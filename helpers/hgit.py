@@ -57,7 +57,7 @@ def get_branch_name(dir_name: str = ".") -> str:
     return output
 
 
-def get_branch_next_name(dir_name: str = ".") -> str:
+def get_branch_next_name(dir_name: str = ".", log_verb: int = logging.DEBUG) -> str:
     """
     Return a name derived from the branch so that the branch doesn't exist.
 
@@ -66,13 +66,18 @@ def get_branch_next_name(dir_name: str = ".") -> str:
     """
     curr_branch_name = get_branch_name(dir_name=dir_name)
     hdbg.dassert_ne(curr_branch_name, "master")
-    _LOG.debug("curr_branch_name=%s", curr_branch_name)
+    _LOG.log(log_verb, "curr_branch_name='%s'", curr_branch_name)
     #
     for i in range(1, 10):
         new_branch_name = f"{curr_branch_name}_{i}"
-        exists = does_branch_exist(new_branch_name, dir_name=dir_name)
-        _LOG.debug("'%s' -> exists=%s", new_branch_name, exists)
+        _LOG.log(log_verb, "Trying branch name '%s'", new_branch_name)
+        mode = "all"
+        exists = does_branch_exist(
+            new_branch_name, mode, dir_name=dir_name
+        )
+        _LOG.log(log_verb, "-> exists=%s", exists)
         if not exists:
+            _LOG.log(log_verb, "new_branch_name='%s'", new_branch_name)
             return new_branch_name
     raise ValueError(f"Can't find the next branch name for '{curr_branch_name}'")
 
@@ -1221,18 +1226,63 @@ def is_client_clean(
     return is_clean
 
 
-def does_branch_exist(branch_name: str, dir_name: str = ".") -> bool:
-    # From https://stackoverflow.com/questions/35941566
-    cmd = f"cd {dir_name} && git fetch --prune"
-    hsystem.system(cmd, abort_on_error=False)
-    # From https://stackoverflow.com/questions/5167957
-    # > git rev-parse --verify LimeTask197_Get_familiar_with_CF2
-    # f03bfa0b4577c2524afd6a1f24d06013f8aa9f1a
-    # > git rev-parse --verify I_dont_exist
-    # fatal: Needed a single revision
-    cmd = f"cd {dir_name} && git rev-parse --verify {branch_name}"
-    rc = hsystem.system(cmd, abort_on_error=False)
-    exists = rc == 0
+@functools.lru_cache()
+def _get_gh_pr_list() -> str:
+    cmd = "gh pr list -s all --limit 10000"
+    rc, txt = hsystem.system_to_string(cmd)
+    _ = rc
+    return txt
+
+
+def does_branch_exist(
+    branch_name: str,
+    mode: str,
+    *,
+    dir_name: str = ".",
+) -> bool:
+    """
+    Check if a branch with the given name exists in Git or GitHub.
+    """
+    # Handle the "all" case by recursion on all the possible modes.
+    if mode == "all":
+        exists = False
+        for mode in ("git_local", "git_remote", "github"):
+            exists_tmp = does_branch_exist(branch_name, mode, dir_name=dir_name)
+            exists |= exists_tmp
+        return exists
+    #
+    hdbg.dassert_in(mode, ("git_local", "git_remote", "github"))
+    exists = False
+    if mode in ("git_local", "git_remote"):
+        # From https://stackoverflow.com/questions/35941566
+        cmd = f"cd {dir_name} && git fetch --prune"
+        hsystem.system(cmd, abort_on_error=False)
+        # From https://stackoverflow.com/questions/5167957
+        # > git rev-parse --verify LimeTask197_Get_familiar_with_CF2
+        # f03bfa0b4577c2524afd6a1f24d06013f8aa9f1a
+        # > git rev-parse --verify I_dont_exist
+        # fatal: Needed a single revision
+        git_branch_name = branch_name
+        if mode == "git_remote":
+            git_branch_name = f"origin/{git_branch_name}"
+        cmd = f"cd {dir_name} && git rev-parse --verify {git_branch_name}"
+        rc = hsystem.system(cmd, abort_on_error=False)
+        exists = rc == 0
+        _LOG.debug("branch_name='%s' on git: %s", branch_name, exists)
+    # Check on GitHub.
+    if mode == "github":
+        txt = _get_gh_pr_list()
+        # > gh pr list -s all --limit 10000 | grep AmpTask2163
+        # 347     AmpTask2163_Implement_tiled_backtesting_1  AmpTask2163 ... MERGED
+        # The text is separated by tabs.
+        for line in txt.split("\n"):
+            # number, GH branch name, Git branch name, status.
+            fields = line.split("\t")
+            hdbg.dassert_eq(len(fields), 4)
+            number, gh_branch_name, git_branch_name, status = fields
+            if branch_name == git_branch_name:
+                exists = True
+                _LOG.debug("fields=%s -> found")
     return exists
 
 

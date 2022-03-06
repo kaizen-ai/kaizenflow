@@ -671,6 +671,7 @@ def dassert_exists(
     *args: Any,
     only_warning: bool = False,
 ) -> None:
+    dassert_isinstance(file_name, str)
     file_name = os.path.abspath(file_name)
     if not os.path.exists(file_name):
         txt = []
@@ -687,6 +688,7 @@ def dassert_file_exists(
     """
     Assert unless `file_name` exists and it's a file and not a directory.
     """
+    dassert_isinstance(file_name, str)
     file_name = os.path.abspath(file_name)
     # `file_name` exists.
     exists = os.path.exists(file_name)
@@ -709,6 +711,7 @@ def dassert_dir_exists(
     """
     Assert unless `dir_name` exists and it's a directory.
     """
+    dassert_isinstance(dir_name, str)
     dir_name = os.path.abspath(dir_name)
     # `dir_name` exists.
     exists = os.path.exists(dir_name)
@@ -736,6 +739,7 @@ def dassert_not_exists(
     if something doesn't exist, we can't make a distinction of what it
     is.
     """
+    dassert_isinstance(file_name, str)
     file_name = os.path.abspath(file_name)
     # pylint: disable=superfluous-parens,unneeded-not
     if not (not os.path.exists(file_name)):

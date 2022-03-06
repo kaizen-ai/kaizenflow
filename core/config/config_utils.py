@@ -30,6 +30,9 @@ def check_no_dummy_values(config: cconconf.Config) -> bool:
         # (('load_prices', 'source_node_name'), 'kibot_equities')
         # ```
         _LOG.debug(hprint.to_str("key val"))
+        # Only check for equality if the types agree.
+        # Example: if we compare a pd.Series to a built-in type, the comparison
+        # is carried out element-wise, which is not what we want in this case.
         if type(val) == dummy_type:
             hdbg.dassert_ne(
                 val,

@@ -65,44 +65,58 @@ _LOG = logging.getLogger(__name__)
 _ENCODING = "ISO-8859-1"
 
 
-def _get_all_files(dirs: List[str], exts: Optional[List[str]]) -> List[str]:
+def _get_all_files(dirs: List[str], extensions: Optional[List[str]]) -> List[str]:
     """
     Find all the files with the given extensions in files under `dirs`.
 
-    :param exts: if None, no filtering by extensions
+    :param extensions: if None, no filtering by extensions
     """
-    if exts is not None:
+    if extensions is not None:
         # Extensions are specified.
-        hdbg.dassert_isinstance(exts, list)
-        hdbg.dassert_lte(1, len(exts))
-        for ext in exts:
-            hdbg.dassert(not ext.startswith("."), "Invalid ext='%s'", ext)
+        hdbg.dassert_isinstance(extensions, list)
+        hdbg.dassert_lte(1, len(extensions))
+        for extension in extensions:
+            hdbg.dassert(
+                not extension.startswith("."), "Invalid ext='%s'", extension
+            )
     # Get files.
-    _LOG.debug("exts=%s", exts)
+    _LOG.debug("extensions=%s", extensions)
     file_names = []
     for d in dirs:
         _LOG.debug("Processing dir '%s'", d)
-        if exts is not None:
+        if extensions is not None:
             # Extensions are specified: find all the files with the given extensions.
-            for ext in exts:
-                file_names_tmp = hio.find_files(d, "*." + ext)
-                _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
+            for extension in extensions:
+                file_names_tmp = hio.find_files(d, "*." + extension)
+                _LOG.debug(
+                    "extension=%s -> found %s files",
+                    extension,
+                    len(file_names_tmp),
+                )
                 file_names.extend(file_names_tmp)
         else:
             # No extension: find all files.
             file_names_tmp = hio.find_files(d, "*")
-            _LOG.debug("exts=%s -> found %s files", exts, len(file_names_tmp))
+            _LOG.debug(
+                "extensions=%s -> found %s files", extensions, len(file_names_tmp)
+            )
             file_names.extend(file_names_tmp)
     # Exclude some files.
-    file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
-    file_names = [f for f in file_names if "__pycache__" not in f]
-    file_names = [f for f in file_names if ".mypy_cache" not in f]
-    file_names = [f for f in file_names if ".pytest_cache" not in f]
-    file_names = [f for f in file_names if "replace_text.py" not in f]
-    file_names = [f for f in file_names if ".git/" not in f]
+    file_names_to_remove = [
+        ".ipynb_checkpoints",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        "replace_text.py",
+        ".git/",
+    ]
+    for file_name_to_remove in file_names_to_remove:
+        file_names = [f for f in file_names if file_name_to_remove not in f]
     file_names = [f for f in file_names if os.path.basename(f) != "cfile"]
     _LOG.info(
-        "Found %s target files with extension '%s'", len(file_names), str(exts)
+        "Found %s target files with extensions '%s'",
+        len(file_names),
+        str(extensions),
     )
     return file_names
 
@@ -110,6 +124,24 @@ def _get_all_files(dirs: List[str], exts: Optional[List[str]]) -> List[str]:
 # #############################################################################
 # Replace strings inside file.
 # #############################################################################
+
+
+def _look_for(file_name: str, old_regex: str) -> Tuple[bool, List[str]]:
+    """
+    Look for `old_regex` in `file_name` returning if it was found and the
+    corresponding cfile entry.
+    """
+    txt = hio.from_file(file_name, encoding=_ENCODING)
+    txt = txt.split("\n")
+    res = []
+    found = False
+    for i, line in enumerate(txt):
+        m = re.search(old_regex, line)
+        if m:
+            # ./install/create_conda.py:21:import helpers.helper_io as hio
+            res.append("%s:%s:%s" % (file_name, i + 1, line))
+            found = True
+    return found, res
 
 
 def _get_files_to_replace(
@@ -130,27 +162,9 @@ def _get_files_to_replace(
             file_names_to_process.append(f)
     #
     txt = "\n".join(res)
-    _LOG.info("Found %s occurrences\n%s", len(res), hprint.indent(txt))
-    _LOG.info("Found %s files to process", len(file_names_to_process))
+    _LOG.info("Found %s occurrences to replace\n%s", len(res), hprint.indent(txt))
+    _LOG.info("Found %s files to replace", len(file_names_to_process))
     return file_names_to_process, txt
-
-
-def _look_for(file_name: str, old_regex: str) -> Tuple[bool, List[str]]:
-    """
-    Look for `old_regex` in `file_name` returning if it was found and the
-    corresponding cfile entry.
-    """
-    txt = hio.from_file(file_name, encoding=_ENCODING)
-    txt = txt.split("\n")
-    res = []
-    found = False
-    for i, line in enumerate(txt):
-        m = re.search(old_regex, line)
-        if m:
-            # ./install/create_conda.py:21:import helpers.helper_io as hio
-            res.append("%s:%s:%s" % (file_name, i + 1, line))
-            found = True
-    return found, res
 
 
 # #############################################################################
@@ -262,6 +276,8 @@ def _replace_repeated_lines(file_name: str, new_regex: str) -> None:
     hio.to_file(file_name, lines_out)
 
 
+# #############################################################################
+# Custom scripts.
 # #############################################################################
 
 
@@ -419,8 +435,9 @@ def _get_files_to_rename(
             file_names_to_process.append(f)
             file_map[f] = os.path.join(dirname, new_basename)
     #
-    _LOG.info("Found %s files to process", len(file_names_to_process))
-    _LOG.info("%s", pprint.pformat(file_map))
+    _LOG.info("Found %s files to rename", len(file_names_to_process))
+    if file_map:
+        _LOG.info("Replacing:\n%s", pprint.pformat(file_map))
     return file_names_to_process, file_map
 
 
@@ -473,20 +490,20 @@ def _parse() -> argparse.ArgumentParser:
         "--action",
         action="store",
         default="replace",
-        choices=["replace", "rename"],
+        choices=["replace", "rename", "replace_rename"],
     )
     parser.add_argument(
         "--ext",
         action="store",
         type=str,
-        default="py,ipynb",
-        help="Extensions to process",
+        default="py,ipynb,txt,sh",
+        help="Extensions to process. `_all_` for all files",
     )
     parser.add_argument(
         "--backup", action="store_true", help="Keep backups of files"
     )
     parser.add_argument(
-        "--dirs",
+        "--only_dirs",
         action="append",
         default=None,
         help="Directories to process",
@@ -496,6 +513,12 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         default=None,
         help="Files to process",
+    )
+    parser.add_argument(
+        "--exclude_files",
+        action="store",
+        default=None,
+        help="Files to exclude",
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -525,12 +548,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         eval("%s(args)" % args.custom_flow)
     else:
         # Use command line params.
-        dirs = args.dirs
+        dirs = args.only_dirs
         if dirs is None:
             dirs = ["."]
         _LOG.info("dirs=%s", dirs)
         # Parse the extensions.
-        if args.ext == "None":
+        if args.ext == "_all_":
             exts = None
         else:
             exts = args.ext
@@ -542,13 +565,39 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if args.only_files:
             # Use only specific files.
             only_files_list = args.only_files.split(" ")
+            num_files_before = len(file_names)
+            _LOG.info("Using only_files=%s", only_files_list)
             file_names = [
                 file_name
                 for file_name in file_names
                 # Remove current directory to match only_files format.
                 if os.path.normpath(file_name) in only_files_list
             ]
-        if args.action == "replace":
+            num_files_after = len(file_names)
+            _LOG.info(
+                "num_files_before=%s num_files_after=%s",
+                num_files_before,
+                num_files_after,
+            )
+        if args.exclude_files:
+            exclude_files_list = args.exclude_files.split(" ")
+            num_files_before = len(file_names)
+            _LOG.info("Excluding files=%s", exclude_files_list)
+            file_names = [
+                file_name
+                for file_name in file_names
+                if os.path.normpath(file_name) not in exclude_files_list
+            ]
+            num_files_after = len(file_names)
+            _LOG.info(
+                "num_files_before=%s num_files_after=%s",
+                num_files_before,
+                num_files_after,
+            )
+        _LOG.info("Found %s target files to process", len(file_names))
+        # Process the actions.
+        action_processed = False
+        if args.action in ("replace", "replace_rename"):
             # Replace.
             file_names_to_process, txt = _get_files_to_replace(
                 file_names, args.old
@@ -557,21 +606,29 @@ def _main(parser: argparse.ArgumentParser) -> None:
             if args.preview:
                 hio.to_file("./cfile", txt)
                 _LOG.warning("Preview only as required. Results saved in ./cfile")
-                sys.exit(0)
-            _replace(
-                file_names_to_process, args.old, args.new, args.backup, args.mode
-            )
-        elif args.action == "rename":
+            else:
+                _replace(
+                    file_names_to_process,
+                    args.old,
+                    args.new,
+                    args.backup,
+                    args.mode,
+                )
+            action_processed = True
+        if args.action in ("rename", "replace_rename"):
             # Rename.
             file_names_to_process, file_map = _get_files_to_rename(
                 file_names, args.old, args.new
             )
             if args.preview:
                 _LOG.warning("Preview only as required.")
-                sys.exit(0)
-            _rename(file_names_to_process, file_map)
-        else:
+            else:
+                _rename(file_names_to_process, file_map)
+            action_processed = True
+        if not action_processed:
             raise ValueError("Invalid action='%s'" % args.action)
+        if args.preview:
+            sys.exit(0)
 
 
 if __name__ == "__main__":
