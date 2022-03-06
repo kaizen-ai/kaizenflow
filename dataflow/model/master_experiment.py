@@ -103,7 +103,7 @@ def _save_tiled_output(config, result_bundle):
     df["month"] = df.index.month
     # The results are saved in the subdir `tiled_results` of the experiment list.
     tiled_dst_dir = os.path.join(config["meta", "dst_dir"], "tiled_results")
-    hparque.partition_dataset(
+    hparque.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir=tiled_dst_dir
     )
     _LOG.info("Tiled results written in '%s'", tiled_dst_dir)

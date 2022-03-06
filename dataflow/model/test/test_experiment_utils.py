@@ -18,7 +18,7 @@ _LOG = logging.getLogger(__name__)
 def _build_base_config() -> cconfig.Config:
     wrapper = cconfig.Config()
     #
-    dag_builder = dtfpiexpip.ExamplePipeline1_ModelBuilder()
+    dag_builder = dtfpiexpip.ExamplePipeline1_DagBuilder()
     config = dag_builder.get_config_template()
     wrapper["DAG"] = config
     wrapper["meta", "dag_builder"] = dag_builder

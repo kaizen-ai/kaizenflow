@@ -18,7 +18,7 @@ import dataflow.core as dtfcore
 _LOG = logging.getLogger(__name__)
 
 
-class ExamplePipeline1_ModelBuilder(dtfcore.DagBuilder):
+class ExamplePipeline1_DagBuilder(dtfcore.DagBuilder):
     def get_config_template(self) -> cconfig.Config:
         dict_ = {
             self._get_nid("filter_ath"): {
