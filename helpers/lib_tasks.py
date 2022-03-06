@@ -1006,7 +1006,7 @@ def _git_diff_with_branch(
     print(script_txt)
     # Save the script to compare.
     script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
-    hsystem.create_executable_script(script_file_name, script_txt)
+    hio.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against {tag} run:\n> {script_file_name}")
     _run(ctx, script_file_name, dry_run=dry_run, pty=True)
 
@@ -1447,7 +1447,7 @@ def _integrate_files(
     else:
         # Save the diff script.
         script_file_name = f"./tmp.vimdiff.{tag}.sh"
-        hsystem.create_executable_script(script_file_name, script_txt)
+        hio.create_executable_script(script_file_name, script_txt)
         print(f"# To diff run:\n> {script_file_name}")
 
 
@@ -1612,7 +1612,7 @@ def integrate_diff_overlapping_files(  # type: ignore
     # Save the script to compare.
     script_file_name = "./tmp.vimdiff_overlapping_files.sh"
     script_txt = "\n".join(script_txt)
-    hsystem.create_executable_script(script_file_name, script_txt)
+    hio.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against the base run:\n> {script_file_name}")
 
 
@@ -3460,7 +3460,7 @@ def _run_test_cmd(
             script_txt = """(sleep 2; open http://localhost:33333) &
 (cd ./htmlcov; python -m http.server 33333)"""
             script_name = "./tmp.coverage.sh"
-            hsystem.create_executable_script(script_name, script_txt)
+            hio.create_executable_script(script_name, script_txt)
             coverage_rc = hsystem.system(script_name)
             if coverage_rc != 0:
                 _LOG.warning(
