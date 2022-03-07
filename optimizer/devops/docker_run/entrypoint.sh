@@ -67,6 +67,10 @@ aws configure --profile am list || true
 echo "OPT_CONTAINER_VERSION='$OPT_CONTAINER_VERSION'"
 
 # Test the installed packages.
+if [[ $ENABLE_DIND == 1 ]]; then
+    echo "docker -v: "$(docker -v)
+    echo "docker-compose -v: "$(docker-compose -v)
+fi;
 VAL=$(which python)
 echo "which python: $VAL"
 VAL=$(python -V)
@@ -77,10 +81,6 @@ VAL=$(python -c "import cvxopt; print(cvxopt.__version__)")
 echo "cvxopt: $VAL"
 VAL=$(python -c "import cvxpy; print(cvxpy.__version__)")
 echo "cvxpy: $VAL"
-#if [[ $ENABLE_DIND == 1 ]]; then
-#    echo "docker -v: "$(docker -v)
-#    echo "docker-compose -v: "$(docker-compose -v)
-#fi;
 VAL=$(python -c "import helpers; print(helpers)")
 echo "helpers: $VAL"
 

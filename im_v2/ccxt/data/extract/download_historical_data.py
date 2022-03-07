@@ -36,53 +36,6 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 _LOG = logging.getLogger(__name__)
 
 
-def _run(args: argparse.Namespace) -> None:
-    # Connect to S3 filesystem.
-    fs = hs3.get_s3fs(args.aws_profile)
-    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
-    # Load trading universe.
-    universe = imvccunun.get_trade_universe(args.universe)
-    # Load a list of currency pars.
-    currency_pairs = universe["CCXT"][args.exchange_id]
-    # Convert timestamps.
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
-    for currency_pair in currency_pairs:
-        # Download OHLCV data.
-        data = exchange.download_ohlcv_data(
-            currency_pair.replace("_", "/"),
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-        )
-        data["currency_pair"] = currency_pair
-        # Change index to allow calling add_date_partition_cols function on the dataframe.
-        data = imvcdttrut.reindex_on_datetime(data, "timestamp")
-        data, partition_cols = hparque.add_date_partition_columns(
-            data, "by_year_month"
-        )
-        # Get current time of push to s3 in UTC.
-        knowledge_timestamp = hdateti.get_current_time("UTC")
-        data["knowledge_timestamp"] = knowledge_timestamp
-        # Save data to S3 filesystem.
-        # Saves filename as `uuid`.
-        hparque.to_partitioned_parquet(
-            data,
-            ["currency_pair"] + partition_cols,
-            path_to_exchange,
-            filesystem=fs,
-            partition_filename=None,
-        )
-        # Sleep between iterations.
-        time.sleep(args.sleep_time)
-    # Merge all new parquet into a single `data.parquet`.
-    list_and_merge_pq_files(
-        path_to_exchange,
-        fs,
-        file_name="data.parquet",
-    )
-
-
 def list_and_merge_pq_files(
     root_dir: str, fs: Any, *, file_name: str = "data.parquet"
 ) -> None:
@@ -133,9 +86,6 @@ def list_and_merge_pq_files(
             pq.write_table(data, folder + "/" + file_name, filesystem=fs)
 
 
-# #############################################################################
-
-
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -180,6 +130,57 @@ def _parse() -> argparse.ArgumentParser:
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
+
+
+def _run(args: argparse.Namespace) -> None:
+    # Connect to S3 filesystem.
+    fs = hs3.get_s3fs(args.aws_profile)
+    exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
+    # Load trading universe.
+    universe = imvccunun.get_trade_universe(args.universe)
+    # Load a list of currency pars.
+    currency_pairs = universe["CCXT"][args.exchange_id]
+    # Convert timestamps.
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
+    for currency_pair in currency_pairs:
+        # Download OHLCV data.
+        data = exchange.download_ohlcv_data(
+            currency_pair.replace("_", "/"),
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+        )
+        # Assign pair and exchange columns.
+        # TODO(Nikola): Exchange id was missing and it is added additionally to
+        #  match signature of other scripts.
+        data["currency_pair"] = currency_pair
+        data["exchange_id"] = args.exchange_id
+        # Change index to allow calling add_date_partition_cols function on the dataframe.
+        data = imvcdttrut.reindex_on_datetime(data, "timestamp")
+        data, partition_cols = hparque.add_date_partition_columns(
+            data, "by_year_month"
+        )
+        # Get current time of push to s3 in UTC.
+        knowledge_timestamp = hdateti.get_current_time("UTC")
+        data["knowledge_timestamp"] = knowledge_timestamp
+        # Save data to S3 filesystem.
+        # Saves filename as `uuid`.
+        hparque.to_partitioned_parquet(
+            data,
+            ["currency_pair"] + partition_cols,
+            path_to_exchange,
+            filesystem=fs,
+            partition_filename=None,
+            )
+        # Sleep between iterations.
+        time.sleep(args.sleep_time)
+    # Merge all new parquet into a single `data.parquet`.
+    list_and_merge_pq_files(
+        path_to_exchange,
+        fs,
+        file_name="data.parquet",
+    )
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

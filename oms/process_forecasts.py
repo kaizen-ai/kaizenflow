@@ -203,6 +203,7 @@ class ForecastProcessor:
         portfolio: omportfo.AbstractPortfolio,
         order_config: cconfig.Config,
         optimizer_config: cconfig.Config,
+        restrictions: Optional[pd.DataFrame] = None,
         log_dir: Optional[str] = None,
     ) -> None:
         self._portfolio = portfolio
@@ -217,6 +218,7 @@ class ForecastProcessor:
         self._target_gmv = self._optimizer_config["target_gmv"]
         self._dollar_neutrality = self._optimizer_config["dollar_neutrality"]
         #
+        self._restrictions = restrictions
         self._log_dir = log_dir
         #
         self._target_positions = collections.OrderedDict()
