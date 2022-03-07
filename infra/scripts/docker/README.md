@@ -2,3 +2,4 @@
 # 1) Save this script in `/etc/cron.daily/`
 # 2) Make it executable with `sudo chmod +x /etc/cron.daily/docker-prune`
 # 3) To test `run-parts /etc/cron.daily`
+
