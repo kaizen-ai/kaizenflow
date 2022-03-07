@@ -1,6 +1,6 @@
 import logging
 import unittest.mock as umock
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 import pytest
@@ -12,7 +12,7 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
+# @pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestTalosExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
@@ -30,9 +30,8 @@ class TestTalosExchange1(hunitest.TestCase):
         """
         mock_get_current_time.return_value = "2021-09-09 00:00:00.000000+00:00"
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        # Need to add one minute more since Talos consider [a, b) time interval.
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
-        actual = self._download_ohlcv_data(start_timestamp, end_timestamp)
+        actual = self.download_ohlcv_data(start_timestamp, end_timestamp)
         # Verify dataframe length.
         self.assertEqual(1440, actual.shape[0])
         # Check number of calls and args for current time.
@@ -53,49 +52,41 @@ class TestTalosExchange1(hunitest.TestCase):
         """
         Run with invalid start timestamp.
         """
-        # Initialize class.
-        exchange_class = imvtdeexcl.TalosExchange("sandbox")
-        # Run with invalid input.
+        cur_pair = "BTC_USDT"
+        exchange = "binance"
+        # End is before start -> invalid.
         start_timestamp = "invalid"
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
-        with pytest.raises(AssertionError) as fail:
-            exchange_class.download_ohlcv_data(
-                currency_pair="BTC_USDT",
-                exchange="binance",
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-            )
-        # Check output for error.
-        actual = str(fail.value)
         expected = (
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
         )
-        self.assertIn(expected, actual)
+        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
+                                                       exchange, 
+                                                        start_timestamp,
+                                                        end_timestamp,
+                                                        expected,
+                                                        AssertionError)
 
     def test_download_ohlcv_data_invalid_input2(self) -> None:
         """
         Run with invalid end timestamp.
         """
-        # Initialize class.
-        exchange_class = imvtdeexcl.TalosExchange("sandbox")
-        # Run with invalid input.
-        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
+        cur_pair = "BTC_USDT"
+        exchange = "binance"
+        # End is before start -> invalid.
+        start_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         end_timestamp = "invalid"
-        with pytest.raises(AssertionError) as fail:
-            exchange_class.download_ohlcv_data(
-                currency_pair="BTC_USDT",
-                exchange="binance",
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-            )
-        # Check output for error.
-        actual = str(fail.value)
         expected = (
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
         )
-        self.assertIn(expected, actual)
+        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
+                                                       exchange, 
+                                                        start_timestamp,
+                                                        end_timestamp,
+                                                        expected,
+                                                        AssertionError)
 
     def test_download_ohlcv_data_invalid_input3(self) -> None:
         """
@@ -103,66 +94,81 @@ class TestTalosExchange1(hunitest.TestCase):
 
         Start greater than the end.
         """
-        # Initialize class.
-        exchange_class = imvtdeexcl.TalosExchange("sandbox")
-        # Run with invalid input.
+        cur_pair = "BTC_USDT"
+        exchange = "binance"
+        # End is before start -> invalid.
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        with pytest.raises(AssertionError) as fail:
-            exchange_class.download_ohlcv_data(
-                currency_pair="BTC_USDT",
-                exchange="binance",
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-            )
-        # Check output for error.
-        actual = str(fail.value)
         expected = "2021-09-10 00:00:00 <= 2021-09-09 00:00:00"
-        self.assertIn(expected, actual)
+        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
+                                                       exchange, 
+                                                        start_timestamp,
+                                                        end_timestamp,
+                                                        expected,
+                                                        AssertionError)
 
     def test_download_ohlcv_data_invalid_input4(self) -> None:
         """
         Run with invalid currency pair.
         """
-        # Initialize class.
-        exchange_class = imvtdeexcl.TalosExchange("sandbox")
+        cur_pair = "invalid_pair"
+        exchange = "binance"
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        end_timestamp = pd.Timestamp("2021-09-10T00:00:01")
-        # Run with invalid input.
-        with pytest.raises(ValueError) as fail:
-            exchange_class.download_ohlcv_data(
-                currency_pair="invalid_currency_pair",
-                exchange="binance",
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-            )
-        # Check output for error.
-        actual = str(fail.value)
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         expected = "Finished with code: 400"
-        self.assertIn(expected, actual)
+        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
+                                                       exchange, 
+                                                        start_timestamp,
+                                                        end_timestamp,
+                                                        expected,
+                                                        ValueError)
 
     def test_download_ohlcv_data_invalid_input5(self) -> None:
         """
         Run with invalid exchange.
         """
+        cur_pair = "BTC_USDT"
+        exchange = "unknown_exchange"
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
+        expected = "Finished with code: 400"
+        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
+                                                       exchange, 
+                                                        pd.Timestamp("2021-09-09T00:00:00"),
+                                                        pd.Timestamp("2021-09-10T00:00:00"),
+                                                        expected,
+                                                        ValueError)
+    
+    # Allow params to be also str, so we can test raising
+    # of assertion errors.
+    def download_ohlcv_data_invalid_input_param_helper(
+        self,
+        currency_pair: str,
+        exchange: str,
+        start_timestamp: Union[pd.Timestamp, str],
+        end_timestamp: Union[pd.Timestamp, str],
+        expected: str,
+        raises: Union[AssertionError, ValueError]
+    ) -> None:
+        """
+        Make creation of tests with invalid input easier.
+
+        """
         # Initialize class.
         exchange_class = imvtdeexcl.TalosExchange("sandbox")
         # Run with invalid input.
-        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        end_timestamp = pd.Timestamp("2021-09-10T00:00:01")
-        with pytest.raises(ValueError) as fail:
+        with pytest.raises(raises) as fail:
             exchange_class.download_ohlcv_data(
-                currency_pair="invalid_currency_pair",
-                exchange="unknown_exchange",
+                currency_pair=currency_pair,
+                exchange=exchange,
                 start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
+                end_timestamp=end_timestamp
             )
         # Check output for error.
         actual = str(fail.value)
-        expected = "Finished with code: 400"
         self.assertIn(expected, actual)
 
-    def _download_ohlcv_data(
+    def download_ohlcv_data(
         self,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
