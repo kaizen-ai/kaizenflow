@@ -1,6 +1,6 @@
 import logging
 import unittest.mock as umock
-from typing import Optional, Union
+from typing import Type, Union
 
 import pandas as pd
 import pytest
@@ -61,12 +61,14 @@ class TestTalosExchange1(hunitest.TestCase):
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
         )
-        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
-                                                       exchange, 
-                                                        start_timestamp,
-                                                        end_timestamp,
-                                                        expected,
-                                                        AssertionError)
+        self.download_ohlcv_data_invalid_input_param_helper(
+            cur_pair,
+            exchange,
+            start_timestamp,
+            end_timestamp,
+            expected,
+            AssertionError,
+        )
 
     def test_download_ohlcv_data_invalid_input2(self) -> None:
         """
@@ -81,12 +83,14 @@ class TestTalosExchange1(hunitest.TestCase):
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
         )
-        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
-                                                       exchange, 
-                                                        start_timestamp,
-                                                        end_timestamp,
-                                                        expected,
-                                                        AssertionError)
+        self.download_ohlcv_data_invalid_input_param_helper(
+            cur_pair,
+            exchange,
+            start_timestamp,
+            end_timestamp,
+            expected,
+            AssertionError,
+        )
 
     def test_download_ohlcv_data_invalid_input3(self) -> None:
         """
@@ -100,12 +104,14 @@ class TestTalosExchange1(hunitest.TestCase):
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00")
         expected = "2021-09-10 00:00:00 <= 2021-09-09 00:00:00"
-        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
-                                                       exchange, 
-                                                        start_timestamp,
-                                                        end_timestamp,
-                                                        expected,
-                                                        AssertionError)
+        self.download_ohlcv_data_invalid_input_param_helper(
+            cur_pair,
+            exchange,
+            start_timestamp,
+            end_timestamp,
+            expected,
+            AssertionError,
+        )
 
     def test_download_ohlcv_data_invalid_input4(self) -> None:
         """
@@ -116,12 +122,14 @@ class TestTalosExchange1(hunitest.TestCase):
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         expected = "Finished with code: 400"
-        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
-                                                       exchange, 
-                                                        start_timestamp,
-                                                        end_timestamp,
-                                                        expected,
-                                                        ValueError)
+        self.download_ohlcv_data_invalid_input_param_helper(
+            cur_pair,
+            exchange,
+            start_timestamp,
+            end_timestamp,
+            expected,
+            ValueError,
+        )
 
     def test_download_ohlcv_data_invalid_input5(self) -> None:
         """
@@ -132,13 +140,15 @@ class TestTalosExchange1(hunitest.TestCase):
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         expected = "Finished with code: 400"
-        self.download_ohlcv_data_invalid_input_param_helper(cur_pair, 
-                                                       exchange, 
-                                                        pd.Timestamp("2021-09-09T00:00:00"),
-                                                        pd.Timestamp("2021-09-10T00:00:00"),
-                                                        expected,
-                                                        ValueError)
-    
+        self.download_ohlcv_data_invalid_input_param_helper(
+            cur_pair,
+            exchange,
+            start_timestamp,
+            end_timestamp,
+            expected,
+            ValueError,
+        )
+
     # Allow params to be also str, so we can test raising
     # of assertion errors.
     def download_ohlcv_data_invalid_input_param_helper(
@@ -148,11 +158,10 @@ class TestTalosExchange1(hunitest.TestCase):
         start_timestamp: Union[pd.Timestamp, str],
         end_timestamp: Union[pd.Timestamp, str],
         expected: str,
-        raises: Union[AssertionError, ValueError]
+        raises: Union[Type[AssertionError], Type[ValueError]],
     ) -> None:
         """
         Make creation of tests with invalid input easier.
-
         """
         # Initialize class.
         exchange_class = imvtdeexcl.TalosExchange("sandbox")
@@ -162,7 +171,7 @@ class TestTalosExchange1(hunitest.TestCase):
                 currency_pair=currency_pair,
                 exchange=exchange,
                 start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp
+                end_timestamp=end_timestamp,
             )
         # Check output for error.
         actual = str(fail.value)
@@ -186,7 +195,7 @@ class TestTalosExchange1(hunitest.TestCase):
             exchange="binance",
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
-            bar_per_iteration=1000
+            bar_per_iteration=1000,
         )
         # Verify that the output is a dataframe.
         hdbg.dassert_isinstance(actual, pd.DataFrame)
