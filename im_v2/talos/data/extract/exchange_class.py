@@ -1,5 +1,6 @@
 """
-This file contains a class for providing interface to download data from Talos broker.
+This file contains a class for providing interface to download data from Talos
+broker.
 
 Import as:
 
@@ -8,7 +9,7 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 
 
 import logging
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 import pandas as pd
 import requests
@@ -69,7 +70,7 @@ class TalosExchange:
         """
         hdateti.dassert_is_tz_naive(timestamp)
         timestamp_iso_8601 = timestamp.isoformat(timespec="microseconds") + "Z"
-        return timestamp_iso_8601
+        return timestamp_iso_8601  # type: ignore
 
     def build_talos_query_params(
         self,
@@ -206,8 +207,12 @@ class TalosExchange:
         ]
         concat_df = pd.concat(dfs)
         concat_df.columns = columns
-        # Change from Talos date format to unix timestamp.
-        # The 'value' attribute holds timestamp in ns, we convert to us (microseconds).
-        concat_df['timestamp'] = pd.to_datetime(concat_df['timestamp']).apply(lambda x: x.value) / 1000000
-        concat_df['timestamp'] = concat_df['timestamp'].astype(int)
+        # Change from Talos date format (returned as string) to pd.Timestamp.
+        concat_df["timestamp"] = concat_df["timestamp"].apply(
+            hdateti.to_timestamp
+        )
+        # Change to unix epoch timestamp.
+        concat_df["timestamp"] = concat_df["timestamp"].apply(
+            hdateti.convert_timestamp_to_unix_epoch
+        )
         return concat_df
