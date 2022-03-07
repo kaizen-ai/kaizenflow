@@ -1,5 +1,0 @@
-# This script is used to prune the Docker images that are older than 7 days.
-# 1) Save this script in `/etc/cron.daily/`
-# 2) Make it executable with `sudo chmod +x /etc/cron.daily/docker-prune`
-# 3) To test `run-parts /etc/cron.daily`
-
