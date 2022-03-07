@@ -758,7 +758,7 @@ def git_create_branch(  # type: ignore
     m = re.match(r"^\S+Task\d+_\S+$", branch_name)
     hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
     hdbg.dassert(
-        not hgit.does_branch_exist(branch_name),
+        not hgit.does_branch_exist(branch_name, mode="all"),
         "The branch '%s' already exists",
         branch_name,
     )
@@ -889,10 +889,7 @@ def git_branch_next_name(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    branch_next_name = hgit.get_branch_next_name()
-    # TODO(gp): We should also check on GH
-    # > gh pr list -s all --limit 10000 | grep AmpTask2163_Implement_tiled_backtesting_1
-    # 347     AmpTask2163_Implement_tiled_backtesting_1       AmpTask2163_Implement_tiled_backtesting_1       MERGED
+    branch_next_name = hgit.get_branch_next_name(log_verb=logging.INFO)
     print(f"branch_next_name='{branch_next_name}'")
 
 
@@ -916,7 +913,8 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
         new_branch_name = hgit.get_branch_next_name()
     _LOG.info("new_branch_name='%s'", new_branch_name)
     # Create or go to the new branch.
-    new_branch_exists = hgit.does_branch_exist(new_branch_name)
+    mode = "all"
+    new_branch_exists = hgit.does_branch_exist(new_branch_name, mode)
     if new_branch_exists:
         cmd = f"git checkout {new_branch_name}"
     else:
@@ -2435,7 +2433,7 @@ def docker_build_local_image(  # type: ignore
     _report_task()
     _dassert_is_subsequent_version(version)
     version = _resolve_version_value(version)
-    # Update poetry.
+    # Update poetry, if needed.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
         _run(ctx, cmd)
@@ -2466,7 +2464,7 @@ def docker_build_local_image(  # type: ignore
         .
     """
     _run(ctx, cmd)
-    #
+    # Check image and report stats.
     cmd = f"docker image ls {image_local}"
     _run(ctx, cmd)
 
@@ -4107,7 +4105,7 @@ def pytest_repro(  # type: ignore
             _, traceback = htraceb.parse_traceback(
                 traceback_block, purify_from_client=False
             )
-            tracebacks.append("\n".join(["# " + name, traceback.strip(), ""]))
+            tracebacks.append("\n".join(["# " + name, traceback, ""]))
         # Combine the stacktraces for all the failures.
         full_traceback = "\n\n" + "\n".join(tracebacks)
         failed_test_output_str += full_traceback

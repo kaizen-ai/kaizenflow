@@ -4,7 +4,7 @@
 # variables.
 #
 
-# TODO(gp): This seems useless. If so, delete.
+# TODO(gp): This file seems useless. If so, delete.
 
 set -e
 
