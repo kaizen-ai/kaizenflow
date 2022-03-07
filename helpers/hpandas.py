@@ -664,3 +664,60 @@ def df_to_str(
     out.append(df_as_str)
     txt = "\n".join(out)
     return txt
+
+
+def convert_df_to_json_string(
+    df: pd.DataFrame,
+    n_head: Optional[int] = 10,
+    n_tail: Optional[int] = 10,
+    columns_order: Optional[List[str]] = None,
+) -> str:
+    """
+    Convert dataframe to pretty-printed JSON string.
+
+    To select all rows of the dataframe, pass `n_head` as None.
+
+    :param df: dataframe to convert
+    :param n_head: number of printed top rows
+    :param n_tail: number of printed bottom rows
+    :param columns_order: order for the KG columns sort
+    :return: dataframe converted to JSON string
+    """
+    # Append shape of the initial dataframe.
+    shape = "original shape=%s" % (df.shape,)
+    # Reorder columns.
+    if columns_order is not None:
+        hdbg.dassert_set_eq(columns_order, df.cols)
+        df = df[columns_order]
+    # Select head.
+    if n_head is not None:
+        head_df = df.head(n_head)
+    else:
+        # If no n_head provided, append entire dataframe.
+        head_df = df
+    # Transform head to json.
+    head_json = head_df.to_json(
+        orient="index",
+        force_ascii=False,
+        indent=4,
+        default_handler=str,
+        date_format="iso",
+        date_unit="s",
+    )
+    if n_tail is not None:
+        # Transform tail to json.
+        tail = df.tail(n_tail)
+        tail_json = tail.to_json(
+            orient="index",
+            force_ascii=False,
+            indent=4,
+            default_handler=str,
+            date_format="iso",
+            date_unit="s",
+        )
+    else:
+        # If no tail specified, append an empty string.
+        tail_json = ""
+    # Join shape and dataframe to single string.
+    output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
+    return output_str

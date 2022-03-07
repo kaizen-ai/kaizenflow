@@ -180,31 +180,6 @@ class ImClient(abc.ABC):
         mode = "end"
         return self._get_start_end_ts_for_symbol(full_symbol, mode)
 
-    # /////////////////////////////////////////////////////////////////////////
-
-    @staticmethod
-    @abc.abstractmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
-        """
-        Return the entire universe of valid full symbols.
-        """
-
-    @staticmethod
-    def get_asset_ids_from_full_symbols(
-        full_symbols: List[imvcdcfusy.FullSymbol],
-    ) -> List[int]:
-        """
-        Convert full symbols into asset ids.
-
-        :param full_symbols: assets as full symbols
-        :return: assets as numerical ids
-        """
-        numerical_asset_id = [
-            imvcuunut.string_to_numerical_id(full_symbol)
-            for full_symbol in full_symbols
-        ]
-        return numerical_asset_id
-
     def get_full_symbols_from_asset_ids(
         self, asset_ids: List[int]
     ) -> List[imvcdcfusy.FullSymbol]:
@@ -222,6 +197,38 @@ class ImClient(abc.ABC):
             for asset_id in asset_ids
         ]
         return full_symbols
+
+    # /////////////////////////////////////////////////////////////////////////
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+        """
+        Return the entire universe of valid full symbols.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+
+    @staticmethod
+    def get_asset_ids_from_full_symbols(
+        full_symbols: List[imvcdcfusy.FullSymbol],
+    ) -> List[int]:
+        """
+        Convert full symbols into asset ids.
+
+        :param full_symbols: assets as full symbols
+        :return: assets as numerical ids
+        """
+        numerical_asset_id = [
+            imvcuunut.string_to_numerical_id(full_symbol)
+            for full_symbol in full_symbols
+        ]
+        return numerical_asset_id
 
     # //////////////////////////////////////////////////////////////////////////
 

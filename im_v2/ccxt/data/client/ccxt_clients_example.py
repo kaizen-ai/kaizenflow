@@ -10,6 +10,9 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 
+# TODO(gp): @Grisha -> move the example file in parallel to ccxt_clients
+#  We want to expose this from the package, we don't like exporting stuff from
+#  test.
 
 def get_test_data_dir() -> str:
     """
