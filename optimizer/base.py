@@ -21,15 +21,15 @@ class Expression(abc.ABC):
     def get_expr(
         self,
         target_weights,
-        target_diffs,
-        total_wealth: float,
+        target_weight_diffs,
+        gmv: float,
     ) -> EXPR:
         """
 
-        :param target_weights: current weights plus target diffs
-        :param target_diffs: trades normalized by `value` (of holdings); same
-            scale as weights
-        :param total_wealth: portfolio in notional plus cash balance
+        :param target_weights: current weights plus target weight diffs
+        :param target_weight_diffs: trades normalized by current gmv. These
+            are on the same scale as the weights.
+        :param gmv: sum of absolute value of notional value of assets
         :return: cvxpy Expression
         """
         ...

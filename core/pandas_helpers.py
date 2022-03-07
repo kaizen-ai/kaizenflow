@@ -6,7 +6,7 @@ Import as:
 import core.pandas_helpers as cpanh
 """
 
-# TODO(gp): Merge into helpers/pandas_helpers.py
+# TODO(gp): Merge into helpers/hpandas.py
 
 import collections
 import logging

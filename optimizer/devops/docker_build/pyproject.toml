@@ -11,6 +11,12 @@ jupyter = "*"
 jupyter_contrib_nbextensions = "*"
 jupytext = "*"
 pandas = "*"
+pytest = "^6.0.0"
+pytest-cov = "*"
+pytest-instafail = "*"
+pytest-rerunfailures = "*"
+pytest-timeout = "*"
+pytest-xdist = "*"
 python = "^3.8"
 
 [tool.poetry.dev-dependencies]
