@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): -> dataflow/system/test_real_time_pipeline.py
 
-# TODO(gp): Split the class in methods like TestReplayedRH8EdWithMockedOms1
+# TODO(gp): Split the class in methods like TestReplayed8EdWithMockedOms1
 
 # TODO(gp): use dag_builder = dtfsrtdaad.RealTimeDagAdapter(base_dag_builder,
 #  portfolio)

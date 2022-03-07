@@ -349,14 +349,18 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_branch_files(ctx)"
         self._check_output(target)
 
+    @pytest.mark.slow(reason="Around 7s")
     def test_git_create_branch1(self) -> None:
+        _gh_login()
         target = (
             "git_create_branch(ctx, branch_name='AmpTask123_test', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)
 
+    @pytest.mark.slow(reason="Around 7s")
     def test_git_create_branch2(self) -> None:
+        _gh_login()
         target = (
             "git_create_branch(ctx, issue_id=1, repo_short_name='amp', "
             "only_branch_from_master=False)"
@@ -1836,6 +1840,10 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         self.helper(cmd)
 
     def test4(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
+        self.helper(cmd)
+        
+    def test5(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
 

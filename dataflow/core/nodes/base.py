@@ -158,6 +158,7 @@ class DataSource(FitPredictNode, abc.ABC):
               `None` boundary is interpreted as data start/end
             -
         """
+        _LOG.debug("intervals=%s", intervals)
         if intervals is None:
             dtfcorutil.dassert_valid_intervals(intervals)
         self._fit_intervals = intervals

@@ -61,6 +61,7 @@ class Test_Traceback1(hunitest.TestCase):
           File "$GIT_ROOT/helpers/git.py", line 397, in get_task_prefix_from_repo_short_name
             if repo_short_name == "amp":
         NameError: name 'repo_short_name' is not defined
+            TEST TEST TEST
         """
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
@@ -182,6 +183,10 @@ class Test_Traceback1(hunitest.TestCase):
           File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
         AssertionError:
+        # #####################################################################
+        * Failed assertion *
+        cond=None
+        Invalid test='dev_scripts/testing/test/test_run_tests.py'
         """
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback

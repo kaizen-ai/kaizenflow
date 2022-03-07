@@ -1,17 +1,17 @@
 import logging
 import os
 
-import helpers.hversion as hversi
-import helpers.lib_tasks as hlib
-
 # Expose the pytest targets.
 # Extract with:
 # > i print_tasks --as-code
 from opt_lib_tasks import (
-    docker_build_local_opt_image,
     opt_docker_bash,
+    opt_docker_build_local_image,
     opt_docker_jupyter,
 )
+
+import helpers.hversion as hversi
+import helpers.lib_tasks as hlib
 
 _LOG = logging.getLogger(__name__)
 
