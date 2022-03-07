@@ -12,7 +12,7 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-# @pytest.mark.skip("Enable after CMTask1292 is resolved.")
+@pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestTalosExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
