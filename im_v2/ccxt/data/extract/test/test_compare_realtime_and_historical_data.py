@@ -86,16 +86,14 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         ################################################################################
         Missing real time data:
         df.shape=(9, 5)
-        df.head=
+        df.full=
                                        open    high     low   close   volume
         timestamp     currency_pair
         1640995020000 SOL_USDT       170.17  170.29  170.11  170.19   747.91
         1640995080000 SOL_USDT       170.20  170.20  169.76  169.93  1203.06
         1640995140000 SOL_USDT       169.90  170.07  169.90  169.99   304.42
         1640995200000 SOL_USDT       170.01  170.22  169.93  170.14   810.27
-        df.tail=
-                                       open    high     low   close   volume
-        timestamp     currency_pair
+        1640995260000 SOL_USDT       170.09  170.52  170.06  170.40  1504.74
         1640995320000 SOL_USDT       170.46  170.60  170.33  170.53   520.30
         1640995380000 SOL_USDT       170.53  170.60  170.27  170.34  1175.03
         1640995440000 SOL_USDT       170.33  170.49  170.31  170.40   318.96
@@ -142,16 +140,14 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         ################################################################################
         Missing daily data:
         df.shape=(9, 5)
-        df.head=
-                                      open  high    low  close    volume
-        timestamp     currency_pair
-        1640994900000 ADA_USDT       1.309  1.31  1.308  1.309   47265.6
-        1640994960000 ADA_USDT       1.309  1.31  1.308  1.309   45541.6
-        1640995020000 ADA_USDT       1.309  1.31  1.309  1.310   23032.3
-        1640995080000 ADA_USDT       1.310  1.31  1.306  1.306  179644.8
-        df.tail=
+        df.full=
                                       open   high    low  close    volume
         timestamp     currency_pair
+        1640994900000 ADA_USDT       1.309  1.310  1.308  1.309   47265.6
+        1640994960000 ADA_USDT       1.309  1.310  1.308  1.309   45541.6
+        1640995020000 ADA_USDT       1.309  1.310  1.309  1.310   23032.3
+        1640995080000 ADA_USDT       1.310  1.310  1.306  1.306  179644.8
+        1640995140000 ADA_USDT       1.306  1.310  1.306  1.308  373664.9
         1640995200000 ADA_USDT       1.308  1.310  1.307  1.310   98266.8
         1640995260000 ADA_USDT       1.310  1.314  1.308  1.312  132189.4
         1640995320000 ADA_USDT       1.312  1.318  1.311  1.317  708964.2
@@ -196,42 +192,33 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         ################################################################################
         Missing real time data:
         df.shape=(4, 5)
-        df.head=
-                                       open   high     low   close   volume
+        df.full=
+                                       open    high     low   close   volume
         timestamp     currency_pair
-        1640995320000 SOL_USDT       170.46  170.6  170.33  170.53   520.30
-        1640995380000 SOL_USDT       170.53  170.6  170.27  170.34  1175.03
-        df.tail=
-                                       open    high     low   close  volume
-        timestamp     currency_pair
-        1640995440000 SOL_USDT       170.33  170.49  170.31  170.40  318.96
-        1640995500000 SOL_USDT       170.41  170.73  170.25  170.65  612.02
+        1640995320000 SOL_USDT       170.46  170.60  170.33  170.53   520.30
+        1640995380000 SOL_USDT       170.53  170.60  170.27  170.34  1175.03
+        1640995440000 SOL_USDT       170.33  170.49  170.31  170.40   318.96
+        1640995500000 SOL_USDT       170.41  170.73  170.25  170.65   612.02
         Missing daily data:
         df.shape=(4, 5)
-        df.head=
-                                      open  high    low  close   volume
-        timestamp     currency_pair
-        1640994900000 ADA_USDT       1.309  1.31  1.308  1.309  47265.6
-        1640994960000 ADA_USDT       1.309  1.31  1.308  1.309  45541.6
-        df.tail=
+        df.full=
                                       open  high    low  close    volume
         timestamp     currency_pair
+        1640994900000 ADA_USDT       1.309  1.31  1.308  1.309   47265.6
+        1640994960000 ADA_USDT       1.309  1.31  1.308  1.309   45541.6
         1640995020000 ADA_USDT       1.309  1.31  1.309  1.310   23032.3
         1640995080000 ADA_USDT       1.310  1.31  1.306  1.306  179644.8
         Differing table contents:
         df.shape=(6, 2)
-        df.head=
-                open
-                self    other
-        2   46285.79  666.000
-        33    109.41  666.000
-        46    999.00    3.033
-        df.tail=
-               open
-               self    other
-        51  999.000  109.750
-        67    1.317  666.000
-        83  999.000    1.315
+        df.full=
+                 open
+                 self    other
+        2   46285.790  666.000
+        33    109.410  666.000
+        46    999.000    3.033
+        51    999.000  109.750
+        67      1.317  666.000
+        83    999.000    1.315
         ################################################################################"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
