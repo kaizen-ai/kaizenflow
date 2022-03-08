@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 r"""
-Run an experiment consisting of multiple model runs based on the passed:
+Run a list of experiments consisting of multiple model runs based on the passed:
 - `config_builder`, which describes DAG and configs
 - `experiment_builder`, which describes the model driver
 

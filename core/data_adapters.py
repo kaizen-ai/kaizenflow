@@ -307,7 +307,8 @@ if True:
 # #############################################################################
 
 
-# TODO(gp): @all -> sklearn/data_adapters.py
+# TODO(gp): @all -> data_adapters_sklearn.py
+# TODO(gp): Consider moving to dataflow if it's used only there
 
 
 def transform_to_sklearn(df: pd.DataFrame, cols: List[Any]) -> np.array:

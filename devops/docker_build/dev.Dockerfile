@@ -43,8 +43,8 @@ RUN /bin/bash -c "./create_users.sh"
 COPY devops/docker_build/etc_sudoers /etc/sudoers
 
 # Mount external filesystems.
-#RUN mkdir -p /s3/alphamatic-data
-#RUN mkdir -p /fsx/research
+# RUN mkdir -p /s3/alphamatic-data
+# RUN mkdir -p /fsx/research
 
 COPY devops/docker_run/bashrc $HOME/.bashrc
 

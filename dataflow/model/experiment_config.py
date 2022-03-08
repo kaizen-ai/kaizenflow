@@ -70,10 +70,18 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
         # Jan and Feb of 2020.
         start_datetime = datetime.datetime(2020, 1, 1)
         end_datetime = datetime.datetime(2020, 3, 1)
+    elif period == "FebMar2020":
+        # Feb and March of 2020.
+        start_datetime = datetime.datetime(2020, 2, 1)
+        end_datetime = datetime.datetime(2020, 4, 1)
     elif period == "2018":
         # 2018.
         start_datetime = datetime.datetime(2018, 1, 1)
         end_datetime = datetime.datetime(2019, 1, 1)
+    elif period == "2018_2019":
+        # 2018.
+        start_datetime = datetime.datetime(2018, 1, 1)
+        end_datetime = datetime.datetime(2020, 1, 1)
     elif period == "2009_2019":
         # Entire 2009-2019 period.
         start_datetime = datetime.datetime(2009, 1, 1)
@@ -84,6 +92,9 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     elif period == "2012_2022":
         start_datetime = datetime.datetime(2012, 1, 1)
         end_datetime = datetime.datetime(2022, 1, 1)
+    elif period == "2018_2022":
+        start_datetime = datetime.datetime(2012, 1, 1)
+        end_datetime = datetime.datetime(2022, 3, 1)
     else:
         hdbg.dfatal("Invalid period='%s'" % period)
     _LOG.info("start_datetime=%s end_datetime=%s", start_datetime, end_datetime)
@@ -173,8 +184,8 @@ def build_configs_varying_asset_id(
     configs = []
     for asset_id in asset_ids:
         config_tmp = config.copy()
-        set_asset_id(config_tmp, asset_id_key, asset_id)
-        _LOG.debug("config_tmp=%s\n", config_tmp)
+        config_tmp = set_asset_id(config_tmp, asset_id_key, asset_id)
+        _LOG.info("config_tmp=%s\n", config_tmp)
         #
         configs.append(config_tmp)
     return configs
@@ -199,7 +210,7 @@ def build_configs_varying_universe_tiles(
     configs = []
     for universe_tile in universe_tiles:
         config_tmp = config.copy()
-        set_asset_id(config_tmp, universe_tile_id, universe_tile)
+        config_tmp = set_asset_id(config_tmp, universe_tile_id, universe_tile)
         _LOG.debug("config_tmp=%s\n", config_tmp)
         #
         configs.append(config_tmp)
