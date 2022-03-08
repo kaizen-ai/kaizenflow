@@ -1,10 +1,12 @@
 import pandas as pd
+import pytest
 
 import helpers.hunit_test as hunitest
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 
 class TestConvertTimestampColumn(hunitest.TestCase):
+
     def test_integer_datetime(self) -> None:
         """
         Verify that integer datetime is converted correctly.
@@ -59,12 +61,25 @@ class TestConvertTimestampColumn(hunitest.TestCase):
 
 
 class TestReindexOnDatetime(hunitest.TestCase):
+
+    def get_dummy_df_with_timestamp(self, unit: str = "ms") -> pd.DataFrame:
+        datetime_column_name = "dummy_timestamp"
+        test_data = {
+            "dummy_value": [1, 2, 3],
+            datetime_column_name: [1638646800000, 1638646860000, 1638646960000],
+        }
+        if unit == "s":
+            test_data[datetime_column_name] = [
+                timestamp // 1000 for timestamp in test_data[datetime_column_name]
+            ]
+        return pd.DataFrame(data=test_data)
+
     def test_reindex_on_datetime_milliseconds(self) -> None:
         """
         Verify datetime index creation when timestamp is in milliseconds.
         """
         # Prepare inputs.
-        dummy_df = self._get_dummy_df_with_timestamp()
+        dummy_df = self.get_dummy_df_with_timestamp()
         # Run.
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
@@ -85,7 +100,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         Verify datetime index creation when timestamp is in seconds.
         """
         # Prepare inputs.
-        dummy_df = self._get_dummy_df_with_timestamp(unit="s")
+        dummy_df = self.get_dummy_df_with_timestamp(unit="s")
         # Run.
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp", unit="s"
@@ -104,7 +119,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         Assert that wrong column is detected before reindexing.
         """
-        dummy_df = self._get_dummy_df_with_timestamp()
+        dummy_df = self.get_dummy_df_with_timestamp()
         with self.assertRaises(AssertionError) as fail:
             imvcdttrut.reindex_on_datetime(dummy_df, "void_column")
         actual = str(fail.exception)
@@ -118,7 +133,7 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         Assert that reindexing is not done on already reindexed dataframe.
         """
-        dummy_df = self._get_dummy_df_with_timestamp()
+        dummy_df = self.get_dummy_df_with_timestamp()
         reindexed_dummy_df = imvcdttrut.reindex_on_datetime(
             dummy_df, "dummy_timestamp"
         )
@@ -131,15 +146,62 @@ class TestReindexOnDatetime(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    @staticmethod
-    def _get_dummy_df_with_timestamp(unit: str = "ms") -> pd.DataFrame:
-        datetime_column_name = "dummy_timestamp"
+
+# #############################################################################
+
+
+class TestReindexOnCustomColumns(hunitest.TestCase):
+
+    def get_test_data(self) -> pd.DataFrame:
         test_data = {
-            "dummy_value": [1, 2, 3],
-            datetime_column_name: [1638646800000, 1638646860000, 1638646960000],
+            "dummy_value_1": [1, 3, 2],
+            "dummy_value_2": ["A", "C", "B"],
+            "dummy_value_3": [0, 0, 0],
         }
-        if unit == "s":
-            test_data[datetime_column_name] = [
-                timestamp // 1000 for timestamp in test_data[datetime_column_name]
-            ]
-        return pd.DataFrame(data=test_data)
+        df = pd.DataFrame(data=test_data)
+        df.index.name = "test"
+        return df
+
+    def test_reindex_on_custom_columns(self) -> None:
+        """
+        Verify that dataframe is re-indexed correctly with specified columns.
+        """
+        # Prepare inputs.
+        test_data = self.get_test_data()
+        expected_columns = test_data.columns.values.tolist()
+        # Run.
+        actual = imvcdttrut.reindex_on_custom_columns(
+            test_data, expected_columns[:2], expected_columns
+        )
+        # Check output.
+        actual = str(actual)
+        expected = r"""                             dummy_value_3
+        dummy_value_1 dummy_value_2
+        1             A                          0
+        2             B                          0
+        3             C                          0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_reindex_on_custom_columns_invalid_columns(self) -> None:
+        """
+        Verify that dataframe is re-indexed correctly with specified columns.
+        """
+        # Prepare inputs.
+        test_data = self.get_test_data()
+        expected_columns = ["mock1", "mock2", "mock3"]
+        # Run.
+        with pytest.raises(AssertionError) as fail:
+            imvcdttrut.reindex_on_custom_columns(
+                test_data, expected_columns[:2], expected_columns
+            )
+        # Check output.
+        actual = str(fail.value)
+        expected = r"""
+        ################################################################################
+        * Failed assertion *
+        val1=['mock1', 'mock2', 'mock3']
+        issubset
+        val2=['dummy_value_1', 'dummy_value_2', 'dummy_value_3']
+        val1 - val2=['mock1', 'mock2', 'mock3']
+        ################################################################################"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
