@@ -321,10 +321,22 @@ def compare_dataframe_rows(
     idx_intersection = first.index.intersection(second.index)
     # Get difference between daily data and rt data.
     # Index is set to default sequential integer values because compare is
-    # sensitive to multi index. Multi index columns are regular columns now.
+    # sensitive to multi index (probably because new multi indexes are created
+    # for each difference in `compare`). Multi index columns are regular columns now.
     trimmed_second = second.loc[idx_intersection].reset_index()
     trimmed_first = first.loc[idx_intersection].reset_index()
     data_difference = trimmed_second.compare(trimmed_first)
+    # Update data difference with original dataframe index names
+    # for easier identification.
+    index_names = tuple(second.index.names)
+    # If index or multi index is named, it will be visible in data difference.
+    if not index_names == (None,):
+        for index in data_difference.index:
+            for column in index_names:
+                data_difference.loc[index, column] = trimmed_second.loc[index][
+                    column
+                ]
+        data_difference = data_difference.convert_dtypes()
     return data_difference
 
 
