@@ -495,7 +495,7 @@ def _rename(file_names_to_process: List[str], file_map: Dict[str, str]) -> None:
         dirname = os.path.dirname(new_name)
         if not os.path.isdir(dirname):
             # Create a dir if the new file name presupposes a new dir.
-            cmd = "mkdir %s" % dirname
+            cmd = "mkdir -p %s" % dirname
             hsystem.system(cmd)
         # Rename the file.
         cmd = "git mv %s %s" % (f, new_name)
