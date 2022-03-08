@@ -289,48 +289,46 @@ def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
 
 
 def find_gaps_in_dataframes(
-    first: pd.DataFrame, second: pd.DataFrame
+    df1: pd.DataFrame, df2: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Find data present in one dataframe and missing in other one.
+    Find data present in one dataframe and missing in the other one.
 
-    :param first: first dataframe for comparison
-    :param second: second dataframe for comparison
+    :param df1: first dataframe for comparison
+    :param df2: second dataframe for comparison
     :return: two dataframes with missing data
     """
     # Get data present in first, but not present in second dataframe.
-    first_missing_indices = second.index.difference(first.index)
-    first_missing_data = second.loc[first_missing_indices]
+    first_missing_indices = df2.index.difference(df1.index)
+    first_missing_data = df2.loc[first_missing_indices]
     # Get data present in second, but not present in first dataframe.
-    second_missing_indices = first.index.difference(second.index)
-    second_missing_data = first.loc[second_missing_indices]
+    second_missing_indices = df1.index.difference(df2.index)
+    second_missing_data = df1.loc[second_missing_indices]
     return first_missing_data, second_missing_data
 
 
-def compare_dataframe_rows(
-    first: pd.DataFrame, second: pd.DataFrame
-) -> pd.DataFrame:
+def compare_dataframe_rows(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
     """
     Compare contents of rows with same indices.
 
-    :param first: first dataframe for comparison
-    :param second: second dataframe for comparison
+    :param df1: first dataframe for comparison
+    :param df2: second dataframe for comparison
     :return: dataframe with data with same indices and different contents
     """
     # Get rows on which the two dataframe indices match.
-    idx_intersection = first.index.intersection(second.index)
+    idx_intersection = df1.index.intersection(df2.index)
     # Get difference between second and first dataframe.
     # Index is set to default sequential integer values because compare is
     # sensitive to multi index (probably because new multi indexes are created
     # for each difference in `compare`). Multi index columns are regular columns now.
-    trimmed_second = second.loc[idx_intersection].reset_index()
-    trimmed_first = first.loc[idx_intersection].reset_index()
+    trimmed_second = df2.loc[idx_intersection].reset_index()
+    trimmed_first = df1.loc[idx_intersection].reset_index()
     data_difference = trimmed_second.compare(trimmed_first)
     # Update data difference with original dataframe index names
     # for easier identification.
-    index_names = tuple(second.index.names)
+    index_names = tuple(df2.index.names)
     # If index or multi index is named, it will be visible in data difference.
-    if not index_names == (None,):
+    if index_names != (None,):
         for index in data_difference.index:
             for column in index_names:
                 data_difference.loc[index, column] = trimmed_second.loc[index][

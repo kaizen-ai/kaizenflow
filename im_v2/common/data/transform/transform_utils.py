@@ -7,6 +7,7 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 """
 
 import logging
+from typing import List
 
 import pandas as pd
 
@@ -69,29 +70,22 @@ def reindex_on_datetime(
     return df
 
 
-def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
+def reindex_on_custom_columns(
+    df: pd.DataFrame, index_columns: List[str], expected_columns: List[str]
+) -> pd.DataFrame:
     """
-    Reindex data on currency pair and timestamp.
+    Reindex dataframe on provided index columns.
 
-    Drop timestamps for downloading and saving.
+    :param df: original dataframe
+    :param index_columns: columns that will be used to create new index
+    :param expected_columns: columns that will be present in new re-indexed dataframe
+    :return: re-indexed dataframe
     """
-    # Select only index and OHLCV columns
-    expected_col_names = [
-        "timestamp",
-        "currency_pair",
-        "open",
-        "high",
-        "low",
-        "close",
-        "volume",
-    ]
-    hdbg.dassert_is_subset(expected_col_names, data.columns)
-    data_reindex = data.loc[:, expected_col_names]
+    hdbg.dassert_is_subset(expected_columns, df.columns)
+    data_reindex = df.loc[:, expected_columns]
     data_reindex = data_reindex.drop_duplicates()
-    # Reindex on ts and asset.
     # Remove index name, so there is no conflict with column names.
-    # For example if index is named `timestamp`.
     data_reindex.index.name = None
-    data_reindex = data_reindex.sort_values(by=["timestamp", "currency_pair"])
-    data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
+    data_reindex = data_reindex.sort_values(by=index_columns)
+    data_reindex = data_reindex.set_index(index_columns)
     return data_reindex
