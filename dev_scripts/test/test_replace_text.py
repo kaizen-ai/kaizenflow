@@ -185,12 +185,13 @@ class Test_get_files_to_replace(hunitest.TestCase):
         expected_cfile: str,
     ) -> None:
         """
-        Run the filter on the file names and check the outcome.
+        Run the filter on the files and check the outcome.
 
         See param descriptions in `dscretex._get_files_to_replace`.
 
         :param expected_file_names: file names expected to remain after filtering
-        :param expected_cfile: the expected mapping for renaming the filtered files
+        :param expected_cfile: the lines from the files where the filtering regex
+            should be detected
         """
         # Run.
         actual_file_names, actual_cfile = dscretex._get_files_to_replace(

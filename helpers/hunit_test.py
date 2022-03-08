@@ -1729,7 +1729,7 @@ class TestCase(unittest.TestCase):
                 test_method_name,
             )
         if use_absolute_path:
-            # E.g., `.../dataflow/test/TestContinuousSarimaxModel.test_compare`.
+            # E.g., `.../dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare`.
             dir_name = os.path.join(self._base_dir_name, dir_name)
             # dir_name = os.path.join(self._base_dir_name, "outcomes", dir_name)
         # else:
