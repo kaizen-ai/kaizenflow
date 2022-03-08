@@ -13,50 +13,56 @@ useradd -u 501 $OPTS user_501
 usermod -aG docker user_501
 
 # Linux users.
-useradd -u 1001 $OPTS user_1001
-usermod -aG docker user_1001
-
-useradd -u 1002 $OPTS user_1002
-usermod -aG docker user_1002
-
-useradd -u 1003 $OPTS user_1003
-usermod -aG docker user_1003
-
-useradd -u 1004 $OPTS user_1004
-usermod -aG docker user_1004
-
-useradd -u 1005 $OPTS user_1005
-usermod -aG docker user_1005
-
-useradd -u 1006 $OPTS user_1006
-usermod -aG docker user_1006
-
-useradd -u 1007 $OPTS user_1007
-usermod -aG docker user_1007
-
-useradd -u 1008 $OPTS user_1008
-usermod -aG docker user_1008
-
-useradd -u 1009 $OPTS user_1009
-usermod -aG docker user_1009
-
-useradd -u 1010 $OPTS user_1010
-usermod -aG docker user_1010
-
-useradd -u 1011 $OPTS user_1011
-usermod -aG docker user_1011
-
-useradd -u 1012 $OPTS user_1012
-usermod -aG docker user_1012
-
-useradd -u 1013 $OPTS user_1013
-usermod -aG docker user_1013
-
-useradd -u 1014 $OPTS user_1014
-usermod -aG docker user_1014
-
-useradd -u 1015 $OPTS user_1015
-usermod -aG docker user_1015
+# We start from id=1001, the upper bound can be changed if needed.
+for current_linux_id in {1001..1050}
+do
+  useradd -u $current_linux_id $OPTS user_$current_linux_id
+  usermod -aG docker user_$current_linux_id
+done
+#useradd -u 1001 $OPTS user_1001
+#usermod -aG docker user_1001
+#
+#useradd -u 1002 $OPTS user_1002
+#usermod -aG docker user_1002
+#
+#useradd -u 1003 $OPTS user_1003
+#usermod -aG docker user_1003
+#
+#useradd -u 1004 $OPTS user_1004
+#usermod -aG docker user_1004
+#
+#useradd -u 1005 $OPTS user_1005
+#usermod -aG docker user_1005
+#
+#useradd -u 1006 $OPTS user_1006
+#usermod -aG docker user_1006
+#
+#useradd -u 1007 $OPTS user_1007
+#usermod -aG docker user_1007
+#
+#useradd -u 1008 $OPTS user_1008
+#usermod -aG docker user_1008
+#
+#useradd -u 1009 $OPTS user_1009
+#usermod -aG docker user_1009
+#
+#useradd -u 1010 $OPTS user_1010
+#usermod -aG docker user_1010
+#
+#useradd -u 1011 $OPTS user_1011
+#usermod -aG docker user_1011
+#
+#useradd -u 1012 $OPTS user_1012
+#usermod -aG docker user_1012
+#
+#useradd -u 1013 $OPTS user_1013
+#usermod -aG docker user_1013
+#
+#useradd -u 1014 $OPTS user_1014
+#usermod -aG docker user_1014
+#
+#useradd -u 1015 $OPTS user_1015
+#usermod -aG docker user_1015
 
 sudo chmod -R 777 /home
 
