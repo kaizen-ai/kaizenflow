@@ -500,6 +500,9 @@ def _rename(file_names_to_process: List[str], file_map: Dict[str, str]) -> None:
         # Rename the file.
         cmd = "git mv %s %s" % (f, new_name)
         hsystem.system(cmd)
+    # Remove dirs that ended up empty.
+    cmd = "find . -type d -empty -delete"
+    hsystem.system(cmd)
 
 
 # #############################################################################
