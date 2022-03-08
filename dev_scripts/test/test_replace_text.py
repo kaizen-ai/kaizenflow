@@ -8,7 +8,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_get_files_to_rename(hunitest.TestCase):
-
     def helper(
         self,
         file_names: List[str],
@@ -178,7 +177,6 @@ class Test_get_files_to_rename(hunitest.TestCase):
 
 
 class Test_get_files_to_replace(hunitest.TestCase):
-
     def helper(
         self,
         file_names: List[str],
