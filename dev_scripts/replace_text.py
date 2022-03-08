@@ -126,17 +126,21 @@ def _get_all_files(dirs: List[str], extensions: Optional[List[str]]) -> List[str
 # #############################################################################
 
 
-def _look_for(file_name: str, old_regex: str) -> Tuple[bool, List[str]]:
+def _look_for(file_name: str, filter_by: str) -> Tuple[bool, List[str]]:
     """
-    Look for `old_regex` in `file_name` returning if it was found and the
-    corresponding cfile entry.
+    Search for the regex string in a file.
+
+    :param file_name: the name of the file to search in
+    :param filter_by: the regex to search for in the file content
+    :return: whether the regex was found in a file; the corresponding
+        cfile entry
     """
     txt = hio.from_file(file_name, encoding=_ENCODING)
     txt = txt.split("\n")
     res = []
     found = False
     for i, line in enumerate(txt):
-        m = re.search(old_regex, line)
+        m = re.search(filter_by, line)
         if m:
             # ./install/create_conda.py:21:import helpers.helper_io as hio
             res.append("%s:%s:%s" % (file_name, i + 1, line))
@@ -145,17 +149,22 @@ def _look_for(file_name: str, old_regex: str) -> Tuple[bool, List[str]]:
 
 
 def _get_files_to_replace(
-    file_names: List[str], old_regex: str
+    file_names: List[str],
+    filter_by: str,
 ) -> Tuple[List[str], str]:
     """
-    Return the list of files that contain `old_regex` and the corresponding
-    cfile.
+    Get the list of the files that contain the `filter_by` regex.
+
+    :param file_names: names of the files to check
+    :param filter_by: the regex to look for in the files
+    :return: names of the files that contain the `filter_by` regex and the
+        corresponding cfile
     """
     # Look for files with values.
     res = []
     file_names_to_process = []
     for f in file_names:
-        found, res_tmp = _look_for(f, old_regex)
+        found, res_tmp = _look_for(f, filter_by)
         _LOG.debug("File='%s', found=%s, res_tmp=\n%s", f, found, res_tmp)
         res.extend(res_tmp)
         if found:
@@ -420,21 +429,60 @@ def _prerelease_cleanup(args: argparse.Namespace) -> None:
 
 
 def _get_files_to_rename(
-    file_names: List[str], old_regex: str, new_regex: str
+    file_names: List[str],
+    old_regex: str,
+    new_regex: str,
+    replace_in: str,
+    filter_by: str,
+    filter_on: str,
 ) -> Tuple[List[str], Dict[str, str]]:
-    # Look for files containing "old_regex".
+    """
+    Get names of the files to be renamed and a mapping for renaming.
+
+    :param file_names: all file names to check
+    :param old_regex: regex of the string to be replaced in the file names
+    :param new_regex: regex of the string that `old_regex` will be replaced with
+    :param replace_in: part of the name to replace `old_regex` with `new_regex` in
+        - "basename": `file.py` for `dir/subdir/file.py`
+        - "dirname": `dir/subdir` for `dir/subdir/file.py`
+        - "filename": `dir/subdir/file.py` for `dir/subdir/file.py`
+    :param filter_by: only replace `old_regex` with `new_regex` if the `filter_by`
+        regex is found in the file name
+    :param filter_on: part of the file name to look for the `filter_by` regex in;
+        same possible options as in `replace_in`
+    :return: file names to rename; a mapping for renaming
+    """
     file_map: Dict[str, str] = {}
     file_names_to_process = []
-    for f in file_names:
-        dirname = os.path.dirname(f)
-        basename = os.path.basename(f)
-        found = old_regex in basename
+    for filename in file_names:
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+        # Check if the file matches the filter.
+        if filter_on == "basename":
+            filter_name_part = basename
+        elif filter_on == "dirname":
+            filter_name_part = dirname
+        elif filter_on == "filename":
+            filter_name_part = filename
+        else:
+            raise ValueError(f"Unsupported 'filter_on'={filter_on}")
+        found = bool(re.findall(filter_by, filter_name_part))
         if found:
-            new_basename = basename.replace(old_regex, new_regex)
-            _LOG.debug("File='%s', found=%s", f, found)
-            file_names_to_process.append(f)
-            file_map[f] = os.path.join(dirname, new_basename)
-    #
+            # Update the name.
+            if replace_in == "basename":
+                new_basename = re.sub(old_regex, new_regex, basename)
+                new_filename = os.path.join(dirname, new_basename)
+            elif replace_in == "dirname":
+                new_dirname = re.sub(old_regex, new_regex, dirname)
+                new_filename = os.path.join(new_dirname, basename)
+            elif replace_in == "filename":
+                new_filename = re.sub(old_regex, new_regex, filename)
+            else:
+                raise ValueError(f"Unsupported 'replace_in'={replace_in}")
+            # Store the new file name.
+            _LOG.debug("File='%s', found=%s", filename, found)
+            file_names_to_process.append(filename)
+            file_map[filename] = new_filename
     _LOG.info("Found %s files to rename", len(file_names_to_process))
     if file_map:
         _LOG.info("Replacing:\n%s", pprint.pformat(file_map))
@@ -444,6 +492,12 @@ def _get_files_to_rename(
 def _rename(file_names_to_process: List[str], file_map: Dict[str, str]) -> None:
     for f in file_names_to_process:
         new_name = file_map[f]
+        dirname = os.path.dirname(new_name)
+        if not os.path.isdir(dirname):
+            # Create a dir if the new file name presupposes a new dir.
+            cmd = "mkdir -p %s" % dirname
+            hsystem.system(cmd)
+        # Rename the file.
         cmd = "git mv %s %s" % (f, new_name)
         hsystem.system(cmd)
 
@@ -469,6 +523,20 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--custom_flow", action="store", type=str)
     parser.add_argument(
+        "--filter_by",
+        action="store",
+        default=None,
+        type=str,
+        help="Regex to filter file names by",
+    )
+    parser.add_argument(
+        "--filter_on",
+        action="store",
+        default="basename",
+        choices=["basename", "dirname", "filename"],
+        help="Which part of the file name to filter on",
+    )
+    parser.add_argument(
         "--old",
         action="store",
         type=str,
@@ -476,6 +544,13 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--new", action="store", type=str, help="New string to replace with"
+    )
+    parser.add_argument(
+        "--replace_in",
+        action="store",
+        default="basename",
+        choices=["basename", "dirname", "filename"],
+        help="Which part of the file name to replace the string in",
     )
     parser.add_argument(
         "--preview", action="store_true", help="Preview only the replacement"
@@ -596,17 +671,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
         _LOG.info("Found %s target files to process", len(file_names))
         # Process the actions.
+        if args.filter_by is None:
+            # Filter the files by the string that is going to be replaced.
+            filter_by = args.old
+        else:
+            # Filter the files by the supplied regex.
+            filter_by = args.filter_by
         action_processed = False
         if args.action in ("replace", "replace_rename"):
-            # Replace.
+            # Get the files to replace the string in. The files are selected
+            # if the `filter_by` regex is found in their content.
             file_names_to_process, txt = _get_files_to_replace(
-                file_names, args.old
+                file_names, filter_by
             )
-            #
             if args.preview:
                 hio.to_file("./cfile", txt)
                 _LOG.warning("Preview only as required. Results saved in ./cfile")
             else:
+                # Replace the string inside the files. The `args.old` regex is
+                # replaced with the `args.new` regex in the whole files' contents.
                 _replace(
                     file_names_to_process,
                     args.old,
@@ -616,13 +699,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 )
             action_processed = True
         if args.action in ("rename", "replace_rename"):
-            # Rename.
+            # Get the files to rename. The files are selected if the `filter_by`
+            # regex is found in a part of their name determined by `args.filter_on`.
+            # Then the `args.old` regex is replaced with the `args.new` regex in the
+            # part of their name determined by `args.replace_in`.
             file_names_to_process, file_map = _get_files_to_rename(
-                file_names, args.old, args.new
+                file_names,
+                args.old,
+                args.new,
+                args.replace_in,
+                filter_by,
+                args.filter_on,
             )
             if args.preview:
                 _LOG.warning("Preview only as required.")
             else:
+                # Rename the files.
                 _rename(file_names_to_process, file_map)
             action_processed = True
         if not action_processed:
