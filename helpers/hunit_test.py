@@ -1711,7 +1711,7 @@ class TestCase(unittest.TestCase):
     ) -> str:
         """
         Return the name of the directory containing the input / output data
-        (e.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare)
+        (e.g., ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare)
 
         The parameters have the same meaning as in `get_input_dir()`.
         """
@@ -1729,8 +1729,11 @@ class TestCase(unittest.TestCase):
                 test_method_name,
             )
         if use_absolute_path:
-            # E.g., .../dataflow/test/TestContinuousSarimaxModel.test_compare
-            dir_name = os.path.join(self._base_dir_name, dir_name)
+            # E.g., `.../dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare`.
+            dir_name = os.path.join(self._base_dir_name, "outcomes", dir_name)
+        else:
+            # E.g., `outcomes/TestContinuousSarimaxModel.test_compare`.
+            dir_name = os.path.join("outcomes", dir_name)
         return dir_name
 
     def _to_error(self, msg: str) -> None:
