@@ -7,4 +7,5 @@
   --filter_on "dirname" \
   --old "/test/" \
   --new "/test/outcomes/" \
-  --ext None \
+  --replace_in "dirname" \
+  --ext "_all_" \
