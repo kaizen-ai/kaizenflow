@@ -67,3 +67,31 @@ def reindex_on_datetime(
         datetime_idx = convert_timestamp_column(datetime_col_name, unit=unit)
         df = df.set_index(datetime_idx)
     return df
+
+
+def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Reindex data on currency pair and timestamp.
+
+    Drop timestamps for downloading and saving.
+    """
+    # Select only index and OHLCV columns
+    expected_col_names = [
+        "timestamp",
+        "currency_pair",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    ]
+    hdbg.dassert_is_subset(expected_col_names, data.columns)
+    data_reindex = data.loc[:, expected_col_names]
+    data_reindex = data_reindex.drop_duplicates()
+    # Reindex on ts and asset.
+    # Remove index name, so there is no conflict with column names.
+    # For example if index is named `timestamp`.
+    data_reindex.index.name = None
+    data_reindex = data_reindex.sort_values(by=["timestamp", "currency_pair"])
+    data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
+    return data_reindex

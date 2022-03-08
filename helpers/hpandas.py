@@ -4,7 +4,7 @@ Import as:
 import helpers.hpandas as hpandas
 """
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -286,6 +286,46 @@ def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
     df_reindex = df.reindex(resampled_index)
     df_reindex.index.name = index_name
     return df_reindex
+
+
+def find_gaps_in_dataframes(
+    first: pd.DataFrame, second: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Find data present in one dataframe and missing in other one.
+
+    :param first: first dataframe for comparison
+    :param second: second dataframe for comparison
+    :return: two dataframes with missing data
+    """
+    # Get data present in first, but not present in second dataframe.
+    first_missing_indices = second.index.difference(first.index)
+    first_missing_data = second.loc[first_missing_indices]
+    # Get data present in second, but not present in first dataframe.
+    second_missing_indices = first.index.difference(second.index)
+    second_missing_data = first.loc[second_missing_indices]
+    return first_missing_data, second_missing_data
+
+
+def compare_dataframe_rows(
+    first: pd.DataFrame, second: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Compare contents of rows with same indices.
+
+    :param first: first dataframe for comparison
+    :param second: second dataframe for comparison
+    :return: dataframe with data with same indices and different contents
+    """
+    # Get rows on which the two dataframe indices match.
+    idx_intersection = first.index.intersection(second.index)
+    # Get difference between daily data and rt data.
+    # Index is set to default sequential integer values because compare is
+    # sensitive to multi index. Multi index columns are regular columns now.
+    trimmed_second = second.loc[idx_intersection].reset_index()
+    trimmed_first = first.loc[idx_intersection].reset_index()
+    data_difference = trimmed_second.compare(trimmed_first)
+    return data_difference
 
 
 def drop_duplicates(
