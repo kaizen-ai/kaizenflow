@@ -319,7 +319,7 @@ def compare_dataframe_rows(
     """
     # Get rows on which the two dataframe indices match.
     idx_intersection = first.index.intersection(second.index)
-    # Get difference between daily data and rt data.
+    # Get difference between second and first dataframe.
     # Index is set to default sequential integer values because compare is
     # sensitive to multi index (probably because new multi indexes are created
     # for each difference in `compare`). Multi index columns are regular columns now.
