@@ -1730,11 +1730,10 @@ class TestCase(unittest.TestCase):
             )
         if use_absolute_path:
             # E.g., `.../dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare`.
-            dir_name = os.path.join(self._base_dir_name, dir_name)
-            # dir_name = os.path.join(self._base_dir_name, "outcomes", dir_name)
-        # else:
+            dir_name = os.path.join(self._base_dir_name, "outcomes", dir_name)
+        else:
             # E.g., `outcomes/TestContinuousSarimaxModel.test_compare`.
-            # dir_name = os.path.join("outcomes", dir_name)
+            dir_name = os.path.join("outcomes", dir_name)
         return dir_name
 
     def _to_error(self, msg: str) -> None:

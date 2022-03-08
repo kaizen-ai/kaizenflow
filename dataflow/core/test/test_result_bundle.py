@@ -64,8 +64,8 @@ class TestResultBundle(hunitest.TestCase):
         # Check.
         expected = """
         # Dir structure
-        $GIT_ROOT/dataflow/core/test/TestResultBundle.test_pickle1/tmp.scratch
-        $GIT_ROOT/dataflow/core/test/TestResultBundle.test_pickle1/tmp.scratch/result_bundle.v1_0.pkl
+        $GIT_ROOT/dataflow/core/test/outcomes/TestResultBundle.test_pickle1/tmp.scratch
+        $GIT_ROOT/dataflow/core/test/outcomes/TestResultBundle.test_pickle1/tmp.scratch/result_bundle.v1_0.pkl
         """
         expected = hprint.dedent(expected)
         self.assert_equal(str(actual), str(expected), purify_text=True)
