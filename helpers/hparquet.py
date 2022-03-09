@@ -9,6 +9,7 @@ import datetime
 import logging
 import os
 from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
+from tqdm.autonotebook import tqdm
 
 import pandas as pd
 import pyarrow as pa
@@ -168,6 +169,44 @@ def yield_parquet_tiles_by_year(
         filters = [filters]
     columns = [str(col) for col in cols]
     for filter_ in filters:
+        tile = from_parquet(
+            file_name,
+            columns=columns,
+            filters=filter_,
+        )
+        yield tile
+
+
+def build_asset_id_filter(
+    asset_ids: List[int],
+    asset_id_col: str,
+) -> List[List[Tuple[str, str, int]]]:
+    filters = []
+    for asset_id in asset_ids:
+        filters.append([(asset_id_col, "==", asset_id)])
+    return filters
+
+
+# TODO(Paul): Add additional time-restriction filter.
+def yield_parquet_tiles_by_assets(
+    file_name: str,
+    asset_ids: List[int],
+    asset_id_col: str,
+    asset_batch_size: int,
+    cols: List[Union[int, str]],
+) -> Iterator[pd.DataFrame]:
+    """
+    Yield parquet data in tiles up to one year in length.
+
+    :param file_name: as in `from_parquet()`
+    :param cols: if an `int` is supplied, it is cast to a string before reading
+    :return: a generator of `from_parquet()` dataframes
+    """
+    batches = [asset_ids[i: i + asset_batch_size] for i in range(0, len(asset_ids), asset_batch_size)]
+    columns = [str(col) for col in cols]
+    for batch in tqdm(batches):
+        _LOG.debug("assets=%s", batch)
+        filter_ = build_asset_id_filter(batch, asset_id_col)
         tile = from_parquet(
             file_name,
             columns=columns,
@@ -519,22 +558,24 @@ def to_partitioned_parquet(
             data.parquet
     ```
 
-    In case of multiple columns like `year`, `month`, `asset`, the file layout
+    In case of multiple columns like `asset`, `year`, `month`, the file layout
     looks like:
     ```
     dst_dir/
-        year=2021/
-            month=12/
-                asset=A/
+        asset=A/
+            year=2021/
+                month=12/
                     data.parquet
-                asset=B/
+            year=2022/
+                month=01/
                     data.parquet
         ...
-        year=2022/
-            month=01/
-                asset=A/
+        asset=B/
+            year=2021/
+                month=12/
                     data.parquet
-                asset=B/
+            year=2022/
+                month=01/
                     data.parquet
     ```
     """
