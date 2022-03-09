@@ -4194,21 +4194,23 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
             #
             hdbg.dassert(False, "To change the name of the method, specify the methods of the same class. E.g. \
                 `--old TestCache.test1 --new TestCache.new_test1`");
-        _LOG.debug(f"Changing the name of {old_method_name} methos of {old_class_name} class to {new_method_name}.")
+        _LOG.debug(f"Changing the name of {old_method_name} method of {old_class_name} class to {new_method_name}.")
     else:
         hdbg.dassert(False, "The test names are not consistent.");
-    # Get test paths.
-    outcomes_directories = _get_test_outcomes_directories(root_dir, old_class_name, old_method_name)
-    hdbg.dassert(len(outcomes_directories)>=1, "No unit tests outcomes found in '%s'", root_dir)
-    test_files_paths = _get_test_files_paths(outcomes_directories)
-    # 
-    for path in test_paths:
-        # rename in file
-        # rename directory name 
-        result = _process_path(path, old_class_name, new_class_name, old_method_name, new_method_name)
+    # Get the paths to test directories that contain outcomes of target test.
+    test_directories = _get_test_directories(root_dir, old_class_name, old_method_name)
+    hdbg.dassert(len(test_directories)>=1, "No unit tests outcomes found in '%s'", root_dir)
+    # Iterate over test directories that contain test outcome.
+    for path in test_directories:
+        search_pattern = os.path.join(path, "test_*.py")
+        # Get python files with unit tests.
+        files = glob.glob(search_pattern)
+        #
+        for test_file in files:
+            _process_file(test_file, old_class_name, new_class_name, old_method_name, new_method_name)
     
 
-def _get_test_outcomes_directories(root_dir: str, old_class_name: str, old_method_name: str) -> List[str]:
+def _get_test_directories(root_dir: str, old_class_name: str, old_method_name: str) -> List[str]:
     """
     Get all paths of the directories with specified test.
 
@@ -4220,24 +4222,18 @@ def _get_test_outcomes_directories(root_dir: str, old_class_name: str, old_metho
     paths = []
     # Build the target name, e.g. `TestCacheUpdateFunction1` if class or `TestCacheUpdateFunction1.test1` if method.
     tagret_name = ".".join([old_class_name, old_method_name])
-    # Build the part of the tagret path, e.g. `/test/TestCacheUpdateFunction1`.
     # We wath to find the path of the directories that contain test outcomes.
     # It helps us to narrow down the area of the search of python files containing the target class
     # as we know that file with unit tests always locates in the same test directory.
-    tagret_test_path = f"/test/{tagret_name}"
-    for path, _, _ in os.walk(root_dir):
-        if tagret_test_path in path:
-            paths.append(path)
+    for path, dirs, _ in os.walk(root_dir):
+        # Iterate over the directories to find the test outcomes.
+        for dir_name in dirs:
+            if tagret_name in dir_name:
+               paths.append(path)
+               break
     return paths
 
-
-def _get_test_files_paths(test_outcomes_directories: str) -> List[str]:
-    """
-    """
-    paths = []
-    pass
-
-def _process_path(path: str, old_class_name: str, new_class_name: str, old_method_name: str, new_method_name: str) -> bool:
+def _process_file(path: str, old_class_name: str, new_class_name: str, old_method_name: str, new_method_name: str) -> bool:
     """
     """
     content = hio.from_file(path)
