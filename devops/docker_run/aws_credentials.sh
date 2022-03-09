@@ -4,6 +4,8 @@
 # variables.
 #
 
+# TODO(gp): This file seems useless. If so, delete.
+
 set -e
 
 FILE_NAME="devops/docker_build/entrypoint/aws_credentials.sh"

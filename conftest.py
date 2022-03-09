@@ -77,8 +77,12 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         _ = items
         import helpers.henv as henv
 
-        print(henv.get_system_signature()[0])
         _WARNING = "\033[33mWARNING\033[0m"
+        try:
+            print(henv.get_system_signature()[0])
+        except:
+            print(f"\n{_WARNING}: Can't print system_signature")
+            pass
         if config.getoption("--update_outcomes"):
             print(f"\n{_WARNING}: Updating test outcomes")
             hut.set_update_tests(True)

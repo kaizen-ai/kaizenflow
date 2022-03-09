@@ -36,6 +36,7 @@ def compute_target_positions_in_cash(
     """
     # Sanity-check the dataframe.
     hdbg.dassert_isinstance(df, pd.DataFrame)
+    # TODO(Paul): Change `value` to `position`.
     hdbg.dassert_is_subset(
         ["asset_id", "prediction", "volatility", "value"], df.columns
     )

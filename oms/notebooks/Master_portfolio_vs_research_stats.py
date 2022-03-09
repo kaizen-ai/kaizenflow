@@ -39,14 +39,19 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
+date = "YYYY-MM-DD"
+start_timestamp = pd.Timestamp(date + " 09:30:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
+
+# %%
 dict_ = {
-    "portfolio_data_dir": "",
-    "research_data_dir": "",
+    "portfolio_data_dir": f"{date}/portfolio",
+    "research_data_dir": f"{date}/evaluate_forecasts",
     "freq": "5T",
     "portfolio_file_name": None,
     "research_file_name": None,
-    "start_timestamp": None,
-    "end_timestamp": None,
+    "start_timestamp": start_timestamp,
+    "end_timestamp": end_timestamp,
 }
 
 # %%

@@ -5,7 +5,7 @@
 
 set -ex
 
-FILE_NAME="devops/docker_build/install_python_packages.sh"
+FILE_NAME="optimizer/devops/docker_build/install_python_packages.sh"
 echo "#############################################################################"
 echo "##> $FILE_NAME"
 echo "#############################################################################"
@@ -67,9 +67,6 @@ else
     # TODO(gp): Enable this.
     #poetry cache clear --all -q pypi
 fi;
-
-# Install cvxpy directly (see Amp Issue #1836).
-pip install cvxpy
 
 # Some tools refer to `python` and `pip`.
 # TODO(gp): Move to install_packages.sh
