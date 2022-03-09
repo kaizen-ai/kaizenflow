@@ -4161,24 +4161,58 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 
 
 @task
-def pytest_rename_test(ctx, file_name1, file_name2):  # type: ignore
+def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
     """
     Rename the test and move its golden outcome.
+
+    E.g., to rename a test class and all the test methods
+    > i pytest_rename_test --old TestCacheUpdateFunction1 --new TestCacheUpdateFunction_new
     """
     _report_task()
     _ = ctx
-    # Change the name of the test.
-    rename_cmd = f"./dev_scripts/replace_text.py --action replace --old {file_name1} --new {file_name2}"
-    rc = hsystem.system(rename_cmd, abort_on_error=False, suppress_output=False)
-    # Get all dirs that contain the name of the target unit test.
-    test_paths = glob.glob(f"**/test/{file_name1}.**/", recursive=True)
+    # work_dir = "/src"
+    root_dir = os.getcwd()
+    # Assert if the classname is invalid.
+    hdbg.dassert(old_test_class_name.startswith("Test"), "Invalid test_class_name='%s'", old_test_class_name)
+    hdbg.dassert(new_test_class_name.startswith("Test"), "Invalid test_class_name='%s'", new_test_class_name)
+    hdbg.dassert_ne(old_test_class_name, new_test_class_name)
+    old_method_name = ""
+    new_method_name = ""
+    # Split by "." to separate class name and method name. 
+    splitted_old_name = old_test_class_name.split(".")
+    splitted_new_name = new_test_class_name.split(".")
+    # Check the format of test names.
+    if len(splitted_old_name) == 1 and len(splitted_new_name) == 1:
+        old_class_name = splitted_old_name[0]
+        new_class_name = splitted_new_name[0]
+    elif len(splitted_old_name) == 2 and len(splitted_new_name) == 2:
+        old_class_name, old_method_name = splitted_old_name
+        new_class_name, new_method_name = splitted_new_name
+    else:
+        hdbg.dassert(False, "The test names are not consistent.");
+    test_paths = _get_test_dirs(root_dir)
+    hdbg.dassert(len(test_paths)>=1, "No unit tests found in '%s'", root_dir)
+    # 
     for path in test_paths:
-        # Build the new path.
-        new_path = re.sub(f"/{file_name1}.", f"/{file_name2}.", path)
-        # Move the golden outcome.
-        cmd = f"git mv {path} {new_path}"
-        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        _process_path()
+        pass
 
+
+def _get_test_dirs(root_dir: str) -> List[str]:
+    """
+    Get all paths of test directories.
+    """
+
+    pass
+
+
+def _process_path(path: str, old_class_name: str, new_class_name: str, old_method_name: str, new_method_name: str) -> bool:
+    """
+    """
+    content = hio.from_file(path)
+    
+
+    # Find pattern.
 
 
 # #############################################################################
