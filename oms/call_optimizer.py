@@ -9,7 +9,12 @@ import logging
 import numpy as np
 import pandas as pd
 
+import core.config as cconfig
 import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hpickle as hpickle
+import helpers.hsystem as hsystem
+import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
@@ -125,3 +130,63 @@ def compute_target_positions_in_cash(
     df["target_position"] = target_positions
     df["target_trade"] = target_trades
     return df
+
+
+def optimize(
+    config: cconfig.Config,
+    df: pd.DataFrame,
+    *,
+    tmp_dir: str = "tmp.optimizer_stub",
+) -> pd.DataFrame:
+    """
+    :param tmp_dir: local dir to use to exchange parameters with the "remote"
+        optimizer
+    """
+    hio.create_dir(tmp_dir, incremental=True)
+    # Serialize the inputs in tmp_dir.
+    input_obj = {"config": config, "df": df}
+    input_file = os.path.join(tmp_dir, "input.pkl")
+    hpickle.to_pickle(input_obj, input_file)
+    # Call optimizer_stub through Docker.
+    cmd = []
+    cmd.append("cd optimizer &&")
+    cmd.append("optimizer_stub.py")
+    cmd.append(f"--input_file {input_file}")
+    output_file = os.path.join(tmp_dir, "output.pkl")
+    cmd.append(f"--output_file {output_file}")
+    cmd.append("-v INFO")
+    cmd = " ".join(cmd)
+    #
+    base_image = ""
+    stage = "local"
+    version = "0.1.0"
+    entrypoint = True
+    as_user = True
+    docker_cmd = hlibtask._get_docker_cmd(
+        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
+    )
+    # ctx = invoke.context.Context()
+    # hlibtask._run(ctx, docker_cmd, pty=True)
+    hsystem.system(docker_cmd)
+    # Read the output from tmp_dir.
+    output_df = pd.DataFrame()
+    return output_df
+
+
+# TODO(gp): Move it to lib_tasks.
+# ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
+ECR_BASE_PATH = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
+
+
+default_params = {
+    "ECR_BASE_PATH": ECR_BASE_PATH,
+    # When testing a change to the build system in a branch you can use a different
+    # image, e.g., `XYZ_tmp` to not interfere with the prod system.
+    # "BASE_IMAGE": "opt_tmp",
+    "BASE_IMAGE": "opt",
+    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
+    "USE_ONLY_ONE_DOCKER_COMPOSE": True,
+}
+
+
+hlibtask.set_default_params(default_params)
