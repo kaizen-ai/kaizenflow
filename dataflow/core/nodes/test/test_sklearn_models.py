@@ -13,6 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestContinuousSkLearnModel(hunitest.TestCase):
+
     def test1(self) -> None:
         # Load test data.
         data = self._get_data(1)
@@ -194,7 +195,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
             model_func=slmode.LinearRegression,
             **config.to_dict(),
         )
-        node.fit(data_fit)["df_out"]
+        _ = node.fit(data_fit)["df_out"]
         df_out = node.predict(data_predict)["df_out"]
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
@@ -224,7 +225,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
             model_func=slmode.LinearRegression,
             **config.to_dict(),
         )
-        node.fit(data_fit)["df_out"]
+        _ = node.fit(data_fit)["df_out"]
         df_out = node.predict(data_predict)["df_out"]
         df_str = hunitest.convert_df_to_string(
             df_out.round(3), index=True, decimals=3
@@ -249,6 +250,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
 
 
 class TestMultiindexSkLearnModel(hunitest.TestCase):
+
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -328,6 +330,7 @@ class TestMultiindexSkLearnModel(hunitest.TestCase):
 
 
 class TestMultiindexPooledSkLearnModel(hunitest.TestCase):
+
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()

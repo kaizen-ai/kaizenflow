@@ -93,6 +93,8 @@ def get_replayed_time_execute_rt_loop_kwargs(
     return execute_rt_loop_kwargs
 
 
+# TODO(gp): move time_out_in_secs to defaults, then kill the example.
+# TODO(gp): Add "_example" to the end of the name.
 def get_real_time_execute_rt_loop_kwargs(
     sleep_interval_in_secs: float,
     *,
@@ -107,6 +109,8 @@ def get_real_time_execute_rt_loop_kwargs(
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "sleep_interval_in_secs": sleep_interval_in_secs,
+        # TODO(gp): This is the number of seconds the real time loop runs for.
+        #  Change the name to something more intuitive.
         "time_out_in_secs": 3.0 * sleep_interval_in_secs,
     }
     return execute_rt_loop_kwargs

@@ -24,7 +24,6 @@ import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
@@ -640,7 +639,7 @@ def diff_files(
     # Save a script to diff.
     diff_script = os.path.join(dst_dir, "tmp_diff.sh")
     vimdiff_cmd = "vimdiff %s %s" % (file_name1, file_name2)
-    # TODO(gp): Use create_executable_script().
+    # TODO(gp): Use hio.create_executable_script().
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
     hsystem.system(cmd)
@@ -1181,6 +1180,8 @@ class TestCase(unittest.TestCase):
         project_dirname = hgit.get_project_dirname()
         dir_name = f"{user_name}.{server_name}.{project_dirname}"
         # Assemble everything in a single path.
+        import helpers.hs3 as hs3
+
         s3_bucket = hs3.get_path()
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
@@ -1710,7 +1711,7 @@ class TestCase(unittest.TestCase):
     ) -> str:
         """
         Return the name of the directory containing the input / output data
-        (e.g., ./core/dataflow/test/TestContinuousSarimaxModel.test_compare)
+        (e.g., ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare)
 
         The parameters have the same meaning as in `get_input_dir()`.
         """
@@ -1728,8 +1729,11 @@ class TestCase(unittest.TestCase):
                 test_method_name,
             )
         if use_absolute_path:
-            # E.g., .../dataflow/test/TestContinuousSarimaxModel.test_compare
-            dir_name = os.path.join(self._base_dir_name, dir_name)
+            # E.g., `.../dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare`.
+            dir_name = os.path.join(self._base_dir_name, "outcomes", dir_name)
+        else:
+            # E.g., `outcomes/TestContinuousSarimaxModel.test_compare`.
+            dir_name = os.path.join("outcomes", dir_name)
         return dir_name
 
     def _to_error(self, msg: str) -> None:

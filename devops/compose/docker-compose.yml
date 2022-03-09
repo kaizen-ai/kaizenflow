@@ -33,13 +33,13 @@ services:
       - ~/.config/gspread_pandas/:/home/.config/gspread_pandas/
       - ~/.config/gh:/home/.config/gh
       # No need to mount file systems.
-      #- ../docker_build/fstab:/etc/fstab
-      #deploy:
-      #  resources:
-      #    limits:
-      #      # This should be passed from command line depending on how much
-      #      # memory is available.
-      #      memory: 60G
+      # - ../docker_build/fstab:/etc/fstab
+      # deploy:
+      #   resources:
+      #     limits:
+      #       # This should be passed from command line depending on how much
+      #       # memory is available.
+      #       memory: 60G
 
   # Mount `amp` when it is used as supermodule.
   app:
@@ -48,7 +48,7 @@ services:
     # Default network mode set to host so we can reach e.g.
     # a database container pointing to localhost:5432.
     # In tests we use dind so we need set back to the default "bridge".
-    # See CmTask988 and https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
+    # See CmTask988 and https://stackoverflow.com/questions/24319662
     network_mode: ${NETWORK_MODE:-host}
     volumes:
       - ../../:/app

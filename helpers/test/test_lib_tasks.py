@@ -349,14 +349,18 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_branch_files(ctx)"
         self._check_output(target)
 
+    @pytest.mark.slow(reason="Around 7s")
     def test_git_create_branch1(self) -> None:
+        _gh_login()
         target = (
             "git_create_branch(ctx, branch_name='AmpTask123_test', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)
 
+    @pytest.mark.slow(reason="Around 7s")
     def test_git_create_branch2(self) -> None:
+        _gh_login()
         target = (
             "git_create_branch(ctx, issue_id=1, repo_short_name='amp', "
             "only_branch_from_master=False)"
@@ -953,7 +957,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         act = hlibtask._find_test_class("TestHelloWorld", file_names)
         act = hunitest.purify_file_names(act)
         exp = [
-            "helpers/test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
+            "helpers/test/outcomes/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
             "test/test_this.py::TestHelloWorld"
         ]
         self.assert_equal(str(act), str(exp))
@@ -991,7 +995,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         act = hlibtask._find_test_decorator("no_container", file_names)
         act = hunitest.purify_file_names(act)
         exp = [
-            "helpers/test/TestLibTasksRunTests1.test_find_test_decorator1/"
+            "helpers/test/outcomes/TestLibTasksRunTests1.test_find_test_decorator1/"
             "tmp.scratch/test/test_that.py"
         ]
         self.assert_equal(str(act), str(exp))
@@ -1836,6 +1840,10 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         self.helper(cmd)
 
     def test4(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
+        self.helper(cmd)
+        
+    def test5(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
 

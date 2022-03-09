@@ -15,6 +15,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 # TODO(Paul): Write a function to check for PSD.
+# TODO(Paul): Rename to `optimizer_utils.py`.
 
 
 def is_symmetric(matrix: pd.DataFrame, **kwargs) -> bool:

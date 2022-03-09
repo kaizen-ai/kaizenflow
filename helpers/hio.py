@@ -298,8 +298,8 @@ def create_dir(
     # not incremental   rm+mkdir     mkdir
     if exists:
         if incremental and is_dir:
-            # The dir exists and we want to keep it it exists (i.e.,
-            # incremental), so we are done.
+            # The dir exists and we want to keep it (i.e., incremental), so we
+            # are done.
             # os.chmod(dir_name, 0755)
             _LOG.debug(
                 "The dir '%s' exists and incremental=True: exiting", dir_name
@@ -452,16 +452,13 @@ def from_file(
     if file_name.endswith((".gz", ".gzip")):
         # Open gzipped file.
         f = gzip.open(file_name, "rt", encoding=encoding)
-    elif file_name.endswith((".pq", ".parquet")):
-        # TODO(Nikola): Temporary workaround. Definitely revisit.
-        import helpers.hparquet as hparque
-        import helpers.hunit_test as hunitest
-
-        # Open pq file.
-        df = hparque.from_parquet(file_name)
-        data = hunitest.convert_df_to_json_string(df, n_head=3, n_tail=3)
-        # Already a proper string.
-        return data
+    # TODO(Nikola): CmTask1305: This function should only read the data without
+    #  any transformation. Furthermore we can't use hpandas and hparquet in
+    #  this file since it creates circular imports.
+    # elif file_name.endswith((".pq", ".parquet")):
+    #   df = hparque.from_parquet(file_name)
+    #   data = hpandas.convert_df_to_json_string(df, n_head=3, n_tail=3)
+    # return data
     else:
         # Open regular text file.
         f = open(  # pylint: disable=consider-using-with
@@ -535,6 +532,15 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     # Add the new extension.
     new_filename += new_ext
     return new_filename
+
+
+def create_executable_script(file_name: str, content: str) -> None:
+    # Write the file.
+    hdbg.dassert_isinstance(content, str)
+    to_file(file_name, content)
+    # Make it executable.
+    cmd = "chmod +x " + file_name
+    hsystem.system(cmd)
 
 
 # #############################################################################

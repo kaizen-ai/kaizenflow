@@ -29,21 +29,22 @@ def run_experiment(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     config = config.copy()
-    dag_config = config.pop("DAG")
-    dag_runner = cdataf.PredictionDagRunner(
-        dag_config, config["meta"]["dag_builder"]
-    )
+    #dag_config = config.pop("DAG")
+    #dag_runner = cdataf.PredictionDagRunner(
+    #    dag_config, config["meta"]["dag_builder"]
+    #)
+    dag_runner = config["meta", "dag_runner"](config)
     # TODO(gp): Maybe save the drawing to file?
     # cdataf.draw(dag_runner.dag)
     # TODO(gp): Why passing function instead of the values directly?
-    if "set_fit_intervals" in config["meta"].to_dict():
-        dag_runner.set_fit_intervals(
-            **config["meta", "set_fit_intervals", "func_kwargs"].to_dict()
-        )
-    if "set_predict_intervals" in config["meta"].to_dict():
-        dag_runner.set_predict_intervals(
-            **config["meta", "set_predict_intervals", "func_kwargs"].to_dict()
-        )
+    # if "set_fit_intervals" in config["meta"].to_dict():
+    #     dag_runner.set_fit_intervals(
+    #         **config["meta", "set_fit_intervals", "func_kwargs"].to_dict()
+    #     )
+    # if "set_predict_intervals" in config["meta"].to_dict():
+    #     dag_runner.set_predict_intervals(
+    #         **config["meta", "set_predict_intervals", "func_kwargs"].to_dict()
+    #     )
     fit_result_bundle = dag_runner.fit()
     # Maybe run OOS.
     if "run_oos" in config["meta"].to_dict().keys() and config["meta"]:
@@ -102,7 +103,7 @@ def _save_tiled_output(config, result_bundle):
     df["month"] = df.index.month
     # The results are saved in the subdir `tiled_results` of the experiment list.
     tiled_dst_dir = os.path.join(config["meta", "dst_dir"], "tiled_results")
-    hparque.partition_dataset(
+    hparque.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir=tiled_dst_dir
     )
     _LOG.info("Tiled results written in '%s'", tiled_dst_dir)
