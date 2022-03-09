@@ -5,6 +5,7 @@ import oms.call_optimizer as ocalopti
 """
 
 import logging
+import os
 
 import numpy as np
 import pandas as pd
@@ -163,13 +164,13 @@ def optimize(
     entrypoint = True
     as_user = True
     docker_cmd = hlibtask._get_docker_cmd(
-        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
+        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user, use_bash=True
     )
     # ctx = invoke.context.Context()
     # hlibtask._run(ctx, docker_cmd, pty=True)
-    hsystem.system(docker_cmd)
+    hsystem.system("sudo " + docker_cmd)
     # Read the output from tmp_dir.
-    output_df = pd.DataFrame()
+    output_df = pd.read_pickle(output_file)
     return output_df
 
 
