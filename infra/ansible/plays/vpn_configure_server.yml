@@ -1,5 +1,5 @@
 - name: Install openvpn server
-  hosts: 13.51.59.43
+  hosts: all
   become: true
   gather_facts: true
   roles:
