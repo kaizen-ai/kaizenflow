@@ -14,6 +14,7 @@ import pandas as pd
 import core.pandas_helpers as cpanh
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -31,7 +32,6 @@ class TalosClient(icdc.ImClient, abc.ABC):
     Contain common code for all the `Talos` clients, e.g.,
 
     - getting `Talos` universe
-    - applying common transformation for all the data from `Talos`
     """
 
     def __init__(self) -> None:
@@ -47,46 +47,6 @@ class TalosClient(icdc.ImClient, abc.ABC):
         """
         # TODO(Dan): CmTask1318.
         return []
-
-    @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations to `Talos` data.
-
-        Parquet by asset data is normalized to fit parent class output format:
-            - index name is dropped
-            - only OHLCV columns are selected
-
-        Input data:
-        ```
-                                   timestamp        open     knowledge_timestamp
-        timestamp
-        2022-01-01 00:00:00+00:00  1640995200000  102.99 ... 2022-03-09 19:14:50
-        2022-01-01 00:01:00+00:00  1640995260000  102.99     2022-03-09 19:14:50
-        2022-01-01 00:02:00+00:00  1640995320000  103.18     2022-03-09 19:14:50
-        ```
-        Output data:
-        ```
-                                   open       close   volume
-        2022-01-01 00:00:00+00:00  102.99 ... 102.99  112
-        2022-01-01 00:01:00+00:00  102.99     102.99  112
-        2022-01-01 00:02:00+00:00  103.18     103.18  781
-        ```
-        """
-        data.index.name = None
-        # Specify OHLCV columns.
-        ohlcv_columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data[ohlcv_columns]
-        return data
 
 
 # #############################################################################
@@ -118,9 +78,7 @@ class TalosParquetByAssetClient(
         """
         super().__init__()
         self._root_dir = root_dir
-        # Set s3fs parameter value if aws profile parameter is specified.
-        if aws_profile:
-            self._s3fs = hs3.get_s3fs(aws_profile)
+        self._aws_profile = aws_profile
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -140,21 +98,16 @@ class TalosParquetByAssetClient(
         """
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
-        # Get absolute file path for a file with crypto price data.
-        file_path = self._get_file_path(exchange_id, currency_pair)
+        # Get path to a dir with all the data for specified exchange id.
+        exchange_dir_path = os.path.join(self._root_dir, exchange_id)
         # Read raw crypto price data.
         _LOG.info(
-            "Reading data for `Talos`, exchange id='%s', currencies='%s' from file='%s'...",
-            self._vendor,
+            "Reading data for `Talos`, exchange id='%s', currencies='%s'...",
             exchange_id,
             currency_pair,
-            file_path,
         )
-        if hs3.is_s3_path(file_path):
-            # Add s3fs argument to kwargs.
-            kwargs["s3fs"] = self._s3fs
         # Initialize list of filters.
-        filters = []
+        filters = [("currency_pair", "==", currency_pair)]
         if start_ts:
             # Add filtering by start timestamp if specified.
             start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -166,43 +119,14 @@ class TalosParquetByAssetClient(
         if filters:
             # Add filters to kwargs if any were set.
             kwargs["filters"] = filters
+        # Specify column names to load.
+        columns = ["open", "high", "low", "close", "volume"]
         # Load data.
-        data = cpanh.read_parquet(file_path, **kwargs)
-        # Normalize data according to the vendor.
-        data = self._apply_vendor_normalization(data)
-        return data
-
-    def _get_file_path(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-    ) -> str:
-        """
-        Get the absolute path to a file with `Kibot` price data.
-
-        The file path is constructed in the following way:
-        `<root_dir>/<vendor>/<exchange_id>/currency_pair=<currency_pair>`
-
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
-        :param exchange_id: exchange id, e.g. "binance"
-        :param currency_pair: currency pair `<currency1>_<currency2>`,
-            e.g. "BTC_USDT"
-        :return: absolute path to a file with `Kibot` price data
-        """
-        # Get absolute file path.
-        file_name = ".".join([currency_pair, ".parquet"])
-        file_path = os.path.join(
-            self._root_dir,
-            self._vendor.lower(),
-            data_snapshot,
-            exchange_id,
-            file_name,
+        data = hparque.from_parquet(
+            exchange_dir_path,
+            columns=columns,
+            filters=filters,
+            aws_profile=self._aws_profile,
         )
-        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
-        # Verify that the file exists.
-        if hs3.is_s3_path(file_path):
-            hs3.dassert_s3_exists(file_path, self._s3fs)
-        else:
-            hdbg.dassert_file_exists(file_path)
-        return file_path
+        data.index.name = None
+        return data
