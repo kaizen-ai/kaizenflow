@@ -3,16 +3,26 @@
   no_log: true
   include_vars:
     file: secrets.yml
+
+- name: Ansible | Set CA password for EU instance
+  set_fact:
+    easyrsa_ca_password: "{{ easyrsa_ca_password_vpn1_eu }}"
+  when: vpn_region == "eu"    
     
 - name: Ansible | Include variables for VPN1 server in EU
   include_vars:
     file: vpn1-eu.yml
   when: vpn_region == "eu"  
 
+- name: Ansible | Set CA password for US instance
+  set_fact:
+    easyrsa_ca_password: "{{ easyrsa_ca_password_vpn1_us }}"
+  when: vpn_region == "us"
+  
 - name: Ansible | Include variables for VPN1 server in US
   include_vars:
     file: vpn1-us.yml
-  when: vpn_region == "us"  
+  when: vpn_region == "us" 
 
 - name: Disable UFW firewall (rules are covered by AWS security groups)
   ufw:

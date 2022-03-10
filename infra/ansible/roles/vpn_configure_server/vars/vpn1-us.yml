@@ -5,7 +5,6 @@ easyrsa_key_city: "Beverly Hills"
 easyrsa_key_org: "TEST CORPORATION"
 easyrsa_key_ou: "Anvil Department"
 easyrsa_key_email: "user@example.com"
-easyrsa_ca_password: "{{ easyrsa_ca_password_vpn1_us }}"
 
 openvpn_server_common_name: vpn1.us-east-1
 openvpn_server_proto: tcp
