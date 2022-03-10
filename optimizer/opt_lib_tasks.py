@@ -5,12 +5,9 @@ import optimizer.opt_lib_tasks as ooplitas
 """
 
 import logging
-import os
 
 from invoke import task
 
-import helpers.hdbg as hdbg
-import helpers.hgit as hgit
 import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
@@ -75,10 +72,7 @@ def opt_docker_push_dev_image(  # type: ignore
     See more in `helpers/lib_tasks.py::docker_push_dev_image`.
     """
     hlibtask.docker_push_dev_image(
-        ctx,
-        version,
-        base_image=base_image,
-        dir_name="optimizer"
+        ctx, version, base_image=base_image, dir_name="optimizer"
     )
 
 
