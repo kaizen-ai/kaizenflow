@@ -3,4 +3,5 @@
   hosts: "{{ play_target_host | default('all') }}"
   roles:
     - { role: roles/zabbix_configure_server }
-#ansible-playbook plays/zabbix_configure_server.yml --user tfrkan --become --private-key=/home/tfrkan/id_rsa -i 172.30.3.185, --extra-vars "zabbix_db_pass= root_db_pass="
+#ansible-playbook plays/zabbix_configure_server.yml --user tfrkan --become --ask-become-pass --private-key=/home/tfrkan/id_rsa -i 172.30.3.185, --extra-vars "zabbix_db_pass=[KEEPASS] root_db_pass="
+#ansible-playbook plays/zabbix_configure_server.yml --user ubuntu --become --private-key=/home/tfrkan/id_rsa -i 172.30.3.185, --extra-vars "zabbix_db_pass=[KEEPASS] root_db_pass="
