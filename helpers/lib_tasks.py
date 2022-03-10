@@ -457,7 +457,7 @@ def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
 
     Run `git status --ignored` to see what it's skipped.
     """
-    _report_task(hprint.to_str("dry_run"))
+    _report_task(txt=hprint.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Fix permissions, if needed.
@@ -520,7 +520,7 @@ def git_create_patch(  # type: ignore
         - "diff": (default) creates a patch with the diff of the files
         - "tar": creates a tar ball with all the files
     """
-    _report_task(hprint.to_str("mode modified branch last_commit files"))
+    _report_task(txt=hprint.to_str("mode modified branch last_commit files"))
     _ = ctx
     # TODO(gp): Check that the current branch is up to date with master to avoid
     #  failures when we try to merge the patch.
@@ -1697,7 +1697,7 @@ def docker_stats(  # type: ignore
     :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    _report_task(hprint.to_str("all"))
+    _report_task(txt=hprint.to_str("all"))
     _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
@@ -1741,7 +1741,7 @@ def docker_kill(  # type: ignore
     :param all: kill all the containers (be careful!)
     :param sudo: use sudo for the Docker commands
     """
-    _report_task(hprint.to_str("all"))
+    _report_task(txt=hprint.to_str("all"))
     docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
@@ -3002,7 +3002,7 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
     :param dir_name: the dir from which to search (default: .)
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task("class_name abs_dir pbcopy")
+    _report_task(txt="class_name abs_dir pbcopy")
     hdbg.dassert(class_name != "", "You need to specify a class name")
     _ = ctx
     file_names = _find_test_files(dir_name)
@@ -3150,7 +3150,7 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     :param how: how to report the results
         - `remove_dups`: report only imports and calls that are the same
     """
-    _report_task(hprint.to_str("regex mode how subdir"))
+    _report_task(txt=hprint.to_str("regex mode how subdir"))
     _ = ctx
     # Process the `where`.
     python_files = _get_python_files(subdir)
@@ -4754,7 +4754,7 @@ def gh_workflow_list(
     :param filter_by_status: filter table by the status of the workflow
         - E.g., "failure", "success"
     """
-    _report_task(hprint.to_str("filter_by_branch filter_by_status"))
+    _report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
     _ = ctx
     # Get the table.
     table = _get_workflow_table()
@@ -4823,7 +4823,7 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
     """
     Run GH workflows in a branch.
     """
-    _report_task(hprint.to_str("branch workflows"))
+    _report_task(txt=hprint.to_str("branch workflows"))
     # Get the branch name.
     if branch == "current_branch":
         branch_name = hgit.get_branch_name()
@@ -4929,7 +4929,7 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task(hprint.to_str("issue_id repo_short_name"))
+    _report_task(txt=hprint.to_str("issue_id repo_short_name"))
     _ = ctx
     issue_id = int(issue_id)
     hdbg.dassert_lte(1, issue_id)
