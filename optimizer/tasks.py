@@ -1,6 +1,8 @@
 import logging
 import os
 
+import helpers.lib_tasks as hlib
+
 # Expose the pytest targets.
 # Extract with:
 # > i print_tasks --as-code
@@ -12,8 +14,6 @@ from optimizer.opt_lib_tasks import (  # noqa: F401  # pylint: disable=unused-im
     opt_docker_release_dev_image,
     opt_docker_tag_local_image_as_dev,
 )
-
-import helpers.lib_tasks as hlib
 
 _LOG = logging.getLogger(__name__)
 
