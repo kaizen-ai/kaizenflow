@@ -5,7 +5,6 @@ from invoke import task
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.hsystem as hsystem
 import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
@@ -27,7 +26,7 @@ def opt_docker_build_local_image(  # type: ignore
     :param cache: use the cache
     :param update_poetry: run poetry lock to update the packages
     """
-    # _report_task()
+    hlibtask._report_task()
     # TODO(gp): Enable the versioning.
     # _dassert_is_subsequent_version(version)
     # version = _resolve_version_value(version)
@@ -57,6 +56,113 @@ def opt_docker_build_local_image(  # type: ignore
     # Check image and report stats.
     cmd = f"docker image ls {image_local}"
     hlibtask._run(ctx, cmd)
+
+
+@task
+def opt_docker_tag_local_image_as_dev(  # type: ignore
+    ctx,
+    version,
+    base_image="",
+):
+    """
+    (ONLY CI/CD) Mark the "local" image as "dev".
+
+    :param version: version to tag the image and code with
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    """
+    hlibtask._report_task()
+    # TODO(Grisha): fix versioning.
+    #version = _resolve_version_value(version)
+    # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
+    image_versioned_local = hlibtask.get_image(base_image, "local", version)
+    image_versioned_dev = hlibtask.get_image(base_image, "dev", version)
+    cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
+    hlibtask._run(ctx, cmd)
+    # Tag local image as dev image.
+    latest_version = None
+    image_dev = hlibtask.get_image(base_image, "dev", latest_version)
+    cmd = f"docker tag {image_versioned_local} {image_dev}"
+    hlibtask._run(ctx, cmd)
+
+
+@task
+def opt_docker_push_dev_image(  # type: ignore
+    ctx,
+    version,
+    base_image="",
+):
+    """
+    (ONLY CI/CD) Push the "dev" image to ECR.
+
+    :param version: version to tag the image and code with
+    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    """
+    hlibtask._report_task()
+    # TODO(Grisha): fix versioning.
+    # version = hlibtask._resolve_version_value(version)
+    #
+    hlibtask.docker_login(ctx)
+    # Push Docker versioned tag.
+    image_versioned_dev = hlibtask.get_image(base_image, "dev", version)
+    cmd = f"docker push {image_versioned_dev}"
+    hlibtask._run(ctx, cmd, pty=True)
+    # Push Docker tag.
+    latest_version = None
+    image_dev = hlibtask.get_image(base_image, "dev", latest_version)
+    cmd = f"docker push {image_dev}"
+    hlibtask._run(ctx, cmd, pty=True)
+
+
+@task
+def opt_docker_release_dev_image(  # type: ignore
+    ctx,
+    version,
+    cache=True,
+    push_to_repo=True,
+    update_poetry=False,
+):
+    """
+    (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
+
+    This can be used to test the entire flow from scratch by building an image,
+    running the tests, but not necessarily pushing.
+
+    Phases:
+    1) Build local image
+    2) Mark local as dev image
+    3) Push dev image to the repo
+
+    :param version: version to tag the image and code with
+    :param cache: use the cache
+    :param push_to_repo: push the image to the repo_short_name
+    :param update_poetry: update package dependencies using poetry
+    """
+    hlibtask._report_task()
+    # 1) Build "local" image.
+    opt_docker_build_local_image(
+        ctx,
+        cache=cache,
+        update_poetry=update_poetry,
+        version=version,
+    )
+    # Run resolve after `docker_build_local_image` so that a proper check
+    # for subsequent version can be made in case `FROM_CHANGELOG` token
+    # is used.
+    # TODO(Grisha): fix versioning.
+    # version = _resolve_version_value(version)
+    # TODO(Grisha): add `opt` tests.
+    stage = "local"
+    # 2) Promote the "local" image to "dev".
+    opt_docker_tag_local_image_as_dev(ctx, version)
+    # TODO(Grisha): add `qa` tests.
+    # 3) Push the "dev" image to ECR.
+    if push_to_repo:
+        opt_docker_push_dev_image(ctx, version)
+    else:
+        _LOG.warning(
+            "Skipping pushing dev image to repo_short_name, as requested"
+        )
+    _LOG.info("==> SUCCESS <==")
 
 
 @task
