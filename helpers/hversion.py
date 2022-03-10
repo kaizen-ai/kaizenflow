@@ -88,8 +88,9 @@ def get_changelog_version(dir_name: str) -> Optional[str]:
     :param dir_name: container directory, e.g., `cmamp`, `optimizer`
     """
     version: Optional[str] = None
-    root_dir = hgit.get_client_root(super_module=False)
-    changelog_file = os.path.join(root_dir, dir_name, "changelog.txt")
+    # Handle supermodule and submodule cases.
+    _, repo_path = hgit.get_path_from_supermodule()
+    changelog_file = os.path.join(repo_path, dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)
     match = re.search(_CHANGELOG_VERSION_RE, changelog)
