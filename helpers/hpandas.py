@@ -311,17 +311,19 @@ def compare_dataframe_rows(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame
     """
     Compare contents of rows with same indices.
 
+    Index is set to default sequential integer values because compare is
+    sensitive to multi index (probably because new multi indexes are created
+    for each difference in `compare`). Multi index columns are regular columns now.
+    Excess columns are removed so both dataframes are always same shape because
+    `compare` expects identical dataframes (same number of rows, columns, etc.).
+
     :param df1: first dataframe for comparison
     :param df2: second dataframe for comparison
     :return: dataframe with data with same indices and different contents
     """
     # Get rows on which the two dataframe indices match.
     idx_intersection = df1.index.intersection(df2.index)
-    # Index is set to default sequential integer values because compare is
-    # sensitive to multi index (probably because new multi indexes are created
-    # for each difference in `compare`). Multi index columns are regular columns now.
-    # Excess columns are removed so both dataframes are always same shape because
-    # `compare` expects identical dataframes (same number of rows, columns, etc.).
+    # Remove excess columns and reset indexes.
     trimmed_second = df2.loc[idx_intersection].reset_index()
     trimmed_first = df1.loc[idx_intersection].reset_index()
     # Get difference between second and first dataframe.
