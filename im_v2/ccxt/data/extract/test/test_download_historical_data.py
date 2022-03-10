@@ -17,7 +17,7 @@ import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
 
 if _HAS_MOTO:
 
-    # @pytest.mark.skip("Enable after CMTask1292 is resolved.")
+    @pytest.mark.skip("Enable after CMTask1292 is resolved.")
     class TestDownloadHistoricalData1(hunitest.TestCase):
         # Mocked aws credentials.
         mock_aws_credentials_patch = umock.patch.dict(
