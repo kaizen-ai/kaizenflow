@@ -642,3 +642,57 @@ def maybe_cast_to_int(string: str) -> Union[str, int]:
     except ValueError:
         val = string
     return val
+
+
+# TODO(Nikola): Currently indirectly tested in
+#  `im_v2/ccxt/data/extract/test/test_download_historical_data.py`.
+def list_and_merge_pq_files(
+    root_dir: str, fs: Any, *, file_name: str = "data.parquet"
+) -> None:
+    """
+    Merge all files of the parquet dataset.
+
+    Can be generalized to any used partition.
+
+    The standard partition assumed is:
+
+    ```
+    root_dir/
+        currency_pair=ADA_USDT/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+        ...
+        currency_pair=EOS_USDT/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+    ```
+
+    :param root_dir: root directory of PQ dataset
+    :param fs: S3 filesystem columns on which the dataset is partitioned
+    :param file_name: name of the single resulting file
+    """
+    # Get full paths to each parquet file inside root dir.
+    parquet_files = fs.glob(f"{root_dir}/**.parquet")
+    _LOG.debug("Parquet files: '%s'", parquet_files)
+    # Get paths only to the lowest level of dataset folders.
+    dataset_folders = set(f.rsplit("/", 1)[0] for f in parquet_files)
+    for folder in dataset_folders:
+        # Get files per folder and merge if there are multiple ones.
+        folder_files = fs.ls(folder)
+        # TODO(Nikola): Skip on empty folder?
+        if len(folder_files) == 1 and folder_files[0].endswith("/data.parquet"):
+            # If there is already single `data.parquet` file, no action is required.
+            continue
+        # Read all files in target folder.
+        data = pq.ParquetDataset(folder_files, filesystem=fs).read()
+        # Remove all old files and write new, merged one.
+        fs.rm(folder, recursive=True)
+        pq.write_table(data, folder + "/" + file_name, filesystem=fs)
