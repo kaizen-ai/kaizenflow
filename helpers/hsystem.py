@@ -17,6 +17,8 @@ import sys
 import time
 from typing import Any, Callable, List, Match, Optional, Tuple, Union, cast
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
+
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint

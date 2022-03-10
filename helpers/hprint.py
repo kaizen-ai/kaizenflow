@@ -9,6 +9,8 @@ import re
 import sys
 from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
+
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
