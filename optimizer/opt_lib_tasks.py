@@ -23,6 +23,7 @@ def opt_docker_build_local_image(  # type: ignore
     ctx,
     version,
     cache=True,
+    base_image="",
     update_poetry=False,
 ):
     """
@@ -30,36 +31,14 @@ def opt_docker_build_local_image(  # type: ignore
 
     See more in `helpers/lib_tasks.py::docker_build_local_image`.
     """
-    hlibtask._report_task()
-    # TODO(gp): Enable the versioning.
-    # _dassert_is_subsequent_version(version)
-    # version = _resolve_version_value(version)
-    # Update poetry, if needed.
-    if update_poetry:
-        cmd = "cd devops/docker_build; poetry lock -v"
-        hlibtask._run(ctx, cmd)
-    # Build the local image.
-    opts = "--no-cache" if not cache else ""
-    dockerfile = "devops/docker_build/dev.Dockerfile"
-    dockerfile = os.path.abspath(dockerfile)
-    base_image = ""
-    stage = "local"
-    image_local = hlibtask.get_image(base_image, stage, version)
-    cmd = rf"""
-    DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
-    time \
-    docker build \
-        --progress=plain \
-        {opts} \
-        --build-arg OPT_CONTAINER_VERSION={version} \
-        --tag {image_local} \
-        --file {dockerfile} \
-        .
-    """
-    hlibtask._run(ctx, cmd)
-    # Check image and report stats.
-    cmd = f"docker image ls {image_local}"
-    hlibtask._run(ctx, cmd)
+    hlibtask.docker_build_local_image(
+        ctx,
+        version,
+        cache=cache,
+        base_image=base_image,
+        update_poetry=update_poetry,
+        dir_name="optimizer",
+    )
 
 
 @task

@@ -1934,25 +1934,25 @@ def _dassert_is_version_valid(version: str) -> None:
 _IMAGE_VERSION_FROM_CHANGELOG = "FROM_CHANGELOG"
 
 
-def _resolve_version_value(version: str) -> str:
+def _resolve_version_value(dir_name, version: str) -> str:
     """
     Pass a version (e.g., 1.0.0) or a symbolic value (e.g., FROM_CHANGELOG) and
     return the resolved value of the version.
     """
     hdbg.dassert_isinstance(version, str)
     if version == _IMAGE_VERSION_FROM_CHANGELOG:
-        version = hversio.get_changelog_version()
+        version = hversio.get_changelog_version(dir_name)
     _dassert_is_version_valid(version)
     return version
 
 
-def _dassert_is_subsequent_version(version: str) -> None:
+def _dassert_is_subsequent_version(dir_name, version: str) -> None:
     """
     Check that version is strictly bigger than the current one as specified in
     the changelog.
     """
     if version != _IMAGE_VERSION_FROM_CHANGELOG:
-        current_version = hversio.get_changelog_version()
+        current_version = hversio.get_changelog_version(dir_name)
         hdbg.dassert_lt(current_version, version)
 
 
@@ -2421,6 +2421,7 @@ def docker_build_local_image(  # type: ignore
     cache=True,
     base_image="",
     update_poetry=False,
+    dir_name="",
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
@@ -2431,8 +2432,8 @@ def docker_build_local_image(  # type: ignore
     :param update_poetry: run poetry lock to update the packages
     """
     _report_task()
-    _dassert_is_subsequent_version(version)
-    version = _resolve_version_value(version)
+    _dassert_is_subsequent_version(dir_name, version)
+    version = _resolve_version_value(dir_name, version)
     # Update poetry, if needed.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
