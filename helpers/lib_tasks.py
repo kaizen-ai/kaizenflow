@@ -2276,11 +2276,12 @@ def docker_bash(  # type: ignore
     version="",
     entrypoint=True,
     as_user=True,
+    dir_name="",
 ):
     """
     Start a bash shell inside the container corresponding to a stage.
     """
-    _report_task()
+    _report_task(dir_name=dir_name)
     cmd = "bash"
     docker_cmd_ = _get_docker_cmd(
         base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
@@ -2340,6 +2341,7 @@ def docker_jupyter(  # type: ignore
     auto_assign_port=True,
     port=9999,
     self_test=False,
+    dir_name="",
 ):
     """
     Run jupyter notebook server.
@@ -2347,7 +2349,7 @@ def docker_jupyter(  # type: ignore
     :param auto_assign_port: use the UID of the user and the inferred number of the
         repo (e.g., 4 for `~/src/amp4`) to get a unique port
     """
-    _report_task()
+    _report_task(dir_name=dir_name)
     if auto_assign_port:
         uid = os.getuid()
         _LOG.debug("uid=%s", uid)

@@ -125,6 +125,7 @@ def opt_docker_release_dev_image(  # type: ignore
 @task
 def opt_docker_bash(  # type: ignore
     ctx,
+    base_image="",
     stage="dev",
     version="",
     entrypoint=True,
@@ -135,12 +136,15 @@ def opt_docker_bash(  # type: ignore
 
     See more in `helpers/lib_tasks.py::docker_bash`.
     """
-    base_image = ""
-    cmd = "bash"
-    _docker_cmd = hlibtask._get_docker_cmd(
-        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
+    hlibtask.docker_bash(
+        ctx,
+        base_image=base_image,
+        stage=stage,
+        version=version,
+        entrypoint=entrypoint,
+        as_user=as_user,
+        dir_name="optimizer",
     )
-    hlibtask._run(ctx, _docker_cmd, pty=True)
 
 
 @task
@@ -158,26 +162,13 @@ def opt_docker_jupyter(  # type: ignore
 
     See more in `helpers/lib_tasks.py::docker_jupyter`.
     """
-    hlibtask._report_task()
-    if auto_assign_port:
-        uid = os.getuid()
-        _LOG.debug("uid=%s", uid)
-        git_repo_idx = hgit.get_project_dirname(only_index=True)
-        git_repo_idx = int(git_repo_idx)
-        _LOG.debug("git_repo_idx=%s", git_repo_idx)
-        # We assume that there are no more than `max_idx_per_users` clients.
-        max_idx_per_user = 10
-        hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
-        port = (uid * max_idx_per_user) + git_repo_idx
-        _LOG.info("Assigned port is %s", port)
-    #
-    print_docker_config = False
-    docker_cmd_ = hlibtask._get_docker_jupyter_cmd(
-        base_image,
-        stage,
-        version,
-        port,
-        self_test,
-        print_docker_config=print_docker_config,
+    hlibtask.docker_jupyter(
+        ctx,
+        stage=stage,
+        version=version,
+        base_image=base_image,
+        auto_assign_port=auto_assign_port,
+        port=port,
+        self_test=self_test,
+        dir_name="optimizer",
     )
-    hlibtask._docker_cmd(ctx, docker_cmd_)
