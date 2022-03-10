@@ -4158,6 +4158,88 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
     print(f"> {cmd}")
 
 
+def _get_test_directories(root_dir: str, old_class_name: str, old_method_name: str) -> List[str]:
+    """
+    Get all paths of the directories that contain outcome of specified unit test.
+
+    :param root_dir: 
+    :param old_class_name:
+    :param old_method_name:
+    :returns:
+    """
+    paths = []
+    # Build the target name, e.g. `TestCacheUpdateFunction1` if class or `TestCacheUpdateFunction1.test1` if method.
+    tagret_name = ".".join([old_class_name, old_method_name])
+    # We wath to find the path of the directories that contain test outcomes.
+    # It helps us to narrow down the area of the search of python files containing the target class
+    # as we know that file with unit tests always locates in the same test directory.
+    for path, dirs, _ in os.walk(root_dir):
+        # Iterate over the directories to find the test outcomes.
+        for dir_name in dirs:
+            if tagret_name in dir_name:
+               paths.append(path)
+               break
+    return paths
+
+
+def _process_file_content(path: str, old_class_name: str, new_class_name: str, old_method_name: str, new_method_name: str, renaming_mode: str) -> bool:
+    """
+    """
+    content = hio.from_file(path)
+    pattern = f"class {old_class_name}"
+    if not re.search(pattern, content):
+        # Return if target test class does not appear in file content.
+        return False
+    if renaming_mode == "CLASS":
+        # Rename the class.
+        content = re.sub(pattern, f"class {new_class_name}", content)
+    else:
+        # Rename the method of the class.
+        content = _rename_method(path, content, old_class_name, old_method_name, new_method_name)
+    # Write processed content back to file.
+    hio.to_file(path, content)
+    _rename_outcomes(path, old_class_name, new_class_name, old_method_name, new_method_name)
+    
+
+def _rename_method(path: str, content: str, class_name: str, old_method_name: str, new_method_name: str) -> str:
+    """
+    Rename the method of the class.
+    """
+    lines = content.split("\n")
+    class_found = False
+    method_replaced = False
+    class_pattern = f"class {class_name}"
+    method_pattern = f"def {old_method_name}"
+    for ind, line in enumerate(lines):
+        # Iterate over the lines of the file to find the specific method of the class that should be renamed.
+        if class_found:
+            # Break if the next class started and the method was not found.
+            if line.startswith("class"):
+                break
+            if method_pattern in line:
+                # Rename the method.
+                new_line = re.sub(method_pattern,  f"def {new_method_name}", line)
+                # Replace the line with method definition.
+                lines[ind] = new_line
+                method_replaced = True
+                break
+        else:
+            if class_pattern in line:
+                class_found = True
+    hdbg.dassert(method_replaced, f"Old method `{old_method_name}` of was not find in class `{class_name}`");
+    new_content = "\n".join(lines)   
+    return new_content
+
+
+def _rename_outcomes(path: str, old_class_name: str, new_class_name: str, old_method_name: str, new_method_name: str):
+    """
+    """
+    directories = [os.path.join(path, dir_name) for dir_name in os.listdir(path) if os.path.isdir(os.path.join(path, dir_name))]
+    target_name = ".".join([old_class_name, old_method_name])
+    
+    pass
+
+
 @task
 def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
     """
@@ -4183,19 +4265,24 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     # Check the format of test names.
     if len(splitted_old_name) == 1 and len(splitted_new_name) == 1:
         #
+        # Mode of processing `CLASS` or `METHOD`.
+        renaming_mode = "CLASS"
+        #
         old_class_name = splitted_old_name[0]
         new_class_name = splitted_new_name[0]
         _LOG.debug(f"Changing the name of {old_class_name} unit test class to {new_class_name}.")
     elif len(splitted_old_name) == 2 and len(splitted_new_name) == 2:
         #
+        # Mode of processing `CLASS` or `METHOD`.
+        renaming_mode = "METHOD"
+        #
         old_class_name, old_method_name = splitted_old_name
         new_class_name, new_method_name = splitted_new_name
-        if old_class_name != new_class_name:
-            #
-            hdbg.dassert(False, "To change the name of the method, specify the methods of the same class. E.g. \
-                `--old TestCache.test1 --new TestCache.new_test1`");
+        hdbg.dassert(old_class_name == new_class_name, "To change the name of the method, specify \
+            the methods of the same class. E.g. `--old TestCache.test1 --new TestCache.new_test1`");
         _LOG.debug(f"Changing the name of {old_method_name} method of {old_class_name} class to {new_method_name}.")
     else:
+        #
         hdbg.dassert(False, "The test names are not consistent.");
     # Get the paths to test directories that contain outcomes of target test.
     test_directories = _get_test_directories(root_dir, old_class_name, old_method_name)
@@ -4203,44 +4290,13 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     # Iterate over test directories that contain test outcome.
     for path in test_directories:
         search_pattern = os.path.join(path, "test_*.py")
-        # Get python files with unit tests.
+        # Get all python test files from this directory.
         files = glob.glob(search_pattern)
         #
         for test_file in files:
-            _process_file(test_file, old_class_name, new_class_name, old_method_name, new_method_name)
+            _process_file_content(test_file, old_class_name, new_class_name, old_method_name, new_method_name, renaming_mode)
     
-
-def _get_test_directories(root_dir: str, old_class_name: str, old_method_name: str) -> List[str]:
-    """
-    Get all paths of the directories with specified test.
-
-    :param root_dir:
-    :param old_class_name:
-    :param old_method_name:
-    :returns:
-    """
-    paths = []
-    # Build the target name, e.g. `TestCacheUpdateFunction1` if class or `TestCacheUpdateFunction1.test1` if method.
-    tagret_name = ".".join([old_class_name, old_method_name])
-    # We wath to find the path of the directories that contain test outcomes.
-    # It helps us to narrow down the area of the search of python files containing the target class
-    # as we know that file with unit tests always locates in the same test directory.
-    for path, dirs, _ in os.walk(root_dir):
-        # Iterate over the directories to find the test outcomes.
-        for dir_name in dirs:
-            if tagret_name in dir_name:
-               paths.append(path)
-               break
-    return paths
-
-def _process_file(path: str, old_class_name: str, new_class_name: str, old_method_name: str, new_method_name: str) -> bool:
-    """
-    """
-    content = hio.from_file(path)
-
-    # Find pattern.
-    pass
-
+    
 # #############################################################################
 # Linter.
 # #############################################################################
