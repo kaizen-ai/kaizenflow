@@ -89,8 +89,8 @@ def get_changelog_version(dir_name: str) -> Optional[str]:
     """
     version: Optional[str] = None
     # Handle supermodule and submodule cases.
-    _, repo_path = hgit.get_path_from_supermodule()
-    changelog_file = os.path.join(repo_path, dir_name, "changelog.txt")
+    amp_path = hgit.get_amp_abs_path()
+    changelog_file = os.path.join(amp_path, dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)
     match = re.search(_CHANGELOG_VERSION_RE, changelog)
