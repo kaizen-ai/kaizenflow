@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import optimizer.opt_lib_tasks as ooplitas
+"""
+
 import logging
 import os
 
@@ -72,7 +78,7 @@ def opt_docker_tag_local_image_as_dev(  # type: ignore
     """
     hlibtask._report_task()
     # TODO(Grisha): fix versioning.
-    #version = _resolve_version_value(version)
+    # version = _resolve_version_value(version)
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
     image_versioned_local = hlibtask.get_image(base_image, "local", version)
     image_versioned_dev = hlibtask.get_image(base_image, "dev", version)
@@ -151,7 +157,6 @@ def opt_docker_release_dev_image(  # type: ignore
     # TODO(Grisha): fix versioning.
     # version = _resolve_version_value(version)
     # TODO(Grisha): add `opt` tests.
-    stage = "local"
     # 2) Promote the "local" image to "dev".
     opt_docker_tag_local_image_as_dev(ctx, version)
     # TODO(Grisha): add `qa` tests.
