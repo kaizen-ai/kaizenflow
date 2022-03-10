@@ -6,15 +6,15 @@ import helpers.hpandas as hpandas
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+# Avoid dependency from other `helpers` modules, such as `helpers.hsql`and
+# `helpers.hunit_test`, to prevent import cycles.
+
 import numpy as np
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-
-# Do not import `helpers.hsql` and `helpers.hunit_test` to avoid circular 
-# dependencies.
 
 _LOG = logging.getLogger(__name__)
 

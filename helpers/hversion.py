@@ -12,12 +12,13 @@ import helpers.hversion as hversio
 # 2) when a container is built to know what version of the code was used to build
 #    it
 
-# Do not import `helpers.henv` to avoid circular dependencies.
-
 import logging
 import os
 import re
 from typing import Optional
+
+# Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
+# import cycles.
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit

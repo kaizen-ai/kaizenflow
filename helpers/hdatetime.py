@@ -21,6 +21,7 @@ except ModuleNotFoundError:
     _module = "dateutil"
     print(_WARNING + f": Can't find {_module}: continuing")
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
 
 import pandas as pd  # noqa: E402 # pylint: disable=wrong-import-position
 
@@ -35,9 +36,6 @@ except ModuleNotFoundError:
 
 import helpers.hdbg as hdbg  # noqa: E402 # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 # pylint: disable=wrong-import-position
-
-# Avoid dependency from other helpers modules since it is used extensively
-# for datetime processing.
 
 _LOG = logging.getLogger(__name__)
 

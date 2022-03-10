@@ -8,11 +8,10 @@ import logging
 import time
 from typing import Any, Callable, Optional, Tuple, cast
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
+
 import helpers.hdbg as hdbg
 import helpers.hlogging as hloggin
-
-# Avoid dependency from other helpers modules since it is used extensively
-# for measuring time of downstream functionalities.
 
 _LOG = logging.getLogger(__name__)
 

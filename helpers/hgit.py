@@ -12,13 +12,12 @@ import pprint
 import re
 from typing import Any, Dict, List, Match, Optional, Tuple
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
+
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
-
-# Avoid dependency from other helpers modules since it is used extensively
-# for interactions with git.
 
 _LOG = logging.getLogger(__name__)
 
