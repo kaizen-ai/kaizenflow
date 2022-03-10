@@ -16,6 +16,11 @@ import helpers.lib_tasks as hlibtask
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# Docker image release.
+# #############################################################################
+
+
 @task
 def opt_docker_build_local_image(  # type: ignore
     ctx,
@@ -110,6 +115,11 @@ def opt_docker_release_dev_image(  # type: ignore
         update_poetry=update_poetry,
         dir_name="optimizer",
     )
+
+
+# #############################################################################
+# Docker development.
+# #############################################################################
 
 
 @task
