@@ -21,8 +21,13 @@ import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
 # TODO(gp): Enable this after the linter has been updated.
+# NB! Enabling it would introduce a cicrcular dependency with `helpers.hs3`. 
+# Remove the cycle before uncommenting.
 # import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
+
+# Avoid dependency from other helpers modules since it is used everywhere.
+# Do not import third party libraries, such as `numpy` and `pandas`.
 
 _LOG = logging.getLogger(__name__)
 

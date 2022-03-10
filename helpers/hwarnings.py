@@ -9,6 +9,8 @@ import helpers.hwarnings as hwarnin
 _WARNING = "\033[33mWARNING\033[0m"
 print(f"{_WARNING}: Disabling annoying warnings")
 
+# Do not import `helpers.hprint` to avoid circular dependencies.
+
 import warnings
 
 # From https://docs.python.org/3/library/warnings.html

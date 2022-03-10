@@ -23,6 +23,8 @@ import helpers.hprint as hprint
 import helpers.htimer as htimer
 import helpers.htqdm as htqdm
 
+# Do not import `helpers.hcache` to avoid circular dependencies.
+
 _LOG = logging.getLogger(__name__)
 
 # - Assume one wants to execute `n` invocations of a given `func`

@@ -36,6 +36,9 @@ except ModuleNotFoundError:
 import helpers.hdbg as hdbg  # noqa: E402 # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 # pylint: disable=wrong-import-position
 
+# Avoid dependency from other helpers modules since it is used extensively
+# for datetime processing.
+
 _LOG = logging.getLogger(__name__)
 
 # We use the type `Datetime` to allow flexibility in the interface exposed to client.

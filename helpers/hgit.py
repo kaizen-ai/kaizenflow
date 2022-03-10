@@ -17,6 +17,9 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 
+# Avoid dependency from other helpers modules since it is used extensively
+# for interactions with git.
+
 _LOG = logging.getLogger(__name__)
 
 # We refer to "Git" when we talk about the control system (e.g., "in a Git

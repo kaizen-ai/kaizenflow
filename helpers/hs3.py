@@ -28,6 +28,9 @@ import helpers.hprint as hprint  # noqa: E402 module level import not at top of 
 import helpers.hsystem as hsystem  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.htimer as htimer  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
+# Do not import `helpers.hparquet`, `helpers.hcache`, `helpers.hcsv`, 
+# `helpers.hunit_test` to avoid circular dependencies.
+
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): @all separate S3 code in `helpers/hs3.py` from authentication and

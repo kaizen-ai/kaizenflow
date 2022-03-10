@@ -21,6 +21,9 @@ import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 
+# Avoid dependency from other helpers modules since it is used extensively
+# for system interaction.
+
 _LOG = logging.getLogger(__name__)
 
 # Set logging level of this file.

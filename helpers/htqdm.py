@@ -7,6 +7,7 @@ import io
 import logging
 from typing import Any, Optional
 
+# Do not import `helpers.hjoblib` to avoid circular dependencies.
 
 # From https://github.com/tqdm/tqdm/issues/313
 class TqdmToLogger(io.StringIO):

@@ -11,6 +11,9 @@ from typing import Any, Callable, Optional, Tuple, cast
 import helpers.hdbg as hdbg
 import helpers.hlogging as hloggin
 
+# Avoid dependency from other helpers modules since it is used extensively
+# for measuring time of downstream functionalities.
+
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################

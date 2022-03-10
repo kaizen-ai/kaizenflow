@@ -30,6 +30,8 @@ import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 
+# Do not import `helpers.hsql` to avoid circular dependencies.
+
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
