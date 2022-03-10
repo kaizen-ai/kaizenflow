@@ -1,8 +1,8 @@
 - name: Create VPN user on openvpn server
-  hosts: 172.30.1.125
+  hosts: all
   become: true
   gather_facts: true
   roles:
     - { role: roles/vpn_user_add }
 
-#ansible-playbook plays/vpn_user_add.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 172.30.1.125, --extra-vars "openvpn_client_username= openvpn_client_password= openvpn_client_pem_passphrase=" --ask-vault-pass
+#ansible-playbook plays/vpn_user_add.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 172.30.1.125, --extra-vars "openvpn_client_username= openvpn_client_password= openvpn_client_pem_passphrase=" --ask-vault-pass --extra-vars "vpn_region=eu"

@@ -5,4 +5,4 @@
   roles:
     - { role: roles/vpn_configure_server }
 
-# ansible-playbook plays/vpn_configure_server.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 13.51.59.43, --ask-vault-pass
+# ansible-playbook plays/vpn_configure_server.yml --user ubuntu --private-key=/root/.ssh/id_rsa_crypto --inventory 13.51.59.43, --ask-vault-pass --extra-vars "vpn_region=us"
