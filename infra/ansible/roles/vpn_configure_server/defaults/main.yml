@@ -1,12 +1,7 @@
 ---
+vpn_region: eu
 easyrsa_dir: /usr/share/easy-rsa/
 easyrsa_dn_mode_cn_only: false
-easyrsa_key_country:  "US"
-easyrsa_key_province: "California"
-easyrsa_key_city: "Beverly Hills"
-easyrsa_key_org: "TEST CORPORATION"
-easyrsa_key_ou: "Anvil Department"
-easyrsa_key_email: "user@example.com"
 
 easyrsa_pki_dir: /opt/pki
 easyrsa_pki_ca_key: "{{ easyrsa_pki_dir }}/private/ca.key"
@@ -32,17 +27,9 @@ openvpn_data_ciphers_fallback: "AES-128-GCM"
 openvpn_auth_digest: "SHA256"
 openvpn_tls_cipher: "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256"
 
-openvpn_server_common_name: vpn1.eu-north-1
 openvpn_path: "/etc/openvpn"
 openvpn_path_ccd: "{{ openvpn_path }}/ccd" 
 openvpn_ta_key: "{{ openvpn_path }}/ta-{{ openvpn_server_port }}.key"
-openvpn_server_proto: udp
-openvpn_server_port: 1194
-openvpn_server_mask: "10.30.254.0 255.255.255.0"
-openvpn_server_server_extra_options: 
-  - 'push "route 172.30.1.0 255.255.255.0"'
-  - 'push "route 172.30.2.0 255.255.255.0"'
-  - 'push "route 172.30.3.0 255.255.255.0"'
 
 gauth_username: gauth
 gauth_group: gauth
