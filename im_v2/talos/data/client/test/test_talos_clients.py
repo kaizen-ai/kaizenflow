@@ -34,7 +34,7 @@ class TestTalosParquetByAssetClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(10, 6)
                                           full_symbol        open        high         low       close           volume
-        timestamp                                                                                                     
+        timestamp
         2022-01-01 00:01:00+00:00   binance::ADA_USDT  1.31000000  1.31400000  1.30800000  1.31200000  132189.40000000
         2022-01-01 00:01:00+00:00  coinbase::BTC_USDT    46219.13    46311.86    46219.13    46306.76       0.10478747
         2022-01-01 00:02:00+00:00   binance::ADA_USDT  1.31200000  1.31800000  1.31100000  1.31700000  708964.20000000
