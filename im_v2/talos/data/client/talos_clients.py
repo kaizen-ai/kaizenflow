@@ -11,12 +11,8 @@ from typing import Any, List, Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hdatetime as hdateti
-import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
-import helpers.hs3 as hs3
-import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
@@ -54,9 +50,7 @@ class TalosClient(icdc.ImClient, abc.ABC):
 # #############################################################################
 
 
-class TalosParquetByAssetClient(
-    TalosClient, icdc.ImClientReadingOneSymbol
-):
+class TalosParquetByAssetClient(TalosClient, icdc.ImClientReadingOneSymbol):
     """
     Read data from a Parquet file storing data for a single `Talos` asset.
 
@@ -99,7 +93,7 @@ class TalosParquetByAssetClient(
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get path to a dir with all the data for specified exchange id.
-        exchange_dir_path = os.path.join(self._root_dir, exchange_id)
+        exchange_dir_path = os.path.join(self._root_dir, "talos", exchange_id)
         # Read raw crypto price data.
         _LOG.info(
             "Reading data for `Talos`, exchange id='%s', currencies='%s'...",
