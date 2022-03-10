@@ -5,6 +5,7 @@
     file: secrets.yml
 
 - name: Ansible | Set CA password for EU instance
+  no_log: true
   set_fact:
     easyrsa_ca_password: "{{ easyrsa_ca_password_vpn1_eu }}"
   when: vpn_region == "eu"    
@@ -15,6 +16,7 @@
   when: vpn_region == "eu"  
 
 - name: Ansible | Set CA password for US instance
+  no_log: true
   set_fact:
     easyrsa_ca_password: "{{ easyrsa_ca_password_vpn1_us }}"
   when: vpn_region == "us"
@@ -45,11 +47,7 @@
   file: 
     path: "{{ easyrsa_pki_dir }}/"
     state: directory
-
-- name: OpenVPN | PKI | Set CA password variable
-  set_fact:
-    easyrsa_ca_password: "TEST"
-    
+  
 - name: OpenVPN | PKI | Deploy vars configuration
   template:
     src: ./templates/easyrsa3_vars.j2
