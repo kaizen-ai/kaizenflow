@@ -1,0 +1,7 @@
+---
+easyrsa_ca_password: "{{ easyrsa_ca_password_vpn1_us }}"
+
+openvpn_server_common_name: vpn1.us-east-1
+openvpn_server_proto: tcp
+openvpn_server_port: 443
+openvpn_server_remote_host: 34.200.203.37

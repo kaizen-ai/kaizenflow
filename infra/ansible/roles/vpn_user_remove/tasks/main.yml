@@ -3,6 +3,16 @@
   no_log: true
   include_vars:
     file: secrets.yml
+    
+- name: Ansible | Include variables for VPN1 server in EU
+  include_vars:
+    file: vpn1-eu.yml
+  when: vpn_region == "eu"  
+
+- name: Ansible | Include variables for VPN1 server in US
+  include_vars:
+    file: vpn1-us.yml
+  when: vpn_region == "us"
 
 - name: OpenVPN | Revoke Client | Revoke access
   expect:

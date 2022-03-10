@@ -1,0 +1,7 @@
+---
+easyrsa_ca_password: "{{ easyrsa_ca_password_vpn1_eu }}"
+
+openvpn_server_common_name: vpn1.eu-north-1
+openvpn_server_proto: udp
+openvpn_server_port: 1194
+openvpn_server_remote_host: 13.51.59.43

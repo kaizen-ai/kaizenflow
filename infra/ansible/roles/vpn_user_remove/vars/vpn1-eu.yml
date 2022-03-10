@@ -1,0 +1,3 @@
+---
+easyrsa_ca_password: "{{ easyrsa_ca_password_vpn1_eu }}"
+openvpn_server_common_name: vpn1.eu-north-1

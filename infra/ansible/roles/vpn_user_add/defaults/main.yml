@@ -1,21 +1,17 @@
 ---
+vpn_region: eu
 easyrsa_dir: /usr/share/easy-rsa/
-
 easyrsa_pki_dir: /opt/pki
 easyrsa_pki_ca_cert: "{{ easyrsa_pki_dir }}/ca.crt"
 easyrsa_pki_path_certs: "{{ easyrsa_pki_dir }}/issued"
 easyrsa_pki_path_keys: "{{ easyrsa_pki_dir }}/private"
 
-openvpn_server_common_name: vpn1.eu-north-1
 openvpn_path: "/etc/openvpn"
 openvpn_path_ccd: "{{ openvpn_path }}/ccd" 
 openvpn_path_ovpn: "{{ openvpn_path }}/ovpn"
 
 openvpn_ta_key: "{{ openvpn_path }}/ta-{{ openvpn_server_port }}.key"
-openvpn_server_proto: udp
-openvpn_server_port: 1194
 openvpn_server_client_extra_options: []
-openvpn_server_remote_host: 13.51.59.43
 openvpn_data_ciphers: "AES-128-GCM"
 openvpn_data_ciphers_fallback: "AES-128-GCM"
 openvpn_auth_digest: "SHA256"
@@ -30,8 +26,8 @@ easyrsa_pki_client_key: "{{ easyrsa_pki_path_keys }}/{{ openvpn_client_username 
 # Password Management
 vpn_client_export_bundle_dir: "/opt/crypto_vpn/{{ openvpn_client_username }}"
 password_directory: "{{ vpn_client_export_bundle_dir }}/user_credentials"
-password_file_path: "{{ password_directory }}/vpn_password.txt"
-pem_passphrase_file_path: "{{ password_directory }}/vpn_pem_passphrase.txt"
+password_file_path: "{{ password_directory }}/{{ openvpn_server_common_name }}_password.txt"
+pem_passphrase_file_path: "{{ password_directory }}/{{ openvpn_server_common_name }}_pem_passphrase.txt"
 
 gauth_username: gauth
 gauth_group: gauth
