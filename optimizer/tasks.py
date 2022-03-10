@@ -4,7 +4,7 @@ import os
 # Expose the pytest targets.
 # Extract with:
 # > i print_tasks --as-code
-from opt_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+from optimizer.opt_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     opt_docker_bash,
     opt_docker_build_local_image,
     opt_docker_jupyter,

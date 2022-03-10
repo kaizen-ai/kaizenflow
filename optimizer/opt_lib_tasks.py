@@ -26,11 +26,9 @@ def opt_docker_build_local_image(  # type: ignore
     update_poetry=False,
 ):
     """
-    Build a local image (i.e., a release candidate "dev" image).
+    Build a local `opt` image (i.e., a release candidate "dev" image).
 
-    :param version: version to tag the image and code with
-    :param cache: use the cache
-    :param update_poetry: run poetry lock to update the packages
+    See more in `helpers/lib_tasks.py::docker_build_local_image`.
     """
     hlibtask._report_task()
     # TODO(gp): Enable the versioning.
@@ -71,10 +69,9 @@ def opt_docker_tag_local_image_as_dev(  # type: ignore
     base_image="",
 ):
     """
-    (ONLY CI/CD) Mark the "local" image as "dev".
+    (ONLY CI/CD) Mark the `opt:local` image as `dev`.
 
-    :param version: version to tag the image and code with
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    See more in `helpers/lib_tasks.py::docker_tag_local_image_as_dev`.
     """
     hlibtask._report_task()
     # TODO(Grisha): fix versioning.
@@ -98,10 +95,9 @@ def opt_docker_push_dev_image(  # type: ignore
     base_image="",
 ):
     """
-    (ONLY CI/CD) Push the "dev" image to ECR.
+    (ONLY CI/CD) Push the `opt:dev` image to ECR.
 
-    :param version: version to tag the image and code with
-    :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
+    See more in `helpers/lib_tasks.py::docker_push_dev_image`.
     """
     hlibtask._report_task()
     # TODO(Grisha): fix versioning.
@@ -128,20 +124,14 @@ def opt_docker_release_dev_image(  # type: ignore
     update_poetry=False,
 ):
     """
-    (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
+    (ONLY CI/CD) Build, test, and release to ECR the latest `opt:dev` image.
 
-    This can be used to test the entire flow from scratch by building an image,
-    running the tests, but not necessarily pushing.
+    See more in `helpers/lib_tasks.py::docker_release_dev_image`.
 
     Phases:
     1) Build local image
     2) Mark local as dev image
     3) Push dev image to the repo
-
-    :param version: version to tag the image and code with
-    :param cache: use the cache
-    :param push_to_repo: push the image to the repo_short_name
-    :param update_poetry: update package dependencies using poetry
     """
     hlibtask._report_task()
     # 1) Build "local" image.
@@ -172,8 +162,17 @@ def opt_docker_release_dev_image(  # type: ignore
 
 @task
 def opt_docker_bash(  # type: ignore
-    ctx, stage, version, entrypoint=True, as_user=True
+    ctx,
+    stage="dev",
+    version="",
+    entrypoint=True,
+    as_user=True,
 ):
+    """
+    Start a bash shell inside the `opt` container corresponding to a stage.
+
+    See more in `helpers/lib_tasks.py::docker_bash`.
+    """
     base_image = ""
     cmd = "bash"
     _docker_cmd = hlibtask._get_docker_cmd(
@@ -183,9 +182,21 @@ def opt_docker_bash(  # type: ignore
 
 
 @task
-def opt_docker_jupyter(ctx, stage="local", version="0.1.0"):
+def opt_docker_jupyter(  # type: ignore
+    ctx,
+    stage="dev",
+    version="",
+    base_image="",
+    auto_assign_port=True,
+    port=9999,
+    self_test=False,
+):
+    """
+    Run jupyter notebook server in the `opt` container.
+
+    See more in `helpers/lib_tasks.py::docker_jupyter`.
+    """
     hlibtask._report_task()
-    auto_assign_port = True
     if auto_assign_port:
         uid = os.getuid()
         _LOG.debug("uid=%s", uid)
@@ -199,9 +210,6 @@ def opt_docker_jupyter(ctx, stage="local", version="0.1.0"):
         _LOG.info("Assigned port is %s", port)
     #
     print_docker_config = False
-    base_image = ""
-    port = 9999
-    self_test = False
     docker_cmd_ = hlibtask._get_docker_jupyter_cmd(
         base_image,
         stage,
