@@ -1934,7 +1934,7 @@ def _dassert_is_version_valid(version: str) -> None:
 _IMAGE_VERSION_FROM_CHANGELOG = "FROM_CHANGELOG"
 
 
-def _resolve_version_value(dir_name, version: str) -> str:
+def _resolve_version_value(dir_name: str, version: str) -> str:
     """
     Pass a version (e.g., 1.0.0) or a symbolic value (e.g., FROM_CHANGELOG) and
     return the resolved value of the version.
@@ -1946,7 +1946,7 @@ def _resolve_version_value(dir_name, version: str) -> str:
     return version
 
 
-def _dassert_is_subsequent_version(dir_name, version: str) -> None:
+def _dassert_is_subsequent_version(dir_name: str, version: str) -> None:
     """
     Check that version is strictly bigger than the current one as specified in
     the changelog.

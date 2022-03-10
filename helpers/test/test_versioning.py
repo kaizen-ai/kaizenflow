@@ -13,7 +13,8 @@ class TestVersioning1(hunitest.TestCase):
         """
         Test `cmamp` version.
         """
-        code_version = hversio.get_changelog_version()
+        dir_name = ""
+        code_version = hversio.get_changelog_version(dir_name)
         _LOG.debug("code_version=%s", code_version)
 
     def test_get_changelog_version2(self) -> None:

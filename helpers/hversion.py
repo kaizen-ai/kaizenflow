@@ -81,9 +81,11 @@ def check_version() -> None:
     _check_version(code_version, container_version)
 
 
-def get_changelog_version(dir_name: str = "") -> Optional[str]:
+def get_changelog_version(dir_name: str) -> Optional[str]:
     """
     Return latest version from changelog.txt file.
+
+    :param dir_name: container directory, e.g., `cmamp`, `optimizer`
     """
     version: Optional[str] = None
     root_dir = hgit.get_client_root(super_module=False)
