@@ -81,13 +81,13 @@ def check_version() -> None:
     _check_version(code_version, container_version)
 
 
-def get_changelog_version() -> Optional[str]:
+def get_changelog_version(dir_name: str = "") -> Optional[str]:
     """
     Return latest version from changelog.txt file.
     """
     version: Optional[str] = None
     root_dir = hgit.get_client_root(super_module=False)
-    changelog_file = os.path.join(root_dir, "changelog.txt")
+    changelog_file = os.path.join(root_dir, dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)
     match = re.search(_CHANGELOG_VERSION_RE, changelog)

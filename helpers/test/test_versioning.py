@@ -10,7 +10,18 @@ _LOG = logging.getLogger(__name__)
 
 class TestVersioning1(hunitest.TestCase):
     def test_get_changelog_version1(self) -> None:
+        """
+        Test `cmamp` version.
+        """
         code_version = hversio.get_changelog_version()
+        _LOG.debug("code_version=%s", code_version)
+
+    def test_get_changelog_version2(self) -> None:
+        """
+        Test `optimizer` version.
+        """
+        dir_name = "optimizer"
+        code_version = hversio.get_changelog_version(dir_name)
         _LOG.debug("code_version=%s", code_version)
 
     def test_get_container_version1(self) -> None:
