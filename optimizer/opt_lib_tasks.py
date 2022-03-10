@@ -15,8 +15,6 @@ import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
-DOCKER_BUILDKIT = 0
-
 
 @task
 def opt_docker_build_local_image(  # type: ignore

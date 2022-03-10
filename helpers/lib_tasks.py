@@ -113,12 +113,12 @@ else:
 _WAS_FIRST_CALL_DONE = False
 
 
-def _report_task(txt: str = "") -> None:
+def _report_task(dir_name: str = "", txt: str = "") -> None:
     # On the first invocation report the version.
     global _WAS_FIRST_CALL_DONE
     if not _WAS_FIRST_CALL_DONE:
         _WAS_FIRST_CALL_DONE = True
-        hversio.check_version()
+        hversio.check_version(dir_name)
     # Print the name of the function.
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
@@ -2431,7 +2431,7 @@ def docker_build_local_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param update_poetry: run poetry lock to update the packages
     """
-    _report_task()
+    _report_task(dir_name=dir_name)
     _dassert_is_subsequent_version(dir_name, version)
     version = _resolve_version_value(dir_name, version)
     # Update poetry, if needed.
@@ -2483,7 +2483,7 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param version: version to tag the image and code with
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    _report_task()
+    _report_task(dir_name=dir_name)
     version = _resolve_version_value(version, dir_name)
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
     image_versioned_local = get_image(base_image, "local", version)
@@ -2510,7 +2510,7 @@ def docker_push_dev_image(  # type: ignore
     :param version: version to tag the image and code with
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    _report_task()
+    _report_task(dir_name=dir_name)
     version = _resolve_version_value(version, dir_name)
     #
     docker_login(ctx)
@@ -2562,13 +2562,14 @@ def docker_release_dev_image(  # type: ignore
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
-    _report_task()
+    _report_task(dir_name=dir_name)
     # 1) Build "local" image.
     docker_build_local_image(
         ctx,
         cache=cache,
         update_poetry=update_poetry,
         version=version,
+        dir_name=dir_name,
     )
     # Run resolve after `docker_build_local_image` so that a proper check
     # for subsequent version can be made in case `FROM_CHANGELOG` token
@@ -2589,13 +2590,13 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx, version)
+    docker_tag_local_image_as_dev(ctx, version, dir_name=dir_name)
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
         run_qa_tests(ctx, stage="dev", version=version)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
-        docker_push_dev_image(ctx, version)
+        docker_push_dev_image(ctx, version, dir_name=dir_name)
     else:
         _LOG.warning(
             "Skipping pushing dev image to repo_short_name, as requested"

@@ -34,7 +34,7 @@ _ERROR = "\033[31mERROR\033[0m"
 _CHANGELOG_VERSION_RE = r"\d+\.\d+\.\d+"
 
 
-def check_version() -> None:
+def check_version(dir_name: str) -> None:
     """
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
@@ -43,7 +43,7 @@ def check_version() -> None:
         # Skip the check altogether.
         return
     # Get code version.
-    code_version = get_changelog_version()
+    code_version = get_changelog_version(dir_name)
     container_version = _get_container_version()
     is_inside_container = _is_inside_container()
     # Print information.
