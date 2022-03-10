@@ -9,8 +9,9 @@ easyrsa_key_email: "user@example.com"
 openvpn_server_common_name: vpn1.eu-north-1
 openvpn_server_proto: udp
 openvpn_server_port: 1194
-openvpn_server_mask: "10.30.254.0 255.255.255.0"
-openvpn_server_server_extra_options: 
+openvpn_server_mask: "172.30.254.0 255.255.255.0"
+openvpn_server_server_extra_options:
+  - 'push "route 172.29.1.0 255.255.255.0"'  
   - 'push "route 172.30.1.0 255.255.255.0"'
   - 'push "route 172.30.2.0 255.255.255.0"'
   - 'push "route 172.30.3.0 255.255.255.0"'
