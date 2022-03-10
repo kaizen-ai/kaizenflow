@@ -30,7 +30,8 @@ class TestVersioning1(hunitest.TestCase):
         _LOG.debug("container_version=%s", container_version)
 
     def test_check_version1(self) -> None:
-        hversio.check_version()
+        dir_name = ""
+        hversio.check_version(dir_name)
 
     @pytest.mark.skip(reason="CmampTask570")
     def test__check_version1(self) -> None:
