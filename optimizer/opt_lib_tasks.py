@@ -52,19 +52,12 @@ def opt_docker_tag_local_image_as_dev(  # type: ignore
 
     See more in `helpers/lib_tasks.py::docker_tag_local_image_as_dev`.
     """
-    hlibtask._report_task()
-    # TODO(Grisha): fix versioning.
-    # version = _resolve_version_value(version)
-    # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
-    image_versioned_local = hlibtask.get_image(base_image, "local", version)
-    image_versioned_dev = hlibtask.get_image(base_image, "dev", version)
-    cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
-    hlibtask._run(ctx, cmd)
-    # Tag local image as dev image.
-    latest_version = None
-    image_dev = hlibtask.get_image(base_image, "dev", latest_version)
-    cmd = f"docker tag {image_versioned_local} {image_dev}"
-    hlibtask._run(ctx, cmd)
+    hlibtask.docker_tag_local_image_as_dev(
+        ctx,
+        version,
+        base_image=base_image,
+        dir_name="optimizer",
+    )
 
 
 @task
@@ -78,20 +71,12 @@ def opt_docker_push_dev_image(  # type: ignore
 
     See more in `helpers/lib_tasks.py::docker_push_dev_image`.
     """
-    hlibtask._report_task()
-    # TODO(Grisha): fix versioning.
-    # version = hlibtask._resolve_version_value(version)
-    #
-    hlibtask.docker_login(ctx)
-    # Push Docker versioned tag.
-    image_versioned_dev = hlibtask.get_image(base_image, "dev", version)
-    cmd = f"docker push {image_versioned_dev}"
-    hlibtask._run(ctx, cmd, pty=True)
-    # Push Docker tag.
-    latest_version = None
-    image_dev = hlibtask.get_image(base_image, "dev", latest_version)
-    cmd = f"docker push {image_dev}"
-    hlibtask._run(ctx, cmd, pty=True)
+    hlibtask.docker_push_dev_image(
+        ctx,
+        version,
+        base_image=base_image,
+        dir_name="optimizer"
+    )
 
 
 @task
@@ -112,31 +97,21 @@ def opt_docker_release_dev_image(  # type: ignore
     2) Mark local as dev image
     3) Push dev image to the repo
     """
-    hlibtask._report_task()
-    # 1) Build "local" image.
-    opt_docker_build_local_image(
+    hlibtask.docker_release_dev_image(
         ctx,
+        version,
         cache=cache,
+        # TODO(Grisha): replace with `opt` tests.
+        skip_tests=True,
+        fast_tests=False,
+        slow_tests=False,
+        superslow_tests=False,
+        # TODO(Grisha): enable `qa` tests.
+        qa_tests=False,
+        push_to_repo=push_to_repo,
         update_poetry=update_poetry,
-        version=version,
+        dir_name="optimizer",
     )
-    # Run resolve after `docker_build_local_image` so that a proper check
-    # for subsequent version can be made in case `FROM_CHANGELOG` token
-    # is used.
-    # TODO(Grisha): fix versioning.
-    # version = _resolve_version_value(version)
-    # TODO(Grisha): add `opt` tests.
-    # 2) Promote the "local" image to "dev".
-    opt_docker_tag_local_image_as_dev(ctx, version)
-    # TODO(Grisha): add `qa` tests.
-    # 3) Push the "dev" image to ECR.
-    if push_to_repo:
-        opt_docker_push_dev_image(ctx, version)
-    else:
-        _LOG.warning(
-            "Skipping pushing dev image to repo_short_name, as requested"
-        )
-    _LOG.info("==> SUCCESS <==")
 
 
 @task

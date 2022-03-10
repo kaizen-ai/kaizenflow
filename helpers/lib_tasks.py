@@ -2475,6 +2475,7 @@ def docker_tag_local_image_as_dev(  # type: ignore
     ctx,
     version,
     base_image="",
+    dir_name="",
 ):
     """
     (ONLY CI/CD) Mark the "local" image as "dev".
@@ -2483,7 +2484,7 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    version = _resolve_version_value(version)
+    version = _resolve_version_value(version, dir_name)
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
     image_versioned_local = get_image(base_image, "local", version)
     image_versioned_dev = get_image(base_image, "dev", version)
@@ -2501,6 +2502,7 @@ def docker_push_dev_image(  # type: ignore
     ctx,
     version,
     base_image="",
+    dir_name="",
 ):
     """
     (ONLY CI/CD) Push the "dev" image to ECR.
@@ -2509,7 +2511,7 @@ def docker_push_dev_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task()
-    version = _resolve_version_value(version)
+    version = _resolve_version_value(version, dir_name)
     #
     docker_login(ctx)
     # Push Docker versioned tag.
@@ -2535,6 +2537,7 @@ def docker_release_dev_image(  # type: ignore
     qa_tests=True,
     push_to_repo=True,
     update_poetry=False,
+    dir_name="",
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -2570,7 +2573,7 @@ def docker_release_dev_image(  # type: ignore
     # Run resolve after `docker_build_local_image` so that a proper check
     # for subsequent version can be made in case `FROM_CHANGELOG` token
     # is used.
-    version = _resolve_version_value(version)
+    version = _resolve_version_value(version, dir_name)
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
