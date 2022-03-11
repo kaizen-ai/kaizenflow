@@ -202,3 +202,50 @@ get_orders(endpoint, path, api_keys["apiKey"], api_keys["secret"])
 post_order(endpoint, path, api_keys["apiKey"], api_keys["secret"])
 
 # %%
+import helpers.hsecrets as hsecret
+api_keys = hsecret.get_secret("talos_sandbox")
+
+# %%
+api_keys
+
+
+# %% [markdown]
+# ## Place sell order using TWAP strategy
+
+# %% [markdown]
+# In order to specify strategy one should use param `Strategy` and choose one of the 10 options (see description in th doc: https://docs.google.com/document/d/1BPn08jDr-Rzu79KhAKFA_ZI1Vk1WtxDuLgm4N05DFRc/edit#)
+#
+# In this case there's a presentation of Sell order via TWAP order strategy. TWAP strategy requires param `EndTime`, while StartTime is optional.
+
+# %%
+def create_order(timestamp_ISO8601: str):
+    order = {
+        "ClOrdID": get_cl_ord_id(),
+        "Markets": ["binance"],
+        "OrderQty": "0.1000",
+        "Symbol": "BTC-USDT",
+        "Currency": "BTC",
+        "TransactTime": timestamp_ISO8601,  # Should always be the utcnow() with Talos date formatting.
+        "OrdType": "Limit",
+        "TimeInForce": "GoodTillCancel",
+        "Price": "37000",
+        "Side": "Sell",
+        "Strategy": "TWAP",
+        "EndTime": "2022-03-08T16:21:00.000000Z",
+        #"StartTime": "2022-03-08T16:22:00.000000Z"
+    }
+    return order
+
+
+# %%
+get_orders(endpoint, path, api_keys["apiKey"], api_keys["secret"])
+
+# %%
+post_order(endpoint, path, api_keys["apiKey"], api_keys["secret"])
+
+# %% [markdown]
+# After posting the order one can check https://sandbox.talostrading.com/ to see how it is gradually being filled.
+
+# %% [markdown]
+# Interesting note: TWAP really decreases the number of paid fees.
+# In comparison, the fees for a standard order (Limit) is 7.75 from an execution price 38773.97 (so, 0,02%), while TWAP order costs only 5.19 from an execution price 38737.24 (so, 0,014%).
