@@ -1,7 +1,9 @@
 import logging
+import os
 
 import pytest
 
+import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import helpers.hversion as hversio
 
@@ -21,7 +23,8 @@ class TestVersioning1(hunitest.TestCase):
         """
         Test `optimizer` version.
         """
-        dir_name = "optimizer"
+        amp_path = hgit.get_amp_abs_path()
+        dir_name = os.path.join(amp_path, "optimizer")
         code_version = hversio.get_changelog_version(dir_name)
         _LOG.debug("code_version=%s", code_version)
 
