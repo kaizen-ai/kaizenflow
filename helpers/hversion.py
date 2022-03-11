@@ -93,8 +93,8 @@ def get_changelog_version(container_dir_name: str) -> Optional[str]:
     version: Optional[str] = None
     supermodule = True
     root_dir = hgit.get_client_root(supermodule)
-    # Note: for `amp` as submodule one should `container_dir_name` relative to
-    # the root, e.g., `amp/optimizer` and not just `optimizer`.
+    # Note: for `amp` as submodule one should pass `container_dir_name` relative
+    # to the root, e.g., `amp/optimizer` and not just `optimizer`.
     changelog_file = os.path.join(root_dir, container_dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)
