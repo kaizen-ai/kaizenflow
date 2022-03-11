@@ -171,3 +171,30 @@ def opt_docker_jupyter(  # type: ignore
         self_test=self_test,
         container_dir_name=_OPTIMIZER_DIR,
     )
+
+
+# #############################################################################
+# Docker up / down.
+# #############################################################################
+
+def _get_docker_cmd(command: str) -> str:
+    cmd = ["docker-compose"]
+    cmd.append(command)
+    cmd = hlibtask._to_multi_line_cmd(cmd)
+    return cmd  # type: ignore[no-any-return]
+
+
+@task
+def opt_docker_up(ctx, command="up"):
+    docker_up_cmd = _get_docker_cmd(command)
+
+    # Execute the command.
+    hlibtask._run(ctx, docker_up_cmd, pty=True)
+
+
+@task
+def opt_docker_down(ctx, command="down"):
+    docker_down_cmd = _get_docker_cmd(command)
+
+    # Execute the command.
+    hlibtask._run(ctx, docker_down_cmd, pty=True)
