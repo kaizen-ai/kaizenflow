@@ -21,6 +21,7 @@ except ModuleNotFoundError:
     _module = "dateutil"
     print(_WARNING + f": Can't find {_module}: continuing")
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
 
 import pandas as pd  # noqa: E402 # pylint: disable=wrong-import-position
 
