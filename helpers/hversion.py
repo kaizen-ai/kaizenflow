@@ -92,8 +92,9 @@ def get_changelog_version(container_dir_name: str) -> Optional[str]:
     version: Optional[str] = None
     # Handle supermodule and submodule cases by finding the location of the
     # `amp` directory.
-    amp_path = hgit.get_amp_abs_path()
-    changelog_file = os.path.join(amp_path, container_dir_name, "changelog.txt")
+    supermodule = True
+    root_dir = hgit.get_client_root(supermodule)
+    changelog_file = os.path.join(root_dir, container_dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)
     match = re.search(_CHANGELOG_VERSION_RE, changelog)
