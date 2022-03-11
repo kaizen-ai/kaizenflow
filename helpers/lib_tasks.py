@@ -4158,7 +4158,7 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
     print(f"> {cmd}")
 
 
-def _get_test_directories(root_dir: str, old_class_name: str, old_method_name: str) -> List[str]:
+def _get_test_directories(root_dir: str) -> List[str]:
     """
     Get all paths of the directories that contain outcome of specified unit test.
 
@@ -4168,18 +4168,10 @@ def _get_test_directories(root_dir: str, old_class_name: str, old_method_name: s
     :returns:
     """
     paths = []
-    # Build the target name, e.g. `TestCacheUpdateFunction1` if class or `TestCacheUpdateFunction1.test1` if method.
-    tagret_name = ".".join([old_class_name, old_method_name])
-    # We wath to find the path of the directories that contain test outcomes.
-    # It helps us to narrow down the area of the search of python files containing the target class
-    # as we know that file with unit tests always locates in the same test directory.
-    for path, dirs, _ in os.walk(root_dir):
+    for path, _, _ in os.walk(root_dir):
         # Iterate over the directories to find the test outcomes.
-        for dir_name in dirs:
-            if tagret_name in dir_name:
-                # Here path example is .../test/outcome
-                paths.append(path)
-                break
+        if path.endswith("/test"):
+            paths.append(path)
     return paths
 
 
@@ -4193,13 +4185,15 @@ def _process_file_content(path: str, old_class_name: str, new_class_name: str, o
         return False
     if rename_method:
         # Rename the method of the class.
-        content = _rename_method(path, content, old_class_name, old_method_name, new_method_name)
+        content = _rename_method(content, old_class_name, old_method_name, new_method_name)
     else:
         # Rename the class.
         content = re.sub(pattern, f"class {new_class_name}", content)
+        _LOG.debug(f"{path}: class `{old_class_name}` renamed to {new_class_name}")
     # Write processed content back to file.
     hio.to_file(path, content)
     _rename_outcomes(path, old_class_name, new_class_name, old_method_name, new_method_name, rename_method)
+    return True
     
 
 def _rename_method(path: str, content: str, class_name: str, old_method_name: str, new_method_name: str) -> str:
@@ -4230,27 +4224,36 @@ def _rename_method(path: str, content: str, class_name: str, old_method_name: st
                 class_found = True
     hdbg.dassert(method_replaced, f"Old method `{old_method_name}` of was not find in class `{class_name}`");
     new_content = "\n".join(lines)   
+    _LOG.debug(f"{path}: method `{old_method_name}` of `{class_name}` class was renamed to {new_method_name}")
     return new_content
 
 
 def _rename_outcomes(path: str, old_class_name: str, new_class_name: str, old_method_name: str, new_method_name: str, rename_method: bool):
     """
     """
-    directories = [dir_name for dir_name in os.listdir(path) if os.path.isdir(os.path.join(path, dir_name))]
+    outcomes_path = os.path.join(path, "outcomes")
+    # Filter out directories.
+    outcomes = [dir_name for dir_name in os.listdir(outcomes_path) if os.path.isdir(os.path.join(outcomes_path, dir_name))]
     old_target_name = ".".join([old_class_name, old_method_name])
     new_target_name = ".".join([new_class_name, new_method_name])
-    cmd = ""
-    for outcome_dir in directories:
+    for outcome_dir in outcomes:
+        # Contruct the path to outcomes directory.
+        outcome_path_old = os.path.join(path, outcome_dir)
         if rename_method and (outcome_dir == old_target_name):
-            outcome_path_old = os.path.join(path, outcome_dir)
             outcome_path_new = os.path.join(path, new_target_name)
-            cmd = f"git mv -k {outcome_path_old} {outcome_path_new}"
-        if not rename_method and (outcome_dir.startswith(old_target_name)):
-            
-        
-        outcome_dir.startswith(old_target_name):
-            new_name =
-    pass
+        elif rename_method and outcome_dir.startswith(old_target_name):
+            # Split old directory name - the part before "." is the class name.
+            class_method = outcome_dir.split(".")
+            # Replace old class name with the new one.
+            class_method[0] = new_class_name
+            outcome_name_new = ".".join(class_method)
+            outcome_path_new = os.path.join(path, outcome_name_new)
+        else:
+            continue
+        cmd = f"git mv {outcome_path_old} {outcome_path_new}"
+        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        _LOG.debug("Renaming `%s` directory to `%s`. Output log: %s", outcome_path_old, outcome_path_new, rc)
+    
 
 
 @task
@@ -4299,13 +4302,12 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     else:
         #
         hdbg.dassert(False, "The test names are not consistent.");
-    # Get the paths to test directories that contain outcomes of target test.
-    test_directories = _get_test_directories(root_dir, old_class_name, old_method_name)
+    # Get the paths to test directories.
+    test_directories = _get_test_directories(root_dir)
     hdbg.dassert(len(test_directories)>=1, "No unit tests outcomes found in '%s'", root_dir)
-    # Iterate over test directories that contain test outcome.
-    for path in test_directories:
-        # Since all test outcomes are located in `.../test/outcomes` directory,
-        # go on one level down 
+    # Iterate over test directories.
+    for path in test_directories: 
+        _LOG.debug(f"Scanning `{path}` directory.")
         search_pattern = os.path.join(path, "test_*.py")
         # Get all python test files from this directory.
         files = glob.glob(search_pattern)
