@@ -6,18 +6,18 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
 
 # #############################################################################
-# TestTalosParquetByAssetClient1
+# TestTalosParquetByTileClient1
 # #############################################################################
 
 
-class TestTalosParquetByAssetClient1(icdctictc.ImClientTestCase):
+class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
     """
 
     def test_read_data5(self) -> None:
-        talos_client = imvtdctcex.get_TalosParquetByAssetClient_example1()
+        talos_client = imvtdctcex.get_TalosParquetByTileClient_example1()
         full_symbols = ["binance::ADA_USDT", "coinbase::BTC_USDT"]
         start_ts = pd.Timestamp("2022-01-01T00:01:00-00:00")
         end_ts = pd.Timestamp("2022-01-01T00:05:00-00:00")

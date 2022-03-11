@@ -46,11 +46,11 @@ class TalosClient(icdc.ImClient, abc.ABC):
 
 
 # #############################################################################
-# TalosParquetByAssetClient
+# TalosParquetByTileClient
 # #############################################################################
 
 
-class TalosParquetByAssetClient(TalosClient, icdc.ImClientReadingOneSymbol):
+class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
     """
     Read data from a Parquet file storing data for a single `Talos` asset.
 
