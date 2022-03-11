@@ -17,12 +17,12 @@ import os
 import re
 from typing import Optional
 
+# Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
+# import cycles.
+
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
-
-# Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
-# import cycles.
 
 
 _LOG = logging.getLogger(__name__)
@@ -95,6 +95,7 @@ def get_changelog_version(container_dir_name: str) -> Optional[str]:
     root_dir = hgit.get_client_root(supermodule)
     # Note: for `amp` as submodule one should pass `container_dir_name` relative
     # to the root, e.g., `amp/optimizer` and not just `optimizer`.
+    hdbg.dassert_ne(container_dir_name, "")
     changelog_file = os.path.join(root_dir, container_dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)

@@ -15,8 +15,8 @@ class TestVersioning1(hunitest.TestCase):
         """
         Test `cmamp` version.
         """
-        dir_name = ""
-        code_version = hversio.get_changelog_version(dir_name)
+        container_dir_name = "."
+        code_version = hversio.get_changelog_version(container_dir_name)
         _LOG.debug("code_version=%s", code_version)
 
     def test_get_changelog_version2(self) -> None:
@@ -24,8 +24,8 @@ class TestVersioning1(hunitest.TestCase):
         Test `optimizer` version.
         """
         amp_path = hgit.get_amp_abs_path()
-        dir_name = os.path.join(amp_path, "optimizer")
-        code_version = hversio.get_changelog_version(dir_name)
+        container_dir_name = os.path.join(amp_path, "optimizer")
+        code_version = hversio.get_changelog_version(container_dir_name)
         _LOG.debug("code_version=%s", code_version)
 
     def test_get_container_version1(self) -> None:
@@ -33,8 +33,8 @@ class TestVersioning1(hunitest.TestCase):
         _LOG.debug("container_version=%s", container_version)
 
     def test_check_version1(self) -> None:
-        dir_name = ""
-        hversio.check_version(dir_name)
+        container_dir_name = "."
+        hversio.check_version(container_dir_name)
 
     @pytest.mark.skip(reason="CmampTask570")
     def test__check_version1(self) -> None:
