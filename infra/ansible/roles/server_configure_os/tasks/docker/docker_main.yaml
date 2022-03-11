@@ -10,6 +10,14 @@
     path: "{{ ansible_env.HOME }}/ROOTLESS_DOCKER.README"
     state: absent
 
+ name: deploy docker daemon configuration options
+  template:
+    src: docker.daemon.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: 0644
+
 - name: rootful docker
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ docker_user_info.uid }}"
