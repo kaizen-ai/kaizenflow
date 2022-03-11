@@ -31,7 +31,6 @@ def get_TalosParquetByAssetClient_example1() -> imvtdctacl.TalosParquetByAssetCl
     """
     Get `TalosParquetByAssetClient` object for the tests.
     """
-    # TODO(Dan): Add snippet of data.
     root_dir = get_test_data_dir()
     talos_file_client = imvtdctacl.TalosParquetByAssetClient(root_dir)
     return talos_file_client
