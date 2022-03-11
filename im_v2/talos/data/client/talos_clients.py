@@ -52,7 +52,7 @@ class TalosClient(icdc.ImClient, abc.ABC):
 
 class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
     """
-    Read data from a Parquet file storing data for a single `Talos` asset.
+    Read historical data for 1 `Talos` asset stored as Parquet dataset.
 
     It can read data from local or S3 filesystem as backend.
     """
