@@ -81,6 +81,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     pytest_clean,
     pytest_compare,
     pytest_repro,
+    pytest_rename_test,
     run_blank_tests,
     run_coverage_report,
     run_fast_slow_superslow_tests,
