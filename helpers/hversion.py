@@ -34,16 +34,18 @@ _ERROR = "\033[31mERROR\033[0m"
 _CHANGELOG_VERSION_RE = r"\d+\.\d+\.\d+"
 
 
-def check_version(dir_name: str) -> None:
+def check_version(container_dir_name: str) -> None:
     """
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
+
+    :param container_dir_name: container directory, e.g., `optimizer`
     """
     if "SKIP_VERSION_CHECK" in os.environ:
         # Skip the check altogether.
         return
     # Get code version.
-    code_version = get_changelog_version(dir_name)
+    code_version = get_changelog_version(container_dir_name)
     container_version = _get_container_version()
     is_inside_container = _is_inside_container()
     # Print information.
@@ -81,16 +83,17 @@ def check_version(dir_name: str) -> None:
     _check_version(code_version, container_version)
 
 
-def get_changelog_version(dir_name: str) -> Optional[str]:
+def get_changelog_version(container_dir_name: str) -> Optional[str]:
     """
     Return latest version from changelog.txt file.
 
-    :param dir_name: container directory, e.g., `cmamp`, `optimizer`
+    :param container_dir_name: container directory, e.g., `optimizer`
     """
     version: Optional[str] = None
-    # Handle supermodule and submodule cases.
+    # Handle supermodule and submodule cases by finding the location of the
+    # `amp` directory.
     amp_path = hgit.get_amp_abs_path()
-    changelog_file = os.path.join(amp_path, dir_name, "changelog.txt")
+    changelog_file = os.path.join(amp_path, container_dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)
     match = re.search(_CHANGELOG_VERSION_RE, changelog)

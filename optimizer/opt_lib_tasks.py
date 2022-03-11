@@ -29,7 +29,7 @@ def opt_docker_build_local_image(  # type: ignore
     """
     Build a local `opt` image (i.e., a release candidate "dev" image).
 
-    See more in `helpers/lib_tasks.py::docker_build_local_image`.
+    See corresponding invoke target for the main container.
     """
     hlibtask.docker_build_local_image(
         ctx,
@@ -37,7 +37,7 @@ def opt_docker_build_local_image(  # type: ignore
         cache=cache,
         base_image=base_image,
         update_poetry=update_poetry,
-        dir_name="optimizer",
+        container_dir_name="optimizer",
     )
 
 
@@ -50,13 +50,13 @@ def opt_docker_tag_local_image_as_dev(  # type: ignore
     """
     (ONLY CI/CD) Mark the `opt:local` image as `dev`.
 
-    See more in `helpers/lib_tasks.py::docker_tag_local_image_as_dev`.
+    See corresponding invoke target for the main container.
     """
     hlibtask.docker_tag_local_image_as_dev(
         ctx,
         version,
         base_image=base_image,
-        dir_name="optimizer",
+        container_dir_name="optimizer",
     )
 
 
@@ -69,10 +69,10 @@ def opt_docker_push_dev_image(  # type: ignore
     """
     (ONLY CI/CD) Push the `opt:dev` image to ECR.
 
-    See more in `helpers/lib_tasks.py::docker_push_dev_image`.
+    See corresponding invoke target for the main container.
     """
     hlibtask.docker_push_dev_image(
-        ctx, version, base_image=base_image, dir_name="optimizer"
+        ctx, version, base_image=base_image, container_dir_name="optimizer"
     )
 
 
@@ -87,7 +87,7 @@ def opt_docker_release_dev_image(  # type: ignore
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest `opt:dev` image.
 
-    See more in `helpers/lib_tasks.py::docker_release_dev_image`.
+    See corresponding invoke target for the main container.
 
     Phases:
     1) Build local image
@@ -107,7 +107,7 @@ def opt_docker_release_dev_image(  # type: ignore
         qa_tests=False,
         push_to_repo=push_to_repo,
         update_poetry=update_poetry,
-        dir_name="optimizer",
+        container_dir_name="optimizer",
     )
 
 
@@ -128,7 +128,7 @@ def opt_docker_bash(  # type: ignore
     """
     Start a bash shell inside the `opt` container corresponding to a stage.
 
-    See more in `helpers/lib_tasks.py::docker_bash`.
+    See corresponding invoke target for the main container.
     """
     hlibtask.docker_bash(
         ctx,
@@ -137,7 +137,7 @@ def opt_docker_bash(  # type: ignore
         version=version,
         entrypoint=entrypoint,
         as_user=as_user,
-        dir_name="optimizer",
+        container_dir_name="optimizer",
     )
 
 
@@ -154,7 +154,7 @@ def opt_docker_jupyter(  # type: ignore
     """
     Run jupyter notebook server in the `opt` container.
 
-    See more in `helpers/lib_tasks.py::docker_jupyter`.
+    See corresponding invoke target for the main container.
     """
     hlibtask.docker_jupyter(
         ctx,
@@ -164,5 +164,5 @@ def opt_docker_jupyter(  # type: ignore
         auto_assign_port=auto_assign_port,
         port=port,
         self_test=self_test,
-        dir_name="optimizer",
+        container_dir_name="optimizer",
     )
