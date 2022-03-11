@@ -23,7 +23,7 @@ class TestTalosParquetByAssetClient1(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2022-01-01T00:05:00-00:00")
         #
         expected_length = 10
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT", "coinbase::BTC_USDT"]
         }
@@ -58,7 +58,7 @@ class TestTalosParquetByAssetClient1(icdctictc.ImClientTestCase):
     # ////////////////////////////////////////////////////////////////////////
 
     @staticmethod
-    def _get_expected_column_names() -> List[str]:
+    def get_expected_column_names() -> List[str]:
         """
         Return a list of expected column names.
         """
