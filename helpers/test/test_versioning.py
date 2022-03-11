@@ -1,7 +1,9 @@
 import logging
+import os
 
 import pytest
 
+import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import helpers.hversion as hversio
 
@@ -10,7 +12,20 @@ _LOG = logging.getLogger(__name__)
 
 class TestVersioning1(hunitest.TestCase):
     def test_get_changelog_version1(self) -> None:
-        code_version = hversio.get_changelog_version()
+        """
+        Test `cmamp` version.
+        """
+        container_dir_name = "."
+        code_version = hversio.get_changelog_version(container_dir_name)
+        _LOG.debug("code_version=%s", code_version)
+
+    def test_get_changelog_version2(self) -> None:
+        """
+        Test `optimizer` version.
+        """
+        amp_path = hgit.get_amp_abs_path()
+        container_dir_name = os.path.join(amp_path, "optimizer")
+        code_version = hversio.get_changelog_version(container_dir_name)
         _LOG.debug("code_version=%s", code_version)
 
     def test_get_container_version1(self) -> None:
@@ -18,7 +33,8 @@ class TestVersioning1(hunitest.TestCase):
         _LOG.debug("container_version=%s", container_version)
 
     def test_check_version1(self) -> None:
-        hversio.check_version()
+        container_dir_name = "."
+        hversio.check_version(container_dir_name)
 
     @pytest.mark.skip(reason="CmampTask570")
     def test__check_version1(self) -> None:

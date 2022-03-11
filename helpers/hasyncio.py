@@ -22,6 +22,9 @@ from typing import (
     cast,
 )
 
+# Avoid dependency from other `helpers` modules, such as `helpers.hsql`, to prevent
+# import cycles.
+
 import async_solipsism
 import pandas as pd
 
