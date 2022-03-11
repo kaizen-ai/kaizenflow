@@ -2443,7 +2443,9 @@ def docker_build_local_image(  # type: ignore
     """
     _report_task(container_dir_name=container_dir_name)
     _dassert_is_subsequent_version(version, container_dir_name=container_dir_name)
-    version = _resolve_version_value(version, container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # Update poetry, if needed.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
@@ -2494,7 +2496,9 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task(container_dir_name=container_dir_name)
-    version = _resolve_version_value(version, container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
     image_versioned_local = get_image(base_image, "local", version)
     image_versioned_dev = get_image(base_image, "dev", version)
@@ -2521,7 +2525,9 @@ def docker_push_dev_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task(container_dir_name=container_dir_name)
-    version = _resolve_version_value(version, container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     #
     docker_login(ctx)
     # Push Docker versioned tag.
@@ -2584,7 +2590,9 @@ def docker_release_dev_image(  # type: ignore
     # Run resolve after `docker_build_local_image` so that a proper check
     # for subsequent version can be made in case `FROM_CHANGELOG` token
     # is used.
-    version = _resolve_version_value(version, container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
@@ -2600,7 +2608,9 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx, version, container_dir_name=container_dir_name)
+    docker_tag_local_image_as_dev(
+        ctx, version, container_dir_name=container_dir_name
+    )
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
         run_qa_tests(ctx, stage="dev", version=version)
@@ -2648,7 +2658,9 @@ def docker_build_prod_image(  # type: ignore
         where hash is the output of hgit.get_head_hash
     """
     _report_task(container_dir_name=container_dir_name)
-    version = _resolve_version_value(version, container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # Prepare `.dockerignore`.
     docker_ignore = ".dockerignore.prod"
     _prepare_docker_ignore(ctx, docker_ignore)
@@ -2712,7 +2724,9 @@ def docker_push_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     _report_task(container_dir_name=container_dir_name)
-    version = _resolve_version_value(version, container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     #
     docker_login(ctx)
     # Push versioned tag.
@@ -2776,9 +2790,13 @@ def docker_release_prod_image(  # type: ignore
     :param push_to_repo: push the image to the repo_short_name
     """
     _report_task(container_dir_name=container_dir_name)
-    version = _resolve_version_value(version, container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # 1) Build prod image.
-    docker_build_prod_image(ctx, cache=cache, version=version, container_dir_name=container_dir_name)
+    docker_build_prod_image(
+        ctx, cache=cache, version=version, container_dir_name=container_dir_name
+    )
     # 2) Run tests.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
@@ -2792,7 +2810,9 @@ def docker_release_prod_image(  # type: ignore
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Push prod image.
     if push_to_repo:
-        docker_push_prod_image(ctx, version=version, container_dir_name=container_dir_name)
+        docker_push_prod_image(
+            ctx, version=version, container_dir_name=container_dir_name
+        )
     else:
         _LOG.warning("Skipping pushing image to repo_short_name as requested")
     _LOG.info("==> SUCCESS <==")
