@@ -88,7 +88,7 @@ class TalosParquetByAssetClient(TalosClient, icdc.ImClientReadingOneSymbol):
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
-        See the `_read_data_for_one_symbol()` in the parent class.
+        See description in the parent class.
         """
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
