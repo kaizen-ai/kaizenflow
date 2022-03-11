@@ -39,7 +39,7 @@ def check_version(container_dir_name: str) -> None:
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
 
-    :param container_dir_name: container directory, e.g., `optimizer`
+    :param container_dir_name: container directory relative to the root directory
     """
     if "SKIP_VERSION_CHECK" in os.environ:
         # Skip the check altogether.
@@ -87,13 +87,13 @@ def get_changelog_version(container_dir_name: str) -> Optional[str]:
     """
     Return latest version from changelog.txt file.
 
-    :param container_dir_name: container directory, e.g., `optimizer`
+    :param container_dir_name: container directory relative to the root directory
     """
     version: Optional[str] = None
-    # Handle supermodule and submodule cases by finding the location of the
-    # `amp` directory.
     supermodule = True
     root_dir = hgit.get_client_root(supermodule)
+    # Note: for `amp` as submodule one should `container_dir_name` relative to
+    # the root, e.g., `amp/optimizer` and not just `optimizer`.
     changelog_file = os.path.join(root_dir, container_dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)

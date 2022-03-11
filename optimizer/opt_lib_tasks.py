@@ -5,12 +5,17 @@ import optimizer.opt_lib_tasks as ooplitas
 """
 
 import logging
+import os
 
 from invoke import task
 
+import helpers.hgit as hgit
 import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
+
+
+_OPTIMIZER_DIR = os.path.join(hgit.get_amp_abs_path(), "optimizer")
 
 
 # #############################################################################
@@ -37,7 +42,7 @@ def opt_docker_build_local_image(  # type: ignore
         cache=cache,
         base_image=base_image,
         update_poetry=update_poetry,
-        container_dir_name="optimizer",
+        container_dir_name=_OPTIMIZER_DIR,
     )
 
 
@@ -56,7 +61,7 @@ def opt_docker_tag_local_image_as_dev(  # type: ignore
         ctx,
         version,
         base_image=base_image,
-        container_dir_name="optimizer",
+        container_dir_name=_OPTIMIZER_DIR,
     )
 
 
@@ -72,7 +77,7 @@ def opt_docker_push_dev_image(  # type: ignore
     See corresponding invoke target for the main container.
     """
     hlibtask.docker_push_dev_image(
-        ctx, version, base_image=base_image, container_dir_name="optimizer"
+        ctx, version, base_image=base_image, container_dir_name=_OPTIMIZER_DIR
     )
 
 
@@ -107,7 +112,7 @@ def opt_docker_release_dev_image(  # type: ignore
         qa_tests=False,
         push_to_repo=push_to_repo,
         update_poetry=update_poetry,
-        container_dir_name="optimizer",
+        container_dir_name=_OPTIMIZER_DIR,
     )
 
 
@@ -137,7 +142,7 @@ def opt_docker_bash(  # type: ignore
         version=version,
         entrypoint=entrypoint,
         as_user=as_user,
-        container_dir_name="optimizer",
+        container_dir_name=_OPTIMIZER_DIR,
     )
 
 
@@ -164,5 +169,5 @@ def opt_docker_jupyter(  # type: ignore
         auto_assign_port=auto_assign_port,
         port=port,
         self_test=self_test,
-        container_dir_name="optimizer",
+        container_dir_name=_OPTIMIZER_DIR,
     )
