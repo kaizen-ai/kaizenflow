@@ -151,7 +151,7 @@ def optimize(
     # Call optimizer_stub through Docker.
     cmd = []
     cmd.append("cd optimizer &&")
-    cmd.append("optimizer_stub.py")
+    cmd.append("./optimizer_stub.py")
     cmd.append(f"--input_file {input_file}")
     output_file = os.path.join(tmp_dir, "output.pkl")
     cmd.append(f"--output_file {output_file}")
@@ -159,13 +159,14 @@ def optimize(
     cmd = " ".join(cmd)
     #
     base_image = ""
-    stage = "local"
-    version = "0.1.0"
+    stage = "dev"
+    version = ""
     entrypoint = True
     as_user = True
     docker_cmd = hlibtask._get_docker_cmd(
         base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user, use_bash=True
     )
+    print(docker_cmd)
     # ctx = invoke.context.Context()
     # hlibtask._run(ctx, docker_cmd, pty=True)
     hsystem.system("sudo " + docker_cmd)
