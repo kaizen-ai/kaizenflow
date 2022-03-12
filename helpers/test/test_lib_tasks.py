@@ -1020,6 +1020,10 @@ class TestLibTasksRunTests1(hunitest.TestCase):
 
 
 @pytest.mark.slow(reason="Around 7s")
+@pytest.mark.skipif(
+    not hgit.is_in_amp_as_supermodule(),
+    reason="Run only in amp as super-module",
+)
 class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     """
     Test `git_create_patch()`.
