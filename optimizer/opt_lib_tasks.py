@@ -185,7 +185,8 @@ def _get_docker_cmd(command: str) -> str:
 
 
 @task
-def opt_docker_up(ctx, command="up"):
+def opt_docker_up(ctx):
+    command = "up"
     docker_up_cmd = _get_docker_cmd(command)
 
     # Execute the command.
@@ -193,7 +194,8 @@ def opt_docker_up(ctx, command="up"):
 
 
 @task
-def opt_docker_down(ctx, command="down"):
+def opt_docker_down(ctx):
+    command = "down"
     docker_down_cmd = _get_docker_cmd(command)
 
     # Execute the command.
