@@ -49,7 +49,8 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     import helpers.hversion as hversio
 
     # TODO(gp): This should return a string that we append to the rest.
-    hversio.check_version()
+    container_dir_name = "."
+    hversio.check_version(container_dir_name)
     #
     txt: List[str] = []
     # Add git signature.

@@ -535,13 +535,18 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
     return new_filename
 
 
-def create_executable_script(file_name: str, content: str) -> None:
+# TODO(gp): @all Use msg in all uses of this script `jackpyc "create_executable"`
+def create_executable_script(file_name: str, content: str,
+                             *,
+                             msg: str ="") -> None:
     # Write the file.
     hdbg.dassert_isinstance(content, str)
     to_file(file_name, content)
     # Make it executable.
     cmd = "chmod +x " + file_name
     hsystem.system(cmd)
+    if msg:
+        print(f"# {msg}:\n> {file_name}")
 
 
 # #############################################################################

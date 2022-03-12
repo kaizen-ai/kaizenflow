@@ -956,7 +956,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         act = hlibtask._find_test_class("TestHelloWorld", file_names)
         act = hunitest.purify_file_names(act)
         exp = [
-            "helpers/test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
+            "helpers/test/outcomes/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
             "test/test_this.py::TestHelloWorld"
         ]
         self.assert_equal(str(act), str(exp))
@@ -994,7 +994,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         act = hlibtask._find_test_decorator("no_container", file_names)
         act = hunitest.purify_file_names(act)
         exp = [
-            "helpers/test/TestLibTasksRunTests1.test_find_test_decorator1/"
+            "helpers/test/outcomes/TestLibTasksRunTests1.test_find_test_decorator1/"
             "tmp.scratch/test/test_that.py"
         ]
         self.assert_equal(str(act), str(exp))

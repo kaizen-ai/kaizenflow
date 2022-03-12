@@ -4011,6 +4011,7 @@ def pytest_repro(  # type: ignore
     mode="tests",
     file_name="./.pytest_cache/v/cache/lastfailed",
     show_stacktrace=False,
+    create_script=True,
 ):
     """
     Generate commands to reproduce the failed tests after a `pytest` run.
@@ -4045,6 +4046,7 @@ def pytest_repro(  # type: ignore
     :param file_name: the name of the file containing the pytest output file to parse
     :param show_stacktrace: whether to show the stacktrace of the failed tests
       - only if it is available in the pytest output file
+    :param create_script: create a script to run the tests
     :return: commands to reproduce pytest failures at the requested granularity level
     """
     _report_task()
@@ -4082,10 +4084,10 @@ def pytest_repro(  # type: ignore
             test_method,
         )
         if mode == "tests":
-            targets.append("pytest " + test)
+            targets.append(test)
         elif mode == "files":
             if test_file_name != "":
-                targets.append("pytest " + test_file_name)
+                targets.append(test_file_name)
             else:
                 _LOG.warning(
                     "Skipping test='%s' since test_file_name='%s'",
@@ -4094,7 +4096,7 @@ def pytest_repro(  # type: ignore
                 )
         elif mode == "classes":
             if test_file_name != "" and test_class != "":
-                targets.append(f"pytest {test_file_name}::{test_class}")
+                targets.append(f"{test_file_name}::{test_class}")
             else:
                 _LOG.warning(
                     "Skipping test='%s' since test_file_name='%s', test_class='%s'",
@@ -4105,15 +4107,17 @@ def pytest_repro(  # type: ignore
         else:
             hdbg.dfatal(f"Invalid mode='{mode}'")
     # Package the output.
-    _LOG.debug("res=%s", str(targets))
+    # targets is a list of tests in the format
+    # `helpers/test/test_env.py::Test_env1::test_get_system_signature1`.
+    hdbg.dassert_isinstance(targets, list)
     targets = hlist.remove_duplicates(targets)
     failed_test_output_str = (
         f"Found {len(targets)} failed pytest '{mode}' target(s); "
-        "to reproduce run:\n" + "\n".join(targets)
+        "to reproduce run:\n"
     )
-    hdbg.dassert_isinstance(targets, list)
-    res = " ".join(targets)
-    _LOG.debug("res=%s", str(res))
+    res = ["pytest %s" % t for t in targets]
+    res = "\n".join(res)
+    failed_test_output_str += res
     #
     if show_stacktrace:
         # Get the stacktrace block from the pytest output.
@@ -4123,6 +4127,8 @@ def pytest_repro(  # type: ignore
             or "====== slowest 3 durations ======" not in txt
         ):
             _LOG.info("%s", failed_test_output_str)
+            # TODO(gp): @Sonya this return from the middle of the code makes the
+            #  code difficult to understand. There should be a single return.
             return res
         txt = txt.split("====== FAILURES ======")[-1].split(
             "====== slowest 3 durations ======"
@@ -4154,6 +4160,11 @@ def pytest_repro(  # type: ignore
         failed_test_output_str += full_traceback
         res += full_traceback
     _LOG.info("%s", failed_test_output_str)
+    if create_script:
+        script_name = "./tmp.pytest_repro.sh"
+        cmd = "pytest " + " ".join(targets)
+        msg = "To run the tests"
+        hio.create_executable_script(script_name, cmd, msg=msg)
     return res
 
 
