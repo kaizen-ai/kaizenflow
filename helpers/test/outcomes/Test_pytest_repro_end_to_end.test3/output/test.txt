@@ -6,3 +6,5 @@ HH:MM:SS - INFO  lib_tasks.py pytest_repro:{LINE_NUM}                         Fo
 pytest dataflow/pipelines/real_time/test/test_dataflow_pipelines_real_time_pipeline.py::TestRealTimeMvnReturnsWithOms1::test1
 pytest dataflow/core/nodes/test/test_sources.py::TestMultivariateNormalDataSource::test1
 pytest dataflow/core/test/test_builders.py::TestMvnReturnsBuilder::test1
+# To run the tests:
+> ./tmp.pytest_repro.sh

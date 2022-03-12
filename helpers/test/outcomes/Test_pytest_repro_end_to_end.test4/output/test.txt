@@ -33,3 +33,6 @@ Traceback (most recent call last):
   File "/app/dataflow/core/nodes/sources.py", line 354, in _generate_returns
     vol = cofinanc.compute_annualized_volatility(avg_rets)
 NameError: name 'cofinanc' is not defined
+
+# To run the tests:
+> ./tmp.pytest_repro.sh

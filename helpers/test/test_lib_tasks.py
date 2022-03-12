@@ -9,6 +9,7 @@ from typing import Dict, List
 import invoke
 import pytest
 
+import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
@@ -1570,6 +1571,17 @@ class Test_get_files_to_process1(hunitest.TestCase):
 
 
 class Test_pytest_repro1(hunitest.TestCase):
+    def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
+        ctx = _build_mock_context_returning_ok()
+        act = hlibtask.pytest_repro(
+            ctx,
+            mode=mode,
+            file_name=file_name,
+        )
+        hdbg.dassert_isinstance(act, str)
+        exp = "\n".join(["pytest " + x for x in exp])
+        self.assert_equal(act, exp)
+
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
         mode = "tests"
@@ -1582,7 +1594,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/helpers/test/test_list.py::Test_list_1",
             "helpers/test/test_cache.py::TestAmpTask1407",
         ]
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_files1(self) -> None:
         file_name = self._build_pytest_file1()
@@ -1596,7 +1608,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/helpers/test/test_list.py",
             "helpers/test/test_cache.py",
         ]
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_classes1(self) -> None:
         file_name = self._build_pytest_file1()
@@ -1606,7 +1618,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/helpers/test/test_list.py::Test_list_1",
             "helpers/test/test_cache.py::TestAmpTask1407",
         ]
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_tests2(self) -> None:
         file_name = self._build_pytest_file2()
@@ -1663,7 +1675,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py::Test_dedent1::test2",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_files2(self) -> None:
         file_name = self._build_pytest_file2()
@@ -1683,7 +1695,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_classes2(self) -> None:
         file_name = self._build_pytest_file2()
@@ -1707,11 +1719,11 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py::Test_dedent1",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     # #########################################################################
 
-    def _build_pytest_file_helper(self, txt: str) -> str:
+    def _build_pytest_filehelper(self, txt: str) -> str:
         txt = hprint.dedent(txt)
         file_name = os.path.join(self.get_scratch_space(), "cache/lastfailed")
         hio.to_file(file_name, txt)
@@ -1729,7 +1741,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_cache.py::TestAmpTask1407": true
         }
         """
-        return self._build_pytest_file_helper(txt)
+        return self._build_pytest_filehelper(txt)
 
     def _build_pytest_file2(self) -> str:
         # pylint: disable=line-too-long
@@ -1786,17 +1798,7 @@ class Test_pytest_repro1(hunitest.TestCase):
         }
         """
         # pylint: enable=line-too-long
-        return self._build_pytest_file_helper(txt)
-
-    def _helper(self, file_name: str, mode: str, exp: List[str]) -> None:
-        ctx = _build_mock_context_returning_ok()
-        act = hlibtask.pytest_repro(
-            ctx,
-            mode=mode,
-            file_name=file_name,
-        )
-        exp = " ".join(["pytest " + x for x in exp])
-        self.assert_equal(act, exp)
+        return self._build_pytest_filehelper(txt)
 
 
 class Test_pytest_repro_end_to_end(hunitest.TestCase):
