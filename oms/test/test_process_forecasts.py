@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
-    @pytest.mark.skip("Enable after updating Pandas")
+    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             hasynci.run(
@@ -133,7 +133,7 @@ asset_id                    101    202
 
 class TestSimulatedProcessForecasts2(hunitest.TestCase):
     @pytest.mark.slow("~8 seconds")
-    @pytest.mark.skip("Enable after updating Pandas")
+    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             hasynci.run(

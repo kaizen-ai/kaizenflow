@@ -123,6 +123,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
 # TODO(gp): Use dag_builder = dtfsrtdaad.RealTimeDagAdapter(base_dag_builder,
 #   portfolio)
 # TODO(gp): -> TestRealTimeNaivePipelineWithOms1
+@pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
 class TestRealTimePipelineWithOms1(hunitest.TestCase):
     """
     This test uses:
