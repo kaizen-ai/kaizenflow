@@ -213,7 +213,7 @@ def _run(
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
     if dry_run:
-        print(f"> {cmd}")
+        print(f"Dry-run: > {cmd}")
         _LOG.warning("Skipping execution")
         res = None
     else:
@@ -935,9 +935,10 @@ def _git_diff_with_branch(
     dir_name: str,
     diff_type: str,
     subdir: str,
+    extensions: str,
     dry_run: bool,
 ) -> None:
-    _LOG.debug(hprint.to_str("hash_ tag dir_name diff_type subdir dry_run"))
+    _LOG.debug(hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run"))
     # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
     hdbg.dassert_ne(curr_branch_name, "master")
@@ -951,6 +952,17 @@ def _git_diff_with_branch(
     files = hsystem.system_to_files(cmd, dir_name, remove_files_non_present=False)
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
+    # Filter the files, if needed.
+    if extensions:
+        extensions = extensions.split(",")
+        _LOG.warning("Requested filtering by %d extensions: %s", len(extensions),
+                     extensions)
+        files_tmp = []
+        for f in files:
+            if any(f.endswith(ext) for ext in extensions):
+                files_tmp.append(f)
+        files = files_tmp
+        print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
     if len(files) == 0:
         _LOG.warning("Nothing to diff: exiting")
         return
@@ -1006,20 +1018,22 @@ def _git_diff_with_branch(
     print(script_txt)
     # Save the script to compare.
     script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
-    hio.create_executable_script(script_file_name, script_txt)
-    print(f"# To diff against {tag} run:\n> {script_file_name}")
+    msg = f"To diff against {tag} run"
+    hio.create_executable_script(script_file_name, script_txt, msg=msg)
     _run(ctx, script_file_name, dry_run=dry_run, pty=True)
 
 
 @task
 def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", dry_run=False
 ):
     """
     Diff files of the current branch with master at the branching point.
 
     :param diff_type: files to diff using git `--diff-filter` options
     :param subdir: subdir to consider for diffing, instead of `.`
+    :param extensions: a comma-separated list of extensions to check, e.g.,
+        'csv,py'. An empty string means all the files
     :param dry_run: execute diffing script or not
     """
     # Get the branching point.
@@ -1027,7 +1041,8 @@ def git_branch_diff_with_base(  # type: ignore
     hash_ = hgit.get_branch_hash(dir_name=dir_name)
     #
     tag = "base"
-    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
+    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, extensions,
+                          dry_run)
 
 
 @task
@@ -1039,12 +1054,15 @@ def git_branch_diff_with_master(  # type: ignore
 
     :param diff_type: files to diff using git `--diff-filter` options
     :param subdir: subdir to consider for diffing, instead of `.`
+    :param extensions: a comma-separated list of extensions to check, e.g.,
+        'csv,py'. An empty string means all the files
     :param dry_run: execute diffing script or not
     """
     dir_name = "."
     hash_ = "origin/master"
     tag = "origin_master"
-    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
+    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, extensions,
+                          dry_run)
 
 
 # TODO(gp): Add the following scripts:
