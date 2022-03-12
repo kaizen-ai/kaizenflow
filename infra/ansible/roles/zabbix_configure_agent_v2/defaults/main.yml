@@ -5,6 +5,6 @@ zabbix_repo_baseurl: "https://repo.zabbix.com/zabbix/{{ zabbix_version }}/ubuntu
 
 zabbix_servers:
   - 172.30.3.65
-  - 172.16.0.0/12 #docker network
+  - 10.173.0.0/16 #docker network
 zabbix_servers_active:
   - "172.30.3.65:10051"
