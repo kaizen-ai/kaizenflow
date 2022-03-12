@@ -180,8 +180,8 @@ def opt_docker_jupyter(  # type: ignore
 def _get_docker_cmd(command: str) -> str:
     cmd = ["docker-compose"]
     cmd.append(command)
-    cmd = hlibtask._to_multi_line_cmd(cmd)
-    return cmd  # type: ignore[no-any-return]
+    cmd = hlibtask._to_single_line_cmd(cmd)
+    return cmd
 
 
 @task
