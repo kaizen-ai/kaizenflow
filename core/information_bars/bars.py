@@ -269,31 +269,6 @@ class _StandardBars:
             "cum_buy_volume": 0,
         }
 
-    @staticmethod
-    def _assert_csv(test_batch: pd.DataFrame) -> None:
-        """
-        Test that the csv file read has the format: date_time, price, and
-        volume. If not then the user needs to create such a file. This format
-        is in place to remove any unwanted overhead.
-
-        :param test_batch: The first row of the dataset.
-        """
-        hdbg.dassert_eq(
-            test_batch.shape[1],
-            3,
-            "Must have only 3 columns in csv: date_time, price, & volume.",
-        )
-        hdbg.dassert_isinstance(
-            test_batch.iloc[0, 1], float, "price column in csv not float."
-        )
-        try:
-            pd.to_datetime(test_batch.iloc[0, 0])
-        except ValueError as ex:
-            raise ValueError(
-                "csv file, column 0, not a date time format:",
-                test_batch.iloc[0, 0],
-            ) from ex
-
     def _update_high_low(self, price: float) -> Tuple[float, float]:
         """
         Update the high and low prices using the current price.
@@ -401,6 +376,31 @@ class _StandardBars:
                 "Unknown imbalance metric, possible values are tick/dollar/volume imbalance/run"
             )
         return imbalance
+
+    @staticmethod
+    def _assert_csv(test_batch: pd.DataFrame) -> None:
+        """
+        Test that the csv file read has the format: date_time, price, and
+        volume. If not then the user needs to create such a file. This format
+        is in place to remove any unwanted overhead.
+
+        :param test_batch: The first row of the dataset.
+        """
+        hdbg.dassert_eq(
+            test_batch.shape[1],
+            3,
+            "Must have only 3 columns in csv: date_time, price, & volume.",
+        )
+        hdbg.dassert_isinstance(
+            test_batch.iloc[0, 1], float, "price column in csv not float."
+        )
+        try:
+            pd.to_datetime(test_batch.iloc[0, 0])
+        except ValueError as ex:
+            raise ValueError(
+                "csv file, column 0, not a date time format:",
+                test_batch.iloc[0, 0],
+            ) from ex
 
 
 def get_dollar_bars(

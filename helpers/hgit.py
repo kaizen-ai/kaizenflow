@@ -12,12 +12,13 @@ import pprint
 import re
 from typing import Any, Dict, List, Match, Optional, Tuple
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
-
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
+
+# Avoid dependency from other `helpers` modules to prevent import cycles.
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -1285,7 +1286,9 @@ def does_branch_exist(
             number, gh_branch_name, git_branch_name, status = fields
             if branch_name == git_branch_name:
                 exists = True
-                _LOG.debug("branch_name='%s' on github: exists=%s", branch_name, exists)
+                _LOG.debug(
+                    "branch_name='%s' on github: exists=%s", branch_name, exists
+                )
     return exists
 
 

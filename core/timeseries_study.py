@@ -212,15 +212,6 @@ class _TimeSeriesAnalyzer:
         figs.append(self.boxplot_day_of_week(ax=axes[3]))
         return figs
 
-    @staticmethod
-    def _boxplot(
-        ts: pd.Series, groupby: str, ax: Optional[mpl.axes.Axes] = None
-    ) -> None:
-        ts_df = pd.DataFrame(ts)
-        ts_df["groupby"] = groupby
-        ts_df.boxplot(by="groupby", column=ts.name, ax=ax)
-        plt.suptitle("")
-
     def _need_to_skip(self, func_name: str) -> bool:
         _LOG.debug(func_name)
         if func_name in self._disabled_methods:
@@ -235,6 +226,15 @@ class _TimeSeriesAnalyzer:
         else:
             ret = ""
         return ret
+
+    @staticmethod
+    def _boxplot(
+        ts: pd.Series, groupby: str, ax: Optional[mpl.axes.Axes] = None
+    ) -> None:
+        ts_df = pd.DataFrame(ts)
+        ts_df["groupby"] = groupby
+        ts_df.boxplot(by="groupby", column=ts.name, ax=ax)
+        plt.suptitle("")
 
 
 class TimeSeriesDailyStudy(_TimeSeriesAnalyzer):

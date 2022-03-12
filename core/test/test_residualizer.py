@@ -18,36 +18,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestPcaFactorComputer1(hunitest.TestCase):
-    @staticmethod
-    def get_ex1() -> Tuple[
-        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
-    ]:
-        df_str = hprint.dedent(
-            """
-        ,0,1,2
-        0,0.68637724274453,0.34344509725064354,0.6410395820984168
-        1,-0.7208890365507423,0.205021903910637,0.6620309780499695
-        2,-0.09594413803541411,0.916521404055221,-0.3883081743735094"""
-        )
-        df_str = io.StringIO(df_str)
-        prev_eigvec_df = pd.read_csv(df_str, index_col=0)
-        prev_eigvec_df.index = prev_eigvec_df.index.map(int)
-        prev_eigvec_df.columns = prev_eigvec_df.columns.map(int)
-        #
-        prev_eigval_df = pd.DataFrame([[1.0, 0.5, 0.3]], columns=[0, 1, 2])
-        # Shuffle eigenvalues / eigenvectors.
-        eigvec_df = prev_eigvec_df.copy()
-        shuffle = [1, 2, 0]
-        eigvec_df = eigvec_df.reindex(columns=shuffle)
-        eigvec_df.columns = list(range(eigvec_df.shape[1]))
-        eigvec_df.iloc[:, 1] *= -1
-        #
-        eigval_df = prev_eigval_df.reindex(columns=shuffle)
-        eigval_df.columns = list(range(eigval_df.shape[1]))
-        for obj in (prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df):
-            hpandas.dassert_strictly_increasing_index(obj)
-        return prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df
-
     def test_stabilize_eigenvec1(self) -> None:
         data_func = self.get_ex1
         eval_func = coresidu.PcaFactorComputer._build_stable_eig_map
@@ -99,6 +69,36 @@ class TestPcaFactorComputer1(hunitest.TestCase):
         )
         are_eigval_sorted_exp = False
         self._test_sort_eigval_helper(eigval, eigvec, are_eigval_sorted_exp)
+
+    @staticmethod
+    def get_ex1() -> Tuple[
+        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
+    ]:
+        df_str = hprint.dedent(
+            """
+        ,0,1,2
+        0,0.68637724274453,0.34344509725064354,0.6410395820984168
+        1,-0.7208890365507423,0.205021903910637,0.6620309780499695
+        2,-0.09594413803541411,0.916521404055221,-0.3883081743735094"""
+        )
+        df_str = io.StringIO(df_str)
+        prev_eigvec_df = pd.read_csv(df_str, index_col=0)
+        prev_eigvec_df.index = prev_eigvec_df.index.map(int)
+        prev_eigvec_df.columns = prev_eigvec_df.columns.map(int)
+        #
+        prev_eigval_df = pd.DataFrame([[1.0, 0.5, 0.3]], columns=[0, 1, 2])
+        # Shuffle eigenvalues / eigenvectors.
+        eigvec_df = prev_eigvec_df.copy()
+        shuffle = [1, 2, 0]
+        eigvec_df = eigvec_df.reindex(columns=shuffle)
+        eigvec_df.columns = list(range(eigvec_df.shape[1]))
+        eigvec_df.iloc[:, 1] *= -1
+        #
+        eigval_df = prev_eigval_df.reindex(columns=shuffle)
+        eigval_df.columns = list(range(eigval_df.shape[1]))
+        for obj in (prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df):
+            hpandas.dassert_strictly_increasing_index(obj)
+        return prev_eigval_df, eigval_df, prev_eigvec_df, eigvec_df
 
     def _test_stabilize_eigenvec_helper(
         self, data_func: Callable, eval_func: Callable
@@ -185,6 +185,39 @@ class TestPcaFactorComputer2(hunitest.TestCase):
         )
         self._check(comp, df_res)
 
+    def _helper(
+        self,
+        num_samples: int,
+        report_stats: bool,
+        stabilize_eig: bool,
+        window: int,
+    ) -> Tuple[coresidu.PcaFactorComputer, pd.DataFrame]:
+        result = self._get_data(num_samples, report_stats)
+        _LOG.debug("result=%s", result.keys())
+        #
+        nan_mode_in_data = "drop"
+        nan_mode_in_corr = "fill_with_zero"
+        sort_eigvals = True
+        comp = coresidu.PcaFactorComputer(
+            nan_mode_in_data, nan_mode_in_corr, sort_eigvals, stabilize_eig
+        )
+        df_res = cpanh.df_rolling_apply(
+            result["y"], window, comp, progress_bar=True
+        )
+        if report_stats:
+            comp.plot_over_time(df_res, num_pcs_to_plot=-1)
+        return comp, df_res
+
+    def _check(
+        self, comp: coresidu.PcaFactorComputer, df_res: pd.DataFrame
+    ) -> None:
+        txt = []
+        txt.append("comp.get_eigval_names()=\n%s" % comp.get_eigval_names())
+        txt.append("df_res.mean()=\n%s" % df_res.mean())
+        txt.append("df_res.std()=\n%s" % df_res.std())
+        txt = "\n".join(txt)
+        self.check_string(txt)
+
     @staticmethod
     def _get_data(num_samples: int, report_stats: bool) -> Dict[str, Any]:
         # The desired covariance matrix.
@@ -237,36 +270,3 @@ class TestPcaFactorComputer2(hunitest.TestCase):
             "transform": transform,
         }
         return result
-
-    def _helper(
-        self,
-        num_samples: int,
-        report_stats: bool,
-        stabilize_eig: bool,
-        window: int,
-    ) -> Tuple[coresidu.PcaFactorComputer, pd.DataFrame]:
-        result = self._get_data(num_samples, report_stats)
-        _LOG.debug("result=%s", result.keys())
-        #
-        nan_mode_in_data = "drop"
-        nan_mode_in_corr = "fill_with_zero"
-        sort_eigvals = True
-        comp = coresidu.PcaFactorComputer(
-            nan_mode_in_data, nan_mode_in_corr, sort_eigvals, stabilize_eig
-        )
-        df_res = cpanh.df_rolling_apply(
-            result["y"], window, comp, progress_bar=True
-        )
-        if report_stats:
-            comp.plot_over_time(df_res, num_pcs_to_plot=-1)
-        return comp, df_res
-
-    def _check(
-        self, comp: coresidu.PcaFactorComputer, df_res: pd.DataFrame
-    ) -> None:
-        txt = []
-        txt.append("comp.get_eigval_names()=\n%s" % comp.get_eigval_names())
-        txt.append("df_res.mean()=\n%s" % df_res.mean())
-        txt.append("df_res.std()=\n%s" % df_res.std())
-        txt = "\n".join(txt)
-        self.check_string(txt)
