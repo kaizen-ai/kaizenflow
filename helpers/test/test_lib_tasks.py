@@ -229,6 +229,10 @@ class TestDryRunTasks1(hunitest.TestCase):
 
 
 @pytest.mark.slow(reason="Around 7s")
+@pytest.mark.skipif(
+    not hgit.is_in_amp_as_supermodule(),
+    reason="Run only in amp as super-module",
+)
 class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     """
     - Call the invoke task directly from Python

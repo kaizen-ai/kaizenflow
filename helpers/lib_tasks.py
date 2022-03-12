@@ -1053,7 +1053,7 @@ def git_branch_diff_with_base(  # type: ignore
 
 @task
 def git_branch_diff_with_master(  # type: ignore
-    ctx, diff_type="", subdir="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", dry_run=False
 ):
     """
     Diff files of the current branch with origin/master.
