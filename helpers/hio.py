@@ -17,13 +17,13 @@ import time
 import uuid
 from typing import Any, List, Optional, cast
 
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hsystem as hsystem
+
 # Avoid dependency from other `helpers` modules to prevent import cycles.
 # Do not import third party libraries, such as `numpy` and `pandas`.
 
-import helpers.hdbg as hdbg
-import helpers.hprint as hprint
-
-import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -536,9 +536,9 @@ def change_filename_extension(filename: str, old_ext: str, new_ext: str) -> str:
 
 
 # TODO(gp): @all Use msg in all uses of this script `jackpyc "create_executable"`
-def create_executable_script(file_name: str, content: str,
-                             *,
-                             msg: str ="") -> None:
+def create_executable_script(
+    file_name: str, content: str, *, msg: str = ""
+) -> None:
     # Write the file.
     hdbg.dassert_isinstance(content, str)
     to_file(file_name, content)

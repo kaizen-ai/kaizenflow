@@ -19,10 +19,10 @@ import sys
 import tempfile
 from typing import List, Optional
 
-import helpers.hdbg as dbg
+import helpers.hdbg as hdbg
 import helpers.hio as hio
-import helpers.hparser as hparse
-import helpers.hsystem as hsyste
+import helpers.hparser as hparser
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ def _prettier(txt: str, print_width: Optional[int] = None) -> str:
     tab_width = 2
     cmd.append("--tab-width %s" % tab_width)
     if print_width is not None:
-        dbg.dassert_lte(1, print_width)
+        hdbg.dassert_lte(1, print_width)
         cmd.append("--print-width %s" % print_width)
     if True:
         # Workaround for PTask2155.
@@ -116,7 +116,7 @@ def _prettier(txt: str, print_width: Optional[int] = None) -> str:
         cmd.append(tmp_file_name)
     # cmd.append("2>&1 >/dev/null")
     cmd_as_str = " ".join(cmd)
-    _, output_tmp = hsyste.system_to_string(cmd_as_str, abort_on_error=True)
+    _, output_tmp = hsystem.system_to_string(cmd_as_str, abort_on_error=True)
     _LOG.debug("output_tmp=%s", output_tmp)
     #
     txt = hio.from_file(tmp_file_name)
@@ -216,11 +216,11 @@ def _refresh_toc(txt: str) -> str:
     gh_md_toc = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "gh-md-toc"
     )
-    dbg.dassert_exists(gh_md_toc)
+    hdbg.dassert_exists(gh_md_toc)
     cmd.append(gh_md_toc)
     cmd.append("--insert %s" % tmp_file_name)
     cmd_as_str = " ".join(cmd)
-    hsyste.system(cmd_as_str, abort_on_error=False, suppress_output=True)
+    hsystem.system(cmd_as_str, abort_on_error=False, suppress_output=True)
     # Read file.
     txt = hio.from_file(tmp_file_name)
     return txt  # type: ignore
@@ -311,21 +311,21 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         default=None,
     )
-    hparse.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
-    hparse.add_verbosity_arg(parser)
+    hparser.add_action_arg(parser, _VALID_ACTIONS, _DEFAULT_ACTIONS)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(args: argparse.Namespace) -> None:
     in_file_name = args.infile.name
     from_stdin = in_file_name == "<stdin>"
-    dbg.init_logger(
+    hdbg.init_logger(
         verbosity=args.log_level, use_exec_path=False, force_white=from_stdin
     )
     # Read input.
     _LOG.debug("in_file_name=%s", in_file_name)
     if not from_stdin:
-        dbg.dassert(
+        hdbg.dassert(
             in_file_name.endswith(".txt") or in_file_name.endswith(".md"),
             "Invalid extension for file name '%s'",
             in_file_name,
@@ -337,7 +337,7 @@ def _main(args: argparse.Namespace) -> None:
     )
     # Write output.
     if args.in_place:
-        dbg.dassert_ne(in_file_name, "<stdin>")
+        hdbg.dassert_ne(in_file_name, "<stdin>")
         hio.to_file(in_file_name, txt)
     else:
         args.outfile.write(txt)
