@@ -174,8 +174,8 @@ class SystemWithSimulatedOmsRunner(SystemRunner, abc.ABC):
     ) -> Coroutine:
         # Build OrderProcessor.
         order_processor = self.get_order_processor(portfolio)
-        # TODO(Paul): Maybe make this public.
-        initial_timestamp = portfolio._initial_timestamp
+        get_wall_clock_time = portfolio.broker.market_data.get_wall_clock_time
+        initial_timestamp = get_wall_clock_time()
         offset = pd.Timedelta(real_time_loop_time_out_in_secs, unit="seconds")
         termination_condition = initial_timestamp + offset
         order_processor_coroutine = order_processor.run_loop(

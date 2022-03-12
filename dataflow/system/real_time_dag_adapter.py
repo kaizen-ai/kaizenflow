@@ -73,10 +73,16 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         }
         # We could also write the `process_forecasts_config` key directly but we
         # want to show a `Config` created with multiple pieces.
-        overriding_config["process_forecasts"]["process_forecasts_config"] = {
-            "market_data": market_data,
-            "order_type": order_type,
-            "order_duration": 5,
+        process_forecasts_config_dict = {
+            "order_config": {
+                "order_type": order_type,
+                "order_duration": 5,
+            },
+            "optimizer_config": {
+                "backend": "compute_target_positions_in_cash",
+                "target_gmv": target_gmv,
+                "dollar_neutrality": dollar_neutrality,
+            },
             "ath_start_time": pd.Timestamp(
                 "2000-01-01 09:30:00-05:00", tz="America/New_York"
             ).time(),
@@ -90,10 +96,14 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
                 "2000-01-01 16:40:00-05:00", tz="America/New_York"
             ).time(),
             "execution_mode": "real_time",
-            "target_gmv": target_gmv,
-            "dollar_neutrality": dollar_neutrality,
             "log_dir": log_dir,
         }
+        process_forecasts_config = cconfig.get_config_from_nested_dict(
+            process_forecasts_config_dict
+        )
+        overriding_config["process_forecasts"][
+            "process_forecasts_config"
+        ] = process_forecasts_config
         # Insert a node.
         nodes_to_insert = []
         stage = "load_prices"

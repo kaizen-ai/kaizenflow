@@ -39,44 +39,41 @@ result_bundles=
     volatility_col: close
     portfolio: # historical holdings=
     asset_id                        101       -1  
-    2000-01-03 09:30:00-05:00      0.00  1000000.0
     2000-01-03 09:30:01-05:00      0.00  1000000.0
     2000-01-03 09:35:01-05:00      0.00  1000000.0
     2000-01-03 09:40:01-05:00  99934.44   900020.9
     # historical holdings marked to market=
     asset_id                        101       -1  
-    2000-01-03 09:30:00-05:00      0.00  1000000.0
     2000-01-03 09:30:01-05:00      0.00  1000000.0
     2000-01-03 09:35:01-05:00      0.00  1000000.0
     2000-01-03 09:40:01-05:00  99946.63   900020.9
     # historical flows=
     asset_id                       101
-    2000-01-03 09:30:01-05:00      NaN
-    2000-01-03 09:35:01-05:00      NaN
+    2000-01-03 09:35:01-05:00     -0.0
     2000-01-03 09:40:01-05:00 -99979.1
     # historical pnl=
     asset_id                     101
-    2000-01-03 09:30:00-05:00    NaN
     2000-01-03 09:30:01-05:00    NaN
-    2000-01-03 09:35:01-05:00    NaN
+    2000-01-03 09:35:01-05:00   0.00
     2000-01-03 09:40:01-05:00 -32.46
     # historical statistics=
                                  pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-    2000-01-03 09:30:00-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
     2000-01-03 09:30:01-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
-    2000-01-03 09:35:01-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
+    2000-01-03 09:35:01-05:00   0.00           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
     2000-01-03 09:40:01-05:00 -32.46       99979.1     99979.1  99946.63  99946.63   900020.9   999967.54       0.1
     process_forecasts_config:
-      market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      order_type: price@twap
-      order_duration: 5
+      order_config:
+        order_type: price@twap
+        order_duration: 5
+      optimizer_config:
+        backend: compute_target_positions_in_cash
+        target_gmv: 100000.0
+        dollar_neutrality: no_constraint
       ath_start_time: 09:30:00
       trading_start_time: 09:30:00
       ath_end_time: 16:40:00
       trading_end_time: 16:40:00
       execution_mode: real_time
-      target_gmv: 100000.0
-      dollar_neutrality: no_constraint
       log_dir: None
     evaluate_forecasts_config: None
 result_nid: process_forecasts
@@ -212,44 +209,41 @@ class: ResultBundle, config:
     volatility_col: close
     portfolio: # historical holdings=
     asset_id                        101       -1  
-    2000-01-03 09:30:00-05:00      0.00  1000000.0
     2000-01-03 09:30:01-05:00      0.00  1000000.0
     2000-01-03 09:35:01-05:00      0.00  1000000.0
     2000-01-03 09:40:01-05:00  99934.44   900020.9
     # historical holdings marked to market=
     asset_id                        101       -1  
-    2000-01-03 09:30:00-05:00      0.00  1000000.0
     2000-01-03 09:30:01-05:00      0.00  1000000.0
     2000-01-03 09:35:01-05:00      0.00  1000000.0
     2000-01-03 09:40:01-05:00  99946.63   900020.9
     # historical flows=
     asset_id                       101
-    2000-01-03 09:30:01-05:00      NaN
-    2000-01-03 09:35:01-05:00      NaN
+    2000-01-03 09:35:01-05:00     -0.0
     2000-01-03 09:40:01-05:00 -99979.1
     # historical pnl=
     asset_id                     101
-    2000-01-03 09:30:00-05:00    NaN
     2000-01-03 09:30:01-05:00    NaN
-    2000-01-03 09:35:01-05:00    NaN
+    2000-01-03 09:35:01-05:00   0.00
     2000-01-03 09:40:01-05:00 -32.46
     # historical statistics=
                                  pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-    2000-01-03 09:30:00-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
     2000-01-03 09:30:01-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
-    2000-01-03 09:35:01-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
+    2000-01-03 09:35:01-05:00   0.00           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
     2000-01-03 09:40:01-05:00 -32.46       99979.1     99979.1  99946.63  99946.63   900020.9   999967.54       0.1
     process_forecasts_config:
-      market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      order_type: price@twap
-      order_duration: 5
+      order_config:
+        order_type: price@twap
+        order_duration: 5
+      optimizer_config:
+        backend: compute_target_positions_in_cash
+        target_gmv: 100000.0
+        dollar_neutrality: no_constraint
       ath_start_time: 09:30:00
       trading_start_time: 09:30:00
       ath_end_time: 16:40:00
       trading_end_time: 16:40:00
       execution_mode: real_time
-      target_gmv: 100000.0
-      dollar_neutrality: no_constraint
       log_dir: None
     evaluate_forecasts_config: None
 result_nid: process_forecasts
@@ -385,44 +379,41 @@ class: ResultBundle, config:
     volatility_col: close
     portfolio: # historical holdings=
     asset_id                        101       -1  
-    2000-01-03 09:30:00-05:00      0.00  1000000.0
     2000-01-03 09:30:01-05:00      0.00  1000000.0
     2000-01-03 09:35:01-05:00      0.00  1000000.0
     2000-01-03 09:40:01-05:00  99934.44   900020.9
     # historical holdings marked to market=
     asset_id                        101       -1  
-    2000-01-03 09:30:00-05:00      0.00  1000000.0
     2000-01-03 09:30:01-05:00      0.00  1000000.0
     2000-01-03 09:35:01-05:00      0.00  1000000.0
     2000-01-03 09:40:01-05:00  99946.63   900020.9
     # historical flows=
     asset_id                       101
-    2000-01-03 09:30:01-05:00      NaN
-    2000-01-03 09:35:01-05:00      NaN
+    2000-01-03 09:35:01-05:00     -0.0
     2000-01-03 09:40:01-05:00 -99979.1
     # historical pnl=
     asset_id                     101
-    2000-01-03 09:30:00-05:00    NaN
     2000-01-03 09:30:01-05:00    NaN
-    2000-01-03 09:35:01-05:00    NaN
+    2000-01-03 09:35:01-05:00   0.00
     2000-01-03 09:40:01-05:00 -32.46
     # historical statistics=
                                  pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-    2000-01-03 09:30:00-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
     2000-01-03 09:30:01-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
-    2000-01-03 09:35:01-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
+    2000-01-03 09:35:01-05:00   0.00           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
     2000-01-03 09:40:01-05:00 -32.46       99979.1     99979.1  99946.63  99946.63   900020.9   999967.54       0.1
     process_forecasts_config:
-      market_data: <market_data.replayed_market_data.ReplayedMarketData object>
-      order_type: price@twap
-      order_duration: 5
+      order_config:
+        order_type: price@twap
+        order_duration: 5
+      optimizer_config:
+        backend: compute_target_positions_in_cash
+        target_gmv: 100000.0
+        dollar_neutrality: no_constraint
       ath_start_time: 09:30:00
       trading_start_time: 09:30:00
       ath_end_time: 16:40:00
       trading_end_time: 16:40:00
       execution_mode: real_time
-      target_gmv: 100000.0
-      dollar_neutrality: no_constraint
       log_dir: None
     evaluate_forecasts_config: None
 result_nid: process_forecasts
@@ -527,30 +518,25 @@ None
 portfolio=
 # historical holdings=
 asset_id                        101       -1  
-2000-01-03 09:30:00-05:00      0.00  1000000.0
 2000-01-03 09:30:01-05:00      0.00  1000000.0
 2000-01-03 09:35:01-05:00      0.00  1000000.0
 2000-01-03 09:40:01-05:00  99934.44   900020.9
 # historical holdings marked to market=
 asset_id                        101       -1  
-2000-01-03 09:30:00-05:00      0.00  1000000.0
 2000-01-03 09:30:01-05:00      0.00  1000000.0
 2000-01-03 09:35:01-05:00      0.00  1000000.0
 2000-01-03 09:40:01-05:00  99946.63   900020.9
 # historical flows=
 asset_id                       101
-2000-01-03 09:30:01-05:00      NaN
-2000-01-03 09:35:01-05:00      NaN
+2000-01-03 09:35:01-05:00     -0.0
 2000-01-03 09:40:01-05:00 -99979.1
 # historical pnl=
 asset_id                     101
-2000-01-03 09:30:00-05:00    NaN
 2000-01-03 09:30:01-05:00    NaN
-2000-01-03 09:35:01-05:00    NaN
+2000-01-03 09:35:01-05:00   0.00
 2000-01-03 09:40:01-05:00 -32.46
 # historical statistics=
                              pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-2000-01-03 09:30:00-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
 2000-01-03 09:30:01-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
-2000-01-03 09:35:01-05:00    NaN           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
+2000-01-03 09:35:01-05:00   0.00           0.0         0.0      0.00      0.00  1000000.0  1000000.00       0.0
 2000-01-03 09:40:01-05:00 -32.46       99979.1     99979.1  99946.63  99946.63   900020.9   999967.54       0.1

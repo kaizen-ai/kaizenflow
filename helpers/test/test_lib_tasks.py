@@ -227,6 +227,7 @@ class TestDryRunTasks1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.slow(reason="Around 7s")
 class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     """
     - Call the invoke task directly from Python
@@ -349,7 +350,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_branch_files(ctx)"
         self._check_output(target)
 
-    @pytest.mark.slow(reason="Around 7s")
     def test_git_create_branch1(self) -> None:
         _gh_login()
         target = (
@@ -358,7 +358,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         )
         self._check_output(target)
 
-    @pytest.mark.slow(reason="Around 7s")
     def test_git_create_branch2(self) -> None:
         _gh_login()
         target = (
@@ -957,7 +956,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         act = hlibtask._find_test_class("TestHelloWorld", file_names)
         act = hunitest.purify_file_names(act)
         exp = [
-            "helpers/test/outcomes/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
+            "helpers/test/TestLibTasksRunTests1.test_find_test_class3/tmp.scratch/"
             "test/test_this.py::TestHelloWorld"
         ]
         self.assert_equal(str(act), str(exp))
@@ -995,7 +994,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
         act = hlibtask._find_test_decorator("no_container", file_names)
         act = hunitest.purify_file_names(act)
         exp = [
-            "helpers/test/outcomes/TestLibTasksRunTests1.test_find_test_decorator1/"
+            "helpers/test/TestLibTasksRunTests1.test_find_test_decorator1/"
             "tmp.scratch/test/test_that.py"
         ]
         self.assert_equal(str(act), str(exp))
@@ -1015,10 +1014,23 @@ class TestLibTasksRunTests1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.slow(reason="Around 7s")
 class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     """
     Test `git_create_patch()`.
     """
+
+    @staticmethod
+    def helper(
+        modified: bool, branch: bool, last_commit: bool, files: str
+    ) -> None:
+        ctx = _build_mock_context_returning_ok()
+        #
+        mode = "tar"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        #
+        mode = "diff"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
     def test_tar_modified1(self) -> None:
         """
@@ -1033,7 +1045,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         branch = False
         last_commit = False
         files = ""
-        self._helper(modified, branch, last_commit, files)
+        self.helper(modified, branch, last_commit, files)
 
     def test_tar_branch1(self) -> None:
         """
@@ -1045,7 +1057,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         branch = True
         last_commit = False
         files = ""
-        self._helper(modified, branch, last_commit, files)
+        self.helper(modified, branch, last_commit, files)
 
     def test_tar_last_commit1(self) -> None:
         """
@@ -1060,7 +1072,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         branch = False
         last_commit = True
         files = ""
-        self._helper(modified, branch, last_commit, files)
+        self.helper(modified, branch, last_commit, files)
 
     def test_tar_files1(self) -> None:
         """
@@ -1113,18 +1125,6 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         Specify only one among --modified, --branch, --last-commit
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
-    @staticmethod
-    def _helper(
-        modified: bool, branch: bool, last_commit: bool, files: str
-    ) -> None:
-        ctx = _build_mock_context_returning_ok()
-        #
-        mode = "tar"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
-        #
-        mode = "diff"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
 
 # #############################################################################
@@ -1842,7 +1842,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
     def test4(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
-        
+
     def test5(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
