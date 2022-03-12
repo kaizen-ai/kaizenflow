@@ -12,17 +12,18 @@ import helpers.hversion as hversio
 # 2) when a container is built to know what version of the code was used to build
 #    it
 
-# This file should depend only on Python standard package since it's used by
-# helpers/dbg.py, which is used everywhere.
-
 import logging
 import os
 import re
 from typing import Optional
 
+# Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
+# import cycles.
+
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -34,16 +35,18 @@ _ERROR = "\033[31mERROR\033[0m"
 _CHANGELOG_VERSION_RE = r"\d+\.\d+\.\d+"
 
 
-def check_version() -> None:
+def check_version(container_dir_name: str) -> None:
     """
     Check that the code and container code have compatible version, otherwise
     raises `RuntimeError`.
+
+    :param container_dir_name: container directory relative to the root directory
     """
     if "SKIP_VERSION_CHECK" in os.environ:
         # Skip the check altogether.
         return
     # Get code version.
-    code_version = get_changelog_version()
+    code_version = get_changelog_version(container_dir_name)
     container_version = _get_container_version()
     is_inside_container = _is_inside_container()
     # Print information.
@@ -81,13 +84,19 @@ def check_version() -> None:
     _check_version(code_version, container_version)
 
 
-def get_changelog_version() -> Optional[str]:
+def get_changelog_version(container_dir_name: str) -> Optional[str]:
     """
     Return latest version from changelog.txt file.
+
+    :param container_dir_name: container directory relative to the root directory
     """
     version: Optional[str] = None
-    root_dir = hgit.get_client_root(super_module=False)
-    changelog_file = os.path.join(root_dir, "changelog.txt")
+    supermodule = True
+    root_dir = hgit.get_client_root(supermodule)
+    # Note: for `amp` as submodule one should pass `container_dir_name` relative
+    # to the root, e.g., `amp/optimizer` and not just `optimizer`.
+    hdbg.dassert_ne(container_dir_name, "")
+    changelog_file = os.path.join(root_dir, container_dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)
     match = re.search(_CHANGELOG_VERSION_RE, changelog)
