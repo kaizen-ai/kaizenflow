@@ -31,6 +31,7 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
@@ -92,34 +93,6 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--start_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="Beginning of the downloaded period",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--exchange_id",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of exchange to download data from",
-    )
-    parser.add_argument(
-        "--universe",
-        action="store",
-        required=True,
-        type=str,
-        help="Trade universe to download data for",
-    )
-    parser.add_argument(
         "--sleep_time",
         action="store",
         type=int,
@@ -127,6 +100,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Sleep time between currency pair downloads (in seconds).",
     )
     parser.add_argument("--incremental", action="store_true")
+    parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
@@ -172,7 +146,7 @@ def _run(args: argparse.Namespace) -> None:
             path_to_exchange,
             filesystem=fs,
             partition_filename=None,
-            )
+        )
         # Sleep between iterations.
         time.sleep(args.sleep_time)
     # Merge all new parquet into a single `data.parquet`.

@@ -1,0 +1,144 @@
+"""
+Implement common exchange download operations.
+
+Import as:
+
+import im_v2.common.data.extract.extract_utils as imvcdeexut
+"""
+
+
+import argparse
+import os
+from typing import Any
+
+import pandas as pd
+
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hs3 as hs3
+import helpers.hsql as hsql
+import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.im_lib_tasks as imvimlita
+
+
+def add_exchange_download_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """
+    Add the command line options exchange download.
+    """
+    parser.add_argument(
+        "--start_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded period",
+    )
+    parser.add_argument(
+        "--exchange_id",
+        action="store",
+        required=True,
+        type=str,
+        help="Name of exchange to download data from",
+    )
+    parser.add_argument(
+        "--universe",
+        action="store",
+        required=True,
+        type=str,
+        help="Trade universe to download data for",
+    )
+    return parser
+
+
+def download_realtime_for_one_exchange(
+    args: argparse.Namespace, exchange_class: Any
+) -> None:
+    """
+    Helper function for encapsulating common logic for downloading exchange
+    data.
+
+    :param args: arguments passed on script run
+    :param exchange_class: which exchange is used in script run
+    """
+    # Check if proper class is supplied.
+    supported_classes = ("CcxtExchange", "TalosExchange")
+    hdbg.dassert_in(
+        exchange_class.__name__,
+        supported_classes,
+        msg=f"{exchange_class.__name__} class is not supported!",
+    )
+    # Connect to database.
+    env_file = imvimlita.get_db_env_path(args.db_stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
+    # Connect to S3 filesystem, if provided.
+    if args.aws_profile:
+        fs = hs3.get_s3fs(args.aws_profile)
+    # Load currency pairs.
+    universe = imvccunun.get_trade_universe(args.universe)
+    currency_pairs = universe["CCXT"][args.exchange_id]
+    # Initialize exchange class and prepare additional args,if any.
+    additional_args = []
+    if exchange_class.__name__ == supported_classes[0]:
+        # Ccxt.
+        exchange = exchange_class(args.exchange_id)
+        currency_pairs = [
+            currency_pair.replace("_", "/") for currency_pair in currency_pairs
+        ]
+    elif exchange_class.__name__ == supported_classes[1]:
+        # Talos.
+        exchange = exchange_class(args.api_stage)
+        additional_args.append(args.exchange_id)
+    # Load DB table to work with
+    db_table = args.db_table
+    # Generate a query to remove duplicates.
+    dup_query = hsql.get_remove_duplicates_query(
+        table_name=db_table,
+        id_col_name="id",
+        column_names=["timestamp", "exchange_id", "currency_pair"],
+    )
+    # Convert timestamps.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    # Download data for specified time period.
+    for currency_pair in currency_pairs:
+        data = exchange.download_ohlcv_data(
+            currency_pair,
+            *additional_args,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+        )
+        # Assign pair and exchange columns.
+        data["currency_pair"] = currency_pair
+        data["exchange_id"] = args.exchange_id
+        # Get timestamp of insertion in UTC.
+        data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
+        # Insert data into the DB.
+        hsql.execute_insert_query(
+            connection=connection,
+            obj=data,
+            table_name=db_table,
+        )
+        # Save data to S3 bucket.
+        if args.s3_path:
+            # Get file name.
+            file_name = (
+                currency_pair
+                + "_"
+                + hdateti.get_current_timestamp_as_string("UTC")
+                + ".csv"
+            )
+            path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
+            # Save data to S3 filesystem.
+            with fs.open(path_to_file, "w") as f:
+                data.to_csv(f, index=False)
+        # Remove duplicated entries.
+        connection.cursor().execute(dup_query)
