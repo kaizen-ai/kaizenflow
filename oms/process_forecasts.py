@@ -33,7 +33,7 @@ async def process_forecasts(
     prediction_df: pd.DataFrame,
     volatility_df: pd.DataFrame,
     portfolio: omportfo.AbstractPortfolio,
-    config: Dict[str, Any],
+    config: cconfig.Config,
 ) -> None:
     """
     Place orders corresponding to the predictions stored in the given df.
@@ -57,37 +57,23 @@ async def process_forecasts(
         - `log_dir`: directory for logging state
     """
     # Check `predictions_df`.
-    hdbg.dassert_isinstance(prediction_df, pd.DataFrame)
-    hpandas.dassert_index_is_datetime(prediction_df)
-    hpandas.dassert_strictly_increasing_index(prediction_df)
+    _validate_df(prediction_df)
     # Check `volatility_df`.
-    hdbg.dassert_isinstance(volatility_df, pd.DataFrame)
-    hpandas.dassert_index_is_datetime(volatility_df)
-    hpandas.dassert_strictly_increasing_index(volatility_df)
+    _validate_df(volatility_df)
     # Check index compatibility.
     hdbg.dassert(prediction_df.index.equals(volatility_df.index))
+    hdbg.dassert(prediction_df.columns.equals(volatility_df.columns))
     # Check `portfolio`.
     hdbg.dassert_isinstance(portfolio, omportfo.AbstractPortfolio)
-    # TODO(*): Make `order_config` a subconfig.
+    hdbg.dassert_isinstance(config, cconfig.Config)
     # Create an `order_config` from `config` elements.
-    order_type = _get_object_from_config(config, "order_type", str)
-    order_duration = _get_object_from_config(config, "order_duration", int)
-    order_config = cconfig.get_config_from_nested_dict(
-        {
-            "order_type": order_type,
-            "order_duration": order_duration,
-        }
-    )
+    order_config = _get_object_from_config(config, "order_config", cconfig.Config)
+    _validate_order_config(order_config)
     #
-    target_gmv = _get_object_from_config(config, "target_gmv", float)
-    dollar_neutrality = _get_object_from_config(config, "dollar_neutrality", str)
-    #
-    optimizer_config = cconfig.get_config_from_nested_dict(
-        {
-            "target_gmv": target_gmv,
-            "dollar_neutrality": dollar_neutrality,
-        }
+    optimizer_config = _get_object_from_config(
+        config, "optimizer_config", cconfig.Config
     )
+    _validate_optimizer_config(optimizer_config)
     # Extract ATH and trading start times from config.
     # TODO(Paul): Add a check for ATH start/end.
     ath_start_time = _get_object_from_config(
@@ -129,7 +115,7 @@ async def process_forecasts(
     get_wall_clock_time = portfolio.market_data.get_wall_clock_time
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     iter_ = enumerate(prediction_df.iterrows())
-    offset_min = pd.DateOffset(minutes=order_duration)
+    offset_min = pd.DateOffset(minutes=order_config["order_duration"])
     # Initialize a `ForecastProcessor` object to perform the heavy lifting.
     forecast_processor = ForecastProcessor(
         portfolio, order_config, optimizer_config, log_dir
@@ -209,14 +195,12 @@ class ForecastProcessor:
         self._portfolio = portfolio
         self._get_wall_clock_time = portfolio.market_data.get_wall_clock_time
         # TODO(Paul): process config with checks.
+        _validate_order_config(order_config)
         self._order_config = order_config
-        self._order_type = self._order_config["order_type"]
-        self._order_duration = self._order_config["order_duration"]
-        self._offset_min = pd.DateOffset(minutes=self._order_duration)
+        self._offset_min = pd.DateOffset(minutes=order_config["order_duration"])
         # Process optimizer config.
+        _validate_optimizer_config(optimizer_config)
         self._optimizer_config = optimizer_config
-        self._target_gmv = self._optimizer_config["target_gmv"]
-        self._dollar_neutrality = self._optimizer_config["dollar_neutrality"]
         #
         self._restrictions = restrictions
         self._log_dir = log_dir
@@ -307,7 +291,7 @@ class ForecastProcessor:
         timestamp_start = wall_clock_timestamp
         timestamp_end = wall_clock_timestamp + self._offset_min
         order_dict_ = {
-            "type_": self._order_type,
+            "type_": self._order_config["order_type"],
             "creation_timestamp": wall_clock_timestamp,
             "start_timestamp": timestamp_start,
             "end_timestamp": timestamp_end,
@@ -354,17 +338,54 @@ class ForecastProcessor:
         assets_and_predictions = self._prepare_data_for_optimizer(
             predictions, volatility
         )
-        # Compute the target positions in cash (call the optimizer).
-        df = ocalopti.compute_target_positions_in_cash(
-            assets_and_predictions,
-            self._portfolio.CASH_ID,
-            target_gmv=self._target_gmv,
-            dollar_neutrality=self._dollar_neutrality,
+        hdbg.dassert_not_in(
+            self._portfolio.CASH_ID, assets_and_predictions["asset_id"].to_list()
         )
+        # Compute the target positions in cash (call the optimizer).
+        backend = self._optimizer_config["backend"]
+        if backend == "compute_target_positions_in_cash":
+            target_gmv = _get_object_from_config(
+                self._optimizer_config, "target_gmv", float
+            )
+            dollar_neutrality = _get_object_from_config(
+                self._optimizer_config, "dollar_neutrality", str
+            )
+            df = ocalopti.compute_target_positions_in_cash(
+                assets_and_predictions,
+                target_gmv=target_gmv,
+                dollar_neutrality=dollar_neutrality,
+            )
+        elif backend == "batch_optimizer":
+            import optimizer.single_period_optimization as osipeopt
+
+            spo = osipeopt.SinglePeriodOptimizer(
+                self._optimizer_config,
+                assets_and_predictions,
+                restrictions=self._restrictions,
+            )
+            df = spo.optimize()
+            _LOG.debug("df=\n%s", hpandas.df_to_str(df))
+            df = df.merge(
+                assets_and_predictions.set_index("asset_id")[
+                    ["price", "curr_num_shares"]
+                ],
+                how="outer",
+                left_index=True,
+                right_index=True,
+            )
+        elif backend == "dind_optimizer":
+            # Call docker optimizer stub.
+            raise NotImplementedError
+        elif backend == "service_optimizer":
+            raise NotImplementedError
+        else:
+            raise ValueError
         # Convert the target positions from cash values to target share counts.
         # Round to nearest integer towards zero.
         # df["diff_num_shares"] = np.fix(df["target_trade"] / df["price"])
-        df["diff_num_shares"] = df["target_trade"] / df["price"]
+        df["diff_num_shares"] = df["target_notional_trade"] / df["price"]
+        # TODO(Paul): Warn and zero-out any trades that violate restrictions.
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         return df
 
     def _prepare_data_for_optimizer(
@@ -389,7 +410,9 @@ class ForecastProcessor:
         df_for_optimizer = self._merge_predictions(
             marked_to_market, predictions, volatility
         )
-        return df_for_optimizer
+        cash_id_filter = df_for_optimizer["asset_id"] == self._portfolio.CASH_ID
+        df_for_optimizer.rename(columns={"value": "position"}, inplace=True)
+        return df_for_optimizer[~cash_id_filter].reset_index(drop=True)
 
     def _get_extended_marked_to_market_df(
         self,
@@ -402,7 +425,6 @@ class ForecastProcessor:
         should be a no-op.
 
         :param predictions: predictions indexed by `asset_id`
-        :return:
         """
         marked_to_market = self._portfolio.mark_to_market().set_index("asset_id")
         # If there are predictions for assets not currently in `marked_to_market`,
@@ -437,11 +459,6 @@ class ForecastProcessor:
     ) -> pd.DataFrame:
         """
         Normalize predictions with `index`, NaN-filling, and df conversion.
-        series.
-
-        :param predictions:
-        :param index:
-        :return:
         """
         _LOG.debug("Number of predictions=%i", predictions.size)
         _LOG.debug("Number of non-NaN predictions=%i", predictions.count())
@@ -470,10 +487,6 @@ class ForecastProcessor:
     ) -> pd.DataFrame:
         """
         Normalize predictions with `index`, NaN-filling, and df conversion.
-
-        :param volatility:
-        :param index:
-        :return:
         """
         # TODO(Paul): Factor out common part with predictions normalization.
         _LOG.debug("Number of volatility forecasts=%i", volatility.size)
@@ -547,8 +560,8 @@ class ForecastProcessor:
         _LOG.debug("After merge: merged_df=\n%s", hpandas.df_to_str(merged_df))
         return merged_df
 
-    @staticmethod
     def _generate_orders(
+        self,
         shares_df: pd.DataFrame,
         order_config: Dict[str, Any],
     ) -> List[omorder.Order]:
@@ -579,6 +592,9 @@ class ForecastProcessor:
                     asset_id,
                 )
                 diff_num_shares = 0.0
+            diff_num_shares = self._enforce_restrictions(
+                asset_id, curr_num_shares, diff_num_shares
+            )
             if diff_num_shares == 0.0:
                 # No need to place trades.
                 continue
@@ -592,6 +608,49 @@ class ForecastProcessor:
             orders.append(order)
         _LOG.debug("Number of orders generated=%i", len(orders))
         return orders
+
+    def _enforce_restrictions(
+        self,
+        asset_id: int,
+        curr_num_shares: float,
+        diff_num_shares: float,
+    ) -> float:
+        if self._restrictions is None:
+            return diff_num_shares
+        filter_ = self._restrictions["asset_id"] == asset_id
+        restrictions = self._restrictions[filter_]
+        if restrictions.empty:
+            return diff_num_shares
+        # Enforce "is_buy_restricted".
+        if (
+            restrictions.loc["is_buy_restricted"]
+            and curr_num_shares >= 0
+            and diff_num_shares > 0
+        ):
+            diff_num_shares = 0.0
+        # Enforce "is_buy_cover_restricted".
+        if (
+            restrictions.loc["is_buy_cover_restricted"]
+            and curr_num_shares < 0
+            and diff_num_shares > 0
+        ):
+            diff_num_shares = 0.0
+        # Enforce "is_sell_short_restricted".
+        if (
+            restrictions.loc["is_sell_short_restricted"]
+            and curr_num_shares <= 0
+            and diff_num_shares < 0
+        ):
+            diff_num_shares = 0.0
+        # Enforce "is_sell_long_restricted".
+        if (
+            restrictions.loc["is_sell_long_restricted"]
+            and curr_num_shares > 0
+            and diff_num_shares < 0
+        ):
+            diff_num_shares = 0.0
+        _LOG.warning("Enforcing restriction for asset_id=%i", asset_id)
+        return diff_num_shares
 
     # TODO(Paul): This is the same as the corresponding method in `Portfolio`.
     @staticmethod
@@ -618,10 +677,30 @@ class ForecastProcessor:
         odict[key] = obj
 
 
+def _validate_order_config(config: cconfig.Config) -> None:
+    hdbg.dassert_isinstance(config, cconfig.Config)
+    _ = _get_object_from_config(config, "order_type", str)
+    _ = _get_object_from_config(config, "order_duration", int)
+
+
+def _validate_optimizer_config(config: cconfig.Config) -> None:
+    hdbg.dassert_isinstance(config, cconfig.Config)
+    _ = _get_object_from_config(config, "backend", str)
+    _ = _get_object_from_config(config, "target_gmv", float)
+
+
+def _validate_df(df: pd.DataFrame) -> None:
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hpandas.dassert_index_is_datetime(df)
+    hpandas.dassert_strictly_increasing_index(df)
+
+
 # Extract the objects from the config.
 def _get_object_from_config(
     config: cconfig.Config, key: str, expected_type: type
 ) -> Any:
+    hdbg.dassert_isinstance(config, cconfig.Config),
+    hdbg.dassert_isinstance(key, str)
     hdbg.dassert_in(key, config)
     obj = config[key]
     hdbg.dassert_issubclass(obj, expected_type)

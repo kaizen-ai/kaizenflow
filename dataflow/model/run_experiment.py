@@ -16,7 +16,7 @@ Import as:
 import dataflow.model.run_experiment as dtfmoruexp
 """
 
-# TODO(gp): -> run_experiment_list.py?
+# TODO(gp): -> run_configs.py?
 
 import argparse
 import logging
@@ -40,6 +40,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): _run_configs_stub
 def _run_experiment_stub(
     config: cconfig.Config,
     #

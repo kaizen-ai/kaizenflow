@@ -311,7 +311,7 @@ def collate_parquet_tile_metadata(
     :return: dataframe with two file size columns and a multiindex reflecting
         the parquet path structure.
     """
-    hdbg.dassert(os.path.isdir(path))
+    hdbg.dassert_dir_exists(path)
     # Remove the trailing slash to simplify downstream accounting.
     if path.endswith("/"):
         path = path[:-1]
@@ -358,8 +358,8 @@ def collate_parquet_tile_metadata(
 
 
 # TODO(Paul): The `int` assumption is baked in. We can generalize to strings
-# if needed, but if we do, then we should continue to handle string ints as
-# ints as we do here (e.g., there are sorting advantages, among others).
+#  if needed, but if we do, then we should continue to handle string ints as
+#  ints as we do here (e.g., there are sorting advantages, among others).
 def _process_walk_triple(
     triple: tuple, start_depth
 ) -> Tuple[Tuple[str], Tuple[int]]:
@@ -458,7 +458,7 @@ def get_parquet_filters_from_timestamp_interval(
         )
         years = list(set(dates.year))
         if len(years) == 1:
-            # For one year range, simple AND statement is enough.
+            # For one year range, a simple AND statement is enough.
             # `[[('year', '==', 2020), ('month', '>=', 6), ('month', '<=', 12)]]`
             and_filter = [
                 ("year", "==", dates[0].year),
@@ -467,8 +467,8 @@ def get_parquet_filters_from_timestamp_interval(
             ]
             or_and_filter.append(and_filter)
         else:
-            # For ranges over two years, OR statements are necessary to bridge the gap
-            # between first and last AND statement, unless range is around two years.
+            # For ranges over two years, OR statements are necessary to bridge the
+            # gap between first and last AND statement, unless range is around two years.
             # First AND filter.
             first_and_filter = [
                 ("year", "==", dates[0].year),
@@ -623,3 +623,22 @@ def to_partitioned_parquet(
             partition_filename_cb=partition_filename,
             filesystem=filesystem,
         )
+
+
+def maybe_cast_to_int(string: str) -> Union[str, int]:
+    """
+    Return `string` as an `int` if convertible, otherwise a no-op.
+
+    This is useful for parsing mixed-type dataframe columns that may contain
+    strings and ints. For example, a dataframe with columns
+       feature1 feature2 1 2 3
+    will be written and read back with columns `1`, `2`, `3` as the strings
+    "1", "2", "3" rather than the ints. This function can be used to rectify
+    that in a post-processing column rename.
+    """
+    hdbg.dassert_isinstance(string, str)
+    try:
+        val = int(string)
+    except ValueError:
+        val = string
+    return val

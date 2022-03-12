@@ -59,34 +59,28 @@ class AbstractPortfolio(abc.ABC):
 
     def __init__(
         self,
-        strategy_id: str,
-        account: str,
         broker: ombroker.AbstractBroker,
         mark_to_market_col: str,
         pricing_method: str,
-        timestamp_col: str,
         initial_holdings: pd.Series,
     ):
         """
         Constructor.
 
-        :param strategy_id, account: back office information about the strategy
-            driving this portfolio
         :param mark_to_market_col: column name used as price to mark holdings to
             market
         :param pricing_method: pricing methodology to use for valuing assets.
             If e.g. "twap", then we also include the bar duration as a
             pandas-style suffix: "twap.5T"
-        :param timestamp_col: column to use when accessing price data
+        :param initial_holdings: initial positions in shares indexed by integer
+            asset_ids
         """
-        _LOG.debug(
-            hprint.to_str("strategy_id account mark_to_market_col timestamp_col")
-        )
-        self._strategy_id = strategy_id
-        self._account = account
+        _LOG.debug(hprint.to_str("mark_to_market_col"))
         # Set and unpack broker.
         hdbg.dassert_issubclass(broker, ombroker.AbstractBroker)
         self.broker = broker
+        self._account = broker.account
+        self._timestamp_col = broker.timestamp_col
         # Extract `market_data` from `broker`.
         self.market_data = broker.market_data
         # Extract `get_wall_clock_time` from `market_data`.
@@ -94,68 +88,32 @@ class AbstractPortfolio(abc.ABC):
         self._asset_id_col = broker.market_data.asset_id_col
         self._mark_to_market_col = mark_to_market_col
         # Parse `pricing_method`.
-        hdbg.dassert_isinstance(pricing_method, str)
-        if pricing_method == "last":
-            self._pricing_type = "last"
-        else:
-            split_str = pricing_method.split(".")
-            hdbg.dassert_eq(len(split_str), 2)
-            pricing_type = split_str[0]
-            hdbg.dassert_in(pricing_type, ["twap", "vwap"])
-            self._pricing_type = pricing_type
-            bar_duration = split_str[1]
-            hdbg.dassert(
-                pd.Timedelta(bar_duration),
-                "Cannot convert %s to `pd.Timedelta`" % bar_duration,
-            )
-            self._bar_duration = bar_duration
-        # Timestamp column.
-        self._timestamp_col = timestamp_col
-        # Initialize universe and holdings.
+        self._pricing_type, self._bar_duration = self._parse_pricing_method(
+            pricing_method
+        )
+        # Validate universe and holdings.
         self._validate_initial_holdings(initial_holdings)
         initial_holdings.index.name = "asset_id"
         initial_holdings.name = "curr_num_shares"
-        # Get the initialization timestamp from the wall clock.
-        initial_timestamp = self._get_wall_clock_time()
-        _LOG.debug("initial_timestamp=%s" % initial_timestamp)
-        self._initial_timestamp = initial_timestamp
+        self._initial_holdings = initial_holdings
+        # Initialize bookkeeping dictionaries.
         # At each call to `mark_to_market()`, we capture `wall_clock_time` and
         # perform a sequence of updates to the following dictionaries.
         # We initialize the collection of dictionaries from `holdings_df`.
-        # - timestamp to pd.Series of holdings in shares (indexed by asset_id).
-        _LOG.debug("Initializing asset_holdings...")
+        # - timestamp to pd.Series of holdings in shares (indexed by asset_id)
         self._asset_holdings = collections.OrderedDict()
-        asset_holdings = initial_holdings[
-            initial_holdings.index != AbstractPortfolio.CASH_ID
-        ]
-        asset_holdings.name = initial_timestamp
-        hdbg.dassert_isinstance(asset_holdings, pd.Series)
-        self._sequential_insert(
-            initial_timestamp, asset_holdings, self._asset_holdings
-        )
-        _LOG.debug("asset_holdings initialized.")
-        # - timestamp to float.
-        _LOG.debug("Initializing cash...")
+        # - timestamp to float
         self._cash = collections.OrderedDict()
-        cash = initial_holdings.iloc[AbstractPortfolio.CASH_ID]
-        self._sequential_insert(initial_timestamp, cash, self._cash)
-        _LOG.debug("cash initialized.")
-        # - timestamp to pd.DataFrame of price, value (indexed by asset_id).
-        _LOG.debug("Initializing assets_marked_to_market...")
+        # - timestamp to pd.DataFrame of price, value (indexed by asset_id)
         self._assets_marked_to_market = collections.OrderedDict()
-        # Price the assets at the initial timestamp.
-        self._price_assets(asset_holdings)
-        _LOG.debug("assets_marked_to_market initialized.")
-        _LOG.debug("Initializing statistics...")
-        # Set up asset flows dict. No initialization.
+        # - timestamp to pd.Series of notional flows (indexed by asset_id)
         self._flows = collections.OrderedDict()
-        # - timestamp to pd.Series of statistics.
+        # - timestamp to pd.Series of statistics
         self._statistics = collections.OrderedDict()
-        # Compute the initial portfolio statistics.
-        self._compute_statistics()
-        _LOG.debug("statistics initialized.")
-        #
-        self._initial_universe = asset_holdings.index
+        # Set the initial universe.
+        self._initial_universe = initial_holdings.index.drop(
+            AbstractPortfolio.CASH_ID
+        )
 
     def __str__(self) -> str:
         """
@@ -281,23 +239,29 @@ class AbstractPortfolio(abc.ABC):
         :return: dataframe with HOLDINGS and PRICE columns
         """
         _LOG.debug("Marking to market...")
-        # Update asset_holdings, cash.
-        self._observe_holdings()
-        # Get the latest timestamp.
-        ts = next(reversed(self._asset_holdings))
-        # Price the assets.
-        self._price_assets(self._asset_holdings[ts])
-        # Calculate statistics.
-        self._compute_statistics()
-        # Perform sanity-checks.
-        # These four dictionaries should have the same keys. Here we check that
-        # they have the same length.
-        # TODO(Paul): Maybe check keys instead of length.
-        hdbg.dassert_eq(
-            len(self._asset_holdings), len(self._assets_marked_to_market)
-        )
-        hdbg.dassert_eq(len(self._asset_holdings), len(self._cash))
-        hdbg.dassert_eq(len(self._asset_holdings), len(self._statistics))
+        # The first time this function is called we set the "initial holdings".
+        # TODO(Paul): See if `_set_holdings()` can call into `mark_to_market()`
+        #     or vice versa.
+        if not self._asset_holdings:
+            self._set_holdings(self._initial_holdings)
+        else:
+            # Update asset_holdings, cash.
+            self._observe_holdings()
+            # Get the latest timestamp.
+            ts = next(reversed(self._asset_holdings))
+            # Price the assets.
+            self._price_assets(self._asset_holdings[ts])
+            # Calculate statistics.
+            self._compute_statistics()
+            # Perform sanity-checks.
+            # These four dictionaries should have the same keys. Here we check that
+            # they have the same length.
+            # TODO(Paul): Maybe check keys instead of length.
+            hdbg.dassert_eq(
+                len(self._asset_holdings), len(self._assets_marked_to_market)
+            )
+            hdbg.dassert_eq(len(self._asset_holdings), len(self._cash))
+            hdbg.dassert_eq(len(self._asset_holdings), len(self._statistics))
         #
         df = self.get_cached_mark_to_market()
         _LOG.debug("mark_to_market_df=\n%s", hpandas.df_to_str(df, num_rows=None))
@@ -311,6 +275,8 @@ class AbstractPortfolio(abc.ABC):
 
         return: same as `mark_to_market()`
         """
+        # TODO(Paul): Gracefully fail instead of assert.
+        hdbg.dassert(self._asset_holdings, "No cached information available.")
         # Get latest timestamp available.
         timestamp = next(reversed(self._asset_holdings))
         _LOG.debug("Retrieving holdings at timestamp=%s", timestamp)
@@ -478,10 +444,7 @@ class AbstractPortfolio(abc.ABC):
         portfolio_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         return portfolio_df, stats_df
 
-    def price_assets(
-        self,
-        asset_ids: List[int],
-    ) -> pd.Series:
+    def price_assets(self, asset_ids: List[int]) -> pd.Series:
         """
         Wrap `portfolio.market_data` and packages output.
 
@@ -506,6 +469,57 @@ class AbstractPortfolio(abc.ABC):
         prices.name = "price"
         hdbg.dassert(not prices.index.has_duplicates)
         return prices
+
+    def _set_holdings(self, holdings: pd.Series) -> None:
+        """
+        Set portfolio holdings in shares and price the portfolio.
+
+        This covers two main use cases:
+        - Lazy initialization of the portfolio holdings
+        - Resetting portfolio holdings overnight to account for splits/dividends
+        """
+        # Get the timestamp from the wall clock.
+        timestamp = self._get_wall_clock_time()
+        _LOG.debug("timestamp=%s" % timestamp)
+        _LOG.debug("Setting asset_holdings...")
+        asset_holdings = holdings[holdings.index != AbstractPortfolio.CASH_ID]
+        asset_holdings.name = timestamp
+        hdbg.dassert_isinstance(asset_holdings, pd.Series)
+        _LOG.debug("`asset_holdings`=\n%s", hpandas.df_to_str(asset_holdings))
+        self._sequential_insert(timestamp, asset_holdings, self._asset_holdings)
+        _LOG.debug("asset_holdings set.")
+        _LOG.debug("Setting cash...")
+        cash = holdings.iloc[AbstractPortfolio.CASH_ID]
+        _LOG.debug("`cash`=%0.2f", cash)
+        self._sequential_insert(timestamp, cash, self._cash)
+        _LOG.debug("cash set.")
+        _LOG.debug("Setting assets_marked_to_market...")
+        # Price the assets at the initial timestamp.
+        self._price_assets(asset_holdings)
+        _LOG.debug("assets_marked_to_market set.")
+        _LOG.debug("Calculating statistics...")
+        # Compute the initial portfolio statistics.
+        self._compute_statistics()
+        _LOG.debug("statistics calculated.")
+
+    @staticmethod
+    def _parse_pricing_method(pricing_method: str) -> Tuple[str, Optional[str]]:
+        hdbg.dassert_isinstance(pricing_method, str)
+        if pricing_method == "last":
+            pricing_type = "last"
+            bar_duration = None
+        else:
+            split_str = pricing_method.split(".")
+            hdbg.dassert_eq(len(split_str), 2)
+            pricing_type = split_str[0]
+            hdbg.dassert_in(pricing_type, ["twap", "vwap"])
+            pricing_type = pricing_type
+            bar_duration = split_str[1]
+            hdbg.dassert(
+                pd.Timedelta(bar_duration),
+                "Cannot convert %s to `pd.Timedelta`" % bar_duration,
+            )
+        return pricing_type, bar_duration
 
     @staticmethod
     def _compute_pnl(
@@ -544,18 +558,13 @@ class AbstractPortfolio(abc.ABC):
         return df
 
     @abc.abstractmethod
-    def _observe_holdings(
-        self,
-    ) -> None:
+    def _observe_holdings(self) -> None:
         """
         Update holdings and cash at the current wall clock time.
         """
         ...
 
-    def _price_assets(
-        self,
-        asset_ids: pd.Series,
-    ) -> None:
+    def _price_assets(self, asset_ids: pd.Series) -> None:
         """
         Access the underlying market_data to price assets.
 
@@ -653,9 +662,7 @@ class AbstractPortfolio(abc.ABC):
         return holdings_df
 
     @staticmethod
-    def _validate_mark_to_market_df(
-        df: pd.DataFrame,
-    ) -> None:
+    def _validate_mark_to_market_df(df: pd.DataFrame) -> None:
         """
         Ensure that `df` passes basic sanity checks for `mark_to_market()`.
         """
@@ -687,9 +694,7 @@ class AbstractPortfolio(abc.ABC):
         )
 
     @staticmethod
-    def _validate_initial_holdings(
-        initial_holdings: pd.Series,
-    ) -> None:
+    def _validate_initial_holdings(initial_holdings: pd.Series) -> None:
         """
         Ensure that `initial_holdings` passes basic sanity checks.
         """
@@ -759,24 +764,18 @@ class DataFramePortfolio(AbstractPortfolio):
         "price",
     ]
 
-    def _observe_holdings(
-        self,
-    ) -> None:
+    def _observe_holdings(self) -> None:
         """
         Update holdings at the current wall clock time using fills information.
         """
-        wall_clock_timestamp = self._get_wall_clock_time()
-        # Round the time in simulation to nearest second.
-        # TODO: consider changing the resolution.
-        # wall_clock_timestamp = wall_clock_timestamp.round("S")
         # Get fills.
-        fills_df = self._get_fills(wall_clock_timestamp)
+        fills_df = self._get_fills()
         # Get latest holdings
         prev_asset_holdings_ts = next(reversed(self._asset_holdings))
         prev_asset_holdings = self._asset_holdings[prev_asset_holdings_ts]
-        hdbg.dassert_lt(prev_asset_holdings_ts, wall_clock_timestamp)
         prev_cash_holdings_ts = next(reversed(self._cash))
         prev_cash = self._cash[prev_cash_holdings_ts]
+        wall_clock_timestamp = self._get_wall_clock_time()
         hdbg.dassert_lt(prev_cash_holdings_ts, wall_clock_timestamp)
         new_cash = prev_cash
         # Update holdings using the `fills_df`.
@@ -803,10 +802,7 @@ class DataFramePortfolio(AbstractPortfolio):
         )
         self._sequential_insert(wall_clock_timestamp, new_cash, self._cash)
 
-    def _get_fills(
-        self,
-        wall_clock_timestamp: pd.Timestamp,
-    ) -> pd.DataFrame:
+    def _get_fills(self) -> pd.DataFrame:
         """
         Get the fills from the broker and convert it into a `fills_df`.
 
@@ -835,9 +831,7 @@ class DataFramePortfolio(AbstractPortfolio):
         return fills_df
 
     @staticmethod
-    def _validate_fills_df(
-        fills_df: pd.DataFrame,
-    ) -> None:
+    def _validate_fills_df(fills_df: pd.DataFrame) -> None:
         """
         Ensure that `fills_df` passes basic sanity checks.
         """
@@ -931,7 +925,6 @@ class MockedPortfolio(AbstractPortfolio):
         self._timestamp_to_snapshot_df = collections.OrderedDict()
         # wall clock timestamp -> total net cost of transactions since the BOD.
         self._net_cost = collections.OrderedDict()
-        self._net_cost[self._initial_timestamp] = pd.Series([], dtype="float64")
 
     def _observe_holdings(self) -> None:
         # The current positions table has the following fields:
@@ -1088,10 +1081,15 @@ class MockedPortfolio(AbstractPortfolio):
         _LOG.debug("prev_cash=%s", prev_cash)
         hdbg.dassert(np.isfinite(prev_cash), "prev_cash=%s", prev_cash)
         # Get the net cost at the previous timestamp.
-        prev_net_cost_ts = next(reversed(self._net_cost))
-        prev_net_costs = self._net_cost[prev_net_cost_ts]
+        if self._net_cost:
+            prev_net_cost_ts = next(reversed(self._net_cost))
+            hdbg.dassert_eq(prev_net_cost_ts, prev_cash_ts)
+            prev_net_costs = self._net_cost[prev_net_cost_ts]
+        else:
+            initial_asset_holdings_ts = next(reversed(self._asset_holdings))
+            idx = self._asset_holdings[initial_asset_holdings_ts].index
+            prev_net_costs = pd.Series(0, idx)
         prev_net_cost = prev_net_costs.sum()
-        hdbg.dassert_eq(prev_net_cost_ts, prev_cash_ts)
         # Get the current net cost.
         current_net_costs = self._get_net_cost(snapshot_df)
         current_net_cost = current_net_costs.sum()

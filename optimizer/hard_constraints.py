@@ -6,11 +6,16 @@ import optimizer.hard_constraints as oharcons
 
 import logging
 
-import cvxpy as cvx
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import optimizer.base as opbase
+
+# Equivalent to `import cvxpy as cpx`, but skip this module if the module is
+# not present.
+import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
+
+cvx = pytest.importorskip("cvxpy")
 
 _LOG = logging.getLogger(__name__)
 

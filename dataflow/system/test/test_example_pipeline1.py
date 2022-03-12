@@ -12,86 +12,44 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Factor this out.
 
-
-@pytest.mark.skip("Enable after updating Pandas")
+# TODO(gp): -> Test_ExamplePipeline1_SystemRunner?
 class TestExamplePipeline1(otodh.TestOmsDbHelper):
     """
-    Test pipeline end-to-end with fake data, features.
+    Test using fake data and features:
+    - `ExamplePipeline1`
+    - end-to-end inside a `System`
+    - with a `MarketData`
+    - with a `Portfolio` backed by DB or dataframe
     """
 
-    asset_ids = [101]
-
-    @pytest.mark.slow
-    def test_market_data1_database_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = self._get_market_data_df1()
-        actual = self._run_coroutines(data, real_time_loop_time_out_in_secs)
-        self.check_string(actual)
-
-    @pytest.mark.slow
-    def test_market_data2_database_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = self._get_market_data_df2()
-        actual = self._run_coroutines(data, real_time_loop_time_out_in_secs)
-        self.check_string(actual)
-
-    @pytest.mark.slow
-    def test_market_data3_database_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = self._get_market_data_df3()
-        actual = self._run_coroutines(data, real_time_loop_time_out_in_secs)
-        self.check_string(actual)
-
-    @pytest.mark.slow
-    def test_market_data1_database_vs_dataframe_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = self._get_market_data_df1()
-        expected = self._run_coroutines(
-            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
-        )
-        actual = self._run_coroutines(
-            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
-        )
-        self.assert_equal(actual, expected)
-
-    @pytest.mark.slow
-    def test_market_data2_database_vs_dataframe_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = self._get_market_data_df2()
-        expected = self._run_coroutines(
-            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
-        )
-        actual = self._run_coroutines(
-            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
-        )
-        self.assert_equal(actual, expected)
-
-    @pytest.mark.superslow("Times out in GH Actions.")
-    def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = self._get_market_data_df3()
-        expected = self._run_coroutines(
-            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
-        )
-        actual = self._run_coroutines(
-            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
-        )
-        self.assert_equal(actual, expected)
-
-    def _run_coroutines(
+    def run_coroutines(
         self,
         data: pd.DataFrame,
         real_time_loop_time_out_in_secs: int,
-        is_database_portfolio: bool = True,
+        is_database_portfolio: bool,
     ) -> str:
+        """
+        Run a system using the desired portfolio based on DB or dataframe.
+        """
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [101]
+            # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
                 system_runner = dtfsepsyru.ExamplePipeline1_Database_SystemRunner(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = dtfsepsyru.ExamplePipeline1_Dataframe_SystemRunner(
-                    asset_ids, event_loop
+                system_runner = (
+                    dtfsepsyru.ExamplePipeline1_Dataframe_SystemRunner(
+                        asset_ids, event_loop
+                    )
                 )
+            #
             market_data = system_runner.get_market_data(data)
+            #
             portfolio = system_runner.get_portfolio(market_data)
+            #
             returns_col = "vwap.ret_0"
             volatility_col = "vwap.ret_0.vol"
             prediction_col = "feature1"
@@ -101,6 +59,7 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
                 volatility_col=volatility_col,
                 returns_col=returns_col,
             )
+            #
             get_wall_clock_time = market_data.get_wall_clock_time
             dag_runner = system_runner.get_dag_runner(
                 dag_builder,
@@ -134,80 +93,66 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
             )
             return actual
 
-    @staticmethod
-    def _get_market_data_df1() -> pd.DataFrame:
-        """
-        Generate price series that alternates every 5 minutes.
-        """
-        idx = pd.date_range(
-            start=pd.Timestamp(
-                "2000-01-01 09:31:00-05:00", tz="America/New_York"
-            ),
-            end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
-            freq="T",
-        )
-        bar_duration = "1T"
-        bar_delay = "0T"
-        data = mdata.build_timestamp_df(idx, bar_duration, bar_delay)
-        price_pattern = [101.0] * 5 + [100.0] * 5
-        price = price_pattern * 4
-        data["close"] = price
-        data["asset_id"] = 101
-        data["volume"] = 100
-        feature_pattern = [1.0] * 5 + [-1.0] * 5
-        feature = feature_pattern * 4
-        data["feature1"] = feature
-        real_time_loop_time_out_in_secs = 35 * 60
-        return data, real_time_loop_time_out_in_secs
+    # ///////////////////////////////////////////////////////////////////////////
 
-    @staticmethod
-    def _get_market_data_df2() -> pd.DataFrame:
-        """
-        Generate price series that alternates every 5 minutes.
-        """
-        idx = pd.date_range(
-            start=pd.Timestamp(
-                "2000-01-01 09:31:00-05:00", tz="America/New_York"
-            ),
-            end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
-            freq="T",
+    @pytest.mark.slow
+    def test_market_data1_database_portfolio(self) -> None:
+        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df1()
+        actual = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
         )
-        bar_duration = "1T"
-        bar_delay = "0T"
-        data = mdata.build_timestamp_df(idx, bar_duration, bar_delay)
-        price_pattern = [101.0] * 2 + [100.0] * 2 + [101.0] * 2 + [102.0] * 4
-        price = price_pattern * 4
-        data["close"] = price
-        data["asset_id"] = 101
-        data["volume"] = 100
-        feature_pattern = [-1.0] * 5 + [1.0] * 5
-        feature = feature_pattern * 4
-        data["feature1"] = feature
-        real_time_loop_time_out_in_secs = 35 * 60
-        return data, real_time_loop_time_out_in_secs
+        self.check_string(actual)
 
-    @staticmethod
-    def _get_market_data_df3() -> pd.DataFrame:
-        """
-        Generate price series that alternates every 5 minutes.
-        """
-        idx = pd.date_range(
-            start=pd.Timestamp(
-                "2000-01-01 09:31:00-05:00", tz="America/New_York"
-            ),
-            end=pd.Timestamp("2000-01-01 11:30:00-05:00", tz="America/New_York"),
-            freq="T",
+    @pytest.mark.slow
+    def test_market_data2_database_portfolio(self) -> None:
+        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df2()
+        actual = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
         )
-        bar_duration = "1T"
-        bar_delay = "0T"
-        data = mdata.build_timestamp_df(idx, bar_duration, bar_delay)
-        price_pattern = [101.0] * 3 + [100.0] * 3 + [101.0] * 3 + [102.0] * 6
-        price = price_pattern * 8
-        data["close"] = price
-        data["asset_id"] = 101
-        data["volume"] = 100
-        feature_pattern = [-1.0] * 5 + [1.0] * 5
-        feature = feature_pattern * 12
-        data["feature1"] = feature
-        real_time_loop_time_out_in_secs = 115 * 60
-        return data, real_time_loop_time_out_in_secs
+        self.check_string(actual)
+
+    @pytest.mark.slow
+    def test_market_data3_database_portfolio(self) -> None:
+        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df3()
+        actual = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
+        )
+        self.check_string(actual)
+
+    @pytest.mark.slow
+    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
+    def test_market_data1_database_vs_dataframe_portfolio(self) -> None:
+        """
+        Compare the output between using a DB and dataframe portfolio.
+        """
+        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df1()
+        expected = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
+        )
+        actual = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
+        )
+        self.assert_equal(actual, expected)
+
+    @pytest.mark.slow
+    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
+    def test_market_data2_database_vs_dataframe_portfolio(self) -> None:
+        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df2()
+        expected = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
+        )
+        actual = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
+        )
+        self.assert_equal(actual, expected)
+
+    @pytest.mark.superslow("Times out in GH Actions.")
+    def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
+        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df3()
+        expected = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=True
+        )
+        actual = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs, is_database_portfolio=False
+        )
+        self.assert_equal(actual, expected)
