@@ -43,7 +43,7 @@ services:
     #       # memory is available.
     #       memory: 60G
 
-  app:
+  opt_app:
     extends:
       base_app
     # Default network mode set to host so we can reach e.g.

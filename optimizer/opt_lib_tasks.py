@@ -177,9 +177,10 @@ def opt_docker_jupyter(  # type: ignore
 # Docker up / down.
 # #############################################################################
 
-def _get_docker_cmd(command: str) -> str:
+def _get_docker_cmd(command: str, service_name: str) -> str:
     cmd = ["docker-compose"]
     cmd.append(command)
+    cmd.append(service_name)
     cmd = hlibtask._to_single_line_cmd(cmd)
     return cmd
 
@@ -187,16 +188,18 @@ def _get_docker_cmd(command: str) -> str:
 @task
 def opt_docker_up(ctx):
     command = "up"
-    docker_up_cmd = _get_docker_cmd(command)
+    service_name = "opt_app"
+    docker_cmd = _get_docker_cmd(command, service_name)
 
     # Execute the command.
-    hlibtask._run(ctx, docker_up_cmd, pty=True)
+    hlibtask._run(ctx, docker_cmd, pty=True)
 
 
 @task
 def opt_docker_down(ctx):
     command = "down"
-    docker_down_cmd = _get_docker_cmd(command)
+    service_name = "opt_app"
+    docker_cmd = _get_docker_cmd(command, service_name)
 
     # Execute the command.
-    hlibtask._run(ctx, docker_down_cmd, pty=True)
+    hlibtask._run(ctx, docker_cmd, pty=True)
