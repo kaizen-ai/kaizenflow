@@ -12,6 +12,9 @@ import pprint
 import random
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+# Avoid dependency from other `helpers` modules, such as `helpers.hcache`, to
+# prevent import cycles.
+
 import joblib
 from joblib._store_backends import StoreBackendBase, StoreBackendMixin
 from tqdm.autonotebook import tqdm

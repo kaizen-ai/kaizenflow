@@ -13,7 +13,7 @@ import im_v2.common.db.db_utils as imvcddbut
 
 @pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
-    S3_PATH = "s3://cryptokaizen-data/unit-test/parquet/historical"
+    S3_PATH = "s3://cryptokaizen-data/unit_test/parquet/historical"
     FILTERS = [
         [
             ("year", "==", 2021),
