@@ -6,7 +6,11 @@ import optimizer.base as opbase
 
 import abc
 
-import cvxpy as cvx
+# Equivalent to `import cvxpy as cpx`, but skip this module if the module is
+# not present.
+import pytest  # noqa: E402 # pylint: disable=wrong-import-position
+
+cvx = pytest.importorskip("cvxpy")
 
 EXPR = cvx.expressions.expression.Expression
 

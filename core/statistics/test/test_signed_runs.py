@@ -273,7 +273,7 @@ class Test_compute_signed_run_lengths(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    @pytest.mark.skip("AmpTask2200 Update tests after pandas update")
+    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test4(self) -> None:
         """
         Test a single value.

@@ -31,6 +31,7 @@ _LOG.setLevel(logging.INFO)
 # #############################################################################
 
 
+# TODO(gp): Maybe move to henv.py
 def is_inside_docker() -> bool:
     """
     Return whether we are inside a container or not.

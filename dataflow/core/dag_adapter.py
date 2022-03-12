@@ -5,7 +5,7 @@ import dataflow.core.dag_adapter as dtfcodaada
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, List
 
 import core.config as cconfig
 import dataflow.core.dag as dtfcordag
@@ -25,7 +25,7 @@ class DagAdapter(dtfcodabui.DagBuilder):
     def __init__(
         self,
         dag_builder: dtfcodabui.DagBuilder,
-        overriding_config: Dict[str, Any],
+        overriding_config: cconfig.Config,
         nodes_to_insert: List[dtfcornode.Node],
         nodes_to_append: List[dtfcornode.Node],
         **kwargs: Any,

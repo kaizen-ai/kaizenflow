@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 import sklearn as sklear
 
-import core.finance as cofinanc
 import core.data_adapters as cdatadap
+import core.finance as cofinanc
 import core.statistics as costatis
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas

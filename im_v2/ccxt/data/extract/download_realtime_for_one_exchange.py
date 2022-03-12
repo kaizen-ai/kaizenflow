@@ -137,10 +137,10 @@ def _run(args: argparse.Namespace):
         if args.s3_path:
             # Get file name.
             file_name = (
-                    currency_pair
-                    + "_"
-                    + hdateti.get_current_timestamp_as_string("UTC")
-                    + ".csv"
+                currency_pair
+                + "_"
+                + hdateti.get_current_timestamp_as_string("UTC")
+                + ".csv"
             )
             path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
             # Save data to S3 filesystem.

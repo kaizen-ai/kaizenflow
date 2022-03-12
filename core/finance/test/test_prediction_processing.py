@@ -5,7 +5,6 @@ import logging
 import pandas as pd
 
 import core.finance.prediction_processing as cfiprpro
-
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)

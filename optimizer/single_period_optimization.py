@@ -7,7 +7,6 @@ import optimizer.single_period_optimization as osipeopt
 import logging
 from typing import List, Optional, Tuple
 
-import cvxpy as cvx
 import numpy as np
 import pandas as pd
 
@@ -17,6 +16,12 @@ import helpers.hpandas as hpandas
 import optimizer.base as opbase
 import optimizer.hard_constraints as oharcons
 import optimizer.soft_constraints as osofcons
+
+# Equivalent to `import cvxpy as cpx`, but skip this module if the module is
+# not present.
+import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
+
+cvx = pytest.importorskip("cvxpy")
 
 _LOG = logging.getLogger(__name__)
 
@@ -72,8 +77,12 @@ class SinglePeriodOptimizer:
         self._asset_ids = self._df["asset_id"]
         self._n_assets = df.shape[0]
         positions = self._df["position"]
+        _LOG.debug("positions=\n%s", hpandas.df_to_str(positions))
         self._gmv = positions.abs().sum()
-        self._current_weights = positions / self._gmv
+        self._current_weights = positions / self._target_gmv
+        _LOG.debug(
+            "current_weights=\n%s", hpandas.df_to_str(self._current_weights)
+        )
 
     def optimize(self) -> pd.DataFrame:
         """
@@ -99,49 +108,6 @@ class SinglePeriodOptimizer:
         gmv_stats = 100 * (notional_stats / self._target_gmv).rename("percentage")
         return pd.concat([notional_stats, gmv_stats], axis=1)
 
-    @staticmethod
-    def _validate_df(df: pd.DataFrame) -> None:
-        """
-        Sanity-check `df`.
-        """
-        SinglePeriodOptimizer._is_df_with_asset_id_col(df)
-        # Ensure the dataframe has the expected columns.
-        expected_cols = ["volatility", "prediction", "position"]
-        hdbg.dassert_is_subset(expected_cols, df.columns)
-        # Ensure that the dataframe has a range-index.
-        hdbg.dassert_isinstance(df.index, pd.RangeIndex)
-        # Do not allow NaNs.
-        # TODO(Paul): We may need to relax this later
-        for col in expected_cols:
-            hdbg.dassert(not df[col].isna().any())
-
-    @staticmethod
-    def _is_df_with_asset_id_col(df: pd.DataFrame) -> None:
-        # Type-check the dataframe.
-        hdbg.dassert_isinstance(df, pd.DataFrame)
-        hdbg.dassert_in("asset_id", df.columns)
-        # Ensure that there are no duplicate asset ids.
-        hdbg.dassert_eq(df["asset_id"].nunique(), df["asset_id"].count())
-
-    @staticmethod
-    def _validate_restrictions_df(df: pd.DataFrame) -> None:
-        """
-        Sanity-check `df`.
-        """
-        SinglePeriodOptimizer._is_df_with_asset_id_col(df)
-        # Type-check the dataframe.
-        hdbg.dassert_isinstance(df, pd.DataFrame)
-        # Ensure the dataframe has the expected columns.
-        restriction_cols = [
-            "is_buy_restricted",
-            "is_buy_cover_restricted",
-            "is_sell_short_restricted",
-            "is_sell_long_restricted",
-        ]
-        hdbg.dassert_is_subset(restriction_cols, df.columns)
-        for col in restriction_cols:
-            hpandas.dassert_series_type_is(df[col], np.bool_)
-
     def _optimize_weights(self) -> Tuple[cvx.Variable, cvx.Variable]:
         """
         Create and solve the cvx optimization problem.
@@ -152,7 +118,9 @@ class SinglePeriodOptimizer:
         # Determine the current GMV and GMV-normalized weights.
         # Create a placeholder for (current) GMV-normalized weight adjustments.
         target_weight_diffs = cvx.Variable(self._n_assets)
-        target_weights = self._current_weights.values + target_weight_diffs
+        current_weights = self._current_weights.to_numpy()
+        _LOG.debug("current_weights=\n%s", current_weights)
+        target_weights = current_weights + target_weight_diffs
         # Create a placeholder for predicted returns (to maximize subject to
         # constraints).
         predictions = self._df["prediction"]
@@ -164,11 +132,15 @@ class SinglePeriodOptimizer:
         hard_constraints = self._get_hard_constraints()
         # Convert constraints into cvxpy expressions.
         soft_constraint_cvx_expr = [
-            constraint.get_expr(target_weights, target_weight_diffs, self._gmv)
+            constraint.get_expr(
+                target_weights, target_weight_diffs, self._target_gmv
+            )
             for constraint in soft_constraints
         ]
         hard_constraint_cvx_expr = [
-            constraint.get_expr(target_weights, target_weight_diffs, self._gmv)
+            constraint.get_expr(
+                target_weights, target_weight_diffs, self._target_gmv
+            )
             for constraint in hard_constraints
         ]
         # Create the cvxpy problem.
@@ -223,12 +195,12 @@ class SinglePeriodOptimizer:
             False
         )
         do_not_buy = ((df["position"] >= 0) & df["is_buy_restricted"]) | (
-            (df["position"] <= 0) & df["is_buy_cover_restricted"]
+            (df["position"] < 0) & df["is_buy_cover_restricted"]
         )
         if do_not_buy.any():
             do_not_buy_constraint = oharcons.DoNotBuyHardConstraint(do_not_buy)
             constraints.append(do_not_buy_constraint)
-        do_not_sell = ((df["position"] >= 0) & df["is_sell_long_restricted"]) | (
+        do_not_sell = ((df["position"] > 0) & df["is_sell_long_restricted"]) | (
             (df["position"] <= 0) & df["is_sell_short_restricted"]
         )
         if do_not_sell.any():
@@ -256,14 +228,14 @@ class SinglePeriodOptimizer:
         # Target positions (notional).
         target_positions = pd.Series(
             index=self._asset_ids,
-            data=target_weights.value * self._gmv,
+            data=target_weights.value * self._target_gmv,
             name="target_position",
         )
         srs_list.append(target_positions)
         # Target trades (notional).
         target_trades = pd.Series(
             index=self._asset_ids,
-            data=target_weight_diffs.value * self._gmv,
+            data=target_weight_diffs.value * self._target_gmv,
             name="target_notional_trade",
         )
         srs_list.append(target_trades)
@@ -282,3 +254,46 @@ class SinglePeriodOptimizer:
         )
         srs_list.append(target_weight_diffs)
         return pd.concat(srs_list, axis=1)
+
+    @staticmethod
+    def _validate_df(df: pd.DataFrame) -> None:
+        """
+        Sanity-check `df`.
+        """
+        SinglePeriodOptimizer._is_df_with_asset_id_col(df)
+        # Ensure the dataframe has the expected columns.
+        expected_cols = ["volatility", "prediction", "position"]
+        hdbg.dassert_is_subset(expected_cols, df.columns)
+        # Ensure that the dataframe has a range-index.
+        hdbg.dassert_isinstance(df.index, pd.RangeIndex)
+        # Do not allow NaNs.
+        # TODO(Paul): We may need to relax this later
+        for col in expected_cols:
+            hdbg.dassert(not df[col].isna().any())
+
+    @staticmethod
+    def _is_df_with_asset_id_col(df: pd.DataFrame) -> None:
+        # Type-check the dataframe.
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_in("asset_id", df.columns)
+        # Ensure that there are no duplicate asset ids.
+        hdbg.dassert_eq(df["asset_id"].nunique(), df["asset_id"].count())
+
+    @staticmethod
+    def _validate_restrictions_df(df: pd.DataFrame) -> None:
+        """
+        Sanity-check `df`.
+        """
+        SinglePeriodOptimizer._is_df_with_asset_id_col(df)
+        # Type-check the dataframe.
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        # Ensure the dataframe has the expected columns.
+        restriction_cols = [
+            "is_buy_restricted",
+            "is_buy_cover_restricted",
+            "is_sell_short_restricted",
+            "is_sell_long_restricted",
+        ]
+        hdbg.dassert_is_subset(restriction_cols, df.columns)
+        for col in restriction_cols:
+            hpandas.dassert_series_type_is(df[col], np.bool_)

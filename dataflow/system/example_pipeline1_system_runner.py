@@ -4,7 +4,6 @@ Import as:
 import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 """
 
-
 import logging
 from typing import List, Optional, Tuple
 
@@ -19,6 +18,9 @@ import market_data as mdata
 import oms
 
 _LOG = logging.getLogger(__name__)
+
+
+# TODO(gp): -> system_runner_example.py for symmetry with the other _example?
 
 
 class ExamplePipeline1_SystemRunner(dtfsysyrun.SystemRunner):
@@ -65,6 +67,9 @@ class ExamplePipeline1_SystemRunner(dtfsysyrun.SystemRunner):
         return config, dag_builder
 
 
+# #############################################################################
+
+
 class ExamplePipeline1_Dataframe_SystemRunner(ExamplePipeline1_SystemRunner):
     def get_portfolio(
         self,
@@ -84,6 +89,9 @@ class ExamplePipeline1_Dataframe_SystemRunner(ExamplePipeline1_SystemRunner):
             "price": "close",
         }
         return portfolio
+
+
+# #############################################################################
 
 
 class ExamplePipeline1_Database_SystemRunner(

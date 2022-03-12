@@ -50,7 +50,7 @@ class TestSql1(imvcddbut.TestImDbHelper):
         """
         self._create_test_table()
         test_data = self._get_test_data()
-        actual_query = hsql._create_insert_query(test_data, "test_table")
+        actual_query = hsql.create_insert_query(test_data, "test_table")
         self.check_string(actual_query)
         # Delete the table.
         hsql.remove_table(self.connection, "test_table")

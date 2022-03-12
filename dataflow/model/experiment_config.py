@@ -74,6 +74,10 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
         # Feb and March of 2020.
         start_datetime = datetime.datetime(2020, 2, 1)
         end_datetime = datetime.datetime(2020, 4, 1)
+    elif period == "NovDec2020":
+        # Nov and Dec of 2020.
+        start_datetime = datetime.datetime(2020, 9, 1)
+        end_datetime = datetime.datetime(2021, 1, 1)
     elif period == "2018":
         # 2018.
         start_datetime = datetime.datetime(2018, 1, 1)
@@ -114,7 +118,7 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
 # Experiment config.
 # #############################################################################
 
-# TODO(gp): bm_config -> experiment_config
+# TODO(gp): backtest_config -> experiment_config
 # TODO(gp): build_model_config -> build_experiment_config
 
 
