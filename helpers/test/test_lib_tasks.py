@@ -2,6 +2,7 @@
 # `test_tasks.py` associated to `tasks.py` should test specific task targets.
 
 import logging
+from multiprocessing.spawn import old_main_modules
 import os
 import re
 from typing import Dict, List
@@ -1859,3 +1860,104 @@ class TestFailing(hunitest.TestCase):
     def test_failing(self) -> None:
         if os.environ.get("AM_FORCE_TEST_FAIL", "") == "1":
             self.fail("test failed succesfully")
+
+
+# #############################################################################
+
+
+class TestPytestRenameTest(hunitest.TestCase):
+    """
+    Test `pytest_rename_test` task.
+    """
+
+    def _helper(self) -> None:
+        """
+        """
+        name = "test_rename_class.py"
+        content = """
+class TestCase(hunitest.TestCase):
+    def test_assert_equal1(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        outcomes = "test/outcomes/TestCase.test_check_string1"
+        os.mkdir(outcomes)
+        hio.to_file(f"{outcomes}/test.txt", "Test files.")
+        hio.to_file(f"test/{name}", content)
+        cmd = f"git add test/"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+
+
+    def _remove(self) -> None:
+        """
+        """
+        cmd = "git rm -rf test/"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+
+
+    def test_rename_inconsistent1(self) -> None:
+        """
+
+        """
+        self._helper()
+        old_name = "TestCase"
+        new_name = "TestNewCase.test1"
+        self._remove()
+        pass
+
+    def test_rename_inconsistent2(self) -> None:
+        """
+
+        """
+        self._helper()
+        old_name = "TestOldCase.test1"
+        new_name = "TestNewCase.test10"
+        self._remove()
+        
+
+    def test_rename_class(self) -> None:
+        """
+        """
+        self._helper()
+        old_name = " "
+        new_name = " "
+        self._remove()
+        
+
+    def test_rename_method_invalid(self) -> None:
+        """
+        """
+        self._helper()
+        old_name = " "
+        new_name = " "
+        self._remove()
+        
+
+    def test_rename_method_outcomes(self) -> None:
+        """
+        """
+        self._helper()
+        old_name = " "
+        new_name = " "
+        self._remove()
+
+    def test_rename_method_no_outcomes(self) -> None:
+        """
+        """
+        self._helper()
+        old_name = " "
+        new_name = " "
+        self._remove()
+
+        
+
+
+
+    
+
+
