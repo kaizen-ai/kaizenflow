@@ -938,7 +938,9 @@ def _git_diff_with_branch(
     extensions: str,
     dry_run: bool,
 ) -> None:
-    _LOG.debug(hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run"))
+    _LOG.debug(
+        hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
+    )
     # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
     hdbg.dassert_ne(curr_branch_name, "master")
@@ -955,8 +957,11 @@ def _git_diff_with_branch(
     # Filter the files, if needed.
     if extensions:
         extensions = extensions.split(",")
-        _LOG.warning("Requested filtering by %d extensions: %s", len(extensions),
-                     extensions)
+        _LOG.warning(
+            "Requested filtering by %d extensions: %s",
+            len(extensions),
+            extensions,
+        )
         files_tmp = []
         for f in files:
             if any(f.endswith(ext) for ext in extensions):
@@ -1041,8 +1046,9 @@ def git_branch_diff_with_base(  # type: ignore
     hash_ = hgit.get_branch_hash(dir_name=dir_name)
     #
     tag = "base"
-    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, extensions,
-                          dry_run)
+    _git_diff_with_branch(
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+    )
 
 
 @task
@@ -1061,8 +1067,9 @@ def git_branch_diff_with_master(  # type: ignore
     dir_name = "."
     hash_ = "origin/master"
     tag = "origin_master"
-    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, extensions,
-                          dry_run)
+    _git_diff_with_branch(
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+    )
 
 
 # TODO(gp): Add the following scripts:

@@ -194,9 +194,7 @@ class Test_find_file_with_dir1(hunitest.TestCase):
         act = self._helper(dir_depth, mode)
         _LOG.debug("Found %d matching files", len(act))
         # There should be a single match.
-        exp = (
-            r"""['helpers/test/outcomes/Test_find_file_with_dir1.test3/output/test.txt']"""
-        )
+        exp = r"""['helpers/test/outcomes/Test_find_file_with_dir1.test3/output/test.txt']"""
         self.assert_equal(str(act), str(exp), purify_text=True)
         self.assertEqual(len(act), 1)
 
@@ -210,9 +208,7 @@ class Test_find_file_with_dir1(hunitest.TestCase):
         act = self._helper(dir_depth, mode)
         _LOG.debug("Found %d matching files", len(act))
         # There should be a single match.
-        exp = (
-            r"""['helpers/test/outcomes/Test_find_file_with_dir1.test4/output/test.txt']"""
-        )
+        exp = r"""['helpers/test/outcomes/Test_find_file_with_dir1.test4/output/test.txt']"""
         self.assert_equal(str(act), str(exp), purify_text=True)
         self.assertEqual(len(act), 1)
 
@@ -225,9 +221,7 @@ class Test_find_file_with_dir1(hunitest.TestCase):
         mode = "assert_unless_one_result"
         act = self._helper(dir_depth, mode)
         _LOG.debug("Found %d matching files", len(act))
-        exp = (
-            r"""['helpers/test/outcomes/Test_find_file_with_dir1.test5/output/test.txt']"""
-        )
+        exp = r"""['helpers/test/outcomes/Test_find_file_with_dir1.test5/output/test.txt']"""
         self.assert_equal(str(act), str(exp), purify_text=True)
         self.assertEqual(len(act), 1)
 

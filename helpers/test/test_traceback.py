@@ -10,7 +10,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_Traceback1(hunitest.TestCase):
-
     def test_parse1(self) -> None:
         """
         Parse traceback with all files from Docker that actually exist in the
@@ -349,7 +348,6 @@ class Test_Traceback1(hunitest.TestCase):
     #   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
     # ModuleNotFoundError: No module named 'research'
     # ============================= slowest 3 durations ==============================
-
 
     # pylint: enable=line-too-long
 

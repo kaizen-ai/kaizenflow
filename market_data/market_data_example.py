@@ -253,9 +253,7 @@ def get_market_data_df1() -> pd.DataFrame:
     Generate price series that alternates every 5 minutes.
     """
     idx = pd.date_range(
-        start=pd.Timestamp(
-            "2000-01-01 09:31:00-05:00", tz="America/New_York"
-        ),
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
         end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
         freq="T",
     )
@@ -279,9 +277,7 @@ def get_market_data_df2() -> pd.DataFrame:
     Generate price series that alternates every 5 minutes.
     """
     idx = pd.date_range(
-        start=pd.Timestamp(
-            "2000-01-01 09:31:00-05:00", tz="America/New_York"
-        ),
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
         end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
         freq="T",
     )
@@ -305,9 +301,7 @@ def get_market_data_df3() -> pd.DataFrame:
     Generate price series that alternates every 5 minutes.
     """
     idx = pd.date_range(
-        start=pd.Timestamp(
-            "2000-01-01 09:31:00-05:00", tz="America/New_York"
-        ),
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
         end=pd.Timestamp("2000-01-01 11:30:00-05:00", tz="America/New_York"),
         freq="T",
     )

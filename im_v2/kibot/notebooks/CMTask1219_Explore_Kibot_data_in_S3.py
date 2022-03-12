@@ -51,17 +51,15 @@ logger.setLevel(logging.CRITICAL)
 # %%
 # TODO: Merge this function into `compute_start_end_table` in `research_amp/cc/statistics.py`
 def calculate_datetime_statistics_for_kibot_data(
-    list_of_symbols: list, 
-    contract_type: str, 
-    futures_frequency: str
+    list_of_symbols: list, contract_type: str, futures_frequency: str
 ) -> pd.DataFrame:
     """
-    Load the data for each asset through the loop and proccess it to obtain 
+    Load the data for each asset through the loop and proccess it to obtain
     datetime statistics:
     - start date
     - end date
     - data points count
-    
+
     :param list_of_symbols: tickers for asset in desired universe
     :param contract_type: either 'Futures' or 'Stocks'
     :param futures_frequency: only for Futures; "daily" or "minutely"
@@ -93,7 +91,7 @@ def calculate_datetime_statistics_for_kibot_data(
         # Here is a condition that cuts out empty dataframes.
         # See section 'Example of an empty stock data' for reference.
         if asset_df.shape[0] in [1, 2]:
-            # The logic here and below: mapping the value of start date to the 
+            # The logic here and below: mapping the value of start date to the
             # specific company ticker.
             start_ind[ticker] = np.nan
             # The logic here and below: add a particular ticket related data
@@ -147,7 +145,7 @@ def calculate_general_datetime_stats(df: pd.DataFrame) -> pd.DataFrame:
     - min start date
     - max start date
     - median data points
-    
+
     :param df: Table with datetime statistics for every asset in the given universe
     :return: Table with general datetime statistics for all assets in given universe
     """

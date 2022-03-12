@@ -203,6 +203,7 @@ post_order(endpoint, path, api_keys["apiKey"], api_keys["secret"])
 
 # %%
 import helpers.hsecrets as hsecret
+
 api_keys = hsecret.get_secret("talos_sandbox")
 
 # %%
@@ -232,7 +233,7 @@ def create_order(timestamp_ISO8601: str):
         "Side": "Sell",
         "Strategy": "TWAP",
         "EndTime": "2022-03-08T16:21:00.000000Z",
-        #"StartTime": "2022-03-08T16:22:00.000000Z"
+        # "StartTime": "2022-03-08T16:22:00.000000Z"
     }
     return order
 

@@ -20,9 +20,9 @@ import logging
 import re
 from typing import List, Tuple
 
-import helpers.hdbg as dbg
-import helpers.hio as io_
-import helpers.hparser as prsr
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,12 +32,12 @@ _NUM_SPACES = 2
 def _process_comment_block(line: str, in_skip_block: bool) -> Tuple[bool, bool]:
     # TODO: improve the comment handling, handle also \* *\ and %.
     do_continue = False
-    if line.startswith(r"<!--") or re.search(r'^\s*\/\*', line):
-        dbg.dassert(not in_skip_block)
+    if line.startswith(r"<!--") or re.search(r"^\s*\/\*", line):
+        hdbg.dassert(not in_skip_block)
         # Start skipping comments.
         in_skip_block = True
     if in_skip_block:
-        if line.endswith(r"-->") or re.search(r'^\s*\*\/', line):
+        if line.endswith(r"-->") or re.search(r"^\s*\*\/", line):
             # End skipping comments.
             in_skip_block = False
         # Skip comment.
@@ -152,7 +152,7 @@ def _transform(lines: List[str]) -> List[str]:
         _LOG.debug("%s:line=%s", i, line)
         # Process comment block.
         do_continue, in_skip_block = _process_comment_block(line, in_skip_block)
-        #_LOG.debug("  -> do_continue=%s in_skip_block=%s", do_continue, in_skip_block)
+        # _LOG.debug("  -> do_continue=%s in_skip_block=%s", do_continue, in_skip_block)
         if do_continue:
             continue
         # Process code block.
@@ -223,16 +223,16 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--input", action="store", type=str, required=True)
     parser.add_argument("--output", action="store", type=str, default=None)
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    _LOG.info("cmd line=%s", dbg.get_command_line())
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    _LOG.info("cmd line=%s", hdbg.get_command_line())
     # Slurp file.
-    lines = io_.from_file(args.input).split("\n")
+    lines = hio.from_file(args.input).split("\n")
     lines = [l.rstrip("\n") for l in lines]
     out: List[str] = []
     # Add some directive for pandoc.
@@ -244,7 +244,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     out.extend(out_tmp)
     # Print result.
     txt = "\n".join(out)
-    io_.to_file(args.output, txt)
+    hio.to_file(args.output, txt)
 
 
 if __name__ == "__main__":

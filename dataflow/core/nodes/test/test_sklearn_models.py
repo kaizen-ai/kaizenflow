@@ -13,7 +13,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestContinuousSkLearnModel(hunitest.TestCase):
-
     def test1(self) -> None:
         # Load test data.
         data = self._get_data(1)
@@ -250,7 +249,6 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
 
 
 class TestMultiindexSkLearnModel(hunitest.TestCase):
-
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()
@@ -330,7 +328,6 @@ class TestMultiindexSkLearnModel(hunitest.TestCase):
 
 
 class TestMultiindexPooledSkLearnModel(hunitest.TestCase):
-
     def test1(self) -> None:
         # Load test data.
         data = self._get_data()

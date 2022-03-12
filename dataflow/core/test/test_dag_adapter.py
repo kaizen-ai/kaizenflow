@@ -37,7 +37,6 @@ def _get_data() -> pd.DataFrame:
 
 
 class TestDagAdapter1(hunitest.TestCase):
-
     def helper(
         self,
         dag_builder: dtfcodabui.DagBuilder,

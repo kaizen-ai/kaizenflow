@@ -14,7 +14,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestResultBundle(hunitest.TestCase):
-
     def test_to_config1(self) -> None:
         """
         Convert a `ResultBundle` to a config.
@@ -122,7 +121,6 @@ class TestResultBundle(hunitest.TestCase):
 
 
 class TestPredictionResultBundle(hunitest.TestCase):
-
     def test_to_config1(self) -> None:
         init_config = self._get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())

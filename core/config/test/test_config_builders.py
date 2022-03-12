@@ -33,7 +33,9 @@ class TestGetConfigsFromBuilder1(hunitest.TestCase):
         """
         Build a config from.
         """
-        config_builder = "core.config.test.test_config_builders._build_test_configs()"
+        config_builder = (
+            "core.config.test.test_config_builders._build_test_configs()"
+        )
         configs = cconfig.get_configs_from_builder(config_builder)
         txt = pprint.pformat(configs)
         self.check_string(txt)

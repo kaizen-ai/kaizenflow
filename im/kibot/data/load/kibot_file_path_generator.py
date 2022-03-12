@@ -86,11 +86,6 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
         contract_path = self.CONTRACT_PATH_MAPPING[contract_type]
         return f"_{contract_path}contracts_"
 
-    @staticmethod
-    def _generate_unadjusted_modifier(unadjusted: bool) -> str:
-        adjusted_modifier = "unadjusted_" if unadjusted else ""
-        return adjusted_modifier
-
     def _generate_modifier(
         self,
         asset_class: imcodatyp.AssetClass,
@@ -131,3 +126,8 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
                 unadjusted=cast(bool, unadjusted)
             )
         return modifier
+
+    @staticmethod
+    def _generate_unadjusted_modifier(unadjusted: bool) -> str:
+        adjusted_modifier = "unadjusted_" if unadjusted else ""
+        return adjusted_modifier
