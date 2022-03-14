@@ -147,6 +147,7 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.superslow("Times out in GH Actions.")
+    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = mdata.get_market_data_df3()
         expected = self.run_coroutines(
