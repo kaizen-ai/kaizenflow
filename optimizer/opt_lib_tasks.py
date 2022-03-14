@@ -181,13 +181,14 @@ def _get_docker_cmd(command: str) -> str:
     cmd = ["docker-compose"]
 
     # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    cmd.append(f"-f {docker_compose_file_path}")
+    # docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    # cmd.append(f"-f {docker_compose_file_path}")
 
     # Add docker-compose command up or down
     # and name of image
     cmd.append(command)
     service_name = "opt_app"
+    cmd.append(f"run --rm {service_name}")
     cmd.append(service_name)
 
     cmd = hlibtask._to_multi_line_cmd(cmd)
@@ -196,7 +197,7 @@ def _get_docker_cmd(command: str) -> str:
 
 @task
 def opt_docker_up(ctx):
-    command = "up"
+    command = "run"
     docker_cmd = _get_docker_cmd(command)
 
     # Execute the command.
@@ -205,7 +206,7 @@ def opt_docker_up(ctx):
 
 @task
 def opt_docker_down(ctx):
-    command = "down"
+    command = "stop"
     docker_cmd = _get_docker_cmd(command)
 
     # Execute the command.
