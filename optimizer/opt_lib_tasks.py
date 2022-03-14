@@ -186,9 +186,8 @@ def _get_docker_cmd(command: str) -> str:
 
     # Add docker-compose command up or down
     # and name of image
-    cmd.append(command)
     service_name = "opt_app"
-    cmd.append(f"run --rm {service_name}")
+    cmd.append(f"{command} --rm {service_name}")
     cmd.append(service_name)
 
     cmd = hlibtask._to_multi_line_cmd(cmd)
