@@ -190,7 +190,7 @@ def _get_docker_cmd(command: str) -> str:
     service_name = "opt_app"
     cmd.append(service_name)
 
-    cmd = hlibtask._to_multiline_cmd(cmd)
+    cmd = hlibtask._to_multi_line_cmd(cmd)
     return cmd
 
 
