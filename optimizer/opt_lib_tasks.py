@@ -366,7 +366,7 @@ def _get_docker_cmd(
     cmd.append(f"{command} --rm {service_name}")
 
     # Add variables
-    cmd.append(f"-e IMAGE={image} -e PORT={port}")
+    cmd.append(f"-e IMAGE={str(image)} -e PORT={int(port)}")
 
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
