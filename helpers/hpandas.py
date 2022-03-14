@@ -6,15 +6,16 @@ import helpers.hpandas as hpandas
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-# Avoid dependency from other `helpers` modules, such as `helpers.hsql`and
-# `helpers.hunit_test`, to prevent import cycles.
-
 import numpy as np
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+
+# Avoid dependency from other `helpers` modules, such as `helpers.hsql`and
+# `helpers.hunit_test`, to prevent import cycles.
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -778,3 +779,27 @@ def convert_df_to_json_string(
     # Join shape and dataframe to single string.
     output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
     return output_str
+
+
+# #############################################################################
+
+
+def convert_col_to_int(
+    df: pd.DataFrame,
+    col: str,
+) -> pd.DataFrame:
+    """
+    Convert a column to an integer column.
+
+    Example use case:
+        Parquet uses categoricals. If supplied with a categorical-type column,
+        this function will convert it to an integer column.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(col, str)
+    hdbg.dassert_in(col, df.columns)
+    # Attempt the conversion.
+    df[col] = df[col].astype("int64")
+    # Trust, but verify.
+    dassert_series_type_is(df[col], np.int64)
+    return df

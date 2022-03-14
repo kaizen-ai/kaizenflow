@@ -12,17 +12,20 @@ import helpers.hversion as hversio
 # 2) when a container is built to know what version of the code was used to build
 #    it
 
+# This file should depend only on Python standard package since it's used by
+# helpers/dbg.py, which is used everywhere.
+
 import logging
 import os
 import re
 from typing import Optional
 
-# Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
-# import cycles.
-
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+
+# Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
+# import cycles.
 
 
 _LOG = logging.getLogger(__name__)

@@ -459,7 +459,7 @@ def get_dir_signature(
     return txt
 
 
-# TODO(gp): Use the copy in helpers/printing.py.
+# TODO(gp): Use the copy in helpers/print.py.
 def filter_text(regex: str, txt: str) -> str:
     """
     Remove lines in `txt` that match the regex `regex`.

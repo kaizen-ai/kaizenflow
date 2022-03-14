@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 r"""
-Run a single DAG model wrapping
+Run a single config through a run_config()
 
 # Use example:
-> run_notebook_stub.py \
+> run_configs_stub.py \
     --dst_dir nlp/test_results \
     --experiment_builder "dataflow_model.master_experiment.run_experiment" \
     --config_builder "nlp.build_configs.build_PTask1088_configs()" \
@@ -13,6 +13,10 @@ Import as:
 
 import dataflow.model.run_experiment_stub as dtfmruexst
 """
+
+
+# TODO(gp): -> run_config_stub.py
+
 import argparse
 import importlib
 import logging

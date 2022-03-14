@@ -103,7 +103,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         df = ccxt_db_client.read_data(
             symbols,
             start_ts=timespan[date_index],
-            end_ts=timespan[date_index + 1]
+            end_ts=timespan[date_index + 1],
         )
         try:
             # Check if directory already exists in specified path.

@@ -6,10 +6,13 @@ import oms.portfolio_example as oporexam
 
 import asyncio
 import logging
-from typing import List, Optional
+from typing import Dict, List, Optional
+
+import pandas as pd
 
 import helpers.hsql as hsql
 import market_data as mdata
+import oms.broker as ombroker
 import oms.broker_example as obroexam
 import oms.portfolio as omportfo
 
@@ -32,20 +35,47 @@ def get_DataFramePortfolio_example1(
         timestamp_col=timestamp_col,
     )
     # Build DataFramePortfolio.
-    strategy_id = "st1"
-    account = "paper"
     mark_to_market_col = mark_to_market_col
     initial_cash = 1e6
     portfolio = omportfo.DataFramePortfolio.from_cash(
-        strategy_id,
-        account,
         broker,
         mark_to_market_col,
         pricing_method,
-        timestamp_col,
         #
         initial_cash=initial_cash,
         asset_ids=asset_ids,
+    )
+    return portfolio
+
+
+def get_DataFramePortfolio_example2(
+    strategy_id: str,
+    account: str,
+    market_data: mdata.MarketData,
+    timestamp_col: str,
+    mark_to_market_col: str,
+    pricing_method: str,
+    initial_holdings: pd.Series,
+    *,
+    column_remap: Optional[Dict[str, str]] = None,
+) -> omportfo.DataFramePortfolio:
+    """
+    Expose all parameters for creating a `DataFramePortfolio`.
+    """
+    # Build SimulatedBroker.
+    broker = ombroker.SimulatedBroker(
+        strategy_id,
+        account,
+        market_data,
+        timestamp_col=timestamp_col,
+        column_remap=column_remap,
+    )
+    # Build DataFramePortfolio.
+    portfolio = omportfo.DataFramePortfolio(
+        broker,
+        mark_to_market_col,
+        pricing_method,
+        initial_holdings,
     )
     return portfolio
 
@@ -72,16 +102,11 @@ def get_mocked_portfolio_example1(
         timestamp_col=timestamp_col,
     )
     # Build MockedPortfolio.
-    strategy_id = "st1"
-    account = "candidate"
     initial_cash = 1e6
     portfolio = omportfo.MockedPortfolio.from_cash(
-        strategy_id,
-        account,
         broker,
         mark_to_market_col,
         pricing_method,
-        timestamp_col,
         db_connection=db_connection,
         table_name=table_name,
         #

@@ -213,7 +213,7 @@ def _run(
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
     if dry_run:
-        print(f"> {cmd}")
+        print(f"Dry-run: > {cmd}")
         _LOG.warning("Skipping execution")
         res = None
     else:
@@ -935,9 +935,12 @@ def _git_diff_with_branch(
     dir_name: str,
     diff_type: str,
     subdir: str,
+    extensions: str,
     dry_run: bool,
 ) -> None:
-    _LOG.debug(hprint.to_str("hash_ tag dir_name diff_type subdir dry_run"))
+    _LOG.debug(
+        hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
+    )
     # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
     hdbg.dassert_ne(curr_branch_name, "master")
@@ -951,6 +954,20 @@ def _git_diff_with_branch(
     files = hsystem.system_to_files(cmd, dir_name, remove_files_non_present=False)
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
+    # Filter the files, if needed.
+    if extensions:
+        extensions = extensions.split(",")
+        _LOG.warning(
+            "Requested filtering by %d extensions: %s",
+            len(extensions),
+            extensions,
+        )
+        files_tmp = []
+        for f in files:
+            if any(f.endswith(ext) for ext in extensions):
+                files_tmp.append(f)
+        files = files_tmp
+        print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
     if len(files) == 0:
         _LOG.warning("Nothing to diff: exiting")
         return
@@ -1006,20 +1023,22 @@ def _git_diff_with_branch(
     print(script_txt)
     # Save the script to compare.
     script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
-    hio.create_executable_script(script_file_name, script_txt)
-    print(f"# To diff against {tag} run:\n> {script_file_name}")
+    msg = f"To diff against {tag} run"
+    hio.create_executable_script(script_file_name, script_txt, msg=msg)
     _run(ctx, script_file_name, dry_run=dry_run, pty=True)
 
 
 @task
 def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", dry_run=False
 ):
     """
     Diff files of the current branch with master at the branching point.
 
     :param diff_type: files to diff using git `--diff-filter` options
     :param subdir: subdir to consider for diffing, instead of `.`
+    :param extensions: a comma-separated list of extensions to check, e.g.,
+        'csv,py'. An empty string means all the files
     :param dry_run: execute diffing script or not
     """
     # Get the branching point.
@@ -1027,24 +1046,30 @@ def git_branch_diff_with_base(  # type: ignore
     hash_ = hgit.get_branch_hash(dir_name=dir_name)
     #
     tag = "base"
-    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
+    _git_diff_with_branch(
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+    )
 
 
 @task
 def git_branch_diff_with_master(  # type: ignore
-    ctx, diff_type="", subdir="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", dry_run=False
 ):
     """
     Diff files of the current branch with origin/master.
 
     :param diff_type: files to diff using git `--diff-filter` options
     :param subdir: subdir to consider for diffing, instead of `.`
+    :param extensions: a comma-separated list of extensions to check, e.g.,
+        'csv,py'. An empty string means all the files
     :param dry_run: execute diffing script or not
     """
     dir_name = "."
     hash_ = "origin/master"
     tag = "origin_master"
-    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
+    _git_diff_with_branch(
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+    )
 
 
 # TODO(gp): Add the following scripts:
@@ -4011,6 +4036,7 @@ def pytest_repro(  # type: ignore
     mode="tests",
     file_name="./.pytest_cache/v/cache/lastfailed",
     show_stacktrace=False,
+    create_script=True,
 ):
     """
     Generate commands to reproduce the failed tests after a `pytest` run.
@@ -4045,6 +4071,7 @@ def pytest_repro(  # type: ignore
     :param file_name: the name of the file containing the pytest output file to parse
     :param show_stacktrace: whether to show the stacktrace of the failed tests
       - only if it is available in the pytest output file
+    :param create_script: create a script to run the tests
     :return: commands to reproduce pytest failures at the requested granularity level
     """
     _report_task()
@@ -4082,10 +4109,10 @@ def pytest_repro(  # type: ignore
             test_method,
         )
         if mode == "tests":
-            targets.append("pytest " + test)
+            targets.append(test)
         elif mode == "files":
             if test_file_name != "":
-                targets.append("pytest " + test_file_name)
+                targets.append(test_file_name)
             else:
                 _LOG.warning(
                     "Skipping test='%s' since test_file_name='%s'",
@@ -4094,7 +4121,7 @@ def pytest_repro(  # type: ignore
                 )
         elif mode == "classes":
             if test_file_name != "" and test_class != "":
-                targets.append(f"pytest {test_file_name}::{test_class}")
+                targets.append(f"{test_file_name}::{test_class}")
             else:
                 _LOG.warning(
                     "Skipping test='%s' since test_file_name='%s', test_class='%s'",
@@ -4105,15 +4132,17 @@ def pytest_repro(  # type: ignore
         else:
             hdbg.dfatal(f"Invalid mode='{mode}'")
     # Package the output.
-    _LOG.debug("res=%s", str(targets))
+    # targets is a list of tests in the format
+    # `helpers/test/test_env.py::Test_env1::test_get_system_signature1`.
+    hdbg.dassert_isinstance(targets, list)
     targets = hlist.remove_duplicates(targets)
     failed_test_output_str = (
         f"Found {len(targets)} failed pytest '{mode}' target(s); "
-        "to reproduce run:\n" + "\n".join(targets)
+        "to reproduce run:\n"
     )
-    hdbg.dassert_isinstance(targets, list)
-    res = " ".join(targets)
-    _LOG.debug("res=%s", str(res))
+    res = ["pytest %s" % t for t in targets]
+    res = "\n".join(res)
+    failed_test_output_str += res
     #
     if show_stacktrace:
         # Get the stacktrace block from the pytest output.
@@ -4123,6 +4152,8 @@ def pytest_repro(  # type: ignore
             or "====== slowest 3 durations ======" not in txt
         ):
             _LOG.info("%s", failed_test_output_str)
+            # TODO(gp): @Sonya this return from the middle of the code makes the
+            #  code difficult to understand. There should be a single return.
             return res
         txt = txt.split("====== FAILURES ======")[-1].split(
             "====== slowest 3 durations ======"
@@ -4154,6 +4185,11 @@ def pytest_repro(  # type: ignore
         failed_test_output_str += full_traceback
         res += full_traceback
     _LOG.info("%s", failed_test_output_str)
+    if create_script:
+        script_name = "./tmp.pytest_repro.sh"
+        cmd = "pytest " + " ".join(targets)
+        msg = "To run the tests"
+        hio.create_executable_script(script_name, cmd, msg=msg)
     return res
 
 

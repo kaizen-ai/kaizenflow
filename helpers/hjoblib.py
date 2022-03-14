@@ -12,9 +12,6 @@ import pprint
 import random
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-# Avoid dependency from other `helpers` modules, such as `helpers.hcache`, to
-# prevent import cycles.
-
 import joblib
 from joblib._store_backends import StoreBackendBase, StoreBackendMixin
 from tqdm.autonotebook import tqdm
@@ -25,6 +22,10 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.htimer as htimer
 import helpers.htqdm as htqdm
+
+# Avoid dependency from other `helpers` modules, such as `helpers.hcache`, to
+# prevent import cycles.
+
 
 _LOG = logging.getLogger(__name__)
 
