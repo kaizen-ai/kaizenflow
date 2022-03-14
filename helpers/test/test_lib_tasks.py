@@ -130,6 +130,7 @@ def _gh_login() -> None:
 
 
 class TestGhLogin1(hunitest.TestCase):
+
     def test_gh_login(self) -> None:
         _gh_login()
 
@@ -504,6 +505,7 @@ class TestLibTasks1(hunitest.TestCase):
 
 
 class TestLibTasksRemoveSpaces1(hunitest.TestCase):
+
     def test1(self) -> None:
         txt = r"""
             IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
@@ -737,6 +739,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
+
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
@@ -1261,6 +1264,7 @@ core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuil
 
 
 class Test_find_check_string_output1(hunitest.TestCase):
+
     def test1(self) -> None:
         """
         Test `find_check_string_output()` by searching the `check_string` of
@@ -1570,6 +1574,7 @@ class Test_get_files_to_process1(hunitest.TestCase):
 
 
 class Test_pytest_repro1(hunitest.TestCase):
+
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
         mode = "tests"
