@@ -113,12 +113,12 @@ else:
 _WAS_FIRST_CALL_DONE = False
 
 
-def _report_task(txt: str = "") -> None:
+def _report_task(txt: str = "", container_dir_name: str = ".") -> None:
     # On the first invocation report the version.
     global _WAS_FIRST_CALL_DONE
     if not _WAS_FIRST_CALL_DONE:
         _WAS_FIRST_CALL_DONE = True
-        hversio.check_version()
+        hversio.check_version(container_dir_name)
     # Print the name of the function.
     func_name = hintros.get_function_name(count=1)
     msg = "## %s: %s" % (func_name, txt)
@@ -213,7 +213,7 @@ def _run(
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
     if dry_run:
-        print(f"> {cmd}")
+        print(f"Dry-run: > {cmd}")
         _LOG.warning("Skipping execution")
         res = None
     else:
@@ -457,7 +457,7 @@ def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
 
     Run `git status --ignored` to see what it's skipped.
     """
-    _report_task(hprint.to_str("dry_run"))
+    _report_task(txt=hprint.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Fix permissions, if needed.
@@ -520,7 +520,7 @@ def git_create_patch(  # type: ignore
         - "diff": (default) creates a patch with the diff of the files
         - "tar": creates a tar ball with all the files
     """
-    _report_task(hprint.to_str("mode modified branch last_commit files"))
+    _report_task(txt=hprint.to_str("mode modified branch last_commit files"))
     _ = ctx
     # TODO(gp): Check that the current branch is up to date with master to avoid
     #  failures when we try to merge the patch.
@@ -935,9 +935,12 @@ def _git_diff_with_branch(
     dir_name: str,
     diff_type: str,
     subdir: str,
+    extensions: str,
     dry_run: bool,
 ) -> None:
-    _LOG.debug(hprint.to_str("hash_ tag dir_name diff_type subdir dry_run"))
+    _LOG.debug(
+        hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
+    )
     # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
     hdbg.dassert_ne(curr_branch_name, "master")
@@ -951,6 +954,20 @@ def _git_diff_with_branch(
     files = hsystem.system_to_files(cmd, dir_name, remove_files_non_present=False)
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
+    # Filter the files, if needed.
+    if extensions:
+        extensions = extensions.split(",")
+        _LOG.warning(
+            "Requested filtering by %d extensions: %s",
+            len(extensions),
+            extensions,
+        )
+        files_tmp = []
+        for f in files:
+            if any(f.endswith(ext) for ext in extensions):
+                files_tmp.append(f)
+        files = files_tmp
+        print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
     if len(files) == 0:
         _LOG.warning("Nothing to diff: exiting")
         return
@@ -1006,20 +1023,22 @@ def _git_diff_with_branch(
     print(script_txt)
     # Save the script to compare.
     script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
-    hio.create_executable_script(script_file_name, script_txt)
-    print(f"# To diff against {tag} run:\n> {script_file_name}")
+    msg = f"To diff against {tag} run"
+    hio.create_executable_script(script_file_name, script_txt, msg=msg)
     _run(ctx, script_file_name, dry_run=dry_run, pty=True)
 
 
 @task
 def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", dry_run=False
 ):
     """
     Diff files of the current branch with master at the branching point.
 
     :param diff_type: files to diff using git `--diff-filter` options
     :param subdir: subdir to consider for diffing, instead of `.`
+    :param extensions: a comma-separated list of extensions to check, e.g.,
+        'csv,py'. An empty string means all the files
     :param dry_run: execute diffing script or not
     """
     # Get the branching point.
@@ -1027,24 +1046,30 @@ def git_branch_diff_with_base(  # type: ignore
     hash_ = hgit.get_branch_hash(dir_name=dir_name)
     #
     tag = "base"
-    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
+    _git_diff_with_branch(
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+    )
 
 
 @task
 def git_branch_diff_with_master(  # type: ignore
-    ctx, diff_type="", subdir="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", dry_run=False
 ):
     """
     Diff files of the current branch with origin/master.
 
     :param diff_type: files to diff using git `--diff-filter` options
     :param subdir: subdir to consider for diffing, instead of `.`
+    :param extensions: a comma-separated list of extensions to check, e.g.,
+        'csv,py'. An empty string means all the files
     :param dry_run: execute diffing script or not
     """
     dir_name = "."
     hash_ = "origin/master"
     tag = "origin_master"
-    _git_diff_with_branch(ctx, hash_, tag, dir_name, diff_type, subdir, dry_run)
+    _git_diff_with_branch(
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+    )
 
 
 # TODO(gp): Add the following scripts:
@@ -1697,7 +1722,7 @@ def docker_stats(  # type: ignore
     :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    _report_task(hprint.to_str("all"))
+    _report_task(txt=hprint.to_str("all"))
     _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
@@ -1741,7 +1766,7 @@ def docker_kill(  # type: ignore
     :param all: kill all the containers (be careful!)
     :param sudo: use sudo for the Docker commands
     """
-    _report_task(hprint.to_str("all"))
+    _report_task(txt=hprint.to_str("all"))
     docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
@@ -1934,25 +1959,33 @@ def _dassert_is_version_valid(version: str) -> None:
 _IMAGE_VERSION_FROM_CHANGELOG = "FROM_CHANGELOG"
 
 
-def _resolve_version_value(version: str) -> str:
+def _resolve_version_value(
+    version: str,
+    *,
+    container_dir_name: str = ".",
+) -> str:
     """
     Pass a version (e.g., 1.0.0) or a symbolic value (e.g., FROM_CHANGELOG) and
     return the resolved value of the version.
     """
     hdbg.dassert_isinstance(version, str)
     if version == _IMAGE_VERSION_FROM_CHANGELOG:
-        version = hversio.get_changelog_version()
+        version = hversio.get_changelog_version(container_dir_name)
     _dassert_is_version_valid(version)
     return version
 
 
-def _dassert_is_subsequent_version(version: str) -> None:
+def _dassert_is_subsequent_version(
+    version: str,
+    *,
+    container_dir_name: str = ".",
+) -> None:
     """
     Check that version is strictly bigger than the current one as specified in
     the changelog.
     """
     if version != _IMAGE_VERSION_FROM_CHANGELOG:
-        current_version = hversio.get_changelog_version()
+        current_version = hversio.get_changelog_version(container_dir_name)
         hdbg.dassert_lt(current_version, version)
 
 
@@ -2276,11 +2309,12 @@ def docker_bash(  # type: ignore
     version="",
     entrypoint=True,
     as_user=True,
+    container_dir_name=".",
 ):
     """
     Start a bash shell inside the container corresponding to a stage.
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     cmd = "bash"
     docker_cmd_ = _get_docker_cmd(
         base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
@@ -2340,6 +2374,7 @@ def docker_jupyter(  # type: ignore
     auto_assign_port=True,
     port=9999,
     self_test=False,
+    container_dir_name=".",
 ):
     """
     Run jupyter notebook server.
@@ -2347,7 +2382,7 @@ def docker_jupyter(  # type: ignore
     :param auto_assign_port: use the UID of the user and the inferred number of the
         repo (e.g., 4 for `~/src/amp4`) to get a unique port
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     if auto_assign_port:
         uid = os.getuid()
         _LOG.debug("uid=%s", uid)
@@ -2421,6 +2456,7 @@ def docker_build_local_image(  # type: ignore
     cache=True,
     base_image="",
     update_poetry=False,
+    container_dir_name=".",
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
@@ -2430,9 +2466,11 @@ def docker_build_local_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param update_poetry: run poetry lock to update the packages
     """
-    _report_task()
-    _dassert_is_subsequent_version(version)
-    version = _resolve_version_value(version)
+    _report_task(container_dir_name=container_dir_name)
+    _dassert_is_subsequent_version(version, container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # Update poetry, if needed.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
@@ -2474,6 +2512,7 @@ def docker_tag_local_image_as_dev(  # type: ignore
     ctx,
     version,
     base_image="",
+    container_dir_name=".",
 ):
     """
     (ONLY CI/CD) Mark the "local" image as "dev".
@@ -2481,8 +2520,10 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param version: version to tag the image and code with
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    _report_task()
-    version = _resolve_version_value(version)
+    _report_task(container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
     image_versioned_local = get_image(base_image, "local", version)
     image_versioned_dev = get_image(base_image, "dev", version)
@@ -2500,6 +2541,7 @@ def docker_push_dev_image(  # type: ignore
     ctx,
     version,
     base_image="",
+    container_dir_name=".",
 ):
     """
     (ONLY CI/CD) Push the "dev" image to ECR.
@@ -2507,8 +2549,10 @@ def docker_push_dev_image(  # type: ignore
     :param version: version to tag the image and code with
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    _report_task()
-    version = _resolve_version_value(version)
+    _report_task(container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     #
     docker_login(ctx)
     # Push Docker versioned tag.
@@ -2534,6 +2578,7 @@ def docker_release_dev_image(  # type: ignore
     qa_tests=True,
     push_to_repo=True,
     update_poetry=False,
+    container_dir_name=".",
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest "dev" image.
@@ -2558,18 +2603,21 @@ def docker_release_dev_image(  # type: ignore
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     # 1) Build "local" image.
     docker_build_local_image(
         ctx,
         cache=cache,
         update_poetry=update_poetry,
         version=version,
+        container_dir_name=container_dir_name,
     )
     # Run resolve after `docker_build_local_image` so that a proper check
     # for subsequent version can be made in case `FROM_CHANGELOG` token
     # is used.
-    version = _resolve_version_value(version)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
@@ -2585,13 +2633,15 @@ def docker_release_dev_image(  # type: ignore
     if superslow_tests:
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Promote the "local" image to "dev".
-    docker_tag_local_image_as_dev(ctx, version)
+    docker_tag_local_image_as_dev(
+        ctx, version, container_dir_name=container_dir_name
+    )
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
         run_qa_tests(ctx, stage="dev", version=version)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
-        docker_push_dev_image(ctx, version)
+        docker_push_dev_image(ctx, version, container_dir_name=container_dir_name)
     else:
         _LOG.warning(
             "Skipping pushing dev image to repo_short_name, as requested"
@@ -2612,7 +2662,12 @@ def docker_release_dev_image(  # type: ignore
 # TODO(gp): Remove redundancy with docker_build_local_image(), if possible.
 @task
 def docker_build_prod_image(  # type: ignore
-    ctx, version, cache=True, base_image="", candidate=False
+    ctx,
+    version,
+    cache=True,
+    base_image="",
+    candidate=False,
+    container_dir_name=".",
 ):
     """
     (ONLY CI/CD) Build a prod image.
@@ -2627,8 +2682,10 @@ def docker_build_prod_image(  # type: ignore
     :param candidate: build a prod image with a tag format: prod-{hash}
         where hash is the output of hgit.get_head_hash
     """
-    _report_task()
-    version = _resolve_version_value(version)
+    _report_task(container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # Prepare `.dockerignore`.
     docker_ignore = ".dockerignore.prod"
     _prepare_docker_ignore(ctx, docker_ignore)
@@ -2683,6 +2740,7 @@ def docker_push_prod_image(  # type: ignore
     ctx,
     version,
     base_image="",
+    container_dir_name=".",
 ):
     """
     (ONLY CI/CD) Push the "prod" image to ECR.
@@ -2690,8 +2748,10 @@ def docker_push_prod_image(  # type: ignore
     :param version: version to tag the image and code with
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    _report_task()
-    version = _resolve_version_value(version)
+    _report_task(container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     #
     docker_login(ctx)
     # Push versioned tag.
@@ -2710,6 +2770,7 @@ def docker_push_prod_candidate_image(  # type: ignore
     ctx,
     candidate,
     base_image="",
+    container_dir_name=".",
 ):
     """
     (ONLY CI/CD) Push the "prod" candidate image to ECR.
@@ -2717,7 +2778,7 @@ def docker_push_prod_candidate_image(  # type: ignore
     :param candidate: hash tag of the candidate prod image to push
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     #
     docker_login(ctx)
     # Push image with tagged with a hash ID.
@@ -2736,6 +2797,7 @@ def docker_release_prod_image(  # type: ignore
     slow_tests=True,
     superslow_tests=False,
     push_to_repo=True,
+    container_dir_name=".",
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
@@ -2752,10 +2814,14 @@ def docker_release_prod_image(  # type: ignore
     :param superslow_tests: run superslow tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
     """
-    _report_task()
-    version = _resolve_version_value(version)
+    _report_task(container_dir_name=container_dir_name)
+    version = _resolve_version_value(
+        version, container_dir_name=container_dir_name
+    )
     # 1) Build prod image.
-    docker_build_prod_image(ctx, cache=cache, version=version)
+    docker_build_prod_image(
+        ctx, cache=cache, version=version, container_dir_name=container_dir_name
+    )
     # 2) Run tests.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
@@ -2769,14 +2835,16 @@ def docker_release_prod_image(  # type: ignore
         run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Push prod image.
     if push_to_repo:
-        docker_push_prod_image(ctx, version=version)
+        docker_push_prod_image(
+            ctx, version=version, container_dir_name=container_dir_name
+        )
     else:
         _LOG.warning("Skipping pushing image to repo_short_name as requested")
     _LOG.info("==> SUCCESS <==")
 
 
 @task
-def docker_release_all(ctx, version):  # type: ignore
+def docker_release_all(ctx, version, container_dir_name="."):  # type: ignore
     """
     (ONLY CI/CD) Release both dev and prod image to ECR.
 
@@ -2787,8 +2855,8 @@ def docker_release_all(ctx, version):  # type: ignore
     :param version: version to tag the image and code with
     """
     _report_task()
-    docker_release_dev_image(ctx, version)
-    docker_release_prod_image(ctx, version)
+    docker_release_dev_image(ctx, version, container_dir_name=container_dir_name)
+    docker_release_prod_image(ctx, version, container_dir_name=container_dir_name)
     _LOG.info("==> SUCCESS <==")
 
 
@@ -2987,7 +3055,7 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
     :param dir_name: the dir from which to search (default: .)
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task("class_name abs_dir pbcopy")
+    _report_task(txt="class_name abs_dir pbcopy")
     hdbg.dassert(class_name != "", "You need to specify a class name")
     _ = ctx
     file_names = _find_test_files(dir_name)
@@ -3135,7 +3203,7 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     :param how: how to report the results
         - `remove_dups`: report only imports and calls that are the same
     """
-    _report_task(hprint.to_str("regex mode how subdir"))
+    _report_task(txt=hprint.to_str("regex mode how subdir"))
     _ = ctx
     # Process the `where`.
     python_files = _get_python_files(subdir)
@@ -3968,6 +4036,7 @@ def pytest_repro(  # type: ignore
     mode="tests",
     file_name="./.pytest_cache/v/cache/lastfailed",
     show_stacktrace=False,
+    create_script=True,
 ):
     """
     Generate commands to reproduce the failed tests after a `pytest` run.
@@ -4002,6 +4071,7 @@ def pytest_repro(  # type: ignore
     :param file_name: the name of the file containing the pytest output file to parse
     :param show_stacktrace: whether to show the stacktrace of the failed tests
       - only if it is available in the pytest output file
+    :param create_script: create a script to run the tests
     :return: commands to reproduce pytest failures at the requested granularity level
     """
     _report_task()
@@ -4039,10 +4109,10 @@ def pytest_repro(  # type: ignore
             test_method,
         )
         if mode == "tests":
-            targets.append("pytest " + test)
+            targets.append(test)
         elif mode == "files":
             if test_file_name != "":
-                targets.append("pytest " + test_file_name)
+                targets.append(test_file_name)
             else:
                 _LOG.warning(
                     "Skipping test='%s' since test_file_name='%s'",
@@ -4051,7 +4121,7 @@ def pytest_repro(  # type: ignore
                 )
         elif mode == "classes":
             if test_file_name != "" and test_class != "":
-                targets.append(f"pytest {test_file_name}::{test_class}")
+                targets.append(f"{test_file_name}::{test_class}")
             else:
                 _LOG.warning(
                     "Skipping test='%s' since test_file_name='%s', test_class='%s'",
@@ -4062,15 +4132,17 @@ def pytest_repro(  # type: ignore
         else:
             hdbg.dfatal(f"Invalid mode='{mode}'")
     # Package the output.
-    _LOG.debug("res=%s", str(targets))
+    # targets is a list of tests in the format
+    # `helpers/test/test_env.py::Test_env1::test_get_system_signature1`.
+    hdbg.dassert_isinstance(targets, list)
     targets = hlist.remove_duplicates(targets)
     failed_test_output_str = (
         f"Found {len(targets)} failed pytest '{mode}' target(s); "
-        "to reproduce run:\n" + "\n".join(targets)
+        "to reproduce run:\n"
     )
-    hdbg.dassert_isinstance(targets, list)
-    res = " ".join(targets)
-    _LOG.debug("res=%s", str(res))
+    res = ["pytest %s" % t for t in targets]
+    res = "\n".join(res)
+    failed_test_output_str += res
     #
     if show_stacktrace:
         # Get the stacktrace block from the pytest output.
@@ -4080,6 +4152,8 @@ def pytest_repro(  # type: ignore
             or "====== slowest 3 durations ======" not in txt
         ):
             _LOG.info("%s", failed_test_output_str)
+            # TODO(gp): @Sonya this return from the middle of the code makes the
+            #  code difficult to understand. There should be a single return.
             return res
         failures_blocks = txt.split("====== FAILURES ======")[1:]
         failures_blocks = [
@@ -4119,6 +4193,11 @@ def pytest_repro(  # type: ignore
         failed_test_output_str += full_traceback
         res += full_traceback
     _LOG.info("%s", failed_test_output_str)
+    if create_script:
+        script_name = "./tmp.pytest_repro.sh"
+        cmd = "pytest " + " ".join(targets)
+        msg = "To run the tests"
+        hio.create_executable_script(script_name, cmd, msg=msg)
     return res
 
 
@@ -4747,7 +4826,7 @@ def gh_workflow_list(
     :param filter_by_status: filter table by the status of the workflow
         - E.g., "failure", "success"
     """
-    _report_task(hprint.to_str("filter_by_branch filter_by_status"))
+    _report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
     _ = ctx
     # Get the table.
     table = _get_workflow_table()
@@ -4816,7 +4895,7 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
     """
     Run GH workflows in a branch.
     """
-    _report_task(hprint.to_str("branch workflows"))
+    _report_task(txt=hprint.to_str("branch workflows"))
     # Get the branch name.
     if branch == "current_branch":
         branch_name = hgit.get_branch_name()
@@ -4922,7 +5001,7 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task(hprint.to_str("issue_id repo_short_name"))
+    _report_task(txt=hprint.to_str("issue_id repo_short_name"))
     _ = ctx
     issue_id = int(issue_id)
     hdbg.dassert_lte(1, issue_id)

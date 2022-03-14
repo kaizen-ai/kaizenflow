@@ -16,6 +16,8 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> System_TestCase for symmetry with the rest of the objects.
+# TODO(gp): system_tester.py -> system_test_case.py
 class SystemTester:
     """
     Test a System.

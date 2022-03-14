@@ -12,9 +12,10 @@ import re
 import sys
 from typing import Any, Callable, List, Optional, cast
 
+import helpers.hdbg as hdbg
+
 # Avoid dependency from other `helpers` modules to prevent import cycles.
 
-import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
