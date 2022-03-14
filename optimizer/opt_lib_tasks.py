@@ -327,8 +327,8 @@ def get_image(
 def _get_docker_cmd(
     command: str,
     stage="dev",
-    version="",
-    base_image=""
+    version="cmamp",
+    base_image="665840871993.dkr.ecr.us-east-1.amazonaws.com"
 ) -> str:
     """
     Construct the `docker-compose' command to run a script inside this
