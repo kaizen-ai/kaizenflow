@@ -2037,13 +2037,15 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         Rename outcome directory.
         """
         # Create outcomes directory.
-        self._helper()
+        test_path = "/toy/test"
+        # Create the toy outcomes.
+        self._helper(test_path)
         old_class_name = "TestCase"
         new_class_name = "TestCase"
         old_method_name = "test_check_string1"
         new_method_name = "test_rename"
         hlibtask._rename_outcomes(
-            "/test",
+            test_path,
             old_class_name,
             new_class_name,
             old_method_name,
@@ -2051,7 +2053,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
             True,
         )
         # Check if the dir was renamed.
-        outcomes_path = "/test/outcomes/"
+        outcomes_path = os.path.join(test_path, "outcomes")
         directories = [
             ent
             for ent in os.listdir(outcomes_path)
@@ -2061,19 +2063,21 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         self.assertTrue("TestCase.test_rename" in directories)
         self._remove()
 
-    def _helper(self) -> None:
+    def _helper(self, test_path) -> None:
         """
         Create the temporal outcome to rename.
+
+        :param test_path: the toy path to the test dir
         """
-        outcomes = "test/outcomes/TestCase.test_check_string1"
+        outcomes = os.path.join(test_path, "outcomes/TestCase.test_check_string1")
         os.makedirs(outcomes)
         hio.to_file(f"{outcomes}/test.txt", "Test files.")
-        cmd = "git add test/"
+        cmd = "git add toy/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
 
     def _remove(self) -> None:
         """
         Remove temporal test directory.
         """
-        cmd = "git rm -rf test/"
+        cmd = "git rm -rf toy/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
