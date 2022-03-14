@@ -1942,7 +1942,7 @@ class TestProcessRenameParameters(hunitest.TestCase):
         self.assert_equal(config["new_method_name"], "test2")
 
 
-class TestPytestRenameClass(hunitest.TestCase):
+class TestPytestRenameTest(hunitest.TestCase):
     """
     Test renaming functionality.
     """
@@ -1952,7 +1952,7 @@ class TestPytestRenameClass(hunitest.TestCase):
         Test renaming of the class.
         """
         content = self._helper()
-        actual = hlibtask._process_class(
+        actual = hlibtask._rename_class(
             "test_file.txt", content, "TestCase", "TestNewCase"
         )
         expected = """
@@ -2068,7 +2068,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         outcomes = "test/outcomes/TestCase.test_check_string1"
         os.makedirs(outcomes)
         hio.to_file(f"{outcomes}/test.txt", "Test files.")
-        cmd = f"git add test/"
+        cmd = "git add test/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
 
     def _remove(self) -> None:
