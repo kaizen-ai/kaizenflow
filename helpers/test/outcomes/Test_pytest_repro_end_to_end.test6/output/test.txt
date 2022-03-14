@@ -35,3 +35,6 @@ AssertionError:
 ################################################################################
 The golden outcome doesn't exist: saved the actual output in '/app/dataflow_lime/pipelines/E8/test/Test_TiledBacktest_E8d.test_end_to_end_slow1/output/configs_signature.txt.tmp'
 ################################################################################
+
+# To run the tests:
+> ./tmp.pytest_repro.sh
