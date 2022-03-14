@@ -1864,10 +1864,132 @@ class TestFailing(hunitest.TestCase):
 
 # #############################################################################
 
+class TestProcessRenameParameters(hunitest.TestCase):
+    """
+    """
+
+    def test_check_invalid1(self) -> None:
+        """
+
+        """
+        old_name = "TestCase"
+        new_name = "TestNewCase.test1"
+        with self.assertRaises(AssertionError):
+            hlibtask._process_parameters(old_name, new_name)
+        
+
+    def test_check_invalid2(self) -> None:
+        """
+
+        """
+        old_name = "TestOldCase.test1"
+        new_name = "TestNewCase.test10"
+        with self.assertRaises(AssertionError):
+            hlibtask._process_parameters(old_name, new_name)
+    
+
+    def test_check_invalid3(self) -> None:
+        """
+        """
+        old_name = "TestCase.test1.test3"
+        new_name = "TestCase.test2.test3"
+        with self.assertRaises(AssertionError):
+            hlibtask._process_parameters(old_name, new_name)
+
+
+    def test_check_valid1(self) -> None:
+        """
+        """
+        old_name = "TestCase"
+        new_name = "TestRenameCase"
+        config = hlibtask._process_parameters(old_name, new_name) 
+        self.assert_equal(config["rename_method"], False)
+        self.assert_equal(config["old_class_name"], "TestCase")
+        self.assert_equal(config["old_method_name"], "")
+        self.assert_equal(config["new_class_name"], "TestRenameCase")
+        self.assert_equal(config["new_method_name"], "")
+
+
+    def test_check_valid2(self) -> None:
+        """
+        """
+        old_name = "TestCase.test1"
+        new_name = "TestCase.test2"
+        config = hlibtask._process_parameters(old_name, new_name)
+        self.assert_equal(config["rename_method"], True)
+        self.assert_equal(config["old_class_name"], "TestCase")
+        self.assert_equal(config["old_method_name"], "test1")
+        self.assert_equal(config["new_class_name"], "TestCase")
+        self.assert_equal(config["new_method_name"], "test2")
+
 
 class TestPytestRenameTest(hunitest.TestCase):
     """
-    Test `pytest_rename_test` task.
+    """
+
+    def rename_class1(self) -> None:
+        """
+        """
+        content = self._helper()
+        actual = hlibtask._process_class("test_file.txt", content, "TestCase", "TestNewCase")
+        expected = """
+class TestNewCase(hunitest.TestCase):
+    def test_assert_equal1(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        self.assert_equal(actual, expected)
+
+    def rename_method1(self) -> None:
+        """
+        """
+        content = self._helper()
+        actual = hlibtask._rename_method("test_file.txt", content, "TestCase", "test_assert_equal1", "TestCase", "test_assert_equal2")
+        expected = """
+class TestCase(hunitest.TestCase):
+    def test_assert_equal2(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        self.assert_equal(actual, expected)
+
+    def rename_method2(self) -> None:
+        """
+        Try to rename the method that does not exsist.
+        """
+        content = self._helper()
+        with self.assertRaises(AssertionError):
+            hlibtask._rename_method("test_file.txt", content, "TestCase", "test_assert", "TestCase", "test_assert_equal2")
+
+
+    def _helper(self) -> None:
+        """
+        """
+        content = """
+class TestCase(hunitest.TestCase):
+    def test_assert_equal1(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        return content
+
+class TestPytestRenameOutcomes(hunitest.TestCase):
+    """
     """
 
     def _helper(self) -> None:
@@ -1899,44 +2021,6 @@ class TestCase(hunitest.TestCase):
         cmd = "git rm -rf test/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
 
-
-    def test_rename_inconsistent1(self) -> None:
-        """
-
-        """
-        self._helper()
-        old_name = "TestCase"
-        new_name = "TestNewCase.test1"
-        self._remove()
-        pass
-
-    def test_rename_inconsistent2(self) -> None:
-        """
-
-        """
-        self._helper()
-        old_name = "TestOldCase.test1"
-        new_name = "TestNewCase.test10"
-        self._remove()
-        
-
-    def test_rename_class(self) -> None:
-        """
-        """
-        self._helper()
-        old_name = " "
-        new_name = " "
-        self._remove()
-        
-
-    def test_rename_method_invalid(self) -> None:
-        """
-        """
-        self._helper()
-        old_name = " "
-        new_name = " "
-        self._remove()
-        
 
     def test_rename_method_outcomes(self) -> None:
         """

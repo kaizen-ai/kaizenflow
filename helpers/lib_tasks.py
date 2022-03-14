@@ -4201,6 +4201,9 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
     print(f"> {cmd}")
 
 
+# #############################################################################
+
+
 def _get_test_directories(root_dir: str) -> List[str]:
     """
     Get all paths of the directories that contain unit tests.
@@ -4214,59 +4217,6 @@ def _get_test_directories(root_dir: str) -> List[str]:
         if path.endswith("/test"):
             paths.append(path)
     return paths
-
-
-def _process_file(
-    test_dir: str,
-    file_path: str,
-    old_class_name: str,
-    new_class_name: str,
-    old_method_name: str,
-    new_method_name: str,
-    rename_method: bool,
-) -> bool:
-    """
-    Process the file:
-      - check if the content of the file contains target class
-      - change the class name or change the method name
-      - rename the outcomes if they exist
-    
-    :param test_dir: the path to the test directory containing the file
-    :param file_path: the path to the file
-    :param old_class_name: the old name of the class
-    :param new_class_name: the new name of the class
-    :param old_method_name: the old name of the method
-    :param new_method_name: the new name of the method
-    :param rename_method: if the method should be renamed
-    """
-    content = hio.from_file(file_path)
-    pattern = f"class {old_class_name}"
-    if not re.search(pattern, content):
-        # Return if target test class does not appear in file content.
-        return False
-    if rename_method:
-        # Rename the method of the class.
-        content = _rename_method(
-            file_path, content, old_class_name, old_method_name, new_method_name
-        )
-    else:
-        # Rename the class.
-        content = re.sub(pattern, f"class {new_class_name}", content)
-        _LOG.info(
-            f"{file_path}: class `{old_class_name}` renamed to {new_class_name}"
-        )
-    # Rename the directories that contain target test outcomes.
-    _rename_outcomes(
-        test_dir,
-        old_class_name,
-        new_class_name,
-        old_method_name,
-        new_method_name,
-        rename_method,
-    )
-    # Write processed content back to file.
-    hio.to_file(file_path, content)
-    return True
 
 
 def _rename_method(
@@ -4318,10 +4268,24 @@ def _rename_method(
     )
     return new_content
 
+def _rename_class(
+    file_path: str,
+    content: str,
+    old_class_name: str,
+    new_class_name: str,
+) -> str:
+    """
+    """
+    # Rename the class.
+    content = re.sub(f"class {old_class_name}", f"class {new_class_name}", content)
+    _LOG.info(
+        f"{file_path}: class `{old_class_name}` was renamed to {new_class_name}."
+    )
+    return content
 
 def _rename_outcomes(
     path: str,
-    old_class_name: str,
+    old_class_name: str, 
     new_class_name: str,
     old_method_name: str,
     new_method_name: str,
@@ -4379,6 +4343,97 @@ def _rename_outcomes(
             outcomes_path,
         )
 
+def _process_parameters(old_test_class_name, new_test_class_name) -> Dict[str, Union[bool, str]]:
+    """
+    """
+    # Build the processing config.
+    config: Dict[str, Union[bool, str]] = dict()
+    # Split by "." to separate class name and method name.
+    splitted_old_name = old_test_class_name.split(".")
+    splitted_new_name = new_test_class_name.split(".")
+    # Check the format of test names.
+    if len(splitted_old_name) == 1 and len(splitted_new_name) == 1:
+        # Set the flag state to rename the class name.
+        config["rename_method"] = False
+        # Class name splitted by `.` is one element array, e.g. `["TestClassName"]`.
+        old_class_name, old_method_name = splitted_old_name[0], ""
+        new_class_name, new_method_name = splitted_new_name[0], ""
+        _LOG.debug(
+            f"Trying to change the name of `{old_test_class_name}` unit test class to `{new_test_class_name}`."
+        )
+    elif len(splitted_old_name) == 2 and len(splitted_new_name) == 2:
+        # Set the flag state to rename the method name.
+        config["rename_method"] = True
+        # Method name splitted by `.` is 2 element array, e.g. `TestClassName.test2` - >`["TestClassName", "test2"]`.
+        old_class_name, old_method_name = splitted_old_name
+        new_class_name, new_method_name = splitted_new_name
+        hdbg.dassert(
+            old_class_name == new_class_name,
+            "To change the name of the method, specify the methods of the same class. E.g. `--old TestCache.test1 --new TestCache.new_test1`",
+        )
+        _LOG.debug(f"Trying to change the name of `{old_method_name}` method of `{old_class_name}` class to `{new_method_name}`."
+        )
+    else:
+        #
+        hdbg.dassert(False, "The test names are not consistent.")
+    #
+    config["old_class_name"] = old_class_name
+    config["old_method_name"] = old_method_name
+    config["new_class_name"] = new_class_name
+    config["new_method_name"] = new_method_name
+    return config
+
+
+def _process_file(
+    test_dir: str,
+    file_path: str,
+    old_class_name: str,
+    new_class_name: str,
+    old_method_name: str,
+    new_method_name: str,
+    rename_method: bool,
+) -> bool:
+    """
+    Process the file:
+      - check if the content of the file contains target class
+      - change the class name or change the method name
+      - rename the outcomes if they exist
+    
+    :param test_dir: the path to the test directory containing the file
+    :param file_path: the path to the file
+    :param old_class_name: the old name of the class
+    :param new_class_name: the new name of the class
+    :param old_method_name: the old name of the method
+    :param new_method_name: the new name of the method
+    :param rename_method: if the method should be renamed
+    """
+    content = hio.from_file(file_path)
+    if not re.search(f"class {old_class_name}", content):
+        # Return if target test class does not appear in file content.
+        return False
+    if rename_method:
+        # Rename the method of the class.
+        content = _rename_method(
+            file_path, content, old_class_name, old_method_name, new_method_name
+        )
+    else:
+        #
+        content = _rename_class(
+            file_path, content, old_class_name, new_class_name
+        )  
+    # Rename the directories that contain target test outcomes.
+    _rename_outcomes(
+        test_dir,
+        old_class_name,
+        new_class_name,
+        old_method_name,
+        new_method_name,
+        rename_method,
+    )
+    # Write processed content back to file.
+    hio.to_file(file_path, content)
+    return True
+
 
 @task
 def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
@@ -4409,38 +4464,7 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     )
     hdbg.dassert_ne(old_test_class_name, new_test_class_name)
     #
-    old_method_name = ""
-    new_method_name = ""
-    # Flag that indicates if only the method of the class should be removed.
-    rename_method: bool
-    # Split by "." to separate class name and method name.
-    splitted_old_name = old_test_class_name.split(".")
-    splitted_new_name = new_test_class_name.split(".")
-    # Check the format of test names.
-    if len(splitted_old_name) == 1 and len(splitted_new_name) == 1:
-        # Set the flag state to rename the class name.
-        rename_method = False
-        # Class name splitted be `.` is one element array, e.g. `["TestClassName"]`.
-        old_class_name = splitted_old_name[0]
-        new_class_name = splitted_new_name[0]
-        _LOG.debug(
-            f"Trying to change the name of `{old_class_name}` unit test class to `{new_class_name}`."
-        )
-    elif len(splitted_old_name) == 2 and len(splitted_new_name) == 2:
-        # Set the flag state to rename the method name.
-        rename_method = True
-        # Method name splitted be `.` is 2 element array, e.g. `["TestClassName", "test2"]`.
-        old_class_name, old_method_name = splitted_old_name
-        new_class_name, new_method_name = splitted_new_name
-        hdbg.dassert(
-            old_class_name == new_class_name,
-            "To change the name of the method, specify the methods of the same class. E.g. `--old TestCache.test1 --new TestCache.new_test1`",
-        )
-        _LOG.debug(f"Trying to change the name of `{old_method_name}` method of `{old_class_name}` class to `{new_method_name}`."
-        )
-    else:
-        #
-        hdbg.dassert(False, "The test names are not consistent.")
+    config = _process_parameters(old_test_class_name, new_test_class_name)
     # Get the paths to test directories.
     test_directories = _get_test_directories(root_dir)
     hdbg.dassert(
@@ -4459,11 +4483,11 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
             _process_file(
                 path,
                 test_file,
-                old_class_name,
-                new_class_name,
-                old_method_name,
-                new_method_name,
-                rename_method,
+                config["old_class_name"],
+                config["new_class_name"],
+                config["old_method_name"],
+                config["new_method_name"],
+                config["rename_method"],
             )
 
 
