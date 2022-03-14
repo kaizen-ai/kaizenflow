@@ -4308,7 +4308,7 @@ def _rename_outcomes(
         for dir_name in os.listdir(outcomes_path)
         if os.path.isdir(os.path.join(outcomes_path, dir_name))
     ]
-    # Construct target dir name, e.g.  
+    # Construct target dir name, e.g. `TestClassName.test2`.
     old_target_name = ".".join([old_class_name, old_method_name])
     new_target_name = ".".join([new_class_name, new_method_name])
     renamed = False
@@ -4345,6 +4345,7 @@ def _rename_outcomes(
 
 def _process_parameters(old_test_class_name, new_test_class_name) -> Dict[str, Union[bool, str]]:
     """
+    Build the processing config.
     """
     # Build the processing config.
     config: Dict[str, Union[bool, str]] = dict()
@@ -4376,7 +4377,7 @@ def _process_parameters(old_test_class_name, new_test_class_name) -> Dict[str, U
     else:
         #
         hdbg.dassert(False, "The test names are not consistent.")
-    #
+    # Fill the processing parameters.
     config["old_class_name"] = old_class_name
     config["old_method_name"] = old_method_name
     config["new_class_name"] = new_class_name
