@@ -9,6 +9,7 @@ import os
 
 from invoke import task
 
+import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.lib_tasks as hlibtask
 
@@ -177,26 +178,59 @@ def opt_docker_jupyter(  # type: ignore
 # Docker up / down.
 # #############################################################################
 
-def _get_docker_cmd(command: str) -> str:
-    cmd = ["docker-compose"]
+def get_db_env_path(stage: str) -> str:
+    """
+    Get path to db env file that contains db connection parameters.
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
+    """
+    hdbg.dassert_in(stage, "local dev prod".split())
+    # Get `env` files dir.
+    env_dir = "im_v2/devops/env"
+    # Get the file name depending on the stage.
+    env_file_name = f"{stage}.im_db_config.env"
+    # Get file path.
+    amp_path = hgit.get_amp_abs_path()
+    env_file_path = os.path.join(amp_path, env_dir, env_file_name)
+    hdbg.dassert_file_exists(env_file_path)
+    return env_file_path
 
+
+def _get_docker_cmd(stage: str, command: str) -> str:
+    """
+    Construct the `docker-compose' command to run a script inside this
+    container Docker component.
+    E.g, to run the `.../devops/set_schema_im_db.py`:
+    ```
+    docker-compose \
+        --file devops/compose/docker-compose.yml \
+        --env-file devops/env/local.im_db_config.env \
+        run --rm im_postgres \
+        .../devops/set_schema_im_db.py
+    ```
+    :param stage: development stage, i.e. `local`, `dev` and `prod`
+    :param docker_cmd: command to execute inside docker
+    """
+    cmd = ["docker-compose"]
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    cmd.append(f"-f {docker_compose_file_path}")
-
-    # Add docker-compose command up or down
-    # and name of image
+    cmd.append(f"--file {docker_compose_file_path}")
+    # Add `env file` path.
+    env_file = get_db_env_path(stage)
+    cmd.append(f"--env-file {env_file}")
+    # Add `run`.
     service_name = "opt_app"
-    cmd.append(f"{command} {service_name}")
+    cmd.append(f"{command} --rm {service_name}")
 
-    cmd = hlibtask._to_multi_line_cmd(cmd)
-    return cmd
+    # Convert the list to a multiline command.
+    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+    return multiline_docker_cmd
 
 
 @task
 def opt_docker_up(ctx):
-    command = "start"
-    docker_cmd = _get_docker_cmd(command)
+    command = "run"
+    stage = "dev"
+    docker_cmd = _get_docker_cmd(stage, command)
 
     # Execute the command.
     hlibtask._run(ctx, docker_cmd, pty=True)
@@ -205,7 +239,8 @@ def opt_docker_up(ctx):
 @task
 def opt_docker_down(ctx):
     command = "stop"
-    docker_cmd = _get_docker_cmd(command)
+    stage = "dev"
+    docker_cmd = _get_docker_cmd(stage, command)
 
     # Execute the command.
     hlibtask._run(ctx, docker_cmd, pty=True)
