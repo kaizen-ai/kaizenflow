@@ -19,7 +19,6 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
 import os
-from typing import Tuple
 
 import pandas as pd
 
@@ -30,73 +29,8 @@ import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.im_lib_tasks as imvimlita
-
-
-def reindex_on_asset_and_ts(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Reindex data on currency pair and timestamp.
-
-    Drop timestamps for downloading and saving.
-    """
-    # Select only index and OHLCV columns
-    expected_col_names = [
-        "timestamp",
-        "currency_pair",
-        "open",
-        "high",
-        "low",
-        "close",
-        "volume",
-    ]
-    hdbg.dassert_is_subset(expected_col_names, data.columns)
-    data_reindex = data.loc[:, expected_col_names]
-    data_reindex = data_reindex.drop_duplicates()
-    # Reindex on ts and asset.
-    # Remove index name, so there is no conflict with column names.
-    # For example if index is named `timestamp`.
-    data_reindex.index.name = None
-    data_reindex = data_reindex.sort_values(by=["timestamp", "currency_pair"])
-    data_reindex = data_reindex.set_index(["timestamp", "currency_pair"])
-    return data_reindex
-
-
-def find_gaps(
-    rt_data: pd.DataFrame, daily_data: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Find data present in one dataframe and missing in other.
-
-    :param rt_data: data downloaded in real time
-    :param daily_data: data saved to S3, downloaded once daily
-    :return: two dataframes with data missing in respective downloads
-    """
-    # Get data present in daily, but not present in rt.
-    rt_missing_indices = daily_data.index.difference(rt_data.index)
-    rt_missing_data = daily_data.loc[rt_missing_indices]
-    # Get data present in rt, but not present in daily.
-    daily_missing_indices = rt_data.index.difference(daily_data.index)
-    daily_missing_data = rt_data.loc[daily_missing_indices]
-    return rt_missing_data, daily_missing_data
-
-
-def compare_rows(rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compare contents of rows with same indices.
-
-    :param rt_data: data downloaded to DB in real time
-    :param daily_data: data downloaded to S3 once daily
-    :return: dataframe with data with same indices and different contents
-    """
-    # Get rows on which the two dataframe indices match.
-    idx_intersection = rt_data.index.intersection(daily_data.index)
-    # Get difference between daily data and rt data.
-    # Index is set to default sequential integer values because compare is
-    # sensitive to multi index. Multi index columns are regular columns now.
-    trimmed_daily_data = daily_data.loc[idx_intersection].reset_index()
-    trimmed_rt_data = rt_data.loc[idx_intersection].reset_index()
-    data_difference = trimmed_daily_data.compare(trimmed_rt_data)
-    return data_difference
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -164,7 +98,18 @@ def _run(args: argparse.Namespace) -> None:
         f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
     )
     rt_data = hsql.execute_query_to_df(connection, query)
-    rt_data_reindex = reindex_on_asset_and_ts(rt_data)
+    expected_columns = [
+        "timestamp",
+        "currency_pair",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    ]
+    rt_data_reindex = imvcdttrut.reindex_on_custom_columns(
+        rt_data, expected_columns[:2], expected_columns
+    )
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id) + "/"
     timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
@@ -176,13 +121,17 @@ def _run(args: argparse.Namespace) -> None:
     )
     daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
     daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
-    daily_data_reindex = reindex_on_asset_and_ts(daily_data)
+    daily_data_reindex = imvcdttrut.reindex_on_custom_columns(
+        daily_data, expected_columns[:2], expected_columns
+    )
     # Get missing data.
-    rt_missing_data, daily_missing_data = find_gaps(
+    rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
         rt_data_reindex, daily_data_reindex
     )
     # Compare dataframe contents.
-    data_difference = compare_rows(rt_data_reindex, daily_data_reindex)
+    data_difference = hpandas.compare_dataframe_rows(
+        rt_data_reindex, daily_data_reindex
+    )
     # Show difference and raise if one is found.
     error_message = []
     if not rt_missing_data.empty:

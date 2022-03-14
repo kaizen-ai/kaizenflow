@@ -4,7 +4,7 @@ Import as:
 import helpers.hpandas as hpandas
 """
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -290,6 +290,60 @@ def resample_df(df: pd.DataFrame, frequency: str) -> pd.DataFrame:
     df_reindex = df.reindex(resampled_index)
     df_reindex.index.name = index_name
     return df_reindex
+
+
+def find_gaps_in_dataframes(
+    df1: pd.DataFrame, df2: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Find data present in one dataframe and missing in the other one.
+
+    :param df1: first dataframe for comparison
+    :param df2: second dataframe for comparison
+    :return: two dataframes with missing data
+    """
+    # Get data present in first, but not present in second dataframe.
+    first_missing_indices = df2.index.difference(df1.index)
+    first_missing_data = df2.loc[first_missing_indices]
+    # Get data present in second, but not present in first dataframe.
+    second_missing_indices = df1.index.difference(df2.index)
+    second_missing_data = df1.loc[second_missing_indices]
+    return first_missing_data, second_missing_data
+
+
+def compare_dataframe_rows(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compare contents of rows with same indices.
+
+    Index is set to default sequential integer values because compare is
+    sensitive to multi index (probably because new multi indexes are created
+    for each difference in `compare`). Multi index columns are regular columns now.
+    Excess columns are removed so both dataframes are always same shape because
+    `compare` expects identical dataframes (same number of rows, columns, etc.).
+
+    :param df1: first dataframe for comparison
+    :param df2: second dataframe for comparison
+    :return: dataframe with data with same indices and different contents
+    """
+    # Get rows on which the two dataframe indices match.
+    idx_intersection = df1.index.intersection(df2.index)
+    # Remove excess columns and reset indexes.
+    trimmed_second = df2.loc[idx_intersection].reset_index()
+    trimmed_first = df1.loc[idx_intersection].reset_index()
+    # Get difference between second and first dataframe.
+    data_difference = trimmed_second.compare(trimmed_first)
+    # Update data difference with original dataframe index names
+    # for easier identification.
+    index_names = tuple(df2.index.names)
+    # If index or multi index is named, it will be visible in data difference.
+    if index_names != (None,):
+        for index in data_difference.index:
+            for column in index_names:
+                data_difference.loc[index, column] = trimmed_second.loc[index][
+                    column
+                ]
+        data_difference = data_difference.convert_dtypes()
+    return data_difference
 
 
 def drop_duplicates(
