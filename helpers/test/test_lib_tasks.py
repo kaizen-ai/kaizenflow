@@ -9,6 +9,7 @@ from typing import Dict, List
 import invoke
 import pytest
 
+import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
@@ -130,6 +131,7 @@ def _gh_login() -> None:
 
 
 class TestGhLogin1(hunitest.TestCase):
+
     def test_gh_login(self) -> None:
         _gh_login()
 
@@ -227,6 +229,11 @@ class TestDryRunTasks1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.slow(reason="Around 7s")
+@pytest.mark.skipif(
+    not hgit.is_in_amp_as_supermodule(),
+    reason="Run only in amp as super-module",
+)
 class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     """
     - Call the invoke task directly from Python
@@ -349,7 +356,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_branch_files(ctx)"
         self._check_output(target)
 
-    @pytest.mark.slow(reason="Around 7s")
     def test_git_create_branch1(self) -> None:
         _gh_login()
         target = (
@@ -358,7 +364,6 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         )
         self._check_output(target)
 
-    @pytest.mark.slow(reason="Around 7s")
     def test_git_create_branch2(self) -> None:
         _gh_login()
         target = (
@@ -504,6 +509,7 @@ class TestLibTasks1(hunitest.TestCase):
 
 
 class TestLibTasksRemoveSpaces1(hunitest.TestCase):
+
     def test1(self) -> None:
         txt = r"""
             IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
@@ -737,6 +743,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
+
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
@@ -1015,10 +1022,27 @@ class TestLibTasksRunTests1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.slow(reason="Around 7s")
+@pytest.mark.skipif(
+    not hgit.is_in_amp_as_supermodule(),
+    reason="Run only in amp as super-module",
+)
 class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     """
     Test `git_create_patch()`.
     """
+
+    @staticmethod
+    def helper(
+        modified: bool, branch: bool, last_commit: bool, files: str
+    ) -> None:
+        ctx = _build_mock_context_returning_ok()
+        #
+        mode = "tar"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        #
+        mode = "diff"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
     def test_tar_modified1(self) -> None:
         """
@@ -1033,7 +1057,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         branch = False
         last_commit = False
         files = ""
-        self._helper(modified, branch, last_commit, files)
+        self.helper(modified, branch, last_commit, files)
 
     def test_tar_branch1(self) -> None:
         """
@@ -1045,7 +1069,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         branch = True
         last_commit = False
         files = ""
-        self._helper(modified, branch, last_commit, files)
+        self.helper(modified, branch, last_commit, files)
 
     def test_tar_last_commit1(self) -> None:
         """
@@ -1060,7 +1084,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         branch = False
         last_commit = True
         files = ""
-        self._helper(modified, branch, last_commit, files)
+        self.helper(modified, branch, last_commit, files)
 
     def test_tar_files1(self) -> None:
         """
@@ -1113,18 +1137,6 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         Specify only one among --modified, --branch, --last-commit
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
-    @staticmethod
-    def _helper(
-        modified: bool, branch: bool, last_commit: bool, files: str
-    ) -> None:
-        ctx = _build_mock_context_returning_ok()
-        #
-        mode = "tar"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
-        #
-        mode = "diff"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
 
 # #############################################################################
@@ -1261,6 +1273,7 @@ core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuil
 
 
 class Test_find_check_string_output1(hunitest.TestCase):
+
     def test1(self) -> None:
         """
         Test `find_check_string_output()` by searching the `check_string` of
@@ -1570,6 +1583,18 @@ class Test_get_files_to_process1(hunitest.TestCase):
 
 
 class Test_pytest_repro1(hunitest.TestCase):
+  
+    def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
+        ctx = _build_mock_context_returning_ok()
+        act = hlibtask.pytest_repro(
+            ctx,
+            mode=mode,
+            file_name=file_name,
+        )
+        hdbg.dassert_isinstance(act, str)
+        exp = "\n".join(["pytest " + x for x in exp])
+        self.assert_equal(act, exp)
+
     def test_tests1(self) -> None:
         file_name = self._build_pytest_file1()
         mode = "tests"
@@ -1582,7 +1607,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/helpers/test/test_list.py::Test_list_1",
             "helpers/test/test_cache.py::TestAmpTask1407",
         ]
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_files1(self) -> None:
         file_name = self._build_pytest_file1()
@@ -1596,7 +1621,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/helpers/test/test_list.py",
             "helpers/test/test_cache.py",
         ]
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_classes1(self) -> None:
         file_name = self._build_pytest_file1()
@@ -1606,7 +1631,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/helpers/test/test_list.py::Test_list_1",
             "helpers/test/test_cache.py::TestAmpTask1407",
         ]
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_tests2(self) -> None:
         file_name = self._build_pytest_file2()
@@ -1663,7 +1688,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py::Test_dedent1::test2",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_files2(self) -> None:
         file_name = self._build_pytest_file2()
@@ -1683,7 +1708,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     def test_classes2(self) -> None:
         file_name = self._build_pytest_file2()
@@ -1707,11 +1732,11 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_printing.py::Test_dedent1",
         ]
         # pylint: enable=line-too-long
-        self._helper(file_name, mode, exp)
+        self.helper(file_name, mode, exp)
 
     # #########################################################################
 
-    def _build_pytest_file_helper(self, txt: str) -> str:
+    def _build_pytest_filehelper(self, txt: str) -> str:
         txt = hprint.dedent(txt)
         file_name = os.path.join(self.get_scratch_space(), "cache/lastfailed")
         hio.to_file(file_name, txt)
@@ -1729,7 +1754,7 @@ class Test_pytest_repro1(hunitest.TestCase):
             "helpers/test/test_cache.py::TestAmpTask1407": true
         }
         """
-        return self._build_pytest_file_helper(txt)
+        return self._build_pytest_filehelper(txt)
 
     def _build_pytest_file2(self) -> str:
         # pylint: disable=line-too-long
@@ -1786,17 +1811,7 @@ class Test_pytest_repro1(hunitest.TestCase):
         }
         """
         # pylint: enable=line-too-long
-        return self._build_pytest_file_helper(txt)
-
-    def _helper(self, file_name: str, mode: str, exp: List[str]) -> None:
-        ctx = _build_mock_context_returning_ok()
-        act = hlibtask.pytest_repro(
-            ctx,
-            mode=mode,
-            file_name=file_name,
-        )
-        exp = " ".join(["pytest " + x for x in exp])
-        self.assert_equal(act, exp)
+        return self._build_pytest_filehelper(txt)
 
 
 class Test_pytest_repro_end_to_end(hunitest.TestCase):
@@ -1842,8 +1857,12 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
     def test4(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
-        
+
     def test5(self) -> None:
+        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
+        self.helper(cmd)
+
+    def test6(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
 

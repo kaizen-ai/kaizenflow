@@ -6,6 +6,8 @@ Import as:
 import dataflow.model.master_experiment as dtfmomaexp
 """
 
+# TODO(gp): master_run_backtest.py
+
 import logging
 import os
 
@@ -17,6 +19,7 @@ import helpers.hparquet as hparque
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> run_ins_oos_backtest
 def run_experiment(config: cconfig.Config) -> None:
     """
     Implement an experiment to:
@@ -29,10 +32,10 @@ def run_experiment(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     config = config.copy()
-    #dag_config = config.pop("DAG")
-    #dag_runner = cdataf.PredictionDagRunner(
+    # dag_config = config.pop("DAG")
+    # dag_runner = cdataf.PredictionDagRunner(
     #    dag_config, config["meta"]["dag_builder"]
-    #)
+    # )
     dag_runner = config["meta", "dag_runner"](config)
     # TODO(gp): Maybe save the drawing to file?
     # cdataf.draw(dag_runner.dag)
@@ -60,6 +63,7 @@ def run_experiment(config: cconfig.Config) -> None:
 # #############################################################################
 
 
+# TODO(gp): -> run_rolling_backtest
 def run_rolling_experiment(config: cconfig.Config) -> None:
     _LOG.debug("config=\n%s", config)
     dag_config = config.pop("DAG")
@@ -109,6 +113,7 @@ def _save_tiled_output(config, result_bundle):
     _LOG.info("Tiled results written in '%s'", tiled_dst_dir)
 
 
+# TODO(gp): -> run_tiled_backtest
 def run_tiled_experiment(config: cconfig.Config) -> None:
     """
     Run an experiment by:

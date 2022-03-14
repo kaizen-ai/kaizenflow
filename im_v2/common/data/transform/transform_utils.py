@@ -7,6 +7,7 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 """
 
 import logging
+from typing import List
 
 import pandas as pd
 
@@ -67,3 +68,24 @@ def reindex_on_datetime(
         datetime_idx = convert_timestamp_column(datetime_col_name, unit=unit)
         df = df.set_index(datetime_idx)
     return df
+
+
+def reindex_on_custom_columns(
+    df: pd.DataFrame, index_columns: List[str], expected_columns: List[str]
+) -> pd.DataFrame:
+    """
+    Reindex dataframe on provided index columns.
+
+    :param df: original dataframe
+    :param index_columns: columns that will be used to create new index
+    :param expected_columns: columns that will be present in new re-indexed dataframe
+    :return: re-indexed dataframe
+    """
+    hdbg.dassert_is_subset(expected_columns, df.columns)
+    data_reindex = df.loc[:, expected_columns]
+    data_reindex = data_reindex.drop_duplicates()
+    # Remove index name, so there is no conflict with column names.
+    data_reindex.index.name = None
+    data_reindex = data_reindex.sort_values(by=index_columns)
+    data_reindex = data_reindex.set_index(index_columns)
+    return data_reindex

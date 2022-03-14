@@ -22,9 +22,6 @@ from typing import (
     cast,
 )
 
-# Avoid dependency from other `helpers` modules, such as `helpers.hsql`, to prevent
-# import cycles.
-
 import async_solipsism
 import pandas as pd
 
@@ -32,6 +29,10 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
+
+# Avoid dependency from other `helpers` modules, such as `helpers.hsql`, to prevent
+# import cycles.
+
 
 _LOG = logging.getLogger(__name__)
 

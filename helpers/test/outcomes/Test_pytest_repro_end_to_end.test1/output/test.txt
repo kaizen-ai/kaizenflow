@@ -13,3 +13,5 @@ pytest documentation/scripts/test/test_render_md.py
 pytest helpers/test/helpers/test/test_list.py::Test_list_1
 pytest helpers/test/helpers/test/test_list.py::Test_list_2
 pytest helpers/test/test_cache.py::TestAmpTask1407
+# To run the tests:
+> ./tmp.pytest_repro.sh

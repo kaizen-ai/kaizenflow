@@ -10,7 +10,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_Traceback1(hunitest.TestCase):
-
     def test_parse1(self) -> None:
         """
         Parse traceback with all files from Docker that actually exist in the
@@ -151,7 +150,6 @@ class Test_Traceback1(hunitest.TestCase):
           File "/app/amp/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
         AssertionError:
-        # #####################################################################
         * Failed assertion *
         cond=None
         Invalid test='dev_scripts/testing/test/test_run_tests.py'
@@ -183,7 +181,6 @@ class Test_Traceback1(hunitest.TestCase):
           File "$GIT_ROOT/helpers/dbg.py", line 63, in dfatal
             raise assertion_type(ret)
         AssertionError:
-        # #####################################################################
         * Failed assertion *
         cond=None
         Invalid test='dev_scripts/testing/test/test_run_tests.py'
@@ -239,6 +236,56 @@ class Test_Traceback1(hunitest.TestCase):
           File "$GIT_ROOT/helpers/dbg.py", line 172, in dassert_lte
             cond = val1 <= val2
           TypeError: '<=' not supported between instances of 'float' and 'Timestamp'"""
+        # pylint: enable=line-too-long
+        self._parse_traceback_helper(
+            txt, purify_from_client, exp_cfile, exp_traceback
+        )
+
+    def test_parse5(self) -> None:
+        """
+        Parse a traceback file with both files from Docker and local files.
+        """
+        # pylint: disable=line-too-long
+        txt = """
+        Traceback (most recent call last):
+          File "/app/dataflow_lime/pipelines/E8/test/test_E8d_configs.py", line 37, in test1
+            configs = dtfmoexuti.get_configs_from_command_line(args)
+          File "/app/amp/dataflow/model/experiment_utils.py", line 195, in get_configs_from_command_line
+            configs = cconfig.get_configs_from_builder(config_builder)
+          File "/app/amp/core/config/builder.py", line 46, in get_configs_from_builder
+            imp = importlib.import_module(import_)
+          File "/usr/lib/python3.8/importlib/__init__.py", line 127, in import_module
+            return _bootstrap._gcd_import(name[level:], package, level)
+          File "<frozen importlib._bootstrap>", line 1014, in _gcd_import
+          File "<frozen importlib._bootstrap>", line 991, in _find_and_load
+          File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
+        ModuleNotFoundError: No module named 'dataflow_lime.pipelines.E8.8Ed_configs'
+        """
+        purify_from_client = False
+        exp_cfile = """
+        $GIT_ROOT/dataflow_lime/pipelines/E8/test/test_E8d_configs.py:37:test1:configs = dtfmoexuti.get_configs_from_command_line(args)
+        $GIT_ROOT/dataflow/model/experiment_utils.py:195:get_configs_from_command_line:configs = cconfig.get_configs_from_builder(config_builder)
+        $GIT_ROOT/core/config/builder.py:46:get_configs_from_builder:imp = importlib.import_module(import_)
+        /usr/lib/python3.8/importlib/__init__.py:127:import_module:return _bootstrap._gcd_import(name[level:], package, level)
+        <frozen importlib._bootstrap>:1014:_gcd_import:
+        <frozen importlib._bootstrap>:991:_find_and_load:
+        <frozen importlib._bootstrap>:973:_find_and_load_unlocked:
+        """
+        exp_traceback = """
+        Traceback (most recent call last):
+          File "$GIT_ROOT/dataflow_lime/pipelines/E8/test/test_E8d_configs.py", line 37, in test1
+            configs = dtfmoexuti.get_configs_from_command_line(args)
+          File "$GIT_ROOT/dataflow/model/experiment_utils.py", line 195, in get_configs_from_command_line
+            configs = cconfig.get_configs_from_builder(config_builder)
+          File "$GIT_ROOT/core/config/builder.py", line 46, in get_configs_from_builder
+            imp = importlib.import_module(import_)
+          File "/usr/lib/python3.8/importlib/__init__.py", line 127, in import_module
+            return _bootstrap._gcd_import(name[level:], package, level)
+          File "<frozen importlib._bootstrap>", line 1014, in _gcd_import
+          File "<frozen importlib._bootstrap>", line 991, in _find_and_load
+          File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
+        ModuleNotFoundError: No module named 'dataflow_lime.pipelines.E8.8Ed_configs'
+        """
         # pylint: enable=line-too-long
         self._parse_traceback_helper(
             txt, purify_from_client, exp_cfile, exp_traceback
@@ -349,7 +396,6 @@ class Test_Traceback1(hunitest.TestCase):
     #   File "<frozen importlib._bootstrap>", line 973, in _find_and_load_unlocked
     # ModuleNotFoundError: No module named 'research'
     # ============================= slowest 3 durations ==============================
-
 
     # pylint: enable=line-too-long
 
