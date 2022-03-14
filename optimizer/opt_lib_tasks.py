@@ -357,13 +357,13 @@ def _get_docker_cmd(
 
     cmd = ["docker-compose"]
 
+    # Add `docker-compose` file path.
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    cmd.append(f"-f {docker_compose_file_path}")
+
     # Add `run`.
     service_name = "opt_app"
     cmd.append(f"{command} --rm {service_name}")
-
-    # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    cmd.append(f"--file {docker_compose_file_path}")
 
     # Add `env file` path.
     # - Handle the env file.
