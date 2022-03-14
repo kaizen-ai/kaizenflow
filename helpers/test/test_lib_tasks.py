@@ -2,7 +2,6 @@
 # `test_tasks.py` associated to `tasks.py` should test specific task targets.
 
 import logging
-from multiprocessing.spawn import old_main_modules
 import os
 import re
 from typing import Dict, List
@@ -1033,18 +1032,6 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     Test `git_create_patch()`.
     """
 
-    @staticmethod
-    def helper(
-        modified: bool, branch: bool, last_commit: bool, files: str
-    ) -> None:
-        ctx = _build_mock_context_returning_ok()
-        #
-        mode = "tar"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
-        #
-        mode = "diff"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
-
     def test_tar_modified1(self) -> None:
         """
         Exercise the code for:
@@ -1138,6 +1125,18 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         Specify only one among --modified, --branch, --last-commit
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+    @staticmethod
+    def helper(
+        modified: bool, branch: bool, last_commit: bool, files: str
+    ) -> None:
+        ctx = _build_mock_context_returning_ok()
+        #
+        mode = "tar"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        #
+        mode = "diff"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
 
 # #############################################################################
@@ -1584,7 +1583,7 @@ class Test_get_files_to_process1(hunitest.TestCase):
 
 
 class Test_pytest_repro1(hunitest.TestCase):
-  
+
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
         ctx = _build_mock_context_returning_ok()
         act = hlibtask.pytest_repro(
@@ -1886,53 +1885,52 @@ class TestFailing(hunitest.TestCase):
 
 class TestProcessRenameParameters(hunitest.TestCase):
     """
-    Process the name
+    Test that the class and the method names are parsed correctly.
     """
 
     def test_check_invalid1(self) -> None:
         """
-
+        Test inconsistent names.
         """
         old_name = "TestCase"
         new_name = "TestNewCase.test1"
         with self.assertRaises(AssertionError):
             hlibtask._process_parameters(old_name, new_name)
-        
 
     def test_check_invalid2(self) -> None:
         """
-
+        Test the methods of different classes.
         """
         old_name = "TestOldCase.test1"
         new_name = "TestNewCase.test10"
         with self.assertRaises(AssertionError):
             hlibtask._process_parameters(old_name, new_name)
-    
 
     def test_check_invalid3(self) -> None:
         """
+        Test invalid names.
         """
         old_name = "TestCase.test1.test3"
         new_name = "TestCase.test2.test3"
         with self.assertRaises(AssertionError):
             hlibtask._process_parameters(old_name, new_name)
 
-
     def test_check_valid1(self) -> None:
         """
+        Test class names.
         """
         old_name = "TestCase"
         new_name = "TestRenameCase"
-        config = hlibtask._process_parameters(old_name, new_name) 
+        config = hlibtask._process_parameters(old_name, new_name)
         self.assertFalse(config["rename_method"])
         self.assert_equal(config["old_class_name"], "TestCase")
         self.assert_equal(config["old_method_name"], "")
         self.assert_equal(config["new_class_name"], "TestRenameCase")
         self.assert_equal(config["new_method_name"], "")
 
-
     def test_check_valid2(self) -> None:
         """
+        Test method names.
         """
         old_name = "TestCase.test1"
         new_name = "TestCase.test2"
@@ -1946,30 +1944,17 @@ class TestProcessRenameParameters(hunitest.TestCase):
 
 class TestPytestRenameClass(hunitest.TestCase):
     """
+    Test renaming functionality.
     """
-
-    def _helper(self) -> str:
-        """
-        """
-        content = """
-class TestCase(hunitest.TestCase):
-    def test_assert_equal1(self) -> None:
-        actual = "hello world"
-        expected = actual
-        self.assert_equal(actual, expected)
-
-    def test_check_string1(self) -> None:
-        actual = "hello world"
-        self.check_string(actual)
-        """
-        return content
 
     def rename_class1(self) -> None:
         """
-        Test the renaming of the class.
+        Test renaming of the class.
         """
         content = self._helper()
-        actual = hlibtask._process_class("test_file.txt", content, "TestCase", "TestNewCase")
+        actual = hlibtask._process_class(
+            "test_file.txt", content, "TestCase", "TestNewCase"
+        )
         expected = """
 class TestNewCase(hunitest.TestCase):
     def test_assert_equal1(self) -> None:
@@ -1985,10 +1970,17 @@ class TestNewCase(hunitest.TestCase):
 
     def rename_method1(self) -> None:
         """
-        Test the renaming of the method.
+        Test renaming of the method.
         """
         content = self._helper()
-        actual = hlibtask._rename_method("test_file.txt", content, "TestCase", "test_assert_equal1", "TestCase", "test_assert_equal2")
+        actual = hlibtask._rename_method(
+            "test_file.txt",
+            content,
+            "TestCase",
+            "test_assert_equal1",
+            "TestCase",
+            "test_assert_equal2",
+        )
         expected = """
 class TestCase(hunitest.TestCase):
     def test_assert_equal2(self) -> None:
@@ -2002,38 +1994,43 @@ class TestCase(hunitest.TestCase):
         """
         self.assert_equal(actual, expected)
 
-
     def rename_method2(self) -> None:
         """
         Test the renaming of the method that does not exsist in the class.
         """
         content = self._helper()
         with self.assertRaises(AssertionError):
-            hlibtask._rename_method("test_file.txt", content, "TestCase", "test_assert", "TestCase", "test_assert_equal2")
+            hlibtask._rename_method(
+                "test_file.txt",
+                content,
+                "TestCase",
+                "test_assert",
+                "TestCase",
+                "test_assert_equal2",
+            )
+
+    def _helper(self) -> str:
+        """
+        Create file content.
+        """
+        content = """
+class TestCase(hunitest.TestCase):
+    def test_assert_equal1(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        return content
 
 
 class TestPytestRenameOutcomes(hunitest.TestCase):
     """
-    Run a test that checks the functionality of renaming golden outcomes directory.
+    Test golden outcomes directory renaming.
     """
-
-    def _helper(self) -> None:
-        """
-        Create the temporal outcome to rename.
-        """
-        outcomes = "test/outcomes/TestCase.test_check_string1"
-        os.makedirs(outcomes)
-        hio.to_file(f"{outcomes}/test.txt", "Test files.")
-        cmd = f"git add test/"
-        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-
-    def _remove(self) -> None:
-        """
-        Remove temporal test directory.
-        """
-        cmd = "git rm -rf test/"
-        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-
 
     def test_rename_method_outcomes(self) -> None:
         """
@@ -2055,7 +2052,28 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         )
         # Check if the dir was renamed.
         outcomes_path = "/test/outcomes/"
-        directories = [ent for ent in os.listdir(outcomes_path) if os.path.isdir(os.path.join(outcomes_path, ent))]
+        directories = [
+            ent
+            for ent in os.listdir(outcomes_path)
+            if os.path.isdir(os.path.join(outcomes_path, ent))
+        ]
         self.assertFalse("TestCase.test_check_string1" in directories)
         self.assertTrue("TestCase.test_rename" in directories)
         self._remove()
+
+    def _helper(self) -> None:
+        """
+        Create the temporal outcome to rename.
+        """
+        outcomes = "test/outcomes/TestCase.test_check_string1"
+        os.makedirs(outcomes)
+        hio.to_file(f"{outcomes}/test.txt", "Test files.")
+        cmd = f"git add test/"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+
+    def _remove(self) -> None:
+        """
+        Remove temporal test directory.
+        """
+        cmd = "git rm -rf test/"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)

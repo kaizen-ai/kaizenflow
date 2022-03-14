@@ -4249,7 +4249,7 @@ def _get_test_directories(root_dir: str) -> List[str]:
     Get all paths of the directories that contain unit tests.
 
     :param root_dir: the dir to start the search from
-    :returns: test directories
+    :return: paths of test directories
     """
     paths = []
     for path, _, _ in os.walk(root_dir):
@@ -4308,6 +4308,7 @@ def _rename_method(
     )
     return new_content
 
+
 def _rename_class(
     file_path: str,
     content: str,
@@ -4315,31 +4316,41 @@ def _rename_class(
     new_class_name: str,
 ) -> str:
     """
+    Rename the class.
+
+    :param file_path: the path to the file
+    :param content: the content of the file
+    :param old_class_name: the old name of the target class
+    :param new_class_name: the new name of the target class
+    :return: the content of the file with the class name replaced
     """
     # Rename the class.
-    content = re.sub(f"class {old_class_name}", f"class {new_class_name}", content)
+    content = re.sub(
+        f"class {old_class_name}", f"class {new_class_name}", content
+    )
     _LOG.info(
         f"{file_path}: class `{old_class_name}` was renamed to {new_class_name}."
     )
     return content
 
+
 def _rename_outcomes(
     path: str,
-    old_class_name: str, 
+    old_class_name: str,
     new_class_name: str,
     old_method_name: str,
     new_method_name: str,
     rename_method: bool,
-):
+) -> None:
     """
-    Rename the directory that contain test outcomes.
+    Rename the directory that contains test outcomes.
 
     :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
     :param old_class_name: the old name of the target class
     :param new_class_name: the new name of the target class
     :param old_method_name: the old name of the target method
     :param new_method_name: the new name of the target method
-    :param rename_method: if the method should be renamed 
+    :param rename_method: if the method should be renamed
     """
     outcomes_path = os.path.join(path, "outcomes")
     # Get the list of outcomes directories.
@@ -4383,7 +4394,10 @@ def _rename_outcomes(
             outcomes_path,
         )
 
-def _process_parameters(old_test_class_name, new_test_class_name) -> Dict[str, Union[bool, str]]:
+
+def _process_parameters(
+    old_test_class_name, new_test_class_name
+) -> Dict[str, Union[bool, str]]:
     """
     Build the processing config.
     """
@@ -4412,7 +4426,8 @@ def _process_parameters(old_test_class_name, new_test_class_name) -> Dict[str, U
             old_class_name == new_class_name,
             "To change the name of the method, specify the methods of the same class. E.g. `--old TestCache.test1 --new TestCache.new_test1`",
         )
-        _LOG.debug(f"Trying to change the name of `{old_method_name}` method of `{old_class_name}` class to `{new_method_name}`."
+        _LOG.debug(
+            f"Trying to change the name of `{old_method_name}` method of `{old_class_name}` class to `{new_method_name}`."
         )
     else:
         #
@@ -4433,13 +4448,14 @@ def _process_file(
     old_method_name: str,
     new_method_name: str,
     rename_method: bool,
-) -> bool:
+) -> None:
     """
     Process the file:
+
       - check if the content of the file contains target class
       - change the class name or change the method name
       - rename the outcomes if they exist
-    
+
     :param test_dir: the path to the test directory containing the file
     :param file_path: the path to the file
     :param old_class_name: the old name of the class
@@ -4461,7 +4477,7 @@ def _process_file(
         #
         content = _rename_class(
             file_path, content, old_class_name, new_class_name
-        )  
+        )
     # Rename the directories that contain target test outcomes.
     _rename_outcomes(
         test_dir,
@@ -4473,7 +4489,6 @@ def _process_file(
     )
     # Write processed content back to file.
     hio.to_file(file_path, content)
-    return True
 
 
 @task
