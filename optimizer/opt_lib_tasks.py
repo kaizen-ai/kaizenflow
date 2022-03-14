@@ -367,7 +367,7 @@ def _get_docker_cmd(
 
     # Add `env file` path.
     # - Handle the env file.
-    env_file = "/devops/env/default.env"
+    env_file = "/data/viktora/src/cmamp1/optimizer/devops/env/default.env"
     cmd.append(
         f"--env-file {env_file}"
     )
