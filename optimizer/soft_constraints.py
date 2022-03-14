@@ -7,13 +7,18 @@ import optimizer.soft_constraints as osofcons
 import abc
 import logging
 
-import cvxpy as cvx
 import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import optimizer.base as opbase
 import optimizer.utils as oputils
+
+# Equivalent to `import cvxpy as cpx`, but skip this module if the module is
+# not present.
+import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
+
+cvx = pytest.importorskip("cvxpy")
 
 _LOG = logging.getLogger(__name__)
 

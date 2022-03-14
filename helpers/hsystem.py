@@ -21,6 +21,9 @@ import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
+
+
 _LOG = logging.getLogger(__name__)
 
 # Set logging level of this file.
@@ -29,6 +32,7 @@ _LOG.setLevel(logging.INFO)
 # #############################################################################
 
 
+# TODO(gp): Maybe move to henv.py
 def is_inside_docker() -> bool:
     """
     Return whether we are inside a container or not.

@@ -11,20 +11,15 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import scipy as sp
-
-# import statsmodels as sm
 import statsmodels.api as sm
 
 import helpers.hdbg as hdbg
-
-# TODO(*): statsmodels needs this import to work properly.
-# import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
-
+import helpers.henv as henv
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Remove after PTask2335.
-if True:
+
+if henv.has_module("gluonts"):
     import gluonts
     import gluonts.dataset.artificial as gda
     import gluonts.dataset.artificial.recipe as rcp
