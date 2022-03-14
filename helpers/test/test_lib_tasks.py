@@ -1864,8 +1864,10 @@ class TestFailing(hunitest.TestCase):
 
 # #############################################################################
 
+
 class TestProcessRenameParameters(hunitest.TestCase):
     """
+    Process the name
     """
 
     def test_check_invalid1(self) -> None:
@@ -1994,29 +1996,17 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
 
     def _helper(self) -> None:
         """
-        """
-        name = "test_rename_class.py"
-        content = """
-class TestCase(hunitest.TestCase):
-    def test_assert_equal1(self) -> None:
-        actual = "hello world"
-        expected = actual
-        self.assert_equal(actual, expected)
-
-    def test_check_string1(self) -> None:
-        actual = "hello world"
-        self.check_string(actual)
+        Create the outcome to rename.
         """
         outcomes = "test/outcomes/TestCase.test_check_string1"
         os.mkdir(outcomes)
         hio.to_file(f"{outcomes}/test.txt", "Test files.")
-        hio.to_file(f"test/{name}", content)
         cmd = f"git add test/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
 
-
     def _remove(self) -> None:
         """
+        Remove temporal test directory.
         """
         cmd = "git rm -rf test/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
@@ -2024,21 +2014,29 @@ class TestCase(hunitest.TestCase):
 
     def test_rename_method_outcomes(self) -> None:
         """
+        Rename outcome directory.
         """
+        # Create outcomes directory.
         self._helper()
-        old_name = " "
-        new_name = " "
+        old_class_name = "TestCase"
+        new_class_name = "TestCase"
+        old_method_name = "test_check_string1"
+        new_method_name = "test_rename"
+        hlibtask._rename_outcomes(
+            "/test",
+            old_class_name,
+            new_class_name,
+            old_method_name,
+            new_method_name,
+            True,
+        )
+        # Check if the dir was renamed.
+        outcomes_path = "/test/outcomes/"
+        directories = [ent for ent in os.listdir(outcomes_path) if os.path.isdir(os.path.join(outcomes_path, ent))]
+        self.assertFalse("TestCase.test_check_string1" in directories)
+        self.assertTrue("TestCase.test_rename" in directories)
         self._remove()
 
-    def test_rename_method_no_outcomes(self) -> None:
-        """
-        """
-        self._helper()
-        old_name = " "
-        new_name = " "
-        self._remove()
-
-        
 
 
 
