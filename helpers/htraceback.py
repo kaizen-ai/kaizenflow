@@ -92,7 +92,7 @@ def parse_traceback(
             # The file looks like:
             #   File "/app/amp/test/test_lib_tasks.py", line 27, in test_get_gh
             #     act = ltasks._get_gh_issue_title(issue_id, repo)
-            regex = r"^\s*File \"(\S+)\", line (\d+), in (\S+)$"
+            regex = r"^\s*File \"(.+)\", line (\d+), in (\S+)$"
             m = re.match(regex, line)
             hdbg.dassert(m, "Can't parse '%s'", line)
             m: Match[Any]
