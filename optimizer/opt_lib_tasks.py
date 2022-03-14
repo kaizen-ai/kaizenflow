@@ -188,7 +188,6 @@ def _get_docker_cmd(command: str) -> str:
     # and name of image
     service_name = "opt_app"
     cmd.append(f"{command} --rm {service_name}")
-    cmd.append(service_name)
 
     cmd = hlibtask._to_multi_line_cmd(cmd)
     return cmd
