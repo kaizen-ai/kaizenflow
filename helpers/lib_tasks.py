@@ -4026,7 +4026,7 @@ def _get_failed_tests_from_file(file_name: str) -> List[str]:
         tests = [k for k, v in vals.items() if v]
     else:
         # Extract failed tests from the regular text output.
-        tests = re.findall(r"FAILED (\S+\.py::\S+::\S+)[\s|\n]", txt)
+        tests = re.findall(r"FAILED (\S+\.py::\S+::\S+)\b", txt)
     return tests
 
 
