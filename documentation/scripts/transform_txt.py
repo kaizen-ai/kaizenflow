@@ -33,8 +33,8 @@ import argparse
 import logging
 import re
 
-import helpers.hdbg as dbg
-import helpers.hparser as prsr
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ def skip_comments(line, skip_block):
 
 def table_of_content(file_name, max_lev):
     skip_block = False
-    txt = prsr.read_file(file_name)
+    txt = hparser.read_file(file_name)
     for line in txt:
         # Skip comments.
         skip_this_line, skip_block = skip_comments(line, skip_block)
@@ -86,7 +86,7 @@ def table_of_content(file_name, max_lev):
 
 
 def format_text(in_file_name, out_file_name, max_lev):
-    txt = prsr.read_file(in_file_name)
+    txt = hparser.read_file(in_file_name)
     #
     for line in txt:
         m = re.search("max_level=(\d+)", line)
@@ -94,7 +94,7 @@ def format_text(in_file_name, out_file_name, max_lev):
             max_lev = int(m.group(1))
             _LOG.warning("Inferred max_level=%s", max_lev)
             break
-    dbg.dassert_lte(1, max_lev)
+    hdbg.dassert_lte(1, max_lev)
     # Remove all headings.
     txt_tmp = []
     for line in txt:
@@ -123,13 +123,13 @@ def format_text(in_file_name, out_file_name, max_lev):
             txt_tmp.append(line)
     # TODO(gp): Remove all empty lines after a heading.
     # TODO(gp): Format title (first line capital and then small).
-    prsr.write_file(txt_tmp, out_file_name)
+    hparser.write_file(txt_tmp, out_file_name)
 
 
 def increase_chapter(in_file_name, out_file_name):
     """Increase the level of chapters by one for text in stdin."""
     skip_block = False
-    txt = prsr.read_file(in_file_name)
+    txt = hparser.read_file(in_file_name)
     #
     txt_tmp = []
     for line in txt:
@@ -144,7 +144,7 @@ def increase_chapter(in_file_name, out_file_name):
                 break
         txt_tmp.append(line)
     #
-    prsr.write_file(txt_tmp, out_file_name)
+    hparser.write_file(txt_tmp, out_file_name)
 
 
 # #############################################################################
@@ -157,21 +157,23 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "-a", "--action", choices=["toc", "format", "increase"], required=True
     )
-    prsr.add_input_output_args(parser)
+    hparser.add_input_output_args(parser)
     parser.add_argument("-l", "--max_lev", default=5)
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    print("cmd line: %s" % dbg.get_command_line())
-    dbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    print("cmd line: %s" % hdbg.get_command_line())
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     cmd = args.action
     max_lev = int(args.max_lev)
     #
-    in_file_name, out_file_name = prsr.parse_input_output_args(args, clear_screen=True)
+    in_file_name, out_file_name = hparser.parse_input_output_args(
+        args, clear_screen=True
+    )
     if cmd == "toc":
         table_of_content(in_file_name, max_lev)
     elif cmd == "format":

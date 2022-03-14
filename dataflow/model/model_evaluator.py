@@ -18,8 +18,8 @@ import core.config as cconfig
 import core.signal_processing as csigproc
 import core.statistics as costatis
 import dataflow as cdataf
-import dataflow.model.stats_computer as dtfmostcom
 import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.model.stats_computer as dtfmostcom
 import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros

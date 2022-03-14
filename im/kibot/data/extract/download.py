@@ -302,27 +302,6 @@ class DatasetExtractor:
         cmd = "aws s3 cp %s %s" % (dataset_csv_file, dataset_csv_s3_file)
         hsystem.system(cmd)
 
-    @staticmethod
-    def _extract_payload_links(src_file: str) -> pd.DataFrame:
-        """
-        Extract a table from dataset html page.
-
-        :param src_file: path to dataset html file page
-        :return: DataFrame with the list of series with Symbol and Link columns
-        """
-        html = hio.from_file(src_file)
-        # Find HTML that refers a required table.
-        _, table_start, rest = html.partition('<table class="ms-classic4-main">')
-        table, table_end, _ = rest.partition("</table>")
-        # Replace all anchors with their href attributes.
-        table = re.sub('<a.*?href="(.*?)">(.*?)</a>', "\\1", table)
-        # Construct back the table.
-        table = table_start + table + table_end
-        df = pd.read_html(table)[0]
-        df.columns = df.iloc[0]
-        df = df.iloc[1:]
-        return df
-
     def _download_file(
         self, link: str, local_file: str, dst_file: str, download_compressed: bool
     ) -> None:
@@ -346,6 +325,27 @@ class DatasetExtractor:
             # Delete csv file.
             cmd = "rm -f %s" % local_file
             hsystem.system(cmd)
+
+    @staticmethod
+    def _extract_payload_links(src_file: str) -> pd.DataFrame:
+        """
+        Extract a table from dataset html page.
+
+        :param src_file: path to dataset html file page
+        :return: DataFrame with the list of series with Symbol and Link columns
+        """
+        html = hio.from_file(src_file)
+        # Find HTML that refers a required table.
+        _, table_start, rest = html.partition('<table class="ms-classic4-main">')
+        table, table_end, _ = rest.partition("</table>")
+        # Replace all anchors with their href attributes.
+        table = re.sub('<a.*?href="(.*?)">(.*?)</a>', "\\1", table)
+        # Construct back the table.
+        table = table_start + table + table_end
+        df = pd.read_html(table)[0]
+        df.columns = df.iloc[0]
+        df = df.iloc[1:]
+        return df
 
 
 # #############################################################################
@@ -402,6 +402,13 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
     ) -> pd.DataFrame:
         return self.get_adjustments_to_download(source_dir, converted_dir)
 
+    def _download_file(
+        self, link: str, local_file: str, dst_file: str, download_compressed: bool
+    ) -> None:
+        super()._download_file(link, local_file, dst_file, download_compressed)
+        csv_table = pd.read_table(dst_file, sep="\t")
+        csv_table.to_csv(dst_file, index=False)
+
     @staticmethod
     def _get_adjustments_payload_link(symbol: str) -> str:
         """
@@ -417,13 +424,6 @@ class AdjustmentsDatasetExtractor(DatasetExtractor):
         api_link = uparse.urljoin(imkidacon.API_ENDPOINT, query_params)
         return api_link  # type: ignore
 
-    def _download_file(
-        self, link: str, local_file: str, dst_file: str, download_compressed: bool
-    ) -> None:
-        super()._download_file(link, local_file, dst_file, download_compressed)
-        csv_table = pd.read_table(dst_file, sep="\t")
-        csv_table.to_csv(dst_file, index=False)
-
 
 # #############################################################################
 
@@ -433,6 +433,9 @@ class DownloadDataCommand(imkibacom.KibotCommand):
         super().__init__(
             docstring=__doc__, supports_tmp_dir=True, requires_auth=True
         )
+
+    def customize_run(self) -> int:
+        return _run(args=self.args)
 
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:
@@ -476,9 +479,6 @@ class DownloadDataCommand(imkibacom.KibotCommand):
             action="store_true",
             help="Delete the S3 dir before starting uploading (dangerous)",
         )
-
-    def customize_run(self) -> int:
-        return _run(args=self.args)
 
 
 def _run(args) -> int:  # type: ignore

@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 # Latest historical data snapshot.
 _LATEST_DATA_SNAPSHOT = "20210924"
 # TODO(gp): @all bump up to the new snapshot.
-#_LATEST_DATA_SNAPSHOT = "20220210"
+# _LATEST_DATA_SNAPSHOT = "20220210"
 
 
 # #############################################################################
@@ -259,7 +259,7 @@ class CcxtCddCsvParquetByAssetClient(
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
-        See the `_read_data_for_one_symbol()` in the parent class.
+        See description in the parent class.
         """
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)

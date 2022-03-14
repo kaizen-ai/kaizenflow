@@ -172,7 +172,7 @@ def _run(args: argparse.Namespace) -> None:
             path_to_exchange,
             filesystem=fs,
             partition_filename=None,
-            )
+        )
         # Sleep between iterations.
         time.sleep(args.sleep_time)
     # Merge all new parquet into a single `data.parquet`.

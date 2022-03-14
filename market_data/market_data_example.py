@@ -12,18 +12,21 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-import core.artificial_signal_generators as carsigen
 import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import market_data.market_data_im_client as mdmdimcl
 import market_data.replayed_market_data as mdremada
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# Utils
+# #############################################################################
 
 
 def generate_random_price_data(
@@ -143,6 +146,8 @@ def generate_random_bars_for_asset(
       - index is an integer index
       - columns include timestamps, asset id, price, volume, and fake features
     """
+    import core.artificial_signal_generators as carsigen
+
     price_process = carsigen.PriceProcess(seed)
     close = price_process.generate_price_series_from_normal_log_returns(
         start_datetime,
@@ -238,6 +243,86 @@ def build_timestamp_df(
 
 
 # #############################################################################
+# MarketDataDf examples
+# #############################################################################
+
+
+# TODO(gp): -> get_MarketDataDf_example1()
+def get_market_data_df1() -> pd.DataFrame:
+    """
+    Generate price series that alternates every 5 minutes.
+    """
+    idx = pd.date_range(
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
+        end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
+        freq="T",
+    )
+    bar_duration = "1T"
+    bar_delay = "0T"
+    data = build_timestamp_df(idx, bar_duration, bar_delay)
+    price_pattern = [101.0] * 5 + [100.0] * 5
+    price = price_pattern * 4
+    data["close"] = price
+    data["asset_id"] = 101
+    data["volume"] = 100
+    feature_pattern = [1.0] * 5 + [-1.0] * 5
+    feature = feature_pattern * 4
+    data["feature1"] = feature
+    real_time_loop_time_out_in_secs = 35 * 60
+    return data, real_time_loop_time_out_in_secs
+
+
+def get_market_data_df2() -> pd.DataFrame:
+    """
+    Generate price series that alternates every 5 minutes.
+    """
+    idx = pd.date_range(
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
+        end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
+        freq="T",
+    )
+    bar_duration = "1T"
+    bar_delay = "0T"
+    data = build_timestamp_df(idx, bar_duration, bar_delay)
+    price_pattern = [101.0] * 2 + [100.0] * 2 + [101.0] * 2 + [102.0] * 4
+    price = price_pattern * 4
+    data["close"] = price
+    data["asset_id"] = 101
+    data["volume"] = 100
+    feature_pattern = [-1.0] * 5 + [1.0] * 5
+    feature = feature_pattern * 4
+    data["feature1"] = feature
+    real_time_loop_time_out_in_secs = 35 * 60
+    return data, real_time_loop_time_out_in_secs
+
+
+def get_market_data_df3() -> pd.DataFrame:
+    """
+    Generate price series that alternates every 5 minutes.
+    """
+    idx = pd.date_range(
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
+        end=pd.Timestamp("2000-01-01 11:30:00-05:00", tz="America/New_York"),
+        freq="T",
+    )
+    bar_duration = "1T"
+    bar_delay = "0T"
+    data = build_timestamp_df(idx, bar_duration, bar_delay)
+    price_pattern = [101.0] * 3 + [100.0] * 3 + [101.0] * 3 + [102.0] * 6
+    price = price_pattern * 8
+    data["close"] = price
+    data["asset_id"] = 101
+    data["volume"] = 100
+    feature_pattern = [-1.0] * 5 + [1.0] * 5
+    feature = feature_pattern * 12
+    data["feature1"] = feature
+    real_time_loop_time_out_in_secs = 115 * 60
+    return data, real_time_loop_time_out_in_secs
+
+
+# #############################################################################
+# ReplayedTimeMarketData examples
+# #############################################################################
 
 
 # TODO(gp): Return only MarketData since the wall clock is inside it.
@@ -267,7 +352,7 @@ def get_ReplayedTimeMarketData_from_df(
     asset_id_col_name = "asset_id"
     hdbg.dassert_in(asset_id_col_name, df.columns)
     # If the asset ids were not specified, then infer it from the dataframe.
-    asset_ids = df[asset_id_col_name].unique().tolist()
+    asset_ids = list(df[asset_id_col_name].unique())
     start_time_col_name = "start_datetime"
     hdbg.dassert_in(start_time_col_name, df.columns)
     end_time_col_name = "end_datetime"
@@ -415,6 +500,8 @@ def get_ReplayedTimeMarketData_example4(
 
 
 # #############################################################################
+# ImClientMarketData examples
+# #############################################################################
 
 
 def get_ImClientMarketData_example1(
@@ -425,6 +512,8 @@ def get_ImClientMarketData_example1(
     """
     Build a `ImClientMarketData` backed with loaded test data.
     """
+    import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
+
     ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
     #
     asset_id_col = "asset_id"
