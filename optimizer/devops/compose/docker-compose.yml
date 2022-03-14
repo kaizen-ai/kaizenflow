@@ -59,7 +59,7 @@ services:
     environment:
       - PORT=${PORT}
     extends:
-      app
+      opt_app
     network_mode: ${NETWORK_MODE:-bridge}
     ports:
       # TODO(gp): Rename `AM_PORT`.
