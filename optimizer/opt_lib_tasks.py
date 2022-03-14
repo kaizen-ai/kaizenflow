@@ -346,20 +346,14 @@ def _get_docker_cmd(
     """
 
     cmd: List[str] = []
-    extra_env_vars: Optional[List[str]] = ["PORT=9999"]
 
     # - Handle the image.
     image = get_image(base_image, stage, version)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
     _dassert_is_image_name_valid(image)
-    cmd.append(f"IMAGE={image}")
 
     # - Handle extra env vars.
-    if extra_env_vars:
-        hdbg.dassert_isinstance(extra_env_vars, list)
-        for env_var in extra_env_vars:
-            cmd.append(f"{env_var}")
-    #
+    port = "PORT=9999"
 
     cmd = ["docker-compose"]
 
@@ -374,6 +368,8 @@ def _get_docker_cmd(
         rf"""
             --env-file {env_file}"""
     )
+
+    cmd.append(f"-e IMAGE={image} PORT={port}")
 
     # Add `run`.
     service_name = "opt_app"
