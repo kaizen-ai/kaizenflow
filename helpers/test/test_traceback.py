@@ -10,6 +10,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_Traceback1(hunitest.TestCase):
+
     def test_parse1(self) -> None:
         """
         Parse traceback with all files from Docker that actually exist in the
