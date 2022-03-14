@@ -2079,5 +2079,5 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         """
         Remove temporal test directory.
         """
-        cmd = "git reset toy/"
+        cmd = "git reset toy/ && rm -rf toy/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
