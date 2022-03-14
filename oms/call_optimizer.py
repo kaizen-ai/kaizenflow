@@ -151,7 +151,7 @@ def optimize(
     # Call optimizer_stub through Docker.
     cmd = []
     cmd.append("cd optimizer &&")
-    cmd.append("./optimizer_stub.py")
+    cmd.append("/app/optimizer/optimizer_stub.py")
     cmd.append(f"--input_file {input_file}")
     output_file = os.path.join(tmp_dir, "output.pkl")
     cmd.append(f"--output_file {output_file}")

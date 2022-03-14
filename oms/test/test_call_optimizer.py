@@ -3,6 +3,7 @@ import logging
 import pandas as pd
 
 import core.config as cconfig
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import oms.call_optimizer as ocalopti
 

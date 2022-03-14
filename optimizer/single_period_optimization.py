@@ -29,7 +29,7 @@ def optimize(
     config: cconfig.Config,
     df: pd.DataFrame,
 ) -> pd.DataFrame:
-    spo = SinglePeriodOptimzer(config, df)
+    spo = SinglePeriodOptimizer(config, df)
     output_df = spo.optimize()
     return output_df
 
