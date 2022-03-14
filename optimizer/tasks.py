@@ -9,12 +9,12 @@ import helpers.lib_tasks as hlib
 from optimizer.opt_lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     opt_docker_bash,
     opt_docker_build_local_image,
+    opt_docker_down,
     opt_docker_jupyter,
     opt_docker_push_dev_image,
     opt_docker_release_dev_image,
     opt_docker_tag_local_image_as_dev,
     opt_docker_up,
-    opt_docker_down,
 )
 
 _LOG = logging.getLogger(__name__)
