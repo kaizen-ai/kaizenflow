@@ -352,10 +352,14 @@ def _get_docker_cmd(
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
     _dassert_is_image_name_valid(image)
 
-    # - Handle extra env vars.
+    # - Handle port.
     port = "PORT=9999"
 
     cmd = ["docker-compose"]
+
+    # Add `run`.
+    service_name = "opt_app"
+    cmd.append(f"{command} --rm {service_name}")
 
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
@@ -365,15 +369,10 @@ def _get_docker_cmd(
     # - Handle the env file.
     env_file = "devops/env/default.env"
     cmd.append(
-        rf"""
-            --env-file {env_file}"""
+        f"--env-file {env_file}"
     )
 
-    cmd.append(f"-e IMAGE={image} PORT={port}")
-
-    # Add `run`.
-    service_name = "opt_app"
-    cmd.append(f"{command} --rm {service_name}")
+    cmd.append(f"-e IMAGE={image} -e PORT={port}")
 
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
