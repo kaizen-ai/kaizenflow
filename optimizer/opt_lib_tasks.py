@@ -353,7 +353,7 @@ def _get_docker_cmd(
     _dassert_is_image_name_valid(image)
 
     # - Handle port.
-    port = "PORT=9999"
+    port = "9999"
 
     cmd = ["docker-compose"]
 
@@ -365,13 +365,7 @@ def _get_docker_cmd(
     service_name = "opt_app"
     cmd.append(f"{command} --rm {service_name}")
 
-    # Add `env file` path.
-    # - Handle the env file.
-    env_file = "/data/viktora/src/cmamp1/optimizer/devops/env/default.env"
-    cmd.append(
-        f"--env-file {env_file}"
-    )
-
+    # Add variables
     cmd.append(f"-e IMAGE={image} -e PORT={port}")
 
     # Convert the list to a multiline command.
