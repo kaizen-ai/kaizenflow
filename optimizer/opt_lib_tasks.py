@@ -181,8 +181,8 @@ def _get_docker_cmd(command: str) -> str:
     cmd = ["docker-compose"]
 
     # Add `docker-compose` file path.
-    # docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    # cmd.append(f"-f {docker_compose_file_path}")
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    cmd.append(f"-f {docker_compose_file_path}")
 
     # Add docker-compose command up or down
     # and name of image
