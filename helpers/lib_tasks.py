@@ -4026,7 +4026,7 @@ def _get_failed_tests_from_file(file_name: str) -> List[str]:
         tests = [k for k, v in vals.items() if v]
     else:
         # Extract failed tests from the regular text output.
-        tests = re.findall(r"FAILED (\S+\.py::\S+::\S+)[\s|\n]", txt)
+        tests = re.findall(r"FAILED (\S+\.py::\S+::\S+)\b", txt)
     return tests
 
 
@@ -4148,42 +4148,46 @@ def pytest_repro(  # type: ignore
         # Get the stacktrace block from the pytest output.
         txt = hio.from_file(file_name)
         if (
-            "====== FAILURES ======" not in txt
-            or "====== slowest 3 durations ======" not in txt
+            "====== FAILURES ======" in txt
+            and "====== slowest 3 durations ======" in txt
         ):
-            _LOG.info("%s", failed_test_output_str)
-            # TODO(gp): @Sonya this return from the middle of the code makes the
-            #  code difficult to understand. There should be a single return.
-            return res
-        txt = txt.split("====== FAILURES ======")[-1].split(
-            "====== slowest 3 durations ======"
-        )[0]
-        # Get the classes and names of the failed tests, e.g.
-        # "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5" ->
-        # -> "TestSmaModel.test5".
-        failed_test_names = [
-            test.split("::")[1] + "." + test.split("::")[2] for test in tests
-        ]
-        tracebacks = []
-        for i, name in enumerate(failed_test_names):
-            # Get the stacktrace for the individual test failure.
-            # Its start is marked with the name of the test, e.g.
-            # "___________________ TestSmaModel.test5 ___________________".
-            start_block = "________ " + name + " ________"
-            traceback_block = txt.split(start_block)[-1]
-            if i != len(failed_test_names) - 1:
-                # The end of the traceback for the current failed test is the
-                # start of the traceback for the next failed test.
-                end_block = "________ " + failed_test_names[i + 1] + " ________"
-                traceback_block = traceback_block.split(end_block)[0]
-            _, traceback = htraceb.parse_traceback(
-                traceback_block, purify_from_client=False
-            )
-            tracebacks.append("\n".join(["# " + name, traceback, ""]))
-        # Combine the stacktraces for all the failures.
-        full_traceback = "\n\n" + "\n".join(tracebacks)
-        failed_test_output_str += full_traceback
-        res += full_traceback
+            failures_blocks = txt.split("====== FAILURES ======")[1:]
+            failures_blocks = [
+                x.split("====== slowest 3 durations ======")[0]
+                for x in failures_blocks
+            ]
+            txt = "\n".join([x.rstrip("=").lstrip("=") for x in failures_blocks])
+            # Get the classes and names of the failed tests, e.g.
+            # "core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5" ->
+            # -> "TestSmaModel.test5".
+            failed_test_names = [
+                test.split("::")[1] + "." + test.split("::")[2] for test in tests
+            ]
+            tracebacks = []
+            for i, name in enumerate(failed_test_names):
+                # Get the stacktrace for the individual test failure.
+                # Its start is marked with the name of the test, e.g.
+                # "___________________ TestSmaModel.test5 ___________________".
+                start_block = "________ " + name + " ________"
+                traceback_block = txt.split(start_block)[-1]
+                end_block_options = [
+                    "________ " + n + " ________"
+                    for n in failed_test_names
+                    if n != name
+                ]
+                for end_block in end_block_options:
+                    # The end of the traceback for the current failed test is the
+                    # start of the traceback for the next failed test.
+                    if end_block in traceback_block:
+                        traceback_block = traceback_block.split(end_block)[0]
+                _, traceback = htraceb.parse_traceback(
+                    traceback_block, purify_from_client=False
+                )
+                tracebacks.append("\n".join(["# " + name, traceback.strip(), ""]))
+            # Combine the stacktraces for all the failures.
+            full_traceback = "\n\n" + "\n".join(tracebacks)
+            failed_test_output_str += full_traceback
+            res += full_traceback
     _LOG.info("%s", failed_test_output_str)
     if create_script:
         script_name = "./tmp.pytest_repro.sh"
