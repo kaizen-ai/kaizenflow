@@ -12,9 +12,9 @@ import hashlib
 import hmac
 import json
 import logging
-import uuid
 import urllib
-from typing import Any, Dict, List
+import uuid
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -30,7 +30,10 @@ class TalosBroker(ombroker.AbstractBroker):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._api_keys = hsecret.get_secret(self._account)
+        # Talos request endpoint.
         self._endpoint = self.get_endpoint()
+        # Path for order request.
+        self._order_path = "/v1/orders"
 
     def calculate_signature(self, parts: List[str]) -> str:
         """
@@ -49,7 +52,7 @@ class TalosBroker(ombroker.AbstractBroker):
         """
         payload = "\n".join(parts)
         hash = hmac.new(
-            self.api_keys["secretKey"].encode("ascii"),
+            self._api_keys["secretKey"].encode("ascii"),
             payload.encode("ascii"),
             hashlib.sha256,
         )
@@ -115,7 +118,6 @@ class TalosBroker(ombroker.AbstractBroker):
     def submit_order(
         self,
         orders: List[Dict[str, Any]],
-        *,
     ) -> None:
         """
         Submit and log multiple orders given by the model.
@@ -126,6 +128,49 @@ class TalosBroker(ombroker.AbstractBroker):
         for order in orders:
             _LOG.debug("Submitting order %s", order["ClOrdID"])
             _ = self._submit_order(order, wall_clock_timestamp)
+
+    def get_orders(
+        self,
+        *,
+        start_timestamp: Optional[str] = "",
+        end_timestamp: Optional[str] = "",
+        order_id: Optional[str] = "",
+    ):
+        """
+        Get current orders by date and order id.
+
+        Example of order data:
+
+        """
+        # TODO(Danya): Add specific order data.
+        wall_clock_time = self.get_talos_current_utc_timestamp()
+        query = {
+            "StartDate": start_timestamp,
+            "EndDate": end_timestamp,
+            "OrderID": order_id,
+        }
+        query_string = urllib.parse.urlencode(query)
+        # TODO(Danya): Factor out authorization.
+        parts = [
+            "GET",
+            wall_clock_time,
+            self._endpoint,
+            self._order_path,
+            query_string,
+        ]
+        signature = self.calculate_signature(parts)
+        headers = {
+            "TALOS-KEY": self._api_keys["publicKey"],
+            "TALOS-SIGN": signature,
+            "TALOS-TS": wall_clock_time,
+        }
+        url = f"https://{self._endpoint}{self._order_path}?{query_string}"
+        r = requests.get(url=url, headers=headers)
+        if r.status_code == 200:
+            data = r.json()
+        else:
+            raise Exception(f"{r.status_code}: {r.text}")
+        return data
 
     @staticmethod
     def get_order_id():
@@ -156,11 +201,10 @@ class TalosBroker(ombroker.AbstractBroker):
         parts = [
             "POST",
             wall_clock_timestamp,
-            "tal-87.sandbox.talostrading.com",
-            "/v1/orders",
+            self._endpoint,
+            self._order_path,
         ]
         # TODO(Danya): Make it customizable/dependent on `self._strategy`
-        path = "/v1/orders"
         body = json.dumps(order)
         parts.append(body)
         # Enciode request with secret key.
@@ -171,31 +215,10 @@ class TalosBroker(ombroker.AbstractBroker):
             "TALOS-TS": wall_clock_timestamp,
         }
         # Create a POST request.
-        url = f"https://{self._endpoint}{path}"
+        url = f"https://{self._endpoint}{self._order_path}"
         r = requests.post(url=url, data=body, headers=headers)
         # TODO(Danya): Return a receipt instead of a status code.
         if r.status_code != 200:
             # TODO(Danya): Remove Exception.
             Exception(f"{r.status_code}: {r.text}")
         return r.status_code
-
-    def get_orders(self, start_timestamp: str, end_timestamp: str):
-        utc_datetime = self.get_talos_current_utc_timestamp()
-        query = {"StartDate": start_timestamp, "EndDate": end_timestamp}
-        query_string = urllib.parse.urlencode(query)
-
-        path = "/v1/orders"
-        headers = {
-            "TALOS-KEY": self._api_keys["publicKey"],  # API public key
-            "TALOS-SIGN": signature,  # an encoded secret key + request
-            "TALOS-TS": utc_datetime,  # Time of request UTC.
-        }
-        # TODO(Danya): Factor out
-        url = f"https://{self._endpoint}{path}?{query_string}"
-        print(url)
-        r = requests.get(url=url, headers=headers)
-        if r.status_code == 200:
-            data = r.json()
-        else:
-            raise Exception(f"{r.status_code}: {r.text}")
-        return data
