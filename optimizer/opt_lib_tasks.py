@@ -345,8 +345,6 @@ def _get_docker_cmd(
     :param docker_cmd: command to execute inside docker
     """
 
-    cmd: List[str] = []
-
     # - Handle the image.
     image = get_image(base_image, stage, version)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
@@ -355,15 +353,15 @@ def _get_docker_cmd(
     # - Handle port.
     port = "9999"
 
-    cmd = ["docker"]
+    cmd = ["docker-compose"]
 
     # Add `docker-compose` file path.
-    # docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    # cmd.append(f"-f {docker_compose_file_path}")
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    cmd.append(f"-f {docker_compose_file_path}")
 
     # Add `run`.
     service_name = "opt_app"
-    cmd.append(f"{command} --env IMAGE={image} --env PORT={port} {service_name} --rm")
+    cmd.append(f"{command} -e IMAGE={image} --rm {service_name}")
 
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
