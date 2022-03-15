@@ -179,7 +179,23 @@ class TalosBroker(ombroker.AbstractBroker):
             Exception(f"{r.status_code}: {r.text}")
         return r.status_code
 
-    def get_orders(self, start_timestamp: str, end_timestamp: str,):
+    def get_orders(self, start_timestamp: str, end_timestamp: str):
         utc_datetime = self.get_talos_current_utc_timestamp()
         query = {"StartDate": start_timestamp, "EndDate": end_timestamp}
         query_string = urllib.parse.urlencode(query)
+
+        path = "/v1/orders"
+        headers = {
+            "TALOS-KEY": self._api_keys["publicKey"],  # API public key
+            "TALOS-SIGN": signature,  # an encoded secret key + request
+            "TALOS-TS": utc_datetime,  # Time of request UTC.
+        }
+        # TODO(Danya): Factor out
+        url = f"https://{self._endpoint}{path}?{query_string}"
+        print(url)
+        r = requests.get(url=url, headers=headers)
+        if r.status_code == 200:
+            data = r.json()
+        else:
+            raise Exception(f"{r.status_code}: {r.text}")
+        return data
