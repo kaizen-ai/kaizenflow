@@ -14,7 +14,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestResultBundle(hunitest.TestCase):
-
     def test_to_config1(self) -> None:
         """
         Convert a `ResultBundle` to a config.
@@ -64,8 +63,8 @@ class TestResultBundle(hunitest.TestCase):
         # Check.
         expected = """
         # Dir structure
-        $GIT_ROOT/dataflow/core/test/TestResultBundle.test_pickle1/tmp.scratch
-        $GIT_ROOT/dataflow/core/test/TestResultBundle.test_pickle1/tmp.scratch/result_bundle.v1_0.pkl
+        $GIT_ROOT/dataflow/core/test/outcomes/TestResultBundle.test_pickle1/tmp.scratch
+        $GIT_ROOT/dataflow/core/test/outcomes/TestResultBundle.test_pickle1/tmp.scratch/result_bundle.v1_0.pkl
         """
         expected = hprint.dedent(expected)
         self.assert_equal(str(actual), str(expected), purify_text=True)
@@ -122,7 +121,6 @@ class TestResultBundle(hunitest.TestCase):
 
 
 class TestPredictionResultBundle(hunitest.TestCase):
-
     def test_to_config1(self) -> None:
         init_config = self._get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())

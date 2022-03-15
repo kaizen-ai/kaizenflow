@@ -1,3 +1,11 @@
+# cmamp-1.0.9
+- 2022-03-15
+- Update `docker-compose` version
+
+# cmamp-1.0.8
+- 2022-03-09
+- Add more docker users
+
 # cmamp-1.0.7
 - 2022-02-16
 - Remove useless Python packages

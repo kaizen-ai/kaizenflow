@@ -21,6 +21,7 @@ except ModuleNotFoundError:
     _module = "dateutil"
     print(_WARNING + f": Can't find {_module}: continuing")
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
 
 import pandas as pd  # noqa: E402 # pylint: disable=wrong-import-position
 
@@ -238,8 +239,7 @@ def dassert_is_valid_timestamp(timestamp: Optional[pd.Timestamp]) -> None:
 
 
 def dassert_timestamp_lte(
-    start_timestamp: Optional[pd.Timestamp],
-    end_timestamp: Optional[pd.Timestamp]
+    start_timestamp: Optional[pd.Timestamp], end_timestamp: Optional[pd.Timestamp]
 ) -> None:
     dassert_is_valid_timestamp(start_timestamp)
     dassert_is_valid_timestamp(end_timestamp)
@@ -248,8 +248,7 @@ def dassert_timestamp_lte(
 
 
 def dassert_timestamp_lt(
-    start_timestamp: Optional[pd.Timestamp],
-    end_timestamp: Optional[pd.Timestamp]
+    start_timestamp: Optional[pd.Timestamp], end_timestamp: Optional[pd.Timestamp]
 ) -> None:
     dassert_is_valid_timestamp(start_timestamp)
     dassert_is_valid_timestamp(end_timestamp)

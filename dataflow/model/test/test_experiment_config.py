@@ -1,8 +1,6 @@
 import logging
-from typing import Any, Dict, List, Tuple
 
 import pandas as pd
-import pytest
 
 import core.config as cconfig
 import dataflow.model.experiment_config as dtfmoexcon
@@ -12,6 +10,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
+    """
+    Cover period of times with different tiles.
+    """
+
     def cover_with_monthly_tiles(
         self,
         start_timestamp: pd.Timestamp,
@@ -22,11 +24,6 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         # Prepare inputs.
         config = cconfig.Config()
         freq_as_pd_str = "1M"
-        # end_timestamp += pd.tseries.frequencies.to_offset("M")
-        # dates = pd.date_range(start_timestamp, end_timestamp,
-        #                       freq=freq_as_pd_str)
-        # print(dates)
-        # assert 0
         lookback_as_pd_str = "10D"
         # Run.
         configs = dtfmoexcon.build_configs_varying_tiled_periods(
@@ -40,6 +37,8 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         actual_output = cconfig.configs_to_str(configs)
         self.assert_equal(actual_output, expected_output, fuzzy_match=True)
         self.assertEqual(len(configs), expected_num_configs)
+
+    # //////////////////////////////////////////////////////////////////////////////
 
     def test_1tile_1(self) -> None:
         """

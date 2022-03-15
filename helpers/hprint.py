@@ -11,6 +11,9 @@ from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.hdbg as hdbg
 
+# Avoid dependency from other `helpers` modules to prevent import cycles.
+
+
 _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.

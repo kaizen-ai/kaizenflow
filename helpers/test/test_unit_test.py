@@ -67,7 +67,7 @@ class TestTestCase1(hunitest.TestCase):
         """
         act = self.get_input_dir()
         act = hunitest.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir1/input"
+        exp = "$GIT_ROOT/helpers/test/outcomes/TestTestCase1.test_get_input_dir1/input"
         self.assertEqual(act, exp)
 
     def test_get_input_dir2(self) -> None:
@@ -79,7 +79,7 @@ class TestTestCase1(hunitest.TestCase):
         )
         act = hunitest.purify_txt_from_client(act)
         #
-        exp = "$GIT_ROOT/helpers/test/test_class.test_method/input"
+        exp = "$GIT_ROOT/helpers/test/outcomes/test_class.test_method/input"
         self.assertEqual(act, exp)
 
     def test_get_input_dir3(self) -> None:
@@ -91,7 +91,7 @@ class TestTestCase1(hunitest.TestCase):
         )
         act = hunitest.purify_txt_from_client(act)
         #
-        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir3/input"
+        exp = "$GIT_ROOT/helpers/test/outcomes/TestTestCase1.test_get_input_dir3/input"
         self.assertEqual(act, exp)
 
     def test_get_input_dir4(self) -> None:
@@ -103,7 +103,7 @@ class TestTestCase1(hunitest.TestCase):
         )
         act = hunitest.purify_txt_from_client(act)
         #
-        exp = "$GIT_ROOT/helpers/test/TestTestCase1/input"
+        exp = "$GIT_ROOT/helpers/test/outcomes/TestTestCase1/input"
         self.assertEqual(act, exp)
 
     def test_get_output_dir1(self) -> None:
@@ -112,7 +112,7 @@ class TestTestCase1(hunitest.TestCase):
         """
         act = self.get_output_dir()
         act = hunitest.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_output_dir1/output"
+        exp = "$GIT_ROOT/helpers/test/outcomes/TestTestCase1.test_get_output_dir1/output"
         self.assertEqual(act, exp)
 
     def test_get_scratch_space1(self) -> None:
@@ -122,7 +122,7 @@ class TestTestCase1(hunitest.TestCase):
         act = self.get_scratch_space()
         act = hunitest.purify_txt_from_client(act)
         exp = (
-            "$GIT_ROOT/helpers/test/TestTestCase1.test_get_scratch_space1"
+            "$GIT_ROOT/helpers/test/outcomes/TestTestCase1.test_get_scratch_space1"
             "/tmp.scratch"
         )
         self.assertEqual(act, exp)
@@ -132,7 +132,7 @@ class TestTestCase1(hunitest.TestCase):
         test_method_name = "test_method"
         act = self.get_scratch_space(test_class_name, test_method_name)
         act = hunitest.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
+        exp = "$GIT_ROOT/helpers/test/outcomes/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
     def test_get_scratch_space3(self) -> None:
@@ -143,7 +143,7 @@ class TestTestCase1(hunitest.TestCase):
             test_class_name, test_method_name, use_absolute_path
         )
         act = hunitest.purify_txt_from_client(act)
-        exp = "test_class.test_method/tmp.scratch"
+        exp = "outcomes/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
     def test_get_s3_scratch_dir1(self) -> None:
@@ -193,7 +193,7 @@ class TestTestCase1(hunitest.TestCase):
         # $TMP_DIR/tmp_diff.sh
         num_lines=1
         '''
-        vimdiff helpers/test/TestTestCase1.test_assert_not_equal2/tmp.actual.txt helpers/test/TestTestCase1.test_assert_not_equal2/tmp.expected.txt
+        vimdiff helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.expected.txt
         '''
         """
         # pylint: enable=line-too-long
@@ -313,7 +313,7 @@ completed failure Lint    Run_linter                                      |  com
 completed       success Lint    Fast_tests                                (
 completed       success Lint    Slow_tests                                (
 Diff with:
-> vimdiff helpers/test/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.actual.txt helpers/test/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.expected.txt
+> vimdiff helpers/test/outcomes/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.actual.txt helpers/test/outcomes/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.expected.txt
 or running:
 > ./tmp_diff.sh
 --------------------------------------------------------------------------------
@@ -949,15 +949,15 @@ class Test_get_dir_signature1(hunitest.TestCase):
         # pylint: disable=line-too-long
         exp = r"""
         # Dir structure
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.pkl
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.txt
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/run_notebook.0.log
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/config.pkl
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/config.txt
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/run_notebook.1.log
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_0
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_0/config.pkl
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_0/config.txt
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_0/run_notebook.0.log
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_1
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_1/config.pkl
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_1/config.txt
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_1/run_notebook.1.log
         """
         # pylint: enable=line-too-long
         self.assert_equal(act, exp, fuzzy_match=True)
