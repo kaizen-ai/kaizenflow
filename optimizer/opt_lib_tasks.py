@@ -355,15 +355,15 @@ def _get_docker_cmd(
     # - Handle port.
     port = "9999"
 
-    cmd = ["docker-compose"]
+    cmd = ["docker"]
 
     # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    cmd.append(f"-f {docker_compose_file_path}")
+    # docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    # cmd.append(f"-f {docker_compose_file_path}")
 
     # Add `run`.
     service_name = "opt_app"
-    cmd.append(f"{command} -e IMAGE={str(image)} --rm {service_name}")
+    cmd.append(f"{command} --env IMAGE={image} --env PORT={port} {service_name} --rm")
 
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
