@@ -147,44 +147,16 @@ def run_optimizer(
     hsystem.system(docker_login_cmd)
     # Call optimizer_stub through Docker.
     cmd = []
-    cmd.append("cd optimizer && ls")
+    cmd.append("cd optimizer &&")
     cmd.append("/app/optimizer/optimizer_stub.py")
     cmd.append(f"--input_file {input_file}")
     output_file = os.path.join(tmp_dir, "output.pkl")
     cmd.append(f"--output_file {output_file}")
     cmd.append("-v INFO")
     cmd = " ".join(cmd)
-    #
-    base_image = ""
-    stage = "dev"
-    version = ""
-    entrypoint = True
-    as_user = True
-    # TODO(Grisha): ideally we should call `opt_docker_cmd -c cmd` CmTask #547.
-    docker_cmd = hlibtask._get_docker_cmd(
-        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user, use_bash=True
-    )
-    hsystem.system("sudo " + docker_cmd)
+    # TODO(Grisha): make Docker invokes work w/o `sudo`.
+    hsystem.system(f"invoke opt_docker_cmd --cmd {cmd})
     # Read the output from `tmp_dir`.
     output_file = os.path.join(tmp_dir, "output.pkl")
     output_df = hpickle.from_pickle(output_file)
     return output_df
-
-
-# TODO(gp): Move it to lib_tasks.
-# ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
-ECR_BASE_PATH = "665840871993.dkr.ecr.us-east-1.amazonaws.com"
-
-
-default_params = {
-    "ECR_BASE_PATH": ECR_BASE_PATH,
-    # When testing a change to the build system in a branch you can use a different
-    # image, e.g., `XYZ_tmp` to not interfere with the prod system.
-    # "BASE_IMAGE": "opt_tmp",
-    "BASE_IMAGE": "opt",
-    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
-    "USE_ONLY_ONE_DOCKER_COMPOSE": True,
-}
-
-
-hlibtask.set_default_params(default_params)

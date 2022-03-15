@@ -2324,12 +2324,18 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
+    ctx,
+    base_image="",
+    stage="dev",
+    version="",
+    cmd="",
+    use_bash=False,
+    container_dir_name=".",
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(
