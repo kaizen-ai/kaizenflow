@@ -30,16 +30,21 @@ _LOG = logging.getLogger(__name__)
 # Single period optimization with costs and constraints
 # #############################################################################
 
+
 def optimize(
     config: cconfig.Config,
     df: pd.DataFrame,
 ) -> pd.DataFrame:
+    """
+    Wrapper around `SinglePeriodOptimizer`.
+    """
     spo = SinglePeriodOptimizer(config, df)
     output_df = spo.optimize()
     return output_df
 
 
 class SinglePeriodOptimizer:
+
     def __init__(
         self,
         config: cconfig.Config,
