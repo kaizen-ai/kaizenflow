@@ -19,7 +19,7 @@ import optimizer.soft_constraints as osofcons
 
 # Equivalent to `import cvxpy as cpx`, but skip this module if the module is
 # not present.
-import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
+import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-order
 
 cvx = pytest.importorskip("cvxpy")
 
