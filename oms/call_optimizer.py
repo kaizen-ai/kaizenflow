@@ -14,7 +14,6 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
-import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
@@ -145,17 +144,19 @@ def run_optimizer(
     # TODO(Grisha): we should call `invoke docker_login` CmTask #547.
     docker_login_cmd = "sudo -s eval $(aws ecr get-login --profile am --no-include-email --region us-east-1)"
     hsystem.system(docker_login_cmd)
+    # Go to `optimizer` dir.
+    hsystem.system("cd optimizer", suppress_output=False)
     # Call optimizer_stub through Docker.
-    cmd = []
-    cmd.append("cd optimizer &&")
-    cmd.append("/app/optimizer/optimizer_stub.py")
-    cmd.append(f"--input_file {input_file}")
-    output_file = os.path.join(tmp_dir, "output.pkl")
-    cmd.append(f"--output_file {output_file}")
-    cmd.append("-v INFO")
-    cmd = " ".join(cmd)
+    # cmd = []
+    # cmd.append("/app/optimizer/optimizer_stub.py")
+    # cmd.append(f"--input_file {input_file}")
+    # output_file = os.path.join(tmp_dir, "output.pkl")
+    # cmd.append(f"--output_file {output_file}")
+    # cmd.append("-v INFO")
+    # cmd = " ".join(cmd)
+    cmd = "ls"
     # TODO(Grisha): make Docker invokes work w/o `sudo`.
-    hsystem.system(f"invoke opt_docker_cmd --cmd {cmd})
+    hsystem.system(f"invoke opt_docker_cmd --cmd {cmd} --no-as-user")
     # Read the output from `tmp_dir`.
     output_file = os.path.join(tmp_dir, "output.pkl")
     output_df = hpickle.from_pickle(output_file)

@@ -180,6 +180,7 @@ def opt_docker_cmd(  # type: ignore
     stage="dev",
     version="",
     cmd="",
+    as_user=True,
     use_bash=False,
 ):
     """
@@ -193,6 +194,7 @@ def opt_docker_cmd(  # type: ignore
         stage=stage,
         version=version,
         cmd=cmd,
+        as_user=as_user,
         use_bash=use_bash,
         container_dir_name=_OPTIMIZER_DIR,
     )

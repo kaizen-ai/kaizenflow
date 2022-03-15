@@ -2329,6 +2329,7 @@ def docker_cmd(  # type: ignore
     stage="dev",
     version="",
     cmd="",
+    as_user=True,
     use_bash=False,
     container_dir_name=".",
 ):
@@ -2339,7 +2340,7 @@ def docker_cmd(  # type: ignore
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(
-        base_image, stage, version, cmd, use_bash=use_bash
+        base_image, stage, version, cmd, as_user=as_user, use_bash=use_bash,
     )
     _docker_cmd(ctx, docker_cmd_)
 
