@@ -50,7 +50,7 @@ class Test_optimize1(hunitest.TestCase):
         config: cconfig.Config,
         df: pd.DataFrame,
     ) -> str:
-        actual = ocalopti.optimize(config, df)
+        actual = ocalopti.run_optimizer(config, df)
         precision = 5
         actual_str = hpandas.df_to_str(actual, precision=precision)
         return actual_str

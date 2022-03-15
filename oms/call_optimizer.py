@@ -147,7 +147,7 @@ def run_optimizer(
     hsystem.system(docker_login_cmd)
     # Call optimizer_stub through Docker.
     cmd = []
-    cmd.append("cd optimizer &&")
+    cmd.append("cd optimizer && ls")
     cmd.append("/app/optimizer/optimizer_stub.py")
     cmd.append(f"--input_file {input_file}")
     output_file = os.path.join(tmp_dir, "output.pkl")
@@ -164,12 +164,9 @@ def run_optimizer(
     docker_cmd = hlibtask._get_docker_cmd(
         base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user, use_bash=True
     )
-    print(docker_cmd)
-    assert 0
-    # ctx = invoke.context.Context()
-    # hlibtask._run(ctx, docker_cmd, pty=True)
     hsystem.system("sudo " + docker_cmd)
     # Read the output from `tmp_dir`.
+    output_file = os.path.join(tmp_dir, "output.pkl")
     output_df = hpickle.from_pickle(output_file)
     return output_df
 
