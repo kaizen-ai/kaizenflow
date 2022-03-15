@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
+import helpers.hs3 as hs3
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -802,4 +803,63 @@ def convert_col_to_int(
     df[col] = df[col].astype("int64")
     # Trust, but verify.
     dassert_series_type_is(df[col], np.int64)
+    return df
+
+
+# #############################################################################
+
+
+def _get_local_or_s3_stream(file_name: str, **kwargs: Any) -> Tuple[Any, Any]:
+    _LOG.debug(hprint.to_str("file_name kwargs"))
+    # Handle the s3fs param, if needed.
+    if hs3.is_s3_path(file_name):
+        # For S3 files we need to have an `s3fs` parameter.
+        hdbg.dassert_in(
+            "s3fs",
+            kwargs,
+            "Credentials through s3fs are needed to access an S3 path",
+        )
+        s3fs_ = kwargs.pop("s3fs")
+        import s3fs
+
+        hdbg.dassert_isinstance(s3fs_, s3fs.core.S3FileSystem)
+        # TODO(gp): Add
+        # hdbg.dassert_s3_file_exists(file_name)
+        stream = s3fs_.open(file_name)
+    else:
+        if "s3fs" in kwargs:
+            _LOG.warning("Passed `s3fs` without an S3 file: ignoring it")
+            _ = kwargs.pop("s3fs")
+        hdbg.dassert_file_exists(file_name)
+        stream = file_name
+    return stream, kwargs
+
+
+def read_csv_to_df(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+    """
+    Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
+    """
+    stream, kwargs = _get_local_or_s3_stream(file_name, **kwargs)
+    # Handle zipped files.
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "gzip"
+    elif file_name.endswith(".zip"):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "zip"
+    # Read.
+    _LOG.debug(hprint.to_str("args kwargs"))
+    df = pd.read_csv(stream, *args, **kwargs)
+    return df
+
+
+def read_parquet_to_df(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+    """
+    Read a Parquet file into a `pd.DataFrame` handling the S3 profile, if
+    needed.
+    """
+    stream, kwargs = _get_local_or_s3_stream(file_name, **kwargs)
+    # Read.
+    _LOG.debug(hprint.to_str("args kwargs"))
+    df = pd.read_parquet(stream, *args, **kwargs)
     return df

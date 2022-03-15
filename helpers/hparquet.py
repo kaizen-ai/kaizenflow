@@ -564,8 +564,8 @@ def to_partitioned_parquet(
     partition_columns: List[str],
     dst_dir: str,
     *,
-    filesystem=None,
     partition_filename: Union[Callable, None] = lambda x: "data.parquet",
+    aws_profile: str = None
 ) -> None:
     """
     Save the given dataframe as Parquet file partitioned along the given
@@ -574,8 +574,8 @@ def to_partitioned_parquet(
     :param df: dataframe
     :param partition_columns: partitioning columns
     :param dst_dir: location of partitioned dataset
-    :param filesystem: filesystem to use (e.g. S3FS), if None, local FS is assumed
     :param partition_filename: a callable to override standard partition names. None for `uuid`.
+    :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
 
     E.g., in case of partition using `date`, the file layout looks like:
     ```
@@ -609,6 +609,10 @@ def to_partitioned_parquet(
                     data.parquet
     ```
     """
+    # Use either S3 or local filesystem.
+    filesystem = None
+    if aws_profile is not None:
+        filesystem = hs3.get_s3fs(aws_profile)
     with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
         # Read.
         table = pa.Table.from_pandas(df)
