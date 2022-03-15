@@ -124,13 +124,15 @@ def compute_target_positions_in_cash(
     return df
 
 
-def optimize(
+def run_optimizer(
     config: cconfig.Config,
     df: pd.DataFrame,
     *,
     tmp_dir: str = "tmp.optimizer_stub",
 ) -> pd.DataFrame:
     """
+    Run the optimizer through Docker.
+
     :param tmp_dir: local dir to use to exchange parameters with the "remote"
         optimizer
     """
@@ -139,6 +141,10 @@ def optimize(
     input_obj = {"config": config, "df": df}
     input_file = os.path.join(tmp_dir, "input.pkl")
     hpickle.to_pickle(input_obj, input_file)
+    # Login in the Docker on AWS to pull the `opt` image.
+    # TODO(Grisha): we should call `invoke docker_login` CmTask #547.
+    docker_login_cmd = "sudo -s eval $(aws ecr get-login --profile am --no-include-email --region us-east-1)"
+    hsystem.system(docker_login_cmd)
     # Call optimizer_stub through Docker.
     cmd = []
     cmd.append("cd optimizer &&")
@@ -154,15 +160,17 @@ def optimize(
     version = ""
     entrypoint = True
     as_user = True
+    # TODO(Grisha): ideally we should call `opt_docker_cmd -c cmd` CmTask #547.
     docker_cmd = hlibtask._get_docker_cmd(
         base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user, use_bash=True
     )
     print(docker_cmd)
+    assert 0
     # ctx = invoke.context.Context()
     # hlibtask._run(ctx, docker_cmd, pty=True)
     hsystem.system("sudo " + docker_cmd)
-    # Read the output from tmp_dir.
-    output_df = pd.read_pickle(output_file)
+    # Read the output from `tmp_dir`.
+    output_df = hpickle.from_pickle(output_file)
     return output_df
 
 
