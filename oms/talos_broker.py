@@ -180,16 +180,6 @@ class TalosBroker(ombroker.AbstractBroker):
         return r.status_code
 
     def get_orders(self, start_timestamp: str, end_timestamp: str,):
-        utc_datetime = datetime.datetime.utcnow().strftime(
-            "%Y-%m-%dT%H:%M:%S.000000Z"
-        )
-        # TODO(Danya): Add time query (startDate and endDate)
-        # TODO(Danya): Factor out the general form of a GET request (common with OHLCV)
-        # TODO(Danya): Factor out the general part of TALOS authorization.
-        # Note: some kind of query is required.
-        utc_datetime = datetime.datetime.utcnow().strftime(
-            "%Y-%m-%dT%H:%M:%S.000000Z"
-        )
-        # Note: some kind of query is required.
+        utc_datetime = self.get_talos_current_utc_timestamp()
         query = {"StartDate": start_timestamp, "EndDate": end_timestamp}
         query_string = urllib.parse.urlencode(query)
