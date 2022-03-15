@@ -361,7 +361,7 @@ def _get_docker_cmd(
 
     # Add `run`.
     service_name = "opt_app"
-    cmd.append(f"{command} -e IMAGE={image} --rm {service_name}")
+    cmd.append(f"{command} -d {service_name}")
 
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
@@ -370,7 +370,7 @@ def _get_docker_cmd(
 
 @task
 def opt_docker_up(ctx):
-    command = "run"
+    command = "up"
     docker_cmd = _get_docker_cmd(command)
 
     # Execute the command.
