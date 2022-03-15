@@ -17,7 +17,6 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hpickle as hpickle
-
 import optimizer.single_period_optimization as osipeopt
 
 _LOG = logging.getLogger(__name__)
@@ -29,8 +28,18 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--input_file", action="store", required=True, help="file with the input data for optimizer.")
-    parser.add_argument("--output_file", action="store", required=True, help="file with the optimizer output data.")
+    parser.add_argument(
+        "--input_file",
+        action="store",
+        required=True,
+        help="file with the input data for optimizer.",
+    )
+    parser.add_argument(
+        "--output_file",
+        action="store",
+        required=True,
+        help="file with the optimizer output data.",
+    )
     hparser.add_verbosity_arg(parser)
     return parser
 
