@@ -5,6 +5,7 @@ import pandas as pd
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
 
+
 # #############################################################################
 # TestTalosParquetByTileClient1
 # #############################################################################
@@ -15,13 +16,13 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
     For all the test methods see description of corresponding private method in
     the parent class.
     """
+
     def test_read_data1(self) -> None:
         talos_client = imvtdctcex.get_TalosParquetByTileClient_example1()
         full_symbols = "binance::ADA_USDT"
         #
         expected_length = 100
         expected_column_names = self.get_expected_column_names()
-        print(expected_column_names)
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT"]
         }
@@ -42,7 +43,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         2022-01-01 01:39:00+00:00  binance::ADA_USDT  1.33400000  1.33400000  1.33200000  1.33300000  69430.10000000
         """
         # pylint: enable=line-too-long
-
         self._test_read_data1(
             talos_client,
             full_symbols,
@@ -78,7 +78,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         2022-01-01 01:39:00+00:00  coinbase::BTC_USDT    46769.53    46808.49    46769.53    46808.49      0.05759393
         """
         # pylint: enable=line-too-long
-
         self._test_read_data2(
             talos_client,
             full_symbols,
@@ -115,7 +114,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         2022-01-01 01:39:00+00:00  coinbase::BTC_USDT    46769.53    46808.49    46769.53    46808.49      0.05759393
         """
         # pylint: enable=line-too-long
-
         self._test_read_data3(
             talos_client,
             full_symbols,
@@ -153,7 +151,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         2022-01-01 00:05:00+00:00  coinbase::BTC_USDT    46292.52    46392.47    46287.87    46392.47      0.11990593
         """
         # pylint: enable=line-too-long
-
         self._test_read_data4(
             talos_client,
             full_symbols,
@@ -206,7 +203,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
     def test_read_data6(self) -> None:
         talos_client = imvtdctcex.get_TalosParquetByTileClient_example1()
         full_symbols = ["binance::ADA_USDT", "coinbase::BTC_USDT"]
-
         self._test_read_data6(
             talos_client,
             full_symbols,
@@ -216,7 +212,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         talos_client = imvtdctcex.get_TalosParquetByTileClient_example1()
         full_symbol = "binance::ADA_USDT"
         expected_start_ts = pd.Timestamp("2022-01-01T00:00:00-00:00")
-
         self._test_get_start_ts_for_symbol1(
             talos_client,
             full_symbol,
@@ -227,7 +222,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         talos_client = imvtdctcex.get_TalosParquetByTileClient_example1()
         full_symbol = "binance::ADA_USDT"
         expected_end_ts = pd.Timestamp("2022-01-01T01:39:00-00:00")
-
         self._test_get_end_ts_for_symbol1(
             talos_client,
             full_symbol,
