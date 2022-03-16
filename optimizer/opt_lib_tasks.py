@@ -171,3 +171,51 @@ def opt_docker_jupyter(  # type: ignore
         self_test=self_test,
         container_dir_name=_OPTIMIZER_DIR,
     )
+
+
+@task
+def opt_docker_cmd(  # type: ignore
+    ctx,
+    base_image="",
+    stage="dev",
+    version="",
+    cmd="",
+    as_user=True,
+    use_bash=False,
+):
+    """
+    Run a command inside the `opt` container corresponding to a stage.
+
+    See corresponding invoke target for the main container.
+    """
+    hlibtask.docker_cmd(
+        ctx,
+        base_image=base_image,
+        stage=stage,
+        version=version,
+        cmd=cmd,
+        as_user=as_user,
+        use_bash=use_bash,
+        container_dir_name=_OPTIMIZER_DIR,
+    )
+
+
+@task
+def opt_docker_up(ctx, base_image="", stage="dev", version=""):
+    docker_up_cmd = []
+    image = hlibtask.get_image(base_image, stage, version)
+    print(image)
+    _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
+    hlibtask._dassert_is_image_name_valid(image)
+    docker_up_cmd.append(f"IMAGE={image}")
+    docker_up_cmd.append("docker-compose")
+    # Add `docker-compose` file path.
+    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    docker_up_cmd.append(f"--file {docker_compose_file_path}")
+    # Add `down` command.
+    docker_up_cmd.append("up")
+    service = "opt_app"
+    docker_up_cmd.append(service)
+    docker_up_cmd = hlibtask._to_multi_line_cmd(docker_up_cmd)
+    print(docker_up_cmd)
+    hlibtask._run(ctx, docker_up_cmd, pty=True)

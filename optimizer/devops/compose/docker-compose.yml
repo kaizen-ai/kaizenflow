@@ -4,7 +4,7 @@
 version: '3'
 
 services:
-  base_app:
+  base_opt_app:
     cap_add:
       - SYS_ADMIN
     # TODO(gp): @Grisha add these vars.
@@ -45,21 +45,21 @@ services:
 
   app:
     extends:
-      base_app
+      base_opt_app
     # Default network mode set to host so we can reach e.g.
     # a database container pointing to localhost:5432.
     # In tests we use dind so we need set back to the default "bridge".
     # See CmTask988 and https://stackoverflow.com/questions/24319662
     #network_mode: ${NETWORK_MODE:-host}
     volumes:
-      - ../../../:/app
+      - ../../../../:/app
 
   jupyter_server:
     command: devops/docker_run/run_jupyter_server.sh
     environment:
       - PORT=${PORT}
     extends:
-      app
+      opt_app
     network_mode: ${NETWORK_MODE:-bridge}
     ports:
       # TODO(gp): Rename `AM_PORT`.
