@@ -172,8 +172,63 @@ class TalosBroker(ombroker.AbstractBroker):
             raise Exception(f"{r.status_code}: {r.text}")
         return data
 
-    def get_fills(self) -> List[ombroker.Fill]:
-        raise NotImplementedError
+    def get_fills(
+        self,
+        order_id_list: List(str),
+    ) -> dict(str):
+        """
+        Get fill status from unique order ids. The possible values are:
+        - New
+        - PartiallyFilled
+        - Filled
+        - Canceled
+        - PendingCancel
+        - Rejected
+        - PendingNew
+        - PendingReplace
+        - DoneForDay
+        
+        Example of an output:
+        {('ce871d61-a1f6-4993-8f81-a6d8f872be53', 'Canceled'),
+         ('e38ec070-30b7-49d4-a301-619c2d3ed20e', 'DoneForDay')}
+         
+        :param order_id_list: values of `OrderID` from Talos universe
+        :return: mappings of `OrderID` and order status
+        """
+        # Create dictionary that will store the order status.
+        fill_status_dict = {}
+        # Inititate the loop for every `OrderID` in the list.
+        for order_id in order_id_list:
+            # Imitation of script input parameters.
+            # Common elements of both GET and POST requests.
+            utc_datetime = datetime.datetime.utcnow().strftime(
+                "%Y-%m-%dT%H:%M:%S.000000Z"
+            )
+            parts = [
+                "GET",
+                utc_datetime,
+                self._endpoint,
+                f"{self._order_path}/{order_id}",
+            ]
+            signature = calculate_signature(api_keys["secret"], parts)
+            headers = {
+                "TALOS-KEY": self._api_keys["apiKey"],
+                "TALOS-SIGN": signature,
+                "TALOS-TS": utc_datetime,
+            }
+            # Create a GET request.
+            url = f"https://{self._endpoint}{self._order_path}/{order_id}"
+            r = requests.get(url=url, headers=headers)
+            body = r.json()
+            # Specify order information.
+            ord_summary = body["data"]
+            # Save the general order status.
+            fills_general = ord_summary[0]["OrdStatus"]
+            # Writing these values into the dictionary.
+            fill_status = {order_id: fills_general}
+            fill_status_dict = fill_status_dict | fill_status.items()
+        return fill_status_dict
+        
 
     @staticmethod
     def get_order_id():
