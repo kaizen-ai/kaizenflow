@@ -5,7 +5,6 @@ import pandas as pd
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
 
-
 # #############################################################################
 # TestTalosParquetByTileClient1
 # #############################################################################
@@ -23,9 +22,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         #
         expected_length = 100
         expected_column_names = self.get_expected_column_names()
-        expected_column_unique_values = {
-            "full_symbol": ["binance::ADA_USDT"]
-        }
+        expected_column_unique_values = {"full_symbol": ["binance::ADA_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -33,7 +30,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(100, 6)
                                          full_symbol        open        high         low       close           volume
-        timestamp                                                                                                    
+        timestamp
         2022-01-01 00:00:00+00:00  binance::ADA_USDT  1.30800000  1.31000000  1.30700000  1.31000000   98266.80000000
         2022-01-01 00:01:00+00:00  binance::ADA_USDT  1.31000000  1.31400000  1.30800000  1.31200000  132189.40000000
         2022-01-01 00:02:00+00:00  binance::ADA_USDT  1.31200000  1.31800000  1.31100000  1.31700000  708964.20000000
@@ -68,7 +65,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(200, 6)
                                           full_symbol        open        high         low       close           volume
-        timestamp                                                                                                     
+        timestamp
         2022-01-01 00:00:00+00:00   binance::ADA_USDT  1.30800000  1.31000000  1.30700000  1.31000000   98266.80000000
         2022-01-01 00:00:00+00:00  coinbase::BTC_USDT    46221.22    46257.95    46221.22    46226.81       0.09282946
         2022-01-01 00:01:00+00:00   binance::ADA_USDT  1.31000000  1.31400000  1.30800000  1.31200000  132189.40000000
@@ -104,7 +101,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(198, 6)
                                           full_symbol        open        high         low       close           volume
-        timestamp                                                                                                     
+        timestamp
         2022-01-01 00:01:00+00:00   binance::ADA_USDT  1.31000000  1.31400000  1.30800000  1.31200000  132189.40000000
         2022-01-01 00:01:00+00:00  coinbase::BTC_USDT    46219.13    46311.86    46219.13    46306.76       0.10478747
         2022-01-01 00:02:00+00:00   binance::ADA_USDT  1.31200000  1.31800000  1.31100000  1.31700000  708964.20000000
@@ -141,7 +138,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(12, 6)
                                           full_symbol        open        high         low       close           volume
-        timestamp                                                                                                     
+        timestamp
         2022-01-01 00:00:00+00:00   binance::ADA_USDT  1.30800000  1.31000000  1.30700000  1.31000000   98266.80000000
         2022-01-01 00:00:00+00:00  coinbase::BTC_USDT    46221.22    46257.95    46221.22    46226.81       0.09282946
         2022-01-01 00:01:00+00:00   binance::ADA_USDT  1.31000000  1.31400000  1.30800000  1.31200000  132189.40000000
