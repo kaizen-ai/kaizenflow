@@ -127,7 +127,8 @@ class AbstractBroker(abc.ABC):
         Constructor.
 
         :param column_remap: (optional) remap columns when accessing a
-            `MarketData` to retrieve execution prices
+            `MarketData` to retrieve execution prices. The required columns
+            are "bid", "ask", "price", and "midpoint".
         """
         self._strategy_id = strategy_id
         self._account = account
@@ -148,6 +149,18 @@ class AbstractBroker(abc.ABC):
         ] = collections.defaultdict(list)
         # Track the fills for internal accounting.
         self._fills: List[Fill] = []
+
+    @property
+    def strategy_id(self) -> str:
+        return self._strategy_id
+
+    @property
+    def account(self) -> str:
+        return self._account
+
+    @property
+    def timestamp_col(self) -> str:
+        return self._timestamp_col
 
     async def submit_orders(
         self,

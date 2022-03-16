@@ -14,6 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_dassert_is_unique1(hunitest.TestCase):
+
     def get_df1(self) -> pd.DataFrame:
         """
         Return a df without duplicated index.
@@ -87,6 +88,7 @@ class Test_dassert_is_unique1(hunitest.TestCase):
 
 
 class Test_to_series1(hunitest.TestCase):
+
     def helper(self, n: int, exp: str) -> None:
         vals = list(range(n))
         df = pd.DataFrame([vals], columns=[f"a{i}" for i in vals])
@@ -127,6 +129,7 @@ class Test_to_series1(hunitest.TestCase):
 
 
 class Test_trim_df1(hunitest.TestCase):
+
     def get_df(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
         Return a df where the CSV txt is read verbatim without inferring dates.
@@ -427,15 +430,6 @@ class Test_trim_df1(hunitest.TestCase):
 
 
 class TestDfToStr(hunitest.TestCase):
-    @staticmethod
-    def get_test_data() -> pd.DataFrame:
-        test_data = {
-            "dummy_value_1": [1, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
-            "dummy_value_3": [0, 0, 0],
-        }
-        df = pd.DataFrame(data=test_data)
-        return df
 
     def test_df_to_str1(self) -> None:
         """
@@ -522,11 +516,22 @@ class TestDfToStr(hunitest.TestCase):
         2              3             C              0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @staticmethod
+    def get_test_data() -> pd.DataFrame:
+        test_data = {
+            "dummy_value_1": [1, 2, 3],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [0, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        return df
+
 
 # #############################################################################
 
 
 class TestDataframeToJson(hunitest.TestCase):
+
     def test_dataframe_to_json(self) -> None:
         """
         Verify correctness of dataframe to JSON transformation.
@@ -600,3 +605,95 @@ class TestDataframeToJson(hunitest.TestCase):
             test_dataframe, n_head=None, n_tail=None
         )
         self.check_string(output_str)
+
+
+# #############################################################################
+
+
+class TestFindGapsInDataframes(hunitest.TestCase):
+
+    def test_find_gaps_in_dataframes(self) -> None:
+        """
+        Verify that gaps are caught.
+        """
+        # Prepare inputs.
+        test_data = pd.DataFrame(
+            data={
+                "dummy_value_1": [1, 2, 3],
+                "dummy_value_2": ["A", "B", "C"],
+                "dummy_value_3": [0, 0, 0],
+            }
+        )
+        # Run.
+        missing_data = hpandas.find_gaps_in_dataframes(
+            test_data.head(2), test_data.tail(2)
+        )
+        # Check output.
+        actual = pd.concat(missing_data)
+        actual = hpandas.df_to_str(actual)
+        expected = r"""   dummy_value_1 dummy_value_2  dummy_value_3
+        2              3             C              0
+        0              1             A              0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class TestCompareDataframeRows(hunitest.TestCase):
+
+    def get_test_data(self) -> pd.DataFrame:
+        test_data = {
+            "dummy_value_1": [0, 1, 3, 2, 0],
+            "dummy_value_2": ["0", "A", "C", "B", "D"],
+            "dummy_value_3": [0, 0, 0, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        df.index.name = "test"
+        return df
+
+    def test_compare_dataframe_rows1(self) -> None:
+        """
+        Verify that differences are caught and displayed properly.
+        """
+        # Prepare inputs.
+        test_data = self.get_test_data()
+        edited_test_data = test_data.copy()[1:-1]
+        edited_test_data.loc[1, "dummy_value_2"] = "W"
+        edited_test_data.loc[2, "dummy_value_2"] = "Q"
+        edited_test_data.loc[2, "dummy_value_3"] = "1"
+        # Run.
+        data_difference = hpandas.compare_dataframe_rows(
+            test_data, edited_test_data
+        )
+        # Check output.
+        actual = hpandas.df_to_str(data_difference)
+        expected = r"""  dummy_value_2       dummy_value_3       test
+                   self other          self other
+        0             W     A          <NA>  <NA>    1
+        1             Q     C             1     0    2"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_compare_dataframe_rows2(self) -> None:
+        """
+        Verify that differences are caught and displayed properly without
+        original index.
+        """
+        # Prepare inputs.
+        test_data = self.get_test_data()
+        test_data.index.name = None
+        edited_test_data = test_data.copy()[1:-1]
+        edited_test_data.loc[1, "dummy_value_2"] = "W"
+        edited_test_data.loc[2, "dummy_value_2"] = "Q"
+        edited_test_data.loc[2, "dummy_value_3"] = "1"
+        # Run.
+        data_difference = hpandas.compare_dataframe_rows(
+            test_data, edited_test_data
+        )
+        # Check output.
+        actual = hpandas.df_to_str(data_difference)
+        expected = r"""  dummy_value_2       dummy_value_3
+                   self other          self other
+        0             W     A           NaN   NaN
+        1             Q     C             1   0.0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)

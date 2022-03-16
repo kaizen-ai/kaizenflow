@@ -4,7 +4,6 @@ Import as:
 import dataflow.system.sink_nodes as dtfsysinod
 """
 
-# TODO(gp): -> sink_nodes.py
 
 import collections
 import logging
@@ -12,6 +11,7 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
+import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
@@ -43,6 +43,10 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         self._prediction_col = prediction_col
         self._volatility_col = volatility_col
         self._portfolio = portfolio
+        process_forecasts_config = cconfig.get_config_from_nested_dict(
+            process_forecasts_config
+        )
+        hdbg.dassert_isinstance(process_forecasts_config, cconfig.Config)
         self._process_forecasts_config = process_forecasts_config
         self._evaluate_forecasts_config = evaluate_forecasts_config
 

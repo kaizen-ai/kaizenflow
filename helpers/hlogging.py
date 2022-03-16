@@ -584,18 +584,6 @@ class CustomFormatter(logging.Formatter):
         record.msg = msg
         return super().format(record)
 
-    @staticmethod
-    def _get_date_format(date_format_mode: str) -> str:
-        if date_format_mode == "time":
-            date_fmt = "%H:%M:%S"
-        elif date_format_mode == "date_time":
-            date_fmt = "%m-%d_%H:%M"
-        elif date_format_mode == "date_timestamp":
-            date_fmt = "%Y-%m-%d %I:%M:%S %p"
-        else:
-            raise ValueError("Invalid date_format")
-        return date_fmt
-
     def _convert_time_to_string(
         self, now: datetime.datetime, date_fmt: str
     ) -> str:
@@ -606,6 +594,10 @@ class CustomFormatter(logging.Formatter):
             dt = dt.astimezone(self._tzinfo)
         time_as_str = dt.strftime(date_fmt)
         return time_as_str
+
+    def _get_wall_clock_time(self) -> str:
+        dt = datetime.datetime.utcnow()
+        return self._convert_time_to_string(dt, self._date_fmt)
 
     _COLOR_MAPPING = {
         # White: 37.
@@ -621,10 +613,6 @@ class CustomFormatter(logging.Formatter):
         "CRITICAL": (41, "CRTCL"),
     }
 
-    def _get_wall_clock_time(self) -> str:
-        dt = datetime.datetime.utcnow()
-        return self._convert_time_to_string(dt, self._date_fmt)
-
     def _colorize_level(self, level_name: str) -> str:
         # Use white as default.
         prefix = "\033["
@@ -635,6 +623,18 @@ class CustomFormatter(logging.Formatter):
             prefix, color_code, tag, suffix
         )
         return colored_level_name
+
+    @staticmethod
+    def _get_date_format(date_format_mode: str) -> str:
+        if date_format_mode == "time":
+            date_fmt = "%H:%M:%S"
+        elif date_format_mode == "date_time":
+            date_fmt = "%m-%d_%H:%M"
+        elif date_format_mode == "date_timestamp":
+            date_fmt = "%Y-%m-%d %I:%M:%S %p"
+        else:
+            raise ValueError("Invalid date_format")
+        return date_fmt
 
 
 def set_v2_formatter(

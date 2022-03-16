@@ -12,12 +12,13 @@ import pprint
 import re
 from typing import Any, Dict, List, Match, Optional, Tuple
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
-
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
+
+# Avoid dependency from other `helpers` modules to prevent import cycles.
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,7 +60,9 @@ def get_branch_name(dir_name: str = ".") -> str:
     return output
 
 
-def get_branch_next_name(dir_name: str = ".", log_verb: int = logging.DEBUG) -> str:
+def get_branch_next_name(
+    dir_name: str = ".", log_verb: int = logging.DEBUG
+) -> str:
     """
     Return a name derived from the branch so that the branch doesn't exist.
 
@@ -74,9 +77,7 @@ def get_branch_next_name(dir_name: str = ".", log_verb: int = logging.DEBUG) -> 
         new_branch_name = f"{curr_branch_name}_{i}"
         _LOG.log(log_verb, "Trying branch name '%s'", new_branch_name)
         mode = "all"
-        exists = does_branch_exist(
-            new_branch_name, mode, dir_name=dir_name
-        )
+        exists = does_branch_exist(new_branch_name, mode, dir_name=dir_name)
         _LOG.log(log_verb, "-> exists=%s", exists)
         if not exists:
             _LOG.log(log_verb, "new_branch_name='%s'", new_branch_name)
@@ -1245,6 +1246,7 @@ def does_branch_exist(
     """
     Check if a branch with the given name exists in Git or GitHub.
     """
+    _LOG.debug(hprint.to_str("branch_name mode dir_name"))
     # Handle the "all" case by recursion on all the possible modes.
     if mode == "all":
         exists = False
@@ -1270,7 +1272,7 @@ def does_branch_exist(
         cmd = f"cd {dir_name} && git rev-parse --verify {git_branch_name}"
         rc = hsystem.system(cmd, abort_on_error=False)
         exists = rc == 0
-        _LOG.debug("branch_name='%s' on git: %s", branch_name, exists)
+        _LOG.debug("branch_name='%s' on git: exists=%s", branch_name, exists)
     # Check on GitHub.
     if mode == "github":
         txt = _get_gh_pr_list()
@@ -1284,7 +1286,9 @@ def does_branch_exist(
             number, gh_branch_name, git_branch_name, status = fields
             if branch_name == git_branch_name:
                 exists = True
-                _LOG.debug("fields=%s -> found")
+                _LOG.debug(
+                    "branch_name='%s' on github: exists=%s", branch_name, exists
+                )
     return exists
 
 
