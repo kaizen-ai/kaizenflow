@@ -18,7 +18,6 @@ import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
-
 _OPTIMIZER_DIR = os.path.join(hgit.get_amp_abs_path(), "optimizer")
 
 
@@ -29,11 +28,11 @@ _OPTIMIZER_DIR = os.path.join(hgit.get_amp_abs_path(), "optimizer")
 
 @task
 def opt_docker_build_local_image(  # type: ignore
-    ctx,
-    version,
-    cache=True,
-    base_image="",
-    update_poetry=False,
+        ctx,
+        version,
+        cache=True,
+        base_image="",
+        update_poetry=False,
 ):
     """
     Build a local `opt` image (i.e., a release candidate "dev" image).
@@ -52,9 +51,9 @@ def opt_docker_build_local_image(  # type: ignore
 
 @task
 def opt_docker_tag_local_image_as_dev(  # type: ignore
-    ctx,
-    version,
-    base_image="",
+        ctx,
+        version,
+        base_image="",
 ):
     """
     (ONLY CI/CD) Mark the `opt:local` image as `dev`.
@@ -71,9 +70,9 @@ def opt_docker_tag_local_image_as_dev(  # type: ignore
 
 @task
 def opt_docker_push_dev_image(  # type: ignore
-    ctx,
-    version,
-    base_image="",
+        ctx,
+        version,
+        base_image="",
 ):
     """
     (ONLY CI/CD) Push the `opt:dev` image to ECR.
@@ -87,11 +86,11 @@ def opt_docker_push_dev_image(  # type: ignore
 
 @task
 def opt_docker_release_dev_image(  # type: ignore
-    ctx,
-    version,
-    cache=True,
-    push_to_repo=True,
-    update_poetry=False,
+        ctx,
+        version,
+        cache=True,
+        push_to_repo=True,
+        update_poetry=False,
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the latest `opt:dev` image.
@@ -127,12 +126,12 @@ def opt_docker_release_dev_image(  # type: ignore
 
 @task
 def opt_docker_bash(  # type: ignore
-    ctx,
-    base_image="",
-    stage="dev",
-    version="",
-    entrypoint=True,
-    as_user=True,
+        ctx,
+        base_image="",
+        stage="dev",
+        version="",
+        entrypoint=True,
+        as_user=True,
 ):
     """
     Start a bash shell inside the `opt` container corresponding to a stage.
@@ -152,13 +151,13 @@ def opt_docker_bash(  # type: ignore
 
 @task
 def opt_docker_jupyter(  # type: ignore
-    ctx,
-    stage="dev",
-    version="",
-    base_image="",
-    auto_assign_port=True,
-    port=9999,
-    self_test=False,
+        ctx,
+        stage="dev",
+        version="",
+        base_image="",
+        auto_assign_port=True,
+        port=9999,
+        self_test=False,
 ):
     """
     Run jupyter notebook server in the `opt` container.
@@ -196,23 +195,6 @@ def get_default_param(key: str) -> Any:
     hdbg.dassert_in(key, _DEFAULT_PARAMS)
     hdbg.dassert_isinstance(key, str)
     return _DEFAULT_PARAMS[key]
-
-
-def get_db_env_path(stage: str) -> str:
-    """
-    Get path to db env file that contains db connection parameters.
-    :param stage: development stage, i.e. `local`, `dev` and `prod`
-    """
-    hdbg.dassert_in(stage, "local dev prod".split())
-    # Get `env` files dir.
-    env_dir = "im_v2/devops/env"
-    # Get the file name depending on the stage.
-    env_file_name = f"{stage}.im_db_config.env"
-    # Get file path.
-    amp_path = hgit.get_amp_abs_path()
-    env_file_path = os.path.join(amp_path, env_dir, env_file_name)
-    hdbg.dassert_file_exists(env_file_path)
-    return env_file_path
 
 
 def _dassert_is_version_valid(version: str) -> None:
@@ -278,18 +260,18 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            get_default_param("ECR_BASE_PATH")
-            + "/"
-            + get_default_param("BASE_IMAGE")
+                get_default_param("ECR_BASE_PATH")
+                + "/"
+                + get_default_param("BASE_IMAGE")
         )
     _dassert_is_base_image_name_valid(base_image)
     return base_image
 
 
 def get_image(
-    base_image: str,
-    stage: str,
-    version: Optional[str],
+        base_image: str,
+        stage: str,
+        version: Optional[str],
 ) -> str:
     """
     Return the fully qualified image name.
@@ -324,35 +306,57 @@ def get_image(
     return image
 
 
+def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
+    as_root = hgit.execute_repo_config_code("run_docker_as_root()")
+    as_user = as_user_from_cmd_line
+    if as_root:
+        as_user = False
+    _LOG.debug(
+        "as_user_from_cmd_line=%s as_root=%s -> as_user=%s",
+        as_user_from_cmd_line,
+        as_root,
+        as_user,
+    )
+    return as_user
+
+
 def _get_docker_cmd(
-    command: str,
-    stage="dev",
-    version=None,
-    base_image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp"
+        command: str,
+        stage: str = "dev",
+        version: str = None,
+        base_image: str = "665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp",
+        as_user: bool = True,
 ) -> str:
-    docker_cmd: List[str] = []
+    docker_cmd_: List[str] = []
 
     image = get_image(base_image, stage, version)
     port = "9999"
 
-    docker_cmd.append(f"IMAGE={image}")
-    docker_cmd.append(f"PORT={port}")
+    docker_cmd_.append(f"IMAGE={image}")
+    docker_cmd_.append(f"PORT={port}")
 
-    docker_cmd.append("docker-compose")
+    docker_cmd_.append("docker-compose")
 
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    docker_cmd.append(f"-f {docker_compose_file_path}")
+    docker_cmd_.append(f"-f {docker_compose_file_path}")
 
     # Add command.
     service_name = "opt_app"
     if command == "run":
-        docker_cmd.append(f"{command} --rm {service_name}")
+        docker_cmd_.append(f"{command} --rm {service_name}")
     elif command == "stop":
-        docker_cmd.append(f"{command} {service_name}")
+        docker_cmd_.append(f"{command} {service_name}")
+
+    as_user = _run_docker_as_user(as_user)
+    if as_user:
+        docker_cmd_.append(
+            r"""
+        --user $(id -u):$(id -g)"""
+        )
 
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlibtask._to_multi_line_cmd(docker_cmd)
+    multiline_docker_cmd = hlibtask._to_multi_line_cmd(docker_cmd_)
     return multiline_docker_cmd
 
 
