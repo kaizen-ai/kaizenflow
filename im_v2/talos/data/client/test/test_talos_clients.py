@@ -19,7 +19,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data1(self) -> None:
         talos_client = imvtdctcex.get_TalosParquetByTileClient_example1()
-        full_symbols = "binance::ADA_USDT"
+        full_symbol = "binance::ADA_USDT"
         #
         expected_length = 100
         expected_column_names = self.get_expected_column_names()
@@ -45,7 +45,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         # pylint: enable=line-too-long
         self._test_read_data1(
             talos_client,
-            full_symbols,
+            full_symbol,
             expected_length,
             expected_column_names,
             expected_column_unique_values,
@@ -207,6 +207,8 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
             talos_client,
             full_symbols,
         )
+
+    # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
         talos_client = imvtdctcex.get_TalosParquetByTileClient_example1()
