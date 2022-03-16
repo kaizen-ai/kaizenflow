@@ -43,7 +43,7 @@ services:
     #       # memory is available.
     #       memory: 60G
 
-  app:
+  opt_app:
     extends:
       base_opt_app
     # Default network mode set to host so we can reach e.g.
@@ -52,7 +52,7 @@ services:
     # See CmTask988 and https://stackoverflow.com/questions/24319662
     #network_mode: ${NETWORK_MODE:-host}
     volumes:
-      - ../../../../:/app
+      - ../../../:/app
 
   jupyter_server:
     command: devops/docker_run/run_jupyter_server.sh

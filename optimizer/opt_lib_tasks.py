@@ -204,7 +204,6 @@ def opt_docker_cmd(  # type: ignore
 def opt_docker_up(ctx, base_image="", stage="dev", version=""):
     docker_up_cmd = []
     image = hlibtask.get_image(base_image, stage, version)
-    print(image)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
     hlibtask._dassert_is_image_name_valid(image)
     docker_up_cmd.append(f"IMAGE={image}")
@@ -213,9 +212,8 @@ def opt_docker_up(ctx, base_image="", stage="dev", version=""):
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     docker_up_cmd.append(f"--file {docker_compose_file_path}")
     # Add `down` command.
-    docker_up_cmd.append("up")
+    docker_up_cmd.append("up --no-deps")
     service = "opt_app"
     docker_up_cmd.append(service)
     docker_up_cmd = hlibtask._to_multi_line_cmd(docker_up_cmd)
-    print(docker_up_cmd)
     hlibtask._run(ctx, docker_up_cmd, pty=True)
