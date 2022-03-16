@@ -2250,7 +2250,7 @@ def _get_docker_cmd(
     )
     # - Add a name to the container.
     container_type = ""
-    if use_bash:
+    if use_bash or entrypoint:
         container_type = "bash_"
     container_name = _get_container_name(container_type)
     docker_cmd_.append(
