@@ -306,26 +306,11 @@ def get_image(
     return image
 
 
-def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
-    as_root = hgit.execute_repo_config_code("run_docker_as_root()")
-    as_user = as_user_from_cmd_line
-    if as_root:
-        as_user = False
-    _LOG.debug(
-        "as_user_from_cmd_line=%s as_root=%s -> as_user=%s",
-        as_user_from_cmd_line,
-        as_root,
-        as_user,
-    )
-    return as_user
-
-
 def _get_docker_cmd(
         command: str,
         stage: str = "dev",
         version: str = None,
         base_image: str = "665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp",
-        as_user: bool = True,
 ) -> str:
     docker_cmd_: List[str] = []
 
@@ -347,12 +332,6 @@ def _get_docker_cmd(
         docker_cmd_.append(f"{command} --rm {service_name}")
     elif command == "stop":
         docker_cmd_.append(f"{command} {service_name}")
-
-    as_user = _run_docker_as_user(as_user)
-    if as_user:
-        docker_cmd_.append(
-            r"--user $(id -u):$(id -g)"
-        )
 
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(docker_cmd_)
