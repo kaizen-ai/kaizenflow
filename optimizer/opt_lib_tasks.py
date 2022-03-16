@@ -330,28 +330,14 @@ def _get_docker_cmd(
     version=None,
     base_image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp"
 ) -> str:
-    """
-    Construct the `docker-compose' command to run a script inside this
-    container Docker component.
-    E.g, to run the `.../devops/set_schema_im_db.py`:
-    ```
-    docker-compose \
-        --file devops/compose/docker-compose.yml \
-        --env-file devops/env/local.im_db_config.env \
-        run --rm im_postgres \
-        .../devops/set_schema_im_db.py
-    ```
-    :param stage: development stage, i.e. `local`, `dev` and `prod`
-    :param docker_cmd: command to execute inside docker
-    """
+    cmd: List[str] = []
 
-    # - Handle the image.
-    image = get_image(base_image, stage, version)
-    _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
-    _dassert_is_image_name_valid(image)
+    if command == "run":
+        image = get_image(base_image, stage, version)
+        port = "9999"
 
-    # - Handle port.
-    port = "9999"
+        cmd.append(f"IMAGE={image}")
+        cmd.append(f"PORT={port}")
 
     cmd = ["docker-compose"]
 
@@ -359,9 +345,12 @@ def _get_docker_cmd(
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
     cmd.append(f"-f {docker_compose_file_path}")
 
-    # Add `run`.
+    # Add command.
     service_name = "opt_app"
-    cmd.append(f"{command} -d {service_name}")
+    if command == "run":
+        cmd.append(f"{command} --rm {service_name}")
+    elif command == "stop":
+        cmd.append(f"{command} {service_name}")
 
     # Convert the list to a multiline command.
     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
@@ -369,8 +358,8 @@ def _get_docker_cmd(
 
 
 @task
-def opt_docker_up(ctx):
-    command = "up"
+def opt_docker_run(ctx):
+    command = "run"
     docker_cmd = _get_docker_cmd(command)
 
     # Execute the command.
@@ -378,7 +367,7 @@ def opt_docker_up(ctx):
 
 
 @task
-def opt_docker_down(ctx):
+def opt_docker_stop(ctx):
     command = "stop"
     docker_cmd = _get_docker_cmd(command)
 
