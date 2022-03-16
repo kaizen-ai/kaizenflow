@@ -2135,6 +2135,15 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
     return as_user
 
 
+def _get_container_name(container_type: str):
+    linux_user = hsystem.get_user_name()
+    dir_name = hgit.get_repo_full_name_from_dirname(".", include_host_name=False)
+    repo_short_name = hgit.get_repo_name(dir_name, in_mode="full_name")
+    current_date = datetime.date.today().strftime("%Y%m%d")
+    container_name = f"{linux_user}_{container_type}{repo_short_name}_{current_date}"
+    return container_name
+
+
 def _get_docker_cmd(
     base_image: str,
     stage: str,
@@ -2238,6 +2247,15 @@ def _get_docker_cmd(
         r"""
         run \
         --rm"""
+    )
+    # - Add a name to the container.
+    container_type = ""
+    if use_bash:
+        container_type = "bash_"
+    container_name = _get_container_name(container_type)
+    docker_cmd_.append(
+        rf"""
+    --name {container_name}"""
     )
     # - Handle the user.
     as_user = _run_docker_as_user(as_user)
