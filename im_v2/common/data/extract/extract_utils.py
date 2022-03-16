@@ -58,6 +58,10 @@ def add_exchange_download_args(
     return parser
 
 
+CCXT_EXCHANGE = "CcxtExchange"
+TALOS_EXCHANGE = "TalosExchange"
+
+
 def download_realtime_for_one_exchange(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
@@ -68,24 +72,21 @@ def download_realtime_for_one_exchange(
     :param args: arguments passed on script run
     :param exchange_class: which exchange is used in script run
     """
-    # Load currency pairs.
-    universe = imvccunun.get_trade_universe(args.universe)
-    currency_pairs = universe["CCXT"][args.exchange_id]
     # Initialize exchange class and prepare additional args, if any.
     # Every exchange can potentially have a specific set of init args.
     additional_args = []
-    if exchange_class.__name__ == "CcxtExchange":
-        # Initialize CCXT with `exchange_id` and edited currency pairs.
+    if exchange_class.__name__ == CCXT_EXCHANGE:
+        # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
-        currency_pairs = [
-            currency_pair.replace("_", "/") for currency_pair in currency_pairs
-        ]
-    elif exchange_class.__name__ == "TalosExchange":
-        # Unlike CCXT, Talos is initialized with `api_stage` with original currency pairs.
+    elif exchange_class.__name__ == TALOS_EXCHANGE:
+        # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
         additional_args.append(args.exchange_id)
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
+    # Load currency pairs.
+    universe = imvccunun.get_trade_universe(args.universe)
+    currency_pairs = universe["CCXT"][args.exchange_id]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
@@ -106,8 +107,16 @@ def download_realtime_for_one_exchange(
     end_timestamp = pd.Timestamp(args.end_timestamp)
     # Download data for specified time period.
     for currency_pair in currency_pairs:
+        # Currency pair used for getting data from exchange should not be used
+        # as column value as it can slightly differ.
+        currency_pair_for_download = (
+            currency_pair.replace("_", "/")
+            # Currently, only diff is in CCXT.
+            if exchange_class.__name__ == CCXT_EXCHANGE
+            else currency_pair
+        )
         data = exchange.download_ohlcv_data(
-            currency_pair,
+            currency_pair_for_download,
             *additional_args,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
