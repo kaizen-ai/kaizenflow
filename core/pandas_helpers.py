@@ -268,8 +268,7 @@ def _get_local_or_s3_stream(file_name: str, **kwargs: Any) -> Tuple[Any, Any]:
         import s3fs
 
         hdbg.dassert_isinstance(s3fs_, s3fs.core.S3FileSystem)
-        # TODO(gp): Add
-        # hdbg.dassert_s3_file_exists(file_name)
+        hs3.dassert_s3_exists(file_name, s3fs_)
         stream = s3fs_.open(file_name)
     else:
         if "s3fs" in kwargs:

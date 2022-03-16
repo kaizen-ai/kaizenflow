@@ -343,10 +343,4 @@ class CcxtCddCsvParquetByAssetClient(
             exchange_id,
             file_name,
         )
-        # TODO(Dan): Remove asserts below after CMTask108 is resolved.
-        # Verify that the file exists.
-        if hs3.is_s3_path(file_path):
-            hs3.dassert_s3_exists(file_path, self._s3fs)
-        else:
-            hdbg.dassert_file_exists(file_path)
         return file_path
