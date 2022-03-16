@@ -351,8 +351,7 @@ def _get_docker_cmd(
     as_user = _run_docker_as_user(as_user)
     if as_user:
         docker_cmd_.append(
-            r"""
-        --user $(id -u):$(id -g)"""
+            r"--user $(id -u):$(id -g)"
         )
 
     # Convert the list to a multiline command.
