@@ -29,6 +29,7 @@ class TalosBroker(ombroker.AbstractBroker):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        # TODO(Danya): Provide a working example of MarketData for testing.
         self._api_keys = hsecret.get_secret(self._account)
         # Talos request endpoint.
         self._endpoint = self.get_endpoint()
