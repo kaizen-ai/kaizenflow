@@ -182,7 +182,7 @@ def yield_parquet_tiles_by_year(
     cols: List[Union[int, str]],
 ) -> Iterator[pd.DataFrame]:
     """
-    Yield parquet data in tiles up to one year in length.
+    Yield Parquet data in tiles up to one year in length.
 
     :param file_name: as in `from_parquet()`
     :param start_date: first date to load; day is ignored
@@ -225,7 +225,7 @@ def yield_parquet_tiles_by_assets(
     cols: List[Union[int, str]],
 ) -> Iterator[pd.DataFrame]:
     """
-    Yield parquet data in tiles up to one year in length.
+    Yield Parquet data in tiles up to one year in length.
 
     :param file_name: as in `from_parquet()`
     :param cols: if an `int` is supplied, it is cast to a string before reading
@@ -252,7 +252,7 @@ def build_year_month_filter(
     end_date: datetime.date,
 ) -> list:
     """
-    Use the year/months to build a parquet filter.
+    Use the year/months to build a Parquet filter.
 
     If `start_date.year == end_date.year`, then return a list of
     three tuples (to be "ANDed" together) based on the year and months.
@@ -302,14 +302,14 @@ def collate_parquet_tile_metadata(
     path: str,
 ) -> pd.DataFrame:
     """
-    Report stats in a dataframe on parquet file partitions.
+    Report stats in a dataframe on Parquet file partitions.
 
     The directories should be of the form `lhs=rhs` where "rhs" is a string
     representation of an `int`.
 
-    :param path: path to top-level parquet directory
+    :param path: path to top-level Parquet directory
     :return: dataframe with two file size columns and a multiindex reflecting
-        the parquet path structure.
+        the Parquet path structure.
     """
     hdbg.dassert_dir_exists(path)
     # Remove the trailing slash to simplify downstream accounting.
@@ -625,16 +625,72 @@ def to_partitioned_parquet(
         )
 
 
+# TODO(Nikola): Currently indirectly tested in
+#  `im_v2/ccxt/data/extract/test/test_download_historical_data.py`.
+def list_and_merge_pq_files(
+    root_dir: str, s3fs_: Any, *, file_name: str = "data.parquet"
+) -> None:
+    """
+    Merge all files of the Parquet dataset.
+
+    Can be generalized to any used partition.
+
+    The standard partition (also known as "by-tile") assumed is:
+
+    ```
+    root_dir/
+        currency_pair=ADA_USDT/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+        ...
+        currency_pair=EOS_USDT/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+    ```
+
+    :param root_dir: root directory of Parquet dataset
+    :param s3fs_: S3 filesystem columns on which the dataset is partitioned
+    :param file_name: name of the single resulting file
+    """
+    # Get full paths to each Parquet file inside root dir.
+    parquet_files = s3fs_.glob(f"{root_dir}/**.parquet")
+    _LOG.debug("Parquet files: '%s'", parquet_files)
+    # Get paths only to the lowest level of dataset folders.
+    dataset_folders = set(f.rsplit("/", 1)[0] for f in parquet_files)
+    for folder in dataset_folders:
+        # Get files per folder and merge if there are multiple ones.
+        folder_files = s3fs_.ls(folder)
+        hdbg.dassert_ne(
+            len(folder_files), 0, msg=f"Empty folder `{folder}` detected!"
+        )
+        if len(folder_files) == 1 and folder_files[0].endswith("/data.parquet"):
+            # If there is already single `data.parquet` file, no action is required.
+            continue
+        # Read all files in target folder.
+        data = pq.ParquetDataset(folder_files, filesystem=s3fs_).read()
+        # Remove all old files and write new, merged one.
+        s3fs_.rm(folder, recursive=True)
+        pq.write_table(data, folder + "/" + file_name, filesystem=s3fs_)
+
+
 def maybe_cast_to_int(string: str) -> Union[str, int]:
     """
     Return `string` as an `int` if convertible, otherwise a no-op.
 
-    This is useful for parsing mixed-type dataframe columns that may contain
-    strings and ints. For example, a dataframe with columns
-       feature1 feature2 1 2 3
-    will be written and read back with columns `1`, `2`, `3` as the strings
-    "1", "2", "3" rather than the ints. This function can be used to rectify
-    that in a post-processing column rename.
+    This is useful for parsing mixed-type dataframe columns that may
+    contain strings and ints. For example, a dataframe with columns
+    `feature1, feature2, 1, 2, 3` will be written and read back with
+    columns `1`, `2`, `3` as the strings "1", "2", "3" rather than the
+    ints. This function can be used to rectify that in a post-processing
+    column rename.
     """
     hdbg.dassert_isinstance(string, str)
     try:
