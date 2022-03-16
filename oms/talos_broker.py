@@ -140,7 +140,6 @@ class TalosBroker(ombroker.AbstractBroker):
         Get current orders by date and order id.
 
         Example of order data:
-
         """
         # TODO(Danya): Add specific order data.
         wall_clock_time = self.get_talos_current_utc_timestamp()
@@ -172,6 +171,9 @@ class TalosBroker(ombroker.AbstractBroker):
             raise Exception(f"{r.status_code}: {r.text}")
         return data
 
+    def get_fills(self) -> List[ombroker.Fill]:
+        raise NotImplementedError
+
     @staticmethod
     def get_order_id():
         """
@@ -192,9 +194,13 @@ class TalosBroker(ombroker.AbstractBroker):
         )
         return utc_datetime
 
-    def _submit_order(
-        self, order: Dict[str, Any], wall_clock_timestamp: str
-    ) -> int:
+    def _submit_orders(
+        self,
+        orders: List[Dict[str, Any]],
+        wall_clock_timestamp: str,
+        *,
+        dry_run: bool = False,
+    ) -> None:
         """
         Submit a single order.
         """
@@ -205,20 +211,26 @@ class TalosBroker(ombroker.AbstractBroker):
             self._order_path,
         ]
         # TODO(Danya): Make it customizable/dependent on `self._strategy`
-        body = json.dumps(order)
-        parts.append(body)
-        # Enciode request with secret key.
-        signature = self.calculate_signature(parts)
-        headers = {
-            "TALOS-KEY": self._api_keys["apiKey"],
-            "TALOS-SIGN": signature,
-            "TALOS-TS": wall_clock_timestamp,
-        }
-        # Create a POST request.
-        url = f"https://{self._endpoint}{self._order_path}"
-        r = requests.post(url=url, data=body, headers=headers)
-        # TODO(Danya): Return a receipt instead of a status code.
-        if r.status_code != 200:
-            # TODO(Danya): Remove Exception.
-            Exception(f"{r.status_code}: {r.text}")
-        return r.status_code
+        for order in orders:
+            body = json.dumps(order)
+            parts.append(body)
+            # Enciode request with secret key.
+            signature = self.calculate_signature(parts)
+            headers = {
+                "TALOS-KEY": self._api_keys["apiKey"],
+                "TALOS-SIGN": signature,
+                "TALOS-TS": wall_clock_timestamp,
+            }
+            # Create a POST request.
+            url = f"https://{self._endpoint}{self._order_path}"
+            r = requests.post(url=url, data=body, headers=headers)
+            # TODO(Danya): Return a receipt instead of a status code.
+            if r.status_code != 200:
+                # TODO(Danya): Remove Exception.
+                Exception(f"{r.status_code}: {r.text}")
+
+    def _wait_for_accepted_orders(
+        self,
+        file_name: str,
+    ) -> None:
+        raise NotImplementedError
