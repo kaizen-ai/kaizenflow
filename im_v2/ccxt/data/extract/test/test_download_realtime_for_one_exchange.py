@@ -24,7 +24,6 @@ if _HAS_MOTO:
         {
             "AWS_ACCESS_KEY_ID": "mock_key_id",
             "AWS_SECRET_ACCESS_KEY": "mock_secret_access_key",
-            "AWS_DEFAULT_REGION": "af-south-1",
         },
     )
     class TestDownloadRealtimeForOneExchange1(imvcddbut.TestImDbHelper):
