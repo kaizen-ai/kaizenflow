@@ -174,10 +174,11 @@ class TalosBroker(ombroker.AbstractBroker):
 
     def get_fills(
         self,
-        order_id_list: List(str),
-    ) -> dict(str):
+        order_id_list: List[str],
+    ) -> Dict[str, str]:
         """
         Get fill status from unique order ids. The possible values are:
+
         - New
         - PartiallyFilled
         - Filled
@@ -187,11 +188,11 @@ class TalosBroker(ombroker.AbstractBroker):
         - PendingNew
         - PendingReplace
         - DoneForDay
-        
+
         Example of an output:
         {('ce871d61-a1f6-4993-8f81-a6d8f872be53', 'Canceled'),
          ('e38ec070-30b7-49d4-a301-619c2d3ed20e', 'DoneForDay')}
-         
+
         :param order_id_list: values of `OrderID` from Talos universe
         :return: mappings of `OrderID` and order status
         """
@@ -210,7 +211,7 @@ class TalosBroker(ombroker.AbstractBroker):
                 self._endpoint,
                 f"{self._order_path}/{order_id}",
             ]
-            signature = calculate_signature(api_keys["secret"], parts)
+            signature = self.calculate_signature(self._api_keys["secret"], parts)
             headers = {
                 "TALOS-KEY": self._api_keys["apiKey"],
                 "TALOS-SIGN": signature,
@@ -228,7 +229,6 @@ class TalosBroker(ombroker.AbstractBroker):
             fill_status = {order_id: fills_general}
             fill_status_dict = fill_status_dict | fill_status.items()
         return fill_status_dict
-        
 
     @staticmethod
     def get_order_id():
