@@ -330,30 +330,29 @@ def _get_docker_cmd(
     version=None,
     base_image="665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp"
 ) -> str:
-    cmd: List[str] = []
+    docker_cmd: List[str] = []
 
-    if command == "run":
-        image = get_image(base_image, stage, version)
-        port = "9999"
+    image = get_image(base_image, stage, version)
+    port = "9999"
 
-        cmd.append(f"IMAGE={image}")
-        cmd.append(f"PORT={port}")
+    docker_cmd.append(f"IMAGE={image}")
+    docker_cmd.append(f"PORT={port}")
 
-    cmd = ["docker-compose"]
+    docker_cmd.append("docker-compose")
 
     # Add `docker-compose` file path.
     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    cmd.append(f"-f {docker_compose_file_path}")
+    docker_cmd.append(f"-f {docker_compose_file_path}")
 
     # Add command.
     service_name = "opt_app"
     if command == "run":
-        cmd.append(f"{command} --rm {service_name}")
+        docker_cmd.append(f"{command} --rm {service_name}")
     elif command == "stop":
-        cmd.append(f"{command} {service_name}")
+        docker_cmd.append(f"{command} {service_name}")
 
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+    multiline_docker_cmd = hlibtask._to_multi_line_cmd(docker_cmd)
     return multiline_docker_cmd
 
 
