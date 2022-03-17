@@ -33,6 +33,8 @@ class HistoricalPqByTileClient(
         full_symbol_col_name: str,
         root_dir_name: str,
         partition_mode: str,
+        *,
+        aws_profile: Optional[str] = None,
     ):
         """
         Constructor.
@@ -40,11 +42,13 @@ class HistoricalPqByTileClient(
         :param full_symbol_col_name: column name storing the `full_symbol`
         :param root_dir_name: directory storing the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
+        :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__(vendor)
         self._full_symbol_col_name = full_symbol_col_name
         self._root_dir_name = root_dir_name
         self._partition_mode = partition_mode
+        self._aws_profile = aws_profile
 
     def _read_data_for_multiple_symbols(
         self,
@@ -73,12 +77,12 @@ class HistoricalPqByTileClient(
             additional_filter=asset_and_filter,
         )
         # Read the data.
-        # TODO(gp): Add support for S3 passing aws_profile.
         df = hparque.from_parquet(
             self._root_dir_name,
             columns=columns,
             filters=filters,
             log_level=logging.INFO,
+            aws_profile=self._aws_profile,
         )
         hdbg.dassert(not df.empty)
         # Convert to datetime.
