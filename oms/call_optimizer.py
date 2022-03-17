@@ -146,6 +146,8 @@ def run_optimizer(
         optimizer
     """
     # Login in the Docker on AWS to pull the `opt` image.
+
+    # TODO(Grisha): Move this inside the opt_docker_cmd
     # TODO(Grisha): maybe move `docker_login` to the entrypoint?
     ctx = invoke.context.Context()
     hlibtask.docker_login(ctx)
