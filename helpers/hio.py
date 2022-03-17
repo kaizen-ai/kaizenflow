@@ -19,6 +19,7 @@ from typing import Any, List, Optional, cast
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 
 # Avoid dependency from other `helpers` modules to prevent import cycles.
@@ -54,19 +55,27 @@ def purify_file_name(file_name: str) -> str:
 # #############################################################################
 
 
-# TODO(gp): Redundant with `find_regex_files()`. Remove this.
-def find_files(directory: str, pattern: str) -> List[str]:
+def find_files(
+    directory: str, pattern: str, aws_profile: Optional[str] = None
+) -> List[str]:
     """
     Find all files under `directory` that match a certain `pattern`.
 
+    :param directory: path to desired directory
     :param pattern: pattern to match a filename against
+    :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
     """
     file_names = []
-    for root, _, files in os.walk(directory):
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                file_name = os.path.join(root, basename)
-                file_names.append(file_name)
+    if aws_profile:
+        s3fs_ = hs3.get_s3fs(aws_profile)
+        file_names = s3fs_.glob(f"{directory}/{pattern}")
+    else:
+        hdbg.dassert_dir_exists(directory)
+        for root, _, files in os.walk(directory):
+            for basename in files:
+                if fnmatch.fnmatch(basename, pattern):
+                    file_name = os.path.join(root, basename)
+                    file_names.append(file_name)
     return file_names
 
 

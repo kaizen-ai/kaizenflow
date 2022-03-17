@@ -46,12 +46,9 @@ dst_dir/
     --num_threads serial \
     --prepare_tasks_func_name lime317_prepare_tasks \
     --execute_task_func_name lime317_execute_task \
-    --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-data/unit_test/parquet/'
+    --aws_profile 'ck'
     -v DEBUG
 """
-# TODO(Nikola): Should we use s3 path as core dir? And just use src/dst dir as
-#  addon to existing s3 path, if provided.
 
 import argparse
 import logging
@@ -65,7 +62,6 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hio as hio
-import helpers.hs3 as hs3
 import helpers.hjoblib as hjoblib
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
@@ -355,45 +351,28 @@ def _prepare_tasks(src_file_names: List[str], args: Any) -> List[hjoblib.Task]:
 # #############################################################################
 
 
-# TODO(gp): Move to hparquet.py
-# TODO(Nikola): Update after CMTask1320 is done.
-def _get_parquet_filenames(src_dir: str, aws_profile: str = None) -> List[str]:
-    """
-    Generate a list of all the Parquet files in a given dir.
-    """
-    source_parquet_files = []
-    if aws_profile:
-        filesystem = hs3.get_s3fs(aws_profile)
-        source_parquet_files.extend(filesystem.glob(f"{src_dir}/**.parquet"))
-    else:
-        hdbg.dassert_dir_exists(src_dir)
-        # Find all the files with extension `.parquet`.
-        source_parquet_files.extend(hio.find_files(src_dir, "*.parquet"))
-        hdbg.dassert_lte(1, len(source_parquet_files))
-    return source_parquet_files
-
-
 def _run(args: argparse.Namespace) -> None:
     incremental = not args.no_incremental
     # Prepare the destination dir.
     if args.aws_profile:
-        # TODO(Nikola): How to treat incremental dir?
-        #  Update existing function to support it?
-        pass
+        # TODO(Nikola): CMTask1439.
+        raise NotImplementedError("Incremental on S3 is not implemented!")
     else:
         hparser.create_incremental_dir(args.dst_dir, args)
     # Get the input files to process.
-    src_file_names = _get_parquet_filenames(args.src_dir, aws_profile=args.aws_profile)
+    pattern = "*.parquet"
+    src_file_names = hio.find_files(
+        args.src_dir, pattern, aws_profile=args.aws_profile
+    )
+    hdbg.dassert_lte(1, len(src_file_names))
     _LOG.info("Found %s Parquet files in '%s'", len(src_file_names), args.src_dir)
     # Prepare the tasks.
-    # TODO(Nikola): Is full path expected instead function name?
     func = hintros.get_function_from_string(args.prepare_tasks_func_name)
     hdbg.dassert_isinstance(func, Callable)
     tasks = func(src_file_names, args)
     # Prepare the workload.
     func = hintros.get_function_from_string(args.execute_task_func_name)
     hdbg.dassert_isinstance(func, Callable)
-    # TODO(Nikola): Is line below necessary?
     func_name = func.__name__
     workload = (func, func_name, tasks)
     hjoblib.validate_workload(workload)
@@ -437,21 +416,13 @@ def _parse() -> argparse.ArgumentParser:
         help="Destination directory where transformed Parquet files will be stored",
     )
     parser.add_argument(
-        "--prepare_tasks_func_name",
+        "--aws_profile",
         action="store",
         type=str,
-        required=True,
-        help="Function that will prepare all the tasks for future execution",
-    )
-    parser.add_argument(
-        "--execute_task_func_name",
-        action="store",
-        type=str,
-        required=True,
-        help="Function that will transform certain chunk of data",
+        default=None,
+        help="The AWS profile to use for `.aws/credentials` or for env vars",
     )
     parser = hparser.add_parallel_processing_arg(parser)
-    parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser
 
