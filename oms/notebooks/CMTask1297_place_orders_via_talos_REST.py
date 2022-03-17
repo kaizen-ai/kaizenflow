@@ -41,7 +41,7 @@ import helpers.hprint as hprint
 import helpers.hsecrets as hsecret
 
 # %%
-hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
@@ -195,8 +195,28 @@ path = "/v1/orders"  # path for all data related to placin orders
 # %%
 get_orders(endpoint, path, api_keys["apiKey"], api_keys["secret"])
 
+
 # %% [markdown]
 # ### Post an order
+
+# %%
+def create_order(timestamp_ISO8601: str):
+    # TODO(Danya): Add arguments: quantity, markets (exchanges), order type, etc.
+    # TODO(Danya): required types of order: limit, VWAP, TWAP; TimeInForce should have "GoodUntil" passed.
+    order = {
+        "ClOrdID": get_cl_ord_id(),
+        "Markets": ["binance"],
+        "OrderQty": "1.0000",
+        "Symbol": "BTC-USDT",
+        "Currency": "BTC",
+        "TransactTime": timestamp_ISO8601,  # Should always be the utcnow() with Talos date formatting.
+        "OrdType": "Limit",
+        "TimeInForce": "GoodTillCancel",
+        "Price": "49000",
+        "Side": "Buy",
+    }
+    return order
+
 
 # %%
 post_order(endpoint, path, api_keys["apiKey"], api_keys["secret"])
@@ -232,7 +252,7 @@ def create_order(timestamp_ISO8601: str):
         "Price": "37000",
         "Side": "Sell",
         "Strategy": "TWAP",
-        "EndTime": "2022-03-08T16:21:00.000000Z",
+        "EndTime": "2022-03-14T16:25:00.000000Z",
         # "StartTime": "2022-03-08T16:22:00.000000Z"
     }
     return order
@@ -250,3 +270,55 @@ post_order(endpoint, path, api_keys["apiKey"], api_keys["secret"])
 # %% [markdown]
 # Interesting note: TWAP really decreases the number of paid fees.
 # In comparison, the fees for a standard order (Limit) is 7.75 from an execution price 38773.97 (so, 0,02%), while TWAP order costs only 5.19 from an execution price 38737.24 (so, 0,014%).
+
+# %% [markdown]
+# ## Expeiment with get_fills() method
+
+# %%
+# Specify the order.
+OrderID = 'f378848a-27e2-4230-97d9-1cd94316e42e'
+
+
+# %%
+def get_fills(order_id: str):
+    """
+    Get fill status from unique order.
+    """
+    # Imitation of script input parameters.
+    # Common elements of both GET and POST requests.
+    api_keys = get_talos_api_keys()
+    endpoint = "tal-87.sandbox.talostrading.com"  # our sandbox endpoint
+    path = "/v1/orders"  # path for all data related to placin orders
+    utc_datetime = datetime.datetime.utcnow().strftime(
+        "%Y-%m-%dT%H:%M:%S.000000Z"
+    )
+    parts = [
+        "GET",
+        utc_datetime,
+        endpoint,
+        f"{path}/{order_id}",
+    ]
+    signature = calculate_signature(api_keys["secret"], parts)
+    headers = {
+        "TALOS-KEY": api_keys["apiKey"],
+        "TALOS-SIGN": signature,
+        "TALOS-TS": utc_datetime,
+    }
+    # Create a GET request.
+    url = f"https://{endpoint}{path}/{order_id}"
+    r = requests.get(url=url, headers=headers)
+    body = r.json()
+    # Specify order information.
+    ord_summary = body["data"]
+    # Save the general order status.
+    fills_general = ord_summary[0]["OrdStatus"]
+    # Save order status from markets where trade is executed.
+    fills_market = [a for a in ord_summary[0]["Markets"] if "OrdStatus" in a.keys()]
+    return fills_general, fills_market
+
+
+# %%
+fills_general, fills_market = get_fills(OrderID)
+print(fills_general)
+# See `OrdStatus` section to obtain `fill` status.
+fills_market
