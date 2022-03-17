@@ -155,8 +155,8 @@ def to_parquet(
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
-        hdbg.dassert_exists(file_name)
-    hdbg.dassert_file_extension(file_name, ["parquet"])
+        hdbg.dassert_not_exists(file_name)
+    hdbg.dassert_file_extension(file_name, "parquet")
     # There is no concept of directory on S3.
     # Only applicable to local filesystem.
     if aws_profile is None:
@@ -172,7 +172,7 @@ def to_parquet(
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_name, filesystem=filesystem)
     # Report stats about the Parquet file size.
-    # TODO(Nikola): CMTask1437.
+    # TODO(Nikola): CMTask1437 Extend hsystem.du to support S3.
     if report_stats and aws_profile is None:
         file_size = hsystem.du(file_name, human_format=True)
         _LOG.log(

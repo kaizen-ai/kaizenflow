@@ -55,13 +55,14 @@ def purify_file_name(file_name: str) -> str:
 # #############################################################################
 
 
+# TODO(Nikola): Supports S3 and thus we should keep/merge it properly with `find_regex_files`.
 def find_files(
     directory: str, pattern: str, aws_profile: Optional[str] = None
 ) -> List[str]:
     """
     Find all files under `directory` that match a certain `pattern`.
 
-    :param directory: path to desired directory
+    :param directory: path to the directory where to look for files. It can be an S3 or local file.
     :param pattern: pattern to match a filename against
     :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
     """
@@ -76,6 +77,7 @@ def find_files(
             for basename in files:
                 if fnmatch.fnmatch(basename, pattern):
                     file_name = os.path.join(root, basename)
+                    # TODO(Nikola): Use glob.
                     file_names.append(file_name)
     return file_names
 
