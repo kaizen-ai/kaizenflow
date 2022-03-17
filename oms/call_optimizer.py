@@ -13,11 +13,11 @@ import pandas as pd
 
 import core.config as cconfig
 import helpers.hdbg as hdbg
-import helpers.hio as hio
 import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
-import helpers.lib_tasks as hlibtasks
+import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
@@ -142,7 +142,7 @@ def run_optimizer(
     # Login in the Docker on AWS to pull the `opt` image.
     # TODO(Grisha): maybe move `docker_login` to the entrypoint?
     ctx = invoke.context.Context()
-    hlibtasks.docker_login(ctx)
+    hlibtask.docker_login(ctx)
     # Serialize the inputs in `tmp_dir`.
     hio.create_dir(tmp_dir, incremental=True)
     input_obj = {"config": config, "df": df}
@@ -150,7 +150,9 @@ def run_optimizer(
     hpickle.to_pickle(input_obj, input_file)
     # Get path to the `optimizer_stub.py`.
     root_dir = hgit.get_client_root(False)
-    optimizer_stub_file_path = os.path.join(root_dir, "optimizer/optimizer_stub.py")
+    optimizer_stub_file_path = os.path.join(
+        root_dir, "optimizer/optimizer_stub.py"
+    )
     hdbg.dassert_file_exists(optimizer_stub_file_path)
     # Call `optimizer_stub` through `opt` Docker container.
     docker_cmd_: List[str] = []
