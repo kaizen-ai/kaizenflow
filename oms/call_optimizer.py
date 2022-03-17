@@ -136,6 +136,12 @@ def run_optimizer(
     """
     Run the optimizer through Docker.
 
+    The flow is:
+       - Save the input data in a temp dir
+       - Start an `opt` Docker container
+       - Run the optimizer
+       - Save the optimizer output to a temp dir
+
     :param tmp_dir: local dir to use to exchange parameters with the "remote"
         optimizer
     """
@@ -154,7 +160,7 @@ def run_optimizer(
         root_dir, "optimizer/optimizer_stub.py"
     )
     hdbg.dassert_file_exists(optimizer_stub_file_path)
-    # Call `optimizer_stub` through `opt` Docker container.
+    # Build the command to be executed in `opt` container.
     docker_cmd_: List[str] = []
     docker_cmd_.append(optimizer_stub_file_path)
     docker_cmd_.append(f"--input_file {input_file}")
@@ -162,7 +168,7 @@ def run_optimizer(
     docker_cmd_.append(f"--output_file {output_file}")
     docker_cmd_.append("-v INFO")
     docker_cmd = " ".join(docker_cmd_)
-    # Run the command.
+    # Call `optimizer_stub` through `opt` Docker container.
     optimizer_cmd_: List[str] = []
     # `opt` invokes can only be run from `optimizer` dir.
     optimizer_cmd_.append("cd optimizer &&")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Run the optimizer using an input file and save the result into an output file.
+Run the optimizer using an input file and save the results to an output file.
 
 E.g., to run optimizer using `input.pkl` as an input file and to save the output
 to `output.pkl` do:
