@@ -68,6 +68,7 @@ def find_files(
     file_names = []
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
+        hs3.dassert_s3_exists(directory, s3fs_)
         file_names = s3fs_.glob(f"{directory}/{pattern}")
     else:
         hdbg.dassert_dir_exists(directory)
