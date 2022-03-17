@@ -23,6 +23,7 @@ from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
+# import helpers.hdatetime as hdatetime
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
@@ -33,7 +34,6 @@ import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.htraceback as htraceb
 import helpers.hversion as hversio
-import helpers.hdatetime as hdatetime
 
 _LOG = logging.getLogger(__name__)
 
@@ -2151,10 +2151,10 @@ def _get_container_name(service_name: str):
     image_name = get_default_param("BASE_IMAGE")
 
     # Get current date
-    et_tz = str(hdatetime.get_ET_tz())
-    current_timestamp = hdatetime.get_current_timestamp_as_string(et_tz)
-
-    container_name = f"{linux_user}.{service_name}.{image_name}.{current_timestamp}"
+    # et_tz = str(hdatetime.get_ET_tz())
+    # current_timestamp = hdatetime.get_current_timestamp_as_string(et_tz)
+    current_date = datetime.date.today().strftime("%Y%m%d")
+    container_name = f"{linux_user}.{service_name}.{image_name}.{current_date}"
     _LOG.debug(
         "get_container_name: container_name=%s",
         container_name,
