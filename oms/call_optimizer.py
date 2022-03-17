@@ -160,15 +160,14 @@ def run_optimizer(
     docker_cmd_.append(f"--output_file {output_file}")
     docker_cmd_.append("-v INFO")
     docker_cmd = " ".join(docker_cmd_)
-    # TODO(Grisha): call `opt_docker_cmd` directly.
     # Run the command.
     optimizer_cmd_: List[str] = []
+    # `opt` invokes can only be run from `optimizer` dir.
     optimizer_cmd_.append("cd optimizer &&")
     optimizer_cmd_.append(f"invoke opt_docker_cmd --cmd '{docker_cmd}'")
     optimizer_cmd = " ".join(optimizer_cmd_)
-    #import optimizer.opt_lib_tasks as ooplitas
-    #ooplitas.opt_docker_cmd(ctx, cmd=docker_cmd_, use_bash=True)
-    hsystem.system(optimizer_cmd, suppress_output=False)
+    # TODO(Grisha): call `opt_docker_cmd` directly.
+    hsystem.system(optimizer_cmd)
     # Read the output from `tmp_dir`.
     output_file = os.path.join(tmp_dir, "output.pkl")
     output_df = hpickle.from_pickle(output_file)
