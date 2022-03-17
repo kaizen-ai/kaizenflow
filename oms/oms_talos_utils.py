@@ -16,11 +16,6 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
-# #############################################################################
-# Accounting functions.
-# #############################################################################
-
-
 def calculate_signature(secret_key: str, parts: List[str]) -> str:
     """
     Encode the request using secret key.
