@@ -23,7 +23,7 @@ from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
-# import helpers.hdatetime as hdatetime
+import helpers.hdatetime as hdatetime
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
@@ -2145,16 +2145,16 @@ def _get_container_name(service_name: str):
     This function return the container_name.
 
     :param service_name: e.g., cmamp
-    :return: e.g., grisha_app_cmamp1_20210101 or grisha_jupyter_server
+    :return: e.g., viktora.app.cmamp.20220317 or grisha.jupyter_server.cmamp.20220317
     """
     linux_user = hsystem.get_user_name()
     image_name = get_default_param("BASE_IMAGE")
 
-    # Get current date
-    # et_tz = str(hdatetime.get_ET_tz())
-    # current_timestamp = hdatetime.get_current_timestamp_as_string(et_tz)
-    current_date = datetime.date.today().strftime("%Y%m%d")
-    container_name = f"{linux_user}.{service_name}.{image_name}.{current_date}"
+    # Get current date in ET
+    et_tz = _get_ET_timestamp()
+    current_timestamp = hdatetime.get_current_timestamp_as_string(et_tz)
+
+    container_name = f"{linux_user}.{service_name}.{image_name}.{current_timestamp}"
     _LOG.debug(
         "get_container_name: container_name=%s",
         container_name,
