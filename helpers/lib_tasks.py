@@ -219,9 +219,9 @@ def _run(
         res = None
     else:
         if use_system:
-            # TODO(gp): Consider using only hsystem.system() since it's more
+            # TODO(gp): Consider using only `hsystem.system()` since it's more
             # reliable.
-            res = hsystem.system(cmd)
+            res = hsystem.system(cmd, suppress_output=False)
         else:
             result = ctx.run(cmd, *args, **ctx_run_kwargs)
             res = result.return_code
@@ -1910,6 +1910,9 @@ def docker_login(ctx):  # type: ignore
         )
     # cmd = ("aws ecr get-login-password" +
     #       " | docker login --username AWS --password-stdin "
+    # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
+    #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
+    #  with `@task` decorator) do not work.
     _run(ctx, cmd, use_system=True)
 
 
