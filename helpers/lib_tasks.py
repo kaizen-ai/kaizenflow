@@ -33,6 +33,7 @@ import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.htraceback as htraceb
 import helpers.hversion as hversio
+import helpers.hdatetime as hdatetime
 
 _LOG = logging.getLogger(__name__)
 
@@ -2135,12 +2136,29 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
     return as_user
 
 
-def _get_container_name(container_type: str):
+def _get_container_name(service_name: str):
+    """
+    We want to use container names from invoke with information about what's running (e.g., Docker bash or Jupyter),
+    which user it belongs to, which dir it was started from (e.g., cmamp1, ...), maybe the date when it was started
+    (to see if it's a runaway container)
+
+    This function return the container_name.
+
+    :param service_name: e.g., cmamp
+    :return: e.g., grisha_app_cmamp1_20210101 or grisha_jupyter_server
+    """
     linux_user = hsystem.get_user_name()
-    dir_name = hgit.get_repo_full_name_from_dirname(".", include_host_name=False)
-    repo_short_name = hgit.get_repo_name(dir_name, in_mode="full_name")
-    current_date = datetime.date.today().strftime("%Y%m%d")
-    container_name = f"{linux_user}_{container_type}{repo_short_name}_{current_date}"
+    image_name = get_default_param("BASE_IMAGE")
+
+    # Get current date
+    et_tz = str(hdatetime.get_ET_tz())
+    current_timestamp = hdatetime.get_current_timestamp_as_string(et_tz)
+
+    container_name = f"{linux_user}.{service_name}.{image_name}.{current_timestamp}"
+    _LOG.debug(
+        "get_container_name: container_name=%s",
+        container_name,
+    )
     return container_name
 
 
@@ -2249,13 +2267,10 @@ def _get_docker_cmd(
         --rm"""
     )
     # - Add a name to the container.
-    container_type = ""
-    if use_bash or entrypoint:
-        container_type = "bash_"
-    container_name = _get_container_name(container_type)
+    container_name = _get_container_name(service_name)
     docker_cmd_.append(
         rf"""
-    --name {container_name}"""
+        --name {container_name}"""
     )
     # - Handle the user.
     as_user = _run_docker_as_user(as_user)
