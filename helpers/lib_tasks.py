@@ -206,8 +206,12 @@ use_one_line_cmd = False
 
 # TODO(Grisha): make it public #755.
 def _run(
-        ctx: Any, cmd: str, *args, dry_run: bool = False, use_system: bool = False,
-        **ctx_run_kwargs: Any
+    ctx: Any,
+    cmd: str,
+    *args,
+    dry_run: bool = False,
+    use_system: bool = False,
+    **ctx_run_kwargs: Any,
 ) -> int:
     _LOG.debug(hprint.to_str("cmd dry_run"))
     if use_one_line_cmd:
