@@ -7,6 +7,7 @@ import oms.call_optimizer as ocalopti
 import logging
 import os
 
+import invoke
 import pandas as pd
 
 import core.config as cconfig
@@ -14,6 +15,8 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
+import helpers.lib_tasks as hlibtasks
+import optimizer.opt_lib_tasks as ooplitas
 
 _LOG = logging.getLogger(__name__)
 
@@ -141,9 +144,9 @@ def run_optimizer(
     input_file = os.path.join(tmp_dir, "input.pkl")
     hpickle.to_pickle(input_obj, input_file)
     # Login in the Docker on AWS to pull the `opt` image.
-    # TODO(Grisha): we should call `invoke docker_login` CmTask #547.
-    docker_login_cmd = "sudo -s eval $(aws ecr get-login --profile am --no-include-email --region us-east-1)"
-    hsystem.system(docker_login_cmd)
+    # TODO(Grisha): maybe move `docker_login` to the entrypoint?
+    ctx = invoke.context.Context()
+    hlibtasks.docker_login(ctx)
     # Call optimizer_stub through Docker.
     # cmd = []
     # cmd.append("/app/optimizer/optimizer_stub.py")
@@ -155,6 +158,8 @@ def run_optimizer(
     cmd = "ls"
     # TODO(Grisha): make Docker invokes work w/o `sudo`.
     hsystem.system(f"cd optimizer && invoke opt_docker_cmd --cmd {cmd}")
+    #ctx = invoke.context.Context()
+    #ooplitas.opt_docker_cmd(ctx, cmd=cmd)
     # Read the output from `tmp_dir`.
     output_file = os.path.join(tmp_dir, "output.pkl")
     output_df = hpickle.from_pickle(output_file)
