@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.model.incremental_flows as dtfmoinflo
+import dataflow.model.tiled_flows as dtfmotiflo
 """
 
 import datetime
@@ -12,14 +12,15 @@ import pandas as pd
 _LOG = logging.getLogger(__name__)
 
 from typing import List, Optional, Union
+
 from tqdm.autonotebook import tqdm
 
 import dataflow.model.forecast_evaluator as dtfmofoeva
 import dataflow.model.forecast_mixer as dtfmofomix
-import dataflow.model.parquet_utils as dtfmopauti
 import dataflow.model.parquet_tile_analyzer as dtfmpatian
 import dataflow.model.regression_analyzer as dtfmoreana
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 
 
@@ -35,6 +36,9 @@ def generate_bar_metrics(
     dollar_neutrality: str = "no_constraint",
     overnight_returns: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
+    """
+    Generate "research" portfolio bar metrics over a tiled backtest.
+    """
     columns = [asset_id_col, returns_col, volatility_col, prediction_col]
     tiles = hparque.yield_parquet_tiles_by_year(
         file_name,
@@ -51,7 +55,7 @@ def generate_bar_metrics(
     num_years = end_date.year - start_date.year + 1
     for tile in tqdm(tiles, total=num_years):
         # Convert the `from_parquet()` dataframe to a dataflow-style dataframe.
-        df = dtfmopauti.process_parquet_read_df(
+        df = process_parquet_read_df(
             tile,
             asset_id_col,
         )
@@ -124,7 +128,7 @@ def load_mix_evaluate(
     num_years = end_date.year - start_date.year + 1
     for tile in tqdm(tiles, total=num_years):
         # Convert the `from_parquet()` dataframe to a dataflow-style dataframe.
-        df = dtfmopauti.process_parquet_read_df(
+        df = process_parquet_read_df(
             tile,
             asset_id_col,
         )
@@ -149,10 +153,15 @@ def regress(
     batch_size: int,
 ) -> pd.DataFrame:
     """
+    Perform per-asset regressions over a tiled backtest.
+
+    For each asset, the regression is performed over the entire time window.
     """
     cols = [asset_id_col, target_col] + feature_cols
     parquet_tile_analyzer = dtfmpatian.ParquetTileAnalyzer()
-    parquet_tile_metadata = parquet_tile_analyzer.collate_parquet_tile_metadata(file_name)
+    parquet_tile_metadata = parquet_tile_analyzer.collate_parquet_tile_metadata(
+        file_name
+    )
     asset_ids = parquet_tile_metadata.index.levels[0].to_list()
     _LOG.debug("Num assets=%d", len(asset_ids))
     ra = dtfmoreana.RegressionAnalyzer(
@@ -169,7 +178,7 @@ def regress(
         cols,
     )
     for tile in tile_iter:
-        df = dtfmopauti.process_parquet_read_df(
+        df = process_parquet_read_df(
             tile,
             asset_id_col,
         )
@@ -179,4 +188,26 @@ def regress(
         results.append(coeffs)
     df = pd.concat(results)
     df.sort_index(inplace=True)
+    return df
+
+
+def process_parquet_read_df(
+    df: pd.DataFrame,
+    asset_id_col: str,
+) -> pd.DataFrame:
+    """
+    Post-process a multiindex dataflow result dataframe re-read from parquet.
+
+    :param df: dataframe in "long" format
+    :param asset_id_col: asset id column to pivot on
+    :return: multiindexed dataframe with asset id's at the inner column level
+    """
+    # Convert the asset it column to an integer column.
+    df = hpandas.convert_col_to_int(df, asset_id_col)
+    # If a (non-asset id) column can be represented as an int, then do so.
+    df = df.rename(columns=hparque.maybe_cast_to_int)
+    # Convert from long format to column-multiindexed format.
+    df = df.pivot(columns=asset_id_col)
+    # NOTE: the asset ids may already be sorted and so this may not be needed.
+    df.sort_index(axis=1, level=-2, inplace=True)
     return df

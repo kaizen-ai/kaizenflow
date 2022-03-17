@@ -4,7 +4,7 @@ Import as:
 import dataflow.pipelines.dataflow_example as dtfpidtfexa
 """
 
-# TODO(gp): -> pipelines_example.py
+# TODO(gp): -> pipelines/examples/pipeline2.py
 
 import logging
 
@@ -18,6 +18,7 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> ExamplePipeline2_DagBuilder(dtfcore.DagBuilder):
 class _NaivePipeline(dtfcore.DagBuilder):
     """
     Pipeline with:
@@ -33,6 +34,7 @@ class _NaivePipeline(dtfcore.DagBuilder):
         :return: reference config
         """
 
+        # TODO(gp): Move out of this function.
         def _get_data() -> pd.DataFrame:
             """
             Generate random data.

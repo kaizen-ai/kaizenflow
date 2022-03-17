@@ -8,3 +8,5 @@ pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoric
 pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data3
 pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data4
 pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data5
+# To run the tests:
+> ./tmp.pytest_repro.sh

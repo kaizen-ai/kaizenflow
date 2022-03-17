@@ -182,7 +182,7 @@ def yield_parquet_tiles_by_year(
     cols: List[Union[int, str]],
 ) -> Iterator[pd.DataFrame]:
     """
-    Yield parquet data in tiles up to one year in length.
+    Yield Parquet data in tiles up to one year in length.
 
     :param file_name: as in `from_parquet()`
     :param start_date: first date to load; day is ignored
@@ -225,7 +225,7 @@ def yield_parquet_tiles_by_assets(
     cols: List[Union[int, str]],
 ) -> Iterator[pd.DataFrame]:
     """
-    Yield parquet data in tiles up to one year in length.
+    Yield Parquet data in tiles up to one year in length.
 
     :param file_name: as in `from_parquet()`
     :param cols: if an `int` is supplied, it is cast to a string before reading
@@ -252,7 +252,7 @@ def build_year_month_filter(
     end_date: datetime.date,
 ) -> list:
     """
-    Use the year/months to build a parquet filter.
+    Use the year/months to build a Parquet filter.
 
     If `start_date.year == end_date.year`, then return a list of
     three tuples (to be "ANDed" together) based on the year and months.
@@ -302,16 +302,16 @@ def collate_parquet_tile_metadata(
     path: str,
 ) -> pd.DataFrame:
     """
-    Report stats in a dataframe on parquet file partitions.
+    Report stats in a dataframe on Parquet file partitions.
 
     The directories should be of the form `lhs=rhs` where "rhs" is a string
     representation of an `int`.
 
-    :param path: path to top-level parquet directory
+    :param path: path to top-level Parquet directory
     :return: dataframe with two file size columns and a multiindex reflecting
-        the parquet path structure.
+        the Parquet path structure.
     """
-    hdbg.dassert(os.path.isdir(path))
+    hdbg.dassert_dir_exists(path)
     # Remove the trailing slash to simplify downstream accounting.
     if path.endswith("/"):
         path = path[:-1]
@@ -358,8 +358,8 @@ def collate_parquet_tile_metadata(
 
 
 # TODO(Paul): The `int` assumption is baked in. We can generalize to strings
-# if needed, but if we do, then we should continue to handle string ints as
-# ints as we do here (e.g., there are sorting advantages, among others).
+#  if needed, but if we do, then we should continue to handle string ints as
+#  ints as we do here (e.g., there are sorting advantages, among others).
 def _process_walk_triple(
     triple: tuple, start_depth
 ) -> Tuple[Tuple[str], Tuple[int]]:
@@ -458,7 +458,7 @@ def get_parquet_filters_from_timestamp_interval(
         )
         years = list(set(dates.year))
         if len(years) == 1:
-            # For one year range, simple AND statement is enough.
+            # For one year range, a simple AND statement is enough.
             # `[[('year', '==', 2020), ('month', '>=', 6), ('month', '<=', 12)]]`
             and_filter = [
                 ("year", "==", dates[0].year),
@@ -467,8 +467,8 @@ def get_parquet_filters_from_timestamp_interval(
             ]
             or_and_filter.append(and_filter)
         else:
-            # For ranges over two years, OR statements are necessary to bridge the gap
-            # between first and last AND statement, unless range is around two years.
+            # For ranges over two years, OR statements are necessary to bridge the
+            # gap between first and last AND statement, unless range is around two years.
             # First AND filter.
             first_and_filter = [
                 ("year", "==", dates[0].year),
@@ -623,3 +623,78 @@ def to_partitioned_parquet(
             partition_filename_cb=partition_filename,
             filesystem=filesystem,
         )
+
+
+# TODO(Nikola): Currently indirectly tested in
+#  `im_v2/ccxt/data/extract/test/test_download_historical_data.py`.
+def list_and_merge_pq_files(
+    root_dir: str, s3fs_: Any, *, file_name: str = "data.parquet"
+) -> None:
+    """
+    Merge all files of the Parquet dataset.
+
+    Can be generalized to any used partition.
+
+    The standard partition (also known as "by-tile") assumed is:
+
+    ```
+    root_dir/
+        currency_pair=ADA_USDT/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+        ...
+        currency_pair=EOS_USDT/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+    ```
+
+    :param root_dir: root directory of Parquet dataset
+    :param s3fs_: S3 filesystem columns on which the dataset is partitioned
+    :param file_name: name of the single resulting file
+    """
+    # Get full paths to each Parquet file inside root dir.
+    parquet_files = s3fs_.glob(f"{root_dir}/**.parquet")
+    _LOG.debug("Parquet files: '%s'", parquet_files)
+    # Get paths only to the lowest level of dataset folders.
+    dataset_folders = set(f.rsplit("/", 1)[0] for f in parquet_files)
+    for folder in dataset_folders:
+        # Get files per folder and merge if there are multiple ones.
+        folder_files = s3fs_.ls(folder)
+        hdbg.dassert_ne(
+            len(folder_files), 0, msg=f"Empty folder `{folder}` detected!"
+        )
+        if len(folder_files) == 1 and folder_files[0].endswith("/data.parquet"):
+            # If there is already single `data.parquet` file, no action is required.
+            continue
+        # Read all files in target folder.
+        data = pq.ParquetDataset(folder_files, filesystem=s3fs_).read()
+        # Remove all old files and write new, merged one.
+        s3fs_.rm(folder, recursive=True)
+        pq.write_table(data, folder + "/" + file_name, filesystem=s3fs_)
+
+
+def maybe_cast_to_int(string: str) -> Union[str, int]:
+    """
+    Return `string` as an `int` if convertible, otherwise a no-op.
+
+    This is useful for parsing mixed-type dataframe columns that may
+    contain strings and ints. For example, a dataframe with columns
+    `feature1, feature2, 1, 2, 3` will be written and read back with
+    columns `1`, `2`, `3` as the strings "1", "2", "3" rather than the
+    ints. This function can be used to rectify that in a post-processing
+    column rename.
+    """
+    hdbg.dassert_isinstance(string, str)
+    try:
+        val = int(string)
+    except ValueError:
+        val = string
+    return val

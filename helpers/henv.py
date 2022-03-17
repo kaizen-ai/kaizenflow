@@ -7,16 +7,11 @@ import helpers.henv as henv
 import logging
 from typing import List, Tuple
 
-import helpers.hgit as hgit
-import helpers.hprint as hprint
-import helpers.hsystem as hsystem
-import helpers.hversion as hversio
-
 _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
-# TODO(gp): Merge env in system_interaction?
+_WARNING = "\033[33mWARNING\033[0m"
 
 
 def _get_library_version(lib_name: str) -> str:
@@ -47,6 +42,12 @@ def _append(
 
 
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
+    # We use dynamic imports to minimize the dependencies.
+    import helpers.hgit as hgit
+    import helpers.hprint as hprint
+    import helpers.hsystem as hsystem
+    import helpers.hversion as hversio
+
     # TODO(gp): This should return a string that we append to the rest.
     container_dir_name = "."
     hversio.check_version(container_dir_name)
@@ -137,3 +138,22 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     #
     txt = "\n".join(txt)
     return txt, failed_imports
+
+
+# #############################################################################
+
+
+def has_module(module: str) -> bool:
+    """
+    Return whether a module can be imported or not.
+    """
+    code = f"""
+try:
+    import {module}
+    has_module_ = True
+except ImportError as e:
+    print(_WARNING + ": " + str(e))
+    has_module_ = False
+"""
+    exec(code, globals())
+    return has_module_
