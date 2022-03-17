@@ -153,19 +153,22 @@ def run_optimizer(
     optimizer_stub_file_path = os.path.join(root_dir, "optimizer/optimizer_stub.py")
     hdbg.dassert_file_exists(optimizer_stub_file_path)
     # Call `optimizer_stub` through `opt` Docker container.
-    cmd: List[str] = []
-    cmd.append(optimizer_stub_file_path)
-    cmd.append(f"--input_file {input_file}")
+    docker_cmd_: List[str] = []
+    docker_cmd_.append(optimizer_stub_file_path)
+    docker_cmd_.append(f"--input_file {input_file}")
     output_file = os.path.join(tmp_dir, "output.pkl")
-    cmd.append(f"--output_file {output_file}")
-    cmd.append("-v INFO")
-    docker_cmd = " ".join(cmd)
+    docker_cmd_.append(f"--output_file {output_file}")
+    docker_cmd_.append("-v INFO")
+    docker_cmd = " ".join(docker_cmd_)
     # TODO(Grisha): call `opt_docker_cmd` directly.
     # Run the command.
-    optimizer_cmd =
+    optimizer_cmd_: List[str] = []
+    optimizer_cmd_.append("cd optimizer &&")
+    optimizer_cmd_.append(f"invoke opt_docker_cmd --cmd '{docker_cmd}'")
+    optimizer_cmd = " ".join(optimizer_cmd_)
     #import optimizer.opt_lib_tasks as ooplitas
     #ooplitas.opt_docker_cmd(ctx, cmd=docker_cmd_, use_bash=True)
-    hsystem.system(f'bash -c cd optimizer && invoke opt_docker_cmd --cmd "{docker_cmd_}" --use-bash')
+    hsystem.system(optimizer_cmd, suppress_output=False)
     # Read the output from `tmp_dir`.
     output_file = os.path.join(tmp_dir, "output.pkl")
     output_df = hpickle.from_pickle(output_file)
