@@ -28,11 +28,12 @@ class TestOptimize(hunitest.TestCase):
     def helper(
         config: cconfig.Config,
         df: pd.DataFrame,
+        tmp_dir: str,
     ) -> str:
         """
         Run the optimizer and covert output to string.
         """
-        actual = ocalopti.run_optimizer(config, df)
+        actual = ocalopti.run_optimizer(config, df, tmp_dir=tmp_dir)
         precision = 5
         actual_str = hpandas.df_to_str(actual, precision=precision)
         return actual_str
@@ -51,7 +52,8 @@ class TestOptimize(hunitest.TestCase):
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         df = self.get_prediction_df()
-        actual = self.helper(config, df)
+        scratch_dir = self.get_scratch_space()
+        actual = self.helper(config, df, scratch_dir)
         expected = r"""
                   target_positions  target_notional_trades  target_weights  target_weight_diffs
         asset_id
