@@ -6,6 +6,7 @@ import oms.call_optimizer as ocalopti
 
 import logging
 import os
+from typing import List
 
 import invoke
 import pandas as pd
@@ -13,10 +14,10 @@ import pandas as pd
 import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hgit as hgit
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
 import helpers.lib_tasks as hlibtasks
-import optimizer.opt_lib_tasks as ooplitas
 
 _LOG = logging.getLogger(__name__)
 
@@ -138,28 +139,33 @@ def run_optimizer(
     :param tmp_dir: local dir to use to exchange parameters with the "remote"
         optimizer
     """
-    hio.create_dir(tmp_dir, incremental=True)
-    # Serialize the inputs in tmp_dir.
-    input_obj = {"config": config, "df": df}
-    input_file = os.path.join(tmp_dir, "input.pkl")
-    hpickle.to_pickle(input_obj, input_file)
     # Login in the Docker on AWS to pull the `opt` image.
     # TODO(Grisha): maybe move `docker_login` to the entrypoint?
     ctx = invoke.context.Context()
     hlibtasks.docker_login(ctx)
-    # Call optimizer_stub through Docker.
-    # cmd = []
-    # cmd.append("/app/optimizer/optimizer_stub.py")
-    # cmd.append(f"--input_file {input_file}")
-    # output_file = os.path.join(tmp_dir, "output.pkl")
-    # cmd.append(f"--output_file {output_file}")
-    # cmd.append("-v INFO")
-    # cmd = " ".join(cmd)
-    cmd = "ls"
-    # TODO(Grisha): make Docker invokes work w/o `sudo`.
-    hsystem.system(f"cd optimizer && invoke opt_docker_cmd --cmd {cmd}")
-    #ctx = invoke.context.Context()
-    #ooplitas.opt_docker_cmd(ctx, cmd=cmd)
+    # Serialize the inputs in `tmp_dir`.
+    hio.create_dir(tmp_dir, incremental=True)
+    input_obj = {"config": config, "df": df}
+    input_file = os.path.join(tmp_dir, "input.pkl")
+    hpickle.to_pickle(input_obj, input_file)
+    # Get path to the `optimizer_stub.py`.
+    root_dir = hgit.get_client_root(False)
+    optimizer_stub_file_path = os.path.join(root_dir, "optimizer/optimizer_stub.py")
+    hdbg.dassert_file_exists(optimizer_stub_file_path)
+    # Call `optimizer_stub` through `opt` Docker container.
+    cmd: List[str] = []
+    cmd.append(optimizer_stub_file_path)
+    cmd.append(f"--input_file {input_file}")
+    output_file = os.path.join(tmp_dir, "output.pkl")
+    cmd.append(f"--output_file {output_file}")
+    cmd.append("-v INFO")
+    docker_cmd = " ".join(cmd)
+    # TODO(Grisha): call `opt_docker_cmd` directly.
+    # Run the command.
+    optimizer_cmd =
+    #import optimizer.opt_lib_tasks as ooplitas
+    #ooplitas.opt_docker_cmd(ctx, cmd=docker_cmd_, use_bash=True)
+    hsystem.system(f'bash -c cd optimizer && invoke opt_docker_cmd --cmd "{docker_cmd_}" --use-bash')
     # Read the output from `tmp_dir`.
     output_file = os.path.join(tmp_dir, "output.pkl")
     output_df = hpickle.from_pickle(output_file)
