@@ -10,7 +10,7 @@ import oms.call_optimizer as ocalopti
 _LOG = logging.getLogger(__name__)
 
 
-class Test_optimize1(hunitest.TestCase):
+class TestOptimize(hunitest.TestCase):
 
     def test_only_gmv_constraint(self) -> None:
         """
@@ -38,6 +38,9 @@ class Test_optimize1(hunitest.TestCase):
 
     @staticmethod
     def get_prediction_df() -> pd.DataFrame:
+        """
+        Get prediction data.
+        """
         df = pd.DataFrame(
             [[1, 1000, 0.05, 0.05], [2, 1500, 0.09, 0.07], [3, -500, 0.03, 0.08]],
             range(0, 3),
@@ -50,6 +53,9 @@ class Test_optimize1(hunitest.TestCase):
         config: cconfig.Config,
         df: pd.DataFrame,
     ) -> str:
+        """
+        Run the optimizer and covert output to string.
+        """
         actual = ocalopti.run_optimizer(config, df)
         precision = 5
         actual_str = hpandas.df_to_str(actual, precision=precision)
