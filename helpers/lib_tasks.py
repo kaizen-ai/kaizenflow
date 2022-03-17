@@ -2340,7 +2340,12 @@ def docker_cmd(  # type: ignore
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(
-        base_image, stage, version, cmd, as_user=as_user, use_bash=use_bash,
+        base_image,
+        stage,
+        version,
+        cmd,
+        as_user=as_user,
+        use_bash=use_bash,
     )
     _docker_cmd(ctx, docker_cmd_)
 
