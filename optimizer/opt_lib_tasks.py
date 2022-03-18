@@ -208,26 +208,53 @@ def opt_docker_cmd(  # type: ignore
 
 @task
 def opt_docker_up(ctx, detach=True, base_image="", stage="dev", version=""):
-    # Get `opt` image name.
-    image = hlibtask.get_image(base_image, stage, version)
-    _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
-    hlibtask._dassert_is_image_name_valid(image)
-    # 
-    docker_up_cmd_: List[str] = []
-    # Set the `IMAGE` environment variable.
-    docker_up_cmd_.append(f"IMAGE={image}")
-    docker_up_cmd_.append("docker-compose")
-    # Add `docker-compose.yml` file path.
-    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
-    docker_up_cmd_.append(f"--file {docker_compose_file_path}")
-    # Add `enf-file` path.
-    default_env_file_path = "devops/env/default.env"
-    docker_up_cmd_.append(f"--env-file {default_env_file_path}")
+    extra_env_vars = None
+    extra_docker_compose_files = None
+    docker_up_cmd_ = hlibtask._get_base_docker_cmd(
+        base_image,
+        stage,
+        version,
+        extra_env_vars,
+        extra_docker_compose_files,
+    )
     # Add `up` command.
-    docker_up_cmd_.append("up -d")
+    docker_up_cmd_.append(
+        r"""
+        up"""
+    )
+    if detach:
+        # Run in detached mode.
+        docker_up_cmd_.append(
+        r"""
+        -d"""
+    )
     # Specify the service name.
     service = "app"
-    docker_up_cmd_.append(service)
+    docker_up_cmd_.append(
+        rf"""
+        {service}"""
+    )
+    #
+    docker_up_cmd = hlibtask._to_multi_line_cmd(docker_up_cmd_)
+    hlibtask._run(ctx, docker_up_cmd, pty=True)
+
+
+@task
+def opt_docker_down(ctx, base_image="", stage="dev", version=""):
+    extra_env_vars = None
+    extra_docker_compose_files = None
+    docker_up_cmd_ = hlibtask._get_base_docker_cmd(
+        base_image,
+        stage,
+        version,
+        extra_env_vars,
+        extra_docker_compose_files,
+    )
+    # Add `up` command.
+    docker_up_cmd_.append(
+        r"""
+        down"""
+    )
     #
     docker_up_cmd = hlibtask._to_multi_line_cmd(docker_up_cmd_)
     hlibtask._run(ctx, docker_up_cmd, pty=True)

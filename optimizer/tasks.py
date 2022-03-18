@@ -10,6 +10,7 @@ from optimizer.opt_lib_tasks import (  # noqa: F401  # pylint: disable=unused-im
     opt_docker_bash,
     opt_docker_build_local_image,
     opt_docker_cmd,
+    opt_docker_down,
     opt_docker_jupyter,
     opt_docker_push_dev_image,
     opt_docker_release_dev_image,

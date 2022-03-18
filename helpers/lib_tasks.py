@@ -2135,36 +2135,13 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
     return as_user
 
 
-def _get_docker_cmd(
+def _get_base_docker_cmd(
     base_image: str,
     stage: str,
     version: str,
-    cmd: str,
-    *,
-    extra_env_vars: Optional[List[str]] = None,
-    extra_docker_compose_files: Optional[List[str]] = None,
-    extra_docker_run_opts: Optional[List[str]] = None,
-    service_name: str = "app",
-    entrypoint: bool = True,
-    as_user: bool = True,
-    print_docker_config: bool = False,
-    use_bash: bool = False,
-) -> str:
-    """
-    :param base_image, stage, version: like in `get_image()`
-    :param cmd: command to run inside Docker container
-    :param as_user: pass the user / group id or not
-    :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
-    :param print_docker_config: print the docker config for debugging purposes
-    :param use_bash: run command through a shell
-    """
-    hprint.log(
-        _LOG,
-        logging.DEBUG,
-        "stage base_image cmd extra_env_vars"
-        " extra_docker_compose_files extra_docker_run_opts"
-        " service_name entrypoint",
-    )
+    extra_env_vars: List[str],
+    extra_docker_compose_files: List[str],
+):
     docker_cmd_: List[str] = []
     # - Handle the image.
     image = get_image(base_image, stage, version)
@@ -2226,6 +2203,46 @@ def _get_docker_cmd(
     docker_cmd_.append(
         rf"""
         --env-file {env_file}"""
+    )
+    return docker_cmd_
+
+
+def _get_docker_cmd(
+    base_image: str,
+    stage: str,
+    version: str,
+    cmd: str,
+    *,
+    extra_env_vars: Optional[List[str]] = None,
+    extra_docker_compose_files: Optional[List[str]] = None,
+    extra_docker_run_opts: Optional[List[str]] = None,
+    service_name: str = "app",
+    entrypoint: bool = True,
+    as_user: bool = True,
+    print_docker_config: bool = False,
+    use_bash: bool = False,
+) -> str:
+    """
+    :param base_image, stage, version: like in `get_image()`
+    :param cmd: command to run inside Docker container
+    :param as_user: pass the user / group id or not
+    :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
+    :param print_docker_config: print the docker config for debugging purposes
+    :param use_bash: run command through a shell
+    """
+    hprint.log(
+        _LOG,
+        logging.DEBUG,
+        "stage base_image cmd extra_env_vars"
+        " extra_docker_compose_files extra_docker_run_opts"
+        " service_name entrypoint",
+    )
+    docker_cmd_ = _get_base_docker_cmd(
+        base_image,
+        stage,
+        version,
+        extra_env_vars,
+        extra_docker_compose_files,
     )
     # - Add the `config` command for debugging purposes.
     docker_config_cmd: List[str] = docker_cmd_[:]
