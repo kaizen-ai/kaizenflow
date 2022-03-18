@@ -14,5 +14,5 @@ Include=/etc/zabbix/zabbix_agent2.d/*.conf
 ControlSocket=/tmp/agent.sock 
 {% if 'docker.service' in services %}
 Plugins.Docker.Endpoint=unix:///var/run/docker.sock 
+AllowKey=system.run[*]
 {% endif %}
-
