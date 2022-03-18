@@ -144,12 +144,13 @@ class TalosBroker(ombroker.AbstractBroker):
         - PendingReplace
         - DoneForDay
 
+        An output is a dictionary where key is `OrderID` and the value is the order status.
         Example of an output:
-        {('ce871d61-a1f6-4993-8f81-a6d8f872be53', 'Canceled'),
-        ('e38ec070-30b7-49d4-a301-619c2d3ed20e', 'DoneForDay')}
+        {'19eaff5c-c01f-4360-8b7e-c8d0028625e3': 'Rejected',
+         '81a341c1-8e2c-4027-b0ea-26fb1166549c': 'DoneForDay'}
 
-        :param order_id_list: values of `OrderID` from Talos universe
-        :return: mappings of `OrderID` and order status
+        :param order_id_list: values of `OrderID` from values of Talos' `OrderIDs`
+        :return: mappings of `OrderID` to order status
         """
         # Create dictionary that will store the order status.
         fill_status_dict: Dict[str, str] = {}
@@ -167,6 +168,7 @@ class TalosBroker(ombroker.AbstractBroker):
             signature = oomtauti.calculate_signature(
                 self._api_keys["secret"], parts
             )
+            # TODO(Max): Factor `headers` part out.
             headers = {
                 "TALOS-KEY": self._api_keys["apiKey"],
                 "TALOS-SIGN": signature,
@@ -179,10 +181,11 @@ class TalosBroker(ombroker.AbstractBroker):
             # Specify order information.
             ord_summary = body["data"]
             # Save the general order status.
+            # The output of 'ord_summary' contains detailed information about orders and its executions.
+            # The idea is to extract the order status from it.
             fills_general = ord_summary[0]["OrdStatus"]
             # Writing these values into the dictionary.
-            fill_status = {order_id: fills_general}
-            fill_status_dict = fill_status_dict | fill_status.items()
+            fill_status_dict[order_id] = fills_general
         return fill_status_dict
 
     def _submit_orders(
