@@ -95,17 +95,17 @@ def get_trade_universe(
 
 # TODO(Dan): remove default values for `vendor` param #832.
 def get_vendor_universe(
-    *, version: Optional[str] = None, vendor: str = "CCXT"
+    vendor: str, *, version: Optional[str] = None
 ) -> Union[List[icdc.FullSymbol], List[int]]:
     """
     Load vendor universe as full symbols.
 
-    :param version: release version
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
+    :param version: release version
     :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
     """
     # Get vendor universe.
-    vendor_universe = get_trade_universe(vendor, version=version)
+    vendor_universe = get_trade_universe(vendor, version=version)[vendor]
     # Convert vendor universe dict to a sorted list of full symbols.
     universe = [
         icdc.build_full_symbol(exchange_id, currency_pair)
@@ -114,4 +114,5 @@ def get_vendor_universe(
     ]
     # Sort list of symbols in the universe.
     universe = sorted(universe)
+    print(universe)
     return universe
