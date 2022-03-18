@@ -2137,22 +2137,22 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
 
 def _get_container_name(service_name: str):
     """
-    We want to use container names from invoke with information about what's running (e.g., Docker bash or Jupyter),
-    which user it belongs to, which dir it was started from (e.g., cmamp1, ...), maybe the date when it was started
-    (to see if it's a runaway container)
+    Build a container name.
 
-    This function return the container_name.
+    To do so we use:
+       - Linux user name
+       - Base Docker image name
+       - Service name
+       - Container start ET timestamp
 
-    :param service_name: e.g., cmamp
-    :return: e.g., viktora.app.cmamp.20220317 or grisha.jupyter_server.cmamp.20220317
+    :param service_name: `docker-compose` service name, e.g., `app`
+    :return: container name, e.g., `viktora.cmamp.app.20220317_232120`
     """
     linux_user = hsystem.get_user_name()
     image_name = get_default_param("BASE_IMAGE")
-
-    # Get current date in ET
+    # Get current timestamp in ET.
     current_timestamp = _get_ET_timestamp()
-
-    container_name = f"{linux_user}.{service_name}.{image_name}.{current_timestamp}"
+    container_name = f"{linux_user}.{image_name}.{service_name}.{current_timestamp}"
     _LOG.debug(
         "get_container_name: container_name=%s",
         container_name,
