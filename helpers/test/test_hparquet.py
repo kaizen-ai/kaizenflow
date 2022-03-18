@@ -108,7 +108,7 @@ class TestParquet1(hunitest.TestCase):
 
     def get_file_name(self) -> str:
         dir_name = self.get_scratch_space()
-        file_name = os.path.join(dir_name, "df.pq")
+        file_name = os.path.join(dir_name, "df.parquet")
         return file_name
 
     def write_data_as_parquet(self) -> Tuple[pd.DataFrame, str]:
