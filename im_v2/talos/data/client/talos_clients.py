@@ -61,6 +61,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self,
         root_dir: str,
         *,
+        version: str = 'latest',
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -73,6 +74,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         super().__init__()
         self._root_dir = root_dir
         self._aws_profile = aws_profile
+        self._version = version
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -93,7 +95,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get path to a dir with all the data for specified exchange id.
-        exchange_dir_path = os.path.join(self._root_dir, "talos", exchange_id)
+        exchange_dir_path = os.path.join(self._root_dir, "talos", self._version, exchange_id)
         # Read raw crypto price data.
         _LOG.info(
             "Reading data for `Talos`, exchange id='%s', currencies='%s'...",
