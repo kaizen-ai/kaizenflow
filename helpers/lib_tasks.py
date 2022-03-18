@@ -4453,47 +4453,6 @@ def _parse_linter_output(txt: str) -> str:
 
 
 @task
-def lint_add_init_files(  # type: ignore
-    ctx,
-    dir_name=".",
-    dry_run=True,
-    run_bash=False,
-    stage="prod",
-    as_user=True,
-    out_file_name="lint_add_init_files.output.txt",
-):
-    """
-    Add the missing `__init__.py` in dirs with Python files.
-
-    For param descriptions, see `lint()`.
-
-    :param dir_name: path to the head directory to start the check from
-    :param dry_run:
-      - True: output a warning pointing to the dirs where `__init__.py`
-        files are missing
-      - False: create the required `__init__.py` files
-    """
-    _report_task()
-    # Remove the log file.
-    if os.path.exists(out_file_name):
-        cmd = f"rm {out_file_name}"
-        _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
-    # Prepare the command line.
-    docker_cmd_opts = [dir_name]
-    if dry_run:
-        docker_cmd_opts.append("--dry_run")
-    docker_cmd_ = "/app/linters/add_module_init.py " + _to_single_line_cmd(
-        docker_cmd_opts
-    )
-    # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
-    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
-    # Run.
-    _run(ctx, cmd)
-
-
-@task
 def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
@@ -4596,6 +4555,7 @@ def lint(  # type: ignore
     # CRLF end-lines remover...........................(no files to check)Skipped
     # Tabs remover.....................................(no files to check)Skipped
     # autoflake........................................(no files to check)Skipped
+    # add_python_init_files............................(no files to check)Skipped
     # amp_check_filename...............................(no files to check)Skipped
     # amp_isort........................................(no files to check)Skipped
     # amp_black........................................(no files to check)Skipped
@@ -4615,6 +4575,7 @@ def lint(  # type: ignore
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
             [
+                "add_python_init_files",
                 "amp_isort",
                 "amp_class_method_order",
                 "amp_normalize_import",
