@@ -198,3 +198,114 @@ def opt_docker_cmd(  # type: ignore
         use_bash=use_bash,
         container_dir_name=_OPTIMIZER_DIR,
     )
+
+
+# #############################################################################
+# Start/stop optimizer services.
+# #############################################################################
+
+
+def _get_opt_docker_up_cmd(
+    detach: bool, base_image: str, stage: str, version: Optional[str]
+) -> str:
+    """
+    Get docker-compose up for the optimizer.
+
+    E.g.,
+    
+    ```
+    IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
+        docker-compose \
+        --file devops/compose/docker-compose.yml \
+        --env-file devops/env/default.env \
+        up \
+        -d \
+        app
+    ```
+    :param detach: whether to run in detached mode or not
+    """
+    extra_env_vars = None
+    extra_docker_compose_files = None
+    docker_up_cmd_ = hlibtask._get_base_docker_cmd(
+        base_image,
+        stage,
+        version,
+        extra_env_vars,
+        extra_docker_compose_files,
+    )
+    # Add up command.
+    docker_up_cmd_.append(
+        r"""
+        up"""
+    )
+    if detach:
+        # Run in detached mode.
+        docker_up_cmd_.append(
+            r"""
+        -d"""
+        )
+    # Specify the service name.
+    service = "app"
+    docker_up_cmd_.append(
+        rf"""
+        {service}"""
+    )
+    #
+    docker_up_cmd = hlibtask._to_multi_line_cmd(docker_up_cmd_)
+    return docker_up_cmd  # type: ignore[no-any-return]
+
+
+@task
+def opt_docker_up(ctx, detach=True, base_image="", stage="dev", version=""):  # type: ignore
+    """
+    Start the optimizer as a service.
+    """
+    # Build docker-compose up cmd.
+    docker_up_cmd = _get_opt_docker_up_cmd(detach, base_image, stage, version)
+    # Run.
+    hlibtask._run(ctx, docker_up_cmd, pty=True)
+
+
+def _get_opt_docker_down_cmd(
+    base_image: str, stage: str, version: Optional[str]
+) -> str:
+    """
+    Get docker-compose down for the optimizer.
+
+    E.g.,
+    
+    ```
+    IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
+        docker-compose \
+        --file devops/compose/docker-compose.yml \
+        --env-file devops/env/default.env \
+        down
+    ```
+    """
+    extra_env_vars = None
+    extra_docker_compose_files = None
+    docker_down_cmd_ = hlibtask._get_base_docker_cmd(
+        base_image,
+        stage,
+        version,
+        extra_env_vars,
+        extra_docker_compose_files,
+    )
+    # Add down command.
+    docker_down_cmd_.append(
+        r"""
+        down"""
+    )
+    docker_down_cmd = hlibtask._to_multi_line_cmd(docker_down_cmd_)
+    return docker_down_cmd  # type: ignore[no-any-return]
+
+
+@task
+def opt_docker_down(ctx, base_image="", stage="dev", version=""):  # type: ignore
+    """
+    Bring down the optimizer service.
+    """
+    # Build docker-compose up cmd.
+    docker_down_cmd = _get_opt_docker_down_cmd(base_image, stage, version)
+    # Run.
+    hlibtask._run(ctx, docker_down_cmd, pty=True)
