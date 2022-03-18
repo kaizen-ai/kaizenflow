@@ -19,7 +19,7 @@ import optimizer.soft_constraints as osofcons
 
 # Equivalent to `import cvxpy as cpx`, but skip this module if the module is
 # not present.
-import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
+import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-order
 
 cvx = pytest.importorskip("cvxpy")
 
@@ -31,7 +31,20 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+def optimize(
+    config: cconfig.Config,
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Wrapper around `SinglePeriodOptimizer`.
+    """
+    spo = SinglePeriodOptimizer(config, df)
+    output_df = spo.optimize()
+    return output_df
+
+
 class SinglePeriodOptimizer:
+
     def __init__(
         self,
         config: cconfig.Config,
