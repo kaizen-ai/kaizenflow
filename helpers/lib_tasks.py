@@ -2174,8 +2174,7 @@ def _get_base_docker_cmd(
     hprint.log(
         _LOG,
         logging.DEBUG,
-        "base_image stage version "
-        "extra_env_vars extra_docker_compose_files",
+        "base_image stage version " "extra_env_vars extra_docker_compose_files",
     )
     docker_cmd_: List[str] = []
     # - Handle the image.

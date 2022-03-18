@@ -213,7 +213,7 @@ def _get_opt_docker_up_cmd(
     Get docker-compose up for the optimizer.
 
     E.g.,
-    
+
     ```
     IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
         docker-compose \
@@ -274,7 +274,7 @@ def _get_opt_docker_down_cmd(
     Get docker-compose down for the optimizer.
 
     E.g.,
-    
+
     ```
     IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
         docker-compose \
