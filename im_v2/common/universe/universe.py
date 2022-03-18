@@ -3,34 +3,99 @@ Import as:
 
 import im_v2.common.universe.universe as imvcounun
 """
-import os
 import glob
-from typing import Dict, List, Union, Optional
+import os
+import re
+from typing import Dict, List, Optional, Union
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import im_v2.common.data.client as icdc
 
-def get_trade_universe(vendor: str, *,
+
+def _extract_universe_version(universe_file: str) -> int:
+    """
+    Extract version number from universe_vXX.json file. e.g.
+    'universe_v03.json' -> 3.
+
+    :param file_name:
+    :return: universe file version number
+    """
+    basename = os.path.basename(universe_file).rstrip(".json")
+    m = re.search(r"(\d+)$", basename)
+    hdbg.dassert(
+        m,
+        "Can't parse file '%s', correct format is e.g. 'universe_v03.json'.",
+        basename,
+    )
+    # Groups return tuple.
+    return int(m.groups(1)[0])  # type: ignore[union-attr, arg-type]
+
+
+def _get_universe_file_path(vendor: str, *, version: Optional[str] = None) -> str:
+    """
+    Get universe file path based on version.
+
+    :param vendor: vendor to load data for (e.g., CCXT, Talos)
+    :param version: universe release version (e.g. "v01"). If None it uses
+      the latest version available
+    :return: file path to the universe file corresponding to the specified version
+    """
+    vendor = vendor.lower()
+    # Get path to vendor universe dir.
+    vendor_dir = os.path.join(hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe")
+    hdbg.dassert_dir_exists(vendor_dir)
+    if version is None:
+        # Find all universe files.
+        vendor_universe_pattern = os.path.join(vendor_dir, "universe_v*.json")
+        universe_files = list(glob.glob(vendor_universe_pattern))
+        hdbg.dassert_ne(len(universe_files), 0)
+        file_path = max(universe_files, key=_extract_universe_version)
+    else:
+        file_name = "".join(["universe_", version, ".json"])
+        file_path = os.path.join(vendor_dir, file_name)
+    hdbg.dassert_exists(file_path)
+    return file_path
+
+
+def get_trade_universe(
+    vendor: str,
+    *,
     version: Optional[str] = None,
 ) -> Dict[str, Dict[str, List[str]]]:
     """
-    Load trade universe for which we have historical data on S3.
+    Load trade universe for which we have historical data.
 
     :param vendor: vendor to load data for (e.g., CCXT/Talos)
     :param version: release version
-    :return: trade universe
+    :return: trade universe as a nested dictionary of vendor (e.g., CCXT),
+      exchange name (e.g., binance) to list of symbols e.g.,
+        {
+            "Talos": {
+                "binance": [
+                "ADA_USDT",
+                "AVAX_USDT",
+                "BNB_USDT",
+                "BTC_USDT",
+                "DOGE_USDT",
+                "EOS_USDT",
+                "ETH_USDT",
+                "LINK_USDT",
+                "SOL_USDT"
+                ],
+                ...
+        }
     """
-    file_path = get_universe_file_path(vendor, version)
+    file_path = _get_universe_file_path(vendor, version=version)
     hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
     return universe  # type: ignore[no-any-return]
 
 
 # TODO(Dan): remove default values for `vendor` param #832.
-def get_vendor_universe(*,
-    version: Optional[str] = None, vendor: str = "CCXT"
+def get_vendor_universe(
+    *, version: Optional[str] = None, vendor: str = "CCXT"
 ) -> Union[List[icdc.FullSymbol], List[int]]:
     """
     Load vendor universe as full symbols.
@@ -40,7 +105,7 @@ def get_vendor_universe(*,
     :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
     """
     # Get vendor universe.
-    vendor_universe = get_trade_universe(vendor, version)
+    vendor_universe = get_trade_universe(vendor, version=version)
     # Convert vendor universe dict to a sorted list of full symbols.
     universe = [
         icdc.build_full_symbol(exchange_id, currency_pair)
@@ -50,31 +115,3 @@ def get_vendor_universe(*,
     # Sort list of symbols in the universe.
     universe = sorted(universe)
     return universe
-
-def get_universe_file_path(vendor: str, version: Optional[str]) -> str:
-    """
-    Get universe file based on version. If version is not provided
-     assumes the latest version
-    
-    :param vendor: vendor to load data for (e.g., CCXT, Talos)
-    :param version: universe release version
-    :return: file path to the universe file of specified version
-    """
-    vendor = vendor.lower()
-    if version is None:
-        # Get path to vendor dir.
-        vendor_dir = os.path.join(hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe/")
-        hdbg.dassert_dir_exists(vendor_dir)
-        vendor_universe_pattern = os.path.join(vendor_dir, "universe_v*.json")
-        # Find all universe files.
-        universe_files = list(glob.glob(vendor_universe_pattern))
-        hdbg.dassert_ne(len(universe_files), 0)
-        # Assuming 0 < version <= 99.
-        get_vers_part = lambda x: int(x.rstrip(".json")[-2])
-        file_path = max(universe_files, key=get_vers_part)
-    else:
-        file_name = "".join(["universe_", version, ".json"])
-        file_path = os.path.join(
-            hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe", file_name
-        )
-    return file_path
