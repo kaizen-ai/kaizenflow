@@ -206,7 +206,12 @@ use_one_line_cmd = False
 
 # TODO(Grisha): make it public #755.
 def _run(
-    ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any
+    ctx: Any,
+    cmd: str,
+    *args,
+    dry_run: bool = False,
+    use_system: bool = False,
+    **ctx_run_kwargs: Any,
 ) -> int:
     _LOG.debug(hprint.to_str("cmd dry_run"))
     if use_one_line_cmd:
@@ -217,8 +222,13 @@ def _run(
         _LOG.warning("Skipping execution")
         res = None
     else:
-        result = ctx.run(cmd, *args, **ctx_run_kwargs)
-        res = result.return_code
+        if use_system:
+            # TODO(gp): Consider using only `hsystem.system()` since it's more
+            # reliable.
+            res = hsystem.system(cmd, suppress_output=False)
+        else:
+            result = ctx.run(cmd, *args, **ctx_run_kwargs)
+            res = result.return_code
     return res
 
 
@@ -1904,7 +1914,10 @@ def docker_login(ctx):  # type: ignore
         )
     # cmd = ("aws ecr get-login-password" +
     #       " | docker login --username AWS --password-stdin "
-    _run(ctx, cmd)
+    # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
+    #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
+    #  with `@task` decorator) do not work.
+    _run(ctx, cmd, use_system=True)
 
 
 def get_base_docker_compose_path() -> str:
@@ -2324,16 +2337,28 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
+    ctx,
+    base_image="",
+    stage="dev",
+    version="",
+    cmd="",
+    as_user=True,
+    use_bash=False,
+    container_dir_name=".",
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(
-        base_image, stage, version, cmd, use_bash=use_bash
+        base_image,
+        stage,
+        version,
+        cmd,
+        as_user=as_user,
+        use_bash=use_bash,
     )
     _docker_cmd(ctx, docker_cmd_)
 
