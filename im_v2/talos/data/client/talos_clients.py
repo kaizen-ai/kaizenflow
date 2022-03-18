@@ -165,8 +165,8 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         query: str,
         exchange_id: str,
         currency_pair: str,
-        start_ts: int,
-        end_ts: int,
+        start_unix_epoch: int,
+        end_unix_epoch: int,
     ) -> str:
         """
         Append a WHERE clause to the query.
