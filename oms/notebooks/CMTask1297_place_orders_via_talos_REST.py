@@ -41,7 +41,7 @@ import helpers.hprint as hprint
 import helpers.hsecrets as hsecret
 
 # %%
-hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 

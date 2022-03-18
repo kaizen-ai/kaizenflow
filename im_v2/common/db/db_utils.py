@@ -5,7 +5,7 @@ Import as:
 
 import im_v2.common.db.db_utils as imvcddbut
 """
-
+import argparse
 import logging
 from typing import Optional
 
@@ -19,6 +19,29 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
+
+
+def add_db_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """
+    Add the command line options for db table and stage.
+    """
+    parser.add_argument(
+        "--db_stage",
+        action="store",
+        required=True,
+        type=str,
+        help="DB stage to use",
+    )
+    parser.add_argument(
+        "--db_table",
+        action="store",
+        required=True,
+        type=str,
+        help="DB table to use",
+    )
+    return parser
 
 
 def get_common_create_table_query() -> str:
@@ -125,6 +148,7 @@ def create_im_database(
 
 
 class TestImDbHelper(hsqltest.TestDbHelper):
+
     @staticmethod
     def _get_compose_file() -> str:
         return "im_v2/devops/compose/docker-compose.yml"

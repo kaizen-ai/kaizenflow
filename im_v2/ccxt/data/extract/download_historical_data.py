@@ -29,6 +29,7 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
@@ -40,34 +41,6 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--start_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="Beginning of the downloaded period",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--exchange_id",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of exchange to download data from",
-    )
-    parser.add_argument(
-        "--universe",
-        action="store",
-        required=True,
-        type=str,
-        help="Trade universe to download data for",
-    )
-    parser.add_argument(
         "--sleep_time",
         action="store",
         type=int,
@@ -75,14 +48,14 @@ def _parse() -> argparse.ArgumentParser:
         help="Sleep time between currency pair downloads (in seconds).",
     )
     parser.add_argument("--incremental", action="store_true")
+    parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _run(args: argparse.Namespace) -> None:
-    # Connect to S3 filesystem.
-    fs = hs3.get_s3fs(args.aws_profile)
+    # Initialize exchange class.
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load trading universe.
     universe = imvccunun.get_trade_universe(args.universe)
@@ -118,17 +91,13 @@ def _run(args: argparse.Namespace) -> None:
             data,
             ["currency_pair"] + partition_cols,
             path_to_exchange,
-            filesystem=fs,
             partition_filename=None,
+            aws_profile=args.aws_profile,
         )
         # Sleep between iterations.
         time.sleep(args.sleep_time)
     # Merge all new parquet into a single `data.parquet`.
-    hparque.list_and_merge_pq_files(
-        path_to_exchange,
-        fs,
-        file_name="data.parquet",
-    )
+    hparque.list_and_merge_pq_files(path_to_exchange, aws_profile=args.aws_profile)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
