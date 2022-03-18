@@ -710,7 +710,7 @@ def git_create_branch(  # type: ignore
     issue_id=0,
     repo_short_name="current",
     suffix="",
-    only_branch_from_master=True,
+    skip_checks=False,
 ):
     """
     Create and push upstream branch `branch_name` or the one corresponding to
@@ -731,7 +731,7 @@ def git_create_branch(  # type: ignore
         - "current" (default): the current repo_short_name
         - short name (e.g., "amp", "lm") of the branch
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
-    :param only_branch_from_master: only allow to branch from master
+    :param skip_checks: disable any check (e.g., only branch from master)
     """
     _report_task()
     if issue_id > 0:
@@ -766,7 +766,8 @@ def git_create_branch(  # type: ignore
     hdbg.dassert(not m, "Branch names with only numbers are invalid")
     # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
     m = re.match(r"^\S+Task\d+_\S+$", branch_name)
-    hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
+    if not skip_checks:
+        hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
     hdbg.dassert(
         not hgit.does_branch_exist(branch_name, mode="all"),
         "The branch '%s' already exists",
@@ -774,11 +775,9 @@ def git_create_branch(  # type: ignore
     )
     # Make sure we are branching from `master`, unless that's what the user wants.
     curr_branch = hgit.get_branch_name()
-    if curr_branch != "master":
-        if only_branch_from_master:
-            hdbg.dfatal(
-                "You should branch from master and not from '%s'" % curr_branch
-            )
+    if not skip_checks:
+        hdbg.dassert_ne(curr_branch, "master",
+                "You should branch from master and not from '%s'", curr_branch)
     # Fetch master.
     cmd = "git pull --autostash"
     _run(ctx, cmd)
