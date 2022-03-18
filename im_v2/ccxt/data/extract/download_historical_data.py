@@ -19,10 +19,8 @@ import argparse
 import logging
 import os
 import time
-from typing import Any
 
 import pandas as pd
-import pyarrow.parquet as pq
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -31,93 +29,16 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
-
-
-def list_and_merge_pq_files(
-    root_dir: str, fs: Any, *, file_name: str = "data.parquet"
-) -> None:
-    """
-    Merge all files of the parquet dataset.
-
-    Can be generalized to any used partition.
-
-    The standard partition assumed is:
-
-    ```
-    root_dir/
-        currency_pair=ADA_USDT/
-            year=2021/
-                month=12/
-                    data.parquet
-            year=2022/
-                month=01/
-                    data.parquet
-        ...
-        currency_pair=EOS_USDT/
-            year=2021/
-                month=12/
-                    data.parquet
-            year=2022/
-                month=01/
-                    data.parquet
-    ```
-
-    :param root_dir: root directory of PQ dataset
-    :param fs: S3 filesystem columns on which the dataset is partitioned
-    :param file_name: name of the single resulting file
-    """
-    # TODO(Danya): Expand to local filesystem.
-    # Get full paths to each parquet file inside root dir.
-    parquet_files = fs.glob(f"{root_dir}/**.parquet")
-    _LOG.debug("Parquet files: '%s'", parquet_files)
-    # Get paths only to the lowest level of dataset folders.
-    dataset_folders = set(f.rsplit("/", 1)[0] for f in parquet_files)
-    for folder in dataset_folders:
-        # Get files per folder and merge if there are multiple ones.
-        folder_files = fs.ls(folder)
-        if len(folder_files) > 1:
-            # Read all files in target folder.
-            data = pq.ParquetDataset(folder_files, filesystem=fs).read()
-            # Remove all old files and write new, merged one.
-            fs.rm(folder, recursive=True)
-            pq.write_table(data, folder + "/" + file_name, filesystem=fs)
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser.add_argument(
-        "--start_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="Beginning of the downloaded period",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--exchange_id",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of exchange to download data from",
-    )
-    parser.add_argument(
-        "--universe",
-        action="store",
-        required=True,
-        type=str,
-        help="Trade universe to download data for",
     )
     parser.add_argument(
         "--sleep_time",
@@ -127,14 +48,14 @@ def _parse() -> argparse.ArgumentParser:
         help="Sleep time between currency pair downloads (in seconds).",
     )
     parser.add_argument("--incremental", action="store_true")
+    parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _run(args: argparse.Namespace) -> None:
-    # Connect to S3 filesystem.
-    fs = hs3.get_s3fs(args.aws_profile)
+    # Initialize exchange class.
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load trading universe.
     universe = imvccunun.get_trade_universe(args.universe)
@@ -170,17 +91,13 @@ def _run(args: argparse.Namespace) -> None:
             data,
             ["currency_pair"] + partition_cols,
             path_to_exchange,
-            filesystem=fs,
             partition_filename=None,
+            aws_profile=args.aws_profile,
         )
         # Sleep between iterations.
         time.sleep(args.sleep_time)
     # Merge all new parquet into a single `data.parquet`.
-    list_and_merge_pq_files(
-        path_to_exchange,
-        fs,
-        file_name="data.parquet",
-    )
+    hparque.list_and_merge_pq_files(path_to_exchange, aws_profile=args.aws_profile)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

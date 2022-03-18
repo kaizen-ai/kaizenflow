@@ -396,7 +396,7 @@ def reindex_on_unix_epoch(
     return df
 
 
-def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
+def get_df_signature(df: pd.DataFrame, num_rows: int = 6) -> str:
     """
     Compute a simple signature of a dataframe in string format.
 
@@ -405,15 +405,19 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     testing purposes.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
-    txt: List[str] = []
-    txt.append("df.shape=%s" % str(df.shape))
+    text: List[str] = ["df.shape=%s" % str(df.shape)]
     with pd.option_context(
         "display.max_colwidth", int(1e6), "display.max_columns", None
     ):
-        txt.append("df.head=\n%s" % df.head(num_rows))
-        txt.append("df.tail=\n%s" % df.tail(num_rows))
-    txt = "\n".join(txt)
-    return txt
+        # If dataframe size exceeds number of rows, show only subset in form of
+        # first and last rows. Otherwise, whole dataframe is shown.
+        if len(df) > num_rows:
+            text.append("df.head=\n%s" % df.head(num_rows // 2))
+            text.append("df.tail=\n%s" % df.tail(num_rows // 2))
+        else:
+            text.append("df.full=\n%s" % df)
+    text: str = "\n".join(text)
+    return text
 
 
 # #############################################################################

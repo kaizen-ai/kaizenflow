@@ -10,7 +10,6 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import im_v2.common.data.client as icdc
-import im_v2.common.universe.universe_utils as imvcuunut
 
 _LATEST_UNIVERSE_VERSION = "v03"
 
