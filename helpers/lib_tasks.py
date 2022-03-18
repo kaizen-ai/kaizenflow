@@ -206,7 +206,12 @@ use_one_line_cmd = False
 
 # TODO(Grisha): make it public #755.
 def _run(
-    ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any
+    ctx: Any,
+    cmd: str,
+    *args,
+    dry_run: bool = False,
+    use_system: bool = False,
+    **ctx_run_kwargs: Any,
 ) -> int:
     _LOG.debug(hprint.to_str("cmd dry_run"))
     if use_one_line_cmd:
@@ -217,8 +222,13 @@ def _run(
         _LOG.warning("Skipping execution")
         res = None
     else:
-        result = ctx.run(cmd, *args, **ctx_run_kwargs)
-        res = result.return_code
+        if use_system:
+            # TODO(gp): Consider using only `hsystem.system()` since it's more
+            # reliable.
+            res = hsystem.system(cmd, suppress_output=False)
+        else:
+            result = ctx.run(cmd, *args, **ctx_run_kwargs)
+            res = result.return_code
     return res
 
 
@@ -1904,7 +1914,10 @@ def docker_login(ctx):  # type: ignore
         )
     # cmd = ("aws ecr get-login-password" +
     #       " | docker login --username AWS --password-stdin "
-    _run(ctx, cmd)
+    # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
+    #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
+    #  with `@task` decorator) do not work.
+    _run(ctx, cmd, use_system=True)
 
 
 def get_base_docker_compose_path() -> str:
@@ -2324,16 +2337,28 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
+    ctx,
+    base_image="",
+    stage="dev",
+    version="",
+    cmd="",
+    as_user=True,
+    use_bash=False,
+    container_dir_name=".",
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(
-        base_image, stage, version, cmd, use_bash=use_bash
+        base_image,
+        stage,
+        version,
+        cmd,
+        as_user=as_user,
+        use_bash=use_bash,
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -4453,47 +4478,6 @@ def _parse_linter_output(txt: str) -> str:
 
 
 @task
-def lint_add_init_files(  # type: ignore
-    ctx,
-    dir_name=".",
-    dry_run=True,
-    run_bash=False,
-    stage="prod",
-    as_user=True,
-    out_file_name="lint_add_init_files.output.txt",
-):
-    """
-    Add the missing `__init__.py` in dirs with Python files.
-
-    For param descriptions, see `lint()`.
-
-    :param dir_name: path to the head directory to start the check from
-    :param dry_run:
-      - True: output a warning pointing to the dirs where `__init__.py`
-        files are missing
-      - False: create the required `__init__.py` files
-    """
-    _report_task()
-    # Remove the log file.
-    if os.path.exists(out_file_name):
-        cmd = f"rm {out_file_name}"
-        _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
-    # Prepare the command line.
-    docker_cmd_opts = [dir_name]
-    if dry_run:
-        docker_cmd_opts.append("--dry_run")
-    docker_cmd_ = "/app/linters/add_module_init.py " + _to_single_line_cmd(
-        docker_cmd_opts
-    )
-    # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
-    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
-    # Run.
-    _run(ctx, cmd)
-
-
-@task
 def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
@@ -4596,6 +4580,7 @@ def lint(  # type: ignore
     # CRLF end-lines remover...........................(no files to check)Skipped
     # Tabs remover.....................................(no files to check)Skipped
     # autoflake........................................(no files to check)Skipped
+    # add_python_init_files............................(no files to check)Skipped
     # amp_check_filename...............................(no files to check)Skipped
     # amp_isort........................................(no files to check)Skipped
     # amp_black........................................(no files to check)Skipped
@@ -4615,6 +4600,7 @@ def lint(  # type: ignore
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
             [
+                "add_python_init_files",
                 "amp_isort",
                 "amp_class_method_order",
                 "amp_normalize_import",
