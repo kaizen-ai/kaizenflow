@@ -4,7 +4,7 @@
 version: '3'
 
 services:
-  base_opt_app:
+  base_app:
     cap_add:
       - SYS_ADMIN
     # TODO(gp): @Grisha add these vars.
@@ -43,9 +43,9 @@ services:
     #       # memory is available.
     #       memory: 60G
 
-  opt_app:
+  app:
     extends:
-      base_opt_app
+      base_app
     # Default network mode set to host so we can reach e.g.
     # a database container pointing to localhost:5432.
     # In tests we use dind so we need set back to the default "bridge".
@@ -59,7 +59,7 @@ services:
     environment:
       - PORT=${PORT}
     extends:
-      opt_app
+      app
     network_mode: ${NETWORK_MODE:-bridge}
     ports:
       # TODO(gp): Rename `AM_PORT`.
