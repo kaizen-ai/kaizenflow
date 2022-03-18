@@ -261,7 +261,7 @@ def opt_docker_up(ctx, detach=True, base_image="", stage="dev", version=""):  # 
     """
     Start the optimizer as a service.
     """
-    # Build docker-compose up cmd.
+    # Build `docker-compose up` cmd.
     docker_up_cmd = _get_opt_docker_up_cmd(detach, base_image, stage, version)
     # Run.
     hlibtask._run(ctx, docker_up_cmd, pty=True)
@@ -306,7 +306,7 @@ def opt_docker_down(ctx, base_image="", stage="dev", version=""):  # type: ignor
     """
     Bring down the optimizer service.
     """
-    # Build docker-compose up cmd.
+    # Build `docker-compose down` cmd.
     docker_down_cmd = _get_opt_docker_down_cmd(base_image, stage, version)
     # Run.
     hlibtask._run(ctx, docker_down_cmd, pty=True)
