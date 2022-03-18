@@ -76,6 +76,10 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self._root_dir = root_dir
         self._aws_profile = aws_profile
 
+    @staticmethod
+    def should_be_online() -> None:
+        raise NotImplementedError
+
     def get_metadata(self) -> pd.DataFrame:
         """
         See description in the parent class.
@@ -128,9 +132,9 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         return data
 
 
-class RealTimeSQLTalosClient(TalosClient, icdc.ImClient):
+class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
     """
-    Retrieve real-time Talos data from SQL.
+    Retrieve real-time Talos data from DB using SQL queries.
     """
 
     def __init__(
@@ -141,6 +145,13 @@ class RealTimeSQLTalosClient(TalosClient, icdc.ImClient):
         super().__init__()
         self._db_connection = db_connection
         self._table_name = table_name
+
+    @staticmethod
+    def should_be_online() -> bool:
+        """
+        The real-time system for Talos should always be online.
+        """
+        return True
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
@@ -164,9 +175,9 @@ class RealTimeSQLTalosClient(TalosClient, icdc.ImClient):
         raise NotImplementedError
 
     @staticmethod
-    def _apply_talos_sql_normalization(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
-        Apply normalization to data:
+        Apply Talos-specific normalization:
 
         - Convert `timestamp` column to a UTC timestamp and set index
         - Drop extra columns (e.g. `id` created by the DB).
@@ -179,7 +190,7 @@ class RealTimeSQLTalosClient(TalosClient, icdc.ImClient):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
         *,
-        full_symbol_col_name: str = "full_symbol",  # This is the column that will appear in the output.
+        full_symbol_col_name: str = "full_symbol",  # This is the column to appear in the output.
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
