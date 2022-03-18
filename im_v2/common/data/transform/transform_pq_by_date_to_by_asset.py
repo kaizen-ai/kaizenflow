@@ -39,17 +39,15 @@ dst_dir/
     --num_threads 2
 
 # To process Parquet data for LimeTask317:
-> transform_pq_by_date_to_by_asset.py \
-    --src_dir $DST_DIR \
-    --dst_dir ${DST_DIR}_out \
+> im_v2/common/data/transform/transform_pq_by_date_to_by_asset.py \
+    --src_dir 's3://cryptokaizen-data/unit_test/parquet/' \
+    --dst_dir 's3://cryptokaizen-data/unit_test/parquet/test_out/' \
     --no_incremental --force \
     --num_threads serial \
-    --transform_func_name _LimeTask317 \
+    --prepare_tasks_func_name lime317_prepare_tasks \
+    --execute_task_func_name lime317_execute_task \
+    --aws_profile 'ck'
     -v DEBUG
-
-Import as:
-
-import im_v2.common.data.transform.transform_pq_by_date_to_by_asset as imvcdttpbdtba
 """
 
 import argparse
@@ -339,6 +337,7 @@ def _prepare_tasks(src_file_names: List[str], args: Any) -> List[hjoblib.Task]:
         _LOG.debug(hprint.to_str("src_dst_file_names"))
         # The interface for the function called is:
         # def _process_chunk(src_dst_file_names: List[Tuple[str, str]])
+        # TODO(Nikola): Reintroduce _process_chunk?
         task: hjoblib.Task = (
             # args.
             (src_dst_file_names,),
@@ -352,26 +351,20 @@ def _prepare_tasks(src_file_names: List[str], args: Any) -> List[hjoblib.Task]:
 # #############################################################################
 
 
-# TODO(gp): Move to hparquet.py
-def _get_parquet_filenames(src_dir: str) -> List[str]:
-    """
-    Generate a list of all the Parquet files in a given dir.
-    """
-    hdbg.dassert_dir_exists(src_dir)
-    # Find all the files with extension `.parquet` or `.pq`.
-    src_pq_files = hio.find_files(src_dir, "*.parquet")
-    if not src_pq_files:
-        src_pq_files = hio.find_files(src_dir, "*.pq")
-    hdbg.dassert_lte(1, len(src_pq_files))
-    return src_pq_files
-
-
 def _run(args: argparse.Namespace) -> None:
     incremental = not args.no_incremental
     # Prepare the destination dir.
-    hparser.create_incremental_dir(args.dst_dir, args)
+    if args.aws_profile:
+        # TODO(Nikola): CMTask1439 Add S3 support to hparser's `create_incremental_dir`.
+        raise NotImplementedError("Incremental on S3 is not implemented!")
+    else:
+        hparser.create_incremental_dir(args.dst_dir, args)
     # Get the input files to process.
-    src_file_names = _get_parquet_filenames(args.src_dir)
+    pattern = "*.parquet"
+    src_file_names = hio.find_files(
+        args.src_dir, pattern, aws_profile=args.aws_profile
+    )
+    hdbg.dassert_lte(1, len(src_file_names))
     _LOG.info("Found %s Parquet files in '%s'", len(src_file_names), args.src_dir)
     # Prepare the tasks.
     func = hintros.get_function_from_string(args.prepare_tasks_func_name)
@@ -422,8 +415,15 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         help="Destination directory where transformed Parquet files will be stored",
     )
-    hparser.add_parallel_processing_arg(parser)
-    hparser.add_verbosity_arg(parser)
+    parser.add_argument(
+        "--aws_profile",
+        action="store",
+        type=str,
+        default=None,
+        help="The AWS profile to use for `.aws/credentials` or for env vars",
+    )
+    parser = hparser.add_parallel_processing_arg(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser
 
 

@@ -63,12 +63,13 @@ def from_parquet(
     hdbg.dassert_isinstance(file_name, str)
     if aws_profile is not None:
         hdbg.dassert(hs3.is_s3_path(file_name))
-        fs = get_pyarrow_s3fs(aws_profile)
+        filesystem = get_pyarrow_s3fs(aws_profile)
+        # Pyarrow S3FileSystem does not have `exists` method.
+        s3_filesystem = hs3.get_s3fs(aws_profile)
+        hs3.dassert_s3_exists(file_name, s3_filesystem)
         file_name = file_name.lstrip("s3://")
-        # TODO(Danya): pyarrow S3FileSystem does not have `exists` method
-        #  for assertion.
     else:
-        fs = None
+        filesystem = None
         hdbg.dassert_exists(file_name)
     # Load data.
     with htimer.TimedScope(
@@ -77,7 +78,7 @@ def from_parquet(
         dataset = pq.ParquetDataset(
             # Replace URI with path.
             file_name,
-            filesystem=fs,
+            filesystem=filesystem,
             filters=filters,
             use_legacy_dataset=False,
         )
@@ -134,22 +135,32 @@ def _create_enclosing_dir(file_name: str) -> str:
     return dir_name
 
 
-# TODO(gp): @Nikola allow to read / write from S3 passing aws_profile like done
-#  in the rest of the code.
 def to_parquet(
     df: pd.DataFrame,
     file_name: str,
     *,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
+    aws_profile: Optional[str] = None,
 ) -> None:
     """
     Save a dataframe as Parquet.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(file_name, str)
-    hdbg.dassert_file_extension(file_name, ["pq", "parquet"])
-    _create_enclosing_dir(file_name)
+    if aws_profile is not None:
+        hdbg.dassert(hs3.is_s3_path(file_name))
+        filesystem = hs3.get_s3fs(aws_profile)
+        hs3.dassert_s3_exists(file_name, filesystem)
+        file_name = file_name.lstrip("s3://")
+    else:
+        filesystem = None
+        hdbg.dassert_not_exists(file_name)
+    hdbg.dassert_file_extension(file_name, "parquet")
+    # There is no concept of directory on S3.
+    # Only applicable to local filesystem.
+    if aws_profile is None:
+        _create_enclosing_dir(file_name)
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
@@ -159,9 +170,10 @@ def to_parquet(
         logging.DEBUG, f"# Writing Parquet file '{file_name}'"
     ) as ts:
         table = pa.Table.from_pandas(df)
-        pq.write_table(table, file_name)
+        pq.write_table(table, file_name, filesystem=filesystem)
     # Report stats about the Parquet file size.
-    if report_stats:
+    # TODO(Nikola): CMTask1437 Extend hsystem.du to support S3.
+    if report_stats and aws_profile is None:
         file_size = hsystem.du(file_name, human_format=True)
         _LOG.log(
             log_level,
@@ -564,8 +576,8 @@ def to_partitioned_parquet(
     partition_columns: List[str],
     dst_dir: str,
     *,
-    filesystem=None,
     partition_filename: Union[Callable, None] = lambda x: "data.parquet",
+    aws_profile: Optional[str] = None,
 ) -> None:
     """
     Save the given dataframe as Parquet file partitioned along the given
@@ -574,8 +586,8 @@ def to_partitioned_parquet(
     :param df: dataframe
     :param partition_columns: partitioning columns
     :param dst_dir: location of partitioned dataset
-    :param filesystem: filesystem to use (e.g. S3FS), if None, local FS is assumed
     :param partition_filename: a callable to override standard partition names. None for `uuid`.
+    :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
 
     E.g., in case of partition using `date`, the file layout looks like:
     ```
@@ -609,6 +621,10 @@ def to_partitioned_parquet(
                     data.parquet
     ```
     """
+    # Use either S3 or local filesystem.
+    filesystem = None
+    if aws_profile is not None:
+        filesystem = hs3.get_s3fs(aws_profile)
     with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
         # Read.
         table = pa.Table.from_pandas(df)
@@ -628,7 +644,10 @@ def to_partitioned_parquet(
 # TODO(Nikola): Currently indirectly tested in
 #  `im_v2/ccxt/data/extract/test/test_download_historical_data.py`.
 def list_and_merge_pq_files(
-    root_dir: str, s3fs_: Any, *, file_name: str = "data.parquet"
+    root_dir: str,
+    *,
+    file_name: str = "data.parquet",
+    aws_profile: Optional[str] = None,
 ) -> None:
     """
     Merge all files of the Parquet dataset.
@@ -657,17 +676,21 @@ def list_and_merge_pq_files(
     ```
 
     :param root_dir: root directory of Parquet dataset
-    :param s3fs_: S3 filesystem columns on which the dataset is partitioned
     :param file_name: name of the single resulting file
+    :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
     """
+    if aws_profile is not None:
+        filesystem = hs3.get_s3fs(aws_profile)
+    else:
+        raise NotImplementedError("Local filesystem is not implemented!")
     # Get full paths to each Parquet file inside root dir.
-    parquet_files = s3fs_.glob(f"{root_dir}/**.parquet")
+    parquet_files = filesystem.glob(f"{root_dir}/**.parquet")
     _LOG.debug("Parquet files: '%s'", parquet_files)
     # Get paths only to the lowest level of dataset folders.
     dataset_folders = set(f.rsplit("/", 1)[0] for f in parquet_files)
     for folder in dataset_folders:
         # Get files per folder and merge if there are multiple ones.
-        folder_files = s3fs_.ls(folder)
+        folder_files = filesystem.ls(folder)
         hdbg.dassert_ne(
             len(folder_files), 0, msg=f"Empty folder `{folder}` detected!"
         )
@@ -675,10 +698,10 @@ def list_and_merge_pq_files(
             # If there is already single `data.parquet` file, no action is required.
             continue
         # Read all files in target folder.
-        data = pq.ParquetDataset(folder_files, filesystem=s3fs_).read()
+        data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
         # Remove all old files and write new, merged one.
-        s3fs_.rm(folder, recursive=True)
-        pq.write_table(data, folder + "/" + file_name, filesystem=s3fs_)
+        filesystem.rm(folder, recursive=True)
+        pq.write_table(data, folder + "/" + file_name, filesystem=filesystem)
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:
