@@ -171,3 +171,30 @@ def opt_docker_jupyter(  # type: ignore
         self_test=self_test,
         container_dir_name=_OPTIMIZER_DIR,
     )
+
+
+@task
+def opt_docker_cmd(  # type: ignore
+    ctx,
+    base_image="",
+    stage="dev",
+    version="",
+    cmd="",
+    as_user=True,
+    use_bash=False,
+):
+    """
+    Run a command inside the `opt` container corresponding to a stage.
+
+    See corresponding invoke target for the main container.
+    """
+    hlibtask.docker_cmd(
+        ctx,
+        base_image=base_image,
+        stage=stage,
+        version=version,
+        cmd=cmd,
+        as_user=as_user,
+        use_bash=use_bash,
+        container_dir_name=_OPTIMIZER_DIR,
+    )
