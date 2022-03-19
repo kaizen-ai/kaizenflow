@@ -36,7 +36,7 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # Wait for Docker to be started, otherwise `docker.sock` file is not created
     # so fast. This is needed to change `docker.sock` permissions.
 
-    python3 <<EOF
+        python3 <<EOF
 import pathlib
 import subprocess
 import time
