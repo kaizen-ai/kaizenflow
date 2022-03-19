@@ -46,6 +46,12 @@ class HistoricalPqByTileClient(
         self._root_dir_name = root_dir_name
         self._partition_mode = partition_mode
 
+    def get_metadata(self) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],

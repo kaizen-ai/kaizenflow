@@ -49,11 +49,9 @@ def _generate_test_data(
 
 class MockHistoricalByTile(imvcdchpcl.HistoricalPqByTileClient):
     def get_universe(self) -> List[str]:
-        return ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        return ["1467591036", "1508924190"]
 
 
-# TODO(gp): @Nikola fix and enable the tests
-@pytest.mark.skip("Some tests are returning an empty df")
 class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     # TODO(gp): @Nikola factor out the common code in the tests so that
     #  it's clear what exactly each method is testing, e.g.,
@@ -71,15 +69,15 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "1467591036"
         expected_length = 4320
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": [1467591036]}
+        expected_column_unique_values = {"full_symbol": ["1467591036"]}
         expected_signature = r"""# df=
         index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
         columns=full_symbol,close,year,month
@@ -115,15 +113,15 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols = ["1467591036", "1508924190"]
         expected_length = 8640
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": [1467591036, 1508924190]}
+        expected_column_unique_values = {"full_symbol": ["1467591036", "1508924190"]}
         expected_signature = r"""# df=
         index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
         columns=full_symbol,close,year,month
@@ -159,15 +157,15 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols = ["1467591036", "1508924190"]
         expected_length = 2640
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": [1467591036, 1508924190]}
+        expected_column_unique_values = {"full_symbol": ["1467591036", "1508924190"]}
         expected_signature = r"""# df=
         index=[2022-01-01 02:00:00+00:00, 2022-01-01 23:59:00+00:00]
         columns=full_symbol,close,year,month
@@ -205,15 +203,15 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols = ["1467591036", "1508924190"]
         expected_length = 6002
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": [1467591036, 1508924190]}
+        expected_column_unique_values = {"full_symbol": ["1467591036", "1508924190"]}
         expected_signature = r"""# df=
         index=[2021-12-30 00:00:00+00:00, 2022-01-01 02:00:00+00:00]
         columns=full_symbol,close,year,month
@@ -251,15 +249,15 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols = ["1467591036", "1508924190"]
         expected_length = 242
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": [1467591036, 1508924190]}
+        expected_column_unique_values = {"full_symbol": ["1467591036", "1508924190"]}
         expected_signature = r"""# df=
         index=[2021-12-31 23:00:00+00:00, 2022-01-01 01:00:00+00:00]
         columns=full_symbol,close,year,month
@@ -299,7 +297,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
@@ -321,12 +319,12 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "1467591036"
         expected_start_timestamp = pd.Timestamp("2021-12-30 00:00:00+00:00")
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_timestamp
@@ -345,12 +343,12 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         im_client = MockHistoricalByTile(
             vendor, asset_column_name, test_dir, partition_mode
         )
         # Compare the expected values.
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "1467591036"
         expected_end_timestamp = pd.Timestamp("2021-12-31 23:59:00+00:00")
         self._test_get_end_ts_for_symbol1(
             im_client, full_symbol, expected_end_timestamp
@@ -361,7 +359,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_get_universe1(self) -> None:
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "asset_id"
+        asset_column_name = "full_symbol"
         test_dir = "dummy"
         partition_mode = "by_year_month"
         im_client = MockHistoricalByTile(
@@ -369,7 +367,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Compare the expected values.
         expected_length = 2
-        expected_first_elements = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        expected_first_elements = ["1467591036", "1508924190"]
         expected_last_elements = expected_first_elements
         self._test_get_universe1(
             im_client,

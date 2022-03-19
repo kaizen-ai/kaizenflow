@@ -44,7 +44,7 @@ class ParquetDataFrameGenerator:
     ASSET_COLUMN_NAME_MAP = {
         "basic": "asset",
         "verbose_open": "ticker",
-        "cm_task_1103": "asset_id",
+        "cm_task_1103": "full_symbol",
     }
 
     def __init__(
@@ -205,10 +205,10 @@ class ParquetDataFrameGenerator:
 
         :return: updated core dataframe as presented below
         ```
-                    asset_id   close
-        2000-01-01     10689     100
-        2000-01-02     10689     200
-        2000-01-03     10689     300
+                    full_symbol   close
+        2000-01-01        10689     100
+        2000-01-02        10689     200
+        2000-01-03        10689     300
         ```
         """
         asset_dataframes = self._get_core_dataframes()
