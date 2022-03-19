@@ -74,8 +74,8 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         """
         super().__init__()
         self._root_dir = root_dir
-        self._aws_profile = aws_profile
         self._version = version
+        self._aws_profile = aws_profile
 
     def get_metadata(self) -> pd.DataFrame:
         """
