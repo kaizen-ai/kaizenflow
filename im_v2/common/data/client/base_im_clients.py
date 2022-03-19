@@ -78,6 +78,7 @@ class ImClient(abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: str = "full_symbol",
+        resample: bool = True,
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
@@ -91,6 +92,7 @@ class ImClient(abc.ABC):
             - `None` means end at the end of the available data
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
+        :param resample: allow to switch off resampling when needed
         :return: combined data for all the requested symbols
         """
         _LOG.debug(
@@ -138,7 +140,7 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, start_ts, end_ts
+                df_tmp, full_symbol_col_name, start_ts, end_ts, resample
             )
             self._dassert_output_data_is_valid(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
@@ -282,6 +284,7 @@ class ImClient(abc.ABC):
         full_symbol_col_name: str,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        resample: bool = True,
     ) -> pd.DataFrame:
         """
         Apply normalizations to IM data.
@@ -302,8 +305,9 @@ class ImClient(abc.ABC):
         df = hpandas.trim_df(
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
-        # 3) Resample index to 1 min frequency
-        df = hpandas.resample_df(df, "T")
+        # 3) Resample index to 1 min frequency if specified.
+        if resample:
+            df = hpandas.resample_df(df, "T")
         # Fill NaN values appeared after resampling in full symbol column.
         # Combination of full symbol and timestamp is a unique identifier,
         # so full symbol cannot be NaN.
