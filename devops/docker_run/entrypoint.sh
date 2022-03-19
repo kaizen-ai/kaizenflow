@@ -39,6 +39,7 @@ if [[ $ENABLE_DIND == 1 ]]; then
         python3 <<EOF
 import pathlib
 import subprocess
+import time
 
 path = pathlib.Path('/var/run/docker.sock')
 while not path.exists():
