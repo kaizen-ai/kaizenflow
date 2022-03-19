@@ -71,8 +71,6 @@ class ImClient(abc.ABC):
             self._build_asset_id_to_full_symbol_mapping()
         )
 
-    # /////////////////////////////////////////////////////////////////////////
-
     @staticmethod
     @abc.abstractmethod
     def get_universe() -> List[imvcdcfusy.FullSymbol]:
@@ -231,6 +229,8 @@ class ImClient(abc.ABC):
             for asset_id in asset_ids
         ]
         return full_symbols
+
+    # /////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _apply_im_normalizations(
