@@ -71,6 +71,38 @@ class ImClient(abc.ABC):
             self._build_asset_id_to_full_symbol_mapping()
         )
 
+    # /////////////////////////////////////////////////////////////////////////
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+        """
+        Return the entire universe of valid full symbols.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+
+    @staticmethod
+    def get_asset_ids_from_full_symbols(
+        full_symbols: List[imvcdcfusy.FullSymbol],
+    ) -> List[int]:
+        """
+        Convert full symbols into asset ids.
+
+        :param full_symbols: assets as full symbols
+        :return: assets as numerical ids
+        """
+        numerical_asset_id = [
+            imvcuunut.string_to_numerical_id(full_symbol)
+            for full_symbol in full_symbols
+        ]
+        return numerical_asset_id
+
     def read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -200,84 +232,6 @@ class ImClient(abc.ABC):
         ]
         return full_symbols
 
-    # /////////////////////////////////////////////////////////////////////////
-
-    @staticmethod
-    @abc.abstractmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
-        """
-        Return the entire universe of valid full symbols.
-        """
-
-    @staticmethod
-    @abc.abstractmethod
-    def get_metadata() -> pd.DataFrame:
-        """
-        Return metadata.
-        """
-
-    @staticmethod
-    def get_asset_ids_from_full_symbols(
-        full_symbols: List[imvcdcfusy.FullSymbol],
-    ) -> List[int]:
-        """
-        Convert full symbols into asset ids.
-
-        :param full_symbols: assets as full symbols
-        :return: assets as numerical ids
-        """
-        numerical_asset_id = [
-            imvcuunut.string_to_numerical_id(full_symbol)
-            for full_symbol in full_symbols
-        ]
-        return numerical_asset_id
-
-    # //////////////////////////////////////////////////////////////////////////
-
-    @abc.abstractmethod
-    def _read_data(
-        self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        *,
-        full_symbol_col_name: str = "full_symbol",
-        **kwargs: Dict[str, Any],
-    ) -> pd.DataFrame:
-        ...
-
-    def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
-        """
-        Build asset id to full symbol mapping.
-        """
-        # Get full symbol universe.
-        full_symbol_universe = self.get_universe()
-        # Build the mapping.
-        asset_id_to_full_symbol_mapping = (
-            imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
-        )
-        return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
-
-    def _get_start_end_ts_for_symbol(
-        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
-    ) -> pd.Timestamp:
-        _LOG.debug(hprint.to_str("full_symbol"))
-        # Read data for the entire period of time available.
-        start_timestamp = None
-        end_timestamp = None
-        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
-        # Assume that the timestamp is always stored as index.
-        if mode == "start":
-            timestamp = data.index.min()
-        elif mode == "end":
-            timestamp = data.index.max()
-        else:
-            raise ValueError("Invalid mode='%s'" % mode)
-        #
-        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
-        hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
-        return timestamp
-
     @staticmethod
     def _apply_im_normalizations(
         df: pd.DataFrame,
@@ -355,6 +309,52 @@ class ImClient(abc.ABC):
             hdbg.dassert_lte(start_ts, df.index.min())
         if end_ts:
             hdbg.dassert_lte(df.index.max(), end_ts)
+
+    # //////////////////////////////////////////////////////////////////////////
+
+    @abc.abstractmethod
+    def _read_data(
+        self,
+        full_symbols: List[imvcdcfusy.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        *,
+        full_symbol_col_name: str = "full_symbol",
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
+        ...
+
+    def _build_asset_id_to_full_symbol_mapping(self) -> Dict[int, str]:
+        """
+        Build asset id to full symbol mapping.
+        """
+        # Get full symbol universe.
+        full_symbol_universe = self.get_universe()
+        # Build the mapping.
+        asset_id_to_full_symbol_mapping = (
+            imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
+        )
+        return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
+
+    def _get_start_end_ts_for_symbol(
+        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+    ) -> pd.Timestamp:
+        _LOG.debug(hprint.to_str("full_symbol"))
+        # Read data for the entire period of time available.
+        start_timestamp = None
+        end_timestamp = None
+        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
+        # Assume that the timestamp is always stored as index.
+        if mode == "start":
+            timestamp = data.index.min()
+        elif mode == "end":
+            timestamp = data.index.max()
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
+        #
+        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+        hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
+        return timestamp
 
 
 # #############################################################################
