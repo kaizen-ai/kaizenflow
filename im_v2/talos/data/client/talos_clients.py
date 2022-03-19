@@ -162,9 +162,8 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
 
     @staticmethod
     def _build_select_query(
-        query: str,
-        exchange_id: str,
-        currency_pair: str,
+        exchange_ids: List[str],
+        currency_pairs: List[str],
         start_unix_epoch: int,
         end_unix_epoch: int,
     ) -> str:
