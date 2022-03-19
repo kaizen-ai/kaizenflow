@@ -49,6 +49,7 @@ def _generate_test_data(
 
 class MockHistoricalByTile(imvcdchpcl.HistoricalPqByTileClient):
     def get_universe(self) -> List[str]:
+        # TODO(Dan): Replace numeric ids to full symbols everywhere in the file.
         return ["1467591036", "1508924190"]
 
 

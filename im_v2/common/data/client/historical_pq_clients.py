@@ -30,6 +30,8 @@ class HistoricalPqByTileClient(
     def __init__(
         self,
         vendor: str,
+        # TODO(Dan): Consider removal of this parameter from clasc ctor since
+        #  it is not used for data loading.
         full_symbol_col_name: str,
         root_dir_name: str,
         partition_mode: str,

@@ -199,6 +199,9 @@ class ParquetDataFrameGenerator:
             asset_dataframe.insert(loc=7, column="id", value=id_)
         return self._wrap_all_assets_df(asset_dataframes)
 
+    # TODO(Dan): Rename this function and the corresponding code lines so
+    #  it is clear what this actaully is used for, e.g.,
+    #  -> _get_im_dataframe().
     def _get_cm_task_1103_dataframe(self) -> pd.DataFrame:
         """
         Update core dataframes with additional columns.
