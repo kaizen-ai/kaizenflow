@@ -63,6 +63,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self,
         root_dir: str,
         *,
+        version: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
