@@ -39,7 +39,7 @@ hprint.config_notebook()
 # ## Functions
 
 # %%
-def get_data_from_talos_query(start_time, end_time):
+def get_data_from_talos_db(start_time, end_time):
     # Set start and end dates.
     start_timestamp = pd.Timestamp(start_time)
     end_timestamp = pd.Timestamp(end_time)
@@ -82,25 +82,32 @@ def get_data_from_talos_client(start_time, end_time):
 
 
 # %% [markdown]
-# # Talos query
+# # Talos DB
 
 # %%
 # Initialize extractor.
 talos_extract = imvtdeexcl.TalosExchange("sandbox")
 
 # %%
-data_talos_query = get_data_from_talos_query(
-    "2022-01-01T10:00:24.000000Z", "2022-01-01T10:07:15.000000Z"
+data_talos_db = get_data_from_talos_db(
+    "2022-01-01T10:00:24.000000Z", "2022-01-01T10:08:00.000000Z"
 )
-data_talos_query.head(3)
+display(data_talos_db.head(3))
+display(data_talos_db.tail(3))
 
 # %% [markdown]
 # ### Talos query summary
 
 # %% [markdown]
-# - If proposing query for __a complete minute__ (e.g., 10:00:00) - it starts with __exactly mentioned timestamp__ (i.e., 10:00:00).
-# - If proposing query for __an incomplete minute__ (e.g., 10:00:36 or 10:00:24) - it starts with __mentioned timestamp + 1min__ (i.e., 10:01:00).
+# Beginning
+# - If proposing query for __a complete minute__ (e.g., __10:00:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:00:00__).
+# - If proposing query for __an incomplete minute__ (e.g., __10:00:36 or 10:00:24__) - it starts with __mentioned timestamp + 1min__ (i.e., __10:01:00__).
 #    - Since the ohlcv output is blank (equal to zero), it's hard to understand whether volume or prices data changes during incomplete minute query.
+#    
+# End
+# - If proposing query for __a complete minute__ (e.g., __10:07:00__) - it starts with __exactly mentioned timestamp - 1min__ (i.e., __10:06:00__).
+# - If proposing query for __an incomplete minute__ (e.g., __10:07:36 or 10:07:24__) - it starts with __exactly mentioned timestamp__ (i.e., __10:07:00__).
+# - If proposing query for __previous minute + 1min__ (e.g., __10:08:00__) - it starts with __exactly mentioned timestamp - 1min__ (i.e., __10:07:00__).   
 
 # %% [markdown]
 # # Current CCXT client
@@ -118,19 +125,26 @@ ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
 
 # %% run_control={"marked": false}
 data_ccxt_client = get_data_from_ccxt_client(
-    "2020-01-01 10:00:02", "2020-01-01 10:07:15"
+    "2020-01-01 10:00:02", "2020-01-01 10:08:00"
 )
 
 # %%
-data_ccxt_client.head(4)
+display(data_ccxt_client.head(3))
+display(data_ccxt_client.tail(3))
 
 # %% [markdown]
 # ### Current CCXT client summary
 
 # %% [markdown]
-# - If proposing query for __a complete minute__ (e.g., 10:00:00) - it starts with __exactly mentioned timestamp__ (i.e., 10:00:00+00:00).
-# - If proposing query for __an incomplete minute__ (e.g., 10:00:36 or 10:00:24) - it starts with __mentioned timestamp + 1min__ (i.e., 10:01:00).
+# Beginning
+# - If proposing query for __a complete minute__ (e.g., __10:00:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:00:00+00:00__).
+# - If proposing query for __an incomplete minute__ (e.g., __10:00:36 or 10:00:24__) - it starts with __mentioned timestamp + 1min__ (i.e., __10:01:00__).
 #    - - Since the ohlcv output is available, one can check through volume or prices data that changing the query within a minute (e.g., 10:00:02 or 10:00:45) doesn't affect the numbers, so it means that the timestamp indicates the end of time period.
+#    
+# End
+# - If proposing query for __a complete minute__ (e.g., __10:07:00__) - it starts with __exactly mentioned timestamp__ (i.e., 10:07:00).
+# - If proposing query for __an incomplete minute__ (e.g., __10:07:36 or 10:07:24__) - it starts with __exactly mentioned timestamp__ (i.e., __10:07:00__).
+# - If proposing query for __previous minute + 1min__ (e.g., __10:08:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:08:00__).   
 
 # %% [markdown]
 # # Current implemented Talos client
@@ -159,14 +173,21 @@ def get_data_from_talos_client(start_time, end_time):
 
 # %%
 data_talos_client = get_data_from_talos_client(
-    "2022-01-01 10:00:00", "2022-01-01 10:07:15"
+    "2022-01-01 10:00:00", "2022-01-01 10:07:45"
 )
-data_talos_client.head(3)
+display(data_talos_client.head(3))
+display(data_talos_client.tail(3))
 
 # %% [markdown]
 # ### Talos client summary
 
 # %% [markdown]
-# - If proposing query for __a complete minute__ (e.g., 10:00:00) - it starts with __exactly mentioned timestamp__ (i.e., 10:00:00+00:00).
-# - If proposing query for __an incomplete minute__ (e.g., 10:00:36 or 10:00:24) - it starts with __mentioned timestamp + 1min__ (i.e., 10:01:00).
-#    - - Since the ohlcv output is available, one can check through volume or prices data that changing the query within a minute (e.g., 10:00:02 or 10:00:45) doesn't affect the numbers, so it means that the timestamp indicates end of time period.
+# Beginning
+# - If proposing query for __a complete minute__ (e.g., __10:00:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:00:00__).
+# - If proposing query for __an incomplete minute__ (e.g., __10:00:36 or 10:00:24__) - it starts with __mentioned timestamp + 1min__ (i.e., __10:01:00__).
+#    - Since the ohlcv output is available, one can check through volume or prices data that changing the query within a minute (e.g., 10:00:02 or 10:00:45) doesn't affect the numbers, so it means that the timestamp indicates end of time period.
+#
+# End
+# - If proposing query for __a complete minute__ (e.g., __10:07:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:07:00__).
+# - If proposing query for __an incomplete minute__ (e.g., __10:07:36 or 10:07:24__) - it starts with __exactly mentioned timestamp__ (i.e., __10:07:00__).
+# - If proposing query for __previous minute +1min__ (e.g., __10:08:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:08:00__).
