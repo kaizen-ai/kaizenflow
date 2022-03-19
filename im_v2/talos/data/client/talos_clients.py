@@ -162,7 +162,17 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         raise NotImplementedError
 
     @staticmethod
+    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization:
+
+        - Convert `timestamp` column to a UTC timestamp and set index
+        - Drop extra columns (e.g. `id` created by the DB).
+        """
+        raise NotImplementedError
+
     def _build_select_query(
+        self,
         exchange_ids: List[str],
         currency_pairs: List[str],
         start_unix_epoch: int,
@@ -184,19 +194,27 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         hdbg.dassert_lte(
             start_unix_epoch,
             end_unix_epoch,
-            msg="Start unix epoch should be smaller then end unix epoch",
+            msg="Start unix epoch should be smaller then end ",
+        )
+        # Transform `exchange_ids` and `currency_pairs` into a string.
+        in_exchange_ids = (
+            "("
+            + ",".join([f"'{exchange_id}'" for exchange_id in exchange_ids])
+            + ")"
+        )
+        in_currency_pairs = (
+            "("
+            + ",".join([f"'{currency_pair}'" for currency_pair in currency_pairs])
+            + ")"
+        )
+        # Build a WHERE query
+        query = (
+            f"SELECT * FROM '{self._table_name}' WHERE timestamp >= {start_unix_epoch}"
+            f" AND timestamp <= {end_unix_epoch}"
+            f" AND exchange_id IN"
+            f" {in_exchange_ids} AND currency_pair IN {in_currency_pairs}"
         )
         return query
-
-    @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization:
-
-        - Convert `timestamp` column to a UTC timestamp and set index
-        - Drop extra columns (e.g. `id` created by the DB).
-        """
-        raise NotImplementedError
 
     def _read_data_for_multiple_symbols(
         self,
