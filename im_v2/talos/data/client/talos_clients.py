@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -170,8 +171,22 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         Append a WHERE clause to the query.
         """
-        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
-        raise NotImplementedError
+        hdbg.dassert_isinstance(
+            start_unix_epoch,
+            int,
+            msg="Start unix epoch should be an int, e.g. 1647470940000",
+        )
+        hdbg.dassert_isinstance(
+            end_unix_epoch,
+            int,
+            msg="End unix epoch should be an int, e.g. 1647470940000",
+        )
+        hdbg.dassert_lte(
+            start_unix_epoch,
+            end_unix_epoch,
+            msg="Start unix epoch should be smaller then end unix epoch",
+        )
+        return query
 
     @staticmethod
     def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
