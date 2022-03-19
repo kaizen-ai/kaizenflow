@@ -1,0 +1,9 @@
+IMAGE=$AM_ECR_BASE_PATH/amp_test:dev-1.0.0 \
+docker-compose \
+--file $GIT_ROOT/devops/compose/docker-compose.yml \
+--env-file devops/env/default.env \
+run \
+--rm \
+--name $USER_NAME.amp_test.app.20220318_204140 \
+app \
+bash -c 'ls && cd ..'

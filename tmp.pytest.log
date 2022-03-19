@@ -1,0 +1,9 @@
+16:41:40 - [36mINFO [0m hunit_test.py setUp:989            16:41:40 - [36mINFO [0m hunit_test.py setUp:989            
+################################################################################
+TestLibTasksGetDockerCmd1.test_docker_bash5
+################################################################################
+16:41:40 - [31mERROR[0m hunit_test.py assert_equal:900                         16:41:40 - [31mERROR[0m hunit_test.py assert_equal:900                         
+================================================================================
+Test 'TestLibTasksGetDockerCmd1.test_docker_bash5' failed
+================================================================================
+16:41:40 - [36mINFO [0m hunit_test.py assert_equal:932                         16:41:40 - [36mINFO [0m hunit_test.py assert_equal:932                         Saved exp_var in tmp.exp_var.txt

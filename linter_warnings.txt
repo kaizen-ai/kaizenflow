@@ -1,0 +1,55 @@
+17:03:4:[amp_normalize_import] - [33mWARN [0m amp_normalize_import.py _remove_import_from_docstring_text:846 The docstring must end with the import line: all comments after the import line will be removed.
+helpers/lib_tasks.py:1160:[amp_pylint] [C0301(line-too-long), ] Line too long (119/100)
+helpers/lib_tasks.py:1401:[amp_mypy] error: Returning Any from function declared to return "List[str]"  [no-any-return]
+helpers/lib_tasks.py:1448:[amp_mypy] error: Incompatible types in assignment (expression has type "None", variable has type "bool")  [assignment]
+helpers/lib_tasks.py:1632:[amp_pylint] [C0301(line-too-long), ] Line too long (184/100)
+helpers/lib_tasks.py:209:[amp_mypy] error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+helpers/lib_tasks.py:2139:[amp_mypy] error: Function is missing a return type annotation  [no-untyped-def]
+helpers/lib_tasks.py:223:[amp_mypy] error: Incompatible return value type (got "Optional[Any]", expected "int")  [return-value]
+helpers/lib_tasks.py:2758:[amp_pylint] [W1203(logging-fstring-interpolation), docker_build_prod_image] Use lazy % formatting in logging functions
+helpers/lib_tasks.py:3118:[amp_mypy] error: The return type of a generator function should be "Generator" or one of its supertypes  [misc]
+helpers/lib_tasks.py:3172:[amp_mypy] error: Incompatible types in assignment (expression has type "Pattern[str]", variable has type "str")  [assignment]
+helpers/lib_tasks.py:3172:[amp_pylint] [R1704(redefined-argument-from-local), _find_func_class_uses] Redefining argument with the local name 'regex'
+helpers/lib_tasks.py:3173:[amp_mypy] error: "str" has no attribute "search"  [attr-defined]
+helpers/lib_tasks.py:3186:[amp_pylint] [C0301(line-too-long), ] Line too long (102/100)
+helpers/lib_tasks.py:3197:[amp_pylint] [W0612(unused-variable), _process_find_results] Unused variable 'file'
+helpers/lib_tasks.py:3197:[amp_pylint] [W0612(unused-variable), _process_find_results] Unused variable 'line'
+helpers/lib_tasks.py:3197:[amp_pylint] [W0612(unused-variable), _process_find_results] Unused variable 'line_num'
+helpers/lib_tasks.py:3202:[amp_mypy] error: Argument 1 to "sorted" has incompatible type "List[Tuple[str, int, str, str, str]]"; expected "Iterable[Tuple[str, str]]"  [arg-type]
+helpers/lib_tasks.py:3205:[amp_mypy] error: Incompatible return value type (got "List[Tuple[str, str]]", expected "List[Tuple[Any, ...]]")  [return-value]
+helpers/lib_tasks.py:3205:[amp_mypy] note: "List" is invariant -- see http://mypy.readthedocs.io/en/latest/common_issues.html#variance
+helpers/lib_tasks.py:3205:[amp_mypy] note: Consider using "Sequence" instead, which is covariant
+helpers/lib_tasks.py:3205:[amp_mypy] note: Perhaps you need a type annotation for "filtered_results"? Suggestion: "List[Tuple[Any, ...]]"
+helpers/lib_tasks.py:3246:[amp_pylint] [R1705(no-else-return), find] Unnecessary "elif" after "return"
+helpers/lib_tasks.py:3247:[amp_pylint] [R1704(redefined-argument-from-local), find] Redefining argument with the local name 'mode'
+helpers/lib_tasks.py:3251:[amp_mypy] error: Argument 1 to "_find_func_class_uses" has incompatible type "Tuple[str, int, str]"; expected "List[Any]"  [arg-type]
+helpers/lib_tasks.py:3261:[amp_mypy] error: Argument 1 to "_find_short_import" has incompatible type "Tuple[str, int, str]"; expected "List[Any]"  [arg-type]
+helpers/lib_tasks.py:3263:[amp_mypy] error: Argument 1 to "_find_short_import" has incompatible type "Tuple[str, int, str]"; expected "List[Any]"  [arg-type]
+helpers/lib_tasks.py:330:[amp_pylint] [C0301(line-too-long), ] Line too long (106/100)
+helpers/lib_tasks.py:3310:[amp_mypy] error: Function is missing a type annotation  [no-untyped-def]
+helpers/lib_tasks.py:3312:[amp_mypy] error: unused 'type: ignore' comment
+helpers/lib_tasks.py:3324:[amp_mypy] error: Too many arguments for "_find_test_decorator"  [call-arg]
+helpers/lib_tasks.py:3324:[amp_pylint] [E1121(too-many-function-args), find_test_decorator] Too many positional arguments for function call
+helpers/lib_tasks.py:3585:[amp_pylint] [W0621(redefined-outer-name), _run_tests] Redefining name 'git_clean' from outer scope (line 455)
+helpers/lib_tasks.py:3630:[amp_pylint] [W0621(redefined-outer-name), run_fast_tests] Redefining name 'git_clean' from outer scope (line 455)
+helpers/lib_tasks.py:3673:[amp_pylint] [W0621(redefined-outer-name), run_slow_tests] Redefining name 'git_clean' from outer scope (line 455)
+helpers/lib_tasks.py:3709:[amp_pylint] [W0621(redefined-outer-name), run_superslow_tests] Redefining name 'git_clean' from outer scope (line 455)
+helpers/lib_tasks.py:3745:[amp_pylint] [W0621(redefined-outer-name), run_fast_slow_tests] Redefining name 'git_clean' from outer scope (line 455)
+helpers/lib_tasks.py:3799:[amp_pylint] [W0621(redefined-outer-name), run_fast_slow_superslow_tests] Redefining name 'git_clean' from outer scope (line 455)
+helpers/lib_tasks.py:3921:[amp_pylint] [C0301(line-too-long), ] Line too long (107/100)
+helpers/lib_tasks.py:3954:[amp_pylint] [C0301(line-too-long), ] Line too long (107/100)
+helpers/lib_tasks.py:3956:[amp_pylint] [C0301(line-too-long), ] Line too long (107/100)
+helpers/lib_tasks.py:4201:[amp_pylint] [W0612(unused-variable), pytest_repro] Unused variable 'i'
+helpers/lib_tasks.py:4206:[amp_pylint] [C0207(use-maxsplit-arg), pytest_repro] Use txt.rsplit(start_block, maxsplit=1)[-1] instead
+helpers/lib_tasks.py:4217:[amp_pylint] [W0621(redefined-outer-name), pytest_repro] Redefining name 'traceback' from outer scope (line 3997)
+helpers/lib_tasks.py:455:[amp_pylint] [W0621(redefined-outer-name), git_clean] Redefining name 'fix_perms' from outer scope (line 5416)
+helpers/lib_tasks.py:4758:[amp_mypy] error: Function is missing a type annotation  [no-untyped-def]
+helpers/lib_tasks.py:4761:[amp_mypy] error: unused 'type: ignore' comment
+helpers/lib_tasks.py:4777:[amp_pylint] [W1201(logging-not-lazy), gh_login] Use lazy % formatting in logging functions
+helpers/lib_tasks.py:4787:[amp_pylint] [W1201(logging-not-lazy), gh_login] Use lazy % formatting in logging functions
+helpers/lib_tasks.py:4802:[amp_mypy] error: Returning Any from function declared to return "Optional[str]"  [no-any-return]
+helpers/lib_tasks.py:4843:[amp_mypy] error: Function is missing a type annotation  [no-untyped-def]
+helpers/lib_tasks.py:4848:[amp_mypy] error: unused 'type: ignore' comment
+helpers/lib_tasks.py:4897:[amp_pylint] [R1723(no-else-break), gh_workflow_list] Unnecessary "elif" after "break"
+helpers/lib_tasks.py:5053:[amp_mypy] error: Returning Any from function declared to return "bool"  [no-any-return]
+helpers/lib_tasks.py:960:[amp_mypy] error: Incompatible types in assignment (expression has type "List[str]", variable has type "str")  [assignment]
