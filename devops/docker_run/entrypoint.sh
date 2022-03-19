@@ -43,12 +43,13 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # after the engine start.
     # TODO(Grisha): give permissions to the `docker` group only and not to everyone, i.e. `666`.
 
-    while [ ! -f /var/run/docker.sock ]
+    file=/var/run/docker.sock
+    while ! [ -f "$file" ];
     do
       sleep 0.01
     done
-
-    chmod 0666 /var/run/docker.sock
+    ls -l "$file"
+    chmod 0666 "$file"
 
 fi;
 
