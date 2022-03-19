@@ -170,7 +170,7 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, start_ts, end_ts, resample
+                df_tmp, full_symbol_col_name, start_ts, end_ts, resample=resample
             )
             self._dassert_output_data_is_valid(
                 df_tmp, full_symbol_col_name, start_ts, end_ts
@@ -238,6 +238,7 @@ class ImClient(abc.ABC):
         full_symbol_col_name: str,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
         resample: bool = True,
     ) -> pd.DataFrame:
         """
