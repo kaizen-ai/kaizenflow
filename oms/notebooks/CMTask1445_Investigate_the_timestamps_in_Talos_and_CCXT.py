@@ -103,11 +103,11 @@ display(data_talos_db.tail(3))
 # - If proposing query for __a complete minute__ (e.g., __10:00:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:00:00__).
 # - If proposing query for __an incomplete minute__ (e.g., __10:00:36 or 10:00:24__) - it starts with __mentioned timestamp + 1min__ (i.e., __10:01:00__).
 #    - Since the ohlcv output is blank (equal to zero), it's hard to understand whether volume or prices data changes during incomplete minute query.
-#    
+#
 # End
 # - If proposing query for __a complete minute__ (e.g., __10:07:00__) - it starts with __exactly mentioned timestamp - 1min__ (i.e., __10:06:00__).
 # - If proposing query for __an incomplete minute__ (e.g., __10:07:36 or 10:07:24__) - it starts with __exactly mentioned timestamp__ (i.e., __10:07:00__).
-# - If proposing query for __previous minute + 1min__ (e.g., __10:08:00__) - it starts with __exactly mentioned timestamp - 1min__ (i.e., __10:07:00__).   
+# - If proposing query for __previous minute + 1min__ (e.g., __10:08:00__) - it starts with __exactly mentioned timestamp - 1min__ (i.e., __10:07:00__).
 
 # %% [markdown]
 # # Current CCXT client
@@ -140,11 +140,11 @@ display(data_ccxt_client.tail(3))
 # - If proposing query for __a complete minute__ (e.g., __10:00:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:00:00+00:00__).
 # - If proposing query for __an incomplete minute__ (e.g., __10:00:36 or 10:00:24__) - it starts with __mentioned timestamp + 1min__ (i.e., __10:01:00__).
 #    - - Since the ohlcv output is available, one can check through volume or prices data that changing the query within a minute (e.g., 10:00:02 or 10:00:45) doesn't affect the numbers, so it means that the timestamp indicates the end of time period.
-#    
+#
 # End
 # - If proposing query for __a complete minute__ (e.g., __10:07:00__) - it starts with __exactly mentioned timestamp__ (i.e., 10:07:00).
 # - If proposing query for __an incomplete minute__ (e.g., __10:07:36 or 10:07:24__) - it starts with __exactly mentioned timestamp__ (i.e., __10:07:00__).
-# - If proposing query for __previous minute + 1min__ (e.g., __10:08:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:08:00__).   
+# - If proposing query for __previous minute + 1min__ (e.g., __10:08:00__) - it starts with __exactly mentioned timestamp__ (i.e., __10:08:00__).
 
 # %% [markdown]
 # # Current implemented Talos client
