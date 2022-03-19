@@ -46,6 +46,8 @@ while not path.exists():
   time.sleep(0.01)
 try:
   subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
+except Exception as e:
+  print(e)
 EOF
 
     # sleep 1
