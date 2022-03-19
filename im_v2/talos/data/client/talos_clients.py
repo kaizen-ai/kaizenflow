@@ -161,6 +161,17 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
+    def _read_data(
+        self,
+        full_symbols: List[imvcdcfusy.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        *,
+        full_symbol_col_name: str = "full_symbol",
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
+        raise NotImplementedError
+
     @staticmethod
     def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -179,7 +190,13 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         end_unix_epoch: int,
     ) -> str:
         """
-        Append a WHERE clause to the query.
+        Build a SELECT query for Talos DB.
+
+        :param exchange_ids: list of exchanges, e.g. ['binance', 'ftx']
+        :param currency_pairs: list of currency pairs, e.g. ['BTC_USDT']
+        :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
+        :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
+        :return:
         """
         hdbg.dassert_isinstance(
             start_unix_epoch,
@@ -209,7 +226,7 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         )
         # Build a WHERE query
         query = (
-            f"SELECT * FROM '{self._table_name}' WHERE timestamp >= {start_unix_epoch}"
+            f"SELECT * FROM {self._table_name} WHERE timestamp >= {start_unix_epoch}"
             f" AND timestamp <= {end_unix_epoch}"
             f" AND exchange_id IN"
             f" {in_exchange_ids} AND currency_pair IN {in_currency_pairs}"
