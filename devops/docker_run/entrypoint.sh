@@ -39,15 +39,17 @@ if [[ $ENABLE_DIND == 1 ]]; then
         python3 <<EOF
 import pathlib
 import subprocess
-import time
+import asyncio
 
 path = pathlib.Path('/var/run/docker.sock')
-while not path.exists():
-  time.sleep(0.01)
-try:
-  subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
-except Exception as e:
-  print(e)
+async def task():
+    while not path.exists():
+        await asyncio.sleep(0.1)
+    subprocess.call(['chmod', '0666', path])
+
+loop = asyncio.get_event_loop()
+cors = asyncio.wait([task()])
+loop.run_until_complete(cors)
 EOF
 
     # sleep 1
