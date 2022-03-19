@@ -46,7 +46,7 @@ if [[ $ENABLE_DIND == 1 ]]; then
     subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
     print('Permission for docker.sock was changed')
     EOF
-      )
+    )
 
       python3 -c "$PYCMD"
     }
