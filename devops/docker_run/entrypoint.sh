@@ -43,7 +43,7 @@ import time
 
 path = pathlib.Path('/var/run/docker.sock')
 while not path.exists():
-  time.sleep(0.01)
+  time.sleep(0.1)
 subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
 print('Permission for docker.sock was changed')
 EOF
@@ -107,5 +107,3 @@ echo "entrypoint.sh: '$@'"
 
 # TODO(gp): eval seems to be more general, but it creates a new executable.
 eval "$@"
-
-exit
