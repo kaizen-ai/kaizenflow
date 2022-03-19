@@ -35,13 +35,31 @@ if [[ $ENABLE_DIND == 1 ]]; then
     sudo /etc/init.d/docker status
     # Wait for Docker to be started, otherwise `docker.sock` file is not created
     # so fast. This is needed to change `docker.sock` permissions.
-    sleep 1
+
+    check_docker_socket_file_and_change_permissions () {
+    PYCMD=$(cat <<EOF
+    import os
+    import subprocess
+
+    while not os.path.exists('/var/run/docker.sock'):
+      time.sleep(0.1)
+    subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
+    print('Permission for docker.sock was changed')
+    EOF
+      )
+
+      python3 -c "$PYCMD"
+    }
+
+    check_docker_socket_file_and_change_permissions
+
+    # sleep 1
     # Change permissions for Docker socket. See more on S/O:
     # `https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue`.
     # We do it after the Docker engine is started because `docker.sock` is created only
     # after the engine start.
     # TODO(Grisha): give permissions to the `docker` group only and not to everyone, i.e. `666`.
-    sudo chmod 666 /var/run/docker.sock
+#    sudo chmod 666 /var/run/docker.sock
 fi;
 
 # Mount other file systems.
