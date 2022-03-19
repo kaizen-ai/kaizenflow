@@ -36,23 +36,16 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # Wait for Docker to be started, otherwise `docker.sock` file is not created
     # so fast. This is needed to change `docker.sock` permissions.
 
-    check_docker_socket_file_and_change_permissions () {
-        PYCMD=$(cat <<EOF
-#    import pathlib
-#    import subprocess
-#
-#    path = pathlib.Path('/var/run/docker.sock')
-#    while not path.exists():
-#      time.sleep(0.01)
-#    subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
-    print('Permission for docker.sock was changed')
-    EOF
-        )
+        python3 <<EOF
+import pathlib
+import subprocess
 
-        python3 -c "$PYCMD"
-    }
-
-    check_docker_socket_file_and_change_permissions
+path = pathlib.Path('/var/run/docker.sock')
+while not path.exists():
+  time.sleep(0.01)
+subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
+print('Permission for docker.sock was changed')
+EOF
 
     # sleep 1
     # Change permissions for Docker socket. See more on S/O:
