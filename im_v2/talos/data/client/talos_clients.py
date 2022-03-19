@@ -14,6 +14,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
+import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 
@@ -179,10 +180,28 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         Apply Talos-specific normalization:
 
-        - Convert `timestamp` column to a UTC timestamp and set index
+        - Convert `timestamp` column to a UTC timestamp and set index.
         - Drop extra columns (e.g. `id` created by the DB).
         """
-        raise NotImplementedError
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            lambda x: hdateti.convert_unix_epoch_to_timestamp(x)
+        )
+        # Set timestamp column as an index.
+        data = data.set_index("timestamp")
+        # Specify OHLCV columns.
+        ohlcv_columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data[ohlcv_columns]
+        return data
 
     def _read_data_for_multiple_symbols(
         self,
