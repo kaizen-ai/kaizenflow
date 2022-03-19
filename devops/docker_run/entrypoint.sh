@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 set -e
@@ -44,21 +43,21 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # after the engine start.
     # TODO(Grisha): give permissions to the `docker` group only and not to everyone, i.e. `666`.
 
-#    python3 <<- 'EOF'
-#    import pathlib
-#    import subprocess
-#    import asyncio
-#
-#    path = pathlib.Path('/var/run/docker.sock')
-#    async def task():
-#	    while not path.exists():
-#	      await asyncio.sleep(0.1)
-#	    subprocess.call(['chmod', '0666', path])
-#
-#    loop = asyncio.get_event_loop()
-#    cors = asyncio.wait([task()])
-#    loop.run_until_complete(cors)
-#  EOF
+    python3 <<- 'EOF'
+    import pathlib
+    import subprocess
+    import asyncio
+
+    path = pathlib.Path('/var/run/docker.sock')
+    async def task():
+	    while not path.exists():
+	      await asyncio.sleep(0.1)
+	    subprocess.call(['chmod', '0666', path])
+
+    loop = asyncio.get_event_loop()
+    cors = asyncio.wait([task()])
+    loop.run_until_complete(cors)
+  EOF
 
 fi;
 
