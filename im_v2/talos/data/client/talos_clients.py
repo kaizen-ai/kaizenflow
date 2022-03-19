@@ -7,13 +7,15 @@ import im_v2.talos.data.client.talos_clients as imvtdctacl
 import abc
 import logging
 import os
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hparquet as hparque
+import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
+import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ class TalosClient(icdc.ImClient, abc.ABC):
         """
         See description in the parent class.
         """
-        # TODO(Dan): CmTask1379.
+        # TODO(Danya): CmTask1420.
         return []
 
 
@@ -61,7 +63,6 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self,
         root_dir: str,
         *,
-        version: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -76,6 +77,10 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self._root_dir = root_dir
         self._version = version
         self._aws_profile = aws_profile
+
+    @staticmethod
+    def should_be_online() -> None:
+        raise NotImplementedError
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -129,3 +134,83 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         )
         data.index.name = None
         return data
+
+
+class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
+    """
+    Retrieve real-time Talos data from DB using SQL queries.
+    """
+
+    def __init__(
+        self,
+        db_connection: hsql.DbConnection,
+        table_name: str,
+    ) -> None:
+        super().__init__()
+        self._db_connection = db_connection
+        self._table_name = table_name
+
+    @staticmethod
+    def should_be_online() -> bool:
+        """
+        The real-time system for Talos should always be online.
+        """
+        return True
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def _build_select_query(
+        query: str,
+        exchange_id: str,
+        currency_pair: str,
+        start_unix_epoch: int,
+        end_unix_epoch: int,
+    ) -> str:
+        """
+        Append a WHERE clause to the query.
+        """
+        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
+        raise NotImplementedError
+
+    @staticmethod
+    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization:
+
+        - Convert `timestamp` column to a UTC timestamp and set index
+        - Drop extra columns (e.g. `id` created by the DB).
+        """
+        raise NotImplementedError
+
+    def _read_data_for_multiple_symbols(
+        self,
+        full_symbols: List[imvcdcfusy.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
+        *,
+        full_symbol_col_name: str = "full_symbol",  # This is the column to appear in the output.
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
+        """
+        Read data for the given time range and full symbols.
+
+        The method builds a SELECT query like:
+
+        SELECT * FROM {self._table_name} WHERE exchange_id="binance" AND currency_pair="ADA_USDT"
+
+        The WHERE clause with AND/OR operators is built using a built-in method.
+
+        :param full_symbols: a list of symbols, e.g. ["binance::ADA_USDT"]
+        :param start_ts: beginning of the period, is converted to unix epoch
+        :param end_ts: end of the period, is converted to unix epoch
+        :param full_symbol_col_name: the name of the full_symbol column
+        """
+        # TODO(Danya): Convert timestamps to int when reading.
+        # TODO(Danya): add a full symbol column to the output
+        raise NotImplementedError
