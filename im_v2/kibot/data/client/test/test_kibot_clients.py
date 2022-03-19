@@ -738,6 +738,80 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    def test_read_csv_data7(self) -> None:
+        full_symbols = ["kibot::ZI", "kibot::W"]
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
+            contract_type
+        )
+        #
+        expected_length = 144
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["kibot::ZI", "kibot::W"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2009-09-27 19:00:00+00:00, 2009-09-29 21:37:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(144, 6)
+                                  full_symbol     open     high      low    close  volume
+        timestamp                                                                        
+        2009-09-27 19:00:00+00:00    kibot::W  462.000    462.1    452.0    457.0     762
+        2009-09-28 19:25:00+00:00   kibot::ZI   16.230  16.23.1  16.23.2  16.23.3       1
+        2009-09-28 20:22:00+00:00   kibot::ZI   16.255   16.255   16.255   16.255       1
+        ...
+        2009-09-29 13:24:00+00:00   kibot::ZI  16.172  16.172  16.172  16.172       1
+        2009-09-29 13:43:00+00:00   kibot::ZI  16.206  16.206  16.206  16.206       1
+        2009-09-29 21:37:00+00:00   kibot::ZI  16.230   16.23   16.23   16.23       1
+                """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_parquet_data7(self) -> None:
+        full_symbols = ["kibot::ZI", "kibot::EZ"]
+        contract_type = "continuous"
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
+            contract_type
+        )
+        #
+        expected_length = 185
+        expected_column_names = _get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kibot::ZI", "kibot::EZ"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2009-09-28 19:25:00+00:00, 2009-09-29 13:43:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(185, 6)
+                                  full_symbol    open    high     low   close  volume
+        timestamp                                                                    
+        2009-09-28 19:25:00+00:00   kibot::ZI  16.230  16.230  16.230  16.230       1
+        2009-09-28 20:22:00+00:00   kibot::ZI  16.255  16.255  16.255  16.255       1
+        2009-09-28 21:29:00+00:00   kibot::ZI  16.195  16.195  16.195  16.195       1
+        ...
+        2009-09-29 13:22:00+00:00   kibot::ZI  16.182  16.182  16.177  16.182       5
+        2009-09-29 13:24:00+00:00   kibot::ZI  16.172  16.172  16.172  16.172       1
+        2009-09-29 13:43:00+00:00   kibot::ZI  16.206  16.206  16.206  16.206       1
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:

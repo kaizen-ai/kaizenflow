@@ -206,6 +206,41 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
+    def test_read_data7(self) -> None:
+        im_client = imvcdcccex.get_CcxtCsvClient_example1()
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 174
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(174, 6)
+                                         full_symbol         open         high          low        close     volume
+        timestamp                                                                                                  
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        ...
+        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+                """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:

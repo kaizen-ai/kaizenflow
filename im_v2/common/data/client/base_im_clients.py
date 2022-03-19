@@ -104,11 +104,11 @@ class ImClient(abc.ABC):
     def read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
+        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: str = "full_symbol",
-        resample: bool = True,
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
@@ -122,7 +122,7 @@ class ImClient(abc.ABC):
             - `None` means end at the end of the available data
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
-        :param resample: allow to switch off resampling when needed
+        :param resample_1min: allow to control resampling
         :return: combined data for all the requested symbols
         """
         _LOG.debug(
@@ -170,10 +170,10 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, start_ts, end_ts, resample=resample
+                df_tmp, full_symbol_col_name, start_ts, end_ts, resample_1min=resample_1min
             )
             self._dassert_output_data_is_valid(
-                df_tmp, full_symbol_col_name, start_ts, end_ts
+                df_tmp, full_symbol_col_name, start_ts, end_ts, resample_1min
             )
             dfs.append(df_tmp)
         # TODO(Nikola): raise error on empty df?
@@ -239,7 +239,7 @@ class ImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
-        resample: bool = True,
+        resample_1min: bool,
     ) -> pd.DataFrame:
         """
         Apply normalizations to IM data.
@@ -261,12 +261,12 @@ class ImClient(abc.ABC):
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # 3) Resample index to 1 min frequency if specified.
-        if resample:
+        if resample_1min:
             df = hpandas.resample_df(df, "T")
-        # Fill NaN values appeared after resampling in full symbol column.
-        # Combination of full symbol and timestamp is a unique identifier,
-        # so full symbol cannot be NaN.
-        df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
+            # Fill NaN values appeared after resampling in full symbol column.
+            # Combination of full symbol and timestamp is a unique identifier,
+            # so full symbol cannot be NaN.
+            df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
         # 4) Convert to UTC.
         df.index = df.index.tz_convert("UTC")
         return df
@@ -277,16 +277,19 @@ class ImClient(abc.ABC):
         full_symbol_col_name: str,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        resample_1min: bool,
     ) -> None:
         """
         Verify that the normalized data is valid.
         """
         # Check that index is `pd.DatetimeIndex`.
         hpandas.dassert_index_is_datetime(df)
-        # Check that index is monotonic increasing.
-        hpandas.dassert_strictly_increasing_index(df)
-        # Verify that index frequency is 1 minute.
-        hdbg.dassert_eq(df.index.freq, "T")
+
+        if resample_1min:
+            # Check that index is monotonic increasing.
+            hpandas.dassert_strictly_increasing_index(df)
+            # Verify that index frequency is 1 minute.
+            hdbg.dassert_eq(df.index.freq, "T")
         # Check that timezone info is correct.
         expected_tz = ["UTC"]
         # Assume that the first value of an index is representative.
@@ -344,7 +347,8 @@ class ImClient(abc.ABC):
         # Read data for the entire period of time available.
         start_timestamp = None
         end_timestamp = None
-        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
+        resample_1min = True
+        data = self.read_data([full_symbol], resample_1min, start_timestamp, end_timestamp)
         # Assume that the timestamp is always stored as index.
         if mode == "start":
             timestamp = data.index.min()
