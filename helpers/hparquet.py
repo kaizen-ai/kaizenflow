@@ -442,6 +442,9 @@ def get_parquet_filters_from_timestamp_interval(
         `("asset_id", "in", (...))`
     :return: list of OR-AND predicates
     """
+    # Ensure that at least one timestamp is provided.
+    if start_timestamp is None and end_timestamp is None:
+        hdbg.dfatal("At least one timestamp must be provided!", ValueError)
     # Check timestamp interval.
     left_close = True
     right_close = True
@@ -451,57 +454,59 @@ def get_parquet_filters_from_timestamp_interval(
         left_close=left_close,
         right_close=right_close,
     )
-    # Use hardwired start and end date to represent start_timestamp /
-    # end_timestamp = None. This is not very elegant, but it simplifies the code.
-    # TODO(gp): This approach of enumerating seems slow when Parquet reads the data.
-    #  Verify it is and then use a smarter approach like year <= ...
-    if start_timestamp is None:
-        start_timestamp = pd.Timestamp("2001-01-01 00:00:00+00:00")
-    if end_timestamp is None:
-        end_timestamp = pd.Timestamp("2030-01-01 00:00:00+00:00")
     or_and_filter = []
     if partition_mode == "by_year_month":
-        # Partition by year and month.
-        # Include last month in the interval.
-        end_timestamp += pd.DateOffset(months=1)
-        # Get all months in interval.
-        dates = pd.date_range(
-            start_timestamp.date(), end_timestamp.date(), freq="M"
-        )
-        years = list(set(dates.year))
-        if len(years) == 1:
-            # For one year range, a simple AND statement is enough.
-            # `[[('year', '==', 2020), ('month', '>=', 6), ('month', '<=', 12)]]`
-            and_filter = [
-                ("year", "==", dates[0].year),
-                ("month", ">=", dates[0].month),
-                ("month", "<=", dates[-1].month),
+        # Add initial filters.
+        if start_timestamp:
+            # `[('year', '==', 2020), ('month', '>=', 6)]`
+            start_timestamp_filter = [
+                ("year", "==", start_timestamp.year),
+                ("month", ">=", start_timestamp.month),
             ]
-            or_and_filter.append(and_filter)
+            or_and_filter.append(start_timestamp_filter)
+        if end_timestamp:
+            # `[('year', '==', 2021), ('month', '<=', 3)]`
+            end_timestamp_filter = [
+                ("year", "==", end_timestamp.year),
+                ("month", "<=", end_timestamp.month),
+            ]
+            or_and_filter.append(end_timestamp_filter)
+        if start_timestamp and end_timestamp:
+            number_of_years = len(
+                range(start_timestamp.year, end_timestamp.year + 1)
+            )
+            if number_of_years == 1:
+                # For one year range, a simple AND statement is mandatory to prevent logical error.
+                # `[[('year', '==', 2020), ('month', '>=', 6), ('month', '<=', 12)]]`
+                mandatory_and_filter = [
+                    ("year", "==", start_timestamp.year),
+                    ("month", ">=", start_timestamp.month),
+                    ("month", "<=", end_timestamp.month),
+                ]
+                # Previous filters are ignored.
+                or_and_filter = [mandatory_and_filter]
+                # Logical error sample:
+                # `[[('year', '==', 2020), ('month', '>=', 1)],`
+                # `[('year', '==', 2020), ('month', '<=', 3)]]`
+                # First AND will include months greater than 3,
+                # while second one will include first month also.
+            elif number_of_years > 2:
+                # For ranges over two years, one OR statement is necessary to bridge the
+                # gap between first and last AND statement.
+                # `[('year', '>', 2020), ('year', '<', 2023)]`
+                # Inserted in middle as bridge between AND statements.
+                bridge_filter = [
+                    ("year", ">", start_timestamp.year),
+                    ("year", "<", end_timestamp.year),
+                ]
+                or_and_filter.insert(1, bridge_filter)
         else:
-            # For ranges over two years, OR statements are necessary to bridge the
-            # gap between first and last AND statement, unless range is around two years.
-            # First AND filter.
-            first_and_filter = [
-                ("year", "==", dates[0].year),
-                ("month", ">=", dates[0].month),
-                ("year", "==", dates[0].year),
-                ("month", "<=", 12),
-            ]
-            or_and_filter.append(first_and_filter)
-            # OR statements to bridge the gap, if any.
-            # `[('year', '==', 2021)]`
-            for year in years[1:-1]:
-                bridge_and_filter = [("year", "==", year)]
-                or_and_filter.append(bridge_and_filter)
-            # Last AND filter.
-            last_and_filter = [
-                ("year", "==", dates[-1].year),
-                ("month", ">=", 1),
-                ("year", "==", dates[-1].year),
-                ("month", "<=", dates[-1].month),
-            ]
-            or_and_filter.append(last_and_filter)
+            # If only one timestamp is provided, extra OR statement needs
+            # to be included so data for missing timestamp can be included.
+            operator = ">" if start_timestamp else "<"
+            timestamp = start_timestamp if start_timestamp else end_timestamp
+            extra_filter = [("year", operator, timestamp.year)]
+            or_and_filter.append(extra_filter)
     elif partition_mode == "by_year_week":
         # Partition by year and week.
         # Include last week in the interval.
