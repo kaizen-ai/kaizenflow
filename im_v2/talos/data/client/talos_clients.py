@@ -161,6 +161,16 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
+    @staticmethod
+    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization:
+
+        - Convert `timestamp` column to a UTC timestamp and set index
+        - Drop extra columns (e.g. `id` created by the DB).
+        """
+        raise NotImplementedError
+
     def _read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -172,31 +182,26 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
     ) -> pd.DataFrame:
         raise NotImplementedError
 
-    @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization:
-
-        - Convert `timestamp` column to a UTC timestamp and set index
-        - Drop extra columns (e.g. `id` created by the DB).
-        """
-        raise NotImplementedError
-
     def _build_select_query(
         self,
         exchange_ids: List[str],
         currency_pairs: List[str],
         start_unix_epoch: int,
         end_unix_epoch: int,
+        *,
+        limit: Optional[int] = None,
     ) -> str:
         """
         Build a SELECT query for Talos DB.
+
+        Time is provided as unix epochs in ms, the time range
+        is considered closed on both sides, i.e. [1647470940000, 1647471180000]
 
         :param exchange_ids: list of exchanges, e.g. ['binance', 'ftx']
         :param currency_pairs: list of currency pairs, e.g. ['BTC_USDT']
         :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
-        :return:
+        :return: SELECT query for Talos data
         """
         hdbg.dassert_isinstance(
             start_unix_epoch,
@@ -213,7 +218,17 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
             end_unix_epoch,
             msg="Start unix epoch should be smaller then end ",
         )
-        # Transform `exchange_ids` and `currency_pairs` into a string.
+        # TODO(Danya): Make all params optional to select all data.
+        hdbg.dassert_list_of_strings(
+            exchange_ids,
+            msg="'exchange_ids' should be a list of strings, e.g. `['binance', 'ftx']`",
+        )
+        hdbg.dassert_list_of_strings(
+            currency_pairs,
+            msg="'currency_pairs' should be a list of strings, e.g. `['AVA_USDT', 'BTC_USDT']`",
+        )
+        # Transform `exchange_ids` and `currency_pairs` into a string for an IN operator,
+        #  e.g. ('binance', 'ftx'), ('AVAX_USDT', 'BTC_USDT')
         in_exchange_ids = (
             "("
             + ",".join([f"'{exchange_id}'" for exchange_id in exchange_ids])
@@ -224,13 +239,15 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
             + ",".join([f"'{currency_pair}'" for currency_pair in currency_pairs])
             + ")"
         )
-        # Build a WHERE query
+        # Build a WHERE query.
         query = (
             f"SELECT * FROM {self._table_name} WHERE timestamp >= {start_unix_epoch}"
             f" AND timestamp <= {end_unix_epoch}"
             f" AND exchange_id IN"
             f" {in_exchange_ids} AND currency_pair IN {in_currency_pairs}"
         )
+        if limit:
+            query += f" LIMIT {limit}"
         return query
 
     def _read_data_for_multiple_symbols(
