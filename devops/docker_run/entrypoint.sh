@@ -107,3 +107,5 @@ echo "entrypoint.sh: '$@'"
 
 # TODO(gp): eval seems to be more general, but it creates a new executable.
 eval "$@"
+
+exit
