@@ -45,7 +45,6 @@ path = pathlib.Path('/var/run/docker.sock')
 while not path.exists():
   time.sleep(0.1)
 subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
-print('Permission for docker.sock was changed')
 EOF
 
     # sleep 1
