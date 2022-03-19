@@ -36,29 +36,29 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # Wait for Docker to be started, otherwise `docker.sock` file is not created
     # so fast. This is needed to change `docker.sock` permissions.
 
-        python3 <<EOF
-import pathlib
-import subprocess
-import asyncio
 
-path = pathlib.Path('/var/run/docker.sock')
-async def task():
-    while not path.exists():
-        await asyncio.sleep(0.1)
-    subprocess.call(['chmod', '0666', path])
-
-loop = asyncio.get_event_loop()
-cors = asyncio.wait([task()])
-loop.run_until_complete(cors)
-EOF
-
-    # sleep 1
     # Change permissions for Docker socket. See more on S/O:
     # `https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue`.
     # We do it after the Docker engine is started because `docker.sock` is created only
     # after the engine start.
     # TODO(Grisha): give permissions to the `docker` group only and not to everyone, i.e. `666`.
-#    sudo chmod 666 /var/run/docker.sock
+
+    python3 <<- 'EOF'
+    import pathlib
+    import subprocess
+    import asyncio
+
+    path = pathlib.Path('/var/run/docker.sock')
+    async def task():
+      while not path.exists():
+        await asyncio.sleep(0.1)
+      subprocess.call(['chmod', '0666', path])
+
+    loop = asyncio.get_event_loop()
+    cors = asyncio.wait([task()])
+    loop.run_until_complete(cors)
+  EOF
+
 fi;
 
 # Mount other file systems.
