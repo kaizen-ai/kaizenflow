@@ -43,8 +43,9 @@ import time
 
 path = pathlib.Path('/var/run/docker.sock')
 while not path.exists():
-  time.sleep(0.1)
-subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
+  time.sleep(0.01)
+try:
+  subprocess.call(['chmod', '0666', '/var/run/docker.sock'])
 EOF
 
     # sleep 1
