@@ -240,16 +240,6 @@ class AbstractSqlDataLoader(AbstractDataLoader):
     def close(self) -> None:
         self.conn.close()
 
-    @staticmethod
-    @abc.abstractmethod
-    def _get_table_name_by_frequency(frequency: imcodatyp.Frequency) -> str:
-        """
-        Get table name by predefined frequency.
-
-        :param frequency: a predefined frequency
-        :return: table name in DB
-        """
-
     def _read_data(
         self,
         exchange: str,
@@ -273,3 +263,13 @@ class AbstractSqlDataLoader(AbstractDataLoader):
             params=[pexten.AsIs(table_name), trade_symbol_id, limit],
         )
         return df
+
+    @staticmethod
+    @abc.abstractmethod
+    def _get_table_name_by_frequency(frequency: imcodatyp.Frequency) -> str:
+        """
+        Get table name by predefined frequency.
+
+        :param frequency: a predefined frequency
+        :return: table name in DB
+        """

@@ -14,7 +14,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_dassert_is_unique1(hunitest.TestCase):
-
     def get_df1(self) -> pd.DataFrame:
         """
         Return a df without duplicated index.
@@ -88,7 +87,6 @@ class Test_dassert_is_unique1(hunitest.TestCase):
 
 
 class Test_to_series1(hunitest.TestCase):
-
     def helper(self, n: int, exp: str) -> None:
         vals = list(range(n))
         df = pd.DataFrame([vals], columns=[f"a{i}" for i in vals])
@@ -129,7 +127,6 @@ class Test_to_series1(hunitest.TestCase):
 
 
 class Test_trim_df1(hunitest.TestCase):
-
     def get_df(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
         Return a df where the CSV txt is read verbatim without inferring dates.
@@ -430,7 +427,6 @@ class Test_trim_df1(hunitest.TestCase):
 
 
 class TestDfToStr(hunitest.TestCase):
-
     def test_df_to_str1(self) -> None:
         """
         Test common call to `df_to_str` with basic df.
@@ -531,7 +527,6 @@ class TestDfToStr(hunitest.TestCase):
 
 
 class TestDataframeToJson(hunitest.TestCase):
-
     def test_dataframe_to_json(self) -> None:
         """
         Verify correctness of dataframe to JSON transformation.
@@ -611,7 +606,6 @@ class TestDataframeToJson(hunitest.TestCase):
 
 
 class TestFindGapsInDataframes(hunitest.TestCase):
-
     def test_find_gaps_in_dataframes(self) -> None:
         """
         Verify that gaps are caught.
@@ -641,7 +635,6 @@ class TestFindGapsInDataframes(hunitest.TestCase):
 
 
 class TestCompareDataframeRows(hunitest.TestCase):
-
     def get_test_data(self) -> pd.DataFrame:
         test_data = {
             "dummy_value_1": [0, 1, 3, 2, 0],

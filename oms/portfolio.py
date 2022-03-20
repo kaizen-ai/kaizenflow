@@ -457,6 +457,32 @@ class AbstractPortfolio(abc.ABC):
         AbstractPortfolio._write_df(stats_df, log_dir, "statistics", file_name)
         return file_name
 
+    def price_assets(self, asset_ids: List[int]) -> pd.Series:
+        """
+        Wrap `portfolio.market_data` and packages output.
+
+        :param asset_ids: as in `market_data.get_data_at_timestamp()`
+        :return: series of prices at `as_of_timestamp` indexed by asset_id
+        """
+        if self._pricing_type == "last":
+            prices = self.market_data.get_last_price(
+                self._mark_to_market_col, asset_ids
+            )
+        elif self._pricing_type == "twap":
+            prices = self.market_data.get_last_twap_price(
+                self._bar_duration,
+                self._timestamp_col,
+                asset_ids,
+                self._mark_to_market_col,
+            )
+        else:
+            raise NotImplementedError
+        hdbg.dassert_eq(self._mark_to_market_col, prices.name)
+        prices.index.name = "asset_id"
+        prices.name = "price"
+        hdbg.dassert(not prices.index.has_duplicates)
+        return prices
+
     @staticmethod
     def read_state(
         log_dir: str,
@@ -491,54 +517,6 @@ class AbstractPortfolio(abc.ABC):
         portfolio_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         return portfolio_df, stats_df
 
-    def price_assets(self, asset_ids: List[int]) -> pd.Series:
-        """
-        Wrap `portfolio.market_data` and packages output.
-
-        :param asset_ids: as in `market_data.get_data_at_timestamp()`
-        :return: series of prices at `as_of_timestamp` indexed by asset_id
-        """
-        if self._pricing_type == "last":
-            prices = self.market_data.get_last_price(
-                self._mark_to_market_col, asset_ids
-            )
-        elif self._pricing_type == "twap":
-            prices = self.market_data.get_last_twap_price(
-                self._bar_duration,
-                self._timestamp_col,
-                asset_ids,
-                self._mark_to_market_col,
-            )
-        else:
-            raise NotImplementedError
-        hdbg.dassert_eq(self._mark_to_market_col, prices.name)
-        prices.index.name = "asset_id"
-        prices.name = "price"
-        hdbg.dassert(not prices.index.has_duplicates)
-        return prices
-
-    @staticmethod
-    def _load_df_from_files(
-        log_dir: str,
-        name: str,
-        tz: str,
-    ) -> pd.DataFrame:
-        dir_name = os.path.join(log_dir, name)
-        files = hio.find_all_files(dir_name)
-        files.sort()
-        dfs = []
-        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
-            df = AbstractPortfolio._read_df(log_dir, name, file_name, tz)
-            dfs.append(df)
-        df = pd.concat(dfs)
-        hdbg.dassert(
-            not df.index.has_duplicates,
-            "Duplicated indices for `%s`=\n%s",
-            name,
-            df.index[df.index.duplicated()],
-        )
-        return df
-
     def _set_holdings(self, holdings: pd.Series) -> None:
         """
         Set portfolio holdings in shares and price the portfolio.
@@ -571,69 +549,6 @@ class AbstractPortfolio(abc.ABC):
         # Compute the initial portfolio statistics.
         self._compute_statistics()
         _LOG.debug("statistics calculated.")
-
-    @staticmethod
-    def _parse_pricing_method(pricing_method: str) -> Tuple[str, Optional[str]]:
-        hdbg.dassert_isinstance(pricing_method, str)
-        if pricing_method == "last":
-            pricing_type = "last"
-            bar_duration = None
-        else:
-            split_str = pricing_method.split(".")
-            hdbg.dassert_eq(len(split_str), 2)
-            pricing_type = split_str[0]
-            hdbg.dassert_in(pricing_type, ["twap", "vwap"])
-            pricing_type = pricing_type
-            bar_duration = split_str[1]
-            hdbg.dassert(
-                pd.Timedelta(bar_duration),
-                "Cannot convert %s to `pd.Timedelta`" % bar_duration,
-            )
-        return pricing_type, bar_duration
-
-    @staticmethod
-    def _compute_pnl(
-        holdings_marked_to_market: pd.DataFrame,
-        flows: pd.DataFrame,
-    ) -> pd.DataFrame:
-        # Drop the cash balance.
-        holdings_marked_to_market = holdings_marked_to_market.drop(
-            columns=AbstractPortfolio.CASH_ID
-        )
-        cols = holdings_marked_to_market.columns.union(flows.columns)
-        holdings_marked_to_market = holdings_marked_to_market.reindex(
-            columns=cols, fill_value=0
-        )
-        flows = flows.reindex(columns=cols, fill_value=0)
-        # Get per-bar flows and compute PnL.
-        pnl = holdings_marked_to_market.diff().add(flows)
-        return pnl
-
-    @staticmethod
-    def _write_df(
-        df: pd.DataFrame,
-        log_dir: str,
-        name: str,
-        file_name: str,
-    ) -> None:
-        path = os.path.join(log_dir, name, file_name)
-        hio.create_enclosing_dir(path, incremental=True)
-        df.to_csv(path)
-
-    @staticmethod
-    def _read_df(
-        log_dir: str,
-        name: str,
-        file_name: str,
-        tz: str,
-    ) -> pd.DataFrame:
-        path = os.path.join(log_dir, name, file_name)
-        df = pd.read_csv(path, index_col=0, parse_dates=True)
-        # TODO(Paul): Add better checks. The first `flows` dataframe has no
-        # rows, and so when parsed it does not have a DatetimeIndex.
-        if isinstance(df.index, pd.DatetimeIndex):
-            df.index = df.index.tz_convert(tz)
-        return df
 
     @abc.abstractmethod
     def _observe_holdings(self) -> None:
@@ -722,6 +637,91 @@ class AbstractPortfolio(abc.ABC):
         }
         statistics = pd.Series(dict_, name=cash_ts)
         self._statistics[cash_ts] = statistics
+
+    @staticmethod
+    def _load_df_from_files(
+        log_dir: str,
+        name: str,
+        tz: str,
+    ) -> pd.DataFrame:
+        dir_name = os.path.join(log_dir, name)
+        files = hio.find_all_files(dir_name)
+        files.sort()
+        dfs = []
+        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
+            df = AbstractPortfolio._read_df(log_dir, name, file_name, tz)
+            dfs.append(df)
+        df = pd.concat(dfs)
+        hdbg.dassert(
+            not df.index.has_duplicates,
+            "Duplicated indices for `%s`=\n%s",
+            name,
+            df.index[df.index.duplicated()],
+        )
+        return df
+
+    @staticmethod
+    def _parse_pricing_method(pricing_method: str) -> Tuple[str, Optional[str]]:
+        hdbg.dassert_isinstance(pricing_method, str)
+        if pricing_method == "last":
+            pricing_type = "last"
+            bar_duration = None
+        else:
+            split_str = pricing_method.split(".")
+            hdbg.dassert_eq(len(split_str), 2)
+            pricing_type = split_str[0]
+            hdbg.dassert_in(pricing_type, ["twap", "vwap"])
+            pricing_type = pricing_type
+            bar_duration = split_str[1]
+            hdbg.dassert(
+                pd.Timedelta(bar_duration),
+                "Cannot convert %s to `pd.Timedelta`" % bar_duration,
+            )
+        return pricing_type, bar_duration
+
+    @staticmethod
+    def _compute_pnl(
+        holdings_marked_to_market: pd.DataFrame,
+        flows: pd.DataFrame,
+    ) -> pd.DataFrame:
+        # Drop the cash balance.
+        holdings_marked_to_market = holdings_marked_to_market.drop(
+            columns=AbstractPortfolio.CASH_ID
+        )
+        cols = holdings_marked_to_market.columns.union(flows.columns)
+        holdings_marked_to_market = holdings_marked_to_market.reindex(
+            columns=cols, fill_value=0
+        )
+        flows = flows.reindex(columns=cols, fill_value=0)
+        # Get per-bar flows and compute PnL.
+        pnl = holdings_marked_to_market.diff().add(flows)
+        return pnl
+
+    @staticmethod
+    def _write_df(
+        df: pd.DataFrame,
+        log_dir: str,
+        name: str,
+        file_name: str,
+    ) -> None:
+        path = os.path.join(log_dir, name, file_name)
+        hio.create_enclosing_dir(path, incremental=True)
+        df.to_csv(path)
+
+    @staticmethod
+    def _read_df(
+        log_dir: str,
+        name: str,
+        file_name: str,
+        tz: str,
+    ) -> pd.DataFrame:
+        path = os.path.join(log_dir, name, file_name)
+        df = pd.read_csv(path, index_col=0, parse_dates=True)
+        # TODO(Paul): Add better checks. The first `flows` dataframe has no
+        # rows, and so when parsed it does not have a DatetimeIndex.
+        if isinstance(df.index, pd.DatetimeIndex):
+            df.index = df.index.tz_convert(tz)
+        return df
 
     @staticmethod
     def _create_holdings_df_from_cash(
