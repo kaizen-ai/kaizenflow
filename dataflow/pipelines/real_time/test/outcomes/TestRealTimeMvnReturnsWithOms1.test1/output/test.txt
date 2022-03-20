@@ -37,6 +37,7 @@ result_bundles=
   process_forecasts:
     prediction_col: close
     volatility_col: close
+    spread_col: None
     portfolio: # historical holdings=
     asset_id                        101       -1  
     2000-01-03 09:30:01-05:00      0.00  1000000.0
@@ -207,6 +208,7 @@ class: ResultBundle, config:
   process_forecasts:
     prediction_col: close
     volatility_col: close
+    spread_col: None
     portfolio: # historical holdings=
     asset_id                        101       -1  
     2000-01-03 09:30:01-05:00      0.00  1000000.0
@@ -377,6 +379,7 @@ class: ResultBundle, config:
   process_forecasts:
     prediction_col: close
     volatility_col: close
+    spread_col: None
     portfolio: # historical holdings=
     asset_id                        101       -1  
     2000-01-03 09:30:01-05:00      0.00  1000000.0

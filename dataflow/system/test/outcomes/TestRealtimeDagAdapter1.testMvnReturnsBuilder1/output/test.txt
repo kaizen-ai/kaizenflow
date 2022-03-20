@@ -179,7 +179,7 @@ dag_adapter
         }
   overriding_config=
     load_prices: {'source_node_name': 'RealTimeDataSource', 'source_node_kwargs': {'market_data': <market_data.replayed_market_data.ReplayedMarketData object>, 'timedelta': Timedelta('0 days 00:05:00'), 'asset_id_col': 'asset_id', 'multiindex_output': True}}
-    process_forecasts: {'prediction_col': 'close', 'volatility_col': 'close', 'portfolio': <oms.portfolio.DataFramePortfolio object>, 'process_forecasts_config': order_config:
+    process_forecasts: {'prediction_col': 'close', 'volatility_col': 'close', 'spread_col': None, 'portfolio': <oms.portfolio.DataFramePortfolio object>, 'process_forecasts_config': order_config:
       order_type: price@twap
       order_duration: 5
     optimizer_config:

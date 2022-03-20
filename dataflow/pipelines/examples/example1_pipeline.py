@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.pipelines.examples.pipeline1 as dtfpiexpip
+import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 """
 
 import datetime
@@ -17,10 +17,8 @@ import dataflow.core as dtfcore
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> example_pipeline1.py?
 
-
-class ExamplePipeline1_DagBuilder(dtfcore.DagBuilder):
+class Example1_DagBuilder(dtfcore.DagBuilder):
     """
     A pipeline similar to real models.
     """
