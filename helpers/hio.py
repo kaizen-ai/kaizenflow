@@ -19,7 +19,6 @@ from typing import Any, List, Optional, cast
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 
 # Avoid dependency from other `helpers` modules to prevent import cycles.
@@ -69,6 +68,8 @@ def find_files(
     """
     file_names = []
     if aws_profile:
+        # TODO(gp): Remove this and move the code that requires s3 in hs3.
+        import helpers.hs3 as hs3
         s3fs_ = hs3.get_s3fs(aws_profile)
         hs3.dassert_s3_exists(directory, s3fs_)
         file_names = s3fs_.glob(f"{directory}/{pattern}")
