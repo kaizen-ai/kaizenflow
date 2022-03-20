@@ -55,7 +55,8 @@ def purify_file_name(file_name: str) -> str:
 # #############################################################################
 
 
-# TODO(Nikola): Supports S3 and thus we should keep/merge it properly with `find_regex_files`.
+# TODO(Nikola): Supports S3 and thus we should keep/merge it properly with
+# `find_regex_files`.
 def find_files(
     directory: str, pattern: str, aws_profile: Optional[str] = None
 ) -> List[str]:
