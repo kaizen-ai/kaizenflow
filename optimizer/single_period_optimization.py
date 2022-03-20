@@ -92,10 +92,24 @@ class SinglePeriodOptimizer:
         positions = self._df["position"]
         _LOG.debug("positions=\n%s", hpandas.df_to_str(positions))
         self._gmv = positions.abs().sum()
-        self._current_weights = positions / self._target_gmv
+        self._current_weights = positions * self._n_assets / self._target_gmv
         _LOG.debug(
             "current_weights=\n%s", hpandas.df_to_str(self._current_weights)
         )
+        # We pass "solver" as a string to avoid propagating `cvx` dependencies.
+        if "solver" in config:
+            solver = config["solver"]
+            if solver == "ECOS":
+                self._solver = cvx.ECOS
+            elif solver == "OSQP":
+                self._solver = cvx.OSQP
+            elif solver == "SCS":
+                self._solver = cvx.SCS
+            else:
+                raise ValueError("solver=%s not supported", solver)
+        else:
+            self._solver = None
+        self._verbose = config.get("verbose", False)
 
     def optimize(self) -> pd.DataFrame:
         """
@@ -162,8 +176,9 @@ class SinglePeriodOptimizer:
             hard_constraint_cvx_expr,
         )
         # Optimize.
-        optimal_value = problem.solve()
-        hdbg.dassert_eq(problem.status, "optimal")
+        optimal_value = problem.solve(self._solver, verbose=self._verbose)
+        if problem.status != "optimal":
+            _LOG.warning("problem.status=%s", problem.status)
         _LOG.info("`optimal_value`=%0.2f", optimal_value)
         # TODO(Paul): Compute estimates for PnL, costs.
         return target_weights, target_weight_diffs
@@ -238,17 +253,19 @@ class SinglePeriodOptimizer:
         """
         # Collect series.
         srs_list = []
+        #
+        rescaling = self._target_gmv / self._n_assets
         # Target positions (notional).
         target_positions = pd.Series(
             index=self._asset_ids,
-            data=target_weights.value * self._target_gmv,
+            data=target_weights.value * rescaling,
             name="target_position",
         )
         srs_list.append(target_positions)
         # Target trades (notional).
         target_trades = pd.Series(
             index=self._asset_ids,
-            data=target_weight_diffs.value * self._target_gmv,
+            data=target_weight_diffs.value * rescaling,
             name="target_notional_trade",
         )
         srs_list.append(target_trades)
@@ -266,7 +283,9 @@ class SinglePeriodOptimizer:
             name="target_weight_diff",
         )
         srs_list.append(target_weight_diffs)
-        return pd.concat(srs_list, axis=1)
+        df = pd.concat(srs_list, axis=1)
+        _LOG.debug("optimizer result=\n%s", hpandas.df_to_str(df, precision=2))
+        return df
 
     @staticmethod
     def _validate_df(df: pd.DataFrame) -> None:
