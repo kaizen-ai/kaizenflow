@@ -95,12 +95,16 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         portfolio = self.get_portfolio(event_loop, asset_ids)
         # Get process forecasts config.
         config = self.get_process_forecasts_config()
+        spread_df = None
+        restrictions_df = None
         # Run.
         await oprofore.process_forecasts(
             predictions,
             volatility,
             portfolio,
             config,
+            spread_df,
+            restrictions_df,
         )
         actual = str(portfolio)
         expected = r"""
@@ -221,12 +225,16 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             event_loop, start_datetime, end_datetime, asset_ids
         )
         config = self.get_process_forecasts_config()
+        spread_df = None
+        restrictions_df = None
         # Run.
         await oprofore.process_forecasts(
             predictions,
             volatility,
             portfolio,
             config,
+            spread_df,
+            restrictions_df,
         )
         actual = str(portfolio)
         expected = r"""
@@ -442,12 +450,16 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             "trading_end_time": datetime.time(15, 55),
         }
         config = cconfig.get_config_from_nested_dict(dict_)
+        spread_df = None
+        restrictions_df = None
         # Run.
         await oprofore.process_forecasts(
             predictions,
             volatility,
             portfolio,
             config,
+            spread_df,
+            restrictions_df,
         )
         # TODO(Paul): Factor out a test that compares simulation and mock.
         actual = str(portfolio)
@@ -680,12 +692,16 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             "trading_end_time": datetime.time(15, 55),
         }
         config = cconfig.get_config_from_nested_dict(dict_)
+        spread_df = None
+        restrictions_df = None
         # Run.
         await oprofore.process_forecasts(
             predictions,
             volatility,
             portfolio,
             config,
+            spread_df,
+            restrictions_df,
         )
         #
         asset_ids = portfolio.universe

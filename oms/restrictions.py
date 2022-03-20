@@ -4,6 +4,7 @@ Import as:
 import oms.restrictions as omrestri
 """
 import logging
+from typing import Optional
 
 import pandas as pd
 
@@ -19,19 +20,25 @@ class Restrictions:
     def __init__(
         self,
         strategy_id: str,
-        account: str,
+        account: Optional[str],
         asset_id_col: str,
         date_col: str,
         db_connection: hsql.DbConnection,
         table_name: str,
         get_wall_clock_time: hdateti.GetWallClockTime,
     ) -> None:
-        self._strategy_id = Restrictions._check_nonempty_str(strategy_id)
-        self._account = Restrictions._check_nonempty_str(account)
-        self._asset_id_col = Restrictions._check_nonempty_str(asset_id_col)
-        self._date_col = Restrictions._check_nonempty_str(date_col)
+        """
+        Constructor.
+
+        :param strategy_id: identifier of the strategy (e.g., "SAU1")
+        :param account: used to create SQL queries, if not `None`
+        """
+        self._strategy_id = self._check_nonempty_str(strategy_id)
+        self._account = account
+        self._asset_id_col = self._check_nonempty_str(asset_id_col)
+        self._date_col = self._check_nonempty_str(date_col)
         self._db_connection = db_connection
-        self._table_name = Restrictions._check_nonempty_str(table_name)
+        self._table_name = self._check_nonempty_str(table_name)
         self._get_wall_clock_time = get_wall_clock_time
         #
         self._restrictions = None
@@ -56,12 +63,15 @@ class Restrictions:
     def _get_trading_restrictions(self) -> pd.DataFrame:
         query = []
         query.append(f"SELECT * FROM {self._table_name}")
+        #
         wall_clock_timestamp = self._get_wall_clock_time()
-        _LOG.debug("wall_clock_timestamp=%s" % wall_clock_timestamp)
+        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
         trade_date = wall_clock_timestamp.date()
-        query.append(
-            f"WHERE account='{self._account}' AND tradedate='{trade_date}'"
-        )
+        where_clause = f"WHERE tradedate='{trade_date}'"
+        if self._account:
+            where_clause += f" AND account='{self._account}'"
+        query.append(where_clause)
+        #
         query.append(f"ORDER BY {self._asset_id_col}")
         query = "\n".join(query)
         _LOG.debug("query=%s", query)
