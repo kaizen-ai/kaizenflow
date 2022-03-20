@@ -18,9 +18,9 @@ import dataflow.core.nodes.volatility_models as dtfcnovomo
 _LOG = logging.getLogger(__name__)
 
 
-class DagBuilderExample1(dtfcodabui.DagBuilder):
+class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
     """
-    Pipeline contain a single node with a data source node factory.
+    Pipeline containing a single node with a data source node factory.
     """
 
     def get_config_template(self) -> cconfig.Config:
@@ -55,6 +55,10 @@ class DagBuilderExample1(dtfcodabui.DagBuilder):
         return dag
 
 
+# #############################################################################
+
+
+# TODO(gp): Builder -> _DagBuiler
 class ReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from a given `DataSource` node.
@@ -176,6 +180,10 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
         return dag
 
 
+# #############################################################################
+
+
+# TODO(gp): Builder -> _DagBuiler
 # TODO(gp): Remove the first node from these DAG and express ArmaReturnsBuilder and
 #  MvnReturnsBuilder in terms of a DagAdapter and ReturnsBuilder.
 class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
@@ -315,6 +323,10 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         return dag
 
 
+# #############################################################################
+
+
+# TODO(gp): Builder -> _DagBuiler
 class MvnReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from an Multivariate Normal

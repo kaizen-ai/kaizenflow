@@ -1,0 +1,740 @@
+# 1/2
+DAG:
+  filter_ath:
+    col_mode: replace_all
+    transformer_kwargs:
+      start_time: 09:30:00
+      end_time: 16:00:00
+  zscore:
+    in_col_groups: [('sided_bid_count',), ('sided_ask_count',)]
+    out_col_group: ()
+    transformer_kwargs:
+      dyadic_tau: 7
+    col_mapping:
+      sided_bid_count: sided_bid_count.z
+      sided_ask_count: sided_ask_count.z
+    drop_nans: True
+  compress_tails:
+    in_col_groups: [('sided_bid_count.z',), ('sided_ask_count.z',)]
+    out_col_group: ()
+    transformer_kwargs:
+      scale: 6
+    col_mapping:
+      sided_bid_count.z: sided_bid_count.zc
+      sided_ask_count.z: sided_ask_count.zc
+  cross_feature_pairs:
+    in_col_groups: [('sided_bid_count.zc',), ('sided_ask_count.zc',)]
+    out_col_group: ()
+    transformer_kwargs:
+      feature_groups: [('sided_bid_count.zc', 'sided_ask_count.zc', ['compressed_difference'], 'sbc_sac')]
+      join_output_with_input: False
+  resample:
+    in_col_groups: [('close',), ('volume',), ('sbc_sac.compressed_difference',), ('day_spread',), ('day_num_spread',)]
+    out_col_group: ()
+    transformer_kwargs:
+      rule: 5T
+      resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'sbc_sac.compressed_difference': 'sbc_sac.compressed_difference'}, 'mean', {}), ({'day_spread': 'day_spread', 'day_num_spread': 'day_num_spread', 'volume': 'volume'}, 'sum', {'min_count': 1})]
+      vwap_groups: [('close', 'volume', 'vwap')]
+    reindex_like_input: False
+    join_output_with_input: False
+  compute_ret_0:
+    in_col_groups: [('close',), ('vwap',), ('twap',)]
+    out_col_group: ()
+    transformer_kwargs:
+      mode: log_rets
+    col_mapping:
+      close: close.ret_0
+      vwap: vwap.ret_0
+      twap: twap.ret_0
+  compute_bar_spread:
+    in_col_groups: [('day_spread',), ('day_num_spread',)]
+    out_col_group: ()
+    transformer_kwargs: {}
+    col_mapping:
+      day_spread: bar_spread
+      day_num_spread: bar_num_spread
+  compute_mean_bar_spread:
+    in_col_groups: [('bar_spread',), ('bar_num_spread',)]
+    out_col_group: ()
+    transformer_kwargs:
+      term1_col: bar_spread
+      term2_col: bar_num_spread
+      out_col: mean_bar_spread
+      operation: div
+  compute_pct_spread:
+    in_col_groups: [('mean_bar_spread',), ('vwap',)]
+    out_col_group: ()
+    transformer_kwargs:
+      term1_col: mean_bar_spread
+      term2_col: vwap
+      out_col: pct_bar_spread
+      operation: div
+  compute_vol:
+    in_col_group: ('vwap.ret_0',)
+    out_col_group: ('vwap.ret_0.vol',)
+    drop_nans: True
+    permitted_exceptions: (<class 'ValueError'>,)
+  adjust_rets:
+    in_col_groups: [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+    out_col_group: ()
+    transformer_kwargs:
+      term1_col: vwap.ret_0
+      term2_col: vwap.ret_0.vol
+      out_col: vwap.ret_0.vol_adj
+      term2_delay: 2
+      operation: div
+    drop_nans: True
+  compress_rets:
+    in_col_groups: [('vwap.ret_0.vol_adj',)]
+    out_col_group: ()
+    col_mapping:
+      vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
+  cswt:
+    in_col_groups: [('sbc_sac.compressed_difference',)]
+    out_col_group: ()
+    transformer_kwargs:
+      depth: 10
+      output_mode: detail
+    drop_nans: True
+    permitted_exceptions: (<class 'ValueError'>,)
+  predict:
+    in_col_groups: [(1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,), (9,), (10,)]
+    out_col_group: ()
+    transformer_kwargs:
+      weights: 1    -1
+      2    -1
+      3    -1
+      4    -1
+      5    -1
+      6    -1
+      7    -1
+      8    -1
+      9    -1
+      10   -1
+      Name: prediction, dtype: int64
+      convert_to_dataframe: True
+    drop_nans: True
+meta:
+  dag_builder: nid_prefix=
+  get_config_template=
+    filter_ath:
+      col_mode: replace_all
+      transformer_kwargs:
+        start_time: 09:30:00
+        end_time: 16:00:00
+    zscore:
+      in_col_groups: [('sided_bid_count',), ('sided_ask_count',)]
+      out_col_group: ()
+      transformer_kwargs:
+        dyadic_tau: 7
+      col_mapping:
+        sided_bid_count: sided_bid_count.z
+        sided_ask_count: sided_ask_count.z
+      drop_nans: True
+    compress_tails:
+      in_col_groups: [('sided_bid_count.z',), ('sided_ask_count.z',)]
+      out_col_group: ()
+      transformer_kwargs:
+        scale: 6
+      col_mapping:
+        sided_bid_count.z: sided_bid_count.zc
+        sided_ask_count.z: sided_ask_count.zc
+    cross_feature_pairs:
+      in_col_groups: [('sided_bid_count.zc',), ('sided_ask_count.zc',)]
+      out_col_group: ()
+      transformer_kwargs:
+        feature_groups: [('sided_bid_count.zc', 'sided_ask_count.zc', ['compressed_difference'], 'sbc_sac')]
+        join_output_with_input: False
+    resample:
+      in_col_groups: [('close',), ('volume',), ('sbc_sac.compressed_difference',), ('day_spread',), ('day_num_spread',)]
+      out_col_group: ()
+      transformer_kwargs:
+        rule: 5T
+        resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'sbc_sac.compressed_difference': 'sbc_sac.compressed_difference'}, 'mean', {}), ({'day_spread': 'day_spread', 'day_num_spread': 'day_num_spread', 'volume': 'volume'}, 'sum', {'min_count': 1})]
+        vwap_groups: [('close', 'volume', 'vwap')]
+      reindex_like_input: False
+      join_output_with_input: False
+    compute_ret_0:
+      in_col_groups: [('close',), ('vwap',), ('twap',)]
+      out_col_group: ()
+      transformer_kwargs:
+        mode: log_rets
+      col_mapping:
+        close: close.ret_0
+        vwap: vwap.ret_0
+        twap: twap.ret_0
+    compute_bar_spread:
+      in_col_groups: [('day_spread',), ('day_num_spread',)]
+      out_col_group: ()
+      transformer_kwargs: {}
+      col_mapping:
+        day_spread: bar_spread
+        day_num_spread: bar_num_spread
+    compute_mean_bar_spread:
+      in_col_groups: [('bar_spread',), ('bar_num_spread',)]
+      out_col_group: ()
+      transformer_kwargs:
+        term1_col: bar_spread
+        term2_col: bar_num_spread
+        out_col: mean_bar_spread
+        operation: div
+    compute_pct_spread:
+      in_col_groups: [('mean_bar_spread',), ('vwap',)]
+      out_col_group: ()
+      transformer_kwargs:
+        term1_col: mean_bar_spread
+        term2_col: vwap
+        out_col: pct_bar_spread
+        operation: div
+    compute_vol:
+      in_col_group: ('vwap.ret_0',)
+      out_col_group: ('vwap.ret_0.vol',)
+      drop_nans: True
+      permitted_exceptions: (<class 'ValueError'>,)
+    adjust_rets:
+      in_col_groups: [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+      out_col_group: ()
+      transformer_kwargs:
+        term1_col: vwap.ret_0
+        term2_col: vwap.ret_0.vol
+        out_col: vwap.ret_0.vol_adj
+        term2_delay: 2
+        operation: div
+      drop_nans: True
+    compress_rets:
+      in_col_groups: [('vwap.ret_0.vol_adj',)]
+      out_col_group: ()
+      col_mapping:
+        vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
+    cswt:
+      in_col_groups: [('sbc_sac.compressed_difference',)]
+      out_col_group: ()
+      transformer_kwargs:
+        depth: 7
+        output_mode: detail
+      drop_nans: True
+      permitted_exceptions: (<class 'ValueError'>,)
+    predict:
+      in_col_groups: [(1,), (2,), (3,), (4,), (5,), (6,), (7,)]
+      out_col_group: ()
+      transformer_kwargs:
+        weights: 1    -0.347734
+        2    -0.697560
+        3    -1.540003
+        4    -3.946937
+        5   -10.447953
+        6   -19.227048
+        7   -25.385100
+        Name: prediction, dtype: float64
+        convert_to_dataframe: True
+      drop_nans: True
+  dag=
+    name=None
+    mode=strict
+    json=
+      {
+          "directed": true,
+          "graph": {},
+          "links": [
+              {
+                  "df_in": "df_out",
+                  "source": "filter_ath",
+                  "target": "zscore"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "zscore",
+                  "target": "compress_tails"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compress_tails",
+                  "target": "cross_feature_pairs"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "cross_feature_pairs",
+                  "target": "resample"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "resample",
+                  "target": "compute_ret_0"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_ret_0",
+                  "target": "compute_bar_spread"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_bar_spread",
+                  "target": "compute_mean_bar_spread"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_mean_bar_spread",
+                  "target": "compute_pct_spread"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_pct_spread",
+                  "target": "compute_vol"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_vol",
+                  "target": "adjust_rets"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "adjust_rets",
+                  "target": "compress_rets"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compress_rets",
+                  "target": "cswt"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "cswt",
+                  "target": "predict"
+              }
+          ],
+          "multigraph": false,
+          "nodes": [
+              {
+                  "id": "filter_ath",
+                  "stage": "ColumnTransformer"
+              },
+              {
+                  "id": "zscore",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compress_tails",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "cross_feature_pairs",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "resample",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_ret_0",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_bar_spread",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_mean_bar_spread",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_pct_spread",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_vol",
+                  "stage": "SeriesToSeriesTransformer"
+              },
+              {
+                  "id": "adjust_rets",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compress_rets",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "cswt",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "predict",
+                  "stage": "GroupedColDfToDfTransformer"
+              }
+          ]
+      }
+  dag_runner: <function get_dag_runner>
+  asset_id_col_name: egid
+  asset_ids: [10025]
+  start_timestamp_with_lookback: 2019-10-03 00:00:00+00:00
+  start_timestamp: 2020-01-01 00:00:00+00:00
+  end_timestamp: 2020-01-31 00:00:00+00:00
+# 2/2
+DAG:
+  filter_ath:
+    col_mode: replace_all
+    transformer_kwargs:
+      start_time: 09:30:00
+      end_time: 16:00:00
+  zscore:
+    in_col_groups: [('sided_bid_count',), ('sided_ask_count',)]
+    out_col_group: ()
+    transformer_kwargs:
+      dyadic_tau: 7
+    col_mapping:
+      sided_bid_count: sided_bid_count.z
+      sided_ask_count: sided_ask_count.z
+    drop_nans: True
+  compress_tails:
+    in_col_groups: [('sided_bid_count.z',), ('sided_ask_count.z',)]
+    out_col_group: ()
+    transformer_kwargs:
+      scale: 6
+    col_mapping:
+      sided_bid_count.z: sided_bid_count.zc
+      sided_ask_count.z: sided_ask_count.zc
+  cross_feature_pairs:
+    in_col_groups: [('sided_bid_count.zc',), ('sided_ask_count.zc',)]
+    out_col_group: ()
+    transformer_kwargs:
+      feature_groups: [('sided_bid_count.zc', 'sided_ask_count.zc', ['compressed_difference'], 'sbc_sac')]
+      join_output_with_input: False
+  resample:
+    in_col_groups: [('close',), ('volume',), ('sbc_sac.compressed_difference',), ('day_spread',), ('day_num_spread',)]
+    out_col_group: ()
+    transformer_kwargs:
+      rule: 5T
+      resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'sbc_sac.compressed_difference': 'sbc_sac.compressed_difference'}, 'mean', {}), ({'day_spread': 'day_spread', 'day_num_spread': 'day_num_spread', 'volume': 'volume'}, 'sum', {'min_count': 1})]
+      vwap_groups: [('close', 'volume', 'vwap')]
+    reindex_like_input: False
+    join_output_with_input: False
+  compute_ret_0:
+    in_col_groups: [('close',), ('vwap',), ('twap',)]
+    out_col_group: ()
+    transformer_kwargs:
+      mode: log_rets
+    col_mapping:
+      close: close.ret_0
+      vwap: vwap.ret_0
+      twap: twap.ret_0
+  compute_bar_spread:
+    in_col_groups: [('day_spread',), ('day_num_spread',)]
+    out_col_group: ()
+    transformer_kwargs: {}
+    col_mapping:
+      day_spread: bar_spread
+      day_num_spread: bar_num_spread
+  compute_mean_bar_spread:
+    in_col_groups: [('bar_spread',), ('bar_num_spread',)]
+    out_col_group: ()
+    transformer_kwargs:
+      term1_col: bar_spread
+      term2_col: bar_num_spread
+      out_col: mean_bar_spread
+      operation: div
+  compute_pct_spread:
+    in_col_groups: [('mean_bar_spread',), ('vwap',)]
+    out_col_group: ()
+    transformer_kwargs:
+      term1_col: mean_bar_spread
+      term2_col: vwap
+      out_col: pct_bar_spread
+      operation: div
+  compute_vol:
+    in_col_group: ('vwap.ret_0',)
+    out_col_group: ('vwap.ret_0.vol',)
+    drop_nans: True
+    permitted_exceptions: (<class 'ValueError'>,)
+  adjust_rets:
+    in_col_groups: [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+    out_col_group: ()
+    transformer_kwargs:
+      term1_col: vwap.ret_0
+      term2_col: vwap.ret_0.vol
+      out_col: vwap.ret_0.vol_adj
+      term2_delay: 2
+      operation: div
+    drop_nans: True
+  compress_rets:
+    in_col_groups: [('vwap.ret_0.vol_adj',)]
+    out_col_group: ()
+    col_mapping:
+      vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
+  cswt:
+    in_col_groups: [('sbc_sac.compressed_difference',)]
+    out_col_group: ()
+    transformer_kwargs:
+      depth: 10
+      output_mode: detail
+    drop_nans: True
+    permitted_exceptions: (<class 'ValueError'>,)
+  predict:
+    in_col_groups: [(1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,), (9,), (10,)]
+    out_col_group: ()
+    transformer_kwargs:
+      weights: 1    -1
+      2    -1
+      3    -1
+      4    -1
+      5    -1
+      6    -1
+      7    -1
+      8    -1
+      9    -1
+      10   -1
+      Name: prediction, dtype: int64
+      convert_to_dataframe: True
+    drop_nans: True
+meta:
+  dag_builder: nid_prefix=
+  get_config_template=
+    filter_ath:
+      col_mode: replace_all
+      transformer_kwargs:
+        start_time: 09:30:00
+        end_time: 16:00:00
+    zscore:
+      in_col_groups: [('sided_bid_count',), ('sided_ask_count',)]
+      out_col_group: ()
+      transformer_kwargs:
+        dyadic_tau: 7
+      col_mapping:
+        sided_bid_count: sided_bid_count.z
+        sided_ask_count: sided_ask_count.z
+      drop_nans: True
+    compress_tails:
+      in_col_groups: [('sided_bid_count.z',), ('sided_ask_count.z',)]
+      out_col_group: ()
+      transformer_kwargs:
+        scale: 6
+      col_mapping:
+        sided_bid_count.z: sided_bid_count.zc
+        sided_ask_count.z: sided_ask_count.zc
+    cross_feature_pairs:
+      in_col_groups: [('sided_bid_count.zc',), ('sided_ask_count.zc',)]
+      out_col_group: ()
+      transformer_kwargs:
+        feature_groups: [('sided_bid_count.zc', 'sided_ask_count.zc', ['compressed_difference'], 'sbc_sac')]
+        join_output_with_input: False
+    resample:
+      in_col_groups: [('close',), ('volume',), ('sbc_sac.compressed_difference',), ('day_spread',), ('day_num_spread',)]
+      out_col_group: ()
+      transformer_kwargs:
+        rule: 5T
+        resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'sbc_sac.compressed_difference': 'sbc_sac.compressed_difference'}, 'mean', {}), ({'day_spread': 'day_spread', 'day_num_spread': 'day_num_spread', 'volume': 'volume'}, 'sum', {'min_count': 1})]
+        vwap_groups: [('close', 'volume', 'vwap')]
+      reindex_like_input: False
+      join_output_with_input: False
+    compute_ret_0:
+      in_col_groups: [('close',), ('vwap',), ('twap',)]
+      out_col_group: ()
+      transformer_kwargs:
+        mode: log_rets
+      col_mapping:
+        close: close.ret_0
+        vwap: vwap.ret_0
+        twap: twap.ret_0
+    compute_bar_spread:
+      in_col_groups: [('day_spread',), ('day_num_spread',)]
+      out_col_group: ()
+      transformer_kwargs: {}
+      col_mapping:
+        day_spread: bar_spread
+        day_num_spread: bar_num_spread
+    compute_mean_bar_spread:
+      in_col_groups: [('bar_spread',), ('bar_num_spread',)]
+      out_col_group: ()
+      transformer_kwargs:
+        term1_col: bar_spread
+        term2_col: bar_num_spread
+        out_col: mean_bar_spread
+        operation: div
+    compute_pct_spread:
+      in_col_groups: [('mean_bar_spread',), ('vwap',)]
+      out_col_group: ()
+      transformer_kwargs:
+        term1_col: mean_bar_spread
+        term2_col: vwap
+        out_col: pct_bar_spread
+        operation: div
+    compute_vol:
+      in_col_group: ('vwap.ret_0',)
+      out_col_group: ('vwap.ret_0.vol',)
+      drop_nans: True
+      permitted_exceptions: (<class 'ValueError'>,)
+    adjust_rets:
+      in_col_groups: [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+      out_col_group: ()
+      transformer_kwargs:
+        term1_col: vwap.ret_0
+        term2_col: vwap.ret_0.vol
+        out_col: vwap.ret_0.vol_adj
+        term2_delay: 2
+        operation: div
+      drop_nans: True
+    compress_rets:
+      in_col_groups: [('vwap.ret_0.vol_adj',)]
+      out_col_group: ()
+      col_mapping:
+        vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
+    cswt:
+      in_col_groups: [('sbc_sac.compressed_difference',)]
+      out_col_group: ()
+      transformer_kwargs:
+        depth: 7
+        output_mode: detail
+      drop_nans: True
+      permitted_exceptions: (<class 'ValueError'>,)
+    predict:
+      in_col_groups: [(1,), (2,), (3,), (4,), (5,), (6,), (7,)]
+      out_col_group: ()
+      transformer_kwargs:
+        weights: 1    -0.347734
+        2    -0.697560
+        3    -1.540003
+        4    -3.946937
+        5   -10.447953
+        6   -19.227048
+        7   -25.385100
+        Name: prediction, dtype: float64
+        convert_to_dataframe: True
+      drop_nans: True
+  dag=
+    name=None
+    mode=strict
+    json=
+      {
+          "directed": true,
+          "graph": {},
+          "links": [
+              {
+                  "df_in": "df_out",
+                  "source": "filter_ath",
+                  "target": "zscore"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "zscore",
+                  "target": "compress_tails"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compress_tails",
+                  "target": "cross_feature_pairs"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "cross_feature_pairs",
+                  "target": "resample"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "resample",
+                  "target": "compute_ret_0"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_ret_0",
+                  "target": "compute_bar_spread"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_bar_spread",
+                  "target": "compute_mean_bar_spread"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_mean_bar_spread",
+                  "target": "compute_pct_spread"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_pct_spread",
+                  "target": "compute_vol"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_vol",
+                  "target": "adjust_rets"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "adjust_rets",
+                  "target": "compress_rets"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compress_rets",
+                  "target": "cswt"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "cswt",
+                  "target": "predict"
+              }
+          ],
+          "multigraph": false,
+          "nodes": [
+              {
+                  "id": "filter_ath",
+                  "stage": "ColumnTransformer"
+              },
+              {
+                  "id": "zscore",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compress_tails",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "cross_feature_pairs",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "resample",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_ret_0",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_bar_spread",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_mean_bar_spread",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_pct_spread",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_vol",
+                  "stage": "SeriesToSeriesTransformer"
+              },
+              {
+                  "id": "adjust_rets",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compress_rets",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "cswt",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "predict",
+                  "stage": "GroupedColDfToDfTransformer"
+              }
+          ]
+      }
+  dag_runner: <function get_dag_runner>
+  asset_id_col_name: egid
+  asset_ids: [10025]
+  start_timestamp_with_lookback: 2019-11-03 00:00:00+00:00
+  start_timestamp: 2020-02-01 00:00:00+00:00
+  end_timestamp: 2020-02-29 00:00:00+00:00

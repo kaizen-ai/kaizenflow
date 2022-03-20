@@ -1,0 +1,19 @@
+# Dir structure
+.
+result_0
+result_0/config.pkl
+result_0/config.txt
+result_0/run_experiment.0.log
+result_0/success.txt
+result_1
+result_1/config.pkl
+result_1/config.txt
+result_1/run_experiment.1.log
+result_1/success.txt
+tiled_results
+tiled_results/egid=10025
+tiled_results/egid=10025/year=2020
+tiled_results/egid=10025/year=2020/month=1
+tiled_results/egid=10025/year=2020/month=1/data.parquet
+tiled_results/egid=10025/year=2020/month=2
+tiled_results/egid=10025/year=2020/month=2/data.parquet

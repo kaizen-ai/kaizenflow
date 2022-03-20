@@ -331,35 +331,34 @@ def get_ReplayedTimeMarketData_from_df(
     initial_replayed_delay: int,
     df: pd.DataFrame,
     *,
+    knowledge_datetime_col_name: str = "timestamp_db",
+    asset_id_col_name: str = "asset_id",
+    start_time_col_name: str = "start_datetime",
+    end_time_col_name: str = "end_datetime",
     delay_in_secs: int = 0,
     sleep_in_secs: float = 1.0,
     time_out_in_secs: int = 60 * 2,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a `ReplayedMarketData` backed by synthetic data stored in a
-    dataframe.
+    Build a `ReplayedMarketData` backed by data stored in a dataframe.
 
     :param df: dataframe including the columns
         ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
-    :param initial_replayed_delay: how many minutes after the beginning of the data
-        the replayed time starts. This is useful to simulate the beginning / end of
-        the trading day
+    :param initial_replayed_delay: how many minutes after the beginning of the
+        data the replayed time starts. This is useful to simulate the beginning
+        / end of the trading day.
     """
-    # Build the `ReplayedMarketData` backed by the df with
-    # `initial_replayed_delay` after the first timestamp of the data.
-    knowledge_datetime_col_name = "timestamp_db"
     hdbg.dassert_in(knowledge_datetime_col_name, df.columns)
-    asset_id_col_name = "asset_id"
     hdbg.dassert_in(asset_id_col_name, df.columns)
-    # If the asset ids were not specified, then infer it from the dataframe.
+    # Infer the asset ids from the dataframe.
     asset_ids = list(df[asset_id_col_name].unique())
-    start_time_col_name = "start_datetime"
     hdbg.dassert_in(start_time_col_name, df.columns)
-    end_time_col_name = "end_datetime"
     hdbg.dassert_in(end_time_col_name, df.columns)
     columns = None
     # Build the wall clock.
     tz = "ET"
+    # Find the initial timestamp of the data and shift by
+    # `initial_replayed_delay`.
     initial_replayed_dt = df[start_time_col_name].min() + pd.Timedelta(
         minutes=initial_replayed_delay
     )
