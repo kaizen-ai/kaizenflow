@@ -11,7 +11,7 @@ import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow.pipelines.examples.pipeline1 as dtfpiexpip
+import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 import dataflow.system.system_runner as dtfsysyrun
 import market_data as mdata
@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): -> system_runner_example.py for symmetry with the other _example?
 
 
-class ExamplePipeline1_SystemRunner(dtfsysyrun.SystemRunner):
+class Example1_SystemRunner(dtfsysyrun.SystemRunner):
     def __init__(self, asset_ids: List[int], event_loop=None):
         self._asset_ids = asset_ids
         self._event_loop = event_loop
@@ -47,17 +47,19 @@ class ExamplePipeline1_SystemRunner(dtfsysyrun.SystemRunner):
         prediction_col: str = "feature1",
         volatility_col: str = "vwap.ret_0.vol",
         returns_col: str = "vwap.ret_0",
+        spread_col: Optional[str] = None,
         timedelta: pd.Timedelta = pd.Timedelta("7D"),
         asset_id_col: str = "asset_id",
         log_dir: Optional[str] = None,
     ) -> Tuple[cconfig.Config, dtfcore.DagBuilder]:
-        base_dag_builder = dtfpiexpip.ExamplePipeline1_DagBuilder()
+        base_dag_builder = dtfpexexpi.Example1_DagBuilder()
         dag_builder = dtfsrtdaad.RealTimeDagAdapter(
             base_dag_builder,
             portfolio,
             prediction_col,
             volatility_col,
             returns_col,
+            spread_col,
             timedelta,
             asset_id_col,
             log_dir=log_dir,
@@ -70,7 +72,7 @@ class ExamplePipeline1_SystemRunner(dtfsysyrun.SystemRunner):
 # #############################################################################
 
 
-class ExamplePipeline1_Dataframe_SystemRunner(ExamplePipeline1_SystemRunner):
+class Example1_Dataframe_SystemRunner(Example1_SystemRunner):
     def get_portfolio(
         self,
         market_data: mdata.MarketData,
@@ -94,8 +96,8 @@ class ExamplePipeline1_Dataframe_SystemRunner(ExamplePipeline1_SystemRunner):
 # #############################################################################
 
 
-class ExamplePipeline1_Database_SystemRunner(
-    dtfsysyrun.SystemWithSimulatedOmsRunner, ExamplePipeline1_SystemRunner
+class Example1_Database_SystemRunner(
+    dtfsysyrun.SystemWithSimulatedOmsRunner, Example1_SystemRunner
 ):
     def get_portfolio(
         self,

@@ -123,7 +123,6 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
 # TODO(gp): Use dag_builder = dtfsrtdaad.RealTimeDagAdapter(base_dag_builder,
 #   portfolio)
 # TODO(gp): -> TestRealTimeNaivePipelineWithOms1
-@pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
 class TestRealTimePipelineWithOms1(hunitest.TestCase):
     """
     This test uses:
@@ -392,6 +391,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
             prediction_col = "close"
             volatility_col = "close"
             returns_col = "close"
+            spread_col = None
             timedelta = pd.Timedelta("5T")
             asset_id_col = "asset_id"
             dag_builder = dtfsys.RealTimeDagAdapter(
@@ -400,6 +400,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
                 prediction_col,
                 volatility_col,
                 returns_col,
+                spread_col,
                 timedelta,
                 asset_id_col,
             )

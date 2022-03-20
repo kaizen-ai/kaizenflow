@@ -13,11 +13,11 @@ import oms.test.oms_db_helper as otodh
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> Test_ExamplePipeline1_SystemRunner?
-class TestExamplePipeline1(otodh.TestOmsDbHelper):
+# TODO(gp): This should derive from SystemTester.
+class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
     """
     Test using fake data and features:
-    - `ExamplePipeline1`
+    - `Example1` pipeline
     - end-to-end inside a `System`
     - with a `MarketData`
     - with a `Portfolio` backed by DB or dataframe
@@ -36,14 +36,12 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsepsyru.ExamplePipeline1_Database_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Database_SystemRunner(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = (
-                    dtfsepsyru.ExamplePipeline1_Dataframe_SystemRunner(
-                        asset_ids, event_loop
-                    )
+                system_runner = dtfsepsyru.Example1_Dataframe_SystemRunner(
+                    asset_ids, event_loop
                 )
             #
             market_data = system_runner.get_market_data(data)
@@ -120,7 +118,6 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         self.check_string(actual)
 
     @pytest.mark.slow
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data1_database_vs_dataframe_portfolio(self) -> None:
         """
         Compare the output between using a DB and dataframe portfolio.
@@ -135,7 +132,6 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.slow
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data2_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = mdata.get_market_data_df2()
         expected = self.run_coroutines(
@@ -147,7 +143,6 @@ class TestExamplePipeline1(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.superslow("Times out in GH Actions.")
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = mdata.get_market_data_df3()
         expected = self.run_coroutines(
