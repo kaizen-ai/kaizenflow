@@ -2148,7 +2148,7 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
     return as_user
 
 
-def _get_base_docker_cmd(
+def _get_docker_base_cmd(
     base_image: str,
     stage: str,
     version: str,
@@ -2273,7 +2273,7 @@ def _get_docker_cmd(
         "entrypoint as_user print_docker_config use_bash",
     )
     # - Get the base Docker command.
-    docker_cmd_ = _get_base_docker_cmd(
+    docker_cmd_ = _get_docker_base_cmd(
         base_image,
         stage,
         version,

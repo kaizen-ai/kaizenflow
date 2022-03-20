@@ -227,7 +227,7 @@ def _get_opt_docker_up_cmd(
     """
     extra_env_vars = None
     extra_docker_compose_files = None
-    docker_up_cmd_ = hlibtask._get_base_docker_cmd(
+    docker_up_cmd_ = hlibtask._get_docker_base_cmd(
         base_image,
         stage,
         version,
@@ -285,7 +285,7 @@ def _get_opt_docker_down_cmd(
     """
     extra_env_vars = None
     extra_docker_compose_files = None
-    docker_down_cmd_ = hlibtask._get_base_docker_cmd(
+    docker_down_cmd_ = hlibtask._get_docker_base_cmd(
         base_image,
         stage,
         version,
