@@ -115,6 +115,19 @@ class TestSmaModel(hunitest.TestCase):
         )
         self.assert_equal(actual, expected)
 
+    def _check_results(
+        self,
+        df: pd.DataFrame,
+    ) -> None:
+        """
+        Convert inputs to a string and check it against golden reference.
+        """
+        decimals = 3
+        actual = hunitest.convert_df_to_string(
+            df.round(decimals), index=True, decimals=decimals
+        )
+        self.check_string(actual)
+
     @staticmethod
     def _get_data() -> pd.DataFrame:
         """
@@ -140,19 +153,6 @@ class TestSmaModel(hunitest.TestCase):
         # Assemble the data in a dataframe.
         df = pd.DataFrame(index=date_range, data=vol_sq)
         return df
-
-    def _check_results(
-        self,
-        df: pd.DataFrame,
-    ) -> None:
-        """
-        Convert inputs to a string and check it against golden reference.
-        """
-        decimals = 3
-        actual = hunitest.convert_df_to_string(
-            df.round(decimals), index=True, decimals=decimals
-        )
-        self.check_string(actual)
 
 
 class TestSingleColumnVolatilityModel(hunitest.TestCase):
@@ -657,6 +657,22 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         )
         self.assert_equal(actual, expected)
 
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate multivariate normal returns.
+        """
+        mn_process = carsigen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
+        realization = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
+        )
+        realization = realization.rename(columns=lambda x: "MN" + str(x))
+        volume = pd.DataFrame(
+            index=realization.index, columns=realization.columns, data=100
+        )
+        data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
+        return data
+
     @staticmethod
     def _package_results1(
         config: cconfig.Config,
@@ -674,22 +690,6 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         )
         act = "\n".join(act)
         return act
-
-    def _get_data(self) -> pd.DataFrame:
-        """
-        Generate multivariate normal returns.
-        """
-        mn_process = carsigen.MultivariateNormalProcess()
-        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
-        realization = mn_process.generate_sample(
-            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
-        )
-        realization = realization.rename(columns=lambda x: "MN" + str(x))
-        volume = pd.DataFrame(
-            index=realization.index, columns=realization.columns, data=100
-        )
-        data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
-        return data
 
 
 class TestVolatilityModulator(hunitest.TestCase):

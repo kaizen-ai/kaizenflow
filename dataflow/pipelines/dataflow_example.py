@@ -77,6 +77,7 @@ class _NaivePipeline(dtfcore.DagBuilder):
             self._get_nid("process_forecasts"): {
                 "prediction_col": "price",
                 "volatility_col": "price",
+                "spread_col": None,
                 "process_forecasts_config": {},
             },
         }

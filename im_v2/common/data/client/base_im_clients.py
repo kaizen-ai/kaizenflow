@@ -295,7 +295,7 @@ class ImClient(abc.ABC):
         # - some data sources can be only queried at day resolution so we get
         #   a date range and then we trim
         # - we want to guarantee that no derived class returns data outside the
-        #   requested #   interval
+        #   requested interval
         ts_col_name = None
         left_close = True
         right_close = True
