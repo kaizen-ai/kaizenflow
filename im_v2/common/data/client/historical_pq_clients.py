@@ -60,6 +60,12 @@ class HistoricalPqByTileClient(
         """
         raise NotImplementedError
 
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        return []
+
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
