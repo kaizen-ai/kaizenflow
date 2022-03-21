@@ -121,9 +121,8 @@ class TestGetVendorUniverse1(hunitest.TestCase):
         Helper function to test universe is loaded correctly as dict.
         """
         universe = imvcounun.get_vendor_universe(vendor, version="small")
-        self.assertIn(vendor, universe)
-        self.assertIn(exchange, universe[vendor])
-        self.assertEqual([currency_pair], universe[vendor][exchange])
+        self.assertIn(exchange, universe)
+        self.assertEqual([currency_pair], universe[exchange])
 
     def test_get_vendor_universe_as_full_symbol(self) -> None:
         """

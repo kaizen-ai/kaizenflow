@@ -90,7 +90,8 @@ def _get_trade_universe(
     file_path = _get_universe_file_path(vendor, version=version)
     hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
-    return universe  # type: ignore[no-any-return]
+    hdbg.dassert_in(vendor, universe)
+    return universe[vendor]  # type: ignore[no-any-return]
 
 def get_vendor_universe(
     vendor: str, *, version: Optional[str] = None, as_full_symbol: bool = False) -> Union[List[icdc.FullSymbol], Dict[str, Dict[str, List[str]]]]:
@@ -121,8 +122,6 @@ def get_vendor_universe(
     """
     vendor_universe =  _get_trade_universe(vendor, version=version)
     if as_full_symbol:
-        hdbg.dassert_in(vendor, vendor_universe)
-        vendor_universe = vendor_universe[vendor]
         # Convert vendor universe dict to a sorted list of full symbols.
         vendor_universe = [
             icdc.build_full_symbol(exchange_id, currency_pair)
