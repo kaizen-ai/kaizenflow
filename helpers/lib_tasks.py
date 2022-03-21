@@ -2241,7 +2241,7 @@ def _get_docker_base_cmd(
     return docker_cmd_
 
 
-# TODO(Grisha): -> `_get_docker_run_cmd`?
+# TODO(Grisha): -> `_get_docker_run_cmd` CmTask #1486.
 def _get_docker_cmd(
     base_image: str,
     stage: str,
