@@ -2152,7 +2152,9 @@ def _get_container_name(service_name: str) -> str:
     image_name = get_default_param("BASE_IMAGE")
     # Get current timestamp.
     current_timestamp = _get_ET_timestamp()
-    container_name = f"{linux_user}.{image_name}.{service_name}.{current_timestamp}"
+    container_name = (
+        f"{linux_user}.{image_name}.{service_name}.{current_timestamp}"
+    )
     _LOG.debug(
         "get_container_name: container_name=%s",
         container_name,
