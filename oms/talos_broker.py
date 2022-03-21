@@ -130,10 +130,12 @@ class TalosBroker(ombroker.AbstractBroker):
             raise Exception(f"{r.status_code}: {r.text}")
         return data
 
-    def get_fills(self, order_id_list: List[str]) -> Dict[str, str]:
+    def get_fills(self, order_ids: List[str]) -> Dict[str, str]:
         """
-        Get fill status from unique order ids. The possible values are:
+        Get fill status from unique order ids.
 
+        The output is a dictionary where key is `OrderID` and the value is the order status, which
+        has possible values:
         - New
         - PartiallyFilled
         - Filled
@@ -144,18 +146,19 @@ class TalosBroker(ombroker.AbstractBroker):
         - PendingReplace
         - DoneForDay
 
-        An output is a dictionary where key is `OrderID` and the value is the order status.
-        Example of an output:
+        E.g.,
+        ```
         {'19eaff5c-c01f-4360-8b7e-c8d0028625e3': 'Rejected',
          '81a341c1-8e2c-4027-b0ea-26fb1166549c': 'DoneForDay'}
+        ```
 
         :param order_id_list: values of `OrderID` from values of Talos' `OrderIDs`
         :return: mappings of `OrderID` to order status
         """
         # Create dictionary that will store the order status.
         fill_status_dict: Dict[str, str] = {}
-        # Initiate the loop for every `OrderID` in the list.
-        for order_id in order_id_list:
+        # Process each `OrderId` querying the interface to get its status.
+        for order_id in order_ids:
             # Imitation of script input parameters.
             # Common elements of both GET and POST requests.
             utc_datetime = oomtauti.get_talos_current_utc_timestamp()
@@ -184,7 +187,7 @@ class TalosBroker(ombroker.AbstractBroker):
             # The output of 'ord_summary' contains detailed information about orders and its executions.
             # The idea is to extract the order status from it.
             fills_general = ord_summary[0]["OrdStatus"]
-            # Writing these values into the dictionary.
+            # Update the dictionary.
             fill_status_dict[order_id] = fills_general
         return fill_status_dict
 
