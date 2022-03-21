@@ -160,18 +160,6 @@ class RealTimeMarketData(mdabmada.MarketData):
         hdbg.dassert_eq(end_time, start_time + pd.Timedelta(minutes=1))
         return end_time
 
-    @staticmethod
-    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
-        """
-        Convert a timestamp into an SQL string to query the DB.
-        """
-        hdateti.dassert_has_tz(dt)
-        # Convert to UTC, if needed.
-        if dt.tzinfo != hdateti.get_UTC_tz().zone:
-            dt = dt.tz_convert(hdateti.get_UTC_tz())
-        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
-        return ret
-
     def _get_sql_query(
         self,
         columns: Optional[List[str]],
@@ -247,3 +235,15 @@ class RealTimeMarketData(mdabmada.MarketData):
             query.append(f"LIMIT {limit}")
         query = " ".join(query)
         return query
+
+    @staticmethod
+    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+        """
+        Convert a timestamp into an SQL string to query the DB.
+        """
+        hdateti.dassert_has_tz(dt)
+        # Convert to UTC, if needed.
+        if dt.tzinfo != hdateti.get_UTC_tz().zone:
+            dt = dt.tz_convert(hdateti.get_UTC_tz())
+        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return ret

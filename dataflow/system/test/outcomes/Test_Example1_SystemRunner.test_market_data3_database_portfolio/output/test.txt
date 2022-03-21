@@ -235,4 +235,4 @@ end_datetime
 
 # pnl agreement with research pnl
 
-corr = 0.998
+corr = 0.997

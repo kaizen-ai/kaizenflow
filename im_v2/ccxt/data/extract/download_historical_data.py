@@ -97,7 +97,9 @@ def _run(args: argparse.Namespace) -> None:
         # Sleep between iterations.
         time.sleep(args.sleep_time)
     # Merge all new parquet into a single `data.parquet`.
-    hparque.list_and_merge_pq_files(path_to_exchange, aws_profile=args.aws_profile)
+    hparque.list_and_merge_pq_files(
+        path_to_exchange, aws_profile=args.aws_profile
+    )
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

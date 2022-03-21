@@ -152,6 +152,36 @@ class TestCcxtExchange1(hunitest.TestCase):
         expected = "Currency pair is not present in exchange"
         self.assertIn(expected, actual)
 
+    def test_download_order_book(self) -> None:
+        """
+        Verify that order book is downloaded correctly.
+        """
+        exchange_class = imvcdeexcl.CcxtExchange("gateio")
+        order_book = exchange_class.download_order_book("BTC_USDT")
+        order_book_keys = [
+            "symbol",
+            "bids",
+            "asks",
+            "timestamp",
+            "datetime",
+            "nonce",
+        ]
+        self.assertListEqual(order_book_keys, list(order_book.keys()))
+
+    def test_download_order_book_invalid_input1(self) -> None:
+        """
+        Run with invalid currency pair.
+        """
+        # Initialize class.
+        exchange_class = imvcdeexcl.CcxtExchange("binance")
+        # Run with invalid input.
+        with pytest.raises(AssertionError) as fail:
+            exchange_class.download_order_book("invalid_currency_pair")
+        # Check output for error.
+        actual = str(fail.value)
+        expected = "Currency pair is not present in exchange"
+        self.assertIn(expected, actual)
+
     def _download_ohlcv_data(
         self,
         start_timestamp: Optional[pd.Timestamp],
@@ -196,33 +226,3 @@ class TestCcxtExchange1(hunitest.TestCase):
         ]
         self.assertListEqual(exp_col_types, col_types)
         return actual
-
-    def test_download_order_book(self) -> None:
-        """
-        Verify that order book is downloaded correctly.
-        """
-        exchange_class = imvcdeexcl.CcxtExchange("gateio")
-        order_book = exchange_class.download_order_book("BTC_USDT")
-        order_book_keys = [
-            "symbol",
-            "bids",
-            "asks",
-            "timestamp",
-            "datetime",
-            "nonce",
-        ]
-        self.assertListEqual(order_book_keys, list(order_book.keys()))
-
-    def test_download_order_book_invalid_input1(self) -> None:
-        """
-        Run with invalid currency pair.
-        """
-        # Initialize class.
-        exchange_class = imvcdeexcl.CcxtExchange("binance")
-        # Run with invalid input.
-        with pytest.raises(AssertionError) as fail:
-            exchange_class.download_order_book("invalid_currency_pair")
-        # Check output for error.
-        actual = str(fail.value)
-        expected = "Currency pair is not present in exchange"
-        self.assertIn(expected, actual)
