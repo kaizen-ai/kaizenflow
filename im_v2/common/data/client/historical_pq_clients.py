@@ -24,7 +24,7 @@ class HistoricalPqByTileClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
-    Provide historical data stored as Parquet by-asset.
+    Provide historical data stored as Parquet by-tile.
     """
 
     def __init__(
