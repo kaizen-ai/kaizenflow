@@ -202,7 +202,16 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         full_symbol_col_name: str = "full_symbol",
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
-        raise NotImplementedError
+        """
+
+        """
+        parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
+        exchange_ids = [symbol[0] for symbol in parsed_symbols]
+        currency_pairs = [symbol[1] for symbol in parsed_symbols]
+        start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+        end_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+        return data
+
 
     def _build_select_query(
         self,
