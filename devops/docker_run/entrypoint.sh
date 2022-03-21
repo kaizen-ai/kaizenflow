@@ -36,19 +36,33 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # Wait for Docker Engine to be started, otherwise `docker.sock` file is 
     # not created so fast. This is needed to change `docker.sock` permissions.
     DOCKER_SOCK_FILE=/var/run/docker.sock
-    while [ ! -e "$DOCKER_SOCK_FILE" ] 
-    do 
-        sleep 0.1 
-        echo "Waiting for $DOCKER_SOCK_FILE to be created."
+    COUNTER=0
+    # Set sleep interval.
+    SLEEP_SEC=0.1
+    # Which is 10 seconds, i.e. `100 = 10 seconds (limit) / 0.1 seconds (sleep)`.
+    COUNTER_LIMIT=100
+    while true; do
+        if [ -e "$DOCKER_SOCK_FILE" ]; then
+            # Change permissions for Docker socket. See more on S/O:
+            # `https://stackoverflow.com/questions/48957195`.
+            # We do it after the Docker engine is started because `docker.sock` is
+            # created only after the engine start.
+            # TODO(Grisha): give permissions to the `docker` group only and not to
+            # everyone, i.e. `666`.
+            sudo chmod 666 $DOCKER_SOCK_FILE
+            echo "Permissions for "$DOCKER_SOCK_FILE" have been changed."
+            break
+        elif [[ "$COUNTER" -gt "$COUNTER_LIMIT" ]]; then
+            echo "Timeout limit is reached, exit script."
+            exit 1
+        else
+            COUNTER=$((counter+1))
+            sleep $SLEEP_SEC
+            echo "Waiting for $DOCKER_SOCK_FILE to be created."
+        fi
     done
-    # Change permissions for Docker socket. See more on S/O:
-    # `https://stackoverflow.com/questions/48957195`.
-    # We do it after the Docker engine is started because `docker.sock` is
-    # created only after the engine start.
-    # TODO(Grisha): give permissions to the `docker` group only and not to
-    # everyone, i.e. `666`.
-    sudo chmod 666 $DOCKER_SOCK_FILE
 fi;
+
 
 # Mount other file systems.
 # mount -a || true
