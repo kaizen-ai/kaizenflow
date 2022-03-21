@@ -9,7 +9,6 @@ try:
 except ImportError:
     _HAS_MOTO = False
 import pytest
-import s3fs
 
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
@@ -96,13 +95,11 @@ if _HAS_MOTO:
             # Check args/kwargs that were used for function call.
             expected_args = mock_list_and_merge.call_args.args
             expected_kwargs = mock_list_and_merge.call_args.kwargs
-            self.assertEqual(len(expected_args), 2)
+            self.assertEqual(len(expected_args), 1)
             # Check first argument, `root_dir`.
             self.assertEqual(expected_args[0], "s3://mock_bucket/binance")
-            # Check second argument, `fs`. This is actual live instance of `S3FileSystem`.
-            self.assertIsInstance(expected_args[1], s3fs.core.S3FileSystem)
-            # Check keyword arguments. In this case only `file_name`.
-            self.assertDictEqual(expected_kwargs, {"file_name": "data.parquet"})
+            # Check keyword arguments. In this case only `aws_profile`.
+            self.assertDictEqual(expected_kwargs, {"aws_profile": "ck"})
             # TODO(Nikola): Move section below to `helpers/test/test_hparquet.py`, if possible.
             # Check bucket content before merge.
             parquet_meta_list_before = self.moto_client.list_objects(

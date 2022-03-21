@@ -55,8 +55,7 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def _run(args: argparse.Namespace) -> None:
-    # Connect to S3 filesystem.
-    fs = hs3.get_s3fs(args.aws_profile)
+    # Initialize exchange class.
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load trading universe.
     universe = imvccunun.get_trade_universe(args.universe)
@@ -92,16 +91,14 @@ def _run(args: argparse.Namespace) -> None:
             data,
             ["currency_pair"] + partition_cols,
             path_to_exchange,
-            filesystem=fs,
             partition_filename=None,
+            aws_profile=args.aws_profile,
         )
         # Sleep between iterations.
         time.sleep(args.sleep_time)
     # Merge all new parquet into a single `data.parquet`.
     hparque.list_and_merge_pq_files(
-        path_to_exchange,
-        fs,
-        file_name="data.parquet",
+        path_to_exchange, aws_profile=args.aws_profile
     )
 
 

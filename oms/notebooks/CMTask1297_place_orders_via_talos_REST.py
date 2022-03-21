@@ -276,7 +276,7 @@ post_order(endpoint, path, api_keys["apiKey"], api_keys["secret"])
 
 # %%
 # Specify the order.
-OrderID = 'f378848a-27e2-4230-97d9-1cd94316e42e'
+OrderID = "f378848a-27e2-4230-97d9-1cd94316e42e"
 
 
 # %%
@@ -313,7 +313,9 @@ def get_fills(order_id: str):
     # Save the general order status.
     fills_general = ord_summary[0]["OrdStatus"]
     # Save order status from markets where trade is executed.
-    fills_market = [a for a in ord_summary[0]["Markets"] if "OrdStatus" in a.keys()]
+    fills_market = [
+        a for a in ord_summary[0]["Markets"] if "OrdStatus" in a.keys()
+    ]
     return fills_general, fills_market
 
 

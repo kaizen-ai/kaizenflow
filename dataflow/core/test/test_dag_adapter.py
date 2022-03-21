@@ -84,7 +84,7 @@ class TestDagAdapter1(hunitest.TestCase):
         node_ctor = dtfconosin.WriteDf
         nodes_to_append.append((stage, node_ctor))
         #
-        dag_builder = dtfcdabuex.DagBuilderExample1()
+        dag_builder = dtfcdabuex.LoadPrices_DagBuilder()
         # Check.
         self.helper(
             dag_builder, overriding_config, nodes_to_insert, nodes_to_append

@@ -30,6 +30,7 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         prediction_col: str,
         volatility_col: str,
         returns_col: str,
+        spread_col: Optional[str],
         timedelta: pd.Timedelta,
         asset_id_col: str,
         *,
@@ -67,6 +68,7 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         overriding_config["process_forecasts"] = {
             "prediction_col": prediction_col,
             "volatility_col": volatility_col,
+            "spread_col": spread_col,
             "portfolio": portfolio,
             "process_forecasts_config": {},
             "evaluate_forecasts_config": evaluate_forecasts_config,

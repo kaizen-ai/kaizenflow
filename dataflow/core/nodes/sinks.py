@@ -58,9 +58,7 @@ class WriteDf(dtfconobas.FitPredictNode):
                 epoch = epochs.iloc[-1].values[0]
             else:
                 raise NotImplementedError
-            # TODO(gp): We started using `.parquet` extension as recommended by the
-            #  official documentation.
-            file_name = f"{epoch}.pq"
+            file_name = f"{epoch}.parquet"
             file_name = os.path.join(self._dir_name, file_name)
             hdbg.dassert_not_exists(file_name)
             # Write the file.

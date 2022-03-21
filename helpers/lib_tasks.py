@@ -206,7 +206,12 @@ use_one_line_cmd = False
 
 # TODO(Grisha): make it public #755.
 def _run(
-    ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any
+    ctx: Any,
+    cmd: str,
+    *args,
+    dry_run: bool = False,
+    use_system: bool = False,
+    **ctx_run_kwargs: Any,
 ) -> int:
     _LOG.debug(hprint.to_str("cmd dry_run"))
     if use_one_line_cmd:
@@ -217,8 +222,13 @@ def _run(
         _LOG.warning("Skipping execution")
         res = None
     else:
-        result = ctx.run(cmd, *args, **ctx_run_kwargs)
-        res = result.return_code
+        if use_system:
+            # TODO(gp): Consider using only `hsystem.system()` since it's more
+            # reliable.
+            res = hsystem.system(cmd, suppress_output=False)
+        else:
+            result = ctx.run(cmd, *args, **ctx_run_kwargs)
+            res = result.return_code
     return res
 
 
@@ -779,6 +789,7 @@ def git_create_branch(  # type: ignore
     _run(ctx, cmd)
 
 
+# TODO(gp): Move to hgit.
 def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
     if tag == "local":
         # Delete local branches that are already merged into master.
@@ -1109,9 +1120,12 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
-# - Remove end-of-line spaces:
+# - Add end-of-file:
 #   ```
-#   # Remove
+#   find . -name "*.py" | xargs sed -i '' -e '$a\'
+#   ```
+# - Remove end-of-file:
+#   ```
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #
@@ -1397,6 +1411,7 @@ def _find_files_touched_since_last_integration(
     )
     hio.to_file(file_name, "\n".join(files))
     _LOG.debug("Saved file to '%s'", file_name)
+    files = cast(List[str], files)
     return files
 
 
@@ -1626,9 +1641,12 @@ def integrate_diff_overlapping_files(  # type: ignore
             # The file was created: nothing to do.
             pass
         elif rc == 128:
-            # Note that the file potentially could not exist, i.e., it was added in
-            # the branch. In this case Git returns:
-            # rc=128 fatal: path 'dataflow/pipelines/real_time/test/test_dataflow_pipelines_real_time_pipeline.py' exists on disk, but not in 'ce54877016204315766e90df7c45192bec1fbf20'
+            # Note that the file potentially could not exist, i.e., it was added
+            # in the branch. In this case Git returns:
+            # ```
+            # rc=128 fatal: path 'dataflow/pipelines/real_time/test/
+            # test_dataflow_pipelines_real_time_pipeline.py' exists on disk, but
+            # not in 'ce54877016204315766e90df7c45192bec1fbf20'
             src_file = "/dev/null"
         else:
             raise ValueError("cmd='%s' returned %s" % (cmd, rc))
@@ -1904,7 +1922,10 @@ def docker_login(ctx):  # type: ignore
         )
     # cmd = ("aws ecr get-login-password" +
     #       " | docker login --username AWS --password-stdin "
-    _run(ctx, cmd)
+    # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
+    #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
+    #  with `@task` decorator) do not work.
+    _run(ctx, cmd, use_system=True)
 
 
 def get_base_docker_compose_path() -> str:
@@ -2324,16 +2345,28 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
+    ctx,
+    base_image="",
+    stage="dev",
+    version="",
+    cmd="",
+    as_user=True,
+    use_bash=False,
+    container_dir_name=".",
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(
-        base_image, stage, version, cmd, use_bash=use_bash
+        base_image,
+        stage,
+        version,
+        cmd,
+        as_user=as_user,
+        use_bash=use_bash,
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -3082,13 +3115,13 @@ _FindResults = List[_FindResult]
 
 
 def _scan_files(python_files: List[str]) -> Tuple[str, int, str]:
-    for file in python_files:
+    for file_ in python_files:
         _LOG.debug("file=%s", file)
         txt = hio.from_file(file)
         for line_num, line in enumerate(txt.split("\n")):
             # TODO(gp): Skip commented lines.
-            # _LOG.debug("%s:%s line='%s'", file, line_num, line)
-            yield file, line_num, line
+            # _LOG.debug("%s:%s line='%s'", file_, line_num, line)
+            yield file_, line_num, line
 
 
 def _find_short_import(iterator: List, short_import: str) -> _FindResults:
@@ -3104,7 +3137,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     regex = re.compile(regex)
     #
     results: _FindResults = []
-    for file, line_num, line in iterator:
+    for file_, line_num, line in iterator:
         m = regex.search(line)
         if m:
             # E.g.,
@@ -3113,7 +3146,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
             long_import_txt = m.group(1)
             short_import_txt = m.group(2)
             full_import_txt = f"import {long_import_txt} as {short_import_txt}"
-            res = (file, line_num, line, short_import_txt, full_import_txt)
+            res = (file_, line_num, line, short_import_txt, full_import_txt)
             # E.g.,
             _LOG.debug("  => %s", str(res))
             results.append(res)
@@ -3132,7 +3165,7 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
     regexs = [re.compile(regex) for regex in regexs]
     #
     results: _FindResults = []
-    for file, line_num, line in iterator:
+    for file_, line_num, line in iterator:
         _LOG.debug("line='%s'", line)
         m = None
         for regex in regexs:
@@ -3144,7 +3177,7 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
             _LOG.debug("  --> line:%s=%s", line_num, line)
             short_import_txt = m.group(1)
             obj_txt = m.group(2)
-            res = (file, line_num, line, short_import_txt, obj_txt)
+            res = (file_, line_num, line, short_import_txt, obj_txt)
             # E.g.,
             # ('./helpers/lib_tasks.py', 10226, 'dtfsys', 'RealTimeDagRunner')
             # ('./dataflow/core/test/test_builders.py', 70, 'dtfcodarun', 'FitPredictDagRunner')
@@ -3160,7 +3193,7 @@ def _process_find_results(results: _FindResults, how: str) -> List[Tuple]:
     if how == "remove_dups":
         # Remove duplicates.
         for result in results:
-            (file, line_num, line, info1, info2) = result
+            (file_, line_num, line, info1, info2) = result
             filtered_results.append((info1, info2))
         filtered_results = hlist.remove_duplicates(filtered_results)
         filtered_results = sorted(filtered_results)
@@ -3210,8 +3243,8 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     iter_ = _scan_files(python_files)
     # Process the `what`.
     if mode == "all":
-        for mode in ("symbol_import", "short_import"):
-            find(ctx, regex, mode=mode, how=how, subdir=subdir)
+        for mode_tmp in ("symbol_import", "short_import"):
+            find(ctx, regex, mode=mode_tmp, how=how, subdir=subdir)
         return
     elif mode == "symbol_import":
         results = _find_func_class_uses(iter_, regex)
@@ -4453,47 +4486,6 @@ def _parse_linter_output(txt: str) -> str:
 
 
 @task
-def lint_add_init_files(  # type: ignore
-    ctx,
-    dir_name=".",
-    dry_run=True,
-    run_bash=False,
-    stage="prod",
-    as_user=True,
-    out_file_name="lint_add_init_files.output.txt",
-):
-    """
-    Add the missing `__init__.py` in dirs with Python files.
-
-    For param descriptions, see `lint()`.
-
-    :param dir_name: path to the head directory to start the check from
-    :param dry_run:
-      - True: output a warning pointing to the dirs where `__init__.py`
-        files are missing
-      - False: create the required `__init__.py` files
-    """
-    _report_task()
-    # Remove the log file.
-    if os.path.exists(out_file_name):
-        cmd = f"rm {out_file_name}"
-        _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
-    # Prepare the command line.
-    docker_cmd_opts = [dir_name]
-    if dry_run:
-        docker_cmd_opts.append("--dry_run")
-    docker_cmd_ = "/app/linters/add_module_init.py " + _to_single_line_cmd(
-        docker_cmd_opts
-    )
-    # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
-    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
-    # Run.
-    _run(ctx, cmd)
-
-
-@task
 def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
@@ -4596,6 +4588,7 @@ def lint(  # type: ignore
     # CRLF end-lines remover...........................(no files to check)Skipped
     # Tabs remover.....................................(no files to check)Skipped
     # autoflake........................................(no files to check)Skipped
+    # add_python_init_files............................(no files to check)Skipped
     # amp_check_filename...............................(no files to check)Skipped
     # amp_isort........................................(no files to check)Skipped
     # amp_black........................................(no files to check)Skipped
@@ -4615,6 +4608,7 @@ def lint(  # type: ignore
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
             [
+                "add_python_init_files",
                 "amp_isort",
                 "amp_class_method_order",
                 "amp_normalize_import",
