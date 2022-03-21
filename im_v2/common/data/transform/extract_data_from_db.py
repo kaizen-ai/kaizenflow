@@ -97,7 +97,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     ccxt_db_client = icdcl.CcxtCddDbClient(vendor, connection)
     # Get universe of symbols.
     symbols = imvccunun.get_vendor_universe()
-    resample_1min = True
+    resample_1min = False
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.
