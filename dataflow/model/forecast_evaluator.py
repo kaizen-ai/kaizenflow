@@ -139,48 +139,6 @@ class ForecastEvaluator:
         ForecastEvaluator._write_df(statistics, log_dir, "statistics", file_name)
         return file_name
 
-    @staticmethod
-    def read_portfolio(
-        log_dir: str,
-        *,
-        file_name: Optional[str] = None,
-        tz: str = "America/New_York",
-        cast_asset_ids_to_int: bool = True,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Read and process logged portfolio.
-
-        :param file_name: if `None`, find and use the latest
-        """
-        if file_name is None:
-            dir_name = os.path.join(log_dir, "returns")
-            files = hio.find_all_files(dir_name)
-            files.sort()
-            file_name = files[-1]
-        returns = ForecastEvaluator._read_df(log_dir, "returns", file_name, tz)
-        volatility = ForecastEvaluator._read_df(
-            log_dir, "volatility", file_name, tz
-        )
-        prediction = ForecastEvaluator._read_df(
-            log_dir, "prediction", file_name, tz
-        )
-        positions = ForecastEvaluator._read_df(log_dir, "position", file_name, tz)
-        pnl = ForecastEvaluator._read_df(log_dir, "pnl", file_name, tz)
-        if cast_asset_ids_to_int:
-            for df in [returns, volatility, prediction, positions, pnl]:
-                ForecastEvaluator._cast_cols_to_int(df)
-        portfolio_df = ForecastEvaluator._build_multiindex_df(
-            returns,
-            volatility,
-            prediction,
-            positions,
-            pnl,
-        )
-        statistics_df = ForecastEvaluator._read_df(
-            log_dir, "statistics", file_name, tz
-        )
-        return portfolio_df, statistics_df
-
     def compute_portfolio(
         self,
         df: pd.DataFrame,
@@ -319,6 +277,58 @@ class ForecastEvaluator:
             }
         )
         return pnl, stats
+
+    @staticmethod
+    def read_portfolio(
+        log_dir: str,
+        *,
+        file_name: Optional[str] = None,
+        tz: str = "America/New_York",
+        cast_asset_ids_to_int: bool = True,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Read and process logged portfolio.
+
+        :param file_name: if `None`, find and use the latest
+        """
+        if file_name is None:
+            dir_name = os.path.join(log_dir, "returns")
+            files = hio.find_all_files(dir_name)
+            files.sort()
+            file_name = files[-1]
+        returns = ForecastEvaluator._read_df(log_dir, "returns", file_name, tz)
+        volatility = ForecastEvaluator._read_df(
+            log_dir, "volatility", file_name, tz
+        )
+        prediction = ForecastEvaluator._read_df(
+            log_dir, "prediction", file_name, tz
+        )
+        positions = ForecastEvaluator._read_df(log_dir, "position", file_name, tz)
+        pnl = ForecastEvaluator._read_df(log_dir, "pnl", file_name, tz)
+        if cast_asset_ids_to_int:
+            for df in [returns, volatility, prediction, positions, pnl]:
+                ForecastEvaluator._cast_cols_to_int(df)
+        portfolio_df = ForecastEvaluator._build_multiindex_df(
+            returns,
+            volatility,
+            prediction,
+            positions,
+            pnl,
+        )
+        statistics_df = ForecastEvaluator._read_df(
+            log_dir, "statistics", file_name, tz
+        )
+        return portfolio_df, statistics_df
+
+    def _validate_df(self, df: pd.DataFrame) -> None:
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        hpandas.dassert_strictly_increasing_index(df)
+        hdbg.dassert_eq(df.columns.nlevels, 2)
+        hdbg.dassert_is_subset(
+            [self._returns_col, self._volatility_col, self._prediction_col],
+            df.columns.levels[0].to_list(),
+        )
 
     @staticmethod
     def _build_multiindex_df(
@@ -483,16 +493,6 @@ class ForecastEvaluator:
             }
         )
         return stats
-
-    def _validate_df(self, df: pd.DataFrame) -> None:
-        hdbg.dassert_isinstance(df, pd.DataFrame)
-        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-        hpandas.dassert_strictly_increasing_index(df)
-        hdbg.dassert_eq(df.columns.nlevels, 2)
-        hdbg.dassert_is_subset(
-            [self._returns_col, self._volatility_col, self._prediction_col],
-            df.columns.levels[0].to_list(),
-        )
 
     @staticmethod
     def _get_df(df: pd.DataFrame, col: str) -> pd.DataFrame:

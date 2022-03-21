@@ -4,7 +4,7 @@ dag_builder
 nid_prefix=
 get_config_template=
   load_prices:
-    func: <function DagBuilderExample1.get_config_template.<locals>.<lambda>>
+    func: <function LoadPrices_DagBuilder.get_config_template.<locals>.<lambda>>
 dag=
   name=None
   mode=strict
@@ -28,7 +28,7 @@ dag_builder=
   nid_prefix=
   get_config_template=
     load_prices:
-      func: <function DagBuilderExample1.get_config_template.<locals>.<lambda>>
+      func: <function LoadPrices_DagBuilder.get_config_template.<locals>.<lambda>>
   dag=
     name=None
     mode=strict

@@ -32,6 +32,7 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         nid: dtfcore.NodeId,
         prediction_col: str,
         volatility_col: str,
+        spread_col: Optional[str],
         portfolio: omportfo.AbstractPortfolio,
         process_forecasts_config: Dict[str, Any],
         evaluate_forecasts_config: Optional[Dict[str, Any]] = None,
@@ -42,6 +43,7 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         super().__init__(nid)
         self._prediction_col = prediction_col
         self._volatility_col = volatility_col
+        self._spread_col = spread_col
         self._portfolio = portfolio
         process_forecasts_config = cconfig.get_config_from_nested_dict(
             process_forecasts_config
@@ -58,11 +60,14 @@ class ProcessForecasts(dtfcore.FitPredictNode):
 
     async def process_forecasts(self) -> None:
         # Get the latest `df` index value.
+        restrictions = None
         await oprofore.process_forecasts(
             self._prediction_df,
             self._volatility_df,
             self._portfolio,
             self._process_forecasts_config,
+            self._spread_df,
+            restrictions,
         )
 
     def _compute_forecasts(
@@ -83,6 +88,14 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         volatility_df = df[self._volatility_col]
         self._volatility_df = volatility_df
         _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
+        #
+        if self._spread_col is None:
+            self._spread_df = None
+            _LOG.debug("spread_df is `None`")
+        else:
+            spread_df = df[self._spread_col]
+            self._spread_df = spread_df
+            _LOG.debug("spread_df=\n%s", hpandas.df_to_str(spread_df))
         # Compute stats.
         info = collections.OrderedDict()
         info["df_out_info"] = dtfcore.get_df_info_as_string(df)

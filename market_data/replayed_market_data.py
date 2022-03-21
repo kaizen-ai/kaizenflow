@@ -97,6 +97,8 @@ class ReplayedMarketData(mdabmada.MarketData):
                 "right_close limit"
             )
         )
+        # TODO(gp): This assertion seems very slow. Move this check in a
+        #  centralized place instead of calling it every time, if possible.
         if asset_ids is not None:
             # Make sure that the requested asset_ids are in the df at some point.
             # This avoids mistakes when mocking data for certain assets, but request
