@@ -53,13 +53,13 @@ def _get_universe_file_path(vendor: str, *, version: Optional[str] = None) -> st
         hdbg.dassert_ne(len(universe_files), 0)
         file_path = max(universe_files, key=_extract_universe_version)
     else:
+        # TODO(Juraj): #1487 Assert version format (include 'small').
         file_name = "".join(["universe_", version, ".json"])
         file_path = os.path.join(vendor_dir, file_name)
     hdbg.dassert_exists(file_path)
     return file_path
 
-
-def get_trade_universe(
+def _get_trade_universe(
     vendor: str,
     *,
     version: Optional[str] = None,
@@ -92,27 +92,43 @@ def get_trade_universe(
     universe = hio.from_json(file_path)
     return universe  # type: ignore[no-any-return]
 
-
-# TODO(Dan): remove default values for `vendor` param #832.
 def get_vendor_universe(
-    vendor: str, *, version: Optional[str] = None
-) -> Union[List[icdc.FullSymbol], List[int]]:
+    vendor: str, *, version: Optional[str] = None, as_full_symbol: bool = False) -> Union[List[icdc.FullSymbol], Dict[str, Dict[str, List[str]]]]:
     """
-    Load vendor universe as full symbols.
+    Load vendor universe either as a list of 
+    currency pairs per each vendor or list of full symbols.
 
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
     :param version: release version
-    :return: vendor universe as full symbols (e.g., gateio::XRP_USDT)
+    :param as_full_symbol: if True transform the universe into list of full symbols e.g. gateio::XRP_USDT
+    :return: vendor universe as a list of symbol or list of full symbols e.g.:
+        {
+            "Talos": {
+                "binance": [
+                "ADA_USDT",
+                "AVAX_USDT",
+                "BNB_USDT",
+                "BTC_USDT",
+                "DOGE_USDT",
+                "EOS_USDT",
+                "ETH_USDT",
+                "LINK_USDT",
+                "SOL_USDT"
+                ],
+                ...
+        }
+        or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
-    # Get vendor universe.
-    vendor_universe = get_trade_universe(vendor, version=version)[vendor]
-    # Convert vendor universe dict to a sorted list of full symbols.
-    universe = [
-        icdc.build_full_symbol(exchange_id, currency_pair)
-        for exchange_id, currency_pairs in vendor_universe.items()
-        for currency_pair in currency_pairs
-    ]
-    # Sort list of symbols in the universe.
-    universe = sorted(universe)
-    print(universe)
-    return universe
+    vendor_universe =  _get_trade_universe(vendor, version=version)
+    if as_full_symbol:
+        hdbg.dassert_in(vendor, vendor_universe)
+        vendor_universe = vendor_universe[vendor]
+        # Convert vendor universe dict to a sorted list of full symbols.
+        vendor_universe = [
+            icdc.build_full_symbol(exchange_id, currency_pair)
+            for exchange_id, currency_pairs in vendor_universe.items()
+            for currency_pair in currency_pairs
+        ]
+        # Sort list of symbols in the universe.
+        vendor_universe = sorted(vendor_universe)
+    return vendor_universe
