@@ -184,9 +184,7 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         - Drop extra columns (e.g. `id` created by the DB).
         """
         # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
-            lambda x: hdateti.convert_unix_epoch_to_timestamp(x)
-        )
+        data["timestamp"] = data["timestamp"].apply(hdateti.convert_unix_epoch_to_timestamp)
         # Set timestamp column as an index.
         data = data.set_index("timestamp")
         # Specify OHLCV columns.
@@ -200,7 +198,7 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
-        data = data[ohlcv_columns]
+        data = data.loc[:, ohlcv_columns]
         return data
 
     def _read_data_for_multiple_symbols(
