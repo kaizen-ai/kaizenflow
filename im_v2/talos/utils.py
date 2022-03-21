@@ -12,25 +12,21 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 _TALOS_HOST = "talostrading.com"
 
-def get_endpoint(account: str) -> str:
+
+def get_endpoint(environment: str) -> str:
     """
-    Get entrypoint to Talos
+    Get entrypoint to Talos.
     """
-    if account == "talos_sandbox":
-        endpoint = "tal-87.sandbox.talostrading.com"
+    hdbg.dassert_in(environment, ["sandbox", "prod"])
+    if environment == "sandbox":
+        endpoint = f"sandbox.{_TALOS_HOST}"
     else:
         hdbg.dfatal(
-            "Incorrect account type. Supported account types: 'talos_sandbox'."
+            "Incorrect account type. Supported environment: 'sandbox'."
         )
     return endpoint
 
 
-def get_api_host(environment: str) -> str:
-    hdbg.dassert_in(environment, ["sandbox", "prod"])
-    keys = hsecret.get_secret(f"talos_{environment}")
-    import helpers.hsecrets as hsecret
-
-:
 def get_talos_current_utc_timestamp() -> str:
     """
     Return the current UTC timestamp in Talos-acceptable format.
