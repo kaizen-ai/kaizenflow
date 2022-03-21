@@ -69,9 +69,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
@@ -113,9 +113,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -157,9 +157,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -203,9 +203,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -249,9 +249,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -297,9 +297,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         full_symbol = "kucoin::MOCK"
         self._test_read_data6(im_client, full_symbol)
@@ -319,9 +319,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
@@ -343,9 +343,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
@@ -359,11 +359,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_get_universe1(self) -> None:
         # Init client for testing.
         vendor = "mock"
-        asset_column_name = "full_symbol"
+        full_symbol_col_name = "full_symbol"
         test_dir = "dummy"
         partition_mode = "by_year_month"
         im_client = MockHistoricalByTile(
-            vendor, asset_column_name, test_dir, partition_mode
+            vendor, full_symbol_col_name, test_dir, partition_mode
         )
         # Compare the expected values.
         expected_length = 2
