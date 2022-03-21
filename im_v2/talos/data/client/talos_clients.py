@@ -219,7 +219,7 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         hdbg.dassert_lte(
             start_unix_epoch,
             end_unix_epoch,
-            msg="Start unix epoch should be smaller then end ",
+            msg="Start unix epoch should be smaller than end.",
         )
         # TODO(Danya): Make all params optional to select all data.
         hdbg.dassert_list_of_strings(
