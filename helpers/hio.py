@@ -70,6 +70,7 @@ def find_files(
     if aws_profile:
         # TODO(gp): Remove this and move the code that requires s3 in hs3.
         import helpers.hs3 as hs3
+
         s3fs_ = hs3.get_s3fs(aws_profile)
         hs3.dassert_s3_exists(directory, s3fs_)
         file_names = s3fs_.glob(f"{directory}/{pattern}")
