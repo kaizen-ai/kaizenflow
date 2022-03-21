@@ -567,6 +567,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.app.amp_test.app \
             --entrypoint bash \
             app
         """
@@ -597,6 +598,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
                 --env-file devops/env/default.env \
                 run \
                 --rm \
+                --name $USER_NAME.app.amp_test.app \
                 app \
                 bash """
         self._check(act, exp)
@@ -631,6 +633,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.app.amp_test.app \
             app \
             bash
         """
@@ -662,6 +665,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.app.amp_test.app \
             --entrypoint bash \
             app
         """
@@ -694,6 +698,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.app.amp_test.app \
             app \
             bash -c 'ls && cd ..'
         """
@@ -725,6 +730,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.app.amp_test.app \
             --service-ports \
             jupyter_server_test
         """
@@ -734,6 +740,10 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         act = hunitest.purify_txt_from_client(act)
         # This is required when different repos run Docker with user vs root / remap.
         act = hunitest.filter_text("--user", act)
+        # Remove current timestamp (e.g., `20220317_232120``) from the `--name` 
+        # so that the tests pass.
+        timestamp_regex = r"\.\d{8}_\d{6}"
+        act = re.sub(timestamp_regex, "", act)
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
