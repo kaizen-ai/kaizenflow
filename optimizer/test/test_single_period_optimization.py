@@ -13,22 +13,43 @@ _LOG = logging.getLogger(__name__)
 
 class Test_SinglePeriodOptimizer1(hunitest.TestCase):
     def test_only_gmv_constraint(self) -> None:
-        dict_ = {
-            "volatility_penalty": 0.0,
-            "dollar_neutrality_penalty": 0.0,
-            "turnover_penalty": 0.0,
-            "target_gmv": 3000,
-            "target_gmv_upper_bound_multiple": 1.00,
-        }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        df = Test_SinglePeriodOptimizer1.get_prediction_df()
-        actual = Test_SinglePeriodOptimizer1.helper(config, df, restrictions=None)
+        actual = self.only_gmv_constraint_helper()
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
-1                    8.44                -991.56           0.00               -0.33
-2                 3089.38                1589.38           1.03                0.53
-3                    8.44                 508.44           0.00                0.17"""
+1                   -0.00               -1000.00           -0.0                -1.0
+2                 2999.94                1499.94            3.0                 1.5
+3                   -0.00                 500.00           -0.0                 0.5"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_only_gmv_constraint_osqp(self) -> None:
+        actual = self.only_gmv_constraint_helper("OSQP")
+        expected = r"""
+          target_position  target_notional_trade  target_weight  target_weight_diff
+asset_id
+1                   -0.00               -1000.00           -0.0                -1.0
+2                 2999.94                1499.94            3.0                 1.5
+3                   -0.00                 500.00           -0.0                 0.5"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_only_gmv_constraint_ecos(self) -> None:
+        actual = self.only_gmv_constraint_helper("ECOS")
+        expected = r"""
+          target_position  target_notional_trade  target_weight  target_weight_diff
+asset_id
+1                     0.0                -1000.0            0.0                -1.0
+2                  3000.0                 1500.0            3.0                 1.5
+3                     0.0                  500.0            0.0                 0.5"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_only_gmv_constraint_scs(self) -> None:
+        actual = self.only_gmv_constraint_helper("SCS")
+        expected = r"""
+          target_position  target_notional_trade  target_weight  target_weight_diff
+asset_id
+1                    -0.0                -1000.0           -0.0                -1.0
+2                  3000.0                 1500.0            3.0                 1.5
+3                     0.0                  500.0            0.0                 0.5"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_restrictions(self) -> None:
@@ -58,9 +79,9 @@ asset_id
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
-1                 1566.10                 566.10           0.52                0.19
-2                 1487.98                 -12.02           0.50               -0.00
-3                    2.75                 502.75           0.00                0.17"""
+1                 1500.05                 500.05            1.5                 0.5
+2                 1499.99                  -0.01            1.5                -0.0
+3                    0.00                 500.00            0.0                 0.5"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_mixed_constraints(self) -> None:
@@ -77,9 +98,9 @@ asset_id
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
-1                    1.10                -998.90            0.0               -0.33
-2                 1496.51                  -3.49            0.5               -0.00
-3                -1488.48                -988.48           -0.5               -0.33"""
+1                   -0.00               -1000.00          -0.00               -1.00
+2                 1514.98                  14.98           1.51                0.01
+3                -1514.97               -1014.97          -1.51               -1.01"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_short_ban(self) -> None:
@@ -109,10 +130,26 @@ asset_id
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
-1                -1018.65               -2018.65          -0.34               -0.67
-2                 1515.80                  15.80           0.51                0.01
-3                 -497.69                   2.31          -0.17                0.00"""
+1                -1015.07               -2015.07          -1.02               -2.02
+2                 1515.03                  15.03           1.52                0.02
+3                 -499.96                   0.04          -0.50                0.00"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    @staticmethod
+    def only_gmv_constraint_helper(solver: Optional[str] = None) -> str:
+        dict_ = {
+            "volatility_penalty": 0.0,
+            "dollar_neutrality_penalty": 0.0,
+            "turnover_penalty": 0.0,
+            "target_gmv": 3000,
+            "target_gmv_upper_bound_multiple": 1.00,
+        }
+        if solver is not None:
+            dict_["solver"] = solver
+        config = cconfig.get_config_from_nested_dict(dict_)
+        df = Test_SinglePeriodOptimizer1.get_prediction_df()
+        actual = Test_SinglePeriodOptimizer1.helper(config, df, restrictions=None)
+        return actual
 
     @staticmethod
     def get_prediction_df() -> pd.DataFrame:
@@ -156,10 +193,10 @@ class Test_SinglePeriodOptimizer2(hunitest.TestCase):
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
-101               7618.49                -115.83           0.08               -0.00
-201                -43.19               10919.25          -0.00                0.11
-301             -50135.64              -11098.08          -0.50               -0.11
-401              42599.66                 333.98           0.43                0.00"""
+101               8234.32                 500.00           0.33                0.02
+201                  0.00               10962.44           0.00                0.44
+301             -50500.00              -11462.44          -2.02               -0.46
+401              42265.68                  -0.00           1.69               -0.00"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @staticmethod

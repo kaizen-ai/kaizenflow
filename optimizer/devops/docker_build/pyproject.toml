@@ -5,12 +5,15 @@ description = ""
 authors = [""]
 
 [tool.poetry.dependencies]
+async_solipsism = "*"
 cvxopt = "*"
 cvxpy = "*"
+joblib = "*"
 jupyter = "*"
 jupyter_contrib_nbextensions = "*"
 jupytext = "*"
 pandas = "*"
+pyarrow = "*"
 pytest = "^6.0.0"
 pytest-cov = "*"
 pytest-instafail = "*"
@@ -18,6 +21,8 @@ pytest-rerunfailures = "*"
 pytest-timeout = "*"
 pytest-xdist = "*"
 python = "^3.8"
+s3fs = "*"
+tqdm = "*"
 
 [tool.poetry.dev-dependencies]
 

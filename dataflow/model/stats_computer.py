@@ -104,14 +104,6 @@ class StatsComputer:
         # TODO(*): costatis.compute_centered_gaussian_log_likelihood
         return self._compute_stat_functions(srs, name, functions)
 
-    @staticmethod
-    def compute_autocorrelation_stats(srs: pd.Series) -> pd.Series:
-        # name = "autocorrelation"
-        # ljung_box = costatis.apply_ljung_box_test(srs)
-        # TODO(Paul): Only return pvals. Rename according to test and lag.
-        #     Change default lags reported.
-        raise NotImplementedError
-
     def compute_spectral_stats(self, srs: pd.Series) -> pd.Series:
         name = "spectral"
         functions = [
@@ -321,6 +313,14 @@ class StatsComputer:
         result = pd.concat(results, axis=0)
         hdbg.dassert_isinstance(result, pd.Series)
         return result
+
+    @staticmethod
+    def compute_autocorrelation_stats(srs: pd.Series) -> pd.Series:
+        # name = "autocorrelation"
+        # ljung_box = costatis.apply_ljung_box_test(srs)
+        # TODO(Paul): Only return pvals. Rename according to test and lag.
+        #     Change default lags reported.
+        raise NotImplementedError
 
     def _compute_portfolio_stats(
         self,

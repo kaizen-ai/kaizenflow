@@ -14,6 +14,7 @@ import os
 import core.config as cconfig
 import dataflow.core as cdataf
 import dataflow.model.experiment_utils as dtfmoexuti
+import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 
 _LOG = logging.getLogger(__name__)
@@ -126,6 +127,7 @@ def run_tiled_experiment(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     dag_runner = config["meta", "dag_runner"](config)
+    hdbg.dassert_isinstance(dag_runner, cdataf.AbstractDagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
         [
