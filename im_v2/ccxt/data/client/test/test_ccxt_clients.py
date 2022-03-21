@@ -946,6 +946,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             expected_last_elements,
         )
 
+    # ///////////////////////////////////////////////////////////////////////
+
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
         """
@@ -993,8 +995,6 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             "volume",
         ]
         return expected_column_names
-
-    # ///////////////////////////////////////////////////////////////////////
 
     def _create_test_table(self) -> None:
         """
