@@ -734,8 +734,6 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --service-ports \
             jupyter_server_test
         """
-        print("ACT=", act)
-        print("EXP=", exp)
         self._check(act, exp)
 
     def _check(self, act: str, exp: str) -> None:

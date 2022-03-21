@@ -2169,6 +2169,7 @@ def _get_container_name(service_name: str) -> str:
     :param service_name: `docker-compose` service name, e.g., `app`
     :return: container name, e.g., `viktora.cmamp.app.20220317_232120`
     """
+    hdbg.dassert_ne(service_name, "", "You need to specify a service name")
     linux_user = hsystem.get_user_name()
     image_name = get_default_param("BASE_IMAGE")
     # Get current timestamp.
