@@ -6,7 +6,6 @@ import im_v2.talos.utils as imv2tauti
 import datetime
 import logging
 
-import helpers.hsecrets as hsecret
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -37,8 +36,3 @@ def get_talos_current_utc_timestamp() -> str:
         "%Y-%m-%dT%H:%M:%S.000000Z"
     )
     return utc_datetime
-
-
-# timestamp.strftime(
-#    "%Y-%m-%dT%H:%M:%S.000000Z"
-# )

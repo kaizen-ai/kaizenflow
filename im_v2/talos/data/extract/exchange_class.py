@@ -64,8 +64,7 @@ class TalosExchange:
 
         Note: microseconds must be included.
         """
-        hdateti.dassert_is_tz_naive(timestamp)
-        timestamp_iso_8601 = timestamp.isoformat(timespec="microseconds") + "Z"
+        timestamp_iso_8601 = timestamp.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
         return timestamp_iso_8601  # type: ignore
 
     def build_talos_query_params(
