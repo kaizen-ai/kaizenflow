@@ -15,7 +15,7 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
-import im_v2.common.data.client.full_symbol as imvcdcfusy
+import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class HistoricalPqByTileClient(
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[icdc.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,
@@ -156,7 +156,7 @@ class HistoricalPqByDateClient(
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[icdc.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,
