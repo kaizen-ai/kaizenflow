@@ -80,14 +80,14 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self._version = version
         self._aws_profile = aws_profile
 
+    @staticmethod
+    def should_be_online() -> None:
+        raise NotImplementedError
+
     def get_metadata(self) -> pd.DataFrame:
         """
         See description in the parent class.
         """
-        raise NotImplementedError
-
-    @staticmethod
-    def should_be_online() -> None:
         raise NotImplementedError
 
     def _read_data_for_one_symbol(
@@ -176,6 +176,23 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
+    @staticmethod
+    # TODO(Danya): Move up to hsql.
+    def _create_in_operator(values: List[str], column_name: str) -> str:
+        """
+        Transform a list of possible values into an IN operator clause.
+
+        Example:
+            (`["binance", "ftx"]`, 'exchange_id') =>
+            "exchange_id IN ('binance', 'ftx')"
+        """
+        in_operator = (
+            f"{column_name} IN ("
+            + ",".join([f"'{value}'" for value in values])
+            + ")"
+        )
+        return in_operator
+
     def _read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -191,8 +208,8 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         self,
         exchange_ids: List[str],
         currency_pairs: List[str],
-        start_unix_epoch: int,
-        end_unix_epoch: int,
+        start_unix_epoch: Optional[int],
+        end_unix_epoch: Optional[int],
         *,
         limit: Optional[int] = None,
     ) -> str:
@@ -201,6 +218,14 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
 
         Time is provided as unix epochs in ms, the time range
         is considered closed on both sides, i.e. [1647470940000, 1647471180000]
+
+        Example of a full query:
+        ```
+        "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000
+         AND timestamp <= 1647471180000
+         AND exchange_id IN ('binance')
+         AND currency_pair IN ('AVAX_USDT')"
+        ```
 
         :param exchange_ids: list of exchanges, e.g. ['binance', 'ftx']
         :param currency_pairs: list of currency pairs, e.g. ['BTC_USDT']
@@ -230,25 +255,23 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
             currency_pairs,
             msg="'currency_pairs' should be a list of strings, e.g. `['AVA_USDT', 'BTC_USDT']`",
         )
-        # Transform `exchange_ids` and `currency_pairs` into a string for an IN operator,
-        #  e.g. ('binance', 'ftx'), ('AVAX_USDT', 'BTC_USDT')
-        in_exchange_ids = (
-            "("
-            + ",".join([f"'{exchange_id}'" for exchange_id in exchange_ids])
-            + ")"
-        )
-        in_currency_pairs = (
-            "("
-            + ",".join([f"'{currency_pair}'" for currency_pair in currency_pairs])
-            + ")"
-        )
+        # Build a SELECT query.
+        select_query = f"SELECT * FROM {self._table_name} WHERE "
         # Build a WHERE query.
-        query = (
-            f"SELECT * FROM {self._table_name} WHERE timestamp >= {start_unix_epoch}"
-            f" AND timestamp <= {end_unix_epoch}"
-            f" AND exchange_id IN"
-            f" {in_exchange_ids} AND currency_pair IN {in_currency_pairs}"
+        # TODO(Danya): Generalize to hsql with dictionary input.
+        where_clause = []
+        if start_unix_epoch:
+            where_clause.append(f"timestamp >= {start_unix_epoch}")
+        if end_unix_epoch:
+            where_clause.append(f"timestamp <= {end_unix_epoch}")
+        # Add 'exchange_id IN (...)' clause.
+        where_clause.append(self._create_in_operator(exchange_ids, "exchange_id"))
+        # Add 'currency_pair IN (...)' clause.
+        where_clause.append(
+            self._create_in_operator(currency_pairs, "currency_pair")
         )
+        # Build whole query.
+        query = select_query + " AND ".join(where_clause)
         if limit:
             query += f" LIMIT {limit}"
         return query
