@@ -2135,7 +2135,7 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
     return as_user
 
 
-def _get_container_name(service_name: str):
+def _get_container_name(service_name: str) -> str:
     """
     Build a container name.
 
@@ -2143,14 +2143,14 @@ def _get_container_name(service_name: str):
        - Linux user name
        - Base Docker image name
        - Service name
-       - Container start ET timestamp
+       - Container start timestamp
 
     :param service_name: `docker-compose` service name, e.g., `app`
     :return: container name, e.g., `viktora.cmamp.app.20220317_232120`
     """
     linux_user = hsystem.get_user_name()
     image_name = get_default_param("BASE_IMAGE")
-    # Get current timestamp in ET.
+    # Get current timestamp.
     current_timestamp = _get_ET_timestamp()
     container_name = f"{linux_user}.{image_name}.{service_name}.{current_timestamp}"
     _LOG.debug(
