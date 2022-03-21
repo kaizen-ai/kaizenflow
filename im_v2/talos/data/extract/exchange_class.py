@@ -37,7 +37,7 @@ class TalosExchange:
         :param environment: specify if this instance should call the 'sandbox'
           or 'prod' API
         """
-        self._api_keys = hsecret.get_secret(f"talos{environment}")
+        self._api_keys = hsecret.get_secret(f"talos_{environment}")
         self._api_host = imv2tauti.get_endpoint(environment)
         self._api_key = self._api_keys["apiKey"]
         self._api_secret = self._api_keys["secret"]
