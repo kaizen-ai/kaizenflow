@@ -2156,6 +2156,39 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
     return as_user
 
 
+def _get_container_name(service_name: str) -> str:
+    """
+    Create a container name based on various information (e.g.,
+    `grisha.cmamp.app.cmamp1.20220317_232120`).
+
+    The information used to build a container is:
+       - Linux user name
+       - Base Docker image name
+       - Service name
+       - Project directory that was used to start a container
+       - Container start timestamp
+
+    :param service_name: `docker-compose` service name, e.g., `app`
+    :return: container name
+    """
+    hdbg.dassert_ne(service_name, "", "You need to specify a service name")
+    # Get linux user name.
+    linux_user = hsystem.get_user_name()
+    # Get dir name.
+    project_dir = hgit.get_project_dirname()
+    # Get Docker image base name.
+    image_name = get_default_param("BASE_IMAGE")
+    # Get current timestamp.
+    current_timestamp = _get_ET_timestamp()
+    # Build container name.
+    container_name = f"{linux_user}.{image_name}.{service_name}.{project_dir}.{current_timestamp}"
+    _LOG.debug(
+        "get_container_name: container_name=%s",
+        container_name,
+    )
+    return container_name
+
+
 def _get_docker_base_cmd(
     base_image: str,
     stage: str,
@@ -2276,6 +2309,7 @@ def _get_docker_cmd(
         --env-file devops/env/default.env \
         run \
         --rm \
+        --name grisha.cmamp.app.cmamp1.20220317_232120 \
         --user $(id -u):$(id -g) \
         app \
         bash 
@@ -2313,6 +2347,12 @@ def _get_docker_cmd(
         r"""
         run \
         --rm"""
+    )
+    # - Add a name to the container.
+    container_name = _get_container_name(service_name)
+    docker_cmd_.append(
+        rf"""
+        --name {container_name}"""
     )
     # - Handle the user.
     as_user = _run_docker_as_user(as_user)
