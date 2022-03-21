@@ -10,12 +10,12 @@ import os
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import helpers.hprint as hprint
-import helpers.hpandas as hpandas
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.full_symbol as imvcdcfusy
@@ -168,51 +168,6 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame, full_symbol_col_name: str = "full_symbol") -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization:
-        - Convert `timestamp` column to a UTC timestamp and set index.
-        - Drop extra columns (e.g. `id` created by the DB).
-        """
-        # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
-            hdateti.convert_unix_epoch_to_timestamp
-        )
-        # Set timestamp column as an index.
-        data = data.set_index("timestamp")
-        # Specify OHLCV columns.
-        ohlcv_columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            full_symbol_col_name
-        ]
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data.loc[:, ohlcv_columns]
-        return data
-
-    @staticmethod
-    # TODO(Danya): Move up to hsql.
-    def _create_in_operator(values: List[str], column_name: str) -> str:
-        """
-        Transform a list of possible values into an IN operator clause.
-
-        Example:
-            (`["binance", "ftx"]`, 'exchange_id') =>
-            "exchange_id IN ('binance', 'ftx')"
-        """
-        in_operator = (
-            f"{column_name} IN ("
-            + ",".join([f"'{value}'" for value in values])
-            + ")"
-        )
-        return in_operator
-
     def read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -224,6 +179,9 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
     ) -> pd.DataFrame:
         """
         Read data in `[start_ts, end_ts]` for `imvcdcfusy.FullSymbol` symbols.
+
+        Implementation is same as in abstract class, but with talos normalization
+        and excluding the `groupby` statements.
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
@@ -281,6 +239,54 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
         return df
 
+    @staticmethod
+    def _apply_talos_normalization(
+        data: pd.DataFrame, full_symbol_col_name: str = "full_symbol"
+    ) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization:
+
+        - Convert `timestamp` column to a UTC timestamp and set index.
+        - Drop extra columns (e.g. `id` created by the DB).
+        """
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        # Set timestamp column as an index.
+        data = data.set_index("timestamp")
+        # Specify OHLCV columns.
+        ohlcv_columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            full_symbol_col_name,
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data.loc[:, ohlcv_columns]
+        return data
+
+    @staticmethod
+    # TODO(Danya): Move up to hsql.
+    def _create_in_operator(values: List[str], column_name: str) -> str:
+        """
+        Transform a list of possible values into an IN operator clause.
+
+        Example:
+            (`["binance", "ftx"]`, 'exchange_id') =>
+            "exchange_id IN ('binance', 'ftx')"
+        """
+        in_operator = (
+            f"{column_name} IN ("
+            + ",".join([f"'{value}'" for value in values])
+            + ")"
+        )
+        return in_operator
+
     def _read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -291,20 +297,26 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
-
+        Create a select query and load data from database.
         """
         # Parse symbols into exchange and currency pair.
         parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
         exchange_ids = [symbol[0] for symbol in parsed_symbols]
         currency_pairs = [symbol[1] for symbol in parsed_symbols]
         # Convert timestamps to epochs.
-        start_unix_epoch = start_ts or hdateti.convert_timestamp_to_unix_epoch(start_ts)
+        start_unix_epoch = start_ts or hdateti.convert_timestamp_to_unix_epoch(
+            start_ts
+        )
         end_unix_epoch = end_ts or hdateti.convert_timestamp_to_unix_epoch(end_ts)
         # Read data from DB.
-        select_query = self._build_select_query(exchange_ids, currency_pairs, start_unix_epoch, end_unix_epoch)
+        select_query = self._build_select_query(
+            exchange_ids, currency_pairs, start_unix_epoch, end_unix_epoch
+        )
         data = hsql.execute_query_to_df(self._db_connection, select_query)
         # Add a full symbol column.
-        data[full_symbol_col_name] = data[["exchange_id", "currency_pair"]].agg('::'.join, axis=1)
+        data[full_symbol_col_name] = data[["exchange_id", "currency_pair"]].agg(
+            "::".join, axis=1
+        )
         return data
 
     def _build_select_query(
