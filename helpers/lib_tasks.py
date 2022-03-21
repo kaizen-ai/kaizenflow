@@ -2165,7 +2165,7 @@ def _get_container_name(service_name: str) -> str:
        - Linux user name
        - Base Docker image name
        - Service name
-        - Project directory that was used to start a container
+       - Project directory that was used to start a container
        - Container start timestamp
 
     :param service_name: `docker-compose` service name, e.g., `app`
