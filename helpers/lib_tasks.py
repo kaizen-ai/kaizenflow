@@ -2159,7 +2159,7 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
 def _get_container_name(service_name: str) -> str:
     """
     Create a container name based on various information (e.g.,
-    `grisha.cmamp1.cmamp.app.20220317_232120`).
+    `grisha.cmamp.app.cmamp1.20220317_232120`).
 
     The information used to build a container is:
        - Linux user name
