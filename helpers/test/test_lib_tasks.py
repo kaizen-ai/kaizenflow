@@ -567,7 +567,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
-            --name $USER_NAME.amp_test.app \
+            --name $USER_NAME.app.amp_test.app \
             --entrypoint bash \
             app
         """
@@ -598,7 +598,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
                 --env-file devops/env/default.env \
                 run \
                 --rm \
-                --name $USER_NAME.amp_test.app \
+                --name $USER_NAME.app.amp_test.app \
                 app \
                 bash """
         self._check(act, exp)
@@ -633,7 +633,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
-            --name $USER_NAME.amp_test.app \
+            --name $USER_NAME.app.amp_test.app \
             app \
             bash
         """
@@ -665,7 +665,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
-            --name $USER_NAME.amp_test.app \
+            --name $USER_NAME.app.amp_test.app \
             --entrypoint bash \
             app
         """
@@ -698,7 +698,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
-            --name $USER_NAME.amp_test.app \
+            --name $USER_NAME.app.amp_test.app \
             app \
             bash -c 'ls && cd ..'
         """
@@ -730,7 +730,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
-            --name $USER_NAME.amp_test.app \
+            --name $USER_NAME.app.amp_test.app \
             --service-ports \
             jupyter_server_test
         """
