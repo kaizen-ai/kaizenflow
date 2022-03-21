@@ -59,7 +59,7 @@ if _HAS_MOTO:
         @umock.patch.object(
             imvcdedrfoe.imvcdeexcl.hdateti, "get_current_timestamp_as_string"
         )
-        @umock.patch.object(imvcdedrfoe.hdateti, "get_current_time")
+        @umock.patch.object(imvcdedrfoe.imvcdeexut.hdateti, "get_current_time")
         def test_function_call1(
             self,
             mock_get_current_time: umock.MagicMock,
@@ -87,7 +87,7 @@ if _HAS_MOTO:
         @umock.patch.object(
             imvcdedrfoe.imvcdeexcl.hdateti, "get_current_timestamp_as_string"
         )
-        @umock.patch.object(imvcdedrfoe.hdateti, "get_current_time")
+        @umock.patch.object(imvcdedrfoe.imvcdeexut.hdateti, "get_current_time")
         def test_function_call2(
             self,
             mock_get_current_time: umock.MagicMock,
@@ -143,6 +143,7 @@ if _HAS_MOTO:
             cmd.extend(["--exchange_id", "binance"])
             cmd.extend(["--universe", "v03"])
             cmd.extend(["--db_stage", "dev"])
+            cmd.extend(["--db_table", "ccxt_ohlcv"])
             cmd.extend(["--aws_profile", "ck"])
             cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
             args = parser.parse_args(cmd)
@@ -193,7 +194,9 @@ if _HAS_MOTO:
                 )
             # Run.
             args = argparse.Namespace(**kwargs)
-            imvcdedrfoe._run(args)
+            imvcdedrfoe.imvcdeexut.download_realtime_for_one_exchange(
+                args, imvcdedrfoe.imvcdeexcl.CcxtExchange
+            )
             # Get saved data in db.
             select_all_query = "SELECT * FROM ccxt_ohlcv;"
             actual_df = hsql.execute_query_to_df(

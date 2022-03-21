@@ -16,6 +16,7 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
+    spread_col: None
     process_forecasts_config:
       order_config:
         order_type: price@twap
@@ -125,6 +126,7 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
+    spread_col: None
     process_forecasts_config:
       order_config:
         order_type: price@twap
@@ -234,6 +236,7 @@ config:
   process_forecasts:
     prediction_col: price
     volatility_col: price
+    spread_col: None
     process_forecasts_config:
       order_config:
         order_type: price@twap

@@ -158,7 +158,7 @@ meta:
   start_timestamp: 2020-01-01 00:00:00+00:00
   end_timestamp: 2020-01-31 00:00:00+00:00
   id: 0
-  config_builder: dataflow.model.test.test_experiment_utils.build_rc1_configs("universe_v2_0-top2.5T.JanFeb2020")
+  config_builder: dataflow.model.test.test_experiment_utils.build_tile_configs("universe_v2_0-top2.5T.JanFeb2020")
   dst_dir: ./dst_dir
   experiment_builder: dataflow.model.master_experiment.run_tiled_experiment
   experiment_result_dir: ./dst_dir/result_0

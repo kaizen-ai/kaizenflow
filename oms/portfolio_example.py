@@ -65,8 +65,8 @@ def get_DataFramePortfolio_example2(
     # Build SimulatedBroker.
     broker = ombroker.SimulatedBroker(
         strategy_id,
-        account,
         market_data,
+        account=account,
         timestamp_col=timestamp_col,
         column_remap=column_remap,
     )

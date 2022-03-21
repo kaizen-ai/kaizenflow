@@ -19,7 +19,7 @@ class TestWriteDf(hunitest.TestCase):
         df_writer = dtfconosin.WriteDf("df_writer", dir_name)
         df = self._get_data()
         df_writer.predict(df)["df_out"]
-        file_name = os.path.join(dir_name, "24199772.pq")
+        file_name = os.path.join(dir_name, "24199772.parquet")
         reconstructed_df = pd.read_parquet(file_name)
         self.assert_dfs_close(reconstructed_df, df)
 
