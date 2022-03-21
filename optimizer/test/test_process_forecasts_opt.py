@@ -126,31 +126,6 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
         )
         return portfolio
 
-    # TODO(gp): This can become an _example.
-    @staticmethod
-    def get_process_forecasts_config() -> cconfig.Config:
-        dict_ = {
-            "order_config": {
-                "order_type": "price@twap",
-                "order_duration": 5,
-            },
-            "optimizer_config": {
-                "backend": "batch_optimizer",
-                "dollar_neutrality_penalty": 0.1,
-                "volatility_penalty": 0.5,
-                "turnover_penalty": 0.0,
-                "target_gmv": 1e5,
-                "target_gmv_upper_bound_multiple": 1.0,
-            },
-            "execution_mode": "batch",
-            "ath_start_time": datetime.time(9, 30),
-            "trading_start_time": datetime.time(9, 35),
-            "ath_end_time": datetime.time(16, 00),
-            "trading_end_time": datetime.time(15, 55),
-        }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        return config
-
     async def run_process_forecasts(
         self, event_loop: asyncio.AbstractEventLoop
     ) -> None:
@@ -245,3 +220,28 @@ asset_id                      100     200
             hasynci.run(
                 self.run_process_forecasts(event_loop), event_loop=event_loop
             )
+
+    # TODO(gp): This can become an _example.
+    @staticmethod
+    def get_process_forecasts_config() -> cconfig.Config:
+        dict_ = {
+            "order_config": {
+                "order_type": "price@twap",
+                "order_duration": 5,
+            },
+            "optimizer_config": {
+                "backend": "batch_optimizer",
+                "dollar_neutrality_penalty": 0.1,
+                "volatility_penalty": 0.5,
+                "turnover_penalty": 0.0,
+                "target_gmv": 1e5,
+                "target_gmv_upper_bound_multiple": 1.0,
+            },
+            "execution_mode": "batch",
+            "ath_start_time": datetime.time(9, 30),
+            "trading_start_time": datetime.time(9, 35),
+            "ath_end_time": datetime.time(16, 00),
+            "trading_end_time": datetime.time(15, 55),
+        }
+        config = cconfig.get_config_from_nested_dict(dict_)
+        return config

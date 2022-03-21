@@ -79,14 +79,14 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self._version = version
         self._aws_profile = aws_profile
 
-    @staticmethod
-    def should_be_online() -> None:
-        raise NotImplementedError
-
     def get_metadata(self) -> pd.DataFrame:
         """
         See description in the parent class.
         """
+        raise NotImplementedError
+
+    @staticmethod
+    def should_be_online() -> None:
         raise NotImplementedError
 
     def _read_data_for_one_symbol(
@@ -165,30 +165,6 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def _build_select_query(
-        query: str,
-        exchange_id: str,
-        currency_pair: str,
-        start_unix_epoch: int,
-        end_unix_epoch: int,
-    ) -> str:
-        """
-        Append a WHERE clause to the query.
-        """
-        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
-        raise NotImplementedError
-
-    @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization:
-
-        - Convert `timestamp` column to a UTC timestamp and set index
-        - Drop extra columns (e.g. `id` created by the DB).
-        """
-        raise NotImplementedError
-
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -214,4 +190,28 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         # TODO(Danya): Convert timestamps to int when reading.
         # TODO(Danya): add a full symbol column to the output
+        raise NotImplementedError
+
+    @staticmethod
+    def _build_select_query(
+        query: str,
+        exchange_id: str,
+        currency_pair: str,
+        start_unix_epoch: int,
+        end_unix_epoch: int,
+    ) -> str:
+        """
+        Append a WHERE clause to the query.
+        """
+        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
+        raise NotImplementedError
+
+    @staticmethod
+    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization:
+
+        - Convert `timestamp` column to a UTC timestamp and set index
+        - Drop extra columns (e.g. `id` created by the DB).
+        """
         raise NotImplementedError

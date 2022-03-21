@@ -194,7 +194,9 @@ if _HAS_MOTO:
                 )
             # Run.
             args = argparse.Namespace(**kwargs)
-            imvcdedrfoe.imvcdeexut.download_realtime_for_one_exchange(args, imvcdedrfoe.imvcdeexcl.CcxtExchange)
+            imvcdedrfoe.imvcdeexut.download_realtime_for_one_exchange(
+                args, imvcdedrfoe.imvcdeexcl.CcxtExchange
+            )
             # Get saved data in db.
             select_all_query = "SELECT * FROM ccxt_ohlcv;"
             actual_df = hsql.execute_query_to_df(

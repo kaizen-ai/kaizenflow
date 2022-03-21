@@ -12,22 +12,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_SinglePeriodOptimizer1(hunitest.TestCase):
-    @staticmethod
-    def only_gmv_constraint_helper(solver: Optional[str] = None) -> str:
-        dict_ = {
-            "volatility_penalty": 0.0,
-            "dollar_neutrality_penalty": 0.0,
-            "turnover_penalty": 0.0,
-            "target_gmv": 3000,
-            "target_gmv_upper_bound_multiple": 1.00,
-        }
-        if solver is not None:
-            dict_["solver"] = solver
-        config = cconfig.get_config_from_nested_dict(dict_)
-        df = Test_SinglePeriodOptimizer1.get_prediction_df()
-        actual = Test_SinglePeriodOptimizer1.helper(config, df, restrictions=None)
-        return actual
-
     def test_only_gmv_constraint(self) -> None:
         actual = self.only_gmv_constraint_helper()
         expected = r"""
@@ -150,6 +134,22 @@ asset_id
 2                 1515.03                  15.03           1.52                0.02
 3                 -499.96                   0.04          -0.50                0.00"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    @staticmethod
+    def only_gmv_constraint_helper(solver: Optional[str] = None) -> str:
+        dict_ = {
+            "volatility_penalty": 0.0,
+            "dollar_neutrality_penalty": 0.0,
+            "turnover_penalty": 0.0,
+            "target_gmv": 3000,
+            "target_gmv_upper_bound_multiple": 1.00,
+        }
+        if solver is not None:
+            dict_["solver"] = solver
+        config = cconfig.get_config_from_nested_dict(dict_)
+        df = Test_SinglePeriodOptimizer1.get_prediction_df()
+        actual = Test_SinglePeriodOptimizer1.helper(config, df, restrictions=None)
+        return actual
 
     @staticmethod
     def get_prediction_df() -> pd.DataFrame:

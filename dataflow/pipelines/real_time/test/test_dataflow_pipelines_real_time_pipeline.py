@@ -284,40 +284,6 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     Run `MvnReturns` pipeline in real-time with mocked OMS objects.
     """
 
-    # TODO(gp): Move to market_data_example.py to reuse?
-    @staticmethod
-    def get_market_data_df() -> pd.DataFrame:
-        """
-        Create a dataframe with the data for a `MarketData`.
-        """
-        start_datetime = pd.Timestamp(
-            "2000-01-03 09:30:00-05:00", tz="America/New_York"
-        )
-        end_datetime = pd.Timestamp(
-            "2000-01-03 10:30:00-05:00", tz="America/New_York"
-        )
-        # Run the node to get the df out.
-        node_config = {
-            "frequency": "T",
-            "start_date": start_datetime,
-            "end_date": end_datetime,
-            "dim": 1,
-            "target_volatility": 0.25,
-            "seed": 247,
-        }
-        node = dtfcore.MultivariateNormalDataSource("fake", **node_config)
-        df = node.fit()["df_out"]
-        df = df.swaplevel(i=0, j=1, axis=1)
-        df = df["MN0"]
-        _LOG.debug("df=%s", hpandas.df_to_str(df))
-        # Transform a DataFlow df into a MarketData df.
-        df["end_datetime"] = df.index
-        df["start_datetime"] = df.index - pd.DateOffset(minutes=1)
-        df["timestamp_db"] = df["end_datetime"]
-        df["asset_id"] = 101
-        _LOG.debug("df=%s", hpandas.df_to_str(df))
-        return df
-
     def get_market_data(
         self, event_loop: asyncio.AbstractEventLoop
     ) -> mdata.MarketData:
@@ -455,6 +421,40 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
             #
             actual = "\n".join(map(str, actual))
             self.check_string(actual)
+
+    # TODO(gp): Move to market_data_example.py to reuse?
+    @staticmethod
+    def get_market_data_df() -> pd.DataFrame:
+        """
+        Create a dataframe with the data for a `MarketData`.
+        """
+        start_datetime = pd.Timestamp(
+            "2000-01-03 09:30:00-05:00", tz="America/New_York"
+        )
+        end_datetime = pd.Timestamp(
+            "2000-01-03 10:30:00-05:00", tz="America/New_York"
+        )
+        # Run the node to get the df out.
+        node_config = {
+            "frequency": "T",
+            "start_date": start_datetime,
+            "end_date": end_datetime,
+            "dim": 1,
+            "target_volatility": 0.25,
+            "seed": 247,
+        }
+        node = dtfcore.MultivariateNormalDataSource("fake", **node_config)
+        df = node.fit()["df_out"]
+        df = df.swaplevel(i=0, j=1, axis=1)
+        df = df["MN0"]
+        _LOG.debug("df=%s", hpandas.df_to_str(df))
+        # Transform a DataFlow df into a MarketData df.
+        df["end_datetime"] = df.index
+        df["start_datetime"] = df.index - pd.DateOffset(minutes=1)
+        df["timestamp_db"] = df["end_datetime"]
+        df["asset_id"] = 101
+        _LOG.debug("df=%s", hpandas.df_to_str(df))
+        return df
 
 
 # #############################################################################

@@ -44,17 +44,17 @@ class KibotCommand:
     def run(self) -> None:
         sys.exit(self._main())
 
-    @staticmethod
-    def customize_parser(parser: argparse.ArgumentParser) -> None:
-        """
-        Allow child classes to customize the parser further.
-        """
-
     def customize_run(self) -> int:  # pylint: disable=no-self-use
         """
         Allow child classes to customize the run further.
         """
         return 0
+
+    @staticmethod
+    def customize_parser(parser: argparse.ArgumentParser) -> None:
+        """
+        Allow child classes to customize the parser further.
+        """
 
     def _setup_parser(self) -> None:
         self.parser = argparse.ArgumentParser(
