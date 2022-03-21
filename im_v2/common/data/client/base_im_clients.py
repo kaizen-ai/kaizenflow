@@ -116,13 +116,13 @@ class ImClient(abc.ABC):
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
+        :param resample_1min: allow to control resampling
         :param start_ts: the earliest date timestamp to load data for
             - `None` means start from the beginning of the available data
         :param end_ts: the latest date timestamp to load data for
             - `None` means end at the end of the available data
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
-        :param resample_1min: allow to control resampling
         :return: combined data for all the requested symbols
         """
         _LOG.debug(
@@ -170,10 +170,10 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, start_ts, end_ts, resample_1min=resample_1min
+                df_tmp, full_symbol_col_name, resample_1min, start_ts, end_ts
             )
             self._dassert_output_data_is_valid(
-                df_tmp, full_symbol_col_name, start_ts, end_ts, resample_1min
+                df_tmp, full_symbol_col_name, resample_1min, start_ts, end_ts
             )
             dfs.append(df_tmp)
         # TODO(Nikola): raise error on empty df?
@@ -236,10 +236,9 @@ class ImClient(abc.ABC):
     def _apply_im_normalizations(
         df: pd.DataFrame,
         full_symbol_col_name: str,
+        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
-        resample_1min: bool,
     ) -> pd.DataFrame:
         """
         Apply normalizations to IM data.
@@ -275,16 +274,15 @@ class ImClient(abc.ABC):
     def _dassert_output_data_is_valid(
         df: pd.DataFrame,
         full_symbol_col_name: str,
+        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        resample_1min: bool,
     ) -> None:
         """
         Verify that the normalized data is valid.
         """
         # Check that index is `pd.DatetimeIndex`.
         hpandas.dassert_index_is_datetime(df)
-
         if resample_1min:
             # Check that index is monotonic increasing.
             hpandas.dassert_strictly_increasing_index(df)
