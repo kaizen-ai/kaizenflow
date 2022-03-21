@@ -211,12 +211,10 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         hdbg.dassert_isinstance(
             start_unix_epoch,
             int,
-            msg="Start unix epoch should be an int, e.g. 1647470940000",
         )
         hdbg.dassert_isinstance(
             end_unix_epoch,
             int,
-            msg="End unix epoch should be an int, e.g. 1647470940000",
         )
         hdbg.dassert_lte(
             start_unix_epoch,
