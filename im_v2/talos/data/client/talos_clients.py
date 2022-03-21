@@ -64,7 +64,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self,
         root_dir: str,
         *,
-        version: str = "latest",
+        data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -72,12 +72,12 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
 
         :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://cryptokaizen-data/historical") to `Talos` data
-        :param version: version of the loaded data to use
+        :param data_snapshot: version of the loaded data to use
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__()
         self._root_dir = root_dir
-        self._version = version
+        self._data_snapshot = data_snapshot
         self._aws_profile = aws_profile
 
     def get_metadata(self) -> pd.DataFrame:
@@ -104,7 +104,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get path to a dir with all the data for specified exchange id.
         exchange_dir_path = os.path.join(
-            self._root_dir, "talos", self._version, exchange_id
+            self._root_dir, "talos", self._data_snapshot, exchange_id
         )
         # Read raw crypto price data.
         _LOG.info(
