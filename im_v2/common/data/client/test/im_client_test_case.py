@@ -42,7 +42,9 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         resample_1min = True
-        actual_df = im_client.read_data(full_symbols, resample_1min, start_ts, end_ts)
+        actual_df = im_client.read_data(
+            full_symbols, resample_1min, start_ts, end_ts
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data2(
@@ -61,7 +63,9 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         resample_1min = True
-        actual_df = im_client.read_data(full_symbols, resample_1min, start_ts, end_ts)
+        actual_df = im_client.read_data(
+            full_symbols, resample_1min, start_ts, end_ts
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data3(
@@ -81,7 +85,9 @@ class ImClientTestCase(hunitest.TestCase):
         """
         end_ts = None
         resample_1min = True
-        actual_df = im_client.read_data(full_symbols, resample_1min, start_ts, end_ts)
+        actual_df = im_client.read_data(
+            full_symbols, resample_1min, start_ts, end_ts
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data4(
@@ -101,7 +107,9 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         resample_1min = True
-        actual_df = im_client.read_data(full_symbols, resample_1min, start_ts, end_ts)
+        actual_df = im_client.read_data(
+            full_symbols, resample_1min, start_ts, end_ts
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data5(
@@ -120,7 +128,9 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         resample_1min = True
-        actual_df = im_client.read_data(full_symbols, resample_1min, start_ts, end_ts)
+        actual_df = im_client.read_data(
+            full_symbols, resample_1min, start_ts, end_ts
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data6(
@@ -141,7 +151,8 @@ class ImClientTestCase(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             im_client.read_data(full_symbols, resample_1min, start_ts, end_ts)
 
-    def _test_read_data7(self,
+    def _test_read_data7(
+        self,
         im_client: icdc.ImClient,
         full_symbols: List[icdc.FullSymbol],
         *args: Any,
@@ -156,7 +167,9 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         resample_1min = False
-        actual_df = im_client.read_data(full_symbols, resample_1min, start_ts, end_ts)
+        actual_df = im_client.read_data(
+            full_symbols, resample_1min, start_ts, end_ts
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     # ////////////////////////////////////////////////////////////////////////

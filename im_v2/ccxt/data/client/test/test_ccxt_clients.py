@@ -222,7 +222,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(174, 6)
                                          full_symbol         open         high          low        close     volume
-        timestamp                                                                                                  
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
@@ -511,7 +511,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(174, 6)
                                          full_symbol         open         high          low        close     volume
-        timestamp                                                                                                  
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
@@ -860,7 +860,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         columns=full_symbol,open,high,low,close,volume
         shape=(5, 6)
                                          full_symbol  open  high   low  close  volume
-        timestamp                                                                    
+        timestamp
         2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0
         2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0
         2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0
@@ -946,15 +946,6 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             expected_last_elements,
         )
 
-    # ///////////////////////////////////////////////////////////////////////
-
-    def _create_test_table(self) -> None:
-        """
-        Create a test CCXT OHLCV table in DB.
-        """
-        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
-        self.connection.cursor().execute(query)
-
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
         """
@@ -1002,3 +993,12 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             "volume",
         ]
         return expected_column_names
+
+    # ///////////////////////////////////////////////////////////////////////
+
+    def _create_test_table(self) -> None:
+        """
+        Create a test CCXT OHLCV table in DB.
+        """
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
+        self.connection.cursor().execute(query)

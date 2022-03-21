@@ -265,7 +265,9 @@ class ImClient(abc.ABC):
             # Fill NaN values appeared after resampling in full symbol column.
             # Combination of full symbol and timestamp is a unique identifier,
             # so full symbol cannot be NaN.
-            df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
+            df[full_symbol_col_name] = df[full_symbol_col_name].fillna(
+                method="bfill"
+            )
         # 4) Convert to UTC.
         df.index = df.index.tz_convert("UTC")
         return df
@@ -346,7 +348,9 @@ class ImClient(abc.ABC):
         start_timestamp = None
         end_timestamp = None
         resample_1min = True
-        data = self.read_data([full_symbol], resample_1min, start_timestamp, end_timestamp)
+        data = self.read_data(
+            [full_symbol], resample_1min, start_timestamp, end_timestamp
+        )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
             timestamp = data.index.min()
