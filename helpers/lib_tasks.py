@@ -1120,9 +1120,12 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
-# - Remove end-of-line spaces:
+# - Add end-of-file:
 #   ```
-#   # Remove
+#   find . -name "*.py" | xargs sed -i '' -e '$a\'
+#   ```
+# - Remove end-of-file:
+#   ```
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #

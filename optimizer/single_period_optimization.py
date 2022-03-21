@@ -44,7 +44,6 @@ def optimize(
 
 
 class SinglePeriodOptimizer:
-
     def __init__(
         self,
         config: cconfig.Config,
