@@ -6,7 +6,6 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 
 class TestConvertTimestampColumn(hunitest.TestCase):
-
     def test_integer_datetime(self) -> None:
         """
         Verify that integer datetime is converted correctly.
@@ -61,7 +60,6 @@ class TestConvertTimestampColumn(hunitest.TestCase):
 
 
 class TestReindexOnDatetime(hunitest.TestCase):
-
     def get_dummy_df_with_timestamp(self, unit: str = "ms") -> pd.DataFrame:
         datetime_column_name = "dummy_timestamp"
         test_data = {
@@ -151,7 +149,6 @@ class TestReindexOnDatetime(hunitest.TestCase):
 
 
 class TestReindexOnCustomColumns(hunitest.TestCase):
-
     def get_test_data(self) -> pd.DataFrame:
         test_data = {
             "dummy_value_1": [1, 3, 2],
@@ -197,11 +194,10 @@ class TestReindexOnCustomColumns(hunitest.TestCase):
         # Check output.
         actual = str(fail.value)
         expected = r"""
-        ################################################################################
         * Failed assertion *
         val1=['mock1', 'mock2', 'mock3']
         issubset
         val2=['dummy_value_1', 'dummy_value_2', 'dummy_value_3']
         val1 - val2=['mock1', 'mock2', 'mock3']
-        ################################################################################"""
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)

@@ -122,24 +122,6 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
     - simulated replayed time
     """
 
-    @staticmethod
-    async def workload(current_time: pd.Timestamp) -> bool:
-        """
-        Coroutine simulating a workload (waiting for 0.1s) when the current
-        time has an even number of seconds.
-
-        :return: True if it was executed
-        """
-        need_execute: bool = current_time.second % 2 == 0
-        _LOG.debug(
-            "current_time=%s -> need_execute=%s", current_time, need_execute
-        )
-        if need_execute:
-            # The execution consists of just waiting.
-            _LOG.debug("  -> execute")
-            await asyncio.sleep(0.1)
-        return need_execute
-
     def helper(
         self,
         get_wall_clock_time: hdateti.GetWallClockTime,
@@ -291,3 +273,21 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         self.check_output_simulated(events_as_str, results_as_str)
         # It should take less than 1 sec to simulate 4 secs.
         self.assertLess(ts.elapsed_time, 1)
+
+    @staticmethod
+    async def workload(current_time: pd.Timestamp) -> bool:
+        """
+        Coroutine simulating a workload (waiting for 0.1s) when the current
+        time has an even number of seconds.
+
+        :return: True if it was executed
+        """
+        need_execute: bool = current_time.second % 2 == 0
+        _LOG.debug(
+            "current_time=%s -> need_execute=%s", current_time, need_execute
+        )
+        if need_execute:
+            # The execution consists of just waiting.
+            _LOG.debug("  -> execute")
+            await asyncio.sleep(0.1)
+        return need_execute

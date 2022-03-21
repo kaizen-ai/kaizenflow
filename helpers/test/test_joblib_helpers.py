@@ -406,14 +406,6 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
 
 @pytest.mark.skip(reason="Just for experimenting with joblib")
 class Test_joblib_example1(hunitest.TestCase):
-    @staticmethod
-    def func(val: int) -> int:
-        print("val=%s" % val)
-        if val == -1:
-            raise ValueError(f"val={val}")
-        print("  out=%s" % val)
-        return val
-
     def test1(self) -> None:
         """
         Show that when a job fails the entire `joblib.Parallel` fails without
@@ -431,6 +423,14 @@ class Test_joblib_example1(hunitest.TestCase):
             joblib.delayed(Test_joblib_example1.func)(val) for val in vals
         )
         print("res=%s" % str(res))
+
+    @staticmethod
+    def func(val: int) -> int:
+        print("val=%s" % val)
+        if val == -1:
+            raise ValueError(f"val={val}")
+        print("  out=%s" % val)
+        return val
 
 
 # #############################################################################

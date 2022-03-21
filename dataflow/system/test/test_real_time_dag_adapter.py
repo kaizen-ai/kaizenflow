@@ -35,6 +35,7 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         prediction_col = "close"
         volatility_col = "close"
         returns_col = "close"
+        spread_col = None
         timedelta = pd.Timedelta("5T")
         asset_id_col = "asset_id"
         dag_adapter = dtfsrtdaad.RealTimeDagAdapter(
@@ -43,6 +44,7 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
             prediction_col,
             volatility_col,
             returns_col,
+            spread_col,
             timedelta,
             asset_id_col,
         )

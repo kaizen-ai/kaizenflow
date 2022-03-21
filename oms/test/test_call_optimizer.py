@@ -13,6 +13,30 @@ _LOG = logging.getLogger(__name__)
 
 @pytest.mark.skip("Cannot update the goldens, see CmTask1357.")
 class TestOptimize(hunitest.TestCase):
+    def test_only_gmv_constraint(self) -> None:
+        """
+        Same test as Test_SinglePeriodOptimizer1.test_only_gmv_constraint() but
+        using the remote execution.
+        """
+        dict_ = {
+            "volatility_penalty": 0.0,
+            "dollar_neutrality_penalty": 0.0,
+            "turnover_penalty": 0.0,
+            "target_gmv": 3000,
+            "target_gmv_upper_bound_multiple": 1.00,
+        }
+        config = cconfig.get_config_from_nested_dict(dict_)
+        df = self.get_prediction_df()
+        scratch_dir = self.get_scratch_space()
+        actual = self.helper(config, df, scratch_dir)
+        expected = r"""
+                  target_positions  target_notional_trades  target_weights  target_weight_diffs
+        asset_id
+        1                 -3.71100             -1003.71100        -0.00124             -0.33457
+        2               2962.92836              1462.92836         0.98764              0.48764
+        3                 -3.71100               496.28900        -0.00124              0.16543
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     @staticmethod
     def get_prediction_df() -> pd.DataFrame:
@@ -39,28 +63,3 @@ class TestOptimize(hunitest.TestCase):
         precision = 5
         actual_str = hpandas.df_to_str(actual, precision=precision)
         return actual_str
-
-    def test_only_gmv_constraint(self) -> None:
-        """
-        Same test as Test_SinglePeriodOptimizer1.test_only_gmv_constraint() but
-        using the remote execution.
-        """
-        dict_ = {
-            "volatility_penalty": 0.0,
-            "dollar_neutrality_penalty": 0.0,
-            "turnover_penalty": 0.0,
-            "target_gmv": 3000,
-            "target_gmv_upper_bound_multiple": 1.00,
-        }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        df = self.get_prediction_df()
-        scratch_dir = self.get_scratch_space()
-        actual = self.helper(config, df, scratch_dir)
-        expected = r"""
-                  target_positions  target_notional_trades  target_weights  target_weight_diffs
-        asset_id
-        1                 -3.71100             -1003.71100        -0.00124             -0.33457
-        2               2962.92836              1462.92836         0.98764              0.48764
-        3                 -3.71100               496.28900        -0.00124              0.16543
-        """
-        self.assert_equal(actual, expected, fuzzy_match=True)
