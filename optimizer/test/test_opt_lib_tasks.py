@@ -2,9 +2,8 @@ import os
 from typing import Dict
 
 import helpers.hunit_test as hunitest
-import optimizer.opt_lib_tasks as ooplitas
 import helpers.lib_tasks as hlibtask
-
+import optimizer.opt_lib_tasks as ooplitas
 
 # TODO(Grisha): unify with `helpers/test/test_lib_tasks.py` CmTask #1485.
 
@@ -53,7 +52,9 @@ class TestGetOptDockerUpDownCmd(_OptLibTasksTestCase):
         base_image = ""
         stage = "dev"
         version = "1.0.0"
-        actual = ooplitas._get_opt_docker_up_cmd(detach, base_image, stage, version)
+        actual = ooplitas._get_opt_docker_up_cmd(
+            detach, base_image, stage, version
+        )
         expected = r"""
         IMAGE=$AM_ECR_BASE_PATH/opt_test:dev-1.0.0 \
             docker-compose \
@@ -61,7 +62,7 @@ class TestGetOptDockerUpDownCmd(_OptLibTasksTestCase):
             --env-file devops/env/default.env \
             up \
             -d \
-            app 
+            app
         """
         self._check(actual, expected)
 
@@ -73,14 +74,16 @@ class TestGetOptDockerUpDownCmd(_OptLibTasksTestCase):
         base_image = ""
         stage = "dev"
         version = "1.0.0"
-        actual = ooplitas._get_opt_docker_up_cmd(detach, base_image, stage, version)
+        actual = ooplitas._get_opt_docker_up_cmd(
+            detach, base_image, stage, version
+        )
         expected = r"""
         IMAGE=$AM_ECR_BASE_PATH/opt_test:dev-1.0.0 \
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
             up \
-            app 
+            app
         """
         self._check(actual, expected)
 
@@ -97,7 +100,7 @@ class TestGetOptDockerUpDownCmd(_OptLibTasksTestCase):
             docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             --env-file devops/env/default.env \
-            down 
+            down
         """
         self._check(actual, expected)
 
