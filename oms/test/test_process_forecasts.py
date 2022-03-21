@@ -95,12 +95,16 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         portfolio = self.get_portfolio(event_loop, asset_ids)
         # Get process forecasts config.
         config = self.get_process_forecasts_config()
+        spread_df = None
+        restrictions_df = None
         # Run.
         await oprofore.process_forecasts(
             predictions,
             volatility,
             portfolio,
             config,
+            spread_df,
+            restrictions_df,
         )
         actual = str(portfolio)
         expected = r"""
@@ -221,12 +225,16 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             event_loop, start_datetime, end_datetime, asset_ids
         )
         config = self.get_process_forecasts_config()
+        spread_df = None
+        restrictions_df = None
         # Run.
         await oprofore.process_forecasts(
             predictions,
             volatility,
             portfolio,
             config,
+            spread_df,
+            restrictions_df,
         )
         actual = str(portfolio)
         expected = r"""
@@ -442,12 +450,16 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             "trading_end_time": datetime.time(15, 55),
         }
         config = cconfig.get_config_from_nested_dict(dict_)
+        spread_df = None
+        restrictions_df = None
         # Run.
         await oprofore.process_forecasts(
             predictions,
             volatility,
             portfolio,
             config,
+            spread_df,
+            restrictions_df,
         )
         # TODO(Paul): Factor out a test that compares simulation and mock.
         actual = str(portfolio)
@@ -547,6 +559,73 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
                 order_processor_coroutine,
             ]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+
+    async def _test_mocked_system1(
+        self,
+        predictions: pd.DataFrame,
+        volatility: pd.DataFrame,
+        portfolio: omportfo.MockedPortfolio,
+    ) -> None:
+        """
+        Run process_forecasts() logic with a given prediction df to update a
+        Portfolio.
+        """
+        dict_ = {
+            "order_config": {
+                "order_type": "price@twap",
+                "order_duration": 5,
+            },
+            "optimizer_config": {
+                "backend": "compute_target_positions_in_cash",
+                "target_gmv": 1e5,
+                "dollar_neutrality": "no_constraint",
+            },
+            "execution_mode": "batch",
+            "ath_start_time": datetime.time(9, 30),
+            "trading_start_time": datetime.time(9, 35),
+            "ath_end_time": datetime.time(16, 00),
+            "trading_end_time": datetime.time(15, 55),
+        }
+        config = cconfig.get_config_from_nested_dict(dict_)
+        spread_df = None
+        restrictions_df = None
+        # Run.
+        await oprofore.process_forecasts(
+            predictions,
+            volatility,
+            portfolio,
+            config,
+            spread_df,
+            restrictions_df,
+        )
+        #
+        asset_ids = portfolio.universe
+        hdbg.dassert_eq(len(asset_ids), 1)
+        asset_id = asset_ids[0]
+        price = portfolio.market_data.get_data_for_interval(
+            pd.Timestamp("2000-01-01 09:30:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:50:00-05:00", tz="America/New_York"),
+            ts_col_name="timestamp_db",
+            asset_ids=asset_ids,
+            left_close=True,
+            right_close=True,
+        )["price"]
+        #
+        twap = cofinanc.resample(price, rule="5T").mean().rename("twap")
+        rets = twap.pct_change().rename("rets")
+        predictions_srs = predictions[asset_id].rename("prediction")
+        research_pnl = (
+            predictions_srs.shift(2).multiply(rets).rename("research_pnl")
+        )
+        #
+        actual = []
+        self._append(actual, "TWAP", twap)
+        self._append(actual, "rets", rets)
+        self._append(actual, "prediction", predictions_srs)
+        self._append(actual, "research_pnl", research_pnl)
+        actual.append(portfolio)
+        actual = "\n".join(map(str, actual))
+        self.check_string(actual)
 
     @staticmethod
     def _get_market_data_df1() -> pd.DataFrame:
@@ -652,69 +731,6 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         ]
         volatility = pd.DataFrame(volatility_data, index, columns)
         return predictions, volatility
-
-    async def _test_mocked_system1(
-        self,
-        predictions: pd.DataFrame,
-        volatility: pd.DataFrame,
-        portfolio: omportfo.MockedPortfolio,
-    ) -> None:
-        """
-        Run process_forecasts() logic with a given prediction df to update a
-        Portfolio.
-        """
-        dict_ = {
-            "order_config": {
-                "order_type": "price@twap",
-                "order_duration": 5,
-            },
-            "optimizer_config": {
-                "backend": "compute_target_positions_in_cash",
-                "target_gmv": 1e5,
-                "dollar_neutrality": "no_constraint",
-            },
-            "execution_mode": "batch",
-            "ath_start_time": datetime.time(9, 30),
-            "trading_start_time": datetime.time(9, 35),
-            "ath_end_time": datetime.time(16, 00),
-            "trading_end_time": datetime.time(15, 55),
-        }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        # Run.
-        await oprofore.process_forecasts(
-            predictions,
-            volatility,
-            portfolio,
-            config,
-        )
-        #
-        asset_ids = portfolio.universe
-        hdbg.dassert_eq(len(asset_ids), 1)
-        asset_id = asset_ids[0]
-        price = portfolio.market_data.get_data_for_interval(
-            pd.Timestamp("2000-01-01 09:30:00-05:00", tz="America/New_York"),
-            pd.Timestamp("2000-01-01 09:50:00-05:00", tz="America/New_York"),
-            ts_col_name="timestamp_db",
-            asset_ids=asset_ids,
-            left_close=True,
-            right_close=True,
-        )["price"]
-        #
-        twap = cofinanc.resample(price, rule="5T").mean().rename("twap")
-        rets = twap.pct_change().rename("rets")
-        predictions_srs = predictions[asset_id].rename("prediction")
-        research_pnl = (
-            predictions_srs.shift(2).multiply(rets).rename("research_pnl")
-        )
-        #
-        actual = []
-        self._append(actual, "TWAP", twap)
-        self._append(actual, "rets", rets)
-        self._append(actual, "prediction", predictions_srs)
-        self._append(actual, "research_pnl", research_pnl)
-        actual.append(portfolio)
-        actual = "\n".join(map(str, actual))
-        self.check_string(actual)
 
     @staticmethod
     def _append(

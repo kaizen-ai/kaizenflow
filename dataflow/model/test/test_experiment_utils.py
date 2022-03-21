@@ -5,20 +5,21 @@ import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.model.experiment_utils as dtfmoexuti
-import dataflow.pipelines.examples.pipeline1 as dtfpiexpip
+import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
-# #############################################################################
-# Test_get_configs_from_command_line1
-# #############################################################################
+
+# This mimics the code in example1_configs.py
+# TODO(gp): Consider calling that code directly if it doesn't violate the
+#  dependencies.
 
 
 def _build_base_config() -> cconfig.Config:
     wrapper = cconfig.Config()
     #
-    dag_builder = dtfpiexpip.ExamplePipeline1_DagBuilder()
+    dag_builder = dtfpexexpi.Example1_DagBuilder()
     config = dag_builder.get_config_template()
     wrapper["DAG"] = config
     wrapper["meta", "dag_builder"] = dag_builder
@@ -37,7 +38,6 @@ def _get_universe_tiny() -> List[int]:
     return asset_ids
 
 
-# TODO(gp): Pass universe_str.
 def build_configs_with_tiled_universe(
     config: cconfig.Config, universe_str: str
 ) -> List[cconfig.Config]:
@@ -53,9 +53,6 @@ def build_configs_with_tiled_universe(
     return configs
 
 
-# /////////////////////////////////////////////////////////////////////////////////
-
-
 def get_dag_runner(config: cconfig.Config) -> dtfcore.DAG:
     """
     Build a DAG runner from a config.
@@ -63,23 +60,12 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.DAG:
     # Build the DAG.
     dag_builder = config["meta", "dag_builder"]
     dag = dag_builder.get_dag(config["DAG"])
-    #
-    if False:
-        # save_node_interface = "stats"
-        save_node_interface = ""
-        profile_execution = True
-        # profile_execution = False
-        dst_dir = "./tmp.dag_profile"
-        dag.set_debug_mode(save_node_interface, profile_execution, dst_dir)
     # Build the DagRunner.
     dag_runner = dtfcore.FitPredictDagRunner(config, dag)
     return dag_runner
 
 
-# /////////////////////////////////////////////////////////////////////////////////
-
-
-def build_rc1_configs(
+def build_tile_configs(
     experiment_config: str,
 ) -> List[cconfig.Config]:
     (
@@ -112,10 +98,7 @@ def build_rc1_configs(
 
 class Test_get_configs_from_command_line1(hunitest.TestCase):
     """
-    Run an experiment list of two experiments that both succeed.
-
-    These tests are equivalent to `TestRunNotebook1` but using the
-    `run_experiment.py` flow instead of `run_notebook.py`.
+    Test the configs for backtest.
     """
 
     def test1(self) -> None:
@@ -123,7 +106,7 @@ class Test_get_configs_from_command_line1(hunitest.TestCase):
         class Args:
             experiment_list_config = "universe_v2_0-top2.5T.JanFeb2020"
             config_builder = (
-                "dataflow.model.test.test_experiment_utils.build_rc1_configs"
+                "dataflow.model.test.test_experiment_utils.build_tile_configs"
                 + f'("{experiment_list_config}")'
             )
             dst_dir = "./dst_dir"

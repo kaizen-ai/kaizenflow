@@ -505,44 +505,6 @@ class MarketData(abc.ABC):
         return start_sampling_time, end_sampling_time, num_iter
 
     # /////////////////////////////////////////////////////////////////////////////
-
-    @staticmethod
-    def _process_period(
-        timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
-    ) -> Optional[pd.Timestamp]:
-        """
-        Return the start time corresponding to returning the desired
-        `timedelta` of time before the current wall clock time.
-
-        E.g., if the df looks like:
-        ```
-           start_datetime           last_price    id
-                     end_datetime
-                              timestamp_db
-        0  09:30     09:31    09:31  -0.125460  1000
-        1  09:31     09:32    09:32   0.325254  1000
-        2  09:32     09:33    09:33   0.557248  1000
-        3  09:33     09:34    09:34   0.655907  1000
-        4  09:34     09:35    09:35   0.311925  1000
-        ```
-        and `wall_clock_time=09:34` the last minute `1T` should be:
-        ```
-           start_datetime           last_price    id
-                     end_datetime
-                              timestamp_db
-        4  09:34     09:35    09:35   0.311925  1000
-        ```
-
-        :param timedelta: a `pd.Timedelta` like `1D`, `5T`
-        """
-        _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
-        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
-        hdbg.dassert_lt(pd.Timedelta("0S"), timedelta)
-        last_start_time = wall_clock_time - timedelta
-        _LOG.verb_debug("last_start_time=%s", last_start_time)
-        return last_start_time
-
-    # /////////////////////////////////////////////////////////////////////////////
     # Derived class interface.
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -652,3 +614,41 @@ class MarketData(abc.ABC):
             self._start_time_col_name
         ].dt.tz_convert(self._timezone)
         return df
+
+    # /////////////////////////////////////////////////////////////////////////////
+
+    @staticmethod
+    def _process_period(
+        timedelta: pd.Timedelta, wall_clock_time: pd.Timestamp
+    ) -> Optional[pd.Timestamp]:
+        """
+        Return the start time corresponding to returning the desired
+        `timedelta` of time before the current wall clock time.
+
+        E.g., if the df looks like:
+        ```
+           start_datetime           last_price    id
+                     end_datetime
+                              timestamp_db
+        0  09:30     09:31    09:31  -0.125460  1000
+        1  09:31     09:32    09:32   0.325254  1000
+        2  09:32     09:33    09:33   0.557248  1000
+        3  09:33     09:34    09:34   0.655907  1000
+        4  09:34     09:35    09:35   0.311925  1000
+        ```
+        and `wall_clock_time=09:34` the last minute `1T` should be:
+        ```
+           start_datetime           last_price    id
+                     end_datetime
+                              timestamp_db
+        4  09:34     09:35    09:35   0.311925  1000
+        ```
+
+        :param timedelta: a `pd.Timedelta` like `1D`, `5T`
+        """
+        _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
+        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
+        hdbg.dassert_lt(pd.Timedelta("0S"), timedelta)
+        last_start_time = wall_clock_time - timedelta
+        _LOG.verb_debug("last_start_time=%s", last_start_time)
+        return last_start_time

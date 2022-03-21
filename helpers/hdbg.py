@@ -866,7 +866,10 @@ def init_logger(
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
         if not hasattr(module, __file__):
-            filename = module.__file__  # type: ignore
+            if module is None:
+                filename = "none"
+            else:
+                filename = module.__file__  # type: ignore
         else:
             filename = "unknown_module"
         log_filename = os.path.realpath(filename) + ".log"
