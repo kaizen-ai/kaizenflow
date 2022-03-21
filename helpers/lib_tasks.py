@@ -2258,6 +2258,20 @@ def _get_docker_cmd(
     use_bash: bool = False,
 ) -> str:
     """
+    Get `docker-compose` run command.
+
+    E.g., 
+    ```
+    IMAGE=*****..dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+        docker-compose \
+        --file /amp/devops/compose/docker-compose.yml \
+        --env-file devops/env/default.env \
+        run \
+        --rm \
+        --user $(id -u):$(id -g) \
+        app \
+        bash 
+    ```
     :param cmd: command to run inside Docker container
     :param extra_docker_run_opts: additional `docker-compose` run options
     :param service_name: service to use to run a command

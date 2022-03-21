@@ -210,12 +210,12 @@ def _get_opt_docker_up_cmd(
     detach: bool, base_image: str, stage: str, version: Optional[str]
 ) -> str:
     """
-    Get docker-compose up for the optimizer.
+    Get `docker-compose up` command for the optimizer.
 
     E.g.,
 
     ```
-    IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
+    IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
         docker-compose \
         --file devops/compose/docker-compose.yml \
         --env-file devops/env/default.env \
@@ -271,12 +271,12 @@ def _get_opt_docker_down_cmd(
     base_image: str, stage: str, version: Optional[str]
 ) -> str:
     """
-    Get docker-compose down for the optimizer.
+    Get `docker-compose down` command for the optimizer.
 
     E.g.,
 
     ```
-    IMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
+    IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
         docker-compose \
         --file devops/compose/docker-compose.yml \
         --env-file devops/env/default.env \
