@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -166,20 +167,6 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         raise NotImplementedError
 
     @staticmethod
-    def _build_select_query(
-        query: str,
-        exchange_id: str,
-        currency_pair: str,
-        start_unix_epoch: int,
-        end_unix_epoch: int,
-    ) -> str:
-        """
-        Append a WHERE clause to the query.
-        """
-        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
-        raise NotImplementedError
-
-    @staticmethod
     def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
         """
         Apply Talos-specific normalization:
@@ -189,6 +176,107 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
+    @staticmethod
+    # TODO(Danya): Move up to hsql.
+    def _create_in_operator(values: List[str], column_name: str) -> str:
+        """
+        Transform a list of possible values into an IN operator clause.
+
+        Example:
+            (`["binance", "ftx"]`, 'exchange_id') =>
+            "exchange_id IN ('binance', 'ftx')"
+        """
+        in_operator = (
+            f"{column_name} IN ("
+            + ",".join([f"'{value}'" for value in values])
+            + ")"
+        )
+        return in_operator
+
+    def _read_data(
+        self,
+        full_symbols: List[imvcdcfusy.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        *,
+        full_symbol_col_name: str = "full_symbol",
+        **kwargs: Dict[str, Any],
+    ) -> pd.DataFrame:
+        raise NotImplementedError
+
+    def _build_select_query(
+        self,
+        exchange_ids: List[str],
+        currency_pairs: List[str],
+        start_unix_epoch: Optional[int],
+        end_unix_epoch: Optional[int],
+        *,
+        limit: Optional[int] = None,
+    ) -> str:
+        """
+        Build a SELECT query for Talos DB.
+
+        Time is provided as unix epochs in ms, the time range
+        is considered closed on both sides, i.e. [1647470940000, 1647471180000]
+
+        Example of a full query:
+        ```
+        "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000
+         AND timestamp <= 1647471180000
+         AND exchange_id IN ('binance')
+         AND currency_pair IN ('AVAX_USDT')"
+        ```
+
+        :param exchange_ids: list of exchanges, e.g. ['binance', 'ftx']
+        :param currency_pairs: list of currency pairs, e.g. ['BTC_USDT']
+        :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
+        :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
+        :return: SELECT query for Talos data
+        """
+        hdbg.dassert_isinstance(
+            start_unix_epoch,
+            int,
+        )
+        hdbg.dassert_isinstance(
+            end_unix_epoch,
+            int,
+        )
+        hdbg.dassert_lte(
+            start_unix_epoch,
+            end_unix_epoch,
+            msg="Start unix epoch should be smaller than end.",
+        )
+        # TODO(Danya): Make all params optional to select all data.
+        hdbg.dassert_list_of_strings(
+            exchange_ids,
+            msg="'exchange_ids' should be a list of strings, e.g. `['binance', 'ftx']`",
+        )
+        hdbg.dassert_list_of_strings(
+            currency_pairs,
+            msg="'currency_pairs' should be a list of strings, e.g. `['AVA_USDT', 'BTC_USDT']`",
+        )
+        # Build a SELECT query.
+        select_query = f"SELECT * FROM {self._table_name} WHERE "
+        # Build a WHERE query.
+        # TODO(Danya): Generalize to hsql with dictionary input.
+        where_clause = []
+        if start_unix_epoch:
+            where_clause.append(f"timestamp >= {start_unix_epoch}")
+        if end_unix_epoch:
+            where_clause.append(f"timestamp <= {end_unix_epoch}")
+        # Add 'exchange_id IN (...)' clause.
+        where_clause.append(self._create_in_operator(exchange_ids, "exchange_id"))
+        # Add 'currency_pair IN (...)' clause.
+        where_clause.append(
+            self._create_in_operator(currency_pairs, "currency_pair")
+        )
+        # Build whole query.
+        query = select_query + " AND ".join(where_clause)
+        if limit:
+            query += f" LIMIT {limit}"
+        return query
+
+      
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
