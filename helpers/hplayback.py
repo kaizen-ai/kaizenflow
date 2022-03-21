@@ -186,23 +186,6 @@ class Playback:
         # ```
         _ = exec(output)  # pylint: disable=exec-used
 
-    @staticmethod
-    def _get_test_file_name(file_with_code: str) -> str:
-        """
-        Construct the test file name based on the file with the code to test.
-
-        :param file_with_code: path to file with code to test.
-        :return: path to the file with generated test.
-        """
-        # Get directory and filename of the testing code.
-        dirname_with_code, filename_with_code = os.path.split(file_with_code)
-        dirname_with_test = os.path.join(dirname_with_code, "test")
-        # Construct test file.
-        test_file = os.path.join(
-            dirname_with_test, "test_by_playback_%s" % filename_with_code
-        )
-        return test_file
-
     def _update_code_to_existing(self) -> None:
         """
         Get existing content from the file with test.
@@ -360,6 +343,23 @@ class Playback:
         Add indented line to the code.
         """
         self._code.append(hprint.indent(string, num_tabs * 4))
+
+    @staticmethod
+    def _get_test_file_name(file_with_code: str) -> str:
+        """
+        Construct the test file name based on the file with the code to test.
+
+        :param file_with_code: path to file with code to test.
+        :return: path to the file with generated test.
+        """
+        # Get directory and filename of the testing code.
+        dirname_with_code, filename_with_code = os.path.split(file_with_code)
+        dirname_with_test = os.path.join(dirname_with_code, "test")
+        # Construct test file.
+        test_file = os.path.join(
+            dirname_with_test, "test_by_playback_%s" % filename_with_code
+        )
+        return test_file
 
 
 def json_pretty_print(parsed: Any) -> str:

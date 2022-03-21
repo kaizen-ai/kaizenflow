@@ -7,12 +7,14 @@ import oms.broker as ombroker
 import abc
 import collections
 import logging
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import market_data as mdata
 import oms.oms_db as oomsdb
@@ -100,6 +102,7 @@ class Fill:
 # #############################################################################
 
 
+# TODO(gp): -> Broker?
 class AbstractBroker(abc.ABC):
     """
     Represent a broker to which we can place orders and receive fills back.
@@ -117,15 +120,16 @@ class AbstractBroker(abc.ABC):
     def __init__(
         self,
         strategy_id: str,
-        account: str,
         market_data: mdata.MarketData,
         *,
+        account: Optional[str] = None,
         timestamp_col: str = "end_datetime",
         column_remap: Optional[Dict[str, str]] = None,
     ) -> None:
         """
         Constructor.
 
+        :param account: allow to have multiple accounts. `None` means not used
         :param column_remap: (optional) remap columns when accessing a
             `MarketData` to retrieve execution prices. The required columns
             are "bid", "ask", "price", and "midpoint".
@@ -266,11 +270,9 @@ class AbstractBroker(abc.ABC):
         for order in orders_to_execute:
             hdbg.dassert_lte(order.end_timestamp, wall_clock_timestamp)
         # "Execute" the orders.
-        fills = []
-        for order in orders_to_execute:
-            # TODO(gp): Here there should be a programmable logic that decides
-            #  how many shares are filled.
-            fills.extend(self._fully_fill(order.end_timestamp, order))
+        # TODO(gp): Here there should be a programmable logic that decides
+        #  how many shares are filled.
+        fills = self._fully_fill(orders_to_execute)
         # NOTE: `self._fills` is not in `init()` in the abstract class.
         self._fills.extend(fills)
         # Remove the orders that have been executed.
@@ -285,26 +287,32 @@ class AbstractBroker(abc.ABC):
 
     # TODO(gp): Consider getting the wall clock, instead of passing it.
     def _fully_fill(
-        self, wall_clock_timestamp: pd.Timestamp, order: omorder.Order
+        self,
+        orders: List[omorder.Order],
     ) -> List[Fill]:
         """
-        Completely fill an order.
-
-        :param wall_clock_timestamp: we pass this value instead of getting the
-            since conceptually the timestamp is when the `_submit_orders` was
-            executed.
+        Completely fill orders.
         """
-        num_shares = order.diff_num_shares
-        # TODO(Paul): The function `get_execution_price()` should be
+        # TODO(Paul): The function `get_execution_prices()` should be
         #  configurable.
-        price = get_execution_price(
+        prices = get_execution_prices(
             self.market_data,
-            order,
+            orders,
             timestamp_col=self._timestamp_col,
             column_remap=self._column_remap,
         )
-        fill = Fill(order, wall_clock_timestamp, num_shares, price)
-        return [fill]
+        fills = []
+        for order in orders:
+            end_timestamp = order.end_timestamp
+            num_shares = order.diff_num_shares
+            hdbg.dassert_in(order.asset_id, prices.index)
+            price = prices[order.asset_id]
+            if not np.isfinite(price):
+                _LOG.warning("Unable to fill order=\n%s", order)
+                continue
+            fill = Fill(order, end_timestamp, num_shares, price)
+            fills.append(fill)
+        return fills
 
     def _log_order_submissions(self, orders: List[omorder.Order]) -> None:
         """
@@ -379,6 +387,7 @@ class SimulatedBroker(AbstractBroker):
 # #############################################################################
 
 
+# TODO(gp): -> DatabaseBroker?
 class MockedBroker(AbstractBroker):
     """
     An object that mocks a real broker backed by a DB with asynchronous updates
@@ -468,100 +477,72 @@ class MockedBroker(AbstractBroker):
 # #############################################################################
 
 
-def get_execution_price(
+def get_execution_prices(
     market_data: mdata.MarketData,
-    order: omorder.Order,
+    orders: List[omorder.Order],
     *,
     timestamp_col: str = "end_datetime",
     column_remap: Optional[Dict[str, str]] = None,
-) -> float:
+) -> pd.Series:
     """
-    Get the simulated execution price of an order.
+    Get the simulated execution prices of a list of orders.
+
+    This method assumes that all orders in the list share a common:
+      - order type
+      - order start timestamp
+      - order end timestamp
     """
     needed_columns = ["bid", "ask", "price", "midpoint"]
     if column_remap is None:
         column_remap = {col_name: col_name for col_name in needed_columns}
     hdbg.dassert_set_eq(column_remap.keys(), needed_columns)
+    # Ensure that the list is nonempty.
+    hdbg.dassert(orders)
     # Parse the order type.
-    config = order.type_.split("@")
-    hdbg.dassert_eq(len(config), 2, "Invalid type_='%s'", order.type_)
+    start_timestamps = set()
+    end_timestamps = set()
+    order_types = set()
+    asset_ids = []
+    # Ensure all orders share a common type, start_timestamp, and
+    # end_timestamp.
+    for order in orders:
+        order_types.add(order.type_)
+        start_timestamps.add(order.start_timestamp)
+        end_timestamps.add(order.end_timestamp)
+        asset_ids.append(order.asset_id)
+    hdbg.dassert_eq(len(order_types), 1)
+    hdbg.dassert_eq(len(start_timestamps), 1)
+    hdbg.dassert_eq(len(end_timestamps), 1)
+    # Extract the shared order properties.
+    order_type = order_types.pop()
+    start_timestamp = start_timestamps.pop()
+    end_timestamp = end_timestamps.pop()
+    # Parse the order type.
+    config = order_type.split("@")
+    hdbg.dassert_eq(len(config), 2, "Invalid type_='%s'", order_type)
     price_type, timing = config
     # Get the price depending on the price_type.
     if price_type in ("price", "midpoint"):
         column = column_remap[price_type]
-        price = _get_price_per_share(
+        prices = _get_price_per_share(
             market_data,
-            order.start_timestamp,
-            order.end_timestamp,
+            start_timestamp,
+            end_timestamp,
             timestamp_col,
-            order.asset_id,
+            asset_ids,
             column,
             timing,
         )
-    elif price_type == "full_spread":
-        # Cross the spread depending on buy / sell.
-        if order.diff_num_shares >= 0:
-            column = "ask"
-        else:
-            column = "bid"
-        column = column_remap[column]
-        price = _get_price_per_share(
-            market_data,
-            order.start_timestamp,
-            order.end_timestamp,
-            timestamp_col,
-            order.asset_id,
-            column,
-            timing,
-        )
-    elif price_type.startswith("partial_spread"):
-        # Pay part of the spread depending on the parameter encoded in the
-        # `price_type` (e.g., TWAP).
-        perc = float(price_type.split("_")[2])
-        hdbg.dassert_lte(0, perc)
-        hdbg.dassert_lte(perc, 1.0)
-        column = column_remap["bid"]
-        bid_price = _get_price_per_share(
-            market_data,
-            order.start_timestamp,
-            order.end_timestamp,
-            timestamp_col,
-            order.asset_id,
-            column,
-            timing,
-        )
-        column = column_remap["ask"]
-        ask_price = _get_price_per_share(
-            market_data,
-            order.start_timestamp,
-            order.end_timestamp,
-            timestamp_col,
-            order.asset_id,
-            column,
-            timing,
-        )
-        if order.diff_num_shares >= 0:
-            # We need to buy:
-            # - if perc == 1.0 pay ask (i.e., pay full-spread)
-            # - if perc == 0.5 pay midpoint
-            # - if perc == 0.0 pay bid
-            price = perc * ask_price + (1.0 - perc) * bid_price
-        else:
-            # We need to sell:
-            # - if perc == 1.0 pay bid (i.e., pay full-spread)
-            # - if perc == 0.5 pay midpoint
-            # - if perc == 0.0 pay ask
-            price = (1.0 - perc) * ask_price + perc * bid_price
     else:
-        raise ValueError(f"Invalid type='{order.type_}'")
+        raise ValueError(f"Invalid type='{order_type}'")
     _LOG.debug(
-        "type=%s, start_timestamp=%s, end_timestamp=%s -> execution_price=%s",
-        order.type_,
-        order.start_timestamp,
-        order.end_timestamp,
-        price,
+        "type=%s, start_timestamp=%s, end_timestamp=%s -> execution prices=%s",
+        order_type,
+        start_timestamp,
+        end_timestamp,
+        hpandas.df_to_str(prices, precision=2),
     )
-    return price
+    return prices
 
 
 def _get_price_per_share(
@@ -569,10 +550,10 @@ def _get_price_per_share(
     start_timestamp: pd.Timestamp,
     end_timestamp: pd.Timestamp,
     timestamp_col_name: str,
-    asset_id: int,
+    asset_ids: List[int],
     column: str,
     timing: str,
-) -> float:
+) -> pd.Series:
     """
     Get the price corresponding to a certain column and timing (e.g., `start`,
     `end`, `twap`).
@@ -581,7 +562,6 @@ def _get_price_per_share(
         start_timestamp and end_timestamp
     :param column: column to use to compute the price
     """
-    asset_ids = [asset_id]
     if timing == "start":
         price = mi.get_data_at_timestamp(
             start_timestamp, timestamp_col_name, asset_ids
@@ -597,9 +577,110 @@ def _get_price_per_share(
             timestamp_col_name,
             asset_ids,
             column,
-        )[asset_id]
+        )
     else:
         raise ValueError(f"Invalid timing='{timing}'")
     hdbg.dassert_is_not(price, None)
-    price = cast(float, price)
+    hdbg.dassert(not price.isna().all())
     return price
+
+
+# TODO(Paul): This function allows us to get the execution price for one order
+#   at a time. It support multiple (but untested) ways of doing this. Consider
+#   vectorizing this code or else adding a switch to invoke order-by-order
+#   processing.
+# def get_execution_price(
+#     market_data: mdata.MarketData,
+#     order: omorder.Order,
+#     *,
+#     timestamp_col: str = "end_datetime",
+#     column_remap: Optional[Dict[str, str]] = None,
+# ) -> float:
+#     """
+#     Get the simulated execution price of an order.
+#     """
+#     hdbg.dassert_isinstance(order, omorder.Order)
+#     needed_columns = ["bid", "ask", "price", "midpoint"]
+#     if column_remap is None:
+#         column_remap = {col_name: col_name for col_name in needed_columns}
+#     hdbg.dassert_set_eq(column_remap.keys(), needed_columns)
+#     # Parse the order type.
+#     config = order.type_.split("@")
+#     hdbg.dassert_eq(len(config), 2, "Invalid type_='%s'", order.type_)
+#     price_type, timing = config
+#     # Get the price depending on the price_type.
+#     if price_type in ("price", "midpoint"):
+#         column = column_remap[price_type]
+#         prices = _get_price_per_share(
+#             market_data,
+#             order.start_timestamp,
+#             order.end_timestamp,
+#             timestamp_col,
+#             order.asset_id,
+#             column,
+#             timing,
+#         )
+#     elif price_type == "full_spread":
+#         # Cross the spread depending on buy / sell.
+#         if order.diff_num_shares >= 0:
+#             column = "ask"
+#         else:
+#             column = "bid"
+#         column = column_remap[column]
+#         prices = _get_price_per_share(
+#             market_data,
+#             order.start_timestamp,
+#             order.end_timestamp,
+#             timestamp_col,
+#             order.asset_id,
+#             column,
+#             timing,
+#         )
+#     elif price_type.startswith("partial_spread"):
+#         # Pay part of the spread depending on the parameter encoded in the
+#         # `price_type` (e.g., TWAP).
+#         perc = float(price_type.split("_")[2])
+#         hdbg.dassert_lte(0, perc)
+#         hdbg.dassert_lte(perc, 1.0)
+#         column = column_remap["bid"]
+#         bid_price = _get_price_per_share(
+#             market_data,
+#             order.start_timestamp,
+#             order.end_timestamp,
+#             timestamp_col,
+#             order.asset_id,
+#             column,
+#             timing,
+#         )
+#         column = column_remap["ask"]
+#         ask_price = _get_price_per_share(
+#             market_data,
+#             order.start_timestamp,
+#             order.end_timestamp,
+#             timestamp_col,
+#             order.asset_id,
+#             column,
+#             timing,
+#         )
+#         if order.diff_num_shares >= 0:
+#             # We need to buy:
+#             # - if perc == 1.0 pay ask (i.e., pay full-spread)
+#             # - if perc == 0.5 pay midpoint
+#             # - if perc == 0.0 pay bid
+#             price = perc * ask_price + (1.0 - perc) * bid_price
+#         else:
+#             # We need to sell:
+#             # - if perc == 1.0 pay bid (i.e., pay full-spread)
+#             # - if perc == 0.5 pay midpoint
+#             # - if perc == 0.0 pay ask
+#             price = (1.0 - perc) * ask_price + perc * bid_price
+#     else:
+#         raise ValueError(f"Invalid type='{order.type_}'")
+#     _LOG.debug(
+#         "type=%s, start_timestamp=%s, end_timestamp=%s -> execution_price=%s",
+#         order.type_,
+#         order.start_timestamp,
+#         order.end_timestamp,
+#         price,
+#     )
+#     return prices

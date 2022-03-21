@@ -56,24 +56,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         universe = imvccunun.get_vendor_universe(vendor=self._vendor)
         return universe  # type: ignore[no-any-return]
 
-    @staticmethod
-    def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations for OHLCV data.
-        """
-        ohlcv_columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data[ohlcv_columns]
-        return data
-
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Input data is indexed with numbers and looks like:
@@ -117,6 +99,24 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
+        return data
+
+    @staticmethod
+    def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations for OHLCV data.
+        """
+        ohlcv_columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data[ohlcv_columns]
         return data
 
 

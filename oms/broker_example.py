@@ -33,7 +33,7 @@ def get_simulated_broker_example1(
     strategy_id = "SAU1"
     account = "candidate"
     broker = ombroker.SimulatedBroker(
-        strategy_id, account, market_data, timestamp_col=timestamp_col
+        strategy_id, market_data, account=account, timestamp_col=timestamp_col
     )
     return broker
 
@@ -62,8 +62,8 @@ def get_mocked_broker_example1(
     account = "candidate"
     broker = ombroker.MockedBroker(
         strategy_id,
-        account,
         market_data,
+        account=account,
         timestamp_col=timestamp_col,
         db_connection=db_connection,
         submitted_orders_table_name=submitted_orders_table_name,
