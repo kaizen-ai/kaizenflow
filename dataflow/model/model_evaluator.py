@@ -572,40 +572,6 @@ class PositionComputer:
             )
         return ret
 
-    @staticmethod
-    def _multiply_kernel(
-        predictions: pd.Series,
-        tau: float,
-        delay: int,
-        z_mute_point: float,
-        z_saturation_point: float,
-    ) -> pd.Series:
-        # z-score.
-        zscored_preds = csigproc.compute_rolling_zscore(
-            predictions, tau=tau, delay=delay
-        )
-        # Multiple by a kernel.
-        bump_function = functools.partial(
-            csigproc.c_infinity_bump_function,
-            a=z_mute_point,
-            b=z_saturation_point,
-        )
-        scale_factors = 1 - zscored_preds.apply(bump_function)
-        adjusted_preds = zscored_preds.multiply(scale_factors)
-        return adjusted_preds
-
-    @staticmethod
-    def _squash(
-        predictions: pd.Series,
-        tau: float,
-        delay: int,
-        scale: float,
-    ) -> pd.Series:
-        zscored_preds = csigproc.compute_rolling_zscore(
-            predictions, tau=tau, delay=delay
-        )
-        return csigproc.squash(zscored_preds, scale=scale)
-
     def _adjust_for_volatility(
         self,
         predictions: pd.Series,
@@ -656,6 +622,40 @@ class PositionComputer:
         else:
             raise ValueError(f"Invalid mode `{mode}`")
         return ret
+
+    @staticmethod
+    def _multiply_kernel(
+        predictions: pd.Series,
+        tau: float,
+        delay: int,
+        z_mute_point: float,
+        z_saturation_point: float,
+    ) -> pd.Series:
+        # z-score.
+        zscored_preds = csigproc.compute_rolling_zscore(
+            predictions, tau=tau, delay=delay
+        )
+        # Multiple by a kernel.
+        bump_function = functools.partial(
+            csigproc.c_infinity_bump_function,
+            a=z_mute_point,
+            b=z_saturation_point,
+        )
+        scale_factors = 1 - zscored_preds.apply(bump_function)
+        adjusted_preds = zscored_preds.multiply(scale_factors)
+        return adjusted_preds
+
+    @staticmethod
+    def _squash(
+        predictions: pd.Series,
+        tau: float,
+        delay: int,
+        scale: float,
+    ) -> pd.Series:
+        zscored_preds = csigproc.compute_rolling_zscore(
+            predictions, tau=tau, delay=delay
+        )
+        return csigproc.squash(zscored_preds, scale=scale)
 
 
 def compute_volatility_normalization_factor(

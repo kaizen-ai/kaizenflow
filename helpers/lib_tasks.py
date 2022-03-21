@@ -789,6 +789,7 @@ def git_create_branch(  # type: ignore
     _run(ctx, cmd)
 
 
+# TODO(gp): Move to hgit.
 def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
     if tag == "local":
         # Delete local branches that are already merged into master.
@@ -1119,9 +1120,12 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
-# - Remove end-of-line spaces:
+# - Add end-of-file:
 #   ```
-#   # Remove
+#   find . -name "*.py" | xargs sed -i '' -e '$a\'
+#   ```
+# - Remove end-of-file:
+#   ```
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #
@@ -1407,6 +1411,7 @@ def _find_files_touched_since_last_integration(
     )
     hio.to_file(file_name, "\n".join(files))
     _LOG.debug("Saved file to '%s'", file_name)
+    files = cast(List[str], files)
     return files
 
 
@@ -1636,9 +1641,12 @@ def integrate_diff_overlapping_files(  # type: ignore
             # The file was created: nothing to do.
             pass
         elif rc == 128:
-            # Note that the file potentially could not exist, i.e., it was added in
-            # the branch. In this case Git returns:
-            # rc=128 fatal: path 'dataflow/pipelines/real_time/test/test_dataflow_pipelines_real_time_pipeline.py' exists on disk, but not in 'ce54877016204315766e90df7c45192bec1fbf20'
+            # Note that the file potentially could not exist, i.e., it was added
+            # in the branch. In this case Git returns:
+            # ```
+            # rc=128 fatal: path 'dataflow/pipelines/real_time/test/
+            # test_dataflow_pipelines_real_time_pipeline.py' exists on disk, but
+            # not in 'ce54877016204315766e90df7c45192bec1fbf20'
             src_file = "/dev/null"
         else:
             raise ValueError("cmd='%s' returned %s" % (cmd, rc))
@@ -3107,13 +3115,13 @@ _FindResults = List[_FindResult]
 
 
 def _scan_files(python_files: List[str]) -> Tuple[str, int, str]:
-    for file in python_files:
+    for file_ in python_files:
         _LOG.debug("file=%s", file)
         txt = hio.from_file(file)
         for line_num, line in enumerate(txt.split("\n")):
             # TODO(gp): Skip commented lines.
-            # _LOG.debug("%s:%s line='%s'", file, line_num, line)
-            yield file, line_num, line
+            # _LOG.debug("%s:%s line='%s'", file_, line_num, line)
+            yield file_, line_num, line
 
 
 def _find_short_import(iterator: List, short_import: str) -> _FindResults:
@@ -3129,7 +3137,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     regex = re.compile(regex)
     #
     results: _FindResults = []
-    for file, line_num, line in iterator:
+    for file_, line_num, line in iterator:
         m = regex.search(line)
         if m:
             # E.g.,
@@ -3138,7 +3146,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
             long_import_txt = m.group(1)
             short_import_txt = m.group(2)
             full_import_txt = f"import {long_import_txt} as {short_import_txt}"
-            res = (file, line_num, line, short_import_txt, full_import_txt)
+            res = (file_, line_num, line, short_import_txt, full_import_txt)
             # E.g.,
             _LOG.debug("  => %s", str(res))
             results.append(res)
@@ -3157,7 +3165,7 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
     regexs = [re.compile(regex) for regex in regexs]
     #
     results: _FindResults = []
-    for file, line_num, line in iterator:
+    for file_, line_num, line in iterator:
         _LOG.debug("line='%s'", line)
         m = None
         for regex in regexs:
@@ -3169,7 +3177,7 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
             _LOG.debug("  --> line:%s=%s", line_num, line)
             short_import_txt = m.group(1)
             obj_txt = m.group(2)
-            res = (file, line_num, line, short_import_txt, obj_txt)
+            res = (file_, line_num, line, short_import_txt, obj_txt)
             # E.g.,
             # ('./helpers/lib_tasks.py', 10226, 'dtfsys', 'RealTimeDagRunner')
             # ('./dataflow/core/test/test_builders.py', 70, 'dtfcodarun', 'FitPredictDagRunner')
@@ -3185,7 +3193,7 @@ def _process_find_results(results: _FindResults, how: str) -> List[Tuple]:
     if how == "remove_dups":
         # Remove duplicates.
         for result in results:
-            (file, line_num, line, info1, info2) = result
+            (file_, line_num, line, info1, info2) = result
             filtered_results.append((info1, info2))
         filtered_results = hlist.remove_duplicates(filtered_results)
         filtered_results = sorted(filtered_results)
@@ -3235,8 +3243,8 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     iter_ = _scan_files(python_files)
     # Process the `what`.
     if mode == "all":
-        for mode in ("symbol_import", "short_import"):
-            find(ctx, regex, mode=mode, how=how, subdir=subdir)
+        for mode_tmp in ("symbol_import", "short_import"):
+            find(ctx, regex, mode=mode_tmp, how=how, subdir=subdir)
         return
     elif mode == "symbol_import":
         results = _find_func_class_uses(iter_, regex)

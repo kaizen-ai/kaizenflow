@@ -163,6 +163,48 @@ class PcaFactorComputer(FactorComputer):
         hdbg.dassert_lt(i, self.eig_num)
         return ["eigvec%s_%s" % (i, j) for j in range(self.eig_comp_num)]
 
+    def plot_over_time(
+        self, res_df: pd.DataFrame, num_pcs_to_plot: int = 0, num_cols: int = 2
+    ) -> None:
+        """
+        Similar to plot_pca_analysis() but over time.
+        """
+        # Plot eigenvalues.
+        cols = [c for c in res_df.columns if c.startswith("eigval")]
+        eigval_df = res_df[cols]
+        hdbg.dassert_lte(1, eigval_df.shape[1])
+        eigval_df.plot(title="Eigenvalues over time", ylim=(0, 1))
+        # Plot cumulative variance.
+        eigval_df.cumsum(axis=1).plot(
+            title="Fraction of variance explained by top PCs over time",
+            ylim=(0, 1),
+        )
+        # Plot eigenvectors.
+        cols = [c for c in res_df.columns if c.startswith("eigvec")]
+        eigvec_df = res_df[cols]
+        hdbg.dassert_lte(1, eigvec_df.shape[1])
+        # TODO(gp): Fix this.
+        # max_pcs = len([c for c in res_df.columns if c.startswith("eigvec_")])
+        max_pcs = 3
+        num_pcs_to_plot = self._get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
+        _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
+        if num_pcs_to_plot > 0:
+            _, axes = coplotti.get_multiple_plots(
+                num_pcs_to_plot,
+                num_cols=num_cols,
+                y_scale=4,
+                sharex=True,
+                sharey=True,
+            )
+            for i in range(num_pcs_to_plot):
+                col_names = [
+                    c for c in eigvec_df.columns if c.startswith("eigvec%s" % i)
+                ]
+                hdbg.dassert_lte(1, len(col_names))
+                eigvec_df[col_names].plot(
+                    ax=axes[i], ylim=(-1, 1), title="PC%s" % i
+                )
+
     # TODO(gp): -> private
     @staticmethod
     def linearize_eigval_eigvec(
@@ -293,59 +335,6 @@ class PcaFactorComputer(FactorComputer):
             are_stable = False
         return are_stable
 
-    def plot_over_time(
-        self, res_df: pd.DataFrame, num_pcs_to_plot: int = 0, num_cols: int = 2
-    ) -> None:
-        """
-        Similar to plot_pca_analysis() but over time.
-        """
-        # Plot eigenvalues.
-        cols = [c for c in res_df.columns if c.startswith("eigval")]
-        eigval_df = res_df[cols]
-        hdbg.dassert_lte(1, eigval_df.shape[1])
-        eigval_df.plot(title="Eigenvalues over time", ylim=(0, 1))
-        # Plot cumulative variance.
-        eigval_df.cumsum(axis=1).plot(
-            title="Fraction of variance explained by top PCs over time",
-            ylim=(0, 1),
-        )
-        # Plot eigenvectors.
-        cols = [c for c in res_df.columns if c.startswith("eigvec")]
-        eigvec_df = res_df[cols]
-        hdbg.dassert_lte(1, eigvec_df.shape[1])
-        # TODO(gp): Fix this.
-        # max_pcs = len([c for c in res_df.columns if c.startswith("eigvec_")])
-        max_pcs = 3
-        num_pcs_to_plot = self._get_num_pcs_to_plot(num_pcs_to_plot, max_pcs)
-        _LOG.info("num_pcs_to_plot=%s", num_pcs_to_plot)
-        if num_pcs_to_plot > 0:
-            _, axes = coplotti.get_multiple_plots(
-                num_pcs_to_plot,
-                num_cols=num_cols,
-                y_scale=4,
-                sharex=True,
-                sharey=True,
-            )
-            for i in range(num_pcs_to_plot):
-                col_names = [
-                    c for c in eigvec_df.columns if c.startswith("eigvec%s" % i)
-                ]
-                hdbg.dassert_lte(1, len(col_names))
-                eigvec_df[col_names].plot(
-                    ax=axes[i], ylim=(-1, 1), title="PC%s" % i
-                )
-
-    @staticmethod
-    def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
-        """
-        Get the number of principal components to coplotti.
-        """
-        if num_pcs_to_plot == -1:
-            num_pcs_to_plot = max_pcs
-        hdbg.dassert_lte(0, num_pcs_to_plot)
-        hdbg.dassert_lte(num_pcs_to_plot, max_pcs)
-        return num_pcs_to_plot
-
     def _execute(self, df: pd.DataFrame, ts: int) -> pd.Series:
         _LOG.debug("ts=%s", ts)
         hpandas.dassert_strictly_increasing_index(df)
@@ -389,6 +378,59 @@ class PcaFactorComputer(FactorComputer):
         res = self.linearize_eigval_eigvec(eigval_df, eigvec_df)
         hdbg.dassert_isinstance(res, pd.Series)
         return res
+
+    def _stabilize_eig(
+        self, eigval_df: pd.DataFrame, eigvec_df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        if not self._ts:
+            return eigval_df, eigvec_df
+        # Get previous ts.
+        prev_ts = self._ts[-1]
+        prev_eigvec_df = self._eigvec_df[prev_ts]
+        # Check if they are stable.
+        num_fails = self.are_eigenvectors_stable(prev_eigvec_df, eigvec_df)
+        if num_fails > 0:
+            _LOG.debug(
+                "Eigenvalues not stable: prev_ts=%s"
+                "\nprev_eigvec_df=\n%s"
+                "\neigvec_df=\n%s"
+                "\nnum_fails=%s",
+                prev_ts,
+                prev_eigvec_df,
+                eigvec_df,
+                num_fails,
+            )
+            col_map, _ = self._build_stable_eig_map(prev_eigvec_df, eigvec_df)
+            shuffled_eigval_df, shuffled_eigvec_df = self.shuffle_eigval_eigvec(
+                eigval_df, eigvec_df, col_map
+            )
+            # Check.
+            # TODO(gp): Use Frobenius norm compared to identity.
+            if False:
+                num_fails = self.are_eigenvectors_stable(
+                    prev_eigvec_df, shuffled_eigvec_df
+                )
+                hdbg.dassert_eq(
+                    num_fails,
+                    0,
+                    "prev_eigvec_df=\n%s\n" "shuffled_eigvec_df=\n%s",
+                    prev_eigvec_df,
+                    shuffled_eigvec_df,
+                )
+            eigval_df = shuffled_eigval_df
+            eigvec_df = shuffled_eigvec_df
+        return eigval_df, eigvec_df
+
+    @staticmethod
+    def _get_num_pcs_to_plot(num_pcs_to_plot: int, max_pcs: int) -> int:
+        """
+        Get the number of principal components to coplotti.
+        """
+        if num_pcs_to_plot == -1:
+            num_pcs_to_plot = max_pcs
+        hdbg.dassert_lte(0, num_pcs_to_plot)
+        hdbg.dassert_lte(num_pcs_to_plot, max_pcs)
+        return num_pcs_to_plot
 
     @staticmethod
     def _build_stable_eig_map(
@@ -472,48 +514,6 @@ class PcaFactorComputer(FactorComputer):
         # Add dummy var to keep the same interface of _build_stable_eig_map.
         dummy = None
         return col_map, dummy
-
-    def _stabilize_eig(
-        self, eigval_df: pd.DataFrame, eigvec_df: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        if not self._ts:
-            return eigval_df, eigvec_df
-        # Get previous ts.
-        prev_ts = self._ts[-1]
-        prev_eigvec_df = self._eigvec_df[prev_ts]
-        # Check if they are stable.
-        num_fails = self.are_eigenvectors_stable(prev_eigvec_df, eigvec_df)
-        if num_fails > 0:
-            _LOG.debug(
-                "Eigenvalues not stable: prev_ts=%s"
-                "\nprev_eigvec_df=\n%s"
-                "\neigvec_df=\n%s"
-                "\nnum_fails=%s",
-                prev_ts,
-                prev_eigvec_df,
-                eigvec_df,
-                num_fails,
-            )
-            col_map, _ = self._build_stable_eig_map(prev_eigvec_df, eigvec_df)
-            shuffled_eigval_df, shuffled_eigvec_df = self.shuffle_eigval_eigvec(
-                eigval_df, eigvec_df, col_map
-            )
-            # Check.
-            # TODO(gp): Use Frobenius norm compared to identity.
-            if False:
-                num_fails = self.are_eigenvectors_stable(
-                    prev_eigvec_df, shuffled_eigvec_df
-                )
-                hdbg.dassert_eq(
-                    num_fails,
-                    0,
-                    "prev_eigvec_df=\n%s\n" "shuffled_eigvec_df=\n%s",
-                    prev_eigvec_df,
-                    shuffled_eigvec_df,
-                )
-            eigval_df = shuffled_eigval_df
-            eigvec_df = shuffled_eigvec_df
-        return eigval_df, eigvec_df
 
 
 # #############################################################################

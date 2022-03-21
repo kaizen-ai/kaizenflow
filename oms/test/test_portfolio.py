@@ -444,6 +444,10 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         log_dir = self.get_scratch_space()
         _ = portfolio.log_state(log_dir)
         #
+        await asyncio.sleep(60 * 5)
+        portfolio.mark_to_market()
+        _ = portfolio.log_state(log_dir)
+        #
         portfolio_df, stats_df = portfolio.read_state(log_dir)
         # Ensure that the `int` asset id type is recovered.
         asset_id_idx = portfolio_df.columns.levels[1]
@@ -453,10 +457,10 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         #
         portfolio_df_str = hpandas.df_to_str(portfolio_df, precision=precision)
         expected_portfolio_df_str = r"""
-                          holdings            holdings_marked_to_market            flows       pnl
-                               101       -1                         101       -1     101       101
-2000-01-01 09:35:00-05:00      0.0  1000000.0                      0.00  1000000.0   NaN       NaN
-2000-01-01 09:40:00-05:00     20.0  1000000.0                  20004.03  1000000.0   0.0  20004.03"""
+                          holdings            holdings_marked_to_market            flows   pnl
+                               101       -1                         101       -1     101   101
+2000-01-01 09:40:00-05:00     20.0  1000000.0                  20004.03  1000000.0   0.0   NaN
+2000-01-01 09:45:00-05:00     20.0  1000000.0                  19998.37  1000000.0  -0.0 -5.66"""
         self.assert_equal(
             portfolio_df_str, expected_portfolio_df_str, fuzzy_match=True
         )
@@ -464,6 +468,6 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         stats_df_str = hpandas.df_to_str(stats_df, precision=precision)
         expected_stats_df_str = r"""
                                 pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-2000-01-01 09:35:00-05:00       NaN           0.0         0.0      0.00      0.00  1000000.0    1.00e+06      0.00
-2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02"""
+2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02
+2000-01-01 09:45:00-05:00     -5.66           0.0         0.0  19998.37  19998.37  1000000.0    1.02e+06      0.02"""
         self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)

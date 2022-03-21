@@ -63,6 +63,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self,
         root_dir: str,
         *,
+        version: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -70,20 +71,22 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
 
         :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://cryptokaizen-data/historical") to `Talos` data
+        :param version: version of the loaded data to use
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__()
         self._root_dir = root_dir
+        self._version = version
         self._aws_profile = aws_profile
-
-    @staticmethod
-    def should_be_online() -> None:
-        raise NotImplementedError
 
     def get_metadata(self) -> pd.DataFrame:
         """
         See description in the parent class.
         """
+        raise NotImplementedError
+
+    @staticmethod
+    def should_be_online() -> None:
         raise NotImplementedError
 
     def _read_data_for_one_symbol(
@@ -99,7 +102,9 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         # Split full symbol into exchange and currency pair.
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get path to a dir with all the data for specified exchange id.
-        exchange_dir_path = os.path.join(self._root_dir, "talos", exchange_id)
+        exchange_dir_path = os.path.join(
+            self._root_dir, "talos", self._version, exchange_id
+        )
         # Read raw crypto price data.
         _LOG.info(
             "Reading data for `Talos`, exchange id='%s', currencies='%s'...",
@@ -160,30 +165,6 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def _build_select_query(
-        query: str,
-        exchange_id: str,
-        currency_pair: str,
-        start_unix_epoch: int,
-        end_unix_epoch: int,
-    ) -> str:
-        """
-        Append a WHERE clause to the query.
-        """
-        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
-        raise NotImplementedError
-
-    @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization:
-
-        - Convert `timestamp` column to a UTC timestamp and set index
-        - Drop extra columns (e.g. `id` created by the DB).
-        """
-        raise NotImplementedError
-
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -209,4 +190,28 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         # TODO(Danya): Convert timestamps to int when reading.
         # TODO(Danya): add a full symbol column to the output
+        raise NotImplementedError
+
+    @staticmethod
+    def _build_select_query(
+        query: str,
+        exchange_id: str,
+        currency_pair: str,
+        start_unix_epoch: int,
+        end_unix_epoch: int,
+    ) -> str:
+        """
+        Append a WHERE clause to the query.
+        """
+        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
+        raise NotImplementedError
+
+    @staticmethod
+    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization:
+
+        - Convert `timestamp` column to a UTC timestamp and set index
+        - Drop extra columns (e.g. `id` created by the DB).
+        """
         raise NotImplementedError
