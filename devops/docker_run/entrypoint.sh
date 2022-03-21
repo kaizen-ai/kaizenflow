@@ -23,7 +23,7 @@ if [ -z "$ENABLE_DIND" ]; then
 fi;
 
 if [[ $ENABLE_DIND == 1 ]]; then
-    echo "Setting up Docker-in-docker"
+    echo "# Setting up Docker-in-docker"
     if [[ ! -d /etc/docker ]]; then
         sudo mkdir /etc/docker
     fi;
@@ -33,16 +33,21 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # Start Docker Engine.
     sudo /etc/init.d/docker start
     sudo /etc/init.d/docker status
-    # Wait for Docker to be started, otherwise `docker.sock` file is not
-    # created so fast. This is needed to change `docker.sock` permissions.
-    sleep 1
+    # Wait for Docker Engine to be started, otherwise `docker.sock` file is 
+    # not created so fast. This is needed to change `docker.sock` permissions.
+    DOCKER_SOCK_FILE=/var/run/docker.sock
+    while [ ! -e "$DOCKER_SOCK_FILE" ] 
+    do 
+        sleep 0.1 
+        echo "Waiting for $DOCKER_SOCK_FILE to be created."
+    done
     # Change permissions for Docker socket. See more on S/O:
     # `https://stackoverflow.com/questions/48957195`.
     # We do it after the Docker engine is started because `docker.sock` is
     # created only after the engine start.
     # TODO(Grisha): give permissions to the `docker` group only and not to
     # everyone, i.e. `666`.
-    sudo chmod 666 /var/run/docker.sock
+    sudo chmod 666 $DOCKER_SOCK_FILE
 fi;
 
 # Mount other file systems.
