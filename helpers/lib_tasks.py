@@ -2163,9 +2163,9 @@ def _get_container_name(service_name: str) -> str:
 
     The information used to build a container is:
        - Linux user name
-       - Project directory that was used to start a container
        - Base Docker image name
        - Service name
+        - Project directory that was used to start a container
        - Container start timestamp
 
     :param service_name: `docker-compose` service name, e.g., `app`
@@ -2181,7 +2181,7 @@ def _get_container_name(service_name: str) -> str:
     # Get current timestamp.
     current_timestamp = _get_ET_timestamp()
     # Build container name.
-    container_name = f"{linux_user}.{project_dir}.{image_name}.{service_name}.{current_timestamp}"
+    container_name = f"{linux_user}.{image_name}.{service_name}.{project_dir}.{current_timestamp}"
     _LOG.debug(
         "get_container_name: container_name=%s",
         container_name,
