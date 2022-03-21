@@ -6,14 +6,15 @@ import im_v2.talos.utils as imv2tauti
 import datetime
 import logging
 
+import helpers.hsecrets as hsecret
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
-
+_TALOS_HOST = "talostrading.com"
 
 def get_endpoint(account: str) -> str:
     """
-    Get entrypoint to Talos API.
+    Get entrypoint to Talos
     """
     if account == "talos_sandbox":
         endpoint = "tal-87.sandbox.talostrading.com"
@@ -24,6 +25,12 @@ def get_endpoint(account: str) -> str:
     return endpoint
 
 
+def get_api_host(environment: str) -> str:
+    hdbg.dassert_in(environment, ["sandbox", "prod"])
+    keys = hsecret.get_secret(f"talos_{environment}")
+    import helpers.hsecrets as hsecret
+
+:
 def get_talos_current_utc_timestamp() -> str:
     """
     Return the current UTC timestamp in Talos-acceptable format.
