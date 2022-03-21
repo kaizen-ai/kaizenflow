@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -164,6 +165,48 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         Return metadata.
         """
         raise NotImplementedError
+
+    @staticmethod
+    def _build_select_query(
+        query: str,
+        exchange_id: str,
+        currency_pair: str,
+        start_unix_epoch: int,
+        end_unix_epoch: int,
+    ) -> str:
+        """
+        Append a WHERE clause to the query.
+        """
+        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
+        raise NotImplementedError
+
+    @staticmethod
+    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization:
+
+        - Convert `timestamp` column to a UTC timestamp and set index.
+        - Drop extra columns (e.g. `id` created by the DB).
+        """
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        # Set timestamp column as an index.
+        data = data.set_index("timestamp")
+        # Specify OHLCV columns.
+        ohlcv_columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data.loc[:, ohlcv_columns]
+        return data
 
     def _read_data_for_multiple_symbols(
         self,
