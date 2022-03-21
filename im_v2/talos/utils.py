@@ -20,9 +20,7 @@ def get_endpoint(environment: str) -> str:
     if environment == "sandbox":
         endpoint = f"sandbox.{_TALOS_HOST}"
     else:
-        hdbg.dfatal(
-            "Incorrect account type. Supported environment: 'sandbox'."
-        )
+        hdbg.dfatal("Incorrect account type. Supported environment: 'sandbox'.")
     return endpoint
 
 
