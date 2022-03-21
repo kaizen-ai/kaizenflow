@@ -30,23 +30,29 @@ class HistoricalPqByTileClient(
     def __init__(
         self,
         vendor: str,
-        # TODO(Dan): Consider removal of this parameter from clasc ctor since
-        #  it is not used for data loading.
-        full_symbol_col_name: str,
+        symbol_col_name: str,
         root_dir_name: str,
         partition_mode: str,
+        *,
+        version: str = "latest",
+        aws_profile: Optional[str] = None,
     ):
         """
         Constructor.
 
-        :param full_symbol_col_name: column name storing the `full_symbol`
+        :param symbol_col_name: column name storing particular symbol data, e.g.,
+            "full_symbol" or "currency_pair"
         :param root_dir_name: directory storing the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
+        :param version: version of the loaded data to use
+        :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__(vendor)
-        self._full_symbol_col_name = full_symbol_col_name
+        self._symbol_col_name = symbol_col_name
         self._root_dir_name = root_dir_name
         self._partition_mode = partition_mode
+        self._version = version
+        self._aws_profile = aws_profile
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -71,43 +77,49 @@ class HistoricalPqByTileClient(
                 "full_symbols start_ts end_ts full_symbol_col_name columns"
             )
         )
-        # Build the Parquet filtering condition.
         hdbg.dassert_container_type(full_symbols, list, str)
-        asset_and_filter = (self._full_symbol_col_name, "in", full_symbols)
+        # Build the Parquet filtering condition.
+        if self._symbol_col_name == full_symbol_col_name:
+            root_dir = self._root_dir_name
+            symbol_filter = (self._symbol_col_name, "in", full_symbols)
+        else:
+            exchange_ids, currency_pairs = tuple(
+                zip(
+                    *[icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols]
+                )
+            )
+            # TODO(Dan) Extend functionality to load data for multiple exchange
+            #  ids in one query when data partitioning on S3 is changed.
+            hdbg.dassert_eq(1, len(set(exchange_ids)))
+            root_dir = os.path.join(
+                self._root_dir_name, self._vendor, self._version, exchange_ids[0]
+            )
+            symbol_filter = (self._symbol_col_name, "in", currency_pairs)
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partition_mode,
             start_ts,
             end_ts,
-            additional_filter=asset_and_filter,
+            additional_filter=symbol_filter,
         )
         # Read the data.
-        # TODO(gp): Add support for S3 passing aws_profile.
         df = hparque.from_parquet(
-            self._root_dir_name,
+            root_dir,
             columns=columns,
             filters=filters,
             log_level=logging.INFO,
+            aws_profile=self._aws_profile,
         )
         hdbg.dassert(not df.empty)
         # Convert to datetime.
         df.index = pd.to_datetime(df.index)
-        # The asset data can come back from Parquet as:
-        # ```
-        # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
-        #                         83317, 89970]
-        # ```
-        # which confuses `df.groupby()`, so we force that column to str.
-        df[self._full_symbol_col_name] = df[self._full_symbol_col_name].astype(
-            str
-        )
-        # Rename column storing `full_symbols`, if needed.
-        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
-        if full_symbol_col_name != self._full_symbol_col_name:
-            hdbg.dassert_not_in(full_symbol_col_name, df.columns)
-            df.rename(
-                columns={self._full_symbol_col_name: full_symbol_col_name},
-                inplace=True,
-            )
+        if full_symbol_col_name in df.columns:
+            # The asset data can come back from Parquet as:
+            # ```
+            # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
+            #                         83317, 89970]
+            # ```
+            # which confuses `df.groupby()`, so we force that column to str.
+            df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
         # Since we have normalized the data, the index is a timestamp and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
         # from filtering in terms of days.
