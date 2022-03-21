@@ -2158,7 +2158,8 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
 
 def _get_container_name(service_name: str) -> str:
     """
-    Create a container name based on various information (e.g., `grisha.cmamp1.cmamp.app.20220317_232120`).
+    Create a container name based on various information (e.g.,
+    `grisha.cmamp1.cmamp.app.20220317_232120`).
 
     The information used to build a container is:
        - Linux user name
@@ -2180,9 +2181,7 @@ def _get_container_name(service_name: str) -> str:
     # Get current timestamp.
     current_timestamp = _get_ET_timestamp()
     # Build container name.
-    container_name = (
-        f"{linux_user}.{project_dir}.{image_name}.{service_name}.{current_timestamp}"
-    )
+    container_name = f"{linux_user}.{project_dir}.{image_name}.{service_name}.{current_timestamp}"
     _LOG.debug(
         "get_container_name: container_name=%s",
         container_name,
