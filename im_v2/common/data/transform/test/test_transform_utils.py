@@ -194,11 +194,10 @@ class TestReindexOnCustomColumns(hunitest.TestCase):
         # Check output.
         actual = str(fail.value)
         expected = r"""
-        # #####################################################################
         * Failed assertion *
         val1=['mock1', 'mock2', 'mock3']
         issubset
         val2=['dummy_value_1', 'dummy_value_2', 'dummy_value_3']
         val1 - val2=['mock1', 'mock2', 'mock3']
-        ################################################################################"""
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
