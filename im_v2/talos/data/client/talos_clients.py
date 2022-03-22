@@ -13,9 +13,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
-import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.full_symbol as imvcdcfusy
@@ -168,77 +166,6 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
-    def read_data1(
-        self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        *,
-        full_symbol_col_name: str = "full_symbol",
-        **kwargs: Dict[str, Any],
-    ) -> pd.DataFrame:
-        """
-        Read data in `[start_ts, end_ts]` for `imvcdcfusy.FullSymbol` symbols.
-
-        Implementation is same as in abstract class, but with talos normalization
-        and excluding the `groupby` statements.
-
-        :param full_symbols: list of full symbols, e.g.
-            `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
-        :param start_ts: the earliest date timestamp to load data for
-            - `None` means start from the beginning of the available data
-        :param end_ts: the latest date timestamp to load data for
-            - `None` means end at the end of the available data
-        :param full_symbol_col_name: name of the column storing the full
-            symbols (e.g., `asset_id`)
-        :return: combined data for all the requested symbols
-        """
-        _LOG.debug(
-            hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
-            )
-        )
-        # Verify the requested parameters.
-        imvcdcfusy.dassert_valid_full_symbols(full_symbols)
-        #
-        left_close = True
-        right_close = True
-        hdateti.dassert_is_valid_interval(
-            start_ts, end_ts, left_close, right_close
-        )
-        # Delegate to the derived classes to retrieve the data.
-        df = self._read_data(
-            full_symbols,
-            start_ts,
-            end_ts,
-            full_symbol_col_name=full_symbol_col_name,
-            **kwargs,
-        )
-        # Apply normalization.
-        df = self._apply_talos_normalization(df, full_symbol_col_name)
-        # Check all symbols were loaded.
-        loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
-        imvcdcfusy.dassert_valid_full_symbols(loaded_full_symbols)
-        hdbg.dassert_set_eq(
-            full_symbols,
-            loaded_full_symbols,
-            msg="Not all the requested symbols were retrieved",
-            only_warning=True,
-        )
-        # Verify that the correct period has been loaded.
-        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
-        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
-        # Rename index.
-        df.index.name = "timestamp"
-        # Sort by index and `full_symbol_col_name`.
-        # There is not a simple way to sort by index and columns in Pandas,
-        # so we convert the index into a column, sort, and convert back.
-        df = df.reset_index()
-        df = df.sort_values(by=["timestamp", full_symbol_col_name])
-        df = df.set_index("timestamp", drop=True)
-        _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
-        return df
-
     @staticmethod
     def _apply_talos_normalization(
         data: pd.DataFrame, full_symbol_col_name: str = "full_symbol"
@@ -253,11 +180,10 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         data["timestamp"] = data["timestamp"].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
-        # Set timestamp column as an index.
-        #data = data.set_index("timestamp")
+        data = data.set_index("timestamp")
         # Specify OHLCV columns.
         ohlcv_columns = [
-            "timestamp",
+            # "timestamp",
             "open",
             "high",
             "low",
