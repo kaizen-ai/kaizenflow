@@ -168,7 +168,7 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         raise NotImplementedError
 
-    def read_data(
+    def read_data1(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
