@@ -77,7 +77,7 @@ class HistoricalPqByTileClient(
         columns: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
-        Same as abstract method.
+        See description in the parent class.
         """
         _LOG.debug(
             hprint.to_str(
@@ -87,9 +87,12 @@ class HistoricalPqByTileClient(
         hdbg.dassert_container_type(full_symbols, list, str)
         # Build the Parquet filtering condition.
         if self._symbol_col_name == full_symbol_col_name:
+            # If dataset is partitioned by full symbol column, add a filter for it.
             root_dir = self._root_dir_name
             symbol_filter = (self._symbol_col_name, "in", full_symbols)
         else:
+            # If dataset is partitioned by not full symbols then it is done by
+            # currency pairs, so separate them from exchange ids.
             exchange_ids, currency_pairs = tuple(
                 zip(
                     *[
@@ -100,11 +103,16 @@ class HistoricalPqByTileClient(
             )
             # TODO(Dan) Extend functionality to load data for multiple exchange
             #  ids in one query when data partitioning on S3 is changed.
+            # Verify that all full symbols in a query belong to one exchange id
+            # since dataset is partitioned only by currency pairs.
             hdbg.dassert_eq(1, len(set(exchange_ids)))
+            # Extend a root dir to the specified exchange id dir.
             root_dir = os.path.join(
                 self._root_dir_name, self._vendor, self._version, exchange_ids[0]
             )
+            # Add a filter.
             symbol_filter = (self._symbol_col_name, "in", currency_pairs)
+        # Build list of filters for a query.
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partition_mode,
             start_ts,
@@ -132,6 +140,7 @@ class HistoricalPqByTileClient(
             df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
         else:
             # TODO(Dan): Refactor full symbol column creation while creating Talos client.
+            # Build full symbols column if it is not present in the data.
             df[full_symbol_col_name] = (
                 df["exchange_id"].astype(str)
                 + "::"
@@ -143,6 +152,8 @@ class HistoricalPqByTileClient(
         # TODO(Dan): Refactor timestamp column naming while creating Talos client.
         ts_col_name = None
         if df.index.name in df.columns:
+            # Remove a column that has the same name that a timestamp index
+            # (e.g. in `Talos` data).
             df = df.drop(df.index.name, axis=1)
         left_close = True
         right_close = True
