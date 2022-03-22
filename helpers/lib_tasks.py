@@ -4387,7 +4387,7 @@ def _rename_outcomes(
             outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
         else:
             continue
-        cmd = f"git mv {outcome_path_old} {outcome_path_new}"
+        cmd = f"mv {outcome_path_old} {outcome_path_new}"
         rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
         _LOG.info(
             "Renaming `%s` directory to `%s`. Output log: %s",
@@ -4442,7 +4442,7 @@ def _process_file(
 
 
 @task
-def pytest_rename_test(ctx, old_test_class_name="", new_test_class_name=""):  # type: ignore
+def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
     """
     Rename the test and move its golden outcome.
 
