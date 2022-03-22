@@ -89,7 +89,9 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             ),
         )
         # Run.
+        resample_1min = True
         df = market_data.get_data_for_interval(
+            resample_1min,
             start_ts,
             end_ts,
             ts_col_name,
@@ -275,8 +277,9 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             + hprint.to_str("start_ts end_ts ts_col_name asset_ids column"),
         )
         # Run.
+        resample_1min = True
         srs = market_data.get_twap_price(
-            start_ts, end_ts, ts_col_name, asset_ids, column
+            resample_1min, start_ts, end_ts, ts_col_name, asset_ids, column
         ).round(2)
         # Check output.
         self.check_srs_output(srs, *args, **kwargs)
@@ -336,6 +339,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     @staticmethod
     def _test_get_data_for_last_period(
+        resample_1min: bool,
         market_data: mdata.MarketData,
         timedelta: pd.Timestamp,
     ) -> None:
@@ -353,7 +357,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             "get_data_for_last_period:" + hprint.to_str("timedelta"),
         )
         # Run.
-        _ = market_data.get_data_for_last_period(timedelta)
+        _ = market_data.get_data_for_last_period(resample_1min, timedelta)
 
     # TODO(GP): Implement test for `wait_for_latest_data()`.
 

@@ -45,9 +45,9 @@ def compute_stats_for_universe(
     # Iterate over vendor universe tuples.
     for full_symbol in vendor_universe:
         # Read data for current exchange and currency pair.
+        resample_1min = True
         start_ts = None
         end_ts = None
-        resample_1min = True
         data = loader.read_data(
             [full_symbol],
             resample_1min,
