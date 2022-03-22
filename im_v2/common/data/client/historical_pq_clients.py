@@ -6,6 +6,7 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 import abc
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -14,8 +15,8 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 import im_v2.common.data.client as icdc
+import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 
 _LOG = logging.getLogger(__name__)
 
@@ -91,7 +92,10 @@ class HistoricalPqByTileClient(
         else:
             exchange_ids, currency_pairs = tuple(
                 zip(
-                    *[icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols]
+                    *[
+                        icdc.parse_full_symbol(full_symbol)
+                        for full_symbol in full_symbols
+                    ]
                 )
             )
             # TODO(Dan) Extend functionality to load data for multiple exchange
