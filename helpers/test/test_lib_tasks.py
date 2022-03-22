@@ -1962,9 +1962,9 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
 
         :param test_path: the toy path to the test dir
         """
-        outcomes_paths = ["outcomes/TestCase.test_check_string1", "outcomes/TestCase.test_rename", "outcomes/TestRename.test_rename1"]
+        outcomes_paths = ["TestCase.test_check_string1", "TestCase.test_rename", "TestRename.test_rename1"]
         for path in outcomes_paths:
-            outcomes = os.path.join(test_path, path)
+            outcomes = os.path.join(test_path, "outcomes", path)
             os.makedirs(outcomes)
             hio.to_file(f"{outcomes}/test.txt", "Test files.")
         cmd = "git add toy/"
@@ -1987,12 +1987,16 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         )
         # Check if the dir was renamed.
         outcomes_path = os.path.join(test_path, "outcomes")
+        print("outcomes_path", outcomes_path)
         outcomes_dirs = os.listdir(outcomes_path)
+        print("outcomes_dirs", outcomes_dirs)
         directories = [
             ent
             for ent in outcomes_dirs
             if os.path.isdir(os.path.join(outcomes_path, ent))
         ]
+        print("directories", directories)
+        self.assertEqual(len(directories), 0)
         self.assertFalse("TestCase.test_check_string1" in directories)
         self.assertFalse("TestCase.test_rename" in directories)
         self.assertTrue("TestRenamedCase.test_check_string1" in directories)
