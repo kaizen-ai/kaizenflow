@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 
 import pandas as pd
+import pytest
 
 import core.config as cconfig
 import helpers.hpandas as hpandas
@@ -9,6 +10,9 @@ import helpers.hunit_test as hunitest
 import optimizer.single_period_optimization as osipeopt
 
 _LOG = logging.getLogger(__name__)
+
+
+pytestmark = pytest.mark.optimizer
 
 
 class Test_SinglePeriodOptimizer1(hunitest.TestCase):
