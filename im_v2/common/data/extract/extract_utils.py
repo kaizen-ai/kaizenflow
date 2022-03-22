@@ -17,7 +17,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.universe.universe as imvcounun
 import im_v2.im_lib_tasks as imvimlita
 
 
@@ -78,15 +78,17 @@ def download_realtime_for_one_exchange(
     if exchange_class.__name__ == CCXT_EXCHANGE:
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
+        vendor = "CCXT"
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
+        vendor = "Talos"
         additional_args.append(args.exchange_id)
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
-    universe = imvccunun.get_trade_universe(args.universe)
-    currency_pairs = universe["CCXT"][args.exchange_id]
+    universe = imvcounun.get_vendor_universe(vendor, args.universe)
+    currency_pairs = universe[args.exchange_id]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)

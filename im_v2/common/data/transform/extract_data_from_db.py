@@ -24,7 +24,7 @@ import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.universe.universe as imvcounun
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.im_lib_tasks as imvimlita
 
@@ -96,12 +96,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
     vendor = "CCXT"
     ccxt_db_client = icdcl.CcxtCddDbClient(vendor, connection)
     # Get universe of symbols.
-    symbols = imvccunun.get_vendor_universe()
+    symbols = imvcounun.get_vendor_universe(vendor, as_full_symbol=True)
+    resample_1min = False
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.
         df = ccxt_db_client.read_data(
             symbols,
+            resample_1min,
             start_ts=timespan[date_index],
             end_ts=timespan[date_index + 1],
         )
