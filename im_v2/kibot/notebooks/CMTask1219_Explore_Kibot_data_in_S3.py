@@ -24,10 +24,11 @@ import pandas as pd
 import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 
 # %%
@@ -222,7 +223,7 @@ len(stocks_symbols)
 # # Example for data loading
 
 # %%
-kibot_loader = imkdlksdlo.KibotS3DataLoader()
+kibot_loader = ikdlksdlo.KibotS3DataLoader()
 
 # %% [markdown]
 # ## Futures
@@ -393,7 +394,7 @@ s3fs = hs3.get_s3fs("am")
 file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz"
 
 # %%
-aapl_raw = cpanh.read_csv(file_path_stock, s3fs=s3fs)
+aapl_raw = hpandas.read_csv_to_df(file_path_stock, s3fs=s3fs)
 aapl_raw.head()
 
 # %% [markdown]
@@ -403,7 +404,7 @@ aapl_raw.head()
 file_path_futures = "s3://alphamatic-data/data/kibot/all_futures_continuous_contracts_daily/AE.csv.gz"
 
 # %%
-ae_futures_raw = cpanh.read_csv(file_path_futures, s3fs=s3fs)
+ae_futures_raw = hpandas.read_csv_to_df(file_path_futures, s3fs=s3fs)
 ae_futures_raw.head()
 
 # %% [markdown]
@@ -416,7 +417,7 @@ ae_futures_raw.head()
 file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/QCOM.csv.gz"
 
 # %% run_control={"marked": false}
-csv_qcom = cpanh.read_csv(file_path_futures, s3fs=s3fs)
+csv_qcom = hpandas.read_csv_to_df(file_path_futures, s3fs=s3fs)
 csv_qcom.head()
 
 # %% [markdown]
@@ -428,7 +429,7 @@ file_path_stock_parquet = (
 )
 
 # %%
-pq_qcom = cpanh.read_parquet(file_path_stock_parquet, s3fs=s3fs)
+pq_qcom = hpandas.read_parquet_to_df(file_path_stock_parquet, s3fs=s3fs)
 pq_qcom.head()
 
 # %% [markdown]

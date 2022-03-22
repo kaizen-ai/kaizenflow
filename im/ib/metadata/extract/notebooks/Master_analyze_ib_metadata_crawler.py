@@ -20,6 +20,7 @@ import pandas as pd
 
 import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 
 # %%
@@ -41,7 +42,7 @@ file_name = (
 )
 s3fs = hs3.get_s3fs("am")
 print("file_name=%s" % file_name)
-symbols = cpanh.read_csv(file_name, s3fs=s3fs, sep="\t")
+symbols = hpandas.read_csv_to_df(file_name, s3fs=s3fs, sep="\t")
 
 print(len(symbols))
 

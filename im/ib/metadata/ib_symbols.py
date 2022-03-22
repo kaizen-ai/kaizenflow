@@ -11,6 +11,7 @@ from typing import List, Optional
 
 import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
@@ -54,7 +55,7 @@ class IbSymbolUniverse(imcomesym.SymbolUniverse):
             kwargs = {"s3fs": s3fs}
         else:
             kwargs = {}
-        df = cpanh.read_csv(
+        df = hpandas.read_csv_to_df(
             symbols_file,
             sep="\t",
             keep_default_na=False,

@@ -138,9 +138,9 @@ def load_data_from_disk(
         # Assume that the first column is the index, unless specified.
         if "index_col" not in reader_kwargs:
             kwargs["index_col"] = 0
-        read_data = cpanh.read_csv
+        read_data = hpandas.read_csv_to_df
     elif ext == ".pq":
-        read_data = cpanh.read_parquet
+        read_data = hpandas.read_parquet_to_df
     else:
         raise ValueError("Invalid file extension='%s'" % ext)
     # Read the data.

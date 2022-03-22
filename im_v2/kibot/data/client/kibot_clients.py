@@ -12,6 +12,7 @@ import pandas as pd
 
 import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im_v2.common.data.client as icdc
 
@@ -224,7 +225,7 @@ class KibotEquitiesCsvParquetByAssetClient(
             # Add columns to read to kwargs.
             kwargs["columns"] = ["open", "high", "low", "close", "vol"]
             # Load and normalize data.
-            data = cpanh.read_parquet(file_path, **kwargs)
+            data = hpandas.read_parquet_to_df(file_path, **kwargs)
             data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
             # Avoid using the 1st data row as columns and set column names.
@@ -239,7 +240,7 @@ class KibotEquitiesCsvParquetByAssetClient(
                 "volume",
             ]
             # Load and normalize data.
-            data = cpanh.read_csv(file_path, **kwargs)
+            data = hpandas.read_csv_to_df(file_path, **kwargs)
             data = self._apply_kibot_csv_normalization(data)
             # Filter by dates if specified.
             if start_ts:
@@ -374,7 +375,7 @@ class KibotFuturesCsvParquetByAssetClient(
         if hs3.is_s3_path(file_path):
             read_csv_kwargs["s3fs"] = self._s3fs
         # Read metadata.
-        df = cpanh.read_csv(file_path, **read_csv_kwargs)
+        df = hpandas.read_csv_to_df(file_path, **read_csv_kwargs)
         return df
 
     def _read_data_for_one_symbol(
@@ -418,7 +419,7 @@ class KibotFuturesCsvParquetByAssetClient(
             # Add columns to read to kwargs.
             kwargs["columns"] = ["open", "high", "low", "close", "vol"]
             # Load and normalize data.
-            data = cpanh.read_parquet(file_path, **kwargs)
+            data = hpandas.read_parquet_to_df(file_path, **kwargs)
             data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
             # Avoid using the 1st data row as columns and set column names.
@@ -433,7 +434,7 @@ class KibotFuturesCsvParquetByAssetClient(
                 "volume",
             ]
             # Load and normalize data.
-            data = cpanh.read_csv(file_path, **kwargs)
+            data = hpandas.read_csv_to_df(file_path, **kwargs)
             data = self._apply_kibot_csv_normalization(data)
             # Filter by dates if specified.
             if start_ts:

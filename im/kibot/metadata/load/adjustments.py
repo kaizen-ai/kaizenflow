@@ -8,6 +8,7 @@ import os
 from typing import List
 
 import core.pandas_helpers as cpanh
+import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im.kibot.metadata.config as imkimecon
 import im.kibot.metadata.types as imkimetyp
@@ -21,5 +22,5 @@ class AdjustmentsLoader:
         )
         sep = "\t"
         s3fs = hs3.get_s3fs("am")
-        df = cpanh.read_csv(s3_path, s3fs=s3fs, sep=sep)
+        df = hpandas.read_csv_to_df(s3_path, s3fs=s3fs, sep=sep)
         return [imkimetyp.Adjustment(*row) for row in df.values.tolist()]
