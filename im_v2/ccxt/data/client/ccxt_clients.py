@@ -16,7 +16,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.universe.universe as imvcounun
 import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         See description in the parent class.
         """
-        universe = imvccunun.get_vendor_universe(vendor=self._vendor)
+        universe = imvcounun.get_vendor_universe(vendor=self._vendor, as_full_symbol=True)
         return universe  # type: ignore[no-any-return]
 
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
