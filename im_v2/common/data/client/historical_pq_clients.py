@@ -6,8 +6,7 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 import abc
 import logging
-import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -31,28 +30,21 @@ class HistoricalPqByTileClient(
     def __init__(
         self,
         vendor: str,
-        symbol_col_name: str,
         root_dir_name: str,
         partition_mode: str,
         *,
-        version: str = "latest",
         aws_profile: Optional[str] = None,
     ):
         """
         Constructor.
 
-        :param symbol_col_name: column name storing particular symbol data, e.g.,
-            "full_symbol" or "currency_pair"
         :param root_dir_name: directory storing the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
-        :param version: version of the loaded data to use
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__(vendor)
-        self._symbol_col_name = symbol_col_name
         self._root_dir_name = root_dir_name
         self._partition_mode = partition_mode
-        self._version = version
         self._aws_profile = aws_profile
 
     def get_metadata(self) -> pd.DataFrame:
@@ -85,33 +77,10 @@ class HistoricalPqByTileClient(
             )
         )
         hdbg.dassert_container_type(full_symbols, list, str)
-        # Build the Parquet filtering condition.
-        if self._symbol_col_name == full_symbol_col_name:
-            # If dataset is partitioned by full symbol column, add a filter for it.
-            root_dir = self._root_dir_name
-            symbol_filter = (self._symbol_col_name, "in", full_symbols)
-        else:
-            # If dataset is partitioned by not full symbols then it is done by
-            # currency pairs, so separate them from exchange ids.
-            exchange_ids, currency_pairs = tuple(
-                zip(
-                    *[
-                        icdc.parse_full_symbol(full_symbol)
-                        for full_symbol in full_symbols
-                    ]
-                )
-            )
-            # TODO(Dan) Extend functionality to load data for multiple exchange
-            #  ids in one query when data partitioning on S3 is changed.
-            # Verify that all full symbols in a query belong to one exchange id
-            # since dataset is partitioned only by currency pairs.
-            hdbg.dassert_eq(1, len(set(exchange_ids)))
-            # Extend a root dir to the specified exchange id dir.
-            root_dir = os.path.join(
-                self._root_dir_name, self._vendor, self._version, exchange_ids[0]
-            )
-            # Add a filter.
-            symbol_filter = (self._symbol_col_name, "in", currency_pairs)
+        # Build root dir to the data and Parquet filtering condition.
+        root_dir, symbol_filter = self._get_root_dir_and_symbol_filter(
+            full_symbols, full_symbol_col_name
+        )
         # Build list of filters for a query.
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partition_mode,
@@ -119,6 +88,9 @@ class HistoricalPqByTileClient(
             end_ts,
             additional_filter=symbol_filter,
         )
+        # Get columns for a query if they are not provided.
+        if not columns:
+            columns = self._get_columns_for_query()
         # Read the data.
         df = hparque.from_parquet(
             root_dir,
@@ -128,38 +100,56 @@ class HistoricalPqByTileClient(
             aws_profile=self._aws_profile,
         )
         hdbg.dassert(not df.empty)
+        # TODO(Dan) Discuss if we should always convert index to timestamp
+        #  or make a function so it may change based on the vendor.
         # Convert to datetime.
         df.index = pd.to_datetime(df.index)
-        if full_symbol_col_name in df.columns:
-            # The asset data can come back from Parquet as:
-            # ```
-            # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
-            #                         83317, 89970]
-            # ```
-            # which confuses `df.groupby()`, so we force that column to str.
-            df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
-        else:
-            # TODO(Dan): Refactor full symbol column creation while creating Talos client.
-            # Build full symbols column if it is not present in the data.
-            df[full_symbol_col_name] = (
-                df["exchange_id"].astype(str)
-                + "::"
-                + df[self._symbol_col_name].astype(str)
-            )
+        # Transform data.
+        df = self._apply_transformations(df, full_symbol_col_name)
         # Since we have normalized the data, the index is a timestamp, and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
         # from filtering in terms of days.
-        # TODO(Dan): Refactor timestamp column naming while creating Talos client.
         ts_col_name = None
-        if df.index.name in df.columns:
-            # Remove a column that has the same name that a timestamp index
-            # (e.g. in `Talos` data).
-            df = df.drop(df.index.name, axis=1)
         left_close = True
         right_close = True
         df = hpandas.trim_df(
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
+        return df
+
+    def _get_root_dir_and_symbol_filter(
+        self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
+    ) -> Tuple[str, hparque.ParquetFilter]:
+        """
+        Get a root dir to the data and filtering condition on full symbol column.
+        """
+        root_dir = self._root_dir_name
+        symbol_filter = (full_symbol_col_name, "in", full_symbols)
+        return root_dir, symbol_filter
+
+    @staticmethod
+    def _get_columns_for_query() -> Optional[List[str]]:
+        """
+        Get columns for Parquet data query.
+
+        For base implementation of this class columns are `None`
+        """
+        return None
+
+    @staticmethod
+    def _apply_transformations(
+        df: pd.DataFrame, full_symbol_col_name: str
+    ) -> pd.DataFrame:
+        """
+        Apply transformations to loaded data for base implementation.
+        """
+        # The asset data can come back from Parquet as:
+        # ```
+        # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
+        #                         83317, 89970]
+        # ```
+        # which confuses `df.groupby()`, so we force that column to str.
+        df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
         return df
 
 
