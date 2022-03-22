@@ -1888,73 +1888,30 @@ class TestFailing(hunitest.TestCase):
 # #############################################################################
 
 
-class TestProcessRenameParameters(hunitest.TestCase):
-    """
-    Test that the class and the method names are parsed correctly.
-    """
-
-    def test_check_invalid1(self) -> None:
-        """
-        Test inconsistent names.
-        """
-        old_name = "TestCase"
-        new_name = "TestNewCase.test1"
-        with self.assertRaises(AssertionError):
-            hlibtask._process_parameters(old_name, new_name)
-
-    def test_check_invalid2(self) -> None:
-        """
-        Test the methods of different classes.
-        """
-        old_name = "TestOldCase.test1"
-        new_name = "TestNewCase.test10"
-        with self.assertRaises(AssertionError):
-            hlibtask._process_parameters(old_name, new_name)
-
-    def test_check_invalid3(self) -> None:
-        """
-        Test invalid names.
-        """
-        old_name = "TestCase.test1.test3"
-        new_name = "TestCase.test2.test3"
-        with self.assertRaises(AssertionError):
-            hlibtask._process_parameters(old_name, new_name)
-
-    def test_check_valid1(self) -> None:
-        """
-        Test class names.
-        """
-        old_name = "TestCase"
-        new_name = "TestRenameCase"
-        config = hlibtask._process_parameters(old_name, new_name)
-        self.assertFalse(config["rename_method"])
-        self.assert_equal(config["old_class_name"], "TestCase")
-        self.assert_equal(config["old_method_name"], "")
-        self.assert_equal(config["new_class_name"], "TestRenameCase")
-        self.assert_equal(config["new_method_name"], "")
-
-    def test_check_valid2(self) -> None:
-        """
-        Test method names.
-        """
-        old_name = "TestCase.test1"
-        new_name = "TestCase.test2"
-        config = hlibtask._process_parameters(old_name, new_name)
-        self.assertTrue(config["rename_method"])
-        self.assert_equal(config["old_class_name"], "TestCase")
-        self.assert_equal(config["old_method_name"], "test1")
-        self.assert_equal(config["new_class_name"], "TestCase")
-        self.assert_equal(config["new_method_name"], "test2")
-
-
 class TestPytestRenameTest(hunitest.TestCase):
     """
     Test renaming functionality.
     """
+    def _helper(self) -> str:
+        """
+        Create file content.
+        """
+        content = """
+class TestCase(hunitest.TestCase):
+    def test_assert_equal1(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        return content
 
     def rename_class1(self) -> None:
         """
-        Test renaming of the class.
+        Test renaming of existing class.
         """
         content = self._helper()
         actual = hlibtask._rename_class(
@@ -1973,63 +1930,25 @@ class TestNewCase(hunitest.TestCase):
         """
         self.assert_equal(actual, expected)
 
-    def rename_method1(self) -> None:
+    def rename_class2(self) -> None:
         """
-        Test renaming of the method.
-        """
-        content = self._helper()
-        actual = hlibtask._rename_method(
-            "test_file.txt",
-            content,
-            "TestCase",
-            "test_assert_equal1",
-            "TestCase",
-            "test_assert_equal2",
-        )
-        expected = """
-class TestCase(hunitest.TestCase):
-    def test_assert_equal2(self) -> None:
-        actual = "hello world"
-        expected = actual
-        self.assert_equal(actual, expected)
-
-    def test_check_string1(self) -> None:
-        actual = "hello world"
-        self.check_string(actual)
-        """
-        self.assert_equal(actual, expected)
-
-    def rename_method2(self) -> None:
-        """
-        Test the renaming of the method that does not exsist in the class.
+        Test renaming of non existing class.
         """
         content = self._helper()
         with self.assertRaises(AssertionError):
-            hlibtask._rename_method(
-                "test_file.txt",
-                content,
-                "TestCase",
-                "test_assert",
-                "TestCase",
-                "test_assert_equal2",
-            )
+            hlibtask._rename_class(
+            "test_file.txt", content, "TestCases", "TestNewCase"
+        )
 
-    def _helper(self) -> str:
+    def rename_class2(self) -> None:
         """
-        Create file content.
+        Test renaming of the class with invalid name.
         """
-        content = """
-class TestCase(hunitest.TestCase):
-    def test_assert_equal1(self) -> None:
-        actual = "hello world"
-        expected = actual
-        self.assert_equal(actual, expected)
-
-    def test_check_string1(self) -> None:
-        actual = "hello world"
-        self.check_string(actual)
-        """
-        return content
+        content = self._helper()
+        with self.assertRaises(AssertionError):
+            hlibtask._rename_class(
+            "test_file.txt", content, "TestCases", "testNewCase"
+        )
 
 
 class TestPytestRenameOutcomes(hunitest.TestCase):
@@ -2037,7 +1956,21 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
     Test golden outcomes directory renaming.
     """
 
-    def test_rename_method_outcomes(self) -> None:
+    def _helper(self, test_path) -> None:
+        """
+        Create the temporal outcome to rename.
+
+        :param test_path: the toy path to the test dir
+        """
+        outcomes_paths = ["outcomes/TestCase.test_check_string1", "outcomes/TestCase.test_rename", "outcomes/TestRename.test_rename1"]
+        for path in outcomes_paths:
+            outcomes = os.path.join(test_path, path)
+            os.makedirs(outcomes)
+            hio.to_file(f"{outcomes}/test.txt", "Test files.")
+        cmd = "git add toy/"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+
+    def test_rename_class_outcomes(self) -> None:
         """
         Rename outcome directory.
         """
@@ -2046,41 +1979,29 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         # Create the toy outcomes.
         self._helper(test_path)
         old_class_name = "TestCase"
-        new_class_name = "TestCase"
-        old_method_name = "test_check_string1"
-        new_method_name = "test_rename"
+        new_class_name = "TestRenamedCase"
         hlibtask._rename_outcomes(
             test_path,
             old_class_name,
             new_class_name,
-            old_method_name,
-            new_method_name,
-            True,
         )
         # Check if the dir was renamed.
         outcomes_path = os.path.join(test_path, "outcomes")
+        outcomes_dirs = os.listdir(outcomes_path)
         directories = [
             ent
-            for ent in os.listdir(outcomes_path)
+            for ent in outcomes_dirs
             if os.path.isdir(os.path.join(outcomes_path, ent))
         ]
-        #self.assertFalse("TestCase.test_check_string1" in directories)
-        self.assertTrue("TestCase.test_rename" in directories)
-        self._remove()
+        self.assertFalse("TestCase.test_check_string1" in directories)
+        self.assertFalse("TestCase.test_rename" in directories)
+        self.assertTrue("TestRenamedCase.test_check_string1" in directories)
+        self.assertTrue("TestRenamedCase.test_rename" in directories)
+        self.assertTrue("TestRename.test_rename1" in directories)
+        self._clean_up()
 
-    def _helper(self, test_path) -> None:
-        """
-        Create the temporal outcome to rename.
 
-        :param test_path: the toy path to the test dir
-        """
-        outcomes = os.path.join(test_path, "outcomes/TestCase.test_check_string1")
-        os.makedirs(outcomes)
-        hio.to_file(f"{outcomes}/test.txt", "Test files.")
-        cmd = "git add toy/"
-        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-
-    def _remove(self) -> None:
+    def _clean_up(self) -> None:
         """
         Remove temporal test directory.
         """
