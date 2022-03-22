@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
@@ -147,53 +146,6 @@ class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient)
         # Add a filter on currency pairs.
         symbol_filter = ("currency_pair", "in", currency_pairs)
         return root_dir, symbol_filter
-
-    def _read_data_for_one_symbol(
-        self,
-        full_symbol: icdc.FullSymbol,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        **kwargs: Any,
-    ) -> pd.DataFrame:
-        """
-        See description in the parent class.
-        """
-        # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
-        # Get path to a dir with all the data for specified exchange id.
-        exchange_dir_path = os.path.join(
-            self._root_dir, "talos", self._data_snapshot, exchange_id
-        )
-        # Read raw crypto price data.
-        _LOG.info(
-            "Reading data for `Talos`, exchange id='%s', currencies='%s'...",
-            exchange_id,
-            currency_pair,
-        )
-        # Initialize list of filters.
-        filters = [("currency_pair", "==", currency_pair)]
-        if start_ts:
-            # Add filtering by start timestamp if specified.
-            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            filters.append(("timestamp", ">=", start_ts))
-        if end_ts:
-            # Add filtering by end timestamp if specified.
-            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            filters.append(("timestamp", "<=", end_ts))
-        if filters:
-            # Add filters to kwargs if any were set.
-            kwargs["filters"] = filters
-        # Specify column names to load.
-        columns = ["open", "high", "low", "close", "volume"]
-        # Load data.
-        data = hparque.from_parquet(
-            exchange_dir_path,
-            columns=columns,
-            filters=filters,
-            aws_profile=self._aws_profile,
-        )
-        data.index.name = None
-        return data
 
 
 # #############################################################################
