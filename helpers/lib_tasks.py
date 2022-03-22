@@ -3480,7 +3480,7 @@ def _select_tests_to_skip(test_list_name: str) -> str:
     Generate text for pytest specifying which tests to deselect.
     """
     if test_list_name == "fast_tests":
-        skipped_tests = "not slow and not superslow"
+        skipped_tests = " not slow and not superslow"
     elif test_list_name == "slow_tests":
         skipped_tests = "slow and not superslow"
     elif test_list_name == "superslow_tests":
@@ -3492,6 +3492,7 @@ def _select_tests_to_skip(test_list_name: str) -> str:
 
 def _build_run_command_line(
     test_list_name: str,
+    custom_marker: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
@@ -3517,7 +3518,7 @@ def _build_run_command_line(
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
     skipped_tests = _select_tests_to_skip(test_list_name)
-    pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
+    pytest_opts_tmp.insert(0, f'-m "{custom_marker} and {skipped_tests}"')
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
@@ -3614,6 +3615,7 @@ def _run_tests(
     ctx: Any,
     stage: str,
     test_list_name: str,
+    custom_marker: str,
     version: str,
     pytest_opts: str,
     skip_submodules: bool,
@@ -3634,6 +3636,7 @@ def _run_tests(
     # Build the command line.
     cmd = _build_run_command_line(
         test_list_name,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,

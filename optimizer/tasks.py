@@ -13,6 +13,7 @@ from optimizer.opt_lib_tasks import (  # noqa: F401  # pylint: disable=unused-im
     opt_docker_jupyter,
     opt_docker_push_dev_image,
     opt_docker_release_dev_image,
+    opt_run_fast_tests,
     opt_docker_tag_local_image_as_dev,
 )
 

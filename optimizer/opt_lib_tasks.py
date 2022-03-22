@@ -198,3 +198,56 @@ def opt_docker_cmd(  # type: ignore
         use_bash=use_bash,
         container_dir_name=_OPTIMIZER_DIR,
     )
+
+
+# #############################################################################
+# Run tests.
+# #############################################################################
+
+@task
+def opt_run_fast_tests(
+    ctx,
+    stage="dev",
+    version="",
+    pytest_opts="",
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+    **kwargs,
+):
+    test_list_name = "fast_tests"
+    custom_marker = "optimizer"
+    pytest_opts = "optimizer"
+    # This parameter is not needed as `optimizer` never has a submodule.
+    skip_submodules = False
+    # This is always False because we cannot call `git_clean` invoke
+    # from the `optimizer` dir.
+    git_clean = False
+    rc = hlibtask._run_tests(
+        ctx,
+        stage,
+        test_list_name,
+        custom_marker,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        **kwargs,
+    )
+    return rc
+
+
+
+def test():
+    test_list_name = "fast_tests"
+    custom_marker = "optimizer"
+    pytest_opts = "optimizer"
+    skip_submodules = False
+    coverage = False
+    collect_only = False
+    tee_to_file = False
+    cmd = hlibtask._build_run_command_line(test_list_name, custom_marker, pytest_opts, skip_submodules, coverage, collect_only, tee_to_file)
+    return cmd
