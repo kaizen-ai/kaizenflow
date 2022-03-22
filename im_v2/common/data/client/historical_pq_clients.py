@@ -59,22 +59,44 @@ class HistoricalPqByTileClient(
         """
         return []
 
+    @staticmethod
+    def _get_columns_for_query() -> Optional[List[str]]:
+        """
+        Get columns for Parquet data query.
+
+        For base implementation the columns are `None`
+        """
+        return None
+
+    @staticmethod
+    def _apply_transformations(
+        df: pd.DataFrame, full_symbol_col_name: str
+    ) -> pd.DataFrame:
+        """
+        Apply transformations to loaded data.
+        """
+        # The asset data can come back from Parquet as:
+        # ```
+        # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
+        #                         83317, 89970]
+        # ```
+        # which confuses `df.groupby()`, so we force that column to str.
+        df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
+        return df
+
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[icdc.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,
-        *,
-        columns: Optional[List[str]] = None,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         See description in the parent class.
         """
         _LOG.debug(
-            hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name columns"
-            )
+            hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
         )
         hdbg.dassert_container_type(full_symbols, list, str)
         # Build root dir to the data and Parquet filtering condition.
@@ -88,9 +110,8 @@ class HistoricalPqByTileClient(
             end_ts,
             additional_filter=symbol_filter,
         )
-        # Get columns for a query if they are not provided.
-        if not columns:
-            columns = self._get_columns_for_query()
+        # Get columns for a query.
+        columns = self._get_columns_for_query()
         # Read the data.
         df = hparque.from_parquet(
             root_dir,
@@ -121,36 +142,12 @@ class HistoricalPqByTileClient(
         self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
     ) -> Tuple[str, hparque.ParquetFilter]:
         """
-        Get a root dir to the data and filtering condition on full symbol column.
+        Get a root dir to the data and filtering condition on full symbol
+        column.
         """
         root_dir = self._root_dir_name
         symbol_filter = (full_symbol_col_name, "in", full_symbols)
         return root_dir, symbol_filter
-
-    @staticmethod
-    def _get_columns_for_query() -> Optional[List[str]]:
-        """
-        Get columns for Parquet data query.
-
-        For base implementation of this class columns are `None`
-        """
-        return None
-
-    @staticmethod
-    def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str
-    ) -> pd.DataFrame:
-        """
-        Apply transformations to loaded data for base implementation.
-        """
-        # The asset data can come back from Parquet as:
-        # ```
-        # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
-        #                         83317, 89970]
-        # ```
-        # which confuses `df.groupby()`, so we force that column to str.
-        df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
-        return df
 
 
 # #############################################################################

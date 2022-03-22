@@ -2,7 +2,6 @@ import os
 from typing import List
 
 import pandas as pd
-import pytest
 
 import helpers.hgit as hgit
 import helpers.hsystem as hsystem
@@ -48,6 +47,7 @@ def _generate_test_data(
 
 
 class MockHistoricalByTile(imvcdchpcl.HistoricalPqByTileClient):
+
     def get_universe(self) -> List[str]:
         return ["binance::BTC_USDT", "kucoin::FIL_USDT"]
 
@@ -115,7 +115,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         expected_length = 8640
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
         expected_signature = r"""# df=
         index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
         columns=full_symbol,close,year,month
@@ -156,7 +158,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         expected_length = 2640
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
         expected_signature = r"""# df=
         index=[2022-01-01 02:00:00+00:00, 2022-01-01 23:59:00+00:00]
         columns=full_symbol,close,year,month
@@ -199,7 +203,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         expected_length = 6002
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
         expected_signature = r"""# df=
         index=[2021-12-30 00:00:00+00:00, 2022-01-01 02:00:00+00:00]
         columns=full_symbol,close,year,month
@@ -242,7 +248,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         expected_length = 242
         expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
         expected_signature = r"""# df=
         index=[2021-12-31 23:00:00+00:00, 2022-01-01 01:00:00+00:00]
         columns=full_symbol,close,year,month
