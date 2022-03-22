@@ -3480,7 +3480,7 @@ def _select_tests_to_skip(test_list_name: str) -> str:
     Generate text for pytest specifying which tests to deselect.
     """
     if test_list_name == "fast_tests":
-        skipped_tests = " not slow and not superslow"
+        skipped_tests = "not slow and not superslow"
     elif test_list_name == "slow_tests":
         skipped_tests = "slow and not superslow"
     elif test_list_name == "superslow_tests":

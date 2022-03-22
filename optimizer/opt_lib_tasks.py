@@ -238,16 +238,3 @@ def opt_run_fast_tests(
         **kwargs,
     )
     return rc
-
-
-
-def test():
-    test_list_name = "fast_tests"
-    custom_marker = "optimizer"
-    pytest_opts = "optimizer"
-    skip_submodules = False
-    coverage = False
-    collect_only = False
-    tee_to_file = False
-    cmd = hlibtask._build_run_command_line(test_list_name, custom_marker, pytest_opts, skip_submodules, coverage, collect_only, tee_to_file)
-    return cmd
