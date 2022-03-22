@@ -304,10 +304,16 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         exchange_ids = [symbol[0] for symbol in parsed_symbols]
         currency_pairs = [symbol[1] for symbol in parsed_symbols]
         # Convert timestamps to epochs.
-        start_unix_epoch = start_ts or hdateti.convert_timestamp_to_unix_epoch(
-            start_ts
-        )
-        end_unix_epoch = end_ts or hdateti.convert_timestamp_to_unix_epoch(end_ts)
+        if start_ts:
+            start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(
+                start_ts
+            )
+        else:
+            start_unix_epoch = start_ts
+        if end_ts:
+            end_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+        else:
+            end_unix_epoch = end_ts
         # Read data from DB.
         select_query = self._build_select_query(
             exchange_ids, currency_pairs, start_unix_epoch, end_unix_epoch
