@@ -266,12 +266,80 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
 
     def test_build_select_query1(self):
         """
-        `start_unix_epoch` is not equal to int.
+        `start_unix_epoch` is not int type.
         """
         talos_sql_client = self._setup_talos_sql_client()
         exchange_id = ['binance']
         currency_pair = ['AVAX_USDT']
         start_unix_epoch = 'unsupported_type'
+        end_unix_epoch = 1647471180000
+        with self.assertRaises(AssertionError):
+            talos_sql_client._build_select_query(
+               exchange_id,
+               currency_pair,
+               start_unix_epoch,
+               end_unix_epoch
+            )
+
+    def test_build_select_query2(self):
+        """
+        `end_unix_epoch` is not int type.
+        """
+        talos_sql_client = self._setup_talos_sql_client()
+        exchange_id = ['binance']
+        currency_pair = ['AVAX_USDT']
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 'unsupported_type'
+        with self.assertRaises(AssertionError):
+            talos_sql_client._build_select_query(
+               exchange_id,
+               currency_pair,
+               start_unix_epoch,
+               end_unix_epoch
+            )
+
+    def test_build_select_query3(self):
+        """
+        `exchange_ids` is not a list of strings.
+        """
+        talos_sql_client = self._setup_talos_sql_client()
+        exchange_id = 'unsupported_type'
+        currency_pair = ['AVAX_USDT']
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        with self.assertRaises(AssertionError):
+            talos_sql_client._build_select_query(
+               exchange_id,
+               currency_pair,
+               start_unix_epoch,
+               end_unix_epoch
+            )
+
+    def test_build_select_query4(self):
+        """
+        `currency_pair` is not a list of strings.
+        """
+        talos_sql_client = self._setup_talos_sql_client()
+        exchange_id = ['binance']
+        currency_pair = 'unsupported_type'
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        with self.assertRaises(AssertionError):
+            talos_sql_client._build_select_query(
+               exchange_id,
+               currency_pair,
+               start_unix_epoch,
+               end_unix_epoch
+            )
+
+    def test_build_select_query5(self):
+        """
+        Start unix epoch should is larger than end.
+        """
+        talos_sql_client = self._setup_talos_sql_client()
+        exchange_id = ['binance']
+        currency_pair = ['AVAX_USDT']
+        start_unix_epoch = 1647471200000
         end_unix_epoch = 1647471180000
         with self.assertRaises(AssertionError):
             talos_sql_client._build_select_query(
