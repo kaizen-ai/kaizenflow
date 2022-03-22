@@ -257,7 +257,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
     
     """
 
-    def test_build_select_query1(self):
+    def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
         """
@@ -327,7 +327,9 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
                 exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
             )
 
-    def _setup_talos_sql_client(self):
+    def _setup_talos_sql_client(
+        self,
+    ) -> imvtdctacl.RealTimeSqlTalosClient:
         """
         Initialize Talos SQL Client.
         """
