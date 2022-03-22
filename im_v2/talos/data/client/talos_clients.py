@@ -71,6 +71,7 @@ class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient)
         """
         Load `Talos` data from local or S3 filesystem.
         """
+        # TODO(Dan): Discuss heritage from parent classes.
         imvcdchpcl.HistoricalPqByTileClient.__init__(
             self, "talos", root_dir, partition_mode, aws_profile=aws_profile
         )
@@ -125,7 +126,7 @@ class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient)
         Get a root dir to the `Talos` data and filtering condition on currency
         pair column.
         """
-        # GEt lists of exchange ids and currency pairs.
+        # Get lists of exchange ids and currency pairs.
         exchange_ids, currency_pairs = tuple(
             zip(
                 *[
