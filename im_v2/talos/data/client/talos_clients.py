@@ -254,9 +254,10 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
             hdateti.convert_unix_epoch_to_timestamp
         )
         # Set timestamp column as an index.
-        data = data.set_index("timestamp")
+        #data = data.set_index("timestamp")
         # Specify OHLCV columns.
         ohlcv_columns = [
+            "timestamp",
             "open",
             "high",
             "low",
