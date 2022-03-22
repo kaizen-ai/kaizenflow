@@ -7,7 +7,6 @@ import im.kibot.metadata.load.adjustments as imkmeload
 import os
 from typing import List
 
-import core.pandas_helpers as cpanh
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im.kibot.metadata.config as imkimecon
@@ -15,6 +14,7 @@ import im.kibot.metadata.types as imkimetyp
 
 
 class AdjustmentsLoader:
+
     @staticmethod
     def load(symbol: str) -> List[imkimetyp.Adjustment]:
         s3_path = os.path.join(

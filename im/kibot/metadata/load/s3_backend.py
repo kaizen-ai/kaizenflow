@@ -10,7 +10,6 @@ from typing import List, Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
@@ -31,6 +30,7 @@ _LOG = logging.getLogger("amp" + __name__)
 
 
 class S3Backend:
+
     def __init__(self, max_rows: Optional[int] = None):
         self._max_rows = max_rows
 

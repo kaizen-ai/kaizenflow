@@ -9,7 +9,6 @@ from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hcache as hcache
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -22,6 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
+
     def read_data(
         self,
         exchange: str,

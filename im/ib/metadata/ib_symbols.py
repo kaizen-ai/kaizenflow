@@ -9,7 +9,6 @@ import logging
 import string
 from typing import List, Optional
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint

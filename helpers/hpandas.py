@@ -796,9 +796,9 @@ def convert_col_to_int(
     """
     Convert a column to an integer column.
 
-    Example use case:
-        Parquet uses categoricals. If supplied with a categorical-type column,
-        this function will convert it to an integer column.
+    Example use case:     Parquet uses categoricals. If supplied with a
+    categorical-type column,     this function will convert it to an
+    integer column.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(col, str)

@@ -21,7 +21,6 @@ import logging
 import numpy as np
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
@@ -57,6 +56,7 @@ def calculate_datetime_statistics_for_kibot_data(
     """
     Load the data for each asset through the loop and proccess it to obtain
     datetime statistics:
+
     - start date
     - end date
     - data points count
@@ -139,8 +139,9 @@ def calculate_datetime_statistics_for_kibot_data(
 
 def calculate_general_datetime_stats(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Take the table with datetime stats for individual assets and
-    compute generalized stats for all universe:
+    Take the table with datetime stats for individual assets and compute
+    generalized stats for all universe:
+
     - median start date
     - median end date
     - min start date

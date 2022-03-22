@@ -18,6 +18,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestResampleIndex1(hunitest.TestCase):
+
     def test1(self) -> None:
         index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
         df = pd.DataFrame(np.random.rand(len(index), 3), index=index)
@@ -38,6 +39,7 @@ class TestResampleIndex1(hunitest.TestCase):
 
 
 class TestDfRollingApply(hunitest.TestCase):
+
     def test1(self) -> None:
         """
         Test with function returning a pd.Series.
@@ -159,6 +161,7 @@ class TestDfRollingApply(hunitest.TestCase):
 
 
 class TestReadDataFromS3(hunitest.TestCase):
+
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs("am")
         file_name = os.path.join(
