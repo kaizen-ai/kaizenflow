@@ -1968,7 +1968,8 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
             os.makedirs(outcomes)
             hio.to_file(f"{outcomes}/test.txt", "Test files.")
         cmd = "git add toy/"
-        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        _LOG.warning(rc)
 
     def test_rename_class_outcomes(self) -> None:
         """
@@ -1985,15 +1986,16 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
             old_class_name,
             new_class_name,
         )
-        # Check if the dir was renamed.
+        # Check if the dirs were renamed.
         outcomes_path = os.path.join(test_path, "outcomes")
+        _LOG.warning(outcomes_path)
         outcomes_dirs = os.listdir(outcomes_path)
+        _LOG.warning(outcomes_dirs)
         directories = [
             ent
             for ent in outcomes_dirs
             if os.path.isdir(os.path.join(outcomes_path, ent))
         ]
-        self.assertEqual(directories[1], "goga")
         self.assertEqual(directories[2], "goga")
         self.assertFalse("TestCase.test_check_string1" in directories)
         self.assertFalse("TestCase.test_rename" in directories)

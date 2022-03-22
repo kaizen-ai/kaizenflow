@@ -4427,12 +4427,10 @@ def _process_file(
         # Return if target test class does not appear in file content.
         return None
     # Rename the class.
-    content = _rename_class(
-        content, old_class_name, new_class_name
-    )
+    content = _rename_class(content, old_class_name, new_class_name)
     _LOG.info(
-    f"{file_path}: class `{old_class_name}` was renamed to {new_class_name}."
-)
+        f"{file_path}: class `{old_class_name}` was renamed to {new_class_name}."
+    )
     # Rename the directories that contain target test outcomes.
     _rename_outcomes(
         test_dir,
