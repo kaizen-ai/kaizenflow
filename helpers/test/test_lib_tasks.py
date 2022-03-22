@@ -1993,7 +1993,6 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
             for ent in outcomes_dirs
             if os.path.isdir(os.path.join(outcomes_path, ent))
         ]
-        self.assertEqual(directories[0], "goga")
         self.assertEqual(directories[1], "goga")
         self.assertEqual(directories[2], "goga")
         self.assertFalse("TestCase.test_check_string1" in directories)
