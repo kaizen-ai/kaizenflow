@@ -1,7 +1,9 @@
 from typing import List
 
 import pandas as pd
-
+import im_v2.talos.data.client.talos_clients as imvtdctacl
+import im_v2.im_lib_tasks as imvimlita
+import helpers.hsql as hsql
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
 
@@ -243,3 +245,38 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
             "volume",
         ]
         return expected_column_names
+
+    # #############################################################################
+    # RealTimeSqlTalosClient
+    # #############################################################################
+
+class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
+    """
+    """
+    def _setup_talos_sql_client(self):
+        """
+        Initialize Talos SQL Client.
+        """
+        env_file = imvimlita.get_db_env_path("dev")
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        connection = hsql.get_connection(*connection_params)
+        table_name = "talos_ohlcv"
+        sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(connection, table_name)
+        return sql_talos_client
+
+    def test_build_select_query1(self):
+        """
+        `start_unix_epoch` is not equal to int.
+        """
+        talos_sql_client = self._setup_talos_sql_client()
+        exchange_id = ['binance']
+        currency_pair = ['AVAX_USDT']
+        start_unix_epoch = 'unsupported_type'
+        end_unix_epoch = 1647471180000
+        with self.assertRaises(AssertionError):
+            talos_sql_client._build_select_query(
+               exchange_id,
+               currency_pair,
+               start_unix_epoch,
+               end_unix_epoch
+            )
