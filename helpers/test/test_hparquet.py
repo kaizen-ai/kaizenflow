@@ -488,6 +488,20 @@ class TestPartitionedParquet1(hunitest.TestCase):
 
 class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
+    def test_no_interval(self) -> None:
+        """
+        No timestamps provided.
+        """
+        partition_mode = "by_year_month"
+        start_ts = None
+        end_ts = None
+        filters = hparque.get_parquet_filters_from_timestamp_interval(
+            partition_mode, start_ts, end_ts
+        )
+        actual = str(filters)
+        expected = r"[]"
+        self.assert_equal(actual, expected)
+
     def test_by_month_half1(self) -> None:
         """
         Test a left-bound interval [..., None].
@@ -584,21 +598,6 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         actual = str(fail.value)
         expected = r"Unknown partition mode `new_mode`!"
         self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test_by_month_invalid3(self) -> None:
-        """
-        Verify error raise when no timestamp is provided.
-        """
-        partition_mode = "by_year_month"
-        start_ts = None
-        end_ts = None
-        with pytest.raises(ValueError) as fail:
-            hparque.get_parquet_filters_from_timestamp_interval(
-                partition_mode, start_ts, end_ts
-            )
-        actual = str(fail.value)
-        expected = "At least one timestamp must be provided!"
-        self.assertIn(expected, actual)
 
     def test_by_month_two_years1(self) -> None:
         """
