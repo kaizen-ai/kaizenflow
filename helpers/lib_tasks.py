@@ -4395,6 +4395,8 @@ def _rename_outcomes(
             outcome_path_new,
             rc,
         )
+        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
         renamed = True
     if not renamed:
         _LOG.info(
