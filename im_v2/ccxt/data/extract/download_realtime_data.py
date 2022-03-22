@@ -34,7 +34,7 @@ import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
-import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.universe.universe as imvcounun
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -198,12 +198,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Load universe.
-    universe = imvccunun.get_trade_universe(args.universe)
-    exchange_ids = universe["CCXT"].keys()
+    universe = imvcounun.get_vendor_universe("CCXT", version=args.universe)
+    exchange_ids = universe.keys()
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []
     for exchange_id in exchange_ids:
-        exchanges.append(instantiate_exchange(exchange_id, universe["CCXT"]))
+        exchanges.append(instantiate_exchange(exchange_id, universe))
     # Construct table name.
     table_name = f"ccxt_{args.data_type}"
     # Generate a query to remove duplicates.

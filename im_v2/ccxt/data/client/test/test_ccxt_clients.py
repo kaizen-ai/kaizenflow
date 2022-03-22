@@ -206,6 +206,41 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
+    def test_read_data7(self) -> None:
+        im_client = imvcdcccex.get_CcxtCsvClient_example1()
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 174
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(174, 6)
+                                         full_symbol         open         high          low        close     volume
+        timestamp
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        ...
+        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+                """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
@@ -459,6 +494,41 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
+
+    def test_read_data7(self) -> None:
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 174
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2018-08-17 01:39:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(174, 6)
+                                         full_symbol         open         high          low        close     volume
+        timestamp
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        ...
+        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
 
     # ////////////////////////////////////////////////////////////////////////
 
@@ -764,6 +834,51 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
+    def test_read_data7(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        vendor = "CCXT"
+        im_client = (
+            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
+                vendor, self.connection
+            )
+        )
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        #
+        expected_length = 5
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(5, 6)
+                                         full_symbol  open  high   low  close  volume
+        timestamp
+        2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0
+        2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0
+        2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0
+        2021-09-09 00:04:00+00:00  binance::BTC_USDT  34.0  44.0  54.0   64.0    74.0
+        2021-09-09 00:04:00+00:00  binance::ETH_USDT  34.0  44.0  54.0   64.0    74.0
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
@@ -833,13 +948,6 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
 
     # ///////////////////////////////////////////////////////////////////////
 
-    def _create_test_table(self) -> None:
-        """
-        Create a test CCXT OHLCV table in DB.
-        """
-        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
-        self.connection.cursor().execute(query)
-
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
         """
@@ -887,3 +995,10 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             "volume",
         ]
         return expected_column_names
+
+    def _create_test_table(self) -> None:
+        """
+        Create a test CCXT OHLCV table in DB.
+        """
+        query = imvccdbut.get_ccxt_ohlcv_create_table_query()
+        self.connection.cursor().execute(query)
