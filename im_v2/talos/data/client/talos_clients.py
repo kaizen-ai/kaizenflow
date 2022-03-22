@@ -305,9 +305,7 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         currency_pairs = [symbol[1] for symbol in parsed_symbols]
         # Convert timestamps to epochs.
         if start_ts:
-            start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(
-                start_ts
-            )
+            start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
         else:
             start_unix_epoch = start_ts
         if end_ts:
@@ -323,6 +321,9 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         data[full_symbol_col_name] = data[["exchange_id", "currency_pair"]].agg(
             "::".join, axis=1
         )
+        # Remove extra columns and create a timestamp index.
+        # TODO(Danya): The normalization may change depending on use of the class.
+        data = self._apply_talos_normalization(data, full_symbol_col_name)
         return data
 
     def _build_select_query(
