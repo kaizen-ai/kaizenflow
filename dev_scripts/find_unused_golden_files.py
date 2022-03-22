@@ -15,7 +15,7 @@ import helpers.hparser as hparser
 _LOG = logging.getLogger(__name__)
 
 
-def _get_test_methods_from_files(dir_name: str) -> List[str]:
+def get_test_methods_from_files(dir_name: str) -> List[str]:
     """
     Get test methods with existing golden outcomes.
 
@@ -38,7 +38,7 @@ def _get_test_methods_from_files(dir_name: str) -> List[str]:
     return test_methods
 
 
-def _get_python_test_files(dir_name: str) -> List[str]:
+def get_python_test_files(dir_name: str) -> List[str]:
     """
     Get names of Python files with tests.
 
@@ -60,7 +60,63 @@ def _get_python_test_files(dir_name: str) -> List[str]:
     return test_py_files
 
 
-def _get_test_methods_from_code(
+def parse_test_code(
+    code: str, test_py_file: str
+) -> Tuple[List[str], Dict[str, str]]:
+    """
+    Extract test methods from the code of a test file.
+
+    :param code: the code of the test file
+    :param test_py_file: the name of the .py file with tests
+    :return:
+        - test methods, e.g. ["dir/test/outcomes/TestClass.test1",
+          "dir/test/outcomes/TestClass.test2"]
+        - a mapping between test classes and the name of the .py file
+          with these tests, e.g. {"dir/test/outcomes/TestClass": "dir/test/test_lib.py"}
+    """
+    dir_ = os.path.dirname(test_py_file)
+    test_methods: List[str] = []
+    class_to_test_file: Dict[str, str] = {}
+    # Extract the test classes.
+    classes = re.split(r"class (Test.+)\(.+\):\n", code)
+    if len(classes) == 1:
+        return test_methods, class_to_test_file
+    classes_grouped = [
+        classes[1:][i : i + 2] for i in range(0, len(classes[1:]), 2)
+    ]
+    for test_class_name, test_class_code in classes_grouped:
+        # Store the class-filename mapping.
+        class_to_test_file[f"{dir_}/outcomes/{test_class_name}"] = test_py_file
+        # Extract the test methods.
+        methods = re.split(r"def (.+)\(", test_class_code)
+        if len(methods) == 1:
+            continue
+        methods_grouped = [
+            methods[1:][i : i + 2] for i in range(0, len(methods[1:]), 2)
+        ]
+        # Find methods with a `check_string` call that are likely to be helpers.
+        helper_names: Set[str] = set()
+        for _ in range(2):
+            for test_method_name, test_method_code in methods_grouped:
+                if (
+                    "self.check_string(" in test_method_code
+                    or any(f"self.{n}(" in test_method_code for n in helper_names)
+                ) and not test_method_name.startswith("test"):
+                    helper_names.add(test_method_name)
+        for test_method_name, test_method_code in methods_grouped:
+            if (
+                "self.check_string(" in test_method_code
+                or any(f"self.{n}(" in test_method_code for n in helper_names)
+            ) and test_method_name not in helper_names:
+                # Store non-helper methods with `check_string` calls or calls to
+                # helper methods with `check_string`.
+                test_methods.append(
+                    f"{dir_}/outcomes/{test_class_name}.{test_method_name}"
+                )
+    return test_methods, class_to_test_file
+
+
+def get_test_methods_from_code(
     dir_name: str,
 ) -> Tuple[List[str], Dict[str, str]]:
     """
@@ -73,56 +129,21 @@ def _get_test_methods_from_code(
         - test methods, e.g. ["dir/test/outcomes/TestClass.test1",
           "dir/test/outcomes/TestClass.test2"]
         - a mapping between test classes and the names of .py files
-          with those tests, e.g. {"dir/test/outcomes/TestClass": "dir/test/test_lib.py"}
+          with these tests, e.g. {"dir/test/outcomes/TestClass": "dir/test/test_lib.py"}
     """
     # Get the names of .py files with tests.
-    test_py_files = _get_python_test_files(dir_name)
+    test_py_files = get_python_test_files(dir_name)
     #
     test_methods = []
     class_to_test_file = {}
     for test_py_file in test_py_files:
-        dir_ = os.path.dirname(test_py_file)
         code = hio.from_file(test_py_file)
-        # Extract the test classes.
-        classes = re.split(r"\nclass (Test.+)\(.+\):\n", code)
-        if len(classes) == 1:
-            continue
-        classes_grouped = [
-            classes[1:][i : i + 2] for i in range(0, len(classes[1:]), 2)
-        ]
-        for test_class_name, test_class_code in classes_grouped:
-            # Store the class-filename mapping.
-            class_to_test_file[
-                f"{dir_}/outcomes/{test_class_name}"
-            ] = test_py_file
-            # Extract the test methods.
-            methods = re.split(r"def (.+)\(", test_class_code)
-            if len(methods) == 1:
-                continue
-            methods_grouped = [
-                methods[1:][i : i + 2] for i in range(0, len(methods[1:]), 2)
-            ]
-            # Find methods with a `check_string` call that are likely to be helpers.
-            helper_names: Set[str] = set()
-            for _ in range(2):
-                for test_method_name, test_method_code in methods_grouped:
-                    if (
-                        "self.check_string(" in test_method_code
-                        or any(
-                            f"self.{n}(" in test_method_code for n in helper_names
-                        )
-                    ) and not test_method_name.startswith("test"):
-                        helper_names.add(test_method_name)
-            for test_method_name, test_method_code in methods_grouped:
-                if (
-                    "self.check_string(" in test_method_code
-                    or any(f"self.{n}(" in test_method_code for n in helper_names)
-                ) and test_method_name not in helper_names:
-                    # Store non-helper methods with `check_string` calls or calls to
-                    # helper methods with `check_string`.
-                    test_methods.append(
-                        f"{dir_}/outcomes/{test_class_name}.{test_method_name}"
-                    )
+        # Extract the test methods that require golden outcomes.
+        cur_test_methods, cur_class_to_test_file = parse_test_code(
+            code, test_py_file
+        )
+        test_methods.extend(cur_test_methods)
+        class_to_test_file.update(cur_class_to_test_file)
     # Drop duplicates.
     test_methods = sorted(set(test_methods))
     return test_methods, class_to_test_file
@@ -150,9 +171,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(args.log_level)
     # Get test methods that have golden outcome files.
-    test_methods_from_files = _get_test_methods_from_files(args.dir_name)
+    test_methods_from_files = get_test_methods_from_files(args.dir_name)
     # Get test methods that require golden outcome files.
-    test_methods_from_code, class_to_test_file = _get_test_methods_from_code(
+    test_methods_from_code, class_to_test_file = get_test_methods_from_code(
         args.dir_name
     )
     # Get methods that require golden file but do not have them.
