@@ -95,31 +95,32 @@ class HistoricalPqByTileClient(
         """
         See description in the parent class.
         """
+        hdbg.dassert_container_type(full_symbols, list, str)
+        # Implement logging and add it to kwargs.
         _LOG.debug(
             hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
         )
-        hdbg.dassert_container_type(full_symbols, list, str)
+        kwargs["log_level"] = logging.INFO
         # Build root dir to the data and Parquet filtering condition.
         root_dir, symbol_filter = self._get_root_dir_and_symbol_filter(
             full_symbols, full_symbol_col_name
         )
-        # Build list of filters for a query.
+        # Build list of filters for a query and add them to kwargs.
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             self._partition_mode,
             start_ts,
             end_ts,
             additional_filter=symbol_filter,
         )
-        # Get columns for a query.
-        columns = self._get_columns_for_query()
-        # Read the data.
-        df = hparque.from_parquet(
-            root_dir,
-            columns=columns,
-            filters=filters,
-            log_level=logging.INFO,
-            aws_profile=self._aws_profile,
-        )
+        kwargs["filters"] = filters
+        # Get columns and add them to kwargs if they were not specified.
+        if "columns" not in kwargs:
+            columns = self._get_columns_for_query()
+            kwargs["columns"] = columns
+        # Add AWS profile to kwargs.
+        kwargs["aws_profile"] = self._aws_profile
+        # Read data.
+        df = hparque.from_parquet(root_dir, **kwargs)
         hdbg.dassert(not df.empty)
         # TODO(Dan) Discuss if we should always convert index to timestamp
         #  or make a function so it may change based on the vendor.
