@@ -93,7 +93,13 @@ class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient)
         Get columns for Parquet data query.
         """
         columns = [
-            "open", "high", "low", "close", "volume", "exchange_id", "currency_pair"
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "exchange_id",
+            "currency_pair",
         ]
         return columns
 
