@@ -30,7 +30,7 @@ class HistoricalPqByTileClient(
     def __init__(
         self,
         vendor: str,
-        root_dir_name: str,
+        root_dir: str,
         partition_mode: str,
         *,
         aws_profile: Optional[str] = None,
@@ -38,12 +38,14 @@ class HistoricalPqByTileClient(
         """
         Constructor.
 
-        :param root_dir_name: directory storing the tiled Parquet data
+        :param root_dir: either a local root path (e.g., "/app/im") or
+            an S3 root path (e.g., "s3://cryptokaizen-data/historical")
+            to the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__(vendor)
-        self._root_dir_name = root_dir_name
+        self._root_dir = root_dir
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile
 
@@ -146,7 +148,9 @@ class HistoricalPqByTileClient(
         Get a root dir to the data and filtering condition on full symbol
         column.
         """
-        root_dir = self._root_dir_name
+        # Root dir remains the same in base implementation.
+        root_dir = self._root_dir
+        # Add a filter on full symbols.
         symbol_filter = (full_symbol_col_name, "in", full_symbols)
         return root_dir, symbol_filter
 

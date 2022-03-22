@@ -32,5 +32,8 @@ def get_TalosParquetByTileClient_example1() -> imvtdctacl.TalosParquetByTileClie
     Get `TalosParquetByTileClient` object for the tests.
     """
     root_dir = get_test_data_dir()
-    talos_file_client = imvtdctacl.TalosParquetByTileClient(root_dir)
+    partition_mode = "by_year_month"
+    talos_file_client = imvtdctacl.TalosParquetByTileClient(
+        root_dir, partition_mode
+    )
     return talos_file_client
