@@ -130,10 +130,13 @@ class HistoricalPqByTileClient(
             # ```
             # which confuses `df.groupby()`, so we force that column to str.
             df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
-        # Since we have normalized the data, the index is a timestamp and we can
+        # Since we have normalized the data, the index is a timestamp, and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
         # from filtering in terms of days.
+        # TODO(Dan): Refactor timestamp column naming.
         ts_col_name = None
+        if df.index.name in df.columns:
+            ts_col_name = df.index.name
         left_close = True
         right_close = True
         df = hpandas.trim_df(
