@@ -28,7 +28,7 @@ import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
-import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.universe.universe as imvcounun
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
@@ -58,9 +58,9 @@ def _run(args: argparse.Namespace) -> None:
     # Initialize exchange class.
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load trading universe.
-    universe = imvccunun.get_trade_universe(args.universe)
+    universe = imvcounun.get_vendor_universe("CCXT", version=args.universe)
     # Load a list of currency pars.
-    currency_pairs = universe["CCXT"][args.exchange_id]
+    currency_pairs = universe[args.exchange_id]
     # Convert timestamps.
     end_timestamp = pd.Timestamp(args.end_timestamp)
     start_timestamp = pd.Timestamp(args.start_timestamp)
@@ -97,7 +97,9 @@ def _run(args: argparse.Namespace) -> None:
         # Sleep between iterations.
         time.sleep(args.sleep_time)
     # Merge all new parquet into a single `data.parquet`.
-    hparque.list_and_merge_pq_files(path_to_exchange, aws_profile=args.aws_profile)
+    hparque.list_and_merge_pq_files(
+        path_to_exchange, aws_profile=args.aws_profile
+    )
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

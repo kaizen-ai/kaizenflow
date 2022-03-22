@@ -363,6 +363,42 @@ class Order:
             + f"num_shares={self.num_shares}"
         )
 
+    def get_execution_price(self) -> float:
+        """
+        Get price that this order executes at.
+        """
+        price = self.get_price(
+            self._mi, self.type_, self.ts_start, self.ts_end, self.num_shares
+        )
+        return price
+
+    def is_mergeable(self, rhs: "Order") -> bool:
+        """
+        Return whether this order can be merged (i.e., internal crossed) with
+        `rhs`.
+        """
+        return (
+            (self.type_ == rhs.type_)
+            and (self.ts_start == rhs.ts_start)
+            and (self.ts_end == rhs.ts_end)
+        )
+
+    def merge(self, rhs: "Order") -> "Order":
+        """
+        Accumulate current order with `rhs` and return the merged order.
+        """
+        # Only orders for the same type / interval, with different num_shares can
+        # be merged.
+        hdbg.dassert(self.is_mergeable(rhs))
+        num_shares = self.num_shares + rhs.num_shares
+        order = Order(
+            self._mi, self.type_, self.ts_start, self.ts_end, num_shares
+        )
+        return order
+
+    def copy(self) -> "Order":
+        return copy.copy(self)
+
     @staticmethod
     def get_price(
         mi: MarketInterface,
@@ -417,42 +453,6 @@ class Order:
             price,
         )
         return price
-
-    def get_execution_price(self) -> float:
-        """
-        Get price that this order executes at.
-        """
-        price = self.get_price(
-            self._mi, self.type_, self.ts_start, self.ts_end, self.num_shares
-        )
-        return price
-
-    def is_mergeable(self, rhs: "Order") -> bool:
-        """
-        Return whether this order can be merged (i.e., internal crossed) with
-        `rhs`.
-        """
-        return (
-            (self.type_ == rhs.type_)
-            and (self.ts_start == rhs.ts_start)
-            and (self.ts_end == rhs.ts_end)
-        )
-
-    def merge(self, rhs: "Order") -> "Order":
-        """
-        Accumulate current order with `rhs` and return the merged order.
-        """
-        # Only orders for the same type / interval, with different num_shares can
-        # be merged.
-        hdbg.dassert(self.is_mergeable(rhs))
-        num_shares = self.num_shares + rhs.num_shares
-        order = Order(
-            self._mi, self.type_, self.ts_start, self.ts_end, num_shares
-        )
-        return order
-
-    def copy(self) -> "Order":
-        return copy.copy(self)
 
     @staticmethod
     def _get_price(

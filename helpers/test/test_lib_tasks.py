@@ -131,7 +131,6 @@ def _gh_login() -> None:
 
 
 class TestGhLogin1(hunitest.TestCase):
-
     def test_gh_login(self) -> None:
         _gh_login()
 
@@ -509,7 +508,6 @@ class TestLibTasks1(hunitest.TestCase):
 
 
 class TestLibTasksRemoveSpaces1(hunitest.TestCase):
-
     def test1(self) -> None:
         txt = r"""
             IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
@@ -569,6 +567,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             --entrypoint bash \
             app
         """
@@ -599,6 +598,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
                 --env-file devops/env/default.env \
                 run \
                 --rm \
+                --name $USER_NAME.amp_test.app.app \
                 app \
                 bash """
         self._check(act, exp)
@@ -633,6 +633,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             app \
             bash
         """
@@ -664,6 +665,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             --entrypoint bash \
             app
         """
@@ -696,6 +698,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             app \
             bash -c 'ls && cd ..'
         """
@@ -727,6 +730,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.jupyter_server_test.app \
             --service-ports \
             jupyter_server_test
         """
@@ -736,6 +740,10 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         act = hunitest.purify_txt_from_client(act)
         # This is required when different repos run Docker with user vs root / remap.
         act = hunitest.filter_text("--user", act)
+        # Remove current timestamp (e.g., `20220317_232120``) from the `--name` 
+        # so that the tests pass.
+        timestamp_regex = r"\.\d{8}_\d{6}"
+        act = re.sub(timestamp_regex, "", act)
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
@@ -743,7 +751,6 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
-
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
@@ -1032,18 +1039,6 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     Test `git_create_patch()`.
     """
 
-    @staticmethod
-    def helper(
-        modified: bool, branch: bool, last_commit: bool, files: str
-    ) -> None:
-        ctx = _build_mock_context_returning_ok()
-        #
-        mode = "tar"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
-        #
-        mode = "diff"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
-
     def test_tar_modified1(self) -> None:
         """
         Exercise the code for:
@@ -1137,6 +1132,18 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         Specify only one among --modified, --branch, --last-commit
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+    @staticmethod
+    def helper(
+        modified: bool, branch: bool, last_commit: bool, files: str
+    ) -> None:
+        ctx = _build_mock_context_returning_ok()
+        #
+        mode = "tar"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        #
+        mode = "diff"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
 
 # #############################################################################
@@ -1273,7 +1280,6 @@ core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuil
 
 
 class Test_find_check_string_output1(hunitest.TestCase):
-
     def test1(self) -> None:
         """
         Test `find_check_string_output()` by searching the `check_string` of
@@ -1583,7 +1589,6 @@ class Test_get_files_to_process1(hunitest.TestCase):
 
 
 class Test_pytest_repro1(hunitest.TestCase):
-  
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
         ctx = _build_mock_context_returning_ok()
         act = hlibtask.pytest_repro(
