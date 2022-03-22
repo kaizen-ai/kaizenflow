@@ -1987,16 +1987,15 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         )
         # Check if the dir was renamed.
         outcomes_path = os.path.join(test_path, "outcomes")
-        print("outcomes_path", outcomes_path)
         outcomes_dirs = os.listdir(outcomes_path)
-        print("outcomes_dirs", outcomes_dirs)
         directories = [
             ent
             for ent in outcomes_dirs
             if os.path.isdir(os.path.join(outcomes_path, ent))
         ]
-        print("directories", directories)
-        self.assertEqual(len(directories), 0)
+        self.assertEqual(directories[0], "goga")
+        self.assertEqual(directories[1], "goga")
+        self.assertEqual(directories[2], "goga")
         self.assertFalse("TestCase.test_check_string1" in directories)
         self.assertFalse("TestCase.test_rename" in directories)
         self.assertTrue("TestRenamedCase.test_check_string1" in directories)
