@@ -4444,7 +4444,7 @@ def _process_file(
 
 
 @task
-def pytest_rename_test(ctx, old_test_class_name: str, new_test_class_name: str):  # type: ignore
+def pytest_rename_test(ctx, old_test_class_name="", new_test_class_name=""):  # type: ignore
     """
     Rename the test and move its golden outcome.
 
