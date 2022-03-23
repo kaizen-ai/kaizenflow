@@ -534,7 +534,7 @@ def get_parquet_filters_from_timestamp_interval(
             [additional_filter] + and_filter for and_filter in or_and_filter
         ]
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
-    if not or_and_filter:
+    if len(or_and_filter) == 0:
         # Empty list is not acceptable value for pyarrow dataset.
         # Only logical expression or `None`.
         or_and_filter = None

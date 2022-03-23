@@ -153,7 +153,6 @@ class ImClient(abc.ABC):
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
         imvcdcfusy.dassert_valid_full_symbols(loaded_full_symbols)
-        # TODO(Nikola): Remove only warning?
         hdbg.dassert_set_eq(
             full_symbols,
             loaded_full_symbols,
