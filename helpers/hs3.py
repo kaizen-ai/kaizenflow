@@ -119,7 +119,7 @@ def split_path(s3_path: str) -> Tuple[str, str]:
 
 def get_local_or_s3_stream(
     file_name: str, **kwargs: Any
-) -> Tuple[Union[s3fs.core.S3File, str], Any]:
+) -> Tuple[Union[s3fs.core.S3FileSystem, str], Any]:
     """
     Gets S3 stream for desired file or simply returns file name.
 

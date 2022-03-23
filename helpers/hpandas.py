@@ -816,12 +816,12 @@ def convert_col_to_int(
 
 
 def read_csv_to_df(
-    stream: Union[str, s3fs.core.S3File], *args: Any, **kwargs: Any
+    stream: Union[str, s3fs.core.S3FileSystem], *args: Any, **kwargs: Any
 ) -> pd.DataFrame:
     """
     Read a CSV file into a `pd.DataFrame`.
     """
-    if isinstance(stream, str):
+    if isinstance(stream, (str, s3fs.core.S3FileSystem)):
         # Handle zipped files.
         if any(stream.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
             hdbg.dassert_not_in("compression", kwargs)
@@ -829,8 +829,6 @@ def read_csv_to_df(
         elif stream.endswith(".zip"):
             hdbg.dassert_not_in("compression", kwargs)
             kwargs["compression"] = "zip"
-    elif isinstance(stream, s3fs.core.S3File):
-        pass
     else:
         raise ValueError(f"Invalid stream='{stream}'")
     # Read.
@@ -840,7 +838,7 @@ def read_csv_to_df(
 
 
 def read_parquet_to_df(
-    stream: Union[str, s3fs.core.S3File], *args: Any, **kwargs: Any
+    stream: Union[str, s3fs.core.S3FileSystem], *args: Any, **kwargs: Any
 ) -> pd.DataFrame:
     """
     Read a Parquet file into a `pd.DataFrame`.
