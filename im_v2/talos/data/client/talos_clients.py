@@ -64,7 +64,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         self,
         root_dir: str,
         *,
-        version: str = "latest",
+        data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -72,12 +72,12 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
 
         :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://cryptokaizen-data/historical") to `Talos` data
-        :param version: version of the loaded data to use
+        :param data_snapshot: version of the loaded data to use
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__()
         self._root_dir = root_dir
-        self._version = version
+        self._data_snapshot = data_snapshot
         self._aws_profile = aws_profile
 
     @staticmethod
@@ -104,7 +104,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Get path to a dir with all the data for specified exchange id.
         exchange_dir_path = os.path.join(
-            self._root_dir, "talos", self._version, exchange_id
+            self._root_dir, "talos", self._data_snapshot, exchange_id
         )
         # Read raw crypto price data.
         _LOG.info(
@@ -167,14 +167,35 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         raise NotImplementedError
 
     @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_talos_normalization(
+        data: pd.DataFrame, full_symbol_col_name: str = "full_symbol"
+    ) -> pd.DataFrame:
         """
         Apply Talos-specific normalization:
 
-        - Convert `timestamp` column to a UTC timestamp and set index
+        - Convert `timestamp` column to a UTC timestamp and set index.
         - Drop extra columns (e.g. `id` created by the DB).
         """
-        raise NotImplementedError
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        data = data.set_index("timestamp")
+        # Specify OHLCV columns.
+        ohlcv_columns = [
+            # "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            full_symbol_col_name,
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data.loc[:, ohlcv_columns]
+        return data
 
     @staticmethod
     # TODO(Danya): Move up to hsql.
@@ -202,7 +223,35 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         full_symbol_col_name: str = "full_symbol",
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
-        raise NotImplementedError
+        """
+        Create a select query and load data from database.
+        """
+        # Parse symbols into exchange and currency pair.
+        parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
+        exchange_ids = [symbol[0] for symbol in parsed_symbols]
+        currency_pairs = [symbol[1] for symbol in parsed_symbols]
+        # Convert timestamps to epochs.
+        if start_ts:
+            start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+        else:
+            start_unix_epoch = start_ts
+        if end_ts:
+            end_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+        else:
+            end_unix_epoch = end_ts
+        # Read data from DB.
+        select_query = self._build_select_query(
+            exchange_ids, currency_pairs, start_unix_epoch, end_unix_epoch
+        )
+        data = hsql.execute_query_to_df(self._db_connection, select_query)
+        # Add a full symbol column.
+        data[full_symbol_col_name] = data[["exchange_id", "currency_pair"]].agg(
+            "::".join, axis=1
+        )
+        # Remove extra columns and create a timestamp index.
+        # TODO(Danya): The normalization may change depending on use of the class.
+        data = self._apply_talos_normalization(data, full_symbol_col_name)
+        return data
 
     def _build_select_query(
         self,
