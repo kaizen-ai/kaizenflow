@@ -715,4 +715,4 @@ class TestReadDataFromS3(hunitest.TestCase):
         )
         hs3.dassert_s3_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
-        hpandas.read_parquet_to_df(stream, s3fs=s3fs)
+        hpandas.read_parquet_to_df(stream, **kwargs)
