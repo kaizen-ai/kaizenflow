@@ -100,12 +100,14 @@ def parse_test_code(
             for test_method_name, test_method_code in methods_grouped:
                 if (
                     "self.check_string(" in test_method_code
+                    or "self.check_dataframe(" in test_method_code
                     or any(f"self.{n}(" in test_method_code for n in helper_names)
                 ) and not test_method_name.startswith("test"):
                     helper_names.add(test_method_name)
         for test_method_name, test_method_code in methods_grouped:
             if (
                 "self.check_string(" in test_method_code
+                or "self.check_dataframe(" in test_method_code
                 or any(f"self.{n}(" in test_method_code for n in helper_names)
             ) and test_method_name not in helper_names:
                 # Store non-helper methods with `check_string` calls or calls to
