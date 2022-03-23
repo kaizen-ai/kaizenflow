@@ -247,9 +247,10 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
             expected_end_ts,
         )
 
-    # #########################################################################
-    # RealTimeSqlTalosClient
-    # #########################################################################
+
+# #############################################################################
+# RealTimeSqlTalosClient
+# #############################################################################
 
 
 class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
@@ -261,7 +262,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
         """
         `start_unix_epoch` is not int type.
         """
-        talos_sql_client = self._setup_talos_sql_client()
+        talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ["binance"]
         currency_pair = ["AVAX_USDT"]
         start_unix_epoch = "unsupported_type"
@@ -275,7 +276,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
         """
         `end_unix_epoch` is not int type.
         """
-        talos_sql_client = self._setup_talos_sql_client()
+        talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ["binance"]
         currency_pair = ["AVAX_USDT"]
         start_unix_epoch = 1647470940000
@@ -289,7 +290,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
         """
         `exchange_ids` is not a list of strings.
         """
-        talos_sql_client = self._setup_talos_sql_client()
+        talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "unsupported_type"
         currency_pair = ["AVAX_USDT"]
         start_unix_epoch = 1647470940000
@@ -303,7 +304,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
         """
         `currency_pair` is not a list of strings.
         """
-        talos_sql_client = self._setup_talos_sql_client()
+        talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ["binance"]
         currency_pair = "unsupported_type"
         start_unix_epoch = 1647470940000
@@ -317,7 +318,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
         """
         Start unix epoch should is larger than end.
         """
-        talos_sql_client = self._setup_talos_sql_client()
+        talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ["binance"]
         currency_pair = ["AVAX_USDT"]
         start_unix_epoch = 1647471200000
@@ -327,7 +328,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
                 exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
             )
 
-    def _setup_talos_sql_client(
+    def setup_talos_sql_client(
         self,
     ) -> imvtdctacl.RealTimeSqlTalosClient:
         """

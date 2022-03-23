@@ -303,19 +303,19 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         # TODO(Danya): add a full symbol column to the output
         raise NotImplementedError
 
-    @staticmethod
-    def _build_select_query(
-        query: str,
-        exchange_id: str,
-        currency_pair: str,
-        start_unix_epoch: int,
-        end_unix_epoch: int,
-    ) -> str:
-        """
-        Append a WHERE clause to the query.
-        """
-        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
-        raise NotImplementedError
+    # @staticmethod
+    # def _build_select_query(
+    #    query: str,
+    #    exchange_id: str,
+    #    currency_pair: str,
+    #    start_unix_epoch: int,
+    #    end_unix_epoch: int,
+    # ) -> str:
+    #    """
+    #    Append a WHERE clause to the query.
+    ##    """
+    # TODO(Danya): Depending on the implementation, can be moved out to helpers.
+    #    raise NotImplementedError
 
     @staticmethod
     def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
