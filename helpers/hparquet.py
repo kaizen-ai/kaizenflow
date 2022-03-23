@@ -509,7 +509,7 @@ def get_parquet_filters_from_timestamp_interval(
             extra_filter = [("year", operator, timestamp.year)]
             or_and_filter.append(extra_filter)
         else:
-            # If there is no interval provided, empty list is returned.
+            # If there is no interval provided, leave empty `or_and_filter` as is.
             pass
     elif partition_mode == "by_year_week":
         # TODO(gp): Consider using the same approach above for months also here.
@@ -534,6 +534,10 @@ def get_parquet_filters_from_timestamp_interval(
             [additional_filter] + and_filter for and_filter in or_and_filter
         ]
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
+    if not or_and_filter:
+        # Empty list is not acceptable value for pyarrow dataset.
+        # Only logical expression or `None`.
+        or_and_filter = None
     return or_and_filter
 
 
