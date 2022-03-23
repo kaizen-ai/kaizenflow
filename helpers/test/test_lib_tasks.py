@@ -3,6 +3,7 @@
 
 import logging
 import os
+from pickletools import string1
 import re
 from typing import Dict, List
 
@@ -1899,7 +1900,7 @@ class TestPytestRenameClass(hunitest.TestCase):
     """
 
     @staticmethod
-    def helper(self) -> str:
+    def helper() -> str:
         """
         Create file content.
         """
@@ -1951,7 +1952,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
     """
 
     @staticmethod
-    def helper(self, toy_test) -> None:
+    def helper(toy_test: str) -> None:
         """
         Create the temporal outcome to rename.
 
@@ -2005,7 +2006,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         self.assertEqual(actual, expected)
         self._clean_up(toy_test)
 
-    def _clean_up(self, toy_test) -> None:
+    def _clean_up(self, toy_test: str) -> None:
         """
         Remove temporary test directory.
 
