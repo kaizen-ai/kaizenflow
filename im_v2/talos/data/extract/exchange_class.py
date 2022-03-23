@@ -17,6 +17,7 @@ import requests
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
+import im_v2.talos.utils as imvtut
 
 _LOG = logging.getLogger(__name__)
 
@@ -59,19 +60,6 @@ class TalosExchange:
         )
         return data_path
 
-    def timestamp_to_talos_iso_8601(self, timestamp: pd.Timestamp) -> str:
-        """
-        Transform Timestamp into a string in the format accepted by Talos API.
-
-        Example:
-        2019-10-20T15:00:00.000000Z
-
-        Note: microseconds must be included.
-        """
-        hdateti.dassert_is_tz_naive(timestamp)
-        timestamp_iso_8601 = timestamp.isoformat(timespec="microseconds") + "Z"
-        return timestamp_iso_8601  # type: ignore
-
     def build_talos_query_params(
         self,
         start_timestamp: pd.Timestamp,
@@ -94,9 +82,9 @@ class TalosExchange:
         :param limit: number of records to return in request response
         """
         params: Dict[str, Union[str, int]] = {}
-        start_date = self.timestamp_to_talos_iso_8601(start_timestamp)
+        start_date = imvtut.timestamp_to_talos_iso_8601(start_timestamp)
         params["startDate"] = start_date
-        end_date = self.timestamp_to_talos_iso_8601(end_timestamp)
+        end_date = imvtut.timestamp_to_talos_iso_8601(end_timestamp)
         params["endDate"] = end_date
         params["limit"] = limit
         return params
