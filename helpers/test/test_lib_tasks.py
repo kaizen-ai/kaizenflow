@@ -1898,6 +1898,7 @@ class TestPytestRenameClass(hunitest.TestCase):
     Test renaming functionality.
     """
 
+    @staticmethod
     def helper(self) -> str:
         """
         Create file content.
@@ -1949,6 +1950,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
     Test golden outcomes directory renaming.
     """
 
+    @staticmethod
     def helper(self, toy_test) -> None:
         """
         Create the temporal outcome to rename.
