@@ -2189,35 +2189,33 @@ def _get_container_name(service_name: str) -> str:
     return container_name
 
 
-def _get_docker_cmd(
+def _get_docker_base_cmd(
     base_image: str,
     stage: str,
     version: str,
-    cmd: str,
-    *,
-    extra_env_vars: Optional[List[str]] = None,
-    extra_docker_compose_files: Optional[List[str]] = None,
-    extra_docker_run_opts: Optional[List[str]] = None,
-    service_name: str = "app",
-    entrypoint: bool = True,
-    as_user: bool = True,
-    print_docker_config: bool = False,
-    use_bash: bool = False,
-) -> str:
+    extra_env_vars: Optional[List[str]],
+    extra_docker_compose_files: Optional[List[str]],
+) -> List[str]:
     """
-    :param base_image, stage, version: like in `get_image()`
-    :param cmd: command to run inside Docker container
-    :param as_user: pass the user / group id or not
+    Get base `docker-compose` command encoded as a list of strings.
+
+    It can be used as a base to build more complicated commands, e.g., `run`, `up`, `down`.
+
+    E.g.,
+    ```
+        ['IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
+            '\n        docker-compose',
+            '\n        --file amp/devops/compose/docker-compose.yml',
+            '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
+            '\n        --env-file devops/env/default.env']
+    ```
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
-    :param print_docker_config: print the docker config for debugging purposes
-    :param use_bash: run command through a shell
+    :param extra_docker_compose_files: `docker-compose` override files
     """
     hprint.log(
         _LOG,
         logging.DEBUG,
-        "stage base_image cmd extra_env_vars"
-        " extra_docker_compose_files extra_docker_run_opts"
-        " service_name entrypoint",
+        "base_image stage version extra_env_vars extra_docker_compose_files",
     )
     docker_cmd_: List[str] = []
     # - Handle the image.
@@ -2280,6 +2278,63 @@ def _get_docker_cmd(
     docker_cmd_.append(
         rf"""
         --env-file {env_file}"""
+    )
+    return docker_cmd_
+
+
+# TODO(Grisha): -> `_get_docker_run_cmd` CmTask #1486.
+def _get_docker_cmd(
+    base_image: str,
+    stage: str,
+    version: str,
+    cmd: str,
+    *,
+    extra_env_vars: Optional[List[str]] = None,
+    extra_docker_compose_files: Optional[List[str]] = None,
+    extra_docker_run_opts: Optional[List[str]] = None,
+    service_name: str = "app",
+    entrypoint: bool = True,
+    as_user: bool = True,
+    print_docker_config: bool = False,
+    use_bash: bool = False,
+) -> str:
+    """
+    Get `docker-compose` run command.
+
+    E.g., 
+    ```
+    IMAGE=*****..dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+        docker-compose \
+        --file /amp/devops/compose/docker-compose.yml \
+        --env-file devops/env/default.env \
+        run \
+        --rm \
+        --name grisha.cmamp.app.cmamp1.20220317_232120 \
+        --user $(id -u):$(id -g) \
+        app \
+        bash 
+    ```
+    :param cmd: command to run inside Docker container
+    :param extra_docker_run_opts: additional `docker-compose` run options
+    :param service_name: service to use to run a command
+    :param entrypoint: use whether to use `entrypoint` or not
+    :param as_user: pass the user / group id or not
+    :param print_docker_config: print the docker config for debugging purposes
+    :param use_bash: run command through a shell
+    """
+    hprint.log(
+        _LOG,
+        logging.DEBUG,
+        "cmd extra_docker_run_opts service_name "
+        "entrypoint as_user print_docker_config use_bash",
+    )
+    # - Get the base Docker command.
+    docker_cmd_ = _get_docker_base_cmd(
+        base_image,
+        stage,
+        version,
+        extra_env_vars,
+        extra_docker_compose_files,
     )
     # - Add the `config` command for debugging purposes.
     docker_config_cmd: List[str] = docker_cmd_[:]
@@ -4311,6 +4366,185 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
     # TODO(gp): Call vimdiff automatically.
     cmd = "vimdiff %s %s" % (dst_file_name1, dst_file_name2)
     print(f"> {cmd}")
+
+
+# #############################################################################
+
+
+def _get_test_directories(root_dir: str) -> List[str]:
+    """
+    Get all paths of the directories that contain unit tests.
+
+    :param root_dir: the dir to start the search from
+    :return: paths of test directories
+    """
+    paths = []
+    for path, _, _ in os.walk(root_dir):
+        # Iterate over the paths to find the test directories.
+        if path.endswith("/test"):
+            paths.append(path)
+    return paths
+
+
+def _rename_class(
+    content: str,
+    old_class_name: str,
+    new_class_name: str,
+) -> str:
+    """
+    Rename the class.
+
+    :param content: the content of the file
+    :param old_class_name: the old name of the target class
+    :param new_class_name: the new name of the target class
+    :return: the content of the file with the class name replaced
+    """
+    # Rename the class.
+    content = re.sub(
+        f"class {old_class_name}\(", f"class {new_class_name}(", content
+    )
+    return content
+
+
+def _rename_outcomes(
+    path: str,
+    old_class_name: str,
+    new_class_name: str,
+) -> None:
+    """
+    Rename the directory that contains test outcomes.
+
+    :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
+    :param old_class_name: the old name of the target class
+    :param new_class_name: the new name of the target class
+    """
+    outcomes_path = os.path.join(path, "outcomes")
+    dir_items = os.listdir(outcomes_path)
+    # Get the list of outcomes directories.
+    outcomes = [
+        dir_name
+        for dir_name in dir_items
+        if os.path.isdir(os.path.join(outcomes_path, dir_name))
+    ]
+    renamed = False
+    # Construct target dir name, e.g. `TestClassName.`. We need to add `.` to indicate the end of the class name.
+    target_dir = old_class_name + "."
+    for outcome_dir in outcomes:
+        # Contruct the path to outcomes directory.
+        outcome_path_old = os.path.join(outcomes_path, outcome_dir)
+        # Both old and new method names should belong to one class.
+        if outcome_dir.startswith(target_dir):
+            # Split old directory name - the part before "." is the class name.
+            class_method = outcome_dir.split(".")
+            # Replace old class name with the new one.
+            class_method[0] = new_class_name
+            outcome_name_new = ".".join(class_method)
+            outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
+        else:
+            continue
+        cmd = f"mv {outcome_path_old} {outcome_path_new}"
+        # Rename the directory.
+        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        _LOG.info(
+            "Renaming `%s` directory to `%s`. Output log: %s",
+            outcome_path_old,
+            outcome_path_new,
+            rc,
+        )
+        # Add to git new outcome directory and remove the old one.
+        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        renamed = True
+    if not renamed:
+        _LOG.info(
+            "No outcomes for `%s` were found in `%s`.",
+            old_class_name,
+            outcomes_path,
+        )
+
+
+def _rename_test_in_file(
+    test_dir: str,
+    file_path: str,
+    old_class_name: str,
+    new_class_name: str,
+) -> None:
+    """
+    Process the file:
+
+      - check if the content of the file contains target class
+      - change the class name
+      - rename the outcomes if they exist
+
+    :param test_dir: the path to the test directory containing the file
+    :param file_path: the path to the file
+    :param old_class_name: the old name of the class
+    :param new_class_name: the new name of the class
+    """
+    content = hio.from_file(file_path)
+    if not re.search(f"class {old_class_name}\(", content):
+        # Return if target test class does not appear in file content.
+        return
+    # Rename the class.
+    content = _rename_class(content, old_class_name, new_class_name)
+    _LOG.info(
+        "%s: class `%s` was renamed to `%s`.",
+        file_path,
+        old_class_name,
+        new_class_name,
+    )
+    # Rename the directories that contain target test outcomes.
+    _rename_outcomes(
+        test_dir,
+        old_class_name,
+        new_class_name,
+    )
+    # Write processed content back to file.
+    hio.to_file(file_path, content)
+
+
+@task
+def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
+    """
+    Rename the test and move its golden outcome.
+
+    E.g., to rename a test class and all the test methods:
+    > i pytest_rename_test TestCacheUpdateFunction1 TestCacheUpdateFunction_new
+
+    :param old_test_class_name: old class name
+    :param new_test_class_name: new class name
+    """
+    _report_task()
+    _ = ctx
+    root_dir = os.getcwd()
+    # Assert if the classname is invalid.
+    hdbg.dassert(
+        old_test_class_name.startswith("Test"),
+        "Invalid test_class_name='%s'",
+        old_test_class_name,
+    )
+    hdbg.dassert(
+        new_test_class_name.startswith("Test"),
+        "Invalid test_class_name='%s'",
+        new_test_class_name,
+    )
+    hdbg.dassert_ne(old_test_class_name, new_test_class_name)
+    test_directories = _get_test_directories(root_dir)
+    hdbg.dassert_lte(1, len(test_directories))
+    # Iterate over test directories.
+    for path in test_directories:
+        _LOG.debug("Scanning `%s` directory.", path)
+        search_pattern = os.path.join(path, "test_*.py")
+        # Get all python test files from this directory.
+        files = glob.glob(search_pattern)
+        #
+        for test_file in files:
+            _rename_test_in_file(
+                path,
+                test_file,
+                old_test_class_name,
+                new_test_class_name,
+            )
 
 
 # #############################################################################
