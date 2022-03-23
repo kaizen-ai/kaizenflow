@@ -14,8 +14,8 @@ from typing import Any, Dict, List, Optional
 import requests
 
 import helpers.hsecrets as hsecret
-import oms.broker as ombroker
 import im_v2.talos.utils as imvtut
+import oms.broker as ombroker
 import oms.oms_talos_utils as oomtauti
 
 _LOG = logging.getLogger(__name__)

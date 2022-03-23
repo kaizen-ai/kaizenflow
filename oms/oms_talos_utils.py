@@ -4,7 +4,6 @@ Import as:
 import oms.oms_talos_utils as oomtauti
 """
 import base64
-import datetime
 import hashlib
 import hmac
 import logging
@@ -64,4 +63,3 @@ def get_order_id() -> str:
     Get an order ID in UUID4 format.
     """
     return str(uuid.uuid4())
-

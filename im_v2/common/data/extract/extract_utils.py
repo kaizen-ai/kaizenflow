@@ -156,7 +156,7 @@ def download_historical_data(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
     """
-    Helper function for encapsulating common logic for downloading 
+    Helper function for encapsulating common logic for downloading
     historical exchange data.
 
     :param args: arguments passed on script run

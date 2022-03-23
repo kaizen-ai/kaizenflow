@@ -59,6 +59,7 @@ def _get_universe_file_path(vendor: str, *, version: Optional[str] = None) -> st
     hdbg.dassert_exists(file_path)
     return file_path
 
+
 def _get_trade_universe(
     vendor: str,
     *,
@@ -90,12 +91,14 @@ def _get_trade_universe(
     file_path = _get_universe_file_path(vendor, version=version)
     hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
-    return universe # type: ignore[no-any-return]
+    return universe  # type: ignore[no-any-return]
+
 
 def get_vendor_universe(
-    vendor: str, *, version: Optional[str] = None, as_full_symbol: bool = False) -> Union[List[icdc.FullSymbol], Dict[str, Dict[str, List[str]]]]:
+    vendor: str, *, version: Optional[str] = None, as_full_symbol: bool = False
+) -> Union[List[icdc.FullSymbol], Dict[str, Dict[str, List[str]]]]:
     """
-    Load vendor universe either as a list of 
+    Load vendor universe either as a list of
     currency pairs per each vendor or list of full symbols.
 
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
@@ -119,7 +122,7 @@ def get_vendor_universe(
         }
         or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
-    vendor_universe =  _get_trade_universe(vendor, version=version)
+    vendor_universe = _get_trade_universe(vendor, version=version)
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.
         vendor_universe = [
