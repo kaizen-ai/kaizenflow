@@ -144,6 +144,13 @@ def get_local_or_s3_stream(
             _ = kwargs.pop("s3fs")
         hdbg.dassert_file_exists(file_name)
         stream = file_name
+    # Handle zipped files.
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "gzip"
+    elif file_name.endswith(".zip"):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "zip"
     return stream, kwargs
 
 

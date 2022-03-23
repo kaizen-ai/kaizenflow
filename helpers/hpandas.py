@@ -823,18 +823,6 @@ def read_csv_to_df(
     """
     Read a CSV file into a `pd.DataFrame`.
     """
-    if isinstance(stream, (str, s3fs.core.S3FileSystem)):
-        # Handle zipped files.
-        if any(stream.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
-            hdbg.dassert_not_in("compression", kwargs)
-            kwargs["compression"] = "gzip"
-        elif stream.endswith(".zip"):
-            hdbg.dassert_not_in("compression", kwargs)
-            kwargs["compression"] = "zip"
-    elif isinstance(stream, s3fs.core.S3File):
-        pass
-    else:
-        raise ValueError(f"Invalid stream='{stream}'")
     # Read.
     _LOG.debug(hprint.to_str("args kwargs"))
     df = pd.read_csv(stream, *args, **kwargs)
