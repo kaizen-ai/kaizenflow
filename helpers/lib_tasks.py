@@ -4429,7 +4429,7 @@ def _rename_test_in_file(
     content = hio.from_file(file_path)
     if not re.search(f"class {old_class_name}\(", content):
         # Return if target test class does not appear in file content.
-        return 
+        return
     # Rename the class.
     content = _rename_class(content, old_class_name, new_class_name)
     _LOG.info(

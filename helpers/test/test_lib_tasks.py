@@ -1915,7 +1915,6 @@ class TestCases(hunitest.TestCase):
         """
         return content
 
-
     def test_rename_class1(self) -> None:
         """
         Test renaming of existing class.
@@ -1956,17 +1955,18 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
 
         :param toy_test: the name of the toy directory
         """
-        outcomes_paths =['TestCase.test_check_string1',
-            'TestCase.test_rename',
-            'TestCases.test_rename2',
-            'TestRename.test_rename1']
+        outcomes_paths = [
+            "TestCase.test_check_string1",
+            "TestCase.test_rename",
+            "TestCases.test_rename2",
+            "TestRename.test_rename1",
+        ]
         for path in outcomes_paths:
             outcomes = os.path.join(toy_test, "test/outcomes", path)
             os.makedirs(outcomes)
             hio.to_file(f"{outcomes}/test.txt", "Test files.")
         cmd = f"git add {toy_test}/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-
 
     def test_rename_class_outcomes(self) -> None:
         """
@@ -1987,18 +1987,21 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         # Check if the dirs were renamed.
         outcomes_path = os.path.join(test_path, "outcomes")
         outcomes_dirs = os.listdir(outcomes_path)
-        actual = sorted([
-            ent
-            for ent in outcomes_dirs
-            if os.path.isdir(os.path.join(outcomes_path, ent))
-        ])
-        expected =['TestRenamedCase.test_check_string1',
-            'TestRenamedCase.test_rename',
-            'TestCases.test_rename2',
-            'TestRename.test_rename1']
+        actual = sorted(
+            [
+                ent
+                for ent in outcomes_dirs
+                if os.path.isdir(os.path.join(outcomes_path, ent))
+            ]
+        )
+        expected = [
+            "TestCases.test_rename2",
+            "TestRename.test_rename1",
+            "TestRenamedCase.test_check_string1",
+            "TestRenamedCase.test_rename",
+        ]
         self.assertEqual(actual, expected)
         self._clean_up(toy_test)
-
 
     def _clean_up(self, toy_test) -> None:
         """
