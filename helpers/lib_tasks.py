@@ -4371,8 +4371,8 @@ def _rename_outcomes(
         for dir_name in dir_items
         if os.path.isdir(os.path.join(outcomes_path, dir_name))
     ]
-    # Construct target dir name, e.g. `TestClassName.test2`.
     renamed = False
+    # Construct target dir name, e.g. `TestClassName.`. We need to add `.` to indicate the end of the class name.
     target_dir = old_class_name + "."
     for outcome_dir in outcomes:
         # Contruct the path to outcomes directory.
@@ -4388,6 +4388,7 @@ def _rename_outcomes(
         else:
             continue
         cmd = f"mv {outcome_path_old} {outcome_path_new}"
+        # Rename the directory.
         rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
         _LOG.info(
             "Renaming `%s` directory to `%s`. Output log: %s",
@@ -4395,6 +4396,7 @@ def _rename_outcomes(
             outcome_path_new,
             rc,
         )
+        # Add to git new outcome directory and remove the old one.
         cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
         renamed = True
@@ -4406,7 +4408,7 @@ def _rename_outcomes(
         )
 
 
-def _process_file(
+def _rename_test_in_file(
     test_dir: str,
     file_path: str,
     old_class_name: str,
@@ -4431,7 +4433,10 @@ def _process_file(
     # Rename the class.
     content = _rename_class(content, old_class_name, new_class_name)
     _LOG.info(
-        f"{file_path}: class `{old_class_name}` was renamed to {new_class_name}."
+        "%s: class `%s` was renamed to `%s`.",
+        file_path,
+        old_class_name,
+        new_class_name,
     )
     # Rename the directories that contain target test outcomes.
     _rename_outcomes(
@@ -4470,20 +4475,16 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     )
     hdbg.dassert_ne(old_test_class_name, new_test_class_name)
     test_directories = _get_test_directories(root_dir)
-    hdbg.dassert(
-        len(test_directories) >= 1,
-        "No unit tests outcomes found in '%s'",
-        root_dir,
-    )
+    hdbg.dassert_lte(1, len(test_directories))
     # Iterate over test directories.
     for path in test_directories:
-        _LOG.debug(f"Scanning `{path}` directory.")
+        _LOG.debug("Scanning `%s` directory.", path)
         search_pattern = os.path.join(path, "test_*.py")
         # Get all python test files from this directory.
         files = glob.glob(search_pattern)
         #
         for test_file in files:
-            _process_file(
+            _rename_test_in_file(
                 path,
                 test_file,
                 old_test_class_name,
