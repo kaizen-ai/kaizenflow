@@ -41,7 +41,8 @@ file_name = (
 )
 s3fs = hs3.get_s3fs("am")
 print("file_name=%s" % file_name)
-symbols = hpandas.read_csv_to_df(file_name, s3fs=s3fs, sep="\t")
+stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
+symbols = hpandas.read_csv_to_df(stream, sep="\t", **kwargs)
 
 print(len(symbols))
 

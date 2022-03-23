@@ -66,11 +66,12 @@ class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
         Read data from S3 and cache it.
         """
         s3fs = hs3.get_s3fs("am")
+        stream, kwargs = hs3.get_local_or_s3_stream(file_path, s3fs=s3fs)
         data = hpandas.read_csv_to_df(
-            file_path,
-            s3fs=s3fs,
+            stream,
             header=None,
             nrows=nrows,
+            **kwargs,
         )
         data = KibotS3DataLoader._filter_by_dates(
             data, frequency=frequency, start_ts=start_ts, end_ts=end_ts

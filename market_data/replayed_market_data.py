@@ -200,7 +200,8 @@ def load_market_data(
         s3fs_ = hs3.get_s3fs(aws_profile)
         kwargs_tmp["s3fs"] = s3fs_
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
-    df = hpandas.read_csv_to_df(file_name, **kwargs)
+    stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
+    df = hpandas.read_csv_to_df(stream, **kwargs)
     for col_name in ("start_time", "end_time", "timestamp_db"):
         if col_name in df.columns:
             df[col_name] = pd.to_datetime(df[col_name], utc=True)

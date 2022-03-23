@@ -54,8 +54,9 @@ class IbSymbolUniverse(imcomesym.SymbolUniverse):
             kwargs = {"s3fs": s3fs}
         else:
             kwargs = {}
+        stream, kwargs = hs3.get_local_or_s3_stream(symbols_file, **kwargs)
         df = hpandas.read_csv_to_df(
-            symbols_file,
+            stream,
             sep="\t",
             keep_default_na=False,
             na_values=["_"],

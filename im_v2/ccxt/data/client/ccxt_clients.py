@@ -283,6 +283,7 @@ class CcxtCddCsvParquetByAssetClient(
         if self._vendor == "CDD":
             # For `CDD` column names are in the 1st row.
             kwargs["skiprows"] = 1
+        # TODO(Nikola): parquet?
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
@@ -298,9 +299,11 @@ class CcxtCddCsvParquetByAssetClient(
                 # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
             # Load data.
-            data = hpandas.read_parquet_to_df(file_path, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            data = hpandas.read_parquet_to_df(stream, **kwargs)
         elif self._extension in ["csv", "csv.gz"]:
-            data = hpandas.read_csv_to_df(file_path, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            data = hpandas.read_csv_to_df(stream, **kwargs)
             # Filter by dates if specified.
             if start_ts:
                 start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)

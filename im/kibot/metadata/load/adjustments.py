@@ -22,5 +22,6 @@ class AdjustmentsLoader:
         )
         sep = "\t"
         s3fs = hs3.get_s3fs("am")
-        df = hpandas.read_csv_to_df(s3_path, s3fs=s3fs, sep=sep)
+        stream, kwargs = hs3.get_local_or_s3_stream(s3_path, s3fs=s3fs)
+        df = hpandas.read_csv_to_df(stream, sep=sep, **kwargs)
         return [imkimetyp.Adjustment(*row) for row in df.values.tolist()]

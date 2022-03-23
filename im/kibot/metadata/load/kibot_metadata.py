@@ -554,7 +554,8 @@ class FuturesContractLifetimes:
                 kwargs = {"s3fs": s3fs}
             else:
                 kwargs = {}
-            df = hpandas.read_csv_to_df(file_name, index_col=0, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
+            df = hpandas.read_csv_to_df(stream, index_col=0, **kwargs)
             hdbg.dassert_eq(
                 df.columns.tolist(),
                 ["symbol", "contract", "start_date", "end_date"],

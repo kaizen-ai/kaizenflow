@@ -144,7 +144,8 @@ def load_data_from_disk(
         raise ValueError("Invalid file extension='%s'" % ext)
     # Read the data.
     _LOG.debug("filepath=%s kwargs=%s", file_path, str(kwargs))
-    df = read_data(file_path, **kwargs)
+    stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+    df = read_data(stream, **kwargs)
     # Process the data.
     # Use the specified timestamp column as index, if needed.
     if timestamp_col is not None:

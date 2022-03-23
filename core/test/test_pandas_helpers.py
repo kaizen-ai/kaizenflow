@@ -1,14 +1,11 @@
 import io
 import logging
-import os
 
 import numpy as np
 import pandas as pd
 
 import core.pandas_helpers as cpanh
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -155,25 +152,3 @@ class TestDfRollingApply(hunitest.TestCase):
         )
         #
         self.check_string(df_act.to_string())
-
-
-# #############################################################################
-
-
-class TestReadDataFromS3(hunitest.TestCase):
-
-    def test_read_csv1(self) -> None:
-        s3fs = hs3.get_s3fs("am")
-        file_name = os.path.join(
-            hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
-        )
-        hs3.dassert_s3_exists(file_name, s3fs)
-        hpandas.read_csv_to_df(file_name, s3fs=s3fs)
-
-    def test_read_parquet1(self) -> None:
-        s3fs = hs3.get_s3fs("am")
-        file_name = os.path.join(
-            hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
-        )
-        hs3.dassert_s3_exists(file_name, s3fs)
-        hpandas.read_parquet_to_df(file_name, s3fs=s3fs)

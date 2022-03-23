@@ -39,8 +39,9 @@ class S3Backend:
         file_name = os.path.join(imkimecon.S3_PREFIX, "kibot_to_exchange.csv")
         hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         kibot_to_cme_mapping = hpandas.read_csv_to_df(
-            file_name, s3fs=s3fs, index_col="Kibot_symbol"
+            stream, index_col="Kibot_symbol", **kwargs
         )
         return kibot_to_cme_mapping
 
@@ -105,12 +106,13 @@ class S3Backend:
         )
         _LOG.debug("file_name=%s", file_name)
         s3fs = hs3.get_s3fs("am")
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         df = hpandas.read_csv_to_df(
-            file_name,
-            s3fs=s3fs,
+            stream,
             index_col=0,
             nrows=self._max_rows,
             encoding="utf-8",
+            **kwargs,
         )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
@@ -140,8 +142,9 @@ class S3Backend:
         hs3.dassert_is_s3_path(file_name)
         _LOG.debug("file_name=%s", file_name)
         s3fs = hs3.get_s3fs("am")
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         df = hpandas.read_csv_to_df(
-            file_name, s3fs=s3fs, index_col=0, nrows=self._max_rows
+            stream, index_col=0, nrows=self._max_rows, **kwargs
         )
         df = df.iloc[:, 1:]
         _LOG.debug("df=\n%s", df.head(3))
@@ -173,14 +176,15 @@ class S3Backend:
         _LOG.debug("file_name=%s", file_name)
         hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         df = hpandas.read_csv_to_df(
-            file_name,
-            s3fs=s3fs,
+            stream,
             index_col=0,
             skiprows=5,
             header=None,
             sep="\t",
             nrows=self._max_rows,
+            **kwargs,
         )
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
@@ -222,14 +226,15 @@ class S3Backend:
         _LOG.debug("file_name=%s", file_name)
         hs3.dassert_is_s3_path(file_name)
         s3fs = hs3.get_s3fs("am")
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         df = hpandas.read_csv_to_df(
-            file_name,
-            s3fs=s3fs,
+            stream,
             index_col=0,
             skiprows=5,
             header=None,
             sep="\t",
             nrows=self._max_rows,
+            **kwargs,
         )
         df.columns = (
             "SymbolBase Symbol StartDate Size(MB) Description Exchange".split()
