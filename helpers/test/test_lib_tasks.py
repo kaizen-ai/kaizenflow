@@ -1898,11 +1898,29 @@ class TestPytestRenameClass(hunitest.TestCase):
     Test renaming functionality.
     """
 
+    def helper(self) -> str:
+        """
+        Create file content.
+        """
+        content = """
+class TestCases(hunitest.TestCase):
+    def test_assert_equal1(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        return content
+
+
     def test_rename_class1(self) -> None:
         """
         Test renaming of existing class.
         """
-        content = self._helper()
+        content = self.helper()
         actual = hlibtask._rename_class(content, "TestCases", "TestNewCase")
         expected = """
 class TestNewCase(hunitest.TestCase):
@@ -1921,27 +1939,10 @@ class TestNewCase(hunitest.TestCase):
         """
         Test renaming of non existing class.
         """
-        content = self._helper()
+        content = self.helper()
         actual = hlibtask._rename_class(content, "TestCase", "TestNewCase")
         # Check if the content was not changed.
         self.assert_equal(actual, content)
-
-    def _helper(self) -> str:
-        """
-        Create file content.
-        """
-        content = """
-class TestCases(hunitest.TestCase):
-    def test_assert_equal1(self) -> None:
-        actual = "hello world"
-        expected = actual
-        self.assert_equal(actual, expected)
-
-    def test_check_string1(self) -> None:
-        actual = "hello world"
-        self.check_string(actual)
-        """
-        return content
 
 
 class TestPytestRenameOutcomes(hunitest.TestCase):
@@ -1949,14 +1950,33 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
     Test golden outcomes directory renaming.
     """
 
+    def helper(self, toy_test) -> None:
+        """
+        Create the temporal outcome to rename.
+
+        :param toy_test: the name of the toy directory
+        """
+        outcomes_paths =['TestCase.test_check_string1',
+            'TestCase.test_rename',
+            'TestCases.test_rename2',
+            'TestRename.test_rename1']
+        for path in outcomes_paths:
+            outcomes = os.path.join(toy_test, "test/outcomes", path)
+            os.makedirs(outcomes)
+            hio.to_file(f"{outcomes}/test.txt", "Test files.")
+        cmd = f"git add {toy_test}/"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+
+
     def test_rename_class_outcomes(self) -> None:
         """
         Rename outcome directory.
         """
+        toy_test = "toyCmTask1279"
         # Create outcomes directory.
-        test_path = "/toy/test"
+        test_path = os.path.join(toy_test, "test")
         # Create the toy outcomes.
-        self._helper(test_path)
+        self.helper(toy_test)
         old_class_name = "TestCase"
         new_class_name = "TestRenamedCase"
         hlibtask._rename_outcomes(
@@ -1966,47 +1986,25 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         )
         # Check if the dirs were renamed.
         outcomes_path = os.path.join(test_path, "outcomes")
-        _LOG.warning(outcomes_path)
         outcomes_dirs = os.listdir(outcomes_path)
-        _LOG.warning(outcomes_dirs)
-        directories = [
+        actual = sorted([
             ent
             for ent in outcomes_dirs
             if os.path.isdir(os.path.join(outcomes_path, ent))
-        ]
-        self.assertEqual(len(directories), 3)
-        # Check if outcome directory does not contain old test names.
-        self.assertFalse("TestCase.test_check_string1" in directories)
-        self.assertFalse("TestCase.test_rename" in directories)
-        # Check if outcome directory contains new test names.
-        self.assertTrue("TestRenamedCase.test_check_string1" in directories)
-        self.assertTrue("TestRenamedCase.test_rename" in directories)
-        # Check if other directory is untouched.
-        self.assertTrue("TestRename.test_rename1" in directories)
-        self._clean_up()
+        ])
+        expected =['TestRenamedCase.test_check_string1',
+            'TestRenamedCase.test_rename',
+            'TestCases.test_rename2',
+            'TestRename.test_rename1']
+        self.assertEqual(actual, expected)
+        self._clean_up(toy_test)
 
-    def _helper(self, test_path) -> None:
-        """
-        Create the temporal outcome to rename.
 
-        :param test_path: the toy path to the test dir
+    def _clean_up(self, toy_test) -> None:
         """
-        outcomes_paths = [
-            "TestCase.test_check_string1",
-            "TestCase.test_rename",
-            "TestRename.test_rename1",
-        ]
-        for path in outcomes_paths:
-            outcomes = os.path.join(test_path, "outcomes", path)
-            os.makedirs(outcomes)
-            hio.to_file(f"{outcomes}/test.txt", "Test files.")
-        cmd = "git add toy/"
-        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-        _LOG.warning(rc)
+        Remove temporary test directory.
 
-    def _clean_up(self) -> None:
+        :param toy_test: the name of the toy directory
         """
-        Remove temporal test directory.
-        """
-        cmd = "git reset toy/ && rm -rf toy/"
+        cmd = f"git reset {toy_test}/ && rm -rf {toy_test}/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)

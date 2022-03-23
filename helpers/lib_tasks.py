@@ -4402,7 +4402,7 @@ def _rename_outcomes(
         renamed = True
     if not renamed:
         _LOG.info(
-            "No outcomes for `%s` were not found in `%s`.",
+            "No outcomes for `%s` were found in `%s`.",
             old_class_name,
             outcomes_path,
         )
@@ -4429,7 +4429,7 @@ def _rename_test_in_file(
     content = hio.from_file(file_path)
     if not re.search(f"class {old_class_name}\(", content):
         # Return if target test class does not appear in file content.
-        return None
+        return 
     # Rename the class.
     content = _rename_class(content, old_class_name, new_class_name)
     _LOG.info(
@@ -4454,10 +4454,10 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     Rename the test and move its golden outcome.
 
     E.g., to rename a test class and all the test methods:
-    > i pytest_rename_test --old TestCacheUpdateFunction1 --new TestCacheUpdateFunction_new
+    > i pytest_rename_test TestCacheUpdateFunction1 TestCacheUpdateFunction_new
 
-    :param old_test_class_name: old name
-    :param new_test_class_name: new name
+    :param old_test_class_name: old class name
+    :param new_test_class_name: new class name
     """
     _report_task()
     _ = ctx
