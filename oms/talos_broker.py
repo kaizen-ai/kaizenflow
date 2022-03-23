@@ -15,6 +15,7 @@ import requests
 
 import helpers.hsecrets as hsecret
 import oms.broker as ombroker
+import im_v2.talos.utils as imvtut
 import oms.oms_talos_utils as oomtauti
 
 _LOG = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class TalosBroker(ombroker.AbstractBroker):
         Submit and log multiple orders given by the model.
         """
         # TODO(Danya): Merge with `market_data` wall clock time
-        wall_clock_timestamp = oomtauti.get_talos_current_utc_timestamp()
+        wall_clock_timestamp = imvtut.get_talos_current_utc_timestamp()
         _LOG.debug("Submitting %d orders", len(orders))
         for order in orders:
             _LOG.debug("Submitting order %s", order["ClOrdID"])
@@ -57,7 +58,7 @@ class TalosBroker(ombroker.AbstractBroker):
         Example of order data:
         """
         # TODO(Danya): Add specific order data.
-        wall_clock_time = oomtauti.get_talos_current_utc_timestamp()
+        wall_clock_time = imvtut.get_talos_current_utc_timestamp()
         query = {
             "StartDate": start_timestamp,
             "EndDate": end_timestamp,
@@ -119,7 +120,7 @@ class TalosBroker(ombroker.AbstractBroker):
         for order_id in order_ids:
             # Imitation of script input parameters.
             # Common elements of both GET and POST requests.
-            utc_datetime = oomtauti.get_talos_current_utc_timestamp()
+            utc_datetime = imvtut.get_talos_current_utc_timestamp()
             parts = [
                 "GET",
                 utc_datetime,

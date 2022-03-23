@@ -17,7 +17,7 @@ def timestamp_to_talos_iso_8601(timestamp: pd.Timestamp) -> str:
     Example:
     2019-10-20T15:00:00+00:00 -> 2019-10-20T15:00:00.000000Z
 
-    :param timestampt: specify if this instance should call the 'sandbox'
+    :param timestamp: specify if this instance should call the 'sandbox'
           or 'prod' API
     """
     # Talos operates strictly with UTC timestamps.
@@ -25,4 +25,13 @@ def timestamp_to_talos_iso_8601(timestamp: pd.Timestamp) -> str:
     timestamp_iso_8601 = timestamp.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
     return timestamp_iso_8601  # type: ignore
 
+def get_talos_current_utc_timestamp() -> str:
+    """
+    Return the current UTC timestamp in Talos-acceptable format.
 
+    Example: 2019-10-20T15:00:00.000000Z
+    """
+    utc_datetime = datetime.datetime.utcnow().strftime(
+        "%Y-%m-%dT%H:%M:%S.000000Z"
+    )
+    return utc_datetime
