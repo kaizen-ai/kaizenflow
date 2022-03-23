@@ -1941,7 +1941,7 @@ class TestNewCase(hunitest.TestCase):
         """
         content = self.helper()
         actual = hlibtask._rename_class(content, "TestCase", "TestNewCase")
-        # Check if the content was not changed.
+        # Check if the content of the file was not changed.
         self.assert_equal(actual, content)
 
 
