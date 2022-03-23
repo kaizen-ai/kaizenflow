@@ -2189,35 +2189,33 @@ def _get_container_name(service_name: str) -> str:
     return container_name
 
 
-def _get_docker_cmd(
+def _get_docker_base_cmd(
     base_image: str,
     stage: str,
     version: str,
-    cmd: str,
-    *,
-    extra_env_vars: Optional[List[str]] = None,
-    extra_docker_compose_files: Optional[List[str]] = None,
-    extra_docker_run_opts: Optional[List[str]] = None,
-    service_name: str = "app",
-    entrypoint: bool = True,
-    as_user: bool = True,
-    print_docker_config: bool = False,
-    use_bash: bool = False,
-) -> str:
+    extra_env_vars: Optional[List[str]],
+    extra_docker_compose_files: Optional[List[str]],
+) -> List[str]:
     """
-    :param base_image, stage, version: like in `get_image()`
-    :param cmd: command to run inside Docker container
-    :param as_user: pass the user / group id or not
+    Get base `docker-compose` command encoded as a list of strings.
+
+    It can be used as a base to build more complicated commands, e.g., `run`, `up`, `down`.
+
+    E.g.,
+    ```
+        ['IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
+            '\n        docker-compose',
+            '\n        --file amp/devops/compose/docker-compose.yml',
+            '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
+            '\n        --env-file devops/env/default.env']
+    ```
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
-    :param print_docker_config: print the docker config for debugging purposes
-    :param use_bash: run command through a shell
+    :param extra_docker_compose_files: `docker-compose` override files
     """
     hprint.log(
         _LOG,
         logging.DEBUG,
-        "stage base_image cmd extra_env_vars"
-        " extra_docker_compose_files extra_docker_run_opts"
-        " service_name entrypoint",
+        "base_image stage version extra_env_vars extra_docker_compose_files",
     )
     docker_cmd_: List[str] = []
     # - Handle the image.
@@ -2280,6 +2278,63 @@ def _get_docker_cmd(
     docker_cmd_.append(
         rf"""
         --env-file {env_file}"""
+    )
+    return docker_cmd_
+
+
+# TODO(Grisha): -> `_get_docker_run_cmd` CmTask #1486.
+def _get_docker_cmd(
+    base_image: str,
+    stage: str,
+    version: str,
+    cmd: str,
+    *,
+    extra_env_vars: Optional[List[str]] = None,
+    extra_docker_compose_files: Optional[List[str]] = None,
+    extra_docker_run_opts: Optional[List[str]] = None,
+    service_name: str = "app",
+    entrypoint: bool = True,
+    as_user: bool = True,
+    print_docker_config: bool = False,
+    use_bash: bool = False,
+) -> str:
+    """
+    Get `docker-compose` run command.
+
+    E.g., 
+    ```
+    IMAGE=*****..dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+        docker-compose \
+        --file /amp/devops/compose/docker-compose.yml \
+        --env-file devops/env/default.env \
+        run \
+        --rm \
+        --name grisha.cmamp.app.cmamp1.20220317_232120 \
+        --user $(id -u):$(id -g) \
+        app \
+        bash 
+    ```
+    :param cmd: command to run inside Docker container
+    :param extra_docker_run_opts: additional `docker-compose` run options
+    :param service_name: service to use to run a command
+    :param entrypoint: use whether to use `entrypoint` or not
+    :param as_user: pass the user / group id or not
+    :param print_docker_config: print the docker config for debugging purposes
+    :param use_bash: run command through a shell
+    """
+    hprint.log(
+        _LOG,
+        logging.DEBUG,
+        "cmd extra_docker_run_opts service_name "
+        "entrypoint as_user print_docker_config use_bash",
+    )
+    # - Get the base Docker command.
+    docker_cmd_ = _get_docker_base_cmd(
+        base_image,
+        stage,
+        version,
+        extra_env_vars,
+        extra_docker_compose_files,
     )
     # - Add the `config` command for debugging purposes.
     docker_config_cmd: List[str] = docker_cmd_[:]
