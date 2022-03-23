@@ -207,7 +207,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
-        im_client = imvcdcccex.get_CcxtCsvClient_example1()
+        im_client = imvcdcccex.get_CcxtCsvClient_example3()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 174
@@ -496,7 +496,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
-        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1()
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example2()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 174
@@ -603,10 +603,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
@@ -646,10 +647,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -693,10 +695,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -739,10 +742,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -784,10 +788,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -825,10 +830,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data6(self) -> None:
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
@@ -840,10 +846,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        resample_1min = False
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -887,10 +894,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
@@ -907,10 +915,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         full_symbol = "binance::BTC_USDT"
@@ -922,10 +931,11 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_universe1(self) -> None:
+        resample_1min = True
         vendor = "CCXT"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, self.connection
+                resample_1min, vendor, self.connection
             )
         )
         expected_length = 38

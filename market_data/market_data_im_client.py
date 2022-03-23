@@ -103,10 +103,8 @@ class ImClientMarketData(mdabmada.MarketData):
             )
         # Load the data using `im_client`.
         icdc.dassert_valid_full_symbols(full_symbols)
-        resample_1min = True
         market_data = self._im_client.read_data(
             full_symbols,
-            resample_1min,
             start_ts,
             end_ts,
         )

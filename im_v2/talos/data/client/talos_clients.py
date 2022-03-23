@@ -33,11 +33,10 @@ class TalosClient(icdc.ImClient, abc.ABC):
     - getting `Talos` universe
     """
 
-    def __init__(self) -> None:
+    def __init__(self, resample_1min: bool) -> None:
         """
         Constructor.
         """
-        resample_1min = True
         vendor = "talos"
         super().__init__(resample_1min, vendor)
 
@@ -63,6 +62,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
 
     def __init__(
         self,
+        resample_1min: bool,
         root_dir: str,
         *,
         data_snapshot: str = "latest",
@@ -76,7 +76,7 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
         :param data_snapshot: version of the loaded data to use
         :param aws_profile: AWS profile name (e.g., "ck")
         """
-        super().__init__()
+        super().__init__(resample_1min)
         self._root_dir = root_dir
         self._data_snapshot = data_snapshot
         self._aws_profile = aws_profile

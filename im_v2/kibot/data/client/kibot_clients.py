@@ -36,11 +36,10 @@ class KibotClient(icdc.ImClient):
     we do not forget about it.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, resample_1min: bool) -> None:
         """
         Constructor.
         """
-        resample_1min = True
         vendor = "kibot"
         super().__init__(resample_1min, vendor)
 
@@ -131,6 +130,7 @@ class KibotEquitiesCsvParquetByAssetClient(
 
     def __init__(
         self,
+        resample_1min: bool,
         root_dir: str,
         extension: str,
         asset_class: str,
@@ -141,6 +141,7 @@ class KibotEquitiesCsvParquetByAssetClient(
         """
         Constructor.
 
+        :param resample_1min: allows to control resampling
         :param root_dir: either a local root path (e.g., "/app/im") or an S3
             root path (e.g., "s3://alphamatic-data/data") to `Kibot` equity data
         :param extension: file extension, e.g., `csv`, `csv.gz` or `parquet`
@@ -149,7 +150,7 @@ class KibotEquitiesCsvParquetByAssetClient(
             required for all asset classes except for "forex"
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        super().__init__()
+        super().__init__(resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -316,6 +317,7 @@ class KibotFuturesCsvParquetByAssetClient(
 
     def __init__(
         self,
+        resample_1min: bool,
         root_dir: str,
         extension: str,
         contract_type: str,
@@ -331,7 +333,7 @@ class KibotFuturesCsvParquetByAssetClient(
         :param contract_type: futures contract type (e.g., "continuous", "expiry")
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        super().__init__()
+        super().__init__(resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(

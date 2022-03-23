@@ -66,7 +66,7 @@ class ImClient(abc.ABC):
         :param resample_1min: allow to control resampling
         :param vendor: price data provider
         """
-        self.resample_1min = resample_1min
+        self._resample_1min = resample_1min
         self._vendor = vendor
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
@@ -169,10 +169,10 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, self.resample_1min, start_ts, end_ts
+                df_tmp, full_symbol_col_name, self._resample_1min, start_ts, end_ts
             )
             self._dassert_output_data_is_valid(
-                df_tmp, full_symbol_col_name, self.resample_1min, start_ts, end_ts
+                df_tmp, full_symbol_col_name, self._resample_1min, start_ts, end_ts
             )
             dfs.append(df_tmp)
         # TODO(Nikola): raise error on empty df?

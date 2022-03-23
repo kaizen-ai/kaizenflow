@@ -50,10 +50,12 @@ def get_KibotEquitiesCsvParquetByAssetClient_example1(
     :param unadjusted: whether asset class prices are unadjusted (i.e., True or False)
     """
     # Initialize client.
+    resample_1min = True
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     asset_class = "stocks"
     kibot_file_client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
+        resample_1min,
         root_dir,
         extension,
         asset_class,
@@ -73,10 +75,12 @@ def get_KibotEquitiesCsvParquetByAssetClient_example2(
 
     :param unadjusted: whether asset class prices are unadjusted (i.e., True or False)
     """
+    resample_1min = True
     root_dir = get_test_data_dir()
     extension = "pq"
     asset_class = "stocks"
     kibot_file_client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
+        resample_1min,
         root_dir,
         extension,
         asset_class,
@@ -96,9 +100,11 @@ def get_KibotFuturesCsvParquetByAssetClient_example1(
 
     :param contract_type: futures contract type (e.g., "continuous", "expiry")
     """
+    resample_1min = True
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
+        resample_1min,
         root_dir,
         extension,
         contract_type,
@@ -117,9 +123,57 @@ def get_KibotFuturesCsvParquetByAssetClient_example2(
 
     :param contract_type: futures contract type (e.g., "continuous", "expiry")
     """
+    resample_1min = True
     root_dir = get_test_data_dir()
     extension = "pq"
     kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
+        resample_1min,
+        root_dir,
+        extension,
+        contract_type,
+    )
+    return kibot_file_client
+
+
+def get_KibotFuturesCsvParquetByAssetClient_example3(
+    contract_type: str,
+) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
+    """
+    Return a Kibot object with:
+
+       - local `pq` data
+       - using futures data
+
+    :param contract_type: futures contract type (e.g., "continuous", "expiry")
+    """
+    resample_1min = False
+    root_dir = get_test_data_dir()
+    extension = "pq"
+    kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
+        resample_1min,
+        root_dir,
+        extension,
+        contract_type,
+    )
+    return kibot_file_client
+
+
+def get_KibotFuturesCsvParquetByAssetClient_example4(
+    contract_type: str,
+) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
+    """
+    Return a Kibot object with:
+
+       - local `csv.gz` data
+       - using futures data
+
+    :param contract_type: futures contract type (e.g., "continuous", "expiry")
+    """
+    resample_1min = False
+    root_dir = get_test_data_dir()
+    extension = "csv.gz"
+    kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
+        resample_1min,
         root_dir,
         extension,
         contract_type,

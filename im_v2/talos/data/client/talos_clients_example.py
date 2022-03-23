@@ -31,6 +31,7 @@ def get_TalosParquetByTileClient_example1() -> imvtdctacl.TalosParquetByTileClie
     """
     Get `TalosParquetByTileClient` object for the tests.
     """
+    resample_1min = True
     root_dir = get_test_data_dir()
-    talos_file_client = imvtdctacl.TalosParquetByTileClient(root_dir)
+    talos_file_client = imvtdctacl.TalosParquetByTileClient(resample_1min, root_dir)
     return talos_file_client

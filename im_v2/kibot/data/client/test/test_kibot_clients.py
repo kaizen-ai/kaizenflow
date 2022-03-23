@@ -743,7 +743,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data7(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::W"]
         contract_type = "continuous"
-        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example4(
             contract_type
         )
         #
@@ -779,7 +779,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_parquet_data7(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::EZ"]
         contract_type = "continuous"
-        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
+        client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example3(
             contract_type
         )
         #
