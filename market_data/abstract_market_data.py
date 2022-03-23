@@ -147,7 +147,6 @@ class MarketData(abc.ABC):
 
     def get_data_for_last_period(
         self,
-        resample_1min: bool,
         timedelta: pd.Timedelta,
         *,
         # TODO(gp): @Grisha not sure limit is really needed. We could move it
@@ -174,7 +173,6 @@ class MarketData(abc.ABC):
         asset_ids = self._asset_ids
         # Get the data.
         df = self.get_data_for_interval(
-            resample_1min,
             start_ts,
             end_ts,
             ts_col_name,
@@ -194,17 +192,16 @@ class MarketData(abc.ABC):
     ) -> pd.DataFrame:
         """
         Return price data at a specific timestamp.
-        :param ts: the timestamp to filter on
+
         :param ts_col_name: the name of the column (before the remapping) to filter
             on and use as index
+        :param ts: the timestamp to filter on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         """
         dassert_valid_asset_ids(asset_ids)
-        resample_1min = False
         start_ts = ts - pd.Timedelta("1S")
         end_ts = ts + pd.Timedelta("1S")
         df = self.get_data_for_interval(
-            resample_1min,
             start_ts,
             end_ts,
             ts_col_name,
@@ -217,7 +214,6 @@ class MarketData(abc.ABC):
 
     def get_data_for_interval(
         self,
-        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         ts_col_name: str,
@@ -234,7 +230,6 @@ class MarketData(abc.ABC):
         All the `get_data_*` functions should go through this function since
         it is in charge of converting the data to the right timezone and
         performing the column name remapping.
-        :param resample_1min: allow to control resampling
 
         :param ts_col_name: the name of the column (before the remapping) to filter
             on
@@ -257,7 +252,6 @@ class MarketData(abc.ABC):
         )
         # Delegate to the derived classes to retrieve the data.
         df = self._get_data(
-            resample_1min,
             start_ts,
             end_ts,
             ts_col_name,
@@ -304,7 +298,6 @@ class MarketData(abc.ABC):
 
     def get_twap_price(
         self,
-        resample_1min: bool,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         ts_col_name: str,
@@ -327,7 +320,6 @@ class MarketData(abc.ABC):
             start_ts, end_ts, left_close, right_close
         )
         prices = self.get_data_for_interval(
-            resample_1min,
             start_ts,
             end_ts,
             ts_col_name,
@@ -409,9 +401,7 @@ class MarketData(abc.ABC):
         # Get the data.
         # TODO(Paul): Remove the hard-coded 1-minute.
         start_time = last_end_time - pd.Timedelta("1T")
-        resample_1min = False
         df = self.get_data_at_timestamp(
-            resample_1min,
             start_time,
             self._start_time_col_name,
             asset_ids,
@@ -525,7 +515,6 @@ class MarketData(abc.ABC):
     @abc.abstractmethod
     def _get_data(
         self,
-        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         ts_col_name: str,
@@ -539,7 +528,7 @@ class MarketData(abc.ABC):
 
         This should be the only entrypoint to get data from the derived
         classes.
-        :param resample_1min: allow to control resampling
+
         :param start_ts: beginning of the time interval to select data for
         :param end_ts: end of the time interval to select data for
         :param ts_col_name: the name of the column (before the remapping) to filter

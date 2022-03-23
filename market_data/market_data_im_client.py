@@ -74,7 +74,6 @@ class ImClientMarketData(mdabmada.MarketData):
 
     def _get_data(
         self,
-        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         ts_col_name: str,
@@ -107,6 +106,7 @@ class ImClientMarketData(mdabmada.MarketData):
         resample_1min = True
         market_data = self._im_client.read_data(
             full_symbols,
+            # TODO(Nina): discuss implementation of this param in `ImClientMarketData`.
             resample_1min,
             start_ts,
             end_ts,
@@ -172,8 +172,7 @@ class ImClientMarketData(mdabmada.MarketData):
         # TODO(gp): SELECT MAX(start_time) instead of getting all the data
         #  and then find the max and use `start_time`
         timedelta = pd.Timedelta("7D")
-        resample_1min = False
-        df = self.get_data_for_last_period(resample_1min, timedelta)
+        df = self.get_data_for_last_period(timedelta)
         _LOG.debug(
             hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
         )

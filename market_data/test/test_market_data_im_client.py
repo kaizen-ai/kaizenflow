@@ -30,88 +30,70 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
         columns_remap = None
-        resample_1min = True
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("1D")
         # Run.
-        self._test_get_data_for_last_period(resample_1min, market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period2(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
         columns_remap = None
-        resample_1min = True
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("2D")
         # Run.
-        self._test_get_data_for_last_period(resample_1min, market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period3(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
         columns_remap = None
-        resample_1min = True
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("1W")
         # Run.
-        self._test_get_data_for_last_period(resample_1min, market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period4(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
         columns_remap = None
-        resample_1min = True
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("10T")
         # Run.
-        self._test_get_data_for_last_period(resample_1min, market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
         columns_remap = None
-        resample_1min = True
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("5T")
         # Run.
-        self._test_get_data_for_last_period(resample_1min, market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period6(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
         columns_remap = None
-        resample_1min = True
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("1T")
         # Run.
-        self._test_get_data_for_last_period(resample_1min, market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_for_last_period7(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
         columns: List[str] = []
         columns_remap = None
-        resample_1min = True
         market_data = self._build_client(asset_ids, columns, columns_remap)
         timedelta = pd.Timedelta("365D")
         # Run.
-        self._test_get_data_for_last_period(resample_1min, market_data, timedelta)
-
-    def test_get_data_for_last_period8(self) -> None:
-        # Prepare inputs.
-        asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
-        columns_remap = None
-        resample_1min = False
-        market_data = self._build_client(asset_ids, columns, columns_remap)
-        timedelta = pd.Timedelta("2D")
-        # Run.
-        self._test_get_data_for_last_period(resample_1min, market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     def test_get_data_at_timestamp1(self) -> None:
         # Prepare inputs.
