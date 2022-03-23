@@ -37,8 +37,9 @@ class TalosClient(icdc.ImClient, abc.ABC):
         """
         Constructor.
         """
+        resample_1min = True
         vendor = "talos"
-        super().__init__(vendor)
+        super().__init__(resample_1min, vendor)
 
     def get_universe(self) -> List[icdc.FullSymbol]:
         """

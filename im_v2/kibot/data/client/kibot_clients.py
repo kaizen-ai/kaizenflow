@@ -40,8 +40,9 @@ class KibotClient(icdc.ImClient):
         """
         Constructor.
         """
+        resample_1min = True
         vendor = "kibot"
-        super().__init__(vendor)
+        super().__init__(resample_1min, vendor)
 
     def get_universe(self) -> List[icdc.FullSymbol]:
         """

@@ -106,7 +106,6 @@ class ImClientMarketData(mdabmada.MarketData):
         resample_1min = True
         market_data = self._im_client.read_data(
             full_symbols,
-            # TODO(Nina): discuss implementation of this param in `ImClientMarketData`.
             resample_1min,
             start_ts,
             end_ts,
