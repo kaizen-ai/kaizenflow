@@ -28,16 +28,29 @@ def get_endpoint(environment: str) -> str:
     return endpoint
 
 
+def timestamp_to_talos_iso_8601(self, timestamp: pd.Timestamp) -> str:
+    """
+    Transform Timestamp into a string in the format accepted by Talos API.
+
+    Example:
+    2019-10-20T15:00:00.000000Z
+
+    Note: microseconds must be included.
+    """
+    # Timezone check.
+    hdateti.dassert_has_UTC_tz(timestamp)
+    # Timestamp converter.
+    timestamp_iso_8601 = timestamp.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
+    return timestamp_iso_8601  # type: ignore
+
+
 def get_talos_current_utc_timestamp() -> str:
     """
     Return the current UTC timestamp in the format acceptable by Talos.
 
     Example: 2019-10-20T15:00:00.000000Z
     """
-    # Timestamp converter.
     utc_datetime = datetime.datetime.utcnow().strftime(
         "%Y-%m-%dT%H:%M:%S.000000Z"
     )
-    # Timezone check.
-    hdateti.dassert_has_UTC_tz(utc_datetime)
     return utc_datetime
