@@ -14,23 +14,27 @@ import helpers.hio as hio
 import im_v2.common.data.client as icdc
 
 
-def _extract_universe_version(universe_file: str) -> int:
+def _extract_universe_version(universe_file: str) -> (int, int):
     """
     Extract version number from universe_vXX.json file. e.g.
-    'universe_v03.json' -> 3.
+    'universe_v3.1.json' -> (3, 1)
+    'universe_v1.json' -> (1, 0)
 
     :param file_name:
-    :return: universe file version number
+    :return: universe file version tuple in format (major, minor)
     """
     basename = os.path.basename(universe_file).rstrip(".json")
-    m = re.search(r"(\d+)$", basename)
+    m = re.search(r"v(\d+(\.\d+)?)$", basename)
     hdbg.dassert(
         m,
         "Can't parse file '%s', correct format is e.g. 'universe_v03.json'.",
         basename,
     )
     # Groups return tuple.
-    return int(m.groups(1)[0])  # type: ignore[union-attr, arg-type]
+    version = m.groups(1)[0].split(".")
+    major, minor = version[0], 0 if len(version) == 1 else version[1]
+    
+    return major, minor  # type: ignore[union-attr, arg-type]
 
 
 def _get_universe_file_path(vendor: str, *, version: Optional[str] = None) -> str:
