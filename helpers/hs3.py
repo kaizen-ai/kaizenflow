@@ -489,7 +489,6 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
 
 # TODO(gp): -> helpers/aws_utils.py
 
-# TODO(Nikola): Update `aws_profile` here also?
 def archive_data_on_s3(
     src_dir: str, s3_path: str, aws_profile: Optional[str], tag: str = ""
 ) -> str:
@@ -503,6 +502,9 @@ def archive_data_on_s3(
     :param src_dir: directory that will be compressed
     :param s3_path: full S3 path starting with `s3://`
     :param aws_profile: the profile to use
+    :param aws_profile: the profile to use. We use a string and not an
+        `AwsProfile` since this is typically the outermost caller in the stack,
+        and it doesn't reuse an S3 fs object
     :param tag: a tag to add to the name of the file
     """
     aws_profile = get_aws_profile(aws_profile)
@@ -572,7 +574,9 @@ def retrieve_archived_data_from_s3(
     :param s3_file_path: path to the S3 file with the archived data. E.g.,
        `s3://.../experiment.20210802-121908.tgz`
     :param dst_dir: destination directory where to save the data
-    :param aws_profile: AWS profile to use to access the data
+    :param aws_profile: the profile to use. We use a string and not an
+        `AwsProfile` since this is typically the outermost caller in the stack,
+        and it doesn't reuse an S3 fs object
     :param incremental: skip if the tgz file is already present locally
     :return: path with the local tgz file
     """

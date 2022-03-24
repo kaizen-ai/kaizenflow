@@ -67,7 +67,7 @@ def find_files(directory: str, pattern: str) -> List[str]:
         for basename in files:
             if fnmatch.fnmatch(basename, pattern):
                 file_name = os.path.join(root, basename)
-                # TODO(Nikola): Use glob.
+                # TODO(Nikola): Implement this function using glob mimicking hs3.find_files
                 file_names.append(file_name)
     return file_names
 
