@@ -10,8 +10,8 @@ from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im.common.data.load.abstract_data_loader as imcdladalo
 import im.common.data.types as imcodatyp
@@ -87,63 +87,6 @@ class IbS3DataLoader(imcdladalo.AbstractS3DataLoader):
             end_ts=end_ts,
         )
 
-    def _read_data(
-        self,
-        symbol: str,
-        asset_class: imcodatyp.AssetClass,
-        frequency: imcodatyp.Frequency,
-        contract_type: Optional[imcodatyp.ContractType] = None,
-        exchange: Optional[str] = None,
-        currency: Optional[str] = None,
-        unadjusted: Optional[bool] = None,
-        nrows: Optional[int] = None,
-        normalize: bool = True,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-    ) -> pd.DataFrame:
-        # Generate path to retrieve data.
-        file_path = imidlifpge.IbFilePathGenerator().generate_file_path(
-            symbol=symbol,
-            asset_class=asset_class,
-            frequency=frequency,
-            contract_type=contract_type,
-            exchange=exchange,
-            currency=currency,
-            unadjusted=unadjusted,
-            ext=imcodatyp.Extension.CSV,
-        )
-        # Check that file exists.
-        aws_profile = "am"
-        s3fs = hs3.get_s3fs(aws_profile)
-        if hs3.is_s3_path(file_path):
-            hdbg.dassert(
-                s3fs.exists(file_path), "S3 key not found: %s", file_path
-            )
-        # Read data.
-        # cls.S3_COLUMNS.keys() -> list(cls.S3_COLUMNS.keys())
-        # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
-        names = list(self.S3_COLUMNS.keys())
-        data = cpanh.read_csv(file_path, s3fs=s3fs, nrows=nrows, names=names)
-        # TODO(plyq): Reload ES data with a new extractor to have a header.
-        # If header was already in data, remove it.
-        if list(data.iloc[0]) == list(self.S3_COLUMNS.keys()):
-            data = data[1:].reset_index(drop=True)
-        # Cast columns to correct types.
-        data = data.astype(
-            {
-                key: self.S3_COLUMNS[key]
-                for key in self.S3_COLUMNS
-                if key not in self.S3_DATE_COLUMNS
-            }
-        )
-        for date_column in self.S3_DATE_COLUMNS:
-            data[date_column] = pd.to_datetime(data[date_column])
-        data = self._filter_by_dates(data, start_ts=start_ts, end_ts=end_ts)
-        if normalize:
-            data = self.normalize(df=data, frequency=frequency)
-            data.set_index("date", drop=False, inplace=True)
-        return data
-
     @staticmethod
     def _filter_by_dates(
         data: pd.DataFrame,
@@ -200,3 +143,63 @@ class IbS3DataLoader(imcdladalo.AbstractS3DataLoader):
         :return: normalized data
         """
         return df
+
+    def _read_data(
+        self,
+        symbol: str,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        contract_type: Optional[imcodatyp.ContractType] = None,
+        exchange: Optional[str] = None,
+        currency: Optional[str] = None,
+        unadjusted: Optional[bool] = None,
+        nrows: Optional[int] = None,
+        normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+    ) -> pd.DataFrame:
+        # Generate path to retrieve data.
+        file_path = imidlifpge.IbFilePathGenerator().generate_file_path(
+            symbol=symbol,
+            asset_class=asset_class,
+            frequency=frequency,
+            contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+            unadjusted=unadjusted,
+            ext=imcodatyp.Extension.CSV,
+        )
+        # Check that file exists.
+        aws_profile = "am"
+        s3fs = hs3.get_s3fs(aws_profile)
+        if hs3.is_s3_path(file_path):
+            hdbg.dassert(
+                s3fs.exists(file_path), "S3 key not found: %s", file_path
+            )
+        # Read data.
+        # cls.S3_COLUMNS.keys() -> list(cls.S3_COLUMNS.keys())
+        # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
+        names = list(self.S3_COLUMNS.keys())
+        stream, kwargs = hs3.get_local_or_s3_stream(file_path, s3fs=s3fs)
+        data = hpandas.read_csv_to_df(
+            stream, nrows=nrows, names=names, **kwargs
+        )
+        # TODO(plyq): Reload ES data with a new extractor to have a header.
+        # If header was already in data, remove it.
+        if list(data.iloc[0]) == list(self.S3_COLUMNS.keys()):
+            data = data[1:].reset_index(drop=True)
+        # Cast columns to correct types.
+        data = data.astype(
+            {
+                key: self.S3_COLUMNS[key]
+                for key in self.S3_COLUMNS
+                if key not in self.S3_DATE_COLUMNS
+            }
+        )
+        for date_column in self.S3_DATE_COLUMNS:
+            data[date_column] = pd.to_datetime(data[date_column])
+        data = self._filter_by_dates(data, start_ts=start_ts, end_ts=end_ts)
+        if normalize:
+            data = self.normalize(df=data, frequency=frequency)
+            data.set_index("date", drop=False, inplace=True)
+        return data

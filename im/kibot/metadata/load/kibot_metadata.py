@@ -15,13 +15,12 @@ import pandas as pd
 import pandas.tseries.offsets as ptoffs
 from tqdm.autonotebook import tqdm
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 import im.kibot.metadata.load.expiry_contract_mapper as imkmlecoma
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 import im.kibot.metadata.types as imkimetyp
@@ -411,7 +410,7 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         self.end_timedelta_days = end_timedelta_days
 
     def compute_lifetime(self, contract_name: str) -> imkimetyp.ContractLifetime:
-        df = imkdlksdlo.KibotS3DataLoader().read_data(
+        df = ikdlksdlo.KibotS3DataLoader().read_data(
             "Kibot",
             contract_name,
             imcodatyp.AssetClass.Futures,
@@ -555,7 +554,8 @@ class FuturesContractLifetimes:
                 kwargs = {"s3fs": s3fs}
             else:
                 kwargs = {}
-            df = cpanh.read_csv(file_name, index_col=0, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
+            df = hpandas.read_csv_to_df(stream, index_col=0, **kwargs)
             hdbg.dassert_eq(
                 df.columns.tolist(),
                 ["symbol", "contract", "start_date", "end_date"],

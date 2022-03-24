@@ -10,7 +10,7 @@ import functools
 import logging
 import os
 import pprint
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 
 _WARNING = "\033[33mWARNING\033[0m"
 
@@ -20,7 +20,10 @@ except ModuleNotFoundError:
     _module = "s3fs"
     print(_WARNING + f": Can't find {_module}: continuing")
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
+# Avoid the following dependency from other `helpers` modules to prevent import cycles.
+# import helpers.hpandas as hpandas
+# import helpers.hsql as hsql
+# import helpers.hunit_test as hunitest
 
 # To enforce this order of the imports we use the directive for the linter below.
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -114,6 +117,36 @@ def split_path(s3_path: str) -> Tuple[str, str]:
     return bucket, abs_path
 
 
+def get_local_or_s3_stream(
+    file_name: str, **kwargs: Any
+) -> Tuple[Union[s3fs.core.S3FileSystem, str], Any]:
+    """
+    Gets S3 stream for desired file or simply returns file name.
+
+    :param file_name: file name or full path to file
+    """
+    _LOG.debug(hprint.to_str("file_name kwargs"))
+    # Handle the s3fs param, if needed.
+    if is_s3_path(file_name):
+        # For S3 files we need to have an `s3fs` parameter.
+        hdbg.dassert_in(
+            "s3fs",
+            kwargs,
+            "Credentials through s3fs are needed to access an S3 path",
+        )
+        s3fs_ = kwargs.pop("s3fs")
+        hdbg.dassert_isinstance(s3fs_, s3fs.core.S3FileSystem)
+        dassert_s3_exists(file_name, s3fs_)
+        stream = s3fs_.open(file_name)
+    else:
+        if "s3fs" in kwargs:
+            _LOG.warning("Passed `s3fs` without an S3 file: ignoring it")
+            _ = kwargs.pop("s3fs")
+        hdbg.dassert_file_exists(file_name)
+        stream = file_name
+    return stream, kwargs
+
+
 # #############################################################################
 # Bucket
 # #############################################################################
@@ -146,7 +179,8 @@ def get_bucket() -> str:
 # TODO(gp): @all use get_s3_path() below.
 def get_path() -> str:
     """
-    Return the path to the S3 bucket (e.g., `s3://alphamatic-data`) for an account.
+    Return the path to the S3 bucket (e.g., `s3://alphamatic-data`) for an
+    account.
     """
     bucket = get_bucket()
     path = "s3://" + bucket
@@ -274,7 +308,8 @@ def get_aws_credentials(
     aws_profile: str,
 ) -> Dict[str, Optional[str]]:
     """
-    Read the AWS credentials for a given profile from `~/.aws` or from env vars.
+    Read the AWS credentials for a given profile from `~/.aws` or from env
+    vars.
 
     :return: a dictionary with `access_key_id`, `aws_secret_access_key`,
         `aws_region` and optionally `aws_session_token`
