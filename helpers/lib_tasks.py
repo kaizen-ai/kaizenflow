@@ -206,7 +206,12 @@ use_one_line_cmd = False
 
 # TODO(Grisha): make it public #755.
 def _run(
-    ctx: Any, cmd: str, *args, dry_run: bool = False, **ctx_run_kwargs: Any
+    ctx: Any,
+    cmd: str,
+    *args,
+    dry_run: bool = False,
+    use_system: bool = False,
+    **ctx_run_kwargs: Any,
 ) -> int:
     _LOG.debug(hprint.to_str("cmd dry_run"))
     if use_one_line_cmd:
@@ -217,8 +222,13 @@ def _run(
         _LOG.warning("Skipping execution")
         res = None
     else:
-        result = ctx.run(cmd, *args, **ctx_run_kwargs)
-        res = result.return_code
+        if use_system:
+            # TODO(gp): Consider using only `hsystem.system()` since it's more
+            # reliable.
+            res = hsystem.system(cmd, suppress_output=False)
+        else:
+            result = ctx.run(cmd, *args, **ctx_run_kwargs)
+            res = result.return_code
     return res
 
 
@@ -779,6 +789,7 @@ def git_create_branch(  # type: ignore
     _run(ctx, cmd)
 
 
+# TODO(gp): Move to hgit.
 def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
     if tag == "local":
         # Delete local branches that are already merged into master.
@@ -1109,9 +1120,12 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i lint --dir-name . --only-format
 #   ```
 #
-# - Remove end-of-line spaces:
+# - Add end-of-file:
 #   ```
-#   # Remove
+#   find . -name "*.py" | xargs sed -i '' -e '$a\'
+#   ```
+# - Remove end-of-file:
+#   ```
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 #
@@ -1397,6 +1411,7 @@ def _find_files_touched_since_last_integration(
     )
     hio.to_file(file_name, "\n".join(files))
     _LOG.debug("Saved file to '%s'", file_name)
+    files = cast(List[str], files)
     return files
 
 
@@ -1626,9 +1641,12 @@ def integrate_diff_overlapping_files(  # type: ignore
             # The file was created: nothing to do.
             pass
         elif rc == 128:
-            # Note that the file potentially could not exist, i.e., it was added in
-            # the branch. In this case Git returns:
-            # rc=128 fatal: path 'dataflow/pipelines/real_time/test/test_dataflow_pipelines_real_time_pipeline.py' exists on disk, but not in 'ce54877016204315766e90df7c45192bec1fbf20'
+            # Note that the file potentially could not exist, i.e., it was added
+            # in the branch. In this case Git returns:
+            # ```
+            # rc=128 fatal: path 'dataflow/pipelines/real_time/test/
+            # test_dataflow_pipelines_real_time_pipeline.py' exists on disk, but
+            # not in 'ce54877016204315766e90df7c45192bec1fbf20'
             src_file = "/dev/null"
         else:
             raise ValueError("cmd='%s' returned %s" % (cmd, rc))
@@ -1904,7 +1922,10 @@ def docker_login(ctx):  # type: ignore
         )
     # cmd = ("aws ecr get-login-password" +
     #       " | docker login --username AWS --password-stdin "
-    _run(ctx, cmd)
+    # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
+    #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
+    #  with `@task` decorator) do not work.
+    _run(ctx, cmd, use_system=True)
 
 
 def get_base_docker_compose_path() -> str:
@@ -2135,35 +2156,66 @@ def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
     return as_user
 
 
-def _get_docker_cmd(
+def _get_container_name(service_name: str) -> str:
+    """
+    Create a container name based on various information (e.g.,
+    `grisha.cmamp.app.cmamp1.20220317_232120`).
+
+    The information used to build a container is:
+       - Linux user name
+       - Base Docker image name
+       - Service name
+       - Project directory that was used to start a container
+       - Container start timestamp
+
+    :param service_name: `docker-compose` service name, e.g., `app`
+    :return: container name
+    """
+    hdbg.dassert_ne(service_name, "", "You need to specify a service name")
+    # Get linux user name.
+    linux_user = hsystem.get_user_name()
+    # Get dir name.
+    project_dir = hgit.get_project_dirname()
+    # Get Docker image base name.
+    image_name = get_default_param("BASE_IMAGE")
+    # Get current timestamp.
+    current_timestamp = _get_ET_timestamp()
+    # Build container name.
+    container_name = f"{linux_user}.{image_name}.{service_name}.{project_dir}.{current_timestamp}"
+    _LOG.debug(
+        "get_container_name: container_name=%s",
+        container_name,
+    )
+    return container_name
+
+
+def _get_docker_base_cmd(
     base_image: str,
     stage: str,
     version: str,
-    cmd: str,
-    *,
-    extra_env_vars: Optional[List[str]] = None,
-    extra_docker_compose_files: Optional[List[str]] = None,
-    extra_docker_run_opts: Optional[List[str]] = None,
-    service_name: str = "app",
-    entrypoint: bool = True,
-    as_user: bool = True,
-    print_docker_config: bool = False,
-    use_bash: bool = False,
-) -> str:
+    extra_env_vars: Optional[List[str]],
+    extra_docker_compose_files: Optional[List[str]],
+) -> List[str]:
     """
-    :param base_image, stage, version: like in `get_image()`
-    :param cmd: command to run inside Docker container
-    :param as_user: pass the user / group id or not
+    Get base `docker-compose` command encoded as a list of strings.
+
+    It can be used as a base to build more complicated commands, e.g., `run`, `up`, `down`.
+
+    E.g.,
+    ```
+        ['IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev',
+            '\n        docker-compose',
+            '\n        --file amp/devops/compose/docker-compose.yml',
+            '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
+            '\n        --env-file devops/env/default.env']
+    ```
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
-    :param print_docker_config: print the docker config for debugging purposes
-    :param use_bash: run command through a shell
+    :param extra_docker_compose_files: `docker-compose` override files
     """
     hprint.log(
         _LOG,
         logging.DEBUG,
-        "stage base_image cmd extra_env_vars"
-        " extra_docker_compose_files extra_docker_run_opts"
-        " service_name entrypoint",
+        "base_image stage version extra_env_vars extra_docker_compose_files",
     )
     docker_cmd_: List[str] = []
     # - Handle the image.
@@ -2227,6 +2279,63 @@ def _get_docker_cmd(
         rf"""
         --env-file {env_file}"""
     )
+    return docker_cmd_
+
+
+# TODO(Grisha): -> `_get_docker_run_cmd` CmTask #1486.
+def _get_docker_cmd(
+    base_image: str,
+    stage: str,
+    version: str,
+    cmd: str,
+    *,
+    extra_env_vars: Optional[List[str]] = None,
+    extra_docker_compose_files: Optional[List[str]] = None,
+    extra_docker_run_opts: Optional[List[str]] = None,
+    service_name: str = "app",
+    entrypoint: bool = True,
+    as_user: bool = True,
+    print_docker_config: bool = False,
+    use_bash: bool = False,
+) -> str:
+    """
+    Get `docker-compose` run command.
+
+    E.g.,
+    ```
+    IMAGE=*****..dkr.ecr.us-east-1.amazonaws.com/amp:dev \
+        docker-compose \
+        --file /amp/devops/compose/docker-compose.yml \
+        --env-file devops/env/default.env \
+        run \
+        --rm \
+        --name grisha.cmamp.app.cmamp1.20220317_232120 \
+        --user $(id -u):$(id -g) \
+        app \
+        bash
+    ```
+    :param cmd: command to run inside Docker container
+    :param extra_docker_run_opts: additional `docker-compose` run options
+    :param service_name: service to use to run a command
+    :param entrypoint: use whether to use `entrypoint` or not
+    :param as_user: pass the user / group id or not
+    :param print_docker_config: print the docker config for debugging purposes
+    :param use_bash: run command through a shell
+    """
+    hprint.log(
+        _LOG,
+        logging.DEBUG,
+        "cmd extra_docker_run_opts service_name "
+        "entrypoint as_user print_docker_config use_bash",
+    )
+    # - Get the base Docker command.
+    docker_cmd_ = _get_docker_base_cmd(
+        base_image,
+        stage,
+        version,
+        extra_env_vars,
+        extra_docker_compose_files,
+    )
     # - Add the `config` command for debugging purposes.
     docker_config_cmd: List[str] = docker_cmd_[:]
     docker_config_cmd.append(
@@ -2238,6 +2347,12 @@ def _get_docker_cmd(
         r"""
         run \
         --rm"""
+    )
+    # - Add a name to the container.
+    container_name = _get_container_name(service_name)
+    docker_cmd_.append(
+        rf"""
+        --name {container_name}"""
     )
     # - Handle the user.
     as_user = _run_docker_as_user(as_user)
@@ -2324,16 +2439,28 @@ def docker_bash(  # type: ignore
 
 @task
 def docker_cmd(  # type: ignore
-    ctx, base_image="", stage="dev", version="", cmd="", use_bash=False
+    ctx,
+    base_image="",
+    stage="dev",
+    version="",
+    cmd="",
+    as_user=True,
+    use_bash=False,
+    container_dir_name=".",
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
     """
-    _report_task()
+    _report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_cmd(
-        base_image, stage, version, cmd, use_bash=use_bash
+        base_image,
+        stage,
+        version,
+        cmd,
+        as_user=as_user,
+        use_bash=use_bash,
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -3082,13 +3209,13 @@ _FindResults = List[_FindResult]
 
 
 def _scan_files(python_files: List[str]) -> Tuple[str, int, str]:
-    for file in python_files:
+    for file_ in python_files:
         _LOG.debug("file=%s", file)
         txt = hio.from_file(file)
         for line_num, line in enumerate(txt.split("\n")):
             # TODO(gp): Skip commented lines.
-            # _LOG.debug("%s:%s line='%s'", file, line_num, line)
-            yield file, line_num, line
+            # _LOG.debug("%s:%s line='%s'", file_, line_num, line)
+            yield file_, line_num, line
 
 
 def _find_short_import(iterator: List, short_import: str) -> _FindResults:
@@ -3104,7 +3231,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     regex = re.compile(regex)
     #
     results: _FindResults = []
-    for file, line_num, line in iterator:
+    for file_, line_num, line in iterator:
         m = regex.search(line)
         if m:
             # E.g.,
@@ -3113,7 +3240,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
             long_import_txt = m.group(1)
             short_import_txt = m.group(2)
             full_import_txt = f"import {long_import_txt} as {short_import_txt}"
-            res = (file, line_num, line, short_import_txt, full_import_txt)
+            res = (file_, line_num, line, short_import_txt, full_import_txt)
             # E.g.,
             _LOG.debug("  => %s", str(res))
             results.append(res)
@@ -3132,7 +3259,7 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
     regexs = [re.compile(regex) for regex in regexs]
     #
     results: _FindResults = []
-    for file, line_num, line in iterator:
+    for file_, line_num, line in iterator:
         _LOG.debug("line='%s'", line)
         m = None
         for regex in regexs:
@@ -3144,7 +3271,7 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
             _LOG.debug("  --> line:%s=%s", line_num, line)
             short_import_txt = m.group(1)
             obj_txt = m.group(2)
-            res = (file, line_num, line, short_import_txt, obj_txt)
+            res = (file_, line_num, line, short_import_txt, obj_txt)
             # E.g.,
             # ('./helpers/lib_tasks.py', 10226, 'dtfsys', 'RealTimeDagRunner')
             # ('./dataflow/core/test/test_builders.py', 70, 'dtfcodarun', 'FitPredictDagRunner')
@@ -3160,7 +3287,7 @@ def _process_find_results(results: _FindResults, how: str) -> List[Tuple]:
     if how == "remove_dups":
         # Remove duplicates.
         for result in results:
-            (file, line_num, line, info1, info2) = result
+            (file_, line_num, line, info1, info2) = result
             filtered_results.append((info1, info2))
         filtered_results = hlist.remove_duplicates(filtered_results)
         filtered_results = sorted(filtered_results)
@@ -3210,8 +3337,8 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     iter_ = _scan_files(python_files)
     # Process the `what`.
     if mode == "all":
-        for mode in ("symbol_import", "short_import"):
-            find(ctx, regex, mode=mode, how=how, subdir=subdir)
+        for mode_tmp in ("symbol_import", "short_import"):
+            find(ctx, regex, mode=mode_tmp, how=how, subdir=subdir)
         return
     elif mode == "symbol_import":
         results = _find_func_class_uses(iter_, regex)
@@ -4242,6 +4369,230 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 
 
 # #############################################################################
+
+
+def _get_test_directories(root_dir: str) -> List[str]:
+    """
+    Get all paths of the directories that contain unit tests.
+
+    :param root_dir: the dir to start the search from
+    :return: paths of test directories
+    """
+    paths = []
+    for path, _, _ in os.walk(root_dir):
+        # Iterate over the paths to find the test directories.
+        if path.endswith("/test"):
+            paths.append(path)
+    return paths
+
+
+def _rename_class(
+    content: str,
+    old_class_name: str,
+    new_class_name: str,
+) -> str:
+    """
+    Rename the class.
+
+    :param content: the content of the file
+    :param old_class_name: the old name of the target class
+    :param new_class_name: the new name of the target class
+    :return: the content of the file with the class name replaced
+    """
+    # Rename the class.
+    content = re.sub(
+        f"class {old_class_name}\(", f"class {new_class_name}(", content
+    )
+    return content
+
+
+def _rename_outcomes(
+    path: str,
+    old_class_name: str,
+    new_class_name: str,
+) -> None:
+    """
+    Rename the directory that contains test outcomes.
+
+    :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
+    :param old_class_name: the old name of the target class
+    :param new_class_name: the new name of the target class
+    """
+    outcomes_path = os.path.join(path, "outcomes")
+    dir_items = os.listdir(outcomes_path)
+    # Get the list of outcomes directories.
+    outcomes = [
+        dir_name
+        for dir_name in dir_items
+        if os.path.isdir(os.path.join(outcomes_path, dir_name))
+    ]
+    renamed = False
+    # Construct target dir name, e.g. `TestClassName.`. We need to add `.` to indicate the end of the class name.
+    target_dir = old_class_name + "."
+    for outcome_dir in outcomes:
+        # Contruct the path to outcomes directory.
+        outcome_path_old = os.path.join(outcomes_path, outcome_dir)
+        # Both old and new method names should belong to one class.
+        if outcome_dir.startswith(target_dir):
+            # Split old directory name - the part before "." is the class name.
+            class_method = outcome_dir.split(".")
+            # Replace old class name with the new one.
+            class_method[0] = new_class_name
+            outcome_name_new = ".".join(class_method)
+            outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
+        else:
+            continue
+        cmd = f"mv {outcome_path_old} {outcome_path_new}"
+        # Rename the directory.
+        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        _LOG.info(
+            "Renaming `%s` directory to `%s`. Output log: %s",
+            outcome_path_old,
+            outcome_path_new,
+            rc,
+        )
+        # Add to git new outcome directory and remove the old one.
+        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        renamed = True
+    if not renamed:
+        _LOG.info(
+            "No outcomes for `%s` were found in `%s`.",
+            old_class_name,
+            outcomes_path,
+        )
+
+
+def _rename_test_in_file(
+    test_dir: str,
+    file_path: str,
+    old_class_name: str,
+    new_class_name: str,
+) -> None:
+    """
+    Process the file:
+
+      - check if the content of the file contains target class
+      - change the class name
+      - rename the outcomes if they exist
+
+    :param test_dir: the path to the test directory containing the file
+    :param file_path: the path to the file
+    :param old_class_name: the old name of the class
+    :param new_class_name: the new name of the class
+    """
+    content = hio.from_file(file_path)
+    if not re.search(f"class {old_class_name}\(", content):
+        # Return if target test class does not appear in file content.
+        return
+    # Rename the class.
+    content = _rename_class(content, old_class_name, new_class_name)
+    _LOG.info(
+        "%s: class `%s` was renamed to `%s`.",
+        file_path,
+        old_class_name,
+        new_class_name,
+    )
+    # Rename the directories that contain target test outcomes.
+    _rename_outcomes(
+        test_dir,
+        old_class_name,
+        new_class_name,
+    )
+    # Write processed content back to file.
+    hio.to_file(file_path, content)
+
+
+@task
+def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
+    """
+    Rename the test and move its golden outcome.
+
+    E.g., to rename a test class and all the test methods:
+    > i pytest_rename_test TestCacheUpdateFunction1 TestCacheUpdateFunction_new
+
+    :param old_test_class_name: old class name
+    :param new_test_class_name: new class name
+    """
+    _report_task()
+    _ = ctx
+    root_dir = os.getcwd()
+    # Assert if the classname is invalid.
+    hdbg.dassert(
+        old_test_class_name.startswith("Test"),
+        "Invalid test_class_name='%s'",
+        old_test_class_name,
+    )
+    hdbg.dassert(
+        new_test_class_name.startswith("Test"),
+        "Invalid test_class_name='%s'",
+        new_test_class_name,
+    )
+    hdbg.dassert_ne(old_test_class_name, new_test_class_name)
+    test_directories = _get_test_directories(root_dir)
+    hdbg.dassert_lte(1, len(test_directories))
+    # Iterate over test directories.
+    for path in test_directories:
+        _LOG.debug("Scanning `%s` directory.", path)
+        search_pattern = os.path.join(path, "test_*.py")
+        # Get all python test files from this directory.
+        files = glob.glob(search_pattern)
+        #
+        for test_file in files:
+            _rename_test_in_file(
+                path,
+                test_file,
+                old_test_class_name,
+                new_test_class_name,
+            )
+
+
+# #############################################################################
+
+
+@task
+def pytest_find_unused_goldens(  # type: ignore
+    ctx,
+    dir_name=".",
+    run_bash=False,
+    stage="prod",
+    as_user=True,
+    out_file_name="pytest_find_unused_goldens.output.txt",
+):
+    """
+    Detect mismatches between tests and their golden outcome files.
+
+    - When goldens are required by the tests but the corresponding files
+      do not exist
+    - When the existing golden files are not actually required by the
+      corresponding tests
+
+    :param dir_name: the head dir to start the check from
+    """
+    _report_task()
+    # Remove the log file.
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
+        _run(ctx, cmd)
+    as_user = _run_docker_as_user(as_user)
+    # Prepare the command line.
+    amp_abs_path = hgit.get_amp_abs_path()
+    amp_path = amp_abs_path.replace(
+        os.path.commonpath([os.getcwd(), amp_abs_path]), ""
+    )
+    script_path = os.path.join(
+        amp_path, "dev_scripts/find_unused_golden_files.py"
+    ).lstrip("/")
+    docker_cmd_opts = [f"--dir_name {dir_name}"]
+    docker_cmd_ = f"{script_path} " + _to_single_line_cmd(docker_cmd_opts)
+    # Execute command line.
+    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    # Run.
+    _run(ctx, cmd)
+
+
+# #############################################################################
 # Linter.
 # #############################################################################
 
@@ -4453,47 +4804,6 @@ def _parse_linter_output(txt: str) -> str:
 
 
 @task
-def lint_add_init_files(  # type: ignore
-    ctx,
-    dir_name=".",
-    dry_run=True,
-    run_bash=False,
-    stage="prod",
-    as_user=True,
-    out_file_name="lint_add_init_files.output.txt",
-):
-    """
-    Add the missing `__init__.py` in dirs with Python files.
-
-    For param descriptions, see `lint()`.
-
-    :param dir_name: path to the head directory to start the check from
-    :param dry_run:
-      - True: output a warning pointing to the dirs where `__init__.py`
-        files are missing
-      - False: create the required `__init__.py` files
-    """
-    _report_task()
-    # Remove the log file.
-    if os.path.exists(out_file_name):
-        cmd = f"rm {out_file_name}"
-        _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
-    # Prepare the command line.
-    docker_cmd_opts = [dir_name]
-    if dry_run:
-        docker_cmd_opts.append("--dry_run")
-    docker_cmd_ = "/app/linters/add_module_init.py " + _to_single_line_cmd(
-        docker_cmd_opts
-    )
-    # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
-    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
-    # Run.
-    _run(ctx, cmd)
-
-
-@task
 def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
@@ -4596,6 +4906,7 @@ def lint(  # type: ignore
     # CRLF end-lines remover...........................(no files to check)Skipped
     # Tabs remover.....................................(no files to check)Skipped
     # autoflake........................................(no files to check)Skipped
+    # add_python_init_files............................(no files to check)Skipped
     # amp_check_filename...............................(no files to check)Skipped
     # amp_isort........................................(no files to check)Skipped
     # amp_black........................................(no files to check)Skipped
@@ -4615,6 +4926,7 @@ def lint(  # type: ignore
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
             [
+                "add_python_init_files",
                 "amp_isort",
                 "amp_class_method_order",
                 "amp_normalize_import",

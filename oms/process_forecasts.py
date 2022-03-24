@@ -5,7 +5,6 @@ import oms.process_forecasts as oprofore
 """
 
 import asyncio
-import collections
 import datetime
 import logging
 import os
@@ -16,6 +15,8 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
+import core.finance as cofinanc
+import core.key_sorted_ordered_dict as cksoordi
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -34,6 +35,8 @@ async def process_forecasts(
     volatility_df: pd.DataFrame,
     portfolio: omportfo.AbstractPortfolio,
     config: cconfig.Config,
+    spread_df: Optional[pd.DataFrame],
+    restrictions_df: Optional[pd.DataFrame],
 ) -> None:
     """
     Place orders corresponding to the predictions stored in the given df.
@@ -48,6 +51,7 @@ async def process_forecasts(
     :param prediction_df: a dataframe indexed by timestamps with one column for the
         predictions for each asset
     :param volatility_df: like `prediction_df`, but for volatility
+    :param spread_df: like `prediction_df`, but for the bid-ask spread
     :param portfolio: initialized `Portfolio` object
     :param config:
         - `execution_mode`:
@@ -60,12 +64,18 @@ async def process_forecasts(
     _validate_df(prediction_df)
     # Check `volatility_df`.
     _validate_df(volatility_df)
-    # Check index compatibility.
-    hdbg.dassert(prediction_df.index.equals(volatility_df.index))
-    hdbg.dassert(prediction_df.columns.equals(volatility_df.columns))
+    if spread_df is None:
+        _LOG.info("spread_df is `None`; imputing 0.0 spread")
+        spread_df = pd.DataFrame(0.0, prediction_df.index, prediction_df.columns)
+    # Check index/column compatibility.
+    _validate_compatibility(prediction_df, volatility_df)
+    _validate_compatibility(prediction_df, spread_df)
     # Check `portfolio`.
     hdbg.dassert_isinstance(portfolio, omportfo.AbstractPortfolio)
     hdbg.dassert_isinstance(config, cconfig.Config)
+    #
+    if restrictions_df is None:
+        _LOG.info("restrictions_df is `None`; no restrictions will be enforced")
     # Create an `order_config` from `config` elements.
     order_config = _get_object_from_config(config, "order_config", cconfig.Config)
     _validate_order_config(order_config)
@@ -90,7 +100,7 @@ async def process_forecasts(
         config, "trading_end_time", datetime.time
     )
     hdbg.dassert_lte(trading_end_time, ath_end_time)
-    # Get executiom mode ("real_time" or "batch").
+    # Get execution mode ("real_time" or "batch").
     execution_mode = _get_object_from_config(config, "execution_mode", str)
     if execution_mode == "real_time":
         prediction_df = prediction_df.tail(1)
@@ -98,6 +108,12 @@ async def process_forecasts(
         pass
     else:
         raise ValueError(f"Unrecognized execution mode='{execution_mode}'")
+    # TODO(Paul): Pass in a trading calendar explicitly instead of simply
+    #   filtering out weekends.
+    if "remove_weekends" in config and config["remove_weekends"]:
+        prediction_df = cofinanc.remove_weekends(prediction_df)
+        volatility_df = cofinanc.remove_weekends(volatility_df)
+        spread_df = cofinanc.remove_weekends(spread_df)
     # Get log dir.
     log_dir = config.get("log_dir", None)
     # We should not have anything left in the config that we didn't extract.
@@ -118,7 +134,11 @@ async def process_forecasts(
     offset_min = pd.DateOffset(minutes=order_config["order_duration"])
     # Initialize a `ForecastProcessor` object to perform the heavy lifting.
     forecast_processor = ForecastProcessor(
-        portfolio, order_config, optimizer_config, log_dir
+        portfolio,
+        order_config,
+        optimizer_config,
+        restrictions_df,
+        log_dir=log_dir,
     )
     # `timestamp` is the time when the forecast is available and in the current
     #  setup is also when the order should begin.
@@ -177,7 +197,10 @@ async def process_forecasts(
             ),
         )
         volatility = volatility_df.loc[timestamp]
-        orders = forecast_processor.generate_orders(predictions, volatility)
+        spread = spread_df.loc[timestamp]
+        orders = forecast_processor.generate_orders(
+            predictions, volatility, spread
+        )
         await forecast_processor.submit_orders(orders)
         _LOG.debug("ForecastProcessor=\n%s", str(forecast_processor))
     _LOG.debug("Event: exiting process_forecasts() for loop.")
@@ -189,7 +212,8 @@ class ForecastProcessor:
         portfolio: omportfo.AbstractPortfolio,
         order_config: cconfig.Config,
         optimizer_config: cconfig.Config,
-        restrictions: Optional[pd.DataFrame] = None,
+        restrictions: Optional[pd.DataFrame],
+        *,
         log_dir: Optional[str] = None,
     ) -> None:
         self._portfolio = portfolio
@@ -205,8 +229,8 @@ class ForecastProcessor:
         self._restrictions = restrictions
         self._log_dir = log_dir
         #
-        self._target_positions = collections.OrderedDict()
-        self._orders = collections.OrderedDict()
+        self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
+        self._orders = cksoordi.KeySortedOrderedDict(pd.Timestamp)
 
     def __str__(self) -> str:
         """
@@ -214,15 +238,13 @@ class ForecastProcessor:
         """
         act = []
         if self._target_positions:
-            last_key = next(reversed(self._target_positions))
-            target_positions = self._target_positions[last_key]
+            _, target_positions = self._target_positions.peek()
             target_positions_str = hpandas.df_to_str(target_positions)
         else:
             target_positions_str = "None"
         act.append("# last target positions=\n%s" % target_positions_str)
         if self._orders:
-            last_key = next(reversed(self._orders))
-            orders_str = self._orders[last_key]
+            _, orders_str = self._orders.peek()
         else:
             orders_str = "None"
         act.append("# last orders=\n%s" % orders_str)
@@ -240,8 +262,7 @@ class ForecastProcessor:
         filename = f"{wall_clock_time_str}.csv"
         #
         if self._target_positions:
-            last_key = next(reversed(self._target_positions))
-            last_target_positions = self._target_positions[last_key]
+            last_key, last_target_positions = self._target_positions.peek()
             last_target_positions_filename = os.path.join(
                 self._log_dir, "target_positions", filename
             )
@@ -250,8 +271,7 @@ class ForecastProcessor:
             )
             last_target_positions.to_csv(last_target_positions_filename)
         if self._orders:
-            last_key = next(reversed(self._orders))
-            last_orders = self._orders[last_key]
+            last_key, last_orders = self._orders.peek()
             last_orders_filename = os.path.join(self._log_dir, "orders", filename)
             hio.create_enclosing_dir(last_orders_filename, incremental=True)
             hio.to_file(last_orders_filename, last_orders)
@@ -260,24 +280,24 @@ class ForecastProcessor:
         self,
         predictions: pd.Series,
         volatility: pd.Series,
+        spread: pd.Series,
     ) -> List[omorder.Order]:
         """
         Translate returns and volatility forecasts into a list of orders.
 
         :param predictions: returns forecasts
         :param volatility: volatility forecasts
+        :param spread: spread forecasts
         :return: a list of orders to execute
         """
         # Convert forecasts into target positions.
         target_positions = self._compute_target_positions_in_shares(
-            predictions, volatility
+            predictions, volatility, spread
         )
         # Get the wall clock timestamp and internally log `target_positions`.
         wall_clock_timestamp = self._get_wall_clock_time()
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
-        self._sequential_insert(
-            wall_clock_timestamp, target_positions, self._target_positions
-        )
+        self._target_positions[wall_clock_timestamp] = target_positions
         # Generate orders from target positions.
         _LOG.debug(
             "\n%s",
@@ -302,7 +322,7 @@ class ForecastProcessor:
         )
         # Convert orders to a string representation and internally log.
         orders_as_str = omorder.orders_to_string(orders)
-        self._sequential_insert(wall_clock_timestamp, orders_as_str, self._orders)
+        self._orders[wall_clock_timestamp] = orders_as_str
         return orders
 
     async def submit_orders(self, orders) -> None:
@@ -319,24 +339,89 @@ class ForecastProcessor:
             _LOG.debug("Event: awaiting broker.submit_orders() done.")
         else:
             _LOG.debug("No orders to submit to broker.")
-        _LOG.debug("portfolio=\n%s" % str(self._portfolio))
         if self._log_dir:
             self.log_state()
             self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
+
+    @staticmethod
+    def read_logged_target_positions(
+        log_dir: str,
+        *,
+        tz: str = "America/New_York",
+    ) -> pd.DataFrame:
+        """
+        Parse logged `target_position` dataframes.
+
+        Returns a dataframe indexed by datetimes and with two column levels.
+        """
+        name = "target_positions"
+        dir_name = os.path.join(log_dir, name)
+        files = hio.find_all_files(dir_name)
+        files.sort()
+        dfs = []
+        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
+            path = os.path.join(dir_name, file_name)
+            df = pd.read_csv(
+                path, index_col=0, parse_dates=["wall_clock_timestamp"]
+            )
+            # Change the index from `asset_id` to the timestamp.
+            df = df.reset_index().set_index("wall_clock_timestamp")
+            hpandas.dassert_series_type_is(df["asset_id"], np.int64)
+            if not isinstance(df.index, pd.DatetimeIndex):
+                _LOG.info("Skipping file_name=%s", file_name)
+                continue
+            df.index = df.index.tz_convert(tz)
+            # Pivot to multiple column levels.
+            df = df.pivot(columns="asset_id")
+            dfs.append(df)
+        df = pd.concat(dfs)
+        return df
+
+    @staticmethod
+    def read_logged_orders(
+        log_dir: str,
+    ) -> pd.DataFrame:
+        """
+        Parse logged orders and return as a dataframe indexed by order id.
+
+        NOTE: Parsing logged orders takes significantly longer than reading
+        logged target positions.
+        """
+        name = "orders"
+        dir_name = os.path.join(log_dir, name)
+        files = hio.find_all_files(dir_name)
+        files.sort()
+        dfs = []
+        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
+            path = os.path.join(dir_name, file_name)
+            lines = hio.from_file(path)
+            lines = lines.split("\n")
+            for line in lines:
+                if not line:
+                    continue
+                order = omorder.Order.from_string(line)
+                order = order.to_dict()
+                order = pd.Series(order).to_frame().T
+                dfs.append(order)
+        df = pd.concat(dfs)
+        df = df.set_index("order_id")
+        return df
 
     def _compute_target_positions_in_shares(
         self,
         predictions: pd.Series,
         volatility: pd.Series,
+        spread: pd.Series,
     ) -> pd.DataFrame:
         """
         Compute target holdings in shares.
 
         :param predictions: predictions indexed by `asset_id`
         :param volatility: volatility forecasts indexed by `asset_id`
+        :param spread: spread forecasts indexed by `asset_id`
         """
         assets_and_predictions = self._prepare_data_for_optimizer(
-            predictions, volatility
+            predictions, volatility, spread
         )
         hdbg.dassert_not_in(
             self._portfolio.CASH_ID, assets_and_predictions["asset_id"].to_list()
@@ -383,8 +468,11 @@ class ForecastProcessor:
         # Convert the target positions from cash values to target share counts.
         # Round to nearest integer towards zero.
         # df["diff_num_shares"] = np.fix(df["target_trade"] / df["price"])
-        df["diff_num_shares"] = df["target_notional_trade"] / df["price"]
-        # TODO(Paul): Warn and zero-out any trades that violate restrictions.
+        diff_num_shares = df["target_notional_trade"] / df["price"]
+        diff_num_shares.replace([-np.inf, np.inf], np.nan, inplace=True)
+        diff_num_shares = diff_num_shares.fillna(0)
+        df["diff_num_shares"] = diff_num_shares
+        df["spread"] = assets_and_predictions["spread"]
         _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         return df
 
@@ -392,6 +480,7 @@ class ForecastProcessor:
         self,
         predictions: pd.Series,
         volatility: pd.Series,
+        spread: pd.Series,
     ) -> pd.DataFrame:
         """
         Clean up data for optimization.
@@ -408,7 +497,7 @@ class ForecastProcessor:
         marked_to_market = self._get_extended_marked_to_market_df(predictions)
         # Combine the portfolio `marked_to_market` dataframe with the predictions.
         df_for_optimizer = self._merge_predictions(
-            marked_to_market, predictions, volatility
+            marked_to_market, predictions, volatility, spread
         )
         cash_id_filter = df_for_optimizer["asset_id"] == self._portfolio.CASH_ID
         df_for_optimizer.rename(columns={"value": "position"}, inplace=True)
@@ -454,76 +543,51 @@ class ForecastProcessor:
         )
         return marked_to_market
 
-    def _normalize_predictions_srs(
-        self, predictions: pd.Series, index: pd.DatetimeIndex
+    def _normalize_series(
+        self,
+        series: pd.Series,
+        index: pd.DatetimeIndex,
+        imputation: str,
+        name: str,
     ) -> pd.DataFrame:
         """
-        Normalize predictions with `index`, NaN-filling, and df conversion.
+        Normalize series with `index`, NaN-filling, and df conversion.
         """
-        _LOG.debug("Number of predictions=%i", predictions.size)
-        _LOG.debug("Number of non-NaN predictions=%i", predictions.count())
-        _LOG.debug("Number of NaN predictions=%i", predictions.isna().sum())
-        # Ensure that `predictions` does not already include the cash id.
-        hdbg.dassert_not_in(self._portfolio.CASH_ID, predictions.index)
-        # Ensure that `index` includes `predictions.index`.
-        hdbg.dassert(predictions.index.difference(index).empty)
+        hdbg.dassert_isinstance(series, pd.Series)
+        _LOG.debug("Number of values=%i", series.size)
+        _LOG.debug("Number of non-NaN values=%i", series.count())
+        _LOG.debug("Number of NaN values=%i", series.isna().sum())
+        # Ensure that `series` does not include the cash id.
+        hdbg.dassert_not_in(self._portfolio.CASH_ID, series.index)
+        # Ensure that `index` includes `series.index`.
+        hdbg.dassert(series.index.difference(index).empty)
         # Extend `predictions` to `index`.
-        predictions = predictions.reindex(index)
+        series = series.reindex(index)
         # Set the "prediction" for cash to 1. This is for the optimizer.
-        predictions[self._portfolio.CASH_ID] = 1
+        series[self._portfolio.CASH_ID] = 1
         # Impute zero for NaNs.
-        predictions = predictions.fillna(0.0)
+        if imputation == "zero":
+            series = series.fillna(0.0)
+        elif imputation == "mean":
+            series_mean = series.mean()
+            series = series.fillna(series_mean)
+        else:
+            raise ValueError("Invalid imputation mode")
         # Convert to a dataframe.
-        predictions = pd.DataFrame(predictions)
+        df = pd.DataFrame(series)
         # Format the predictions dataframe.
-        predictions.columns = ["prediction"]
-        predictions.index.name = "asset_id"
-        predictions = predictions.reset_index()
-        _LOG.debug("predictions=\n%s", hpandas.df_to_str(predictions))
-        return predictions
-
-    def _normalize_volatility_srs(
-        self, volatility: pd.Series, index: pd.DatetimeIndex
-    ) -> pd.DataFrame:
-        """
-        Normalize predictions with `index`, NaN-filling, and df conversion.
-        """
-        # TODO(Paul): Factor out common part with predictions normalization.
-        _LOG.debug("Number of volatility forecasts=%i", volatility.size)
-        _LOG.debug(
-            "Number of non-NaN volatility forecasts=%i", volatility.count()
-        )
-        _LOG.debug(
-            "Number of NaN volatility forecasts=%i", volatility.isna().sum()
-        )
-        # Ensure that `predictions` does not already include the cash id.
-        hdbg.dassert_not_in(self._portfolio.CASH_ID, volatility.index)
-        # Ensure that `index` includes `volatility.index`.
-        hdbg.dassert(volatility.index.difference(index).empty)
-        # Extend `volatility` to `index`.
-        volatility = volatility.reindex(index)
-        # Compute average volatility.
-        mean_volatility = volatility.mean()
-        if not np.isfinite(mean_volatility):
-            mean_volatility = 1.0
-        # Set the "volatility" for cash to 1. This is for the optimizer.
-        volatility[self._portfolio.CASH_ID] = 0
-        # Impute mean volatility.
-        volatility = volatility.fillna(mean_volatility)
-        # Convert to a dataframe.
-        volatility = pd.DataFrame(volatility)
-        # Format the predictions dataframe.
-        volatility.columns = ["volatility"]
-        volatility.index.name = "asset_id"
-        volatility = volatility.reset_index()
-        _LOG.debug("volatility=\n%s", hpandas.df_to_str(volatility))
-        return volatility
+        df.columns = [name]
+        df.index.name = "asset_id"
+        df = df.reset_index()
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
+        return df
 
     def _merge_predictions(
         self,
         marked_to_market: pd.DataFrame,
         predictions: pd.Series,
         volatility: pd.Series,
+        spread: pd.Series,
     ) -> pd.DataFrame:
         """
         Merge marked_to_market dataframe with predictions and volatility.
@@ -540,14 +604,22 @@ class ForecastProcessor:
         idx = predictions.index.union(
             marked_to_market.set_index("asset_id").index
         )
-        predictions = self._normalize_predictions_srs(predictions, idx)
-        volatility = self._normalize_volatility_srs(volatility, idx)
+        predictions = self._normalize_series(
+            predictions, idx, "zero", "prediction"
+        )
+        volatility = self._normalize_series(volatility, idx, "mean", "volatility")
+        spread = self._normalize_series(spread, idx, "mean", "spread")
         # Merge current holdings and predictions.
         merged_df = marked_to_market.merge(
             predictions, on="asset_id", how="outer"
         )
         merged_df = merged_df.merge(
             volatility,
+            on="asset_id",
+            how="outer",
+        )
+        merged_df = merged_df.merge(
+            spread,
             on="asset_id",
             how="outer",
         )
@@ -652,30 +724,6 @@ class ForecastProcessor:
         _LOG.warning("Enforcing restriction for asset_id=%i", asset_id)
         return diff_num_shares
 
-    # TODO(Paul): This is the same as the corresponding method in `Portfolio`.
-    @staticmethod
-    def _sequential_insert(
-        key: pd.Timestamp,
-        obj: Any,
-        odict: Dict[pd.Timestamp, Any],
-    ) -> None:
-        """
-        Insert `(key, obj)` in `odict` ensuring that keys are in increasing
-        order.
-
-        Assume that `odict` is a dict maintaining the insertion order of
-        the keys.
-        """
-        hdbg.dassert_isinstance(key, pd.Timestamp)
-        hdbg.dassert_isinstance(odict, collections.OrderedDict)
-        # Ensure that timestamps are inserted in increasing order.
-        if odict:
-            last_key = next(reversed(odict))
-            hdbg.dassert_lt(last_key, key)
-        # TODO(Paul): If `obj` is a series or dataframe, ensure that the index is
-        #  unique.
-        odict[key] = obj
-
 
 def _validate_order_config(config: cconfig.Config) -> None:
     hdbg.dassert_isinstance(config, cconfig.Config)
@@ -693,6 +741,13 @@ def _validate_df(df: pd.DataFrame) -> None:
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hpandas.dassert_index_is_datetime(df)
     hpandas.dassert_strictly_increasing_index(df)
+
+
+def _validate_compatibility(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert(df1.index.equals(df2.index))
+    hdbg.dassert(df2.columns.equals(df2.columns))
 
 
 # Extract the objects from the config.

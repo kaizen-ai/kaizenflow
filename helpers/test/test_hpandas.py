@@ -1,5 +1,6 @@
 import datetime
 import io
+import os
 import logging
 import uuid
 from typing import Any
@@ -9,12 +10,12 @@ import pandas as pd
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
+import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
 
 class Test_dassert_is_unique1(hunitest.TestCase):
-
     def get_df1(self) -> pd.DataFrame:
         """
         Return a df without duplicated index.
@@ -88,7 +89,6 @@ class Test_dassert_is_unique1(hunitest.TestCase):
 
 
 class Test_to_series1(hunitest.TestCase):
-
     def helper(self, n: int, exp: str) -> None:
         vals = list(range(n))
         df = pd.DataFrame([vals], columns=[f"a{i}" for i in vals])
@@ -129,7 +129,6 @@ class Test_to_series1(hunitest.TestCase):
 
 
 class Test_trim_df1(hunitest.TestCase):
-
     def get_df(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
         Return a df where the CSV txt is read verbatim without inferring dates.
@@ -430,7 +429,6 @@ class Test_trim_df1(hunitest.TestCase):
 
 
 class TestDfToStr(hunitest.TestCase):
-
     def test_df_to_str1(self) -> None:
         """
         Test common call to `df_to_str` with basic df.
@@ -531,7 +529,6 @@ class TestDfToStr(hunitest.TestCase):
 
 
 class TestDataframeToJson(hunitest.TestCase):
-
     def test_dataframe_to_json(self) -> None:
         """
         Verify correctness of dataframe to JSON transformation.
@@ -611,7 +608,6 @@ class TestDataframeToJson(hunitest.TestCase):
 
 
 class TestFindGapsInDataframes(hunitest.TestCase):
-
     def test_find_gaps_in_dataframes(self) -> None:
         """
         Verify that gaps are caught.
@@ -641,7 +637,6 @@ class TestFindGapsInDataframes(hunitest.TestCase):
 
 
 class TestCompareDataframeRows(hunitest.TestCase):
-
     def get_test_data(self) -> pd.DataFrame:
         test_data = {
             "dummy_value_1": [0, 1, 3, 2, 0],
@@ -697,3 +692,27 @@ class TestCompareDataframeRows(hunitest.TestCase):
         0             W     A           NaN   NaN
         1             Q     C             1   0.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class TestReadDataFromS3(hunitest.TestCase):
+
+    def test_read_csv1(self) -> None:
+        s3fs = hs3.get_s3fs("am")
+        file_name = os.path.join(
+            hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
+        )
+        hs3.dassert_s3_exists(file_name, s3fs)
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
+        hpandas.read_csv_to_df(stream, **kwargs)
+
+    def test_read_parquet1(self) -> None:
+        s3fs = hs3.get_s3fs("am")
+        file_name = os.path.join(
+            hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
+        )
+        hs3.dassert_s3_exists(file_name, s3fs)
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
+        hpandas.read_parquet_to_df(stream, **kwargs)

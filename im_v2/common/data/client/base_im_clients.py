@@ -71,9 +71,40 @@ class ImClient(abc.ABC):
             self._build_asset_id_to_full_symbol_mapping()
         )
 
+    @staticmethod
+    @abc.abstractmethod
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+        """
+        Return the entire universe of valid full symbols.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+
+    @staticmethod
+    def get_asset_ids_from_full_symbols(
+        full_symbols: List[imvcdcfusy.FullSymbol],
+    ) -> List[int]:
+        """
+        Convert full symbols into asset ids.
+
+        :param full_symbols: assets as full symbols
+        :return: assets as numerical ids
+        """
+        numerical_asset_id = [
+            imvcuunut.string_to_numerical_id(full_symbol)
+            for full_symbol in full_symbols
+        ]
+        return numerical_asset_id
+
     def read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
+        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -85,6 +116,7 @@ class ImClient(abc.ABC):
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
+        :param resample_1min: allow to control resampling
         :param start_ts: the earliest date timestamp to load data for
             - `None` means start from the beginning of the available data
         :param end_ts: the latest date timestamp to load data for
@@ -138,10 +170,10 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, start_ts, end_ts
+                df_tmp, full_symbol_col_name, resample_1min, start_ts, end_ts
             )
             self._dassert_output_data_is_valid(
-                df_tmp, full_symbol_col_name, start_ts, end_ts
+                df_tmp, full_symbol_col_name, resample_1min, start_ts, end_ts
             )
             dfs.append(df_tmp)
         # TODO(Nikola): raise error on empty df?
@@ -201,34 +233,86 @@ class ImClient(abc.ABC):
     # /////////////////////////////////////////////////////////////////////////
 
     @staticmethod
-    @abc.abstractmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+    def _apply_im_normalizations(
+        df: pd.DataFrame,
+        full_symbol_col_name: str,
+        resample_1min: bool,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+    ) -> pd.DataFrame:
         """
-        Return the entire universe of valid full symbols.
+        Apply normalizations to IM data.
         """
+        _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
+        hdbg.dassert(not df.empty, "Empty df=\n%s", df)
+        # 1) Drop duplicates.
+        df = hpandas.drop_duplicates(df)
+        # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
+        # Trimming of the data is done because:
+        # - some data sources can be only queried at day resolution so we get
+        #   a date range and then we trim
+        # - we want to guarantee that no derived class returns data outside the
+        #   requested interval
+        ts_col_name = None
+        left_close = True
+        right_close = True
+        df = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        # 3) Resample index to 1 min frequency if specified.
+        if resample_1min:
+            df = hpandas.resample_df(df, "T")
+            # Fill NaN values appeared after resampling in full symbol column.
+            # Combination of full symbol and timestamp is a unique identifier,
+            # so full symbol cannot be NaN.
+            df[full_symbol_col_name] = df[full_symbol_col_name].fillna(
+                method="bfill"
+            )
+        # 4) Convert to UTC.
+        df.index = df.index.tz_convert("UTC")
+        return df
 
     @staticmethod
-    @abc.abstractmethod
-    def get_metadata() -> pd.DataFrame:
+    def _dassert_output_data_is_valid(
+        df: pd.DataFrame,
+        full_symbol_col_name: str,
+        resample_1min: bool,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+    ) -> None:
         """
-        Return metadata.
+        Verify that the normalized data is valid.
         """
-
-    @staticmethod
-    def get_asset_ids_from_full_symbols(
-        full_symbols: List[imvcdcfusy.FullSymbol],
-    ) -> List[int]:
-        """
-        Convert full symbols into asset ids.
-
-        :param full_symbols: assets as full symbols
-        :return: assets as numerical ids
-        """
-        numerical_asset_id = [
-            imvcuunut.string_to_numerical_id(full_symbol)
-            for full_symbol in full_symbols
-        ]
-        return numerical_asset_id
+        # Check that index is `pd.DatetimeIndex`.
+        hpandas.dassert_index_is_datetime(df)
+        if resample_1min:
+            # Check that index is monotonic increasing.
+            hpandas.dassert_strictly_increasing_index(df)
+            # Verify that index frequency is 1 minute.
+            hdbg.dassert_eq(df.index.freq, "T")
+        # Check that timezone info is correct.
+        expected_tz = ["UTC"]
+        # Assume that the first value of an index is representative.
+        hdateti.dassert_has_specified_tz(
+            df.index[0],
+            expected_tz,
+        )
+        # Check that full symbol column has no NaNs.
+        hdbg.dassert(df[full_symbol_col_name].notna().all())
+        # Check that there are no duplicates in data by index and full symbol.
+        n_duplicated_rows = (
+            df.reset_index()
+            .duplicated(subset=["timestamp", full_symbol_col_name])
+            .sum()
+        )
+        hdbg.dassert_eq(
+            n_duplicated_rows, 0, msg="There are duplicated rows in the data"
+        )
+        # Ensure that all the data is in [start_ts, end_ts].
+        if start_ts:
+            hdbg.dassert_lte(start_ts, df.index.min())
+        if end_ts:
+            hdbg.dassert_lte(df.index.max(), end_ts)
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -263,7 +347,10 @@ class ImClient(abc.ABC):
         # Read data for the entire period of time available.
         start_timestamp = None
         end_timestamp = None
-        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
+        resample_1min = True
+        data = self.read_data(
+            [full_symbol], resample_1min, start_timestamp, end_timestamp
+        )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
             timestamp = data.index.min()
@@ -275,82 +362,6 @@ class ImClient(abc.ABC):
         hdbg.dassert_isinstance(timestamp, pd.Timestamp)
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
-
-    @staticmethod
-    def _apply_im_normalizations(
-        df: pd.DataFrame,
-        full_symbol_col_name: str,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-    ) -> pd.DataFrame:
-        """
-        Apply normalizations to IM data.
-        """
-        _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
-        hdbg.dassert(not df.empty, "Empty df=\n%s", df)
-        # 1) Drop duplicates.
-        df = hpandas.drop_duplicates(df)
-        # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
-        # Trimming of the data is done because:
-        # - some data sources can be only queried at day resolution so we get
-        #   a date range and then we trim
-        # - we want to guarantee that no derived class returns data outside the
-        #   requested #   interval
-        ts_col_name = None
-        left_close = True
-        right_close = True
-        df = hpandas.trim_df(
-            df, ts_col_name, start_ts, end_ts, left_close, right_close
-        )
-        # 3) Resample index to 1 min frequency
-        df = hpandas.resample_df(df, "T")
-        # Fill NaN values appeared after resampling in full symbol column.
-        # Combination of full symbol and timestamp is a unique identifier,
-        # so full symbol cannot be NaN.
-        df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
-        # 4) Convert to UTC.
-        df.index = df.index.tz_convert("UTC")
-        return df
-
-    @staticmethod
-    def _dassert_output_data_is_valid(
-        df: pd.DataFrame,
-        full_symbol_col_name: str,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-    ) -> None:
-        """
-        Verify that the normalized data is valid.
-        """
-        # Check that index is `pd.DatetimeIndex`.
-        hpandas.dassert_index_is_datetime(df)
-        # Check that index is monotonic increasing.
-        hpandas.dassert_strictly_increasing_index(df)
-        # Verify that index frequency is 1 minute.
-        hdbg.dassert_eq(df.index.freq, "T")
-        # Check that timezone info is correct.
-        expected_tz = ["UTC"]
-        # Assume that the first value of an index is representative.
-        hdateti.dassert_has_specified_tz(
-            df.index[0],
-            expected_tz,
-        )
-        # Check that full symbol column has no NaNs.
-        hdbg.dassert(df[full_symbol_col_name].notna().all())
-        # Check that there are no duplicates in data by index and full symbol.
-        n_duplicated_rows = (
-            df.reset_index()
-            .duplicated(subset=["timestamp", full_symbol_col_name])
-            .sum()
-        )
-        hdbg.dassert_eq(
-            n_duplicated_rows, 0, msg="There are duplicated rows in the data"
-        )
-        # Ensure that all the data is in [start_ts, end_ts].
-        if start_ts:
-            hdbg.dassert_lte(start_ts, df.index.min())
-        if end_ts:
-            hdbg.dassert_lte(df.index.max(), end_ts)
 
 
 # #############################################################################

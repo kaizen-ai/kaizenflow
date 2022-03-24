@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import core.real_time as creatime
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -97,6 +96,8 @@ class ReplayedMarketData(mdabmada.MarketData):
                 "right_close limit"
             )
         )
+        # TODO(gp): This assertion seems very slow. Move this check in a
+        #  centralized place instead of calling it every time, if possible.
         if asset_ids is not None:
             # Make sure that the requested asset_ids are in the df at some point.
             # This avoids mistakes when mocking data for certain assets, but request
@@ -199,7 +200,8 @@ def load_market_data(
         s3fs_ = hs3.get_s3fs(aws_profile)
         kwargs_tmp["s3fs"] = s3fs_
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
-    df = cpanh.read_csv(file_name, **kwargs)
+    stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
+    df = hpandas.read_csv_to_df(stream, **kwargs)
     for col_name in ("start_time", "end_time", "timestamp_db"):
         if col_name in df.columns:
             df[col_name] = pd.to_datetime(df[col_name], utc=True)

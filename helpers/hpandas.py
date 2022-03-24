@@ -9,13 +9,14 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-import helpers.hs3 as hs3
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
-# Avoid dependency from other `helpers` modules, such as `helpers.hsql`and
-# `helpers.hunit_test`, to prevent import cycles.
+# Avoid the following dependency from other `helpers` modules to prevent import cycles.
+# import helpers.hs3 as hs3
+# import helpers.hsql as hsql
+# import helpers.hunit_test as hunitest
 
 
 _LOG = logging.getLogger(__name__)
@@ -397,7 +398,7 @@ def reindex_on_unix_epoch(
     return df
 
 
-def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
+def get_df_signature(df: pd.DataFrame, num_rows: int = 6) -> str:
     """
     Compute a simple signature of a dataframe in string format.
 
@@ -406,15 +407,19 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 3) -> str:
     testing purposes.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
-    txt: List[str] = []
-    txt.append("df.shape=%s" % str(df.shape))
+    text: List[str] = ["df.shape=%s" % str(df.shape)]
     with pd.option_context(
         "display.max_colwidth", int(1e6), "display.max_columns", None
     ):
-        txt.append("df.head=\n%s" % df.head(num_rows))
-        txt.append("df.tail=\n%s" % df.tail(num_rows))
-    txt = "\n".join(txt)
-    return txt
+        # If dataframe size exceeds number of rows, show only subset in form of
+        # first and last rows. Otherwise, whole dataframe is shown.
+        if len(df) > num_rows:
+            text.append("df.head=\n%s" % df.head(num_rows // 2))
+            text.append("df.tail=\n%s" % df.tail(num_rows // 2))
+        else:
+            text.append("df.full=\n%s" % df)
+    text: str = "\n".join(text)
+    return text
 
 
 # #############################################################################
@@ -792,9 +797,9 @@ def convert_col_to_int(
     """
     Convert a column to an integer column.
 
-    Example use case:
-        Parquet uses categoricals. If supplied with a categorical-type column,
-        this function will convert it to an integer column.
+    Example use case: Parquet uses categoricals. If supplied with a
+    categorical-type column, this function will convert it to an integer
+    column.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(col, str)
@@ -809,37 +814,17 @@ def convert_col_to_int(
 # #############################################################################
 
 
-def _get_local_or_s3_stream(file_name: str, **kwargs: Any) -> Tuple[Any, Any]:
-    _LOG.debug(hprint.to_str("file_name kwargs"))
-    # Handle the s3fs param, if needed.
-    if hs3.is_s3_path(file_name):
-        # For S3 files we need to have an `s3fs` parameter.
-        hdbg.dassert_in(
-            "s3fs",
-            kwargs,
-            "Credentials through s3fs are needed to access an S3 path",
-        )
-        s3fs_ = kwargs.pop("s3fs")
-        import s3fs
-
-        hdbg.dassert_isinstance(s3fs_, s3fs.core.S3FileSystem)
-        # TODO(gp): Add
-        # hdbg.dassert_s3_file_exists(file_name)
-        stream = s3fs_.open(file_name)
-    else:
-        if "s3fs" in kwargs:
-            _LOG.warning("Passed `s3fs` without an S3 file: ignoring it")
-            _ = kwargs.pop("s3fs")
-        hdbg.dassert_file_exists(file_name)
-        stream = file_name
-    return stream, kwargs
-
-
-def read_csv_to_df(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+def read_csv_to_df(
+    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
     """
-    Read a CSV file into a `pd.DataFrame` handling the S3 profile, if needed.
+    Read a CSV file into a `pd.DataFrame`.
     """
-    stream, kwargs = _get_local_or_s3_stream(file_name, **kwargs)
+    # Gets filename from stream if it is not already a string,
+    # so it can be inspected for extension type.
+    file_name = stream if isinstance(stream, str) else vars(stream)["path"]
     # Handle zipped files.
     if any(file_name.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
         hdbg.dassert_not_in("compression", kwargs)
@@ -853,12 +838,14 @@ def read_csv_to_df(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
     return df
 
 
-def read_parquet_to_df(file_name: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+def read_parquet_to_df(
+    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
     """
-    Read a Parquet file into a `pd.DataFrame` handling the S3 profile, if
-    needed.
+    Read a Parquet file into a `pd.DataFrame`.
     """
-    stream, kwargs = _get_local_or_s3_stream(file_name, **kwargs)
     # Read.
     _LOG.debug(hprint.to_str("args kwargs"))
     df = pd.read_parquet(stream, *args, **kwargs)
