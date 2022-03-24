@@ -27,11 +27,10 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-def get_TalosParquetByTileClient_example1() -> imvtdctacl.TalosParquetByTileClient:
+def get_TalosParquetByTileClient_example1(resample_1min: bool) -> imvtdctacl.TalosParquetByTileClient:
     """
     Get `TalosParquetByTileClient` object for the tests.
     """
-    resample_1min = True
     root_dir = get_test_data_dir()
-    talos_file_client = imvtdctacl.TalosParquetByTileClient(resample_1min, root_dir)
+    talos_file_client = imvtdctacl.TalosParquetByTileClient(root_dir, resample_1min)
     return talos_file_client

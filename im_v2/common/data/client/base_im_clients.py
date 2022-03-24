@@ -60,14 +60,14 @@ class ImClient(abc.ABC):
     ```
     """
 
-    def __init__(self, resample_1min: bool, vendor: str) -> None:
+    def __init__(self, vendor: str, resample_1min: bool) -> None:
         """
         Constructor.
-        :param resample_1min: allow to control resampling
         :param vendor: price data provider
+        :param resample_1min: whether to resample data to 1 minute or not
         """
-        self._resample_1min = resample_1min
         self._vendor = vendor
+        self._resample_1min = resample_1min
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )

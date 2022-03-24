@@ -41,11 +41,11 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
-    def __init__(self, resample_1min: bool, vendor: str) -> None:
+    def __init__(self, vendor: str, resample_1min: bool) -> None:
         """
         Constructor.
         """
-        super().__init__(resample_1min, vendor)
+        super().__init__(vendor, resample_1min)
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
 
@@ -133,8 +133,8 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
     def __init__(
         self,
-        resample_1min: bool,
         vendor: str,
+        resample_1min: bool,
         connection: hsql.DbConnection,
     ) -> None:
         """
@@ -142,10 +142,9 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
         This code path is typically used for the real-time data.
 
-        :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param connection: connection for a SQL database
         """
-        super().__init__(resample_1min, vendor)
+        super().__init__(vendor, resample_1min)
         self._connection = connection
 
     def get_metadata(self) -> pd.DataFrame:
@@ -213,8 +212,8 @@ class CcxtCddCsvParquetByAssetClient(
 
     def __init__(
         self,
-        resample_1min: bool,
         vendor: str,
+        resample_1min: bool,
         root_dir: str,
         # TODO(gp): -> file_extension
         extension: str,
@@ -233,7 +232,7 @@ class CcxtCddCsvParquetByAssetClient(
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
-        super().__init__(resample_1min, vendor)
+        super().__init__(vendor, resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(

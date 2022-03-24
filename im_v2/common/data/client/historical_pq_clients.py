@@ -29,8 +29,8 @@ class HistoricalPqByTileClient(
 
     def __init__(
         self,
-        resample_1min: bool,
         vendor: str,
+        resample_1min: bool,
         root_dir_name: str,
         partition_mode: str,
         *,
@@ -43,7 +43,7 @@ class HistoricalPqByTileClient(
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
         :param aws_profile: AWS profile name (e.g., "ck")
         """
-        super().__init__(resample_1min, vendor)
+        super().__init__(vendor, resample_1min)
         self._root_dir_name = root_dir_name
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile

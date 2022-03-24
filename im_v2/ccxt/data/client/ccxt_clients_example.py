@@ -31,18 +31,17 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-def get_CcxtCsvClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
+def get_CcxtCsvClient_example1(resample_1min: bool) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 
     Extension is `csv.gz`.
     """
-    resample_1min = True
     vendor = "CCXT"
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        resample_1min, vendor, root_dir, extension
+        vendor, resample_1min, root_dir, extension
     )
     return ccxt_file_client
 
@@ -58,54 +57,21 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     root_dir = get_test_data_dir()
     extension = "csv"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        resample_1min, vendor, root_dir, extension
+        vendor, resample_1min, root_dir, extension
     )
     return ccxt_file_client
 
 
-def get_CcxtCsvClient_example3() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
-    """
-    Get `CcxtCddCsvParquetByAssetClient` object for the tests.
-
-    Extension is `csv.gz`.
-    """
-    resample_1min = False
-    vendor = "CCXT"
-    root_dir = get_test_data_dir()
-    extension = "csv.gz"
-    ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        resample_1min, vendor, root_dir, extension
-    )
-    return ccxt_file_client
-
-
-def get_CcxtParquetByAssetClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
+def get_CcxtParquetByAssetClient_example1(resample_1min: bool) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 
     Extension is `pq`.
     """
-    resample_1min = True
     vendor = "CCXT"
     root_dir = get_test_data_dir()
     extension = "pq"
     ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        resample_1min, vendor, root_dir, extension
-    )
-    return ccxt_client
-
-
-def get_CcxtParquetByAssetClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
-    """
-    Get `CcxtCddCsvParquetByAssetClient` object for the tests.
-
-    Extension is `pq`.
-    """
-    resample_1min = False
-    vendor = "CCXT"
-    root_dir = get_test_data_dir()
-    extension = "pq"
-    ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        resample_1min, vendor, root_dir, extension
+        vendor, resample_1min, root_dir, extension
     )
     return ccxt_client

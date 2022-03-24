@@ -38,7 +38,7 @@ class TalosClient(icdc.ImClient, abc.ABC):
         Constructor.
         """
         vendor = "talos"
-        super().__init__(resample_1min, vendor)
+        super().__init__(vendor, resample_1min)
 
     def get_universe(self) -> List[icdc.FullSymbol]:
         """
@@ -62,8 +62,8 @@ class TalosParquetByTileClient(TalosClient, icdc.ImClientReadingOneSymbol):
 
     def __init__(
         self,
-        resample_1min: bool,
         root_dir: str,
+        resample_1min: bool,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,

@@ -161,12 +161,12 @@ class ImClientTestCase(hunitest.TestCase):
         """
         Test:
         - reading data for two or more full symbols
+        - reading not resampled data
         - start_ts = end_ts = None
         - resample_1min = False
         """
         start_ts = None
         end_ts = None
-        im_client.resample_1min = False
         actual_df = im_client.read_data(
             full_symbols, start_ts, end_ts
         )

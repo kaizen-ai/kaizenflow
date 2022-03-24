@@ -41,7 +41,7 @@ class KibotClient(icdc.ImClient):
         Constructor.
         """
         vendor = "kibot"
-        super().__init__(resample_1min, vendor)
+        super().__init__(vendor, resample_1min)
 
     def get_universe(self) -> List[icdc.FullSymbol]:
         """
@@ -130,8 +130,8 @@ class KibotEquitiesCsvParquetByAssetClient(
 
     def __init__(
         self,
-        resample_1min: bool,
         root_dir: str,
+        resample_1min: bool,
         extension: str,
         asset_class: str,
         unadjusted: Optional[bool],
@@ -141,7 +141,6 @@ class KibotEquitiesCsvParquetByAssetClient(
         """
         Constructor.
 
-        :param resample_1min: allows to control resampling
         :param root_dir: either a local root path (e.g., "/app/im") or an S3
             root path (e.g., "s3://alphamatic-data/data") to `Kibot` equity data
         :param extension: file extension, e.g., `csv`, `csv.gz` or `parquet`
@@ -317,8 +316,8 @@ class KibotFuturesCsvParquetByAssetClient(
 
     def __init__(
         self,
-        resample_1min: bool,
         root_dir: str,
+        resample_1min: bool,
         extension: str,
         contract_type: str,
         *,
