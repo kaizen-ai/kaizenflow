@@ -22,7 +22,7 @@ class Test_to_str1(hunitest.TestCase):
         x = 1
         # To disable linter complaints.
         _ = x
-        act = hprint.to_str("x")
+        act = hprint.to_str(x)
         exp = "x=1"
         self.assertEqual(act, exp)
 
@@ -30,15 +30,15 @@ class Test_to_str1(hunitest.TestCase):
         x = "hello world"
         # To disable linter complaints.
         _ = x
-        act = hprint.to_str("x")
-        exp = "x='hello world'"
+        act = hprint.to_str(x)
+        exp = "x=hello world"
         self.assertEqual(act, exp)
 
     def test3(self) -> None:
         x = 2
         # To disable linter complaints.
         _ = x
-        act = hprint.to_str("x*2")
+        act = hprint.to_str(x*2)
         exp = "x*2=4"
         self.assertEqual(act, exp)
 
@@ -50,8 +50,8 @@ class Test_to_str1(hunitest.TestCase):
         y = "hello"
         # To disable linter complaints.
         _ = x, y
-        act = hprint.to_str("x y")
-        exp = "x=1, y='hello'"
+        act = hprint.to_str(x, y)
+        exp = "x=1, y=hello"
         self.assertEqual(act, exp)
 
     def test5(self) -> None:
@@ -62,8 +62,8 @@ class Test_to_str1(hunitest.TestCase):
         y = "hello"
         # To disable linter complaints.
         _ = x, y
-        act = hprint.to_str("x y")
-        exp = "x='1', y='hello'"
+        act = hprint.to_str(x, y)
+        exp = "x=1, y=hello"
         self.assertEqual(act, exp)
 
     def test6(self) -> None:
@@ -73,8 +73,48 @@ class Test_to_str1(hunitest.TestCase):
         x = [1, "hello", "world"]
         # To disable linter complaints.
         _ = x
-        act = hprint.to_str("x")
+        act = hprint.to_str(x)
         exp = "x=[1, 'hello', 'world']"
+        self.assertEqual(act, exp)
+
+    def test7(self) -> None:
+        """
+        Test printing arguments which are declared on the different lines.
+        """
+        x = [1, "hello", "world"]
+        y = "Hello"
+        z = "world"
+        # To disable linter complaints.
+        _ = x
+        act = hprint.to_str(x,
+                            y,
+                            z
+                            )
+        exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
+        self.assertEqual(act, exp)
+
+    def test8(self) -> None:
+        """
+        Test printing arguments from a function called from line which contains call of another function
+        """
+        def string_wrapper(line: str) -> str:
+            return line
+
+        x = [1, "hello", "world"]
+        y = "Hello"
+        z = "world"
+        # To disable linter complaints.
+        _ = x
+        act = string_wrapper(hprint.to_str(x, y, z))
+        exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
+        self.assertEqual(act, exp)
+
+    def test9(self) -> None:
+        """
+        Test printing empty arguments
+        """
+        act = hprint.to_str()
+        exp = ""
         self.assertEqual(act, exp)
 
 

@@ -7,6 +7,7 @@ import helpers.hprint as hprint
 import logging
 import re
 import sys
+import inspect
 from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.hdbg as hdbg
@@ -309,37 +310,63 @@ def round_digits(
 # name of variables from the caller.
 
 
-def to_str(expression: str, frame_lev: int = 1) -> str:
+def to_str(*args) -> str:
     """
-    Return a string with the value of a variable / expression / multiple
-    variables.
-
-    If expression is a space-separated compound expression, convert it into
-    `exp1=val1, exp2=val2, ...`.
-
-    This is similar to Python 3.8 f-string syntax `f"{foo=} {bar=}"`.
-    We don't want to force to use Python 3.8 just for this feature.
-
-    >>> x = 1
-    >>> to_str("x+1")
-    x+1=2
+    Return a string with the names and values of a variables that were provided into the function.
+    Limits: can't work with argument which contains parenthesis, ex: to_str(to_str(a,b), c).
+    :param args: variables that should be converted to the "variable=value" string.
+    :raise AssertionError if amount of variables not matches to the amount of values.
+    :return: string which contains all function call arguments and it's values in one line, ex: a=1, b=2...
     """
-    # TODO(gp): If we pass an object it would be nice to find the name of it.
-    # E.g., https://github.com/pwwang/python-varname
-    hdbg.dassert_isinstance(expression, str)
-    if " " in expression:
-        # If expression is a list of space-separated expression, convert each in a
-        # string.
-        exprs = [v.lstrip().rstrip() for v in expression.split(" ")]
-        _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
-        return ", ".join(list(map(_to_str, exprs)))
-    frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
-    ret = (
-        expression
-        + "="
-        + repr(eval(expression, frame_.f_globals, frame_.f_locals))
-    )
-    return ret
+
+    def get_function_call_arguments(source_file_path: str,
+                                    function_call_line_no: int,
+                                    function_name: str) -> str:
+        """
+        Collecting code lines which are related to the function call in case if arguments were given on separate lines.
+        :param source_file_path: Path to the source file.
+        :param function_call_line_no: Line from which function was called.
+        :param function_name: Name of the function which arguments should be returned.
+        :return: string which contains all function call arguments.
+        """
+
+        with open(source_file_path) as fd_in:
+            function_call_with_arguments = str()
+            # First line has index 1.
+            for line_no, line in enumerate(fd_in, 1):
+                # Check starting from line.
+                if line_no >= function_call_line_no:
+                    function_call_with_arguments += line.strip()
+                    regex = fr'{function_name}\((.*?)\)'
+                    match = re.findall(regex, function_call_with_arguments)
+                    if not match:
+                        continue
+                    else:
+                        # Return first match.
+                        return match[0]
+
+    # Return empty string if no arguments were provided.
+    if not args:
+        return ''
+
+    # Get current frame.
+    frame = inspect.currentframe()
+    frames = inspect.getouterframes(frame)
+    # Get first outer frame.
+    frame_above = frames[1]
+    current_frame = frames[0]
+    # Collect function call arguments.
+    variables_str = get_function_call_arguments(source_file_path=frame_above.filename,
+                                                function_call_line_no=frame_above.lineno,
+                                                function_name=current_frame.function)
+    variables = variables_str.split(',')
+    assert len(variables) == len(args), "Amount of variables is not equal to amount of values:" \
+                                        f"\n Variables: {variables},\nValues: {list(args)}"
+    output = list()
+    for name, value in zip(variables, args):
+        output.append(f"{name.strip()}={value}")
+
+    return ', '.join(output)
 
 
 def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
