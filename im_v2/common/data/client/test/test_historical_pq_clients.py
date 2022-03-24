@@ -16,6 +16,7 @@ def _generate_test_data(
     end_date: str,
     freq: str,
     assets: str,
+    asset_col_name: str,
     output_type: str,
     partition_mode: str,
 ) -> str:
@@ -34,6 +35,7 @@ def _generate_test_data(
     cmd.append(f"--end_date {end_date}")
     cmd.append(f"--freq {freq}")
     cmd.append(f"--assets {assets}")
+    cmd.append(f"--asset_col_name {asset_col_name}")
     cmd.append(f"--partition_mode {partition_mode}")
     cmd.append(f"--dst_dir {tiled_bar_data_dir}")
     cmd.append(f"--output_type {output_type}")
@@ -63,10 +65,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_date = "2022-01-02"
         freq = "1T"
         assets = "binance::BTC_USDT"
+        asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
         test_dir = _generate_test_data(
-            self, start_date, end_date, freq, assets, output_type, partition_mode
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
         # Init client for testing.
         vendor = "mock"
@@ -104,10 +114,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_date = "2022-01-02"
         freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
         test_dir = _generate_test_data(
-            self, start_date, end_date, freq, assets, output_type, partition_mode
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
         # Init client for testing.
         vendor = "mock"
@@ -147,10 +165,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_date = "2022-01-02"
         freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
         test_dir = _generate_test_data(
-            self, start_date, end_date, freq, assets, output_type, partition_mode
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
         # Init client for testing.
         vendor = "mock"
@@ -192,10 +218,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_date = "2022-01-02"
         freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
         test_dir = _generate_test_data(
-            self, start_date, end_date, freq, assets, output_type, partition_mode
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
         # Init client for testing.
         vendor = "mock"
@@ -237,10 +271,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_date = "2022-01-02"
         freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
         test_dir = _generate_test_data(
-            self, start_date, end_date, freq, assets, output_type, partition_mode
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
         # Init client for testing.
         vendor = "mock"
@@ -285,10 +327,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_date = "2022-01-01"
         freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
         test_dir = _generate_test_data(
-            self, start_date, end_date, freq, assets, output_type, partition_mode
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
         # Init client for testing.
         vendor = "mock"
@@ -304,10 +354,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_date = "2022-01-01"
         freq = "1T"
         assets = "binance::BTC_USDT"
+        asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
         test_dir = _generate_test_data(
-            self, start_date, end_date, freq, assets, output_type, partition_mode
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
         # Init client for testing.
         vendor = "mock"
@@ -325,10 +383,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_date = "2022-01-01"
         freq = "1T"
         assets = "binance::BTC_USDT"
+        asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
         test_dir = _generate_test_data(
-            self, start_date, end_date, freq, assets, output_type, partition_mode
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
         # Init client for testing.
         vendor = "mock"
