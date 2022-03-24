@@ -19,6 +19,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.universe.universe as imvcounun
@@ -116,8 +117,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
             full_path = os.path.join(dst_dir, date_directory)
             if args.aws_profile:
                 # Check S3 path.
-                # TODO(Nikola): CMTask1438 potentially pass just AWS profile.
-                raise NotImplementedError
+                hs3.dassert_s3_path_not_exists(
+                    full_path, aws_profile=args.aws_profile
+                )
             else:
                 # Check local path.
                 hdbg.dassert_not_exists(full_path)
