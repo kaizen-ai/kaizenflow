@@ -10,8 +10,8 @@ from typing import Any, List, Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im_v2.common.data.client as icdc
 
@@ -209,6 +209,7 @@ class KibotEquitiesCsvParquetByAssetClient(
             # Add s3fs argument to kwargs.
             kwargs["s3fs"] = self._s3fs
         # Read data.
+        # TODO(Nikola): parquet?
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
@@ -224,7 +225,8 @@ class KibotEquitiesCsvParquetByAssetClient(
             # Add columns to read to kwargs.
             kwargs["columns"] = ["open", "high", "low", "close", "vol"]
             # Load and normalize data.
-            data = cpanh.read_parquet(file_path, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            data = hpandas.read_parquet_to_df(stream, **kwargs)
             data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
             # Avoid using the 1st data row as columns and set column names.
@@ -239,7 +241,8 @@ class KibotEquitiesCsvParquetByAssetClient(
                 "volume",
             ]
             # Load and normalize data.
-            data = cpanh.read_csv(file_path, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            data = hpandas.read_csv_to_df(stream, **kwargs)
             data = self._apply_kibot_csv_normalization(data)
             # Filter by dates if specified.
             if start_ts:
@@ -269,6 +272,7 @@ class KibotEquitiesCsvParquetByAssetClient(
         file_name = ".".join([trade_symbol, self._extension])
         subdir = self._get_subdir_name()
         pq_subdir = ""
+        # TODO(Nikola): parquet?
         if self._extension == "pq":
             pq_subdir = "pq"
         file_path = os.path.join(
@@ -374,7 +378,8 @@ class KibotFuturesCsvParquetByAssetClient(
         if hs3.is_s3_path(file_path):
             read_csv_kwargs["s3fs"] = self._s3fs
         # Read metadata.
-        df = cpanh.read_csv(file_path, **read_csv_kwargs)
+        stream, kwargs = hs3.get_local_or_s3_stream(file_path, **read_csv_kwargs)
+        df = hpandas.read_csv_to_df(stream, **kwargs)
         return df
 
     def _read_data_for_one_symbol(
@@ -403,6 +408,7 @@ class KibotFuturesCsvParquetByAssetClient(
             # Add s3fs argument to kwargs.
             kwargs["s3fs"] = self._s3fs
         # Read data.
+        # TODO(Nikola): parquet?
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
@@ -418,7 +424,8 @@ class KibotFuturesCsvParquetByAssetClient(
             # Add columns to read to kwargs.
             kwargs["columns"] = ["open", "high", "low", "close", "vol"]
             # Load and normalize data.
-            data = cpanh.read_parquet(file_path, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            data = hpandas.read_parquet_to_df(stream, **kwargs)
             data = self._apply_kibot_parquet_normalization(data)
         elif self._extension in ["csv", "csv.gz"]:
             # Avoid using the 1st data row as columns and set column names.
@@ -433,7 +440,8 @@ class KibotFuturesCsvParquetByAssetClient(
                 "volume",
             ]
             # Load and normalize data.
-            data = cpanh.read_csv(file_path, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            data = hpandas.read_csv_to_df(stream, **kwargs)
             data = self._apply_kibot_csv_normalization(data)
             # Filter by dates if specified.
             if start_ts:
@@ -460,6 +468,7 @@ class KibotFuturesCsvParquetByAssetClient(
         file_name = ".".join([trade_symbol, self._extension])
         subdir = self._get_subdir_name()
         pq_subdir = ""
+        # TODO(Nikola): parquet?
         if self._extension == "pq":
             pq_subdir = "pq"
             # Capitalize parts of subdir name for Parquet files for futures.

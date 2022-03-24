@@ -66,7 +66,7 @@ def from_parquet(
         filesystem = get_pyarrow_s3fs(aws_profile)
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_s3_exists(file_name, s3_filesystem)
+        hs3.dassert_s3_path_exists(file_name, s3_filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
@@ -141,7 +141,7 @@ def to_parquet(
     *,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
 ) -> None:
     """
     Save a dataframe as Parquet.
@@ -151,7 +151,7 @@ def to_parquet(
     if aws_profile is not None:
         hdbg.dassert(hs3.is_s3_path(file_name))
         filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_s3_exists(file_name, filesystem)
+        hs3.dassert_s3_path_exists(file_name, filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
@@ -509,7 +509,7 @@ def get_parquet_filters_from_timestamp_interval(
             extra_filter = [("year", operator, timestamp.year)]
             or_and_filter.append(extra_filter)
         else:
-            # If there is no interval provided, empty list is returned.
+            # If there is no interval provided, leave empty `or_and_filter` as is.
             pass
     elif partition_mode == "by_year_week":
         # TODO(gp): Consider using the same approach above for months also here.
@@ -534,6 +534,10 @@ def get_parquet_filters_from_timestamp_interval(
             [additional_filter] + and_filter for and_filter in or_and_filter
         ]
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
+    if len(or_and_filter) == 0:
+        # Empty list is not acceptable value for pyarrow dataset.
+        # Only logical expression or `None`.
+        or_and_filter = None
     return or_and_filter
 
 
@@ -587,7 +591,7 @@ def to_partitioned_parquet(
     dst_dir: str,
     *,
     partition_filename: Union[Callable, None] = lambda x: "data.parquet",
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
 ) -> None:
     """
     Save the given dataframe as Parquet file partitioned along the given
@@ -597,7 +601,7 @@ def to_partitioned_parquet(
     :param partition_columns: partitioning columns
     :param dst_dir: location of partitioned dataset
     :param partition_filename: a callable to override standard partition names. None for `uuid`.
-    :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
+    :param aws_profile: the name of an AWS profile or a s3fs filesystem
 
     E.g., in case of partition using `date`, the file layout looks like:
     ```
@@ -657,7 +661,7 @@ def list_and_merge_pq_files(
     root_dir: str,
     *,
     file_name: str = "data.parquet",
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
 ) -> None:
     """
     Merge all files of the Parquet dataset.
@@ -687,7 +691,7 @@ def list_and_merge_pq_files(
 
     :param root_dir: root directory of Parquet dataset
     :param file_name: name of the single resulting file
-    :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
+    :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
     if aws_profile is not None:
         filesystem = hs3.get_s3fs(aws_profile)

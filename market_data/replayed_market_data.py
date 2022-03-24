@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import core.real_time as creatime
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -190,7 +189,7 @@ def save_market_data(
 
 def load_market_data(
     file_name: str,
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
     **kwargs: Dict[str, Any],
 ) -> pd.DataFrame:
     """
@@ -201,7 +200,8 @@ def load_market_data(
         s3fs_ = hs3.get_s3fs(aws_profile)
         kwargs_tmp["s3fs"] = s3fs_
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
-    df = cpanh.read_csv(file_name, **kwargs)
+    stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
+    df = hpandas.read_csv_to_df(stream, **kwargs)
     for col_name in ("start_time", "end_time", "timestamp_db"):
         if col_name in df.columns:
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
