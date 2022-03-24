@@ -189,7 +189,7 @@ def save_market_data(
 
 def load_market_data(
     file_name: str,
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
     **kwargs: Dict[str, Any],
 ) -> pd.DataFrame:
     """
