@@ -29,14 +29,13 @@ Usage sample:
 import argparse
 import logging
 import os
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pyarrow.dataset as ds
-import s3fs
 
-import helpers.hcsv as hcsv
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
@@ -50,7 +49,7 @@ def _get_csv_to_pq_file_names(
     dst_dir: str,
     incremental: bool,
     *,
-    filesystem: s3fs.core.S3FileSystem = None,
+    filesystem: Optional[hs3.s3fs.core.S3FileSystem] = None,
 ) -> List[Tuple[str, str]]:
     """
     Find all the CSV files in `src_dir` to transform and prepare the
@@ -61,8 +60,9 @@ def _get_csv_to_pq_file_names(
     :param filesystem: S3FS, if not, local FS is assumed
     :return: list of tuples (csv_file, pq_file)
     """
-    # Depending on the filesystem, use appropriate alternative functions.
+    # Collect the files (on S3 or on the local filesystem) that need to be transformed.
     original_files = []
+    # TODO(Nikola): Remove section below after CMTask1440 is done.
     if filesystem:
         exists_check = filesystem.exists
         original_files.extend(filesystem.listdir(src_dir))
@@ -119,10 +119,12 @@ def _run(args: argparse.Namespace) -> None:
         args.src_dir, args.dst_dir, args.incremental, filesystem=filesystem
     )
     # Convert CSV files into Parquet files.
-    # TODO(Nikola): Use new functions in `helpers/hpandas.py` instead?
-    #   Do we need dataset couple of lines below?
     for csv_full_path, pq_full_path in files:
-        hcsv.convert_csv_to_pq(csv_full_path, pq_full_path)
+        stream, kwargs = hs3.get_local_or_s3_stream(csv_full_path)
+        if filesystem:
+            kwargs["s3fs"] = filesystem
+        df = hpandas.read_csv_to_df(stream, **kwargs)
+        hparque.to_parquet(df, pq_full_path, aws_profile=filesystem)
     # Convert Parquet files into a different partitioning scheme.
     # TODO(gp): IMO this is a different / optional step.
     dataset = ds.dataset(
