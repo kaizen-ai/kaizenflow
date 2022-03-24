@@ -451,58 +451,68 @@ def get_parquet_filters_from_timestamp_interval(
         left_close=left_close,
         right_close=right_close,
     )
-    # Use hardwired start and end date to represent start_timestamp /
-    # end_timestamp = None. This is not very elegant, but it simplifies the code.
-    # TODO(gp): This approach of enumerating seems slow when Parquet reads the data.
-    #  Verify it is and then use a smarter approach like year <= ...
-    if start_timestamp is None:
-        start_timestamp = pd.Timestamp("2001-01-01 00:00:00+00:00")
-    if end_timestamp is None:
-        end_timestamp = pd.Timestamp("2030-01-01 00:00:00+00:00")
     or_and_filter = []
     if partition_mode == "by_year_month":
-        # Partition by year and month.
-        # Include last month in the interval.
-        end_timestamp += pd.DateOffset(months=1)
-        # Get all months in interval.
-        dates = pd.date_range(
-            start_timestamp.date(), end_timestamp.date(), freq="M"
-        )
-        years = list(set(dates.year))
-        if len(years) == 1:
-            # For one year range, a simple AND statement is enough.
-            # `[[('year', '==', 2020), ('month', '>=', 6), ('month', '<=', 12)]]`
+        # Handle the first and last year of the interval.
+        if start_timestamp:
+            # `[('year', '==', 2020), ('month', '>=', 6)]`
             and_filter = [
-                ("year", "==", dates[0].year),
-                ("month", ">=", dates[0].month),
-                ("month", "<=", dates[-1].month),
+                ("year", "==", start_timestamp.year),
+                ("month", ">=", start_timestamp.month),
             ]
             or_and_filter.append(and_filter)
+        if end_timestamp:
+            # `[('year', '==', 2021), ('month', '<=', 3)]`
+            and_filter = [
+                ("year", "==", end_timestamp.year),
+                ("month", "<=", end_timestamp.month),
+            ]
+            or_and_filter.append(and_filter)
+        if start_timestamp and end_timestamp:
+            number_of_years = len(
+                range(start_timestamp.year, end_timestamp.year + 1)
+            )
+            if number_of_years == 1:
+                # For a one-year range, we overwrite the result with a single AND statement,
+                # e.g., `[Jan 2020, Mar 2020]` corresponds to
+                # `[[('year', '==', 2020), ('month', '>=', 1), ('month', '<=', 3)]]`.
+                # Note that this interval is different from and OR-AND form as
+                # `[[('year', '==', 2020), ('month', '>=', 1)], [('year', '==', 2020), ('month', '<=', 3)]]`
+                # since the first AND clause include months <= 3 and the second one include months >= 1,
+                # and the OR corresponds to the entire year, instead of the interval `[Jan 2020, Mar 2020]`.
+                and_filter = [
+                    ("year", "==", start_timestamp.year),
+                    ("month", ">=", start_timestamp.month),
+                    ("month", "<=", end_timestamp.month),
+                ]
+                or_and_filter = [and_filter]
+            elif number_of_years > 2:
+                # For ranges over two years, one OR statement is necessary to bridge the
+                # gap between first and last AND statement.
+                # `[('year', '>', 2020), ('year', '<', 2023)]`
+                # Inserted in middle as bridge between AND statements.
+                and_filter = [
+                    ("year", ">", start_timestamp.year),
+                    ("year", "<", end_timestamp.year),
+                ]
+                or_and_filter.insert(1, and_filter)
+            else:
+                # For intervals of exactly two years the two AND conditions are
+                # enough to select the desired period of time.
+                pass
+        elif len(or_and_filter) == 1:
+            # Handle the case when exactly one of the interval bounds is passed, e.g., [June 2020, None].
+            # In this case the first year was covered by the code above (i.e,. `year >= 2020 and month == 6`)
+            # and we need to specify the rest of the years (i.e., `year > 2020`).
+            operator = ">" if start_timestamp else "<"
+            timestamp = start_timestamp if start_timestamp else end_timestamp
+            extra_filter = [("year", operator, timestamp.year)]
+            or_and_filter.append(extra_filter)
         else:
-            # For ranges over two years, OR statements are necessary to bridge the
-            # gap between first and last AND statement, unless range is around two years.
-            # First AND filter.
-            first_and_filter = [
-                ("year", "==", dates[0].year),
-                ("month", ">=", dates[0].month),
-                ("year", "==", dates[0].year),
-                ("month", "<=", 12),
-            ]
-            or_and_filter.append(first_and_filter)
-            # OR statements to bridge the gap, if any.
-            # `[('year', '==', 2021)]`
-            for year in years[1:-1]:
-                bridge_and_filter = [("year", "==", year)]
-                or_and_filter.append(bridge_and_filter)
-            # Last AND filter.
-            last_and_filter = [
-                ("year", "==", dates[-1].year),
-                ("month", ">=", 1),
-                ("year", "==", dates[-1].year),
-                ("month", "<=", dates[-1].month),
-            ]
-            or_and_filter.append(last_and_filter)
+            # If there is no interval provided, leave empty `or_and_filter` as is.
+            pass
     elif partition_mode == "by_year_week":
+        # TODO(gp): Consider using the same approach above for months also here.
         # Partition by year and week.
         # Include last week in the interval.
         end_timestamp += pd.DateOffset(weeks=1)
@@ -524,6 +534,10 @@ def get_parquet_filters_from_timestamp_interval(
             [additional_filter] + and_filter for and_filter in or_and_filter
         ]
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
+    if len(or_and_filter) == 0:
+        # Empty list is not acceptable value for pyarrow dataset.
+        # Only logical expression or `None`.
+        or_and_filter = None
     return or_and_filter
 
 

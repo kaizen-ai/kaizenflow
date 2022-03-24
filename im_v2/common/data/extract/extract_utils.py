@@ -9,15 +9,18 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 import argparse
 import os
+import time
 from typing import Any
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.data.transform.transform_utils as imvcdttrut
+import im_v2.common.universe.universe as imvcounun
 import im_v2.im_lib_tasks as imvimlita
 
 
@@ -78,15 +81,17 @@ def download_realtime_for_one_exchange(
     if exchange_class.__name__ == CCXT_EXCHANGE:
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
+        vendor = "CCXT"
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
+        vendor = "Talos"
         additional_args.append(args.exchange_id)
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
-    universe = imvccunun.get_trade_universe(args.universe)
-    currency_pairs = universe["CCXT"][args.exchange_id]
+    universe = imvcounun.get_vendor_universe(vendor, version=args.universe)
+    currency_pairs = universe[args.exchange_id]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
@@ -145,3 +150,80 @@ def download_realtime_for_one_exchange(
                 data.to_csv(f, index=False)
         # Remove duplicated entries.
         connection.cursor().execute(dup_query)
+
+
+def download_historical_data(
+    args: argparse.Namespace, exchange_class: Any
+) -> None:
+    """
+    Helper function for encapsulating common logic for downloading 
+    historical exchange data.
+
+    :param args: arguments passed on script run
+    :param exchange_class: which exchange class is used in script run
+     e.g. "CcxtExchange" or "TalosExchange"
+    """
+    # Initialize exchange class and prepare additional args, if any.
+    # Every exchange can potentially have a specific set of init args.
+    additional_args = []
+    if exchange_class.__name__ == CCXT_EXCHANGE:
+        # Initialize CCXT with `exchange_id`.
+        exchange = exchange_class(args.exchange_id)
+        vendor = "CCXT"
+    elif exchange_class.__name__ == TALOS_EXCHANGE:
+        # Unlike CCXT, Talos is initialized with `api_stage`.
+        exchange = exchange_class(args.api_stage)
+        vendor = "Talos"
+        additional_args.append(args.exchange_id)
+    else:
+        hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
+    # Load currency pairs.
+    universe = imvcounun.get_vendor_universe(vendor, version=args.universe)
+    currency_pairs = universe[args.exchange_id]
+    # Convert timestamps.
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
+    for currency_pair in currency_pairs:
+        # Currency pair used for getting data from exchange should not be used
+        # as column value as it can slightly differ.
+        if exchange_class.__name__ == CCXT_EXCHANGE:
+            currency_pair_for_download = currency_pair.replace("_", "/")
+        elif exchange_class.__name__ == TALOS_EXCHANGE:
+            currency_pair_for_download = currency_pair.replace("_", "-")
+        # Download OHLCV data.
+        data = exchange.download_ohlcv_data(
+            currency_pair_for_download,
+            *additional_args,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+        )
+        # Assign pair and exchange columns.
+        # TODO(Nikola): Exchange id was missing and it is added additionally to
+        #  match signature of other scripts.
+        data["currency_pair"] = currency_pair
+        data["exchange_id"] = args.exchange_id
+        # Change index to allow calling add_date_partition_cols function on the dataframe.
+        data = imvcdttrut.reindex_on_datetime(data, "timestamp")
+        data, partition_cols = hparque.add_date_partition_columns(
+            data, "by_year_month"
+        )
+        # Get current time of push to s3 in UTC.
+        knowledge_timestamp = hdateti.get_current_time("UTC")
+        data["knowledge_timestamp"] = knowledge_timestamp
+        # Save data to S3 filesystem.
+        # Saves filename as `uuid`.
+        hparque.to_partitioned_parquet(
+            data,
+            ["currency_pair"] + partition_cols,
+            path_to_exchange,
+            partition_filename=None,
+            aws_profile=args.aws_profile,
+        )
+        # Sleep between iterations is needed for CCXT.
+        if exchange_class == CCXT_EXCHANGE:
+            time.sleep(args.sleep_time)
+    # Merge all new parquet into a single `data.parquet`.
+    hparque.list_and_merge_pq_files(
+        path_to_exchange, aws_profile=args.aws_profile
+    )

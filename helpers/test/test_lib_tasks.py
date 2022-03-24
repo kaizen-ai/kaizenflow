@@ -131,6 +131,7 @@ def _gh_login() -> None:
 
 
 class TestGhLogin1(hunitest.TestCase):
+
     def test_gh_login(self) -> None:
         _gh_login()
 
@@ -508,6 +509,7 @@ class TestLibTasks1(hunitest.TestCase):
 
 
 class TestLibTasksRemoveSpaces1(hunitest.TestCase):
+
     def test1(self) -> None:
         txt = r"""
             IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
@@ -567,6 +569,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             --entrypoint bash \
             app
         """
@@ -597,6 +600,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
                 --env-file devops/env/default.env \
                 run \
                 --rm \
+                --name $USER_NAME.amp_test.app.app \
                 app \
                 bash """
         self._check(act, exp)
@@ -631,6 +635,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             app \
             bash
         """
@@ -662,6 +667,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             --entrypoint bash \
             app
         """
@@ -694,6 +700,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             app \
             bash -c 'ls && cd ..'
         """
@@ -725,6 +732,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.jupyter_server_test.app \
             --service-ports \
             jupyter_server_test
         """
@@ -734,6 +742,10 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         act = hunitest.purify_txt_from_client(act)
         # This is required when different repos run Docker with user vs root / remap.
         act = hunitest.filter_text("--user", act)
+        # Remove current timestamp (e.g., `20220317_232120``) from the `--name`
+        # so that the tests pass.
+        timestamp_regex = r"\.\d{8}_\d{6}"
+        act = re.sub(timestamp_regex, "", act)
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
@@ -741,6 +753,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
+
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
@@ -1029,6 +1042,18 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     Test `git_create_patch()`.
     """
 
+    @staticmethod
+    def helper(
+        modified: bool, branch: bool, last_commit: bool, files: str
+    ) -> None:
+        ctx = _build_mock_context_returning_ok()
+        #
+        mode = "tar"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        #
+        mode = "diff"
+        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+
     def test_tar_modified1(self) -> None:
         """
         Exercise the code for:
@@ -1122,18 +1147,6 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         Specify only one among --modified, --branch, --last-commit
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
-    @staticmethod
-    def helper(
-        modified: bool, branch: bool, last_commit: bool, files: str
-    ) -> None:
-        ctx = _build_mock_context_returning_ok()
-        #
-        mode = "tar"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
-        #
-        mode = "diff"
-        hlibtask.git_create_patch(ctx, mode, modified, branch, last_commit, files)
 
 
 # #############################################################################
@@ -1270,6 +1283,7 @@ core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuil
 
 
 class Test_find_check_string_output1(hunitest.TestCase):
+
     def test1(self) -> None:
         """
         Test `find_check_string_output()` by searching the `check_string` of
@@ -1579,6 +1593,7 @@ class Test_get_files_to_process1(hunitest.TestCase):
 
 
 class Test_pytest_repro1(hunitest.TestCase):
+
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
         ctx = _build_mock_context_returning_ok()
         act = hlibtask.pytest_repro(
@@ -1873,3 +1888,128 @@ class TestFailing(hunitest.TestCase):
     def test_failing(self) -> None:
         if os.environ.get("AM_FORCE_TEST_FAIL", "") == "1":
             self.fail("test failed succesfully")
+
+
+# #############################################################################
+
+
+class TestPytestRenameClass(hunitest.TestCase):
+    """
+    Test renaming functionality.
+    """
+
+    @staticmethod
+    def helper() -> str:
+        """
+        Create file content.
+        """
+        content = """
+class TestCases(hunitest.TestCase):
+    def test_assert_equal1(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        return content
+
+    def test_rename_class1(self) -> None:
+        """
+        Test renaming of existing class.
+        """
+        content = self.helper()
+        actual = hlibtask._rename_class(content, "TestCases", "TestNewCase")
+        expected = """
+class TestNewCase(hunitest.TestCase):
+    def test_assert_equal1(self) -> None:
+        actual = "hello world"
+        expected = actual
+        self.assert_equal(actual, expected)
+
+    def test_check_string1(self) -> None:
+        actual = "hello world"
+        self.check_string(actual)
+        """
+        self.assert_equal(actual, expected)
+
+    def test_rename_class2(self) -> None:
+        """
+        Test renaming of non existing class.
+        """
+        content = self.helper()
+        actual = hlibtask._rename_class(content, "TestCase", "TestNewCase")
+        # Check if the content of the file was not changed.
+        self.assert_equal(actual, content)
+
+
+class TestPytestRenameOutcomes(hunitest.TestCase):
+    """
+    Test golden outcomes directory renaming.
+    """
+
+    @staticmethod
+    def helper(toy_test: str) -> None:
+        """
+        Create the temporal outcome to rename.
+
+        :param toy_test: the name of the toy directory
+        """
+        outcomes_paths = [
+            "TestCase.test_check_string1",
+            "TestCase.test_rename",
+            "TestCases.test_rename2",
+            "TestRename.test_rename1",
+        ]
+        for path in outcomes_paths:
+            outcomes = os.path.join(toy_test, "test/outcomes", path)
+            os.makedirs(outcomes)
+            hio.to_file(f"{outcomes}/test.txt", "Test files.")
+        cmd = f"git add {toy_test}/"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+
+    def test_rename_class_outcomes(self) -> None:
+        """
+        Rename outcome directory.
+        """
+        toy_test = "toyCmTask1279"
+        # Create outcomes directory.
+        test_path = os.path.join(toy_test, "test")
+        # Create the toy outcomes.
+        self.helper(toy_test)
+        old_class_name = "TestCase"
+        new_class_name = "TestRenamedCase"
+        hlibtask._rename_outcomes(
+            test_path,
+            old_class_name,
+            new_class_name,
+        )
+        # Check if the dirs were renamed.
+        outcomes_path = os.path.join(test_path, "outcomes")
+        outcomes_dirs = os.listdir(outcomes_path)
+        actual = sorted(
+            [
+                ent
+                for ent in outcomes_dirs
+                if os.path.isdir(os.path.join(outcomes_path, ent))
+            ]
+        )
+        expected = [
+            "TestCases.test_rename2",
+            "TestRename.test_rename1",
+            "TestRenamedCase.test_check_string1",
+            "TestRenamedCase.test_rename",
+        ]
+        self.assertEqual(actual, expected)
+        self._clean_up(toy_test)
+
+    def _clean_up(self, toy_test: str) -> None:
+        """
+        Remove temporary test directory.
+
+        :param toy_test: the name of the toy directory
+        """
+        cmd = f"git reset {toy_test}/ && rm -rf {toy_test}/"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
