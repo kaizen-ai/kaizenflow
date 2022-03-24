@@ -704,7 +704,7 @@ class TestReadDataFromS3(hunitest.TestCase):
         file_name = os.path.join(
             hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
         )
-        hs3.dassert_s3_exists(file_name, s3fs)
+        hs3.dassert_s3_path_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         hpandas.read_csv_to_df(stream, **kwargs)
 
@@ -713,6 +713,6 @@ class TestReadDataFromS3(hunitest.TestCase):
         file_name = os.path.join(
             hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
         )
-        hs3.dassert_s3_exists(file_name, s3fs)
+        hs3.dassert_s3_path_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         hpandas.read_parquet_to_df(stream, **kwargs)
