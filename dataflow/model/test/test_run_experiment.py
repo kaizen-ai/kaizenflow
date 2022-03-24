@@ -273,6 +273,6 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
         if clean_up_s3_archive:
             # Clean up S3.
             s3fs_ = hs3.get_s3fs(aws_profile)
-            hs3.dassert_s3_exists(s3_path, s3fs_)
+            hs3.dassert_s3_path_exists(s3_path, s3fs_)
             s3fs_.rm(s3_path)
-            hs3.dassert_s3_not_exists(s3_path, s3fs_)
+            hs3.dassert_s3_path_not_exists(s3_path, s3fs_)
