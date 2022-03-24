@@ -309,27 +309,40 @@ def round_digits(
 # https://stackoverflow.com/questions/2749796 has some solutions to find the
 # name of variables from the caller.
 
-
-def to_str(*args) -> str:
+# TODO(Grisha): @Timur, use linter, i.e. `i lint -f helpers/hprint.py`.
+def to_str(*variables: Any) -> str:
     """
     Return a string with the names and values of a variables that were provided into the function.
-    Limits: can't work with argument which contains parenthesis, ex: to_str(to_str(a,b), c).
-    :param args: variables that should be converted to the "variable=value" string.
-    :raise AssertionError if amount of variables not matches to the amount of values.
-    :return: string which contains all function call arguments and it's values in one line, ex: a=1, b=2...
-    """
+    Limits: can't work with argument which contains parenthesis, e.g.,: `to_str(to_str(a,b), c)`.
 
-    def get_function_call_arguments(source_file_path: str,
-                                    function_call_line_no: int,
-                                    function_name: str) -> str:
+    :param variables: variables that should be converted to the "variable=value" string
+    :return: string which contains all function call arguments and it's values in one line, e.g.,: `a=1, b=2`
+    """
+    # TODO(Grisha): @Timur, make it private and make it a separate function.
+    def get_function_call_arguments(
+        source_file_path: str,
+        function_call_line_no: int,
+        function_name: str
+    ) -> str:
         """
         Collecting code lines which are related to the function call in case if arguments were given on separate lines.
-        :param source_file_path: Path to the source file.
-        :param function_call_line_no: Line from which function was called.
-        :param function_name: Name of the function which arguments should be returned.
-        :return: string which contains all function call arguments.
-        """
 
+        # TODO(Grisha): @Timur, add example of return.
+        E.g.,
+        ```
+        ```
+
+        # TODO(Grisha): @Timur, please elaborate on all param descriptions.
+        :param source_file_path: Path to the source file
+        :param function_call_line_no: Line from which function was called
+        :param function_name: Name of the function which arguments should be returned
+        :return: string which contains all function call arguments
+        """
+        # TODO(Grisha): @Timur, try to use `helpers/hio:from_file()`.
+        # TODO(Grisha): @Timur, the flow should be:
+        # - Read file content
+        # - Filter out what is before `function_call_line_no`
+        # - Use regex for the rest of the text
         with open(source_file_path) as fd_in:
             function_call_with_arguments = str()
             # First line has index 1.
@@ -342,11 +355,11 @@ def to_str(*args) -> str:
                     if not match:
                         continue
                     else:
-                        # Return first match.
                         return match[0]
 
     # Return empty string if no arguments were provided.
-    if not args:
+    # TODO(Grisha): @Timur, here you can assert, see `helpers/hdbg.py`.
+    if not variables:
         return ''
 
     # Get current frame.
@@ -360,10 +373,11 @@ def to_str(*args) -> str:
                                                 function_call_line_no=frame_above.lineno,
                                                 function_name=current_frame.function)
     variables = variables_str.split(',')
-    assert len(variables) == len(args), "Amount of variables is not equal to amount of values:" \
-                                        f"\n Variables: {variables},\nValues: {list(args)}"
+    # TODO(Grisha): @Timur, here you can assert, see `helpers/hdbg.py`.
+    assert len(variables) == len(variables), "Amount of variables is not equal to amount of values:" \
+                                        f"\n Variables: {variables},\nValues: {list(variables)}"
     output = list()
-    for name, value in zip(variables, args):
+    for name, value in zip(variables, variables):
         output.append(f"{name.strip()}={value}")
 
     return ', '.join(output)
