@@ -9,8 +9,8 @@ import logging
 import string
 from typing import List, Optional
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
@@ -54,8 +54,9 @@ class IbSymbolUniverse(imcomesym.SymbolUniverse):
             kwargs = {"s3fs": s3fs}
         else:
             kwargs = {}
-        df = cpanh.read_csv(
-            symbols_file,
+        stream, kwargs = hs3.get_local_or_s3_stream(symbols_file, **kwargs)
+        df = hpandas.read_csv_to_df(
+            stream,
             sep="\t",
             keep_default_na=False,
             na_values=["_"],
