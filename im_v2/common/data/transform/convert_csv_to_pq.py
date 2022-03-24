@@ -49,7 +49,7 @@ def _get_csv_to_pq_file_names(
     dst_dir: str,
     incremental: bool,
     *,
-    filesystem: Optional[hs3.s3fs.core.S3FileSystem] = None,
+    s3fs_: Optional[hs3.s3fs.core.S3FileSystem] = None,
 ) -> List[Tuple[str, str]]:
     """
     Find all the CSV files in `src_dir` to transform and prepare the
@@ -57,15 +57,15 @@ def _get_csv_to_pq_file_names(
 
     :param incremental: if True, skip CSV files for which the corresponding Parquet
         file already exists
-    :param filesystem: S3FS, if not, local FS is assumed
+    :param s3fs_: S3FS, if not, local FS is assumed
     :return: list of tuples (csv_file, pq_file)
     """
     # Collect the files (on S3 or on the local filesystem) that need to be transformed.
     original_files = []
     # TODO(Nikola): Remove section below after CMTask1440 is done.
-    if filesystem:
-        exists_check = filesystem.exists
-        original_files.extend(filesystem.listdir(src_dir))
+    if s3fs_:
+        exists_check = s3fs_.exists
+        original_files.extend(s3fs_.listdir(src_dir))
         # Get the actual file paths from metadata.
         original_files = [file["Key"] for file in original_files]
     else:
@@ -85,7 +85,7 @@ def _get_csv_to_pq_file_names(
         else:
             _LOG.warning("Found non CSV file '%s'", filename)
         # Build corresponding Parquet file.
-        if filesystem:
+        if s3fs_:
             # Full path is already present in filenames when iterating in S3.
             pq_path = (
                 f"{dst_dir.lstrip('s3://')}{csv_filename.split('/')[-1]}.parquet"
@@ -116,7 +116,7 @@ def _run(args: argparse.Namespace) -> None:
         hio.create_dir(args.dst_dir, args.incremental)
     # Find all CSV and Parquet files.
     files = _get_csv_to_pq_file_names(
-        args.src_dir, args.dst_dir, args.incremental, filesystem=filesystem
+        args.src_dir, args.dst_dir, args.incremental, s3fs_=filesystem
     )
     # Convert CSV files into Parquet files.
     for csv_full_path, pq_full_path in files:
