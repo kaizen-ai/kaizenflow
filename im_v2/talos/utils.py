@@ -6,6 +6,8 @@ import im_v2.talos.utils as imv2tauti
 import datetime
 import logging
 
+import pandas as pd
+
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 
@@ -28,7 +30,7 @@ def get_endpoint(environment: str) -> str:
     return endpoint
 
 
-def timestamp_to_talos_iso_8601(self, timestamp: pd.Timestamp) -> str:
+def timestamp_to_talos_iso_8601(timestamp: pd.Timestamp) -> str:
     """
     Transform Timestamp into a string in the format accepted by Talos API.
 
