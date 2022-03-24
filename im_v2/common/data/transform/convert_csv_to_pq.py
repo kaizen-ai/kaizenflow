@@ -32,6 +32,7 @@ import os
 from typing import List, Optional, Tuple
 
 import pyarrow.dataset as ds
+import s3fs
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -49,7 +50,7 @@ def _get_csv_to_pq_file_names(
     dst_dir: str,
     incremental: bool,
     *,
-    s3fs_: Optional[hs3.s3fs.core.S3FileSystem] = None,
+    s3fs_: Optional[s3fs.core.S3FileSystem] = None,
 ) -> List[Tuple[str, str]]:
     """
     Find all the CSV files in `src_dir` to transform and prepare the
