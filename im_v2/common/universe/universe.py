@@ -91,8 +91,7 @@ def _get_trade_universe(
     file_path = _get_universe_file_path(vendor, version=version)
     hdbg.dassert_exists(file_path)
     universe = hio.from_json(file_path)
-    return universe  # type: ignore[no-any-return]
-
+    return universe # type: ignore[no-any-return]
 
 def get_vendor_universe(
     vendor: str, *, version: Optional[str] = None, as_full_symbol: bool = False
