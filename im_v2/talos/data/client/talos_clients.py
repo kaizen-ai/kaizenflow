@@ -4,13 +4,13 @@ Import as:
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 """
 
-import abc
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
@@ -22,40 +22,13 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# TalosClient
+# TalosHistoricalPqByTileClient
 # #############################################################################
 
 
-class TalosClient(icdc.ImClient, abc.ABC):
+class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     """
-    Contain common code for all the `Talos` clients, e.g.,
-
-    - getting `Talos` universe
-    """
-
-    def __init__(self) -> None:
-        """
-        Constructor.
-        """
-        vendor = "talos"
-        super().__init__(vendor)
-
-    def get_universe(self) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        # TODO(Danya): CmTask1420.
-        return []
-
-
-# #############################################################################
-# TalosParquetByTileClient
-# #############################################################################
-
-
-class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient):
-    """
-    Read historical data for 1 `Talos` asset stored as Parquet dataset.
+    Read historical data for `Talos` assets stored as Parquet dataset.
 
     It can read data from local or S3 filesystem as backend.
     """
@@ -71,21 +44,24 @@ class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient)
         """
         Load `Talos` data from local or S3 filesystem.
         """
-        # TODO(Dan): Discuss heritage from parent classes.
+        vendor = "talos"
         imvcdchpcl.HistoricalPqByTileClient.__init__(
-            self, "talos", root_dir, partition_mode, aws_profile=aws_profile
+            self, vendor, root_dir, partition_mode, aws_profile=aws_profile
         )
         self._data_snapshot = data_snapshot
-
-    @staticmethod
-    def should_be_online() -> None:
-        raise NotImplementedError
 
     def get_metadata(self) -> pd.DataFrame:
         """
         See description in the parent class.
         """
         raise NotImplementedError
+
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        # TODO(Danya): CmTask1420.
+        return []
 
     @staticmethod
     def _get_columns_for_query() -> List[str]:
@@ -123,10 +99,10 @@ class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient)
         self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
     ) -> Tuple[str, hparque.ParquetFilter]:
         """
-        Get a root dir to the `Talos` data and filtering condition on currency
-        pair column.
+        Get the root dir of the `Talos` data and filtering condition on
+        currency pair column.
         """
-        # Get lists of exchange ids and currency pairs.
+        # Get the lists of exchange ids and currency pairs.
         exchange_ids, currency_pairs = tuple(
             zip(
                 *[
@@ -140,7 +116,8 @@ class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient)
         # Verify that all full symbols in a query belong to one exchange id
         # since dataset is partitioned only by currency pairs.
         hdbg.dassert_eq(1, len(set(exchange_ids)))
-        # Extend a root dir to the specified exchange dir.
+        # Extend the root dir to include the exchange dir, e.g.,
+        # "s3://cryptokaizen-data/historical/talos/latest/binance"
         root_dir = os.path.join(
             self._root_dir, self._vendor, self._data_snapshot, exchange_ids[0]
         )
@@ -154,7 +131,7 @@ class TalosParquetByTileClient(TalosClient, imvcdchpcl.HistoricalPqByTileClient)
 # #############################################################################
 
 
-class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
+class RealTimeSqlTalosClient(icdc.ImClient):
     """
     Retrieve real-time Talos data from DB using SQL queries.
     """
@@ -164,7 +141,8 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         db_connection: hsql.DbConnection,
         table_name: str,
     ) -> None:
-        super().__init__()
+        vendor = "talos"
+        super().__init__(vendor)
         self._db_connection = db_connection
         self._table_name = table_name
 
@@ -181,6 +159,13 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         Return metadata.
         """
         raise NotImplementedError
+
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        # TODO(Danya): CmTask1420.
+        return []
 
     @staticmethod
     def _apply_talos_normalization(
@@ -365,7 +350,6 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
             query += f" LIMIT {limit}"
         return query
 
-      
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],

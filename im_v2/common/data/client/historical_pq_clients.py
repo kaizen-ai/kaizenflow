@@ -148,7 +148,7 @@ class HistoricalPqByTileClient(
         Get a root dir to the data and filtering condition on full symbol
         column.
         """
-        # Root dir remains the same in base implementation.
+        # The root dir of the data is the one passed from the constructor.
         root_dir = self._root_dir
         # Add a filter on full symbols.
         symbol_filter = (full_symbol_col_name, "in", full_symbols)
