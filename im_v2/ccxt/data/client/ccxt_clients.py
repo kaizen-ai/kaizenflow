@@ -11,13 +11,13 @@ from typing import Any, List, Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.common.universe.universe as imvcounun
 import im_v2.common.data.client as icdc
+import im_v2.common.universe.universe as imvcounun
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,8 +53,28 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         See description in the parent class.
         """
-        universe = imvcounun.get_vendor_universe(vendor=self._vendor, as_full_symbol=True)
+        universe = imvcounun.get_vendor_universe(
+            vendor=self._vendor, as_full_symbol=True
+        )
         return universe  # type: ignore[no-any-return]
+
+    @staticmethod
+    def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Apply transformations for OHLCV data.
+        """
+        ohlcv_columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data[ohlcv_columns]
+        return data
 
     def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -99,24 +119,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
-        return data
-
-    @staticmethod
-    def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply transformations for OHLCV data.
-        """
-        ohlcv_columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data[ohlcv_columns]
         return data
 
 
@@ -281,6 +283,7 @@ class CcxtCddCsvParquetByAssetClient(
         if self._vendor == "CDD":
             # For `CDD` column names are in the 1st row.
             kwargs["skiprows"] = 1
+        # TODO(Nikola): parquet?
         if self._extension == "pq":
             # Initialize list of filters.
             filters = []
@@ -296,9 +299,11 @@ class CcxtCddCsvParquetByAssetClient(
                 # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
             # Load data.
-            data = cpanh.read_parquet(file_path, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            data = hpandas.read_parquet_to_df(stream, **kwargs)
         elif self._extension in ["csv", "csv.gz"]:
-            data = cpanh.read_csv(file_path, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            data = hpandas.read_csv_to_df(stream, **kwargs)
             # Filter by dates if specified.
             if start_ts:
                 start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
