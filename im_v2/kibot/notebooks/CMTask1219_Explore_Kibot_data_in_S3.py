@@ -21,13 +21,13 @@ import logging
 import numpy as np
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 
 # %%
@@ -56,6 +56,7 @@ def calculate_datetime_statistics_for_kibot_data(
     """
     Load the data for each asset through the loop and proccess it to obtain
     datetime statistics:
+
     - start date
     - end date
     - data points count
@@ -138,8 +139,9 @@ def calculate_datetime_statistics_for_kibot_data(
 
 def calculate_general_datetime_stats(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Take the table with datetime stats for individual assets and
-    compute generalized stats for all universe:
+    Take the table with datetime stats for individual assets and compute
+    generalized stats for all universe:
+
     - median start date
     - median end date
     - min start date
@@ -222,7 +224,7 @@ len(stocks_symbols)
 # # Example for data loading
 
 # %%
-kibot_loader = imkdlksdlo.KibotS3DataLoader()
+kibot_loader = ikdlksdlo.KibotS3DataLoader()
 
 # %% [markdown]
 # ## Futures
@@ -393,7 +395,8 @@ s3fs = hs3.get_s3fs("am")
 file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/AAPL.csv.gz"
 
 # %%
-aapl_raw = cpanh.read_csv(file_path_stock, s3fs=s3fs)
+stream, kwargs = hs3.get_local_or_s3_stream(file_path_stock, s3fs=s3fs)
+aapl_raw = hpandas.read_csv_to_df(stream, **kwargs)
 aapl_raw.head()
 
 # %% [markdown]
@@ -403,7 +406,8 @@ aapl_raw.head()
 file_path_futures = "s3://alphamatic-data/data/kibot/all_futures_continuous_contracts_daily/AE.csv.gz"
 
 # %%
-ae_futures_raw = cpanh.read_csv(file_path_futures, s3fs=s3fs)
+stream, kwargs = hs3.get_local_or_s3_stream(file_path_futures, s3fs=s3fs)
+ae_futures_raw = hpandas.read_csv_to_df(stream, **kwargs)
 ae_futures_raw.head()
 
 # %% [markdown]
@@ -416,7 +420,8 @@ ae_futures_raw.head()
 file_path_stock = "s3://alphamatic-data/data/kibot/all_stocks_1min/QCOM.csv.gz"
 
 # %% run_control={"marked": false}
-csv_qcom = cpanh.read_csv(file_path_futures, s3fs=s3fs)
+stream, kwargs = hs3.get_local_or_s3_stream(file_path_futures, s3fs=s3fs)
+csv_qcom = hpandas.read_csv_to_df(stream, **kwargs)
 csv_qcom.head()
 
 # %% [markdown]
@@ -428,7 +433,8 @@ file_path_stock_parquet = (
 )
 
 # %%
-pq_qcom = cpanh.read_parquet(file_path_stock_parquet, s3fs=s3fs)
+stream, kwargs = hs3.get_local_or_s3_stream(file_path_stock_parquet, s3fs=s3fs)
+pq_qcom = hpandas.read_parquet_to_df(stream, **kwargs)
 pq_qcom.head()
 
 # %% [markdown]

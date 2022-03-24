@@ -1,13 +1,11 @@
 import io
 import logging
-import os
 
 import numpy as np
 import pandas as pd
 
 import core.pandas_helpers as cpanh
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -17,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestResampleIndex1(hunitest.TestCase):
+
     def test1(self) -> None:
         index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
         df = pd.DataFrame(np.random.rand(len(index), 3), index=index)
@@ -37,6 +36,7 @@ class TestResampleIndex1(hunitest.TestCase):
 
 
 class TestDfRollingApply(hunitest.TestCase):
+
     def test1(self) -> None:
         """
         Test with function returning a pd.Series.
@@ -152,24 +152,3 @@ class TestDfRollingApply(hunitest.TestCase):
         )
         #
         self.check_string(df_act.to_string())
-
-
-# #############################################################################
-
-
-class TestReadDataFromS3(hunitest.TestCase):
-    def test_read_csv1(self) -> None:
-        s3fs = hs3.get_s3fs("am")
-        file_name = os.path.join(
-            hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
-        )
-        hs3.dassert_s3_exists(file_name, s3fs)
-        cpanh.read_csv(file_name, s3fs=s3fs)
-
-    def test_read_parquet1(self) -> None:
-        s3fs = hs3.get_s3fs("am")
-        file_name = os.path.join(
-            hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
-        )
-        hs3.dassert_s3_exists(file_name, s3fs)
-        cpanh.read_parquet(file_name, s3fs=s3fs)
