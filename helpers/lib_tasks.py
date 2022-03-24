@@ -4576,11 +4576,15 @@ def pytest_find_unused_goldens(  # type: ignore
         _run(ctx, cmd)
     as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
-    docker_cmd_opts = [f"--dir_name {dir_name}"]
-    docker_cmd_ = (
-        "dev_scripts/find_unused_golden_files.py "
-        + _to_single_line_cmd(docker_cmd_opts)
+    amp_abs_path = hgit.get_amp_abs_path()
+    amp_path = amp_abs_path.replace(
+        os.path.commonpath([os.getcwd(), amp_abs_path]), ""
     )
+    script_path = os.path.join(
+        amp_path, "dev_scripts/find_unused_golden_files.py"
+    ).lstrip("/")
+    docker_cmd_opts = [f"--dir_name {dir_name}"]
+    docker_cmd_ = f"{script_path} " + _to_single_line_cmd(docker_cmd_opts)
     # Execute command line.
     cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
