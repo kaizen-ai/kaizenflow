@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import s3fs.core
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -816,13 +815,23 @@ def convert_col_to_int(
 
 
 def read_csv_to_df(
-    stream: Union[str, s3fs.core.S3File, s3fs.core.S3FileSystem],
+    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """
     Read a CSV file into a `pd.DataFrame`.
     """
+    # Gets filename from stream if it is not already a string,
+    # so it can be inspected for extension type.
+    file_name = stream if isinstance(stream, str) else vars(stream)["path"]
+    # Handle zipped files.
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "gzip"
+    elif file_name.endswith(".zip"):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "zip"
     # Read.
     _LOG.debug(hprint.to_str("args kwargs"))
     df = pd.read_csv(stream, *args, **kwargs)
@@ -830,7 +839,7 @@ def read_csv_to_df(
 
 
 def read_parquet_to_df(
-    stream: Union[str, s3fs.core.S3File, s3fs.core.S3FileSystem],
+    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
