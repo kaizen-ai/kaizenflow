@@ -622,7 +622,7 @@ def diff_files(
     :param abort_on_exit: whether to assert or not
     :param dst_dir: dir where to save the comparing script
     """
-    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str(tag, abort_on_exit, dst_dir))
     file_name1 = os.path.relpath(file_name1, os.getcwd())
     file_name2 = os.path.relpath(file_name2, os.getcwd())
     msg = []
@@ -680,7 +680,7 @@ def diff_strings(
 
     :param dst_dir: where to save the intermediatary files
     """
-    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str(tag, abort_on_exit, dst_dir))
     # Save the actual and expected strings to files.
     file_name1 = "%s/tmp.string1.txt" % dst_dir
     hio.to_file(file_name1, string1)
@@ -709,7 +709,7 @@ def diff_df_monotonic(
     Check for a dataframe to be monotonic using the vimdiff flow from
     diff_files().
     """
-    _LOG.debug(hprint.to_str("abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str(abort_on_exit, dst_dir))
     if not df.index.is_monotonic_increasing:
         df2 = df.copy()
         df2.sort_index(inplace=True)
@@ -864,7 +864,7 @@ def assert_equal(
     """
     _LOG.debug(
         hprint.to_str(
-            "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
+            full_test_name, test_dir, fuzzy_match, abort_on_error, dst_dir
         )
     )
     #
@@ -1209,7 +1209,7 @@ class TestCase(unittest.TestCase):
 
         The interface is similar to `check_string()`.
         """
-        _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir"))
+        _LOG.debug(hprint.to_str(fuzzy_match, abort_on_error, dst_dir))
         hdbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
         hdbg.dassert_in(
             type(expected), (bytes, str), "expected=%s", str(expected)
@@ -1293,7 +1293,7 @@ class TestCase(unittest.TestCase):
             (which should be used only for unit testing) return the result but do not
             assert
         """
-        _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error dedent"))
+        _LOG.debug(hprint.to_str(fuzzy_match, purify_text, abort_on_error, dedent))
         hdbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
@@ -1370,7 +1370,7 @@ class TestCase(unittest.TestCase):
                         + f"'{action_on_missing_golden}'"
                     )
         self._test_was_updated = outcome_updated
-        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
+        _LOG.debug(hprint.to_str(outcome_updated, file_exists, is_equal))
         return outcome_updated, file_exists, is_equal
 
     def check_dataframe(
@@ -1386,14 +1386,14 @@ class TestCase(unittest.TestCase):
         """
         Like `check_string()` but for pandas dataframes, instead of strings.
         """
-        _LOG.debug(hprint.to_str("err_threshold tag abort_on_error"))
+        _LOG.debug(hprint.to_str(err_threshold, tag, abort_on_error))
         hdbg.dassert_isinstance(actual, pd.DataFrame)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
         _LOG.debug("file_name=%s", file_name)
         outcome_updated = False
         file_exists = os.path.exists(file_name)
-        _LOG.debug(hprint.to_str("file_exists"))
+        _LOG.debug(hprint.to_str(file_exists))
         is_equal: Optional[bool] = None
         if self._update_tests:
             _LOG.debug("# Update golden outcomes")
@@ -1402,7 +1402,7 @@ class TestCase(unittest.TestCase):
                 is_equal, _ = self._check_df_compare_outcome(
                     file_name, actual, err_threshold
                 )
-                _LOG.debug(hprint.to_str("is_equal"))
+                _LOG.debug(hprint.to_str(is_equal))
                 if not is_equal:
                     outcome_updated = True
             else:
@@ -1462,7 +1462,7 @@ class TestCase(unittest.TestCase):
                         + f"'{action_on_missing_golden}'"
                     )
         self._test_was_updated = outcome_updated
-        _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
+        _LOG.debug(hprint.to_str(outcome_updated, file_exists, is_equal))
         return outcome_updated, file_exists, is_equal
 
     def check_df_output(
@@ -1562,13 +1562,13 @@ class TestCase(unittest.TestCase):
         """
         Add to git repo `file_name`, if needed.
         """
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprint.to_str(file_name))
         if self._git_add:
             # Find the file relative to here.
             mode = "assert_unless_one_result"
             file_names_tmp = hgit.find_docker_file(file_name, mode=mode)
             file_name_tmp = file_names_tmp[0]
-            _LOG.debug(hprint.to_str("file_name file_name_tmp"))
+            _LOG.debug(hprint.to_str(file_name, file_name_tmp))
             if file_name_tmp.startswith("amp"):
                 # To add a file like
                 # amp/core/test/TestCheckSameConfigs.test_check_same_configs_error/output/test.txt
@@ -1591,7 +1591,7 @@ class TestCase(unittest.TestCase):
     def _check_string_update_outcome(
         self, file_name: str, actual: str, use_gzip: bool
     ) -> None:
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprint.to_str(file_name))
         hio.to_file(file_name, actual, use_gzip=use_gzip)
         # Add to git repo.
         self._git_add_file(file_name)
@@ -1603,7 +1603,7 @@ class TestCase(unittest.TestCase):
         file_name: str,
         actual: "pd.DataFrame",
     ) -> None:
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprint.to_str(file_name))
         hio.create_enclosing_dir(file_name)
         actual.to_csv(file_name)
         pytest_warning(f"Update golden outcome file '{file_name}'", prefix="\n")
@@ -1613,7 +1613,7 @@ class TestCase(unittest.TestCase):
     def _check_df_compare_outcome(
         self, file_name: str, actual: "pd.DataFrame", err_threshold: float
     ) -> Tuple[bool, "pd.DataFrame"]:
-        _LOG.debug(hprint.to_str("file_name"))
+        _LOG.debug(hprint.to_str(file_name))
         _LOG.debug("actual_=\n%s", actual)
         hdbg.dassert_lte(0, err_threshold)
         hdbg.dassert_lte(err_threshold, 1.0)
