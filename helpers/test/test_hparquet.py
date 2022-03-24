@@ -498,9 +498,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             partition_mode, start_ts, end_ts
         )
-        actual = str(filters)
-        expected = r"[]"
-        self.assert_equal(actual, expected)
+        self.assertIsNone(filters)
 
     def test_by_month_half1(self) -> None:
         """

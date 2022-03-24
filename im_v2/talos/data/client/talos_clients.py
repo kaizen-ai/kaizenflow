@@ -325,6 +325,7 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
             query += f" LIMIT {limit}"
         return query
 
+      
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
