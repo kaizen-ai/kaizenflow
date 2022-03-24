@@ -213,7 +213,7 @@ def _run(
     use_system: bool = False,
     **ctx_run_kwargs: Any,
 ) -> int:
-    _LOG.debug(hprint.to_str("cmd dry_run"))
+    _LOG.debug(hprint.to_str(cmd, dry_run))
     if use_one_line_cmd:
         cmd = _to_single_line_cmd(cmd)
     _LOG.debug("cmd=%s", cmd)
@@ -267,8 +267,8 @@ def _get_files_to_process(
     """
     _LOG.debug(
         hprint.to_str(
-            "modified branch last_commit all_ files_from_user "
-            "mutually_exclusive remove_dirs"
+            modified, branch, last_commit, all_, files_from_user,
+            mutually_exclusive, remove_dirs
         )
     )
     if mutually_exclusive:
@@ -467,7 +467,7 @@ def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
 
     Run `git status --ignored` to see what it's skipped.
     """
-    _report_task(txt=hprint.to_str("dry_run"))
+    _report_task(txt=hprint.to_str(dry_run))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Fix permissions, if needed.
@@ -530,7 +530,7 @@ def git_create_patch(  # type: ignore
         - "diff": (default) creates a patch with the diff of the files
         - "tar": creates a tar ball with all the files
     """
-    _report_task(txt=hprint.to_str("mode modified branch last_commit files"))
+    _report_task(txt=hprint.to_str(mode, modified, branch, last_commit, files))
     _ = ctx
     # TODO(gp): Check that the current branch is up to date with master to avoid
     #  failures when we try to merge the patch.
@@ -950,7 +950,7 @@ def _git_diff_with_branch(
     dry_run: bool,
 ) -> None:
     _LOG.debug(
-        hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
+        hprint.to_str(hash_, tag, dir_name, diff_type, subdir, extensions, dry_run)
     )
     # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
@@ -1209,7 +1209,7 @@ def _dassert_current_dir_matches(dir_name: str) -> None:
     """
     Ensure that the name of the current dir is the expected one.
     """
-    _LOG.debug(hprint.to_str("dir_name"))
+    _LOG.debug(hprint.to_str(dir_name))
     curr_dir_name = os.path.basename(os.getcwd())
     hdbg.dassert_eq(
         curr_dir_name,
@@ -1224,7 +1224,7 @@ def _dassert_is_integration_branch(abs_dir: str) -> None:
     """
     Ensure that name of the branch in `abs_dir` is an integration or lint one.
     """
-    _LOG.debug(hprint.to_str("abs_dir"))
+    _LOG.debug(hprint.to_str(abs_dir))
     branch_name = hgit.get_branch_name(dir_name=abs_dir)
     hdbg.dassert_ne(branch_name, "master")
     hdbg.dassert(
@@ -1236,7 +1236,7 @@ def _dassert_is_integration_branch(abs_dir: str) -> None:
 
 
 def _clean_both_integration_dirs(abs_dir1: str, abs_dir2: str) -> None:
-    _LOG.debug(hprint.to_str("abs_dir1 abs_dir2"))
+    _LOG.debug(hprint.to_str(abs_dir1, abs_dir2))
     cmd = f"cd {abs_dir1} && invoke git_clean"
     hsystem.system(cmd)
     cmd = f"cd {abs_dir2} && invoke git_clean"
@@ -1374,7 +1374,7 @@ def _find_files_touched_since_last_integration(
         hdbg.dassert_lte(2, len(txt))
         print("# last_integration: '%s'" % txt[0])
         last_integration_hash = txt[0].split()[0]
-        print("* " + hprint.to_str("last_integration_hash"))
+        print("* " + hprint.to_str(last_integration_hash))
         # Find the first commit after the commit with the last integration.
         cmd = f"git log --oneline --reverse --ancestry-path {last_integration_hash}^..master"
         _, txt = hsystem.system_to_string(cmd)
@@ -1387,7 +1387,7 @@ def _find_files_touched_since_last_integration(
         hdbg.dassert_lte(2, len(txt))
         first_commit_hash = txt[1].split()[0]
         _LOG.debug("first_commit: '%s'", txt[1])
-        _LOG.debug(hprint.to_str("first_commit_hash"))
+        _LOG.debug(hprint.to_str(first_commit_hash))
         # Find all the files touched in each branch.
         cmd = f"git diff --name-only {first_commit_hash}..HEAD"
         _, txt = hsystem.system_to_string(cmd)
@@ -1436,13 +1436,13 @@ def _integrate_files(
         different
     """
     _LOG.debug(
-        hprint.to_str("abs_left_dir abs_right_dir copy tag only_different_files")
+        hprint.to_str(abs_left_dir, abs_right_dir, copy, tag, only_different_files)
     )
     files_to_diff = []
     # Create script to diff.
     script_txt = []
     for file in sorted(list(files)):
-        _LOG.debug(hprint.to_str("file"))
+        _LOG.debug(hprint.to_str(file))
         left_file = os.path.join(abs_left_dir, file)
         right_file = os.path.join(abs_right_dir, file)
         # Check if both the files exist and are the same.
@@ -1462,7 +1462,7 @@ def _integrate_files(
                 equal = None
                 skip = False
         _ = left_file, right_file, both_exist, equal, skip
-        _LOG.debug(hprint.to_str("left_file right_file both_exist equal skip"))
+        _LOG.debug(hprint.to_str(left_file, right_file, both_exist, equal, skip))
         # Execute the action on the 2 files.
         if skip:
             _LOG.debug("  Skip %s", file)
@@ -1740,7 +1740,7 @@ def docker_stats(  # type: ignore
     :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    _report_task(txt=hprint.to_str("all"))
+    _report_task(txt=hprint.to_str(all))
     _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
@@ -1784,7 +1784,7 @@ def docker_kill(  # type: ignore
     :param all: kill all the containers (be careful!)
     :param sudo: use sudo for the Docker commands
     """
-    _report_task(txt=hprint.to_str("all"))
+    _report_task(txt=hprint.to_str(all))
     docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
@@ -2265,11 +2265,11 @@ def _get_docker_cmd(
     if has_default_param(key):
         docker_compose_files.append(get_default_param(key))
     #
-    _LOG.debug(hprint.to_str("docker_compose_files"))
+    _LOG.debug(hprint.to_str(docker_compose_files))
     for docker_compose in docker_compose_files:
         hdbg.dassert_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
-    _LOG.debug(hprint.to_str("file_opts"))
+    _LOG.debug(hprint.to_str(file_opts))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
     docker_cmd_.append(
         rf"""
@@ -3275,7 +3275,7 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     :param how: how to report the results
         - `remove_dups`: report only imports and calls that are the same
     """
-    _report_task(txt=hprint.to_str("regex mode how subdir"))
+    _report_task(txt=hprint.to_str(regex, mode, how, subdir))
     _ = ctx
     # Process the `where`.
     python_files = _get_python_files(subdir)
@@ -4763,12 +4763,12 @@ def gh_login(
         full_repo_name = hgit.get_repo_full_name_from_dirname(
             ".", include_host_name=False
         )
-        _LOG.debug(hprint.to_str("full_repo_name"))
+        _LOG.debug(hprint.to_str(full_repo_name))
         account = full_repo_name.split("/")[0]
-    _LOG.info(hprint.to_str("account"))
+    _LOG.info(hprint.to_str(account))
     #
     ssh_filename = os.path.expanduser(f"~/.ssh/id_rsa.{account}.github")
-    _LOG.debug(hprint.to_str("ssh_filename"))
+    _LOG.debug(hprint.to_str(ssh_filename))
     if os.path.exists(ssh_filename):
         cmd = f"export GIT_SSH_COMMAND='ssh -i {ssh_filename}'"
         print(cmd)
@@ -4808,7 +4808,7 @@ def _get_workflow_table() -> htable.TableType:
     # Get the workflow status from GH.
     cmd = "export NO_COLOR=1; gh run list"
     _, txt = hsystem.system_to_string(cmd)
-    _LOG.debug(hprint.to_str("txt"))
+    _LOG.debug(hprint.to_str(txt))
     # pylint: disable=line-too-long
     # > gh run list
     # STATUS  NAME                                                        WORKFLOW    BRANCH                                                EVENT              ID          ELAPSED  AGE
@@ -4819,7 +4819,7 @@ def _get_workflow_table() -> htable.TableType:
     first_line = txt.split("\n")[0]
     _LOG.debug("first_line=%s", first_line.replace("\t", ","))
     num_cols = len(first_line.split("\t"))
-    _LOG.debug(hprint.to_str("first_line num_cols"))
+    _LOG.debug(hprint.to_str(first_line, num_cols))
     cols = [
         "completed",
         "status",
@@ -4834,7 +4834,7 @@ def _get_workflow_table() -> htable.TableType:
     hdbg.dassert_eq(num_cols, len(cols))
     # Build the table.
     table = htable.Table.from_text(cols, txt, delimiter="\t")
-    _LOG.debug(hprint.to_str("table"))
+    _LOG.debug(hprint.to_str(table))
     return table
 
 
@@ -4855,7 +4855,7 @@ def gh_workflow_list(
     :param filter_by_status: filter table by the status of the workflow
         - E.g., "failure", "success"
     """
-    _report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
+    _report_task(txt=hprint.to_str(filter_by_branch, filter_by_status))
     _ = ctx
     # Get the table.
     table = _get_workflow_table()
@@ -4924,7 +4924,7 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
     """
     Run GH workflows in a branch.
     """
-    _report_task(txt=hprint.to_str("branch workflows"))
+    _report_task(txt=hprint.to_str(branch, workflows))
     # Get the branch name.
     if branch == "current_branch":
         branch_name = hgit.get_branch_name()
@@ -4932,13 +4932,13 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
         branch_name = "master"
     else:
         raise ValueError("Invalid branch='%s'" % branch)
-    _LOG.debug(hprint.to_str("branch_name"))
+    _LOG.debug(hprint.to_str(branch_name))
     # Get the workflows.
     if workflows == "all":
         gh_tests = ["fast_tests", "slow_tests"]
     else:
         gh_tests = [workflows]
-    _LOG.debug(hprint.to_str("workflows"))
+    _LOG.debug(hprint.to_str(workflows))
     # Run.
     for gh_test in gh_tests:
         gh_test += ".yml"
@@ -5030,7 +5030,7 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    _report_task(txt=hprint.to_str("issue_id repo_short_name"))
+    _report_task(txt=hprint.to_str(issue_id, repo_short_name))
     _ = ctx
     issue_id = int(issue_id)
     hdbg.dassert_lte(1, issue_id)
@@ -5097,7 +5097,7 @@ def gh_create_pr(  # type: ignore
             not draft, "The PR can't be a draft in order to auto merge it"
         )
     pr_exists = _check_if_pr_exists(title)
-    _LOG.debug(hprint.to_str("pr_exists"))
+    _LOG.debug(hprint.to_str(pr_exists))
     if pr_exists:
         _LOG.warning("PR '%s' already exists: skipping creation", title)
     else:
