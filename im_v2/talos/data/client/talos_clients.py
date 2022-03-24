@@ -167,14 +167,34 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         raise NotImplementedError
 
     @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_talos_normalization(
+        data: pd.DataFrame, full_symbol_col_name: str = "full_symbol"
+    ) -> pd.DataFrame:
         """
         Apply Talos-specific normalization:
-
-        - Convert `timestamp` column to a UTC timestamp and set index
+        - Convert `timestamp` column to a UTC timestamp and set index.
         - Drop extra columns (e.g. `id` created by the DB).
         """
-        raise NotImplementedError
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        data = data.set_index("timestamp")
+        # Specify OHLCV columns.
+        ohlcv_columns = [
+            # "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            full_symbol_col_name,
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data.loc[:, ohlcv_columns]
+        return data
 
     @staticmethod
     # TODO(Danya): Move up to hsql.
@@ -301,28 +321,4 @@ class RealTimeSqlTalosClient(TalosClient, icdc.ImClient):
         """
         # TODO(Danya): Convert timestamps to int when reading.
         # TODO(Danya): add a full symbol column to the output
-        raise NotImplementedError
-
-    # @staticmethod
-    # def _build_select_query(
-    #    query: str,
-    #    exchange_id: str,
-    #    currency_pair: str,
-    #    start_unix_epoch: int,
-    #    end_unix_epoch: int,
-    # ) -> str:
-    #    """
-    #    Append a WHERE clause to the query.
-    ##    """
-    # TODO(Danya): Depending on the implementation, can be moved out to helpers.
-    #    raise NotImplementedError
-
-    @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization:
-
-        - Convert `timestamp` column to a UTC timestamp and set index
-        - Drop extra columns (e.g. `id` created by the DB).
-        """
         raise NotImplementedError
