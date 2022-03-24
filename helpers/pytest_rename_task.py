@@ -17,12 +17,90 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
+class OutcomesRenamer():
+    def __init__(self) -> None:
+        pass
+
+
+    def process_directory(self, outcome_dir: str, outcomes_path: str, target_dir: str, new_class: str) -> bool:
+        """
+        """
+        # Contruct the path to outcomes directory.
+        outcome_path_old = os.path.join(outcomes_path, outcome_dir)
+        # Both old and new method names should belong to one class.
+        if outcome_dir.startswith(target_dir):
+            # Split old directory name - the part before "." is the class name.
+            class_method = outcome_dir.split(".")
+            # Replace old class name with the new one.
+            class_method[0] = new_class
+            outcome_name_new = ".".join(class_method)
+            outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
+        else:
+            return False
+        cmd = f"mv {outcome_path_old} {outcome_path_new}"
+        # Rename the directory.
+        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        _LOG.info(
+            "Renaming `%s` directory to `%s`. Output log: %s",
+            outcome_path_old,
+            outcome_path_new,
+            rc,
+        )
+        # Add to git new outcome directory and remove the old one.
+        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        return True
+
+
+    def rename_outcomes(
+        self,
+        path: str,
+        old_class: str,
+    ) -> None:
+        """
+        Rename the directory that contains test outcomes.
+
+        :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
+        """
+        outcomes_path = os.path.join(path, "outcomes")
+        dir_items = os.listdir(outcomes_path)
+        # Get the list of outcomes directories.
+        outcomes = [
+            dir_name
+            for dir_name in dir_items
+            if os.path.isdir(os.path.join(outcomes_path, dir_name))
+        ]
+        renamed = False
+        # Construct target dir name, e.g. `TestClassName.`. We need to add `.` to indicate the end of the class name.
+        target_dir = old_class + "."
+        for outcome_dir in outcomes:
+            renamed = self.process_directory(outcome_dir, outcomes_path, target_dir)
+        if not renamed:
+            _LOG.info(
+                "No outcomes for `%s` were found in `%s`.",
+                old_class,
+                outcomes_path,
+            )
+
+
 class PytestRenamer():
     def __init__(self, old_test_name: str, new_test_name: str, root_dir: str) -> None:
+        """
+
+        """
         self.test_dirs = self._get_test_directories(root_dir)
+        #
+        self._check_names(old_test_name, new_test_name)
+        #
         self.cfg = self._process_parameters(old_test_name, new_test_name)
+        #
+        self.outcomes_renamer = OutcomesRenamer()
+
 
     def run(self):
+        """
+        Run the renamer.
+        """
         # Iterate over test directories.
         for path in self.test_dirs:
             _LOG.debug("Scanning `%s` directory.", path)
@@ -34,8 +112,6 @@ class PytestRenamer():
                 self._rename_in_file(
                     path,
                     test_file,
-                    old_test_class_name,
-                    new_test_class_name,
                 )
 
 
@@ -43,8 +119,6 @@ class PytestRenamer():
         self,
         test_dir: str,
         file_path: str,
-        old_class_name: str,
-        new_class_name: str,
     ) -> None:
         """
         Process the file:
@@ -59,22 +133,20 @@ class PytestRenamer():
         :param new_class_name: the new name of the class
         """
         content = hio.from_file(file_path)
-        if not re.search(f"class {old_class_name}\(", content):
+        if not re.search(f"class {self.cfg['old_class_name']}\(", content):
             # Return if target test class does not appear in file content.
             return
         # Rename the class.
-        content = self._rename_class(content, old_class_name, new_class_name)
+        content = self._rename_class(content)
         _LOG.info(
             "%s: class `%s` was renamed to `%s`.",
             file_path,
-            old_class_name,
-            new_class_name,
+            self.cfg["old_class_name"],
+            self.cfg["new_class_name"],
         )
         # Rename the directories that contain target test outcomes.
         self._rename_outcomes(
             test_dir,
-            old_class_name,
-            new_class_name,
         )
         # Write processed content back to file.
         hio.to_file(file_path, content)
@@ -82,45 +154,35 @@ class PytestRenamer():
     def _rename_class(
         self, 
         content: str,
-        old_class_name: str,
-        new_class_name: str,
     ) -> str:
         """
         Rename the class.
 
         :param content: the content of the file
-        :param old_class_name: the old name of the target class
-        :param new_class_name: the new name of the target class
         :return: the content of the file with the class name replaced
         """
         # Rename the class.
         content = re.sub(
-            f"class {old_class_name}\(", f"class {new_class_name}(", content
+            f"class {self.cfg['old_class_name']}\(", f"class {self.cfg['new_class_name']}(", content
         )
         return content
 
     def _rename_method(
         self,
         content: str,
-        class_name: str,
-        old_method_name: str,
-        new_method_name: str,
     ) -> str:
         """
         Rename the method of the class.
 
         :param content: the content of the file
-        :param class_name: the name of the class containing the method
-        :param old_method_name: the old method name
-        :param new_method_name: the new method name
         :return: content of the file with the method renamed
         """
         lines = content.split("\n")
         # Flag that informs if the class border was found.
         class_found = False
         method_replaced = False
-        class_pattern = f"class {class_name}\("
-        method_pattern = f"def {old_method_name}\("
+        class_pattern = f"class {self.cfg['old_class_name']}\("
+        method_pattern = f"def {self.cfg['old_method_name']}\("
         for ind, line in enumerate(lines):
             # Iterate over the lines of the file to find the specific method of the class that should be renamed.
             if class_found:
@@ -129,7 +191,7 @@ class PytestRenamer():
                     break
                 if re.search(method_pattern, line):
                     # Rename the method.
-                    new_line = re.sub(method_pattern, f"def {new_method_name}(", line)
+                    new_line = re.sub(method_pattern, f"def {self.cfg['new_method_name']}(", line)
                     # Replace the line with method definition.
                     lines[ind] = new_line
                     method_replaced = True
@@ -143,63 +205,6 @@ class PytestRenamer():
         )
         new_content = "\n".join(lines)
         return new_content
-
-    def _rename_outcomes(
-        self,
-        path: str,
-        old_class_name: str,
-        new_class_name: str,
-    ) -> None:
-        """
-        Rename the directory that contains test outcomes.
-
-        :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
-        :param old_class_name: the old name of the target class
-        :param new_class_name: the new name of the target class
-        """
-        outcomes_path = os.path.join(path, "outcomes")
-        dir_items = os.listdir(outcomes_path)
-        # Get the list of outcomes directories.
-        outcomes = [
-            dir_name
-            for dir_name in dir_items
-            if os.path.isdir(os.path.join(outcomes_path, dir_name))
-        ]
-        renamed = False
-        # Construct target dir name, e.g. `TestClassName.`. We need to add `.` to indicate the end of the class name.
-        target_dir = old_class_name + "."
-        for outcome_dir in outcomes:
-            # Contruct the path to outcomes directory.
-            outcome_path_old = os.path.join(outcomes_path, outcome_dir)
-            # Both old and new method names should belong to one class.
-            if outcome_dir.startswith(target_dir):
-                # Split old directory name - the part before "." is the class name.
-                class_method = outcome_dir.split(".")
-                # Replace old class name with the new one.
-                class_method[0] = new_class_name
-                outcome_name_new = ".".join(class_method)
-                outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
-            else:
-                continue
-            cmd = f"mv {outcome_path_old} {outcome_path_new}"
-            # Rename the directory.
-            rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-            _LOG.info(
-                "Renaming `%s` directory to `%s`. Output log: %s",
-                outcome_path_old,
-                outcome_path_new,
-                rc,
-            )
-            # Add to git new outcome directory and remove the old one.
-            cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
-            hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-            renamed = True
-        if not renamed:
-            _LOG.info(
-                "No outcomes for `%s` were found in `%s`.",
-                old_class_name,
-                outcomes_path,
-            )
 
     @staticmethod
     def _get_test_directories(root_dir: str) -> List[str]:
@@ -219,6 +224,8 @@ class PytestRenamer():
 
     @staticmethod
     def _check_names(old_test_name: str, new_test_name: str) -> None:
+        """
+        """
         # Assert if the classname is invalid.
         hdbg.dassert(
             old_test_name.startswith("Test"),
@@ -239,8 +246,11 @@ class PytestRenamer():
     ) -> Dict[str, Union[bool, str]]:
         """
         Build the processing config.
+
+        :param old_test_class_name:
+        :param new_test_class_name:
+        :return:
         """
-        _check_names(old_test_class_name, new_test_class_name)
         # Build the processing config.
         config: Dict[str, Union[bool, str]] = dict()
         # Split by "." to separate class name and method name.
@@ -270,8 +280,8 @@ class PytestRenamer():
         else:
             hdbg.dassert(False, "Wrong names format.")
         # Fill the processing parameters.
-        config["old_class_name"] = old_class_name
-        config["old_method_name"] = old_method_name
-        config["new_class_name"] = new_class_name
-        config["new_method_name"] = new_method_name
+        config["old_class"] = old_class_name
+        config["old_method"] = old_method_name
+        config["new_class"] = new_class_name
+        config["new_method"] = new_method_name
         return config
