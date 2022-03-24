@@ -4578,7 +4578,7 @@ def pytest_find_unused_goldens(  # type: ignore
     # Prepare the command line.
     docker_cmd_opts = [f"--dir_name {dir_name}"]
     docker_cmd_ = (
-        "python dev_scripts/find_unused_golden_files.py "
+        "dev_scripts/find_unused_golden_files.py "
         + _to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
