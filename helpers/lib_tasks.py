@@ -2301,7 +2301,7 @@ def _get_docker_cmd(
     """
     Get `docker-compose` run command.
 
-    E.g., 
+    E.g.,
     ```
     IMAGE=*****..dkr.ecr.us-east-1.amazonaws.com/amp:dev \
         docker-compose \
@@ -2312,7 +2312,7 @@ def _get_docker_cmd(
         --name grisha.cmamp.app.cmamp1.20220317_232120 \
         --user $(id -u):$(id -g) \
         app \
-        bash 
+        bash
     ```
     :param cmd: command to run inside Docker container
     :param extra_docker_run_opts: additional `docker-compose` run options
@@ -4545,6 +4545,51 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
                 old_test_class_name,
                 new_test_class_name,
             )
+
+
+# #############################################################################
+
+
+@task
+def pytest_find_unused_goldens(  # type: ignore
+    ctx,
+    dir_name=".",
+    run_bash=False,
+    stage="prod",
+    as_user=True,
+    out_file_name="pytest_find_unused_goldens.output.txt",
+):
+    """
+    Detect mismatches between tests and their golden outcome files.
+
+    - When goldens are required by the tests but the corresponding files
+      do not exist
+    - When the existing golden files are not actually required by the
+      corresponding tests
+
+    :param dir_name: the head dir to start the check from
+    """
+    _report_task()
+    # Remove the log file.
+    if os.path.exists(out_file_name):
+        cmd = f"rm {out_file_name}"
+        _run(ctx, cmd)
+    as_user = _run_docker_as_user(as_user)
+    # Prepare the command line.
+    amp_abs_path = hgit.get_amp_abs_path()
+    amp_path = amp_abs_path.replace(
+        os.path.commonpath([os.getcwd(), amp_abs_path]), ""
+    )
+    script_path = os.path.join(
+        amp_path, "dev_scripts/find_unused_golden_files.py"
+    ).lstrip("/")
+    docker_cmd_opts = [f"--dir_name {dir_name}"]
+    docker_cmd_ = f"{script_path} " + _to_single_line_cmd(docker_cmd_opts)
+    # Execute command line.
+    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    # Run.
+    _run(ctx, cmd)
 
 
 # #############################################################################

@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 
 import core.artificial_signal_generators as carsigen
-import core.pandas_helpers as cpanh
 import core.statistics as costatis
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.base as dtfconobas
@@ -138,14 +137,15 @@ def load_data_from_disk(
         # Assume that the first column is the index, unless specified.
         if "index_col" not in reader_kwargs:
             kwargs["index_col"] = 0
-        read_data = cpanh.read_csv
+        read_data = hpandas.read_csv_to_df
     elif ext == ".pq":
-        read_data = cpanh.read_parquet
+        read_data = hpandas.read_parquet_to_df
     else:
         raise ValueError("Invalid file extension='%s'" % ext)
     # Read the data.
     _LOG.debug("filepath=%s kwargs=%s", file_path, str(kwargs))
-    df = read_data(file_path, **kwargs)
+    stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+    df = read_data(stream, **kwargs)
     # Process the data.
     # Use the specified timestamp column as index, if needed.
     if timestamp_col is not None:
