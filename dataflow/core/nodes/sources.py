@@ -110,7 +110,7 @@ def load_data_from_disk(
     timestamp_col: Optional[str] = None,
     start_date: Optional[hdateti.Datetime] = None,
     end_date: Optional[hdateti.Datetime] = None,
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
     reader_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
@@ -122,6 +122,7 @@ def load_data_from_disk(
         that index contains timestamps
     :param start_date: data start date in timezone of the dataset, included
     :param end_date: data end date in timezone of the dataset, included
+    :param aws_profile: the name of an AWS profile or a s3fs filesystem
     :param reader_kwargs: kwargs for the data reading function
     """
     reader_kwargs = reader_kwargs or {}
