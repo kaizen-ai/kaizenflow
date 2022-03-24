@@ -27,7 +27,7 @@ def workload_function(
     incremental = kwargs.pop("incremental")
     num_attempts = kwargs.pop("num_attempts")
     _ = val1, val2, incremental, num_attempts
-    res: str = hprint.to_str("val1 val2 incremental num_attempts kwargs")
+    res: str = hprint.to_str(val1, val2, incremental, num_attempts, kwargs)
     _LOG.debug("res=%s", res)
     sleep = 0.01
     # sleep = 2
