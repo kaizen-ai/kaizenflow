@@ -229,7 +229,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): Depending on the implementation, can be moved out to helpers.
         raise NotImplementedError
 
-
     def _read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -298,14 +297,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
         :return: SELECT query for Talos data
         """
-        hdbg.dassert_isinstance(
-            start_unix_epoch,
-            int,
-        )
-        hdbg.dassert_isinstance(
-            end_unix_epoch,
-            int,
-        )
         hdbg.dassert_lte(
             start_unix_epoch,
             end_unix_epoch,
@@ -326,8 +317,16 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): Generalize to hsql with dictionary input.
         where_clause = []
         if start_unix_epoch:
+            hdbg.dassert_isinstance(
+                start_unix_epoch,
+                int,
+            )
             where_clause.append(f"timestamp >= {start_unix_epoch}")
         if end_unix_epoch:
+            hdbg.dassert_isinstance(
+                end_unix_epoch,
+                int,
+            )
             where_clause.append(f"timestamp <= {end_unix_epoch}")
         # Add 'exchange_id IN (...)' clause.
         where_clause.append(self._create_in_operator(exchange_ids, "exchange_id"))
