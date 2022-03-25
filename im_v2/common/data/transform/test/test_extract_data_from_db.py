@@ -35,6 +35,7 @@ class TestExtractDataFromDb1(imvcddbut.TestImDbHelper):
         """
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
+    # TODO(Nikola): Test both local and S3 (with moto).
     @pytest.mark.slow
     @pytest.mark.skip(
         reason="CmTask1305: after removing circular dependencies in "
