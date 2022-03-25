@@ -109,14 +109,6 @@ class Test_to_str1(hunitest.TestCase):
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
         self.assertEqual(act, exp)
 
-    def test9(self) -> None:
-        """
-        Test printing empty arguments
-        """
-        act = hprint.to_str()
-        exp = ""
-        self.assertEqual(act, exp)
-
 
 # #############################################################################
 
