@@ -7,7 +7,6 @@ import helpers.hprint as hprint
 import inspect
 import logging
 import re
-import sys
 from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.hdbg as hdbg
@@ -309,7 +308,6 @@ def round_digits(
 # https://stackoverflow.com/questions/2749796 has some solutions to find the
 # name of variables from the caller.
 
-# TODO(Grisha): @Timur, use linter, i.e. `i lint -f helpers/hprint.py`.
 def to_str(*variables_values: Any) -> str:
     """
     Return a string with the names and values of a variables that were provided into the function
@@ -329,27 +327,32 @@ def to_str(*variables_values: Any) -> str:
     # Get source code starting from line where current function was called
     source_code_lines = inspect.findsource(frame_above[0])[0]
     call_line_index = frame_above.lineno - 1
-    stripped_code_lines = [line.strip() for line in source_code_lines[call_line_index:]]
-    source_code_string = ''.join(stripped_code_lines)
+    stripped_code_lines = [
+        line.strip() for line in source_code_lines[call_line_index:]
+    ]
+    source_code_string = "".join(stripped_code_lines)
 
-    regex = fr'{current_frame.function}\((.*?)\)'
+    regex = fr"{current_frame.function}\((.*?)\)"
     matches = re.findall(regex, source_code_string)
     hdbg.dassert_ne(
-        len(matches), 0, msg=f"There no arguments were found for in source code `{current_frame.function}` call"
+        len(matches),
+        0,
+        msg=f"There no arguments were found for in source code `{current_frame.function}` call",
     )
     # Only fist match from regex is needed
     variables_names_str = matches[0]
-    variables_names = variables_names_str.split(',')
-    hdbg.dassert_eq(len(variables_names),
-                    len(variables_values),
-                    msg="Amount of variables is not equal to amount of values:"
-                        f"\n Variables: {variables_names},\nValues: {list(variables_values)}"
-                    )
+    variables_names = variables_names_str.split(",")
+    hdbg.dassert_eq(
+        len(variables_names),
+        len(variables_values),
+        msg="Amount of variables is not equal to amount of values:"
+        f"\n Variables: {variables_names},\nValues: {list(variables_values)}",
+    )
     output = list()
     for name, value in zip(variables_names, variables_values):
         output.append(f"{name.strip()}={value}")
 
-    return ', '.join(output)
+    return ", ".join(output)
 
 
 def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
