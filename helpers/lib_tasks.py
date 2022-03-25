@@ -33,7 +33,7 @@ import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.htraceback as htraceb
 import helpers.hversion as hversio
-import helpers.pytest_rename_task as hpretask
+import helpers.hunit_test_utils as hpretask
 
 _LOG = logging.getLogger(__name__)
 
@@ -4386,7 +4386,7 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     _report_task()
     _ = ctx
     root_dir = os.getcwd()
-    renamer = hpretask.PytestRenamer(old_test_class_name, new_test_class_name, root_dir)
+    renamer = hpretask.UnitTestRenamer(old_test_class_name, new_test_class_name, root_dir)
     renamer.run()
 
 
