@@ -3,18 +3,18 @@ Import as:
 
 import im_v2.talos.utils as imv2tauti
 """
-import datetime
-import logging
-
 import abc
+import base64
+import datetime
+import hashlib
+import hmac
+import logging
+from typing import Any, Dict, List
+
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import hmac
-import hashlib
-import base64
-from typing import List, Any
 import helpers.hsecrets as hsecret
 
 _LOG = logging.getLogger(__name__)
@@ -65,17 +65,45 @@ def get_talos_current_utc_timestamp() -> str:
 
 
 class TalosApiBase(abc.ABC):
+
     def __init__(self, account: str):
         self._account = account
         self._api_keys = hsecret.get_secret(self._account)
         # Talos request endpoint.
         self._endpoint = get_endpoint(self._account)
 
-    def build_parts(self, wall_clock_timestamp):
-        raise NotImplementedError
+    def build_parts(
+            self, wall_clock_timestamp: str, path: str, request_type: str
+    ) -> List[str]:
+        """
+        
+        """
+        hdbg.dassert_in(
+            request_type, ["GET", "POST"], msg="Incorrect request type"
+        )
+        parts = [request_type, wall_clock_timestamp, self._endpoint, path]
+        return parts
 
-    def get_api_keys(self):
-        raise NotImplementedError
+    def build_headers(
+            self, parts: List[str], wall_clock_timestamp: str
+    ) -> Dict[str, str]:
+        """
+        
+        """
+        signature = self.calculate_signature(self._api_keys["secretKey"], parts)
+        headers = {
+            "TALOS-KEY": self._api_keys["apiKey"],
+            "TALOS-SIGN": signature,
+            "TALOS-TS": wall_clock_timestamp,
+        }
+        return headers
+
+    @abc.abstractmethod
+    def build_url(self, path: str, **kwargs: Any) -> str:
+        """
+        
+        """
+        ...
 
     def calculate_signature(self, secret_key: str, parts: List[str]) -> str:
         """
