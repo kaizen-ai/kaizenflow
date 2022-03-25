@@ -131,6 +131,7 @@ class TalosBroker(ombroker.AbstractBroker):
             raise Exception(f"{r.status_code}: {r.text}")
         return data
 
+    # TODO(Danya): Implement a method for getting fills since last exec.
     def get_fills(self, order_ids: List[str]) -> Dict[str, str]:
         """
         Get fill status from unique order ids.

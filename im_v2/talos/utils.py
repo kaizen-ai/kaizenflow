@@ -6,10 +6,16 @@ import im_v2.talos.utils as imv2tauti
 import datetime
 import logging
 
+import abc
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import hmac
+import hashlib
+import base64
+from typing import List, Any
+import helpers.hsecrets as hsecret
 
 _LOG = logging.getLogger(__name__)
 _TALOS_HOST = "talostrading.com"
@@ -56,3 +62,46 @@ def get_talos_current_utc_timestamp() -> str:
         "%Y-%m-%dT%H:%M:%S.000000Z"
     )
     return utc_datetime
+
+
+class TalosApiBase(abc.ABC):
+    def __init__(self, account: str):
+        self._account = account
+        self._api_keys = hsecret.get_secret(self._account)
+        # Talos request endpoint.
+        self._endpoint = get_endpoint(self._account)
+
+    def build_parts(self, wall_clock_timestamp):
+        raise NotImplementedError
+
+    def get_api_keys(self):
+        raise NotImplementedError
+
+    def calculate_signature(self, secret_key: str, parts: List[str]) -> str:
+        """
+        Encode the request using secret key.
+
+        Require parts of the API request provided as a list, e.g.:
+
+        ```
+        [
+            "POST",
+            str(utc_datetime),
+            "tal-87.sandbox.talostrading.com",
+            "/v1/orders",
+        ]
+        ```
+
+        :param secret_key: secret key used for encoding
+        :param parts: parts of the GET or POST request
+        :return: an encoded string
+        """
+        payload = "\n".join(parts)
+        hash = hmac.new(
+            secret_key.encode("ascii"),
+            payload.encode("ascii"),
+            hashlib.sha256,
+        )
+        hash.hexdigest()
+        signature = base64.urlsafe_b64encode(hash.digest()).decode()
+        return signature

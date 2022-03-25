@@ -56,7 +56,6 @@ class TalosExchange:
         )
         return data_path
 
-
     def build_talos_query_params(
         self,
         start_timestamp: pd.Timestamp,
