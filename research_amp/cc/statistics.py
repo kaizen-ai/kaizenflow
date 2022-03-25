@@ -47,10 +47,8 @@ def compute_stats_for_universe(
         # Read data for current exchange and currency pair.
         start_ts = None
         end_ts = None
-        resample_1min = True
         data = loader.read_data(
             [full_symbol],
-            resample_1min,
             start_ts,
             end_ts,
         )
@@ -263,14 +261,13 @@ def get_universe_price_data(
     # Initialize lists of column names and price data series.
     colnames = []
     price_srs_list = []
-    resample_1min = True
     start_ts = None
     end_ts = None
     # Iterate exchange ids and currency pairs.
     for full_symbol in vendor_universe:
         colnames.append(full_symbol)
         # Read data for current exchange and currency pair.
-        data = loader.read_data(full_symbol, resample_1min, start_ts, end_ts)
+        data = loader.read_data(full_symbol, start_ts, end_ts)
         # Get series of required prices and append to the list.
         price_srs = data[config["data"]["price_column"]]
         price_srs_list.append(price_srs)

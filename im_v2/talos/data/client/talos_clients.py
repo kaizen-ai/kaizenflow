@@ -36,6 +36,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     def __init__(
         self,
         root_dir: str,
+        resample_1min: bool,
         partition_mode: str,
         *,
         data_snapshot: str = "latest",
@@ -46,7 +47,12 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         """
         vendor = "talos"
         imvcdchpcl.HistoricalPqByTileClient.__init__(
-            self, vendor, root_dir, partition_mode, aws_profile=aws_profile
+            self,
+            vendor,
+            root_dir,
+            resample_1min,
+            partition_mode,
+            aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot
 
@@ -140,9 +146,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self,
         db_connection: hsql.DbConnection,
         table_name: str,
+        resample_1min: bool,
     ) -> None:
         vendor = "talos"
-        super().__init__(vendor)
+        super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
 
