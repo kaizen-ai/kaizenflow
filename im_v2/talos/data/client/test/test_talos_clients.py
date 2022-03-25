@@ -235,6 +235,44 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
             expected_end_ts,
         )
 
+    def test_read_data7(self) -> None:
+        # TODO(Nina): will fix it in another PR by 'spoiling' the stored test data
+        #  so we can demonstrate that everything works
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosParquetByTileClient_example1(resample_1min)
+        full_symbols = ["binance::ADA_USDT", "coinbase::BTC_USDT"]
+        #
+        expected_length = 200
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "coinbase::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2022-01-01 00:00:00+00:00, 2022-01-01 01:39:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(200, 6)
+                                          full_symbol        open        high         low       close           volume
+        timestamp
+        2022-01-01 00:00:00+00:00   binance::ADA_USDT  1.30800000  1.31000000  1.30700000  1.31000000   98266.80000000
+        2022-01-01 00:00:00+00:00  coinbase::BTC_USDT    46221.22    46257.95    46221.22    46226.81       0.09282946
+        2022-01-01 00:01:00+00:00   binance::ADA_USDT  1.31000000  1.31400000  1.30800000  1.31200000  132189.40000000
+        ...
+        2022-01-01 01:38:00+00:00  coinbase::BTC_USDT    46837.75    46841.82    46801.33    46801.33      0.19122669
+        2022-01-01 01:39:00+00:00   binance::ADA_USDT  1.33400000  1.33400000  1.33200000  1.33300000  69430.10000000
+        2022-01-01 01:39:00+00:00  coinbase::BTC_USDT    46769.53    46808.49    46769.53    46808.49      0.05759393
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            talos_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     @staticmethod

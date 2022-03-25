@@ -60,7 +60,6 @@ class ImClientTestCase(hunitest.TestCase):
         - start_ts = end_ts = None
         - resample_1min = True
         """
-        im_client.resample_1min = True
         start_ts = None
         end_ts = None
         actual_df = im_client.read_data(
@@ -84,7 +83,6 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         end_ts = None
-        im_client.resample_1min = True
         actual_df = im_client.read_data(
             full_symbols, start_ts, end_ts
         )
@@ -106,7 +104,6 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         start_ts = None
-        im_client.resample_1min = True
         actual_df = im_client.read_data(
             full_symbols, start_ts, end_ts
         )
@@ -127,7 +124,6 @@ class ImClientTestCase(hunitest.TestCase):
         - specified start_ts and end_ts
         - resample_1min = True
         """
-        im_client.resample_1min = True
         actual_df = im_client.read_data(
             full_symbols, start_ts, end_ts
         )
@@ -145,7 +141,6 @@ class ImClientTestCase(hunitest.TestCase):
         full_symbols = [full_symbol]
         start_ts = None
         end_ts = None
-        im_client.resample_1min = True
         # TODO(gp): We should raise a more specific assertion and / or
         #  check part of the exception as a string.
         with self.assertRaises(AssertionError):

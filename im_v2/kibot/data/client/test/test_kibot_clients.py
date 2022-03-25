@@ -872,8 +872,10 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_metadata1(self) -> None:
+        contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            "continuous", True
+            contract_type, resample_1min
         )
         expected_length = 14962
         expected_column_names = ["Symbol", "Link", "Description"]
