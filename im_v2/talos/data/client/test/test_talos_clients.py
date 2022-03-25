@@ -408,7 +408,8 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDb
         Initialize Talos SQL Client.
         """
         table_name = "talos_ohlcv"
+        resample_1min = True
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
-            self.connection, table_name
+            self.connection, table_name, resample_1min
         )
         return sql_talos_client
