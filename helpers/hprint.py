@@ -310,74 +310,42 @@ def round_digits(
 # name of variables from the caller.
 
 # TODO(Grisha): @Timur, use linter, i.e. `i lint -f helpers/hprint.py`.
-def to_str(*variables: Any) -> str:
+def to_str(*variables_values: Any) -> str:
     """
-    Return a string with the names and values of a variables that were provided into the function.
-    Limits: can't work with argument which contains parenthesis, e.g.,: `to_str(to_str(a,b), c)`.
+    Return a string with the names and values of a variables that were provided into the function
+    Limits: can't work with argument which contains parenthesis, e.g.,: `to_str(to_str(a,b), c)`
 
-    :param variables: variables that should be converted to the "variable=value" string
-    :return: string which contains all function call arguments and it's values in one line, e.g.,: `a=1, b=2`
+    :param variables_values: variables that should be converted to the "variable=value" string
+    :return: string which contains all function call arguments, and it's values in one line, e.g.,: `a=1, b=2`
     """
-    # TODO(Grisha): @Timur, make it private and make it a separate function.
-    def get_function_call_arguments(
-        source_file_path: str,
-        function_call_line_no: int,
-        function_name: str
-    ) -> str:
-        """
-        Collecting code lines which are related to the function call in case if arguments were given on separate lines.
+    # Check parameters.
+    hdbg.dassert_is_not(variables_values, None)
 
-        # TODO(Grisha): @Timur, add example of return.
-        E.g.,
-        ```
-        ```
-
-        # TODO(Grisha): @Timur, please elaborate on all param descriptions.
-        :param source_file_path: Path to the source file
-        :param function_call_line_no: Line from which function was called
-        :param function_name: Name of the function which arguments should be returned
-        :return: string which contains all function call arguments
-        """
-        # TODO(Grisha): @Timur, try to use `helpers/hio:from_file()`.
-        # TODO(Grisha): @Timur, the flow should be:
-        # - Read file content
-        # - Filter out what is before `function_call_line_no`
-        # - Use regex for the rest of the text
-        with open(source_file_path) as fd_in:
-            function_call_with_arguments = str()
-            # First line has index 1.
-            for line_no, line in enumerate(fd_in, 1):
-                # Check starting from line.
-                if line_no >= function_call_line_no:
-                    function_call_with_arguments += line.strip()
-                    regex = fr'{function_name}\((.*?)\)'
-                    match = re.findall(regex, function_call_with_arguments)
-                    if not match:
-                        continue
-                    else:
-                        return match[0]
-
-    # Return empty string if no arguments were provided.
-    # TODO(Grisha): @Timur, here you can assert, see `helpers/hdbg.py`.
-    if not variables:
-        return ''
-
-    # Get current frame.
     frame = inspect.currentframe()
     frames = inspect.getouterframes(frame)
-    # Get first outer frame.
-    frame_above = frames[1]
-    current_frame = frames[0]
-    # Collect function call arguments.
-    variables_str = get_function_call_arguments(source_file_path=frame_above.filename,
-                                                function_call_line_no=frame_above.lineno,
-                                                function_name=current_frame.function)
-    variables = variables_str.split(',')
-    # TODO(Grisha): @Timur, here you can assert, see `helpers/hdbg.py`.
-    assert len(variables) == len(variables), "Amount of variables is not equal to amount of values:" \
-                                        f"\n Variables: {variables},\nValues: {list(variables)}"
+    # Get first outer frame - from where functions was called, and the current one
+    frame_above, current_frame = frames[1], frames[0]
+
+    # Get source code starting from line where current function was called
+    source_code_lines = inspect.findsource(frame_above[0])[0]
+    call_line_index = frame_above.lineno - 1
+    source_code_string = ''.join(source_code_lines[call_line_index:])
+
+    regex = fr'{current_frame.function}\((.*?)\)'
+    matches = re.findall(regex, source_code_string)
+    hdbg.dassert_ne(
+        len(matches), 0, msg=f"There no arguments were found for in source code `{current_frame.function}` call"
+    )
+    # Only fist match from regex is needed
+    variables_names_str = matches[0]
+    variables_names = variables_names_str.split(',')
+    hdbg.dassert_eq(len(variables_names),
+                    len(variables_values),
+                    msg="Amount of variables is not equal to amount of values:"
+                        f"\n Variables: {variables_names},\nValues: {list(variables_values)}"
+                    )
     output = list()
-    for name, value in zip(variables, variables):
+    for name, value in zip(variables_names, variables_values):
         output.append(f"{name.strip()}={value}")
 
     return ', '.join(output)
