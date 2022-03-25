@@ -319,13 +319,32 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDb
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
 
+    def test_build_select_query5(self) -> None:
+        """
+        Test SQL query string with only timestamps provided.
+        """
+        talos_sql_client = self.setup_talos_sql_client()
+        exchange_id = []
+        currency_pair = []
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        actual_outcome = talos_sql_client._build_select_query(
+            exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+        )
+        expected_outcome = (
+            "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= 1647471180000 AND "
+            "exchange_id IN () AND currency_pair IN ()"
+        )
+        # Message in case if test case got failed.
+        message = "Actual and expected SQL queries are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+
     def setup_talos_sql_client(
             self,
     ) -> imvtdctacl.RealTimeSqlTalosClient:
         """
         Initialize Talos SQL Client.
         """
-
         table_name = "talos_ohlcv"
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
             self.connection, table_name
