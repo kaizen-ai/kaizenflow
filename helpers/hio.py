@@ -54,34 +54,21 @@ def purify_file_name(file_name: str) -> str:
 # #############################################################################
 
 
-# TODO(Nikola): Supports S3 and thus we should keep/merge it properly with
-# `find_regex_files`.
-def find_files(
-    directory: str, pattern: str, aws_profile: Optional[str] = None
-) -> List[str]:
+def find_files(directory: str, pattern: str) -> List[str]:
     """
     Find all files under `directory` that match a certain `pattern`.
 
-    :param directory: path to the directory where to look for files. It can be an S3 or local file.
+    :param directory: path to the directory where to look for files.
     :param pattern: pattern to match a filename against
-    :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
     """
     file_names = []
-    if aws_profile:
-        # TODO(gp): Remove this and move the code that requires s3 in hs3.
-        import helpers.hs3 as hs3
-
-        s3fs_ = hs3.get_s3fs(aws_profile)
-        hs3.dassert_s3_exists(directory, s3fs_)
-        file_names = s3fs_.glob(f"{directory}/{pattern}")
-    else:
-        hdbg.dassert_dir_exists(directory)
-        for root, _, files in os.walk(directory):
-            for basename in files:
-                if fnmatch.fnmatch(basename, pattern):
-                    file_name = os.path.join(root, basename)
-                    # TODO(Nikola): Use glob.
-                    file_names.append(file_name)
+    hdbg.dassert_dir_exists(directory)
+    for root, _, files in os.walk(directory):
+        for basename in files:
+            if fnmatch.fnmatch(basename, pattern):
+                file_name = os.path.join(root, basename)
+                # TODO(Nikola): Implement this function using glob mimicking hs3.find_files
+                file_names.append(file_name)
     return file_names
 
 

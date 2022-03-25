@@ -13,8 +13,10 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
-# Avoid dependency from other `helpers` modules, such as `helpers.hsql`and
-# `helpers.hunit_test`, to prevent import cycles.
+# Avoid the following dependency from other `helpers` modules to prevent import cycles.
+# import helpers.hs3 as hs3
+# import helpers.hsql as hsql
+# import helpers.hunit_test as hunitest
 
 
 _LOG = logging.getLogger(__name__)
@@ -795,9 +797,9 @@ def convert_col_to_int(
     """
     Convert a column to an integer column.
 
-    Example use case:
-        Parquet uses categoricals. If supplied with a categorical-type column,
-        this function will convert it to an integer column.
+    Example use case: Parquet uses categoricals. If supplied with a
+    categorical-type column, this function will convert it to an integer
+    column.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(col, str)
@@ -806,4 +808,45 @@ def convert_col_to_int(
     df[col] = df[col].astype("int64")
     # Trust, but verify.
     dassert_series_type_is(df[col], np.int64)
+    return df
+
+
+# #############################################################################
+
+
+def read_csv_to_df(
+    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Read a CSV file into a `pd.DataFrame`.
+    """
+    # Gets filename from stream if it is not already a string,
+    # so it can be inspected for extension type.
+    file_name = stream if isinstance(stream, str) else vars(stream)["path"]
+    # Handle zipped files.
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "gzip"
+    elif file_name.endswith(".zip"):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "zip"
+    # Read.
+    _LOG.debug(hprint.to_str("args kwargs"))
+    df = pd.read_csv(stream, *args, **kwargs)
+    return df
+
+
+def read_parquet_to_df(
+    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Read a Parquet file into a `pd.DataFrame`.
+    """
+    # Read.
+    _LOG.debug(hprint.to_str("args kwargs"))
+    df = pd.read_parquet(stream, *args, **kwargs)
     return df

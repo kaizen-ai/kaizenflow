@@ -1,5 +1,6 @@
 import datetime
 import io
+import os
 import logging
 import uuid
 from typing import Any
@@ -9,6 +10,7 @@ import pandas as pd
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
+import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
@@ -690,3 +692,27 @@ class TestCompareDataframeRows(hunitest.TestCase):
         0             W     A           NaN   NaN
         1             Q     C             1   0.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class TestReadDataFromS3(hunitest.TestCase):
+
+    def test_read_csv1(self) -> None:
+        s3fs = hs3.get_s3fs("am")
+        file_name = os.path.join(
+            hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
+        )
+        hs3.dassert_s3_path_exists(file_name, s3fs)
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
+        hpandas.read_csv_to_df(stream, **kwargs)
+
+    def test_read_parquet1(self) -> None:
+        s3fs = hs3.get_s3fs("am")
+        file_name = os.path.join(
+            hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
+        )
+        hs3.dassert_s3_path_exists(file_name, s3fs)
+        stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
+        hpandas.read_parquet_to_df(stream, **kwargs)

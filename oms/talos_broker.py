@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 import requests
 
 import helpers.hsecrets as hsecret
+import im_v2.talos.utils as imv2tauti
 import oms.broker as ombroker
 import oms.oms_talos_utils as oomtauti
 
@@ -21,14 +22,56 @@ _LOG = logging.getLogger(__name__)
 
 
 class TalosBroker(ombroker.AbstractBroker):
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # TODO(Danya): Provide a working example of MarketData for testing.
         self._api_keys = hsecret.get_secret(self._account)
         # Talos request endpoint.
-        self._endpoint = oomtauti.get_endpoint(self._account)
+        self._endpoint = imv2tauti.get_endpoint(self._account)
         # Path for order request.
         self._order_path = "/v1/orders"
+
+    @staticmethod
+    def create_order(
+        exchanges: List[str],
+        quantity: float,
+        timestamp: str,
+        symbol: str,
+        trading_currency: str,
+        order_type: str,
+        price: float,
+        side: float,
+    ) -> Dict[str, Any]:
+        """
+        Create an order.
+
+        Note: Currently acts a placeholder to demonstrate
+        the format of Talos order.
+        """
+        # TODO(Danya): Adapt to `oms.order.Order` type,
+        #  e.g. convert Order to a supported Talos format.
+        # TODO(Danya): Add assertions for order types and trading strategies.
+        # TODO(Danya): Connect to `strategy` parameter?
+        # TODO(Danya): Pass the order information as a config.
+        order = {
+            "ClOrdID": oomtauti.get_order_id(),
+            # E.g. `["binance", "coinbase"]`.
+            "Markets": exchanges,
+            "OrderQty": quantity,
+            # E.g. "BTC-USDT".
+            "Symbol": symbol,
+            # E.g. "BTC".
+            "Currency": trading_currency,
+            # E.g. 2019-10-20T15:00:00.000000Z
+            "TransactTime": timestamp,
+            # E.g. "Limit".
+            "OrdType": order_type,
+            "TimeInForce": "GoodTillCancel",
+            "Price": price,
+            "Side": side,
+        }
+        return order
 
     def submit_order(
         self,
@@ -38,7 +81,7 @@ class TalosBroker(ombroker.AbstractBroker):
         Submit and log multiple orders given by the model.
         """
         # TODO(Danya): Merge with `market_data` wall clock time
-        wall_clock_timestamp = oomtauti.get_talos_current_utc_timestamp()
+        wall_clock_timestamp = imv2tauti.get_talos_current_utc_timestamp()
         _LOG.debug("Submitting %d orders", len(orders))
         for order in orders:
             _LOG.debug("Submitting order %s", order["ClOrdID"])
@@ -57,7 +100,7 @@ class TalosBroker(ombroker.AbstractBroker):
         Example of order data:
         """
         # TODO(Danya): Add specific order data.
-        wall_clock_time = oomtauti.get_talos_current_utc_timestamp()
+        wall_clock_time = imv2tauti.get_talos_current_utc_timestamp()
         query = {
             "StartDate": start_timestamp,
             "EndDate": end_timestamp,
@@ -119,7 +162,7 @@ class TalosBroker(ombroker.AbstractBroker):
         for order_id in order_ids:
             # Imitation of script input parameters.
             # Common elements of both GET and POST requests.
-            utc_datetime = oomtauti.get_talos_current_utc_timestamp()
+            utc_datetime = imv2tauti.get_talos_current_utc_timestamp()
             parts = [
                 "GET",
                 utc_datetime,
@@ -148,47 +191,6 @@ class TalosBroker(ombroker.AbstractBroker):
             # Update the dictionary.
             fill_status_dict[order_id] = fills_general
         return fill_status_dict
-
-    @staticmethod
-    def create_order(
-        exchanges: List[str],
-        quantity: float,
-        timestamp: str,
-        symbol: str,
-        trading_currency: str,
-        order_type: str,
-        price: float,
-        side: float,
-    ) -> Dict[str, Any]:
-        """
-        Create an order.
-
-        Note: Currently acts a placeholder to demonstrate
-        the format of Talos order.
-        """
-        # TODO(Danya): Adapt to `oms.order.Order` type,
-        #  e.g. convert Order to a supported Talos format.
-        # TODO(Danya): Add assertions for order types and trading strategies.
-        # TODO(Danya): Connect to `strategy` parameter?
-        # TODO(Danya): Pass the order information as a config.
-        order = {
-            "ClOrdID": oomtauti.get_order_id(),
-            # E.g. `["binance", "coinbase"]`.
-            "Markets": exchanges,
-            "OrderQty": quantity,
-            # E.g. "BTC-USDT".
-            "Symbol": symbol,
-            # E.g. "BTC".
-            "Currency": trading_currency,
-            # E.g. 2019-10-20T15:00:00.000000Z
-            "TransactTime": timestamp,
-            # E.g. "Limit".
-            "OrdType": order_type,
-            "TimeInForce": "GoodTillCancel",
-            "Price": price,
-            "Side": side,
-        }
-        return order
 
     def _submit_orders(
         self,

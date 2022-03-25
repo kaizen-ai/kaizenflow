@@ -82,6 +82,7 @@ def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
 
 
 class TestParquet1(hunitest.TestCase):
+
     def test_get_df1(self) -> None:
         """
         Check the output of `_get_df()`.
@@ -486,9 +487,10 @@ class TestPartitionedParquet1(hunitest.TestCase):
 
 
 class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
-    def test_by_month_full1(self) -> None:
+
+    def test_no_interval(self) -> None:
         """
-        Test no interval [None, None].
+        No timestamps provided.
         """
         partition_mode = "by_year_month"
         start_ts = None
@@ -496,22 +498,22 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         filters = hparque.get_parquet_filters_from_timestamp_interval(
             partition_mode, start_ts, end_ts
         )
+        self.assertIsNone(filters)
+
+    def test_no_interval_additional_filter(self) -> None:
+        """
+        No timestamps provided while additional filter is provided.
+        """
+        partition_mode = "by_year_month"
+        start_ts = None
+        end_ts = None
+        additional_filter = ("currency_pair", "in", ("BTC_USDT",),)
+        filters = hparque.get_parquet_filters_from_timestamp_interval(
+            partition_mode, start_ts, end_ts, additional_filter=additional_filter
+        )
         actual = str(filters)
         expected = (
-            r"[[('year', '==', 2001), ('month', '>=', 1), "
-            r"('year', '==', 2001), ('month', '<=', 12)], "
-            r"[('year', '==', 2002)], [('year', '==', 2003)], [('year', '==', 2004)], "
-            r"[('year', '==', 2005)], [('year', '==', 2006)], [('year', '==', 2007)], "
-            r"[('year', '==', 2008)], [('year', '==', 2009)], [('year', '==', 2010)], "
-            r"[('year', '==', 2011)], [('year', '==', 2012)], [('year', '==', 2013)], "
-            r"[('year', '==', 2014)], [('year', '==', 2015)], [('year', '==', 2016)], "
-            r"[('year', '==', 2017)], [('year', '==', 2018)], [('year', '==', 2019)], "
-            r"[('year', '==', 2020)], [('year', '==', 2021)], [('year', '==', 2022)], "
-            r"[('year', '==', 2023)], [('year', '==', 2024)], [('year', '==', 2025)], "
-            r"[('year', '==', 2026)], [('year', '==', 2027)], [('year', '==', 2028)], "
-            r"[('year', '==', 2029)], "
-            r"[('year', '==', 2030), ('month', '>=', 1), "
-            r"('year', '==', 2030), ('month', '<=', 1)]]"
+            r"[('currency_pair', 'in', ('BTC_USDT',))]"
         )
         self.assert_equal(actual, expected)
 
@@ -527,13 +529,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '==', 2020), ('month', '>=', 1), "
-            r"('year', '==', 2020), ('month', '<=', 12)], "
-            r"[('year', '==', 2021)], [('year', '==', 2022)], [('year', '==', 2023)], "
-            r"[('year', '==', 2024)], [('year', '==', 2025)], [('year', '==', 2026)], "
-            r"[('year', '==', 2027)], [('year', '==', 2028)], [('year', '==', 2029)], "
-            r"[('year', '==', 2030), ('month', '>=', 1), "
-            r"('year', '==', 2030), ('month', '<=', 1)]]"
+            r"[[('year', '==', 2020), ('month', '>=', 1)], [('year', '>', 2020)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -549,16 +545,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '==', 2001), ('month', '>=', 1), "
-            r"('year', '==', 2001), ('month', '<=', 12)], "
-            r"[('year', '==', 2002)], [('year', '==', 2003)], [('year', '==', 2004)], "
-            r"[('year', '==', 2005)], [('year', '==', 2006)], [('year', '==', 2007)], "
-            r"[('year', '==', 2008)], [('year', '==', 2009)], [('year', '==', 2010)], "
-            r"[('year', '==', 2011)], [('year', '==', 2012)], [('year', '==', 2013)], "
-            r"[('year', '==', 2014)], [('year', '==', 2015)], [('year', '==', 2016)], "
-            r"[('year', '==', 2017)], [('year', '==', 2018)], [('year', '==', 2019)], "
-            r"[('year', '==', 2020), ('month', '>=', 1), "
-            r"('year', '==', 2020), ('month', '<=', 1)]]"
+            r"[[('year', '==', 2020), ('month', '<=', 1)], [('year', '<', 2020)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -614,7 +601,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
     def test_by_month_invalid2(self) -> None:
         """
-        Test an invalid partition mode..
+        Test an invalid partition mode.
         """
         partition_mode = "new_mode"
         start_ts = pd.Timestamp("2020-01-02 09:31:00+00:00")
@@ -639,10 +626,8 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '==', 2020), ('month', '>=', 6), "
-            r"('year', '==', 2020), ('month', '<=', 12)], "
-            r"[('year', '==', 2021), ('month', '>=', 1), "
-            r"('year', '==', 2021), ('month', '<=', 12)]]"
+            r"[[('year', '==', 2020), ('month', '>=', 6)], "
+            r"[('year', '==', 2021), ('month', '<=', 12)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -658,11 +643,9 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         actual = str(filters)
         expected = (
-            r"[[('year', '==', 2020), ('month', '>=', 6), "
-            r"('year', '==', 2020), ('month', '<=', 12)], "
-            r"[('year', '==', 2021)], "
-            r"[('year', '==', 2022), ('month', '>=', 1), "
-            r"('year', '==', 2022), ('month', '<=', 12)]]"
+            r"[[('year', '==', 2020), ('month', '>=', 6)], "
+            r"[('year', '>', 2020), ('year', '<', 2022)], "
+            r"[('year', '==', 2022), ('month', '<=', 12)]]"
         )
         self.assert_equal(actual, expected)
 
@@ -671,6 +654,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
 
 class TestAddDatePartitionColumns(hunitest.TestCase):
+
     def add_date_partition_columns_helper(
         self, partition_mode: str, expected: str
     ) -> None:
@@ -727,6 +711,17 @@ class TestAddDatePartitionColumns(hunitest.TestCase):
 
 
 class TestToPartitionedDataset(hunitest.TestCase):
+
+    @staticmethod
+    def get_test_data1() -> pd.DataFrame:
+        test_data = {
+            "dummy_value_1": [1, 2, 3],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [0, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        return df
+
     def test_get_test_data1(self) -> None:
         test_data = self.get_test_data1()
         act = hpandas.df_to_str(test_data)
@@ -798,13 +793,3 @@ class TestToPartitionedDataset(hunitest.TestCase):
         val1 - val2=['void_column']
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
-    @staticmethod
-    def get_test_data1() -> pd.DataFrame:
-        test_data = {
-            "dummy_value_1": [1, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
-            "dummy_value_3": [0, 0, 0],
-        }
-        df = pd.DataFrame(data=test_data)
-        return df
