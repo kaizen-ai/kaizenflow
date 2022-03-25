@@ -530,9 +530,14 @@ def get_parquet_filters_from_timestamp_interval(
         raise ValueError(f"Unknown partition mode `{partition_mode}`!")
     if additional_filter:
         hdbg.dassert_isinstance(additional_filter, tuple)
-        or_and_filter = [
-            [additional_filter] + and_filter for and_filter in or_and_filter
-        ]
+        if or_and_filter:
+            # Append additional filter for every present timestamp filter.
+            or_and_filter = [
+                [additional_filter] + and_filter for and_filter in or_and_filter
+            ]
+        else:
+            # If no timestamp filters are provided, use additional filter.
+            or_and_filter = [additional_filter]
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
     if len(or_and_filter) == 0:
         # Empty list is not acceptable value for pyarrow dataset.

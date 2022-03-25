@@ -500,6 +500,23 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         self.assertIsNone(filters)
 
+    def test_no_interval_additional_filter(self) -> None:
+        """
+        No timestamps provided while additional filter is provided.
+        """
+        partition_mode = "by_year_month"
+        start_ts = None
+        end_ts = None
+        additional_filter = ("currency_pair", "in", ("BTC_USDT",),)
+        filters = hparque.get_parquet_filters_from_timestamp_interval(
+            partition_mode, start_ts, end_ts, additional_filter=additional_filter
+        )
+        actual = str(filters)
+        expected = (
+            r"[('currency_pair', 'in', ('BTC_USDT',))]"
+        )
+        self.assert_equal(actual, expected)
+
     def test_by_month_half1(self) -> None:
         """
         Test a left-bound interval [..., None].
