@@ -7,6 +7,7 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.im_lib_tasks as imvimlita
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
+import im_v2.common.db.db_utils as imvcddbut
 
 # #############################################################################
 # TestTalosParquetByTileClient1
@@ -253,7 +254,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
-class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
+class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
     """
 
     """
@@ -326,11 +327,9 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
         """
         Initialize Talos SQL Client.
         """
-        env_file = imvimlita.get_db_env_path("dev")
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        connection = hsql.get_connection(*connection_params)
+
         table_name = "talos_ohlcv"
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
-            connection, table_name
+            self.connection, table_name
         )
         return sql_talos_client
