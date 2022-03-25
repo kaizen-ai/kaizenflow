@@ -124,10 +124,20 @@ class HistoricalPqByTileClient(
         # Read data.
         df = hparque.from_parquet(root_dir, **kwargs)
         hdbg.dassert(not df.empty)
-        # TODO(Dan) Discuss if we should always convert index to timestamp
+        # TODO(Dan): Discuss if we should always convert index to timestamp
         #  or make a function so it may change based on the vendor.
         # Convert to datetime.
         df.index = pd.to_datetime(df.index)
+        # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
+        #  Not sure if this is still needed.
+        #        # Rename column storing `full_symbols`, if needed.
+        #        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
+        #        if full_symbol_col_name != self._full_symbol_col_name:
+        #            hdbg.dassert_not_in(full_symbol_col_name, df.columns)
+        #            df.rename(
+        #                columns={self._full_symbol_col_name: full_symbol_col_name},
+        #                inplace=True,
+        #            )
         # Transform data.
         df = self._apply_transformations(df, full_symbol_col_name)
         # Since we have normalized the data, the index is a timestamp, and we can
