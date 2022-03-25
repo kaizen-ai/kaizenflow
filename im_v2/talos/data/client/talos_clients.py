@@ -297,11 +297,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
         :return: SELECT query for Talos data
         """
-        hdbg.dassert_lte(
-            start_unix_epoch,
-            end_unix_epoch,
-            msg="Start unix epoch should be smaller than end.",
-        )
         # TODO(Danya): Make all params optional to select all data.
         hdbg.dassert_list_of_strings(
             exchange_ids,
@@ -328,6 +323,12 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 int,
             )
             where_clause.append(f"timestamp <= {end_unix_epoch}")
+        if start_unix_epoch and end_unix_epoch:
+            hdbg.dassert_lte(
+                start_unix_epoch,
+                end_unix_epoch,
+                msg="Start unix epoch should be smaller than end.",
+            )
         # Add 'exchange_id IN (...)' clause.
         where_clause.append(self._create_in_operator(exchange_ids, "exchange_id"))
         # Add 'currency_pair IN (...)' clause.
