@@ -63,6 +63,7 @@ class ImClient(abc.ABC):
     def __init__(self, vendor: str, resample_1min: bool) -> None:
         """
         Constructor.
+
         :param vendor: price data provider
         :param resample_1min: whether to resample data to 1 minute or not
         """
@@ -169,10 +170,18 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, self._resample_1min, start_ts, end_ts
+                df_tmp,
+                full_symbol_col_name,
+                self._resample_1min,
+                start_ts,
+                end_ts,
             )
             self._dassert_output_data_is_valid(
-                df_tmp, full_symbol_col_name, self._resample_1min, start_ts, end_ts
+                df_tmp,
+                full_symbol_col_name,
+                self._resample_1min,
+                start_ts,
+                end_ts,
             )
             dfs.append(df_tmp)
         # TODO(Nikola): raise error on empty df?
@@ -346,9 +355,7 @@ class ImClient(abc.ABC):
         # Read data for the entire period of time available.
         start_timestamp = None
         end_timestamp = None
-        data = self.read_data(
-            [full_symbol], start_timestamp, end_timestamp
-        )
+        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
         # Assume that the timestamp is always stored as index.
         if mode == "start":
             timestamp = data.index.min()

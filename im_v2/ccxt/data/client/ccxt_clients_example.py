@@ -31,7 +31,9 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-def get_CcxtCsvClient_example1(resample_1min: bool) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
+def get_CcxtCsvClient_example1(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 
@@ -62,7 +64,9 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     return ccxt_file_client
 
 
-def get_CcxtParquetByAssetClient_example1(resample_1min: bool) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
+def get_CcxtParquetByAssetClient_example1(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 

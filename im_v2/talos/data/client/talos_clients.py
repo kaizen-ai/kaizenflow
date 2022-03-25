@@ -47,7 +47,12 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         """
         vendor = "talos"
         imvcdchpcl.HistoricalPqByTileClient.__init__(
-            self, vendor, root_dir, resample_1min, partition_mode, aws_profile=aws_profile
+            self,
+            vendor,
+            root_dir,
+            resample_1min,
+            partition_mode,
+            aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot
 
@@ -141,7 +146,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self,
         db_connection: hsql.DbConnection,
         table_name: str,
-        resample_1min: bool
+        resample_1min: bool,
     ) -> None:
         vendor = "talos"
         super().__init__(vendor, resample_1min)

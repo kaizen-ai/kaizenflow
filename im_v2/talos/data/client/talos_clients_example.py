@@ -27,7 +27,9 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-def get_TalosHistoricalPqByTileClient_example1(resample_1min: bool) -> imvtdctacl.TalosHistoricalPqByTileClient:
+def get_TalosHistoricalPqByTileClient_example1(
+    resample_1min: bool,
+) -> imvtdctacl.TalosHistoricalPqByTileClient:
     """
     Get `TalosHistoricalPqByTileClient` object for the tests.
     """

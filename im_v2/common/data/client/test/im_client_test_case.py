@@ -42,9 +42,7 @@ class ImClientTestCase(hunitest.TestCase):
         im_client.resample_1min = True
         start_ts = None
         end_ts = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data2(
@@ -62,9 +60,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         end_ts = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data3(
@@ -83,9 +79,7 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         end_ts = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data4(
@@ -104,9 +98,7 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         start_ts = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data5(
@@ -124,9 +116,7 @@ class ImClientTestCase(hunitest.TestCase):
         - specified start_ts and end_ts
         - resample_1min = True
         """
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data6(
@@ -162,9 +152,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         end_ts = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         self.check_df_output(actual_df, *args, **kwargs)
 
     # ////////////////////////////////////////////////////////////////////////
