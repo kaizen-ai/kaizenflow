@@ -236,15 +236,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): Depending on the implementation, can be moved out to helpers.
         raise NotImplementedError
 
-    @staticmethod
-    def _apply_talos_normalization(data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization:
-
-        - Convert `timestamp` column to a UTC timestamp and set index
-        - Drop extra columns (e.g. `id` created by the DB).
-        """
-        raise NotImplementedError
 
     def _read_data(
         self,
