@@ -302,7 +302,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data7(self) -> None:
         # TODO(Nina): will fix it in another PR by 'spoiling' the stored test data
-        #  so we can demonstrate that everything works
+        #  so we can demonstrate that everything works.
         # Generate Parquet test data.
         start_date = "2021-12-30"
         end_date = "2022-01-02"
@@ -314,7 +314,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             self, start_date, end_date, freq, assets, output_type, partition_mode
         )
         # Init client for testing.
-        resample_1min = True
+        resample_1min = False
         vendor = "mock"
         im_client = MockHistoricalByTile(vendor, resample_1min, test_dir, partition_mode)
         # Compare the expected values.

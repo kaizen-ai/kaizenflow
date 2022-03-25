@@ -237,8 +237,8 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data7(self) -> None:
         # TODO(Nina): will fix it in another PR by 'spoiling' the stored test data
-        #  so we can demonstrate that everything works
-        resample_1min = True
+        #  so we can demonstrate that everything works.
+        resample_1min = False
         talos_client = imvtdctcex.get_TalosParquetByTileClient_example1(resample_1min)
         full_symbols = ["binance::ADA_USDT", "coinbase::BTC_USDT"]
         #
