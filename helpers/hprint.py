@@ -329,7 +329,8 @@ def to_str(*variables_values: Any) -> str:
     # Get source code starting from line where current function was called
     source_code_lines = inspect.findsource(frame_above[0])[0]
     call_line_index = frame_above.lineno - 1
-    source_code_string = ''.join(source_code_lines[call_line_index:])
+    stripped_code_lines = [line.strip() for line in source_code_lines[call_line_index:]]
+    source_code_string = ''.join(stripped_code_lines)
 
     regex = fr'{current_frame.function}\((.*?)\)'
     matches = re.findall(regex, source_code_string)
