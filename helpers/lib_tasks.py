@@ -16,7 +16,7 @@ import pwd
 import re
 import stat
 import sys
-from typing import Any, Dict, List, Match, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterator, List, Match, Optional, Set, Tuple, Union
 
 import tqdm
 from invoke import task
@@ -208,11 +208,11 @@ use_one_line_cmd = False
 def _run(
     ctx: Any,
     cmd: str,
-    *args,
+    *args: Any,
     dry_run: bool = False,
     use_system: bool = False,
     **ctx_run_kwargs: Any,
-) -> int:
+) -> Optional[int]:
     _LOG.debug(hprint.to_str("cmd dry_run"))
     if use_one_line_cmd:
         cmd = _to_single_line_cmd(cmd)
@@ -336,7 +336,10 @@ def _filter_existing_paths(paths_from_user: List[str]) -> List[str]:
                 paths.extend(dir_files)
             else:
                 _LOG.error(
-                    "'%s' pattern doesn't match any files: the directory is empty or path does not exist",
+                    (
+                        "'%s' pattern doesn't match any files: "
+                        "the directory is empty or path does not exist"
+                    ),
                     user_path,
                 )
         elif os.path.exists(user_path):
@@ -461,7 +464,7 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
 
 
 @task
-def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
+def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     """
     Clean the repo_short_name and its submodules from artifacts.
 
@@ -471,7 +474,7 @@ def git_clean(ctx, fix_perms=False, dry_run=False):  # type: ignore
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Fix permissions, if needed.
-    if fix_perms:
+    if fix_perms_:
         cmd = "invoke fix_perms"
         _run(ctx, cmd)
     # Clean recursively.
@@ -967,15 +970,15 @@ def _git_diff_with_branch(
     print("files=%s\n%s" % (len(files), "\n".join(files)))
     # Filter the files, if needed.
     if extensions:
-        extensions = extensions.split(",")
+        extensions_lst = extensions.split(",")
         _LOG.warning(
             "Requested filtering by %d extensions: %s",
-            len(extensions),
-            extensions,
+            len(extensions_lst),
+            extensions_lst,
         )
         files_tmp = []
         for f in files:
-            if any(f.endswith(ext) for ext in extensions):
+            if any(f.endswith(ext) for ext in extensions_lst):
                 files_tmp.append(f)
         files = files_tmp
         print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
@@ -1082,6 +1085,8 @@ def git_branch_diff_with_master(  # type: ignore
         ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
     )
 
+
+# pylint: disable=line-too-long
 
 # TODO(gp): Add the following scripts:
 # dev_scripts/git/git_backup.sh
@@ -1392,14 +1397,14 @@ def _find_files_touched_since_last_integration(
         cmd = f"git diff --name-only {first_commit_hash}..HEAD"
         _, txt = hsystem.system_to_string(cmd)
         _LOG.debug("files modified since the integration=\n%s", txt)
-        files = txt.split("\n")
+        files: List[str] = txt.split("\n")
     finally:
         os.chdir(old_dir)
     # Filter files by subdir.
     if subdir:
         filtered_files = []
         for file in files:
-            if files.startswith(subdir):
+            if file.startswith(subdir):
                 filtered_files.append(file)
         files = filtered_files
     # Reorganize the files.
@@ -1411,7 +1416,6 @@ def _find_files_touched_since_last_integration(
     )
     hio.to_file(file_name, "\n".join(files))
     _LOG.debug("Saved file to '%s'", file_name)
-    files = cast(List[str], files)
     return files
 
 
@@ -1449,8 +1453,8 @@ def _integrate_files(
         both_exist = os.path.exists(left_file) and os.path.exists(right_file)
         if not both_exist:
             # Both files don't exist: nothing to do.
-            equal = False
-            skip = True
+            equal: Optional[bool] = False
+            skip: Optional[bool] = True
         else:
             # They both exist.
             if only_different_files:
@@ -2405,14 +2409,14 @@ def _docker_cmd(
     ctx: Any,
     docker_cmd_: str,
     **ctx_run_kwargs: Any,
-) -> int:
+) -> Optional[int]:
     """
     Execute a docker command printing the command.
 
     :param kwargs: kwargs for `ctx.run`
     """
     _LOG.debug("cmd=%s", docker_cmd_)
-    rc = _run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
+    rc: Optional[int] = _run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
     return rc
 
 
@@ -2848,7 +2852,7 @@ def docker_build_prod_image(  # type: ignore
     """
     _run(ctx, cmd)
     if candidate:
-        _LOG.info(f"Head hash: {head_hash}")
+        _LOG.info("Head hash: %s", head_hash)
         cmd = f"docker image ls {image_versioned_prod}"
     else:
         # Tag versioned image as latest prod image.
@@ -3208,17 +3212,17 @@ _FindResult = Tuple[str, int, str, str, str]
 _FindResults = List[_FindResult]
 
 
-def _scan_files(python_files: List[str]) -> Tuple[str, int, str]:
+def _scan_files(python_files: List[str]) -> Iterator:
     for file_ in python_files:
-        _LOG.debug("file=%s", file)
-        txt = hio.from_file(file)
+        _LOG.debug("file=%s", file_)
+        txt = hio.from_file(file_)
         for line_num, line in enumerate(txt.split("\n")):
             # TODO(gp): Skip commented lines.
             # _LOG.debug("%s:%s line='%s'", file_, line_num, line)
             yield file_, line_num, line
 
 
-def _find_short_import(iterator: List, short_import: str) -> _FindResults:
+def _find_short_import(iterator: Iterator, short_import: str) -> _FindResults:
     """
     Find imports in the Python files with the given short import.
 
@@ -3247,7 +3251,7 @@ def _find_short_import(iterator: List, short_import: str) -> _FindResults:
     return results
 
 
-def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
+def _find_func_class_uses(iterator: Iterator, regex: str) -> _FindResults:
     regexs = []
     # E.g.,
     # `dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)`
@@ -3256,14 +3260,14 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
     regexs.append(fr":\s*(\w+)\.(\w*{regex})")
     #
     _LOG.debug("regexs=%s", str(regexs))
-    regexs = [re.compile(regex) for regex in regexs]
+    regexs = [re.compile(regex_) for regex_ in regexs]
     #
     results: _FindResults = []
     for file_, line_num, line in iterator:
         _LOG.debug("line='%s'", line)
         m = None
-        for regex in regexs:
-            m = regex.search(line)
+        for regex_ in regexs:
+            m = regex_.search(line)
             if m:
                 # _LOG.debug("--> regex matched")
                 break
@@ -3276,18 +3280,17 @@ def _find_func_class_uses(iterator: List, regex: str) -> _FindResults:
             # ('./helpers/lib_tasks.py', 10226, 'dtfsys', 'RealTimeDagRunner')
             # ('./dataflow/core/test/test_builders.py', 70, 'dtfcodarun', 'FitPredictDagRunner')
             # ('./dataflow/core/test/test_builders.py', 157, 'dtfcodarun', 'FitPredictDagRunner')
-            # ('./dataflow/core/test/test_runners.py', 50, 'dtfcodarun', 'RollingFitPredictDagRunner')
             _LOG.debug("  => %s", str(res))
             results.append(res)
     return results
 
 
-def _process_find_results(results: _FindResults, how: str) -> List[Tuple]:
-    filtered_results = []
+def _process_find_results(results: _FindResults, how: str) -> List:
+    filtered_results: List = []
     if how == "remove_dups":
         # Remove duplicates.
         for result in results:
-            (file_, line_num, line, info1, info2) = result
+            (_, _, _, info1, info2) = result
             filtered_results.append((info1, info2))
         filtered_results = hlist.remove_duplicates(filtered_results)
         filtered_results = sorted(filtered_results)
@@ -3340,7 +3343,7 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
         for mode_tmp in ("symbol_import", "short_import"):
             find(ctx, regex, mode=mode_tmp, how=how, subdir=subdir)
         return
-    elif mode == "symbol_import":
+    if mode == "symbol_import":
         results = _find_func_class_uses(iter_, regex)
         filtered_results = _process_find_results(results, "remove_dups")
         print("\n".join(map(str, filtered_results)))
@@ -3400,21 +3403,18 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
 
 
 @task
-def find_test_decorator(
-    ctx, decorator_name="", dir_name=".", exact_match=False
-):  # type: ignore
+def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
     """
     Report test files containing `class_name` in pytest format.
 
     :param decorator_name: the decorator to search
     :param dir_name: the dir from which to search
-    :param exact_match:
     """
     _report_task()
     _ = ctx
     hdbg.dassert_ne(decorator_name, "", "You need to specify a decorator name")
     file_names = _find_test_files(dir_name)
-    res = _find_test_decorator(decorator_name, file_names, exact_match)
+    res = _find_test_decorator(decorator_name, file_names)
     res = " ".join(res)
     print(res)
 
@@ -3616,7 +3616,7 @@ def _run_test_cmd(
     collect_only: bool,
     start_coverage_script: bool,
     **ctx_run_kwargs: Any,
-) -> int:
+) -> Optional[int]:
     """
     Same params as `run_fast_tests()`.
     """
@@ -3675,15 +3675,15 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
-    git_clean: bool,
+    git_clean_: bool,
     *,
     start_coverage_script: bool = False,
     **ctx_run_kwargs: Any,
-) -> int:
+) -> Optional[int]:
     """
     Same params as `run_fast_tests()`.
     """
-    if git_clean:
+    if git_clean_:
         cmd = "invoke git_clean --fix-perms"
         _run(ctx, cmd)
     # Build the command line.
@@ -3720,7 +3720,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    git_clean=False,
+    git_clean_=False,
     **kwargs,
 ):
     """
@@ -3732,7 +3732,7 @@ def run_fast_tests(  # type: ignore
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
-    :param git_clean: run `invoke git_clean --fix-perms` before running the tests
+    :param git_clean_: run `invoke git_clean --fix-perms` before running the tests
     :param kwargs: kwargs for `ctx.run`
     """
     _report_task()
@@ -3747,7 +3747,7 @@ def run_fast_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        git_clean,
+        git_clean_,
         **kwargs,
     )
     return rc
@@ -3763,7 +3763,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    git_clean=False,
+    git_clean_=False,
     **kwargs,
 ):
     """
@@ -3783,7 +3783,7 @@ def run_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        git_clean,
+        git_clean_,
         **kwargs,
     )
     return rc
@@ -3799,7 +3799,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    git_clean=False,
+    git_clean_=False,
     **kwargs,
 ):
     """
@@ -3819,7 +3819,7 @@ def run_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        git_clean,
+        git_clean_,
         **kwargs,
     )
     return rc
@@ -3835,7 +3835,7 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    git_clean=False,
+    git_clean_=False,
 ):
     """
     Run fast and slow tests back-to-back.
@@ -3853,13 +3853,13 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        git_clean,
+        git_clean_,
         warn=True,
     )
     if fast_test_rc != 0:
         _LOG.error("Fast tests failed")
     # Run slow tests.
-    git_clean = False
+    git_clean_ = False
     slow_test_rc = run_slow_tests(
         ctx,
         stage,
@@ -3869,7 +3869,7 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        git_clean,
+        git_clean_,
     )
     if slow_test_rc != 0:
         _LOG.error("Slow tests failed")
@@ -3889,7 +3889,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    git_clean=False,
+    git_clean_=False,
 ):
     """
     Run fast, slow, superslow tests back-to-back.
@@ -3907,14 +3907,14 @@ def run_fast_slow_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        git_clean,
+        git_clean_,
         #
         warn=True,
     )
     if fast_test_rc != 0:
         _LOG.error("Fast tests failed")
     # Run slow tests.
-    git_clean = False
+    git_clean_ = False
     slow_test_rc = run_slow_tests(
         ctx,
         stage,
@@ -3924,14 +3924,14 @@ def run_fast_slow_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        git_clean,
+        git_clean_,
         #
         warn=True,
     )
     if slow_test_rc != 0:
         _LOG.error("Slow tests failed")
     # Run superslow tests.
-    git_clean = False
+    git_clean_ = False
     superslow_test_rc = run_superslow_tests(
         ctx,
         stage,
@@ -3941,7 +3941,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
-        git_clean,
+        git_clean_,
         #
         warn=True,
     )
@@ -4011,7 +4011,10 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     )
     # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
-    cp_cmd = f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} --recursive --profile {aws_profile}"
+    cp_cmd = (
+        f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} "
+        f"--recursive --profile {aws_profile}"
+    )
     _LOG.info(
         "HTML coverage report is published on S3: path=`%s`",
         s3_html_coverage_path,
@@ -4044,9 +4047,15 @@ def run_coverage_report(  # type: ignore
     """
     # TODO(Grisha): allow user to specify which tests to run.
     # Run tests for the target dir and collect coverage stats.
-    fast_tests_cmd = f"invoke run_fast_tests --coverage -p {target_dir}; cp .coverage .coverage_fast_tests"
+    fast_tests_cmd = (
+        f"invoke run_fast_tests --coverage -p {target_dir}; "
+        "cp .coverage .coverage_fast_tests"
+    )
     _run(ctx, fast_tests_cmd)
-    slow_tests_cmd = f"invoke run_slow_tests --coverage -p {target_dir}; cp .coverage .coverage_slow_tests"
+    slow_tests_cmd = (
+        f"invoke run_slow_tests --coverage -p {target_dir}; "
+        "cp .coverage .coverage_slow_tests"
+    )
     _run(ctx, slow_tests_cmd)
     #
     report_cmd: List[str] = []
@@ -4291,12 +4300,12 @@ def pytest_repro(  # type: ignore
                 test.split("::")[1] + "." + test.split("::")[2] for test in tests
             ]
             tracebacks = []
-            for i, name in enumerate(failed_test_names):
+            for name in failed_test_names:
                 # Get the stacktrace for the individual test failure.
                 # Its start is marked with the name of the test, e.g.
                 # "___________________ TestSmaModel.test5 ___________________".
                 start_block = "________ " + name + " ________"
-                traceback_block = txt.split(start_block)[-1]
+                traceback_block = txt.rsplit(start_block, maxsplit=1)[-1]
                 end_block_options = [
                     "________ " + n + " ________"
                     for n in failed_test_names
@@ -4307,10 +4316,12 @@ def pytest_repro(  # type: ignore
                     # start of the traceback for the next failed test.
                     if end_block in traceback_block:
                         traceback_block = traceback_block.split(end_block)[0]
-                _, traceback = htraceb.parse_traceback(
+                _, traceback_ = htraceb.parse_traceback(
                     traceback_block, purify_from_client=False
                 )
-                tracebacks.append("\n".join(["# " + name, traceback.strip(), ""]))
+                tracebacks.append(
+                    "\n".join(["# " + name, traceback_.strip(), ""])
+                )
             # Combine the stacktraces for all the failures.
             full_traceback = "\n\n" + "\n".join(tracebacks)
             failed_test_output_str += full_traceback
@@ -4401,7 +4412,7 @@ def _rename_class(
     """
     # Rename the class.
     content = re.sub(
-        f"class {old_class_name}\(", f"class {new_class_name}(", content
+        fr"class {old_class_name}\(", f"class {new_class_name}(", content
     )
     return content
 
@@ -4427,7 +4438,8 @@ def _rename_outcomes(
         if os.path.isdir(os.path.join(outcomes_path, dir_name))
     ]
     renamed = False
-    # Construct target dir name, e.g. `TestClassName.`. We need to add `.` to indicate the end of the class name.
+    # Construct target dir name, e.g. `TestClassName.`. We need to add
+    # `.` to indicate the end of the class name.
     target_dir = old_class_name + "."
     for outcome_dir in outcomes:
         # Contruct the path to outcomes directory.
@@ -4482,7 +4494,7 @@ def _rename_test_in_file(
     :param new_class_name: the new name of the class
     """
     content = hio.from_file(file_path)
-    if not re.search(f"class {old_class_name}\(", content):
+    if not re.search(fr"class {old_class_name}\(", content):
         # Return if target test class does not appear in file content.
         return
     # Rename the class.
@@ -4907,20 +4919,20 @@ def lint(  # type: ignore
     # Tabs remover.....................................(no files to check)Skipped
     # autoflake........................................(no files to check)Skipped
     # add_python_init_files............................(no files to check)Skipped
-    # amp_check_filename...............................(no files to check)Skipped
-    # amp_isort........................................(no files to check)Skipped
-    # amp_black........................................(no files to check)Skipped
-    # amp_flake8.......................................(no files to check)Skipped
-    # amp_doc_formatter................................(no files to check)Skipped
-    # amp_pylint.......................................(no files to check)Skipped
-    # amp_mypy.........................................(no files to check)Skipped
     # amp_lint_md......................................(no files to check)Skipped
+    # amp_doc_formatter................................(no files to check)Skipped
+    # amp_isort........................................(no files to check)Skipped
     # amp_class_method_order...........................(no files to check)Skipped
     # amp_normalize_import.............................(no files to check)Skipped
     # amp_format_separating_line.......................(no files to check)Skipped
-    # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
+    # amp_black........................................(no files to check)Skipped
     # amp_processjupytext..............................(no files to check)Skipped
     # amp_remove_eof_newlines..........................(no files to check)Skipped
+    # amp_check_filename...............................(no files to check)Skipped
+    # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
+    # amp_flake8.......................................(no files to check)Skipped
+    # amp_pylint.......................................(no files to check)Skipped
+    # amp_mypy.........................................(no files to check)Skipped
     # ```
     if only_format:
         hdbg.dassert_eq(phases, "")
@@ -5033,10 +5045,10 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 
 
 @task
-def gh_login(
+def gh_login(  # type: ignore
     ctx,
     account="",
-):  # type: ignore
+):
     if not account:
         # Retrieve the name of the repo, e.g., "alphamatic/amp".
         full_repo_name = hgit.get_repo_full_name_from_dirname(
@@ -5052,7 +5064,7 @@ def gh_login(
         cmd = f"export GIT_SSH_COMMAND='ssh -i {ssh_filename}'"
         print(cmd)
     else:
-        _LOG.warning("Can't find file '%s'" % ssh_filename)
+        _LOG.warning("Can't find file '%s'", ssh_filename)
     #
     cmd = "gh auth status"
     _run(ctx, cmd)
@@ -5062,7 +5074,7 @@ def gh_login(
         cmd = f"gh auth login --with-token <{github_pat_filename}"
         _run(ctx, cmd)
     else:
-        _LOG.warning("Can't find file '%s'" % github_pat_filename)
+        _LOG.warning("Can't find file '%s'", github_pat_filename)
     #
     cmd = "gh auth status"
     _run(ctx, cmd)
@@ -5070,7 +5082,7 @@ def gh_login(
 
 def _get_branch_name(branch_mode: str) -> Optional[str]:
     if branch_mode == "current_branch":
-        branch_name = hgit.get_branch_name()
+        branch_name: Optional[str] = hgit.get_branch_name()
     elif branch_mode == "master":
         branch_name = "master"
     elif branch_mode == "all":
@@ -5118,12 +5130,12 @@ def _get_workflow_table() -> htable.TableType:
 
 
 @task
-def gh_workflow_list(
+def gh_workflow_list(  # type: ignore
     ctx,
     filter_by_branch="current_branch",
     filter_by_status="all",
     report_only_status=True,
-):  # type: ignore
+):
     """
     Report the status of the GH workflows.
 
@@ -5175,7 +5187,7 @@ def gh_workflow_list(
             if status == "success":
                 print(f"Workflow '{workflow}' for '{branch_name}' is ok")
                 break
-            elif status in ("failure", "startup_failure", "cancelled"):
+            if status in ("failure", "startup_failure", "cancelled"):
                 _LOG.error(
                     "Workflow '%s' for '%s' is broken", workflow, branch_name
                 )
@@ -5191,7 +5203,7 @@ def gh_workflow_list(
                 cmd = rf"grep 'Z FAILED ' {log_file_name}"
                 hsystem.system(cmd, suppress_output=False, abort_on_error=False)
                 break
-            elif status == "":
+            if status == "":
                 # It's in progress.
                 pass
             else:
@@ -5327,7 +5339,7 @@ def _check_if_pr_exists(title: str) -> bool:
     # no pull requests found for branch "AmpTask1955_Lint_20211219"
     cmd = f"gh pr diff {title}"
     rc = hsystem.system(cmd, abort_on_error=False)
-    pr_exists = rc == 0
+    pr_exists: bool = rc == 0
     return pr_exists
 
 
