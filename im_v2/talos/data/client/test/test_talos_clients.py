@@ -326,7 +326,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase):
         """
         Initialize Talos SQL Client.
         """
-        env_file = imvimlita.get_db_env_path("dev")
+        env_file = imvimlita.get_db_env_path("local")
         connection_params = hsql.get_connection_info_from_env_file(env_file)
         connection = hsql.get_connection(*connection_params)
         table_name = "talos_ohlcv"
