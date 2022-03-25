@@ -2,10 +2,11 @@ from typing import List
 
 import pandas as pd
 
+import helpers.hsql as hsql
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
+import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
-import im_v2.common.db.db_utils as imvcddbut
 
 # #############################################################################
 # TestTalosParquetByTileClient1
@@ -252,9 +253,11 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
-class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
+class TestRealTimeSqlTalosClient1(
+    icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
+):
     """
-
+    
     """
 
     def test_build_select_query1(self) -> None:
@@ -340,7 +343,7 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDb
         self.assertEqual(actual_outcome, expected_outcome, message)
 
     def setup_talos_sql_client(
-            self,
+        self,
     ) -> imvtdctacl.RealTimeSqlTalosClient:
         """
         Initialize Talos SQL Client.
@@ -350,3 +353,125 @@ class TestRealTimeSqlTalosClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDb
             self.connection, table_name
         )
         return sql_talos_client
+
+    def get_create_talos_ohlcv_table_query(self) -> str:
+        """
+        Get SQL query to create Talos OHLCV table.
+        """
+        query = """
+        CREATE TABLE IF NOT EXISTS talos_ohlcv(
+                id SERIAL PRIMARY KEY,
+                timestamp BIGINT NOT NULL,
+                open NUMERIC,
+                high NUMERIC,
+                low NUMERIC,
+                close NUMERIC,
+                volume NUMERIC,
+                ticks NUMERIC,
+                currency_pair VARCHAR(255) NOT NULL,
+                exchange_id VARCHAR(255) NOT NULL,
+                end_download_timestamp TIMESTAMP,
+                knowledge_timestamp TIMESTAMP
+                )
+                """
+        return query
+
+    def test_read_data5(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        #
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::ETH_USDT"]
+        start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00")
+        end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00")
+        #
+        expected_length = 4
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["binance::ETH_USDT"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:24:00+00:00]
+        columns=open,high,low,close,volume,full_symbol
+        shape=(4, 6)
+                                   open  high   low  close  volume        full_symbol
+        timestamp
+        2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
+        2022-03-24 16:24:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::ETH_USDT
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test Talos OHLCV dataframe.
+        """
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "ticks",
+                "currency_pair",
+                "exchange_id",
+                "end_download_timestamp",
+                "knowledge_timestamp",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [0, 1648138860000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [1, 1648138920000, 31, 41, 51, 61, 71, 72, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [2, 1648138980000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [3, 1648139040000, 34, 44, 54, 64, 74, 74, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        return test_data
+
+    @staticmethod
+    def _get_expected_column_names() -> List[str]:
+        """
+        Return a list of expected column names.
+        """
+        expected_column_names = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "full_symbol",
+        ]
+        return expected_column_names
+
+    def _create_test_table(self) -> None:
+        """
+        Create a test Talos OHLCV table in DB.
+        """
+        query = self.get_create_talos_ohlcv_table_query()
+        self.connection.cursor().execute(query)
