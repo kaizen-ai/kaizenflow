@@ -21,21 +21,6 @@ _LOG = logging.getLogger(__name__)
 _TALOS_HOST = "talostrading.com"
 
 
-def get_endpoint(environment: str) -> str:
-    """
-    Get entrypoint to Talos. The only environment we currently support is
-    `sandbox`.
-
-    :param environment: i.e., `sandbox`
-    :return:
-    """
-    if environment == "sandbox":
-        endpoint = f"sandbox.{_TALOS_HOST}"
-    else:
-        hdbg.dfatal("Incorrect account type. Supported environments: 'sandbox'.")
-    return endpoint
-
-
 def timestamp_to_talos_iso_8601(timestamp: pd.Timestamp) -> str:
     """
     Transform Timestamp into a string in the format accepted by Talos API.
@@ -70,13 +55,29 @@ class TalosApiBase(abc.ABC):
         self._account = account
         self._api_keys = hsecret.get_secret(self._account)
         # Talos request endpoint.
-        self._endpoint = get_endpoint(self._account)
+        self._endpoint = self.get_endpoint()
 
     def build_parts(
-            self, wall_clock_timestamp: str, path: str, request_type: str
+            self, request_type: str, wall_clock_timestamp: str, path: str
     ) -> List[str]:
         """
-        
+        Combine initial parts of a GET or POST request.
+
+        The parts include a timestamp, endpoint and path, e.g.:
+
+        ```
+        [
+        "GET",
+        "2019-10-20T15:00:00.000000Z",
+        "sandbox.talostrading.com",
+        "/v1/orders"
+        ]
+        ```
+
+        :param request_type: GET or POST
+        :param wall_clock_timestamp: time of request creation
+        :param path: part of url after endpoint, e.g. "/v1/orders"
+        :return parts: parts of request
         """
         hdbg.dassert_in(
             request_type, ["GET", "POST"], msg="Incorrect request type"
@@ -88,7 +89,14 @@ class TalosApiBase(abc.ABC):
             self, parts: List[str], wall_clock_timestamp: str
     ) -> Dict[str, str]:
         """
-        
+        Build parts of the request metadata.
+
+        This includes providing public key and encoding request
+        with secret key for Talos authorization.
+
+        :param parts: parts of request
+        :param wall_clock_timestamp: time of request submission
+        :return: headers for Talos request
         """
         signature = self.calculate_signature(self._api_keys["secretKey"], parts)
         headers = {
@@ -101,7 +109,10 @@ class TalosApiBase(abc.ABC):
     @abc.abstractmethod
     def build_url(self, path: str, **kwargs: Any) -> str:
         """
-        
+        Build an url to access.
+
+        :param path: part of url after endpoint, e.g. "/v1/orders"
+        :return: full url to access
         """
         ...
 
@@ -109,7 +120,7 @@ class TalosApiBase(abc.ABC):
         """
         Encode the request using secret key.
 
-        Require parts of the API request provided as a list, e.g.:
+        Requires parts of the API request provided as a list, e.g.:
 
         ```
         [
@@ -133,3 +144,17 @@ class TalosApiBase(abc.ABC):
         hash.hexdigest()
         signature = base64.urlsafe_b64encode(hash.digest()).decode()
         return signature
+
+    def get_endpoint(self) -> str:
+        """
+        Get entrypoint to Talos. The only environment we currently support is
+        `sandbox`.
+
+        :param environment: i.e., `sandbox`
+        :return:
+        """
+        if self._account == "sandbox":
+            endpoint = f"sandbox.{_TALOS_HOST}"
+        else:
+            hdbg.dfatal("Incorrect account type. Supported environments: 'sandbox'.")
+        return endpoint
