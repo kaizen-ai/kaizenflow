@@ -467,26 +467,66 @@ class TestRealTimeSqlTalosClient1(
         im_client = self.setup_talos_sql_client()
         full_symbol = "binance::ETH_USDT"
         #
-        expected_length = 4
+        expected_length = 3
         expected_column_names = self._get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["binance::ETH_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
-        index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:24:00+00:00]
+        index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
         columns=open,high,low,close,volume,full_symbol
-        shape=(4, 6)
+        shape=(3, 6)
                                    open  high   low  close  volume        full_symbol
         timestamp                                                                    
         2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
-        2022-03-24 16:22:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:24:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::ETH_USDT                      
+        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT                      
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
             im_client,
             full_symbol,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_read_data2(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        #
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        #
+        expected_length = 6
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
+        columns=open,high,low,close,volume,full_symbol
+        shape=(6, 6)
+                                   open  high   low  close  volume        full_symbol
+        timestamp                                                                    
+        2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
+        2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
+        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT
+        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT                      
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data2(
+            im_client,
+            full_symbols,
             expected_length,
             expected_column_names,
             expected_column_unique_values,
@@ -502,25 +542,29 @@ class TestRealTimeSqlTalosClient1(
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         #
         im_client = self.setup_talos_sql_client()
-        full_symbols = ["binance::ETH_USDT"]
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00")
         end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00")
         #
-        expected_length = 4
+        expected_length = 6
         expected_column_names = self._get_expected_column_names()
-        expected_column_unique_values = {"full_symbol": ["binance::ETH_USDT"]}
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
-        index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:24:00+00:00]
+        index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
         columns=open,high,low,close,volume,full_symbol
-        shape=(4, 6)
+        shape=(6, 6)
                                    open  high   low  close  volume        full_symbol
-        timestamp
+        timestamp                                                                    
+        2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
         2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
-        2022-03-24 16:22:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:24:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
+        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT
+        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -561,12 +605,16 @@ class TestRealTimeSqlTalosClient1(
             data=[
                 [0, 1648138860000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
                  pd.Timestamp("2022-03-26")],
-                [1, 1648138920000, 31, 41, 51, 61, 71, 72, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                [1, 1648138860000, 31, 41, 51, 61, 71, 72, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
                  pd.Timestamp("2022-03-26")],
-                [2, 1648138980000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                [2, 1648138920000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
                  pd.Timestamp("2022-03-26")],
-                [3, 1648139040000, 34, 44, 54, 64, 74, 74, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                [3, 1648138920000, 34, 44, 54, 64, 74, 74, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
                  pd.Timestamp("2022-03-26")],
+                [4, 1648138980000, 35, 45, 55, 65, 75, 75, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [5, 1648138980000, 36, 46, 56, 66, 76, 76, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")]
             ]
             # pylint: enable=line-too-long
             # fmt: on
