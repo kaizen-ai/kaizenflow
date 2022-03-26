@@ -36,6 +36,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     def __init__(
         self,
         root_dir: str,
+        resample_1min: bool,
         partition_mode: str,
         *,
         data_snapshot: str = "latest",
@@ -46,7 +47,12 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         """
         vendor = "talos"
         imvcdchpcl.HistoricalPqByTileClient.__init__(
-            self, vendor, root_dir, partition_mode, aws_profile=aws_profile
+            self,
+            vendor,
+            root_dir,
+            resample_1min,
+            partition_mode,
+            aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot
 
@@ -140,9 +146,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self,
         db_connection: hsql.DbConnection,
         table_name: str,
+        resample_1min: bool,
     ) -> None:
         vendor = "talos"
-        super().__init__(vendor)
+        super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
 
@@ -229,7 +236,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): Depending on the implementation, can be moved out to helpers.
         raise NotImplementedError
 
-
     def _read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -298,19 +304,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
         :return: SELECT query for Talos data
         """
-        hdbg.dassert_isinstance(
-            start_unix_epoch,
-            int,
-        )
-        hdbg.dassert_isinstance(
-            end_unix_epoch,
-            int,
-        )
-        hdbg.dassert_lte(
-            start_unix_epoch,
-            end_unix_epoch,
-            msg="Start unix epoch should be smaller than end.",
-        )
         # TODO(Danya): Make all params optional to select all data.
         hdbg.dassert_list_of_strings(
             exchange_ids,
@@ -326,9 +319,23 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): Generalize to hsql with dictionary input.
         where_clause = []
         if start_unix_epoch:
+            hdbg.dassert_isinstance(
+                start_unix_epoch,
+                int,
+            )
             where_clause.append(f"timestamp >= {start_unix_epoch}")
         if end_unix_epoch:
+            hdbg.dassert_isinstance(
+                end_unix_epoch,
+                int,
+            )
             where_clause.append(f"timestamp <= {end_unix_epoch}")
+        if start_unix_epoch and end_unix_epoch:
+            hdbg.dassert_lte(
+                start_unix_epoch,
+                end_unix_epoch,
+                msg="Start unix epoch should be smaller than end.",
+            )
         # Add 'exchange_id IN (...)' clause.
         where_clause.append(self._create_in_operator(exchange_ids, "exchange_id"))
         # Add 'currency_pair IN (...)' clause.

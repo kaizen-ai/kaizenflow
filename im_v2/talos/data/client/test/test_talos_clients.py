@@ -19,8 +19,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
     the parent class.
     """
 
-    # ////////////////////////////////////////////////////////////////////////
-
     @staticmethod
     def get_expected_column_names() -> List[str]:
         """
@@ -37,7 +35,10 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         return expected_column_names
 
     def test_read_data1(self) -> None:
-        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1()
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbol = "binance::ADA_USDT"
         #
         expected_length = 100
@@ -70,7 +71,10 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data2(self) -> None:
-        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1()
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
         #
         expected_length = 200
@@ -105,7 +109,10 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data3(self) -> None:
-        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1()
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2022-01-01T00:01:00-00:00")
         #
@@ -142,7 +149,10 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data4(self) -> None:
-        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1()
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
         end_ts = pd.Timestamp("2022-01-01T00:05:00-00:00")
         #
@@ -179,7 +189,10 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data5(self) -> None:
-        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1()
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2022-01-01T00:01:00-00:00")
         end_ts = pd.Timestamp("2022-01-01T00:05:00-00:00")
@@ -218,17 +231,63 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data6(self) -> None:
-        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1()
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(
             talos_client,
             full_symbol,
         )
 
+    def test_read_data7(self) -> None:
+        # TODO(Nina): will fix it in another PR by 'spoiling' the stored test data
+        #  so we can demonstrate that everything works.
+        resample_1min = False
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 200
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2022-01-01 00:00:00+00:00, 2022-01-01 01:39:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(200, 6)
+                                         full_symbol            open            high             low           close           volume
+        timestamp
+        2022-01-01 00:00:00+00:00  binance::ADA_USDT      1.30800000      1.31000000      1.30700000      1.31000000   98266.80000000
+        2022-01-01 00:00:00+00:00  binance::BTC_USDT  46216.93000000  46271.08000000  46208.37000000  46250.00000000      40.57574000
+        2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
+        ...
+        2022-01-01 01:38:00+00:00  binance::BTC_USDT  46840.94000000  46854.39000000  46784.38000000  46789.23000000     18.42650000
+        2022-01-01 01:39:00+00:00  binance::ADA_USDT      1.33400000      1.33400000      1.33200000      1.33300000  69430.10000000
+        2022-01-01 01:39:00+00:00  binance::BTC_USDT  46789.23000000  46811.33000000  46753.84000000  46799.90000000     12.48485000
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            talos_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
-        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1()
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbol = "binance::ADA_USDT"
         expected_start_ts = pd.Timestamp("2022-01-01T00:00:00-00:00")
         self._test_get_start_ts_for_symbol1(
@@ -238,7 +297,10 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_get_end_ts_for_symbol1(self) -> None:
-        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1()
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbol = "binance::ADA_USDT"
         expected_end_ts = pd.Timestamp("2022-01-01T01:39:00-00:00")
         self._test_get_end_ts_for_symbol1(
@@ -369,8 +431,9 @@ class TestRealTimeSqlTalosClient1(
         Initialize Talos SQL Client.
         """
         table_name = "talos_ohlcv"
+        resample_1min = True
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
-            self.connection, table_name
+            self.connection, table_name, resample_1min
         )
         return sql_talos_client
 
