@@ -31,28 +31,19 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-def get_CcxtCsvClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
+def get_CcxtCsvClient_example1(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 
     Extension is `csv.gz`.
     """
-    # Get path to the dir with the test data.
-    #
-    # The data looks like:
-    # ```
-    # timestamp,open,high,low,close,volume
-    # 1534464060000,286.712987,286.712987,286.712987,286.712987,0.0175
-    # 1534464120000,286.405988,286.405988,285.400193,285.400197,0.1622551
-    # 1534464180000,285.400193,285.400193,285.400193,285.400193,0.0202596
-    # 1534464240000,285.400193,285.884638,285.400193,285.884638,0.074655
-    # ```
-    # Initialize client.
     vendor = "CCXT"
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, root_dir, extension
+        vendor, resample_1min, root_dir, extension
     )
     return ccxt_file_client
 
@@ -63,47 +54,28 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
 
     Extension is `csv`.
     """
-    # Get path to the dir with the test data.
-    #
-    # The data looks like:
-    # ```
-    # timestamp,open,high,low,close,volume
-    # 1534464060000,286.712987,286.712987,286.712987,286.712987,0.0175
-    # 1534464120000,286.405988,286.405988,285.400193,285.400197,0.1622551
-    # 1534464180000,285.400193,285.400193,285.400193,285.400193,0.0202596
-    # 1534464240000,285.400193,285.884638,285.400193,285.884638,0.074655
-    # ```
-    # Initialize client.
+    resample_1min = True
     vendor = "CCXT"
     root_dir = get_test_data_dir()
     extension = "csv"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, root_dir, extension
+        vendor, resample_1min, root_dir, extension
     )
     return ccxt_file_client
 
 
-def get_CcxtParquetByAssetClient_example1() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
+def get_CcxtParquetByAssetClient_example1(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     Get `CcxtCddCsvParquetByAssetClient` object for the tests.
 
     Extension is `pq`.
     """
-    # Get path to the dir with the test data.
-    #
-    # The data looks like:
-    # ```
-    # timestamp,open,high,low,close,volume
-    # 1534464060000,286.712987,286.712987,286.712987,286.712987,0.0175
-    # 1534464120000,286.405988,286.405988,285.400193,285.400197,0.1622551
-    # 1534464180000,285.400193,285.400193,285.400193,285.400193,0.0202596
-    # 1534464240000,285.400193,285.884638,285.400193,285.884638,0.074655
-    # ```
-    # Initialize client.
     vendor = "CCXT"
     root_dir = get_test_data_dir()
     extension = "pq"
     ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, root_dir, extension
+        vendor, resample_1min, root_dir, extension
     )
     return ccxt_client
