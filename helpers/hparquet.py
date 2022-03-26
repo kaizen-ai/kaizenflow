@@ -427,7 +427,7 @@ def get_parquet_filters_from_timestamp_interval(
     end_timestamp: Optional[pd.Timestamp],
     *,
     additional_filters: Optional[List[ParquetFilter]] = None,
-) -> ParquetOrAndFilter:
+) -> Union[ParquetOrAndFilter, ParquetAndFilter]:
     """
     Convert a constraint on a timestamp [start_timestamp, end_timestamp] into a
     Parquet filters expression, based on the passed partitioning / tiling
