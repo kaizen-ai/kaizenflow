@@ -60,13 +60,15 @@ class ImClient(abc.ABC):
     ```
     """
 
-    def __init__(self, vendor: str) -> None:
+    def __init__(self, vendor: str, resample_1min: bool) -> None:
         """
         Constructor.
 
         :param vendor: price data provider
+        :param resample_1min: whether to resample data to 1 minute or not
         """
         self._vendor = vendor
+        self._resample_1min = resample_1min
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
@@ -104,7 +106,6 @@ class ImClient(abc.ABC):
     def read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
-        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -116,7 +117,6 @@ class ImClient(abc.ABC):
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
-        :param resample_1min: allow to control resampling
         :param start_ts: the earliest date timestamp to load data for
             - `None` means start from the beginning of the available data
         :param end_ts: the latest date timestamp to load data for
@@ -170,10 +170,18 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, resample_1min, start_ts, end_ts
+                df_tmp,
+                full_symbol_col_name,
+                self._resample_1min,
+                start_ts,
+                end_ts,
             )
             self._dassert_output_data_is_valid(
-                df_tmp, full_symbol_col_name, resample_1min, start_ts, end_ts
+                df_tmp,
+                full_symbol_col_name,
+                self._resample_1min,
+                start_ts,
+                end_ts,
             )
             dfs.append(df_tmp)
         # TODO(Nikola): raise error on empty df?
@@ -347,10 +355,7 @@ class ImClient(abc.ABC):
         # Read data for the entire period of time available.
         start_timestamp = None
         end_timestamp = None
-        resample_1min = True
-        data = self.read_data(
-            [full_symbol], resample_1min, start_timestamp, end_timestamp
-        )
+        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
         # Assume that the timestamp is always stored as index.
         if mode == "start":
             timestamp = data.index.min()
