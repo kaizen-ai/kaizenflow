@@ -327,6 +327,26 @@ class TestRealTimeSqlTalosClient1(
         Test SQL query string with only timestamps provided.
         """
         talos_sql_client = self.setup_talos_sql_client()
+        exchange_id = ["binance"]
+        currency_pair = ["BTC_USDT"]
+        start_unix_epoch = None
+        end_unix_epoch = None
+        actual_outcome = talos_sql_client._build_select_query(
+            exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+        )
+        expected_outcome = (
+            "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= 1647471180000 AND "
+            "exchange_id IN () AND currency_pair IN ()"
+        )
+        # Message in case if test case got failed.
+        message = "Actual and expected SQL queries are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+
+    def test_build_select_query6(self) -> None:
+        """
+        Test SQL query string with only `None` timestamps.
+        """
+        talos_sql_client = self.setup_talos_sql_client()
         exchange_id = []
         currency_pair = []
         start_unix_epoch = 1647470940000
