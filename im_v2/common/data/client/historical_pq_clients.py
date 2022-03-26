@@ -113,7 +113,7 @@ class HistoricalPqByTileClient(
             self._partition_mode,
             start_ts,
             end_ts,
-            additional_filter=symbol_filter,
+            additional_filters=[symbol_filter],
         )
         kwargs["filters"] = filters
         # Get columns and add them to kwargs if they were not specified.
