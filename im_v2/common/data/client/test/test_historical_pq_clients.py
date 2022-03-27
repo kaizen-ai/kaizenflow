@@ -25,6 +25,7 @@ def _generate_test_data(
     """
     test_dir: str = instance.get_scratch_space()
     tiled_bar_data_dir = os.path.join(test_dir, "tiled.bar_data")
+    # TODO(gp): @all replace the script with calling the library directly.
     cmd = []
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
@@ -359,7 +360,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, resample_1min, test_dir, partition_mode
+            vendor, test_dir, resample_1min, partition_mode
         )
         full_symbol = "kucoin::MOCK"
         self._test_read_data6(im_client, full_symbol)
@@ -495,7 +496,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         test_dir = "dummy"
         partition_mode = "by_year_month"
         im_client = MockHistoricalByTile(
-            vendor, resample_1min, test_dir, partition_mode
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         expected_length = 2

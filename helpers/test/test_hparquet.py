@@ -634,7 +634,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
     def test_additional_filters1(self) -> None:
         """
-        No timestamps provided while additional filters are provided.
+        No timestamps provided while a single additional filter is provided.
         """
         partition_mode = "by_year_month"
         start_ts = None
@@ -658,7 +658,7 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
     def test_additional_filters2(self) -> None:
         """
-        Test an interval longer than two years with additional filters.
+        Test an interval with multiple additional filters.
         """
         partition_mode = "by_year_month"
         start_ts = pd.Timestamp("2020-06-02 09:31:00+00:00")
