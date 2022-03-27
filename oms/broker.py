@@ -533,6 +533,47 @@ def get_execution_prices(
             column,
             timing,
         )
+    elif price_type.startswith("partial_spread"):
+        perc = float(price_type.split("_")[2])
+        hdbg.dassert_lte(0, perc)
+        hdbg.dassert_lte(perc, 1.0)
+        bid_col = column_remap["bid"]
+        bids = _get_price_per_share(
+            market_data,
+            start_timestamp,
+            end_timestamp,
+            timestamp_col,
+            asset_ids,
+            bid_col,
+            timing,
+        )
+        ask_col = column_remap["ask"]
+        asks = _get_price_per_share(
+            market_data,
+            start_timestamp,
+            end_timestamp,
+            timestamp_col,
+            asset_ids,
+            ask_col,
+            timing,
+        )
+        is_buy = []
+        for order in orders:
+            if order.diff_num_shares >= 0:
+                is_buy.append(True)
+            else:
+                is_buy.append(False)
+        is_buy = pd.Series(is_buy, bids.index)
+        is_sell = ~is_buy
+        # If perc == 0, we buy at the bid and sell at the ask
+        # (we collect the spread).
+        # If perc == 1, we buy at the ask and sell at the bid
+        # (we cross the spread).
+        buy_prices = (1.0 - perc) * bids + perc * asks
+        # _LOG.debug("buy_prices=\n%s", buy_prices)
+        sell_prices = perc * bids + (1.0 - perc) * asks
+        # _LOG.debug("sell_prices=\n%s", sell_prices)
+        prices = is_buy * buy_prices + is_sell * sell_prices
     else:
         raise ValueError(f"Invalid type='{order_type}'")
     _LOG.debug(
@@ -586,7 +627,7 @@ def _get_price_per_share(
 
 
 # TODO(Paul): This function allows us to get the execution price for one order
-#   at a time. It support multiple (but untested) ways of doing this. Consider
+#   at a time. It supports multiple (but untested) ways of doing this. Consider
 #   vectorizing this code or else adding a switch to invoke order-by-order
 #   processing.
 # def get_execution_price(

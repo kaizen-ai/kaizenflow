@@ -13,11 +13,8 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hunit_test as hunitest
 import market_data as mdata
+import oms
 
-# TODO(gp): Use import oms
-import oms.portfolio as omportfo
-import oms.portfolio_example as oporexam
-import oms.process_forecasts as oprofore
 
 _LOG = logging.getLogger(__name__)
 
@@ -99,7 +96,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
     def get_portfolio(
         self,
         event_loop,
-    ) -> omportfo.DataFramePortfolio:
+    ) -> oms.DataFramePortfolio:
         market_data = self.get_market_data(event_loop)
         asset_ids = market_data._asset_ids
         strategy_id = "strategy"
@@ -114,7 +111,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             "price": "close",
             "midpoint": "midpoint",
         }
-        portfolio = oporexam.get_DataFramePortfolio_example2(
+        portfolio = oms.get_DataFramePortfolio_example2(
             strategy_id,
             account,
             market_data,
@@ -139,7 +136,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
         spread_df = None
         restrictions_df = None
         # Run.
-        await oprofore.process_forecasts(
+        await oms.process_forecasts(
             predictions, volatility, portfolio, config, spread_df, restrictions_df
         )
         actual = str(portfolio)
