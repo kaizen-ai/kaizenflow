@@ -16,7 +16,7 @@ import helpers.hparquet as hparque
 import market_data as mdata
 import oms.portfolio as omportfo
 import oms.portfolio_example as oporexam
-import oms.process_forecasts as oprofore
+import oms.process_forecasts_ as oprofore
 
 _LOG = logging.getLogger(__name__)
 
