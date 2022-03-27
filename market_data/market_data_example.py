@@ -660,7 +660,8 @@ def get_ImClientMarketData_example1(
     """
     import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 
-    ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+    resample_1min = True
+    ccxt_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
     #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
