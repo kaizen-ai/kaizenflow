@@ -21,21 +21,17 @@ import oms.oms_talos_utils as oomtauti
 _LOG = logging.getLogger(__name__)
 
 
-class TalosBroker(ombroker.AbstractBroker):
+class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        # TODO(Danya): Provide a working example of MarketData for testing.
-        self._api_keys = hsecret.get_secret(self._account)
-        # Talos request endpoint.
-        self._endpoint = imv2tauti.get_endpoint(self._account)
         # Path for order request.
         self._order_path = "/v1/orders"
 
     @staticmethod
     def create_order(
-        exchanges: List[str],
-        quantity: float,
+            exchanges: List[str],
+            quantity: float,
         timestamp: str,
         symbol: str,
         trading_currency: str,
@@ -99,37 +95,35 @@ class TalosBroker(ombroker.AbstractBroker):
 
         Example of order data:
         """
-        # TODO(Danya): Add specific order data.
         wall_clock_time = imv2tauti.get_talos_current_utc_timestamp()
+        # Create initial request parts and headers.
+        parts = self.build_parts("GET", wall_clock_time, self._order_path)
+        headers = self.build_headers(parts, wall_clock_time)
+        # Create an URL.
         query = {
             "StartDate": start_timestamp,
             "EndDate": end_timestamp,
             "OrderID": order_id,
         }
-        query_string = urllib.parse.urlencode(query)
-        # TODO(Danya): Factor out authorization.
-        parts = [
-            "GET",
-            wall_clock_time,
-            self._endpoint,
-            self._order_path,
-            query_string,
-        ]
-        signature = oomtauti.calculate_signature(
-            self._api_keys["secretKey"], parts
-        )
-        headers = {
-            "TALOS-KEY": self._api_keys["publicKey"],
-            "TALOS-SIGN": signature,
-            "TALOS-TS": wall_clock_time,
-        }
-        url = f"https://{self._endpoint}{self._order_path}?{query_string}"
+        url = self.build_url(query)
+        # Submit a GET request and return data.
         r = requests.get(url=url, headers=headers)
         if r.status_code == 200:
             data = r.json()
         else:
             raise Exception(f"{r.status_code}: {r.text}")
         return data
+
+    def build_url(self, query: Dict[str, Any]) -> str:
+        """
+        Build a request URL.
+
+        :param query: a query in dict form
+        :return: full URL for the query
+        """
+        query_string = urllib.parse.urlencode(query)
+        url = f"https://{self._endpoint}{self._order_path}?{query_string}"
+        return url
 
     # TODO(Danya): Implement a method for getting fills since last exec.
     def get_fills(self, order_ids: List[str]) -> Dict[str, str]:

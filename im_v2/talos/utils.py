@@ -50,6 +50,9 @@ def get_talos_current_utc_timestamp() -> str:
 
 
 class TalosApiBase(abc.ABC):
+    """
+    Base class containing the methods for Talos API access.
+    """
 
     def __init__(self, account: str):
         self._account = account
@@ -116,7 +119,8 @@ class TalosApiBase(abc.ABC):
         """
         ...
 
-    def calculate_signature(self, secret_key: str, parts: List[str]) -> str:
+    @staticmethod
+    def calculate_signature(secret_key: str, parts: List[str]) -> str:
         """
         Encode the request using secret key.
 
@@ -150,8 +154,7 @@ class TalosApiBase(abc.ABC):
         Get entrypoint to Talos. The only environment we currently support is
         `sandbox`.
 
-        :param environment: i.e., `sandbox`
-        :return:
+        :return: Talos endpoint, e.g. "sandbox.talostrading.com"
         """
         if self._account == "sandbox":
             endpoint = f"sandbox.{_TALOS_HOST}"
