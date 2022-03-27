@@ -665,6 +665,7 @@ def dassert_list_of_strings(
 
 
 # TODO(*): Deprecate this and use only `dassert_{file,dir}_exists()`.
+# TODO(*): -> dassert_path_exists
 def dassert_exists(
     file_name: str,
     msg: Optional[str] = None,
