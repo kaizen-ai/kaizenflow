@@ -544,11 +544,19 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Read data.
         data = im_client.read_data(full_symbols, start_ts, end_ts)
         # Compare the expected values.
-        expected_length = 4320
+        expected_length = ((end_ts - start_ts).seconds/60 + 1) * len(full_symbols)
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]}
+        self.check_df_output(
+            data,
+            expected_length=expected_length,
+            expected_column_names=expected_column_names,
+            expected_column_unique_values=expected_column_unique_values,
+        )
+        self.assert_equal(str(data.index[0]), str(start_ts))
+        self.assert_equal(str(data.index[-1]), str(end_ts))
 
-
+    # TODO(Dan): Check that intervals are correctly assigned.
     @staticmethod
     def _generate_timestamp_interval(
         left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
