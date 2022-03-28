@@ -184,7 +184,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         """
         Rename outcome directory.
         """
-        toy_test = "toyCmTask1279"
+        toy_test = "toyCmTask1279_rename_class"
         # Create outcomes directory.
         test_path = os.path.join(toy_test, "test")
         # Create the toy outcomes.
@@ -219,7 +219,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         """
         Rename outcome directory.
         """
-        toy_test = "toyCmTask1279"
+        toy_test = "toyCmTask1279_rename_method"
         # Create outcomes directory.
         test_path = os.path.join(toy_test, "test")
         # Create the toy outcomes.
@@ -259,4 +259,4 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         :param toy_test: the name of the toy directory
         """
         cmd = f"git reset {toy_test}/ && rm -rf {toy_test}/"
-        hsystem.system(cmd, abort_on_error=True, suppress_output=False)
+        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
