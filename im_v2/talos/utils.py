@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
 
@@ -30,8 +29,6 @@ def timestamp_to_talos_iso_8601(timestamp: pd.Timestamp) -> str:
 
     Note: microseconds must be included.
     """
-    # Timezone check.
-    hdateti.dassert_has_UTC_tz(timestamp)
     # Timestamp converter.
     timestamp_iso_8601 = timestamp.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
     return timestamp_iso_8601  # type: ignore
@@ -56,7 +53,7 @@ class TalosApiBase(abc.ABC):
 
     def __init__(self, account: str):
         self._account = account
-        self._api_keys = hsecret.get_secret(self._account)
+        self._api_keys = hsecret.get_secret(f"talos_{self._account}")
         # Talos request endpoint.
         self._endpoint = self.get_endpoint()
 
