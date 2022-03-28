@@ -30,7 +30,8 @@ class HistoricalPqByTileClient(
     def __init__(
         self,
         vendor: str,
-        root_dir_name: str,
+        root_dir: str,
+        resample_1min: bool,
         partition_mode: str,
         *,
         aws_profile: Optional[str] = None,
@@ -38,12 +39,14 @@ class HistoricalPqByTileClient(
         """
         Constructor.
 
-        :param root_dir_name: directory storing the tiled Parquet data
+        :param root_dir: either a local root path (e.g., "/app/im") or
+            an S3 root path (e.g., "s3://cryptokaizen-data/historical")
+            to the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
         :param aws_profile: AWS profile name (e.g., "ck")
         """
-        super().__init__(vendor)
-        self._root_dir_name = root_dir_name
+        super().__init__(vendor, resample_1min)
+        self._root_dir = root_dir
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile
 
@@ -110,7 +113,7 @@ class HistoricalPqByTileClient(
             self._partition_mode,
             start_ts,
             end_ts,
-            additional_filter=symbol_filter,
+            additional_filters=[symbol_filter],
         )
         kwargs["filters"] = filters
         # Get columns and add them to kwargs if they were not specified.
@@ -122,10 +125,20 @@ class HistoricalPqByTileClient(
         # Read data.
         df = hparque.from_parquet(root_dir, **kwargs)
         hdbg.dassert(not df.empty)
-        # TODO(Dan) Discuss if we should always convert index to timestamp
+        # TODO(Dan): Discuss if we should always convert index to timestamp
         #  or make a function so it may change based on the vendor.
         # Convert to datetime.
         df.index = pd.to_datetime(df.index)
+        # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
+        #  Not sure if this is still needed.
+        #        # Rename column storing `full_symbols`, if needed.
+        #        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
+        #        if full_symbol_col_name != self._full_symbol_col_name:
+        #            hdbg.dassert_not_in(full_symbol_col_name, df.columns)
+        #            df.rename(
+        #                columns={self._full_symbol_col_name: full_symbol_col_name},
+        #                inplace=True,
+        #            )
         # Transform data.
         df = self._apply_transformations(df, full_symbol_col_name)
         # Since we have normalized the data, the index is a timestamp, and we can
@@ -146,7 +159,9 @@ class HistoricalPqByTileClient(
         Get a root dir to the data and filtering condition on full symbol
         column.
         """
-        root_dir = self._root_dir_name
+        # The root dir of the data is the one passed from the constructor.
+        root_dir = self._root_dir
+        # Add a filter on full symbols.
         symbol_filter = (full_symbol_col_name, "in", full_symbols)
         return root_dir, symbol_filter
 

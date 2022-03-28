@@ -242,6 +242,125 @@ def build_timestamp_df(
     return df
 
 
+def generate_random_top_of_book_bars(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_spread_in_bps: int = 4,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    asset_dfs = []
+    for asset_id in asset_ids:
+        df = generate_random_top_of_book_bars_for_asset(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            bar_spread_in_bps=bar_spread_in_bps,
+            bar_expected_count=bar_expected_count,
+            last_price=last_price,
+            start_time=start_time,
+            end_time=end_time,
+            seed=seed,
+        )
+        asset_dfs.append(df)
+        seed += 1
+    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
+    return df
+
+
+def generate_random_top_of_book_bars_for_asset(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_id: int,
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_spread_in_bps: int = 4,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Return a dataframe of random bars for a single instrument.
+
+    :param start_datetime: initial timestamp
+    :param end_datetime: final timestamp
+    :param asset_id: asset id for labeling
+    :param bar_duration: length of bar in time
+    :param bar_volatility_in_bps: expected bar volatility
+    :param bar_expected_count: expected volume per bar
+    :param last_price: "last price" before start of series
+    :param start_time: e.g., start of active trading hours
+    :param end_time: e.g., end of active trading hours
+    :param seed: seed for numpy `Generator`
+    :return: dataframe like
+      - index is an integer index
+      - columns include timestamps, asset id, price, volume, and fake features
+    """
+    import core.artificial_signal_generators as carsigen
+
+    price_process = carsigen.PriceProcess(seed)
+    bid = price_process.generate_price_series_from_normal_log_returns(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_volatility_in_bps=bar_volatility_in_bps,
+        last_price=last_price,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("bid")
+    spread = (
+        price_process.generate_price_series_from_normal_log_returns(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_spread_in_bps,
+            last_price=last_price,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        .pct_change()
+        .shift(-1)
+        .abs()
+    )
+    ask = (bid + spread).rename("ask")
+    midpoint = (0.5 * (bid + ask)).rename("midpoint")
+    volume = price_process.generate_volume_series_from_poisson_process(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_expected_count=bar_expected_count,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("volume")
+    bar_delay = "1s"
+    df = build_timestamp_df(
+        bid.index,
+        bar_duration,
+        bar_delay,
+    )
+    df = pd.concat(
+        [df, bid, ask, midpoint, volume],
+        axis=1,
+    )
+    df["asset_id"] = asset_id
+    return df.reset_index(drop=True)
+
+
 # #############################################################################
 # MarketDataDf examples
 # #############################################################################
@@ -477,11 +596,39 @@ def get_ReplayedTimeMarketData_example4(
     initial_replayed_delay: int = 0,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a `ReplayedMarketData` with synthetic bar data for the given interval
-    of time and assets.
+    Build a `ReplayedMarketData` with synthetic bar data.
     """
     # Generate random price data.
     df = generate_random_bars(start_datetime, end_datetime, asset_ids)
+    _LOG.debug("df=%s", hpandas.df_to_str(df))
+    # Build a `ReplayedMarketData`.
+    delay_in_secs = 0
+    sleep_in_secs = 30
+    time_out_in_secs = 60 * 5
+    market_data, get_wall_clock_time = get_ReplayedTimeMarketData_from_df(
+        event_loop,
+        initial_replayed_delay,
+        df,
+        delay_in_secs=delay_in_secs,
+        sleep_in_secs=sleep_in_secs,
+        time_out_in_secs=time_out_in_secs,
+    )
+    return market_data, get_wall_clock_time
+
+
+def get_ReplayedTimeMarketData_example5(
+    event_loop: asyncio.AbstractEventLoop,
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
+    *,
+    initial_replayed_delay: int = 0,
+) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
+    """
+    Build a `ReplayedMarketData` with synthetic top-of-the-book data.
+    """
+    # Generate random price data.
+    df = generate_random_top_of_book_bars(start_datetime, end_datetime, asset_ids)
     _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
@@ -513,7 +660,8 @@ def get_ImClientMarketData_example1(
     """
     import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 
-    ccxt_client = imvcdcccex.get_CcxtCsvClient_example1()
+    resample_1min = True
+    ccxt_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
     #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"

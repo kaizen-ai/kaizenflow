@@ -387,8 +387,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data1(self) -> None:
         full_symbol = "kibot::ZI"
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 1573
@@ -423,8 +424,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data2(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::W"]
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 3951
@@ -459,8 +461,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_parquet_data2(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::EZ"]
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 1207
@@ -497,8 +500,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data3(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::W"]
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            contract_type
+            contract_type, resample_1min
         )
         start_ts = pd.Timestamp("2009-09-29T05:38:00+00:00")
         #
@@ -535,8 +539,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data4(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::W"]
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            contract_type
+            contract_type, resample_1min
         )
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
@@ -576,8 +581,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 19
@@ -617,8 +623,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2009-09-27T20:05:00+00:00")
         #
         contract_type = "expiry"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 41
@@ -660,8 +667,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 36
@@ -703,8 +711,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2009-09-27T19:50:00+00:00")
         #
         contract_type = "expiry"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 21
@@ -743,8 +752,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_csv_data7(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::W"]
         contract_type = "continuous"
+        resample_1min = False
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 144
@@ -779,8 +789,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     def test_read_parquet_data7(self) -> None:
         full_symbols = ["kibot::ZI", "kibot::EZ"]
         contract_type = "continuous"
+        resample_1min = False
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
-            contract_type
+            contract_type, resample_1min
         )
         #
         expected_length = 185
@@ -820,8 +831,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         full_symbol = "kibot::ZI"
         #
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
-            contract_type
+            contract_type, resample_1min
         )
         expected_start_ts = pd.to_datetime("2009-09-28 19:25:00", utc=True)
         self._test_get_start_ts_for_symbol1(
@@ -832,8 +844,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         full_symbol = "kibot::ZI"
         #
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
-            contract_type
+            contract_type, resample_1min
         )
         expected_end_ts = pd.to_datetime("2009-09-29 13:43:00", utc=True)
         self._test_get_end_ts_for_symbol1(client, full_symbol, expected_end_ts)
@@ -842,8 +855,9 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 
     def test_get_universe1(self) -> None:
         contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            contract_type
+            contract_type, resample_1min
         )
         expected_length = 0
         expected_first_elements: List = []
@@ -858,8 +872,10 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_metadata1(self) -> None:
+        contract_type = "continuous"
+        resample_1min = True
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example1(
-            "continuous"
+            contract_type, resample_1min
         )
         expected_length = 14962
         expected_column_names = ["Symbol", "Link", "Description"]
