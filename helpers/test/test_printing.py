@@ -78,6 +78,54 @@ class Test_to_str1(hunitest.TestCase):
         self.assertEqual(act, exp)
 
 
+class Test_to_str2(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test printing arguments which are declared on the different lines.
+        """
+        x = [1, "hello", "world"]
+        y = "Hello"
+        z = "world"
+        # To disable linter complaints.
+        _ = x, y, z
+        act = hprint.to_str2(x,
+                            y,
+                            z
+                            )
+        exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
+        self.assertEqual(act, exp)
+
+    def test2(self) -> None:
+        """
+        Test printing arguments which are declared on the different lines.
+        """
+        x = [1, "hello", "world"]
+        y = "Hello"
+        z = "world"
+        # To disable linter complaints.
+        _ = x, y, z
+        act = hprint.to_str2(
+            x, y, z
+        )
+        exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
+        self.assertEqual(act, exp)
+
+    def test3(self) -> None:
+        """
+        Test printing arguments from a function called from line which contains call of another function
+        """
+        def string_wrapper(line: str) -> str:
+            return line
+
+        x = [1, "hello", "world"]
+        y = "Hello"
+        z = "world"
+        # To disable linter complaints.
+        _ = x, y, z
+        act = string_wrapper(hprint.to_str2(x, y, z))
+        exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
+        self.assertEqual(act, exp)
+
 # #############################################################################
 
 
