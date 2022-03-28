@@ -4382,7 +4382,7 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 
 # #############################################################################
 
-
+@task
 def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
     """
     Rename the test and move its golden outcome.

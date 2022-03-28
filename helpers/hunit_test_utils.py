@@ -68,10 +68,10 @@ class UnitTestRenamer():
         :param file_path: the path to the file
         """
         content = hio.from_file(file_path)
-        if not re.search(f"class {self.cfg['old_class_name']}\(", content):
+        if not re.search(f"class {self.cfg['old_class']}\(", content):
             # Return if target test class does not appear in file content.
             return
-        if self.cfg["old_method_name"] == "":
+        if self.cfg["old_method"] == "":
             # Rename the class.
             content = self._rename_class(content)
             _LOG.info(
