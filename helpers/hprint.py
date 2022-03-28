@@ -342,9 +342,11 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     )
     return ret
 
+
 # TODO(Timur Galimov): In order to replace `hprint.to_str` function,
 # `frame level`(see `hprint.to_str`) should be implemented,
 # otherwise helpers/test/test_printing.py::Test_log::test2-4 will fail.
+
 
 def to_str2(*variables_values: Any) -> str:
     """

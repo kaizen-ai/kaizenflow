@@ -1,7 +1,6 @@
 import logging
 import pprint
 
-import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -9,6 +8,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_printing1(hunitest.TestCase):
+
     def test_color_highlight1(self) -> None:
         for c in hprint._COLOR_MAP:
             _LOG.debug(hprint.color_highlight(c, c))
@@ -18,6 +18,7 @@ class Test_printing1(hunitest.TestCase):
 
 
 class Test_to_str1(hunitest.TestCase):
+
     def test1(self) -> None:
         x = 1
         # To disable linter complaints.
@@ -79,6 +80,7 @@ class Test_to_str1(hunitest.TestCase):
 
 
 class Test_to_str2(hunitest.TestCase):
+
     def test1(self) -> None:
         """
         Test printing arguments which are declared on the different lines.
@@ -88,10 +90,7 @@ class Test_to_str2(hunitest.TestCase):
         z = "world"
         # To disable linter complaints.
         _ = x, y, z
-        act = hprint.to_str2(x,
-                            y,
-                            z
-                            )
+        act = hprint.to_str2(x, y, z)
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
         self.assertEqual(act, exp)
 
@@ -104,16 +103,16 @@ class Test_to_str2(hunitest.TestCase):
         z = "world"
         # To disable linter complaints.
         _ = x, y, z
-        act = hprint.to_str2(
-            x, y, z
-        )
+        act = hprint.to_str2(x, y, z)
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
         self.assertEqual(act, exp)
 
     def test3(self) -> None:
         """
-        Test printing arguments from a function called from line which contains call of another function
+        Test printing arguments from a function called from line which contains
+        call of another function.
         """
+
         def string_wrapper(line: str) -> str:
             return line
 
@@ -126,10 +125,12 @@ class Test_to_str2(hunitest.TestCase):
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
         self.assertEqual(act, exp)
 
+
 # #############################################################################
 
 
 class Test_log(hunitest.TestCase):
+
     def test2(self) -> None:
         x = 1
         # To disable linter complaints.
@@ -169,6 +170,7 @@ class Test_log(hunitest.TestCase):
 
 
 class Test_sort_dictionary(hunitest.TestCase):
+
     def test1(self) -> None:
         dict_ = {
             "tool": {
@@ -223,6 +225,7 @@ class Test_sort_dictionary(hunitest.TestCase):
 
 
 class Test_indent1(hunitest.TestCase):
+
     def test1(self) -> None:
         txt = """foo
 
@@ -242,6 +245,7 @@ class TestHelloWorld(hunitest.TestCase):
 
 
 class Test_dedent1(hunitest.TestCase):
+
     def test1(self) -> None:
         txt = """
         foo
@@ -292,6 +296,7 @@ class TestHelloWorld(hunitest.TestCase):
 
 
 class Test_align_on_left1(hunitest.TestCase):
+
     def test1(self) -> None:
         txt = """foo
 
@@ -311,6 +316,7 @@ bar
 
 
 class Test_logging1(hunitest.TestCase):
+
     def test_log_frame1(self) -> None:
         hprint.log_frame(_LOG, "%s %s", "hello", "world")
 
