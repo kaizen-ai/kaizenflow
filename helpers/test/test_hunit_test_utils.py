@@ -3,7 +3,7 @@ import os
 import helpers.hio as hio
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
-import helpers.hunit_test_utils as hhteut
+import helpers.hunit_test_utils as hunteuti
 
 
 class TestPytestRenameClass(hunitest.TestCase):
@@ -35,7 +35,7 @@ class TestCases(hunitest.TestCase):
         """
         content = self.helper()
         root_dir = os.getcwd()
-        renamer = hhteut.UnitTestRenamer("TestCases", "TestNewCase", root_dir)
+        renamer = hunteuti.UnitTestRenamer("TestCases", "TestNewCase", root_dir)
         actual = renamer._rename_class(content)
         expected = """
 class TestNewCase(hunitest.TestCase):
@@ -56,7 +56,7 @@ class TestNewCase(hunitest.TestCase):
         """
         content = self.helper()
         root_dir = os.getcwd()
-        renamer = hhteut.UnitTestRenamer("TestCase", "TestNewCase", root_dir)
+        renamer = hunteuti.UnitTestRenamer("TestCase", "TestNewCase", root_dir)
         actual = renamer._rename_class(content)
         # Check if the content of the file was not changed.
         self.assert_equal(actual, content)
@@ -102,7 +102,9 @@ class TestOtherCases(hunitest.TestCase):
         """
         content = self.helper()
         root_dir = os.getcwd()
-        renamer = hhteut.UnitTestRenamer("TestCases.test1", "TestCases.test_new", root_dir)
+        renamer = hunteuti.UnitTestRenamer(
+            "TestCases.test1", "TestCases.test_new", root_dir
+        )
         actual = renamer._rename_method(content)
         expected = """
 class TestCases(hunitest.TestCase):
@@ -134,7 +136,9 @@ class TestOtherCases(hunitest.TestCase):
         """
         content = self.helper()
         root_dir = os.getcwd()
-        renamer = hhteut.UnitTestRenamer("TestOtherCases.test5", "TestOtherCases.test6", root_dir)
+        renamer = hunteuti.UnitTestRenamer(
+            "TestOtherCases.test5", "TestOtherCases.test6", root_dir
+        )
         actual = renamer._rename_method(content)
         # Check if the content of the file was not changed.
         self.assert_equal(actual, content)
@@ -143,10 +147,12 @@ class TestOtherCases(hunitest.TestCase):
         """
         Test renaming of invalid method names.
         """
-        content = self.helper()
+        self.helper()
         root_dir = os.getcwd()
         with self.assertRaises(AssertionError):
-            hhteut.UnitTestRenamer("TestCases.test10", "TestOtherCases.test6", root_dir)
+            hunteuti.UnitTestRenamer(
+                "TestCases.test10", "TestOtherCases.test6", root_dir
+            )
 
 
 class TestPytestRenameOutcomes(hunitest.TestCase):
@@ -184,7 +190,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         # Create the toy outcomes.
         self.helper(toy_test)
         root_dir = os.getcwd()
-        renamer = hhteut.UnitTestRenamer("TestCase", "TestRenamedCase", root_dir)
+        renamer = hunteuti.UnitTestRenamer("TestCase", "TestRenamedCase", root_dir)
         renamer.rename_outcomes(
             test_path,
         )
@@ -217,7 +223,11 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         # Create the toy outcomes.
         self.helper(toy_test)
         root_dir = os.getcwd()
-        renamer = hhteut.UnitTestRenamer("TestRenamedCase.test_check_string1", "TestRenamedCase.renamed", root_dir)
+        renamer = hunteuti.UnitTestRenamer(
+            "TestRenamedCase.test_check_string1",
+            "TestRenamedCase.renamed",
+            root_dir,
+        )
         renamer.rename_outcomes(
             test_path,
         )
@@ -234,8 +244,8 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         expected = [
             "TestCases.test_rename2",
             "TestRename.test_rename1",
-            "TestRenamedCase.test_rename",
             "TestRenamedCase.renamed",
+            "TestRenamedCase.test_rename",
         ]
         self.assertEqual(actual, expected)
         self._clean_up(toy_test)

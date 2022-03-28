@@ -32,8 +32,8 @@ import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.htraceback as htraceb
+import helpers.hunit_test_utils as hunteuti
 import helpers.hversion as hversio
-import helpers.hunit_test_utils as hpretask
 
 _LOG = logging.getLogger(__name__)
 
@@ -4382,6 +4382,7 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 
 # #############################################################################
 
+
 @task
 def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
     """
@@ -4396,7 +4397,9 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     _report_task()
     _ = ctx
     root_dir = os.getcwd()
-    renamer = hpretask.UnitTestRenamer(old_test_class_name, new_test_class_name, root_dir)
+    renamer = hunteuti.UnitTestRenamer(
+        old_test_class_name, new_test_class_name, root_dir
+    )
     renamer.run()
 
 
