@@ -190,7 +190,9 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         # Create the toy outcomes.
         self.helper(toy_test)
         root_dir = os.getcwd()
-        renamer = hunteuti.UnitTestRenamer("TestCase", "TestRenamedCase", root_dir)
+        renamer = hunteuti.UnitTestRenamer(
+            "TestCase", "TestRenamedCase", root_dir
+        )
         renamer.rename_outcomes(
             test_path,
         )

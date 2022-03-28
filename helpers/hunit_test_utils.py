@@ -18,7 +18,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class UnitTestRenamer:
-
     def __init__(
         self, old_test_name: str, new_test_name: str, root_dir: str
     ) -> None:
@@ -36,7 +35,7 @@ class UnitTestRenamer:
         # Construct the renaming config.
         self.cfg = self._process_parameters(old_test_name, new_test_name)
 
-    def run(self):
+    def run(self) -> None:
         """
         Run the renamer tool.
         """
@@ -92,7 +91,7 @@ class UnitTestRenamer:
                 self.cfg["new_method"],
             )
         # Rename the directories that contain target test outcomes.
-        self._rename_outcomes(
+        self.rename_outcomes(
             test_dir,
         )
         # Write processed content back to file.
@@ -124,101 +123,6 @@ class UnitTestRenamer:
                 self.cfg["old_class"],
                 outcomes_path,
             )
-
-    @staticmethod
-    def _get_test_directories(root_dir: str) -> List[str]:
-        """
-        Get paths of the all directories that contain unit tests.
-
-        :param root_dir: the dir to start the search from, e.g. `/src/cmamp1/helpers`
-        :return: paths of test directories
-        """
-        paths = []
-        for path, _, _ in os.walk(root_dir):
-            # Iterate over the paths to find the test directories.
-            if path.endswith("/test"):
-                paths.append(path)
-        hdbg.dassert_lte(1, len(paths))
-        return paths
-
-    @staticmethod
-    def _check_names(old_test_name: str, new_test_name: str) -> None:
-        """
-        Check if the test names are valid.
-
-        :param old_test_name: the old name of the test
-        :param new_test_name: the new name of the test
-        """
-        # Assert if the classname is invalid.
-        hdbg.dassert(
-            old_test_name.startswith("Test"),
-            "Invalid test_class_name='%s'",
-            old_test_name,
-        )
-        hdbg.dassert(
-            new_test_name.startswith("Test"),
-            "Invalid test_class_name='%s'",
-            new_test_name,
-        )
-        hdbg.dassert_ne(old_test_name, new_test_name)
-        return
-
-    @staticmethod
-    def _process_parameters(
-        old_test_name: str,
-        new_test_name: str,
-    ) -> Dict[str, Union[bool, str]]:
-        """
-        Build the processing config with the renaming parameters.
-
-        Config includes the following fields:
-          - `old_class`: old name of the class
-          - `new_class`: new name of the class
-          - `old_method`: new name of the method. If empty, only class should be renamed
-          - `new_method`: new name of the method
-
-        :param old_test_name: the old name of the test
-        :param new_test_name: the new name of the test
-        :return: config for renaming process
-        """
-        # Build the processing config.
-        config: Dict[str, Union[bool, str]] = dict()
-        # Split by "." to separate class name and method name.
-        splitted_old_name = old_test_name.split(".")
-        splitted_new_name = new_test_name.split(".")
-        # Check the consistency of the names - they should have the same length.
-        hdbg.dassert_eq(
-            len(splitted_old_name),
-            len(splitted_new_name),
-            "The test names are not consistent.",
-        )
-        # Check the format of test names.
-        if len(splitted_old_name) == 1:
-            # Class name splitted by `.` is one element array, e.g. `["TestClassName"]`.
-            old_class_name, old_method_name = splitted_old_name[0], ""
-            new_class_name, new_method_name = splitted_new_name[0], ""
-            _LOG.debug(
-                f"Trying to change the name of `{old_test_name}` unit test class to `{new_test_name}`."
-            )
-        elif len(splitted_old_name) == 2:
-            # Method name splitted by `.` is 2 element array, e.g. `TestClassName.test2` - >`["TestClassName", "test2"]`.
-            old_class_name, old_method_name = splitted_old_name
-            new_class_name, new_method_name = splitted_new_name
-            hdbg.dassert(
-                old_class_name == new_class_name,
-                "To change the name of the method, specify the methods of the same class. E.g. `--old TestCache.test1 --new TestCache.new_test1`",
-            )
-            _LOG.debug(
-                f"Trying to change the name of `{old_method_name}` method of `{old_class_name}` class to `{new_method_name}`."
-            )
-        else:
-            hdbg.dassert(False, "Wrong names format.")
-        # Fill the processing parameters.
-        config["old_class"] = old_class_name
-        config["old_method"] = old_method_name
-        config["new_class"] = new_class_name
-        config["new_method"] = new_method_name
-        return config
 
     def _rename_class(
         self,
@@ -341,3 +245,98 @@ class UnitTestRenamer:
         # Rename the directory and add it to git.
         self._rename_directory(outcome_path_old, outcome_path_new)
         return True
+
+    @staticmethod
+    def _get_test_directories(root_dir: str) -> List[str]:
+        """
+        Get paths of the all directories that contain unit tests.
+
+        :param root_dir: the dir to start the search from, e.g. `/src/cmamp1/helpers`
+        :return: paths of test directories
+        """
+        paths = []
+        for path, _, _ in os.walk(root_dir):
+            # Iterate over the paths to find the test directories.
+            if path.endswith("/test"):
+                paths.append(path)
+        hdbg.dassert_lte(1, len(paths))
+        return paths
+
+    @staticmethod
+    def _check_names(old_test_name: str, new_test_name: str) -> None:
+        """
+        Check if the test names are valid.
+
+        :param old_test_name: the old name of the test
+        :param new_test_name: the new name of the test
+        """
+        # Assert if the classname is invalid.
+        hdbg.dassert(
+            old_test_name.startswith("Test"),
+            "Invalid test_class_name='%s'",
+            old_test_name,
+        )
+        hdbg.dassert(
+            new_test_name.startswith("Test"),
+            "Invalid test_class_name='%s'",
+            new_test_name,
+        )
+        hdbg.dassert_ne(old_test_name, new_test_name)
+        return
+
+    @staticmethod
+    def _process_parameters(
+        old_test_name: str,
+        new_test_name: str,
+    ) -> Dict[str, Union[bool, str]]:
+        """
+        Build the processing config with the renaming parameters.
+
+        Config includes the following fields:
+          - `old_class`: old name of the class
+          - `new_class`: new name of the class
+          - `old_method`: new name of the method. If empty, only class should be renamed
+          - `new_method`: new name of the method
+
+        :param old_test_name: the old name of the test
+        :param new_test_name: the new name of the test
+        :return: config for renaming process
+        """
+        # Build the processing config.
+        config: Dict[str, Union[bool, str]] = dict()
+        # Split by "." to separate class name and method name.
+        splitted_old_name = old_test_name.split(".")
+        splitted_new_name = new_test_name.split(".")
+        # Check the consistency of the names - they should have the same length.
+        hdbg.dassert_eq(
+            len(splitted_old_name),
+            len(splitted_new_name),
+            "The test names are not consistent.",
+        )
+        # Check the format of test names.
+        if len(splitted_old_name) == 1:
+            # Class name splitted by `.` is one element array, e.g. `["TestClassName"]`.
+            old_class_name, old_method_name = splitted_old_name[0], ""
+            new_class_name, new_method_name = splitted_new_name[0], ""
+            _LOG.debug(
+                f"Trying to change the name of `{old_test_name}` unit test class to `{new_test_name}`."
+            )
+        elif len(splitted_old_name) == 2:
+            # Method name splitted by `.` is 2 element array, e.g. `TestClassName.test2` - >`["TestClassName", "test2"]`.
+            old_class_name, old_method_name = splitted_old_name
+            new_class_name, new_method_name = splitted_new_name
+            hdbg.dassert(
+                old_class_name == new_class_name,
+                "To change the name of the method, specify the methods of the same class. E.g. `--old TestCache.test1 --new TestCache.new_test1`",
+            )
+            _LOG.debug(
+                f"Trying to change the name of `{old_method_name}` method of `{old_class_name}` class to `{new_method_name}`."
+            )
+        else:
+            hdbg.dassert(False, "Wrong names format.")
+        # Fill the processing parameters.
+        config["old_class"] = old_class_name
+        config["old_method"] = old_method_name
+        config["new_class"] = new_class_name
+        config["new_method"] = new_method_name
+        return config
