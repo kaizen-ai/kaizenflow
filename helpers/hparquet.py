@@ -426,8 +426,8 @@ def get_parquet_filters_from_timestamp_interval(
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
     *,
-    additional_filter: Optional[ParquetFilter] = None,
-) -> ParquetOrAndFilter:
+    additional_filters: Optional[List[ParquetFilter]] = None,
+) -> Union[ParquetOrAndFilter, ParquetAndFilter]:
     """
     Convert a constraint on a timestamp [start_timestamp, end_timestamp] into a
     Parquet filters expression, based on the passed partitioning / tiling
@@ -437,9 +437,10 @@ def get_parquet_filters_from_timestamp_interval(
         in sync with the way the data was saved
     :param start_timestamp: start of the interval. `None` means no bound
     :param end_timestamp: end of the interval. `None` means no bound
-    :param additional_filter: an AND condition to add to the final filter.
-        E.g., if we want to constraint also on `asset_ids`, we can specify
-        `("asset_id", "in", (...))`
+    :param additional_filters: AND conditions to add to the final filter.
+        E.g., if we want to constraint also on `exchange_id` and 'currency_pair`,
+        we can specify
+        `[("exchange_id", "in", (...)),("currency_pair", "in", (...))]`
     :return: list of OR-AND predicates
     """
     # Check timestamp interval.
@@ -528,16 +529,16 @@ def get_parquet_filters_from_timestamp_interval(
             or_and_filter.append(and_filter)
     else:
         raise ValueError(f"Unknown partition mode `{partition_mode}`!")
-    if additional_filter:
-        hdbg.dassert_isinstance(additional_filter, tuple)
+    if additional_filters:
+        hdbg.dassert_isinstance(additional_filters, list)
         if or_and_filter:
-            # Append additional filter for every present timestamp filter.
+            # Append additional filters for every present timestamp filter.
             or_and_filter = [
-                [additional_filter] + and_filter for and_filter in or_and_filter
+                additional_filters + and_filter for and_filter in or_and_filter
             ]
         else:
-            # If no timestamp filters are provided, use additional filter.
-            or_and_filter = [additional_filter]
+            # If no timestamp filters are provided, use additional filters.
+            or_and_filter = additional_filters
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
     if len(or_and_filter) == 0:
         # Empty list is not acceptable value for pyarrow dataset.
