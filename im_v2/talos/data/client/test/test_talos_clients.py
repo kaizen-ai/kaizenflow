@@ -666,6 +666,7 @@ class TestRealTimeSqlTalosClient1(
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
 
+    # TODO(Max) - add `read_data6`, see CMTask1545: `read_data6` problem in testing Talos Client.
     def test_read_data7(self) -> None:
         # Load test data.
         self._create_test_table()
