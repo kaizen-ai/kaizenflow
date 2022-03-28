@@ -17,111 +17,6 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
-class UnitTestOutcomeRenamer():
-    def __init__(self, old_class: str, new_class: str, old_method: str, new_method: str) -> None:
-        """
-        Initialize TestOutcomeRenamer class.
-
-        :param old_class: the name of the old class
-        :param new_class: the name of the new class
-        :param old_method: the name of the old method
-        :param new_method: the name of the new method
-        """
-        self.old_class = old_class
-        self.new_class = new_class
-        self.old_method = old_method
-        self.new_method = new_method
-
-
-    def run(
-        self,
-        path: str,
-        ) -> None:
-        """
-        Rename the directory that contains test outcomes.
-
-        :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
-        """
-        outcomes_path = os.path.join(path, "outcomes")
-        dir_items = os.listdir(outcomes_path)
-        # Get the list of outcomes directories.
-        outcomes = [
-            dir_name
-            for dir_name in dir_items
-            if os.path.isdir(os.path.join(outcomes_path, dir_name))
-        ]
-        renamed = False
-        for outcome_dir in outcomes:
-            renamed = self.process_directory(outcome_dir, outcomes_path)
-        if not renamed:
-            _LOG.info(
-                "No outcomes for `%s` were found in `%s`.",
-                self.old_class,
-                outcomes_path,
-            )
-
-
-    def rename_outcomes(self, outcome_path_old: str, outcome_path_new: str) -> None:
-        """
-        Rename the outcomes directory and add it to git.
-
-        :param outcome_path_old:
-        :param outcome_path_new:
-        :return:
-        """
-        cmd = f"mv {outcome_path_old} {outcome_path_new}"
-        # Rename the directory.
-        rc = hsystem.system(cmd, abort_on_error=True, suppress_output=False)
-        _LOG.info(
-            "Renaming `%s` directory to `%s`. Output log: %s",
-            outcome_path_old,
-            outcome_path_new,
-            rc,
-        )
-        # Add to git new outcome directory and remove the old one.
-        # The sequence of commands is used
-        # git mv does not work properly while unit testing
-        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
-        hsystem.system(cmd, abort_on_error=True, suppress_output=False)
-    
-
-    def process_directory(self, outcome_dir: str, outcomes_path: str) -> bool:
-        """
-        Process the directory containing target test outcomes.
-
-        The stages of processing are:
-         - generate the new name of the directory
-         - rename and add it to git
-
-        :param outcome_dir: the name of the directory containing the outcomes
-        :param outcomes_path: the path to the outcomes directory
-        """
-        # Contruct the path to outcomes directory.
-        outcome_path_old = os.path.join(outcomes_path, outcome_dir)
-        # Construct target old and new target dir names, e.g. 
-        # `TestOldName.` and `TestNewName.` if class should be renamed or
-        # `TestOldName.test_old` and `TestOldName.test_new` if method should be renamed.
-        old_target = ".".join([self.old_class, self.old_method])
-        new_target = ".".join([self.new_class, self.new_method])
-        if self.old_method == "" and outcome_dir.startswith(old_target):
-            # Check if the class should be renamed, e.g. `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.`.
-            # Split old directory name - the part before "." is the class name.
-            class_method = outcome_dir.split(".")
-            # Replace old class name with the new one, `["TestOld", "test1"]` -> `["TestNew", "test1"]`.
-            class_method[0] = self.new_class
-            # Construct the new outcome directory name -> `TestNew.test1`.
-            outcome_name_new = ".".join(class_method)
-            outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
-        elif self.old_method != "" and (outcome_dir == old_target):
-            # Check if the method should be renamed, e.g. `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.test1_new`.
-            outcome_path_new = os.path.join(outcomes_path, new_target)
-        else:
-            return False
-        # Rename the directory and add it to git.
-        self.rename_outcomes(outcome_path_old, outcome_path_new)
-        return True
-
-
 class UnitTestRenamer():
     def __init__(self, old_test_name: str, new_test_name: str, root_dir: str) -> None:
         """
@@ -137,8 +32,6 @@ class UnitTestRenamer():
         self.test_dirs = self._get_test_directories(root_dir)
         # Construct the renaming config.
         self.cfg = self._process_parameters(old_test_name, new_test_name)
-        # Initialize tool for test outcomes renaming.
-        self.outcomes_renamer = UnitTestOutcomeRenamer(self.cfg["old_class"], self.cfg["new_class"], self.cfg["old_method"], self.cfg["new_method"])
 
 
     def run(self):
@@ -153,13 +46,13 @@ class UnitTestRenamer():
             files = glob.glob(search_pattern)
             #
             for test_file in files:
-                self._rename_in_file(
+                self.rename_in_file(
                     path,
                     test_file,
                 )
 
 
-    def _rename_in_file(
+    def rename_in_file(
         self,
         test_dir: str,
         file_path: str,
@@ -258,6 +151,95 @@ class UnitTestRenamer():
         )
         new_content = "\n".join(lines)
         return new_content
+
+    def rename_outcomes(
+        self,
+        path: str,
+        ) -> None:
+        """
+        Rename the directory that contains test outcomes.
+
+        :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
+        """
+        outcomes_path = os.path.join(path, "outcomes")
+        dir_items = os.listdir(outcomes_path)
+        # Get the list of outcomes directories.
+        outcomes = [
+            dir_name
+            for dir_name in dir_items
+            if os.path.isdir(os.path.join(outcomes_path, dir_name))
+        ]
+        renamed = False
+        for outcome_dir in outcomes:
+            renamed = self._process_outcomes_dir(outcome_dir, outcomes_path)
+        if not renamed:
+            _LOG.info(
+                "No outcomes for `%s` were found in `%s`.",
+                self.cfg['old_class'],
+                outcomes_path,
+            )
+
+
+    def _rename_directory(self, outcome_path_old: str, outcome_path_new: str) -> None:
+        """
+        Rename the outcomes directory and add it to git.
+
+        :param outcome_path_old:
+        :param outcome_path_new:
+        :return:
+        """
+        cmd = f"mv {outcome_path_old} {outcome_path_new}"
+        # Rename the directory.
+        rc = hsystem.system(cmd, abort_on_error=True, suppress_output=False)
+        _LOG.info(
+            "Renaming `%s` directory to `%s`. Output log: %s",
+            outcome_path_old,
+            outcome_path_new,
+            rc,
+        )
+        # Add to git new outcome directory and remove the old one.
+        # The sequence of commands is used
+        # git mv does not work properly while unit testing
+        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
+        hsystem.system(cmd, abort_on_error=True, suppress_output=False)
+    
+
+    def _process_outcomes_dir(self, outcome_dir: str, outcomes_path: str) -> bool:
+        """
+        Process the directory containing target test outcomes.
+
+        The stages of processing are:
+         - generate the new name of the directory
+         - rename and add it to git
+
+        :param outcome_dir: the name of the directory containing the outcomes
+        :param outcomes_path: the path to the outcomes directory
+        """
+        # Contruct the path to outcomes directory.
+        outcome_path_old = os.path.join(outcomes_path, outcome_dir)
+        # Construct target old and new target dir names, e.g. 
+        # `TestOldName.` and `TestNewName.` if class should be renamed or
+        # `TestOldName.test_old` and `TestOldName.test_new` if method should be renamed.
+        old_target = ".".join([self.cfg['old_class'], self.cfg['old_method']])
+        new_target = ".".join([self.cfg['new_class'], self.cfg['new_method']])
+        if self.old_method == "" and outcome_dir.startswith(old_target):
+            # Check if the class should be renamed, e.g. `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.`.
+            # Split old directory name - the part before "." is the class name.
+            class_method = outcome_dir.split(".")
+            # Replace old class name with the new one, `["TestOld", "test1"]` -> `["TestNew", "test1"]`.
+            class_method[0] = self.cfg['new_class']
+            # Construct the new outcome directory name -> `TestNew.test1`.
+            outcome_name_new = ".".join(class_method)
+            outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
+        elif self.cfg['old_method'] != "" and (outcome_dir == old_target):
+            # Check if the method should be renamed, e.g. `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.test1_new`.
+            outcome_path_new = os.path.join(outcomes_path, new_target)
+        else:
+            return False
+        # Rename the directory and add it to git.
+        self._rename_directory(outcome_path_old, outcome_path_new)
+        return True
+
 
     @staticmethod
     def _get_test_directories(root_dir: str) -> List[str]:
