@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
-from typing import Optional
+
 import helpers.hsql as hsql
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
@@ -396,9 +396,7 @@ class TestRealTimeSqlTalosClient1(
         actual_outcome = talos_sql_client._build_select_query(
             exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
         )
-        expected_outcome = (
-            "SELECT * FROM talos_ohlcv WHERE exchange_id IN ('binance') AND currency_pair IN ('BTC_USDT')"
-        )
+        expected_outcome = "SELECT * FROM talos_ohlcv WHERE exchange_id IN ('binance') AND currency_pair IN ('BTC_USDT')"
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
@@ -432,7 +430,6 @@ class TestRealTimeSqlTalosClient1(
         Initialize Talos SQL Client.
         """
         table_name = "talos_ohlcv"
-        #resample_1min = True
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
             self.connection, table_name, resample_1min
         )
@@ -480,10 +477,10 @@ class TestRealTimeSqlTalosClient1(
         columns=open,high,low,close,volume,full_symbol
         shape=(3, 6)
                                    open  high   low  close  volume        full_symbol
-        timestamp                                                                    
+        timestamp
         2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
         2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT                      
+        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
@@ -518,13 +515,13 @@ class TestRealTimeSqlTalosClient1(
         columns=open,high,low,close,volume,full_symbol
         shape=(6, 6)
                                    open  high   low  close  volume        full_symbol
-        timestamp                                                                    
+        timestamp
         2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
         2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
         2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
         2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
         2022-03-24 16:23:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT
-        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT                      
+        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -560,7 +557,7 @@ class TestRealTimeSqlTalosClient1(
         columns=open,high,low,close,volume,full_symbol
         shape=(6, 6)
                                    open  high   low  close  volume        full_symbol
-        timestamp                                                                    
+        timestamp
         2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
         2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
         2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
@@ -603,7 +600,7 @@ class TestRealTimeSqlTalosClient1(
         columns=open,high,low,close,volume,full_symbol
         shape=(6, 6)
                                    open  high   low  close  volume        full_symbol
-        timestamp                                                                    
+        timestamp
         2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
         2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
         2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
@@ -647,7 +644,7 @@ class TestRealTimeSqlTalosClient1(
         columns=open,high,low,close,volume,full_symbol
         shape=(6, 6)
                                    open  high   low  close  volume        full_symbol
-        timestamp                                                                    
+        timestamp
         2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
         2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
         2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
@@ -677,8 +674,6 @@ class TestRealTimeSqlTalosClient1(
         #
         im_client = self.setup_talos_sql_client(False)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
-        start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00")
-        end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00")
         #
         expected_length = 6
         expected_column_names = self._get_expected_column_names()
@@ -692,7 +687,7 @@ class TestRealTimeSqlTalosClient1(
         columns=open,high,low,close,volume,full_symbol
         shape=(6, 6)
                                    open  high   low  close  volume        full_symbol
-        timestamp                                                                    
+        timestamp
         2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
         2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
         2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
