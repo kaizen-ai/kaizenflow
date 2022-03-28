@@ -73,6 +73,15 @@ def compute_regression_coefficients(
     x_var_eff_counts = weight_df.apply(
         lambda x: cstaentr.compute_cardinality(x.dropna(), 2)
     ).rename("eff_count")
+    # Calculate sign correlation.
+    sgn_rho = (
+        x_vars.multiply(df[y_col], axis=0)
+        .apply(np.sign)
+        .multiply(weight_df, axis=0)
+        .sum(axis=0)
+        .divide(weight_sums)
+        .rename("sgn_rho")
+    )
     # Calculate variance assuming x variables are centered at zero.
     x_variance = (
         x_vars.pow(2)
@@ -126,6 +135,7 @@ def compute_regression_coefficients(
     coefficients = [
         x_var_counts,
         x_var_eff_counts,
+        sgn_rho,
         x_variance,
         covariance,
         rho,

@@ -61,7 +61,7 @@ from tqdm.autonotebook import tqdm
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
-import helpers.hio as hio
+import helpers.hs3 as hs3
 import helpers.hjoblib as hjoblib
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
@@ -361,7 +361,7 @@ def _run(args: argparse.Namespace) -> None:
         hparser.create_incremental_dir(args.dst_dir, args)
     # Get the input files to process.
     pattern = "*.parquet"
-    src_file_names = hio.find_files(
+    src_file_names = hs3.find_files(
         args.src_dir, pattern, aws_profile=args.aws_profile
     )
     hdbg.dassert_lte(1, len(src_file_names))

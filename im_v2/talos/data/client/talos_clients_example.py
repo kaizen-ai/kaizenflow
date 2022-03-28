@@ -27,10 +27,15 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
-def get_TalosParquetByTileClient_example1() -> imvtdctacl.TalosParquetByTileClient:
+def get_TalosHistoricalPqByTileClient_example1(
+    resample_1min: bool,
+) -> imvtdctacl.TalosHistoricalPqByTileClient:
     """
-    Get `TalosParquetByTileClient` object for the tests.
+    Get `TalosHistoricalPqByTileClient` object for the tests.
     """
     root_dir = get_test_data_dir()
-    talos_file_client = imvtdctacl.TalosParquetByTileClient(root_dir)
+    partition_mode = "by_year_month"
+    talos_file_client = imvtdctacl.TalosHistoricalPqByTileClient(
+        root_dir, resample_1min, partition_mode
+    )
     return talos_file_client

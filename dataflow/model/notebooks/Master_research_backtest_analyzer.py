@@ -57,11 +57,15 @@ dict_ = {
     "prediction_col": "",
     "feature_cols": None,
     "feature_lag": 2,
+    "target_col": "",
     "target_gmv": 1e6,
     "dollar_neutrality": "no_constraint",
     "freq": "5T",
 }
 config = cconfig.get_config_from_nested_dict(dict_)
+
+# %% [markdown]
+# ## Report tile stats
 
 # %%
 parquet_tile_analyzer = dtfmod.ParquetTileAnalyzer()
@@ -77,6 +81,29 @@ parquet_tile_analyzer.compute_universe_size_by_time(parquet_tile_metadata)
 
 # %%
 asset_ids = parquet_tile_metadata.index.levels[0].to_list()
+
+# %% [markdown]
+# ## Load a single-asset tile
+
+# %%
+single_asset_tile = next(
+    hparque.yield_parquet_tiles_by_assets(
+        config["file_name"],
+        asset_ids[0:1],
+        config["asset_id_col"],
+        1,
+        None,
+    )
+)
+
+# %%
+single_tile_df = dtfmod.process_parquet_read_df(df, config["asset_id_col"])
+
+# %%
+single_tile_df.columns
+
+# %%
+single_tile_df.head(3)
 
 # %% [markdown]
 # # Overnight returns
@@ -122,7 +149,7 @@ bar_metrics = dtfmod.generate_bar_metrics(
     config["prediction_col"],
     config["target_gmv"],
     config["dollar_neutrality"],
-    overnight_returns["overnight_returns"],
+    # overnight_returns["overnight_returns"],
 )
 
 # %%
