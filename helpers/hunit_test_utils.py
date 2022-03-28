@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.pytest_rename_task as hpretask
+import helpers.hunit_test_utils as hhteut
 """
 
 import glob
@@ -24,7 +24,7 @@ class UnitTestRenamer():
 
         :param old_test_name: the old name of the test
         :param new_test_name: the new name of the test
-        :param root_dir: the dir to start the search from
+        :param root_dir: the directory to start the search from
         """
         # Check if the names of the test are valid.
         self._check_names(old_test_name, new_test_name)
@@ -64,7 +64,7 @@ class UnitTestRenamer():
         - change the class name / change the method name
         - rename the outcomes if they exist
 
-        :param test_dir: the path to the test directory containing the file
+        :param test_dir: the path to the test directory containing the file, `/src/cmamp1/helpers/test`
         :param file_path: the path to the file
         """
         content = hio.from_file(file_path)
@@ -97,6 +97,34 @@ class UnitTestRenamer():
         hio.to_file(file_path, content)
 
 
+    def rename_outcomes(
+        self,
+        path: str,
+        ) -> None:
+        """
+        Rename the directory that contains test outcomes.
+
+        :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
+        """
+        outcomes_path = os.path.join(path, "outcomes")
+        dir_items = os.listdir(outcomes_path)
+        # Get the list of outcomes directories.
+        outcomes = [
+            dir_name
+            for dir_name in dir_items
+            if os.path.isdir(os.path.join(outcomes_path, dir_name))
+        ]
+        renamed = False
+        for outcome_dir in outcomes:
+            renamed = self._process_outcomes_dir(outcome_dir, outcomes_path)
+        if not renamed:
+            _LOG.info(
+                "No outcomes for `%s` were found in `%s`.",
+                self.cfg['old_class'],
+                outcomes_path,
+            )
+
+
     def _rename_class(
         self, 
         content: str,
@@ -109,9 +137,10 @@ class UnitTestRenamer():
         """
         # Rename the class.
         content = re.sub(
-            f"class {self.cfg['old_class_name']}\(", f"class {self.cfg['new_class_name']}(", content
+            f"class {self.cfg['old_class']}\(", f"class {self.cfg['new_class']}(", content
         )
         return content
+
 
     def _rename_method(
         self,
@@ -145,47 +174,22 @@ class UnitTestRenamer():
             else:
                 if re.search(class_pattern, line):
                     class_found = True
-        hdbg.dassert(
-            method_replaced,
-            f"Invalid method: `{self.cfg['old_method']}` was not find in class `{self.cfg['old_class']}`",
-        )
+        if not method_replaced:
+            _LOG.info(
+                "Invalid method: `%s` was not find in class `%s`",
+                self.cfg["old_method"],
+                self.cfg["old_class"],
+            )
         new_content = "\n".join(lines)
         return new_content
-
-    def rename_outcomes(
-        self,
-        path: str,
-        ) -> None:
-        """
-        Rename the directory that contains test outcomes.
-
-        :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
-        """
-        outcomes_path = os.path.join(path, "outcomes")
-        dir_items = os.listdir(outcomes_path)
-        # Get the list of outcomes directories.
-        outcomes = [
-            dir_name
-            for dir_name in dir_items
-            if os.path.isdir(os.path.join(outcomes_path, dir_name))
-        ]
-        renamed = False
-        for outcome_dir in outcomes:
-            renamed = self._process_outcomes_dir(outcome_dir, outcomes_path)
-        if not renamed:
-            _LOG.info(
-                "No outcomes for `%s` were found in `%s`.",
-                self.cfg['old_class'],
-                outcomes_path,
-            )
 
 
     def _rename_directory(self, outcome_path_old: str, outcome_path_new: str) -> None:
         """
         Rename the outcomes directory and add it to git.
 
-        :param outcome_path_old:
-        :param outcome_path_new:
+        :param outcome_path_old: the old name of outcome directory, `/src/cmamp1/helpers/test/outcomes/TestRename.test_old`
+        :param outcome_path_new: the new name of outcome directory, `/src/cmamp1/helpers/test/outcomes/TestRename.test_new`
         :return:
         """
         cmd = f"mv {outcome_path_old} {outcome_path_new}"
@@ -246,7 +250,7 @@ class UnitTestRenamer():
         """
         Get paths of the all directories that contain unit tests.
 
-        :param root_dir: the dir to start the search from
+        :param root_dir: the dir to start the search from, e.g. `/src/cmamp1/helpers`
         :return: paths of test directories
         """
         paths = []
@@ -302,7 +306,7 @@ class UnitTestRenamer():
         splitted_old_name = old_test_name.split(".")
         splitted_new_name = new_test_name.split(".")
         # Check the consistency of the names - they should have the same length.
-        hdbg.dassert_eq(len(splitted_old_name)==len(splitted_new_name), "The test names are not consistent.")
+        hdbg.dassert_eq(len(splitted_old_name), len(splitted_new_name), "The test names are not consistent.")
         # Check the format of test names.
         if len(splitted_old_name) == 1:
             # Class name splitted by `.` is one element array, e.g. `["TestClassName"]`.
