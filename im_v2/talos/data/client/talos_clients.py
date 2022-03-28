@@ -46,8 +46,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         Load `Talos` data from local or S3 filesystem.
         """
         vendor = "talos"
-        imvcdchpcl.HistoricalPqByTileClient.__init__(
-            self,
+        super().__init__(
             vendor,
             root_dir,
             resample_1min,

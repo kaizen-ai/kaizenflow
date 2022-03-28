@@ -123,6 +123,17 @@ def opt_docker_release_dev_image(  # type: ignore
 
 
 @task
+def opt_docker_pull(ctx, stage="dev", version=None):  # type: ignore
+    """
+    Pull latest dev image corresponding to the current repo from the registry.
+    """
+    hlibtask._report_task()
+    #
+    base_image = ""
+    hlibtask._docker_pull(ctx, base_image, stage, version)
+
+
+@task
 def opt_docker_bash(  # type: ignore
     ctx,
     base_image="",
