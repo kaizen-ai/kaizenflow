@@ -259,4 +259,4 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         :param toy_test: the name of the toy directory
         """
         cmd = f"git reset {toy_test}/ && rm -rf {toy_test}/"
-        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
+        hsystem.system(cmd, abort_on_error=True, suppress_output=False)
