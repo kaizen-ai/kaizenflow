@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-import helpers.hsecrets as hsecret
 import im_v2.talos.utils as imv2tauti
 import oms.broker as ombroker
 import oms.oms_talos_utils as oomtauti
@@ -32,12 +31,12 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
     def create_order(
             exchanges: List[str],
             quantity: float,
-        timestamp: str,
-        symbol: str,
-        trading_currency: str,
-        order_type: str,
-        price: float,
-        side: float,
+            timestamp: str,
+            symbol: str,
+            trading_currency: str,
+            order_type: str,
+            price: float,
+            side: float,
     ) -> Dict[str, Any]:
         """
         Create an order.
@@ -105,7 +104,7 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
             "EndDate": end_timestamp,
             "OrderID": order_id,
         }
-        url = self.build_url(query)
+        url = self.build_url(query=query)
         # Submit a GET request and return data.
         r = requests.get(url=url, headers=headers)
         if r.status_code == 200:
@@ -114,15 +113,28 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
             raise Exception(f"{r.status_code}: {r.text}")
         return data
 
-    def build_url(self, query: Dict[str, Any]) -> str:
+    def build_url(
+            self,
+            *,
+            query: Optional[Dict[str, Any]] = None,
+            order_id: Optional[str] = None,
+    ) -> str:
         """
         Build a request URL.
 
+        The function builds an initial part of the url
+        and then adds optional extra parameters, e.g. a query.
+
         :param query: a query in dict form
+        :param order_id: a UUID of requested order
         :return: full URL for the query
         """
-        query_string = urllib.parse.urlencode(query)
-        url = f"https://{self._endpoint}{self._order_path}?{query_string}"
+        url = f"https://{self._endpoint}{self._order_path}"
+        if order_id:
+            url += f"/{order_id}"
+        if query:
+            query_string = urllib.parse.urlencode(query)
+            url += f"?{query_string}"
         return url
 
     # TODO(Danya): Implement a method for getting fills since last exec.
@@ -158,29 +170,16 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
             # Imitation of script input parameters.
             # Common elements of both GET and POST requests.
             utc_datetime = imv2tauti.get_talos_current_utc_timestamp()
-            parts = [
-                "GET",
-                utc_datetime,
-                self._endpoint,
-                f"{self._order_path}/{order_id}",
-            ]
-            signature = oomtauti.calculate_signature(
-                self._api_keys["secret"], parts
-            )
-            # TODO(Max): Factor `headers` part out.
-            headers = {
-                "TALOS-KEY": self._api_keys["apiKey"],
-                "TALOS-SIGN": signature,
-                "TALOS-TS": utc_datetime,
-            }
+            parts = self.build_parts("GET", utc_datetime, self._order_path)
+            headers = self.build_headers(parts, utc_datetime)
             # Create a GET request.
-            url = f"https://{self._endpoint}{self._order_path}/{order_id}"
+            url = self.build_url(order_id=order_id)
             r = requests.get(url=url, headers=headers)
             body = r.json()
             # Specify order information.
             ord_summary = body["data"]
             # Save the general order status.
-            # The output of 'ord_summary' contains detailed information about orders and its executions.
+            # The output of 'ord_summary' contains information about orders and its executions.
             # The idea is to extract the order status from it.
             fills_general = ord_summary[0]["OrdStatus"]
             # Update the dictionary.
@@ -197,27 +196,15 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
         """
         Submit a single order.
         """
-        parts = [
-            "POST",
-            wall_clock_timestamp,
-            self._endpoint,
-            self._order_path,
-        ]
+        parts = self.build_parts("POST", wall_clock_timestamp, self._order_path)
         # TODO(Danya): Make it customizable/dependent on `self._strategy`
         for order in orders:
             body = json.dumps(order)
             parts.append(body)
             # Enciode request with secret key.
-            signature = oomtauti.calculate_signature(
-                self._api_keys["secretKey"], parts
-            )
-            headers = {
-                "TALOS-KEY": self._api_keys["apiKey"],
-                "TALOS-SIGN": signature,
-                "TALOS-TS": wall_clock_timestamp,
-            }
+            headers = self.build_headers(parts, wall_clock_timestamp)
             # Create a POST request.
-            url = f"https://{self._endpoint}{self._order_path}"
+            url = self.build_url()
             r = requests.post(url=url, data=body, headers=headers)
             # TODO(Danya): Return a receipt instead of a status code.
             if r.status_code != 200:
