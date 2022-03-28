@@ -423,6 +423,7 @@ class TestRealTimeSqlTalosClient1(
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
 
+    # TODO(Max): Move this to im_v2/common/db/db_utils.py
     def setup_talos_sql_client(
         self,
     ) -> imvtdctacl.RealTimeSqlTalosClient:
@@ -436,6 +437,7 @@ class TestRealTimeSqlTalosClient1(
         )
         return sql_talos_client
 
+    # TODO(Max): Move this to im_v2/common/db/db_utils.py
     def get_create_talos_ohlcv_table_query(self) -> str:
         """
         Get SQL query to create Talos OHLCV table.
@@ -665,6 +667,8 @@ class TestRealTimeSqlTalosClient1(
         )
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
+
+    # ///////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
