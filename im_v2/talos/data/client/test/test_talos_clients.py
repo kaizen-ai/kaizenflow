@@ -249,7 +249,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         )
         full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
         #
-        expected_length = 200
+        expected_length = 198
         expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
@@ -259,9 +259,9 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         # df=
         index=[2022-01-01 00:00:00+00:00, 2022-01-01 01:39:00+00:00]
         columns=full_symbol,open,high,low,close,volume
-        shape=(200, 6)
+        shape=(198, 6)
                                          full_symbol            open            high             low           close           volume
-        timestamp
+        timestamp                                                                                                                    
         2022-01-01 00:00:00+00:00  binance::ADA_USDT      1.30800000      1.31000000      1.30700000      1.31000000   98266.80000000
         2022-01-01 00:00:00+00:00  binance::BTC_USDT  46216.93000000  46271.08000000  46208.37000000  46250.00000000      40.57574000
         2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
