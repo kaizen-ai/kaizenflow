@@ -9,7 +9,7 @@ import datetime
 import hashlib
 import hmac
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -89,7 +89,7 @@ class TalosApiBase(abc.ABC):
         return parts
 
     def build_headers(
-            self, parts: List[str], wall_clock_timestamp: str
+            self, parts: Optional[List[str]], wall_clock_timestamp: Optional[str]
     ) -> Dict[str, str]:
         """
         Build parts of the request metadata.
@@ -101,20 +101,19 @@ class TalosApiBase(abc.ABC):
         :param wall_clock_timestamp: time of request submission
         :return: headers for Talos request
         """
-        signature = self.calculate_signature(self._api_keys["secretKey"], parts)
-        headers = {
-            "TALOS-KEY": self._api_keys["apiKey"],
-            "TALOS-SIGN": signature,
-            "TALOS-TS": wall_clock_timestamp,
-        }
+        headers = {"TALOS-KEY": self._api_keys["apiKey"]}
+        if parts:
+            signature = self.calculate_signature(self._api_keys["secretKey"], parts)
+            headers["TALOS-SIGN"] = signature
+        if wall_clock_timestamp:
+            headers["TALOS-TS"] = wall_clock_timestamp
         return headers
 
     @abc.abstractmethod
-    def build_url(self, path: str, **kwargs: Any) -> str:
+    def build_url(self, **kwargs: Any) -> str:
         """
         Build an url to access.
 
-        :param path: part of url after endpoint, e.g. "/v1/orders"
         :return: full url to access
         """
         ...

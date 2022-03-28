@@ -16,13 +16,12 @@ import requests
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hsecrets as hsecret
 import im_v2.talos.utils as imv2tauti
 
 _LOG = logging.getLogger(__name__)
 
 
-class TalosExchange:
+class TalosExchange(imv2tauti.TalosApiBase):
     """
     A class for accessing Talos exchange data.
 
@@ -30,31 +29,24 @@ class TalosExchange:
     specified exchange(s) via Talos REST API.
     """
 
-    def __init__(self, environment: str) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """
         Constructor.
-
-        :param environment: specify if this instance should call the 'sandbox'
-          or 'prod' API
         """
-        self._api_keys = hsecret.get_secret(f"talos_{environment}")
-        self._api_host = imv2tauti.get_endpoint(environment)
-        self._api_key = self._api_keys["apiKey"]
-        self._api_secret = self._api_keys["secret"]
+        super().__init__(*args, **kwargs)
 
-    def build_talos_ohlcv_path(
-        self, currency_pair: str, exchange: str, *, resolution: str = "1m"
+    def build_url(
+            self, currency_pair: str, exchange: str, *, resolution: str = "1m"
     ) -> str:
         """
-        Get data path for given symbol and exchange.
-
-        Example: /v1/symbols/BTC-USD/markets/coinbase/ohlcv/1m
+        Get url for given symbol and exchange.
         """
         currency_pair = currency_pair.replace("_", "-")
         data_path = (
             f"/v1/symbols/{currency_pair}/markets/{exchange}/ohlcv/{resolution}"
         )
-        return data_path
+        url = f"https://{self._endpoint}{data_path}"
+        return url
 
     def build_talos_query_params(
         self,
@@ -150,13 +142,13 @@ class TalosExchange:
             start_timestamp,
             end_timestamp,
         )
-        headers = {"TALOS-KEY": self._api_key}
+        # Create header with secret key.
+        headers = self.build_headers(parts=None, wall_clock_timestamp=None)
+        # Create OHLCV-specific query parameters.
         params = self.build_talos_query_params(
             start_timestamp, end_timestamp, limit=bar_per_iteration
         )
-        path = self.build_talos_ohlcv_path(currency_pair, exchange)
-        url = f"https://{self._api_host}{path}"
-
+        url = self.build_url(currency_pair, exchange)
         has_next = True
         dfs = []
         while has_next:
