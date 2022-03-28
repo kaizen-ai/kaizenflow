@@ -343,34 +343,48 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
-# TODO(Timur Galimov): In order to replace `hprint.to_str` function,
+# TODO(timurg): In order to replace `hprint.to_str` function,
 # `frame level`(see `hprint.to_str`) should be implemented,
 # otherwise helpers/test/test_printing.py::Test_log::test2-4 will fail.
 
 
 def to_str2(*variables_values: Any) -> str:
     """
-    Return a string with the names and values of a variables that were provided into the function
+
+    Return a string with name and value of variables passed to the function as `name=value`
+
+    E.g.,:
+    ```
+    a = 5
+    b = "hello"
+    n = 2
+    to_str2(a, b, n+1)
+    ```
+    returns a string "a=5, b="hello", n+1=2
+
     Limits: can't work with argument which contains parenthesis, e.g.,: `to_str(to_str(a,b), c)`
-    :param variables_values: variables that should be converted to the "variable=value" string
-    :return: string which contains all function call arguments, and it's values in one line, e.g.,: `a=1, b=2`
+    Dependencies: Funtion call index can depends on the Python version,
+    Python 3.6 - last argument line
+    Python 3.9 - function call line
+
+    :param variables_values: variables to convert into "name=value" string
+    :return: string e.g.,: `a=1, b=2`
     """
     # Check parameters.
     hdbg.dassert_is_not(variables_values, None)
-
+    #
     frame = inspect.currentframe()
     frames = inspect.getouterframes(frame)
-    # Get first outer frame - from where functions was called, and the current one
+    # Get first outer frame - from where functions was called, and the current one.
     frame_above, current_frame = frames[1], frames[0]
-
-    # Get source code starting from line where current function was called
+    # Get source code starting from line where current function was called.
     source_code_lines = inspect.findsource(frame_above[0])[0]
     call_line_index = frame_above.lineno - 1
     stripped_code_lines = [
         line.strip() for line in source_code_lines[call_line_index:]
     ]
     source_code_string = "".join(stripped_code_lines)
-
+    # Find the name of the current function in the code.
     regex = fr"{current_frame.function}\((.*?)\)"
     matches = re.findall(regex, source_code_string)
     hdbg.dassert_ne(
@@ -378,7 +392,7 @@ def to_str2(*variables_values: Any) -> str:
         0,
         msg=f"There no arguments were found for in source code `{current_frame.function}` call",
     )
-    # Only fist match from regex is needed
+    # Only fist match from regex is needed.
     variables_names_str = matches[0]
     variables_names = variables_names_str.split(",")
     hdbg.dassert_eq(
@@ -387,6 +401,7 @@ def to_str2(*variables_values: Any) -> str:
         msg="Amount of variables is not equal to amount of values:"
         f"\n Variables: {variables_names},\nValues: {list(variables_values)}",
     )
+    # Package the name and the value of the variables in the return string.
     output = list()
     for name, value in zip(variables_names, variables_values):
         output.append(f"{name.strip()}={value}")

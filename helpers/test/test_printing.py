@@ -88,8 +88,6 @@ class Test_to_str2(hunitest.TestCase):
         x = [1, "hello", "world"]
         y = "Hello"
         z = "world"
-        # To disable linter complaints.
-        _ = x, y, z
         act = hprint.to_str2(x, y, z)
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
         self.assertEqual(act, exp)
@@ -101,8 +99,6 @@ class Test_to_str2(hunitest.TestCase):
         x = [1, "hello", "world"]
         y = "Hello"
         z = "world"
-        # To disable linter complaints.
-        _ = x, y, z
         act = hprint.to_str2(x, y, z)
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
         self.assertEqual(act, exp)
@@ -119,8 +115,6 @@ class Test_to_str2(hunitest.TestCase):
         x = [1, "hello", "world"]
         y = "Hello"
         z = "world"
-        # To disable linter complaints.
-        _ = x, y, z
         act = string_wrapper(hprint.to_str2(x, y, z))
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
         self.assertEqual(act, exp)
