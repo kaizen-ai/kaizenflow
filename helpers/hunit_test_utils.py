@@ -224,18 +224,18 @@ class UnitTestRenamer():
         # Construct target old and new target dir names, e.g. 
         # `TestOldName.` and `TestNewName.` if class should be renamed or
         # `TestOldName.test_old` and `TestOldName.test_new` if method should be renamed.
-        old_target = ".".join([self.cfg['old_class'], self.cfg['old_method']])
-        new_target = ".".join([self.cfg['new_class'], self.cfg['new_method']])
-        if self.old_method == "" and outcome_dir.startswith(old_target):
+        old_target = ".".join([self.cfg["old_class"], self.cfg["old_method"]])
+        new_target = ".".join([self.cfg["new_class"], self.cfg["new_method"]])
+        if self.cfg["old_method"] == "" and outcome_dir.startswith(old_target):
             # Check if the class should be renamed, e.g. `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.`.
             # Split old directory name - the part before "." is the class name.
             class_method = outcome_dir.split(".")
             # Replace old class name with the new one, `["TestOld", "test1"]` -> `["TestNew", "test1"]`.
-            class_method[0] = self.cfg['new_class']
+            class_method[0] = self.cfg["new_class"]
             # Construct the new outcome directory name -> `TestNew.test1`.
             outcome_name_new = ".".join(class_method)
             outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
-        elif self.cfg['old_method'] != "" and (outcome_dir == old_target):
+        elif self.cfg["old_method"] != "" and (outcome_dir == old_target):
             # Check if the method should be renamed, e.g. `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.test1_new`.
             outcome_path_new = os.path.join(outcomes_path, new_target)
         else:
