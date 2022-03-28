@@ -540,19 +540,18 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Specify data reading parameters.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         # Generate random timestamp interval.
-        start_ts, end_ts = self._generate_timestamp_interval(start_date, end_date)
+        left_boundary = pd.Timestamp(start_date)
+        right_boundary = pd.Timestamp(end_date)
+        start_ts, end_ts = self._generate_timestamp_interval(
+            left_boundary, right_boundary
+        )
         # Read data.
         data = im_client.read_data(full_symbols, start_ts, end_ts)
         # Compare the expected values.
+        # TODO(Dan): Investigate why expected length is not matching actual and
+        #  why value is always the same.
         expected_length = ((end_ts - start_ts).seconds/60 + 1) * len(full_symbols)
-        expected_column_names = ["close", "full_symbol", "month", "year"]
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]}
-        self.check_df_output(
-            data,
-            expected_length=expected_length,
-            expected_column_names=expected_column_names,
-            expected_column_unique_values=expected_column_unique_values,
-        )
+        self.assert_equal(str(data.shape[0]), str(expected_length))
         self.assert_equal(str(data.index[0]), str(start_ts))
         self.assert_equal(str(data.index[-1]), str(end_ts))
 
@@ -565,12 +564,22 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         Generate timestamp interval between specified timestamp boundaries.
         """
         # Convert boundaries to epochs.
-        left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(left_boundary, unit="m")
-        right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(right_boundary, unit="m")
+        left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
+            left_boundary, unit="m"
+        )
+        right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
+            right_boundary, unit="m"
+        )
         # Generate 2 random consequtive epochs in specified boundaries.
-        start_ts_epoch = random.randint(left_boundary_epoch, right_boundary_epoch)
+        start_ts_epoch = random.randint(
+            left_boundary_epoch, right_boundary_epoch
+        )
         end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch)
         # Convert generated epochs to timestamps.
-        start_ts = hdateti.convert_unix_epoch_to_timestamp(start_ts_epoch, unit="m")
-        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
+        start_ts = hdateti.convert_unix_epoch_to_timestamp(
+            start_ts_epoch, unit="m"
+        )
+        end_ts = hdateti.convert_unix_epoch_to_timestamp(
+            end_ts_epoch, unit="m"
+        )
         return start_ts, end_ts
