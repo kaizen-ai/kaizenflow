@@ -390,7 +390,8 @@ def to_str2(*variables_values: Any) -> str:
     hdbg.dassert_ne(
         len(matches),
         0,
-        msg=f"There no arguments were found for in source code `{current_frame.function}` call",
+        "No arguments found in the source code for %s",
+        str(current_frame.function),
     )
     # Only fist match from regex is needed.
     variables_names_str = matches[0]
@@ -398,8 +399,9 @@ def to_str2(*variables_values: Any) -> str:
     hdbg.dassert_eq(
         len(variables_names),
         len(variables_values),
-        msg="Amount of variables is not equal to amount of values:"
-        f"\n Variables: {variables_names},\nValues: {list(variables_values)}",
+        "Number of vars and values is not equal: var_names=%s, val_names=%s",
+        str(variables_names),
+        str(variables_values),
     )
     # Package the name and the value of the variables in the return string.
     output = list()
