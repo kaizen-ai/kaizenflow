@@ -1,9 +1,11 @@
 import os
-from typing import List
+import random
+from typing import List, Tuple
 
 import pandas as pd
 import pytest
 
+import helpers.hdatetime as hdateti
 import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
@@ -45,21 +47,19 @@ def _generate_test_data(
     return test_dir
 
 
-# #############################################################################
-# TestHistoricalPqByTileClient1
-# #############################################################################
-
-
 class MockHistoricalByTile(imvcdchpcl.HistoricalPqByTileClient):
 
     def get_universe(self) -> List[str]:
         return ["binance::BTC_USDT", "kucoin::FIL_USDT"]
 
 
+# #############################################################################
+# TestHistoricalPqByTileClient1
+# #############################################################################
+
+
 class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
-    # TODO(gp): @Nikola factor out the common code in the tests so that
-    #  it's clear what exactly each method is testing, e.g.,
-    #  generate_test_data1(...), get_mock_client1(), ...
+
     def test_read_data1(self) -> None:
         # Generate Parquet test data.
         start_date = "2021-12-30"
@@ -508,3 +508,61 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_first_elements,
             expected_last_elements,
         )
+
+
+class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
+
+    def test_read_data1(self) -> None:
+        # Generate Parquet test data.
+        start_date = "2018-12-30"
+        end_date = "2022-01-02"
+        freq = "1T"
+        assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
+        resample_1min = False
+        vendor = "mock"
+        im_client = MockHistoricalByTile(
+            vendor, test_dir, resample_1min, partition_mode
+        )
+        # Specify data reading parameters.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        # Generate random timestamp interval.
+        start_ts, end_ts = self._generate_timestamp_interval(start_date, end_date)
+        # Read data.
+        data = im_client.read_data(full_symbols, start_ts, end_ts)
+        # Compare the expected values.
+        expected_length = 4320
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]}
+
+
+    @staticmethod
+    def _generate_timestamp_interval(
+        left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
+    ) -> Tuple[pd.Timestamp, pd.Timestamp]:
+        """
+        Generate timestamp interval between specified timestamp boundaries.
+        """
+        # Convert boundaries to epochs.
+        left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(left_boundary, unit="m")
+        right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(right_boundary, unit="m")
+        # Generate 2 random consequtive epochs in specified boundaries.
+        start_ts_epoch = random.randint(left_boundary_epoch, right_boundary_epoch)
+        end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch)
+        # Convert generated epochs to timestamps.
+        start_ts = hdateti.convert_unix_epoch_to_timestamp(start_ts_epoch, unit="m")
+        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
+        return start_ts, end_ts
