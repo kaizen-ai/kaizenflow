@@ -18,6 +18,7 @@ def get_test_data_dir() -> str:
     The files in the dir are copies of some `Talos` data files from S3
     that were loaded for our research purposes. These copies are checked
     out locally in order to test functions without dependencies on S3.
+    Data is spoiled to show `resample_1min` works (removed 3d, 4th minutes).
     """
     test_data_dir = os.path.join(
         hgit.get_amp_abs_path(),
