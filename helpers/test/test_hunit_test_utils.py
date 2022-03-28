@@ -184,7 +184,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         """
         Rename outcome directory.
         """
-        toy_test = "toyCmTask1279_rename_class"
+        toy_test = "toyCmTask1279"
         # Create outcomes directory.
         test_path = os.path.join(toy_test, "test")
         # Create the toy outcomes.
@@ -219,15 +219,15 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         """
         Rename outcome directory.
         """
-        toy_test = "toyCmTask1279_rename_method"
+        toy_test = "toyCmTask1279"
         # Create outcomes directory.
         test_path = os.path.join(toy_test, "test")
         # Create the toy outcomes.
         self.helper(toy_test)
         root_dir = os.getcwd()
         renamer = hunteuti.UnitTestRenamer(
-            "TestRenamedCase.test_check_string1",
-            "TestRenamedCase.renamed",
+            "TestCase.test_rename",
+            "TestCase.test_method_renamed",
             root_dir,
         )
         renamer.rename_outcomes(
@@ -244,10 +244,10 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
             ]
         )
         expected = [
+            "TestCase.test_check_string1",
+            "TestCase.test_method_renamed",
             "TestCases.test_rename2",
             "TestRename.test_rename1",
-            "TestRenamedCase.renamed",
-            "TestRenamedCase.test_rename",
         ]
         self.assertEqual(actual, expected)
         self._clean_up(toy_test)
