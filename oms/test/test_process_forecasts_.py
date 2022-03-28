@@ -17,14 +17,13 @@ import oms.oms_db as oomsdb
 import oms.order_processor as oordproc
 import oms.portfolio as omportfo
 import oms.portfolio_example as oporexam
-import oms.process_forecasts as oprofore
+import oms.process_forecasts_ as oprofore
 import oms.test.oms_db_helper as omtodh
 
 _LOG = logging.getLogger(__name__)
 
 
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             hasynci.run(
@@ -137,7 +136,6 @@ asset_id                    101    202
 
 class TestSimulatedProcessForecasts2(hunitest.TestCase):
     @pytest.mark.slow("~8 seconds")
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             hasynci.run(
@@ -362,6 +360,129 @@ asset_id                      100     200
 2000-01-02 10:20:01-05:00  25.06     195290.19   -81338.53  100019.38   18791.09  9.81e+05    1.00e+06       0.1
 2000-01-02 10:25:01-05:00 -27.38     179808.11    81205.62   99969.33   99969.33  9.00e+05    1.00e+06       0.1
 2000-01-02 10:30:01-05:00  27.81      82206.47   -82206.47   99995.09   17790.68  9.82e+05    1.00e+06       0.1"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class TestSimulatedProcessForecasts3(hunitest.TestCase):
+    def test_initialization1(self) -> None:
+        with hasynci.solipsism_context() as event_loop:
+            hasynci.run(
+                self._test_simulated_system1(event_loop), event_loop=event_loop
+            )
+
+    @staticmethod
+    def get_portfolio(
+        event_loop, asset_ids: List[int]
+    ) -> omportfo.DataFramePortfolio:
+        start_datetime = pd.Timestamp(
+            "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        )
+        end_datetime = pd.Timestamp(
+            "2000-01-01 09:50:00-05:00", tz="America/New_York"
+        )
+        market_data, _ = mdata.get_ReplayedTimeMarketData_example5(
+            event_loop,
+            start_datetime,
+            end_datetime,
+            asset_ids,
+        )
+        mark_to_market_col = "midpoint"
+        portfolio = oporexam.get_DataFramePortfolio_example1(
+            event_loop,
+            market_data=market_data,
+            mark_to_market_col=mark_to_market_col,
+            asset_ids=asset_ids,
+        )
+        return portfolio
+
+    @staticmethod
+    def get_process_forecasts_config() -> cconfig.Config:
+        dict_ = {
+            "order_config": {
+                "order_type": "partial_spread_0.25@twap",
+                "order_duration": 5,
+            },
+            "optimizer_config": {
+                "backend": "compute_target_positions_in_cash",
+                "target_gmv": 1e5,
+                "dollar_neutrality": "no_constraint",
+            },
+            "execution_mode": "batch",
+            "ath_start_time": datetime.time(9, 30),
+            "trading_start_time": datetime.time(9, 35),
+            "ath_end_time": datetime.time(16, 00),
+            "trading_end_time": datetime.time(15, 55),
+        }
+        config = cconfig.get_config_from_nested_dict(dict_)
+        return config
+
+    async def _test_simulated_system1(
+        self, event_loop: asyncio.AbstractEventLoop
+    ) -> None:
+        """
+        Run `process_forecasts()` logic with a given prediction df to update a
+        Portfolio.
+        """
+        asset_ids = [101, 202]
+        # Build predictions.
+        index = [
+            pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:40:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:45:00-05:00", tz="America/New_York"),
+        ]
+        prediction_data = [
+            [0.1, 0.2],
+            [-0.1, 0.3],
+            [-0.3, 0.0],
+        ]
+        predictions = pd.DataFrame(prediction_data, index, asset_ids)
+        volatility_data = [
+            [1, 1],
+            [1, 1],
+            [1, 1],
+        ]
+        volatility = pd.DataFrame(volatility_data, index, asset_ids)
+        # Build a Portfolio.
+        portfolio = self.get_portfolio(event_loop, asset_ids)
+        # Get process forecasts config.
+        config = self.get_process_forecasts_config()
+        spread_df = None
+        restrictions_df = None
+        # Run.
+        await oprofore.process_forecasts(
+            predictions,
+            volatility,
+            portfolio,
+            config,
+            spread_df,
+            restrictions_df,
+        )
+        actual = str(portfolio)
+        expected = r"""
+# historical holdings=
+asset_id                     101    202        -1
+2000-01-01 09:35:01-05:00   0.00   0.00  1000000.00
+2000-01-01 09:40:01-05:00  33.42  66.55   899964.50
+2000-01-01 09:45:01-05:00 -25.02  74.95   949830.54
+# historical holdings marked to market=
+asset_id                        101       202        -1
+2000-01-01 09:35:01-05:00      0.00      0.00  1000000.00
+2000-01-01 09:40:01-05:00  33395.11  66592.43   899964.50
+2000-01-01 09:45:01-05:00 -24926.68  75122.70   949830.54
+# historical flows=
+asset_id                        101       202
+2000-01-01 09:40:01-05:00 -33380.55 -66654.94
+2000-01-01 09:45:01-05:00  58288.48  -8422.44
+# historical pnl=
+asset_id                     101     202
+2000-01-01 09:35:01-05:00    NaN     NaN
+2000-01-01 09:40:01-05:00  14.56  -62.51
+2000-01-01 09:45:01-05:00 -33.31  107.83
+# historical statistics=
+                             pnl  gross_volume  net_volume        gmv       nmv        cash  net_wealth  leverage
+2000-01-01 09:35:01-05:00    NaN          0.00        0.00       0.00      0.00  1000000.00    1.00e+06       0.0
+2000-01-01 09:40:01-05:00 -47.96     100035.50   100035.50   99987.54  99987.54   899964.50    1.00e+06       0.1
+2000-01-01 09:45:01-05:00  74.52      66710.92   -49866.04  100049.39  50196.02   949830.54    1.00e+06       0.1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 

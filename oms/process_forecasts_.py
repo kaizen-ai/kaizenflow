@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.process_forecasts as oprofore
+import oms.process_forecasts_ as oprofore
 """
 
 import asyncio
@@ -472,7 +472,7 @@ class ForecastProcessor:
         diff_num_shares.replace([-np.inf, np.inf], np.nan, inplace=True)
         diff_num_shares = diff_num_shares.fillna(0)
         df["diff_num_shares"] = diff_num_shares
-        df["spread"] = assets_and_predictions["spread"]
+        df["spread"] = assets_and_predictions.set_index("asset_id")["spread"]
         _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         return df
 
