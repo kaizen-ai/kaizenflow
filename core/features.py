@@ -77,8 +77,14 @@ def compute_lagged_features(
     return df, info
 
 
+# TODO(Paul): Clean this up. The interface has become a bit awkward.
 def compute_lagged_columns(
-    df: pd.DataFrame, lag_delay: int, num_lags: int
+    df: pd.DataFrame,
+    lag_delay: int,
+    num_lags: int,
+    *,
+    first_lag: int = 1,
+    separator: str = "_",
 ) -> pd.DataFrame:
     """
     Compute lags of each column in df.
@@ -86,13 +92,15 @@ def compute_lagged_columns(
     out_cols = []
     hdbg.dassert_isinstance(df, pd.DataFrame)
     for col in df.columns:
-        out_col = compute_lags(df[col], lag_delay, num_lags)
-        out_col.rename(columns=lambda x: str(col) + "_" + x, inplace=True)
+        out_col = compute_lags(df[col], lag_delay, num_lags, first_lag)
+        out_col.rename(columns=lambda x: str(col) + separator + x, inplace=True)
         out_cols.append(out_col)
     return pd.concat(out_cols, axis=1)
 
 
-def compute_lags(srs: pd.Series, lag_delay: int, num_lags: int) -> pd.DataFrame:
+def compute_lags(
+    srs: pd.Series, lag_delay: int, num_lags: int, first_lag: int
+) -> pd.DataFrame:
     """
     Compute `num_lags` lags of `srs` starting with a delay of `lag_delay`.
     """
@@ -104,7 +112,7 @@ def compute_lags(srs: pd.Series, lag_delay: int, num_lags: int) -> pd.DataFrame:
         )
     hdbg.dassert_lte(1, num_lags)
     #
-    shifts = list(range(1 + lag_delay, 1 + lag_delay + num_lags))
+    shifts = list(range(first_lag + lag_delay, first_lag + lag_delay + num_lags))
     out_cols = []
     hdbg.dassert_isinstance(srs, pd.Series)
     for num_shifts in shifts:

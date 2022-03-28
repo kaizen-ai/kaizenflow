@@ -500,23 +500,6 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
         )
         self.assertIsNone(filters)
 
-    def test_no_interval_additional_filter(self) -> None:
-        """
-        No timestamps provided while additional filter is provided.
-        """
-        partition_mode = "by_year_month"
-        start_ts = None
-        end_ts = None
-        additional_filter = ("currency_pair", "in", ("BTC_USDT",),)
-        filters = hparque.get_parquet_filters_from_timestamp_interval(
-            partition_mode, start_ts, end_ts, additional_filter=additional_filter
-        )
-        actual = str(filters)
-        expected = (
-            r"[('currency_pair', 'in', ('BTC_USDT',))]"
-        )
-        self.assert_equal(actual, expected)
-
     def test_by_month_half1(self) -> None:
         """
         Test a left-bound interval [..., None].
@@ -646,6 +629,61 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
             r"[[('year', '==', 2020), ('month', '>=', 6)], "
             r"[('year', '>', 2020), ('year', '<', 2022)], "
             r"[('year', '==', 2022), ('month', '<=', 12)]]"
+        )
+        self.assert_equal(actual, expected)
+
+    def test_additional_filters1(self) -> None:
+        """
+        No timestamps provided while a single additional filter is provided.
+        """
+        partition_mode = "by_year_month"
+        start_ts = None
+        end_ts = None
+        additional_filters = [
+            (
+                "currency_pair",
+                "in",
+                ("BTC_USDT",),
+            )
+        ]
+        filters = hparque.get_parquet_filters_from_timestamp_interval(
+            partition_mode,
+            start_ts,
+            end_ts,
+            additional_filters=additional_filters,
+        )
+        actual = str(filters)
+        expected = r"[('currency_pair', 'in', ('BTC_USDT',))]"
+        self.assert_equal(actual, expected)
+
+    def test_additional_filters2(self) -> None:
+        """
+        Test an interval with multiple additional filters.
+        """
+        partition_mode = "by_year_month"
+        start_ts = pd.Timestamp("2020-06-02 09:31:00+00:00")
+        end_ts = pd.Timestamp("2022-12-02 09:31:00+00:00")
+        additional_filters = [
+            ("exchange_id", "in", ("binance")),
+            ("currency_pairs", "in", ("ADA_USDT", "BTC_USDT")),
+        ]
+        filters = hparque.get_parquet_filters_from_timestamp_interval(
+            partition_mode,
+            start_ts,
+            end_ts,
+            additional_filters=additional_filters,
+        )
+        actual = str(filters)
+        expected = (
+            r"[[('exchange_id', 'in', 'binance'), "
+            r"('currency_pairs', 'in', ('ADA_USDT', 'BTC_USDT')), "
+            r"('year', '==', 2020), ('month', '>=', 6)], "
+            r"[('exchange_id', 'in', 'binance'), "
+            r"('currency_pairs', 'in', ('ADA_USDT', 'BTC_USDT')), "
+            r"('year', '>', 2020), ('year', '<', 2022)], "
+            r"[('exchange_id', 'in', 'binance'), "
+            r"('currency_pairs', 'in', ('ADA_USDT', 'BTC_USDT')), "
+            r"('year', '==', 2022), ('month', '<=', 12)]]"
         )
         self.assert_equal(actual, expected)
 
