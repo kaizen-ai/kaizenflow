@@ -8,7 +8,7 @@ import helpers.hunit_test_utils as hunteuti
 
 class TestPytestRenameClass(hunitest.TestCase):
     """
-    Test renaming functionality.
+    Test class renaming functionality.
     """
 
     @staticmethod
@@ -64,7 +64,7 @@ class TestNewCase(hunitest.TestCase):
 
 class TestPytestRenameMethod(hunitest.TestCase):
     """
-    Test renaming functionality.
+    Test method renaming functionality.
     """
 
     @staticmethod
