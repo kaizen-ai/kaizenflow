@@ -1,7 +1,8 @@
 import os
+import random
+import time
 from typing import List, Tuple
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -10,6 +11,48 @@ import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
+
+
+def generate_timestamp_interval(
+    left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
+) -> Tuple[pd.Timestamp, pd.Timestamp]:
+    """
+    Generate timestamp interval between specified timestamp boundaries.
+
+    Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval
+
+    :param left_boundary: left boundary for generated timestamp interval
+    :param right_boundary: right boundary for generated timestamp interval
+    :return: two consequtive timestamps that belong to the specified interval
+    """
+    # Set new seed in order to avoid repeating random values.
+    random.seed(time.time())
+    # Convert boundaries to epochs.
+    left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
+        left_boundary, unit="m"
+    )
+    right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
+        right_boundary, unit="m"
+    )
+    # Generate 2 random consequtive epochs in specified boundaries.
+    # TODO(Dan): Discuss boundaries simplification.
+    # Integers are subtracted from right boundary since test data is
+    # generated with open right boundary while `randint` works and
+    # client reads data with closed right boundary.
+    start_ts_epoch = random.randint(
+        left_boundary_epoch, right_boundary_epoch - 2
+    )
+    end_ts_epoch = random.randint(
+        start_ts_epoch, right_boundary_epoch - 1
+    )
+    # Convert generated epochs to timestamps.
+    start_ts = hdateti.convert_unix_epoch_to_timestamp(
+        start_ts_epoch, unit="m"
+    )
+    end_ts = hdateti.convert_unix_epoch_to_timestamp(
+        end_ts_epoch, unit="m"
+    )
+    return start_ts, end_ts
 
 
 def _generate_test_data(
@@ -512,7 +555,8 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
 class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
-    def test_read_data1(self) -> None:
+    @pytest.mark.slow("Execution time varies depending on generated inputs.")
+    def test_read_data_random1(self) -> None:
         # Generate Parquet test data.
         start_date = "2018-12-30"
         end_date = "2022-01-02"
@@ -542,45 +586,15 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate random timestamp interval.
         left_boundary = pd.Timestamp(start_date)
         right_boundary = pd.Timestamp(end_date)
-        start_ts, end_ts = self._generate_timestamp_interval(
+        start_ts, end_ts = generate_timestamp_interval(
             left_boundary, right_boundary
         )
         # Read data.
         data = im_client.read_data(full_symbols, start_ts, end_ts)
         # Compare the expected values.
-        # TODO(Dan): Investigate why values are always the same.
         expected_length = int(
             ((end_ts - start_ts).total_seconds()/60 + 1) * len(full_symbols)
         )
         self.assert_equal(str(data.shape[0]), str(expected_length))
         self.assert_equal(str(data.index[0]), str(start_ts))
         self.assert_equal(str(data.index[-1]), str(end_ts))
-
-    # TODO(Dan): Check that intervals are correctly assigned.
-    @staticmethod
-    def _generate_timestamp_interval(
-        left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
-    ) -> Tuple[pd.Timestamp, pd.Timestamp]:
-        """
-        Generate timestamp interval between specified timestamp boundaries.
-        """
-        # Convert boundaries to epochs.
-        left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-            left_boundary, unit="m"
-        )
-        right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-            right_boundary, unit="m"
-        )
-        # Generate 2 random consequtive epochs in specified boundaries.
-        start_ts_epoch = np.random.randint(
-            left_boundary_epoch, right_boundary_epoch
-        )
-        end_ts_epoch = np.random.randint(start_ts_epoch, right_boundary_epoch)
-        # Convert generated epochs to timestamps.
-        start_ts = hdateti.convert_unix_epoch_to_timestamp(
-            start_ts_epoch, unit="m"
-        )
-        end_ts = hdateti.convert_unix_epoch_to_timestamp(
-            end_ts_epoch, unit="m"
-        )
-        return start_ts, end_ts
