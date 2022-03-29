@@ -345,13 +345,12 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
 
 # TODO(timurg): In order to replace `hprint.to_str` function,
 # `frame level`(see `hprint.to_str`) should be implemented,
-# otherwise helpers/test/test_printing.py::Test_log::test2-4 will fail.
+# otherwise `helpers/test/test_printing.py::Test_log::test2-4` will fail.
 
 
 def to_str2(*variables_values: Any) -> str:
     """
-
-    Return a string with name and value of variables passed to the function as `name=value`
+    Return a string with name and value of variables passed to the function as `name=value`.
 
     E.g.,:
     ```
@@ -360,25 +359,27 @@ def to_str2(*variables_values: Any) -> str:
     n = 2
     to_str2(a, b, n+1)
     ```
-    returns a string "a=5, b="hello", n+1=2
+    returns a string "a=5, b=hello, n+1=2"
 
-    Limits: can't work with argument which contains parenthesis, e.g.,: `to_str(to_str(a,b), c)`
-    Dependencies: Funtion call index can depends on the Python version,
-    Python 3.6 - last argument line
-    Python 3.9 - function call line
+    Limitations: can't work with an argument that contains parenthesis, e.g.,: `to_str(to_str(a,b), c)`.
+    Dependencies: funtion call index depends on the Python version, `frame.lineno` is
+   - Last argument line in Python >=3.6 and < 3.9
+   - Function call line in Python 3.9 and above.
 
     :param variables_values: variables to convert into "name=value" string
     :return: string e.g.,: `a=1, b=2`
     """
     # Check parameters.
-    hdbg.dassert_is_not(variables_values, None)
-    #
-    frame = inspect.currentframe()
-    frames = inspect.getouterframes(frame)
-    # Get first outer frame - from where functions was called, and the current one.
+    hdbg.dassert_lt(1, len(variables_values))
+    # Get frame object for the caller’s stack frame.
+    frame_ = inspect.currentframe()
+    # Get a list of frame records for a frame and all outer frames.
+    frames = inspect.getouterframes(frame_)
+    # Get first outer frame - from where function was called, and the current one.
     frame_above, current_frame = frames[1], frames[0]
     # Get source code starting from line where current function was called.
-    source_code_lines = inspect.findsource(frame_above[0])[0]
+    source_code_lines, _ = inspect.findsource(frame_above.frame)
+    # Line numbers start from 1, converting line number to line index.
     call_line_index = frame_above.lineno - 1
     stripped_code_lines = [
         line.strip() for line in source_code_lines[call_line_index:]
@@ -404,10 +405,9 @@ def to_str2(*variables_values: Any) -> str:
         str(variables_values),
     )
     # Package the name and the value of the variables in the return string.
-    output = list()
+    output = []
     for name, value in zip(variables_names, variables_values):
         output.append(f"{name.strip()}={value}")
-
     return ", ".join(output)
 
 
@@ -446,7 +446,7 @@ def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
 def log_frame(
     logger: logging.Logger,
     fstring: str,
-    *args,
+    *args: Any,
     level: int = 1,
     char: str = "#",
     verbosity: int = logging.DEBUG,
@@ -814,11 +814,11 @@ def filter_text(regex: str, txt: str) -> str:
         return txt
     txt_out = []
     txt_as_arr = txt.split("\n")
-    for line in txt_as_arr:
-        if re.search(regex, line):
-            _LOG.debug("Skipping line='%s'", line)
+    for line_ in txt_as_arr:
+        if re.search(regex, line_):
+            _LOG.debug("Skipping line='%s'", line_)
             continue
-        txt_out.append(line)
+        txt_out.append(line_)
     # We can only remove lines.
     hdbg.dassert_lte(
         len(txt_out),

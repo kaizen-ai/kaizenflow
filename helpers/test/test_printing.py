@@ -88,9 +88,13 @@ class Test_to_str2(hunitest.TestCase):
         x = [1, "hello", "world"]
         y = "Hello"
         z = "world"
-        act = hprint.to_str2(x, y, z)
+        # fmt: off
+        act = hprint.to_str2(
+            x, y, z
+        )
+        # fmt: off
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
-        self.assertEqual(act, exp)
+        self.assert_equal(act, exp)
 
     def test2(self) -> None:
         """
@@ -99,9 +103,13 @@ class Test_to_str2(hunitest.TestCase):
         x = [1, "hello", "world"]
         y = "Hello"
         z = "world"
-        act = hprint.to_str2(x, y, z)
+        # fmt: off
+        act = hprint.to_str2(x,
+                             y,
+                             z)
+        # fmt: on
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
-        self.assertEqual(act, exp)
+        self.assert_equal(act, exp)
 
     def test3(self) -> None:
         """
@@ -117,7 +125,7 @@ class Test_to_str2(hunitest.TestCase):
         z = "world"
         act = string_wrapper(hprint.to_str2(x, y, z))
         exp = "x=[1, 'hello', 'world'], y=Hello, z=world"
-        self.assertEqual(act, exp)
+        self.assert_equal(act, exp)
 
 
 # #############################################################################
