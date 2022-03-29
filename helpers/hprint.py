@@ -353,23 +353,24 @@ def to_str2(*variables_values: Any) -> str:
     Return a string with name and value of variables passed to the function as
     `name=value`.
 
-     E.g.,:
-     ```
-     a = 5
-     b = "hello"
-     n = 2
-     to_str2(a, b, n+1)
-     ```
-     returns a string "a=5, b=hello, n+1=2"
+    E.g.,:
+    ```
+    a = 5
+    b = "hello"
+    n = 2
+    to_str2(a, b, n+1)
+    ```
+    returns a string "a=5, b=hello, n+1=2".
 
-     Limitations: can't work with an argument that contains parenthesis,
-     e.g.,: `to_str(to_str(a,b), c)`.
-     Dependencies: funtion call index depends on the Python version, `frame.lineno` is
-    - Last argument line in Python >=3.6 and < 3.9
-    - Function call line in Python 3.9 and above.
+    Limitations: can't work with an argument that contains parenthesis,
+    e.g.,: `to_str(to_str(a,b), c)`.
 
-     :param variables_values: variables to convert into "name=value" string
-     :return: string e.g.,: `a=1, b=2`
+    Dependencies: funtion call index depends on the Python version, `frame.lineno` is
+       - Last argument line in Python >=3.6 and < 3.9
+       - Function call line in Python 3.9 and above.
+
+    :param variables_values: variables to convert into "name=value" string
+    :return: string e.g.,: `a=1, b=2`
     """
     # Check parameters.
     hdbg.dassert_lt(1, len(variables_values))
