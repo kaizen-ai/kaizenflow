@@ -21,7 +21,7 @@ import im_v2.talos.utils as imv2tauti
 _LOG = logging.getLogger(__name__)
 
 
-class TalosExchange(imv2tauti.TalosApiBuilder):
+class TalosExchange:
     """
     A class for accessing Talos exchange data.
 
@@ -29,11 +29,11 @@ class TalosExchange(imv2tauti.TalosApiBuilder):
     specified exchange(s) via Talos REST API.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, account: str) -> None:
         """
         Constructor.
         """
-        super().__init__(*args, **kwargs)
+        self._account = account
         self._api = imv2tauti.TalosApiBuilder(self._account)
         self._endpoint = self._api.get_endpoint()
 

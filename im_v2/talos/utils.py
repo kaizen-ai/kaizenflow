@@ -3,13 +3,12 @@ Import as:
 
 import im_v2.talos.utils as imv2tauti
 """
-import abc
 import base64
 import datetime
 import hashlib
 import hmac
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -108,15 +107,6 @@ class TalosApiBuilder:
         if wall_clock_timestamp:
             headers["TALOS-TS"] = wall_clock_timestamp
         return headers
-
-    @abc.abstractmethod
-    def build_url(self, **kwargs: Any) -> str:
-        """
-        Build an url to access.
-
-        :return: full url to access
-        """
-        ...
 
     @staticmethod
     def calculate_signature(secret_key: str, parts: List[str]) -> str:
