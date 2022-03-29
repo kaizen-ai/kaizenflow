@@ -368,7 +368,7 @@ def to_str2(*variables_values: Any) -> str:
 
     Dependencies: funtion call index depends on the Python version, `frame.lineno` is
        - Last argument line in Python >=3.6 and < 3.9
-       - Function call line in Python 3.9 and above.
+       - Function call line in Python 3.9 and above
 
     :param variables_values: variables to convert into "name=value" string
     :return: string e.g., `a=1, b=2`
