@@ -345,7 +345,8 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
 
 # TODO(timurg): In order to replace `hprint.to_str` function,
 # `frame level`(see `hprint.to_str`) should be implemented,
-# otherwise `helpers/test/test_printing.py::Test_log::test2-4` will fail.
+# otherwise `helpers/test/test_printing.py::Test_log::test2-4` will fail,
+# see CmTask #1554.
 
 
 def to_str2(*variables_values: Any) -> str:
@@ -363,14 +364,14 @@ def to_str2(*variables_values: Any) -> str:
     returns a string "a=5, b=hello, n+1=2".
 
     Limitations: can't work with an argument that contains parenthesis,
-    e.g.,: `to_str(to_str(a,b), c)`.
+    e.g.,: `to_str(to_str(a, b), c)`.
 
     Dependencies: funtion call index depends on the Python version, `frame.lineno` is
        - Last argument line in Python >=3.6 and < 3.9
        - Function call line in Python 3.9 and above.
 
     :param variables_values: variables to convert into "name=value" string
-    :return: string e.g.,: `a=1, b=2`
+    :return: string e.g., `a=1, b=2`
     """
     # Check parameters.
     hdbg.dassert_lt(1, len(variables_values))
@@ -382,7 +383,7 @@ def to_str2(*variables_values: Any) -> str:
     frame_above, current_frame = frames[1], frames[0]
     # Get source code starting from line where current function was called.
     source_code_lines, _ = inspect.findsource(frame_above.frame)
-    # Line numbers start from 1, converting line number to line index.
+    # Line number start from 1, while index starts with 0.
     call_line_index = frame_above.lineno - 1
     stripped_code_lines = [
         line.strip() for line in source_code_lines[call_line_index:]
