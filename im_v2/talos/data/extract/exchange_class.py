@@ -37,21 +37,8 @@ class TalosExchange:
         self._api = imv2tauti.TalosApiBuilder(self._account)
         self._endpoint = self._api.get_endpoint()
 
-    def build_url(
-            self, currency_pair: str, exchange: str, *, resolution: str = "1m"
-    ) -> str:
-        """
-        Get url for given symbol and exchange.
-        """
-        currency_pair = currency_pair.replace("_", "-")
-        data_path = (
-            f"/v1/symbols/{currency_pair}/markets/{exchange}/ohlcv/{resolution}"
-        )
-        url = f"https://{self._endpoint}{data_path}"
-        return url
-
+    @staticmethod
     def build_talos_query_params(
-        self,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         *,
@@ -69,7 +56,10 @@ class TalosExchange:
         Note that endDate is an open interval, i.e. endDate is NOT included
         in the response.
 
+        :param start_timestamp: beginning of the queried time period
+        :param end_timestamp: end of the queried time period
         :param limit: number of records to return in request response
+        :return: query parameters for OHLCV data
         """
         params: Dict[str, Union[str, int]] = {}
         start_date = imv2tauti.timestamp_to_talos_iso_8601(start_timestamp)
@@ -78,6 +68,19 @@ class TalosExchange:
         params["endDate"] = end_date
         params["limit"] = limit
         return params
+
+    def build_url(
+        self, currency_pair: str, exchange: str, *, resolution: str = "1m"
+    ) -> str:
+        """
+        Get url for given symbol and exchange.
+        """
+        currency_pair = currency_pair.replace("_", "-")
+        data_path = (
+            f"/v1/symbols/{currency_pair}/markets/{exchange}/ohlcv/{resolution}"
+        )
+        url = f"https://{self._endpoint}{data_path}"
+        return url
 
     def download_ohlcv_data(
         self,

@@ -32,14 +32,14 @@ class TalosBroker(ombroker.AbstractBroker):
 
     @staticmethod
     def create_order(
-            exchanges: List[str],
-            quantity: float,
-            timestamp: str,
-            symbol: str,
-            trading_currency: str,
-            order_type: str,
-            price: float,
-            side: float,
+        exchanges: List[str],
+        quantity: float,
+        timestamp: str,
+        symbol: str,
+        trading_currency: str,
+        order_type: str,
+        price: float,
+        side: float,
     ) -> Dict[str, Any]:
         """
         Create an order.
@@ -96,8 +96,6 @@ class TalosBroker(ombroker.AbstractBroker):
         Get current orders by date and order id.
 
         Example of order data:
-
-
         """
         wall_clock_time = imv2tauti.get_talos_current_utc_timestamp()
         # Create initial request parts and headers.
@@ -119,10 +117,10 @@ class TalosBroker(ombroker.AbstractBroker):
         return data
 
     def build_url(
-            self,
-            *,
-            query: Optional[Dict[str, Any]] = None,
-            order_id: Optional[str] = None,
+        self,
+        *,
+        query: Optional[Dict[str, Any]] = None,
+        order_id: Optional[str] = None,
     ) -> str:
         """
         Build a request URL.
@@ -201,7 +199,9 @@ class TalosBroker(ombroker.AbstractBroker):
         """
         Submit a single order.
         """
-        parts = self._api.build_parts("POST", wall_clock_timestamp, self._order_path)
+        parts = self._api.build_parts(
+            "POST", wall_clock_timestamp, self._order_path
+        )
         # TODO(Danya): Make it customizable/dependent on `self._strategy`
         for order in orders:
             body = json.dumps(order)

@@ -59,55 +59,6 @@ class TalosApiBuilder:
         # Talos request endpoint.
         self._endpoint = self.get_endpoint()
 
-    def build_parts(
-            self, request_type: str, wall_clock_timestamp: str, path: str
-    ) -> List[str]:
-        """
-        Combine initial parts of a GET or POST request.
-
-        The parts include a timestamp, endpoint and path, e.g.:
-
-        ```
-        [
-        "GET",
-        "2019-10-20T15:00:00.000000Z",
-        "sandbox.talostrading.com",
-        "/v1/orders"
-        ]
-        ```
-
-        :param request_type: GET or POST
-        :param wall_clock_timestamp: time of request creation
-        :param path: part of url after endpoint, e.g. "/v1/orders"
-        :return parts: parts of request
-        """
-        hdbg.dassert_in(
-            request_type, ["GET", "POST"], msg="Incorrect request type"
-        )
-        parts = [request_type, wall_clock_timestamp, self._endpoint, path]
-        return parts
-
-    def build_headers(
-            self, parts: Optional[List[str]], wall_clock_timestamp: Optional[str]
-    ) -> Dict[str, str]:
-        """
-        Build parts of the request metadata.
-
-        This includes providing public key and encoding request
-        with secret key for Talos authorization.
-
-        :param parts: parts of request
-        :param wall_clock_timestamp: time of request submission
-        :return: headers for Talos request
-        """
-        headers = {"TALOS-KEY": self._api_keys["apiKey"]}
-        if parts:
-            signature = self.calculate_signature(self._api_keys["secretKey"], parts)
-            headers["TALOS-SIGN"] = signature
-        if wall_clock_timestamp:
-            headers["TALOS-TS"] = wall_clock_timestamp
-        return headers
-
     @staticmethod
     def calculate_signature(secret_key: str, parts: List[str]) -> str:
         """
@@ -138,6 +89,57 @@ class TalosApiBuilder:
         signature = base64.urlsafe_b64encode(hash.digest()).decode()
         return signature
 
+    def build_parts(
+        self, request_type: str, wall_clock_timestamp: str, path: str
+    ) -> List[str]:
+        """
+        Combine initial parts of a GET or POST request.
+
+        The parts include a timestamp, endpoint and path, e.g.:
+
+        ```
+        [
+        "GET",
+        "2019-10-20T15:00:00.000000Z",
+        "sandbox.talostrading.com",
+        "/v1/orders"
+        ]
+        ```
+
+        :param request_type: GET or POST
+        :param wall_clock_timestamp: time of request creation
+        :param path: part of url after endpoint, e.g. "/v1/orders"
+        :return parts: parts of request
+        """
+        hdbg.dassert_in(
+            request_type, ["GET", "POST"], msg="Incorrect request type"
+        )
+        parts = [request_type, wall_clock_timestamp, self._endpoint, path]
+        return parts
+
+    def build_headers(
+        self, parts: Optional[List[str]], wall_clock_timestamp: Optional[str]
+    ) -> Dict[str, str]:
+        """
+        Build parts of the request metadata.
+
+        This includes providing public key and encoding request
+        with secret key for Talos authorization.
+
+        :param parts: parts of request
+        :param wall_clock_timestamp: time of request submission
+        :return: headers for Talos request
+        """
+        headers = {"TALOS-KEY": self._api_keys["apiKey"]}
+        if parts:
+            signature = self.calculate_signature(
+                self._api_keys["secretKey"], parts
+            )
+            headers["TALOS-SIGN"] = signature
+        if wall_clock_timestamp:
+            headers["TALOS-TS"] = wall_clock_timestamp
+        return headers
+
     def get_endpoint(self) -> str:
         """
         Get entrypoint to Talos. The only environment we currently support is
@@ -148,5 +150,7 @@ class TalosApiBuilder:
         if self._account == "sandbox":
             endpoint = f"sandbox.{_TALOS_HOST}"
         else:
-            hdbg.dfatal("Incorrect account type. Supported environments: 'sandbox'.")
+            hdbg.dfatal(
+                "Incorrect account type. Supported environments: 'sandbox'."
+            )
         return endpoint
