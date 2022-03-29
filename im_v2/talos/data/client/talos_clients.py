@@ -173,8 +173,8 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): CmTask1420.
         return []
 
-    @staticmethod
     def _apply_talos_normalization(
+        self,
         data: pd.DataFrame,
         *,
         full_symbol_col_name: Optional[str] = None,
@@ -279,7 +279,8 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         # Remove extra columns and create a timestamp index.
         # TODO(Danya): The normalization may change depending on use of the class.
-        data = self._apply_talos_normalization(data, full_symbol_col_name)
+        data = self._apply_talos_normalization(data,
+                full_symbol_col_name=full_symbol_col_name)
         return data
 
     def _build_select_query(
