@@ -26,7 +26,7 @@ def generate_timestamp_interval(
     :return: two consequtive timestamps that belong to the specified interval
     """
     # Set new seed in order to avoid repeating random values.
-    random.seed(time.time())
+    random.seed()
     # Convert boundaries to epochs.
     left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
         left_boundary, unit="m"
