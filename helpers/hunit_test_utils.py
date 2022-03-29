@@ -32,7 +32,7 @@ class UnitTestRenamer:
         # Check if the names of the test are valid.
         self._check_names(old_test_name, new_test_name)
         # Get the directories containing tests.
-        self.test_dirs = self._get_test_directories(root_dir)
+        self.test_dirs = get_test_directories(root_dir)
         # Construct the renaming config.
         self.cfg = self._process_parameters(old_test_name, new_test_name)
 
@@ -126,22 +126,6 @@ class UnitTestRenamer:
             )
 
     @staticmethod
-    def _get_test_directories(root_dir: str) -> List[str]:
-        """
-        Get paths of all the directories that contain unit tests.
-
-        :param root_dir: the dir to start the search from, e.g. `/src/cmamp1/helpers`
-        :return: paths of test directories
-        """
-        paths = []
-        for path, _, _ in os.walk(root_dir):
-            # Iterate over the paths to find the test directories.
-            if path.endswith("/test"):
-                paths.append(path)
-        hdbg.dassert_lte(1, len(paths))
-        return paths
-
-    @staticmethod
     def _check_names(old_test_name: str, new_test_name: str) -> None:
         """
         Check if the test names are valid.
@@ -204,7 +188,8 @@ class UnitTestRenamer:
             hdbg.dassert_eq(
                 old_class_name,
                 new_class_name,
-                "To change the name of the method, specify the methods of the same class. E.g. `--old TestCache.test1 --new TestCache.new_test1`",
+                "To change the name of the method, specify the methods of the same class. E.g. \
+                 `--old TestCache.test1 --new TestCache.new_test1`",
             )
             _LOG.debug(
                 f"Trying to change the name of `{old_method_name}` method of `{old_class_name}` class to `{new_method_name}`."
@@ -252,11 +237,16 @@ class UnitTestRenamer:
         method_replaced = False
         class_pattern = f"class {self.cfg['old_class']}\("
         method_pattern = f"def {self.cfg['old_method']}\("
+        # Flag that indicates if the current line if inside of the docstring.
+        in_docstring = False
         for ind, line in enumerate(lines):
+            if '"""' in line:
+                # Switch docstring flag.
+                in_docstring = not in_docstring
             # Iterate over the lines of the file to find the specific method of the class that should be renamed.
             if class_found:
-                # Break if the next class started and the method was not found.
-                if line.startswith("class"):
+                if line.startswith("class") and not in_docstring:
+                    # Break if the next class started and the method was not found.
                     break
                 # Rename the method.
                 new_line, num = re.subn(
@@ -323,7 +313,7 @@ class UnitTestRenamer:
         old_target = ".".join([self.cfg["old_class"], self.cfg["old_method"]])
         new_target = ".".join([self.cfg["new_class"], self.cfg["new_method"]])
         if self.cfg["old_method"] == "" and outcome_dir.startswith(old_target):
-            # Check if the class should be renamed, e.g. `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.`.
+            # Check if the class should be renamed, e.g. if `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.`.
             # Split old directory name - the part before "." is the class name.
             class_method = outcome_dir.split(".")
             # Replace old class name with the new one, `["TestOld", "test1"]` -> `["TestNew", "test1"]`.
@@ -332,10 +322,27 @@ class UnitTestRenamer:
             outcome_name_new = ".".join(class_method)
             outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
         elif self.cfg["old_method"] != "" and outcome_dir == old_target:
-            # Check if the method should be renamed, e.g. `outcome_dir` is `TestOld.test1` and `old_target` is `TestOld.test1_new`.
+            # Check if the dir should be renamed. E.g. given that `old_target` is `TestOld.test1_new`, then if  
+            # `outcome_dir` is `TestOld.test1`, it should not be renamed, and if `outcome_dir` is `TestOld.test1_new`, it should be renamed.
             outcome_path_new = os.path.join(outcomes_path, new_target)
         else:
             return False
         # Rename the directory and add it to git.
         self._rename_directory(outcome_path_old, outcome_path_new)
         return True
+
+
+def get_test_directories(root_dir: str) -> List[str]:
+    """
+    Get paths of all the directories that contain unit tests.
+
+    :param root_dir: the dir to start the search from, e.g. `/src/cmamp1/helpers`
+    :return: paths of test directories
+    """
+    paths = []
+    for path, _, _ in os.walk(root_dir):
+        # Iterate over the paths to find the test directories.
+        if path.endswith("/test"):
+            paths.append(path)
+    hdbg.dassert_lte(1, len(paths))
+    return paths
