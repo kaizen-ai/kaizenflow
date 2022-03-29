@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im_v2.common.data.client.historical_pq_clients_example as ivcdchpcle
+"""
+
 import os
 import random
 import time
@@ -9,50 +15,9 @@ import pytest
 import helpers.hdatetime as hdateti
 import helpers.hgit as hgit
 import helpers.hsystem as hsystem
-import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
+
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
-
-
-def generate_timestamp_interval(
-    left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
-) -> Tuple[pd.Timestamp, pd.Timestamp]:
-    """
-    Generate timestamp interval between specified timestamp boundaries.
-
-    Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval
-
-    :param left_boundary: left boundary for generated timestamp interval
-    :param right_boundary: right boundary for generated timestamp interval
-    :return: two consequtive timestamps that belong to the specified interval
-    """
-    # Set new seed in order to avoid repeating random values.
-    random.seed(time.time())
-    # Convert boundaries to epochs.
-    left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-        left_boundary, unit="m"
-    )
-    right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-        right_boundary, unit="m"
-    )
-    # Generate 2 random consequtive epochs in specified boundaries.
-    # TODO(Dan): Discuss boundaries simplification.
-    # Integers are subtracted from right boundary since test data is
-    # generated with open right boundary while `randint` works and
-    # client reads data with closed right boundary.
-    start_ts_epoch = random.randint(
-        left_boundary_epoch, right_boundary_epoch - 2
-    )
-    end_ts_epoch = random.randint(
-        start_ts_epoch, right_boundary_epoch - 1
-    )
-    # Convert generated epochs to timestamps.
-    start_ts = hdateti.convert_unix_epoch_to_timestamp(
-        start_ts_epoch, unit="m"
-    )
-    end_ts = hdateti.convert_unix_epoch_to_timestamp(
-        end_ts_epoch, unit="m"
-    )
-    return start_ts, end_ts
+import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 
 def _generate_test_data(
@@ -95,6 +60,35 @@ class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     def get_universe(self) -> List[str]:
         return ["binance::BTC_USDT", "kucoin::FIL_USDT"]
 
+def get_MockHistoricalByTileClient_example1(
+    assets: str, start_date: str, end_date: str, resample_1min: bool
+) -> imvcdchpcl.HistoricalPqByTileClient:
+    """
+    Build mock client example for test.
+    """
+    freq = "1T"
+    asset_col_name = "full_symbol"
+    output_type = "cm_task_1103"
+    partition_mode = "by_year_month"
+    test_dir = _generate_test_data(
+        self,
+        start_date,
+        end_date,
+        freq,
+        assets,
+        asset_col_name,
+        output_type,
+        partition_mode,
+    )
+    # Init client for testing.
+    vendor = "mock"
+    im_client = MockHistoricalByTileClient(
+        vendor, test_dir, resample_1min, partition_mode
+    )
+    return im_client
+
+
+
 
 # #############################################################################
 # TestHistoricalPqByTileClient1
@@ -104,11 +98,29 @@ class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data1(self) -> None:
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
+        freq = "1T"
         assets = "binance::BTC_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
@@ -138,11 +150,29 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data2(self) -> None:
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
+        freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -174,11 +204,29 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data3(self) -> None:
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
+        freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -212,11 +260,29 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data4(self) -> None:
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
+        freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -250,11 +316,29 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data5(self) -> None:
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
+        freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -291,24 +375,59 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     @pytest.mark.skip("CMTask1510: Faulty symbol not detected.")
     def test_read_data6(self) -> None:
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-01"
+        freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
-        resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
         )
-        # Run test.
+        # Init client for testing.
+        resample_1min = True
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
+        )
         full_symbol = "kucoin::MOCK"
         self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
         # TODO(Nina): will fix it in another PR by 'spoiling' the stored test data
         #  so we can demonstrate that everything works.
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
+        freq = "1T"
         assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
         resample_1min = False
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -342,11 +461,29 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-01"
+        freq = "1T"
         assets = "binance::BTC_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
@@ -356,15 +493,33 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_get_end_ts_for_symbol1(self) -> None:
-        # Generate Parquet test data and initialize client.
+        # Generate Parquet test data.
+        start_date = "2021-12-30"
+        end_date = "2022-01-01"
+        freq = "1T"
         assets = "binance::BTC_USDT"
+        asset_col_name = "full_symbol"
+        output_type = "cm_task_1103"
+        partition_mode = "by_year_month"
+        test_dir = _generate_test_data(
+            self,
+            start_date,
+            end_date,
+            freq,
+            assets,
+            asset_col_name,
+            output_type,
+            partition_mode,
+        )
+        # Init client for testing.
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+        vendor = "mock"
+        im_client = MockHistoricalByTileClient(
+            vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
-        expected_end_timestamp = pd.Timestamp("2022-01-01 23:59:00+00:00")
+        expected_end_timestamp = pd.Timestamp("2021-12-31 23:59:00+00:00")
         self._test_get_end_ts_for_symbol1(
             im_client, full_symbol, expected_end_timestamp
         )
@@ -390,37 +545,6 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_first_elements,
             expected_last_elements,
         )
-
-    # ////////////////////////////////////////////////////////////////////////
-
-    def get_MockHistoricalByTileClient_example1(
-        self, assets: str, resample_1min: bool
-    ) -> imvcdchpcl.HistoricalPqByTileClient:
-        """
-        Build mock client example for test.
-        """
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
-        freq = "1T"
-        asset_col_name = "full_symbol"
-        output_type = "cm_task_1103"
-        partition_mode = "by_year_month"
-        test_dir = _generate_test_data(
-            self,
-            start_date,
-            end_date,
-            freq,
-            assets,
-            asset_col_name,
-            output_type,
-            partition_mode,
-        )
-        # Init client for testing.
-        vendor = "mock"
-        im_client = MockHistoricalByTileClient(
-            vendor, test_dir, resample_1min, partition_mode
-        )
-        return im_client
 
 
 class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
