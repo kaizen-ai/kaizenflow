@@ -1303,6 +1303,7 @@ class Test_find_check_string_output1(hunitest.TestCase):
         act =
         exp = r"""
         A fake check_string output to use for test1
+
         """.lstrip().rstrip()
         self.assert_equal(act, exp, fuzzy_match=False)
         '''
@@ -1320,6 +1321,7 @@ class Test_find_check_string_output1(hunitest.TestCase):
         act =
         exp = r"""
 A fake check_string output to use for test2
+
         """.lstrip().rstrip()
         self.assert_equal(act, exp, fuzzy_match=True)
         '''
