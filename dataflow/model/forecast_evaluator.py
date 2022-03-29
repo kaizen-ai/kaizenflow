@@ -50,11 +50,18 @@ class ForecastEvaluator:
         :param prediction_col: prediction of volatility-adjusted returns, two
             steps ahead
         """
+        hdbg.dassert_isinstance(returns_col, str)
         self._returns_col = returns_col
+        hdbg.dassert_isinstance(volatility_col, str)
         self._volatility_col = volatility_col
+        hdbg.dassert_isinstance(prediction_col, str)
         self._prediction_col = prediction_col
+        #
+        hdbg.dassert_isinstance(start_time, datetime.time)
         self._start_time = start_time
+        hdbg.dassert_isinstance(end_time, datetime.time)
         self._end_time = end_time
+        #
         self._remove_weekends = remove_weekends
 
     def to_str(
@@ -241,7 +248,9 @@ class ForecastEvaluator:
         target_gmv: Optional[float] = None,
         dollar_neutrality: str = "no_constraint",
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """"""
+        """
+        
+        """
         positions, _, _ = self.compute_portfolio(
             df, target_gmv=target_gmv, dollar_neutrality=dollar_neutrality
         )
