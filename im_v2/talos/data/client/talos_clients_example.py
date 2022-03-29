@@ -39,6 +39,6 @@ def get_TalosHistoricalPqByTileClient_example1(
     root_dir = get_test_data_dir()
     partition_mode = "by_year_month"
     talos_file_client = imvtdctacl.TalosHistoricalPqByTileClient(
-        root_dir, resample_1min, partition_mode
+        resample_1min, root_dir, partition_mode
     )
     return talos_file_client

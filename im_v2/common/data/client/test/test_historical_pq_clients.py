@@ -83,7 +83,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
@@ -135,7 +135,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -189,7 +189,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -245,7 +245,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -301,7 +301,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -360,7 +360,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         full_symbol = "kucoin::MOCK"
         self._test_read_data6(im_client, full_symbol)
@@ -390,7 +390,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = False
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -446,7 +446,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
@@ -478,7 +478,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = True
         vendor = "mock"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         full_symbol = "binance::BTC_USDT"
@@ -496,7 +496,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         test_dir = "dummy"
         partition_mode = "by_year_month"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         expected_length = 2
