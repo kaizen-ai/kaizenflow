@@ -1,7 +1,7 @@
 import os
-import random
 from typing import List, Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -47,7 +47,7 @@ def _generate_test_data(
     return test_dir
 
 
-class MockHistoricalByTile(imvcdchpcl.HistoricalPqByTileClient):
+class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 
     def get_universe(self) -> List[str]:
         return ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -82,7 +82,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -134,7 +134,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -188,7 +188,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -244,7 +244,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -300,7 +300,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -359,7 +359,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         full_symbol = "kucoin::MOCK"
@@ -389,7 +389,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = False
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -445,7 +445,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -477,7 +477,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -495,7 +495,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         vendor = "mock"
         test_dir = "dummy"
         partition_mode = "by_year_month"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -534,7 +534,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = False
         vendor = "mock"
-        im_client = MockHistoricalByTile(
+        im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Specify data reading parameters.
@@ -548,9 +548,10 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Read data.
         data = im_client.read_data(full_symbols, start_ts, end_ts)
         # Compare the expected values.
-        # TODO(Dan): Investigate why expected length is not matching actual and
-        #  why value is always the same.
-        expected_length = ((end_ts - start_ts).seconds/60 + 1) * len(full_symbols)
+        # TODO(Dan): Investigate why values are always the same.
+        expected_length = int(
+            ((end_ts - start_ts).total_seconds()/60 + 1) * len(full_symbols)
+        )
         self.assert_equal(str(data.shape[0]), str(expected_length))
         self.assert_equal(str(data.index[0]), str(start_ts))
         self.assert_equal(str(data.index[-1]), str(end_ts))
@@ -571,10 +572,10 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             right_boundary, unit="m"
         )
         # Generate 2 random consequtive epochs in specified boundaries.
-        start_ts_epoch = random.randint(
+        start_ts_epoch = np.random.randint(
             left_boundary_epoch, right_boundary_epoch
         )
-        end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch)
+        end_ts_epoch = np.random.randint(start_ts_epoch, right_boundary_epoch)
         # Convert generated epochs to timestamps.
         start_ts = hdateti.convert_unix_epoch_to_timestamp(
             start_ts_epoch, unit="m"
