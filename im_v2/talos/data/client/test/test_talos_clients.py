@@ -429,7 +429,7 @@ class TestRealTimeSqlTalosClient1(
         """
         table_name = "talos_ohlcv"
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
-            self.connection, table_name, resample_1min
+            resample_1min, self.connection, table_name
         )
         return sql_talos_client
 

@@ -25,6 +25,9 @@ class ImClientTestCase(hunitest.TestCase):
     # TODO(gp): To enforce that all methods are called we could add corresponding
     #  abstract methods to the test methods.
 
+    # TODO(gp): not sure this adds value over using a list as in _test_read_data2.
+    # TODO(gp): to keep things more maintanable we should find better meaningful names
+    #  rather than 1, 2, ...
     def _test_read_data1(
         self,
         im_client: icdc.ImClient,

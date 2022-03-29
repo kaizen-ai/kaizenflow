@@ -842,6 +842,9 @@ def init_logger(
     # Exit to avoid to replicate the same output multiple times.
     if not in_pytest and root_logger.handlers:
         print(WARNING + ": Logger already initialized: skipping")
+        import traceback
+
+        traceback.print_stack()
         return
     #
     print(INFO + ": > cmd='%s'" % get_command_line())
