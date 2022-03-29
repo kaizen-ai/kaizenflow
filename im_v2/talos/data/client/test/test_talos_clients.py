@@ -420,7 +420,6 @@ class TestRealTimeSqlTalosClient1(
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
 
-    # TODO(Max): Move this to im_v2/common/db/db_utils.py
     def setup_talos_sql_client(
         self,
         resample_1min: Optional[bool] = True,
