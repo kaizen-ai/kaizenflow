@@ -7,6 +7,7 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
+import im_v2.talos.db.utils as imvtadbut
 
 # #############################################################################
 # TestTalosParquetByTileClient1
@@ -173,7 +174,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         2022-01-01 00:00:00+00:00  binance::BTC_USDT  46216.93000000  46271.08000000  46208.37000000  46250.00000000      40.57574000
         2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
         ...
-        2022-01-01 00:04:00+00:00  binance::BTC_USDT  46331.07000000  46336.10000000  46300.00000000  46321.34000000     20.96029000
+        2022-01-01 00:04:00+00:00  binance::BTC_USDT             NaN             NaN             NaN             NaN             NaN
         2022-01-01 00:05:00+00:00  binance::ADA_USDT      1.31500000      1.31800000      1.31300000      1.31800000  75423.50000000
         2022-01-01 00:05:00+00:00  binance::BTC_USDT  46321.34000000  46443.56000000  46280.00000000  46436.03000000     35.86682000
         """
@@ -214,7 +215,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         2022-01-01 00:01:00+00:00  binance::BTC_USDT  46250.01000000  46344.23000000  46234.39000000  46312.76000000      42.38106000
         2022-01-01 00:02:00+00:00  binance::ADA_USDT      1.31200000      1.31800000      1.31100000      1.31700000  708964.20000000
         ...
-        2022-01-01 00:04:00+00:00  binance::BTC_USDT  46331.07000000  46336.10000000  46300.00000000  46321.34000000     20.96029000
+        2022-01-01 00:04:00+00:00  binance::BTC_USDT             NaN             NaN             NaN             NaN             NaN
         2022-01-01 00:05:00+00:00  binance::ADA_USDT      1.31500000      1.31800000      1.31300000      1.31800000  75423.50000000
         2022-01-01 00:05:00+00:00  binance::BTC_USDT  46321.34000000  46443.56000000  46280.00000000  46436.03000000     35.86682000
         """
@@ -242,15 +243,13 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         )
 
     def test_read_data7(self) -> None:
-        # TODO(Nina): will fix it in another PR by 'spoiling' the stored test data
-        #  so we can demonstrate that everything works.
         resample_1min = False
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example1(
             resample_1min
         )
         full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
         #
-        expected_length = 200
+        expected_length = 196
         expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
@@ -260,7 +259,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
         # df=
         index=[2022-01-01 00:00:00+00:00, 2022-01-01 01:39:00+00:00]
         columns=full_symbol,open,high,low,close,volume
-        shape=(200, 6)
+        shape=(196, 6)
                                          full_symbol            open            high             low           close           volume
         timestamp
         2022-01-01 00:00:00+00:00  binance::ADA_USDT      1.30800000      1.31000000      1.30700000      1.31000000   98266.80000000
@@ -421,7 +420,6 @@ class TestRealTimeSqlTalosClient1(
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
 
-    # TODO(Max): Move this to im_v2/common/db/db_utils.py
     def setup_talos_sql_client(
         self,
         resample_1min: Optional[bool] = True,
@@ -434,29 +432,6 @@ class TestRealTimeSqlTalosClient1(
             self.connection, table_name, resample_1min
         )
         return sql_talos_client
-
-    # TODO(Max): Move this to im_v2/common/db/db_utils.py
-    def get_create_talos_ohlcv_table_query(self) -> str:
-        """
-        Get SQL query to create Talos OHLCV table.
-        """
-        query = """
-        CREATE TABLE IF NOT EXISTS talos_ohlcv(
-                id SERIAL PRIMARY KEY,
-                timestamp BIGINT NOT NULL,
-                open NUMERIC,
-                high NUMERIC,
-                low NUMERIC,
-                close NUMERIC,
-                volume NUMERIC,
-                ticks NUMERIC,
-                currency_pair VARCHAR(255) NOT NULL,
-                exchange_id VARCHAR(255) NOT NULL,
-                end_download_timestamp TIMESTAMP,
-                knowledge_timestamp TIMESTAMP
-                )
-                """
-        return query
 
     def test_read_data1(self) -> None:
         # Load test data.
@@ -770,5 +745,5 @@ class TestRealTimeSqlTalosClient1(
         """
         Create a test Talos OHLCV table in DB.
         """
-        query = self.get_create_talos_ohlcv_table_query()
+        query = imvtadbut.get_talos_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
