@@ -31,6 +31,7 @@ class HistoricalPqByTileClient(
         self,
         vendor: str,
         root_dir: str,
+        # TODO(Nina): change position of `resample_1min` according to parent class order.
         resample_1min: bool,
         partition_mode: str,
         *,
