@@ -47,7 +47,6 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         """
         vendor = "talos"
         super().__init__(
-            self,
             vendor,
             resample_1min,
             root_dir,
