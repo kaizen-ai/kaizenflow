@@ -7,7 +7,6 @@ import pandas as pd
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
