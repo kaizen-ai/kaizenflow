@@ -14,7 +14,6 @@ _LOG = logging.getLogger(__name__)
 
 @pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestTalosExchange1(hunitest.TestCase):
-
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
