@@ -1133,7 +1133,7 @@ def git_branch_diff_with_master(  # type: ignore
 #
 # - Add end-of-file:
 #   ```
-#   find . -name "*.py" | xargs sed -i '' -e '$a\'
+#   > find . -name "*.py" -o -name "*.txt" | xargs sed -i '' -e '$a\'
 #   ```
 # - Remove end-of-file:
 #   ```
