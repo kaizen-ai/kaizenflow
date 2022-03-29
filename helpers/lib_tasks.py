@@ -299,7 +299,9 @@ def _get_files_to_process(
     elif last_commit:
         files = hgit.get_previous_committed_files(dir_name)
     elif all_:
-        files = hio.listdir(dir_name, only_files=True)
+        file_paths = hio.listdir(dir_name, only_files=True)
+        # Remove full paths and leave only file name.
+        files = [file_path.split("/")[-1] for file_path in file_paths]
     if files_from_user:
         # If files were passed, filter out non-existent paths.
         files = _filter_existing_paths(files_from_user.split())
