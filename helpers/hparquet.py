@@ -421,6 +421,7 @@ ParquetOrAndFilter = List[ParquetAndFilter]
 
 
 # TODO(gp): @Nikola add light unit tests for `by_year_week` and for additional_filter.
+# TODO(gp): Can we return a single type?
 def get_parquet_filters_from_timestamp_interval(
     partition_mode: str,
     start_timestamp: Optional[pd.Timestamp],
@@ -474,13 +475,15 @@ def get_parquet_filters_from_timestamp_interval(
                 range(start_timestamp.year, end_timestamp.year + 1)
             )
             if number_of_years == 1:
-                # For a one-year range, we overwrite the result with a single AND statement,
-                # e.g., `[Jan 2020, Mar 2020]` corresponds to
+                # For a one-year range, we overwrite the result with a single AND
+                # statement, e.g., `[Jan 2020, Mar 2020]` corresponds to
                 # `[[('year', '==', 2020), ('month', '>=', 1), ('month', '<=', 3)]]`.
                 # Note that this interval is different from and OR-AND form as
-                # `[[('year', '==', 2020), ('month', '>=', 1)], [('year', '==', 2020), ('month', '<=', 3)]]`
-                # since the first AND clause include months <= 3 and the second one include months >= 1,
-                # and the OR corresponds to the entire year, instead of the interval `[Jan 2020, Mar 2020]`.
+                # `[[('year', '==', 2020), ('month', '>=', 1)],
+                #   [('year', '==', 2020), ('month', '<=', 3)]]`
+                # since the first AND clause include months <= 3 and the second one
+                # include months >= 1, and the OR corresponds to the entire year,
+                # instead of the interval `[Jan 2020, Mar 2020]`.
                 and_filter = [
                     ("year", "==", start_timestamp.year),
                     ("month", ">=", start_timestamp.month),
@@ -488,8 +491,8 @@ def get_parquet_filters_from_timestamp_interval(
                 ]
                 or_and_filter = [and_filter]
             elif number_of_years > 2:
-                # For ranges over two years, one OR statement is necessary to bridge the
-                # gap between first and last AND statement.
+                # For ranges over two years, one OR statement is necessary to bridge
+                # the gap between first and last AND statement.
                 # `[('year', '>', 2020), ('year', '<', 2023)]`
                 # Inserted in middle as bridge between AND statements.
                 and_filter = [
@@ -502,9 +505,11 @@ def get_parquet_filters_from_timestamp_interval(
                 # enough to select the desired period of time.
                 pass
         elif len(or_and_filter) == 1:
-            # Handle the case when exactly one of the interval bounds is passed, e.g., [June 2020, None].
-            # In this case the first year was covered by the code above (i.e,. `year >= 2020 and month == 6`)
-            # and we need to specify the rest of the years (i.e., `year > 2020`).
+            # Handle the case when exactly one of the interval bounds is passed,
+            # e.g., [June 2020, None].
+            # In this case the first year was covered by the code above (i.e.,
+            # `year >= 2020 and month == 6`) and we need to specify the rest of
+            # the years (i.e., `year > 2020`).
             operator = ">" if start_timestamp else "<"
             timestamp = start_timestamp if start_timestamp else end_timestamp
             extra_filter = [("year", operator, timestamp.year)]
