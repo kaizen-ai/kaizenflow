@@ -21,7 +21,7 @@ import im_v2.talos.utils as imv2tauti
 _LOG = logging.getLogger(__name__)
 
 
-class TalosExchange(imv2tauti.TalosApiBase):
+class TalosExchange(imv2tauti.TalosApiBuilder):
     """
     A class for accessing Talos exchange data.
 
@@ -34,6 +34,8 @@ class TalosExchange(imv2tauti.TalosApiBase):
         Constructor.
         """
         super().__init__(*args, **kwargs)
+        self._api = imv2tauti.TalosApiBuilder(self._account)
+        self._endpoint = self._api.get_endpoint()
 
     def build_url(
             self, currency_pair: str, exchange: str, *, resolution: str = "1m"
@@ -143,7 +145,7 @@ class TalosExchange(imv2tauti.TalosApiBase):
             end_timestamp,
         )
         # Create header with secret key.
-        headers = self.build_headers(parts=None, wall_clock_timestamp=None)
+        headers = self._api.build_headers(parts=None, wall_clock_timestamp=None)
         # Create OHLCV-specific query parameters.
         params = self.build_talos_query_params(
             start_timestamp, end_timestamp, limit=bar_per_iteration

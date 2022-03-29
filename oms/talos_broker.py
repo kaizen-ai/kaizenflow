@@ -20,12 +20,15 @@ import oms.oms_talos_utils as oomtauti
 _LOG = logging.getLogger(__name__)
 
 
-class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
+class TalosBroker(ombroker.AbstractBroker):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Path for order request.
         self._order_path = "/v1/orders"
+        self._api = imv2tauti.TalosApiBuilder(self._account)
+        self._endpoint = self._api.get_endpoint()
+        self._api_keys = self._api._api_keys
 
     @staticmethod
     def create_order(
@@ -93,11 +96,13 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
         Get current orders by date and order id.
 
         Example of order data:
+
+
         """
         wall_clock_time = imv2tauti.get_talos_current_utc_timestamp()
         # Create initial request parts and headers.
-        parts = self.build_parts("GET", wall_clock_time, self._order_path)
-        headers = self.build_headers(parts, wall_clock_time)
+        parts = self._api.build_parts("GET", wall_clock_time, self._order_path)
+        headers = self._api.build_headers(parts, wall_clock_time)
         # Create an URL.
         query = {
             "StartDate": start_timestamp,
@@ -160,7 +165,7 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
          '81a341c1-8e2c-4027-b0ea-26fb1166549c': 'DoneForDay'}
         ```
 
-        :param order_id_list: values of `OrderID` from values of Talos' `OrderIDs`
+        :param order_ids: values of `OrderID` from values of Talos' `OrderIDs`
         :return: mappings of `OrderID` to order status
         """
         # Create dictionary that will store the order status.
@@ -170,8 +175,8 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
             # Imitation of script input parameters.
             # Common elements of both GET and POST requests.
             utc_datetime = imv2tauti.get_talos_current_utc_timestamp()
-            parts = self.build_parts("GET", utc_datetime, self._order_path)
-            headers = self.build_headers(parts, utc_datetime)
+            parts = self._api.build_parts("GET", utc_datetime, self._order_path)
+            headers = self._api.build_headers(parts, utc_datetime)
             # Create a GET request.
             url = self.build_url(order_id=order_id)
             r = requests.get(url=url, headers=headers)
@@ -196,13 +201,13 @@ class TalosBroker(ombroker.AbstractBroker, imv2tauti.TalosApiBase):
         """
         Submit a single order.
         """
-        parts = self.build_parts("POST", wall_clock_timestamp, self._order_path)
+        parts = self._api.build_parts("POST", wall_clock_timestamp, self._order_path)
         # TODO(Danya): Make it customizable/dependent on `self._strategy`
         for order in orders:
             body = json.dumps(order)
             parts.append(body)
             # Enciode request with secret key.
-            headers = self.build_headers(parts, wall_clock_timestamp)
+            headers = self._api.build_headers(parts, wall_clock_timestamp)
             # Create a POST request.
             url = self.build_url()
             r = requests.post(url=url, data=body, headers=headers)

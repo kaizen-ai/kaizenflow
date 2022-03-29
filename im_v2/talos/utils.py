@@ -49,7 +49,7 @@ def get_talos_current_utc_timestamp() -> str:
     return utc_datetime
 
 
-class TalosApiBase(abc.ABC):
+class TalosApiBuilder:
     """
     Base class containing the methods for Talos API access.
     """
