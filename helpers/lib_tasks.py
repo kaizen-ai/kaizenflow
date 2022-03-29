@@ -3504,6 +3504,7 @@ def _build_run_command_line(
 
     :param test_list_name: "fast_tests", "slow_tests" or
         "superslow_tests"
+    :param custom_marker: specify a space separated list of `pytest` markers to skip (e.g., `optimizer` for the optimizer tests, see `pytest.ini`). Empty means no marker to skip
     The rest of params are the same as in `run_fast_tests()`.
 
     The invariant is that we don't want to duplicate pytest options that can be
@@ -3513,12 +3514,12 @@ def _build_run_command_line(
         test_list_name, _TEST_TIMEOUTS_IN_SECS, "Invalid test_list_name"
     )
     pytest_opts = pytest_opts or "."
-    #
+    # Skip tests to skip based on the `test_list_name`(e.g., fast tests) and on the custom marker, if present.
     pytest_opts_tmp = []
+    skipped_tests = _select_tests_to_skip(test_list_name)
+    pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    skipped_tests = _select_tests_to_skip(test_list_name)
-    pytest_opts_tmp.insert(0, f'-m "{custom_marker} and {skipped_tests}"')
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
@@ -3675,7 +3676,7 @@ def run_fast_tests(  # type: ignore
     Run fast tests.
 
     :param stage: select a specific stage for the Docker image
-    :param pytest_opts: option for pytest
+    :param pytest_opts: additional options for invoking `pytest`. It can be empty
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed

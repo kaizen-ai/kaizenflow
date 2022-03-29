@@ -11,7 +11,7 @@ import optimizer.single_period_optimization as osipeopt
 
 _LOG = logging.getLogger(__name__)
 
-
+# All tests in this file belong to the `optimizer` test list and need to be run inside an `opt` container.
 pytestmark = pytest.mark.optimizer
 
 

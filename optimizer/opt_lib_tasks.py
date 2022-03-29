@@ -218,9 +218,46 @@ def opt_run_fast_tests(
     test_list_name = "fast_tests"
     custom_marker = "optimizer"
     pytest_opts = "optimizer"
-    # This parameter is not needed as `optimizer` never has a submodule.
+    # False since optimizer doesn't have a submodule.
     skip_submodules = False
-    # This is always False because we cannot call `git_clean` invoke
+    # False since we cannot call `git_clean` invoke
+    # from the `optimizer` dir.
+    git_clean = False
+    rc = hlibtask._run_tests(
+        ctx,
+        stage,
+        test_list_name,
+        custom_marker,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        **kwargs,
+    )
+    return rc
+
+
+@task
+def opt_run_slow_tests(
+    ctx,
+    stage="dev",
+    version="",
+    pytest_opts="",
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+    **kwargs,
+):
+    test_list_name = "slow_tests"
+    # Run only the tests marked as `optimizer` tests in the `optimizer` directory.
+    custom_marker = "optimizer"
+    pytest_opts = "optimizer"
+    # False since optimizer doesn't have a submodule.
+    skip_submodules = False
+    # False since we cannot call `git_clean` invoke
     # from the `optimizer` dir.
     git_clean = False
     rc = hlibtask._run_tests(
