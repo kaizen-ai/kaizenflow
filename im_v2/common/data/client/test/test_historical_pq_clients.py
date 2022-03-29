@@ -39,19 +39,11 @@ def generate_timestamp_interval(
     # Integers are subtracted from right boundary since test data is
     # generated with open right boundary while `randint` works and
     # client reads data with closed right boundary.
-    start_ts_epoch = random.randint(
-        left_boundary_epoch, right_boundary_epoch - 2
-    )
-    end_ts_epoch = random.randint(
-        start_ts_epoch, right_boundary_epoch - 1
-    )
+    start_ts_epoch = random.randint(left_boundary_epoch, right_boundary_epoch - 2)
+    end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch - 1)
     # Convert generated epochs to timestamps.
-    start_ts = hdateti.convert_unix_epoch_to_timestamp(
-        start_ts_epoch, unit="m"
-    )
-    end_ts = hdateti.convert_unix_epoch_to_timestamp(
-        end_ts_epoch, unit="m"
-    )
+    start_ts = hdateti.convert_unix_epoch_to_timestamp(start_ts_epoch, unit="m")
+    end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
     return start_ts, end_ts
 
 
@@ -105,13 +97,12 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT"
+        full_symbol = "binance::BTC_USDT"
         resample_1min = True
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbol, resample_1min
         )
         # Compare the expected values.
-        full_symbol = "binance::BTC_USDT"
         expected_length = 4320
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
@@ -139,10 +130,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data2(self) -> None:
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
         resample_1min = True
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbols_str, resample_1min
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -175,13 +167,13 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data3(self) -> None:
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
         resample_1min = True
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbols_str, resample_1min
         )
         # Compare the expected values.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         expected_length = 2640
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {
@@ -213,13 +205,13 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data4(self) -> None:
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
         resample_1min = True
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbols_str, resample_1min
         )
         # Compare the expected values.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         expected_length = 6002
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {
@@ -251,13 +243,13 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data5(self) -> None:
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
         resample_1min = True
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbols_str, resample_1min
         )
         # Compare the expected values.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         expected_length = 242
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {
@@ -292,10 +284,10 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     @pytest.mark.skip("CMTask1510: Faulty symbol not detected.")
     def test_read_data6(self) -> None:
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        full_symbols_str = "binance::BTC_USDT,kucoin::FIL_USDT"
         resample_1min = True
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbols_str, resample_1min
         )
         # Run test.
         full_symbol = "kucoin::MOCK"
@@ -305,13 +297,13 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # TODO(Nina): will fix it in another PR by 'spoiling' the stored test data
         #  so we can demonstrate that everything works.
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT,kucoin::FIL_USDT"
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
         resample_1min = False
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbols_str, resample_1min
         )
         # Compare the expected values.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         expected_length = 8640
         expected_column_names = ["close", "full_symbol", "month", "year"]
         expected_column_unique_values = {
@@ -343,13 +335,12 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_get_start_ts_for_symbol1(self) -> None:
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT"
+        full_symbol = "binance::BTC_USDT"
         resample_1min = True
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbol, resample_1min
         )
         # Compare the expected values.
-        full_symbol = "binance::BTC_USDT"
         expected_start_timestamp = pd.Timestamp("2021-12-30 00:00:00+00:00")
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_timestamp
@@ -357,13 +348,12 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_get_end_ts_for_symbol1(self) -> None:
         # Generate Parquet test data and initialize client.
-        assets = "binance::BTC_USDT"
+        full_symbol = "binance::BTC_USDT"
         resample_1min = True
         im_client = self.get_MockHistoricalByTileClient_example1(
-            assets, resample_1min
+            full_symbol, resample_1min
         )
         # Compare the expected values.
-        full_symbol = "binance::BTC_USDT"
         expected_end_timestamp = pd.Timestamp("2022-01-01 23:59:00+00:00")
         self._test_get_end_ts_for_symbol1(
             im_client, full_symbol, expected_end_timestamp
@@ -427,11 +417,34 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     @pytest.mark.slow("Execution time varies depending on generated inputs.")
     def test_read_data_random1(self) -> None:
-        # Generate Parquet test data.
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
         start_date = "2018-12-30"
         end_date = "2022-01-02"
+        resample_1min = False
+        im_client = self.get_MockHistoricalByTileClient_example1(
+            full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Generate random timestamp interval and read data.
+        left_boundary = pd.Timestamp(start_date)
+        right_boundary = pd.Timestamp(end_date)
+        start_ts, end_ts = generate_timestamp_interval(
+            left_boundary, right_boundary
+        )
+        data = im_client.read_data(full_symbols, start_ts, end_ts)
+        # Compare the expected values.
+        self._check_output(data, full_symbols, start_ts, end_ts)
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def get_MockHistoricalByTileClient_example1(
+        self, assets: str, start_date: str, end_date: str, resample_1min: bool
+    ) -> imvcdchpcl.HistoricalPqByTileClient:
+        """
+        Build mock client example for tests.
+        """
         freq = "1T"
-        assets = "binance::BTC_USDT,kucoin::FIL_USDT"
         asset_col_name = "full_symbol"
         output_type = "cm_task_1103"
         partition_mode = "by_year_month"
@@ -446,25 +459,25 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             partition_mode,
         )
         # Init client for testing.
-        resample_1min = False
         vendor = "mock"
         im_client = MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
-        # Specify data reading parameters.
-        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
-        # Generate random timestamp interval.
-        left_boundary = pd.Timestamp(start_date)
-        right_boundary = pd.Timestamp(end_date)
-        start_ts, end_ts = generate_timestamp_interval(
-            left_boundary, right_boundary
-        )
-        # Read data.
-        data = im_client.read_data(full_symbols, start_ts, end_ts)
-        # Compare the expected values.
+        return im_client
+
+    def _check_output(
+        self,
+        actual_df: pd.DataFrame,
+        full_symbols: List[str],
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+    ) -> None:
+        """
+        Check output for correctness.
+        """
         expected_length = int(
-            ((end_ts - start_ts).total_seconds()/60 + 1) * len(full_symbols)
+            ((end_ts - start_ts).total_seconds() / 60 + 1) * len(full_symbols)
         )
-        self.assert_equal(str(data.shape[0]), str(expected_length))
-        self.assert_equal(str(data.index[0]), str(start_ts))
-        self.assert_equal(str(data.index[-1]), str(end_ts))
+        self.assert_equal(str(actual_df.shape[0]), str(expected_length))
+        self.assert_equal(str(actual_df.index[0]), str(start_ts))
+        self.assert_equal(str(actual_df.index[-1]), str(end_ts))
