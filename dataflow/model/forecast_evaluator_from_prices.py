@@ -294,7 +294,9 @@ class ForecastEvaluatorFromPrices:
         """
         if file_name is None:
             dir_name = os.path.join(log_dir, "price")
-            files = hio.find_all_files(dir_name)
+            file_paths = hio.listdir(dir_name)
+            # Remove full paths and leave only file name.
+            files = [file_path.split("/")[-1] for file_path in file_paths]
             files.sort()
             file_name = files[-1]
         price = ForecastEvaluatorFromPrices._read_df(
