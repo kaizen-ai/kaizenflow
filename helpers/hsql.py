@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.hsql as hsql
+"""
+
 import helpers.henv as henv
 
 # The problem here is that part of the code base end up including `hsql` which
@@ -5,7 +11,7 @@ import helpers.henv as henv
 # To simplify the dependency management we include the code of `hsql` only if
 # `psycopg2` is present. If not, we just create a stub for the needed type hints.
 if henv.has_module("psycopg2"):
-    from helpers.hsql_implementation import *
+    pass
 
 else:
     from typing import Any
