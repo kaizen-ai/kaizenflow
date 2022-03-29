@@ -496,7 +496,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         test_dir = "dummy"
         partition_mode = "by_year_month"
         im_client = MockHistoricalByTile(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         expected_length = 2
