@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import helpers.hsql as hsql
+"""
+
 import helpers.henv as henv
 
 # The problem here is that part of the code base end up including `hsql` which
