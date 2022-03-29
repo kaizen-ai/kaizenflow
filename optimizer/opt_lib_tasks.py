@@ -257,7 +257,7 @@ def _get_opt_docker_up_cmd(
         -d"""
         )
     # Specify the service name.
-    service = "app"
+    service = "optimizer"
     docker_up_cmd_.append(
         rf"""
         {service}"""
