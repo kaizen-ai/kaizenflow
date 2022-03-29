@@ -1124,10 +1124,16 @@ def git_branch_diff_with_master(  # type: ignore
 #   > cd cmamp1
 #   > i lint --dir-name . --only-format
 #   ```
+#   or at least the files touched by both repos
+#   ```
+#   > i integrate_files --file-direction only_files_in_src
+#   > cat tmp.integrate_find_files_touched_since_last_integration.cmamp1.txt tmp.integrate_find_files_touched_since_last_integration.amp1.txt | sort | uniq >files.txt
+#   > i lint --only-format -f '$(cat files.txt)'
+#   ```
 #
 # - Add end-of-file:
 #   ```
-#   find . -name "*.py" | xargs sed -i '' -e '$a\'
+#   > find . -name "*.py" -o -name "*.txt" | xargs sed -i '' -e '$a\'
 #   ```
 # - Remove end-of-file:
 #   ```

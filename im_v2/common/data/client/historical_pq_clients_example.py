@@ -84,6 +84,6 @@ def get_MockHistoricalByTileClient_example1(
     # Init client for testing.
     vendor = "mock"
     im_client = MockHistoricalByTileClient(
-        vendor, test_dir, resample_1min, partition_mode
+        vendor, resample_1min, test_dir, partition_mode
     )
     return im_client

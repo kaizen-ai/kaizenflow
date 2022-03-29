@@ -55,8 +55,8 @@ def get_KibotEquitiesCsvParquetByAssetClient_example1(
     extension = "csv.gz"
     asset_class = "stocks"
     kibot_file_client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
-        root_dir,
         resample_1min,
+        root_dir,
         extension,
         asset_class,
         unadjusted,
@@ -80,8 +80,8 @@ def get_KibotEquitiesCsvParquetByAssetClient_example2(
     extension = "pq"
     asset_class = "stocks"
     kibot_file_client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
-        root_dir,
         resample_1min,
+        root_dir,
         extension,
         asset_class,
         unadjusted,
@@ -104,8 +104,8 @@ def get_KibotFuturesCsvParquetByAssetClient_example1(
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
-        root_dir,
         resample_1min,
+        root_dir,
         extension,
         contract_type,
     )
@@ -127,8 +127,8 @@ def get_KibotFuturesCsvParquetByAssetClient_example2(
     root_dir = get_test_data_dir()
     extension = "pq"
     kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
-        root_dir,
         resample_1min,
+        root_dir,
         extension,
         contract_type,
     )
