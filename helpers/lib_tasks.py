@@ -3517,7 +3517,10 @@ def _build_run_command_line(
     # Skip tests to skip based on the `test_list_name`(e.g., fast tests) and on the custom marker, if present.
     pytest_opts_tmp = []
     skipped_tests = _select_tests_to_skip(test_list_name)
-    pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
+    if custom_marker != "":
+        pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
+    else:
+        pytest_opts_tmp.append(f'-m "{skipped_tests}"')
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]

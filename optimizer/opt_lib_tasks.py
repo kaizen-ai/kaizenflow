@@ -210,13 +210,18 @@ def opt_run_fast_tests(
     stage="dev",
     version="",
     pytest_opts="",
+    use_opt_test_marker=False,
     coverage=False,
     collect_only=False,
     tee_to_file=False,
     **kwargs,
 ):
     test_list_name = "fast_tests"
-    custom_marker = "optimizer"
+    if use_opt_test_marker:
+        # Run only the tests marked as `optimizer` tests in the `optimizer` directory.
+        custom_marker = "optimizer"
+    else:
+        custom_marker = ""
     pytest_opts = "optimizer"
     # False since optimizer doesn't have a submodule.
     skip_submodules = False
@@ -246,14 +251,18 @@ def opt_run_slow_tests(
     stage="dev",
     version="",
     pytest_opts="",
+    use_opt_test_marker=False,
     coverage=False,
     collect_only=False,
     tee_to_file=False,
     **kwargs,
 ):
     test_list_name = "slow_tests"
-    # Run only the tests marked as `optimizer` tests in the `optimizer` directory.
-    custom_marker = "optimizer"
+    if use_opt_test_marker:
+        # Run only the tests marked as `optimizer` tests in the `optimizer` directory.
+        custom_marker = "optimizer"
+    else:
+        custom_marker = ""
     pytest_opts = "optimizer"
     # False since optimizer doesn't have a submodule.
     skip_submodules = False

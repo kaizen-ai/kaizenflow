@@ -755,6 +755,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         """
         Basic run fast tests.
         """
+        custom_marker = ""
         pytest_opts = ""
         skip_submodules = False
         coverage = False
@@ -763,6 +764,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         act = hlibtask._build_run_command_line(
             "fast_tests",
+            custom_marker,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -780,6 +782,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         """
         Coverage and collect-only.
         """
+        custom_marker = ""
         pytest_opts = ""
         skip_submodules = False
         coverage = True
@@ -788,6 +791,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         act = hlibtask._build_run_command_line(
             "fast_tests",
+            custom_marker,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -835,6 +839,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         hunitest.create_test_dir(dir_name, incremental, file_dict)
         #
         test_list_name = "fast_tests"
+        custom_marker = ""
         pytest_opts = ""
         skip_submodules = True
         coverage = False
@@ -843,6 +848,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         act = hlibtask._build_run_command_line(
             test_list_name,
+            custom_marker,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -860,6 +866,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         Basic run fast tests tee-ing to a file.
         """
         test_list_name = "fast_tests"
+        custom_marker = ""
         pytest_opts = ""
         skip_submodules = False
         coverage = False
@@ -868,6 +875,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         act = hlibtask._build_run_command_line(
             test_list_name,
+            custom_marker,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -882,6 +890,32 @@ class Test_build_run_command_line1(hunitest.TestCase):
         )
         self.assert_equal(act, exp)
 
+    def test_run_fast_tests6(self) -> None:
+        """
+        Basic run fast tests.
+        """
+        custom_marker = "optimizer"
+        pytest_opts = ""
+        skip_submodules = False
+        coverage = False
+        collect_only = False
+        tee_to_file = False
+        #
+        act = hlibtask._build_run_command_line(
+            "fast_tests",
+            custom_marker,
+            pytest_opts,
+            skip_submodules,
+            coverage,
+            collect_only,
+            tee_to_file,
+        )
+        exp = (
+            'pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout"'
+        )
+        self.assert_equal(act, exp)
 
 # #############################################################################
 
