@@ -132,7 +132,7 @@ def listdir(
         pattern: str = "*",
         only_files: bool = False,
         exclude_git_dirs: bool = True,
-        aws_profile: AwsProfile = None,
+        aws_profile: Optional[AwsProfile] = None,
 ) -> List[str]:
     """
     Counterpart to `hio.listdir` with S3 support.
