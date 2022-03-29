@@ -77,7 +77,7 @@ class ImportTimeChecker:
         Traverse files and directory and find all modules and measure execution time
         :return: None
         """
-        file_names = hio.find_files(self.dir_name, "*.py")
+        file_names = hio.listdir(self.dir_name, "*.py")
         modules = set()
         for file_name in file_names:
             _LOG.debug("filename: %s", file_name)

@@ -293,7 +293,7 @@ class ForecastEvaluator:
         """
         if file_name is None:
             dir_name = os.path.join(log_dir, "returns")
-            files = hio.find_all_files(dir_name)
+            files = hio.listdir(dir_name, only_files=True)
             files.sort()
             file_name = files[-1]
         returns = ForecastEvaluator._read_df(log_dir, "returns", file_name, tz)

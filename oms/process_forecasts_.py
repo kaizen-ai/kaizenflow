@@ -356,7 +356,7 @@ class ForecastProcessor:
         """
         name = "target_positions"
         dir_name = os.path.join(log_dir, name)
-        files = hio.find_all_files(dir_name)
+        files = hio.listdir(dir_name, only_files=True)
         files.sort()
         dfs = []
         for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
@@ -389,7 +389,7 @@ class ForecastProcessor:
         """
         name = "orders"
         dir_name = os.path.join(log_dir, name)
-        files = hio.find_all_files(dir_name)
+        files = hio.listdir(dir_name, only_files=True)
         files.sort()
         dfs = []
         for file_name in tqdm(files, desc=f"Loading `{name}` files..."):

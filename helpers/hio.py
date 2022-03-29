@@ -7,7 +7,6 @@ import helpers.hio as hio
 """
 
 import datetime
-import fnmatch
 import gzip
 import json
 import logging
@@ -15,7 +14,7 @@ import os
 import shutil
 import time
 import uuid
-from typing import Any, List, Optional, cast
+from typing import Any, List, Optional
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -54,42 +53,24 @@ def purify_file_name(file_name: str) -> str:
 # #############################################################################
 
 
-def find_files(directory: str, pattern: str) -> List[str]:
-    """
-    Find all files under `directory` that match a certain `pattern`.
-
-    :param directory: path to the directory where to look for files.
-    :param pattern: pattern to match a filename against
-    """
-    file_names = []
-    hdbg.dassert_dir_exists(directory)
-    for root, _, files in os.walk(directory):
-        for basename in files:
-            if fnmatch.fnmatch(basename, pattern):
-                file_name = os.path.join(root, basename)
-                # TODO(Nikola): Implement this function using glob mimicking hs3.find_files
-                file_names.append(file_name)
-    return file_names
-
-
-def find_regex_files(
-    src_dir: str,
-    regex: str,
+def listdir(
+    directory: str,
     *,
+    pattern: str = "*",
     only_files: bool = False,
     exclude_git_dirs: bool = True,
 ) -> List[str]:
     """
-    Find all files under `src_dir`
+    Find all files and subdirectories under `directory` that match a certain
+    `pattern`.
 
-    :param regex: find regex to search for (e.g., `*.py`)
-    :param only_files: look for only files instead of both files and dirs
+    :param directory: path to the directory where to look for files
+    :param pattern: pattern to match a filename against (e.g., `*.py`)
+    :param only_files: look for only files instead of both files and directories
     :param exclude_git_dirs: skip `.git` dirs
     """
-    hdbg.dassert_dir_exists(src_dir)
-    cmd = []
-    cmd.append(f"find {src_dir}")
-    cmd.append(f'-name "{regex}"')
+    hdbg.dassert_dir_exists(directory)
+    cmd = [f"find {directory}", f'-name "{pattern}"']
     if only_files:
         cmd.append("-type f")
     if exclude_git_dirs:
@@ -97,30 +78,10 @@ def find_regex_files(
     cmd = " ".join(cmd)
     _, output = hsystem.system_to_string(cmd)
     # TODO(gp): -> system_to_files
-    file_names = [f for f in output.split("\n") if f != ""]
-    _LOG.debug("Found %s files in %s", len(file_names), src_dir)
-    _LOG.debug("\n".join(file_names))
-    return file_names
-
-
-# TODO(gp): Redundant with `find_regex_files()`. Remove this.
-def find_all_files(dir_name: str, extension: Optional[str] = None) -> List[str]:
-    """
-    Find all files (not directory) under `dir_name`, skipping `.git`.
-    """
-    file_name = "*"
-    if extension is not None:
-        hdbg.dassert(
-            not extension.startswith("."),
-            "extension='%s' should not start with .",
-            extension,
-        )
-        file_name += f".{extension}"
-    cmd = fr'''cd {dir_name} && find . -type f -name "{file_name}" -not -path "*/\.git/*"'''
-    file_names = hsystem.system_to_files(cmd)
-    file_names = cast(List[str], file_names)
-    _LOG.debug("Found %s files", len(file_names))
-    return file_names
+    paths = [path for path in output.split("\n") if path != ""]
+    _LOG.debug("Found %s paths in %s", len(paths), directory)
+    _LOG.debug("\n".join(paths))
+    return paths
 
 
 def is_paired_jupytext_python_file(py_filename: str) -> bool:

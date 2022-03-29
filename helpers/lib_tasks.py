@@ -299,7 +299,7 @@ def _get_files_to_process(
     elif last_commit:
         files = hgit.get_previous_committed_files(dir_name)
     elif all_:
-        files = hio.find_all_files(dir_name)
+        files = hio.listdir(dir_name, only_files=True)
     if files_from_user:
         # If files were passed, filter out non-existent paths.
         files = _filter_existing_paths(files_from_user.split())
@@ -3201,7 +3201,7 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
 
 @functools.lru_cache()
 def _get_python_files(subdir: str) -> List[str]:
-    python_files = hio.find_regex_files(subdir, "*.py", only_files=True)
+    python_files = hio.listdir(subdir, pattern="*.py", only_files=True)
     # Remove tmp files.
     python_files = [f for f in python_files if not f.startswith("tmp")]
     return python_files
@@ -4964,7 +4964,7 @@ def lint(  # type: ignore
         all_ = False
         if dir_name != "":
             hdbg.dassert_eq(files, "")
-            files = hio.find_files(dir_name, "*.py")
+            files = hio.listdir(dir_name, pattern="*.py")
             files = " ".join(files)
         # For linting we can use only files modified in the client, in the branch, or
         # specified.

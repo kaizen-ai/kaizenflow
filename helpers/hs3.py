@@ -10,7 +10,7 @@ import functools
 import logging
 import os
 import pprint
-from typing import Any, Dict, Optional, Tuple, Union, List
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 _WARNING = "\033[33mWARNING\033[0m"
 
@@ -113,7 +113,7 @@ def split_path(s3_path: str) -> Tuple[str, str]:
     # Remove the s3 prefix.
     prefix = "s3://"
     hdbg.dassert(s3_path.startswith(prefix))
-    s3_path = s3_path[len(prefix):]
+    s3_path = s3_path[len(prefix) :]
     # Break the path into dirs.
     dirs = s3_path.split("/")
     bucket = dirs[0]
@@ -126,23 +126,46 @@ def split_path(s3_path: str) -> Tuple[str, str]:
     return bucket, abs_path
 
 
-def find_files(
-        directory: str, pattern: str, aws_profile: AwsProfile = None
+def listdir(
+        directory: str,
+        *,
+        pattern: str = "*",
+        only_files: bool = False,
+        exclude_git_dirs: bool = True,
+        aws_profile: AwsProfile = None,
 ) -> List[str]:
     """
-    Find all files under `directory` that match a certain `pattern`.
+    Counterpart to `hio.listdir` with S3 support.
 
-    :param directory: path to the directory where to look for files, S3 or local
-    :param pattern: pattern to match a filename against
-    :param aws_profile: the name of an AWS profile or a s3fs filesystem
+    If `aws_profile` is specified, S3 is used instead local filesystem.
     """
     if aws_profile:
         s3fs_ = get_s3fs(aws_profile)
         dassert_s3_path_exists(directory, s3fs_)
-        file_names = s3fs_.glob(f"{directory}/{pattern}")
+        # `hio.listdir` is using `find` which is checking all files/directories
+        # up to max depth of the structure. One file can be in current directory
+        # and other one can be in subdirectory of existing directory.
+        # One star in glob will use `maxdepth=1`.
+        pattern = pattern.replace("*", "**")
+        # Detailed S3 objects in dict form with metadata.
+        path_objects = s3fs_.glob(f"{directory}/{pattern}", detail=True)
+        if only_files:
+            # With metadata, it is possible to distinguish files from
+            # directories without calling `s3fs_.isdir/isfile`.
+            for path_object in path_objects.values():
+                if path_object["type"] != "file":
+                    path_objects.pop(path_object["Key"])
+        paths = list(path_objects.keys())
+        if exclude_git_dirs:
+            paths = [path for path in paths if "/.git/" not in path]
     else:
-        file_names = hio.find_files(directory, pattern)
-    return file_names
+        paths = hio.listdir(
+            directory,
+            pattern=pattern,
+            only_files=only_files,
+            exclude_git_dirs=exclude_git_dirs,
+        )
+    return paths
 
 
 def get_local_or_s3_stream(
@@ -488,6 +511,7 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
 
 
 # TODO(gp): -> helpers/aws_utils.py
+
 
 def archive_data_on_s3(
     src_dir: str, s3_path: str, aws_profile: Optional[str], tag: str = ""

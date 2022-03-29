@@ -18,7 +18,7 @@ class Test_find_all_files1(hunitest.TestCase):
         dir_name = hgit.get_client_root(super_module=False)
         #
         # Check that there are files.
-        all_files = hio.find_all_files(dir_name)
+        all_files = hio.listdir(dir_name, only_files=True)
         self.assertGreater(len(all_files), 0)
         # Check that there are more files than Python files.
         exclude_paired_jupytext = False
