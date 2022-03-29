@@ -31,6 +31,26 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     Read historical data for `Talos` assets stored as Parquet dataset.
 
     It can read data from local or S3 filesystem as backend.
+
+    The timing semantic of several clients is described below.
+    # Talos DB:
+    - In a query [a, b], the extremes a and b are rounded to the floor of the minute. If `b` is already a round minute,
+    it's rounded to the previous minute.
+    - E.g., [10:00:00, 10:00:36] retrieves data for [10:00:00, 10:00:00]
+    - E.g., [10:07:00, 10:08:24] -> [10:07:00, 10:08:00]
+    - E.g., [10:06:00, 10:08:00] -> [10:06:00, 10:07:00]
+
+    # CCXT Client:
+    - In a query [a, b], the extremes a and b are rounded to the floor of the minute.
+    - E.g., [10:00:00, 10:00:36] retrieves data for [10:00:00, 10:00:00]
+    - E.g., [10:07:36, 10:08:24] -> [10:08:00, 10:08:00]
+    - E.g., [10:06:00, 10:08:00] -> [10:06:00, 10:08:00]
+
+    # Talos Client:
+    - In a query [a, b], the extremes a and b are rounded to the floor of the minute.
+    - E.g., [10:00:00, 10:00:36] retrieves data for [10:00:00, 10:00:00]
+    - E.g., [10:07:36, 10:08:24] -> [10:08:00, 10:08:00]
+    - E.g., [10:06:00, 10:08:00] -> [10:06:00, 10:08:00]
     """
 
     def __init__(
