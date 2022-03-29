@@ -14,13 +14,31 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
+LOOP = asyncio.get_event_loop()
+
+
 def list_files():
-    return os.listdir("/app/optimizer/tmp_dir")
+    files = os.listdir("/app/optimizer/tmp_dir")
+    print(f"FILES={files}")
+    return files
 
 
 def on_got_files(fut):
-   print("got files {}".format(fut.result()))
-   loop.stop()
+    print("got files {}".format(fut.result()))
+    LOOP.stop()
+
+
+def _wait_for_file():
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        fut = LOOP.run_in_executor(executor, list_files)
+        if fut.result():
+            fut.add_done_callback(on_got_files)
+            print("Listing files asynchronously")
+
+
+def wait_for_file():
+    LOOP.call_soon(_wait_for_file)
+    LOOP.run_forever()
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -34,14 +52,8 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-       loop = asyncio.get_event_loop()
-       fut = loop.run_in_executor(executor, list_files)
-       fut.add_done_callback(on_got_files)
-       print("Listing files asynchronously")
+    wait_for_file()
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.call_soon(_main(_parse()))
-    loop.run_forever()
+    _main(_parse())

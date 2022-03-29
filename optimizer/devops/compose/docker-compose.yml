@@ -55,7 +55,7 @@ services:
       - ../../../:/app
 
   optimizer:
-    command: optimizer/optimizer_stub.py
+    command: optimizer/optimize.py
     extends:
       app
 
