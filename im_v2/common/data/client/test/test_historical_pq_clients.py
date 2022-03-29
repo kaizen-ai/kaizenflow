@@ -1,6 +1,5 @@
 import os
 import random
-import time
 from typing import List, Tuple
 
 import pandas as pd
@@ -11,40 +10,7 @@ import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
-
-
-def generate_timestamp_interval(
-    left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
-) -> Tuple[pd.Timestamp, pd.Timestamp]:
-    """
-    Generate timestamp interval between specified timestamp boundaries.
-
-    Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval
-
-    :param left_boundary: left boundary for generated timestamp interval
-    :param right_boundary: right boundary for generated timestamp interval
-    :return: two consequtive timestamps that belong to the specified interval
-    """
-    # Set new seed in order to avoid repeating random values.
-    random.seed()
-    # Convert boundaries to epochs.
-    left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-        left_boundary, unit="m"
-    )
-    right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-        right_boundary, unit="m"
-    )
-    # Generate 2 random consequtive epochs in specified boundaries.
-    # TODO(Dan): Discuss boundaries simplification.
-    # Integers are subtracted from right boundary since test data is
-    # generated with open right boundary while `randint` works and
-    # client reads data with closed right boundary.
-    start_ts_epoch = random.randint(left_boundary_epoch, right_boundary_epoch - 2)
-    end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch - 1)
-    # Convert generated epochs to timestamps.
-    start_ts = hdateti.convert_unix_epoch_to_timestamp(start_ts_epoch, unit="m")
-    end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
-    return start_ts, end_ts
+import im_v2.common.data.client.historical_pq_clients_example as ivcdchpqce
 
 
 def _generate_test_data(
@@ -98,9 +64,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbol, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbol, start_date, end_date, resample_1min
         )
         # Compare the expected values.
         expected_length = 4320
@@ -132,9 +100,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbols_str, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -169,9 +139,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbols_str, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Compare the expected values.
         expected_length = 2640
@@ -207,9 +179,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbols_str, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Compare the expected values.
         expected_length = 6002
@@ -245,9 +219,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbols_str, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Compare the expected values.
         expected_length = 242
@@ -285,9 +261,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_read_data6(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols_str = "binance::BTC_USDT,kucoin::FIL_USDT"
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbols_str, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Run test.
         full_symbol = "kucoin::MOCK"
@@ -299,9 +277,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = False
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbols_str, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Compare the expected values.
         expected_length = 8640
@@ -336,9 +316,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_get_start_ts_for_symbol1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbol, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbol, start_date, end_date, resample_1min
         )
         # Compare the expected values.
         expected_start_timestamp = pd.Timestamp("2021-12-30 00:00:00+00:00")
@@ -349,9 +331,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_get_end_ts_for_symbol1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
+        start_date = "2021-12-30"
+        end_date = "2022-01-02"
         resample_1min = True
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbol, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbol, start_date, end_date, resample_1min
         )
         # Compare the expected values.
         expected_end_timestamp = pd.Timestamp("2022-01-01 23:59:00+00:00")
@@ -367,7 +351,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         vendor = "mock"
         test_dir = "dummy"
         partition_mode = "by_year_month"
-        im_client = MockHistoricalByTileClient(
+        im_client = ivcdchpqce.MockHistoricalByTileClient(
             vendor, test_dir, resample_1min, partition_mode
         )
         # Compare the expected values.
@@ -381,39 +365,42 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_last_elements,
         )
 
-    # ////////////////////////////////////////////////////////////////////////
-
-    def get_MockHistoricalByTileClient_example1(
-        self, assets: str, resample_1min: bool
-    ) -> imvcdchpcl.HistoricalPqByTileClient:
-        """
-        Build mock client example for test.
-        """
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
-        freq = "1T"
-        asset_col_name = "full_symbol"
-        output_type = "cm_task_1103"
-        partition_mode = "by_year_month"
-        test_dir = _generate_test_data(
-            self,
-            start_date,
-            end_date,
-            freq,
-            assets,
-            asset_col_name,
-            output_type,
-            partition_mode,
-        )
-        # Init client for testing.
-        vendor = "mock"
-        im_client = MockHistoricalByTileClient(
-            vendor, test_dir, resample_1min, partition_mode
-        )
-        return im_client
-
 
 class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
+
+    @staticmethod
+    def generate_timestamp_interval(
+        left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
+    ) -> Tuple[pd.Timestamp, pd.Timestamp]:
+        """
+        Generate timestamp interval between specified timestamp boundaries.
+
+        Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval
+
+        :param left_boundary: left boundary for generated timestamp interval
+        :param right_boundary: right boundary for generated timestamp interval
+        :return: two consequtive timestamps that belong to the specified interval
+        """
+        # Set new seed in order to avoid repeating random values.
+        random.seed()
+        # Convert boundaries to epochs.
+        left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
+            left_boundary, unit="m"
+        )
+        right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
+            right_boundary, unit="m"
+        )
+        # Generate 2 random consequtive epochs in specified boundaries.
+        # TODO(Dan): Discuss boundaries simplification.
+        # Integers are subtracted from right boundary since test data is
+        # generated with open right boundary while `randint` works and
+        # client reads data with closed right boundary.
+        start_ts_epoch = random.randint(left_boundary_epoch, right_boundary_epoch - 2)
+        end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch - 1)
+        # Convert generated epochs to timestamps.
+        start_ts = hdateti.convert_unix_epoch_to_timestamp(start_ts_epoch, unit="m")
+        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
+        return start_ts, end_ts
 
     @pytest.mark.slow("Execution time varies depending on generated inputs.")
     def test_read_data_random1(self) -> None:
@@ -423,47 +410,19 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         start_date = "2018-12-30"
         end_date = "2022-01-02"
         resample_1min = False
-        im_client = self.get_MockHistoricalByTileClient_example1(
-            full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
         )
-        # Generate random timestamp interval and read data.
-        left_boundary = pd.Timestamp(start_date)
-        right_boundary = pd.Timestamp(end_date)
-        start_ts, end_ts = generate_timestamp_interval(
-            left_boundary, right_boundary
-        )
-        data = im_client.read_data(full_symbols, start_ts, end_ts)
-        # Compare the expected values.
-        self._check_output(data, full_symbols, start_ts, end_ts)
-
-    # ////////////////////////////////////////////////////////////////////////
-
-    def get_MockHistoricalByTileClient_example1(
-        self, assets: str, start_date: str, end_date: str, resample_1min: bool
-    ) -> imvcdchpcl.HistoricalPqByTileClient:
-        """
-        Build mock client example for tests.
-        """
-        freq = "1T"
-        asset_col_name = "full_symbol"
-        output_type = "cm_task_1103"
-        partition_mode = "by_year_month"
-        test_dir = _generate_test_data(
-            self,
-            start_date,
-            end_date,
-            freq,
-            assets,
-            asset_col_name,
-            output_type,
-            partition_mode,
-        )
-        # Init client for testing.
-        vendor = "mock"
-        im_client = MockHistoricalByTileClient(
-            vendor, test_dir, resample_1min, partition_mode
-        )
-        return im_client
+        for i in range(5):
+            # Generate random timestamp interval and read data.
+            left_boundary = pd.Timestamp(start_date)
+            right_boundary = pd.Timestamp(end_date)
+            start_ts, end_ts = self.generate_timestamp_interval(
+                left_boundary, right_boundary
+            )
+            data = im_client.read_data(full_symbols, start_ts, end_ts)
+            # Compare the expected values.
+            self._check_output(data, full_symbols, start_ts, end_ts)
 
     def _check_output(
         self,

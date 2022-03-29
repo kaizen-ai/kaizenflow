@@ -20,7 +20,6 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 _LOG = logging.getLogger(__name__)
 
-
 # #############################################################################
 # TalosHistoricalPqByTileClient
 # #############################################################################
