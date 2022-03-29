@@ -8,6 +8,7 @@ import glob
 import logging
 import os
 import re
+from statistics import _Number
 from typing import Dict, List, Union
 
 import helpers.hdbg as hdbg
@@ -74,23 +75,25 @@ class UnitTestRenamer:
             return
         if self.cfg["old_method"] == "":
             # Rename the class.
-            content = self._rename_class(content)
-            _LOG.info(
-                "%s: class `%s` was renamed to `%s`.",
-                file_path,
-                self.cfg["old_class"],
-                self.cfg["new_class"],
-            )
+            content, n_replaced = self._rename_class(content)
+            if n_replaced != 0:
+                _LOG.info(
+                    "%s: class `%s` was renamed to `%s`.",
+                    file_path,
+                    self.cfg["old_class"],
+                    self.cfg["new_class"],
+                )
         else:
             # Rename the method of the class.
-            content = self._rename_method(file_path, content)
-            _LOG.info(
-                "%s: method `%s` of `%s` class was renamed to `%s`.",
-                file_path,
-                self.cfg["old_method"],
-                self.cfg["old_class"],
-                self.cfg["new_method"],
-            )
+            content, n_replaced = self._rename_method(file_path, content)
+            if n_replaced != 0:
+                _LOG.info(
+                    "%s: method `%s` of `%s` class was renamed to `%s`.",
+                    file_path,
+                    self.cfg["old_method"],
+                    self.cfg["old_class"],
+                    self.cfg["new_method"],
+                )
         # Rename the directories that contain target test outcomes.
         self.rename_outcomes(
             test_dir,
@@ -206,35 +209,36 @@ class UnitTestRenamer:
     def _rename_class(
         self,
         content: str,
-    ) -> str:
+    ) -> Union[str, int]:
         """
         Rename a class in a Python file.
 
         :param content: the content of the file
-        :return: the content of the file with the class name replaced
+        :return: the content of the file with the class name replaced, the number of symbols replaced
         """
         # Rename the class.
-        content = re.sub(
+        content, num = re.subn(
             f"class {self.cfg['old_class']}\(",
             f"class {self.cfg['new_class']}(",
             content,
         )
-        return content
+        return content, num
 
     def _rename_method(
         self,
         content: str,
-    ) -> str:
+    ) -> Union[str, int]:
         """
         Rename the method of the class.
 
         :param content: the content of the file
-        :return: content of the file with the method renamed
+        :return: content of the file with the method renamed, the number of symbols replaced 
         """
         lines = content.split("\n")
         # Flag that informs if the class border was found.
         class_found = False
-        method_replaced = False
+        # The number of symbols replaced in the content of the file.
+        num = 0
         class_pattern = f"class {self.cfg['old_class']}\("
         method_pattern = f"def {self.cfg['old_method']}\("
         # Flag that indicates if the current line if inside of the docstring.
@@ -255,19 +259,12 @@ class UnitTestRenamer:
                 if num != 0:
                     # Replace the line with method definition.
                     lines[ind] = new_line
-                    method_replaced = True
                     break
             else:
                 if re.search(class_pattern, line):
                     class_found = True
-        if not method_replaced:
-            _LOG.info(
-                "Method`%s` was not found in class `%s`",
-                self.cfg["old_method"],
-                self.cfg["old_class"],
-            )
         new_content = "\n".join(lines)
-        return new_content
+        return new_content, num
 
     def _rename_directory(
         self, outcome_path_old: str, outcome_path_new: str

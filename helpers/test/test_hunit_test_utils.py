@@ -36,7 +36,7 @@ class TestCases(hunitest.TestCase):
         content = self.helper()
         root_dir = os.getcwd()
         renamer = hunteuti.UnitTestRenamer("TestCases", "TestNewCase", root_dir)
-        actual = renamer._rename_class(content)
+        actual, _ = renamer._rename_class(content)
         expected = """
 class TestNewCase(hunitest.TestCase):
     def test_assert_equal1(self) -> None:
@@ -57,7 +57,7 @@ class TestNewCase(hunitest.TestCase):
         content = self.helper()
         root_dir = os.getcwd()
         renamer = hunteuti.UnitTestRenamer("TestCase", "TestNewCase", root_dir)
-        actual = renamer._rename_class(content)
+        actual, _ = renamer._rename_class(content)
         # Check if the content of the file was not changed.
         self.assert_equal(actual, content)
 
@@ -105,7 +105,7 @@ class TestOtherCases(hunitest.TestCase):
         renamer = hunteuti.UnitTestRenamer(
             "TestCases.test1", "TestCases.test_new", root_dir
         )
-        actual = renamer._rename_method(content)
+        actual, _ = renamer._rename_method(content)
         expected = """
 class TestCases(hunitest.TestCase):
     def test_new(self) -> None:
@@ -139,7 +139,7 @@ class TestOtherCases(hunitest.TestCase):
         renamer = hunteuti.UnitTestRenamer(
             "TestOtherCases.test5", "TestOtherCases.test6", root_dir
         )
-        actual = renamer._rename_method(content)
+        actual, _ = renamer._rename_method(content)
         # Check if the content of the file was not changed.
         self.assert_equal(actual, content)
 
@@ -170,6 +170,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         outcomes_paths = [
             "TestCase.test_check_string1",
             "TestCase.test_rename",
+            "TestCase.test_rename3",
             "TestCases.test_rename2",
             "TestRename.test_rename1",
         ]
@@ -211,6 +212,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
             "TestRename.test_rename1",
             "TestRenamedCase.test_check_string1",
             "TestRenamedCase.test_rename",
+            "TestRenamedCase.test_rename3",
         ]
         self.assertEqual(actual, expected)
         self._clean_up(toy_test)
@@ -246,6 +248,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         expected = [
             "TestCase.test_check_string1",
             "TestCase.test_method_renamed",
+            "TestCase.test_rename3",
             "TestCases.test_rename2",
             "TestRename.test_rename1",
         ]
