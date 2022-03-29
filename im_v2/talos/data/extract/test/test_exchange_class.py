@@ -14,6 +14,7 @@ _LOG = logging.getLogger(__name__)
 
 @pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestTalosExchange1(hunitest.TestCase):
+
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
@@ -29,8 +30,8 @@ class TestTalosExchange1(hunitest.TestCase):
         Test download for historical data.
         """
         mock_get_current_time.return_value = "2021-09-09 00:00:00.000000+00:00"
-        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00", tz="UTC")
         actual = self.download_ohlcv_data(start_timestamp, end_timestamp)
         # Verify dataframe length.
         self.assertEqual(1440, actual.shape[0])
@@ -56,7 +57,7 @@ class TestTalosExchange1(hunitest.TestCase):
         exchange = "binance"
         # End is before start -> invalid.
         start_timestamp = "invalid"
-        end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00", tz="UTC")
         expected = (
             "'invalid' is '<class 'str'>' instead of "
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
@@ -77,7 +78,7 @@ class TestTalosExchange1(hunitest.TestCase):
         cur_pair = "BTC_USDT"
         exchange = "binance"
         # End is before start -> invalid.
-        start_timestamp = pd.Timestamp("2021-09-10T00:00:00")
+        start_timestamp = pd.Timestamp("2021-09-10T00:00:00", tz="UTC")
         end_timestamp = "invalid"
         expected = (
             "'invalid' is '<class 'str'>' instead of "
@@ -119,8 +120,8 @@ class TestTalosExchange1(hunitest.TestCase):
         """
         cur_pair = "invalid_pair"
         exchange = "binance"
-        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00", tz="UTC")
         expected = "Finished with code: 400"
         self.download_ohlcv_data_invalid_input_param_helper(
             cur_pair,
@@ -137,8 +138,8 @@ class TestTalosExchange1(hunitest.TestCase):
         """
         cur_pair = "BTC_USDT"
         exchange = "unknown_exchange"
-        start_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        end_timestamp = pd.Timestamp("2021-09-10T00:00:00")
+        start_timestamp = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2021-09-10T00:00:00", tz="UTC")
         expected = "Finished with code: 400"
         self.download_ohlcv_data_invalid_input_param_helper(
             cur_pair,
