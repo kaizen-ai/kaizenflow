@@ -6,52 +6,8 @@ import pandas as pd
 import pytest
 
 import helpers.hdatetime as hdateti
-import helpers.hgit as hgit
-import helpers.hsystem as hsystem
-import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.data.client.historical_pq_clients_example as ivcdchpqce
-
-
-def _generate_test_data(
-    instance: icdctictc.ImClientTestCase,
-    start_date: str,
-    end_date: str,
-    freq: str,
-    assets: str,
-    asset_col_name: str,
-    output_type: str,
-    partition_mode: str,
-) -> str:
-    """
-    Generate test data in form of partitioned Parquet files.
-    """
-    test_dir: str = instance.get_scratch_space()
-    tiled_bar_data_dir = os.path.join(test_dir, "tiled.bar_data")
-    # TODO(gp): @all replace the script with calling the library directly.
-    cmd = []
-    file_path = os.path.join(
-        hgit.get_amp_abs_path(),
-        "im_v2/common/test/generate_pq_test_data.py",
-    )
-    cmd.append(file_path)
-    cmd.append(f"--start_date {start_date}")
-    cmd.append(f"--end_date {end_date}")
-    cmd.append(f"--freq {freq}")
-    cmd.append(f"--assets {assets}")
-    cmd.append(f"--asset_col_name {asset_col_name}")
-    cmd.append(f"--partition_mode {partition_mode}")
-    cmd.append(f"--dst_dir {tiled_bar_data_dir}")
-    cmd.append(f"--output_type {output_type}")
-    cmd = " ".join(cmd)
-    hsystem.system(cmd)
-    return test_dir
-
-
-class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
-
-    def get_universe(self) -> List[str]:
-        return ["binance::BTC_USDT", "kucoin::FIL_USDT"]
 
 
 # #############################################################################
@@ -366,6 +322,11 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
 
 
+# #############################################################################
+# TestHistoricalPqByTileClient2
+# #############################################################################
+
+
 class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     @staticmethod
@@ -402,7 +363,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
         return start_ts, end_ts
 
-    @pytest.mark.slow("Execution time varies depending on generated inputs.")
+    @pytest.mark.superslow("Execution time varies depending on generated inputs.")
     def test_read_data_random1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -413,7 +374,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
             self, full_symbols_str, start_date, end_date, resample_1min
         )
-        for i in range(5):
+        # Run tests.
+        for i in range(100):
             # Generate random timestamp interval and read data.
             left_boundary = pd.Timestamp(start_date)
             right_boundary = pd.Timestamp(end_date)
