@@ -5,7 +5,7 @@ import im_v2.common.universe.test_universe as imvcounte
 """
 
 import os
-from typing import List
+from typing import List, Tuple
 
 import pytest
 
@@ -14,48 +14,107 @@ import helpers.hio as hio
 import helpers.hunit_test as hunitest
 import im_v2.common.universe.universe as imvcounun
 
-# Currently available vendors.
-_VENDORS = ["CCXT", "Talos"]
-
 
 class TestExtractUniverseVersion1(hunitest.TestCase):
 
-    def test_extract_universe_version(self) -> None:
+    def test_extract_universe_version1(self) -> None:
         """
-        Verify function provides expected output on valid inputs.
+        Verify function provides expected output on valid input.
         """
-        versions = [
-            ("1.1", (1, 1)),
-            ("4", (4, 0)),
-            ("1.0", (1, 0)),
-            ("3.11", (3, 11)),
-            ("2.16", (2, 16)),
-            ("25.11", (25, 11)),
-        ]
-        for ver, num in versions:
-            with self.subTest(ver=ver, num=num):
-                fn = f"/app/im_v2/ccxt/universe/universe_v{ver}.json"
-                self.assertEqual(imvcounun._extract_universe_version(fn), num)
+        self._test_extract_universe_version("1.1", (1, 1))
 
-    def test_extract_universe_version_incorrect_format(self) -> None:
+    def test_extract_universe_version2(self) -> None:
+        """
+        Verify function provides expected output on valid input.
+        """
+        self._test_extract_universe_version("4", (4, 0))
+
+    def test_extract_universe_version3(self) -> None:
+        """
+        Verify function provides expected output on valid input.
+        """
+        self._test_extract_universe_version("1.0", (1, 0))
+
+    def test_extract_universe_version4(self) -> None:
+        """
+        Verify function provides expected output on valid input.
+        """
+        self._test_extract_universe_version("3.11", (3, 11))
+
+    def test_extract_universe_version5(self) -> None:
+        """
+        Verify function provides expected output on valid input.
+        """
+        self._test_extract_universe_version("16.2", (16, 2))
+
+    def test_extract_universe_version6(self) -> None:
+        """
+        Verify function provides expected output on valid input.
+        """
+        self._test_extract_universe_version("25.11", (25, 11))
+
+    def test_extract_universe_version_incorrect_format1(self) -> None:
         """
         Verify function raises AssertionError on incorrect input format.
         """
-        file_names = [
-            "incorrect",
-            "universe_vxx.json",
-            "universe_v.1.json",
-            "universe_11.json",
-        ]
+        self._test_extract_universe_version_incorrect_format("incorrect")
+
+    def test_extract_universe_version_incorrect_format2(self) -> None:
+        """
+        Verify function raises AssertionError on incorrect input format.
+        """
+        self._test_extract_universe_version_incorrect_format("universe_vxx.json")
+
+    def test_extract_universe_version_incorrect_format3(self) -> None:
+        """
+        Verify function raises AssertionError on incorrect input format.
+        """
+        self._test_extract_universe_version_incorrect_format("universe_v.1.json")
+
+    def test_extract_universe_version_incorrect_format4(self) -> None:
+        """
+        Verify function raises AssertionError on incorrect input format.
+        """
+        self._test_extract_universe_version_incorrect_format("universe_11.json")
+
+    def _test_extract_universe_version(
+        self, version: str, expected: Tuple[int, int]
+    ) -> None:
+        """
+        Verify function provides expected output on valid inputs.
+
+        :param version: version in string format to input, e.g. 1.0
+        :param expected: expected output version in (major, minor) format
+        """
+        fn = f"/app/im_v2/ccxt/universe/universe_v{version}.json"
+        self.assertEqual(imvcounun._extract_universe_version(fn), expected)
+
+    def _test_extract_universe_version_incorrect_format(
+        self, file_name: str
+    ) -> None:
+        """
+        Helper function to verify function raises AssertionError on incorrect
+        input format.
+
+        :param file_name: incorrect file_name to test
+        """
         expected_fail = "Can't parse file"
-        for fn in file_names:
-            with self.subTest(fn=fn):
-                with pytest.raises(AssertionError) as fail:
-                    _ = imvcounun._extract_universe_version(fn)
-                self.assertIn(expected_fail, str(fail.value))
+        with pytest.raises(AssertionError) as fail:
+            _ = imvcounun._extract_universe_version(file_name)
+        self.assertIn(expected_fail, str(fail.value))
 
 
-class TestGetUniverseFilePath1(hunitest.TestCase):
+class TestGetUniverseGeneral1(hunitest.TestCase):
+
+    def test_get_universe_invalid_vendor(self) -> None:
+        """
+        Verify that incorrect vendor name is recognized.
+        """
+        with self.assertRaises(AssertionError):
+            _ = imvcounun._get_trade_universe("unknown")
+
+
+class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
 
     def _test_get_universe_file_path(self, vendor: str, version: str) -> None:
         """
@@ -99,17 +158,7 @@ class TestGetUniverseFilePath1(hunitest.TestCase):
         self.assertEqual(actual, mock_universe)
 
 
-class TestGetUniverseGeneral1(hunitest.TestCase):
-
-    def test_get_universe_invalid_vendor(self) -> None:
-        """
-        Verify that incorrect vendor name is recognized.
-        """
-        with self.assertRaises(AssertionError):
-            _ = imvcounun._get_trade_universe("unknown")
-
-
-class TestGetUniverse1(hunitest.TestCase):
+class TestGetUniverse1_TestCase(hunitest.TestCase):
 
     def _test_get_universe1(self, vendor: str) -> None:
         """
@@ -130,9 +179,6 @@ class TestGetUniverse1(hunitest.TestCase):
         """
         with self.assertRaises(AssertionError):
             _ = imvcounun._get_trade_universe(vendor, version=version)
-
-
-class TestGetVendorUniverse1(hunitest.TestCase):
 
     def _test_get_vendor_universe_small(
         self, vendor: str, exchange: str, currency_pair: str
@@ -161,11 +207,11 @@ class TestGetVendorUniverse1(hunitest.TestCase):
         self, vendor: str, universe_as_full_symbols: List[str]
     ) -> None:
         """
-        Test that universe as full symbols is received correctly 
-        from small universe.
+        Test that universe as full symbols is received correctly from small
+        universe.
 
         :param vendor: vendor to apply test to, e.g. CCXT or Talos
-        :param universe_as_full_symbols: list of currency pairs as 
+        :param universe_as_full_symbols: list of currency pairs as
          full symbols in format exchange_id::SYMBOL_SYMBOL
         """
         actual = imvcounun.get_vendor_universe(

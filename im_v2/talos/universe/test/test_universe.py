@@ -1,7 +1,7 @@
 import im_v2.common.universe.test.test_universe as imvcountt
 
 
-class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1):
+class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1_TestCase):
 
     def test_get_universe_file_path(self) -> None:
         """
@@ -18,7 +18,7 @@ class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1):
         self._test_get_latest_file_version("Talos")
 
 
-class TestGetUniverse1(imvcountt.TestGetUniverse1):
+class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
 
     def test_get_universe1(self) -> None:
         """
@@ -31,9 +31,6 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1):
         Verify that incorrect universe version is recognized.
         """
         self._test_get_universe_invalid_version("Talos")
-
-
-class TestGetVendorUniverse1(imvcountt.TestGetVendorUniverse1):
 
     def test_get_vendor_universe_small(self) -> None:
         """
