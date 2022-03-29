@@ -11,7 +11,7 @@ import helpers.henv as henv
 # To simplify the dependency management we include the code of `hsql` only if
 # `psycopg2` is present. If not, we just create a stub for the needed type hints.
 if henv.has_module("psycopg2"):
-    pass
+    from helpers.hsql_implementation import *
 
 else:
     from typing import Any
