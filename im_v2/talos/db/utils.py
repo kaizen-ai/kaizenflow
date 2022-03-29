@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 def get_talos_ohlcv_create_table_query() -> str:
     """
-    Get SQL query to create CCXT OHLCV table.
+    Get SQL query to create Talos OHLCV table.
     """
     query = """
     CREATE TABLE IF NOT EXISTS talos_ohlcv(
