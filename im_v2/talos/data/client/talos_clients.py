@@ -373,3 +373,11 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): Convert timestamps to int when reading.
         # TODO(Danya): add a full symbol column to the output
         raise NotImplementedError
+
+    def _get_start_end_ts_for_symbol(
+            self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+    ) -> pd.Timestamp:
+        """
+        Select a maximum/minimum timestamp for the given symbol
+        """
+        currency_pair, exchange = imvcdcfusy.parse_full_symbol(full_symbol)
