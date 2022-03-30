@@ -1,11 +1,11 @@
 """
 Import as:
 
-import im_v2.common.data.client.historical_pq_clients_example as ivcdchpqce
+import im_v2.common.data.client.historical_pq_clients_example as imvcdchpce
 """
 
-import os
 import logging
+import os
 from typing import List
 
 import helpers.hgit as hgit

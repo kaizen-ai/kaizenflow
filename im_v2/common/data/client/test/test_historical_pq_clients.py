@@ -5,9 +5,8 @@ import pandas as pd
 import pytest
 
 import helpers.hdatetime as hdateti
+import im_v2.common.data.client.historical_pq_clients_example as imvcdchpce
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
-import im_v2.common.data.client.historical_pq_clients_example as ivcdchpqce
-
 
 # #############################################################################
 # TestHistoricalPqByTileClient1
@@ -20,7 +19,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbol, resample_1min
         )
         # Compare the expected values.
@@ -54,7 +53,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
         resample_1min = True
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
@@ -91,7 +90,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
         resample_1min = True
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
@@ -129,7 +128,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
         resample_1min = True
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
@@ -167,7 +166,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
         resample_1min = True
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
@@ -207,7 +206,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols_str = "binance::BTC_USDT,kucoin::FIL_USDT"
         resample_1min = True
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbols_str, resample_1min
         )
         # Run test.
@@ -221,7 +220,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
         resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
@@ -258,7 +257,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbol, resample_1min
         )
         # Compare the expected values.
@@ -271,7 +270,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbol, resample_1min
         )
         # Compare the expected values.
@@ -288,7 +287,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         vendor = "mock"
         test_dir = "dummy"
         partition_mode = "by_year_month"
-        im_client = ivcdchpqce.MockHistoricalByTileClient(
+        im_client = imvcdchpce.MockHistoricalByTileClient(
             vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
@@ -340,10 +339,14 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Integers are subtracted from right boundary since test data is
         # generated with open right boundary while `randint` works and
         # client reads data with closed right boundary.
-        start_ts_epoch = random.randint(left_boundary_epoch, right_boundary_epoch - 2)
+        start_ts_epoch = random.randint(
+            left_boundary_epoch, right_boundary_epoch - 2
+        )
         end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch - 1)
         # Convert generated epochs to timestamps.
-        start_ts = hdateti.convert_unix_epoch_to_timestamp(start_ts_epoch, unit="m")
+        start_ts = hdateti.convert_unix_epoch_to_timestamp(
+            start_ts_epoch, unit="m"
+        )
         end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
         return start_ts, end_ts
 
@@ -354,7 +357,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -368,7 +371,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(178560, 4)
                                          full_symbol   close  year month
-        timestamp                                                       
+        timestamp
         2021-11-01 00:00:00+00:00  binance::BTC_USDT  964800  2021    11
         2021-11-01 00:00:00+00:00   kucoin::FIL_USDT  964800  2021    11
         2021-11-01 00:01:00+00:00  binance::BTC_USDT  964801  2021    11
@@ -395,7 +398,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -409,7 +412,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(1054082, 4)
                                          full_symbol  close  year month
-        timestamp                                                      
+        timestamp
         2020-01-01 00:00:00+00:00  binance::BTC_USDT      0  2020     1
         2020-01-01 00:00:00+00:00   kucoin::FIL_USDT      0  2020     1
         2020-01-01 00:01:00+00:00  binance::BTC_USDT      1  2020     1
@@ -435,7 +438,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -449,7 +452,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(89280, 4)
                                          full_symbol   close  year month
-        timestamp                                                       
+        timestamp
         2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320  2021     8
         2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320  2021     8
         2021-08-01 00:01:00+00:00  binance::BTC_USDT  832321  2021     8
@@ -477,7 +480,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -491,7 +494,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(89282, 4)
                                          full_symbol   close  year month
-        timestamp                                                       
+        timestamp
         2020-12-15 00:00:00+00:00  binance::BTC_USDT  502560  2020    12
         2020-12-15 00:00:00+00:00   kucoin::FIL_USDT  502560  2020    12
         2020-12-15 00:01:00+00:00  binance::BTC_USDT  502561  2020    12
@@ -519,7 +522,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -533,7 +536,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(264962, 4)
                                          full_symbol   close  year month
-        timestamp                                                       
+        timestamp
         2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320  2021     8
         2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320  2021     8
         2021-08-01 00:01:00+00:00  binance::BTC_USDT  832321  2021     8
@@ -561,7 +564,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -575,7 +578,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(434882, 4)
                                          full_symbol   close  year month
-        timestamp                                                       
+        timestamp
         2020-10-01 00:00:00+00:00  binance::BTC_USDT  394560  2020    10
         2020-10-01 00:00:00+00:00   kucoin::FIL_USDT  394560  2020    10
         2020-10-01 00:01:00+00:00  binance::BTC_USDT  394561  2020    10
@@ -604,7 +607,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -618,7 +621,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(1140482, 4)
                                          full_symbol   close  year month
-        timestamp                                                       
+        timestamp
         2020-12-01 00:00:00+00:00  binance::BTC_USDT  482400  2020    12
         2020-12-01 00:00:00+00:00   kucoin::FIL_USDT  482400  2020    12
         2020-12-01 00:01:00+00:00  binance::BTC_USDT  482401  2020    12
@@ -646,7 +649,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -660,7 +663,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(4, 4)
                                          full_symbol    close  year month
-        timestamp                                                        
+        timestamp
         2021-12-31 23:59:00+00:00  binance::BTC_USDT  1052639  2021    12
         2021-12-31 23:59:00+00:00   kucoin::FIL_USDT  1052639  2021    12
         2022-01-01 00:00:00+00:00  binance::BTC_USDT  1052640  2022     1
@@ -685,7 +688,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example2(
             self, full_symbols_str
         )
         # Compare the expected values.
@@ -699,7 +702,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,close,year,month
         shape=(2, 4)
                                          full_symbol   close  year month
-        timestamp                                                       
+        timestamp
         2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320  2021     8
         2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320  2021     8"""
         start_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
@@ -726,7 +729,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         start_date = "2018-12-30"
         end_date = "2022-01-02"
         resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example3(
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example3(
             self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Run tests.
