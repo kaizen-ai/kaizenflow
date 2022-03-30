@@ -314,7 +314,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         """
         Generate timestamp interval between specified timestamp boundaries.
 
-        Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval
+        Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval.
 
         :param left_boundary: left boundary for generated timestamp interval
         :param right_boundary: right boundary for generated timestamp interval
@@ -347,7 +347,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     def test_only_start_date1(self) -> None:
         """
-        Only a start timestamp is provided.
+        Interval has only start timestamp.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -387,7 +387,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     @pytest.mark.slow("6 seconds.")
     def test_only_end_date1(self) -> None:
         """
-        Only end timestamp is provided.
+        Interval has only end timestamp.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -426,7 +426,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     def test_one_month1(self) -> None:
         """
-        Interval strictly inside one month length is provided.
+        Interval of 1 month length capturing data for 1 month strictly.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -467,7 +467,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     def test_one_month2(self) -> None:
         """
-        One month length interval that captures two month is provided.
+        Interval of 1 month length capturing data for 2 month.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -508,7 +508,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     def test_multiple_months1(self) -> None:
         """
-        Multiple months interval in one year is provided.
+        Interval of multiple month length capturing data for 1 year.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -549,7 +549,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     def test_multiple_months2(self) -> None:
         """
-        Multiple months interval in two years is provided.
+        Interval of multiple month length capturing data for 2 years.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -591,7 +591,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     @pytest.mark.slow("6 seconds.")
     def test_multiple_months3(self) -> None:
         """
-        Multiple months interval in more than two years is provided.
+        Interval of multiple month length capturing data for more than 2 years.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -632,7 +632,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     def test_new_year1(self) -> None:
         """
-        The last minute of a year and the first of the next one are provided.
+        Interval of the last minute of a year and the first of the next one.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -670,7 +670,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     def test_equal_dates1(self) -> None:
         """
-        Two equal timestamps are provided.
+        Interval with equal timestamp boundaries.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -707,7 +707,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     @pytest.mark.superslow("~180 seconds.")
     def test_read_data_random1(self) -> None:
         """
-        Test data for randomly generated time intervals.
+        Timestamp intervals are randomly generated and tested 100 times.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]

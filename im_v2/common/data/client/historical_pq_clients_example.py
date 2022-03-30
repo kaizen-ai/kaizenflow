@@ -17,6 +17,7 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Dan): CmTask1490.
 def _generate_test_data(
     instance: icdctictc.ImClientTestCase,
     start_date: str,
@@ -29,6 +30,8 @@ def _generate_test_data(
 ) -> str:
     """
     Generate test data in form of partitioned Parquet files.
+
+    :return: path to generated test data
     """
     test_dir: str = instance.get_scratch_space()
     tiled_bar_data_dir = os.path.join(test_dir, "tiled.bar_data")
@@ -64,7 +67,7 @@ def get_MockHistoricalByTileClient_example1(
     resample_1min: bool,
 ) -> imvcdchpcl.HistoricalPqByTileClient:
     """
-    Build mock client example for tests and test data for 2 days.
+    Build mock client example to test data in span of 2 days.
     """
     start_date = "2021-12-30"
     end_date = "2022-01-02"
@@ -132,7 +135,7 @@ def get_MockHistoricalByTileClient_example3(
     resample_1min: bool,
 ) -> imvcdchpcl.HistoricalPqByTileClient:
     """
-    Build mock client example for testing randomly generated intervals.
+    Build mock client example to test randomly generated intervals.
     """
     freq = "1T"
     assets = ",".join(full_symbols)
