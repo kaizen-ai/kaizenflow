@@ -182,7 +182,6 @@ class UnitTestRenamer:
             [1, 2],
             msg="Wrong test name format: it must contain no more than 1 dot",
             )
-        # Check the format of test names.
         if len(split_old_name) == 1:
             # Class name split by `.` is one element array, e.g. `["TestClassName"]`.
             old_class_name, old_method_name = split_old_name[0], ""
@@ -213,6 +212,30 @@ class UnitTestRenamer:
         config["new_method"] = new_method_name
         return config
 
+    def _is_docstring(
+        self,
+        line: str,
+        quotes_count: Dict[str, int],
+    ) -> Tuple[bool, Dict[str, int]]:
+        """
+        Check if the line is inside of the docstring.
+
+        :param line: the line to check
+        :param quotes_count: the count of the quotes of two types 
+        :return: updated count of the quotes of two types 
+        """
+        # Determine the current line's status: in a multi-line string
+        # or not.
+        for quotes in ["'''", '"""']:
+            if line.count(quotes) == 1:
+                quotes_count[quotes] += 1
+        # The line is in a string if the quotes have been opened but not
+        # closed yet.
+        in_docstring = any(
+            (quote_count % 2) == 1 for quote_count in quotes_count.values()
+        )
+        return in_docstring, quotes_count
+
     def _rename_class(
         self,
         content: str,
@@ -233,16 +256,8 @@ class UnitTestRenamer:
         lines = content.split("\n")
         quotes_count = {"'''": 0, '"""': 0}
         for ind, line in enumerate(lines):
-            # Determine the current line's status: in a multi-line string
-            # or not.
-            for quotes in ["'''", '"""']:
-                if line.count(quotes) == 1:
-                    quotes_count[quotes] += 1
-            # The line is in a string if the quotes have been opened but not
-            # closed yet.
-            in_docstring = any(
-                (quote_count % 2) == 1 for quote_count in quotes_count.values()
-            )
+            # Check if the line is inside of the docstring.
+            in_docstring, quotes_count = self._is_docstring(line, quotes_count)
             if not in_docstring:
                 # Rename the class.
                 new_line, num_replaced = re.subn(
@@ -275,11 +290,6 @@ class UnitTestRenamer:
         method_pattern = f"def {self.cfg['old_method']}\("
         quotes_count = {"'''": 0, '"""': 0}
         for ind, line in enumerate(lines):
-            # Determine the current line's status: in a multi-line string
-            # or not.
-            for quotes in ["'''", '"""']:
-                if line.count(quotes) == 1:
-                    quotes_count[quotes] += 1
             # The line is in a string if the quotes have been opened but not
             # closed yet.
             in_docstring = any(
