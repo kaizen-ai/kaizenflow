@@ -376,7 +376,7 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 # TODO(Nikola): Remove `use_gzip` and use `file_name` extension instead.
 def to_file(
     file_name: str,
-    lines: List[str],
+    lines: str,
     use_gzip: bool = False,
     mode: Optional[str] = None,
     force_flush: bool = False,
