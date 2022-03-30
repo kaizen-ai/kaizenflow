@@ -334,6 +334,7 @@ class TestRealTimeSqlTalosClient1(
             talos_sql_client._build_select_query(
                 exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
             )
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query2(self) -> None:
         """
@@ -351,6 +352,7 @@ class TestRealTimeSqlTalosClient1(
             talos_sql_client._build_select_query(
                 exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
             )
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query3(self) -> None:
         """
@@ -368,6 +370,7 @@ class TestRealTimeSqlTalosClient1(
             talos_sql_client._build_select_query(
                 exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
             )
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query4(self) -> None:
         """
@@ -391,6 +394,7 @@ class TestRealTimeSqlTalosClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query5(self) -> None:
         """
@@ -411,6 +415,7 @@ class TestRealTimeSqlTalosClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query6(self) -> None:
         """
@@ -434,6 +439,7 @@ class TestRealTimeSqlTalosClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def setup_talos_sql_client(
         self,
@@ -715,6 +721,7 @@ class TestRealTimeSqlTalosClient1(
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
         )
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_get_end_ts_for_symbol1(self) -> None:
         """
@@ -729,6 +736,7 @@ class TestRealTimeSqlTalosClient1(
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2022-03-24 16:23:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
 
