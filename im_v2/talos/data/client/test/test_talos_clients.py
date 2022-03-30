@@ -429,7 +429,7 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
-            self.connection, table_name, resample_1min
+            resample_1min, self.connection, table_name
         )
         return sql_talos_client
 

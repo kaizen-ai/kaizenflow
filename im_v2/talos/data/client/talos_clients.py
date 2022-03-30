@@ -32,12 +32,32 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     Read historical data for `Talos` assets stored as Parquet dataset.
 
     It can read data from local or S3 filesystem as backend.
+
+    The timing semantic of several clients is described below:
+    1) Talos DB client
+    2) Talos Parquet client
+    3) CCXT CSV / Parquet client
+
+    In a query for data in the interval `[a, b]`, the extremes `a` and b are
+    rounded to the floor of the minute to retrieve the data.
+    - E.g., for all the 3 clients:
+        - [10:00:00, 10:00:36] retrieves data for [10:00:00, 10:00:00]
+        - [10:07:00, 10:08:24] retrieves data for [10:07:00, 10:08:00]
+
+    Note that for Talos DB if `b` is already a round minute, it's rounded down
+    to the previous minute.
+    - E.g., [10:06:00, 10:08:00]
+        - For Talos DB client, retrieved data is in [10:06:00, 10:07:00]
+        - For CCXT Client and Talos Client the data is in [10:06:00, 10:08:00]
+
+    # TODO(gp): Change the Talos DB implementation to uniform the semantics,
+    # since `MarketData` will not be happy with rewinding one minute.
     """
 
     def __init__(
         self,
-        root_dir: str,
         resample_1min: bool,
+        root_dir: str,
         partition_mode: str,
         *,
         data_snapshot: str = "latest",
@@ -49,8 +69,8 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         vendor = "talos"
         super().__init__(
             vendor,
-            root_dir,
             resample_1min,
+            root_dir,
             partition_mode,
             aws_profile=aws_profile,
         )
@@ -144,9 +164,9 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def __init__(
         self,
+        resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
-        resample_1min: bool,
     ) -> None:
         vendor = "talos"
         super().__init__(vendor, resample_1min)
@@ -174,9 +194,11 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): CmTask1420.
         return []
 
-    @staticmethod
     def _apply_talos_normalization(
-        data: pd.DataFrame, full_symbol_col_name: str = "full_symbol"
+        self,
+        data: pd.DataFrame,
+        *,
+        full_symbol_col_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Apply Talos-specific normalization:
@@ -190,6 +212,9 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         data = data.set_index("timestamp")
         # Specify OHLCV columns.
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
         ohlcv_columns = [
             # "timestamp",
             "open",
@@ -228,7 +253,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
-        full_symbol_col_name: str = "full_symbol",
+        full_symbol_col_name: Optional[str] = None,
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
@@ -253,12 +278,16 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         data = hsql.execute_query_to_df(self._db_connection, select_query)
         # Add a full symbol column.
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
         data[full_symbol_col_name] = data[["exchange_id", "currency_pair"]].agg(
             "::".join, axis=1
         )
         # Remove extra columns and create a timestamp index.
         # TODO(Danya): The normalization may change depending on use of the class.
-        data = self._apply_talos_normalization(data, full_symbol_col_name)
+        data = self._apply_talos_normalization(data,
+                full_symbol_col_name=full_symbol_col_name)
         return data
 
     def _build_select_query(
@@ -340,7 +369,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
         *,
-        full_symbol_col_name: str = "full_symbol",  # This is the column to appear in the output.
+        full_symbol_col_name: Optional[str] = None,
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
@@ -357,6 +386,9 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :param end_ts: end of the period, is converted to unix epoch
         :param full_symbol_col_name: the name of the full_symbol column
         """
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
         # TODO(Danya): Convert timestamps to int when reading.
         # TODO(Danya): add a full symbol column to the output
         raise NotImplementedError
