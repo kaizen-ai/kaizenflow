@@ -176,6 +176,12 @@ class UnitTestRenamer:
             len(split_new_name),
             "The test names are not consistent; one has a method and the other does not.",
         )
+        # Check the format of the test name.
+        hdbg.dassert_in(
+            len(split_old_name),
+            [1, 2],
+            msg="Wrong test name format: it must contain no more than 1 dot",
+            )
         # Check the format of test names.
         if len(split_old_name) == 1:
             # Class name split by `.` is one element array, e.g. `["TestClassName"]`.
@@ -185,7 +191,7 @@ class UnitTestRenamer:
                 f"Trying to change the name of `{old_test_name}` unit test \
                      class to `{new_test_name}`."
             )
-        elif len(split_old_name) == 2:
+        else:
             # Method name split by `.` is 2 element array, e.g.
             # TestClassName.test2` - >`["TestClassName", "test2"]`.
             old_class_name, old_method_name = split_old_name
@@ -199,12 +205,6 @@ class UnitTestRenamer:
             _LOG.debug(
                 f"Trying to change the name of `{old_method_name}` method of \
                      `{old_class_name}` class to `{new_method_name}`."
-            )
-        else:
-            hdbg.dassert_in(
-                len(split_old_name),
-                [1, 2],
-                msg="Wrong test name format: it must contain no more than 1 dot",
             )
         # Fill the processing parameters.
         config["old_class"] = old_class_name
