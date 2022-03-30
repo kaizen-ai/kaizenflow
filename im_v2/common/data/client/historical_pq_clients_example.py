@@ -17,9 +17,16 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Dan): CmTask1490.
+def get_test_data_dir(instance: icdctictc.ImClientTestCase) -> str:
+    """
+    Generate directory for test data.
+    """
+    test_data_dir: str = instance.get_scratch_space()
+    return test_data_dir
+
+
 def _generate_test_data(
-    instance: icdctictc.ImClientTestCase,
+    test_data_dir: str,
     start_date: str,
     end_date: str,
     freq: str,
@@ -27,15 +34,13 @@ def _generate_test_data(
     asset_col_name: str,
     output_type: str,
     partition_mode: str,
-) -> str:
+) -> None:
     """
-    Generate test data in form of partitioned Parquet files.
-
-    :return: path to generated test data
+    Generate test data as partitioned Parquet files at the specified dir.
     """
-    test_dir: str = instance.get_scratch_space()
-    tiled_bar_data_dir = os.path.join(test_dir, "tiled.bar_data")
-    # TODO(gp): @all replace the script with calling the library directly.
+    tiled_bar_data_dir = os.path.join(test_data_dir, "tiled.bar_data")
+    # TODO(gp): @all replace the script with calling the library directly
+    #  CmTask1490.
     cmd = []
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
@@ -52,7 +57,6 @@ def _generate_test_data(
     cmd.append(f"--output_type {output_type}")
     cmd = " ".join(cmd)
     hsystem.system(cmd)
-    return test_dir
 
 
 class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
@@ -69,6 +73,7 @@ def get_MockHistoricalByTileClient_example1(
     """
     Build mock client example to test data in span of 2 days.
     """
+    # Specify parameters for test data generation and client initialization.
     start_date = "2021-12-30"
     end_date = "2022-01-02"
     freq = "1T"
@@ -76,8 +81,10 @@ def get_MockHistoricalByTileClient_example1(
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_dir = _generate_test_data(
-        instance,
+    test_data_dir = get_test_data_dir(instance)
+    # Generate test data.
+    _generate_test_data(
+        test_data_dir,
         start_date,
         end_date,
         freq,
@@ -89,7 +96,7 @@ def get_MockHistoricalByTileClient_example1(
     # Init client for testing.
     vendor = "mock"
     im_client = MockHistoricalByTileClient(
-        vendor, resample_1min, test_dir, partition_mode
+        vendor, resample_1min, test_data_dir, partition_mode
     )
     return im_client
 
@@ -101,6 +108,7 @@ def get_MockHistoricalByTileClient_example2(
     """
     Build mock client example to test Parquet filters building.
     """
+    # Specify parameters for test data generation and client initialization.
     start_date = "2020-01-01"
     end_date = "2022-01-02"
     freq = "1T"
@@ -108,8 +116,10 @@ def get_MockHistoricalByTileClient_example2(
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_dir = _generate_test_data(
-        instance,
+    test_data_dir = get_test_data_dir(instance)
+    # Generate test data.
+    _generate_test_data(
+        test_data_dir,
         start_date,
         end_date,
         freq,
@@ -122,7 +132,7 @@ def get_MockHistoricalByTileClient_example2(
     vendor = "mock"
     resample_1min = False
     im_client = MockHistoricalByTileClient(
-        vendor, resample_1min, test_dir, partition_mode
+        vendor, resample_1min, test_data_dir, partition_mode
     )
     return im_client
 
@@ -137,13 +147,16 @@ def get_MockHistoricalByTileClient_example3(
     """
     Build mock client example to test randomly generated intervals.
     """
+    # Specify parameters for test data generation and client initialization.
     freq = "1T"
     assets = ",".join(full_symbols)
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_dir = _generate_test_data(
-        instance,
+    test_data_dir = get_test_data_dir(instance)
+    # Generate test data.
+    _generate_test_data(
+        test_data_dir,
         start_date,
         end_date,
         freq,
@@ -155,6 +168,6 @@ def get_MockHistoricalByTileClient_example3(
     # Init client for testing.
     vendor = "mock"
     im_client = MockHistoricalByTileClient(
-        vendor, resample_1min, test_dir, partition_mode
+        vendor, resample_1min, test_data_dir, partition_mode
     )
     return im_client
