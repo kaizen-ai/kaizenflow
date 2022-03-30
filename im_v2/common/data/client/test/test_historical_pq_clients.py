@@ -733,7 +733,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Run tests.
-        for i in range(100):
+        for _ in range(100):
             # Generate random timestamp interval and read data.
             left_boundary = pd.Timestamp(start_date)
             right_boundary = pd.Timestamp(end_date)
