@@ -15,9 +15,10 @@ _LOG = logging.getLogger(__name__)
 class Test_find_all_files1(hunitest.TestCase):
     def test1(self) -> None:
         dir_name = hgit.get_client_root(super_module=False)
-        #
+        pattern = "*"
+        only_files = True
         # Check that there are files.
-        all_file_paths = hio.listdir(dir_name, only_files=True)
+        all_file_paths = hio.listdir(dir_name, pattern, only_files)
         # Remove full paths and leave only file name.
         all_files = [file_path.split("/")[-1] for file_path in all_file_paths]
         self.assertGreater(len(all_files), 0)

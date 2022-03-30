@@ -312,8 +312,10 @@ class PoetryDebugStatsComputer:
         """
         stats: POETRY_STATS = {}
         working_directory = get_debug_poetry_dir()
+        pattern = "poetry.log"
+        only_files = True
         # Collect all logs.
-        log_paths = hio.listdir(working_directory, pattern="poetry.log")
+        log_paths = hio.listdir(working_directory, pattern, only_files)
         for log_path in log_paths:
             # Parse log path to extract debug mode directories.
             # `.../poetry/necessary_incremental/pandas/poetry.log`.

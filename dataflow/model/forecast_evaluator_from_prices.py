@@ -294,7 +294,9 @@ class ForecastEvaluatorFromPrices:
         """
         if file_name is None:
             dir_name = os.path.join(log_dir, "price")
-            file_paths = hio.listdir(dir_name, only_files=True)
+            pattern = "*"
+            only_files = True
+            file_paths = hio.listdir(dir_name, pattern, only_files)
             # Remove full paths and leave only file name.
             files = [file_path.split("/")[-1] for file_path in file_paths]
             files.sort()
