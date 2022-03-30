@@ -359,11 +359,14 @@ def _run(args: argparse.Namespace) -> None:
         raise NotImplementedError("Incremental on S3 is not implemented!")
     else:
         hparser.create_incremental_dir(args.dst_dir, args)
+    # Prepare `listdir` args.
+    pattern = "*.parquet"
+    only_files = True
     # Get the input files to process.
     src_file_names = hs3.listdir(
         args.src_dir,
-        pattern="*.parquet",
-        only_files=True,
+        pattern,
+        only_files,
         aws_profile=args.aws_profile,
     )
     hdbg.dassert_lte(1, len(src_file_names))

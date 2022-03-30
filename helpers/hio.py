@@ -54,23 +54,22 @@ def purify_file_name(file_name: str) -> str:
 
 
 def listdir(
-    directory: str,
+    dir_name: str,
+    pattern: str,
+    only_files: bool,
     *,
-    pattern: str = "*",
-    only_files: bool = False,
     exclude_git_dirs: bool = True,
 ) -> List[str]:
     """
-    Find all files and subdirectories under `directory` that match a certain
-    `pattern`.
+    Find all files and subdirectories under `directory` that match `pattern`.
 
-    :param directory: path to the directory where to look for files
+    :param dir_name: path to the directory where to look for files
     :param pattern: pattern to match a filename against (e.g., `*.py`)
     :param only_files: look for only files instead of both files and directories
     :param exclude_git_dirs: skip `.git` dirs
     """
-    hdbg.dassert_dir_exists(directory)
-    cmd = [f"find {directory}", f'-name "{pattern}"']
+    hdbg.dassert_dir_exists(dir_name)
+    cmd = [f"find {dir_name}", f'-name "{pattern}"']
     if only_files:
         cmd.append("-type f")
     if exclude_git_dirs:
@@ -79,7 +78,7 @@ def listdir(
     _, output = hsystem.system_to_string(cmd)
     # TODO(gp): -> system_to_files
     paths = [path for path in output.split("\n") if path != ""]
-    _LOG.debug("Found %s paths in %s", len(paths), directory)
+    _LOG.debug("Found %s paths in %s", len(paths), dir_name)
     _LOG.debug("\n".join(paths))
     return paths
 

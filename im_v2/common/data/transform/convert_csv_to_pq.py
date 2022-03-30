@@ -61,8 +61,11 @@ def _get_csv_to_pq_file_names(
     :param s3fs_: S3FS, if not, local FS is assumed
     :return: list of tuples (csv_file, pq_file)
     """
+    # Prepare `listdir` args.
+    pattern = "*"
+    only_files = True
     # Collect the files (on S3 or on the local filesystem) that need to be transformed.
-    original_files = hs3.listdir(src_dir, only_files=True, aws_profile=s3fs_)
+    original_files = hs3.listdir(src_dir, pattern, only_files, aws_profile=s3fs_)
     # Find all the CSV files to convert.
     csv_filenames = []
     for filename in original_files:
