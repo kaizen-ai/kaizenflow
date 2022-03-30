@@ -317,9 +317,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 class TestRealTimeSqlTalosClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
-    """
-    
-    """
 
     def test_build_select_query1(self) -> None:
         """
@@ -428,6 +425,9 @@ class TestRealTimeSqlTalosClient1(
         Initialize Talos SQL Client.
         """
         table_name = "talos_ohlcv"
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
             self.connection, table_name, resample_1min
         )
@@ -435,10 +435,6 @@ class TestRealTimeSqlTalosClient1(
 
     def test_read_data1(self) -> None:
         # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbol = "binance::ETH_USDT"
         #
@@ -471,10 +467,6 @@ class TestRealTimeSqlTalosClient1(
 
     def test_read_data2(self) -> None:
         # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -512,10 +504,6 @@ class TestRealTimeSqlTalosClient1(
 
     def test_read_data3(self) -> None:
         # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00")
@@ -555,10 +543,6 @@ class TestRealTimeSqlTalosClient1(
 
     def test_read_data4(self) -> None:
         # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00")
@@ -598,11 +582,8 @@ class TestRealTimeSqlTalosClient1(
 
     def test_read_data5(self) -> None:
         # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
+        #
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00")
         end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00")
@@ -644,10 +625,6 @@ class TestRealTimeSqlTalosClient1(
     # TODO(Max) - add `read_data6`, see CMTask1545: `read_data6` problem in testing Talos Client.
     def test_read_data7(self) -> None:
         # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client(False)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -682,6 +659,32 @@ class TestRealTimeSqlTalosClient1(
         )
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_start_ts_for_symbol1(self) -> None:
+        """
+        Verify that earlies timestamp is extracted correctly.
+        """
+        # Load data.
+        im_client = self.setup_talos_sql_client()
+        # Provide expected outcomes.
+        full_symbol = "binance::BTC_USDT"
+        expected_start_ts = pd.to_datetime("2022-03-24 16:21:00", utc=True)
+        self._test_get_start_ts_for_symbol1(
+            im_client, full_symbol, expected_start_ts
+        )
+
+    def test_get_end_ts_for_symbol1(self) -> None:
+        """
+        Verify that earlies timestamp is extracted correctly.
+        """
+        # Load data.
+        im_client = self.setup_talos_sql_client()
+        # Provide expected outcomes.
+        full_symbol = "binance::BTC_USDT"
+        expected_end_ts = pd.to_datetime("2022-03-24 16:23:00", utc=True)
+        self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
     # ///////////////////////////////////////////////////////////////////////
 

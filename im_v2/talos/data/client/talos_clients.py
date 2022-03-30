@@ -12,8 +12,8 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hprint as hprint
 import helpers.hparquet as hparque
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.full_symbol as imvcdcfusy
@@ -222,20 +222,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         return in_operator
 
-    @staticmethod
-    def _build_select_query(
-        query: str,
-        exchange_id: str,
-        currency_pair: str,
-        start_unix_epoch: int,
-        end_unix_epoch: int,
-    ) -> str:
-        """
-        Append a WHERE clause to the query.
-        """
-        # TODO(Danya): Depending on the implementation, can be moved out to helpers.
-        raise NotImplementedError
-
     def _read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -392,13 +378,17 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         exchange, currency_pair = imvcdcfusy.parse_full_symbol(full_symbol)
         # Build a MIN/MAX query.
         if mode == "start":
-            query = f"SELECT MIN(timestamp) from {self._table_name}" \
-                    f" WHERE currency_pair='{currency_pair}'" \
-                    f" AND exchange_id='{exchange}'"
+            query = (
+                f"SELECT MIN(timestamp) from {self._table_name}"
+                f" WHERE currency_pair='{currency_pair}'"
+                f" AND exchange_id='{exchange}'"
+            )
         elif mode == "end":
-            query = f"SELECT MAX(timestamp) from {self._table_name}" \
-                    f" WHERE currency_pair='{currency_pair}'" \
-                    f" AND exchange_id='{exchange}'"
+            query = (
+                f"SELECT MAX(timestamp) from {self._table_name}"
+                f" WHERE currency_pair='{currency_pair}'"
+                f" AND exchange_id='{exchange}'"
+            )
         else:
             raise ValueError("Invalid mode='%s'" % mode)
         # TODO(Danya): factor out min/max as helper function.
