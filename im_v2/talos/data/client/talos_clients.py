@@ -12,6 +12,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -378,6 +379,32 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             self, full_symbol: imvcdcfusy.FullSymbol, mode: str
     ) -> pd.Timestamp:
         """
-        Select a maximum/minimum timestamp for the given symbol
+        Select a maximum/minimum timestamp for the given symbol.
+
+        Overrides the method in parent class to utilize
+        the MIN/MAX SQL operators.
+
+        :param full_symbol: unparsed full_symbol value
+        :param mode: 'start' or 'end'
+        :return: min or max value of 'timestamp' column.
         """
+        _LOG.debug(hprint.to_str("full_symbol"))
         currency_pair, exchange = imvcdcfusy.parse_full_symbol(full_symbol)
+        # Build a MIN/MAX query.
+        if mode == "start":
+            query = f"SELECT MIN(timestamp) from {self._table_name}" \
+                    f" WHERE currency_pair='{currency_pair}'" \
+                    f" AND exchange='{exchange}'"
+        elif mode == "end":
+            query = f"SELECT MAX(timestamp) from {self._table_name}" \
+                    f" WHERE currency_pair='{currency_pair}'" \
+                    f" AND exchange='{exchange}'"
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
+        # TODO(Danya): factor out min/max as helper function.
+        # Load the target data.
+        timestamp = hsql.execute_query_to_df(self._db_connection, query).loc[0][0]
+        hdbg.dassert_isinstance(timestamp, int)
+        # Convert to `pd.Timestamp` type.
+        timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
+        return timestamp
