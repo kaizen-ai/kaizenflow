@@ -230,6 +230,30 @@ class UnitTestRenamer:
             f"class {self.cfg['new_class']}(",
             content,
         )
+        lines = content.split("\n")
+        quotes_count = {"'''": 0, '"""': 0}
+        for ind, line in enumerate(lines):
+            # Determine the current line's status: in a multi-line string
+            # or not.
+            for quotes in ["'''", '"""']:
+                if line.count(quotes) == 1:
+                    quotes_count[quotes] += 1
+            # The line is in a string if the quotes have been opened but not
+            # closed yet.
+            in_docstring = any(
+                (quote_count % 2) == 1 for quote_count in quotes_count.values()
+            )
+            if not in_docstring:
+                # Rename the class.
+                new_line, num_replaced = re.subn(
+                    f"class {self.cfg['old_class']}\(",
+                    f"class {self.cfg['new_class']}(",
+                    line,
+                )
+                if num_replaced != 0:
+                    lines[ind] = new_line
+                    break
+        content = "\n".join(lines)
         return content, num_replaced
 
     def _rename_method(
@@ -249,12 +273,18 @@ class UnitTestRenamer:
         num_replaced = 0
         class_pattern = f"class {self.cfg['old_class']}\("
         method_pattern = f"def {self.cfg['old_method']}\("
-        # Flag that indicates if the current line is inside of the docstring.
-        in_docstring = False
+        quotes_count = {"'''": 0, '"""': 0}
         for ind, line in enumerate(lines):
-            if '"""' in line:
-                # Switch docstring flag.
-                in_docstring = not in_docstring
+            # Determine the current line's status: in a multi-line string
+            # or not.
+            for quotes in ["'''", '"""']:
+                if line.count(quotes) == 1:
+                    quotes_count[quotes] += 1
+            # The line is in a string if the quotes have been opened but not
+            # closed yet.
+            in_docstring = any(
+                (quote_count % 2) == 1 for quote_count in quotes_count.values()
+            )
             # Iterate over the lines of the file to find the specific method of the class that should be renamed.
             if class_found:
                 if line.startswith("class") and not in_docstring:
