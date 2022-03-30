@@ -8,7 +8,7 @@ import glob
 import logging
 import os
 import re
-from typing import Dict, List, Union, Tuple
+from typing import Dict, List, Tuple
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -85,7 +85,7 @@ class UnitTestRenamer:
                 )
         else:
             # Rename the method of the class.
-            content, n_replaced = self._rename_method(file_path, content)
+            content, n_replaced = self._rename_method(content)
             if n_replaced != 0:
                 _LOG.info(
                     "%s: method `%s` of `%s` class was renamed to `%s`.",
@@ -139,7 +139,7 @@ class UnitTestRenamer:
         # Assert if the classname does not start with `Test`.
         for name in [old_test_name, new_test_name]:
             hdbg.dassert(
-                old_test_name.startswith("Test"),
+                name.startswith("Test"),
                 "Invalid test_class_name='%s'",
                 name,
             )
@@ -225,12 +225,12 @@ class UnitTestRenamer:
           of symbols replaced
         """
         # Rename the class.
-        content, num = re.subn(
+        content, num_replaced = re.subn(
             f"class {self.cfg['old_class']}\(",
             f"class {self.cfg['new_class']}(",
             content,
         )
-        return content, num
+        return content, num_replaced
 
     def _rename_method(
         self,
@@ -240,16 +240,16 @@ class UnitTestRenamer:
         Rename the method of the class.
 
         :param content: the content of the file
-        :return: content of the file with the method renamed, the number of symbols replaced
+        :return: content of the file with the method renamed, the number of substitutions made
         """
         lines = content.split("\n")
         # Flag that informs if the class border was found.
         class_found = False
-        # The number of symbols replaced in the content of the file.
-        num = 0
+        # The number of substitutions made in the content of the file.
+        num_replaced = 0
         class_pattern = f"class {self.cfg['old_class']}\("
         method_pattern = f"def {self.cfg['old_method']}\("
-        # Flag that indicates if the current line if inside of the docstring.
+        # Flag that indicates if the current line is inside of the docstring.
         in_docstring = False
         for ind, line in enumerate(lines):
             if '"""' in line:
@@ -261,10 +261,10 @@ class UnitTestRenamer:
                     # Break if the next class started and the method was not found.
                     break
                 # Rename the method.
-                new_line, num = re.subn(
+                new_line, num_replaced = re.subn(
                     method_pattern, f"def {self.cfg['new_method']}(", line
                 )
-                if num != 0:
+                if num_replaced != 0:
                     # Replace the line with method definition.
                     lines[ind] = new_line
                     break
@@ -272,7 +272,7 @@ class UnitTestRenamer:
                 if re.search(class_pattern, line):
                     class_found = True
         new_content = "\n".join(lines)
-        return new_content, num
+        return new_content, num_replaced
 
     def _rename_directory(
         self, outcome_path_old: str, outcome_path_new: str
