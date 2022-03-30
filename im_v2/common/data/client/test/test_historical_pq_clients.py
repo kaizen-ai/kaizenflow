@@ -327,6 +327,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
 
 class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
+    """
+    Test that Parquet intervals are correctly filtered.
+    """
 
     @staticmethod
     def generate_timestamp_interval(
@@ -363,6 +366,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         return start_ts, end_ts
 
     def test_only_start_date1(self) -> None:
+        """
+        Only a start timestamp is provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -378,7 +384,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         }
-        expected_signature =  r"""# df=
+        expected_signature = r"""# df=
         index=[2021-11-01 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
         columns=full_symbol,close,year,month
         shape=(178560, 4)
@@ -404,6 +410,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     @pytest.mark.slow("6 seconds.")
     def test_only_end_date1(self) -> None:
+        """
+        Only end timestamp is provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -444,6 +453,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         )
 
     def test_one_month1(self) -> None:
+        """
+        Interval strictly inside one month length is provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -486,6 +498,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         )
 
     def test_one_month2(self) -> None:
+        """
+        One month length interval that captures two month is provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -528,6 +543,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         )
 
     def test_multiple_months1(self) -> None:
+        """
+        Multiple months interval in one year is provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -570,6 +588,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         )
 
     def test_multiple_months2(self) -> None:
+        """
+        Multiple months interval in two years is provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -613,6 +634,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     @pytest.mark.slow("6 seconds.")
     def test_multiple_months3(self) -> None:
+        """
+        Multiple months interval in more than two years is provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -655,6 +679,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         )
 
     def test_new_year1(self) -> None:
+        """
+        The last minute of a year and the first of the next one are provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -694,6 +721,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         )
 
     def test_equal_dates1(self) -> None:
+        """
+        Two equal timestamps are provided.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
@@ -732,6 +762,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     @pytest.mark.superslow("~180 seconds.")
     def test_read_data_random1(self) -> None:
+        """
+        Test data for randomly generated time intervals.
+        """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
