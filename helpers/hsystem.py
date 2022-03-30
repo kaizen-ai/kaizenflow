@@ -663,7 +663,7 @@ def du(path_name: str, human_format: bool = False) -> Union[int, str]:
     if not os.path.exists(path_name):
         _LOG.warning("Path '%s' doesn't exist", path_name)
         return 0
-    hdbg.dassert_exists(path_name)
+    hdbg.dassert_path_exists(path_name)
     cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
     # > du -d 0 core
     # 20    core

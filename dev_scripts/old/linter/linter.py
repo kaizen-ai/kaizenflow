@@ -203,7 +203,7 @@ def _get_files(args: argparse.Namespace) -> List[str]:
                 dir_name = args.dir_name
             dir_name = os.path.abspath(dir_name)
             _LOG.info("Looking for all files in '%s'", dir_name)
-            hdbg.dassert_exists(dir_name)
+            hdbg.dassert_path_exists(dir_name)
             cmd = "find %s -name '*' -type f" % dir_name
             _, output = hsystem.system_to_string(cmd)
             file_names = output.split("\n")
@@ -331,7 +331,7 @@ class _Action:
         :return: list of strings representing the output
         """
         hdbg.dassert(file_name)
-        hdbg.dassert_exists(file_name)
+        hdbg.dassert_path_exists(file_name)
         output = self._execute(file_name, pedantic)
         _dassert_list_of_strings(output)
         return output
@@ -1376,7 +1376,7 @@ class _LintMarkdown(_Action):
         # Run lint_txt.py.
         executable = "lint_txt.py"
         exec_path = hgit.find_file_in_git_tree(executable)
-        hdbg.dassert_exists(exec_path)
+        hdbg.dassert_path_exists(exec_path)
         #
         cmd = []
         cmd.append(exec_path)

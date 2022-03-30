@@ -165,7 +165,7 @@ def _process_requirements_file(req_file: str) -> str:
     # Read file.
     req_file = os.path.abspath(req_file)
     _LOG.debug("req_file=%s", req_file)
-    hdbg.dassert_exists(req_file)
+    hdbg.dassert_path_exists(req_file)
     txt_tmp = hio.from_file(req_file).split("\n")
     # Process.
     for line in txt_tmp:
@@ -212,7 +212,7 @@ def _create_conda_env(args: Any, conda_env_name: str) -> None:
         # Extract extensions.
         extensions = set()
         for req_file in args.req_file:
-            hdbg.dassert_exists(req_file)
+            hdbg.dassert_path_exists(req_file)
             _, file_extension = os.path.splitext(req_file)
             extensions.add(file_extension)
         hdbg.dassert_eq(
@@ -326,8 +326,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
     _LOG.info("\n%s", henv.get_system_info(add_frame=True))
-    hdbg.dassert_exists(_REQUIREMENTS_DIR)
-    hdbg.dassert_exists(_CONDA_ENVS_DIR)
+    hdbg.dassert_path_exists(_REQUIREMENTS_DIR)
+    hdbg.dassert_path_exists(_CONDA_ENVS_DIR)
     #
     _set_conda_root_dir()
     #

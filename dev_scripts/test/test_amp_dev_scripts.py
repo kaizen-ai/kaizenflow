@@ -38,7 +38,7 @@ class Test_url_py1(hunitest.TestCase):
 
     def test_run1(self) -> None:
         exec_name = os.path.join(hgit.get_amp_abs_path(), "dev_scripts/url.py")
-        hdbg.dassert_exists(exec_name)
+        hdbg.dassert_path_exists(exec_name)
         _LOG.debug(hprint.to_str("exec_name"))
         cmd = (
             f"{exec_name} http://localhost:9999/notebooks/research/"

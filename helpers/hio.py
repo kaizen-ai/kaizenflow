@@ -255,7 +255,7 @@ def create_dir(
     is_dir = os.path.isdir(dir_name)
     _LOG.debug(hprint.to_str("dir_name exists is_dir"))
     if abort_if_exists:
-        hdbg.dassert_not_exists(dir_name)
+        hdbg.dassert_path_not_exists(dir_name)
     #                   dir exists / dir does not exist
     # incremental       no-op        mkdir
     # not incremental   rm+mkdir     mkdir
@@ -410,7 +410,7 @@ def from_file(
     """
     hdbg.dassert_ne(file_name, "")
     _dassert_is_valid_file_name(file_name)
-    hdbg.dassert_exists(file_name)
+    hdbg.dassert_path_exists(file_name)
     data: str = ""
     if file_name.endswith((".gz", ".gzip")):
         # Open gzipped file.

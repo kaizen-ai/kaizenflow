@@ -62,7 +62,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dir_name = positional[1]
     else:
         dir_name = "."
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     name = "*" + positional[0].rstrip("").lstrip("") + "*"
     #
     cmd = "find %s" % dir_name

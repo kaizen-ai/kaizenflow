@@ -82,7 +82,7 @@ def open_file(file_name: str) -> None:
             f"Opening {extension} file '{file_name}'", char1="<", char2=">"
         ),
     )
-    hdbg.dassert_exists(file_name)
+    hdbg.dassert_path_exists(file_name)
     # Get opening command.
     os_name = hsystem.get_os_name()
     cmd: Optional[str]

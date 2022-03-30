@@ -33,7 +33,7 @@ class Test_set_env_amp(hunitest.TestCase):
         )
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
-        hdbg.dassert_exists(executable)
+        hdbg.dassert_path_exists(executable)
         hsystem.system(executable)
 
     # Since there are dependency from the user environment, we freeze a
@@ -48,7 +48,7 @@ class Test_set_env_amp(hunitest.TestCase):
         )
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
-        hdbg.dassert_exists(executable)
+        hdbg.dassert_path_exists(executable)
         # Run _setup.py and get its output.
         _, txt = hsystem.system_to_string(executable)
         # There is a difference between running the same test from different
@@ -66,7 +66,7 @@ class Test_set_env_amp(hunitest.TestCase):
         )
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
-        hdbg.dassert_exists(executable)
+        hdbg.dassert_path_exists(executable)
         cmd = "source %s amp_develop" % executable
         hsystem.system(cmd)
 

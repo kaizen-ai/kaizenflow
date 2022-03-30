@@ -664,19 +664,29 @@ def dassert_list_of_strings(
 # File related.
 
 
-# TODO(*): Deprecate this and use only `dassert_{file,dir}_exists()`.
-# TODO(*): -> dassert_path_exists
-def dassert_exists(
-    file_name: str,
+def dassert_path_exists(
+    path: str,
     msg: Optional[str] = None,
     *args: Any,
     only_warning: bool = False,
 ) -> None:
-    dassert_isinstance(file_name, str)
-    file_name = os.path.abspath(file_name)
-    if not os.path.exists(file_name):
-        txt = []
-        txt.append("File '%s' doesn't exist" % file_name)
+    dassert_isinstance(path, str)
+    path = os.path.abspath(path)
+    if not os.path.exists(path):
+        txt = "Path '%s' doesn't exist!" % path
+        _dfatal(txt, msg, *args, only_warning=only_warning)
+
+
+def dassert_path_not_exists(
+    path: str,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    dassert_isinstance(path, str)
+    path = os.path.abspath(path)
+    if os.path.exists(path):
+        txt = "Path '%s' already exist!" % path
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -723,29 +733,6 @@ def dassert_dir_exists(
     is_dir = os.path.isdir(dir_name)
     if not is_dir:
         txt = f"'{dir_name}' is not a dir"
-        _dfatal(txt, msg, *args, only_warning=only_warning)
-
-
-def dassert_not_exists(
-    file_name: str,
-    msg: Optional[str] = None,
-    *args: Any,
-    only_warning: bool = False,
-) -> None:
-    """
-    Ensure that a file or a dir `file_name` doesn't exist, raise otherwise.
-
-    Of course, we don't need to distinguish between
-    `dassert_file_not_exists()` and `dassert_dir_not_exists()` because
-    if something doesn't exist, we can't make a distinction of what it
-    is.
-    """
-    dassert_isinstance(file_name, str)
-    file_name = os.path.abspath(file_name)
-    # pylint: disable=superfluous-parens,unneeded-not
-    if not (not os.path.exists(file_name)):
-        txt = []
-        txt.append("file='%s' already exists" % file_name)
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
