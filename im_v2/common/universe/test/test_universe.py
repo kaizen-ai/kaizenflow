@@ -221,3 +221,4 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         self.assertEqual(len(actual), 2)
         self.assertEqual(actual[0], universe_as_full_symbols[0])
         self.assertEqual(actual[1], universe_as_full_symbols[1])
+

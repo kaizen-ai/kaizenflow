@@ -4,6 +4,7 @@ Import as:
 import helpers.hprint as hprint
 """
 
+import inspect
 import logging
 import re
 import sys
@@ -342,6 +343,78 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     return ret
 
 
+# TODO(timurg): In order to replace `hprint.to_str` function,
+# `frame level`(see `hprint.to_str`) should be implemented,
+# otherwise `helpers/test/test_printing.py::Test_log::test2-4` will fail,
+# see CmTask #1554.
+
+
+def to_str2(*variables_values: Any) -> str:
+    """
+    Return a string with name and value of variables passed to the function as
+    `name=value`.
+
+    E.g.,:
+    ```
+    a = 5
+    b = "hello"
+    n = 2
+    to_str2(a, b, n+1)
+    ```
+    returns a string "a=5, b=hello, n+1=2".
+
+    Limitations: can't work with an argument that contains parenthesis,
+    e.g.,: `to_str(to_str(a, b), c)`.
+
+    Dependencies: funtion call index depends on the Python version, `frame.lineno` is
+       - Last argument line in Python >=3.6 and < 3.9
+       - Function call line in Python 3.9 and above
+
+    :param variables_values: variables to convert into "name=value" string
+    :return: string e.g., `a=1, b=2`
+    """
+    # Check parameters.
+    hdbg.dassert_lt(1, len(variables_values))
+    # Get frame object for the caller’s stack frame.
+    frame_ = inspect.currentframe()
+    # Get a list of frame records for a frame and all outer frames.
+    frames = inspect.getouterframes(frame_)
+    # Get first outer frame - from where function was called, and the current one.
+    frame_above, current_frame = frames[1], frames[0]
+    # Get source code starting from line where current function was called.
+    source_code_lines, _ = inspect.findsource(frame_above.frame)
+    # Line number start from 1, while index starts with 0.
+    call_line_index = frame_above.lineno - 1
+    stripped_code_lines = [
+        line.strip() for line in source_code_lines[call_line_index:]
+    ]
+    source_code_string = "".join(stripped_code_lines)
+    # Find the name of the current function in the code.
+    regex = fr"{current_frame.function}\((.*?)\)"
+    matches = re.findall(regex, source_code_string)
+    hdbg.dassert_ne(
+        len(matches),
+        0,
+        "No arguments found in the source code for %s",
+        str(current_frame.function),
+    )
+    # Only fist match from regex is needed.
+    variables_names_str = matches[0]
+    variables_names = variables_names_str.split(",")
+    hdbg.dassert_eq(
+        len(variables_names),
+        len(variables_values),
+        "Number of vars and values is not equal: var_names=%s, val_names=%s",
+        str(variables_names),
+        str(variables_values),
+    )
+    # Package the name and the value of the variables in the return string.
+    output = []
+    for name, value in zip(variables_names, variables_values):
+        output.append(f"{name.strip()}={value}")
+    return ", ".join(output)
+
+
 def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
     """
     log(_LOG, logging.DEBUG, "ticker", "exchange")
@@ -377,7 +450,7 @@ def log(logger: logging.Logger, verbosity: int, *vals: Any) -> None:
 def log_frame(
     logger: logging.Logger,
     fstring: str,
-    *args,
+    *args: Any,
     level: int = 1,
     char: str = "#",
     verbosity: int = logging.DEBUG,
@@ -745,11 +818,11 @@ def filter_text(regex: str, txt: str) -> str:
         return txt
     txt_out = []
     txt_as_arr = txt.split("\n")
-    for line in txt_as_arr:
-        if re.search(regex, line):
-            _LOG.debug("Skipping line='%s'", line)
+    for line_ in txt_as_arr:
+        if re.search(regex, line_):
+            _LOG.debug("Skipping line='%s'", line_)
             continue
-        txt_out.append(line)
+        txt_out.append(line_)
     # We can only remove lines.
     hdbg.dassert_lte(
         len(txt_out),

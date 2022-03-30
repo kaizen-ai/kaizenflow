@@ -18,6 +18,9 @@ def get_test_data_dir() -> str:
     The files in the dir are copies of some `Talos` data files from S3
     that were loaded for our research purposes. These copies are checked
     out locally in order to test functions without dependencies on S3.
+
+    Test snippets contain altered original data (3rd and 4th minutes are removed).
+    This is done in order to demonstrate that `resample_1min` works correctly.
     """
     test_data_dir = os.path.join(
         hgit.get_amp_abs_path(),
@@ -36,6 +39,6 @@ def get_TalosHistoricalPqByTileClient_example1(
     root_dir = get_test_data_dir()
     partition_mode = "by_year_month"
     talos_file_client = imvtdctacl.TalosHistoricalPqByTileClient(
-        root_dir, resample_1min, partition_mode
+        resample_1min, root_dir, partition_mode
     )
     return talos_file_client
