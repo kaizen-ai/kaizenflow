@@ -30,7 +30,7 @@ def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
     """
     # TODO(gp): Pass conda_env_name as done in get_conda_list()
     path = holuscre.get_credentials()["conda_sh_path"]
-    hdbg.dassert_exists(path)
+    hdbg.dassert_path_exists(path)
     hdbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
     output: int = hsystem.system(cmd, *args, **kwargs)
@@ -41,7 +41,7 @@ def conda_system_to_string(
     cmd: str, *args: Any, **kwargs: Any
 ) -> Tuple[int, str]:
     path = holuscre.get_credentials()["conda_sh_path"]
-    hdbg.dassert_exists(path)
+    hdbg.dassert_path_exists(path)
     hdbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
     cmd = "source %s && %s" % (path, cmd)
     output: Tuple[int, str] = hsystem.system_to_string(cmd, *args, **kwargs)

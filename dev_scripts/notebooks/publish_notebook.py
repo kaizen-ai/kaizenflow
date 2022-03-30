@@ -60,7 +60,7 @@ def _get_path(path_or_url: str) -> str:
         ret = "/".join(path_or_url.split("/")[7:])
     elif "http://" in path_or_url:
         ret = "/".join(path_or_url.split("/")[4:])
-        hdbg.dassert_exists(ret)
+        hdbg.dassert_path_exists(ret)
         if not os.path.exists(path_or_url):
             # Try to find the file with find basename in the current client.
             pass
