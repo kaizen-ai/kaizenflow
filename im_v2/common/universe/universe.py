@@ -59,7 +59,7 @@ def _get_universe_file_path(vendor: str, *, version: Optional[str] = None) -> st
         # TODO(Juraj): #1487 Assert version format (include 'small').
         file_name = "".join(["universe_", version, ".json"])
         file_path = os.path.join(vendor_dir, file_name)
-    hdbg.dassert_exists(file_path)
+    hdbg.dassert_path_exists(file_path)
     return file_path
 
 
@@ -91,7 +91,7 @@ def _get_trade_universe(
         }
     """
     file_path = _get_universe_file_path(vendor, version=version)
-    hdbg.dassert_exists(file_path)
+    hdbg.dassert_path_exists(file_path)
     universe = hio.from_json(file_path)
     return universe  # type: ignore[no-any-return]
 

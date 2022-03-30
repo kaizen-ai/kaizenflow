@@ -99,7 +99,7 @@ def _rclone_copy_from_gdrive(remote_src_dir, local_dst_dir, log_dir, dry_run):
 
 
 def _rclone_copy_to_gdrive(local_src_dir, remote_dst_dir, log_dir, dry_run):
-    hdbg.dassert_exists(local_src_dir)
+    hdbg.dassert_path_exists(local_src_dir)
     cmd = [
         "rclone copy",
         local_src_dir,
@@ -178,7 +178,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if not args.skip_tgz:
             _LOG.info("# Archiving ...")
             tar_file = "%s/gdrive.%s.tgz" % (dst_dir, timestamp)
-            hdbg.dassert_not_exists(tar_file)
+            hdbg.dassert_path_not_exists(tar_file)
             output_file = log_dir + "/tar.log"
             cmd = "tar -cf %s -C %s ." % (tar_file, temp_dir)
             hsystem.system(

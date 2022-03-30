@@ -46,7 +46,7 @@ def _convert(dir_name: str, ipynb_file: str, py_file: str) -> str:
         "dir_name=%s ipynb_file=%s py_file=%s", dir_name, ipynb_file, py_file
     )
     # TODO(gp): Use dir_name for --output-dir.
-    hdbg.dassert_exists(ipynb_file)
+    hdbg.dassert_path_exists(ipynb_file)
     cmd = "jupyter nbconvert %s --to python --output %s >/dev/null" % (
         ipynb_file,
         py_file,
@@ -55,7 +55,7 @@ def _convert(dir_name: str, ipynb_file: str, py_file: str) -> str:
     # Purify output removing the [\d+].
     dir_name = os.path.dirname(ipynb_file)
     dst_py_file = dir_name + "/" + py_file
-    hdbg.dassert_exists(dst_py_file)
+    hdbg.dassert_path_exists(dst_py_file)
     cmd = r"perl -p -i -e 's/# In\s*\[.*]/# In[]/g' %s" % dst_py_file
     hsystem.system(cmd)
     return dst_py_file
@@ -73,7 +73,7 @@ def _diff_notebook(
     """
     _LOG.debug("dir_name=%s abs_file_name=%s", dir_name, abs_file_name)
     # Make sure the file exists and it's a python notebook.
-    hdbg.dassert_exists(abs_file_name)
+    hdbg.dassert_path_exists(abs_file_name)
     # Retrieve HEAD file and save it.
     old_ipynb = dir_name + "/notebook_old.ipynb"
     # Convert abs file into file relative to git root:
@@ -86,7 +86,7 @@ def _diff_notebook(
     _LOG.info("git_file_name=%s", git_file_name)
     cmd = "git show HEAD:%s >%s" % (git_file_name, old_ipynb)
     hsystem.system(cmd)
-    hdbg.dassert_exists(old_ipynb)
+    hdbg.dassert_path_exists(old_ipynb)
     #
     old_py = "notebook_old.py"
     old_py = _convert(dir_name, old_ipynb, old_py)
@@ -194,7 +194,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         #   /Users/gp/src/mac_tcm2/altdata/python/src/agriculture/
         #       notebooks/data_explorations/ThomsonReuters_db.ipynb
         abs_file_name = git_client_root + "/" + f
-        hdbg.dassert_exists(abs_file_name)
+        hdbg.dassert_path_exists(abs_file_name)
         # pylint: disable=line-too-long
         # Remove the cwd path to get the path relative to the current dir.
         # E.g.,

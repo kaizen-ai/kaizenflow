@@ -133,7 +133,7 @@ def _run_pandoc_to_pdf(
     #
     cmd.append("-t latex")
     template = "%s/pandoc.latex" % curr_path
-    hdbg.dassert_exists(template)
+    hdbg.dassert_path_exists(template)
     cmd.append("--template %s" % template)
     cmd.append("--filter pandoc-plantuml")
     #
@@ -155,7 +155,7 @@ def _run_pandoc_to_pdf(
     _LOG.info("\n%s", hprint.frame("Latex", char1="<", char2=">"))
     # pdflatex needs to run in the same dir of latex_abbrevs.sty so we
     # cd to that dir and save the output in the same dir of the input.
-    hdbg.dassert_exists(_EXEC_DIR_NAME + "/latex_abbrevs.sty")
+    hdbg.dassert_path_exists(_EXEC_DIR_NAME + "/latex_abbrevs.sty")
     cmd = "cd %s; " % _EXEC_DIR_NAME
     cmd += (
         "pdflatex"
@@ -176,7 +176,7 @@ def _run_pandoc_to_pdf(
     #
     file_out = file_.replace(".tex", ".pdf")
     _LOG.debug("file_out=%s", file_out)
-    hdbg.dassert_exists(file_out)
+    hdbg.dassert_path_exists(file_out)
     return file_out
 
 
@@ -201,7 +201,7 @@ def _run_pandoc_to_html(
     #
     file_out = os.path.abspath(file2.replace(".tex", ".html"))
     _LOG.debug("file_out=%s", file_out)
-    hdbg.dassert_exists(file_out)
+    hdbg.dassert_path_exists(file_out)
     return file_out
 
 
@@ -267,7 +267,7 @@ def _pandoc(args: argparse.Namespace) -> None:
         _SCRIPT = ["#/bin/bash -xe"]
     #
     file_ = args.input
-    hdbg.dassert_exists(file_)
+    hdbg.dassert_path_exists(file_)
     prefix = args.tmp_dir + "/tmp.pandoc"
     prefix = os.path.abspath(prefix)
     #
