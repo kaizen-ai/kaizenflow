@@ -58,6 +58,67 @@ class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 
 
 def get_MockHistoricalByTileClient_example1(
+    instance: icdctictc.ImClientTestCase, assets: str, resample_1min: bool
+) -> imvcdchpcl.HistoricalPqByTileClient:
+    """
+    Build mock client example for tests and test data for 2 days.
+    """
+    start_date = "2021-12-30"
+    end_date = "2022-01-02"
+    freq = "1T"
+    asset_col_name = "full_symbol"
+    output_type = "cm_task_1103"
+    partition_mode = "by_year_month"
+    test_dir = _generate_test_data(
+        instance,
+        start_date,
+        end_date,
+        freq,
+        assets,
+        asset_col_name,
+        output_type,
+        partition_mode,
+    )
+    # Init client for testing.
+    vendor = "mock"
+    im_client = MockHistoricalByTileClient(
+        vendor, resample_1min, test_dir, partition_mode
+    )
+    return im_client
+
+
+def get_MockHistoricalByTileClient_example2(
+    instance: icdctictc.ImClientTestCase, assets: str
+) -> imvcdchpcl.HistoricalPqByTileClient:
+    """
+    Build mock client example to test Parquet filters building.
+    """
+    start_date = "2020-01-01"
+    end_date = "2022-01-02"
+    freq = "1T"
+    asset_col_name = "full_symbol"
+    output_type = "cm_task_1103"
+    partition_mode = "by_year_month"
+    test_dir = _generate_test_data(
+        instance,
+        start_date,
+        end_date,
+        freq,
+        assets,
+        asset_col_name,
+        output_type,
+        partition_mode,
+    )
+    # Init client for testing.
+    vendor = "mock"
+    resample_1min = False
+    im_client = MockHistoricalByTileClient(
+        vendor, resample_1min, test_dir, partition_mode
+    )
+    return im_client
+
+
+def get_MockHistoricalByTileClient_example3(
     instance: icdctictc.ImClientTestCase,
     assets: str,
     start_date: str,
@@ -65,7 +126,7 @@ def get_MockHistoricalByTileClient_example1(
     resample_1min: bool,
 ) -> imvcdchpcl.HistoricalPqByTileClient:
     """
-    Build mock client example for tests.
+    Build mock client example for testing randomly generated intervals.
     """
     freq = "1T"
     asset_col_name = "full_symbol"

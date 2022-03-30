@@ -19,11 +19,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = True
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbol, start_date, end_date, resample_1min
+            self, full_symbol, resample_1min
         )
         # Compare the expected values.
         expected_length = 4320
@@ -55,11 +53,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = True
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+            self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -94,11 +90,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = True
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+            self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
         expected_length = 2640
@@ -134,11 +128,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = True
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+            self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
         expected_length = 6002
@@ -174,11 +166,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = True
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+            self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
         expected_length = 242
@@ -216,11 +206,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_read_data6(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols_str = "binance::BTC_USDT,kucoin::FIL_USDT"
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = True
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+            self, full_symbols_str, resample_1min
         )
         # Run test.
         full_symbol = "kucoin::MOCK"
@@ -232,11 +220,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = False
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+            self, full_symbols_str, resample_1min
         )
         # Compare the expected values.
         expected_length = 8640
@@ -271,11 +257,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_get_start_ts_for_symbol1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = True
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbol, start_date, end_date, resample_1min
+            self, full_symbol, resample_1min
         )
         # Compare the expected values.
         expected_start_timestamp = pd.Timestamp("2021-12-30 00:00:00+00:00")
@@ -286,11 +270,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_get_end_ts_for_symbol1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
-        start_date = "2021-12-30"
-        end_date = "2022-01-02"
         resample_1min = True
         im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbol, start_date, end_date, resample_1min
+            self, full_symbol, resample_1min
         )
         # Compare the expected values.
         expected_end_timestamp = pd.Timestamp("2022-01-01 23:59:00+00:00")
@@ -372,11 +354,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 178560
@@ -416,11 +395,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 1054082
@@ -459,11 +435,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 89280
@@ -504,11 +477,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 89282
@@ -549,11 +519,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 264962
@@ -594,11 +561,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 434882
@@ -640,11 +604,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 1140482
@@ -685,11 +646,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 4
@@ -727,11 +685,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         full_symbols_str = ",".join(full_symbols)
-        start_date = "2020-01-01"
-        end_date = "2022-01-02"
-        resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
-            self, full_symbols_str, start_date, end_date, resample_1min
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example2(
+            self, full_symbols_str
         )
         # Compare the expected values.
         expected_length = 2
@@ -771,7 +726,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         start_date = "2018-12-30"
         end_date = "2022-01-02"
         resample_1min = False
-        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example3(
             self, full_symbols_str, start_date, end_date, resample_1min
         )
         # Run tests.
