@@ -82,7 +82,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.warning("Deleting '%s' as per user request", dst_dir)
             hio.create_dir(dst_dir, incremental=False)
         else:
-            hdbg.dassert_not_exists(dst_dir)
+            hdbg.dassert_path_not_exists(dst_dir)
     #
     for file_ in tqdm(files):
         _LOG.debug("Processing '%s'", file_)
