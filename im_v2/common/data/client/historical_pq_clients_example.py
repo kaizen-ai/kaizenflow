@@ -4,25 +4,13 @@ Import as:
 import im_v2.common.data.client.historical_pq_clients_example as imvcdchpce
 """
 
-import logging
 import os
-from typing import List
+from typing import Any, List
 
 import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
-import im_v2.common.data.client.test.im_client_test_case as icdctictc
-
-_LOG = logging.getLogger(__name__)
-
-
-def get_test_data_dir(instance: icdctictc.ImClientTestCase) -> str:
-    """
-    Generate directory for test data.
-    """
-    test_data_dir: str = instance.get_scratch_space()
-    return test_data_dir
 
 
 def _generate_test_data(
@@ -36,7 +24,8 @@ def _generate_test_data(
     partition_mode: str,
 ) -> None:
     """
-    Generate test data as partitioned Parquet files at the specified dir.
+    The parameters are the test data dir and the same as the script
+    `im_v2/common/test/generate_pq_test_data.py`.
     """
     tiled_bar_data_dir = os.path.join(test_data_dir, "tiled.bar_data")
     # TODO(gp): @all replace the script with calling the library directly
@@ -66,7 +55,7 @@ class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 
 
 def get_MockHistoricalByTileClient_example1(
-    instance: icdctictc.ImClientTestCase,
+    self_: Any,
     full_symbols: List[imvcdcfusy.FullSymbol],
     resample_1min: bool,
 ) -> imvcdchpcl.HistoricalPqByTileClient:
@@ -81,7 +70,7 @@ def get_MockHistoricalByTileClient_example1(
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_data_dir = get_test_data_dir(instance)
+    test_data_dir = self_.get_scratch_space()
     # Generate test data.
     _generate_test_data(
         test_data_dir,
@@ -101,8 +90,9 @@ def get_MockHistoricalByTileClient_example1(
     return im_client
 
 
+# TODO(Dan): Generate hourly data in order to speed up tests.
 def get_MockHistoricalByTileClient_example2(
-    instance: icdctictc.ImClientTestCase,
+    self_: Any,
     full_symbols: List[imvcdcfusy.FullSymbol],
 ) -> imvcdchpcl.HistoricalPqByTileClient:
     """
@@ -116,7 +106,7 @@ def get_MockHistoricalByTileClient_example2(
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_data_dir = get_test_data_dir(instance)
+    test_data_dir = self_.get_scratch_space()
     # Generate test data.
     _generate_test_data(
         test_data_dir,
@@ -137,8 +127,9 @@ def get_MockHistoricalByTileClient_example2(
     return im_client
 
 
+# TODO(Dan): Generate hourly data in order to speed up tests.
 def get_MockHistoricalByTileClient_example3(
-    instance: icdctictc.ImClientTestCase,
+    self_: Any,
     full_symbols: List[imvcdcfusy.FullSymbol],
     start_date: str,
     end_date: str,
@@ -153,7 +144,7 @@ def get_MockHistoricalByTileClient_example3(
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
-    test_data_dir = get_test_data_dir(instance)
+    test_data_dir = self_.get_scratch_space()
     # Generate test data.
     _generate_test_data(
         test_data_dir,

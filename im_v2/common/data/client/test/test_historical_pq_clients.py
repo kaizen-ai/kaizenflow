@@ -312,7 +312,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
     ) -> Tuple[pd.Timestamp, pd.Timestamp]:
         """
-        Generate timestamp interval between specified timestamp boundaries.
+        Generate a timestamp interval between specified timestamp boundaries.
 
         Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval.
 
@@ -320,8 +320,10 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         :param right_boundary: right boundary for generated timestamp interval
         :return: two consequtive timestamps that belong to the specified interval
         """
-        # Set new seed in order to avoid repeating random values.
-        random.seed()
+        # TODO(Dan): Consider using random seed value.
+        # Set seed to reproduce tests.
+        seed = 42
+        random.seed(seed)
         # Convert boundaries to epochs.
         left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
             left_boundary, unit="m"
