@@ -320,10 +320,9 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         :param right_boundary: right boundary for generated timestamp interval
         :return: two consequtive timestamps that belong to the specified interval
         """
-        # TODO(Dan): Consider using random seed value.
-        # Set seed to reproduce tests.
-        seed = 42
-        random.seed(seed)
+        # TODO(Dan): Consider logging seed value.
+        # Set new seed to generate different intervals at every run.
+        random.seed()
         # Convert boundaries to epochs.
         left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
             left_boundary, unit="m"
