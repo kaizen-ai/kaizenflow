@@ -307,7 +307,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         test_dir = "dummy"
         partition_mode = "by_year_month"
         im_client = ivcdchpqce.MockHistoricalByTileClient(
-            vendor, test_dir, resample_1min, partition_mode
+            vendor, resample_1min, test_dir, partition_mode
         )
         # Compare the expected values.
         expected_length = 2
@@ -362,7 +362,375 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
         return start_ts, end_ts
 
-    @pytest.mark.superslow("Execution time varies depending on generated inputs.")
+    def test_only_start_date1(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 178560
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature =  r"""# df=
+        index=[2021-11-01 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(178560, 4)
+                                         full_symbol   close  year month
+        timestamp                                                       
+        2021-11-01 00:00:00+00:00  binance::BTC_USDT  964800  2021    11
+        2021-11-01 00:00:00+00:00   kucoin::FIL_USDT  964800  2021    11
+        2021-11-01 00:01:00+00:00  binance::BTC_USDT  964801  2021    11
+        ...
+        2022-01-01 23:58:00+00:00   kucoin::FIL_USDT  1054078  2022     1
+        2022-01-01 23:59:00+00:00  binance::BTC_USDT  1054079  2022     1
+        2022-01-01 23:59:00+00:00   kucoin::FIL_USDT  1054079  2022     1"""
+        start_timestamp = pd.Timestamp("2021-11-01 00:00:00+00:00")
+        self._test_read_data3(
+            im_client,
+            full_symbols,
+            start_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    @pytest.mark.slow("6 seconds.")
+    def test_only_end_date1(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 1054082
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2020-01-01 00:00:00+00:00, 2021-01-01 00:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(1054082, 4)
+                                         full_symbol  close  year month
+        timestamp                                                      
+        2020-01-01 00:00:00+00:00  binance::BTC_USDT      0  2020     1
+        2020-01-01 00:00:00+00:00   kucoin::FIL_USDT      0  2020     1
+        2020-01-01 00:01:00+00:00  binance::BTC_USDT      1  2020     1
+        ...
+        2020-12-31 23:59:00+00:00   kucoin::FIL_USDT  527039  2020    12
+        2021-01-01 00:00:00+00:00  binance::BTC_USDT  527040  2021     1
+        2021-01-01 00:00:00+00:00   kucoin::FIL_USDT  527040  2021     1"""
+        end_timestamp = pd.Timestamp("2021-01-01 00:00:00+00:00")
+        self._test_read_data4(
+            im_client,
+            full_symbols,
+            end_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_one_month1(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 89280
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2021-08-01 00:00:00+00:00, 2021-08-31 23:59:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(89280, 4)
+                                         full_symbol   close  year month
+        timestamp                                                       
+        2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320  2021     8
+        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320  2021     8
+        2021-08-01 00:01:00+00:00  binance::BTC_USDT  832321  2021     8
+        ...
+        2021-08-31 23:58:00+00:00   kucoin::FIL_USDT  876958  2021     8
+        2021-08-31 23:59:00+00:00  binance::BTC_USDT  876959  2021     8
+        2021-08-31 23:59:00+00:00   kucoin::FIL_USDT  876959  2021     8"""
+        start_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
+        end_timestamp = pd.Timestamp("2021-08-31 23:59:00+00:00")
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_timestamp,
+            end_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_one_month2(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 89282
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2020-12-15 00:00:00+00:00, 2021-01-15 00:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(89282, 4)
+                                         full_symbol   close  year month
+        timestamp                                                       
+        2020-12-15 00:00:00+00:00  binance::BTC_USDT  502560  2020    12
+        2020-12-15 00:00:00+00:00   kucoin::FIL_USDT  502560  2020    12
+        2020-12-15 00:01:00+00:00  binance::BTC_USDT  502561  2020    12
+        ...
+        2021-01-14 23:59:00+00:00   kucoin::FIL_USDT  547199  2021     1
+        2021-01-15 00:00:00+00:00  binance::BTC_USDT  547200  2021     1
+        2021-01-15 00:00:00+00:00   kucoin::FIL_USDT  547200  2021     1"""
+        start_timestamp = pd.Timestamp("2020-12-15 00:00:00+00:00")
+        end_timestamp = pd.Timestamp("2021-01-15 00:00:00+00:00")
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_timestamp,
+            end_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_multiple_months1(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 264962
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2021-08-01 00:00:00+00:00, 2021-11-01 00:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(264962, 4)
+                                         full_symbol   close  year month
+        timestamp                                                       
+        2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320  2021     8
+        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320  2021     8
+        2021-08-01 00:01:00+00:00  binance::BTC_USDT  832321  2021     8
+        ...
+        2021-10-31 23:59:00+00:00   kucoin::FIL_USDT  964799  2021    10
+        2021-11-01 00:00:00+00:00  binance::BTC_USDT  964800  2021    11
+        2021-11-01 00:00:00+00:00   kucoin::FIL_USDT  964800  2021    11"""
+        start_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
+        end_timestamp = pd.Timestamp("2021-11-01 00:00:00+00:00")
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_timestamp,
+            end_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_multiple_months2(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 434882
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2020-10-01 00:00:00+00:00, 2021-03-01 00:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(434882, 4)
+                                         full_symbol   close  year month
+        timestamp                                                       
+        2020-10-01 00:00:00+00:00  binance::BTC_USDT  394560  2020    10
+        2020-10-01 00:00:00+00:00   kucoin::FIL_USDT  394560  2020    10
+        2020-10-01 00:01:00+00:00  binance::BTC_USDT  394561  2020    10
+        ...
+        2021-02-28 23:59:00+00:00   kucoin::FIL_USDT  611999  2021     2
+        2021-03-01 00:00:00+00:00  binance::BTC_USDT  612000  2021     3
+        2021-03-01 00:00:00+00:00   kucoin::FIL_USDT  612000  2021     3"""
+        start_timestamp = pd.Timestamp("2020-10-01 00:00:00+00:00")
+        end_timestamp = pd.Timestamp("2021-03-01 00:00:00+00:00")
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_timestamp,
+            end_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    @pytest.mark.slow("6 seconds.")
+    def test_multiple_months3(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 1140482
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2020-12-01 00:00:00+00:00, 2022-01-01 00:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(1140482, 4)
+                                         full_symbol   close  year month
+        timestamp                                                       
+        2020-12-01 00:00:00+00:00  binance::BTC_USDT  482400  2020    12
+        2020-12-01 00:00:00+00:00   kucoin::FIL_USDT  482400  2020    12
+        2020-12-01 00:01:00+00:00  binance::BTC_USDT  482401  2020    12
+        ...
+        2021-12-31 23:59:00+00:00   kucoin::FIL_USDT  1052639  2021    12
+        2022-01-01 00:00:00+00:00  binance::BTC_USDT  1052640  2022     1
+        2022-01-01 00:00:00+00:00   kucoin::FIL_USDT  1052640  2022     1"""
+        start_timestamp = pd.Timestamp("2020-12-01 00:00:00+00:00")
+        end_timestamp = pd.Timestamp("2022-01-01 00:00:00+00:00")
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_timestamp,
+            end_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_new_year1(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 4
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2021-12-31 23:59:00+00:00, 2022-01-01 00:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(4, 4)
+                                         full_symbol    close  year month
+        timestamp                                                        
+        2021-12-31 23:59:00+00:00  binance::BTC_USDT  1052639  2021    12
+        2021-12-31 23:59:00+00:00   kucoin::FIL_USDT  1052639  2021    12
+        2022-01-01 00:00:00+00:00  binance::BTC_USDT  1052640  2022     1
+        2022-01-01 00:00:00+00:00   kucoin::FIL_USDT  1052640  2022     1"""
+        start_timestamp = pd.Timestamp("2021-12-31 23:59:00+00:00")
+        end_timestamp = pd.Timestamp("2022-01-01 00:00:00+00:00")
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_timestamp,
+            end_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_equal_dates1(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        full_symbols_str = ",".join(full_symbols)
+        start_date = "2020-01-01"
+        end_date = "2022-01-02"
+        resample_1min = False
+        im_client = ivcdchpqce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols_str, start_date, end_date, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 2
+        expected_column_names = ["close", "full_symbol", "month", "year"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2021-08-01 00:00:00+00:00, 2021-08-01 00:00:00+00:00]
+        columns=full_symbol,close,year,month
+        shape=(2, 4)
+                                         full_symbol   close  year month
+        timestamp                                                       
+        2021-08-01 00:00:00+00:00  binance::BTC_USDT  832320  2021     8
+        2021-08-01 00:00:00+00:00   kucoin::FIL_USDT  832320  2021     8"""
+        start_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
+        end_timestamp = pd.Timestamp("2021-08-01 00:00:00+00:00")
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_timestamp,
+            end_timestamp,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    @pytest.mark.superslow("~180 seconds.")
     def test_read_data_random1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
