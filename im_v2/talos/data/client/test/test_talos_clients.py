@@ -317,9 +317,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 class TestRealTimeSqlTalosClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
-    """
-    
-    """
+    """"""
 
     def test_build_select_query1(self) -> None:
         """
@@ -651,7 +649,6 @@ class TestRealTimeSqlTalosClient1(
         self._test_read_data6(im_client, full_symbol)
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
-
 
     def test_read_data7(self) -> None:
         # Load test data.
