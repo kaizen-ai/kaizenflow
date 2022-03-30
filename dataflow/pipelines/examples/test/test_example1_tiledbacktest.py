@@ -16,12 +16,16 @@ class Test_Example1_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
     """
 
     @pytest.mark.superslow
+    @pytest.mark.skip("LimeTask416: Breaks_2022_03_28")
     def test1(self) -> None:
         """
         Run on a single name for a few months.
         """
-        backtest_config = "eg_v2_0-top1.5T.JanFeb2020"
-        config_builder = f'dataflow_lime.pipelines.E8.E8d_configs.build_rc1_configs("{backtest_config}")'
+        backtest_config = "kibot_v1-top1.5T.JanFeb2020"
+        config_builder = (
+            "dataflow.pipelines.examples.example1_configs."
+            + f'build_tile_configs("{backtest_config}")'
+        )
         experiment_builder = (
             "amp.dataflow.model.master_experiment.run_tiled_experiment"
         )

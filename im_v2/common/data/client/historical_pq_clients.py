@@ -29,13 +29,14 @@ class HistoricalPqByTileClient(
 
     def __init__(
         self,
+        # TODO(gp): We could use *args, **kwargs as params for ImClient.
         vendor: str,
-        root_dir: str,
-        # TODO(Nina): change position of `resample_1min` according to parent class order.
         resample_1min: bool,
+        root_dir: str,
         partition_mode: str,
         *,
         aws_profile: Optional[str] = None,
+        full_symbol_col_name: Optional[str] = None,
     ):
         """
         Constructor.
@@ -46,22 +47,26 @@ class HistoricalPqByTileClient(
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
         :param aws_profile: AWS profile name (e.g., "ck")
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(
+            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+        )
         self._root_dir = root_dir
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile
 
-    def get_metadata(self) -> pd.DataFrame:
-        """
-        See description in the parent class.
-        """
-        raise NotImplementedError
-
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    @staticmethod
+    def get_universe() -> List[icdc.FullSymbol]:
         """
         See description in the parent class.
         """
         return []
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
 
     @staticmethod
     def _get_columns_for_query() -> Optional[List[str]]:
@@ -179,8 +184,17 @@ class HistoricalPqByDateClient(
     """
 
     # TODO(gp): Do not pass a read_func but use an abstract method.
-    def __init__(self, full_symbol_col_name: str, read_func):
-        self._full_symbol_col_name = full_symbol_col_name
+    def __init__(
+        self,
+        vendor: str,
+        resample_1min: bool,
+        read_func,
+        *,
+        full_symbol_col_name: Optional[str] = None,
+    ):
+        super().__init__(
+            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+        )
         self._read_func = read_func
 
     def _read_data_for_multiple_symbols(

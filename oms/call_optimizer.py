@@ -17,7 +17,6 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
-import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
@@ -148,6 +147,9 @@ def run_optimizer(
     # Login in the Docker on AWS to pull the `opt` image.
     # TODO(Grisha): Move this inside the `opt_docker_cmd`.
     # TODO(Grisha): maybe move `docker_login` to the entrypoint?
+    # To avoid to call init_logger overwriting the call to it from `main`.
+    import helpers.lib_tasks as hlibtask
+
     ctx = invoke.context.Context()
     hlibtask.docker_login(ctx)
     # Serialize the inputs in `tmp_dir`.

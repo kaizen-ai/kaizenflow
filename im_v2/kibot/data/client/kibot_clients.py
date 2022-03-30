@@ -130,8 +130,8 @@ class KibotEquitiesCsvParquetByAssetClient(
 
     def __init__(
         self,
-        root_dir: str,
         resample_1min: bool,
+        root_dir: str,
         extension: str,
         asset_class: str,
         unadjusted: Optional[bool],
@@ -320,8 +320,8 @@ class KibotFuturesCsvParquetByAssetClient(
 
     def __init__(
         self,
-        root_dir: str,
         resample_1min: bool,
+        root_dir: str,
         extension: str,
         contract_type: str,
         *,
