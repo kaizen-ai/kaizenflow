@@ -389,22 +389,22 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :return: min or max value of 'timestamp' column.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
-        currency_pair, exchange = imvcdcfusy.parse_full_symbol(full_symbol)
+        exchange, currency_pair = imvcdcfusy.parse_full_symbol(full_symbol)
         # Build a MIN/MAX query.
         if mode == "start":
             query = f"SELECT MIN(timestamp) from {self._table_name}" \
                     f" WHERE currency_pair='{currency_pair}'" \
-                    f" AND exchange='{exchange}'"
+                    f" AND exchange_id='{exchange}'"
         elif mode == "end":
             query = f"SELECT MAX(timestamp) from {self._table_name}" \
                     f" WHERE currency_pair='{currency_pair}'" \
-                    f" AND exchange='{exchange}'"
+                    f" AND exchange_id='{exchange}'"
         else:
             raise ValueError("Invalid mode='%s'" % mode)
         # TODO(Danya): factor out min/max as helper function.
-        # Load the target data.
+        # Load the target timestamp as unix epoch.
         timestamp = hsql.execute_query_to_df(self._db_connection, query).loc[0][0]
-        hdbg.dassert_isinstance(timestamp, int)
         # Convert to `pd.Timestamp` type.
         timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
+        hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
