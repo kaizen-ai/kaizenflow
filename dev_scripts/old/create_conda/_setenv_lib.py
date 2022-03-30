@@ -121,7 +121,7 @@ def report_info(txt: str) -> Tuple[str, str]:
     _frame("Info", txt)
     _log_var("cmd_line", hdbg.get_command_line(), txt)
     exec_name = os.path.abspath(sys.argv[0])
-    hdbg.dassert_exists(exec_name)
+    hdbg.dassert_path_exists(exec_name)
     _log_var("exec_name", exec_name, txt)
     # Full path of this executable which is the same as setenv_*.sh.
     exec_path = os.path.dirname(exec_name)
@@ -131,7 +131,7 @@ def report_info(txt: str) -> Tuple[str, str]:
     )
     # Get the path of the root of the Git client.
     client_root_path = os.path.abspath(os.path.join(exec_path, ".."))
-    hdbg.dassert_exists(client_root_path)
+    hdbg.dassert_path_exists(client_root_path)
     # Current dir.
     curr_path = os.getcwd()
     _log_var("curr_path", curr_path, txt)
@@ -184,7 +184,7 @@ def config_python(dirs: List[str], txt: str) -> None:
     dirs = sorted(dirs)
     dirs = [os.path.abspath(d) for d in dirs]
     for d in dirs:
-        hdbg.dassert_exists(d)
+        hdbg.dassert_path_exists(d)
     python_path = dirs + ["$PYTHONPATH"]
     txt.extend(_export_env_var("PYTHONPATH", python_path))
     txt.append("# Assign MYPYPATH to let mypy find the modules.")
@@ -203,7 +203,7 @@ def config_conda(
     _log_var("conda_sh_path", conda_sh_path, txt)
     # TODO(gp): This makes conda not working for some reason.
     # txt.append("source %s" % conda_sh_path)
-    hdbg.dassert_exists(conda_sh_path)
+    hdbg.dassert_path_exists(conda_sh_path)
     #
     txt.append('echo "CONDA_PATH="$(which conda)')
     txt.append('echo "CONDA_VER="$(conda -V)')
@@ -237,7 +237,7 @@ def config_path(dirs: List[str], txt: str) -> str:
     dirs = sorted(dirs)
     dirs = [os.path.abspath(d) for d in dirs]
     for d in dirs:
-        hdbg.dassert_exists(d)
+        hdbg.dassert_path_exists(d)
     path = dirs + ["$PATH"]
     txt.extend(_export_env_var("PATH", path))
     return txt
@@ -249,7 +249,7 @@ def test_packages(amp_path: str, txt: str) -> None:
         amp_path, "dev_scripts/install/check_develop_packages.py"
     )
     script = os.path.abspath(script)
-    hdbg.dassert_exists(script)
+    hdbg.dassert_path_exists(script)
     _execute(script, txt)
 
 

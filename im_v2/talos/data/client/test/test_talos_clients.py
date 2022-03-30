@@ -317,14 +317,14 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 class TestRealTimeSqlTalosClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
-    """
-    
-    """
 
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
         """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ["binance"]
         currency_pair = ["AVAX_USDT"]
@@ -334,11 +334,15 @@ class TestRealTimeSqlTalosClient1(
             talos_sql_client._build_select_query(
                 exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
             )
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query2(self) -> None:
         """
         `exchange_ids` is not a list of strings.
         """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "unsupported_type"
         currency_pair = ["AVAX_USDT"]
@@ -348,11 +352,15 @@ class TestRealTimeSqlTalosClient1(
             talos_sql_client._build_select_query(
                 exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
             )
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query3(self) -> None:
         """
         Start unix epoch is larger than end.
         """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ["binance"]
         currency_pair = ["AVAX_USDT"]
@@ -362,11 +370,15 @@ class TestRealTimeSqlTalosClient1(
             talos_sql_client._build_select_query(
                 exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
             )
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query4(self) -> None:
         """
         Test SQL query string with every param provided.
         """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ["binance"]
         currency_pair = ["BTC_USDT"]
@@ -382,11 +394,15 @@ class TestRealTimeSqlTalosClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query5(self) -> None:
         """
         Test SQL query string with `None` timestamps.
         """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ["binance"]
         currency_pair = ["BTC_USDT"]
@@ -399,11 +415,15 @@ class TestRealTimeSqlTalosClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query6(self) -> None:
         """
         Test SQL query string with only timestamps provided.
         """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = []
         currency_pair = []
@@ -419,6 +439,7 @@ class TestRealTimeSqlTalosClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def setup_talos_sql_client(
         self,
@@ -681,6 +702,40 @@ class TestRealTimeSqlTalosClient1(
             expected_signature,
         )
         # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_start_ts_for_symbol1(self) -> None:
+        """
+        Verify that earlies timestamp is extracted correctly.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = self.setup_talos_sql_client()
+        # Provide expected outcomes.
+        full_symbol = "binance::BTC_USDT"
+        expected_start_ts = pd.to_datetime("2022-03-24 16:21:00", utc=True)
+        self._test_get_start_ts_for_symbol1(
+            im_client, full_symbol, expected_start_ts
+        )
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_get_end_ts_for_symbol1(self) -> None:
+        """
+        Verify that earlies timestamp is extracted correctly.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = self.setup_talos_sql_client()
+        # Provide expected outcomes.
+        full_symbol = "binance::BTC_USDT"
+        expected_end_ts = pd.to_datetime("2022-03-24 16:23:00", utc=True)
+        self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
         hsql.remove_table(self.connection, "talos_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
