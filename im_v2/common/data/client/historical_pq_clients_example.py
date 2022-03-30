@@ -10,6 +10,7 @@ from typing import List
 
 import helpers.hgit as hgit
 import helpers.hsystem as hsystem
+import im_v2.common.data.client.full_symbol as imvcdcfusy
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 
@@ -58,7 +59,9 @@ class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 
 
 def get_MockHistoricalByTileClient_example1(
-    instance: icdctictc.ImClientTestCase, assets: str, resample_1min: bool
+    instance: icdctictc.ImClientTestCase,
+    full_symbols: List[imvcdcfusy.FullSymbol],
+    resample_1min: bool,
 ) -> imvcdchpcl.HistoricalPqByTileClient:
     """
     Build mock client example for tests and test data for 2 days.
@@ -66,6 +69,7 @@ def get_MockHistoricalByTileClient_example1(
     start_date = "2021-12-30"
     end_date = "2022-01-02"
     freq = "1T"
+    assets = ",".join(full_symbols)
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
@@ -88,7 +92,8 @@ def get_MockHistoricalByTileClient_example1(
 
 
 def get_MockHistoricalByTileClient_example2(
-    instance: icdctictc.ImClientTestCase, assets: str
+    instance: icdctictc.ImClientTestCase,
+    full_symbols: List[imvcdcfusy.FullSymbol],
 ) -> imvcdchpcl.HistoricalPqByTileClient:
     """
     Build mock client example to test Parquet filters building.
@@ -96,6 +101,7 @@ def get_MockHistoricalByTileClient_example2(
     start_date = "2020-01-01"
     end_date = "2022-01-02"
     freq = "1T"
+    assets = ",".join(full_symbols)
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
@@ -120,7 +126,7 @@ def get_MockHistoricalByTileClient_example2(
 
 def get_MockHistoricalByTileClient_example3(
     instance: icdctictc.ImClientTestCase,
-    assets: str,
+    full_symbols: List[imvcdcfusy.FullSymbol],
     start_date: str,
     end_date: str,
     resample_1min: bool,
@@ -129,6 +135,7 @@ def get_MockHistoricalByTileClient_example3(
     Build mock client example for testing randomly generated intervals.
     """
     freq = "1T"
+    assets = ",".join(full_symbols)
     asset_col_name = "full_symbol"
     output_type = "cm_task_1103"
     partition_mode = "by_year_month"
