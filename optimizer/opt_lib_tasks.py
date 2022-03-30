@@ -216,12 +216,22 @@ def opt_run_fast_tests(
     tee_to_file=False,
     **kwargs,
 ):
+    """
+    Run fast tests from the `optimizer` dir inside the `opt` container
+    corresponding to a stage.
+
+    See corresponding invoke target for the main container.
+
+    :param use_opt_test_marker: whether to run only the tests marked as
+    `optimizer` tests
+    """
     test_list_name = "fast_tests"
     if use_opt_test_marker:
-        # Run only the tests marked as `optimizer` tests in the `optimizer` directory.
+        # Run only the tests marked as `optimizer`..
         custom_marker = "optimizer"
     else:
         custom_marker = ""
+    # Run only the tests in the `optimizer` dir.
     pytest_opts = "optimizer"
     # False since optimizer doesn't have a submodule.
     skip_submodules = False
@@ -257,12 +267,22 @@ def opt_run_slow_tests(
     tee_to_file=False,
     **kwargs,
 ):
+    """
+    Run fast tests from the `optimizer` dir inside the `opt` container
+    corresponding to a stage.
+
+    See corresponding invoke target for the main container.
+
+    :param use_opt_test_marker: whether to run only the tests marked as
+    `optimizer` tests
+    """
     test_list_name = "slow_tests"
     if use_opt_test_marker:
-        # Run only the tests marked as `optimizer` tests in the `optimizer` directory.
+        # Run only the tests marked as `optimizer`.
         custom_marker = "optimizer"
     else:
         custom_marker = ""
+    # Run only the tests in the `optimizer` dir.
     pytest_opts = "optimizer"
     # False since optimizer doesn't have a submodule.
     skip_submodules = False

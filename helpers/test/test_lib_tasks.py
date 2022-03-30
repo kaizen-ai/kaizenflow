@@ -892,7 +892,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
 
     def test_run_fast_tests6(self) -> None:
         """
-        Basic run fast tests.
+        Run fast tests with a custom test marker.
         """
         custom_marker = "optimizer"
         pytest_opts = ""

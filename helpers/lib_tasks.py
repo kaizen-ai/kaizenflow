@@ -3502,10 +3502,20 @@ def _build_run_command_line(
     """
     Build the pytest run command.
 
+     E.g.,
+    ```
+    pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout"
+
+    The rest of params are the same as in `run_fast_tests()`.
+    ```
+
     :param test_list_name: "fast_tests", "slow_tests" or
         "superslow_tests"
-    :param custom_marker: specify a space separated list of `pytest` markers to skip (e.g., `optimizer` for the optimizer tests, see `pytest.ini`). Empty means no marker to skip
-    The rest of params are the same as in `run_fast_tests()`.
+    :param custom_marker: specify a space separated list of
+    `pytest` markers to skip (e.g., `optimizer` for the optimizer
+    tests, see `pytest.ini`). Empty means no marker to skip
 
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
@@ -3514,8 +3524,10 @@ def _build_run_command_line(
         test_list_name, _TEST_TIMEOUTS_IN_SECS, "Invalid test_list_name"
     )
     pytest_opts = pytest_opts or "."
-    # Skip tests to skip based on the `test_list_name`(e.g., fast tests) and on the custom marker, if present.
     pytest_opts_tmp = []
+
+    # Select tests to skip based on the `test_list_name`(e.g., fast tests)
+    # and on the custom marker, if present.
     skipped_tests = _select_tests_to_skip(test_list_name)
     if custom_marker != "":
         pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
@@ -3689,10 +3701,12 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "fast_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -3725,10 +3739,12 @@ def run_slow_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "slow_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -3761,10 +3777,12 @@ def run_superslow_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "superslow_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
