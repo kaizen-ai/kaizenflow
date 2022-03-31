@@ -27,11 +27,13 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         Initialise the class with a DataFrame.
 
-        Input data is indexed with numbers and looks like: ```
-        timestamp      open        close    volume 0    1631145600000
-        3499.01 ... 3496.36  346.4812 1    1631145660000  3496.36
-        3501.59  401.9576 2    1631145720000  3501.59     3513.09
-        579.5656 ```
+        Example of input dataframe:
+        ```
+                                        full_symbol ... close  volume  feature1
+        2021-07-26 13:42:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        2021-07-26 13:43:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        ```
         """
         vendor = "data_frame"
         super().__init__(
@@ -49,15 +51,15 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         hdbg.dassert(not df.empty)
         hpandas.dassert_index_is_datetime(df)
         columns = [
+            self._full_symbol_col_name,
             "open",
             "high",
             "low",
             "close",
             "volume",
-            self._full_symbol_col_name,
             "feature1",
         ]
-        hdbg.dassert_is(df.columns, columns)
+        hdbg.dassert_eq(df.columns.tolist(), columns)
         hdbg.dassert(df[self._full_symbol_col_name].notna().all())
 
     @staticmethod

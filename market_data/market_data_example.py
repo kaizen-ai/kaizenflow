@@ -466,12 +466,12 @@ def get_im_client_market_data_df1() -> pd.DataFrame:
     # Generate data for each symbol.
     for full_symbol in full_symbols:
         data = pd.DataFrame(index=idx)
+        data["full_symbol"] = full_symbol
         data["open"] = 100
         data["high"] = 101
         data["low"] = 99
         data["close"] = price
         data["volume"] = 100
-        data["full_symbol"] = full_symbol
         data["feature1"] = feature
         all_data_list.append(data)
     all_data = pd.concat(all_data_list)
