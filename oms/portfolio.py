@@ -645,7 +645,11 @@ class AbstractPortfolio(abc.ABC):
         tz: str,
     ) -> pd.DataFrame:
         dir_name = os.path.join(log_dir, name)
-        files = hio.find_all_files(dir_name)
+        pattern = "*"
+        only_files = True
+        file_paths = hio.listdir(dir_name, pattern, only_files)
+        # Remove directory paths and leave relative file paths.
+        files = [file_path.lstrip(dir_name) for file_path in file_paths]
         files.sort()
         dfs = []
         for file_name in tqdm(files, desc=f"Loading `{name}` files..."):

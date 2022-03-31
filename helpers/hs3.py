@@ -138,23 +138,46 @@ def split_path(s3_path: str) -> Tuple[str, str]:
     return bucket, abs_path
 
 
-def find_files(
-    dir_name: str, pattern: str, aws_profile: AwsProfile = None
+def listdir(
+        dir_name: str,
+        pattern: str,
+        only_files: bool,
+        *,
+        exclude_git_dirs: bool = True,
+        aws_profile: Optional[AwsProfile] = None,
 ) -> List[str]:
     """
-    Find all files under `directory` that match a certain `pattern`.
+    Counterpart to `hio.listdir` with S3 support.
 
-    :param dir_name: path to the directory where to look for files, S3 or local
-    :param pattern: pattern to match a filename against
-    :param aws_profile: the name of an AWS profile or a s3fs filesystem
+    If `aws_profile` is specified, S3 is used instead of local
+    filesystem.
     """
     if aws_profile:
         s3fs_ = get_s3fs(aws_profile)
         dassert_path_exists(dir_name, s3fs_)
-        file_names = s3fs_.glob(f"{dir_name}/{pattern}")
+        # `hio.listdir` is using `find` which looks for files and directories
+        # descending recursively in the directory.
+        # One star in glob will use `maxdepth=1`.
+        pattern = pattern.replace("*", "**")
+        # Detailed S3 objects in dict form with metadata.
+        path_objects = s3fs_.glob(f"{dir_name}/{pattern}", detail=True)
+        if only_files:
+            # Use metadata to distinguish files from directories without
+            # calling `s3fs_.isdir/isfile`.
+            for path_object in path_objects.values():
+                if path_object["type"] != "file":
+                    path_objects.pop(path_object["Key"])
+        paths = list(path_objects.keys())
+        if exclude_git_dirs:
+            paths = [path for path in paths if "/.git/" not in path]
     else:
-        file_names = hio.find_files(dir_name, pattern)
-    return file_names
+        paths = hio.listdir(
+            dir_name,
+            pattern,
+            only_files,
+            exclude_git_dirs=exclude_git_dirs,
+        )
+    return paths
 
 
 def get_local_or_s3_stream(
