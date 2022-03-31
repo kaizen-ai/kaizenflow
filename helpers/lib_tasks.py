@@ -3212,7 +3212,7 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
 @functools.lru_cache()
 def _get_python_files(subdir: str) -> List[str]:
     pattern = "*.py"
-    only_files = True
+    only_files = False
     python_files = hio.listdir(subdir, pattern, only_files)
     # Remove tmp files.
     python_files = [f for f in python_files if not f.startswith("tmp")]
