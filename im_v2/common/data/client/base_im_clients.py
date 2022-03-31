@@ -529,7 +529,11 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
             full_symbol_col_name
         )
         df = self._read_data_for_multiple_symbols(
-            full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
+            full_symbols,
+            start_ts,
+            end_ts,
+            full_symbol_col_name=full_symbol_col_name,
+            **kwargs,
         )
         return df
 
@@ -539,7 +543,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
         full_symbol_col_name: str,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         ...
