@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.hsql as hsql
+import helpers.hsql_implementation as hsqlimpl
 """
 
 import collections
@@ -10,7 +10,7 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import pandas as pd
 import psycopg2 as psycop
@@ -30,9 +30,7 @@ _LOG = logging.getLogger(__name__)
 # Connection
 # #############################################################################
 
-# TODO(gp): mypy doesn't like this. Understand why and / or inline CMTask #756.
-DbConnection = psycop.extensions.connection
-
+DbConnection = Any
 
 # Invariant: keep the arguments in the interface in the same order as:
 # host, dbname, port, user, password.
@@ -58,7 +56,7 @@ def get_connection(
     )
     if autocommit:
         connection.autocommit = True
-    return connection  # type: ignore[no-any-return]
+    return connection
 
 
 def get_connection_from_env_vars() -> DbConnection:
@@ -99,7 +97,7 @@ def get_connection_from_string(
     connection = psycop.connect(conn_as_str)
     if autocommit:
         connection.autocommit = True
-    return connection  # type: ignore[no-any-return]
+    return connection
 
 
 def get_connection_info_from_env_file(env_file_path: str) -> DbConnectionInfo:
@@ -192,7 +190,7 @@ def db_connection_to_tuple(connection: DbConnection) -> DbConnectionInfo:
     :param connection: a database connection
     :return: database connection details
     """
-    info = connection.info  # type: ignore
+    info = connection.info
     ret = DbConnectionInfo(
         host=info.host,
         dbname=info.dbname,
@@ -226,7 +224,7 @@ def get_engine_version(connection: DbConnection) -> str:
 def get_indexes(connection: DbConnection) -> pd.DataFrame:
     res = []
     tables = get_table_names(connection)
-    cursor = connection.cursor()  # type: ignore
+    cursor = connection.cursor()
     for table in tables:
         query = (
             """SELECT * FROM pg_indexes WHERE tablename = '{table}' """.format(
@@ -806,4 +804,5 @@ async def wait_for_change_in_number_of_rows(
         **poll_kwargs,
     )
     _ = num_iters
+    diff_num_rows = cast(int, diff_num_rows)
     return diff_num_rows
