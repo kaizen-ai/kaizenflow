@@ -162,8 +162,8 @@ def listdir(
         # Detailed S3 objects in dict form with metadata.
         path_objects = s3fs_.glob(f"{dir_name}/{pattern}", detail=True)
         if only_files:
-            # With metadata, it is possible to distinguish files from
-            # directories without calling `s3fs_.isdir/isfile`.
+            # Use metadata to distinguish files from directories without
+            # calling `s3fs_.isdir/isfile`.
             for path_object in path_objects.values():
                 if path_object["type"] != "file":
                     path_objects.pop(path_object["Key"])
