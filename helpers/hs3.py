@@ -150,13 +150,14 @@ def listdir(
     """
     Counterpart to `hio.listdir` with S3 support.
 
-    If `aws_profile` is specified, S3 is used instead of local
-    filesystem.
+    :param dir_name: a S3 or local path
+    :param aws_profile: AWS profile to use if and only if using an S3 path,
+        otherwise `None` for local path
     """
-    if aws_profile:
+    if aws_profile is not None:
         s3fs_ = get_s3fs(aws_profile)
         dassert_path_exists(dir_name, s3fs_)
-        # Ensure that there is no multiple stars in pattern.
+        # Ensure that there are no multiple stars in pattern.
         hdbg.dassert_not_in("**", pattern)
         # `hio.listdir` is using `find` which looks for files and directories
         # descending recursively in the directory.
