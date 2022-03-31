@@ -444,8 +444,8 @@ def get_market_data_df3() -> pd.DataFrame:
 
 def get_im_client_market_data_df1() -> pd.DataFrame:
     """
-    Generate `ImClient` output example with price data that alternates every
-    5 minutes.
+    Generate `ImClient` output example with price data that alternates every 5
+    minutes.
     """
     # Set full symbols and timestamps to generate data for.
     full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
