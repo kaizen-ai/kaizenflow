@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.data.client.data_frame_im_client as imvcdcdfimc
+import im_v2.common.data.client.data_frame_im_clients as ivcdcdfic
 """
 
 from typing import Any, List, Optional
