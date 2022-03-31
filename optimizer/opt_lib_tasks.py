@@ -213,6 +213,114 @@ def opt_docker_cmd(  # type: ignore
 
 
 # #############################################################################
+# Run tests.
+# #############################################################################
+
+
+# TODO(Grisha): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
+@task
+def opt_run_fast_tests(
+    ctx,
+    stage="dev",
+    version="",
+    use_opt_test_marker=False,
+    pytest_opts="",
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+    **kwargs,
+):
+    """
+    Run fast tests from the `optimizer` dir inside the `opt` container
+    corresponding to a stage.
+
+    See corresponding invoke target for the main container.
+
+    :param use_opt_test_marker: whether to run only the tests marked as
+        `optimizer` tests
+    """
+    test_list_name = "fast_tests"
+    if use_opt_test_marker:
+        # Run only the tests marked as `optimizer`.
+        custom_marker = "optimizer"
+    else:
+        custom_marker = ""
+    # Run only the tests in the `optimizer` dir.
+    pytest_opts = "optimizer"
+    # False since optimizer doesn't have a submodule.
+    skip_submodules = False
+    # False since we cannot call `git_clean` invoke
+    # from the `optimizer` dir.
+    git_clean = False
+    rc = hlibtask._run_tests(
+        ctx,
+        stage,
+        test_list_name,
+        custom_marker,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        **kwargs,
+    )
+    return rc
+
+
+@task
+def opt_run_slow_tests(
+    ctx,
+    stage="dev",
+    version="",
+    use_opt_test_marker=False,
+    pytest_opts="",
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+    **kwargs,
+):
+    """
+    Run slow tests from the `optimizer` dir inside the `opt` container
+    corresponding to a stage.
+
+    See corresponding invoke target for the main container.
+
+    :param use_opt_test_marker: whether to run only the tests marked as
+        `optimizer` tests
+    """
+    test_list_name = "slow_tests"
+    if use_opt_test_marker:
+        # Run only the tests marked as `optimizer`.
+        custom_marker = "optimizer"
+    else:
+        custom_marker = ""
+    # Run only the tests in the `optimizer` dir.
+    pytest_opts = "optimizer"
+    # False since optimizer doesn't have a submodule.
+    skip_submodules = False
+    # False since we cannot call `git_clean` invoke
+    # from the `optimizer` dir.
+    git_clean = False
+    rc = hlibtask._run_tests(
+        ctx,
+        stage,
+        test_list_name,
+        custom_marker,
+        version,
+        pytest_opts,
+        skip_submodules,
+        coverage,
+        collect_only,
+        tee_to_file,
+        git_clean,
+        **kwargs,
+    )
+    return rc
+
+
+# #############################################################################
 # Start/stop optimizer services.
 # #############################################################################
 
