@@ -64,7 +64,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Get the path to amp dir.
     amp_path = client_root_dir
     amp_path = os.path.abspath(amp_path)
-    hdbg.dassert_exists(amp_path)
+    hdbg.dassert_path_exists(amp_path)
     #
     # - Config Git.
     #

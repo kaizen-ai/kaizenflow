@@ -154,7 +154,7 @@ def apply_incremental_mode(
         src_file_name, dst_file_name = src_dst_file_name
         _LOG.debug("%s -> %s", src_file_name, dst_file_name)
         # Discard the mapping element if the destination file already exists.
-        hdbg.dassert_exists(src_file_name)
+        hdbg.dassert_path_exists(src_file_name)
         if os.path.exists(dst_file_name):
             _LOG.debug("Skipping %s -> %s", src_file_name, dst_file_name)
         else:

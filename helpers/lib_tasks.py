@@ -2276,7 +2276,7 @@ def _get_docker_base_cmd(
     #
     _LOG.debug(hprint.to_str("docker_compose_files"))
     for docker_compose in docker_compose_files:
-        hdbg.dassert_exists(docker_compose)
+        hdbg.dassert_path_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
@@ -2552,7 +2552,7 @@ def docker_jupyter(  # type: ignore
 
 def _to_abs_path(filename: str) -> str:
     filename = os.path.abspath(filename)
-    hdbg.dassert_exists(filename)
+    hdbg.dassert_path_exists(filename)
     return filename
 
 
@@ -2562,7 +2562,7 @@ def _prepare_docker_ignore(ctx: Any, docker_ignore: str) -> None:
     """
     # Currently there is no built-in way to control which .dockerignore to use.
     # https://stackoverflow.com/questions/40904409
-    hdbg.dassert_exists(docker_ignore)
+    hdbg.dassert_path_exists(docker_ignore)
     cmd = f"cp -f {docker_ignore} .dockerignore"
     _run(ctx, cmd)
 
