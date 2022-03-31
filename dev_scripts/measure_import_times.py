@@ -79,7 +79,8 @@ class ImportTimeChecker:
         """
         pattern = "*.py"
         only_files = True
-        file_names = hio.listdir(self.dir_name, pattern, only_files)
+        use_relative_paths = False
+        file_names = hio.listdir(self.dir_name, pattern, only_files, use_relative_paths)
         modules = set()
         for file_name in file_names:
             _LOG.debug("filename: %s", file_name)
