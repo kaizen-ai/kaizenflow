@@ -302,8 +302,8 @@ def _get_files_to_process(
         pattern = "*"
         only_files = True
         file_paths = hio.listdir(dir_name, pattern, only_files)
-        # Remove full paths and leave only file name.
-        files = [file_path.split("/")[-1] for file_path in file_paths]
+        # Remove directory paths and leave relative file paths.
+        files = [file_path.lstrip(dir_name) for file_path in file_paths]
     if files_from_user:
         # If files were passed, filter out non-existent paths.
         files = _filter_existing_paths(files_from_user.split())

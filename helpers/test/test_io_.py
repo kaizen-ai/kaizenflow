@@ -19,8 +19,9 @@ class Test_find_all_files1(hunitest.TestCase):
         only_files = True
         # Check that there are files.
         all_file_paths = hio.listdir(dir_name, pattern, only_files)
-        # Remove full paths and leave only file name.
-        all_files = [file_path.split("/")[-1] for file_path in all_file_paths]
+        # Remove directory paths and leave relative file paths.
+        from pdb import set_trace; set_trace()
+        all_files = [file_path.lstrip(dir_name) for file_path in all_file_paths]
         self.assertGreater(len(all_files), 0)
         # Check that there are more files than Python files.
         exclude_paired_jupytext = False
