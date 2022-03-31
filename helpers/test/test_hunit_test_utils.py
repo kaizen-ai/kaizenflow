@@ -6,7 +6,7 @@ import helpers.hunit_test as hunitest
 import helpers.hunit_test_utils as hunteuti
 
 
-class TestPytestRenameClass(hunitest.TestCase):
+class TestUnitTestRenamer(hunitest.TestCase):
     """
     Test class renaming functionality.
     """
@@ -163,7 +163,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
     @staticmethod
     def helper(toy_test: str) -> None:
         """
-        Create the temporal outcome to rename.
+        Create the temporary outcome to rename.
 
         :param toy_test: the name of the toy directory
         """

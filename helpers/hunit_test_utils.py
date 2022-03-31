@@ -23,7 +23,7 @@ class UnitTestRenamer:
         self, old_test_name: str, new_test_name: str, root_dir: str
     ) -> None:
         """
-        Initialize UnitTestRenamer class.
+        Constructor.
 
         :param old_test_name: the old name of the test
         :param new_test_name: the new name of the test
@@ -38,7 +38,7 @@ class UnitTestRenamer:
 
     def run(self) -> None:
         """
-        Run the renamer tool.
+        Run the renamer tool on the files under `root_dir`.
         """
         # Iterate over test directories.
         for path in self.test_dirs:
@@ -47,59 +47,10 @@ class UnitTestRenamer:
             search_pattern = os.path.join(path, "test_*.py")
             files = glob.glob(search_pattern)
             for test_file in files:
-                self.rename_in_file(
+                self._rename_in_file(
                     path,
                     test_file,
                 )
-
-    def rename_in_file(
-        self,
-        test_dir: str,
-        file_path: str,
-    ) -> None:
-        """
-        Process the file:
-
-        - check if the content of the file contains target class
-        - change the class name, e.g. `TestClassName` -> `TestClassNameNew`
-          / change the method name `TestClassName.test2` -> `TestClassName.test_new`
-        - rename the outcomes if they exist
-
-        :param test_dir: the path to the test directory containing the file, e.g.
-          `/src/cmamp1/helpers/test`
-        :param file_path: the path to the file, `/src/cmamp1/helpers/test/test_lib_tasks.py`
-        """
-        content = hio.from_file(file_path)
-        if not re.search(f"class {self.cfg['old_class']}\(", content):
-            # Return if target test class does not appear in file content.
-            return
-        if self.cfg["old_method"] == "":
-            # Rename the class.
-            content, n_replaced = self._rename_class(content)
-            if n_replaced != 0:
-                _LOG.info(
-                    "%s: class `%s` was renamed to `%s`.",
-                    file_path,
-                    self.cfg["old_class"],
-                    self.cfg["new_class"],
-                )
-        else:
-            # Rename the method of the class.
-            content, n_replaced = self._rename_method(content)
-            if n_replaced != 0:
-                _LOG.info(
-                    "%s: method `%s` of `%s` class was renamed to `%s`.",
-                    file_path,
-                    self.cfg["old_method"],
-                    self.cfg["old_class"],
-                    self.cfg["new_method"],
-                )
-        # Rename the directories that contain target test outcomes.
-        self.rename_outcomes(
-            test_dir,
-        )
-        # Write processed content back to file.
-        hio.to_file(file_path, content)
 
     def rename_outcomes(
         self,
@@ -145,7 +96,6 @@ class UnitTestRenamer:
             )
         # Assert if the names are the same.
         hdbg.dassert_ne(old_test_name, new_test_name)
-        return
 
     @staticmethod
     def _process_parameters(
@@ -155,15 +105,13 @@ class UnitTestRenamer:
         """
         Build the processing config with the renaming parameters.
 
-        Config includes the following fields:
+        :param old_test_name: the old name of the test
+        :param new_test_name: the new name of the test
+        :return: config for renaming process, i.e. a dictionary which includes the fields:
           - `old_class`: old name of the class
           - `new_class`: new name of the class
           - `old_method`: new name of the method. If empty, only class should be renamed
           - `new_method`: new name of the method
-
-        :param old_test_name: the old name of the test
-        :param new_test_name: the new name of the test
-        :return: config for renaming process
         """
         # Build the processing config.
         config: Dict[str, str] = {}
@@ -212,6 +160,55 @@ class UnitTestRenamer:
         config["new_method"] = new_method_name
         return config
 
+    def _rename_in_file(
+        self,
+        test_dir: str,
+        file_path: str,
+    ) -> None:
+        """
+        Process the file:
+
+        - check if the content of the file contains target class
+        - change the class name, e.g. `TestClassName` -> `TestClassNameNew`
+          / change the method name `TestClassName.test2` -> `TestClassName.test_new`
+        - rename the outcomes if they exist
+
+        :param test_dir: the path to the test directory containing the file, e.g.
+          `/src/cmamp1/helpers/test`
+        :param file_path: the path to the file, `/src/cmamp1/helpers/test/test_lib_tasks.py`
+        """
+        content = hio.from_file(file_path)
+        if not re.search(f"class {self.cfg['old_class']}\(", content):
+            # Return if target test class does not appear in file content.
+            return
+        if self.cfg["old_method"] == "":
+            # Rename the class.
+            content, n_replaced = self._rename_class(content)
+            if n_replaced != 0:
+                _LOG.info(
+                    "%s: class `%s` was renamed to `%s`.",
+                    file_path,
+                    self.cfg["old_class"],
+                    self.cfg["new_class"],
+                )
+        else:
+            # Rename the method of the class.
+            content, n_replaced = self._rename_method(content)
+            if n_replaced != 0:
+                _LOG.info(
+                    "%s: method `%s` of `%s` class was renamed to `%s`.",
+                    file_path,
+                    self.cfg["old_method"],
+                    self.cfg["old_class"],
+                    self.cfg["new_method"],
+                )
+        # Rename the directories that contain target test outcomes.
+        self.rename_outcomes(
+            test_dir,
+        )
+        # Write processed content back to file.
+        hio.to_file(file_path, content)
+
     def _is_docstring(
         self,
         line: str,
@@ -222,11 +219,13 @@ class UnitTestRenamer:
 
         :param line: the line to check
         :param quotes_count: the count of the quotes of two types 
-        :return: updated count of the quotes of two types 
+        :return: 
+            - whether the line is inside the docstring or not
+            - the updated counter of the quotes
         """
         # Determine the current line's status: in a multi-line string
         # or not.
-        for quotes in ["'''", '"""']:
+        for quotes in quotes_count:
             if line.count(quotes) == 1:
                 quotes_count[quotes] += 1
         # The line is in a string if the quotes have been opened but not
@@ -245,14 +244,8 @@ class UnitTestRenamer:
 
         :param content: the content of the file
         :return: the content of the file with the class name replaced, the number
-          of symbols replaced
+          of substitutions replaced
         """
-        # Rename the class.
-        content, num_replaced = re.subn(
-            f"class {self.cfg['old_class']}\(",
-            f"class {self.cfg['new_class']}(",
-            content,
-        )
         lines = content.split("\n")
         quotes_count = {"'''": 0, '"""': 0}
         for ind, line in enumerate(lines):
@@ -290,14 +283,12 @@ class UnitTestRenamer:
         method_pattern = f"def {self.cfg['old_method']}\("
         quotes_count = {"'''": 0, '"""': 0}
         for ind, line in enumerate(lines):
-            # The line is in a string if the quotes have been opened but not
-            # closed yet.
-            in_docstring = any(
-                (quote_count % 2) == 1 for quote_count in quotes_count.values()
-            )
-            # Iterate over the lines of the file to find the specific method of the class that should be renamed.
-            if class_found:
-                if line.startswith("class") and not in_docstring:
+            # Check if the line is inside of the docstring.
+            in_docstring, quotes_count = self._is_docstring(line, quotes_count)
+            # Iterate over the lines of the file to find the specific method of the 
+            # class that should be renamed.
+            if class_found and not in_docstring:
+                if line.startswith("class"):
                     # Break if the next class started and the method was not found.
                     break
                 # Rename the method.
