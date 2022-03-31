@@ -548,7 +548,7 @@ class FuturesContractLifetimes:
         symbol_to_contracts: _SymbolToContracts = {}
         for symbol in symbols:
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
-            hdbg.dassert_exists(file_name)
+            hdbg.dassert_path_exists(file_name)
             if hs3.is_s3_path(file_name):
                 s3fs = hs3.get_s3fs("am")
                 kwargs = {"s3fs": s3fs}

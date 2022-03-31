@@ -28,7 +28,7 @@ def run_notebook(
     :param pre_cmd:
     """
     file_name = os.path.abspath(file_name)
-    hdbg.dassert_exists(file_name)
+    hdbg.dassert_path_exists(file_name)
     hio.create_dir(scratch_dir, incremental=True)
     # Build command line.
     cmd = []

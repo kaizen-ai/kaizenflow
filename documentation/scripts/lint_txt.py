@@ -216,7 +216,7 @@ def _refresh_toc(txt: str) -> str:
     gh_md_toc = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "gh-md-toc"
     )
-    hdbg.dassert_exists(gh_md_toc)
+    hdbg.dassert_path_exists(gh_md_toc)
     cmd.append(gh_md_toc)
     cmd.append("--insert %s" % tmp_file_name)
     cmd_as_str = " ".join(cmd)

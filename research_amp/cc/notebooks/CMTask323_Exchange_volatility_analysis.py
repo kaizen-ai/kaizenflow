@@ -258,7 +258,7 @@ type(18)
 
 # %% run_control={"marked": false}
 frequency = "1D"
-universe = imvcounun.get_vendor_universe("CCXT", version="v03", as_full_symbol=True)
+universe = imvcounun.get_vendor_universe("CCXT", version="v3", as_full_symbol=True)
 compute_daily_vix_ema = lambda data: compute_volatility_for_each_coin(
     data, freq=frequency, span=18
 )

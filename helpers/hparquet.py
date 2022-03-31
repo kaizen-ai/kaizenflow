@@ -66,11 +66,11 @@ def from_parquet(
         filesystem = get_pyarrow_s3fs(aws_profile)
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_s3_path_exists(file_name, s3_filesystem)
+        hs3.dassert_path_exists(file_name, s3_filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
-        hdbg.dassert_exists(file_name)
+        hdbg.dassert_path_exists(file_name)
     # Load data.
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
@@ -151,11 +151,11 @@ def to_parquet(
     if aws_profile is not None:
         hdbg.dassert(hs3.is_s3_path(file_name))
         filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_s3_path_exists(file_name, filesystem)
+        hs3.dassert_path_exists(file_name, filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
-        hdbg.dassert_not_exists(file_name)
+        hdbg.dassert_path_not_exists(file_name)
     hdbg.dassert_file_extension(file_name, "parquet")
     # There is no concept of directory on S3.
     # Only applicable to local filesystem.

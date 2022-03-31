@@ -178,7 +178,7 @@ def to_json(file_name: str, obj: object) -> None:
 
 
 def from_json(file_name: str) -> object:
-    hdbg.dassert_exists(file_name)
+    hdbg.dassert_path_exists(file_name)
     hdbg.dassert_file_extension(file_name, "json")
     obj = json.loads(hio.from_file(file_name))
     return obj
