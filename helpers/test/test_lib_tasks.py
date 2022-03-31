@@ -902,13 +902,13 @@ class Test_build_run_command_line1(hunitest.TestCase):
         tee_to_file = False
         #
         act = hlibtask._build_run_command_line(
-            "fast_tests",
-            custom_marker,
-            pytest_opts,
-            skip_submodules,
-            coverage,
-            collect_only,
-            tee_to_file,
+                    "fast_tests",
+                    custom_marker,
+                    pytest_opts,
+                    skip_submodules,
+                    coverage,
+                    collect_only,
+                    tee_to_file,
         )
         exp = (
             'pytest -m "optimizer and not slow and not superslow" . '

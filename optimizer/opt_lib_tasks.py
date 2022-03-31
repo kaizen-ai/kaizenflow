@@ -204,13 +204,15 @@ def opt_docker_cmd(  # type: ignore
 # Run tests.
 # #############################################################################
 
+
+# TODO(Grisha): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def opt_run_fast_tests(
     ctx,
     stage="dev",
     version="",
-    pytest_opts="",
     use_opt_test_marker=False,
+    pytest_opts="",
     coverage=False,
     collect_only=False,
     tee_to_file=False,
@@ -227,7 +229,7 @@ def opt_run_fast_tests(
     """
     test_list_name = "fast_tests"
     if use_opt_test_marker:
-        # Run only the tests marked as `optimizer`..
+        # Run only the tests marked as `optimizer`.
         custom_marker = "optimizer"
     else:
         custom_marker = ""
@@ -260,15 +262,15 @@ def opt_run_slow_tests(
     ctx,
     stage="dev",
     version="",
-    pytest_opts="",
     use_opt_test_marker=False,
+    pytest_opts="",
     coverage=False,
     collect_only=False,
     tee_to_file=False,
     **kwargs,
 ):
     """
-    Run fast tests from the `optimizer` dir inside the `opt` container
+    Run slow tests from the `optimizer` dir inside the `opt` container
     corresponding to a stage.
 
     See corresponding invoke target for the main container.

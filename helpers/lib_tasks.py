@@ -3502,20 +3502,19 @@ def _build_run_command_line(
     """
     Build the pytest run command.
 
-     E.g.,
+    E.g.,
     ```
     pytest -m "optimizer and not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout"
-
-    The rest of params are the same as in `run_fast_tests()`.
     ```
 
+    The rest of params are the same as in `run_fast_tests()`.
     :param test_list_name: "fast_tests", "slow_tests" or
         "superslow_tests"
     :param custom_marker: specify a space separated list of
-    `pytest` markers to skip (e.g., `optimizer` for the optimizer
-    tests, see `pytest.ini`). Empty means no marker to skip
+        `pytest` markers to skip (e.g., `optimizer` for the optimizer
+        tests, see `pytest.ini`). Empty means no marker to skip
 
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
@@ -3526,7 +3525,7 @@ def _build_run_command_line(
     pytest_opts = pytest_opts or "."
     pytest_opts_tmp = []
 
-    # Select tests to skip based on the `test_list_name`(e.g., fast tests)
+    # Select tests to skip based on the `test_list_name` (e.g., fast tests)
     # and on the custom marker, if present.
     skipped_tests = _select_tests_to_skip(test_list_name)
     if custom_marker != "":
@@ -3673,7 +3672,7 @@ def _run_tests(
     return rc
 
 
-# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
+# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def run_fast_tests(  # type: ignore
     ctx,
@@ -3691,7 +3690,7 @@ def run_fast_tests(  # type: ignore
     Run fast tests.
 
     :param stage: select a specific stage for the Docker image
-    :param pytest_opts: additional options for invoking `pytest`. It can be empty
+    :param pytest_opts: additional options for `pytest` invocation. It can be empty
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
