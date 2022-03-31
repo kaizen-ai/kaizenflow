@@ -237,7 +237,7 @@ def opt_run_fast_tests(
     See corresponding invoke target for the main container.
 
     :param use_opt_test_marker: whether to run only the tests marked as
-    `optimizer` tests
+        `optimizer` tests
     """
     test_list_name = "fast_tests"
     if use_opt_test_marker:
@@ -288,7 +288,7 @@ def opt_run_slow_tests(
     See corresponding invoke target for the main container.
 
     :param use_opt_test_marker: whether to run only the tests marked as
-    `optimizer` tests
+        `optimizer` tests
     """
     test_list_name = "slow_tests"
     if use_opt_test_marker:

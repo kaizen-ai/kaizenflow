@@ -3577,14 +3577,15 @@ def _build_run_command_line(
     ```
 
     The rest of params are the same as in `run_fast_tests()`.
+
+    The invariant is that we don't want to duplicate pytest options that can be
+    passed by the user through `-p` (unless really necessary).
+
     :param test_list_name: "fast_tests", "slow_tests" or
         "superslow_tests"
     :param custom_marker: specify a space separated list of
         `pytest` markers to skip (e.g., `optimizer` for the optimizer
         tests, see `pytest.ini`). Empty means no marker to skip
-
-    The invariant is that we don't want to duplicate pytest options that can be
-    passed by the user through `-p` (unless really necessary).
     """
     hdbg.dassert_in(
         test_list_name, _TEST_TIMEOUTS_IN_SECS, "Invalid test_list_name"
