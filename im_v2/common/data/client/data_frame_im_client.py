@@ -9,7 +9,6 @@ from typing import Any, List, Optional
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 import im_v2.common.data.client.full_symbol as imvcdcfusy
@@ -30,6 +29,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         Example of input dataframe:
         ```
                                         full_symbol ... close  volume  feature1
+        timestamp
         2021-07-26 13:42:00+00:00  binance:BTC_USDT     101.0     100       1.0
         2021-07-26 13:43:00+00:00  binance:BTC_USDT     101.0     100       1.0
         2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0     100       1.0
@@ -43,15 +43,16 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         self._validate_df(df)
         self._df = df
 
-    def _validate_df(self, df: pd.DataFrame) -> None:
+    @staticmethod
+    def _validate_df(df: pd.DataFrame) -> None:
         """
         Validate that input dataframe has correct format.
         """
+        # Verify that not empty dataframe is passed as input.
         hdbg.dassert_isinstance(df, pd.DataFrame)
-        hdbg.dassert(not df.empty)
-        hpandas.dassert_index_is_datetime(df)
-        columns = [
-            self._full_symbol_col_name,
+        hdbg.dassert_lt(0, df.shape[0])
+        # Verify that required columns are in the dataframe.
+        required_columns = [
             "open",
             "high",
             "low",
@@ -59,8 +60,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
             "volume",
             "feature1",
         ]
-        hdbg.dassert_eq(df.columns.tolist(), columns)
-        hdbg.dassert(df[self._full_symbol_col_name].notna().all())
+        hdbg.dassert_is_subset(required_columns, df.columns)
 
     @staticmethod
     def get_universe() -> List[icdc.FullSymbol]:

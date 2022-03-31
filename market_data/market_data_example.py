@@ -461,6 +461,9 @@ def get_im_client_market_data_df1() -> pd.DataFrame:
     price = price_pattern * 4
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
+    # TODO(Dan): CmTask1588.
+    # Generate unique volume values to avoid dropping rows as duplicates.
+    volume = list(range(40))
     # Initialize a resulting data list.
     all_data_list: List = []
     # Generate data for each symbol.
@@ -471,17 +474,14 @@ def get_im_client_market_data_df1() -> pd.DataFrame:
         data["high"] = 101
         data["low"] = 99
         data["close"] = price
-        data["volume"] = 100
+        data["volume"] = volume
         data["feature1"] = feature
         all_data_list.append(data)
     # Combine data for all symbols in one dataframe.
     all_data = pd.concat(all_data_list)
-    # Name index column for sorting.
-    all_data.index.name = "index"
-    # Sort rows by timestamp index and full symbol.
-    all_data = all_data.sort_values(["index", "full_symbol"])
-    # Set index name to `None` to match `ImClient` output.
-    all_data.index.name = None
+    # Name index column and sort rows by timestamp index and full symbol.
+    all_data.index.name = "timestamp"
+    all_data = all_data.sort_values(["timestamp", "full_symbol"])
     return all_data
 
 
