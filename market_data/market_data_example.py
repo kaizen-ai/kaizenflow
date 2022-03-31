@@ -439,6 +439,27 @@ def get_market_data_df3() -> pd.DataFrame:
     return data, real_time_loop_time_out_in_secs
 
 
+def get_market_data_df4() -> pd.DataFrame:
+    """
+    Generate `ImClient` output example with price data that alternates every
+    5 minutes.
+    """
+    idx = pd.date_range(
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
+        end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
+        freq="T",
+    )
+    data = pd.DataFrame(index=idx)
+    price_pattern = [101.0] * 5 + [100.0] * 5
+    price = price_pattern * 4
+    data["close"] = price
+    data["full_symbol"] = "binance::BTC_USDT"
+    feature_pattern = [1.0] * 5 + [-1.0] * 5
+    feature = feature_pattern * 4
+    data["feature1"] = feature
+    return data
+
+
 # #############################################################################
 # ReplayedTimeMarketData examples
 # #############################################################################
