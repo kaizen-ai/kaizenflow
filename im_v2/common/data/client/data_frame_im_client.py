@@ -10,6 +10,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import im_v2.common.data.client as icdc
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 
@@ -58,6 +59,20 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         ]
         hdbg.dassert_is(df.columns, columns)
         hdbg.dassert(df[self._full_symbol_col_name].notna().all())
+
+    @staticmethod
+    def get_universe() -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        return []
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
 
     def _read_data_for_multiple_symbols(
         self,
