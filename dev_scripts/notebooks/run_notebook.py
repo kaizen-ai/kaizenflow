@@ -138,7 +138,7 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     configs = dtfmoexuti.get_configs_from_command_line(args)
     # Get the notebook file.
     notebook_file = os.path.abspath(args.notebook)
-    hdbg.dassert_exists(notebook_file)
+    hdbg.dassert_path_exists(notebook_file)
     #
     publish = args.publish_notebook
     # Prepare the tasks.

@@ -10,7 +10,7 @@ import functools
 import logging
 import os
 import pprint
-from typing import Any, Dict, Optional, Tuple, Union, List
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 _WARNING = "\033[33mWARNING\033[0m"
 
@@ -77,28 +77,40 @@ def dassert_is_not_s3_path(s3_path: str) -> None:
     )
 
 
-def dassert_s3_path_exists(s3_path: str, aws_profile: AwsProfile) -> None:
+def dassert_path_exists(
+    path: str, aws_profile: Optional[AwsProfile] = None
+) -> None:
     """
-    Assert if an S3 path doesn't exist.
+    Assert if S3 or local path doesn't exist. `aws_profile` is specified if and
+    only if path is an S3 path.
 
-    :param s3_path: path on S3 storage
+    :param path: S3 or local path
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    dassert_is_s3_path(s3_path)
-    s3fs_ = get_s3fs(aws_profile)
-    hdbg.dassert(s3fs_.exists(s3_path), "S3 path '%s' doesn't exist", s3_path)
+    if aws_profile is not None:
+        dassert_is_s3_path(path)
+        s3fs_ = get_s3fs(aws_profile)
+        hdbg.dassert(s3fs_.exists(path), "S3 path '%s' doesn't exist!" % path)
+    else:
+        hdbg.dassert_path_exists(path)
 
 
-def dassert_s3_path_not_exists(s3_path: str, aws_profile: AwsProfile) -> None:
+def dassert_path_not_exists(
+    path: str, aws_profile: Optional[AwsProfile] = None
+) -> None:
     """
-    Assert if an S3 path exist.
+    Assert if S3 or local path exist. `aws_profile` is specified if and only if
+    path is an S3 path.
 
-    :param s3_path: path on S3 storage
+    :param path: S3 or local path
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    dassert_is_s3_path(s3_path)
-    s3fs_ = get_s3fs(aws_profile)
-    hdbg.dassert(not s3fs_.exists(s3_path), "S3 path '%s' already exist", s3_path)
+    if aws_profile is not None:
+        dassert_is_s3_path(path)
+        s3fs_ = get_s3fs(aws_profile)
+        hdbg.dassert(not s3fs_.exists(path), "S3 path '%s' already exist!" % path)
+    else:
+        hdbg.dassert_path_not_exists(path)
 
 
 def split_path(s3_path: str) -> Tuple[str, str]:
@@ -113,7 +125,7 @@ def split_path(s3_path: str) -> Tuple[str, str]:
     # Remove the s3 prefix.
     prefix = "s3://"
     hdbg.dassert(s3_path.startswith(prefix))
-    s3_path = s3_path[len(prefix):]
+    s3_path = s3_path[len(prefix) :]
     # Break the path into dirs.
     dirs = s3_path.split("/")
     bucket = dirs[0]
@@ -126,23 +138,46 @@ def split_path(s3_path: str) -> Tuple[str, str]:
     return bucket, abs_path
 
 
-def find_files(
-        directory: str, pattern: str, aws_profile: AwsProfile = None
+def listdir(
+        dir_name: str,
+        pattern: str,
+        only_files: bool,
+        *,
+        exclude_git_dirs: bool = True,
+        aws_profile: Optional[AwsProfile] = None,
 ) -> List[str]:
     """
-    Find all files under `directory` that match a certain `pattern`.
+    Counterpart to `hio.listdir` with S3 support.
 
-    :param directory: path to the directory where to look for files, S3 or local
-    :param pattern: pattern to match a filename against
-    :param aws_profile: the name of an AWS profile or a s3fs filesystem
+    If `aws_profile` is specified, S3 is used instead of local
+    filesystem.
     """
     if aws_profile:
         s3fs_ = get_s3fs(aws_profile)
-        dassert_s3_path_exists(directory, s3fs_)
-        file_names = s3fs_.glob(f"{directory}/{pattern}")
+        dassert_path_exists(dir_name, s3fs_)
+        # `hio.listdir` is using `find` which looks for files and directories
+        # descending recursively in the directory.
+        # One star in glob will use `maxdepth=1`.
+        pattern = pattern.replace("*", "**")
+        # Detailed S3 objects in dict form with metadata.
+        path_objects = s3fs_.glob(f"{dir_name}/{pattern}", detail=True)
+        if only_files:
+            # Use metadata to distinguish files from directories without
+            # calling `s3fs_.isdir/isfile`.
+            for path_object in path_objects.values():
+                if path_object["type"] != "file":
+                    path_objects.pop(path_object["Key"])
+        paths = list(path_objects.keys())
+        if exclude_git_dirs:
+            paths = [path for path in paths if "/.git/" not in path]
     else:
-        file_names = hio.find_files(directory, pattern)
-    return file_names
+        paths = hio.listdir(
+            dir_name,
+            pattern,
+            only_files,
+            exclude_git_dirs=exclude_git_dirs,
+        )
+    return paths
 
 
 def get_local_or_s3_stream(
@@ -164,7 +199,7 @@ def get_local_or_s3_stream(
         )
         s3fs_ = kwargs.pop("s3fs")
         hdbg.dassert_isinstance(s3fs_, s3fs.core.S3FileSystem)
-        dassert_s3_path_exists(file_name, s3fs_)
+        dassert_path_exists(file_name, s3fs_)
         stream = s3fs_.open(file_name)
     else:
         if "s3fs" in kwargs:
@@ -489,6 +524,7 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
 
 # TODO(gp): -> helpers/aws_utils.py
 
+
 def archive_data_on_s3(
     src_dir: str, s3_path: str, aws_profile: Optional[str], tag: str = ""
 ) -> str:
@@ -597,7 +633,7 @@ def retrieve_archived_data_from_s3(
     else:
         # Download.
         s3fs_ = get_s3fs(aws_profile)
-        dassert_s3_path_exists(s3_file_path, s3fs_)
+        dassert_path_exists(s3_file_path, s3fs_)
         _LOG.debug("Getting from s3: '%s' -> '%s", s3_file_path, dst_file)
         s3fs_.get(s3_file_path, dst_file)
         _LOG.info("Saved to '%s'", dst_file)

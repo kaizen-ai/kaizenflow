@@ -166,7 +166,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level)
     #
     file_name = args.file
-    hdbg.dassert_exists(file_name)
+    hdbg.dassert_path_exists(file_name)
     if args.action == "pair":
         _pair(file_name)
     elif args.action == "sync":

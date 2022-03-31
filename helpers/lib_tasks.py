@@ -299,7 +299,11 @@ def _get_files_to_process(
     elif last_commit:
         files = hgit.get_previous_committed_files(dir_name)
     elif all_:
-        files = hio.find_all_files(dir_name)
+        pattern = "*"
+        only_files = True
+        file_paths = hio.listdir(dir_name, pattern, only_files)
+        # Remove directory paths and leave relative file paths.
+        files = [file_path.lstrip(dir_name) for file_path in file_paths]
     if files_from_user:
         # If files were passed, filter out non-existent paths.
         files = _filter_existing_paths(files_from_user.split())
@@ -2275,7 +2279,7 @@ def _get_docker_base_cmd(
     #
     _LOG.debug(hprint.to_str("docker_compose_files"))
     for docker_compose in docker_compose_files:
-        hdbg.dassert_exists(docker_compose)
+        hdbg.dassert_path_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
@@ -2551,7 +2555,7 @@ def docker_jupyter(  # type: ignore
 
 def _to_abs_path(filename: str) -> str:
     filename = os.path.abspath(filename)
-    hdbg.dassert_exists(filename)
+    hdbg.dassert_path_exists(filename)
     return filename
 
 
@@ -2561,7 +2565,7 @@ def _prepare_docker_ignore(ctx: Any, docker_ignore: str) -> None:
     """
     # Currently there is no built-in way to control which .dockerignore to use.
     # https://stackoverflow.com/questions/40904409
-    hdbg.dassert_exists(docker_ignore)
+    hdbg.dassert_path_exists(docker_ignore)
     cmd = f"cp -f {docker_ignore} .dockerignore"
     _run(ctx, cmd)
 
@@ -3207,7 +3211,9 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
 
 @functools.lru_cache()
 def _get_python_files(subdir: str) -> List[str]:
-    python_files = hio.find_regex_files(subdir, "*.py", only_files=True)
+    pattern = "*.py"
+    only_files = False
+    python_files = hio.listdir(subdir, pattern, only_files)
     # Remove tmp files.
     python_files = [f for f in python_files if not f.startswith("tmp")]
     return python_files
@@ -3553,6 +3559,7 @@ def _select_tests_to_skip(test_list_name: str) -> str:
 
 def _build_run_command_line(
     test_list_name: str,
+    custom_marker: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
@@ -3562,23 +3569,39 @@ def _build_run_command_line(
     """
     Build the pytest run command.
 
-    :param test_list_name: "fast_tests", "slow_tests" or
-        "superslow_tests"
+    E.g.,
+    ```
+    pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout"
+    ```
+
     The rest of params are the same as in `run_fast_tests()`.
 
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
+
+    :param test_list_name: "fast_tests", "slow_tests" or
+        "superslow_tests"
+    :param custom_marker: specify a space separated list of
+        `pytest` markers to skip (e.g., `optimizer` for the optimizer
+        tests, see `pytest.ini`). Empty means no marker to skip
     """
     hdbg.dassert_in(
         test_list_name, _TEST_TIMEOUTS_IN_SECS, "Invalid test_list_name"
     )
     pytest_opts = pytest_opts or "."
-    #
     pytest_opts_tmp = []
+
+    # Select tests to skip based on the `test_list_name` (e.g., fast tests)
+    # and on the custom marker, if present.
+    skipped_tests = _select_tests_to_skip(test_list_name)
+    if custom_marker != "":
+        pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
+    else:
+        pytest_opts_tmp.append(f'-m "{skipped_tests}"')
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    skipped_tests = _select_tests_to_skip(test_list_name)
-    pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
@@ -3675,6 +3698,7 @@ def _run_tests(
     ctx: Any,
     stage: str,
     test_list_name: str,
+    custom_marker: str,
     version: str,
     pytest_opts: str,
     skip_submodules: bool,
@@ -3695,6 +3719,7 @@ def _run_tests(
     # Build the command line.
     cmd = _build_run_command_line(
         test_list_name,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
@@ -3715,7 +3740,7 @@ def _run_tests(
     return rc
 
 
-# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
+# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def run_fast_tests(  # type: ignore
     ctx,
@@ -3733,7 +3758,7 @@ def run_fast_tests(  # type: ignore
     Run fast tests.
 
     :param stage: select a specific stage for the Docker image
-    :param pytest_opts: option for pytest
+    :param pytest_opts: additional options for `pytest` invocation. It can be empty
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
@@ -3743,10 +3768,12 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "fast_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -3779,10 +3806,12 @@ def run_slow_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "slow_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -3815,10 +3844,12 @@ def run_superslow_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "superslow_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -4970,7 +5001,9 @@ def lint(  # type: ignore
         all_ = False
         if dir_name != "":
             hdbg.dassert_eq(files, "")
-            files = hio.find_files(dir_name, "*.py")
+            pattern = "*.py"
+            only_files = True
+            files = hio.listdir(dir_name, pattern, only_files)
             files = " ".join(files)
         # For linting we can use only files modified in the client, in the branch, or
         # specified.
