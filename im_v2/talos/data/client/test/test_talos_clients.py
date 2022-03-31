@@ -662,7 +662,18 @@ class TestRealTimeSqlTalosClient1(
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
 
-    # TODO(Max) - add `read_data6`, see CMTask1545: `read_data6` problem in testing Talos Client.
+    def test_read_data6(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        #
+        im_client = self.setup_talos_sql_client(resample_1min=False)
+        full_symbol = "unsupported_exchange::unsupported_currency"
+        self._test_read_data6(im_client, full_symbol)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
     def test_read_data7(self) -> None:
         # Load test data.
         self._create_test_table()
