@@ -320,7 +320,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
         :param right_boundary: right boundary for generated timestamp interval
         :return: two consequtive timestamps that belong to the specified interval
         """
-        # TODO(Dan): Consider logging seed value.
+        # TODO(Dan): Add `seed` to the error output so that we can reproduce.
         # Set new seed to generate different intervals at every run.
         random.seed()
         # Convert boundaries to epochs.
@@ -331,7 +331,8 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             right_boundary, unit="m"
         )
         # Generate 2 random consequtive epochs in specified boundaries.
-        # TODO(Dan): Discuss boundaries simplification.
+        # TODO(Dan): Consider using a simpler solution.
+        #  https://stackoverflow.com/questions/50165501/generate-random-list-of-timestamps-in-python.
         # Integers are subtracted from right boundary since test data is
         # generated with open right boundary while `randint` works and
         # client reads data with closed right boundary.
