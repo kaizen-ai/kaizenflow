@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.data.client.data_frame_im_clients as ivcdcdfic
+import im_v2.common.data.client.data_frame_im_clients as imvcdcdfimc
 """
 
 from typing import Any, List, Optional
@@ -26,14 +26,12 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         Initialise the class with a DataFrame.
 
-        Example of input dataframe:
-        ```
-                                        full_symbol ... close  volume  feature1
-        timestamp
-        2021-07-26 13:42:00+00:00  binance:BTC_USDT     101.0     100       1.0
-        2021-07-26 13:43:00+00:00  binance:BTC_USDT     101.0     100       1.0
-        2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0     100       1.0
-        ```
+        Example of input dataframe: ```
+        full_symbol ... close  volume  feature1 timestamp 2021-07-26
+        13:42:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        2021-07-26 13:43:00+00:00  binance:BTC_USDT     101.0     100
+        1.0 2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0
+        100       1.0 ```
         """
         vendor = "data_frame"
         super().__init__(
@@ -42,6 +40,20 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         # Validate and set input dataframe.
         self._validate_df(df)
         self._df = df
+
+    @staticmethod
+    def get_universe() -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        return []
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
 
     @staticmethod
     def _validate_df(df: pd.DataFrame) -> None:
@@ -61,20 +73,6 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
             "feature1",
         ]
         hdbg.dassert_is_subset(required_columns, df.columns)
-
-    @staticmethod
-    def get_universe() -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        return []
-
-    @staticmethod
-    def get_metadata() -> pd.DataFrame:
-        """
-        See description in the parent class.
-        """
-        raise NotImplementedError
 
     def _read_data_for_multiple_symbols(
         self,

@@ -351,8 +351,8 @@ class ImClient(abc.ABC):
         self, full_symbol_col_name: Optional[str]
     ) -> str:
         """
-        Resolve the name of the `full_symbol_col_name` using the value in the ctor
-        and the one passed to the function.
+        Resolve the name of the `full_symbol_col_name` using the value in the
+        ctor and the one passed to the function.
         """
         ret = self._full_symbol_col_name
         if full_symbol_col_name is not None:
