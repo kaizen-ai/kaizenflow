@@ -18,12 +18,16 @@ _LOG = logging.getLogger(__name__)
 
 
 class UnitTestRenamer:
+    """
+    Rename a unit test in Python code and the corresponding directories containing
+    the inputs and the expected outputs.
+    """
 
     def __init__(
         self, old_test_name: str, new_test_name: str, root_dir: str
     ) -> None:
         """
-        Constructor.
+        Construct the UnitTestRenamer.
 
         :param old_test_name: the old name of the test
         :param new_test_name: the new name of the test
