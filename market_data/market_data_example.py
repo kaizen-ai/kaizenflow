@@ -474,8 +474,14 @@ def get_im_client_market_data_df1() -> pd.DataFrame:
         data["volume"] = 100
         data["feature1"] = feature
         all_data_list.append(data)
+    # Combine data for all symbols in one dataframe.
     all_data = pd.concat(all_data_list)
-    all_data = all_data.sort_values(["full_symbol"]).sort_index()
+    # Name index column for sorting.
+    all_data.index.name = "index"
+    # Sort rows by timestamp index and full symbol.
+    all_data = all_data.sort_values(["index", "full_symbol"])
+    # Set index name to `None` to match `ImClient` output.
+    all_data.index.name = None
     return all_data
 
 
