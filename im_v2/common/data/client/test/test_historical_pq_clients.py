@@ -308,7 +308,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
 class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     """
-    Test that Parquet intervals are correctly filtered.
+    Test that Parquet intervals are correctly filtered (corner cases).
     """
 
     def test_only_start_date1(self) -> None:
@@ -678,12 +678,12 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
 class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
     """
-    Test that Parquet intervals are correctly filtered.
+    Test that randomly generated Parquet intervals are correctly filtered.
     """
 
     @staticmethod
     def generate_random_time_interval(
-        left_boundary: pd.Timestamp, right_boundary: pd.Timestamp, seed: int
+        left_boundary: pd.Timestamp, right_boundary: pd.Timestamp, seed_: int
     ) -> Tuple[pd.Timestamp, pd.Timestamp]:
         """
         Generate a timestamp interval between specified timestamp boundaries.
@@ -692,14 +692,14 @@ class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
 
         :param left_boundary: left boundary for generated timestamp interval
         :param right_boundary: right boundary for generated timestamp interval
-        :param seed: seed value
+        :param seed_: seed value
         :return: two consequtive timestamps that belong to the specified interval
         """
         # TODO(gp): Consider using random intervals based on system clock and
-        #  print the `seed` for reproducibility.
+        #  print the `seed_` for reproducibility.
         # Set seed value and log it so that we can reproduce errors.
-        _LOG.info("Seed value ='%s'", seed)
-        random.seed()
+        _LOG.info("Seed value ='%s'", seed_)
+        random.seed(seed_)
         # Convert boundaries to epochs.
         left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
             left_boundary, unit="m"
@@ -727,7 +727,7 @@ class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
     @pytest.mark.superslow("~180 seconds.")
     def test_read_data_random1(self) -> None:
         """
-        Timestamp intervals are randomly generated and tested 100 times.
+        Timestamp intervals are randomly generated and tested N times.
         """
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -738,12 +738,12 @@ class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
             self, full_symbols, start_date, end_date, resample_1min
         )
         # Run tests.
-        for seed in range(100):
+        for seed_ in range(100):
             # Generate random timestamp interval and read data.
             left_boundary = pd.Timestamp(start_date)
             right_boundary = pd.Timestamp(end_date)
             start_ts, end_ts = self.generate_random_time_interval(
-                left_boundary, right_boundary, seed
+                left_boundary, right_boundary, seed_
             )
             data = im_client.read_data(full_symbols, start_ts, end_ts)
             # Compare the expected values.
