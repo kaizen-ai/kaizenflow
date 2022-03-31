@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import List, Tuple
 
@@ -7,6 +8,9 @@ import pytest
 import helpers.hdatetime as hdateti
 import im_v2.common.data.client.historical_pq_clients_example as imvcdchpce
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
+
+_LOG = logging.getLogger(__name__)
+
 
 # #############################################################################
 # TestHistoricalPqByTileClient1
@@ -306,46 +310,6 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     """
     Test that Parquet intervals are correctly filtered.
     """
-
-    @staticmethod
-    def generate_timestamp_interval(
-        left_boundary: pd.Timestamp, right_boundary: pd.Timestamp
-    ) -> Tuple[pd.Timestamp, pd.Timestamp]:
-        """
-        Generate a timestamp interval between specified timestamp boundaries.
-
-        Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval.
-
-        :param left_boundary: left boundary for generated timestamp interval
-        :param right_boundary: right boundary for generated timestamp interval
-        :return: two consequtive timestamps that belong to the specified interval
-        """
-        # TODO(Dan): Add `seed` to the error output so that we can reproduce.
-        # Set new seed to generate different intervals at every run.
-        random.seed()
-        # Convert boundaries to epochs.
-        left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-            left_boundary, unit="m"
-        )
-        right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
-            right_boundary, unit="m"
-        )
-        # Generate 2 random consequtive epochs in specified boundaries.
-        # TODO(Dan): Consider using a simpler solution.
-        #  https://stackoverflow.com/questions/50165501/generate-random-list-of-timestamps-in-python.
-        # Integers are subtracted from right boundary since test data is
-        # generated with open right boundary while `randint` works and
-        # client reads data with closed right boundary.
-        start_ts_epoch = random.randint(
-            left_boundary_epoch, right_boundary_epoch - 2
-        )
-        end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch - 1)
-        # Convert generated epochs to timestamps.
-        start_ts = hdateti.convert_unix_epoch_to_timestamp(
-            start_ts_epoch, unit="m"
-        )
-        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
-        return start_ts, end_ts
 
     def test_only_start_date1(self) -> None:
         """
@@ -706,6 +670,60 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+
+# #############################################################################
+# TestHistoricalPqByTileClient3
+# #############################################################################
+
+
+class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
+    """
+    Test that Parquet intervals are correctly filtered.
+    """
+
+    @staticmethod
+    def generate_random_time_interval(
+        left_boundary: pd.Timestamp, right_boundary: pd.Timestamp, seed: int
+    ) -> Tuple[pd.Timestamp, pd.Timestamp]:
+        """
+        Generate a timestamp interval between specified timestamp boundaries.
+
+        Timestamps are generated in "[`left_boundary`: `right_boundary`)" interval.
+
+        :param left_boundary: left boundary for generated timestamp interval
+        :param right_boundary: right boundary for generated timestamp interval
+        :param seed: seed value
+        :return: two consequtive timestamps that belong to the specified interval
+        """
+        # TODO(gp): Consider using random intervals based on system clock and
+        #  print the `seed` for reproducibility.
+        # Set seed value and log it so that we can reproduce errors.
+        _LOG.info("Seed value ='%s'", seed)
+        random.seed()
+        # Convert boundaries to epochs.
+        left_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
+            left_boundary, unit="m"
+        )
+        right_boundary_epoch = hdateti.convert_timestamp_to_unix_epoch(
+            right_boundary, unit="m"
+        )
+        # Generate 2 random consequtive epochs in specified boundaries.
+        # TODO(Dan): Consider using a simpler solution.
+        #  https://stackoverflow.com/questions/50165501/generate-random-list-of-timestamps-in-python.
+        # Integers are subtracted from right boundary since test data is
+        # generated with open right boundary while `randint` works and
+        # client reads data with closed right boundary.
+        start_ts_epoch = random.randint(
+            left_boundary_epoch, right_boundary_epoch - 2
+        )
+        end_ts_epoch = random.randint(start_ts_epoch, right_boundary_epoch - 1)
+        # Convert generated epochs to timestamps.
+        start_ts = hdateti.convert_unix_epoch_to_timestamp(
+            start_ts_epoch, unit="m"
+        )
+        end_ts = hdateti.convert_unix_epoch_to_timestamp(end_ts_epoch, unit="m")
+        return start_ts, end_ts
+
     @pytest.mark.superslow("~180 seconds.")
     def test_read_data_random1(self) -> None:
         """
@@ -720,12 +738,12 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             self, full_symbols, start_date, end_date, resample_1min
         )
         # Run tests.
-        for _ in range(100):
+        for seed in range(100):
             # Generate random timestamp interval and read data.
             left_boundary = pd.Timestamp(start_date)
             right_boundary = pd.Timestamp(end_date)
-            start_ts, end_ts = self.generate_timestamp_interval(
-                left_boundary, right_boundary
+            start_ts, end_ts = self.generate_random_time_interval(
+                left_boundary, right_boundary, seed
             )
             data = im_client.read_data(full_symbols, start_ts, end_ts)
             # Compare the expected values.
