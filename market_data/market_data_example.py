@@ -440,6 +440,46 @@ def get_market_data_df3() -> pd.DataFrame:
 
 
 # #############################################################################
+
+
+def get_im_client_market_data_df1() -> pd.DataFrame:
+    """
+    Generate `ImClient` output example with price data that alternates every 5
+    minutes.
+    """
+    # Set full symbols and timestamps to generate data for.
+    full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+    idx = pd.date_range(
+        start=pd.Timestamp("2000-01-01 09:31:00-00:00", tz="utc"),
+        end=pd.Timestamp("2000-01-01 10:10:00-00:00", tz="utc"),
+        freq="T",
+    )
+    # Set price and feature patterns for data alternating.
+    # Data alternates every 5 minutes so we keep the same value for 5 minutes.
+    # 10 minute patterns then are multiplied by 4 to match index length.
+    price_pattern = [101.0] * 5 + [100.0] * 5
+    price = price_pattern * 4
+    feature_pattern = [1.0] * 5 + [-1.0] * 5
+    feature = feature_pattern * 4
+    # Initialize a resulting data list.
+    all_data_list: List = []
+    # Generate data for each symbol.
+    for full_symbol in full_symbols:
+        data = pd.DataFrame(index=idx)
+        data["open"] = 100
+        data["high"] = 101
+        data["low"] = 99
+        data["close"] = price
+        data["volume"] = 100
+        data["full_symbol"] = full_symbol
+        data["feature1"] = feature
+        all_data_list.append(data)
+    all_data = pd.concat(all_data_list)
+    all_data = all_data.sort_values(["full_symbol"]).sort_index()
+    return all_data
+
+
+# #############################################################################
 # ReplayedTimeMarketData examples
 # #############################################################################
 

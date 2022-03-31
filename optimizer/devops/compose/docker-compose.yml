@@ -8,9 +8,9 @@ services:
     cap_add:
       - SYS_ADMIN
     # TODO(gp): @Grisha add these vars.
-    # environment:
+    environment:
     #   - AM_AWS_PROFILE=$AM_AWS_PROFILE
-    #   - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
+      - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
     #   - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
     #   - AM_S3_BUCKET=$AM_S3_BUCKET
     #   - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
