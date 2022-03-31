@@ -89,7 +89,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.dassert_lt(2, len(timespan))
     # Check if location for daily parquet files exists.
     dst_dir = args.dst_dir
-    hdbg.dassert_exists(dst_dir)
+    hdbg.dassert_path_exists(dst_dir)
     # Connect to database.
     db_stage = args.db_stage
     env_file = imvimlita.get_db_env_path(db_stage)
@@ -114,14 +114,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # Check if directory already exists in specified path.
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(dst_dir, date_directory)
-            if args.aws_profile:
-                # Check S3 path.
-                hs3.dassert_s3_path_not_exists(
-                    full_path, aws_profile=args.aws_profile
-                )
-            else:
-                # Check local path.
-                hdbg.dassert_not_exists(full_path)
+            # Check S3 path.
+            hs3.dassert_path_not_exists(
+                full_path, aws_profile=args.aws_profile
+            )
             # Add date partition columns to the dataframe.
             partition_mode = "by_date"
             hparque.add_date_partition_columns(df, partition_mode)

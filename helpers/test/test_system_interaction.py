@@ -28,7 +28,7 @@ class Test_system1(hunitest.TestCase):
             temp_file_name = fp.name
             _LOG.debug("temp_file_name=%s", temp_file_name)
             hsystem.system("ls", output_file=temp_file_name)
-            hdbg.dassert_exists(temp_file_name)
+            hdbg.dassert_path_exists(temp_file_name)
 
     def test4(self) -> None:
         """
@@ -38,7 +38,7 @@ class Test_system1(hunitest.TestCase):
             temp_file_name = fp.name
             _LOG.debug("temp_file_name=%s", temp_file_name)
             hsystem.system("ls", output_file=temp_file_name, tee=True)
-            hdbg.dassert_exists(temp_file_name)
+            hdbg.dassert_path_exists(temp_file_name)
 
     def test5(self) -> None:
         """
@@ -49,7 +49,7 @@ class Test_system1(hunitest.TestCase):
         temp_file_name += "/" + next(candidate_name)
         _LOG.debug("temp_file_name=%s", temp_file_name)
         hsystem.system("ls", output_file=temp_file_name, dry_run=True)
-        hdbg.dassert_not_exists(temp_file_name)
+        hdbg.dassert_path_not_exists(temp_file_name)
 
     def test6(self) -> None:
         """

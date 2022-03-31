@@ -60,7 +60,7 @@ class WriteDf(dtfconobas.FitPredictNode):
                 raise NotImplementedError
             file_name = f"{epoch}.parquet"
             file_name = os.path.join(self._dir_name, file_name)
-            hdbg.dassert_not_exists(file_name)
+            hdbg.dassert_path_not_exists(file_name)
             # Write the file.
             # TODO(Paul): Maybe allow the node to configure the log level.
             hparque.to_parquet(df, file_name, log_level=logging.DEBUG)
@@ -125,7 +125,7 @@ class WriteCols(dtfconobas.FitPredictNode):
                 hdbg.dassert_isinstance(srs, pd.Series)
                 srs.name = str(epoch) + "_" + v
                 file_name = os.path.join(self._dir_name, srs.name + ".csv")
-                hdbg.dassert_not_exists(file_name)
+                hdbg.dassert_path_not_exists(file_name)
                 # Write file.
                 srs.to_csv(file_name)
         # Collect info.

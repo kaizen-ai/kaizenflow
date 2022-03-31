@@ -16,6 +16,7 @@ import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
+import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def _build_base_config() -> cconfig.Config:
     return backtest_config
 
 
-# TODO(gp): Generalize this by passing asset_ids.
+# TODO(gp): @all Generalize this by passing asset_ids.
 def build_configs_with_tiled_universe(
     config: cconfig.Config, universe_str: str
 ) -> List[cconfig.Config]:
@@ -57,15 +58,52 @@ def build_configs_with_tiled_universe(
     return configs
 
 
+# TODO(gp): Should we use a SystemRunner also here?
 def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     """
     Build a DAG runner from a config.
     """
+    # Create MarketData.
+    event_loop = None
+    start_datetime = pd.Timestamp("2020-01-01 09:30:00-05:00")
+    end_datetime = pd.Timestamp("2020-03-01 09:30:00-05:00")
+    initial_replayed_delay = 0
+    asset_ids = [1000]
+    # market_data, _ = mdata.get_ReplayedTimeMarketData_example2(
+    #     event_loop,
+    #     start_datetime,
+    #     end_datetime,
+    #     initial_replayed_delay,
+    #     asset_ids)
+    # TODO(gp): Implement a ImClient that serves a df, then we can put it inside a
+    #  MarketData
+    asset_ids = [1467591036]
+    columns: List[str] = []
+    columns_remap = None
+    market_data = mdata.get_ImClientMarketData_example1(
+        asset_ids, columns, columns_remap
+    )
+    # Create HistoricalDataSource.
+    stage = "read_data"
+    asset_id_col = "asset_id"
+    ts_col_name = "timestamp_db"
+    multiindex_output = True
+    col_names_to_remove = ["start_datetime", "timestamp_db"]
+    node = dtfsysonod.HistoricalDataSource(
+        stage,
+        market_data,
+        asset_id_col,
+        ts_col_name,
+        multiindex_output,
+        col_names_to_remove=col_names_to_remove,
+    )
     # Build the DAG.
     dag_builder = config["meta", "dag_builder"]
     dag = dag_builder.get_dag(config["DAG"])
+    if False:
+        dag.force_freeing_nodes = True
     # Add the data source node.
-    # dag.insert_at_head(stage, node)
+    dag.insert_at_head(stage, node)
     # Build the DagRunner.
     dag_runner = dtfcore.FitPredictDagRunner(config, dag)
     return dag_runner

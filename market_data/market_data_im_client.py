@@ -108,15 +108,31 @@ class ImClientMarketData(mdabmada.MarketData):
             start_ts,
             end_ts,
         )
-        # TODO(Grisha): we should pass `full_symbol_column_name` here CMTask #822.
         # Add `asset_id` column.
-        market_data.insert(
-            0,
-            self._asset_id_col,
-            self._im_client.get_asset_ids_from_full_symbols(
-                market_data["full_symbol"]
-            ),
+        _LOG.debug("asset_id_col=%s", self._asset_id_col)
+        # TODO(gp): im_client should always return the name of the column storing
+        #  the asset_id as "full_symbol" instead we access the class to see what
+        #  is the name of that column.
+        full_symbol_col_name = self._im_client._get_full_symbol_col_name(None)
+        _LOG.debug("full_symbol_col_name=%s", full_symbol_col_name)
+        _LOG.debug("market_data.columns=%s", sorted(list(market_data.columns)))
+        hdbg.dassert_in(full_symbol_col_name, market_data.columns)
+
+        transformed_asset_ids = self._im_client.get_asset_ids_from_full_symbols(
+            market_data[full_symbol_col_name]
         )
+        if self._asset_id_col in market_data.columns:
+            _LOG.debug(
+                "Overwriting column '%s' with asset_ids", self._asset_id_col
+            )
+            market_data[self._asset_id_col] = transformed_asset_ids
+        else:
+            market_data.insert(
+                0,
+                self._asset_id_col,
+                transformed_asset_ids,
+            )
+        hdbg.dassert_in(self._asset_id_col, market_data.columns)
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)

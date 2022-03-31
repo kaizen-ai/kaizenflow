@@ -777,7 +777,7 @@ class TestCheckDataFrame1(hunitest.TestCase):
             )
             hdbg.dassert_file_exists(file_name + ".tmp")
             new_golden = pd.read_csv(file_name + ".tmp", index_col=0)
-            hdbg.dassert_not_exists(file_name)
+            hdbg.dassert_path_not_exists(file_name)
         finally:
             # Clean up.
             hio.delete_file(file_name)

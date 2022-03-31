@@ -203,7 +203,7 @@ def _main():
     # Check that both dirs exist.
     hdbg.dassert_is_not(args.src_dir, None)
     src_dir = os.path.abspath(args.src_dir)
-    hdbg.dassert_exists(src_dir)
+    hdbg.dassert_path_exists(src_dir)
     #
     print("src_dir=%s" % args.src_dir)
     print("dst_dir=%s" % dst_dir)

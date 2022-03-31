@@ -373,7 +373,7 @@ def from_typed_csv(file_name: str) -> pd.DataFrame:
     """
     # Load the types.
     dtypes_filename = file_name + ".types"
-    hdbg.dassert_exists(dtypes_filename)
+    hdbg.dassert_path_exists(dtypes_filename)
     with open(dtypes_filename) as dtypes_file:
         dtypes_dict = ast.literal_eval(list(dtypes_file)[0])
     # Load the data, applying the types.

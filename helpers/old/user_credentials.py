@@ -149,14 +149,14 @@ def get_credentials() -> Dict[str, Any]:
         )
     conda_sh_path = os.path.expanduser(conda_sh_path)
     conda_sh_path = os.path.abspath(conda_sh_path)
-    hdbg.dassert_exists(conda_sh_path)
+    hdbg.dassert_path_exists(conda_sh_path)
     #
     conda_env_path = os.path.abspath(os.path.expanduser(conda_env_path))
     # Not necessarily the conda_env_path exists.
     if not os.path.exists(conda_env_path):
         _LOG.warning("The dir '%s' doesn't exist: creating it", conda_env_path)
         hio.create_dir(conda_env_path, incremental=True)
-    hdbg.dassert_exists(os.path.dirname(conda_env_path))
+    hdbg.dassert_path_exists(os.path.dirname(conda_env_path))
     #
     for service in tunnel_info:
         # TODO(gp): We should call in ssh_tunnels.py to keep this encapsulated.

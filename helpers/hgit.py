@@ -51,7 +51,7 @@ def get_branch_name(dir_name: str = ".") -> str:
 
     E.g., `master` or `AmpTask672_Add_script_to_check_and_merge_PR`
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     # > git rev-parse --abbrev-ref HEAD
     # master
     cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
@@ -281,7 +281,7 @@ def _get_submodule_hash(dir_name: str) -> str:
 
     > git ls-tree master | grep <dir_name>
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     cmd = "git ls-tree master | grep %s" % dir_name
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
     _, output = data
@@ -470,7 +470,7 @@ def get_repo_full_name_from_dirname(
         "github.com/alphamatic/amp"
     :return: the full name of the repo in `git_dir`, e.g., "alphamatic/amp".
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     #
     cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % dir_name
     _, output = hsystem.system_to_string(cmd)
@@ -702,7 +702,7 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
         file_name, "", "Can't find file '%s' in dir '%s'", file_name, root_dir
     )
     file_name: str = os.path.abspath(file_name)
-    hdbg.dassert_exists(file_name)
+    hdbg.dassert_path_exists(file_name)
     return file_name
 
 
@@ -853,7 +853,7 @@ def get_head_hash(dir_name: str = ".", short_hash: bool = False) -> str:
     4759b3685f903e6c669096e960b248ec31c63b69
     ```
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     opts = "--short " if short_hash else " "
     cmd = f"cd {dir_name} && git rev-parse {opts}HEAD"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
@@ -863,7 +863,7 @@ def get_head_hash(dir_name: str = ".", short_hash: bool = False) -> str:
 
 # TODO(gp): Use get_head_hash() and remove this.
 def get_current_commit_hash(dir_name: str = ".") -> str:
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
     _, sha = data
@@ -876,7 +876,7 @@ def get_remote_head_hash(dir_name: str) -> str:
     """
     Report the hash that the remote Git repo is at.
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     sym_name = get_repo_full_name_from_dirname(dir_name, include_host_name=False)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
