@@ -4,6 +4,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.real_time as creatime
 import helpers.hasyncio as hasynci
@@ -404,6 +405,7 @@ asset_id                        101
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+@pytest.mark.skip("CmTask #1580.")
 class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
     def test1(self) -> None:
         """
