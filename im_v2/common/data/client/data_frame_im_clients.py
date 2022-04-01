@@ -26,12 +26,15 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         Initialise the class with a DataFrame.
 
-        Example of input dataframe: ```
-        full_symbol ... close  volume  feature1 timestamp 2021-07-26
-        13:42:00+00:00  binance:BTC_USDT     101.0     100       1.0
-        2021-07-26 13:43:00+00:00  binance:BTC_USDT     101.0     100
-        1.0 2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0
-        100       1.0 ```
+        Example of input dataframe:
+
+        ```
+                                        full_symbol ... close  volume  feature1
+        timestamp
+        2021-07-26 13:42:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        2021-07-26 13:43:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        ```
         """
         vendor = "data_frame"
         super().__init__(
