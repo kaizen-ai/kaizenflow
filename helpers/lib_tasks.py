@@ -3697,8 +3697,8 @@ def _run_test_cmd(
 
 def _run_tests(
     ctx: Any,
-    stage: str,
     test_list_name: str,
+    stage: str,
     custom_marker: str,
     version: str,
     pytest_opts: str,
@@ -3744,9 +3744,10 @@ def _run_tests(
 @task
 def run_tests(
         ctx,
-        test_list_name,
-        abort_on_first_error,
+        test_lists,
+        abort_on_first_error=False,
         stage="dev",
+        custom_marker="",
         version="",
         pytest_opts="",
         skip_submodules=False,
@@ -3754,16 +3755,18 @@ def run_tests(
         collect_only=False,
         tee_to_file=False,
         git_clean_=False,
-        **kwargs
+        **kwargs,
 ):
+    """
+    :param test_lists: comma separated list with test lists to run (e.g., fast_test,slow_tests)
+    :param abort_on_first_error: stop after a test list failing
+    """
     results = []
-    abort_on_first_error = bool(abort_on_first_error)
-    custom_marker = ""
-    for test_name in test_list_name.split(','):
+    for test_name in test_lists.split(','):
         rc = _run_tests(
             ctx,
-            stage,
             test_name,
+            stage,
             custom_marker,
             version,
             pytest_opts,
@@ -3772,6 +3775,7 @@ def run_tests(
             collect_only,
             tee_to_file,
             git_clean_,
+            warn=True,
             **kwargs,
         )
         if rc != 0:
@@ -3782,7 +3786,6 @@ def run_tests(
 
     rc = any(result[1] for result in results)
     return rc
-
 
 
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
