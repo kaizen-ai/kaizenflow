@@ -6,7 +6,7 @@ import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
 
 
 import im_v2.common.data.client.data_frame_im_clients as imvcdcdfimc
-# TODO(Grisha): `im`` should not depend on `market_data`.
+# TODO(Grisha): `im` should not depend on `market_data`.
 import market_data.market_data_example as mdmadaex
 
 
