@@ -3697,8 +3697,8 @@ def _run_test_cmd(
 
 def _run_tests(
     ctx: Any,
-    test_list_name: str,
     stage: str,
+    test_list_name: str,
     custom_marker: str,
     version: str,
     pytest_opts: str,
@@ -3765,8 +3765,8 @@ def run_tests(
     for test_name in test_lists.split(','):
         rc = _run_tests(
             ctx,
-            test_name,
             stage,
+            test_name,
             custom_marker,
             version,
             pytest_opts,
