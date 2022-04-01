@@ -17,7 +17,7 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
     """
-    ImClient that serves data from a passed dataframe indexed with time.
+    `ImClient` that serves data from a passed dataframe indexed with timestamps.
     """
 
     def __init__(
@@ -31,7 +31,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         Constructor.
 
-        Example of input dataframe:
+        Example of an input dataframe:
 
         ```
                                         full_symbol ... close  volume  feature1
@@ -41,14 +41,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0     100       1.0
         ```
         """
-        # Validate that input universe is a non-empty list.
-        hdbg.dassert_isinstance(universe, list)
-        hdbg.dassert_lte(1, len(universe))
-        # Set input universe before calling the parent class ctor since it is
-        # used by `get_universe()` which is necessary the parent ctor
-        # initialisation.
-        self._universe = universe
-        # Call parent class ctor.
+        # Initialise the parent class.
         vendor = "data_frame"
         super().__init__(
             vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
@@ -56,6 +49,13 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         # Validate and set input dataframe.
         self._validate_df(df)
         self._df = df
+        # Validate that the input universe is a non-empty list.
+        hdbg.dassert_container_type(universe, list, icdc.FullSymbol)
+        hdbg.dassert_lte(1, len(universe))
+        # Set the input universe before calling the parent class ctor since 
+        # it is used by `get_universe()` which is necessary for the parent 
+        # ctor initialisation.
+        self._universe = universe
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
@@ -75,17 +75,16 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         Validate that input dataframe has the correct format.
 
-        Note that further sanity checks of the data (e.g., index has
-        timestamps with timezones, index is increasing) are performed
-        when emitting the data by parent's class
-        `_dassert_output_data_is_valid()`.
+        Note that further sanity checks of the data (e.g., index has timestamps
+        with timezones, index is increasing) are performed when emitting the 
+        data by parent's class `_dassert_output_data_is_valid()`.
         """
         # Verify that a non-empty dataframe is passed as input.
         hdbg.dassert_isinstance(df, pd.DataFrame)
         hdbg.dassert_lt(0, df.shape[0])
-        # Verify that dataframe has at least 1 column.
+        # Verify that the dataframe has at least 1 column.
         hdbg.dassert_lte(1, len(df.columns))
-        # Verify that index is increasing.
+        # Verify that the index is increasing.
         hpandas.dassert_increasing_index(df)
 
     def _read_data_for_multiple_symbols(
