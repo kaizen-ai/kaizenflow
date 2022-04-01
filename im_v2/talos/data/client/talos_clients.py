@@ -238,7 +238,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         full_symbol_col_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Apply Talos-specific normalization.
+        Apply Talos-specific marketdata normalization.
 
         Addition of new timestamp columns:
            - `end_time`: UTC timestamp column
@@ -246,6 +246,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
            - `asset_id`: result of mapping full_symbol to integer
         Droping extra columns.
         """
+        # Check and get `full_symbol_col_name`
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
         # Add `asset_id` column using maping on `full_symbol` column.
         data["asset_id"] = data[full_symbol_col_name].apply(imvcuunut.string_to_numerical_id)
         # Generate `start_timestamp` in timestamp format using `end_timestamp` column.
