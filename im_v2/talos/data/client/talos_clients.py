@@ -312,13 +312,15 @@ def _build_select_query(
                 end_unix_epoch,
                 msg="Start unix epoch should be smaller than end.",
             )
-
+        # From `exchange_id`` and `currency_pair` create AND conditions.
+        # In the end there should be something like: 
+        # (exchange_id IN ('binance') AND currency_pair IN ('ADA_USDT')) OR (exchange_id IN ('ftx') AND currency_pair IN ('BTC_USDT')) 
         exchange_currency_conditions = [
             f"(exchange_id IN ({pair[0]}) AND currency_pair IN ({pair[1]})"
              for pair in exchange_currency_pairs]
-        
-        where_clause = where_clause + " OR ".join(exchange_currency_conditions)
-
+        # Add OR conditions as an element of conditions that should be connected by AND
+        # There should be something 
+        where_clause.append('(' + " OR ".join(exchange_currency_conditions) + ')')
         # Build whole query.
         query = select_query + " AND ".join(where_clause)
         if limit:
