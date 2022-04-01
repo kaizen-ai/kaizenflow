@@ -57,12 +57,6 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         self._validate_df(df)
         self._df = df
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        return self._universe
-
     @staticmethod
     def get_metadata() -> pd.DataFrame:
         """
@@ -70,14 +64,21 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         raise NotImplementedError
 
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        return self._universe
+
     @staticmethod
     def _validate_df(df: pd.DataFrame) -> None:
         """
         Validate that input dataframe has the correct format.
 
-        Note that further sanity checks of the data (e.g., index has timestamps
-        with timezones, index is increasing) are performed when emitting
-        the data by parent's class `_dassert_output_data_is_valid()`.
+        Note that further sanity checks of the data (e.g., index has
+        timestamps with timezones, index is increasing) are performed
+        when emitting the data by parent's class
+        `_dassert_output_data_is_valid()`.
         """
         # Verify that a non-empty dataframe is passed as input.
         hdbg.dassert_isinstance(df, pd.DataFrame)
