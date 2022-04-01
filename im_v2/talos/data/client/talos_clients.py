@@ -247,7 +247,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         Droping extra columns.
         """
         # Add `asset_id` column using maping on `full_symbol` column.
-        data["asset_id"] = data["full_symbol"].apply(imvcuunut.string_to_numerical_id)
+        data["asset_id"] = data[full_symbol_col_name].apply(imvcuunut.string_to_numerical_id)
         # Generate `start_timestamp` in timestamp format using `end_timestamp` column.
         minute_ms = 60000
         data["start_timestamp"] = data["timestamp"].apply(
