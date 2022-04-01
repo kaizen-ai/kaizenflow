@@ -9,7 +9,6 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
-
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
@@ -198,7 +197,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self,
         data: pd.DataFrame,
         *,
-        full_symbol_col_name: Optional[str] = None,
+        full_symbol_col_name: Optional[str] = None
     ) -> pd.DataFrame:
         """
         Apply Talos-specific normalization:

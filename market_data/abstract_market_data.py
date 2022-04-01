@@ -509,6 +509,7 @@ class MarketData(abc.ABC):
     # /////////////////////////////////////////////////////////////////////////////
 
     @abc.abstractmethod
+    # TODO(Danya): Shouldn't it be relegated to clients?
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         ...
 
