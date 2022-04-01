@@ -3741,6 +3741,50 @@ def _run_tests(
     return rc
 
 
+@task
+def run_tests(
+        ctx,
+        test_list_name,
+        abort_on_first_error,
+        stage="dev",
+        version="",
+        pytest_opts="",
+        skip_submodules=False,
+        coverage=False,
+        collect_only=False,
+        tee_to_file=False,
+        git_clean_=False,
+        **kwargs
+):
+    results = []
+    abort_on_first_error = bool(abort_on_first_error)
+    custom_marker = ""
+    for test_name in test_list_name.split(','):
+        rc = _run_tests(
+            ctx,
+            stage,
+            test_name,
+            custom_marker,
+            version,
+            pytest_opts,
+            skip_submodules,
+            coverage,
+            collect_only,
+            tee_to_file,
+            git_clean_,
+            **kwargs,
+        )
+        if rc != 0:
+            _LOG.error("'%s' tests failed" % test_name)
+            if abort_on_first_error:
+                sys.exit(-1)
+        results.append((test_name, rc))
+
+    rc = any(result[1] for result in results)
+    return rc
+
+
+
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def run_fast_tests(  # type: ignore
