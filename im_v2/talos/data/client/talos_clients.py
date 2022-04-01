@@ -259,7 +259,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             )
             # Rename column `timestamp` -> `end_timestamp`.
             data = data.rename({"timestamp": "end_timestamp"}, axis=1)
-            # Generate `start_timestamp` from `end_timestamp` column by substracting delta
+            # Generate `start_timestamp` from `end_timestamp` column by substracting delta.
             delta = pd.Timedelta("1 Minute")
             data["start_timestamp"] = data["end_timestamp"].apply(
                 lambda pd_timestamp: (pd_timestamp - delta)
