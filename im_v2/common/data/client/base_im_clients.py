@@ -275,7 +275,7 @@ class ImClient(abc.ABC):
         """
         _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
         hdbg.dassert(not df.empty, "Empty df=\n%s", df)
-        # TODO(Dan): CmTask1588.
+        # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates from data".
         # 1) Drop duplicates.
         df = hpandas.drop_duplicates(df)
         # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
