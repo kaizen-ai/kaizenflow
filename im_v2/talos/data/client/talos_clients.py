@@ -260,7 +260,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             # Rename column `timestamp` -> `end_timestamp`.
             data = data.rename({"timestamp": "end_timestamp"}, axis=1)
             # Generate `start_timestamp` from `end_timestamp` column by substracting delta
-            delta = pd.Timedelta('1 Minute')
+            delta = pd.Timedelta("1 Minute")
             data["start_timestamp"] = data["end_timestamp"].apply(
                 lambda pd_timestamp: (pd_timestamp - delta)
             )
@@ -273,7 +273,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             # Concatenate two lists of columns.
             ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
         else:
-            hdbg.dfatal("Invalid mode='%s'. Correct modes: 'market_data', 'data_client'" % mode)
+            hdbg.dfatal(
+                "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
+                % mode
+            )
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
