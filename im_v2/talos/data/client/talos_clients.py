@@ -18,6 +18,7 @@ import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
+import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
 
@@ -223,6 +224,51 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             "close",
             "volume",
             full_symbol_col_name,
+        ]
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data.loc[:, ohlcv_columns]
+        return data
+
+    def _apply_talos_marketdata_normalization(
+        self,
+        data: pd.DataFrame,
+        *,
+        full_symbol_col_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization.
+
+        Addition of new timestamp columns:
+           - `end_time`: UTC timestamp column
+           - `start_time`: UTC timestamp column
+           - `asset_id`: result of mapping full_symbol to integer
+        Droping extra columns.
+        """
+        # Add `asset_id` column using maping on `full_symbol` column.
+        data["asset_id"] = data["full_symbol"].apply(imvcuunut.string_to_numerical_id)
+        # Generate `start_timestamp` in timestamp format using `end_timestamp` column.
+        minute_ms = 60000
+        data["start_timestamp"] = data["timestamp"].apply(
+            lambda time_ms: hdateti.convert_unix_epoch_to_timestamp(time_ms - minute_ms)
+        )
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        # Rename column `timestamp` -> `end_timestamp`.
+        data = data.rename({"timestamp": "end_timestamp"}, axis=1)
+        # Columns that should left in the table.
+        ohlcv_columns = [
+            "start_timestamp",
+            "end_timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "asset_id",
         ]
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
