@@ -302,9 +302,8 @@ def _get_files_to_process(
     elif all_:
         pattern = "*"
         only_files = True
-        file_paths = hio.listdir(dir_name, pattern, only_files)
-        # Remove directory paths and leave relative file paths.
-        files = [file_path.lstrip(dir_name) for file_path in file_paths]
+        use_relative_paths = True
+        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
     if files_from_user:
         # If files were passed, filter out non-existent paths.
         files = _filter_existing_paths(files_from_user.split())
@@ -3214,7 +3213,8 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
 def _get_python_files(subdir: str) -> List[str]:
     pattern = "*.py"
     only_files = False
-    python_files = hio.listdir(subdir, pattern, only_files)
+    use_relative_paths = False
+    python_files = hio.listdir(subdir, pattern, only_files, use_relative_paths)
     # Remove tmp files.
     python_files = [f for f in python_files if not f.startswith("tmp")]
     return python_files
@@ -4847,7 +4847,8 @@ def lint(  # type: ignore
             hdbg.dassert_eq(files, "")
             pattern = "*.py"
             only_files = True
-            files = hio.listdir(dir_name, pattern, only_files)
+            use_relative_paths = False
+            files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
             files = " ".join(files)
         # For linting we can use only files modified in the client, in the branch, or
         # specified.

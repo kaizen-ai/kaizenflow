@@ -362,11 +362,13 @@ def _run(args: argparse.Namespace) -> None:
     # Prepare `listdir` args.
     pattern = "*.parquet"
     only_files = True
+    use_relative_paths = False
     # Get the input files to process.
     src_file_names = hs3.listdir(
         args.src_dir,
         pattern,
         only_files,
+        use_relative_paths,
         aws_profile=args.aws_profile,
     )
     hdbg.dassert_lte(1, len(src_file_names))

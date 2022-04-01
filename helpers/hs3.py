@@ -139,22 +139,26 @@ def split_path(s3_path: str) -> Tuple[str, str]:
 
 
 def listdir(
-        dir_name: str,
-        pattern: str,
-        only_files: bool,
-        *,
-        exclude_git_dirs: bool = True,
-        aws_profile: Optional[AwsProfile] = None,
+    dir_name: str,
+    pattern: str,
+    only_files: bool,
+    use_relative_paths: bool,
+    *,
+    exclude_git_dirs: bool = True,
+    aws_profile: Optional[AwsProfile] = None,
 ) -> List[str]:
     """
     Counterpart to `hio.listdir` with S3 support.
 
-    If `aws_profile` is specified, S3 is used instead of local
-    filesystem.
+    :param dir_name: a S3 or local path
+    :param aws_profile: AWS profile to use if and only if using an S3 path,
+        otherwise `None` for local path
     """
-    if aws_profile:
+    if aws_profile is not None:
         s3fs_ = get_s3fs(aws_profile)
         dassert_path_exists(dir_name, s3fs_)
+        # Ensure that there are no multiple stars in pattern.
+        hdbg.dassert_not_in("**", pattern)
         # `hio.listdir` is using `find` which looks for files and directories
         # descending recursively in the directory.
         # One star in glob will use `maxdepth=1`.
@@ -170,11 +174,15 @@ def listdir(
         paths = list(path_objects.keys())
         if exclude_git_dirs:
             paths = [path for path in paths if "/.git/" not in path]
+        if use_relative_paths:
+            # TODO(Nikola): Check if `s3://` causes a problem.
+            paths = [os.path.relpath(path, start=dir_name) for path in paths]
     else:
         paths = hio.listdir(
             dir_name,
             pattern,
             only_files,
+            use_relative_paths,
             exclude_git_dirs=exclude_git_dirs,
         )
     return paths
