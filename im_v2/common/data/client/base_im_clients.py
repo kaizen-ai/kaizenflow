@@ -126,7 +126,7 @@ class ImClient(abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Read data in `[start_ts, end_ts]` for `imvcdcfusy.FullSymbol` symbols.
@@ -275,6 +275,7 @@ class ImClient(abc.ABC):
         """
         _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
         hdbg.dassert(not df.empty, "Empty df=\n%s", df)
+        # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates from data".
         # 1) Drop duplicates.
         df = hpandas.drop_duplicates(df)
         # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
@@ -350,8 +351,8 @@ class ImClient(abc.ABC):
         self, full_symbol_col_name: Optional[str]
     ) -> str:
         """
-        Resolve the name of the `full_symbol_col_name` using the value in the ctor
-        and the one passed to the function.
+        Resolve the name of the `full_symbol_col_name` using the value in the
+        ctor and the one passed to the function.
         """
         ret = self._full_symbol_col_name
         if full_symbol_col_name is not None:
@@ -381,7 +382,7 @@ class ImClient(abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         ...
 
@@ -437,7 +438,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Same as the method in the parent class.
@@ -485,7 +486,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         full_symbol: imvcdcfusy.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Read data for a single symbol in [start_ts, end_ts].
@@ -515,7 +516,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Same as the parent class.
@@ -529,7 +530,11 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
             full_symbol_col_name
         )
         df = self._read_data_for_multiple_symbols(
-            full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
+            full_symbols,
+            start_ts,
+            end_ts,
+            full_symbol_col_name=full_symbol_col_name,
+            **kwargs,
         )
         return df
 
@@ -539,7 +544,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
         full_symbol_col_name: str,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         ...
