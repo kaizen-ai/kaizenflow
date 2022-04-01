@@ -285,6 +285,15 @@ def _build_select_query(
         Time is provided as unix epochs in ms, the time range
         is considered closed on both sides, i.e. [1647470940000, 1647471180000]
 
+        Example of a full query:
+        ```
+        "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000
+         AND timestamp <= 1647471180000
+         AND
+         ((exchange_id IN ('binance') AND currency_pair IN ('AVAX_USDT'))
+          OR (exchange_id IN ('ftx')  AND currency_pair IN ('BTC_USDT')))
+        ```
+        :param exchange_currency_pairs: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
         :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
         :return: SELECT query for Talos data
@@ -303,7 +312,7 @@ def _build_select_query(
         if end_unix_epoch:
             hdbg.dassert_isinstance(
                 end_unix_epoch,
-                int, 
+                int,
             )
             where_clause.append(f"timestamp <= {end_unix_epoch}")
         if start_unix_epoch and end_unix_epoch:
