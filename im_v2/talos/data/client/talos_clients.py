@@ -273,7 +273,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             # Concatenate two lists of columns.
             ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
         else:
-            hdbg.dfatal(msg="Incorrect mode. Correct modes: 'market_data', 'data_client'")
+            hdbg.dfatal("Invalid mode='%s'. Correct modes: 'market_data', 'data_client'" % mode)
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
