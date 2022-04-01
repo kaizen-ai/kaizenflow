@@ -41,6 +41,13 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0     100       1.0
         ```
         """
+        # Validate that the input universe is a non-empty list.
+        hdbg.dassert_container_type(universe, list, icdc.FullSymbol)
+        hdbg.dassert_lte(1, len(universe))
+        # Set the input universe before calling the parent class ctor since 
+        # it is used by `get_universe()` which is necessary for the parent 
+        # class initialisation.
+        self._universe = universe
         # Initialise the parent class.
         vendor = "data_frame"
         super().__init__(
@@ -49,13 +56,6 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         # Validate and set input dataframe.
         self._validate_df(df)
         self._df = df
-        # Validate that the input universe is a non-empty list.
-        hdbg.dassert_container_type(universe, list, icdc.FullSymbol)
-        hdbg.dassert_lte(1, len(universe))
-        # Set the input universe before calling the parent class ctor since 
-        # it is used by `get_universe()` which is necessary for the parent 
-        # ctor initialisation.
-        self._universe = universe
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
