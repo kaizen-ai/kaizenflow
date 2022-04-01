@@ -304,9 +304,8 @@ class ForecastEvaluator:
             dir_name = os.path.join(log_dir, "returns")
             pattern = "*"
             only_files = True
-            file_paths = hio.listdir(dir_name, pattern, only_files)
-            # Remove directory paths and leave relative file paths.
-            files = [file_path.lstrip(dir_name) for file_path in file_paths]
+            use_relative_paths = True
+            files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
             files.sort()
             file_name = files[-1]
         returns = ForecastEvaluator._read_df(log_dir, "returns", file_name, tz)
