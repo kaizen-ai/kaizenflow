@@ -405,7 +405,6 @@ asset_id                        101
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-@pytest.mark.skip("CmTask #1580.")
 class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
     def test1(self) -> None:
         """
