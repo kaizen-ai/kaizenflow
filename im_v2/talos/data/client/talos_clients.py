@@ -217,19 +217,25 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         data: pd.DataFrame,
         *,
         full_symbol_col_name: Optional[str] = None,
+        mode: str = "data_client",
     ) -> pd.DataFrame:
         """
-        Apply Talos-specific normalization:
-
+        Apply Talos-specific normalization.
+        `data_client` mode:
         - Convert `timestamp` column to a UTC timestamp and set index.
         - Drop extra columns (e.g. `id` created by the DB).
+
+        `market_data` mode:
+        - Add `start_timestamp` column in UTC timestamp format.
+        - Add `end_timestamp` column in UTC timestamp format.
+        - Add `asset_id` column which is result of mapping full_symbol to integer.
+        - Drop extra columns.
         """
         # Convert timestamp column with Unix epoch to timestamp format.
         data["timestamp"] = data["timestamp"].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
-        data = data.set_index("timestamp")
-        # Specify OHLCV columns.
+        # Check and get `full_symbol_col_name`.
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
@@ -240,61 +246,34 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             "low",
             "close",
             "volume",
-            full_symbol_col_name,
         ]
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data.loc[:, ohlcv_columns]
-        return data
-
-    def _apply_talos_marketdata_normalization(
-        self,
-        data: pd.DataFrame,
-        *,
-        full_symbol_col_name: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        Apply Talos-specific marketdata normalization.
-
-        Addition of new timestamp columns:
-           - `end_time`: UTC timestamp column
-           - `start_time`: UTC timestamp column
-           - `asset_id`: result of mapping full_symbol to integer
-        Droping extra columns.
-        """
-        # Check and get `full_symbol_col_name`
-        full_symbol_col_name = self._get_full_symbol_col_name(
-            full_symbol_col_name
-        )
-        # Add `asset_id` column using maping on `full_symbol` column.
-        data["asset_id"] = data[full_symbol_col_name].apply(
-            imvcuunut.string_to_numerical_id
-        )
-        # Generate `start_timestamp` in timestamp format using `end_timestamp` column.
-        minute_ms = 60000
-        data["start_timestamp"] = data["timestamp"].apply(
-            lambda time_ms: hdateti.convert_unix_epoch_to_timestamp(
-                time_ms - minute_ms
+        if mode == "data_client":
+            # Update index.
+            data = data.set_index("timestamp")
+            # Add `full_symbol_col_name`.
+            ohlcv_columns.append(full_symbol_col_name)
+        elif mode == "market_data":
+            # Add `asset_id` column using maping on `full_symbol` column.
+            data["asset_id"] = data[full_symbol_col_name].apply(
+                imvcuunut.string_to_numerical_id
             )
-        )
-        # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
-            hdateti.convert_unix_epoch_to_timestamp
-        )
-        # Rename column `timestamp` -> `end_timestamp`.
-        data = data.rename({"timestamp": "end_timestamp"}, axis=1)
-        # Columns that should left in the table.
-        ohlcv_columns = [
-            "start_timestamp",
-            "end_timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "asset_id",
-        ]
+            # Rename column `timestamp` -> `end_timestamp`.
+            data = data.rename({"timestamp": "end_timestamp"}, axis=1)
+            # Generate `start_timestamp` from `end_timestamp` column by substracting delta
+            delta = pd.Timedelta('1 Minute')
+            data["start_timestamp"] = data["end_timestamp"].apply(
+                lambda pd_timestamp: (pd_timestamp - delta)
+            )
+            # Columns that should left in the table.
+            market_data_ohlcv_columns = [
+                "start_timestamp",
+                "end_timestamp",
+                "asset_id",
+            ]
+            # Concatenate two lists of columns.
+            ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
+        else:
+            hdbg.dfatal(msg="Incorrect mode. Correct modes: 'market_data', 'data_client'")
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
