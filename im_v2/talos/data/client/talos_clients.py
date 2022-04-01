@@ -195,6 +195,23 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): CmTask1420.
         return []
 
+    @staticmethod
+    # TODO(Danya): Move up to hsql.
+    def _create_in_operator(values: List[str], column_name: str) -> str:
+        """
+        Transform a list of possible values into an IN operator clause.
+
+        Example:
+            (`["binance", "ftx"]`, 'exchange_id') =>
+            "exchange_id IN ('binance', 'ftx')"
+        """
+        in_operator = (
+            f"{column_name} IN ("
+            + ",".join([f"'{value}'" for value in values])
+            + ")"
+        )
+        return in_operator
+
     def _apply_talos_normalization(
         self,
         data: pd.DataFrame,
@@ -251,11 +268,15 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             full_symbol_col_name
         )
         # Add `asset_id` column using maping on `full_symbol` column.
-        data["asset_id"] = data[full_symbol_col_name].apply(imvcuunut.string_to_numerical_id)
+        data["asset_id"] = data[full_symbol_col_name].apply(
+            imvcuunut.string_to_numerical_id
+        )
         # Generate `start_timestamp` in timestamp format using `end_timestamp` column.
         minute_ms = 60000
         data["start_timestamp"] = data["timestamp"].apply(
-            lambda time_ms: hdateti.convert_unix_epoch_to_timestamp(time_ms - minute_ms)
+            lambda time_ms: hdateti.convert_unix_epoch_to_timestamp(
+                time_ms - minute_ms
+            )
         )
         # Convert timestamp column with Unix epoch to timestamp format.
         data["timestamp"] = data["timestamp"].apply(
@@ -279,23 +300,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # Rearrange the columns.
         data = data.loc[:, ohlcv_columns]
         return data
-
-    @staticmethod
-    # TODO(Danya): Move up to hsql.
-    def _create_in_operator(values: List[str], column_name: str) -> str:
-        """
-        Transform a list of possible values into an IN operator clause.
-
-        Example:
-            (`["binance", "ftx"]`, 'exchange_id') =>
-            "exchange_id IN ('binance', 'ftx')"
-        """
-        in_operator = (
-            f"{column_name} IN ("
-            + ",".join([f"'{value}'" for value in values])
-            + ")"
-        )
-        return in_operator
 
     def _read_data(
         self,
@@ -336,8 +340,9 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         # Remove extra columns and create a timestamp index.
         # TODO(Danya): The normalization may change depending on use of the class.
-        data = self._apply_talos_normalization(data,
-                full_symbol_col_name=full_symbol_col_name)
+        data = self._apply_talos_normalization(
+            data, full_symbol_col_name=full_symbol_col_name
+        )
         return data
 
     def _build_select_query(
@@ -444,7 +449,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         raise NotImplementedError
 
     def _get_start_end_ts_for_symbol(
-            self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
     ) -> pd.Timestamp:
         """
         Select a maximum/minimum timestamp for the given symbol.
