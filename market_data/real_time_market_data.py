@@ -13,8 +13,8 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
-import market_data.abstract_market_data as mdabmada
 import im_v2.talos.data.client.talos_clients as imvtdctacl
+import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,6 +57,18 @@ class RealTimeMarketData(mdabmada.MarketData):
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
+
+    @staticmethod
+    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+        """
+        Convert a timestamp into an SQL string to query the DB.
+        """
+        hdateti.dassert_has_tz(dt)
+        # Convert to UTC, if needed.
+        if dt.tzinfo != hdateti.get_UTC_tz().zone:
+            dt = dt.tz_convert(hdateti.get_UTC_tz())
+        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return ret
 
     def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -237,18 +249,6 @@ class RealTimeMarketData(mdabmada.MarketData):
         query = " ".join(query)
         return query
 
-    @staticmethod
-    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
-        """
-        Convert a timestamp into an SQL string to query the DB.
-        """
-        hdateti.dassert_has_tz(dt)
-        # Convert to UTC, if needed.
-        if dt.tzinfo != hdateti.get_UTC_tz().zone:
-            dt = dt.tz_convert(hdateti.get_UTC_tz())
-        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
-        return ret
-
 
 class RealTimeMarketData2(mdabmada.MarketData):
     """
@@ -257,7 +257,9 @@ class RealTimeMarketData2(mdabmada.MarketData):
     Note: RealTimeSqlTalosClient is passed at the initialization.
     """
 
-    def __init__(self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs):
+    def __init__(
+            self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self._client = client
 
