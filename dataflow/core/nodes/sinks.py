@@ -26,6 +26,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Add incremental mode to clean up the dir before writing into it.
 class WriteDf(dtfconobas.FitPredictNode):
+
     def __init__(
         self,
         nid: dtfcornode.NodeId,
@@ -60,7 +61,7 @@ class WriteDf(dtfconobas.FitPredictNode):
                 raise NotImplementedError
             file_name = f"{epoch}.parquet"
             file_name = os.path.join(self._dir_name, file_name)
-            hdbg.dassert_not_exists(file_name)
+            hdbg.dassert_path_not_exists(file_name)
             # Write the file.
             # TODO(Paul): Maybe allow the node to configure the log level.
             hparque.to_parquet(df, file_name, log_level=logging.DEBUG)
@@ -74,6 +75,7 @@ class WriteDf(dtfconobas.FitPredictNode):
 
 
 class WriteCols(dtfconobas.FitPredictNode):
+
     def __init__(
         self,
         nid: dtfcornode.NodeId,
@@ -125,7 +127,7 @@ class WriteCols(dtfconobas.FitPredictNode):
                 hdbg.dassert_isinstance(srs, pd.Series)
                 srs.name = str(epoch) + "_" + v
                 file_name = os.path.join(self._dir_name, srs.name + ".csv")
-                hdbg.dassert_not_exists(file_name)
+                hdbg.dassert_path_not_exists(file_name)
                 # Write file.
                 srs.to_csv(file_name)
         # Collect info.
@@ -145,8 +147,13 @@ def read_dfs(dir_name: str) -> Iterable[Tuple[str, pd.DataFrame]]:
     :param dir_name: directory containing dataframes in Parquet format
     :return: iterable of tuples of the form `(file_name, df)`
     """
+    pattern = "*.pq"
+    only_files = True
+    use_relative_paths = False
     # Glob the `.pq` files.
-    file_names = sorted(hio.find_files(dir_name, "*.pq"))
+    file_names = sorted(
+        hio.listdir(dir_name, pattern, only_files, use_relative_paths)
+    )
     _LOG.info("Number of Parquet files found=%s", len(file_names))
     for file_name in file_names:
         # Load the dataframe.

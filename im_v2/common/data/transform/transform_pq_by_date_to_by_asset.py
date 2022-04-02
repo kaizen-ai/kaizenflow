@@ -61,12 +61,12 @@ from tqdm.autonotebook import tqdm
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
-import helpers.hs3 as hs3
 import helpers.hjoblib as hjoblib
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
@@ -359,10 +359,17 @@ def _run(args: argparse.Namespace) -> None:
         raise NotImplementedError("Incremental on S3 is not implemented!")
     else:
         hparser.create_incremental_dir(args.dst_dir, args)
-    # Get the input files to process.
+    # Prepare `listdir` args.
     pattern = "*.parquet"
-    src_file_names = hs3.find_files(
-        args.src_dir, pattern, aws_profile=args.aws_profile
+    only_files = True
+    use_relative_paths = False
+    # Get the input files to process.
+    src_file_names = hs3.listdir(
+        args.src_dir,
+        pattern,
+        only_files,
+        use_relative_paths,
+        aws_profile=args.aws_profile,
     )
     hdbg.dassert_lte(1, len(src_file_names))
     _LOG.info("Found %s Parquet files in '%s'", len(src_file_names), args.src_dir)

@@ -39,8 +39,8 @@ def _diff(dir1: str, dir2: str) -> str:
     :return: path of the file with the output of `diff -r --brief`
     """
     print(hprint.frame("Compare file list in dirs '%s' vs '%s'" % (dir1, dir2)))
-    hdbg.dassert_exists(dir1)
-    hdbg.dassert_exists(dir2)
+    hdbg.dassert_path_exists(dir1)
+    hdbg.dassert_path_exists(dir2)
     # Find all the files in both dirs.
     cmd = ""
     remove_cmd = "| grep -v \"\.git/\" | grep -v \.idea | grep -v '[/ ]tmp.'"
@@ -114,7 +114,7 @@ def _parse_diff_output(
         hprint.frame("Compare file content in dirs '%s' vs '%s'" % (dir1, dir2))
     )
     # Read the output from `diff -r --brief`.
-    hdbg.dassert_exists(input_file)
+    hdbg.dassert_path_exists(input_file)
     _LOG.info("Reading '%s'", input_file)
     txt = hio.from_file(input_file)
     txt = txt.split("\n")
@@ -181,8 +181,8 @@ def _parse_diff_output(
             hdbg.dassert(m, "Invalid line='%s'", line)
             m: Match[Any]
             # Check.
-            hdbg.dassert_exists(m.group(1))
-            hdbg.dassert_exists(m.group(2))
+            hdbg.dassert_path_exists(m.group(1))
+            hdbg.dassert_path_exists(m.group(2))
             # Comment.
             file1 = _get_symbolic_filepath(dir1, dir2, m.group(1))
             file1 = file1.replace("$DIR1/", "")

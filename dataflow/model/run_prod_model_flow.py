@@ -95,7 +95,7 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         exec_filename = os.path.join(
             exec_filename, "amp/dataflow/model/run_experiment.py"
         )
-        hdbg.dassert_exists(exec_filename)
+        hdbg.dassert_path_exists(exec_filename)
         #
         cmd = []
         cmd.append(exec_filename)

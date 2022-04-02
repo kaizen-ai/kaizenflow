@@ -422,7 +422,7 @@ def get_dir_signature(
     txt: List[str] = []
     # Find all the files under `dir_name`.
     _LOG.debug("dir_name=%s", dir_name)
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
     file_names = hsystem.system_to_files(cmd, dir_name, remove_files_non_present)
@@ -1227,7 +1227,7 @@ class TestCase(unittest.TestCase):
         )
         _LOG.debug("dir_name=%s", dir_name)
         hio.create_dir(dir_name, incremental=True)
-        hdbg.dassert_exists(dir_name)
+        hdbg.dassert_path_exists(dir_name)
         #
         test_name = self._get_test_name()
         is_equal = assert_equal(
@@ -1707,7 +1707,7 @@ class TestCase(unittest.TestCase):
         )
         _LOG.debug("dir_name=%s", dir_name)
         hio.create_dir(dir_name, incremental=True)
-        hdbg.dassert_exists(dir_name)
+        hdbg.dassert_path_exists(dir_name)
         # Get the expected outcome.
         file_name = self.get_output_dir() + f"/{tag}.txt"
         return dir_name, file_name

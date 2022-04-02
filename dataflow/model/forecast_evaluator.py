@@ -302,7 +302,10 @@ class ForecastEvaluator:
         """
         if file_name is None:
             dir_name = os.path.join(log_dir, "returns")
-            files = hio.find_all_files(dir_name)
+            pattern = "*"
+            only_files = True
+            use_relative_paths = True
+            files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
             files.sort()
             file_name = files[-1]
         returns = ForecastEvaluator._read_df(log_dir, "returns", file_name, tz)

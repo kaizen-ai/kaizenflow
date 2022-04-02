@@ -8,6 +8,7 @@ authors = [""]
 async_solipsism = "*"
 cvxopt = "*"
 cvxpy = "*"
+invoke = "*"
 joblib = "*"
 jupyter = "*"
 jupyter_contrib_nbextensions = "*"

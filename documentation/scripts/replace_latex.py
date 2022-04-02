@@ -32,7 +32,7 @@ def _standard_cleanup(in_file, aggressive):
     # - Always use "you" instead of "one"
     # - Try to make the wording as terse as possible
     # - Always use $\cdot$
-    hdbg.dassert_exists(in_file)
+    hdbg.dassert_path_exists(in_file)
     txt = hio.from_file(in_file).split("\n")
     out = []
     for line in txt:
@@ -106,7 +106,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
-    hdbg.dassert_exists(args.file)
+    hdbg.dassert_path_exists(args.file)
     actions = args.action
     if not isinstance(actions, list):
         actions = list(actions)

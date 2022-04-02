@@ -32,6 +32,7 @@ import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.htraceback as htraceb
+import helpers.hunit_test_utils as hunteuti
 import helpers.hversion as hversio
 
 _LOG = logging.getLogger(__name__)
@@ -299,7 +300,10 @@ def _get_files_to_process(
     elif last_commit:
         files = hgit.get_previous_committed_files(dir_name)
     elif all_:
-        files = hio.find_all_files(dir_name)
+        pattern = "*"
+        only_files = True
+        use_relative_paths = True
+        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
     if files_from_user:
         # If files were passed, filter out non-existent paths.
         files = _filter_existing_paths(files_from_user.split())
@@ -2275,7 +2279,7 @@ def _get_docker_base_cmd(
     #
     _LOG.debug(hprint.to_str("docker_compose_files"))
     for docker_compose in docker_compose_files:
-        hdbg.dassert_exists(docker_compose)
+        hdbg.dassert_path_exists(docker_compose)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
@@ -2551,7 +2555,7 @@ def docker_jupyter(  # type: ignore
 
 def _to_abs_path(filename: str) -> str:
     filename = os.path.abspath(filename)
-    hdbg.dassert_exists(filename)
+    hdbg.dassert_path_exists(filename)
     return filename
 
 
@@ -2561,7 +2565,7 @@ def _prepare_docker_ignore(ctx: Any, docker_ignore: str) -> None:
     """
     # Currently there is no built-in way to control which .dockerignore to use.
     # https://stackoverflow.com/questions/40904409
-    hdbg.dassert_exists(docker_ignore)
+    hdbg.dassert_path_exists(docker_ignore)
     cmd = f"cp -f {docker_ignore} .dockerignore"
     _run(ctx, cmd)
 
@@ -3207,7 +3211,10 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
 
 @functools.lru_cache()
 def _get_python_files(subdir: str) -> List[str]:
-    python_files = hio.find_regex_files(subdir, "*.py", only_files=True)
+    pattern = "*.py"
+    only_files = False
+    use_relative_paths = False
+    python_files = hio.listdir(subdir, pattern, only_files, use_relative_paths)
     # Remove tmp files.
     python_files = [f for f in python_files if not f.startswith("tmp")]
     return python_files
@@ -3553,6 +3560,7 @@ def _select_tests_to_skip(test_list_name: str) -> str:
 
 def _build_run_command_line(
     test_list_name: str,
+    custom_marker: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
@@ -3562,23 +3570,39 @@ def _build_run_command_line(
     """
     Build the pytest run command.
 
-    :param test_list_name: "fast_tests", "slow_tests" or
-        "superslow_tests"
+    E.g.,
+    ```
+    pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout"
+    ```
+
     The rest of params are the same as in `run_fast_tests()`.
 
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
+
+    :param test_list_name: "fast_tests", "slow_tests" or
+        "superslow_tests"
+    :param custom_marker: specify a space separated list of
+        `pytest` markers to skip (e.g., `optimizer` for the optimizer
+        tests, see `pytest.ini`). Empty means no marker to skip
     """
     hdbg.dassert_in(
         test_list_name, _TEST_TIMEOUTS_IN_SECS, "Invalid test_list_name"
     )
     pytest_opts = pytest_opts or "."
-    #
     pytest_opts_tmp = []
+
+    # Select tests to skip based on the `test_list_name` (e.g., fast tests)
+    # and on the custom marker, if present.
+    skipped_tests = _select_tests_to_skip(test_list_name)
+    if custom_marker != "":
+        pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
+    else:
+        pytest_opts_tmp.append(f'-m "{skipped_tests}"')
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    skipped_tests = _select_tests_to_skip(test_list_name)
-    pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
@@ -3675,6 +3699,7 @@ def _run_tests(
     ctx: Any,
     stage: str,
     test_list_name: str,
+    custom_marker: str,
     version: str,
     pytest_opts: str,
     skip_submodules: bool,
@@ -3695,6 +3720,7 @@ def _run_tests(
     # Build the command line.
     cmd = _build_run_command_line(
         test_list_name,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
@@ -3715,7 +3741,7 @@ def _run_tests(
     return rc
 
 
-# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
+# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def run_fast_tests(  # type: ignore
     ctx,
@@ -3733,7 +3759,7 @@ def run_fast_tests(  # type: ignore
     Run fast tests.
 
     :param stage: select a specific stage for the Docker image
-    :param pytest_opts: option for pytest
+    :param pytest_opts: additional options for `pytest` invocation. It can be empty
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
@@ -3743,10 +3769,12 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "fast_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -3779,10 +3807,12 @@ def run_slow_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "slow_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -3815,10 +3845,12 @@ def run_superslow_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "superslow_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -4388,139 +4420,6 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 # #############################################################################
 
 
-def _get_test_directories(root_dir: str) -> List[str]:
-    """
-    Get all paths of the directories that contain unit tests.
-
-    :param root_dir: the dir to start the search from
-    :return: paths of test directories
-    """
-    paths = []
-    for path, _, _ in os.walk(root_dir):
-        # Iterate over the paths to find the test directories.
-        if path.endswith("/test"):
-            paths.append(path)
-    return paths
-
-
-def _rename_class(
-    content: str,
-    old_class_name: str,
-    new_class_name: str,
-) -> str:
-    """
-    Rename the class.
-
-    :param content: the content of the file
-    :param old_class_name: the old name of the target class
-    :param new_class_name: the new name of the target class
-    :return: the content of the file with the class name replaced
-    """
-    # Rename the class.
-    content = re.sub(
-        fr"class {old_class_name}\(", f"class {new_class_name}(", content
-    )
-    return content
-
-
-def _rename_outcomes(
-    path: str,
-    old_class_name: str,
-    new_class_name: str,
-) -> None:
-    """
-    Rename the directory that contains test outcomes.
-
-    :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
-    :param old_class_name: the old name of the target class
-    :param new_class_name: the new name of the target class
-    """
-    outcomes_path = os.path.join(path, "outcomes")
-    dir_items = os.listdir(outcomes_path)
-    # Get the list of outcomes directories.
-    outcomes = [
-        dir_name
-        for dir_name in dir_items
-        if os.path.isdir(os.path.join(outcomes_path, dir_name))
-    ]
-    renamed = False
-    # Construct target dir name, e.g. `TestClassName.`. We need to add
-    # `.` to indicate the end of the class name.
-    target_dir = old_class_name + "."
-    for outcome_dir in outcomes:
-        # Contruct the path to outcomes directory.
-        outcome_path_old = os.path.join(outcomes_path, outcome_dir)
-        # Both old and new method names should belong to one class.
-        if outcome_dir.startswith(target_dir):
-            # Split old directory name - the part before "." is the class name.
-            class_method = outcome_dir.split(".")
-            # Replace old class name with the new one.
-            class_method[0] = new_class_name
-            outcome_name_new = ".".join(class_method)
-            outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
-        else:
-            continue
-        cmd = f"mv {outcome_path_old} {outcome_path_new}"
-        # Rename the directory.
-        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-        _LOG.info(
-            "Renaming `%s` directory to `%s`. Output log: %s",
-            outcome_path_old,
-            outcome_path_new,
-            rc,
-        )
-        # Add to git new outcome directory and remove the old one.
-        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
-        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-        renamed = True
-    if not renamed:
-        _LOG.info(
-            "No outcomes for `%s` were found in `%s`.",
-            old_class_name,
-            outcomes_path,
-        )
-
-
-def _rename_test_in_file(
-    test_dir: str,
-    file_path: str,
-    old_class_name: str,
-    new_class_name: str,
-) -> None:
-    """
-    Process the file:
-
-      - check if the content of the file contains target class
-      - change the class name
-      - rename the outcomes if they exist
-
-    :param test_dir: the path to the test directory containing the file
-    :param file_path: the path to the file
-    :param old_class_name: the old name of the class
-    :param new_class_name: the new name of the class
-    """
-    content = hio.from_file(file_path)
-    if not re.search(fr"class {old_class_name}\(", content):
-        # Return if target test class does not appear in file content.
-        return
-    # Rename the class.
-    content = _rename_class(content, old_class_name, new_class_name)
-    _LOG.info(
-        "%s: class `%s` was renamed to `%s`.",
-        file_path,
-        old_class_name,
-        new_class_name,
-    )
-    # Rename the directories that contain target test outcomes.
-    _rename_outcomes(
-        test_dir,
-        old_class_name,
-        new_class_name,
-    )
-    # Write processed content back to file.
-    hio.to_file(file_path, content)
-
-
 @task
 def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
     """
@@ -4535,34 +4434,10 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     _report_task()
     _ = ctx
     root_dir = os.getcwd()
-    # Assert if the classname is invalid.
-    hdbg.dassert(
-        old_test_class_name.startswith("Test"),
-        "Invalid test_class_name='%s'",
-        old_test_class_name,
+    renamer = hunteuti.UnitTestRenamer(
+        old_test_class_name, new_test_class_name, root_dir
     )
-    hdbg.dassert(
-        new_test_class_name.startswith("Test"),
-        "Invalid test_class_name='%s'",
-        new_test_class_name,
-    )
-    hdbg.dassert_ne(old_test_class_name, new_test_class_name)
-    test_directories = _get_test_directories(root_dir)
-    hdbg.dassert_lte(1, len(test_directories))
-    # Iterate over test directories.
-    for path in test_directories:
-        _LOG.debug("Scanning `%s` directory.", path)
-        search_pattern = os.path.join(path, "test_*.py")
-        # Get all python test files from this directory.
-        files = glob.glob(search_pattern)
-        #
-        for test_file in files:
-            _rename_test_in_file(
-                path,
-                test_file,
-                old_test_class_name,
-                new_test_class_name,
-            )
+    renamer.run()
 
 
 # #############################################################################
@@ -4970,7 +4845,10 @@ def lint(  # type: ignore
         all_ = False
         if dir_name != "":
             hdbg.dassert_eq(files, "")
-            files = hio.find_files(dir_name, "*.py")
+            pattern = "*.py"
+            only_files = True
+            use_relative_paths = False
+            files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
             files = " ".join(files)
         # For linting we can use only files modified in the client, in the branch, or
         # specified.

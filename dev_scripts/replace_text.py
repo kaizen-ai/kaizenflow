@@ -84,10 +84,13 @@ def _get_all_files(dirs: List[str], extensions: Optional[List[str]]) -> List[str
     file_names = []
     for d in dirs:
         _LOG.debug("Processing dir '%s'", d)
+        only_files = False
+        use_relative_paths = False
         if extensions is not None:
             # Extensions are specified: find all the files with the given extensions.
             for extension in extensions:
-                file_names_tmp = hio.find_files(d, "*." + extension)
+                pattern = "*." + extension
+                file_names_tmp = hio.listdir(d, pattern, only_files, use_relative_paths)
                 _LOG.debug(
                     "extension=%s -> found %s files",
                     extension,
@@ -95,8 +98,9 @@ def _get_all_files(dirs: List[str], extensions: Optional[List[str]]) -> List[str
                 )
                 file_names.extend(file_names_tmp)
         else:
+            pattern = "*"
             # No extension: find all files.
-            file_names_tmp = hio.find_files(d, "*")
+            file_names_tmp = hio.listdir(d, pattern, only_files, use_relative_paths)
             _LOG.debug(
                 "extensions=%s -> found %s files", extensions, len(file_names_tmp)
             )

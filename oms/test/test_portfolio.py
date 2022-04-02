@@ -4,6 +4,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.real_time as creatime
 import helpers.hasyncio as hasynci
