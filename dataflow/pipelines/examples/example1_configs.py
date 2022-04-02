@@ -80,15 +80,17 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     asset_ids = [1467591036]
     columns: List[str] = []
     columns_remap = None
-    market_data = mdata.get_ImClientMarketData_example1(
-        asset_ids, columns, columns_remap
-    )
+    market_data = mdata.get_CcxtImClientMarketData_example1(
+        asset_ids, columns, columns_remap)
+    #print(market_data._im_client.get_asset_ids_from_full_symbols(["binance::BTC_USDT"]))
+    #assert 0
     # Create HistoricalDataSource.
     stage = "read_data"
     asset_id_col = "asset_id"
     ts_col_name = "timestamp_db"
     multiindex_output = True
-    col_names_to_remove = ["start_datetime", "timestamp_db"]
+    #col_names_to_remove = ["start_ts", "timestamp_db"]
+    col_names_to_remove = ["start_ts"]
     node = dtfsysonod.HistoricalDataSource(
         stage,
         market_data,
@@ -100,6 +102,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     # Build the DAG.
     dag_builder = config["meta", "dag_builder"]
     dag = dag_builder.get_dag(config["DAG"])
+    dag.set_debug_mode("df_as_csv", False, "crypto_forever")
     if False:
         dag.force_freeing_nodes = True
     # Add the data source node.

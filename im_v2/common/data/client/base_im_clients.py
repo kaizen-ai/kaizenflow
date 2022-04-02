@@ -113,6 +113,7 @@ class ImClient(abc.ABC):
         :param full_symbols: assets as full symbols
         :return: assets as numerical ids
         """
+        hdbg.dassert_container_type(full_symbols, list, imvcdcfusy.FullSymbol)
         numerical_asset_id = [
             imvcuunut.string_to_numerical_id(full_symbol)
             for full_symbol in full_symbols

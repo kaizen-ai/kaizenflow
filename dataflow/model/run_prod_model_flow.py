@@ -90,10 +90,9 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         opts.append(extra_opts)
         opts = " ".join(opts)
         #
-        exec_filename = hgit.get_client_root(super_module=False)
-        # TODO(gp): Use find_amp
+        amp_dir = hgit.get_amp_abs_path()
         exec_filename = os.path.join(
-            exec_filename, "amp/dataflow/model/run_experiment.py"
+            amp_dir, "dataflow/model/run_experiment.py"
         )
         hdbg.dassert_path_exists(exec_filename)
         #

@@ -696,6 +696,7 @@ def get_ReplayedTimeMarketData_example5(
 # #############################################################################
 
 
+# TODO(gp): -> CcxtImClientMarketData
 def get_ImClientMarketData_example1(
     asset_ids: List[int],
     columns: List[str],
@@ -726,9 +727,79 @@ def get_ImClientMarketData_example1(
     return market_data_client
 
 
+def get_TalosImClientMarketData_example1(
+    asset_ids: List[int],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+) -> mdmdimcl.ImClientMarketData:
+    """
+    Build a `ImClientMarketData` backed with loaded test data.
+    """
+    import im_v2.talos.data.client.talos_clients_example as imvtdctcex
+
+    resample_1min = True
+    ccxt_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(resample_1min)
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    get_wall_clock_time = get_ImClientMarketData_wall_clock_time
+    market_data_client = mdmdimcl.ImClientMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client=ccxt_client,
+        column_remap=column_remap,
+    )
+    return market_data_client
+
+
+def get_CcxtImClientMarketData_example1(
+        asset_ids: List[int],
+        columns: List[str],
+        column_remap: Optional[Dict[str, str]],
+) -> mdmdimcl.ImClientMarketData:
+    """
+    Build a `ImClientMarketData` backed with loaded test data.
+    """
+    import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+
+    vendor = "CCXT"
+    resample_1min = True
+    root_dir = "s3://alphamatic-data/data"
+    extension = "csv.gz"
+    aws_profile = "am"
+
+    ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
+         vendor, resample_1min, root_dir, extension, aws_profile=aws_profile,
+    )
+
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    get_wall_clock_time = get_ImClientMarketData_wall_clock_time
+    market_data_client = mdmdimcl.ImClientMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client=ccxt_client,
+        column_remap=column_remap,
+    )
+    return market_data_client
+
+
+
 # TODO(gp): We can also use a real wall clock.
 def get_ImClientMarketData_wall_clock_time() -> pd.Timestamp:
     """
     Get a wall clock time to build `ImClientMarketData` for tests.
     """
-    return pd.Timestamp("2018-08-17T01:30:00+00:00")
+    #return pd.Timestamp("2018-08-17T01:30:00+00:00")
+    return pd.Timestamp("2022-08-17T01:30:00+00:00")

@@ -526,7 +526,9 @@ class GroupedColDfToDfColProcessor:
         keys = df_out[col_groups[0]].columns.to_list()
         _LOG.debug("keys=%s", keys)
         # Ensure all groups have the same keys.
+        #print("df_out=%s", df_out)
         for col_group in col_groups:
+            hdbg.dassert_in(col_group, df_out.columns)
             col_group_keys = df_out[col_group].columns.to_list()
             hdbg.dassert_set_eq(keys, col_group_keys)
         # Swap levels in `df` so that keys are top level.
