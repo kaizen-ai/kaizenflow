@@ -5020,6 +5020,7 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 def gh_login(  # type: ignore
     ctx,
     account="",
+    print_status=False,
 ):
     if not account:
         # Retrieve the name of the repo, e.g., "alphamatic/amp".
@@ -5038,8 +5039,9 @@ def gh_login(  # type: ignore
     else:
         _LOG.warning("Can't find file '%s'", ssh_filename)
     #
-    cmd = "gh auth status"
-    _run(ctx, cmd)
+    if print_status:
+        cmd = "gh auth status"
+        _run(ctx, cmd)
     #
     github_pat_filename = os.path.expanduser(f"~/.ssh/github_pat.{account}.txt")
     if os.path.exists(github_pat_filename):
@@ -5048,8 +5050,9 @@ def gh_login(  # type: ignore
     else:
         _LOG.warning("Can't find file '%s'", github_pat_filename)
     #
-    cmd = "gh auth status"
-    _run(ctx, cmd)
+    if print_status:
+        cmd = "gh auth status"
+        _run(ctx, cmd)
 
 
 def _get_branch_name(branch_mode: str) -> Optional[str]:
