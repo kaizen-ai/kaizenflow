@@ -325,8 +325,9 @@ def _build_select_query(
         # In the end there should be something like: 
         # (exchange_id IN ('binance') AND currency_pair IN ('ADA_USDT')) OR (exchange_id IN ('ftx') AND currency_pair IN ('BTC_USDT')) 
         exchange_currency_conditions = [
-            f"(exchange_id IN ({pair[0]}) AND currency_pair IN ({pair[1]})"
-             for pair in exchange_currency_pairs]
+            f"(exchange_id={pair[0]} AND currency_pair={pair[1]})"
+            for pair in exchange_currency_pairs
+        ]
         # Add OR conditions as an element of conditions that should be connected by AND
         # There should be something 
         where_clause.append('(' + " OR ".join(exchange_currency_conditions) + ')')
@@ -336,7 +337,7 @@ def _build_select_query(
             query += f" LIMIT {limit}"
         return query
 
-    def _read_data_for_multiple_symbols(
+def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
