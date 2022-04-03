@@ -1150,7 +1150,8 @@ def git_branch_diff_with_master(  # type: ignore
 #   ```
 #   > i integrate_files --file-direction only_files_in_src
 #   > cat tmp.integrate_find_files_touched_since_last_integration.cmamp1.txt tmp.integrate_find_files_touched_since_last_integration.amp1.txt | sort | uniq >files.txt
-#   > i lint --only-format -f '$(cat files.txt)'
+#   > FILES=$(cat files.txt)
+#   > i lint --only-format -f "$FILES"
 #   ```
 #
 # - Add end-of-file:
