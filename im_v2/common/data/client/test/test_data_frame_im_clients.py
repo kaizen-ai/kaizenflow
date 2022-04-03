@@ -10,7 +10,6 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 
 # TODO(Nina): CmTask1589 "Extend tests for `DataFrameImClient`".
 class TestDataFrameImClient1(icdctictc.ImClientTestCase):
-
     def test_read_data5(self) -> None:
         # Initialize client.
         im_client = imvcdcdfimce.get_DataFrameImClient_example1()

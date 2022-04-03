@@ -1375,7 +1375,10 @@ def integrate_diff_dirs(  # type: ignore
     _report_task()
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
-        _LOG.warning("Reversing dirs: " + hprint.to_str2(src_dir_basename, dst_dir_basename))
+        _LOG.warning(
+            "Reversing dirs: "
+            + hprint.to_str2(src_dir_basename, dst_dir_basename)
+        )
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
@@ -1519,9 +1522,7 @@ def _integrate_files(
         different
     :return: list of files to compare
     """
-    _LOG.debug(
-        hprint.to_str("abs_left_dir abs_right_dir only_different_files")
-    )
+    _LOG.debug(hprint.to_str("abs_left_dir abs_right_dir only_different_files"))
     files_to_diff: List[Tuple[str, str, str]] = []
     for file in sorted(list(files)):
         _LOG.debug(hprint.to_str("file"))
@@ -1588,12 +1589,17 @@ def integrate_files(  # type: ignore
     _ = ctx
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
-        _LOG.warning("Reversing dirs: " + hprint.to_str2(src_dir_basename, dst_dir_basename))
+        _LOG.warning(
+            "Reversing dirs: "
+            + hprint.to_str2(src_dir_basename, dst_dir_basename)
+        )
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
     # We want to stay at the top level dir, since the subdir is handled by
     # `integrate_find_files_touched_since_last_integration`.
-    abs_src_dir, abs_dst_dir = _resolve_src_dst_names(src_dir_basename, dst_dir_basename, subdir="")
+    abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
+        src_dir_basename, dst_dir_basename, subdir=""
+    )
     if check_branches:
         _dassert_is_integration_branch(abs_src_dir)
         _dassert_is_integration_branch(abs_dst_dir)
@@ -1707,7 +1713,9 @@ def integrate_diff_overlapping_files(  # type: ignore
     _ = ctx
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
-    src_dir_basename, dst_dir_basename = _resolve_src_dst_names(src_dir_basename, dst_dir_basename, subdir)
+    src_dir_basename, dst_dir_basename = _resolve_src_dst_names(
+        src_dir_basename, dst_dir_basename, subdir
+    )
     _dassert_is_integration_branch(src_dir_basename)
     _dassert_is_integration_branch(dst_dir_basename)
     _clean_both_integration_dirs(src_dir_basename, dst_dir_basename)
@@ -5022,6 +5030,8 @@ def gh_login(  # type: ignore
     account="",
     print_status=False,
 ):
+    _report_task()
+    #
     if not account:
         # Retrieve the name of the repo, e.g., "alphamatic/amp".
         full_repo_name = hgit.get_repo_full_name_from_dirname(
@@ -5122,7 +5132,8 @@ def gh_workflow_list(  # type: ignore
         - E.g., "failure", "success"
     """
     _report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
-    _ = ctx
+    # Login.
+    gh_login(ctx)
     # Get the table.
     table = _get_workflow_table()
     # Filter table based on the branch.
@@ -5191,6 +5202,8 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
     Run GH workflows in a branch.
     """
     _report_task(txt=hprint.to_str("branch workflows"))
+    # Login.
+    gh_login(ctx)
     # Get the branch name.
     if branch == "current_branch":
         branch_name = hgit.get_branch_name()
@@ -5297,7 +5310,9 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     _report_task(txt=hprint.to_str("issue_id repo_short_name"))
-    _ = ctx
+    # Login.
+    gh_login(ctx)
+    #
     issue_id = int(issue_id)
     hdbg.dassert_lte(1, issue_id)
     title, url = _get_gh_issue_title(issue_id, repo_short_name)
@@ -5345,6 +5360,9 @@ def gh_create_pr(  # type: ignore
     :param title: title of the PR or the branch name, if title is empty
     """
     _report_task()
+    # Login.
+    gh_login(ctx)
+    #
     branch_name = hgit.get_branch_name()
     if not title:
         # Use the branch name as title.

@@ -26,7 +26,6 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Add incremental mode to clean up the dir before writing into it.
 class WriteDf(dtfconobas.FitPredictNode):
-
     def __init__(
         self,
         nid: dtfcornode.NodeId,
@@ -75,7 +74,6 @@ class WriteDf(dtfconobas.FitPredictNode):
 
 
 class WriteCols(dtfconobas.FitPredictNode):
-
     def __init__(
         self,
         nid: dtfcornode.NodeId,

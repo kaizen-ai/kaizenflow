@@ -13,6 +13,22 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
+    @staticmethod
+    def get_data(
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_ids: List[int],
+        *,
+        bar_duration: str = "5T",
+    ) -> pd.DataFrame:
+        df = cfidaexa.get_forecast_price_based_dataframe(
+            start_datetime,
+            end_datetime,
+            asset_ids,
+            bar_duration=bar_duration,
+        )
+        return df
+
     def test_to_str_intraday_1_asset_targeted_gmv(self) -> None:
         data = self.get_data(
             pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
@@ -180,19 +196,3 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
 2022-01-03 09:55:00-05:00    -207.47     852105.42  -720395.01  999786.86 -999786.86
 2022-01-03 10:00:00-05:00     971.76     508715.36    53838.15  998988.02 -944976.95"""
         self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)
-
-    @staticmethod
-    def get_data(
-        start_datetime: pd.Timestamp,
-        end_datetime: pd.Timestamp,
-        asset_ids: List[int],
-        *,
-        bar_duration: str = "5T",
-    ) -> pd.DataFrame:
-        df = cfidaexa.get_forecast_price_based_dataframe(
-            start_datetime,
-            end_datetime,
-            asset_ids,
-            bar_duration=bar_duration,
-        )
-        return df

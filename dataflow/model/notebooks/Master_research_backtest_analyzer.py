@@ -87,7 +87,9 @@ single_asset_tile = next(
 )
 
 # %%
-single_tile_df = dtfmod.process_parquet_read_df(single_asset_tile, tile_config["asset_id_col"])
+single_tile_df = dtfmod.process_parquet_read_df(
+    single_asset_tile, tile_config["asset_id_col"]
+)
 
 # %%
 single_tile_df.columns.levels[0]
@@ -117,9 +119,9 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
     fep_config["price_col"],
     fep_config["volatility_col"],
     fep_config["prediction_col"],
-    first_bar_of_day_open = fep_config["first_bar_of_day_open"],
-    first_bar_of_day_close = fep_config["first_bar_of_day_close"],
-    last_bar_of_day_close = fep_config["last_bar_of_day_close"],
+    first_bar_of_day_open=fep_config["first_bar_of_day_open"],
+    first_bar_of_day_close=fep_config["first_bar_of_day_close"],
+    last_bar_of_day_close=fep_config["last_bar_of_day_close"],
 )
 
 # %%
