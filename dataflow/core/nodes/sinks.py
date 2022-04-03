@@ -145,10 +145,10 @@ def read_dfs(dir_name: str) -> Iterable[Tuple[str, pd.DataFrame]]:
     :param dir_name: directory containing dataframes in Parquet format
     :return: iterable of tuples of the form `(file_name, df)`
     """
+    # Glob the `.pq` files.
     pattern = "*.pq"
     only_files = True
     use_relative_paths = False
-    # Glob the `.pq` files.
     file_names = sorted(
         hio.listdir(dir_name, pattern, only_files, use_relative_paths)
     )

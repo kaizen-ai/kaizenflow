@@ -100,8 +100,8 @@ def _get_all_files(dirs: List[str], extensions: Optional[List[str]]) -> List[str
                 )
                 file_names.extend(file_names_tmp)
         else:
-            pattern = "*"
             # No extension: find all files.
+            pattern = "*"
             file_names_tmp = hio.listdir(
                 d, pattern, only_files, use_relative_paths
             )
