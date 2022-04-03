@@ -44,8 +44,8 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         # Validate that the input universe is a non-empty list.
         hdbg.dassert_container_type(universe, list, icdc.FullSymbol)
         hdbg.dassert_lte(1, len(universe))
-        # Set the input universe before calling the parent class ctor since 
-        # it is used by `get_universe()` which is necessary for the parent 
+        # Set the input universe before calling the parent class ctor since
+        # it is used by `get_universe()` which is necessary for the parent
         # class initialisation.
         self._universe = universe
         # Initialise the parent class.
@@ -76,7 +76,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         Validate that input dataframe has the correct format.
 
         Note that further sanity checks of the data (e.g., index has timestamps
-        with timezones, index is increasing) are performed when emitting the 
+        with timezones, index is increasing) are performed when emitting the
         data by parent's class `_dassert_output_data_is_valid()`.
         """
         # Verify that a non-empty dataframe is passed as input.

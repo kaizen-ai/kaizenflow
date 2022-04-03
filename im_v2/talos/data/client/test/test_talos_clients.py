@@ -317,7 +317,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 class TestRealTimeSqlTalosClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
-
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
