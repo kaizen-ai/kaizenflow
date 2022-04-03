@@ -1682,7 +1682,6 @@ def integrate_find_files(  # type: ignore
     _report_task()
     _ = ctx
     #
-    src_dir = os.path.basename(os.getcwd())
     abs_src_dir = "."
     abs_src_dir = os.path.normpath(abs_src_dir)
     hdbg.dassert_dir_exists(abs_src_dir)

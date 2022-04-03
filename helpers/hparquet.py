@@ -633,7 +633,7 @@ def to_partitioned_parquet(
 
     E.g., in case of partition using `date`, the file layout looks like:
     ```
-    dst_dir_basename/
+    dst_dir/
         date=20211230/
             data.parquet
         date=20211231/
@@ -645,7 +645,7 @@ def to_partitioned_parquet(
     In case of multiple columns like `asset`, `year`, `month`, the file layout
     looks like:
     ```
-    dst_dir_basename/
+    dst_dir/
         asset=A/
             year=2021/
                 month=12/
@@ -672,7 +672,7 @@ def to_partitioned_parquet(
         table = pa.Table.from_pandas(df)
         # Write using partition.
         # TODO(gp): add this logic to hparquet.to_parquet as a possible option.
-        _LOG.debug(hprint.to_str("partition_columns dst_dir_basename"))
+        _LOG.debug(hprint.to_str("partition_columns dst_dir"))
         hdbg.dassert_is_subset(partition_columns, df.columns)
         pq.write_to_dataset(
             table,

@@ -19,7 +19,6 @@ import oms
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("CmTask #1580.")
 class TestDataFrameProcessForecasts1(hunitest.TestCase):
     @pytest.mark.skip("Generate manually files used by other tests")
     def test_generate_data(self) -> None:
