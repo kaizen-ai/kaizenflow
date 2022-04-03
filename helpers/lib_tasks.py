@@ -1155,7 +1155,7 @@ def git_branch_diff_with_master(  # type: ignore
 #
 # - Add end-of-file:
 #   ```
-#   > find . -name "*.py" -o -name "*.txt" | xargs sed -i '' -e '$a\'
+#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs sed -i '' -e '$a\'
 #
 #   # Remove end-of-file.
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
@@ -1163,16 +1163,26 @@ def git_branch_diff_with_master(  # type: ignore
 
 # ## Integration
 #
-# - Check what files were modified since the last integration in each fork
+# - Check what files were modified since the last integration in each fork:
 #   ```
 #   > i integrate_files --file-direction common_files
 #   > i integrate_files --file-direction only_files_in_src
 #   > i integrate_files --file-direction only_files_in_dst
 #   ```
+#
+# - Look for directory touched on only one branch:
+#   ```
+#   > i integrate_files --file-direction common_files --mode "print_dirs"
+#   > i integrate_files --file-direction only_files_in_src --mode "print_dirs"
+#   > i integrate_files --file-direction only_files_in_dst --mode "print_dirs"
+#   ```
 # - If we find dirs that are touched in one branch but not in the other
 #   we can copy / merge without running risks
+#   ```
+#   > i integrate_diff_dirs --subdir $SUBDIR -c
+#   ```
 #
-# - Check which files are different between the dirs
+# - Check which files are different between the dirs:
 #   ```
 #   > i integrate_diff_dirs
 #   ```
@@ -1498,28 +1508,21 @@ def _integrate_files(
     files: Set[str],
     abs_left_dir: str,
     abs_right_dir: str,
-    copy: bool,
-    tag: str,
     only_different_files: bool,
-) -> None:
+) -> List[Tuple[str, str, str]]:
     """
-    Diff or copy `files` between the dirs `abs_left_dir` and `abs_right_dir`.
-
-    This function:
-    - prints the list of the files on screen
-    - creates a script to diff the script
+    Build a list of files to compare based on the pattern.
 
     :param files: relative path of the files to compare
     :param abs_left_dir, abs_right_dir: path of the left / right dir
-    :param only_different_files: include in the script only the ones that are
+    :param only_different_files: include in the script only the files that are
         different
+    :return: list of files to compare
     """
     _LOG.debug(
-        hprint.to_str("abs_left_dir abs_right_dir copy tag only_different_files")
+        hprint.to_str("abs_left_dir abs_right_dir only_different_files")
     )
-    files_to_diff = []
-    # Create script to diff.
-    script_txt = []
+    files_to_diff: List[Tuple[str, str, str]] = []
     for file in sorted(list(files)):
         _LOG.debug(hprint.to_str("file"))
         left_file = os.path.join(abs_left_dir, file)
@@ -1533,7 +1536,7 @@ def _integrate_files(
         else:
             # They both exist.
             if only_different_files:
-                # We want to check
+                # We want to check if they are the same.
                 equal = hio.from_file(left_file) == hio.from_file(right_file)
                 skip = equal
             else:
@@ -1546,28 +1549,9 @@ def _integrate_files(
         if skip:
             _LOG.debug("  Skip %s", file)
         else:
-            if copy:
-                cmd = f"cp -f {left_file} {right_file}"
-            else:
-                cmd = f"vimdiff {left_file} {right_file}"
-            _LOG.debug("  -> %s", cmd)
-            script_txt.append(cmd)
-            files_to_diff.append(file)
-    script_txt = "\n".join(script_txt)
-    # Print the files.
-    print(hprint.frame(tag))
-    files_set = sorted(list(files_to_diff))
-    txt = "\n".join(files_set)
-    print(hprint.indent(txt))
-    # Execute / save the script.
-    if copy:
-        for cmd in script_txt:
-            hsystem.system(cmd)
-    else:
-        # Save the diff script.
-        script_file_name = f"./tmp.vimdiff.{tag}.sh"
-        hio.create_executable_script(script_file_name, script_txt)
-        print(f"# To diff run:\n> {script_file_name}")
+            _LOG.debug("  -> (%s, %s)", left_file, right_file)
+            files_to_diff.append((file, left_file, right_file))
+    return files_to_diff
 
 
 @task
@@ -1577,7 +1561,7 @@ def integrate_files(  # type: ignore
     dst_dir_basename="cmamp1",
     reverse=False,
     subdir="",
-    copy=False,
+    mode="vimdiff",
     file_direction="",
     only_different_files=True,
     check_branches=True,
@@ -1588,11 +1572,15 @@ def integrate_files(  # type: ignore
     :param src_dir_basename: dir with the source branch (e.g., amp1)
     :param dst_dir_basename: dir with the destination branch (e.g., cmamp1)
     :param reverse: switch the roles of the default source and destination branches
-    :param copy: copy the files instead of diff
-    :param file_direction: which files to diff / copy
-        - "common": process the files that were touched in both branches
-        - "only_src_files": process the files that were touched only in the src dir
-        - "only_dst_files": process the files that were touched only in the dst dir
+    :param mode:
+        - "print_dirs": print the directories
+        - "vimdiff": diff the files
+        - "copy": copy the files
+    :param file_direction: which files to diff / copy:
+        - "common_files": files touched in both branches
+        - "union_files": files touched in either branch
+        - "only_files_in_src": files touched only in the src dir
+        - "only_files_in_dst": files touched only in the dst dir
     :param only_different_files: consider only the files that are different among
         the branches
     """
@@ -1620,37 +1608,67 @@ def integrate_files(  # type: ignore
     )
     #
     if file_direction == "common_files":
-        common_files = src_files.intersection(dst_files)
-        _integrate_files(
-            common_files,
-            abs_src_dir,
-            abs_dst_dir,
-            copy,
-            file_direction,
-            only_different_files,
-        )
+        files = src_files.intersection(dst_files)
     elif file_direction == "only_files_in_src":
-        only_src_files = src_files - dst_files
-        _integrate_files(
-            only_src_files,
-            abs_src_dir,
-            abs_dst_dir,
-            copy,
-            file_direction,
-            only_different_files,
-        )
+        files = src_files - dst_files
     elif file_direction == "only_files_in_dst":
-        only_dst_files = dst_files - src_files
-        _integrate_files(
-            only_dst_files,
-            abs_src_dir,
-            abs_dst_dir,
-            copy,
-            file_direction,
-            only_different_files,
-        )
+        files = dst_files - src_files
+    elif file_direction == "union_files":
+        files = src_files.union(dst_files)
     else:
         raise ValueError("Invalid file_direction='%s'" % file_direction)
+    #
+    files_to_diff = _integrate_files(
+        files,
+        abs_src_dir,
+        abs_dst_dir,
+        only_different_files,
+    )
+    # Print the files.
+    print(hprint.frame(file_direction))
+    _LOG.debug(hprint.to_str("files_to_diff"))
+    files_set = list(zip(*files_to_diff))
+    if not files_set:
+        _LOG.warning("No file found: skipping")
+        return
+    files_set = sorted(list(files_set[0]))
+    txt = "\n".join(files_set)
+    print(hprint.indent(txt))
+    # Process the files touched.
+    if mode == "print_dirs":
+        files = []
+        for file, left_file, right_file in files_to_diff:
+            dirname = os.path.dirname(file)
+            # Skip empty dir, e.g., for `pytest.ini`.
+            if dirname != "":
+                files.append(dirname)
+        files = sorted(list(set(files)))
+        print(hprint.frame("Dirs changed"))
+        print("\n".join(files))
+    else:
+        # Build the script with the operations to perform.
+        script_txt = []
+        for file, left_file, right_file in files_to_diff:
+            if mode == "copy":
+                cmd = f"cp -f {left_file} {right_file}"
+            elif mode == "vimdiff":
+                cmd = f"vimdiff {left_file} {right_file}"
+            else:
+                raise ValueError("Invalid mode='%s'" % mode)
+            _LOG.debug("  -> %s", cmd)
+            script_txt.append(cmd)
+        script_txt = "\n".join(script_txt)
+        # Execute / save the script.
+        if mode == "copy":
+            for cmd in script_txt:
+                hsystem.system(cmd)
+        elif mode == "vimdiff":
+            # Save the diff script.
+            script_file_name = f"./tmp.vimdiff.{file_direction}.sh"
+            hio.create_executable_script(script_file_name, script_txt)
+            print(f"# To diff run:\n> {script_file_name}")
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
 
 
 @task
