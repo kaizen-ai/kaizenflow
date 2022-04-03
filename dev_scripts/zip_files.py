@@ -6,7 +6,7 @@ Zip all files in a directory retaining the dir structure.
 # Compress all the files in the dir `FTX` in a dir `FTX.zipped`
 
 ```
-> zip_files.py --src_dir_basename FTX --dst_dir_basename FTX.zipped --delete_dst_dir
+> zip_files.py --src_dir FTX --dst_dir FTX.zipped --delete_dst_dir
 ```
 
 Import as:
@@ -37,10 +37,10 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--src_dir_basename", action="store", required=True, help="Source dir"
+        "--src_dir", action="store", required=True, help="Source dir"
     )
     parser.add_argument(
-        "--dst_dir_basename", action="store", required=True, help="Destination dir"
+        "--dst_dir", action="store", required=True, help="Destination dir"
     )
     parser.add_argument(
         "--incremental",
@@ -63,14 +63,14 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # `src_dir_basename` should exist.
+    # `src_dir` should exist.
     src_dir = args.src_dir
     hdbg.dassert_dir_exists(src_dir)
     # Get all the files.
     files = glob.glob(f"{src_dir}/**", recursive=True)
     files = sorted(files)
     print("Found %d files" % len(files))
-    # `dst_dir_basename` should not exit, unless we want to delete it.
+    # `dst_dir` should not exit, unless we want to delete it.
     dst_dir = args.dst_dir
     if not args.incremental:
         if args.delete_dst_dir:
@@ -88,14 +88,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.debug("Processing '%s'", file_)
         if file_ == ".":
             _LOG.debug("Skipping '%s' since it's not a file", file_)
-        # file is relative to src_dir_basename. # E.g., file=FTX_BCHUSDT_minute.csv
+        # file is relative to src_dir. # E.g., file=FTX_BCHUSDT_minute.csv
         if os.path.isdir(file_):
             _LOG.debug("Skipping '%s' since it's a dir", file_)
             continue
         if not os.path.isfile(file_):
             _LOG.debug("Skipping '%s' since it's not a file", file_)
             continue
-        # Convert `{src_dir_basename}/foo/bar.csv` to `{dst_dir_basename}/foo/bar.csv`.
+        # Convert `{src_dir}/foo/bar.csv` to `{dst_dir}/foo/bar.csv`.
         path = os.path.relpath(file_, src_dir)
         dst_path = os.path.join(dst_dir, path) + ".zip"
         enclosing_dir = os.path.dirname(dst_path)

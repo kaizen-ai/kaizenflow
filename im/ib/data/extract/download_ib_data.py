@@ -23,7 +23,7 @@ Usage examples:
       --exchange GLOBEX \
       --currency USD \
       --action download \
-      --dst_dir_basename ./tmp
+      --dst_dir ./tmp
 
 - Push downloaded parts to S3:
   > download_ib_data.py \
@@ -205,7 +205,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument("--end_ts", type=pd.Timestamp)
     parser.add_argument("--incremental", action="store_true", default=False)
     parser.add_argument(
-        "--dst_dir_basename", type=str, help="Path to extracted files with partial data"
+        "--dst_dir", type=str, help="Path to extracted files with partial data"
     )
     hparser.add_action_arg(
         parser, valid_actions=VALID_ACTIONS, default_actions=DEFAULT_ACTIONS

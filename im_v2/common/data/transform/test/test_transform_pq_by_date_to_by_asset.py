@@ -28,7 +28,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append("--end_date 2022-01-02")
         cmd.append("--assets A,B,C")
         cmd.append("--asset_col_name ticker")
-        cmd.append(f"--dst_dir_basename {by_date_dir}")
+        cmd.append(f"--dst_dir {by_date_dir}")
         if verbose:
             cmd.append("--output_type verbose_open")
             cmd.append("--reset_index")
@@ -121,9 +121,9 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
             "im_v2/common/data/transform/transform_pq_by_date_to_by_asset.py",
         )
         cmd.append(file_path)
-        cmd.append(f"--src_dir_basename {by_date_dir}")
+        cmd.append(f"--src_dir {by_date_dir}")
         by_asset_dir = os.path.join(test_dir, "by_asset")
-        cmd.append(f"--dst_dir_basename {by_asset_dir}")
+        cmd.append(f"--dst_dir {by_asset_dir}")
         cmd.append("--num_threads 1")
         if verbose:
             cmd.append("--asset_col_name ticker")
@@ -143,8 +143,8 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
         kwargs = {
-            "src_dir_basename": by_date_dir,
-            "dst_dir_basename": by_asset_dir,
+            "src_dir": by_date_dir,
+            "dst_dir": by_asset_dir,
             "asset_col_name": "asset",
             # parallelization args
             "num_threads": "1",
@@ -176,7 +176,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         test_dir, by_date_dir = self.generate_test_data(verbose)
         by_asset_dir = os.path.join(test_dir, "by_asset")
         config = {
-            "dst_dir_basename": by_asset_dir,
+            "dst_dir": by_asset_dir,
             "parquet_file_names": [
                 f"{test_dir}/by_date/date=20211230/data.parquet",
                 f"{test_dir}/by_date/date=20211231/data.parquet",

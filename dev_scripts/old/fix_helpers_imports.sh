@@ -13,7 +13,7 @@ AMP_DIR=/Users/saggese/src/cmamp1
 #(cd $SUPER_DIR; git reset --hard)
 (cd $AMP_DIR; git reset --hard)
 
-#replace_text="dev_scripts/replace_text.py --dst_dir_basename $SUPER_DIR "
+#replace_text="dev_scripts/replace_text.py --dst_dir $SUPER_DIR "
 replace_text="dev_scripts/replace_text.py --dst_dir $AMP_DIR "
 
 #__init__.py

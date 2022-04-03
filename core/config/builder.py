@@ -80,8 +80,8 @@ def patch_configs(
         for key in sorted(experiment_list_params.keys()):
             config[("meta", key)] = experiment_list_params[key]
         # Inject the dst dir of the entire experiment list.
-        hdbg.dassert_in("dst_dir_basename", experiment_list_params)
-        dst_dir = experiment_list_params["dst_dir_basename"]
+        hdbg.dassert_in("dst_dir", experiment_list_params)
+        dst_dir = experiment_list_params["dst_dir"]
         # Add experiment result dir.
         dst_subdir = f"result_{idx}"
         experiment_result_dir = os.path.join(dst_dir, dst_subdir)
@@ -103,7 +103,7 @@ def get_config_from_experiment_list_params(
     This is used by `run_experiment_stub.py` using the params from command line.
 
     :param experiment_list_params: parameters from `run_experiment_stub.py`, e.g.,
-        `config_builder`, `experiment_builder`, `dst_dir_basename`.
+        `config_builder`, `experiment_builder`, `dst_dir`.
     """
     config_builder = experiment_list_params["config_builder"]
     # Build all the configs.
@@ -149,8 +149,8 @@ def get_config_from_env() -> Optional[cconconf.Config]:
     #
     # TODO(gp): -> config_dst_dir?
     dst_dir = os.environ["__CONFIG_DST_DIR__"]
-    _LOG.info("dst_dir_basename=%s", dst_dir)
-    params["dst_dir_basename"] = dst_dir
+    _LOG.info("dst_dir=%s", dst_dir)
+    params["dst_dir"] = dst_dir
     #
     config = get_config_from_experiment_list_params(config_idx, params)
     #

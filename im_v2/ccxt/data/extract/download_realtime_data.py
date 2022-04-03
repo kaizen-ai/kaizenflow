@@ -8,7 +8,7 @@ Use as:
 > im_v2/ccxt/data/extract/download_realtime_data.py \
     --end_timestamp '20211110-101100' \
     --start_timestamp '20211110-101200' \
-    --dst_dir_basename 'ccxt/ohlcv/' \
+    --dst_dir 'ccxt/ohlcv/' \
     --data_type 'ohlcv' \
     --universe 'v03' \
     --db_stage 'dev' \
@@ -155,7 +155,7 @@ def _parse() -> argparse.ArgumentParser:
         help="End of the downloaded period",
     )
     parser.add_argument(
-        "--dst_dir_basename",
+        "--dst_dir",
         action="store",
         required=True,
         type=str,

@@ -5,7 +5,7 @@ dataset organized by assets.
 
 A Parquet file organized by dates looks like:
 ```
-src_dir_basename/
+src_dir/
     date1/
         data.parquet
     date2/
@@ -14,7 +14,7 @@ src_dir_basename/
 
 A Parquet file organized by assets looks like:
 ```
-dst_dir_basename/
+dst_dir/
     year1/
         month1/
             day1/
@@ -34,14 +34,14 @@ dst_dir_basename/
 
 # Example:
 > transform_pq_by_date_to_by_asset.py \
-    --src_dir_basename im_v2/common/data/transform/test_data_by_date \
-    --dst_dir_basename im_v2/common/data/transform/test_data_by_asset \
+    --src_dir im_v2/common/data/transform/test_data_by_date \
+    --dst_dir im_v2/common/data/transform/test_data_by_asset \
     --num_threads 2
 
 # To process Parquet data for LimeTask317:
 > im_v2/common/data/transform/transform_pq_by_date_to_by_asset.py \
-    --src_dir_basename 's3://cryptokaizen-data/unit_test/parquet/' \
-    --dst_dir_basename 's3://cryptokaizen-data/unit_test/parquet/test_out/' \
+    --src_dir 's3://cryptokaizen-data/unit_test/parquet/' \
+    --dst_dir 's3://cryptokaizen-data/unit_test/parquet/test_out/' \
     --no_incremental --force \
     --num_threads serial \
     --prepare_tasks_func_name lime317_prepare_tasks \
@@ -82,7 +82,7 @@ _LOG = logging.getLogger(__name__)
 
 # The input Parquet files are organized by-date:
 # ```
-# src_dir_basename
+# src_dir
 #   /20220110
 #       /data.parquet
 #   /20220111
@@ -253,7 +253,7 @@ def lime317_execute_task(
 
     - transforming df (e.g., converting epoch "start_time" into a timestamp)
     - merging multiple Parquet files corresponding to a date interval
-    - writing it into `dst_dir_basename` (partitioning by assets using Parquet datasets)
+    - writing it into `dst_dir` (partitioning by assets using Parquet datasets)
 
     :param src_file_names: a list of files to merge together
     """
@@ -409,14 +409,14 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--src_dir_basename",
+        "--src_dir",
         action="store",
         type=str,
         required=True,
         help="Source directory where original Parquet files are stored",
     )
     parser.add_argument(
-        "--dst_dir_basename",
+        "--dst_dir",
         action="store",
         type=str,
         required=True,

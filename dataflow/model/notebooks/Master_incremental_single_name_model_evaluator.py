@@ -55,7 +55,7 @@ if eval_config is None:
     eval_config = cconfig.get_config_from_nested_dict(
         {
             "compute_stats_kwargs": {
-                "src_dir_basename": src_dir,
+                "src_dir": src_dir,
                 "file_name": file_name,
                 "prediction_col": prediction_col,
                 "target_col": target_col,
@@ -65,7 +65,7 @@ if eval_config is None:
                 "aws_profile": aws_profile,
             },
             "aggregate_single_name_models": {
-                "src_dir_basename": src_dir,
+                "src_dir": src_dir,
                 "file_name": file_name,
                 "position_intent_1_col": "",
                 "ret_0_col": "",

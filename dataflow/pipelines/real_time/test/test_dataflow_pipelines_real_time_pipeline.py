@@ -88,7 +88,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
                 "dag_builder": dag_builder,
                 "fit_state": None,
                 "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-                "dst_dir_basename": None,
+                "dst_dir": None,
             }
             # Run.
             dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)
@@ -218,7 +218,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                 "dag_builder": dag_builder,
                 "fit_state": None,
                 "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-                "dst_dir_basename": None,
+                "dst_dir": None,
             }
             # Run.
             dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)
@@ -384,7 +384,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
                 "dag_builder": dag_builder,
                 "fit_state": None,
                 "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-                "dst_dir_basename": None,
+                "dst_dir": None,
             }
             # Build OrderProcessor.
             order_processor = self.get_order_processor(portfolio)
@@ -579,7 +579,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
                 "dag_builder": dag_builder,
                 "fit_state": None,
                 "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-                "dst_dir_basename": None,
+                "dst_dir": None,
             }
             # Build OrderProcessor.
             order_processor = self.get_order_processor(portfolio)

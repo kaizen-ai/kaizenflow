@@ -28,7 +28,7 @@
 #        columns: Optional[List[str]],
 #        args_num_threads: str,
 #        log_file: str,
-#        dst_dir_basename: str,
+#        dst_dir: str,
 #    ) -> None:
 #        """
 #        Transform by-date Parquet data from S3 into by-asset using weekly chunks.
@@ -42,7 +42,7 @@
 #        # Prepare the tasks.
 #        chunk_mode = "by_year_week"
 #        tasks = imleetpbdtba._prepare_tasks(
-#            src_file_names, asset_ids, columns, chunk_mode, args_num_threads, dst_dir_basename
+#            src_file_names, asset_ids, columns, chunk_mode, args_num_threads, dst_dir
 #        )
 #        # Prepare the workload.
 #        func = imleetpbdtba._execute_task
@@ -320,7 +320,7 @@
 #        Check that the output Parquet file is what is expected.
 #        """
 #        scratch_dir = self.get_scratch_space()
-#        dst_dir_basename = os.path.join(scratch_dir, "parquet_out")
+#        dst_dir = os.path.join(scratch_dir, "parquet_out")
 #        log_file = os.path.join(scratch_dir, "log.txt")
 #        # Read the EG ids.
 #        asset_ids = sorted(reuniver.get_eg_universe_tiny())[:3]
@@ -329,13 +329,13 @@
 #        columns = "start_time end_time asset_id close".split()
 #        args_num_threads = "serial"
 #        self.transform_helper(
-#            asset_ids, dates, columns, args_num_threads, log_file, dst_dir_basename
+#            asset_ids, dates, columns, args_num_threads, log_file, dst_dir
 #        )
 #        # Compute signature.
 #        include_file_content = False
 #        remove_dir_name = True
 #        act = hunitest.get_dir_signature(
-#            dst_dir_basename, include_file_content, remove_dir_name=remove_dir_name
+#            dst_dir, include_file_content, remove_dir_name=remove_dir_name
 #        )
 #        exp = r"""# Dir structure
 #        .
@@ -360,10 +360,10 @@
 #        """
 #        self.assert_equal(act, exp, fuzzy_match=True)
 #        # Read back and check content.
-#        self.check_parquet1(dst_dir_basename)
+#        self.check_parquet1(dst_dir)
 #        #
-#        self.check_parquet2(dst_dir_basename)
+#        self.check_parquet2(dst_dir)
 #        #
-#        self.check_parquet3(dst_dir_basename)
+#        self.check_parquet3(dst_dir)
 #        #
-#        self.check_parquet4(dst_dir_basename)
+#        self.check_parquet4(dst_dir)

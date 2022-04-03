@@ -262,7 +262,7 @@ schemas
 # %%
 # Read data back.
 # https://github.com/dask/dask/issues/4194
-# src_dir_basename = f"{dir_name}/idx=0/year=2000/month=1"
+# src_dir = f"{dir_name}/idx=0/year=2000/month=1"
 src_dir = f"{dir_name}/idx=0/year=2000"
 dataset = ds.dataset(src_dir, format="parquet", partitioning="hive")
 

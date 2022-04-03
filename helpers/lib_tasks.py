@@ -1103,8 +1103,6 @@ def git_branch_diff_with_master(  # type: ignore
 # Integrate.
 # #############################################################################
 
-# # Integration good practices
-#
 # ## Concepts
 #
 # - We have two dirs storing two forks of the same repo
@@ -1141,14 +1139,14 @@ def git_branch_diff_with_master(  # type: ignore
 
 # ## Preparation
 #
-# - Lint both dirs
+# - Lint both dirs:
 #   ```
 #   > cd amp1
 #   > i lint --dir-name . --only-format
 #   > cd cmamp1
 #   > i lint --dir-name . --only-format
 #   ```
-#   or at least the files touched by both repos
+#   or at least the files touched by both repos:
 #   ```
 #   > i integrate_files --file-direction only_files_in_src
 #   > cat tmp.integrate_find_files_touched_since_last_integration.cmamp1.txt tmp.integrate_find_files_touched_since_last_integration.amp1.txt | sort | uniq >files.txt
@@ -1158,9 +1156,8 @@ def git_branch_diff_with_master(  # type: ignore
 # - Add end-of-file:
 #   ```
 #   > find . -name "*.py" -o -name "*.txt" | xargs sed -i '' -e '$a\'
-#   ```
-# - Remove end-of-file:
-#   ```
+#
+#   # Remove end-of-file.
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
 
@@ -1414,7 +1411,6 @@ def _find_files_touched_since_last_integration(
     :param abs_dir: directory to cd before executing this script
     :param subdir: consider only the files under `subdir`
     """
-    _report_task()
     _LOG.debug(hprint.to_str2(abs_dir))
     dir_basename = os.path.basename(abs_dir)
     # TODO(gp): dir_basename can be computed from abs_dir_name to simplify the
@@ -1485,6 +1481,7 @@ def integrate_find_files_touched_since_last_integration(  # type: ignore
     """
     Print the list of files modified since the last integration for this dir.
     """
+    _report_task()
     abs_dir = os.getcwd()
     _ = ctx
     files = _find_files_touched_since_last_integration(abs_dir, subdir)

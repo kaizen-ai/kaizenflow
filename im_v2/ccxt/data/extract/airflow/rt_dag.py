@@ -32,7 +32,7 @@ bash_command = [
     "--start_timestamp {{ execution_date - macros.timedelta(5) }}",
     "--end_timestamp {{ next_execution_date }}",
     # TODO(Danya): Set a shared directory for the DAG (CMTask675).
-    "--dst_dir_basename 'ccxt/ohlcv/'",
+    "--dst_dir 'ccxt/ohlcv/'",
     "--data_type 'ohlcv'",
     "--universe 'v03'",
     "--db_stage 'dev'",

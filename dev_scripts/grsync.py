@@ -2,12 +2,12 @@
 
 """
 - Rsync a git dir against a pycharm deploy dir
-> grsync.py --src_dir_basename $HOME/src/.../... --config amp --action rsync -v DEBUG --preview
+> grsync.py --src_dir $HOME/src/.../... --config amp --action rsync -v DEBUG --preview
 
 - Diff
-> grsync.py --src_dir_basename $HOME/src/.../... --config amp --action diff
-> grsync.py --src_dir_basename $HOME/src/.../... --config amp --action diff_verb
-> grsync.py --src_dir_basename $HOME/src/.../.../tr --config amp --action diff_verb
+> grsync.py --src_dir $HOME/src/.../... --config amp --action diff
+> grsync.py --src_dir $HOME/src/.../... --config amp --action diff_verb
+> grsync.py --src_dir $HOME/src/.../.../tr --config amp --action diff_verb
 
 Import as:
 
@@ -157,10 +157,10 @@ def _main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--src_dir_basename", action="store", required=True, help="Local directory to sync"
+        "--src_dir", action="store", required=True, help="Local directory to sync"
     )
     parser.add_argument(
-        "--dst_dir_basename", action="store", default=None, help="Remote directory to sync"
+        "--dst_dir", action="store", default=None, help="Remote directory to sync"
     )
     parser.add_argument(
         "--action",
@@ -205,8 +205,8 @@ def _main():
     src_dir = os.path.abspath(args.src_dir)
     hdbg.dassert_path_exists(src_dir)
     #
-    print("src_dir_basename=%s" % args.src_dir)
-    print("dst_dir_basename=%s" % dst_dir)
+    print("src_dir=%s" % args.src_dir)
+    print("dst_dir=%s" % dst_dir)
     print("remote=%s@%s" % (remote_user_name, remote_ip))
     #
     if not args.no_check:

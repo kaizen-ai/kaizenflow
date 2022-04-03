@@ -6,7 +6,7 @@ Extract RT data from db to daily PQ files.
 > im_v2/common/data/transform/extract_data_from_db.py \
     --start_date '2021-11-23' \
     --end_date '2021-11-25' \
-    --dst_dir_basename 's3://cryptokaizen-data/temporary/realtime_from_db/' \
+    --dst_dir 's3://cryptokaizen-data/temporary/realtime_from_db/' \
     --aws_profile 'ck'
 """
 
@@ -47,7 +47,7 @@ def _parse() -> argparse.ArgumentParser:
         help="Until when is data going to be extracted, excluding end date",
     )
     parser.add_argument(
-        "--dst_dir_basename",
+        "--dst_dir",
         action="store",
         type=str,
         required=True,

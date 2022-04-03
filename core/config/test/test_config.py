@@ -704,7 +704,7 @@ class TestDassertIsSerializable1(hunitest.TestCase):
         eval_config = cconfig.get_config_from_nested_dict(
             {
                 "load_experiment_kwargs": {
-                    "src_dir_basename": src_dir,
+                    "src_dir": src_dir,
                     "file_name": "result_bundle.v2_0.pkl",
                     "experiment_type": "ins_oos",
                     "selected_idxs": None,
@@ -735,7 +735,7 @@ class TestDassertIsSerializable1(hunitest.TestCase):
         eval_config = cconfig.get_config_from_nested_dict(
             {
                 "load_experiment_kwargs": {
-                    "src_dir_basename": src_dir,
+                    "src_dir": src_dir,
                     "experiment_type": "ins_oos",
                     "selected_idxs": None,
                     "aws_profile": None,

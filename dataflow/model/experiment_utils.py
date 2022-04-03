@@ -45,7 +45,7 @@ def add_run_experiment_args(
         or not. If not, a default value should be passed through `dst_dir_default`
     :param dst_dir_default: a default destination dir
     """
-    # Add options related to destination dir, e.g., `--dst_dir_basename`, `--clean_dst_dir`.
+    # Add options related to destination dir, e.g., `--dst_dir`, `--clean_dst_dir`.
     parser = hparser.add_dst_dir_arg(
         parser, dst_dir_required=dst_dir_required, dst_dir_default=dst_dir_default
     )
@@ -186,7 +186,7 @@ def get_configs_from_command_line(
     `cconfig.get_config_from_experiment_list_params()`.
 
     The configs are patched with all the information from the command
-    line (namely `config_builder`, `experiment_builder`, `dst_dir_basename`) from the options
+    line (namely `config_builder`, `experiment_builder`, `dst_dir`) from the options
     that are common to both `run_experiment.py` and `run_experiment_stub.py`.
     """
     # TODO(gp): This part is common to get_configs_from_experiment_list_params.
@@ -197,7 +197,7 @@ def get_configs_from_command_line(
     # Patch the configs with the command line parameters.
     params = {
         "config_builder": args.config_builder,
-        "dst_dir_basename": args.dst_dir,
+        "dst_dir": args.dst_dir,
     }
     if hasattr(args, "experiment_builder"):
         # `run_notebook.py` flow doesn't always have this.
@@ -313,7 +313,7 @@ def _get_experiment_subdirs(
     aws_profile: Optional[str] = None,
 ) -> Tuple[str, Dict[int, str]]:
     """
-    Get the subdirectories under `src_dir_basename` with a format like `result_*`.
+    Get the subdirectories under `src_dir` with a format like `result_*`.
 
     This function works also for archived (S3 or local) tarballs of experiment results.
 
@@ -336,8 +336,8 @@ def _get_experiment_subdirs(
             tgz_file = src_dir
         # Expand.
         src_dir = hs3.expand_archived_data(tgz_file, scratch_dir)
-        _LOG.debug("src_dir_basename=%s", src_dir)
-    # Retrieve all the subdirectories in `src_dir_basename` that store results.
+        _LOG.debug("src_dir=%s", src_dir)
+    # Retrieve all the subdirectories in `src_dir` that store results.
     hdbg.dassert_dir_exists(src_dir)
     subdirs = [d for d in glob.glob(f"{src_dir}/result_*") if os.path.isdir(d)]
     _LOG.info("Found %d experiment subdirs in '%s'", len(subdirs), src_dir)
@@ -459,7 +459,7 @@ def _yield_rolling_experiment_out_of_sample_df(
     aws_profile: Optional[str] = None,
 ) -> Iterable[Tuple[str, pd.DataFrame]]:
     """
-    Return in experiment dirs under `src_dir_basename` matching `file_name_prefix*`.
+    Return in experiment dirs under `src_dir` matching `file_name_prefix*`.
 
     This function stitches together out-of-sample predictions from consecutive runs
     to form a single out-of-sample dataframe.
@@ -513,16 +513,16 @@ def load_experiment_artifacts(
     The function returns the contents of the files, indexed by the key extracted
     from the subdirectory index name.
 
-    This function assumes subdirectories under `src_dir_basename` have the following
+    This function assumes subdirectories under `src_dir` have the following
     structure:
         ```
-        {src_dir_basename}/result_{idx}/{file_name}
+        {src_dir}/result_{idx}/{file_name}
         ```
     where `idx` denotes an integer encoded in the subdirectory name, representing
     the key of the experiment.
 
     :param src_dir: directory containing subdirectories of experiment results
-        It is the directory that was specified as `--dst_dir_basename` in `run_experiment.py`
+        It is the directory that was specified as `--dst_dir` in `run_experiment.py`
         and `run_notebook.py`
     :param file_name: the file name within each run results subdirectory to load
         E.g., `result_bundle.v1_0.pkl` or `result_bundle.v2_0.pkl`

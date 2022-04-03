@@ -537,10 +537,10 @@ def archive_data_on_s3(
     src_dir: str, s3_path: str, aws_profile: Optional[str], tag: str = ""
 ) -> str:
     """
-    Compress dir `src_dir_basename` and save it on AWS S3 under `s3_path`.
+    Compress dir `src_dir` and save it on AWS S3 under `s3_path`.
 
     A timestamp and a tag is added to make the name more informative.
-    The tgz is created so that when expanded a dir with the name `src_dir_basename` is
+    The tgz is created so that when expanded a dir with the name `src_dir` is
     created.
 
     :param src_dir: directory that will be compressed
@@ -576,7 +576,7 @@ def archive_data_on_s3(
     with htimer.TimedScope(logging.INFO, "Compressing"):
         dir_name = os.path.dirname(src_dir)
         base_name = os.path.basename(src_dir)
-        hdbg.dassert_ne(base_name, "", "src_dir_basename=%s", src_dir)
+        hdbg.dassert_ne(base_name, "", "src_dir=%s", src_dir)
         cmd = ""
         if dir_name != "":
             cmd += f"cd {dir_name} && "
@@ -635,7 +635,7 @@ def retrieve_archived_data_from_s3(
     # Download the tgz file.
     hio.create_dir(dst_dir, incremental=True)
     dst_file = os.path.join(dst_dir, os.path.basename(s3_file_path))
-    _LOG.debug(hprint.to_str("s3_file_path dst_dir_basename dst_file"))
+    _LOG.debug(hprint.to_str("s3_file_path dst_dir dst_file"))
     if incremental and os.path.exists(dst_file):
         _LOG.warning("Found '%s': skipping downloading", dst_file)
     else:
@@ -655,12 +655,12 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
     E.g.,
     - given a tgz file like `s3://.../experiment.20210802-121908.tgz` (which is the
       result of compressing a dir like `/app/.../experiment.RH1E`)
-    - expand it into a dir `{dst_dir_basename}/experiment.RH1E`
+    - expand it into a dir `{dst_dir}/experiment.RH1E`
 
     :param src_tgz_file: path to the local file with the archived data. E.g.,
        `/.../experiment.20210802-121908.tgz`
     :param dst_dir: directory where expand the archive tarball
-    :return: dir with the expanded data (e.g., `{dst_dir_basename/experiment.RH1E`)
+    :return: dir with the expanded data (e.g., `{dst_dir/experiment.RH1E`)
     """
     _LOG.debug("Expanding '%s'", src_tgz_file)
     # Get the name of the including dir, e.g., `experiment.RH1E`.
@@ -679,7 +679,7 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
         )
     else:
         # Expand the tgz file.
-        # The output should be the original compressed dir under `{dst_dir_basename}`.
+        # The output should be the original compressed dir under `{dst_dir}`.
         # E.g.,
         # > tar tzf /app/.../experiment.20210802-133901.tgz
         # experiment.RH1E/
@@ -690,5 +690,5 @@ def expand_archived_data(src_tgz_file: str, dst_dir: str) -> str:
             cmd = f"cd {dst_dir} && tar xzf {src_tgz_file}"
             hsystem.system(cmd)
     hdbg.dassert_dir_exists(tgz_dst_dir)
-    # Return `{dst_dir_basename}/experiment.RH1E`.
+    # Return `{dst_dir}/experiment.RH1E`.
     return tgz_dst_dir

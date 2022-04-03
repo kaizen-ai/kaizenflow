@@ -109,7 +109,7 @@ class Test_get_configs_from_command_line1(hunitest.TestCase):
                 "dataflow.model.test.test_experiment_utils.build_tile_configs"
                 + f'("{experiment_list_config}")'
             )
-            dst_dir = "./dst_dir_basename"
+            dst_dir = "./dst_dir"
             experiment_builder = (
                 "dataflow.model.master_experiment.run_tiled_experiment"
             )

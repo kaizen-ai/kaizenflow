@@ -52,7 +52,7 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--src_dir_basename", action="store", default=".")
+    parser.add_argument("--src_dir", action="store", default=".")
     parser.add_argument("--src_file", action="store", default=None)
     parser.add_argument(
         "--dst_file",

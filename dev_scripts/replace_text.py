@@ -515,7 +515,7 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--dst_dir_basename",
+        "--dst_dir",
         action="store",
         default=None,
         help="Change dir before replacing",

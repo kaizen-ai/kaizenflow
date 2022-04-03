@@ -75,10 +75,10 @@ def add_dst_dir_arg(
     """
     Add command line options related to destination dir.
 
-    E.g., `--dst_dir_basename`, `--clean_dst_dir`
+    E.g., `--dst_dir`, `--clean_dst_dir`
     """
     # TODO(gp): Add unit test to check this.
-    # A required dst_dir_basename implies no default dst_dir_basename.
+    # A required dst_dir implies no default dst_dir.
     hdbg.dassert_imply(
         dst_dir_required,
         not dst_dir_default,
@@ -87,7 +87,7 @@ def add_dst_dir_arg(
         dst_dir_required,
         dst_dir_default,
     )
-    # If dst_dir_basename is not required, then a default dst_dir_basename must be specified.
+    # If dst_dir is not required, then a default dst_dir must be specified.
     hdbg.dassert_imply(
         not dst_dir_required,
         dst_dir_default,
@@ -97,7 +97,7 @@ def add_dst_dir_arg(
         dst_dir_default,
     )
     parser.add_argument(
-        "--dst_dir_basename",
+        "--dst_dir",
         action="store",
         default=dst_dir_default,
         required=dst_dir_required,
@@ -120,15 +120,15 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
     """
     Process the command line options related to destination dir.
 
-    :return: a tuple (dst_dir_basename, clean_dst_dir)
-        - dst_dir_basename: the destination dir
+    :return: a tuple (dst_dir, clean_dst_dir)
+        - dst_dir: the destination dir
         - clean_dst_dir: whether to clean the destination dir or not
     """
     dst_dir = args.dst_dir
-    _LOG.debug("dst_dir_basename=%s", dst_dir)
+    _LOG.debug("dst_dir=%s", dst_dir)
     clean_dst_dir = False
     if args.clean_dst_dir:
-        _LOG.info("Cleaning dst_dir_basename='%s'", dst_dir)
+        _LOG.info("Cleaning dst_dir='%s'", dst_dir)
         if os.path.exists(dst_dir):
             _LOG.warning("Dir '%s' already exists", dst_dir)
             if not args.no_confirm:
@@ -411,7 +411,7 @@ def create_incremental_dir(dst_dir: str, args: argparse.Namespace) -> None:
         hdbg.dassert(
             args.no_incremental, "--force only works with --no_incremental"
         )
-    _LOG.debug(hprint.to_str("dst_dir_basename args"))
+    _LOG.debug(hprint.to_str("dst_dir args"))
     if args.no_incremental:
         # Create the dir from scratch.
         _LOG.debug("No incremental mode")

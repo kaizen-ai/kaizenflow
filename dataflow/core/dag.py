@@ -140,7 +140,7 @@ class DAG:
         `DagBuilder`) so we allow to set them after construction.
 
         :param save_node_interface: store the values at the interface of the nodes
-            into a directory `dst_dir_basename`. Disclaimer: the amount of data generate can
+            into a directory `dst_dir`. Disclaimer: the amount of data generate can
             be huge
             - ``: save no information
             - `stats`: save high level information about the node interface
@@ -166,7 +166,7 @@ class DAG:
         if self._save_node_interface or self._profile_execution:
             _LOG.warning(
                 "Setting up debug mode: %s",
-                hprint.to_str("save_node_interface profile_execution dst_dir_basename"),
+                hprint.to_str("save_node_interface profile_execution dst_dir"),
             )
             hdbg.dassert_is_not(
                 dst_dir, None, "Need to specify a directory to save the data"
@@ -462,7 +462,7 @@ class DAG:
         running a node.
 
         The file has a format like
-        `{dst_dir_basename}/{method}.{topological_id}.{nid}.{file_tag}.txt`
+        `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
 
         :param topological_id, nid, method: information about the node and its method
             to run
@@ -504,7 +504,7 @@ class DAG:
         running a node.
 
         The file has a format like:
-        `{dst_dir_basename}/{method}.{topological_id}.{nid}.{file_tag}.txt`
+        `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
         """
         basename = f"{method}.{topological_id}.{nid}.{output_name}"
         file_name = os.path.join(self._dst_dir, basename)

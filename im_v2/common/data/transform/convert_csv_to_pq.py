@@ -4,7 +4,7 @@ Convert data from CSV to Parquet files and partition dataset by asset.
 
 A Parquet file partitioned by assets looks like:
 ```
-dst_dir_basename/
+dst_dir/
     year=2021/
         month=12/
            day=11/
@@ -17,8 +17,8 @@ dst_dir_basename/
 Usage sample:
 
 > im_v2/common/data/transform/convert_csv_to_pq.py \
-     --src_dir_basename 's3://cryptokaizen-data/historical/binance/' \
-     --dst_dir_basename 's3://cryptokaizen-data/historical/binance_parquet/' \
+     --src_dir 's3://cryptokaizen-data/historical/binance/' \
+     --dst_dir 's3://cryptokaizen-data/historical/binance_parquet/' \
      --datetime_col 'timestamp' \
      --asset_col 'currency_pair' \
      --aws_profile 'ck'
@@ -53,7 +53,7 @@ def _get_csv_to_pq_file_names(
     s3fs_: Optional[s3fs.core.S3FileSystem] = None,
 ) -> List[Tuple[str, str]]:
     """
-    Find all the CSV files in `src_dir_basename` to transform and prepare the
+    Find all the CSV files in `src_dir` to transform and prepare the
     corresponding destination Parquet files.
 
     :param incremental: if True, skip CSV files for which the corresponding Parquet
@@ -110,7 +110,7 @@ def _run(args: argparse.Namespace) -> None:
         filesystem = hs3.get_s3fs(args.aws_profile)
     else:
         filesystem = None
-        # TODO(gp): @danya use hparser.create_incremental_dir(args.dst_dir_basename, args).
+        # TODO(gp): @danya use hparser.create_incremental_dir(args.dst_dir, args).
         hio.create_dir(args.dst_dir, args.incremental)
     # Find all CSV and Parquet files.
     files = _get_csv_to_pq_file_names(
@@ -147,14 +147,14 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--src_dir_basename",
+        "--src_dir",
         action="store",
         type=str,
         required=True,
         help="Dir with input CSV files to convert to Parquet format",
     )
     parser.add_argument(
-        "--dst_dir_basename",
+        "--dst_dir",
         action="store",
         type=str,
         required=True,

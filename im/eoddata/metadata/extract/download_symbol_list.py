@@ -10,13 +10,13 @@ because we want to track the symbols over time.
 
 E.g:
 # Download NYSE data to '<current_dir>/08-04-20/NYSE.csv'
-> download_eoddata_symbol_list.py --dst_dir_basename $(date +"%m-%d-%y") --exchange_codes NYSE
+> download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y") --exchange_codes NYSE
 
 # Download data for multiple exchange codes
-> download_eoddata_symbol_list.py --dst_dir_basename $(date +"%m-%d-%y") --exchange_codes NYSE ASX AMEX
+> download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y") --exchange_codes NYSE ASX AMEX
 
 # Download data for all exchange codes (omit --exchange_codes)
-> download_eoddata_symbol_list.py --dst_dir_basename $(date +"%m-%d-%y")
+> download_eoddata_symbol_list.py --dst_dir $(date +"%m-%d-%y")
 
 Import as:
 
@@ -91,9 +91,9 @@ def _write_symbols_to_csv(
     exchange_code: str, symbols: List[imeometyp.Symbol], dst_dir: str
 ) -> None:
     """
-    Write symbols to `<exchange_code>.csv` in the dst_dir_basename.
+    Write symbols to `<exchange_code>.csv` in the dst_dir.
 
-    Creates `dst_dir_basename` if it doesn't exist.
+    Creates `dst_dir` if it doesn't exist.
     """
     hio.create_dir(dir_name=dst_dir, incremental=True)
 
@@ -128,7 +128,7 @@ def _parse() -> argparse.ArgumentParser:
         nargs="+",
         help="Codes of the exchanges to download symbols for (defaults to all)",
     )
-    parser.add_argument("--dst_dir_basename", action="store", help="Destination dir")
+    parser.add_argument("--dst_dir", action="store", help="Destination dir")
     hparser.add_verbosity_arg(parser)
     return parser
 

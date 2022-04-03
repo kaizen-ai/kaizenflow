@@ -3,19 +3,19 @@
 Handle backups / export / import of Google Drive directory.
 
 # List content of a Google drive dir.
-> infra/gdrive.py --action ls --src_dir_basename gp_drive:alphamatic -v DEBUG
+> infra/gdrive.py --action ls --src_dir gp_drive:alphamatic -v DEBUG
 
 # Backup.
-> infra/gdrive.py --action backup --src_dir_basename gp_drive:alphamatic --dst_dir_basename gdrive_backup -v DEBUG
+> infra/gdrive.py --action backup --src_dir gp_drive:alphamatic --dst_dir gdrive_backup -v DEBUG
 
 # Test of moving data.
-> infra/gdrive.py --action backup --src_dir_basename gp_drive:alphamatic/LLC --dst_dir_basename gdrive_backup
-> infra/gdrive.py --action export --src_dir_basename gp_drive:alphamatic/LLC --dst_dir_basename tmp.LLC
-> infra/gdrive.py --action import --src_dir_basename tmp.LLC --dst_dir_basename alphamatic_drive:test/LLC
+> infra/gdrive.py --action backup --src_dir gp_drive:alphamatic/LLC --dst_dir gdrive_backup
+> infra/gdrive.py --action export --src_dir gp_drive:alphamatic/LLC --dst_dir tmp.LLC
+> infra/gdrive.py --action import --src_dir tmp.LLC --dst_dir alphamatic_drive:test/LLC
 
 # Moving data.
-> infra/gdrive.py --action export --src_dir_basename gp_drive:alphamatic --dst_dir_basename tmp.alphamatic
-> infra/gdrive.py --action import --src_dir_basename tmp.alphamatic --dst_dir_basename alphamatic_drive:alphamatic
+> infra/gdrive.py --action export --src_dir gp_drive:alphamatic --dst_dir tmp.alphamatic
+> infra/gdrive.py --action import --src_dir tmp.alphamatic --dst_dir alphamatic_drive:alphamatic
 
 Import as:
 
@@ -61,7 +61,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _create_dst_dir(dst_dir):
-    hdbg.dassert(dst_dir, msg="Need to specify --dst_dir_basename")
+    hdbg.dassert(dst_dir, msg="Need to specify --dst_dir")
     dst_dir = os.path.abspath(dst_dir)
     hio.create_dir(dst_dir, incremental=True)
     return dst_dir
@@ -139,10 +139,10 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument("--incremental", action="store_true")
     parser.add_argument("--dry_run", action="store_true")
     parser.add_argument(
-        "--src_dir_basename", action="store", default=None, help="Source dir"
+        "--src_dir", action="store", default=None, help="Source dir"
     )
     parser.add_argument(
-        "--dst_dir_basename", action="store", default=None, help="Destination dir"
+        "--dst_dir", action="store", default=None, help="Destination dir"
     )
     hparser.add_verbosity_arg(parser)
     return parser

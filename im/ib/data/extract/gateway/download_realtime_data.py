@@ -82,7 +82,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument("positional", nargs="*", help="...")
     parser.add_argument(
-        "--dst_dir_basename",
+        "--dst_dir",
         action="store",
         default="./tmp.download_data",
         help="Destination dir",

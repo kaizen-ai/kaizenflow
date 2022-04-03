@@ -136,7 +136,7 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
     norm_html_src_path = os.path.abspath(html_src_path)
     norm_html_dst_path = os.path.abspath(html_dst_path)
     if norm_html_src_path != norm_html_dst_path:
-        # Move the HTML file to the `dst_dir_basename`.
+        # Move the HTML file to the `dst_dir`.
         _LOG.debug("Export '%s' to '%s'", norm_html_src_path, norm_html_dst_path)
         hio.create_dir(dst_dir, incremental=True)
         cmd = f"mv {norm_html_src_path} {norm_html_dst_path}"

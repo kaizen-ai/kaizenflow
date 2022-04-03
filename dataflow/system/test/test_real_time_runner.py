@@ -115,7 +115,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
             "dag_builder": dag_builder,
             "fit_state": None,
             "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-            "dst_dir_basename": None,
+            "dst_dir": None,
         }
         # Align on a second boundary.
         get_wall_clock_time = lambda: hdateti.get_current_time(

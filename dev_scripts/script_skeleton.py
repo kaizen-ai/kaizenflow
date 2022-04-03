@@ -29,7 +29,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("positional", nargs="*", help="...")
-    parser.add_argument("--dst_dir_basename", action="store", help="Destination dir")
+    parser.add_argument("--dst_dir", action="store", help="Destination dir")
     hparser.add_verbosity_arg(parser)
     return parser
 
