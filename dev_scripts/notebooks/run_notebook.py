@@ -6,7 +6,7 @@ Run a notebook given a config or a list of configs.
 > run_notebook.py \
     --notebook nlp/notebooks/NLP_RP_pipeline.ipynb \
     --config_builder "nlp.build_configs.build_PTask1088_configs()" \
-    --dst_dir nlp/test_results \
+    --dst_dir_basename nlp/test_results \
     --num_threads 2
 
 Import as:
@@ -69,7 +69,7 @@ def _run_notebook(
     dst_file = os.path.abspath(dst_file)
     # Export config function and its `id` to the notebook.
     config_builder = config[("meta", "config_builder")]
-    dst_dir = config[("meta", "dst_dir")]
+    dst_dir = config[("meta", "dst_dir_basename")]
     cmd = [
         f'export __CONFIG_BUILDER__="{config_builder}";',
         f'export __CONFIG_IDX__="{idx}";',
@@ -220,7 +220,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         log_file,
     )
     #
-    _LOG.info("dst_dir='%s'", dst_dir)
+    _LOG.info("dst_dir_basename='%s'", dst_dir)
     _LOG.info("log_file='%s'", log_file)
     # TODO(gp): Move this inside the framework.
     # # Report failing experiments.

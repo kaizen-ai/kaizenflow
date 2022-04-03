@@ -203,7 +203,7 @@ kwargs = {
     #
     "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
     #
-    "dst_dir": None,
+    "dst_dir_basename": None,
 }
 
 dag_runner = cdtf.RealTimeDagRunner(**kwargs)

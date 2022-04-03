@@ -82,7 +82,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     else:
         hdbg.dfatal("Invalid workload='%s'" % args.workload)
     # Handle the dst dir.
-    # dst_dir, clean_dst_dir = hparser.parse_dst_dir_arg(args)
+    # dst_dir_basename, clean_dst_dir = hparser.parse_dst_dir_arg(args)
     # _ = clean_dst_dir
     # Parse command-line options.
     dry_run = args.dry_run

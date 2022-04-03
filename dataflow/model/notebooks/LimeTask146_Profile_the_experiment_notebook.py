@@ -62,7 +62,7 @@ if config is None:
     eval_config = cconfig.get_config_from_nested_dict(
         {
             "load_experiment_kwargs": {
-                "src_dir": exp_dir,
+                "src_dir_basename": exp_dir,
                 "file_name": "result_bundle.v2_0.pkl",
                 "experiment_type": "ins_oos",
                 "selected_idxs": selected_idxs,

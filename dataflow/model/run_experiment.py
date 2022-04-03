@@ -8,7 +8,7 @@ Run a list of experiments consisting of multiple model runs based on the passed:
 > run_experiment.py \
     --experiment_builder "dataflow_model.master_experiment.run_experiment" \
     --config_builder "dataflow_lm.RH1E.config.build_15min_model_configs()" \
-    --dst_dir experiment1 \
+    --dst_dir_basename experiment1 \
     --num_threads 2
 
 Import as:
@@ -68,7 +68,7 @@ def _run_experiment_stub(
     _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
     _LOG.info("config=\n%s", config)
     #
-    dst_dir = config[("meta", "dst_dir")]
+    dst_dir = config[("meta", "dst_dir_basename")]
     # Prepare the log file.
     # TODO(gp): -> experiment_dst_dir
     experiment_result_dir = config[("meta", "experiment_result_dir")]
@@ -81,7 +81,7 @@ def _run_experiment_stub(
         f"--experiment_builder '{experiment_builder}'",
         f"--config_builder '{config_builder}'",
         f"--config_idx {idx}",
-        f"--dst_dir {dst_dir}",
+        f"--dst_dir_basename {dst_dir}",
         "-v INFO",
     ]
     cmd = " ".join(cmd)
@@ -198,7 +198,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         backend=backend,
     )
     #
-    _LOG.info("dst_dir='%s'", dst_dir)
+    _LOG.info("dst_dir_basename='%s'", dst_dir)
     _LOG.info("log_file='%s'", log_file)
     # Archive on S3.
     if args.archive_on_S3:

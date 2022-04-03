@@ -8,7 +8,7 @@ Parquet representation.
 > pq_convert.py \
     --start_date 2021-11-16 \
     --end_date 2021-11-17 \
-    --dst_dir im/transform/test_data_by_date
+    --dst_dir_basename im/transform/test_data_by_date
 
 Import as:
 
@@ -157,7 +157,7 @@ def df_stats(df: pd.DataFrame) -> str:
 
 def _date_exists(date: datetime.datetime, dst_dir: str) -> bool:
     """
-    Check if the data corresponding to `date` under `dst_dir` already exists.
+    Check if the data corresponding to `date` under `dst_dir_basename` already exists.
     """
     # /app/data/idx=0/year=2000/month=1/02e3265d515e4fb88ebe1a72a405fc05.parquet
     subdirs = glob.glob(f"{dst_dir}/idx=*")
@@ -185,7 +185,7 @@ def _parse() -> argparse.ArgumentParser:
         "--end_date", action="store", help="End date, e.g., 2010-01-01"
     )
     parser.add_argument("--incremental", action="store_true", help="")
-    parser.add_argument("--dst_dir", action="store", help="Destination dir")
+    parser.add_argument("--dst_dir_basename", action="store", help="Destination dir")
     hparser.add_verbosity_arg(parser)
     return parser
 
@@ -198,7 +198,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # - Use hdbg.dassert_*() for assertion.
     # - Use hsysinte.system() and hsysinte.system_to_string() to issue commands.
     dst_dir = args.dst_dir
-    # df = read_pq_data(dst_dir)
+    # df = read_pq_data(dst_dir_basename)
     # print(df_stats(df))
     # assert 0
 

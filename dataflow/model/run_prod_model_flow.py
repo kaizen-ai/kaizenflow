@@ -74,7 +74,7 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         #           amp.dataflow_model.master_experiment.run_experiment \
         #       --config_builder \
         #           'dataflow....build_model_configs("kibot_v1-top1.5T")' \
-        #       --dst_dir .../run_model/oos_experiment.RH1E.kibot_v1-top1.5T \
+        #       --dst_dir_basename .../run_model/oos_experiment.RH1E.kibot_v1-top1.5T \
         #       --clean_dst_dir \
         #       --no_confirm \
         #       --num_threads serial

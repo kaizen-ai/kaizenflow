@@ -111,7 +111,7 @@ class SystemRunner(abc.ABC):
             "dag_builder": dag_builder,
             "fit_state": None,
             "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-            "dst_dir": None,
+            "dst_dir_basename": None,
         }
         dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)
         return dag_runner

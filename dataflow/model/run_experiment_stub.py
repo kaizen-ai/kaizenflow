@@ -4,7 +4,7 @@ Run a single config through a run_config()
 
 # Use example:
 > run_configs_stub.py \
-    --dst_dir nlp/test_results \
+    --dst_dir_basename nlp/test_results \
     --experiment_builder "dataflow_model.master_experiment.run_experiment" \
     --config_builder "nlp.build_configs.build_PTask1088_configs()" \
     --num_threads 2
@@ -48,7 +48,7 @@ def _parse() -> argparse.ArgumentParser:
         help="E.g., 'nlp.build_configs.build_PTask1088_configs()'",
     )
     parser.add_argument(
-        "--dst_dir",
+        "--dst_dir_basename",
         action="store",
         required=True,
         help="Destination dir for the entire experiment list, not for this"
@@ -77,7 +77,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     experiment_list_params = {
         "experiment_builder": args.experiment_builder,
         "config_builder": args.config_builder,
-        "dst_dir": args.dst_dir,
+        "dst_dir_basename": args.dst_dir,
     }
     config = cconfig.get_config_from_experiment_list_params(
         config_idx, experiment_list_params

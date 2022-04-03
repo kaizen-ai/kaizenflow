@@ -55,7 +55,7 @@ def _main() -> None:
     hdbg.dassert_dir_exists(amp_dir)
     # Get the dir with the Git hooks to install.
     src_dir = os.path.join(amp_dir, "dev_scripts/git/git_hooks")
-    _LOG.info("src_dir=%s", src_dir)
+    _LOG.info("src_dir_basename=%s", src_dir)
     hdbg.dassert_dir_exists(src_dir)
     # Find the location to install the Git hooks.
     # In a super-module:

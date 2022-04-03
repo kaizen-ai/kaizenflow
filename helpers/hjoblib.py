@@ -59,7 +59,7 @@ _LOG = logging.getLogger(__name__)
 # args=()
 # kwargs={
 #   'asset_col_name': 'asset',
-#   'dst_dir': './tmp.s3_out',
+#   'dst_dir_basename': './tmp.s3_out',
 #   'parquet_file_names': [
 #           './tmp.s3/20220110/data.parquet',
 #           './tmp.s3/20220111/data.parquet',

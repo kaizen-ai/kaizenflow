@@ -10,7 +10,7 @@ Generate Parquet files for testing.
     --partition_mode by_year_month \
     --output_type verbose_close \
     --assets 10689,10690 \
-    --dst_dir im_v2/common/test/tiled.bar_data
+    --dst_dir_basename im_v2/common/test/tiled.bar_data
 
 # In command sample above, data is created for certain interval with minutely frequency
 # that is further partitioned by Parquet dataset for year and month.
@@ -223,7 +223,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument(
-        "--dst_dir",
+        "--dst_dir_basename",
         action="store",
         type=str,
         required=True,

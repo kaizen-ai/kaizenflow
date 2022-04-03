@@ -622,7 +622,7 @@ def diff_files(
     :param abort_on_exit: whether to assert or not
     :param dst_dir: dir where to save the comparing script
     """
-    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir_basename"))
     file_name1 = os.path.relpath(file_name1, os.getcwd())
     file_name2 = os.path.relpath(file_name2, os.getcwd())
     msg = []
@@ -680,7 +680,7 @@ def diff_strings(
 
     :param dst_dir: where to save the intermediatary files
     """
-    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir_basename"))
     # Save the actual and expected strings to files.
     file_name1 = "%s/tmp.string1.txt" % dst_dir
     hio.to_file(file_name1, string1)
@@ -709,7 +709,7 @@ def diff_df_monotonic(
     Check for a dataframe to be monotonic using the vimdiff flow from
     diff_files().
     """
-    _LOG.debug(hprint.to_str("abort_on_exit dst_dir"))
+    _LOG.debug(hprint.to_str("abort_on_exit dst_dir_basename"))
     if not df.index.is_monotonic_increasing:
         df2 = df.copy()
         df2.sort_index(inplace=True)
@@ -864,7 +864,7 @@ def assert_equal(
     """
     _LOG.debug(
         hprint.to_str(
-            "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
+            "full_test_name test_dir fuzzy_match abort_on_error dst_dir_basename"
         )
     )
     #
@@ -1209,7 +1209,7 @@ class TestCase(unittest.TestCase):
 
         The interface is similar to `check_string()`.
         """
-        _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir"))
+        _LOG.debug(hprint.to_str("fuzzy_match abort_on_error dst_dir_basename"))
         hdbg.dassert_in(type(actual), (bytes, str), "actual=%s", str(actual))
         hdbg.dassert_in(
             type(expected), (bytes, str), "expected=%s", str(expected)
