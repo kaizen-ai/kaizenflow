@@ -364,6 +364,11 @@ def to_file(
             mode = "wt"
         else:
             mode = "w"
+    if "a" in mode:
+        # Ensure that file exists in append mode.
+        hdbg.dassert_path_exists(file_name)
+    else:
+        hdbg.dassert_path_not_exists(file_name)
     # Create the enclosing dir, if needed.
     create_enclosing_dir(file_name, incremental=True)
     if use_gzip:

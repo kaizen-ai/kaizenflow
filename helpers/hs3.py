@@ -190,7 +190,7 @@ def listdir(
 
 
 def to_file(
-    lines: Union[str, bytes],
+    lines: str,
     file_name: str,
     *,
     mode: Optional[str] = None,
@@ -207,11 +207,19 @@ def to_file(
         # Ensure that `bytes` is used.
         if mode is not None and "b" not in mode:
             raise ValueError("S3 only allows binary mode!")
-        hdbg.dassert_isinstance(lines, bytes)
+        hdbg.dassert_isinstance(lines, str)
+        # Convert lines to bytes, only supported mode for S3.
+        # Also create a list of new lines as raw bytes is not supported.
+        os_sep = os.linesep
+        lines = [f"{line}{os_sep}".encode() for line in lines.split(os_sep)]
         # Inspect file name and path.
         hio.dassert_is_valid_file_name(file_name)
         s3fs_ = get_s3fs(aws_profile)
-        dassert_path_exists(file_name, s3fs_)
+        if mode is not None and "a" in mode:
+            # Ensure that file exists in append mode.
+            dassert_path_exists(file_name, s3fs_)
+        else:
+            dassert_path_not_exists(file_name, s3fs_)
         mode = "wb" if mode is None else mode
         # Open s3 file.
         with s3fs_.open(file_name, mode) as s3_file:
@@ -223,7 +231,7 @@ def to_file(
                 # Any other file.
                 s3_file.writelines(lines)
             if force_flush:
-                # TODO(Nikola): Investigate S3 behaviour.
+                # TODO(Nikola): Investigate S3 alternative for `os.fsync(f.fileno())`.
                 s3_file.flush()
     else:
         # TODO(Nikola): Put `lines` as first arg after func update.
@@ -488,6 +496,7 @@ def get_aws_credentials(
     ]
     if any(set_env_vars):
         if not all(set_env_vars):
+            # TODO(Nikola): raise an error instead?
             _LOG.warning(
                 "Some but not all AWS env vars are set (%s): ignoring",
                 str(set_env_vars),
@@ -508,7 +517,7 @@ def get_aws_credentials(
         result["aws_session_token"] = None
         # TODO(gp): @all support also other S3 profiles. We can derive the names
         #  of the env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
-        hdbg.dassert_eq(aws_profile, "am")
+        hdbg.dassert_in(aws_profile, ("am", "ck"))
     else:
         _LOG.debug("Using AWS credentials from files")
         # > more ~/.aws/credentials
