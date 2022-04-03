@@ -1103,19 +1103,24 @@ def git_branch_diff_with_master(  # type: ignore
 # Integrate.
 # #############################################################################
 
-# Integration good practices
+# # Integration good practices
 #
 # ## Concepts
 #
 # - We have two dirs storing two forks of the same repo
-# - Files are touched, e.g., added, modified, deleted in each forks
-# - The most problematic files are the files that are modified in both forks
-# - Files that are added or deleted in one fork, should be added / deleted also
-#   in the other fork
+#   - Files are touched, e.g., added, modified, deleted in each forks
+#   - The most problematic files are the files that are modified in both forks
+#   - Files that are added or deleted in one fork, should be added / deleted also
+#     in the other fork
 # - Often we can integrate "by directory", i.e., finding entire directories that
 #   we were touched in one branch but not the other
 #   - In this case we can simply copy the entire dir from one dir to the other
 # - Other times we need to integrate "by file"
+#
+# - There are various interesting Git reference points:
+#   1) the branch point for each branch, at which the integration branch was started
+#   2) the last integration point for each branch, at which the repos are the same,
+#      or at least aligned
 
 # ## Create integration branches
 #
@@ -1232,7 +1237,7 @@ def _dassert_current_dir_matches(expected_dir_basename: str) -> None:
     E.g., `/Users/saggese/src/cmamp1` is a valid dir for an integration branch for
     `cmamp1`.
     """
-    _LOG.debug(hprint.to_str("dir_name"))
+    _LOG.debug(hprint.to_str("expected_dir_basename"))
     # Get the basename of the current dir.
     curr_dir_basename = os.path.basename(os.getcwd())
     # Check that it's what is expected.
@@ -1406,7 +1411,6 @@ def _find_files_touched_since_last_integration(
     """
     Return the list of files modified since the last integration for `abs_dir`.
 
-    :param dir_basename: basename of the current dir
     :param abs_dir: directory to cd before executing this script
     :param subdir: consider only the files under `subdir`
     """
@@ -1473,14 +1477,21 @@ def _find_files_touched_since_last_integration(
     return files
 
 
+@task
 def integrate_find_files_touched_since_last_integration(  # type: ignore
     ctx,
     subdir="",
 ):
+    """
+    Print the list of files modified since the last integration for this dir.
+    """
     abs_dir = os.getcwd()
-    ctx_ = ""
+    _ = ctx
     files = _find_files_touched_since_last_integration(abs_dir, subdir)
-    _LOG.info("Files modified since the integration=\n%s", "\n".join(files))
+    # Print the result.
+    tag = "Files modified since the integration"
+    print(hprint.frame(tag))
+    print("\n".join(files))
 
 
 # //////////////////////////////////////////////////////////////////////////////
