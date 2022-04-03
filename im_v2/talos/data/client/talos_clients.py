@@ -271,7 +271,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 full_symbol_col_name=full_symbol_col_name)
         return data
 
-def _build_select_query(
+    def _build_select_query(
         self,
         exchange_currency_pairs: List[Tuple],
         start_unix_epoch: Optional[int],
@@ -337,7 +337,7 @@ def _build_select_query(
             query += f" LIMIT {limit}"
         return query
 
-def _read_data_for_multiple_symbols(
+    def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
