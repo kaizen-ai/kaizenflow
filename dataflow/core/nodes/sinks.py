@@ -26,7 +26,6 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Add incremental mode to clean up the dir before writing into it.
 class WriteDf(dtfconobas.FitPredictNode):
-
     def __init__(
         self,
         nid: dtfcornode.NodeId,
@@ -75,7 +74,6 @@ class WriteDf(dtfconobas.FitPredictNode):
 
 
 class WriteCols(dtfconobas.FitPredictNode):
-
     def __init__(
         self,
         nid: dtfcornode.NodeId,
@@ -147,10 +145,10 @@ def read_dfs(dir_name: str) -> Iterable[Tuple[str, pd.DataFrame]]:
     :param dir_name: directory containing dataframes in Parquet format
     :return: iterable of tuples of the form `(file_name, df)`
     """
+    # Glob the `.pq` files.
     pattern = "*.pq"
     only_files = True
     use_relative_paths = False
-    # Glob the `.pq` files.
     file_names = sorted(
         hio.listdir(dir_name, pattern, only_files, use_relative_paths)
     )

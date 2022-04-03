@@ -75,7 +75,9 @@ print(config)
 
 # %%
 vendor_universe = imvcounun.get_vendor_universe(
-    config["data"]["vendor"], version=config["data"]["universe_version"], as_full_symbol=True
+    config["data"]["vendor"],
+    version=config["data"]["universe_version"],
+    as_full_symbol=True,
 )
 vendor_universe
 
