@@ -18,7 +18,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
-
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"

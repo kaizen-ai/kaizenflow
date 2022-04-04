@@ -53,7 +53,7 @@ else
 
         pip3 install wheel
 
-        # TODO(Grisha): fix properly if possible, see CmTask #1584.
+        # TODO(Grisha): CmTask #1584: Cannot build `opt` Docker image.
         poetry run pip install -U setuptools
 
         poetry install

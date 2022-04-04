@@ -1,7 +1,7 @@
 import datetime
 import io
-import os
 import logging
+import os
 import uuid
 from typing import Any
 
@@ -9,8 +9,8 @@ import pandas as pd
 
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hunit_test as hunitest
 import helpers.hs3 as hs3
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -429,6 +429,16 @@ class Test_trim_df1(hunitest.TestCase):
 
 
 class TestDfToStr(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> pd.DataFrame:
+        test_data = {
+            "dummy_value_1": [1, 2, 3],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [0, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        return df
+
     def test_df_to_str1(self) -> None:
         """
         Test common call to `df_to_str` with basic df.
@@ -513,16 +523,6 @@ class TestDfToStr(hunitest.TestCase):
         1              2             B              0
         2              3             C              0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
-
-    @staticmethod
-    def get_test_data() -> pd.DataFrame:
-        test_data = {
-            "dummy_value_1": [1, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
-            "dummy_value_3": [0, 0, 0],
-        }
-        df = pd.DataFrame(data=test_data)
-        return df
 
 
 # #############################################################################
@@ -698,7 +698,6 @@ class TestCompareDataframeRows(hunitest.TestCase):
 
 
 class TestReadDataFromS3(hunitest.TestCase):
-
     def test_read_csv1(self) -> None:
         s3fs = hs3.get_s3fs("am")
         file_name = os.path.join(

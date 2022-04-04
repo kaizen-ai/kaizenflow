@@ -115,9 +115,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
             full_path = os.path.join(dst_dir, date_directory)
             # Check S3 path.
-            hs3.dassert_path_not_exists(
-                full_path, aws_profile=args.aws_profile
-            )
+            hs3.dassert_path_not_exists(full_path, aws_profile=args.aws_profile)
             # Add date partition columns to the dataframe.
             partition_mode = "by_date"
             hparque.add_date_partition_columns(df, partition_mode)

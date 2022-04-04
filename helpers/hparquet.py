@@ -192,6 +192,9 @@ def yield_parquet_tiles_by_year(
     start_date: datetime.date,
     end_date: datetime.date,
     cols: List[Union[int, str]],
+    *,
+    asset_ids: Optional[List[int]] = None,
+    asset_id_col: str = "asset_id",
 ) -> Iterator[pd.DataFrame]:
     """
     Yield Parquet data in tiles up to one year in length.
@@ -202,18 +205,27 @@ def yield_parquet_tiles_by_year(
     :param cols: if an `int` is supplied, it is cast to a string before reading
     :return: a generator of `from_parquet()` dataframes
     """
-    filters = build_year_month_filter(start_date, end_date)
-    hdbg.dassert_isinstance(filters, list)
+    time_filters = build_year_month_filter(start_date, end_date)
+    hdbg.dassert_isinstance(time_filters, list)
     # The list should not be empty.
-    hdbg.dassert(filters)
-    if not isinstance(filters[0], list):
-        filters = [filters]
+    hdbg.dassert(time_filters)
+    if not isinstance(time_filters[0], list):
+        time_filters = [time_filters]
     columns = [str(col) for col in cols]
-    for filter_ in filters:
+    if asset_ids is None:
+        asset_ids = []
+    asset_id_filter = build_asset_id_filter(asset_ids, asset_id_col)
+    for time_filter in time_filters:
+        if asset_id_filter:
+            combined_filter = [
+                id_filter + time_filter for id_filter in asset_id_filter
+            ]
+        else:
+            combined_filter = time_filter
         tile = from_parquet(
             file_name,
             columns=columns,
-            filters=filter_,
+            filters=combined_filter,
         )
         yield tile
 
@@ -234,20 +246,25 @@ def yield_parquet_tiles_by_assets(
     asset_ids: List[int],
     asset_id_col: str,
     asset_batch_size: int,
-    cols: List[Union[int, str]],
+    cols: Optional[List[Union[int, str]]],
 ) -> Iterator[pd.DataFrame]:
     """
-    Yield Parquet data in tiles up to one year in length.
+    Yield Parquet data in tiles batched by asset ids.
 
     :param file_name: as in `from_parquet()`
     :param cols: if an `int` is supplied, it is cast to a string before reading
     :return: a generator of `from_parquet()` dataframes
     """
+    hdbg.dassert_isinstance(asset_id_col, str)
+    hdbg.dassert(asset_id_col, "`asset_id_col` must be nonempty")
     batches = [
         asset_ids[i : i + asset_batch_size]
         for i in range(0, len(asset_ids), asset_batch_size)
     ]
-    columns = [str(col) for col in cols]
+    if cols:
+        columns = [str(col) for col in cols]
+    else:
+        columns = None
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
         filter_ = build_asset_id_filter(batch, asset_id_col)

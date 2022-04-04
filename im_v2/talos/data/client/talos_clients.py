@@ -18,6 +18,7 @@ import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
+import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
 
@@ -167,11 +168,13 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        mode: str = "data_client",
     ) -> None:
         vendor = "talos"
         super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
+        self._mode = mode
 
     @staticmethod
     def should_be_online() -> bool:
@@ -194,42 +197,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): CmTask1420.
         return []
 
-    def _apply_talos_normalization(
-        self,
-        data: pd.DataFrame,
-        *,
-        full_symbol_col_name: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization:
-
-        - Convert `timestamp` column to a UTC timestamp and set index.
-        - Drop extra columns (e.g. `id` created by the DB).
-        """
-        # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
-            hdateti.convert_unix_epoch_to_timestamp
-        )
-        data = data.set_index("timestamp")
-        # Specify OHLCV columns.
-        full_symbol_col_name = self._get_full_symbol_col_name(
-            full_symbol_col_name
-        )
-        ohlcv_columns = [
-            # "timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            full_symbol_col_name,
-        ]
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data.loc[:, ohlcv_columns]
-        return data
-
     @staticmethod
     # TODO(Danya): Move up to hsql.
     def _create_in_operator(values: List[str], column_name: str) -> str:
@@ -247,6 +214,80 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         return in_operator
 
+    def _apply_talos_normalization(
+            self,
+            data: pd.DataFrame,
+            *,
+            full_symbol_col_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Apply Talos-specific normalization.
+        `data_client` mode:
+        - Convert `timestamp` column to a UTC timestamp and set index.
+        - Drop extra columns (e.g. `id` created by the DB).
+
+        `market_data` enforce an output compatible with `MarketData`, by:
+        - Add `start_timestamp` column in UTC timestamp format.
+        - Add `end_timestamp` column in UTC timestamp format.
+        - Add `asset_id` column which is result of mapping full_symbol to integer.
+        - Drop extra columns.
+        - The output looks like:
+        ```
+        open  high  low   close volume  start_timestamp          end_timestamp            asset_id
+        0.825 0.826 0.825 0.825 18427.9 2022-03-16 2:46:00+00:00 2022-03-16 2:47:00+00:00 3303714233
+        0.825 0.826 0.825 0.825 52798.5 2022-03-16 2:47:00+00:00 2022-03-16 2:48:00+00:00 3303714233
+        ```
+        """
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
+        ohlcv_columns = [
+            # "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
+        if self._mode == "data_client":
+            # Update index.
+            data = data.set_index("timestamp")
+            ohlcv_columns.append(full_symbol_col_name)
+        elif self._mode == "market_data":
+            # Add `asset_id` column using maping on `full_symbol` column.
+            data["asset_id"] = data[full_symbol_col_name].apply(
+                imvcuunut.string_to_numerical_id
+            )
+            # Rename column `timestamp` -> `end_timestamp`.
+            data = data.rename({"timestamp": "end_timestamp"}, axis=1)
+            # Generate `start_timestamp` from `end_timestamp` by substracting delta.
+            delta = pd.Timedelta("1M")
+            data["start_timestamp"] = data["end_timestamp"].apply(
+                lambda pd_timestamp: (pd_timestamp - delta)
+            )
+            # Columns that should left in the table.
+            market_data_ohlcv_columns = [
+                "start_timestamp",
+                "end_timestamp",
+                "asset_id",
+            ]
+            # Concatenate two lists of columns.
+            ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
+        else:
+            hdbg.dfatal(
+                "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
+                % self._mode
+            )
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data.loc[:, ohlcv_columns]
+        return data
+
     def _read_data(
         self,
         full_symbols: List[imvcdcfusy.FullSymbol],
@@ -261,8 +302,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         # Parse symbols into exchange and currency pair.
         parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
-        exchange_ids = [symbol[0] for symbol in parsed_symbols]
-        currency_pairs = [symbol[1] for symbol in parsed_symbols]
         # Convert timestamps to epochs.
         if start_ts:
             start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -274,7 +313,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             end_unix_epoch = end_ts
         # Read data from DB.
         select_query = self._build_select_query(
-            exchange_ids, currency_pairs, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
         data = hsql.execute_query_to_df(self._db_connection, select_query)
         # Add a full symbol column.
@@ -286,14 +325,14 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         # Remove extra columns and create a timestamp index.
         # TODO(Danya): The normalization may change depending on use of the class.
-        data = self._apply_talos_normalization(data,
-                full_symbol_col_name=full_symbol_col_name)
+        data = self._apply_talos_normalization(
+            data, full_symbol_col_name=full_symbol_col_name
+        )
         return data
 
     def _build_select_query(
         self,
-        exchange_ids: List[str],
-        currency_pairs: List[str],
+        parsed_symbols: List[Tuple],
         start_unix_epoch: Optional[int],
         end_unix_epoch: Optional[int],
         *,
@@ -309,24 +348,19 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         ```
         "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000
          AND timestamp <= 1647471180000
-         AND exchange_id IN ('binance')
-         AND currency_pair IN ('AVAX_USDT')"
+         AND ((exchange_id='binance' AND currency_pair='AVAX_USDT')
+          OR (exchange_id='ftx' AND currency_pair='BTC_USDT'))
         ```
-
-        :param exchange_ids: list of exchanges, e.g. ['binance', 'ftx']
-        :param currency_pairs: list of currency pairs, e.g. ['BTC_USDT']
+        :param parsed_symbols: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
         :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
         :return: SELECT query for Talos data
         """
-        # TODO(Danya): Make all params optional to select all data.
-        hdbg.dassert_list_of_strings(
-            exchange_ids,
-            msg="'exchange_ids' should be a list of strings, e.g. `['binance', 'ftx']`",
-        )
-        hdbg.dassert_list_of_strings(
-            currency_pairs,
-            msg="'currency_pairs' should be a list of strings, e.g. `['AVA_USDT', 'BTC_USDT']`",
+        hdbg.dassert_container_type(
+            obj=parsed_symbols,
+            container_type=List,
+            elem_type=tuple,
+            msg="`parsed_symbols` should be a list of tuple",
         )
         # Build a SELECT query.
         select_query = f"SELECT * FROM {self._table_name} WHERE "
@@ -351,12 +385,19 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 end_unix_epoch,
                 msg="Start unix epoch should be smaller than end.",
             )
-        # Add 'exchange_id IN (...)' clause.
-        where_clause.append(self._create_in_operator(exchange_ids, "exchange_id"))
-        # Add 'currency_pair IN (...)' clause.
-        where_clause.append(
-            self._create_in_operator(currency_pairs, "currency_pair")
-        )
+        # Create conditions for getting values by exchange_id and currency_pair
+        # In the end there should be something like:
+        # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT')
+        exchange_currency_conditions = [
+            f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
+            for exchange_id, currency_pair in parsed_symbols
+            if exchange_id and currency_pair
+        ]
+        if exchange_currency_conditions:
+            # Add OR conditions between each pair of `exchange_id` and `currency_pair`
+            where_clause.append(
+                "(" + " OR ".join(exchange_currency_conditions) + ")"
+            )
         # Build whole query.
         query = select_query + " AND ".join(where_clause)
         if limit:
@@ -394,7 +435,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         raise NotImplementedError
 
     def _get_start_end_ts_for_symbol(
-            self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
     ) -> pd.Timestamp:
         """
         Select a maximum/minimum timestamp for the given symbol.
