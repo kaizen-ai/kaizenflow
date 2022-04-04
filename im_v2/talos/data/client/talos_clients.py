@@ -243,9 +243,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         Create a select query and load data from database.
         """
         # Parse symbols into exchange and currency pair.
-        exchange_currency_pairs = [
-            imvcdcfusy.parse_full_symbol(s) for s in full_symbols
-        ]
+        parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
         # Convert timestamps to epochs.
         if start_ts:
             start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -257,7 +255,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             end_unix_epoch = end_ts
         # Read data from DB.
         select_query = self._build_select_query(
-            exchange_currency_pairs, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
         data = hsql.execute_query_to_df(self._db_connection, select_query)
         # Add a full symbol column.
@@ -276,7 +274,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def _build_select_query(
         self,
-        exchange_currency_pairs: List[Tuple],
+        parsed_symbols: List[Tuple],
         start_unix_epoch: Optional[int],
         end_unix_epoch: Optional[int],
         *,
@@ -295,16 +293,16 @@ class RealTimeSqlTalosClient(icdc.ImClient):
          AND ((exchange_id='binance' AND currency_pair='AVAX_USDT')
           OR (exchange_id='ftx' AND currency_pair='BTC_USDT'))
         ```
-        :param exchange_currency_pairs: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
+        :param parsed_symbols: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
         :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
         :return: SELECT query for Talos data
         """
         hdbg.dassert_container_type(
-            obj=exchange_currency_pairs,
+            obj=parsed_symbols,
             container_type=List,
             elem_type=tuple,
-            msg="`exchange_currency_pairs` should be a list of tuple",
+            msg="`parsed_symbols` should be a list of tuple",
         )
         # Build a SELECT query.
         select_query = f"SELECT * FROM {self._table_name} WHERE "
@@ -334,7 +332,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT')
         exchange_currency_conditions = [
             f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
-            for exchange_id, currency_pair in exchange_currency_pairs
+            for exchange_id, currency_pair in parsed_symbols
             if exchange_id and currency_pair
         ]
         if exchange_currency_conditions:
