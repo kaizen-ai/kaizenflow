@@ -87,7 +87,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
         hdbg.dassert_file_exists(filename)
         return filename
 
-    def get_market_data(self, event_loop) -> mdata.MarketData:
+    def get_market_data(self, event_loop: asyncio.AbstractEventLoop) -> mdata.MarketData:
         filename = self.get_input_filename("market_data_df.csv")
         market_data_df = pd.read_csv(
             filename,
@@ -120,7 +120,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
     # TODO(gp): This can become an _example.
     def get_portfolio(
         self,
-        event_loop,
+        event_loop: asyncio.AbstractEventLoop,
     ) -> oms.DataFramePortfolio:
         market_data = self.get_market_data(event_loop)
         asset_ids = market_data._asset_ids
@@ -167,7 +167,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
         actual = str(portfolio)
         print("ACTUAL \n", actual)
         expected = r"""
-# historical holdings=                                                                                                                 
+# historical holdings=
 asset_id                     100    200    -1
 2000-01-01 09:40:01-05:00 -50.00  50.00    0.00
 2000-01-01 09:45:01-05:00 -50.13  49.91  220.24
