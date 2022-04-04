@@ -3669,9 +3669,12 @@ def _build_run_command_line(
 
     E.g.,
     ```
-    pytest -m "optimizer and not slow and not superslow" . '
-            "-o timeout_func_only=true --timeout 5 --reruns 2 "
-            '--only-rerun "Failed: Timeout"
+    pytest -m "optimizer and not slow and not superslow" \
+                . \
+                -o timeout_func_only=true \
+                --timeout 5 \
+                --reruns 2 \
+                --only-rerun "Failed: Timeout"
     ```
 
     The rest of params are the same as in `run_fast_tests()`.

@@ -237,7 +237,7 @@ asset_id                      100     200
         print("EXPECTED \n", expected)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    # TODO(gp): -> test1
+    @pytest.mark.skip("CmTask #1607 Flaky fail `test_process_forecasts_opt.py`")
     def test_initialization1(self) -> None:
         """
         Run the process forecasts.
