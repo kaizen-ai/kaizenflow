@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import pandas as pd
 
@@ -317,6 +317,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 class TestRealTimeSqlTalosClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
+
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
@@ -759,6 +760,16 @@ class TestRealTimeSqlTalosClient1(
 
     # ///////////////////////////////////////////////////////////////////////
 
+    def test_build_numerical_to_string_id_mapping(self) -> None:
+        im_client = self.setup_talos_sql_client()
+        actual_outcome = im_client.build_numerical_to_string_id_mapping()
+        expected_outcome = self._get_test_numerical_to_string_id_mapping()
+        # Message in case if test case got failed.
+        message = "Actual and expected mappings are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+
+    # ///////////////////////////////////////////////////////////////////////
+
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
         """
@@ -821,3 +832,24 @@ class TestRealTimeSqlTalosClient1(
         """
         query = imvtadbut.get_talos_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
+
+    def _get_test_numerical_to_string_id_mapping(self) -> Dict[int, str]:
+        test_dict = {
+            3303714233: 'binance::ADA_USDT',
+            2601760471: 'binance::LINK_USDT',
+            2870803583: 'ftx::BTC_USDT',
+            8717633868: 'binance::AVAX_USDT',
+            6514937930: 'ftx::SOL_USDT',
+            2061507978: 'binance::EOS_USDT',
+            1467591036: 'binance::BTC_USDT',
+            2853975840: 'ftx::LINK_USDT',
+            1480530030: 'ftx::ETH_USDT',
+            3065029174: 'binance::DOGE_USDT',
+            2152163375: 'ftx::DOGE_USDT',
+            1464553467: 'binance::ETH_USDT',
+            8968126878: 'binance::BNB_USDT',
+            2502756391: 'ftx::BNB_USDT',
+            2237530510: 'binance::SOL_USDT',
+            2063960810: 'ftx::XRP_USDT'
+        }
+        return test_dict

@@ -214,7 +214,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
         query = (
-            f"SELECT DISTINCT currency_pair, exchange_id FROM {self._table_name}"
+            f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
         )
         currency_exchange_df = hsql.execute_query_to_df(
             self._db_connection, query
