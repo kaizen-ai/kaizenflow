@@ -243,7 +243,9 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         Create a select query and load data from database.
         """
         # Parse symbols into exchange and currency pair.
-        exchange_currency_pairs = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
+        exchange_currency_pairs = [
+            imvcdcfusy.parse_full_symbol(s) for s in full_symbols
+        ]
         # Convert timestamps to epochs.
         if start_ts:
             start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -267,8 +269,9 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         # Remove extra columns and create a timestamp index.
         # TODO(Danya): The normalization may change depending on use of the class.
-        data = self._apply_talos_normalization(data,
-                full_symbol_col_name=full_symbol_col_name)
+        data = self._apply_talos_normalization(
+            data, full_symbol_col_name=full_symbol_col_name
+        )
         return data
 
     def _build_select_query(
@@ -331,12 +334,15 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT')
         exchange_currency_conditions = [
             f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
-            for exchange_id, currency_pair in exchange_currency_pairs if exchange_id and currency_pair
+            for exchange_id, currency_pair in exchange_currency_pairs
+            if exchange_id and currency_pair
         ]
         if exchange_currency_conditions:
             # Add OR conditions as an element of conditions that should be connected by AND
             # There should be something
-            where_clause.append('(' + " OR ".join(exchange_currency_conditions) + ')')
+            where_clause.append(
+                "(" + " OR ".join(exchange_currency_conditions) + ")"
+            )
         # Build whole query.
         query = select_query + " AND ".join(where_clause)
         if limit:
@@ -374,7 +380,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         raise NotImplementedError
 
     def _get_start_end_ts_for_symbol(
-            self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
     ) -> pd.Timestamp:
         """
         Select a maximum/minimum timestamp for the given symbol.
