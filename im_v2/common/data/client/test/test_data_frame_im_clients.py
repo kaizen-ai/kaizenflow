@@ -8,8 +8,14 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 # #############################################################################
 
 
-# TODO(Nina): CmTask1589 "Extend tests for `DataFrameImClient`".
 class TestDataFrameImClient1(icdctictc.ImClientTestCase):
+    """
+    Test the client.
+
+    Note that `test_read_data7()` is not implemented since data that is
+    generated for these tests should alternate every 5 rows and does not
+    contain any data gaps.
+    """
 
     def test_read_data1(self) -> None:
         # Initialize client.
@@ -25,15 +31,13 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
             "volume",
             "feature1",
         ]
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT"]
-        }
+        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         expected_signature = r"""# df=
         index=[2000-01-01 09:31:00+00:00, 2000-01-01 10:10:00+00:00]
         columns=full_symbol,open,high,low,close,volume,feature1
         shape=(40, 7)
                                          full_symbol  open  high  low  close  volume  feature1
-        timestamp                                                                             
+        timestamp
         2000-01-01 09:31:00+00:00  binance::BTC_USDT   100   101   99  101.0       0       1.0
         2000-01-01 09:32:00+00:00  binance::BTC_USDT   100   101   99  101.0       1       1.0
         2000-01-01 09:33:00+00:00  binance::BTC_USDT   100   101   99  101.0       2       1.0
@@ -74,7 +78,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume,feature1
         shape=(80, 7)
                                          full_symbol  open  high  low  close  volume  feature1
-        timestamp                                                                             
+        timestamp
         2000-01-01 09:31:00+00:00  binance::ADA_USDT   100   101   99  101.0       0       1.0
         2000-01-01 09:31:00+00:00  binance::BTC_USDT   100   101   99  101.0       0       1.0
         2000-01-01 09:32:00+00:00  binance::ADA_USDT   100   101   99  101.0       1       1.0
@@ -115,7 +119,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume,feature1
         shape=(74, 7)
                                          full_symbol  open  high  low  close  volume  feature1
-        timestamp                                                                             
+        timestamp
         2000-01-01 09:34:00+00:00  binance::ADA_USDT   100   101   99  101.0       3       1.0
         2000-01-01 09:34:00+00:00  binance::BTC_USDT   100   101   99  101.0       3       1.0
         2000-01-01 09:35:00+00:00  binance::ADA_USDT   100   101   99  101.0       4       1.0
@@ -158,7 +162,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume,feature1
         shape=(16, 7)
                                          full_symbol  open  high  low  close  volume  feature1
-        timestamp                                                                             
+        timestamp
         2000-01-01 09:31:00+00:00  binance::ADA_USDT   100   101   99  101.0       0       1.0
         2000-01-01 09:31:00+00:00  binance::BTC_USDT   100   101   99  101.0       0       1.0
         2000-01-01 09:32:00+00:00  binance::ADA_USDT   100   101   99  101.0       1       1.0
@@ -229,10 +233,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcdfimce.get_DataFrameImClient_example1()
         # Run test.
         full_symbols = "unsupported_exchange::unsupported_currency"
-        self._test_read_data6(
-            im_client,
-            full_symbols
-        )
+        self._test_read_data6(im_client, full_symbols)
 
     # ////////////////////////////////////////////////////////////////////////
 
@@ -242,7 +243,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         full_symbol = "binance::BTC_USDT"
         # Set expected values.
         expected_start_ts = pd.Timestamp("2000-01-01 09:31:00+00:00")
-
+        # Run test.
         self._test_get_start_ts_for_symbol1(
             im_client,
             full_symbol,
@@ -255,7 +256,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         full_symbol = "binance::BTC_USDT"
         # Set expected values.
         expected_end_ts = pd.Timestamp("2000-01-01 10:10:00+00:00")
-
+        # Run test.
         self._test_get_end_ts_for_symbol1(
             im_client,
             full_symbol,
@@ -274,7 +275,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
             "binance::BTC_USDT",
         ]
         expected_last_elements = expected_first_elements
-
+        # Run test.
         self._test_get_universe1(
             im_client,
             expected_length,
