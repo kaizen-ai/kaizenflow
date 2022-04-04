@@ -327,7 +327,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 end_unix_epoch,
                 msg="Start unix epoch should be smaller than end.",
             )
-        # Create conditions which add filter by exchange_id and currency_pair
+        # Create conditions for getting values by exchange_id and currency_pair
         # In the end there should be something like:
         # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT')
         exchange_currency_conditions = [
@@ -336,8 +336,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             if exchange_id and currency_pair
         ]
         if exchange_currency_conditions:
-            # Add OR conditions as an element of conditions that should be connected by AND
-            # There should be something
+            # Add OR conditions between each pair of `exchange_id` and `currency_pair`
             where_clause.append(
                 "(" + " OR ".join(exchange_currency_conditions) + ")"
             )
