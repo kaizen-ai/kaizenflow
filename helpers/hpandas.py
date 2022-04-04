@@ -850,3 +850,62 @@ def read_parquet_to_df(
     _LOG.debug(hprint.to_str("args kwargs"))
     df = pd.read_parquet(stream, *args, **kwargs)
     return df
+
+
+# #############################################################################
+
+
+# TODO(Paul): Add unit tests.
+def compute_weighted_sum(
+    dfs: Dict[str, pd.DataFrame],
+    weights: pd.DataFrame,
+) -> Dict[str, pd.DataFrame]:
+    """
+    Compute weighted sums of `dfs` using `weights`.
+
+    :param dfs: dataframes keyed by id; all dfs should have the same index
+        and cols
+    :param weights: float weights indexed by id with unique col names
+    :return: weighted sums keyed by weight col names
+    """
+    hdbg.dassert_isinstance(dfs, dict)
+    hdbg.dassert(dfs, "dictionary of dfs must be nonempty")
+    # Get a dataframe from the dictionary and record its index and columns.
+    id_ = list(dfs)[0]
+    hdbg.dassert_isinstance(id_, str)
+    df = dfs[id_]
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    idx = df.index
+    cols = df.columns
+    # Sanity-check dataframes in dictionary.
+    for key, value in dfs.items():
+        hdbg.dassert_isinstance(key, str)
+        hdbg.dassert_isinstance(value, pd.DataFrame)
+        hdbg.dassert(
+            value.index.equals(idx),
+            "Index equality fails for keys=%s, %s",
+            id_,
+            key,
+        )
+        hdbg.dassert(
+            value.columns.equals(cols),
+            "Column equality fails for keys=%s, %s",
+            id_,
+            key,
+        )
+    # Sanity-check weights.
+    hdbg.dassert_isinstance(weights, pd.DataFrame)
+    hdbg.dassert_eq(weights.columns.nlevels, 1)
+    hdbg.dassert(not weights.columns.has_duplicates)
+    hdbg.dassert_set_eq(weights.index.to_list(), list(dfs))
+    # Create a multiindexed dataframe to facilitate computing the weighted sums.
+    weighted_dfs = {}
+    combined_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+    # TODO(Paul): Consider relaxing the NaN-handling.
+    for col in weights.columns:
+        weighted_combined_df = combined_df.multiply(weights[col], level=0)
+        weighted_sums = weighted_combined_df.groupby(axis=1, level=1).sum(
+            min_count=len(dfs)
+        )
+        weighted_dfs[col] = weighted_sums
+    return weighted_dfs

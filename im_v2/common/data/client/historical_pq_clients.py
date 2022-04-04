@@ -50,6 +50,7 @@ class HistoricalPqByTileClient(
         super().__init__(
             vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
         )
+        hdbg.dassert_isinstance(root_dir, str)
         self._root_dir = root_dir
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile

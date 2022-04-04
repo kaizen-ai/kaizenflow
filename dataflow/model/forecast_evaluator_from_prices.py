@@ -7,13 +7,13 @@ import dataflow.model.forecast_evaluator_from_prices as dtfmfefrpr
 import datetime
 import logging
 import os
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import sklearn
 
 import core.finance as cofinanc
+import core.signal_processing as sigproc
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
@@ -67,6 +67,71 @@ class ForecastEvaluatorFromPrices:
         self._last_bar_of_day_close = last_bar_of_day_close
         #
         self._remove_weekends = remove_weekends
+
+    @staticmethod
+    def read_portfolio(
+        log_dir: str,
+        *,
+        file_name: Optional[str] = None,
+        tz: str = "America/New_York",
+        cast_asset_ids_to_int: bool = True,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Read and process logged portfolio.
+
+        :param file_name: if `None`, find and use the latest
+        """
+        if file_name is None:
+            dir_name = os.path.join(log_dir, "price")
+            pattern = "*"
+            only_files = True
+            use_relative_paths = True
+            files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
+            files.sort()
+            file_name = files[-1]
+        price = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "price", file_name, tz
+        )
+        volatility = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "volatility", file_name, tz
+        )
+        predictions = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "prediction", file_name, tz
+        )
+        holdings = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "holdings", file_name, tz
+        )
+        positions = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "position", file_name, tz
+        )
+        flows = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "flow", file_name, tz
+        )
+        pnl = ForecastEvaluatorFromPrices._read_df(log_dir, "pnl", file_name, tz)
+        if cast_asset_ids_to_int:
+            for df in [
+                price,
+                volatility,
+                predictions,
+                holdings,
+                positions,
+                flows,
+                pnl,
+            ]:
+                ForecastEvaluatorFromPrices._cast_cols_to_int(df)
+        portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(
+            price,
+            volatility,
+            predictions,
+            holdings,
+            positions,
+            flows,
+            pnl,
+        )
+        statistics_df = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "statistics", file_name, tz
+        )
+        return portfolio_df, statistics_df
 
     def to_str(
         self,
@@ -279,80 +344,13 @@ class ForecastEvaluatorFromPrices:
         )
         return portfolio_df, statistics_df
 
-    @staticmethod
-    def read_portfolio(
-        log_dir: str,
-        *,
-        file_name: Optional[str] = None,
-        tz: str = "America/New_York",
-        cast_asset_ids_to_int: bool = True,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Read and process logged portfolio.
-
-        :param file_name: if `None`, find and use the latest
-        """
-        if file_name is None:
-            dir_name = os.path.join(log_dir, "price")
-            pattern = "*"
-            only_files = True
-            use_relative_paths = True
-            files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
-            files.sort()
-            file_name = files[-1]
-        price = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "price", file_name, tz
-        )
-        volatility = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "volatility", file_name, tz
-        )
-        predictions = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "prediction", file_name, tz
-        )
-        holdings = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "holdings", file_name, tz
-        )
-        positions = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "position", file_name, tz
-        )
-        flows = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "flow", file_name, tz
-        )
-        pnl = ForecastEvaluatorFromPrices._read_df(log_dir, "pnl", file_name, tz)
-        if cast_asset_ids_to_int:
-            for df in [
-                price,
-                volatility,
-                predictions,
-                holdings,
-                positions,
-                flows,
-                pnl,
-            ]:
-                ForecastEvaluatorFromPrices._cast_cols_to_int(df)
-        portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(
-            price,
-            volatility,
-            predictions,
-            holdings,
-            positions,
-            flows,
-            pnl,
-        )
-        statistics_df = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "statistics", file_name, tz
-        )
-        return portfolio_df, statistics_df
-
-    def _validate_df(self, df: pd.DataFrame) -> None:
-        hdbg.dassert_isinstance(df, pd.DataFrame)
-        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
-        hpandas.dassert_strictly_increasing_index(df)
-        hdbg.dassert_eq(df.columns.nlevels, 2)
-        hdbg.dassert_is_subset(
-            [self._price_col, self._volatility_col, self._prediction_col],
-            df.columns.levels[0].to_list(),
-        )
+    def get_cols(self) -> List[str]:
+        cols = [
+            self._price_col,
+            self._volatility_col,
+            self._prediction_col,
+        ]
+        return cols
 
     @staticmethod
     def _build_multiindex_df(
@@ -407,83 +405,6 @@ class ForecastEvaluatorFromPrices:
         df.index = df.index.tz_convert(tz)
         return df
 
-    def _apply_trimming(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Trim `df` according to ATH, weekends, missing data.
-        """
-        # Restrict to required columns.
-        df = df[[self._price_col, self._volatility_col, self._prediction_col]]
-        # Remove weekends if enabled.
-        if self._remove_weekends:
-            df = cofinanc.remove_weekends(df)
-        # Filter dateframe by time.
-        _LOG.debug(
-            "Filtering to data between time %s and %s",
-            self._first_bar_of_day_open,
-            self._last_bar_of_day_close,
-        )
-        df = df.between_time(
-            self._first_bar_of_day_open, self._last_bar_of_day_close
-        )
-        # Drop rows with no prices (this is an approximate way to handle half-days).
-        df = df.dropna(how="all")
-        return df
-
-    def _compute_holdings_and_flows(
-        self,
-        price: pd.DataFrame,
-        target_positions: pd.DataFrame,
-        *,
-        quantization: str = "no_quantization",
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Compute holdings in shares from price and dollar position targets.
-        """
-        # NOTE: We pull prices from the next bar to handle overnight splits
-        # more easily. The intraday price difference is unlikely to make a
-        # difference with respect to trading, at least post-quantization.
-        price_shift = -1
-        target_holdings = target_positions.divide(price.shift(price_shift))
-        target_holdings = ForecastEvaluatorFromPrices._apply_quantization(
-            target_holdings, quantization
-        )
-        # Compute first approximation of current holdings in shares.
-        holdings = target_holdings.shift(1)
-        # Handle overnight period.
-        first_bar_of_day_close_idx = holdings.index.indexer_between_time(
-            start_time=self._first_bar_of_day_close,
-            end_time=self._first_bar_of_day_close,
-        )
-        holdings.iloc[first_bar_of_day_close_idx] = np.nan
-        # Compute first approximation of positions in dollars, excluding the
-        # first bar of the day.
-        positions = holdings.multiply(price)
-        # Forward fill the dollar positions to estimate next-day first bar
-        # holdings.
-        ffill_positions = positions.ffill()
-        holdings = ffill_positions.divide(price)
-        # Re-quantize (to quantize first-bar holdings).
-        # NOTE: We have estimated the beginning-of-day share holdings based on
-        # previous day holdings in dollars and next day end-of-opening bar
-        # price. This enables us to approximately handle corporate actions, but
-        # at the cost of mitigating the impact of large overnight price
-        # movements.
-        holdings = ForecastEvaluatorFromPrices._apply_quantization(
-            holdings, quantization
-        )
-        # Change in shares priced at end of bar. Only valid intraday.
-        flows = -1 * holdings.subtract(holdings.shift(1), fill_value=0).multiply(
-            price
-        )
-        # Set the overnight flow to zero (since we do not trade and since
-        # the share count may change due to corporate actions).
-        first_bar_of_day_close_idx = flows.index.indexer_between_time(
-            start_time=self._first_bar_of_day_close,
-            end_time=self._first_bar_of_day_close,
-        )
-        flows.iloc[first_bar_of_day_close_idx] = np.nan
-        return holdings, flows
-
     @staticmethod
     def _compute_target_positions_from_forecasts(
         volatility: pd.DataFrame,
@@ -517,16 +438,7 @@ class ForecastEvaluatorFromPrices:
         if dollar_neutrality == "no_constraint":
             pass
         elif dollar_neutrality == "gaussian_rank":
-            quantile_transformer = sklearn.preprocessing.QuantileTransformer(
-                n_quantiles=200,
-                output_distribution="normal",
-            )
-            vals = quantile_transformer.fit_transform(target_positions.T.values).T
-            target_positions = pd.DataFrame(
-                vals,
-                target_positions.index,
-                target_positions.columns,
-            )
+            target_positions = sigproc.gaussian_rank(target_positions)
         elif dollar_neutrality == "demean":
             # Cross-sectionally demean signals on a per-bar basis.
             # This is equivalent to a dollar neutralizing linear projection.
@@ -619,3 +531,112 @@ class ForecastEvaluatorFromPrices:
     def _get_df(df: pd.DataFrame, col: str) -> pd.DataFrame:
         hdbg.dassert_in(col, df.columns)
         return df[col]
+
+    def _validate_df(self, df: pd.DataFrame) -> None:
+        hdbg.dassert_isinstance(df, pd.DataFrame)
+        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        hpandas.dassert_strictly_increasing_index(df)
+        hdbg.dassert_eq(df.columns.nlevels, 2)
+        hdbg.dassert_is_subset(
+            [self._price_col, self._volatility_col, self._prediction_col],
+            df.columns.levels[0].to_list(),
+        )
+
+    def _apply_trimming(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Trim `df` according to ATH, weekends, missing data.
+        """
+        # Restrict to required columns.
+        df = df[[self._price_col, self._volatility_col, self._prediction_col]]
+        # Remove weekends if enabled.
+        if self._remove_weekends:
+            df = cofinanc.remove_weekends(df)
+        # Filter dateframe by time.
+        _LOG.debug(
+            "Filtering to data between time %s and %s",
+            self._first_bar_of_day_open,
+            self._last_bar_of_day_close,
+        )
+        df = df.between_time(
+            self._first_bar_of_day_open, self._last_bar_of_day_close
+        )
+        # Drop rows with no prices (this is an approximate way to handle half-days).
+        df = df.dropna(how="all")
+        # Forward fill to mitigate spurious artifacts at the portfolio bar
+        # level.
+        # TODO(Paul): Make this optional, or only apply to assets for which we
+        # have predictions (e.g., the universe may change over the time window
+        # of interest).
+        df = df.ffill()
+        return df
+
+    def _compute_holdings_and_flows(
+        self,
+        price: pd.DataFrame,
+        target_positions: pd.DataFrame,
+        *,
+        quantization: str = "no_quantization",
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Compute holdings in shares from price and dollar position targets.
+        """
+        # Compute target holdings based on prices available now.
+        target_holdings = target_positions.divide(price)
+        # Quantize.
+        target_holdings = ForecastEvaluatorFromPrices._apply_quantization(
+            target_holdings, quantization
+        )
+        # Assume target shares are obtained.
+        holdings = target_holdings.shift(1)
+        # TODO(Paul): Give the user the option of supplying the share
+        # adjustment factors. Infer as below if they are not supplied.
+        # Handle overnight period specially.
+        # 1. Make beginning-of-day-holdings NaN.
+        first_bar_of_day_close_idx = holdings.index.indexer_between_time(
+            start_time=self._first_bar_of_day_close,
+            end_time=self._first_bar_of_day_close,
+        )
+        holdings.iloc[first_bar_of_day_close_idx] = np.nan
+        # 2. Compute overnight bar-to-bar price change.
+        day_rollover_price_bars = price.between_time(
+            self._last_bar_of_day_close, self._first_bar_of_day_close
+        )
+        overnight_price_change_multiple = 1 + day_rollover_price_bars.pct_change()
+        # 3. Infer one-to-many splits by rounding to the nearest integer the
+        #    inverse of the price change multiple.
+        # NOTE: This heuristic does not properly handle reverse splits. There
+        # may also be false positives and false negatives for other types of
+        # splits.
+        # TODO(Paul): log and reports inferred split factors that are not 1.0.
+        inferred_split = (
+            1
+            / overnight_price_change_multiple.between_time(
+                self._first_bar_of_day_close, self._first_bar_of_day_close
+            )
+        ).round()
+        _LOG.debug(
+            "inferred_split=\n%s",
+            hpandas.df_to_str(inferred_split, num_rows=None),
+        )
+        # 4. Compute beginning-of-day holdings from previous end-of-day
+        #    holdings and the inferred split factors.
+        bod_holdings = (
+            holdings.shift(1)
+            .between_time(
+                self._first_bar_of_day_close, self._first_bar_of_day_close
+            )
+            .multiply(inferred_split)
+        )
+        holdings = holdings.add(bod_holdings, fill_value=0)
+        # Change in shares priced at end of bar. Only valid intraday.
+        flows = -1 * holdings.subtract(holdings.shift(1), fill_value=0).multiply(
+            price
+        )
+        # Set the overnight flow to zero (since we do not trade and since
+        # the share count may change due to corporate actions).
+        first_bar_of_day_close_idx = flows.index.indexer_between_time(
+            start_time=self._first_bar_of_day_close,
+            end_time=self._first_bar_of_day_close,
+        )
+        flows.iloc[first_bar_of_day_close_idx] = np.nan
+        return holdings, flows
