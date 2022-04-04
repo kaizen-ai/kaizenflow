@@ -212,10 +212,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         return in_operator
 
     def _apply_talos_normalization(
-        self,
-        data: pd.DataFrame,
-        *,
-        full_symbol_col_name: Optional[str] = None,
+            self,
+            data: pd.DataFrame,
+            *,
+            full_symbol_col_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Apply Talos-specific normalization:
