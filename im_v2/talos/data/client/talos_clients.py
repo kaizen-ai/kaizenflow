@@ -175,6 +175,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self._db_connection = db_connection
         self._table_name = table_name
         self._mode = mode
+        self._numeric_id_mapping = self.build_numerical_to_string_id_mapping()
 
     @staticmethod
     def should_be_online() -> bool:
@@ -197,6 +198,28 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): CmTask1420.
         return []
 
+    def build_numerical_to_string_id_mapping(self) -> Dict[int, str]:
+        """
+        Create a mapping from numerical ids (e.g., encoding asset ids) to the
+        corresponding `full_symbol`.
+        """
+        # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
+        query = (
+            f"SELECT DISTINCT currency_pair, exchange_id FROM {self._table_name}"
+        )
+        currency_exchange_df = hsql.execute_query_to_df(
+            self._db_connection, query
+        )
+        # Merge these columns to the general `full_symbol` format.
+        full_symbols = currency_exchange_df.agg("::".join, axis=1)
+        # Convert to list.
+        full_symbols = full_symbols.to_list()
+        # Map full_symbol with the numerical ids.
+        full_symbol_mapping = imvcuunut.build_numerical_to_string_id_mapping(
+            full_symbols
+        )
+        return full_symbol_mapping
+
     @staticmethod
     # TODO(Danya): Move up to hsql.
     def _create_in_operator(values: List[str], column_name: str) -> str:
@@ -215,14 +238,14 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         return in_operator
 
     def _apply_talos_normalization(
-            self,
-            data: pd.DataFrame,
-            *,
-            full_symbol_col_name: Optional[str] = None,
+        self,
+        data: pd.DataFrame,
+        *,
+        full_symbol_col_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Apply Talos-specific normalization.
-        `data_client` mode:
+        Apply Talos-specific normalization. `data_client` mode:
+
         - Convert `timestamp` column to a UTC timestamp and set index.
         - Drop extra columns (e.g. `id` created by the DB).
 
