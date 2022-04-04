@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+import core.finance as cofinanc
 import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -119,7 +120,7 @@ def get_ReplayedTimeMarketData_example2(
     if columns is None:
         columns = ["last_price"]
     hdbg.dassert_is_not(asset_ids, None)
-    df = generate_random_price_data(
+    df = cofinanc.generate_random_price_data(
         start_datetime, end_datetime, columns, asset_ids
     )
     (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
@@ -152,7 +153,7 @@ def get_ReplayedTimeMarketData_example3(
     )
     columns_ = ["price"]
     asset_ids = [101, 202]
-    df = generate_random_price_data(
+    df = cofinanc.generate_random_price_data(
         start_datetime, end_datetime, columns_, asset_ids
     )
     _LOG.debug("df=%s", hpandas.df_to_str(df))
@@ -184,7 +185,7 @@ def get_ReplayedTimeMarketData_example4(
     Build a `ReplayedMarketData` with synthetic bar data.
     """
     # Generate random price data.
-    df = generate_random_bars(start_datetime, end_datetime, asset_ids)
+    df = cofinanc.generate_random_bars(start_datetime, end_datetime, asset_ids)
     _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
@@ -213,7 +214,7 @@ def get_ReplayedTimeMarketData_example5(
     Build a `ReplayedMarketData` with synthetic top-of-the-book data.
     """
     # Generate random price data.
-    df = generate_random_top_of_book_bars(start_datetime, end_datetime, asset_ids)
+    df = cofinanc.generate_random_top_of_book_bars(start_datetime, end_datetime, asset_ids)
     _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0

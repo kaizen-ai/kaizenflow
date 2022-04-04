@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 import core.config as cconfig
+import core.finance as cofinanc
 import core.real_time_example as cretiexa
 import dataflow.core as dtfcore
 import dataflow.pipelines.dataflow_example as dtfpidtfexa
@@ -54,7 +55,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
             )
             columns = ["close", "vol"]
             asset_ids = [101]
-            df = mdata.generate_random_price_data(
+            df = cofinanc.generate_random_price_data(
                 start_datetime, end_datetime, columns, asset_ids
             )
             initial_replayed_delay = 5
@@ -151,7 +152,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
             )
             columns = ["price", "vol"]
             asset_ids = [1000]
-            df = mdata.generate_random_price_data(
+            df = cofinanc.generate_random_price_data(
                 start_datetime, end_datetime, columns, asset_ids
             )
             initial_replayed_delay = 5

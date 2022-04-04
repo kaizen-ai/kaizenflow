@@ -762,7 +762,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         )
         bar_duration = "1T"
         bar_delay = "0T"
-        data = mdata.build_timestamp_df(idx, bar_duration, bar_delay)
+        data = cofinanc.build_timestamp_df(idx, bar_duration, bar_delay)
         price_pattern = [101.0] * 5 + [100.0] * 5
         price = price_pattern * 2 + [101.0] * 5
         data["price"] = price
@@ -780,7 +780,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         )
         bar_duration = "1T"
         bar_delay = "0T"
-        data = mdata.build_timestamp_df(idx, bar_duration, bar_delay)
+        data = cofinanc.build_timestamp_df(idx, bar_duration, bar_delay)
         data["price"] = 100
         data["asset_id"] = 101
         return data

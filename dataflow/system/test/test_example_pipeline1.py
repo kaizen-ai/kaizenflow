@@ -4,10 +4,10 @@ import logging
 import pandas as pd
 import pytest
 
+import core.finance as cofinanc
 import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
-import market_data as mdata
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
 
     @pytest.mark.slow
     def test_market_data1_database_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df1()
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         actual = self.run_coroutines(
             data, real_time_loop_time_out_in_secs, is_database_portfolio=True
         )
@@ -103,7 +103,7 @@ class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
 
     @pytest.mark.slow
     def test_market_data2_database_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df2()
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         actual = self.run_coroutines(
             data, real_time_loop_time_out_in_secs, is_database_portfolio=True
         )
@@ -111,7 +111,7 @@ class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
 
     @pytest.mark.slow
     def test_market_data3_database_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df3()
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         actual = self.run_coroutines(
             data, real_time_loop_time_out_in_secs, is_database_portfolio=True
         )
@@ -123,7 +123,7 @@ class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
         """
         Compare the output between using a DB and dataframe portfolio.
         """
-        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df1()
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         expected = self.run_coroutines(
             data, real_time_loop_time_out_in_secs, is_database_portfolio=True
         )
@@ -135,7 +135,7 @@ class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
     @pytest.mark.slow
     @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data2_database_vs_dataframe_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df2()
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         expected = self.run_coroutines(
             data, real_time_loop_time_out_in_secs, is_database_portfolio=True
         )
@@ -147,7 +147,7 @@ class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
     @pytest.mark.superslow("Times out in GH Actions.")
     @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
-        data, real_time_loop_time_out_in_secs = mdata.get_market_data_df3()
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         expected = self.run_coroutines(
             data, real_time_loop_time_out_in_secs, is_database_portfolio=True
         )
