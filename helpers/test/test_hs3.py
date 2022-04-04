@@ -1,5 +1,4 @@
 import gzip
-import os
 import unittest.mock as umock
 
 # Equivalent to `import moto`, but skip this module if the module is not present.
@@ -131,14 +130,10 @@ class TestFromFile1(S3Mock):
         """
         # Prepare inputs.
         regular_file_name = "mock.txt"
-        regular_file_content = "line_mock1\nline_mock2\nline_mock3"
         moto_s3fs = hs3.get_s3fs("ck")
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
+        lines = [b"line_mock1\n", b"line_mock2\n", b"line_mock3"]
         # Prepare test file.
-        lines = [
-            f"{line}{os.linesep}".encode()
-            for line in regular_file_content.split(os.linesep)
-        ]
         with moto_s3fs.open(s3_path, "wb") as s3_file:
             s3_file.writelines(lines)
         # Read file.
@@ -155,14 +150,10 @@ class TestFromFile1(S3Mock):
         """
         # Prepare inputs.
         gzip_file_name = "mock.gzip"
-        gzip_file_content = "line_mock1\nline_mock2\nline_mock3"
         moto_s3fs = hs3.get_s3fs("ck")
         s3_path = f"s3://{self.bucket_name}/{gzip_file_name}"
+        lines = [b"line_mock1\n", b"line_mock2\n", b"line_mock3"]
         # Prepare test file.
-        lines = [
-            f"{line}{os.linesep}".encode()
-            for line in gzip_file_content.split(os.linesep)
-        ]
         with moto_s3fs.open(s3_path, "wb") as s3_file:
             with gzip.GzipFile(fileobj=s3_file) as gzip_file:
                 gzip_file.writelines(lines)
