@@ -70,6 +70,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     integrate_diff_overlapping_files,
     integrate_files,
     integrate_find_files,
+    integrate_find_files_touched_since_last_integration,
     lint,
     lint_check_python_files,
     lint_check_python_files_in_docker,

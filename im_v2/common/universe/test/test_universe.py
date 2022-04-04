@@ -16,7 +16,6 @@ import im_v2.common.universe.universe as imvcounun
 
 
 class TestExtractUniverseVersion1(hunitest.TestCase):
-
     def test_extract_universe_version1(self) -> None:
         """
         Verify function provides expected output on valid input.
@@ -105,7 +104,6 @@ class TestExtractUniverseVersion1(hunitest.TestCase):
 
 
 class TestGetUniverseGeneral1(hunitest.TestCase):
-
     def test_get_universe_invalid_vendor(self) -> None:
         """
         Verify that incorrect vendor name is recognized.
@@ -115,7 +113,6 @@ class TestGetUniverseGeneral1(hunitest.TestCase):
 
 
 class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
-
     def _test_get_universe_file_path(self, vendor: str, version: str) -> None:
         """
         A smoke test to test correct file path return when correct version is
@@ -159,7 +156,6 @@ class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
 
 
 class TestGetUniverse1_TestCase(hunitest.TestCase):
-
     def _test_get_universe1(self, vendor: str) -> None:
         """
         A smoke test to verify that universe loads correctly.
@@ -221,4 +217,3 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         self.assertEqual(len(actual), 2)
         self.assertEqual(actual[0], universe_as_full_symbols[0])
         self.assertEqual(actual[1], universe_as_full_symbols[1])
-
