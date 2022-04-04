@@ -1,4 +1,5 @@
 import gzip
+import os
 import unittest.mock as umock
 
 # Equivalent to `import moto`, but skip this module if the module is not present.
@@ -118,4 +119,73 @@ class TestToFile1(S3Mock):
         # Check output.
         actual = str(fail.value)
         expected = r"S3 only allows binary mode!"
+        self.assert_equal(actual, expected)
+
+
+@pytest.mark.skip("Enable after CMTask1292 is resolved.")
+class TestFromFile1(S3Mock):
+
+    def test_from_file1(self) -> None:
+        """
+        Verify that regular `.txt` file can be read from S3.
+        """
+        # Prepare inputs.
+        regular_file_name = "mock.txt"
+        regular_file_content = "line_mock1\nline_mock2\nline_mock3"
+        moto_s3fs = hs3.get_s3fs("ck")
+        s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
+        # Prepare test file.
+        lines = [
+            f"{line}{os.linesep}".encode()
+            for line in regular_file_content.split(os.linesep)
+        ]
+        with moto_s3fs.open(s3_path, "wb") as s3_file:
+            s3_file.writelines(lines)
+        # Read file.
+        file_content = hs3.from_file(s3_path, aws_profile=moto_s3fs)
+        # Check output.
+        expected = r"""line_mock1
+        line_mock2
+        line_mock3"""
+        self.assert_equal(file_content, expected, fuzzy_match=True)
+
+    def test_from_file2(self) -> None:
+        """
+        Verify that compressed (e.g,`.gz`,`gzip`) file can be read from S3.
+        """
+        # Prepare inputs.
+        gzip_file_name = "mock.gzip"
+        gzip_file_content = "line_mock1\nline_mock2\nline_mock3"
+        moto_s3fs = hs3.get_s3fs("ck")
+        s3_path = f"s3://{self.bucket_name}/{gzip_file_name}"
+        # Prepare test file.
+        lines = [
+            f"{line}{os.linesep}".encode()
+            for line in gzip_file_content.split(os.linesep)
+        ]
+        with moto_s3fs.open(s3_path, "wb") as s3_file:
+            with gzip.GzipFile(fileobj=s3_file) as gzip_file:
+                gzip_file.writelines(lines)
+        # Read file.
+        file_content = hs3.from_file(s3_path, aws_profile=moto_s3fs)
+        # Check output.
+        expected = r"""line_mock1
+        line_mock2
+        line_mock3"""
+        self.assert_equal(file_content, expected, fuzzy_match=True)
+
+    def test_from_file_invalid1(self) -> None:
+        """
+        Verify that encoding is not allowed.
+        """
+        # Prepare inputs.
+        regular_file_name = "mock.txt"
+        moto_s3fs = hs3.get_s3fs("ck")
+        s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
+        # Read with encoding.
+        with pytest.raises(ValueError) as fail:
+            hs3.from_file(s3_path, encoding=True, aws_profile=moto_s3fs)
+        # Check output.
+        actual = str(fail.value)
+        expected = r"Encoding is not supported when reading from S3!"
         self.assert_equal(actual, expected)
