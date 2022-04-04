@@ -18,7 +18,6 @@ import oms
 _LOG = logging.getLogger(__name__)
 
 
-#@pytest.mark.skip("CmTask #1580 Optimizer-related tests fail.")
 class TestDataFrameProcessForecasts1(hunitest.TestCase):
 
     # TODO(gp): This can become an _example.
