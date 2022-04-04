@@ -161,15 +161,26 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 class RealTimeSqlTalosClient(icdc.ImClient):
     """
     Retrieve real-time Talos data from DB using SQL queries.
+
     """
 
     def __init__(
-        self,
-        resample_1min: bool,
-        db_connection: hsql.DbConnection,
-        table_name: str,
-        mode: str = "data_client",
+            self,
+            resample_1min: bool,
+            db_connection: hsql.DbConnection,
+            table_name: str,
+            mode: str = "data_client",
     ) -> None:
+        """
+        2 modes are available, depending on the purpose of the loaded data:
+        `data_client` and `market_data`.
+
+        `data_client` mode loads data compatible with other clients, including
+         historical ones, and is used for most prod and research tasks.
+
+        `market_data` mode enforces an output compatible with `MarketData` class.
+        This mode is required when loading data to use inside a model.
+        """
         vendor = "talos"
         super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
@@ -221,20 +232,13 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             full_symbol_col_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Apply Talos-specific normalization.
+        Apply Talos-specific normaliz
 
-        2 modes are available: `data_client` and `market_data`.
-
-
-        `data_client` mode loads data compatible with other clients, including
-          historical ones, and is used for most prod and research tasks.
-
+        `data_client` mode:
         - Convert `timestamp` column to a UTC timestamp and set index.
         - Keep `open`, `high`, `low`, `close`, `volume` columns.
 
-        `market_data` enforces an output compatible with `MarketData`.
-          This mode is required when loading data to use inside a model.
-
+        `market_data` mode:
         - Add `start_timestamp` column in UTC timestamp format.
         - Add `end_timestamp` column in UTC timestamp format.
         - Add `asset_id` column which is result of mapping full_symbol to integer.
