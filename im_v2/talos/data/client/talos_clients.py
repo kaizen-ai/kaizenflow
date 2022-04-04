@@ -222,11 +222,19 @@ class RealTimeSqlTalosClient(icdc.ImClient):
     ) -> pd.DataFrame:
         """
         Apply Talos-specific normalization.
-        `data_client` mode:
-        - Convert `timestamp` column to a UTC timestamp and set index.
-        - Drop extra columns (e.g. `id` created by the DB).
 
-        `market_data` enforce an output compatible with `MarketData`, by:
+        2 modes are available: `data_client` and `market_data`.
+
+
+        `data_client` mode loads data compatible with other clients, including
+          historical ones, and is used for most prod and research tasks.
+
+        - Convert `timestamp` column to a UTC timestamp and set index.
+        - Keep `open`, `high`, `low`, `close`, `volume` columns.
+
+        `market_data` enforces an output compatible with `MarketData`.
+          This mode is required when loading data to use inside a model.
+
         - Add `start_timestamp` column in UTC timestamp format.
         - Add `end_timestamp` column in UTC timestamp format.
         - Add `asset_id` column which is result of mapping full_symbol to integer.
