@@ -11,8 +11,8 @@ import optimizer.single_period_optimization as osipeopt
 
 _LOG = logging.getLogger(__name__)
 
-# All tests in this file belong to the `optimizer` test list
-# and need to be run inside an `opt` container.
+# All tests in this file belong to the `optimizer` test list and need to be run
+# inside an `opt` container.
 pytestmark = pytest.mark.optimizer
 
 
@@ -59,6 +59,7 @@ class Test_SinglePeriodOptimizer1(hunitest.TestCase):
         )
         return actual_str
 
+    @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_only_gmv_constraint(self) -> None:
         actual = self.only_gmv_constraint_helper()
         expected = r"""
@@ -69,6 +70,7 @@ asset_id
 3                   -0.00                 500.00           -0.0                 0.5"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_only_gmv_constraint_osqp(self) -> None:
         actual = self.only_gmv_constraint_helper("OSQP")
         expected = r"""
