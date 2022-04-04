@@ -295,6 +295,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         start_unix_epoch: Optional[int],
         end_unix_epoch: Optional[int],
         *,
+        columns: Optional[List[str]] = None,
+        ts_col_name: Optional[str] = "timestamp",
+        left_close: bool = True,
+        right_close: bool = True,
         limit: Optional[int] = None,
     ) -> str:
         """
@@ -313,6 +317,11 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :param parsed_symbols: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
         :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
+        :param columns: columns to select from `table_name`
+           - `None` means all columns.
+        :param ts_col_name: name of timestamp column
+        :param left_close: if operator for `start_unix_epoch` is either > or >=
+        :param right_close: if operator for `end_unix_epoch` is either < or <=
         :return: SELECT query for Talos data
         """
         hdbg.dassert_container_type(
@@ -321,8 +330,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             elem_type=tuple,
             msg="`parsed_symbols` should be a list of tuple",
         )
+        # Handle `columns`.
+        columns_as_str = "*" if columns is None else ",".join(columns)
         # Build a SELECT query.
-        select_query = f"SELECT * FROM {self._table_name} WHERE "
+        select_query = f"SELECT {columns_as_str} FROM {self._table_name} WHERE "
         # Build a WHERE query.
         # TODO(Danya): Generalize to hsql with dictionary input.
         where_clause = []
@@ -331,13 +342,15 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 start_unix_epoch,
                 int,
             )
-            where_clause.append(f"timestamp >= {start_unix_epoch}")
+            operator = ">=" if left_close else ">"
+            where_clause.append(f"{ts_col_name} {operator} {start_unix_epoch}")
         if end_unix_epoch:
             hdbg.dassert_isinstance(
                 end_unix_epoch,
                 int,
             )
-            where_clause.append(f"timestamp <= {end_unix_epoch}")
+            operator = "<=" if right_close else "<"
+            where_clause.append(f"{ts_col_name} {operator} {end_unix_epoch}")
         if start_unix_epoch and end_unix_epoch:
             hdbg.dassert_lte(
                 start_unix_epoch,
