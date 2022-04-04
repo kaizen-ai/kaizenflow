@@ -164,11 +164,11 @@ class RealTimeSqlTalosClient(icdc.ImClient):
     """
 
     def __init__(
-            self,
-            resample_1min: bool,
-            db_connection: hsql.DbConnection,
-            table_name: str,
-            mode: str = "data_client",
+        self,
+        resample_1min: bool,
+        db_connection: hsql.DbConnection,
+        table_name: str,
+        mode: str = "data_client",
     ) -> None:
         """
         2 modes are available, depending on the purpose of the loaded data:
