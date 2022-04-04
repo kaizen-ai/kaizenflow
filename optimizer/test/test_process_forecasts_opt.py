@@ -87,7 +87,9 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
         hdbg.dassert_file_exists(filename)
         return filename
 
-    def get_market_data(self, event_loop: asyncio.AbstractEventLoop) -> mdata.MarketData:
+    def get_market_data(
+        self, event_loop: asyncio.AbstractEventLoop
+    ) -> mdata.MarketData:
         filename = self.get_input_filename("market_data_df.csv")
         market_data_df = pd.read_csv(
             filename,
