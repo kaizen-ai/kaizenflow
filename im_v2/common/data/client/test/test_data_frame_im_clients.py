@@ -275,7 +275,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
             "binance::BTC_USDT",
         ]
         # Universe for the test data contains only 2 full symbols so expected
-        # fir
+        # first and last elements of the universe should be equal.
         expected_last_elements = expected_first_elements
         # Run test.
         self._test_get_universe1(
