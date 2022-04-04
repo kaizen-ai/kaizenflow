@@ -11,10 +11,12 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+import core.artificial_signal_generators as carsigen
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
 import helpers.hprint as hprint
+import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
 
@@ -141,8 +143,6 @@ def generate_random_bars_for_asset(
       - index is an integer index
       - columns include timestamps, asset id, price, volume, and fake features
     """
-    import core.artificial_signal_generators as carsigen
-
     price_process = carsigen.PriceProcess(seed)
     close = price_process.generate_price_series_from_normal_log_returns(
         start_datetime,
@@ -303,8 +303,6 @@ def generate_random_top_of_book_bars_for_asset(
       - index is an integer index
       - columns include timestamps, asset id, price, volume, and fake features
     """
-    import core.artificial_signal_generators as carsigen
-
     price_process = carsigen.PriceProcess(seed)
     bid = price_process.generate_price_series_from_normal_log_returns(
         start_datetime,
@@ -437,13 +435,13 @@ def get_market_data_df3() -> pd.DataFrame:
 # #############################################################################
 
 
-def get_im_client_market_data_df1() -> pd.DataFrame:
+def get_im_client_market_data_df1(
+    full_symbols: List[icdc.FullSymbol]
+) -> pd.DataFrame:
     """
     Generate `ImClient` output example with price data that alternates every 5
     minutes.
     """
-    # Set full symbols and timestamps to generate data for.
-    full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
     idx = pd.date_range(
         start=pd.Timestamp("2000-01-01 09:31:00-00:00", tz="utc"),
         end=pd.Timestamp("2000-01-01 10:10:00-00:00", tz="utc"),
@@ -459,9 +457,8 @@ def get_im_client_market_data_df1() -> pd.DataFrame:
     # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates from data".
     # Generate unique volume values to avoid dropping rows as duplicates.
     volume = list(range(40))
-    # Initialize a resulting data list.
-    all_data_list: List = []
     # Generate data for each symbol.
+    all_data_list: List = []
     for full_symbol in full_symbols:
         data = pd.DataFrame(index=idx)
         data["full_symbol"] = full_symbol
@@ -474,7 +471,6 @@ def get_im_client_market_data_df1() -> pd.DataFrame:
         all_data_list.append(data)
     # Combine data for all the symbols in one dataframe.
     all_data = pd.concat(all_data_list)
-    # Name index column and sort rows by timestamp index and full symbol.
     all_data.index.name = "timestamp"
     all_data = all_data.sort_values(["timestamp", "full_symbol"])
     return all_data
