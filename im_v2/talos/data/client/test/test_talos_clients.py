@@ -393,7 +393,7 @@ class TestRealTimeSqlTalosClient1(
         )
         expected_outcome = (
             "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
-            "1647471180000 AND ((exchange_id=binance AND currency_pair=BTC_USDT))"
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
@@ -416,7 +416,7 @@ class TestRealTimeSqlTalosClient1(
         actual_outcome = talos_sql_client._build_select_query(
             exchange_currency_pairs, start_unix_epoch, end_unix_epoch
         )
-        expected_outcome = "SELECT * FROM talos_ohlcv WHERE ((exchange_id=binance AND currency_pair=BTC_USDT))"
+        expected_outcome = "SELECT * FROM talos_ohlcv WHERE ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
