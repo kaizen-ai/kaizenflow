@@ -168,11 +168,13 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        mode: str = "data_client",
     ) -> None:
         vendor = "talos"
         super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
+        self._mode = mode
 
     @staticmethod
     def should_be_online() -> bool:
@@ -217,7 +219,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         data: pd.DataFrame,
         *,
         full_symbol_col_name: Optional[str] = None,
-        mode: str = "data_client",
     ) -> pd.DataFrame:
         """
         Apply Talos-specific normalization.
@@ -225,11 +226,17 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         - Convert `timestamp` column to a UTC timestamp and set index.
         - Drop extra columns (e.g. `id` created by the DB).
 
-        `market_data` mode:
+        `market_data` enforce an output compatible with `MarketData`, by:
         - Add `start_timestamp` column in UTC timestamp format.
         - Add `end_timestamp` column in UTC timestamp format.
         - Add `asset_id` column which is result of mapping full_symbol to integer.
         - Drop extra columns.
+        - The output looks like:
+        ```
+        open  high  low   close volume  start_timestamp          end_timestamp            asset_id
+        0.825 0.826 0.825 0.825 18427.9 2022-03-16 2:46:00+00:00 2022-03-16 2:47:00+00:00 3303714233
+        0.825 0.826 0.825 0.825 52798.5 2022-03-16 2:47:00+00:00 2022-03-16 2:48:00+00:00 3303714233
+        ```
         """
         # Convert timestamp column with Unix epoch to timestamp format.
         data["timestamp"] = data["timestamp"].apply(
@@ -247,12 +254,12 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             "close",
             "volume",
         ]
-        if mode == "data_client":
+        if self._mode == "data_client":
             # Update index.
             data = data.set_index("timestamp")
             # Add `full_symbol_col_name`.
             ohlcv_columns.append(full_symbol_col_name)
-        elif mode == "market_data":
+        elif self._mode == "market_data":
             # Add `asset_id` column using maping on `full_symbol` column.
             data["asset_id"] = data[full_symbol_col_name].apply(
                 imvcuunut.string_to_numerical_id
@@ -275,7 +282,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         else:
             hdbg.dfatal(
                 "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
-                % mode
+                % self._mode
             )
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
