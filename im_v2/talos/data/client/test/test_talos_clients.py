@@ -325,19 +325,20 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = ["binance"]
-        currency_pair = ["AVAX_USDT"]
+        exchange_id = "binance"
+        currency_pair = "AVAX_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = "unsupported_type"
         end_unix_epoch = 1647471180000
         with self.assertRaises(AssertionError):
             talos_sql_client._build_select_query(
-                exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+                parsed_symbols, start_unix_epoch, end_unix_epoch
             )
         hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query2(self) -> None:
         """
-        `exchange_ids` is not a list of strings.
+        `parsed_symbols` is not a list of tuple.
         """
         self._create_test_table()
         test_data = self._get_test_data()
@@ -345,11 +346,12 @@ class TestRealTimeSqlTalosClient1(
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "unsupported_type"
         currency_pair = ["AVAX_USDT"]
+        parsed_symbols = [exchange_id, currency_pair]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
         with self.assertRaises(AssertionError):
             talos_sql_client._build_select_query(
-                exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+                parsed_symbols, start_unix_epoch, end_unix_epoch
             )
         hsql.remove_table(self.connection, "talos_ohlcv")
 
@@ -361,13 +363,14 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = ["binance"]
-        currency_pair = ["AVAX_USDT"]
+        exchange_id = "binance"
+        currency_pair = "AVAX_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647471200000
         end_unix_epoch = 1647471180000
         with self.assertRaises(AssertionError):
             talos_sql_client._build_select_query(
-                exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+                parsed_symbols, start_unix_epoch, end_unix_epoch
             )
         hsql.remove_table(self.connection, "talos_ohlcv")
 
@@ -379,16 +382,17 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = ["binance"]
-        currency_pair = ["BTC_USDT"]
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
         actual_outcome = talos_sql_client._build_select_query(
-            exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
         expected_outcome = (
             "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
-            "1647471180000 AND exchange_id IN ('binance') AND currency_pair IN ('BTC_USDT')"
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
@@ -403,14 +407,18 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = ["binance"]
-        currency_pair = ["BTC_USDT"]
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = None
         end_unix_epoch = None
         actual_outcome = talos_sql_client._build_select_query(
-            exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
-        expected_outcome = "SELECT * FROM talos_ohlcv WHERE exchange_id IN ('binance') AND currency_pair IN ('BTC_USDT')"
+        expected_outcome = (
+            "SELECT * FROM talos_ohlcv "
+            "WHERE ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
+        )
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
@@ -424,16 +432,17 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = []
-        currency_pair = []
+        exchange_id = ""
+        currency_pair = ""
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
         actual_outcome = talos_sql_client._build_select_query(
-            exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= 1647471180000 AND "
-            "exchange_id IN () AND currency_pair IN ()"
+            "SELECT * FROM talos_ohlcv "
+            "WHERE timestamp >= 1647470940000 AND timestamp <= 1647471180000"
         )
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
