@@ -303,9 +303,7 @@ def create_dir(
 
 
 def dassert_is_valid_file_name(file_name: str) -> None:
-    # hdbg.dassert_in(type(file_name), (str, unicode))
-    hdbg.dassert_in(type(file_name), [str])
-    hdbg.dassert_is_not(file_name, None)
+    hdbg.dassert_isinstance(file_name, str)
     hdbg.dassert_ne(file_name, "")
 
 
@@ -364,11 +362,6 @@ def to_file(
             mode = "wt"
         else:
             mode = "w"
-    if "a" in mode:
-        # Ensure that file exists in append mode.
-        hdbg.dassert_path_exists(file_name)
-    else:
-        hdbg.dassert_path_not_exists(file_name)
     # Create the enclosing dir, if needed.
     create_enclosing_dir(file_name, incremental=True)
     if use_gzip:

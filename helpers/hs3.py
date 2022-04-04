@@ -215,11 +215,6 @@ def to_file(
         # Inspect file name and path.
         hio.dassert_is_valid_file_name(file_name)
         s3fs_ = get_s3fs(aws_profile)
-        if mode is not None and "a" in mode:
-            # Ensure that file exists in append mode.
-            dassert_path_exists(file_name, s3fs_)
-        else:
-            dassert_path_not_exists(file_name, s3fs_)
         mode = "wb" if mode is None else mode
         # Open s3 file.
         with s3fs_.open(file_name, mode) as s3_file:
@@ -234,7 +229,6 @@ def to_file(
                 # TODO(Nikola): Investigate S3 alternative for `os.fsync(f.fileno())`.
                 s3_file.flush()
     else:
-        # TODO(Nikola): Put `lines` as first arg after func update.
         use_gzip = file_name.endswith((".gz", ".gzip"))
         hio.to_file(
             file_name,
@@ -258,7 +252,6 @@ def from_file(
     """
     if aws_profile is not None:
         if encoding:
-            # Encoding can only be used in non-binary mode.
             raise ValueError("Encoding is not supported when reading from S3!")
         # Inspect file name and path.
         hio.dassert_is_valid_file_name(file_name)
