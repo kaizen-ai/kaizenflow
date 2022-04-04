@@ -242,7 +242,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         data["timestamp"] = data["timestamp"].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
-        # Check and get `full_symbol_col_name`.
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
@@ -257,7 +256,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         if self._mode == "data_client":
             # Update index.
             data = data.set_index("timestamp")
-            # Add `full_symbol_col_name`.
             ohlcv_columns.append(full_symbol_col_name)
         elif self._mode == "market_data":
             # Add `asset_id` column using maping on `full_symbol` column.
@@ -266,8 +264,8 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             )
             # Rename column `timestamp` -> `end_timestamp`.
             data = data.rename({"timestamp": "end_timestamp"}, axis=1)
-            # Generate `start_timestamp` from `end_timestamp` column by substracting delta.
-            delta = pd.Timedelta("1 Minute")
+            # Generate `start_timestamp` from `end_timestamp` by substracting delta.
+            delta = pd.Timedelta("1M")
             data["start_timestamp"] = data["end_timestamp"].apply(
                 lambda pd_timestamp: (pd_timestamp - delta)
             )
