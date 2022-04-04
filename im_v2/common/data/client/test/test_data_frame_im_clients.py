@@ -1,3 +1,5 @@
+from typing import List
+
 import pandas as pd
 
 import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
@@ -9,19 +11,12 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 
 
 class TestDataFrameImClient1(icdctictc.ImClientTestCase):
-    """
-    Test the client.
 
-    Note that `test_read_data7()` is not implemented since data that is
-    generated for these tests should alternate every 5 rows and does not
-    contain any data gaps. Thus, resampling cannot be tested properly.
-    """
-
-    def test_read_data1(self) -> None:
-        # Initialize client.
-        im_client = imvcdcdfimce.get_DataFrameImClient_example1()
-        # Set expected values.
-        expected_length = 40
+    @staticmethod
+    def get_expected_column_names() -> List[str]:
+        """
+        Return a list of expected column names.
+        """
         expected_column_names = [
             "full_symbol",
             "open",
@@ -31,6 +26,14 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
             "volume",
             "feature1",
         ]
+        return expected_column_names
+
+    def test_read_data1(self) -> None:
+        # Initialize client.
+        im_client = imvcdcdfimce.get_DataFrameImClient_example1()
+        # Set expected values.
+        expected_length = 40
+        expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         expected_signature = r"""# df=
         index=[2000-01-01 09:31:00+00:00, 2000-01-01 10:10:00+00:00]
@@ -61,15 +64,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcdfimce.get_DataFrameImClient_example1()
         # Set expected values.
         expected_length = 80
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "feature1",
-        ]
+        expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
         }
@@ -102,15 +97,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcdfimce.get_DataFrameImClient_example1()
         # Set expected values.
         expected_length = 74
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "feature1",
-        ]
+        expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
         }
@@ -145,15 +132,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcdfimce.get_DataFrameImClient_example1()
         # Set expected values.
         expected_length = 16
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "feature1",
-        ]
+        expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
         }
@@ -188,15 +167,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcdfimce.get_DataFrameImClient_example1()
         # Set expected values.
         expected_length = 10
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "feature1",
-        ]
+        expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
         }
@@ -234,6 +205,10 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         # Run test.
         full_symbols = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbols)
+
+    # Note that `test_read_data7()` is not implemented since data that is
+    # generated for these tests should alternate every 5 rows and does not
+    # contain any data gaps. Thus, resampling cannot be tested properly.
 
     # ////////////////////////////////////////////////////////////////////////
 
