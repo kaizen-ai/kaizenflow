@@ -49,13 +49,6 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         )
         return txt
 
-    @abc.abstractmethod
-    def _test(self, *args: Any, **kwargs: Any) -> None:
-        """
-        Run the entire flow.
-        """
-        pass
-
     # TODO(gp): -> run_dag_config
     @staticmethod
     def _run_model(
@@ -116,6 +109,13 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         cmd = " ".join(cmd)
         _LOG.info("cmd=%s", cmd)
         hsystem.system(cmd)
+
+    @abc.abstractmethod
+    def _test(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Run the entire flow.
+        """
+        pass
 
 
 # #############################################################################

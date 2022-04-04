@@ -251,6 +251,76 @@ class ForecastProcessor:
         act = "\n".join(act)
         return act
 
+    @staticmethod
+    def read_logged_target_positions(
+        log_dir: str,
+        *,
+        tz: str = "America/New_York",
+    ) -> pd.DataFrame:
+        """
+        Parse logged `target_position` dataframes.
+
+        Returns a dataframe indexed by datetimes and with two column levels.
+        """
+        name = "target_positions"
+        dir_name = os.path.join(log_dir, name)
+        pattern = "*"
+        only_files = True
+        use_relative_paths = True
+        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
+        files.sort()
+        dfs = []
+        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
+            path = os.path.join(dir_name, file_name)
+            df = pd.read_csv(
+                path, index_col=0, parse_dates=["wall_clock_timestamp"]
+            )
+            # Change the index from `asset_id` to the timestamp.
+            df = df.reset_index().set_index("wall_clock_timestamp")
+            hpandas.dassert_series_type_is(df["asset_id"], np.int64)
+            if not isinstance(df.index, pd.DatetimeIndex):
+                _LOG.info("Skipping file_name=%s", file_name)
+                continue
+            df.index = df.index.tz_convert(tz)
+            # Pivot to multiple column levels.
+            df = df.pivot(columns="asset_id")
+            dfs.append(df)
+        df = pd.concat(dfs)
+        return df
+
+    @staticmethod
+    def read_logged_orders(
+        log_dir: str,
+    ) -> pd.DataFrame:
+        """
+        Parse logged orders and return as a dataframe indexed by order id.
+
+        NOTE: Parsing logged orders takes significantly longer than reading
+        logged target positions.
+        """
+        name = "orders"
+        dir_name = os.path.join(log_dir, name)
+        pattern = "*"
+        only_files = True
+        use_relative_paths = True
+        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
+        files.sort()
+        dfs = []
+        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
+            path = os.path.join(dir_name, file_name)
+            lines = hio.from_file(path)
+            lines = lines.split("\n")
+            for line in lines:
+                if not line:
+                    continue
+                order = omorder.Order.from_string(line)
+                order = order.to_dict()
+                order = pd.Series(order).to_frame().T
+                dfs.append(order)
+        df = pd.concat(dfs)
+        df = df.set_index("order_id")
+        return df
+
     def log_state(self) -> None:
         """
         Log the most recent state of the object.
@@ -342,70 +412,6 @@ class ForecastProcessor:
         if self._log_dir:
             self.log_state()
             self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
-
-    @staticmethod
-    def read_logged_target_positions(
-        log_dir: str,
-        *,
-        tz: str = "America/New_York",
-    ) -> pd.DataFrame:
-        """
-        Parse logged `target_position` dataframes.
-
-        Returns a dataframe indexed by datetimes and with two column levels.
-        """
-        name = "target_positions"
-        dir_name = os.path.join(log_dir, name)
-        files = hio.find_all_files(dir_name)
-        files.sort()
-        dfs = []
-        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
-            path = os.path.join(dir_name, file_name)
-            df = pd.read_csv(
-                path, index_col=0, parse_dates=["wall_clock_timestamp"]
-            )
-            # Change the index from `asset_id` to the timestamp.
-            df = df.reset_index().set_index("wall_clock_timestamp")
-            hpandas.dassert_series_type_is(df["asset_id"], np.int64)
-            if not isinstance(df.index, pd.DatetimeIndex):
-                _LOG.info("Skipping file_name=%s", file_name)
-                continue
-            df.index = df.index.tz_convert(tz)
-            # Pivot to multiple column levels.
-            df = df.pivot(columns="asset_id")
-            dfs.append(df)
-        df = pd.concat(dfs)
-        return df
-
-    @staticmethod
-    def read_logged_orders(
-        log_dir: str,
-    ) -> pd.DataFrame:
-        """
-        Parse logged orders and return as a dataframe indexed by order id.
-
-        NOTE: Parsing logged orders takes significantly longer than reading
-        logged target positions.
-        """
-        name = "orders"
-        dir_name = os.path.join(log_dir, name)
-        files = hio.find_all_files(dir_name)
-        files.sort()
-        dfs = []
-        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
-            path = os.path.join(dir_name, file_name)
-            lines = hio.from_file(path)
-            lines = lines.split("\n")
-            for line in lines:
-                if not line:
-                    continue
-                order = omorder.Order.from_string(line)
-                order = order.to_dict()
-                order = pd.Series(order).to_frame().T
-                dfs.append(order)
-        df = pd.concat(dfs)
-        df = df.set_index("order_id")
-        return df
 
     def _compute_target_positions_in_shares(
         self,

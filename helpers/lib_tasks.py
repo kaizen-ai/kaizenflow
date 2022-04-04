@@ -32,6 +32,7 @@ import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htable as htable
 import helpers.htraceback as htraceb
+import helpers.hunit_test_utils as hunteuti
 import helpers.hversion as hversio
 
 _LOG = logging.getLogger(__name__)
@@ -299,7 +300,10 @@ def _get_files_to_process(
     elif last_commit:
         files = hgit.get_previous_committed_files(dir_name)
     elif all_:
-        files = hio.find_all_files(dir_name)
+        pattern = "*"
+        only_files = True
+        use_relative_paths = True
+        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
     if files_from_user:
         # If files were passed, filter out non-existent paths.
         files = _filter_existing_paths(files_from_user.split())
@@ -1099,46 +1103,26 @@ def git_branch_diff_with_master(  # type: ignore
 # Integrate.
 # #############################################################################
 
-# Integration good practices
-#
 # ## Concepts
 #
 # - We have two dirs storing two forks of the same repo
-# - Files are touched, e.g., added, modified, deleted in each forks
-# - The most problematic files are the files that are modified in both forks
-# - Files that are added or deleted in one fork, should be added / deleted also
-#   in the other fork
+#   - Files are touched, e.g., added, modified, deleted in each forks
+#   - The most problematic files are the files that are modified in both forks
+#   - Files that are added or deleted in one fork, should be added / deleted also
+#     in the other fork
 # - Often we can integrate "by directory", i.e., finding entire directories that
 #   we were touched in one branch but not the other
 #   - In this case we can simply copy the entire dir from one dir to the other
 # - Other times we need to integrate "by file"
+#
+# - There are various interesting Git reference points:
+#   1) the branch point for each branch, at which the integration branch was started
+#   2) the last integration point for each branch, at which the repos are the same,
+#      or at least aligned
 
-# ## Preparation
+# ## Create integration branches
 #
 # - Pull master
-#
-# - Lint both dirs
-#   ```
-#   > cd amp1
-#   > i lint --dir-name . --only-format
-#   > cd cmamp1
-#   > i lint --dir-name . --only-format
-#   ```
-#   or at least the files touched by both repos
-#   ```
-#   > i integrate_files --file-direction only_files_in_src
-#   > cat tmp.integrate_find_files_touched_since_last_integration.cmamp1.txt tmp.integrate_find_files_touched_since_last_integration.amp1.txt | sort | uniq >files.txt
-#   > i lint --only-format -f '$(cat files.txt)'
-#   ```
-#
-# - Add end-of-file:
-#   ```
-#   > find . -name "*.py" -o -name "*.txt" | xargs sed -i '' -e '$a\'
-#   ```
-# - Remove end-of-file:
-#   ```
-#   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
-#   ```
 #
 # - Align `lib_tasks.py`:
 #   ```
@@ -1153,18 +1137,53 @@ def git_branch_diff_with_master(  # type: ignore
 #   > i integrate_create_branch --dir-name cmamp1
 #   ```
 
+# ## Preparation
+#
+# - Lint both dirs:
+#   ```
+#   > cd amp1
+#   > i lint --dir-name . --only-format
+#   > cd cmamp1
+#   > i lint --dir-name . --only-format
+#   ```
+#   or at least the files touched by both repos:
+#   ```
+#   > i integrate_files --file-direction only_files_in_src
+#   > cat tmp.integrate_find_files_touched_since_last_integration.cmamp1.txt tmp.integrate_find_files_touched_since_last_integration.amp1.txt | sort | uniq >files.txt
+#   > FILES=$(cat files.txt)
+#   > i lint --only-format -f "$FILES"
+#   ```
+#
+# - Add end-of-file:
+#   ```
+#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs sed -i '' -e '$a\'
+#
+#   # Remove end-of-file.
+#   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
+#   ```
+
 # ## Integration
 #
-# - Check what files were modified since the last integration in each fork
+# - Check what files were modified since the last integration in each fork:
 #   ```
 #   > i integrate_files --file-direction common_files
 #   > i integrate_files --file-direction only_files_in_src
 #   > i integrate_files --file-direction only_files_in_dst
 #   ```
+#
+# - Look for directory touched on only one branch:
+#   ```
+#   > i integrate_files --file-direction common_files --mode "print_dirs"
+#   > i integrate_files --file-direction only_files_in_src --mode "print_dirs"
+#   > i integrate_files --file-direction only_files_in_dst --mode "print_dirs"
+#   ```
 # - If we find dirs that are touched in one branch but not in the other
 #   we can copy / merge without running risks
+#   ```
+#   > i integrate_diff_dirs --subdir $SUBDIR -c
+#   ```
 #
-# - Check which files are different between the dirs
+# - Check which files are different between the dirs:
 #   ```
 #   > i integrate_diff_dirs
 #   ```
@@ -1209,31 +1228,42 @@ def git_branch_diff_with_master(  # type: ignore
 #   ```
 
 
-# The user uses in the command line "abs_dir", which are the basename of the
-# integration directories (e.g., `amp1`, `cmamp1`)
-# The "src_dir_name" is the one where the command is issued.
-# The "dst_dir_name" is assumed to be parallel to the "src_dir_name"
-# The dirs are then transformed in absolute dirs "abs_src_dir"
+# Invariants for the integration set-up
+#
+# - The user runs commands in a abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
+# - The user refers in the command line to `dir_basename`, which is the basename of
+#   the integration directories (e.g., `amp1`, `cmamp1`)
+#   - The "src_dir_basename" is the one where the command is issued
+#   - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
+# - The dirs are then transformed in absolute dirs "abs_src_dir"
 
 
-def _dassert_current_dir_matches(dir_name: str) -> None:
+def _dassert_current_dir_matches(expected_dir_basename: str) -> None:
     """
-    Ensure that the name of the current dir is the expected one.
+    Ensure that the name of the current dir is the one expected.
+
+    E.g., `/Users/saggese/src/cmamp1` is a valid dir for an integration branch for
+    `cmamp1`.
     """
-    _LOG.debug(hprint.to_str("dir_name"))
-    curr_dir_name = os.path.basename(os.getcwd())
+    _LOG.debug(hprint.to_str("expected_dir_basename"))
+    # Get the basename of the current dir.
+    curr_dir_basename = os.path.basename(os.getcwd())
+    # Check that it's what is expected.
     hdbg.dassert_eq(
-        curr_dir_name,
-        dir_name,
-        "The current dir '%s' is not the source dir '%s'",
-        curr_dir_name,
-        dir_name,
+        curr_dir_basename,
+        expected_dir_basename,
+        "The current dir '%s' doesn't match the expected dir '%s'",
+        curr_dir_basename,
+        expected_dir_basename,
     )
 
 
+# TODO(gp): -> _dassert_is_integration_dir
 def _dassert_is_integration_branch(abs_dir: str) -> None:
     """
-    Ensure that name of the branch in `abs_dir` is an integration or lint one.
+    Ensure that the branch in `abs_dir` is a valid integration or lint branch.
+
+    E.g., `AmpTask1786_Integrate_20220402` is a valid integration branch.
     """
     _LOG.debug(hprint.to_str("abs_dir"))
     branch_name = hgit.get_branch_name(dir_name=abs_dir)
@@ -1247,52 +1277,64 @@ def _dassert_is_integration_branch(abs_dir: str) -> None:
 
 
 def _clean_both_integration_dirs(abs_dir1: str, abs_dir2: str) -> None:
+    """
+    Run `i git_clean` on the passed dirs.
+
+    :param abs_dir1, abs_dir2: full paths of the dirs to clean
+    """
     _LOG.debug(hprint.to_str("abs_dir1 abs_dir2"))
+    #
     cmd = f"cd {abs_dir1} && invoke git_clean"
     hsystem.system(cmd)
+    #
     cmd = f"cd {abs_dir2} && invoke git_clean"
     hsystem.system(cmd)
 
 
 @task
-def integrate_create_branch(ctx, dir_name, dry_run=False):  # type: ignore
+def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     """
-    Create the branch for integration in the current dir.
+    Create the branch for integration of `dir_basename` (e.g., amp1) in the current
+    dir.
 
-    The dir needs to be specified to ensure the set-up is correct.
+    :param dir_basename: specify the dir name (e.g., `amp1`) to ensure the set-up is
+        correct.
     """
     _report_task()
-    # Check that the current dir has the name `dir_name`.
-    _dassert_current_dir_matches(dir_name)
+    # Check that the current dir has the name `dir_basename`.
+    _dassert_current_dir_matches(dir_basename)
     # Create the integration branch with the current date, e.g.,
     # `AmpTask1786_Integrate_20211231`.
     date = datetime.datetime.now().date()
     date_as_str = date.strftime("%Y%m%d")
     branch_name = f"AmpTask1786_Integrate_{date_as_str}"
-    # query_yes_no("Are you sure you want to create the brach ")
+    # query_yes_no("Are you sure you want to create the branch ")
     _LOG.info("Creating branch '%s'", branch_name)
     cmd = f"invoke git_create_branch -b '{branch_name}'"
     _run(ctx, cmd, dry_run=dry_run)
 
 
+# //////////////////////////////////////////////////////////////////////////////
+
+
 def _resolve_src_dst_names(
-    src_dir_name: str, dst_dir_name: str, subdir: str
+    src_dir_basename: str, dst_dir_basename: str, subdir: str
 ) -> Tuple[str, str]:
     """
-    Return the full path of `src_dir_name` and `dst_dir_name` assuming that:
+    Return the full path of `src_dir_basename` and `dst_dir_basename`.
 
-    - `src_dir_name` is the current dir
-    - `dst_dir_name` is a dir parallel to the current one
+    :param src_dir_basename: the current dir (e.g., `amp1`)
+    :param dst_dir_basename: a dir parallel to the current one (`cmamp1`)
 
     :return: absolute paths of both directories
     """
     curr_parent_dir = os.path.dirname(os.getcwd())
     #
-    abs_src_dir = os.path.join(curr_parent_dir, src_dir_name, subdir)
+    abs_src_dir = os.path.join(curr_parent_dir, src_dir_basename, subdir)
     abs_src_dir = os.path.normpath(abs_src_dir)
     hdbg.dassert_dir_exists(abs_src_dir)
     #
-    abs_dst_dir = os.path.join(curr_parent_dir, dst_dir_name, subdir)
+    abs_dst_dir = os.path.join(curr_parent_dir, dst_dir_basename, subdir)
     abs_dst_dir = os.path.normpath(abs_dst_dir)
     hdbg.dassert_dir_exists(abs_dst_dir)
     return abs_src_dir, abs_dst_dir
@@ -1301,8 +1343,9 @@ def _resolve_src_dst_names(
 @task
 def integrate_diff_dirs(  # type: ignore
     ctx,
-    src_dir_name="amp1",
-    dst_dir_name="cmamp1",
+    src_dir_basename="amp1",
+    dst_dir_basename="cmamp1",
+    reverse=False,
     subdir="",
     copy=False,
     use_linux_diff=False,
@@ -1311,22 +1354,36 @@ def integrate_diff_dirs(  # type: ignore
     dry_run=False,
 ):
     """
-    Integrate repos from dirs `src_dir_name` to `dst_dir_name` by diffing or copying
-    all the files with differences.
+    Integrate repos from dirs `src_dir_basename` to `dst_dir_basename` by diffing
+    or copying all the files with differences.
 
     ```
     # Use the default values for src / dst dirs to represent the usual set-up.
-    > i integrate_diff_dirs --src-dir-name amp1 --dst-dir-name cmamp1 --subdir .
+    > i integrate_diff_dirs \
+        --src-dir-basename amp1 \
+        --dst-dir-basename cmamp1 \
+        --subdir .
     ```
 
+    :param src_dir_basename: dir with the source branch (e.g., amp1)
+    :param dst_dir_basename: dir with the destination branch (e.g., cmamp1)
+    :param reverse: switch the roles of the default source and destination branches
+    :param subdir: filter to the given subdir for both dirs (e.g.,
+        `src_dir_basename/subdir` and `dst_dir_basename/subdir`)
     :param copy: copy the files instead of diffing
     :param use_linux_diff: use Linux `diff` instead of `diff_to_vimdiff.py`
     """
     _report_task()
+    if reverse:
+        src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
+        _LOG.warning(
+            "Reversing dirs: "
+            + hprint.to_str2(src_dir_basename, dst_dir_basename)
+        )
     # Check that the integration branches are in the expected state.
-    _dassert_current_dir_matches(src_dir_name)
+    _dassert_current_dir_matches(src_dir_basename)
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
-        src_dir_name, dst_dir_name, subdir
+        src_dir_basename, dst_dir_basename, subdir
     )
     if check_branches:
         _dassert_is_integration_branch(abs_src_dir)
@@ -1356,21 +1413,26 @@ def integrate_diff_dirs(  # type: ignore
     _run(ctx, cmd, dry_run=dry_run)
 
 
+# //////////////////////////////////////////////////////////////////////////////
+
+
 def _find_files_touched_since_last_integration(
-    dir_name: str, abs_dir_name: str, subdir: str
+    abs_dir: str, subdir: str
 ) -> List[str]:
     """
-    Return the list of files modified since the last integration.
+    Return the list of files modified since the last integration for `abs_dir`.
 
-    :param dir_name: basename of the current dir
-    :param abs_dir_name: directory to cd before executing this script
+    :param abs_dir: directory to cd before executing this script
     :param subdir: consider only the files under `subdir`
     """
-    # TODO(gp): dir_name can be computed from abs_dir_name to simplify the interface.
+    _LOG.debug(hprint.to_str2(abs_dir))
+    dir_basename = os.path.basename(abs_dir)
+    # TODO(gp): dir_basename can be computed from abs_dir_name to simplify the
+    #  interface.
     # Change the dir to the correct one.
     old_dir = os.getcwd()
     try:
-        os.chdir(abs_dir_name)
+        os.chdir(abs_dir)
         # Find the hash of all integration commits.
         cmd = "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
         # Remove integrations like "'... Merge branch 'master' into AmpTask1786_Integrate_20220113'"
@@ -1402,11 +1464,11 @@ def _find_files_touched_since_last_integration(
         # Find all the files touched in each branch.
         cmd = f"git diff --name-only {first_commit_hash}..HEAD"
         _, txt = hsystem.system_to_string(cmd)
-        _LOG.debug("files modified since the integration=\n%s", txt)
         files: List[str] = txt.split("\n")
     finally:
         os.chdir(old_dir)
-    # Filter files by subdir.
+    _LOG.debug("Files modified since the integration=\n%s", "\n".join(files))
+    # Filter files by subdir, if needed.
     if subdir:
         filtered_files = []
         for file in files:
@@ -1418,39 +1480,51 @@ def _find_files_touched_since_last_integration(
     files = sorted(files)
     # Save to file for debugging.
     file_name = os.path.join(
-        f"tmp.integrate_find_files_touched_since_last_integration.{dir_name}.txt"
+        f"tmp.integrate_find_files_touched_since_last_integration.{dir_basename}.txt"
     )
     hio.to_file(file_name, "\n".join(files))
     _LOG.debug("Saved file to '%s'", file_name)
     return files
 
 
+@task
+def integrate_find_files_touched_since_last_integration(  # type: ignore
+    ctx,
+    subdir="",
+):
+    """
+    Print the list of files modified since the last integration for this dir.
+    """
+    _report_task()
+    abs_dir = os.getcwd()
+    _ = ctx
+    files = _find_files_touched_since_last_integration(abs_dir, subdir)
+    # Print the result.
+    tag = "Files modified since the integration"
+    print(hprint.frame(tag))
+    print("\n".join(files))
+
+
+# //////////////////////////////////////////////////////////////////////////////
+
+
 def _integrate_files(
     files: Set[str],
     abs_left_dir: str,
     abs_right_dir: str,
-    copy: bool,
-    tag: str,
     only_different_files: bool,
-) -> None:
+) -> List[Tuple[str, str, str]]:
     """
-    Diff or copy `files` between the dirs `abs_left_dir` and `abs_right_dir`.
-
-    This function:
-    - prints the list of the files on screen
-    - creates a script to diff the script
+    Build a list of files to compare based on the pattern.
 
     :param files: relative path of the files to compare
     :param abs_left_dir, abs_right_dir: path of the left / right dir
-    :param only_different_files: include in the script only the ones that are
+    :param only_different_files: include in the script only the files that are
         different
+    :return: list of files to compare
     """
-    _LOG.debug(
-        hprint.to_str("abs_left_dir abs_right_dir copy tag only_different_files")
-    )
-    files_to_diff = []
-    # Create script to diff.
-    script_txt = []
+    _LOG.debug(hprint.to_str("abs_left_dir abs_right_dir only_different_files"))
+    files_to_diff: List[Tuple[str, str, str]] = []
     for file in sorted(list(files)):
         _LOG.debug(hprint.to_str("file"))
         left_file = os.path.join(abs_left_dir, file)
@@ -1464,7 +1538,7 @@ def _integrate_files(
         else:
             # They both exist.
             if only_different_files:
-                # We want to check
+                # We want to check if they are the same.
                 equal = hio.from_file(left_file) == hio.from_file(right_file)
                 skip = equal
             else:
@@ -1477,37 +1551,19 @@ def _integrate_files(
         if skip:
             _LOG.debug("  Skip %s", file)
         else:
-            if copy:
-                cmd = f"cp -f {left_file} {right_file}"
-            else:
-                cmd = f"vimdiff {left_file} {right_file}"
-            _LOG.debug("  -> %s", cmd)
-            script_txt.append(cmd)
-            files_to_diff.append(file)
-    script_txt = "\n".join(script_txt)
-    # Print the files.
-    print(hprint.frame(tag))
-    files_set = sorted(list(files_to_diff))
-    txt = "\n".join(files_set)
-    print(hprint.indent(txt))
-    # Execute / save the script.
-    if copy:
-        for cmd in script_txt:
-            hsystem.system(cmd)
-    else:
-        # Save the diff script.
-        script_file_name = f"./tmp.vimdiff.{tag}.sh"
-        hio.create_executable_script(script_file_name, script_txt)
-        print(f"# To diff run:\n> {script_file_name}")
+            _LOG.debug("  -> (%s, %s)", left_file, right_file)
+            files_to_diff.append((file, left_file, right_file))
+    return files_to_diff
 
 
 @task
 def integrate_files(  # type: ignore
     ctx,
-    src_dir="amp1",
-    dst_dir="cmamp1",
+    src_dir_basename="amp1",
+    dst_dir_basename="cmamp1",
+    reverse=False,
     subdir="",
-    copy=False,
+    mode="vimdiff",
     file_direction="",
     only_different_files=True,
     check_branches=True,
@@ -1515,21 +1571,36 @@ def integrate_files(  # type: ignore
     """
     Find and copy the files that are touched only in one branch or in both.
 
-    :param copy: copy the files instead of diff
-    :param file_direction: which files to diff / copy
-        - "common": process the files that were touched in both branches
-        - "only_src_files": process the files that were touched only in the src dir
-        - "only_dst_files": process the files that were touched only in the dst dir
+    :param src_dir_basename: dir with the source branch (e.g., amp1)
+    :param dst_dir_basename: dir with the destination branch (e.g., cmamp1)
+    :param reverse: switch the roles of the default source and destination branches
+    :param mode:
+        - "print_dirs": print the directories
+        - "vimdiff": diff the files
+        - "copy": copy the files
+    :param file_direction: which files to diff / copy:
+        - "common_files": files touched in both branches
+        - "union_files": files touched in either branch
+        - "only_files_in_src": files touched only in the src dir
+        - "only_files_in_dst": files touched only in the dst dir
     :param only_different_files: consider only the files that are different among
         the branches
     """
     _report_task()
     _ = ctx
+    if reverse:
+        src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
+        _LOG.warning(
+            "Reversing dirs: "
+            + hprint.to_str2(src_dir_basename, dst_dir_basename)
+        )
     # Check that the integration branches are in the expected state.
-    _dassert_current_dir_matches(src_dir)
+    _dassert_current_dir_matches(src_dir_basename)
     # We want to stay at the top level dir, since the subdir is handled by
     # `integrate_find_files_touched_since_last_integration`.
-    abs_src_dir, abs_dst_dir = _resolve_src_dst_names(src_dir, dst_dir, subdir="")
+    abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
+        src_dir_basename, dst_dir_basename, subdir=""
+    )
     if check_branches:
         _dassert_is_integration_branch(abs_src_dir)
         _dassert_is_integration_branch(abs_dst_dir)
@@ -1537,44 +1608,74 @@ def integrate_files(  # type: ignore
         _LOG.warning("Skipping integration branch check")
     # Find the files touched in each branch since the last integration.
     src_files = set(
-        _find_files_touched_since_last_integration(src_dir, abs_src_dir, subdir)
+        _find_files_touched_since_last_integration(abs_src_dir, subdir)
     )
     dst_files = set(
-        _find_files_touched_since_last_integration(dst_dir, abs_dst_dir, subdir)
+        _find_files_touched_since_last_integration(abs_dst_dir, subdir)
     )
     #
     if file_direction == "common_files":
-        common_files = src_files.intersection(dst_files)
-        _integrate_files(
-            common_files,
-            abs_src_dir,
-            abs_dst_dir,
-            copy,
-            file_direction,
-            only_different_files,
-        )
+        files = src_files.intersection(dst_files)
     elif file_direction == "only_files_in_src":
-        only_src_files = src_files - dst_files
-        _integrate_files(
-            only_src_files,
-            abs_src_dir,
-            abs_dst_dir,
-            copy,
-            file_direction,
-            only_different_files,
-        )
+        files = src_files - dst_files
     elif file_direction == "only_files_in_dst":
-        only_dst_files = dst_files - src_files
-        _integrate_files(
-            only_dst_files,
-            abs_src_dir,
-            abs_dst_dir,
-            copy,
-            file_direction,
-            only_different_files,
-        )
+        files = dst_files - src_files
+    elif file_direction == "union_files":
+        files = src_files.union(dst_files)
     else:
         raise ValueError("Invalid file_direction='%s'" % file_direction)
+    #
+    files_to_diff = _integrate_files(
+        files,
+        abs_src_dir,
+        abs_dst_dir,
+        only_different_files,
+    )
+    # Print the files.
+    print(hprint.frame(file_direction))
+    _LOG.debug(hprint.to_str("files_to_diff"))
+    files_set = list(zip(*files_to_diff))
+    if not files_set:
+        _LOG.warning("No file found: skipping")
+        return
+    files_set = sorted(list(files_set[0]))
+    txt = "\n".join(files_set)
+    print(hprint.indent(txt))
+    # Process the files touched.
+    if mode == "print_dirs":
+        files = []
+        for file, left_file, right_file in files_to_diff:
+            dirname = os.path.dirname(file)
+            # Skip empty dir, e.g., for `pytest.ini`.
+            if dirname != "":
+                files.append(dirname)
+        files = sorted(list(set(files)))
+        print(hprint.frame("Dirs changed"))
+        print("\n".join(files))
+    else:
+        # Build the script with the operations to perform.
+        script_txt = []
+        for file, left_file, right_file in files_to_diff:
+            if mode == "copy":
+                cmd = f"cp -f {left_file} {right_file}"
+            elif mode == "vimdiff":
+                cmd = f"vimdiff {left_file} {right_file}"
+            else:
+                raise ValueError("Invalid mode='%s'" % mode)
+            _LOG.debug("  -> %s", cmd)
+            script_txt.append(cmd)
+        script_txt = "\n".join(script_txt)
+        # Execute / save the script.
+        if mode == "copy":
+            for cmd in script_txt:
+                hsystem.system(cmd)
+        elif mode == "vimdiff":
+            # Save the diff script.
+            script_file_name = f"./tmp.vimdiff.{file_direction}.sh"
+            hio.create_executable_script(script_file_name, script_txt)
+            print(f"# To diff run:\n> {script_file_name}")
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
 
 
 @task
@@ -1583,29 +1684,27 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last
-    integration.
+    Find the files that are touched in the current branch since last integration.
     """
     _report_task()
     _ = ctx
     #
-    src_dir = os.path.basename(os.getcwd())
     abs_src_dir = "."
     abs_src_dir = os.path.normpath(abs_src_dir)
     hdbg.dassert_dir_exists(abs_src_dir)
     # Find the files touched in each branch since the last integration.
     src_files = sorted(
-        _find_files_touched_since_last_integration(src_dir, abs_src_dir, subdir)
+        _find_files_touched_since_last_integration(abs_src_dir, subdir)
     )
     print("* Files touched:\n%s" % "\n".join(src_files))
 
 
 @task
 def integrate_diff_overlapping_files(  # type: ignore
-    ctx, src_dir, dst_dir, subdir=""
+    ctx, src_dir_basename, dst_dir_basename, subdir=""
 ):
     """
-    Find the files modified in both branches `src_dir_name` and `dst_dir_name`
+    Find the files modified in both branches `src_dir_basename` and `dst_dir_basename`
     Compare these files from HEAD to master version before the branch point.
 
     This is used to check what changes were made to files modified by
@@ -1614,21 +1713,23 @@ def integrate_diff_overlapping_files(  # type: ignore
     _report_task()
     _ = ctx
     # Check that the integration branches are in the expected state.
-    _dassert_current_dir_matches(src_dir)
-    src_dir, dst_dir = _resolve_src_dst_names(src_dir, dst_dir, subdir)
-    _dassert_is_integration_branch(src_dir)
-    _dassert_is_integration_branch(dst_dir)
-    _clean_both_integration_dirs(src_dir, dst_dir)
+    _dassert_current_dir_matches(src_dir_basename)
+    src_dir_basename, dst_dir_basename = _resolve_src_dst_names(
+        src_dir_basename, dst_dir_basename, subdir
+    )
+    _dassert_is_integration_branch(src_dir_basename)
+    _dassert_is_integration_branch(dst_dir_basename)
+    _clean_both_integration_dirs(src_dir_basename, dst_dir_basename)
     # Find the files modified in both branches.
-    src_hash = hgit.get_branch_hash(src_dir)
+    src_hash = hgit.get_branch_hash(src_dir_basename)
     _LOG.info("src_hash=%s", src_hash)
-    dst_hash = hgit.get_branch_hash(dst_dir)
+    dst_hash = hgit.get_branch_hash(dst_dir_basename)
     _LOG.info("dst_hash=%s", dst_hash)
     diff_files1 = os.path.abspath("./tmp.files_modified1.txt")
     diff_files2 = os.path.abspath("./tmp.files_modified2.txt")
-    cmd = f"cd {src_dir} && git diff --name-only {src_hash} HEAD >{diff_files1}"
+    cmd = f"cd {src_dir_basename} && git diff --name-only {src_hash} HEAD >{diff_files1}"
     hsystem.system(cmd)
-    cmd = f"cd {dst_dir} && git diff --name-only {dst_hash} HEAD >{diff_files2}"
+    cmd = f"cd {dst_dir_basename} && git diff --name-only {dst_hash} HEAD >{diff_files2}"
     hsystem.system(cmd)
     common_files = "./tmp.common_files.txt"
     cmd = f"comm -12 {diff_files1} {diff_files2} >{common_files}"
@@ -3207,7 +3308,10 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
 
 @functools.lru_cache()
 def _get_python_files(subdir: str) -> List[str]:
-    python_files = hio.find_regex_files(subdir, "*.py", only_files=True)
+    pattern = "*.py"
+    only_files = False
+    use_relative_paths = False
+    python_files = hio.listdir(subdir, pattern, only_files, use_relative_paths)
     # Remove tmp files.
     python_files = [f for f in python_files if not f.startswith("tmp")]
     return python_files
@@ -3553,6 +3657,7 @@ def _select_tests_to_skip(test_list_name: str) -> str:
 
 def _build_run_command_line(
     test_list_name: str,
+    custom_marker: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
@@ -3562,23 +3667,39 @@ def _build_run_command_line(
     """
     Build the pytest run command.
 
-    :param test_list_name: "fast_tests", "slow_tests" or
-        "superslow_tests"
+    E.g.,
+    ```
+    pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout"
+    ```
+
     The rest of params are the same as in `run_fast_tests()`.
 
     The invariant is that we don't want to duplicate pytest options that can be
     passed by the user through `-p` (unless really necessary).
+
+    :param test_list_name: "fast_tests", "slow_tests" or
+        "superslow_tests"
+    :param custom_marker: specify a space separated list of
+        `pytest` markers to skip (e.g., `optimizer` for the optimizer
+        tests, see `pytest.ini`). Empty means no marker to skip
     """
     hdbg.dassert_in(
         test_list_name, _TEST_TIMEOUTS_IN_SECS, "Invalid test_list_name"
     )
     pytest_opts = pytest_opts or "."
-    #
     pytest_opts_tmp = []
+
+    # Select tests to skip based on the `test_list_name` (e.g., fast tests)
+    # and on the custom marker, if present.
+    skipped_tests = _select_tests_to_skip(test_list_name)
+    if custom_marker != "":
+        pytest_opts_tmp.append(f'-m "{custom_marker} and {skipped_tests}"')
+    else:
+        pytest_opts_tmp.append(f'-m "{skipped_tests}"')
     if pytest_opts:
         pytest_opts_tmp.append(pytest_opts)
-    skipped_tests = _select_tests_to_skip(test_list_name)
-    pytest_opts_tmp.insert(0, f'-m "{skipped_tests}"')
     timeout_in_sec = _TEST_TIMEOUTS_IN_SECS[test_list_name]
     # Adding `timeout_func_only` is a workaround for
     # https://github.com/pytest-dev/pytest-rerunfailures/issues/99. Because of
@@ -3675,6 +3796,7 @@ def _run_tests(
     ctx: Any,
     stage: str,
     test_list_name: str,
+    custom_marker: str,
     version: str,
     pytest_opts: str,
     skip_submodules: bool,
@@ -3695,6 +3817,7 @@ def _run_tests(
     # Build the command line.
     cmd = _build_run_command_line(
         test_list_name,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
@@ -3715,7 +3838,7 @@ def _run_tests(
     return rc
 
 
-# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code.
+# TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def run_fast_tests(  # type: ignore
     ctx,
@@ -3733,7 +3856,7 @@ def run_fast_tests(  # type: ignore
     Run fast tests.
 
     :param stage: select a specific stage for the Docker image
-    :param pytest_opts: option for pytest
+    :param pytest_opts: additional options for `pytest` invocation. It can be empty
     :param skip_submodules: ignore all the dir inside a submodule
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
@@ -3743,10 +3866,12 @@ def run_fast_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "fast_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -3779,10 +3904,12 @@ def run_slow_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "slow_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -3815,10 +3942,12 @@ def run_superslow_tests(  # type: ignore
     """
     _report_task()
     test_list_name = "superslow_tests"
+    custom_marker = ""
     rc = _run_tests(
         ctx,
         stage,
         test_list_name,
+        custom_marker,
         version,
         pytest_opts,
         skip_submodules,
@@ -4388,139 +4517,6 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
 # #############################################################################
 
 
-def _get_test_directories(root_dir: str) -> List[str]:
-    """
-    Get all paths of the directories that contain unit tests.
-
-    :param root_dir: the dir to start the search from
-    :return: paths of test directories
-    """
-    paths = []
-    for path, _, _ in os.walk(root_dir):
-        # Iterate over the paths to find the test directories.
-        if path.endswith("/test"):
-            paths.append(path)
-    return paths
-
-
-def _rename_class(
-    content: str,
-    old_class_name: str,
-    new_class_name: str,
-) -> str:
-    """
-    Rename the class.
-
-    :param content: the content of the file
-    :param old_class_name: the old name of the target class
-    :param new_class_name: the new name of the target class
-    :return: the content of the file with the class name replaced
-    """
-    # Rename the class.
-    content = re.sub(
-        fr"class {old_class_name}\(", f"class {new_class_name}(", content
-    )
-    return content
-
-
-def _rename_outcomes(
-    path: str,
-    old_class_name: str,
-    new_class_name: str,
-) -> None:
-    """
-    Rename the directory that contains test outcomes.
-
-    :param path: the path to the test directory, e.g. `cmamp1/helpers/test/`
-    :param old_class_name: the old name of the target class
-    :param new_class_name: the new name of the target class
-    """
-    outcomes_path = os.path.join(path, "outcomes")
-    dir_items = os.listdir(outcomes_path)
-    # Get the list of outcomes directories.
-    outcomes = [
-        dir_name
-        for dir_name in dir_items
-        if os.path.isdir(os.path.join(outcomes_path, dir_name))
-    ]
-    renamed = False
-    # Construct target dir name, e.g. `TestClassName.`. We need to add
-    # `.` to indicate the end of the class name.
-    target_dir = old_class_name + "."
-    for outcome_dir in outcomes:
-        # Contruct the path to outcomes directory.
-        outcome_path_old = os.path.join(outcomes_path, outcome_dir)
-        # Both old and new method names should belong to one class.
-        if outcome_dir.startswith(target_dir):
-            # Split old directory name - the part before "." is the class name.
-            class_method = outcome_dir.split(".")
-            # Replace old class name with the new one.
-            class_method[0] = new_class_name
-            outcome_name_new = ".".join(class_method)
-            outcome_path_new = os.path.join(outcomes_path, outcome_name_new)
-        else:
-            continue
-        cmd = f"mv {outcome_path_old} {outcome_path_new}"
-        # Rename the directory.
-        rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-        _LOG.info(
-            "Renaming `%s` directory to `%s`. Output log: %s",
-            outcome_path_old,
-            outcome_path_new,
-            rc,
-        )
-        # Add to git new outcome directory and remove the old one.
-        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
-        hsystem.system(cmd, abort_on_error=False, suppress_output=False)
-        renamed = True
-    if not renamed:
-        _LOG.info(
-            "No outcomes for `%s` were found in `%s`.",
-            old_class_name,
-            outcomes_path,
-        )
-
-
-def _rename_test_in_file(
-    test_dir: str,
-    file_path: str,
-    old_class_name: str,
-    new_class_name: str,
-) -> None:
-    """
-    Process the file:
-
-      - check if the content of the file contains target class
-      - change the class name
-      - rename the outcomes if they exist
-
-    :param test_dir: the path to the test directory containing the file
-    :param file_path: the path to the file
-    :param old_class_name: the old name of the class
-    :param new_class_name: the new name of the class
-    """
-    content = hio.from_file(file_path)
-    if not re.search(fr"class {old_class_name}\(", content):
-        # Return if target test class does not appear in file content.
-        return
-    # Rename the class.
-    content = _rename_class(content, old_class_name, new_class_name)
-    _LOG.info(
-        "%s: class `%s` was renamed to `%s`.",
-        file_path,
-        old_class_name,
-        new_class_name,
-    )
-    # Rename the directories that contain target test outcomes.
-    _rename_outcomes(
-        test_dir,
-        old_class_name,
-        new_class_name,
-    )
-    # Write processed content back to file.
-    hio.to_file(file_path, content)
-
-
 @task
 def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
     """
@@ -4535,34 +4531,10 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     _report_task()
     _ = ctx
     root_dir = os.getcwd()
-    # Assert if the classname is invalid.
-    hdbg.dassert(
-        old_test_class_name.startswith("Test"),
-        "Invalid test_class_name='%s'",
-        old_test_class_name,
+    renamer = hunteuti.UnitTestRenamer(
+        old_test_class_name, new_test_class_name, root_dir
     )
-    hdbg.dassert(
-        new_test_class_name.startswith("Test"),
-        "Invalid test_class_name='%s'",
-        new_test_class_name,
-    )
-    hdbg.dassert_ne(old_test_class_name, new_test_class_name)
-    test_directories = _get_test_directories(root_dir)
-    hdbg.dassert_lte(1, len(test_directories))
-    # Iterate over test directories.
-    for path in test_directories:
-        _LOG.debug("Scanning `%s` directory.", path)
-        search_pattern = os.path.join(path, "test_*.py")
-        # Get all python test files from this directory.
-        files = glob.glob(search_pattern)
-        #
-        for test_file in files:
-            _rename_test_in_file(
-                path,
-                test_file,
-                old_test_class_name,
-                new_test_class_name,
-            )
+    renamer.run()
 
 
 # #############################################################################
@@ -4970,7 +4942,10 @@ def lint(  # type: ignore
         all_ = False
         if dir_name != "":
             hdbg.dassert_eq(files, "")
-            files = hio.find_files(dir_name, "*.py")
+            pattern = "*.py"
+            only_files = True
+            use_relative_paths = False
+            files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
             files = " ".join(files)
         # For linting we can use only files modified in the client, in the branch, or
         # specified.
@@ -5054,7 +5029,10 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 def gh_login(  # type: ignore
     ctx,
     account="",
+    print_status=False,
 ):
+    _report_task()
+    #
     if not account:
         # Retrieve the name of the repo, e.g., "alphamatic/amp".
         full_repo_name = hgit.get_repo_full_name_from_dirname(
@@ -5072,8 +5050,9 @@ def gh_login(  # type: ignore
     else:
         _LOG.warning("Can't find file '%s'", ssh_filename)
     #
-    cmd = "gh auth status"
-    _run(ctx, cmd)
+    if print_status:
+        cmd = "gh auth status"
+        _run(ctx, cmd)
     #
     github_pat_filename = os.path.expanduser(f"~/.ssh/github_pat.{account}.txt")
     if os.path.exists(github_pat_filename):
@@ -5082,8 +5061,9 @@ def gh_login(  # type: ignore
     else:
         _LOG.warning("Can't find file '%s'", github_pat_filename)
     #
-    cmd = "gh auth status"
-    _run(ctx, cmd)
+    if print_status:
+        cmd = "gh auth status"
+        _run(ctx, cmd)
 
 
 def _get_branch_name(branch_mode: str) -> Optional[str]:
@@ -5153,7 +5133,8 @@ def gh_workflow_list(  # type: ignore
         - E.g., "failure", "success"
     """
     _report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
-    _ = ctx
+    # Login.
+    gh_login(ctx)
     # Get the table.
     table = _get_workflow_table()
     # Filter table based on the branch.
@@ -5222,6 +5203,8 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
     Run GH workflows in a branch.
     """
     _report_task(txt=hprint.to_str("branch workflows"))
+    # Login.
+    gh_login(ctx)
     # Get the branch name.
     if branch == "current_branch":
         branch_name = hgit.get_branch_name()
@@ -5328,7 +5311,9 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     _report_task(txt=hprint.to_str("issue_id repo_short_name"))
-    _ = ctx
+    # Login.
+    gh_login(ctx)
+    #
     issue_id = int(issue_id)
     hdbg.dassert_lte(1, issue_id)
     title, url = _get_gh_issue_title(issue_id, repo_short_name)
@@ -5376,6 +5361,9 @@ def gh_create_pr(  # type: ignore
     :param title: title of the PR or the branch name, if title is empty
     """
     _report_task()
+    # Login.
+    gh_login(ctx)
+    #
     branch_name = hgit.get_branch_name()
     if not title:
         # Use the branch name as title.

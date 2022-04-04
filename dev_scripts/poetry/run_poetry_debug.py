@@ -121,6 +121,71 @@ class PoetryDebugger:
         else:
             raise ValueError(f"Unsupported debug mode `{self._debug_mode}`!")
 
+    @staticmethod
+    def _run_lock_cmd(dir_path: str) -> None:
+        """
+        Run `poetry lock` in verbose mode.
+
+        :param dir_path: path of directory where command is run
+        """
+        # Prepare log file.
+        log_file_name = "poetry.log"
+        log_file_path = os.path.join(dir_path, log_file_name)
+        # Prepare `poetry lock` command that is run in the same directory
+        # where `pyproject.toml` and `poetry.toml` are stored.
+        cmd = f"cd {dir_path}; poetry lock -vv"
+        _LOG.info("Resolving poetry dependencies cdm=`%s`", cmd)
+        # Run `poetry lock` command.
+        hsystem.system(cmd, suppress_output=False, output_file=log_file_path)
+
+    @staticmethod
+    def _get_necessary_packages() -> List[str]:
+        """
+        Get necessary Python packages.
+        """
+        necessary_packages = [
+            'python = "^3.8"',
+            'pandas = "*"',
+            'jupyter = "*"',
+            'awscli = "1.22.17"',
+            'jupyter_contrib_nbextensions = "*"',
+            'jupyter_nbextensions_configurator = "*"',
+            'matplotlib = "*"',
+            'networkx = "*"',
+            'psycopg2-binary = "*"',
+            'pyarrow = "*"',
+            'pytest = "*"',
+            'pytest-cov = "*"',
+            'pytest-instafail = "*"',
+            'pytest-rerunfailures = "*"',
+            'pytest-timeout = "*"',
+            'pytest-xdist = "*"',
+            'python-dotenv = "*"',
+            'pywavelets = "*"',
+            's3fs = "*"',
+            'seaborn = "*"',
+            'sklearn = "*"',
+            'statsmodels = "*"',
+            'tqdm = "*"',
+        ]
+        return necessary_packages
+
+    @staticmethod
+    def _get_optional_packages() -> List[str]:
+        """
+        Get optional Python packages.
+        """
+        optional_packages = [
+            'boto3 = "*"',
+            'invoke = "*"',
+            'jsonpickle = "*"',
+            'moto = "*"',
+            'psutil = "*"',
+            'pygraphviz = "*"',
+            'requests = "*"',
+        ]
+        return optional_packages
+
     def _run_with_time_constraint(self, dir_path: str) -> None:
         """
         Command `poetry lock` is started as a separate process so runtime can
@@ -234,71 +299,6 @@ class PoetryDebugger:
         _LOG.info("Writing `poetry.toml` to file=`%s`", file_path)
         hio.to_file(file_path, file_content)
 
-    @staticmethod
-    def _run_lock_cmd(dir_path: str) -> None:
-        """
-        Run `poetry lock` in verbose mode.
-
-        :param dir_path: path of directory where command is run
-        """
-        # Prepare log file.
-        log_file_name = "poetry.log"
-        log_file_path = os.path.join(dir_path, log_file_name)
-        # Prepare `poetry lock` command that is run in the same directory
-        # where `pyproject.toml` and `poetry.toml` are stored.
-        cmd = f"cd {dir_path}; poetry lock -vv"
-        _LOG.info("Resolving poetry dependencies cdm=`%s`", cmd)
-        # Run `poetry lock` command.
-        hsystem.system(cmd, suppress_output=False, output_file=log_file_path)
-
-    @staticmethod
-    def _get_necessary_packages() -> List[str]:
-        """
-        Get necessary Python packages.
-        """
-        necessary_packages = [
-            'python = "^3.8"',
-            'pandas = "*"',
-            'jupyter = "*"',
-            'awscli = "1.22.17"',
-            'jupyter_contrib_nbextensions = "*"',
-            'jupyter_nbextensions_configurator = "*"',
-            'matplotlib = "*"',
-            'networkx = "*"',
-            'psycopg2-binary = "*"',
-            'pyarrow = "*"',
-            'pytest = "*"',
-            'pytest-cov = "*"',
-            'pytest-instafail = "*"',
-            'pytest-rerunfailures = "*"',
-            'pytest-timeout = "*"',
-            'pytest-xdist = "*"',
-            'python-dotenv = "*"',
-            'pywavelets = "*"',
-            's3fs = "*"',
-            'seaborn = "*"',
-            'sklearn = "*"',
-            'statsmodels = "*"',
-            'tqdm = "*"',
-        ]
-        return necessary_packages
-
-    @staticmethod
-    def _get_optional_packages() -> List[str]:
-        """
-        Get optional Python packages.
-        """
-        optional_packages = [
-            'boto3 = "*"',
-            'invoke = "*"',
-            'jsonpickle = "*"',
-            'moto = "*"',
-            'psutil = "*"',
-            'pygraphviz = "*"',
-            'requests = "*"',
-        ]
-        return optional_packages
-
 
 POETRY_STATS = Dict[str, Union[str, Dict[str, str]]]
 
@@ -312,8 +312,13 @@ class PoetryDebugStatsComputer:
         """
         stats: POETRY_STATS = {}
         working_directory = get_debug_poetry_dir()
+        pattern = "poetry.log"
+        only_files = False
+        use_relative_paths = False
         # Collect all logs.
-        log_paths = hio.find_regex_files(working_directory, "poetry.log")
+        log_paths = hio.listdir(
+            working_directory, pattern, only_files, use_relative_paths
+        )
         for log_path in log_paths:
             # Parse log path to extract debug mode directories.
             # `.../poetry/necessary_incremental/pandas/poetry.log`.

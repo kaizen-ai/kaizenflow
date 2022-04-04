@@ -62,16 +62,12 @@ def _get_csv_to_pq_file_names(
     :return: list of tuples (csv_file, pq_file)
     """
     # Collect the files (on S3 or on the local filesystem) that need to be transformed.
-    original_files = []
-    # TODO(Nikola): Remove section below after CMTask1440 is done.
-    if s3fs_:
-        exists_check = s3fs_.exists
-        original_files.extend(s3fs_.listdir(src_dir))
-        # Get the actual file paths from metadata.
-        original_files = [file["Key"] for file in original_files]
-    else:
-        exists_check = os.path.exists
-        original_files.extend(os.listdir(src_dir))
+    pattern = "*"
+    only_files = True
+    use_relative_paths = False
+    original_files = hs3.listdir(
+        src_dir, pattern, only_files, use_relative_paths, aws_profile=s3fs_
+    )
     # Find all the CSV files to convert.
     csv_filenames = []
     for filename in original_files:
@@ -97,7 +93,7 @@ def _get_csv_to_pq_file_names(
             csv_path = os.path.join(src_dir, filename)
         # Skip CSV files that do not need to be converted.
         # TODO(gp): Try to use hjoblib.apply_incremental_mode
-        if incremental and exists_check(pq_path):
+        if incremental:
             _LOG.warning(
                 "Skipping conversion of CSV file '%s' since '%s' already exists",
                 csv_path,
