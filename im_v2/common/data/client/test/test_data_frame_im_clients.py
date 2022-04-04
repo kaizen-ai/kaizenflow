@@ -4,7 +4,7 @@ import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 
 # #############################################################################
-# TestHistoricalPqByTileClient1
+# TestDataFrameImClient1
 # #############################################################################
 
 
@@ -274,6 +274,8 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
             "binance::ADA_USDT",
             "binance::BTC_USDT",
         ]
+        # Universe for the test data contains only 2 full symbols so expected
+        # fir
         expected_last_elements = expected_first_elements
         # Run test.
         self._test_get_universe1(
