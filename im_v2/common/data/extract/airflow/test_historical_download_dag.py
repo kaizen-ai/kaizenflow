@@ -1,3 +1,16 @@
+"""
+This is a utility DAG to conveniently download bigger chunks of historical
+data using manual dag trigger, example parameters provided on manual run:
+{
+     "exchange": "ftx",
+     "vendor": "talos",
+     "start_timestamp": "2019-01-01T00:00:00+00:00",
+     "end_timestamp": "2019-01-10T00:00:00+00:00",
+     "snapshot_name": "test",
+     "universe": "v1"
+}
+"""
+
 import datetime
 from pickle import FALSE
 
@@ -5,31 +18,20 @@ import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
 from airflow.models import Variable
 
-# This is a utility DAG to conveniently download bigger chunks of historical
-# data using manual dag trigger, example parameters provided on manual run:
-# {
-#     "exchange": "ftx",
-#     "vendor": "talos",
-#     "start_timestamp": "2019-01-01T00:00:00+00:00",
-#     "end_timestamp": "2019-01-10T00:00:00+00:00",
-#     "snapshot_name": "test",
-#     "universe": "v1"
-# }
-
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to prod
 # in one line (in best case scenario).
 _STAGE = "test"
 _EXCHANGE = "{{ dag_run.conf['exchange'] }}"
-# Provide in lowercase
+# Provide the vendor in lowercase e.g. CCXT -> ccxt.
 _VENDOR = "{{ dag_run.conf['vendor'] }}"
 _UNIVERSE = "{{ dag_run.conf['universe'] }}"
 
-ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
-# The naming convention is set such that this value is then reused 
-# in log groups, stream prefixes and container names to minimize 
+ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
+# The naming convention is set such that this value is then reused
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
-ecs_task_definition = Variable.get(f'{_STAGE}_ecs_task_definiton')
+ecs_task_definition = Variable.get(f"{_STAGE}_ecs_task_definiton")
 ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
@@ -41,9 +43,9 @@ s3_historical_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Var
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get(f'{_STAGE}_notification_email')],
+    "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": False,
-    'email_on_retry': FALSE,
+    "email_on_retry": FALSE,
     "owner": "airflow",
 }
 
@@ -62,13 +64,13 @@ start_timestamp = "{{ dag_run.conf['start_timestamp'] }}"
 end_timestamp = "{{ dag_run.conf['end_timestamp'] }}"
 
 download_command = [
-     f"/app/im_v2/{_VENDOR}/data/extract/download_historical_data.py",
-     f"--start_timestamp '{start_timestamp}'",
-     f"--end_timestamp '{end_timestamp}'",
-     f"--exchange_id '{_EXCHANGE}'",
-     f"--universe '{_UNIVERSE}'",
-     "--aws_profile 'ck'",
-     f"--s3_path '{s3_historical_data_path}'"
+    f"/app/im_v2/{_VENDOR}/data/extract/download_historical_data.py",
+    f"--start_timestamp '{start_timestamp}'",
+    f"--end_timestamp '{end_timestamp}'",
+    f"--exchange_id '{_EXCHANGE}'",
+    f"--universe '{_UNIVERSE}'",
+    "--aws_profile 'ck'",
+    f"--s3_path '{s3_historical_data_path}'",
 ]
 
 downloading_task = ECSOperator(
@@ -86,11 +88,8 @@ downloading_task = ECSOperator(
             }
         ]
     },
-    placement_strategy= [
-        {
-            'type': 'spread',
-            'field': 'instanceId'
-        },
+    placement_strategy=[
+        {"type": "spread", "field": "instanceId"},
     ],
     awslogs_group=ecs_awslogs_group,
     awslogs_stream_prefix=ecs_awslogs_stream_prefix,

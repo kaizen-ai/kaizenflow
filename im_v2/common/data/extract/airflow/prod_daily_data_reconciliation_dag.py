@@ -1,10 +1,14 @@
+"""
+This DAG is used to compare data downloaded via 
+rt DAG with data downloaded once per day in bulk.
+"""
 import datetime
 
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
 from airflow.models import Variable
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to prod
 # in one line (in best case scenario).
 _STAGE = "prod"
@@ -12,11 +16,11 @@ _EXCHANGE = "binance"
 _VENDOR = "ccxt"
 _UNIVERSE = "v3"
 
-ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
-# The naming convention is set such that this value is then reused 
-# in log groups, stream prefixes and container names to minimize 
+ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
+# The naming convention is set such that this value is then reused
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
-ecs_task_definition = Variable.get(f'{_STAGE}_ecs_task_definiton')
+ecs_task_definition = Variable.get(f"{_STAGE}_ecs_task_definiton")
 ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
@@ -26,9 +30,9 @@ s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{V
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get(f'{_STAGE}_notification_email')],
+    "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True,
-    'email_on_retry': True,
+    "email_on_retry": True,
     "owner": "airflow",
 }
 
@@ -45,12 +49,12 @@ dag = airflow.DAG(
 
 download_command = [
     f"/app/im_v2/{_VENDOR}/data/extract/download_historical_data.py",
-     "--end_timestamp '{{ execution_date - macros.timedelta(minutes=15) }}'",
-     "--start_timestamp '{{ execution_date - macros.timedelta(days=1) - macros.timedelta(minutes=15) }}'",
-     f"--exchange_id '{_EXCHANGE}'",
-     f"--universe '{_UNIVERSE}'",
-     "--aws_profile 'ck'",
-     f"--s3_path '{s3_daily_staged_data_path}'"
+    "--end_timestamp '{{ execution_date - macros.timedelta(minutes=15) }}'",
+    "--start_timestamp '{{ execution_date - macros.timedelta(days=1) - macros.timedelta(minutes=15) }}'",
+    f"--exchange_id '{_EXCHANGE}'",
+    f"--universe '{_UNIVERSE}'",
+    "--aws_profile 'ck'",
+    f"--s3_path '{s3_daily_staged_data_path}'",
 ]
 
 
@@ -69,26 +73,23 @@ downloading_task = ECSOperator(
             }
         ]
     },
-    placement_strategy= [
-            {
-                'type': 'spread',
-                'field': 'instanceId'
-            },
+    placement_strategy=[
+        {"type": "spread", "field": "instanceId"},
     ],
     awslogs_group=ecs_awslogs_group,
     awslogs_stream_prefix=ecs_awslogs_stream_prefix,
-    execution_timeout=datetime.timedelta(minutes=15)
+    execution_timeout=datetime.timedelta(minutes=15),
 )
 
 compare_command = [
-    F"/app/im_v2/{_VENDOR}/data/extract/compare_realtime_and_historical.py",
+    f"/app/im_v2/{_VENDOR}/data/extract/compare_realtime_and_historical.py",
     "--end_timestamp '{{ execution_date - macros.timedelta(minutes=15) }}'",
     "--start_timestamp '{{ execution_date - macros.timedelta(days=1) - macros.timedelta(minutes=15) }}'",
     "--db_stage 'dev'",
     f"--exchange_id '{_EXCHANGE}'",
     f"--db_table '{_VENDOR}_ohlcv'",
     "--aws_profile 'ck'",
-    f"--s3_path '{s3_daily_staged_data_path}'"
+    f"--s3_path '{s3_daily_staged_data_path}'",
 ]
 
 comparing_task = ECSOperator(
@@ -106,16 +107,13 @@ comparing_task = ECSOperator(
             }
         ]
     },
-    placement_strategy= [
-            {
-                'type': 'spread',
-                'field': 'instanceId'
-            },
+    placement_strategy=[
+        {"type": "spread", "field": "instanceId"},
     ],
     awslogs_group=ecs_awslogs_group,
     awslogs_stream_prefix=ecs_awslogs_stream_prefix,
-    execution_timeout=datetime.timedelta(minutes=10)
+    execution_timeout=datetime.timedelta(minutes=10),
 )
 
-#downloading_task >> comparing_task
+# downloading_task >> comparing_task
 downloading_task >> comparing_task

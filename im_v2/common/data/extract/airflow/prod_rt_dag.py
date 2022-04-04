@@ -1,15 +1,21 @@
+"""
+This DAG is used to download realtime data to the 
+ohlcv tables in the database.
+"""
+
+import copy
 import datetime
+from itertools import product
+
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
-from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import Variable
-from itertools import product
-import copy
+from airflow.operators.dummy_operator import DummyOperator
 
 _STAGE = "prod"
-_EXCHANGES = ["binance", "ftx"] 
+_EXCHANGES = ["binance", "ftx"]
 _PROVIDERS = ["ccxt", "talos"]
-_UNIVERSES = { "ccxt": "v3", "talos": "v1" }
+_UNIVERSES = {"ccxt": "v3", "talos": "v1"}
 
 # E.g. DB table ccxt_ohlcv -> has an equivalent for testing ccxt_ohlcv_test
 # but production is ccxt_ohlcv.
@@ -27,7 +33,7 @@ ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get(f'{_STAGE}_notification_email')],
+    "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True,
     "owner": "airflow",
 }
@@ -56,12 +62,12 @@ dag = airflow.DAG(
     start_date=datetime.datetime(2022, 3, 1, 0, 0, 0),
 )
 
-start_task = DummyOperator(task_id='start', dag=dag)
-end_task = DummyOperator(task_id='end', dag=dag)
+start_task = DummyOperator(task_id="start", dag=dag)
+end_task = DummyOperator(task_id="end", dag=dag)
 
 for provider, exchange in product(_PROVIDERS, _EXCHANGES):
 
-    #TODO(Juraj): Make this code more readable.
+    # TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(bash_command)
     curr_bash_command[0] = curr_bash_command[0].format(provider)
@@ -69,14 +75,14 @@ for provider, exchange in product(_PROVIDERS, _EXCHANGES):
     curr_bash_command[4] = curr_bash_command[4].format(_UNIVERSES[provider])
     curr_bash_command[-3] = curr_bash_command[-3].format(provider, _TABLE_SUFFIX)
     curr_bash_command[-1] = curr_bash_command[-1].format(
-        Variable.get(f'{_STAGE}_s3_data_bucket'), 
-        Variable.get('s3_realtime_data_folder'),
-        provider
+        Variable.get(f"{_STAGE}_s3_data_bucket"),
+        Variable.get("s3_realtime_data_folder"),
+        provider,
     )
-    
+
     container_suffix = f"-{_STAGE}" if _STAGE == "test" else ""
     container_name = f"cmamp{container_suffix}"
-    
+
     downloading_task = ECSOperator(
         task_id=f"rt_{provider}_{exchange}",
         dag=dag,
@@ -92,15 +98,12 @@ for provider, exchange in product(_PROVIDERS, _EXCHANGES):
                 }
             ]
         },
-        placement_strategy= [
-            {
-                'type': 'spread',
-                'field': 'instanceId'
-            },
+        placement_strategy=[
+            {"type": "spread", "field": "instanceId"},
         ],
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
-        execution_timeout=datetime.timedelta(minutes=3)
+        execution_timeout=datetime.timedelta(minutes=3),
     )
     # Define the sequence of execution of task.
     start_task >> downloading_task >> end_task
