@@ -303,7 +303,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             elem_type=tuple,
             msg="`exchange_currency_pairs` should be a list of tuple",
         )
-
         # Build a SELECT query.
         select_query = f"SELECT * FROM {self._table_name} WHERE "
         # Build a WHERE query.
@@ -327,16 +326,16 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 end_unix_epoch,
                 msg="Start unix epoch should be smaller than end.",
             )
-        # From `exchange_id`` and `currency_pair` create AND conditions.
-        # In the end there should be something like: 
-        # (exchange_id IN ('binance') AND currency_pair IN ('ADA_USDT')) OR (exchange_id IN ('ftx') AND currency_pair IN ('BTC_USDT')) 
+        # Create conditions which add filter by exchange_id and currency_pair
+        # In the end there should be something like:
+        # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT')
         exchange_currency_conditions = [
-            f"(exchange_id='{pair[0]}' AND currency_pair='{pair[1]}')"
-            for pair in exchange_currency_pairs if pair[0] and pair[1]
+            f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
+            for exchange_id, currency_pair in exchange_currency_pairs if exchange_id and currency_pair
         ]
         if exchange_currency_conditions:
             # Add OR conditions as an element of conditions that should be connected by AND
-            # There should be something 
+            # There should be something
             where_clause.append('(' + " OR ".join(exchange_currency_conditions) + ')')
         # Build whole query.
         query = select_query + " AND ".join(where_clause)
