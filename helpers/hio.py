@@ -57,6 +57,7 @@ def listdir(
     dir_name: str,
     pattern: str,
     only_files: bool,
+    use_relative_paths: bool,
     *,
     exclude_git_dirs: bool = True,
 ) -> List[str]:
@@ -66,6 +67,7 @@ def listdir(
     :param dir_name: path to the directory where to look for files
     :param pattern: pattern to match a filename against (e.g., `*.py`)
     :param only_files: look for only files instead of both files and directories
+    :param use_relative_paths: remove `dir_name` from path
     :param exclude_git_dirs: skip `.git` dirs
     """
     hdbg.dassert_dir_exists(dir_name)
@@ -80,6 +82,8 @@ def listdir(
     paths = [path for path in output.split("\n") if path != ""]
     _LOG.debug("Found %s paths in %s", len(paths), dir_name)
     _LOG.debug("\n".join(paths))
+    if use_relative_paths:
+        paths = [os.path.relpath(path, start=dir_name) for path in paths]
     return paths
 
 

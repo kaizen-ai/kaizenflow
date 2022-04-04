@@ -647,9 +647,8 @@ class AbstractPortfolio(abc.ABC):
         dir_name = os.path.join(log_dir, name)
         pattern = "*"
         only_files = True
-        file_paths = hio.listdir(dir_name, pattern, only_files)
-        # Remove directory paths and leave relative file paths.
-        files = [file_path.lstrip(dir_name) for file_path in file_paths]
+        use_relative_paths = True
+        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
         files.sort()
         dfs = []
         for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
