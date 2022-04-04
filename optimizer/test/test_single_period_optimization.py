@@ -59,6 +59,7 @@ class Test_SinglePeriodOptimizer1(hunitest.TestCase):
         )
         return actual_str
 
+    @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_only_gmv_constraint(self) -> None:
         actual = self.only_gmv_constraint_helper()
         expected = r"""
