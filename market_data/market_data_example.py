@@ -461,21 +461,27 @@ def get_im_client_market_data_df1() -> pd.DataFrame:
     price = price_pattern * 4
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
+    # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates from data".
+    # Generate unique volume values to avoid dropping rows as duplicates.
+    volume = list(range(40))
     # Initialize a resulting data list.
     all_data_list: List = []
     # Generate data for each symbol.
     for full_symbol in full_symbols:
         data = pd.DataFrame(index=idx)
+        data["full_symbol"] = full_symbol
         data["open"] = 100
         data["high"] = 101
         data["low"] = 99
         data["close"] = price
-        data["volume"] = 100
-        data["full_symbol"] = full_symbol
+        data["volume"] = volume
         data["feature1"] = feature
         all_data_list.append(data)
+    # Combine data for all the symbols in one dataframe.
     all_data = pd.concat(all_data_list)
-    all_data = all_data.sort_values(["full_symbol"]).sort_index()
+    # Name index column and sort rows by timestamp index and full symbol.
+    all_data.index.name = "timestamp"
+    all_data = all_data.sort_values(["timestamp", "full_symbol"])
     return all_data
 
 

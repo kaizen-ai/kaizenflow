@@ -194,6 +194,23 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): CmTask1420.
         return []
 
+    @staticmethod
+    # TODO(Danya): Move up to hsql.
+    def _create_in_operator(values: List[str], column_name: str) -> str:
+        """
+        Transform a list of possible values into an IN operator clause.
+
+        Example:
+            (`["binance", "ftx"]`, 'exchange_id') =>
+            "exchange_id IN ('binance', 'ftx')"
+        """
+        in_operator = (
+            f"{column_name} IN ("
+            + ",".join([f"'{value}'" for value in values])
+            + ")"
+        )
+        return in_operator
+
     def _apply_talos_normalization(
         self,
         data: pd.DataFrame,

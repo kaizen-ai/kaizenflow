@@ -11,11 +11,12 @@ import pandas as pd
 
 _LOG = logging.getLogger(__name__)
 
-from typing import List, Optional, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Tuple, Union
 
 from tqdm.autonotebook import tqdm
 
-import dataflow.model.forecast_evaluator as dtfmofoeva
+import core.signal_processing as csigproc
+import dataflow.model.forecast_evaluator_from_prices as dtfmfefrpr
 import dataflow.model.forecast_mixer as dtfmofomix
 import dataflow.model.parquet_tile_analyzer as dtfmpatian
 import dataflow.model.regression_analyzer as dtfmoreana
@@ -24,34 +25,43 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 
 
-def generate_bar_metrics(
-    file_name: str,
+def yield_processed_parquet_tiles_by_year(
+    dir_name: str,
     start_date: datetime.date,
     end_date: datetime.date,
     asset_id_col: str,
-    returns_col: str,
-    volatility_col: str,
-    prediction_col: str,
-    target_gmv: Optional[float] = None,
-    dollar_neutrality: str = "no_constraint",
-    overnight_returns: Optional[pd.DataFrame] = None,
-) -> pd.DataFrame:
+    data_cols: List[Union[int, str]],
+    *,
+    asset_ids: Optional[List[int]] = None,
+) -> Iterator[pd.DataFrame]:
     """
-    Generate "research" portfolio bar metrics over a tiled backtest.
+    Process parquet tiles as dataflow multi-indexed column dataframes.
+
+    :param dir_name: dir of tiled results
+    :param start_date: date specifying first month/year to read
+    :param end_date: date specifying last month/year to read
+    :param asset_id_col: name of the asset id column
+    :param data_cols: names of data columns to load
+    :param asset_ids: if `None`, load all available; otherwise load specified
+        subset
+    :return: dataframe with multi-indexed columns
     """
-    columns = [asset_id_col, returns_col, volatility_col, prediction_col]
+    hdbg.dassert_isinstance(asset_id_col, str)
+    hdbg.dassert_isinstance(data_cols, list)
+    cols = [asset_id_col] + data_cols
+    #
+    hdbg.dassert_isinstance(start_date, datetime.date)
+    hdbg.dassert_isinstance(end_date, datetime.date)
+    hdbg.dassert_lte(start_date, end_date)
+    #
     tiles = hparque.yield_parquet_tiles_by_year(
-        file_name,
+        dir_name,
         start_date,
         end_date,
-        columns,
+        cols,
+        asset_ids=asset_ids,
+        asset_id_col=asset_id_col,
     )
-    forecast_evaluator = dtfmofoeva.ForecastEvaluator(
-        returns_col=returns_col,
-        volatility_col=volatility_col,
-        prediction_col=prediction_col,
-    )
-    results = []
     num_years = end_date.year - start_date.year + 1
     for tile in tqdm(tiles, total=num_years):
         # Convert the `from_parquet()` dataframe to a dataflow-style dataframe.
@@ -59,24 +69,212 @@ def generate_bar_metrics(
             tile,
             asset_id_col,
         )
-        _, bar_metrics = forecast_evaluator.annotate_forecasts(
-            df,
-            target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-        )
-        results.append(bar_metrics)
-        if overnight_returns is not None:
-            _, overnight_bar_metrics = forecast_evaluator.compute_overnight_pnl(
-                df,
-                overnight_returns=overnight_returns,
-                target_gmv=target_gmv,
-                dollar_neutrality=dollar_neutrality,
+        yield df
+
+
+def yield_processed_parquet_tile_dict(
+    simulations: pd.DataFrame,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    asset_id_col: str,
+    *,
+    asset_ids: Optional[List[int]] = None,
+) -> Iterator[Dict[str, pd.DataFrame]]:
+    """
+    Yield a dictionary of processed dataframes, keyed by simulation.
+    """
+    # Sanity-check the simulation dataframe.
+    hdbg.dassert_isinstance(simulations, pd.DataFrame)
+    hdbg.dassert_is_subset(["dir_name", "prediction_col"], simulations.columns)
+    hdbg.dassert(not simulations.index.has_duplicates)
+    # Build time filters.
+    # TODO(Paul): Allow loading smaller tiles once we are memory-constrained.
+    time_filters = hparque.build_year_month_filter(start_date, end_date)
+    hdbg.dassert_isinstance(time_filters, list)
+    hdbg.dassert(time_filters)
+    if not isinstance(time_filters[0], list):
+        time_filters = [time_filters]
+    # Build asset id filter.
+    if asset_ids is None:
+        asset_ids = []
+    asset_id_filter = hparque.build_asset_id_filter(asset_ids, asset_id_col)
+    # Iterate through time slices.
+    for time_filter in time_filters:
+        # Create a single parquet filter by combining `time_filter` and, if
+        # one exists, the `asset_id_filter`.
+        if asset_id_filter:
+            combined_filter = [
+                id_filter + time_filter for id_filter in asset_id_filter
+            ]
+        else:
+            combined_filter = time_filter
+        # Create a dictionary of processed dataframes, indexed by simulation.
+        dfs = {}
+        for idx, row in simulations.iterrows():
+            dir_name = row["dir_name"]
+            prediction_col = row["prediction_col"]
+            columns = [asset_id_col] + [prediction_col]
+            tile = hparque.from_parquet(
+                dir_name,
+                columns=columns,
+                filters=combined_filter,
             )
-            results.append(overnight_bar_metrics)
-    df = pd.concat(results)
-    # TODO(Paul): Handle the duplicates from the overnight returns.
-    hdbg.dassert(not df.index.has_duplicates)
-    df.sort_index(inplace=True)
+            df = process_parquet_read_df(
+                tile,
+                asset_id_col,
+            )[prediction_col]
+            dfs[idx] = df
+        yield dfs
+
+
+def evaluate_weighted_forecasts(
+    simulations: pd.DataFrame,
+    weights: pd.DataFrame,
+    market_data_and_volatility: pd.DataFrame,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    asset_id_col: str,
+    *,
+    asset_ids: Optional[List[int]] = None,
+    annotate_forecasts_kwargs: Optional[dict] = None,
+    target_freq_str: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Mix forecasts with weights and evaluate the portfolio.
+
+    :param simulations: df indexed by backtest id; columns are "dir_name" and
+        "prediction_col"
+    :param weights: df indexed by backtest id; columns are weights
+    :param market_data_and_volatility: df with "price" and "volatility" in
+        index; columns are "dir_name" and "col"
+    :param start_date: start date for tile loading
+    :param end_date: end date for tile loading
+    :param asset_id_col: name of column with asset ids in tiles
+    :param asset_ids: if `None`, select all available
+    :param annotate_forecasts_kwargs: options for
+        `ForecastEvaluatorFromPrice.annotate_forecasts()`
+    :param target_freq_str: if not `None`, resample all forecasts to target
+        frequency
+    :return: bar metrics dataframe
+    """
+    forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
+        "price",
+        "volatility",
+        "prediction",
+    )
+    pred_dict_iter = yield_processed_parquet_tile_dict(
+        simulations, start_date, end_date, asset_id_col, asset_ids=asset_ids
+    )
+    #
+    hdbg.dassert_isinstance(market_data_and_volatility, pd.DataFrame)
+    hdbg.dassert_is_subset(
+        ["dir_name", "col"], market_data_and_volatility.columns
+    )
+    hdbg.dassert(not simulations.index.has_duplicates)
+    hdbg.dassert_is_subset(
+        ["price", "volatility"], market_data_and_volatility.index
+    )
+    # Set forecast annotation defaults.
+    if annotate_forecasts_kwargs is None:
+        annotate_forecasts_kwargs = {}
+        annotate_forecasts_kwargs["target_gmv"] = 1e6
+        annotate_forecasts_kwargs["dollar_neutrality"] = "gaussian_rank"
+        annotate_forecasts_kwargs["quantization"] = "nearest_share"
+    #
+    if target_freq_str is not None:
+        hdbg.dassert_isinstance(target_freq_str, str)
+    # Create volatility time slice iterator.
+    vol_dir = market_data_and_volatility.loc["volatility"]["dir_name"]
+    vol_col = market_data_and_volatility.loc["volatility"]["col"]
+    volatility_iter = yield_processed_parquet_tiles_by_year(
+        vol_dir,
+        start_date,
+        end_date,
+        asset_id_col,
+        [vol_col],
+        asset_ids=asset_ids,
+    )
+    # Create price time slice iterator.
+    price_dir = market_data_and_volatility.loc["price"]["dir_name"]
+    price_col = market_data_and_volatility.loc["price"]["col"]
+    price_iter = yield_processed_parquet_tiles_by_year(
+        price_dir,
+        start_date,
+        end_date,
+        asset_id_col,
+        [price_col],
+        asset_ids=asset_ids,
+    )
+    bar_metrics = []
+    for dfs in pred_dict_iter:
+        volatility = next(volatility_iter)[vol_col]
+        price = next(price_iter)[price_col]
+        idx = volatility.index
+        if target_freq_str is not None:
+            bar_length = pd.Series(idx).diff().min()
+            _LOG.info("bar_length=%s", bar_length)
+            hdbg.dassert_eq(
+                bar_length,
+                pd.Timedelta(target_freq_str),
+                "bar length of market and volatility data must equal `target_freq_str`",
+            )
+        # Cross-sectionally normalize the predictions.
+        for key, val in dfs.items():
+            # Resample provided `target_freq_str` is not `None`.
+            if target_freq_str is not None:
+                # TODO(Paul): Revisit this scale factor.
+                # freq = pd.Series(val.index).diff().min()
+                # scale_factor = np.sqrt(pd.Timedelta(target_freq_str) / freq)
+                val = val.resample(target_freq_str).ffill().reindex(idx)
+                val.index = idx
+            # Cross-sectionally normalize.
+            val = csigproc.gaussian_rank(val)
+            # TODO(Paul): Enable should we set `scale_factor` above.
+            # if target_freq_str is not None:
+            #     val *= scale_factor
+            dfs[key] = val
+        bar_metrics_dict = {}
+        weighted_sum = hpandas.compute_weighted_sum(dfs, weights)
+        for key, val in weighted_sum.items():
+            df = pd.concat(
+                [val, volatility, price],
+                axis=1,
+                keys=["prediction", "volatility", "price"],
+            )
+            _, stats = forecast_evaluator.annotate_forecasts(
+                df,
+                **annotate_forecasts_kwargs,
+            )
+            bar_metrics_dict[key] = stats
+        bar_metrics_df = pd.concat(
+            bar_metrics_dict.values(),
+            axis=1,
+            keys=bar_metrics_dict.keys(),
+        )
+        bar_metrics.append(bar_metrics_df)
+    bar_metrics = pd.concat(bar_metrics)
+    return bar_metrics
+
+
+def process_parquet_read_df(
+    df: pd.DataFrame,
+    asset_id_col: str,
+) -> pd.DataFrame:
+    """
+    Post-process a multiindex dataflow result dataframe re-read from parquet.
+
+    :param df: dataframe in "long" format
+    :param asset_id_col: asset id column to pivot on
+    :return: multiindexed dataframe with asset id's at the inner column level
+    """
+    # Convert the asset it column to an integer column.
+    df = hpandas.convert_col_to_int(df, asset_id_col)
+    # If a (non-asset id) column can be represented as an int, then do so.
+    df = df.rename(columns=hparque.maybe_cast_to_int)
+    # Convert from long format to column-multiindexed format.
+    df = df.pivot(columns=asset_id_col)
+    # NOTE: the asset ids may already be sorted and so this may not be needed.
+    df.sort_index(axis=1, level=-2, inplace=True)
     return df
 
 
@@ -112,12 +310,14 @@ def load_mix_evaluate(
     """
     hdbg.dassert_isinstance(weights, pd.DataFrame)
     hdbg.dassert_set_eq(weights.index, feature_cols)
-    columns = [asset_id_col, returns_col, volatility_col] + feature_cols
-    tiles = hparque.yield_parquet_tiles_by_year(
+    #
+    data_cols = [returns_col, volatility_col] + feature_cols
+    df_iter = yield_processed_parquet_tiles_by_year(
         file_name,
         start_date,
         end_date,
-        columns,
+        asset_id_col,
+        data_cols,
     )
     fm = dtfmofomix.ForecastMixer(
         returns_col=returns_col,
@@ -125,13 +325,7 @@ def load_mix_evaluate(
         prediction_cols=feature_cols,
     )
     results = []
-    num_years = end_date.year - start_date.year + 1
-    for tile in tqdm(tiles, total=num_years):
-        # Convert the `from_parquet()` dataframe to a dataflow-style dataframe.
-        df = process_parquet_read_df(
-            tile,
-            asset_id_col,
-        )
+    for df in df_iter:
         bar_metrics = fm.generate_portfolio_bar_metrics_df(
             df,
             weights,
@@ -275,26 +469,4 @@ def compute_bar_col_abs_stats(
         results.append(stats_df)
     df = pd.concat(results)
     df.sort_index(inplace=True)
-    return df
-
-
-def process_parquet_read_df(
-    df: pd.DataFrame,
-    asset_id_col: str,
-) -> pd.DataFrame:
-    """
-    Post-process a multiindex dataflow result dataframe re-read from parquet.
-
-    :param df: dataframe in "long" format
-    :param asset_id_col: asset id column to pivot on
-    :return: multiindexed dataframe with asset id's at the inner column level
-    """
-    # Convert the asset it column to an integer column.
-    df = hpandas.convert_col_to_int(df, asset_id_col)
-    # If a (non-asset id) column can be represented as an int, then do so.
-    df = df.rename(columns=hparque.maybe_cast_to_int)
-    # Convert from long format to column-multiindexed format.
-    df = df.pivot(columns=asset_id_col)
-    # NOTE: the asset ids may already be sorted and so this may not be needed.
-    df.sort_index(axis=1, level=-2, inplace=True)
     return df

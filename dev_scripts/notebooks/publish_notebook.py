@@ -151,7 +151,9 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
     return norm_html_dst_path
 
 
-def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: hs3.AwsProfile) -> str:
+def _post_to_s3(
+    local_src_path: str, s3_path: str, aws_profile: hs3.AwsProfile
+) -> str:
     """
     Export a notebook as HTML to S3.
 
