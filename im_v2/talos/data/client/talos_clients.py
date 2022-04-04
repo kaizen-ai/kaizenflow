@@ -261,8 +261,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         # Parse symbols into exchange and currency pair.
         parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
-        exchange_ids = [symbol[0] for symbol in parsed_symbols]
-        currency_pairs = [symbol[1] for symbol in parsed_symbols]
         # Convert timestamps to epochs.
         if start_ts:
             start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -274,7 +272,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             end_unix_epoch = end_ts
         # Read data from DB.
         select_query = self._build_select_query(
-            exchange_ids, currency_pairs, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
         data = hsql.execute_query_to_df(self._db_connection, select_query)
         # Add a full symbol column.
@@ -293,8 +291,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def _build_select_query(
         self,
-        exchange_ids: List[str],
-        currency_pairs: List[str],
+        parsed_symbols: List[Tuple],
         start_unix_epoch: Optional[int],
         end_unix_epoch: Optional[int],
         *,
@@ -310,24 +307,19 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         ```
         "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000
          AND timestamp <= 1647471180000
-         AND exchange_id IN ('binance')
-         AND currency_pair IN ('AVAX_USDT')"
+         AND ((exchange_id='binance' AND currency_pair='AVAX_USDT')
+          OR (exchange_id='ftx' AND currency_pair='BTC_USDT'))
         ```
-
-        :param exchange_ids: list of exchanges, e.g. ['binance', 'ftx']
-        :param currency_pairs: list of currency pairs, e.g. ['BTC_USDT']
+        :param parsed_symbols: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
         :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
         :return: SELECT query for Talos data
         """
-        # TODO(Danya): Make all params optional to select all data.
-        hdbg.dassert_list_of_strings(
-            exchange_ids,
-            msg="'exchange_ids' should be a list of strings, e.g. `['binance', 'ftx']`",
-        )
-        hdbg.dassert_list_of_strings(
-            currency_pairs,
-            msg="'currency_pairs' should be a list of strings, e.g. `['AVA_USDT', 'BTC_USDT']`",
+        hdbg.dassert_container_type(
+            obj=parsed_symbols,
+            container_type=List,
+            elem_type=tuple,
+            msg="`parsed_symbols` should be a list of tuple",
         )
         # Build a SELECT query.
         select_query = f"SELECT * FROM {self._table_name} WHERE "
@@ -352,12 +344,19 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 end_unix_epoch,
                 msg="Start unix epoch should be smaller than end.",
             )
-        # Add 'exchange_id IN (...)' clause.
-        where_clause.append(self._create_in_operator(exchange_ids, "exchange_id"))
-        # Add 'currency_pair IN (...)' clause.
-        where_clause.append(
-            self._create_in_operator(currency_pairs, "currency_pair")
-        )
+        # Create conditions for getting values by exchange_id and currency_pair
+        # In the end there should be something like:
+        # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT')
+        exchange_currency_conditions = [
+            f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
+            for exchange_id, currency_pair in parsed_symbols
+            if exchange_id and currency_pair
+        ]
+        if exchange_currency_conditions:
+            # Add OR conditions between each pair of `exchange_id` and `currency_pair`
+            where_clause.append(
+                "(" + " OR ".join(exchange_currency_conditions) + ")"
+            )
         # Build whole query.
         query = select_query + " AND ".join(where_clause)
         if limit:
