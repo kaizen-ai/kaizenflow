@@ -18,6 +18,7 @@ import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.full_symbol as imvcdcfusy
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
+import im_v2.common.universe.universe_utils as imvcuunut
 
 _LOG = logging.getLogger(__name__)
 
@@ -172,6 +173,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
+        self._numeric_id_mapping = self.get_numerical_ids()
 
     @staticmethod
     def should_be_online() -> bool:
@@ -430,3 +432,20 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
+
+    def get_numerical_ids(self) -> Dict[int, str]:
+        """
+        Create a mapping of `full_symbol` with numerical ids.
+        """
+        # Extract DataFrame with `exchange_id`, `currency_pair` columns.
+        query = f"SELECT DISTINCT currency_pair, exchange_id FROM {self._table_name}"
+        currency_exchange_df = hsql.execute_query_to_df(self._db_connection, query)
+        # Merge these columns to the general `full_symbol` format.
+        full_symbol_series = currency_exchange_df.agg(
+            "::".join, axis=1
+        )
+        # Convert to list.
+        full_symbol_list = full_symbol_series.to_list()
+        # Map full_symbol with the numerical ids.
+        full_symbol_mapping = imvcuunut.build_numerical_to_string_id_mapping(full_symbol_list)
+        return full_symbol_mapping
