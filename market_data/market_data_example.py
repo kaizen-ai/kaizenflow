@@ -5,20 +5,16 @@ import market_data.market_data_example as mdmadaex
 """
 
 import asyncio
-import datetime
 import logging
 from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 
 import core.finance as cofinanc
 import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hnumpy as hnumpy
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import market_data.market_data_im_client as mdmdimcl
 import market_data.replayed_market_data as mdremada
 
@@ -214,7 +210,9 @@ def get_ReplayedTimeMarketData_example5(
     Build a `ReplayedMarketData` with synthetic top-of-the-book data.
     """
     # Generate random price data.
-    df = cofinanc.generate_random_top_of_book_bars(start_datetime, end_datetime, asset_ids)
+    df = cofinanc.generate_random_top_of_book_bars(
+        start_datetime, end_datetime, asset_ids
+    )
     _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0

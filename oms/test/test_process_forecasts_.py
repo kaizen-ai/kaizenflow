@@ -24,11 +24,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
-    def test_initialization1(self) -> None:
-        with hasynci.solipsism_context() as event_loop:
-            hasynci.run(
-                self._test_simulated_system1(event_loop), event_loop=event_loop
-            )
 
     @staticmethod
     def get_portfolio(
@@ -63,6 +58,12 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
+
+    def test_initialization1(self) -> None:
+        with hasynci.solipsism_context() as event_loop:
+            hasynci.run(
+                self._test_simulated_system1(event_loop), event_loop=event_loop
+            )
 
     async def _test_simulated_system1(
         self, event_loop: asyncio.AbstractEventLoop
@@ -135,12 +136,6 @@ asset_id                    101    202
 
 
 class TestSimulatedProcessForecasts2(hunitest.TestCase):
-    @pytest.mark.slow("~8 seconds")
-    def test_initialization1(self) -> None:
-        with hasynci.solipsism_context() as event_loop:
-            hasynci.run(
-                self._test_simulated_system1(event_loop), event_loop=event_loop
-            )
 
     @staticmethod
     def get_portfolio(
@@ -195,6 +190,13 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
+
+    @pytest.mark.slow("~8 seconds")
+    def test_initialization1(self) -> None:
+        with hasynci.solipsism_context() as event_loop:
+            hasynci.run(
+                self._test_simulated_system1(event_loop), event_loop=event_loop
+            )
 
     async def _test_simulated_system1(
         self, event_loop: asyncio.AbstractEventLoop
@@ -364,11 +366,6 @@ asset_id                      100     200
 
 
 class TestSimulatedProcessForecasts3(hunitest.TestCase):
-    def test_initialization1(self) -> None:
-        with hasynci.solipsism_context() as event_loop:
-            hasynci.run(
-                self._test_simulated_system1(event_loop), event_loop=event_loop
-            )
 
     @staticmethod
     def get_portfolio(
@@ -415,6 +412,12 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
+
+    def test_initialization1(self) -> None:
+        with hasynci.solipsism_context() as event_loop:
+            hasynci.run(
+                self._test_simulated_system1(event_loop), event_loop=event_loop
+            )
 
     async def _test_simulated_system1(
         self, event_loop: asyncio.AbstractEventLoop
@@ -487,6 +490,7 @@ asset_id                     101     202
 
 
 class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
+
     def test_mocked_system1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Build a Portfolio.
@@ -613,6 +617,7 @@ asset_id                    101    202
 
 
 class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
+
     def test_mocked_system1(self) -> None:
         data = self._get_market_data_df1()
         predictions, volatility = self._get_predictions_and_volatility1(data)
@@ -635,118 +640,6 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         data = self._get_market_data_df2()
         predictions, volatility = self._get_predictions_and_volatility2(data)
         self._run_coroutines(data, predictions, volatility)
-
-    def _run_coroutines(self, data, predictions, volatility):
-        with hasynci.solipsism_context() as event_loop:
-            # Build MarketData.
-            initial_replayed_delay = 5
-            asset_id = [data["asset_id"][0]]
-            market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
-                event_loop,
-                initial_replayed_delay,
-                data,
-            )
-            # Create a portfolio with one asset (and cash).
-            db_connection = self.connection
-            table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
-            oomsdb.create_oms_tables(self.connection, incremental=False)
-            portfolio = oporexam.get_mocked_portfolio_example1(
-                event_loop,
-                db_connection,
-                table_name,
-                market_data=market_data,
-                asset_ids=asset_id,
-            )
-            # Build OrderProcessor.
-            delay_to_accept_in_secs = 3
-            delay_to_fill_in_secs = 10
-            broker = portfolio.broker
-            poll_kwargs = hasynci.get_poll_kwargs(portfolio._get_wall_clock_time)
-            poll_kwargs["timeout_in_secs"] = 60 * 10
-            order_processor = oordproc.OrderProcessor(
-                db_connection,
-                delay_to_accept_in_secs,
-                delay_to_fill_in_secs,
-                broker,
-                poll_kwargs=poll_kwargs,
-            )
-            # Build order process coroutine.
-            termination_condition = 4
-            order_processor_coroutine = order_processor.run_loop(
-                termination_condition
-            )
-            coroutines = [
-                self._test_mocked_system1(predictions, volatility, portfolio),
-                order_processor_coroutine,
-            ]
-            hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
-
-    async def _test_mocked_system1(
-        self,
-        predictions: pd.DataFrame,
-        volatility: pd.DataFrame,
-        portfolio: omportfo.MockedPortfolio,
-    ) -> None:
-        """
-        Run process_forecasts() logic with a given prediction df to update a
-        Portfolio.
-        """
-        dict_ = {
-            "order_config": {
-                "order_type": "price@twap",
-                "order_duration": 5,
-            },
-            "optimizer_config": {
-                "backend": "compute_target_positions_in_cash",
-                "target_gmv": 1e5,
-                "dollar_neutrality": "no_constraint",
-            },
-            "execution_mode": "batch",
-            "ath_start_time": datetime.time(9, 30),
-            "trading_start_time": datetime.time(9, 35),
-            "ath_end_time": datetime.time(16, 00),
-            "trading_end_time": datetime.time(15, 55),
-        }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        spread_df = None
-        restrictions_df = None
-        # Run.
-        await oprofore.process_forecasts(
-            predictions,
-            volatility,
-            portfolio,
-            config,
-            spread_df,
-            restrictions_df,
-        )
-        #
-        asset_ids = portfolio.universe
-        hdbg.dassert_eq(len(asset_ids), 1)
-        asset_id = asset_ids[0]
-        price = portfolio.market_data.get_data_for_interval(
-            pd.Timestamp("2000-01-01 09:30:00-05:00", tz="America/New_York"),
-            pd.Timestamp("2000-01-01 09:50:00-05:00", tz="America/New_York"),
-            ts_col_name="timestamp_db",
-            asset_ids=asset_ids,
-            left_close=True,
-            right_close=True,
-        )["price"]
-        #
-        twap = cofinanc.resample(price, rule="5T").mean().rename("twap")
-        rets = twap.pct_change().rename("rets")
-        predictions_srs = predictions[asset_id].rename("prediction")
-        research_pnl = (
-            predictions_srs.shift(2).multiply(rets).rename("research_pnl")
-        )
-        #
-        actual = []
-        self._append(actual, "TWAP", twap)
-        self._append(actual, "rets", rets)
-        self._append(actual, "prediction", predictions_srs)
-        self._append(actual, "research_pnl", research_pnl)
-        actual.append(portfolio)
-        actual = "\n".join(map(str, actual))
-        self.check_string(actual)
 
     @staticmethod
     def _get_market_data_df1() -> pd.DataFrame:
@@ -859,3 +752,115 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
     ) -> None:
         data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
         list_.append(f"{label}=\n{data_str}")
+
+    def _run_coroutines(self, data, predictions, volatility):
+        with hasynci.solipsism_context() as event_loop:
+            # Build MarketData.
+            initial_replayed_delay = 5
+            asset_id = [data["asset_id"][0]]
+            market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
+                event_loop,
+                initial_replayed_delay,
+                data,
+            )
+            # Create a portfolio with one asset (and cash).
+            db_connection = self.connection
+            table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+            oomsdb.create_oms_tables(self.connection, incremental=False)
+            portfolio = oporexam.get_mocked_portfolio_example1(
+                event_loop,
+                db_connection,
+                table_name,
+                market_data=market_data,
+                asset_ids=asset_id,
+            )
+            # Build OrderProcessor.
+            delay_to_accept_in_secs = 3
+            delay_to_fill_in_secs = 10
+            broker = portfolio.broker
+            poll_kwargs = hasynci.get_poll_kwargs(portfolio._get_wall_clock_time)
+            poll_kwargs["timeout_in_secs"] = 60 * 10
+            order_processor = oordproc.OrderProcessor(
+                db_connection,
+                delay_to_accept_in_secs,
+                delay_to_fill_in_secs,
+                broker,
+                poll_kwargs=poll_kwargs,
+            )
+            # Build order process coroutine.
+            termination_condition = 4
+            order_processor_coroutine = order_processor.run_loop(
+                termination_condition
+            )
+            coroutines = [
+                self._test_mocked_system1(predictions, volatility, portfolio),
+                order_processor_coroutine,
+            ]
+            hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+
+    async def _test_mocked_system1(
+        self,
+        predictions: pd.DataFrame,
+        volatility: pd.DataFrame,
+        portfolio: omportfo.MockedPortfolio,
+    ) -> None:
+        """
+        Run process_forecasts() logic with a given prediction df to update a
+        Portfolio.
+        """
+        dict_ = {
+            "order_config": {
+                "order_type": "price@twap",
+                "order_duration": 5,
+            },
+            "optimizer_config": {
+                "backend": "compute_target_positions_in_cash",
+                "target_gmv": 1e5,
+                "dollar_neutrality": "no_constraint",
+            },
+            "execution_mode": "batch",
+            "ath_start_time": datetime.time(9, 30),
+            "trading_start_time": datetime.time(9, 35),
+            "ath_end_time": datetime.time(16, 00),
+            "trading_end_time": datetime.time(15, 55),
+        }
+        config = cconfig.get_config_from_nested_dict(dict_)
+        spread_df = None
+        restrictions_df = None
+        # Run.
+        await oprofore.process_forecasts(
+            predictions,
+            volatility,
+            portfolio,
+            config,
+            spread_df,
+            restrictions_df,
+        )
+        #
+        asset_ids = portfolio.universe
+        hdbg.dassert_eq(len(asset_ids), 1)
+        asset_id = asset_ids[0]
+        price = portfolio.market_data.get_data_for_interval(
+            pd.Timestamp("2000-01-01 09:30:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:50:00-05:00", tz="America/New_York"),
+            ts_col_name="timestamp_db",
+            asset_ids=asset_ids,
+            left_close=True,
+            right_close=True,
+        )["price"]
+        #
+        twap = cofinanc.resample(price, rule="5T").mean().rename("twap")
+        rets = twap.pct_change().rename("rets")
+        predictions_srs = predictions[asset_id].rename("prediction")
+        research_pnl = (
+            predictions_srs.shift(2).multiply(rets).rename("research_pnl")
+        )
+        #
+        actual = []
+        self._append(actual, "TWAP", twap)
+        self._append(actual, "rets", rets)
+        self._append(actual, "prediction", predictions_srs)
+        self._append(actual, "research_pnl", research_pnl)
+        actual.append(portfolio)
+        actual = "\n".join(map(str, actual))
+        self.check_string(actual)

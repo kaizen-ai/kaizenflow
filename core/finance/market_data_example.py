@@ -289,7 +289,8 @@ def generate_random_top_of_book_bars(
     seed: int = 10,
 ) -> pd.DataFrame:
     """
-    Wraps `generate_random_top_of_book_bars_for_asset()` for multiple instruments.
+    Wraps `generate_random_top_of_book_bars_for_asset()` for multiple
+    instruments.
 
     Output example:
 
@@ -529,7 +530,7 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
 
 
 def get_im_client_market_data_df1(
-    full_symbols: List[icdc.FullSymbol]
+    full_symbols: List[icdc.FullSymbol],
 ) -> pd.DataFrame:
     """
     Generate `ImClient` output example with price data that alternates every 5

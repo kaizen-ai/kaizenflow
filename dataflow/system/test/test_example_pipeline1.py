@@ -17,6 +17,7 @@ _LOG = logging.getLogger(__name__)
 class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
     """
     Test using fake data and features:
+
     - `Example1` pipeline
     - end-to-end inside a `System`
     - with a `MarketData`
