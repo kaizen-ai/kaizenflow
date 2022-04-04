@@ -371,7 +371,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             elem_type=tuple,
             msg="`parsed_symbols` should be a list of tuple",
         )
-        # Handle `columns`.
+        # Add columns to the SELECT query
         columns_as_str = "*" if columns is None else ",".join(columns)
         # Build a SELECT query.
         select_query = f"SELECT {columns_as_str} FROM {self._table_name} WHERE "
