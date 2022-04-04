@@ -164,12 +164,22 @@ class RealTimeSqlTalosClient(icdc.ImClient):
     """
 
     def __init__(
-        self,
-        resample_1min: bool,
-        db_connection: hsql.DbConnection,
-        table_name: str,
-        mode: str = "data_client",
+            self,
+            resample_1min: bool,
+            db_connection: hsql.DbConnection,
+            table_name: str,
+            mode: str = "data_client",
     ) -> None:
+        """
+        2 modes are available, depending on the purpose of the loaded data:
+        `data_client` and `market_data`.
+
+        `data_client` mode loads data compatible with other clients, including
+         historical ones, and is used for most prod and research tasks.
+
+        `market_data` mode enforces an output compatible with `MarketData` class.
+        This mode is required when loading data to use inside a model.
+        """
         vendor = "talos"
         super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
@@ -197,6 +207,28 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # TODO(Danya): CmTask1420.
         return []
 
+    def build_numerical_to_string_id_mapping(self) -> Dict[int, str]:
+        """
+        Create a mapping from numerical ids (e.g., encoding asset ids) to the
+        corresponding `full_symbol`.
+        """
+        # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
+        query = (
+            f"SELECT DISTINCT currency_pair, exchange_id FROM {self._table_name}"
+        )
+        currency_exchange_df = hsql.execute_query_to_df(
+            self._db_connection, query
+        )
+        # Merge these columns to the general `full_symbol` format.
+        full_symbols = currency_exchange_df.agg("::".join, axis=1)
+        # Convert to list.
+        full_symbols = full_symbols.to_list()
+        # Map full_symbol with the numerical ids.
+        full_symbol_mapping = imvcuunut.build_numerical_to_string_id_mapping(
+            full_symbols
+        )
+        return full_symbol_mapping
+
     @staticmethod
     # TODO(Danya): Move up to hsql.
     def _create_in_operator(values: List[str], column_name: str) -> str:
@@ -221,12 +253,13 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         full_symbol_col_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Apply Talos-specific normalization. `data_client` mode:
+        Apply Talos-specific normalization.
 
+         `data_client` mode:
         - Convert `timestamp` column to a UTC timestamp and set index.
-        - Drop extra columns (e.g. `id` created by the DB).
+        - Keep `open`, `high`, `low`, `close`, `volume` columns.
 
-        `market_data` enforce an output compatible with `MarketData`, by:
+        `market_data` mode:
         - Add `start_timestamp` column in UTC timestamp format.
         - Add `end_timestamp` column in UTC timestamp format.
         - Add `asset_id` column which is result of mapping full_symbol to integer.
@@ -336,6 +369,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         start_unix_epoch: Optional[int],
         end_unix_epoch: Optional[int],
         *,
+        columns: Optional[List[str]] = None,
+        ts_col_name: Optional[str] = "timestamp",
+        left_close: bool = True,
+        right_close: bool = True,
         limit: Optional[int] = None,
     ) -> str:
         """
@@ -354,6 +391,11 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :param parsed_symbols: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
         :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
+        :param columns: columns to select from `table_name`
+           - `None` means all columns.
+        :param ts_col_name: name of timestamp column
+        :param left_close: if operator for `start_unix_epoch` is either > or >=
+        :param right_close: if operator for `end_unix_epoch` is either < or <=
         :return: SELECT query for Talos data
         """
         hdbg.dassert_container_type(
@@ -362,8 +404,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             elem_type=tuple,
             msg="`parsed_symbols` should be a list of tuple",
         )
+        # Add columns to the SELECT query
+        columns_as_str = "*" if columns is None else ",".join(columns)
         # Build a SELECT query.
-        select_query = f"SELECT * FROM {self._table_name} WHERE "
+        select_query = f"SELECT {columns_as_str} FROM {self._table_name} WHERE "
         # Build a WHERE query.
         # TODO(Danya): Generalize to hsql with dictionary input.
         where_clause = []
@@ -372,13 +416,15 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 start_unix_epoch,
                 int,
             )
-            where_clause.append(f"timestamp >= {start_unix_epoch}")
+            operator = ">=" if left_close else ">"
+            where_clause.append(f"{ts_col_name} {operator} {start_unix_epoch}")
         if end_unix_epoch:
             hdbg.dassert_isinstance(
                 end_unix_epoch,
                 int,
             )
-            where_clause.append(f"timestamp <= {end_unix_epoch}")
+            operator = "<=" if right_close else "<"
+            where_clause.append(f"{ts_col_name} {operator} {end_unix_epoch}")
         if start_unix_epoch and end_unix_epoch:
             hdbg.dassert_lte(
                 start_unix_epoch,
