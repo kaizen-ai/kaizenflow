@@ -69,6 +69,7 @@ asset_id
 3                   -0.00                 500.00           -0.0                 0.5"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_only_gmv_constraint_osqp(self) -> None:
         actual = self.only_gmv_constraint_helper("OSQP")
         expected = r"""
