@@ -118,7 +118,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
             df["exchange_id"].astype(str) + "::" + df["currency_pair"].astype(str)
         )
         # Select only necessary columns.
-        columns = ["full_symbol", "open", "high", "low", "close", "volume"]
+        columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
         df = df[columns]
         return df
 
@@ -215,14 +215,14 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         return in_operator
 
     def _apply_talos_normalization(
-            self,
-            data: pd.DataFrame,
-            *,
-            full_symbol_col_name: Optional[str] = None,
+        self,
+        data: pd.DataFrame,
+        *,
+        full_symbol_col_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Apply Talos-specific normalization.
-        `data_client` mode:
+        Apply Talos-specific normalization. `data_client` mode:
+
         - Convert `timestamp` column to a UTC timestamp and set index.
         - Drop extra columns (e.g. `id` created by the DB).
 
