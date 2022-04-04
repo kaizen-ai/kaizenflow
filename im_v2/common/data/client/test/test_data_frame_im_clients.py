@@ -14,7 +14,7 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
 
     Note that `test_read_data7()` is not implemented since data that is
     generated for these tests should alternate every 5 rows and does not
-    contain any data gaps.
+    contain any data gaps. Thus, resampling cannot be tested properly.
     """
 
     def test_read_data1(self) -> None:
