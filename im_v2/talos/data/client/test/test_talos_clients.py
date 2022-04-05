@@ -449,6 +449,92 @@ class TestRealTimeSqlTalosClient1(
         self.assertEqual(actual_outcome, expected_outcome, message)
         hsql.remove_table(self.connection, "talos_ohlcv")
 
+    def test_build_select_query7(self) -> None:
+        """
+        Test SQL query with changed left_close and right_close arguments
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        talos_sql_client = self.setup_talos_sql_client()
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        actual_outcome = talos_sql_client._build_select_query(
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            left_close=False,
+            right_close=False,
+        )
+        expected_outcome = (
+            "SELECT * FROM talos_ohlcv WHERE timestamp > 1647470940000 AND timestamp < "
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
+        )
+        # Message in case if test case got failed.
+        message = "Actual and expected SQL queries are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+    
+    def test_build_select_query8(self) -> None:
+        """
+        Test SQL query string with changed timestamp column name
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        talos_sql_client = self.setup_talos_sql_client()
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        actual_outcome = talos_sql_client._build_select_query(
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            ts_col_name='test_timestamp',
+        )
+        expected_outcome = (
+            "SELECT * FROM talos_ohlcv WHERE timestamp => 1647470940000 AND test_timestamp <= "
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
+        )
+        # Message in case if test case got failed.
+        message = "Actual and expected SQL queries are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_build_select_query9(self) -> None:
+        """
+        Test SQL query string with given list of columns
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        talos_sql_client = self.setup_talos_sql_client()
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        actual_outcome = talos_sql_client._build_select_query(
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            columns=["open", "high", "low", "close", "volume", "timestamp"]
+        )
+        expected_outcome = (
+            "SELECT open, high, low, close, volume, timestamp "
+            "FROM talos_ohlcv WHERE timestamp => 1647470940000 AND timestamp <= "
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
+        )
+        # Message in case if test case got failed.
+        message = "Actual and expected SQL queries are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
     def setup_talos_sql_client(
         self,
         resample_1min: Optional[bool] = True,
