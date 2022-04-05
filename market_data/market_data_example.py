@@ -17,7 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
-import market_data.market_data_im_client as mdmdimcl
+import market_data.im_client_market_data as mdimcmada
 import market_data.replayed_market_data as mdremada
 
 _LOG = logging.getLogger(__name__)
@@ -240,7 +240,7 @@ def get_ImClientMarketData_example1(
     asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
-) -> mdmdimcl.ImClientMarketData:
+) -> mdimcmada.ImClientMarketData:
     """
     Build a `ImClientMarketData` backed with `CCXT` data.
     """
@@ -259,7 +259,7 @@ def get_ImClientMarketData_example1(
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
-    market_data_client = mdmdimcl.ImClientMarketData(
+    market_data_client = mdimcmada.ImClientMarketData(
         asset_id_col,
         asset_ids,
         start_time_col_name,
@@ -276,7 +276,7 @@ def get_ImClientMarketData_example2(
     asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
-) -> mdmdimcl.ImClientMarketData:
+) -> mdimcmada.ImClientMarketData:
     """
     Build a `ImClientMarketData` backed with synthetic data.
     """
@@ -294,7 +294,7 @@ def get_ImClientMarketData_example2(
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
-    market_data_client = mdmdimcl.ImClientMarketData(
+    market_data_client = mdimcmada.ImClientMarketData(
         asset_id_col,
         asset_ids,
         start_time_col_name,
