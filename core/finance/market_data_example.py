@@ -16,7 +16,6 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
 import helpers.hprint as hprint
-import im_v2.common.data.client as icdc
 
 _LOG = logging.getLogger(__name__)
 
@@ -529,12 +528,12 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
 # #############################################################################
 
 
-def get_im_client_market_data_df1(
-    full_symbols: List[icdc.FullSymbol],
-) -> pd.DataFrame:
+def get_im_client_market_data_df1(full_symbols: List[str]) -> pd.DataFrame:
     """
     Generate `ImClient` output example with price data that alternates every 5
     minutes.
+
+    Input full symbols represent `icdc.FullSymbol`.
 
     Output example:
 

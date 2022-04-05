@@ -641,6 +641,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         predictions, volatility = self._get_predictions_and_volatility2(data)
         self._run_coroutines(data, predictions, volatility)
 
+    # TODO(gp): Move to core/finance/market_data_example.py or reuse some of those functions.
     @staticmethod
     def _get_market_data_df1() -> pd.DataFrame:
         """
@@ -662,6 +663,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         data["asset_id"] = 101
         return data
 
+    # TODO(gp): Move to core/finance/market_data_example.py or reuse some of those functions.
     @staticmethod
     def _get_market_data_df2() -> pd.DataFrame:
         idx = pd.date_range(
