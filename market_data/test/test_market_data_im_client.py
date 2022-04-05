@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import List
 
 import pandas as pd
 import pytest
@@ -6,8 +6,12 @@ import pytest
 import market_data as mdata
 import market_data.test.market_data_test_case as mdtmdtca
 
+# #############################################################################
+# TestImClientMarketData1
+# #############################################################################
 
-class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
+
+class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
