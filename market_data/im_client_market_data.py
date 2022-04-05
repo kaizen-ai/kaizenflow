@@ -1,7 +1,7 @@
 """
 Import as:
 
-import market_data.market_data_im_client as mdmdimcl
+import market_data.im_client_market_data as mdimcmada
 """
 
 import logging
