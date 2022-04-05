@@ -235,7 +235,7 @@ def get_ReplayedTimeMarketData_example5(
 
 
 def get_ImClientMarketData_example1(
-    asset_ids: List[int],
+    asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
 ) -> mdmdimcl.ImClientMarketData:
@@ -265,7 +265,7 @@ def get_ImClientMarketData_example1(
 
 
 def get_ImClientMarketData_example2(
-    asset_ids: List[int],
+    asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
 ) -> mdmdimcl.ImClientMarketData:
