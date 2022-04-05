@@ -185,6 +185,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self._db_connection = db_connection
         self._table_name = table_name
         self._mode = mode
+        self._numerical_id_mapping = self.build_numerical_to_string_id_mapping()
 
     @staticmethod
     def should_be_online() -> bool:
@@ -214,7 +215,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
         query = (
-            f"SELECT DISTINCT currency_pair, exchange_id FROM {self._table_name}"
+            f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
         )
         currency_exchange_df = hsql.execute_query_to_df(
             self._db_connection, query
