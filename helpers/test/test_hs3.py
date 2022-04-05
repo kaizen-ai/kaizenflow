@@ -1,9 +1,9 @@
 import unittest.mock as umock
 
 # Equivalent to `import moto`, but skip this module if the module is not present.
-# Also, `moto` must be imported before `boto3` to properly mock it.
 import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
 
+# `moto` must be imported before `boto3` to properly mock it.
 moto = pytest.importorskip("moto")
 
 import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
