@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -762,8 +762,8 @@ class TestRealTimeSqlTalosClient1(
 
     def test_build_numerical_to_string_id_mapping(self) -> None:
         """
-        Verify that the mapping from numerical ids (e.g., encoding asset ids) to the
-        corresponding `full_symbol` is done correctly.
+        Verify that the mapping from numerical ids (e.g., encoding asset ids)
+        to the corresponding `full_symbol` is done correctly.
         """
         # Load data.
         self._create_test_table()
@@ -845,7 +845,7 @@ class TestRealTimeSqlTalosClient1(
 
     def _get_test_numerical_to_string_id_mapping(self) -> Dict[int, str]:
         test_dict = {
-            1467591036: 'binance::BTC_USDT',
-            1464553467: 'binance::ETH_USDT',
+            1467591036: "binance::BTC_USDT",
+            1464553467: "binance::ETH_USDT",
         }
         return test_dict
