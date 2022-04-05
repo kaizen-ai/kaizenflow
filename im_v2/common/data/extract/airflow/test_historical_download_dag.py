@@ -88,6 +88,15 @@ downloading_task = ECSOperator(
             }
         ]
     },
+    """
+    This part ensures we do not get a random failure because of insufficient 
+    HW resources. For unknown reasons, the ECS scheduling when using 
+    your own EC2s is done  in a random way by default, so the task is placed 
+    on an arbitrary instance in your cluster, hence sometimes the instance 
+    did not have enough resources while other was empty. 
+    This argument and the provided values ensure the tasks are0
+    evenly "spread" across all "instanceId"s.
+    """
     placement_strategy=[
         {"type": "spread", "field": "instanceId"},
     ],
