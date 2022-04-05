@@ -1,9 +1,7 @@
 """
-Import as:
-
-import im_v2.ccxt.data.extract.airflow.prod_daily_data_reconciliation_dag as imvcdeapddrd
+This DAG is used to compare data downloaded via 
+rt DAG with data downloaded once per day in bulk.
 """
-
 import datetime
 
 import airflow
@@ -12,12 +10,11 @@ from airflow.models import Variable
 
 # This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to prod
-# in one line (in best case scenario)
+# in one line (in best case scenario).
 _STAGE = "prod"
 _EXCHANGE = "binance"
-# E.g. DB table ccxt_ohlcv -> has an equivalent for testing ccxt_ohlcv_test
-# but production is ccxt_ohlcv.
-_TABLE_SUFFIX = "_" + _STAGE if _STAGE == "test" else ""
+_VENDOR = "ccxt"
+_UNIVERSE = "v3"
 
 ecs_cluster = Variable.get(f"{_STAGE}_ecs_cluster")
 # The naming convention is set such that this value is then reused
@@ -28,16 +25,17 @@ ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
 ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
-s3_historical_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_historical_data_folder')}/"
+s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_daily_staged_data_folder')}/{_VENDOR}"
 
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 0,
-    "email": [Variable.get("notification_email")],
+    "email": [Variable.get(f"{_STAGE}_notification_email")],
     "email_on_failure": True,
     "email_on_retry": True,
     "owner": "airflow",
 }
+
 # Create a DAG.
 dag = airflow.DAG(
     dag_id=f"{_STAGE}_daily_data_reconciliation",
@@ -48,15 +46,18 @@ dag = airflow.DAG(
     catchup=False,
     start_date=datetime.datetime(2022, 2, 10, 0, 15, 0),
 )
+
 download_command = [
-    "/app/im_v2/ccxt/data/extract/download_historical_data.py",
-    "--start_timestamp '{{ execution_date - macros.timedelta(1) - macros.timedelta(minutes=15) }}'",
+    f"/app/im_v2/{_VENDOR}/data/extract/download_historical_data.py",
     "--end_timestamp '{{ execution_date - macros.timedelta(minutes=15) }}'",
+    "--start_timestamp '{{ execution_date - macros.timedelta(days=1) - macros.timedelta(minutes=15) }}'",
     f"--exchange_id '{_EXCHANGE}'",
-    "--universe 'v03'",
+    f"--universe '{_UNIVERSE}'",
     "--aws_profile 'ck'",
-    f"--s3_path '{s3_historical_data_path}'",
+    f"--s3_path '{s3_daily_staged_data_path}'",
 ]
+
+
 downloading_task = ECSOperator(
     task_id=f"daily_data_download",
     dag=dag,
@@ -69,28 +70,28 @@ downloading_task = ECSOperator(
             {
                 "name": f"{ecs_task_definition}",
                 "command": download_command,
-                "environment": [
-                    {
-                        "name": "ENABLE_DIND",
-                        "value": "0",
-                    }
-                ],
             }
         ]
     },
+    placement_strategy=[
+        {"type": "spread", "field": "instanceId"},
+    ],
     awslogs_group=ecs_awslogs_group,
     awslogs_stream_prefix=ecs_awslogs_stream_prefix,
+    execution_timeout=datetime.timedelta(minutes=15),
 )
+
 compare_command = [
-    "/app/im_v2/ccxt/data/extract/compare_realtime_and_historical.py",
+    f"/app/im_v2/{_VENDOR}/data/extract/compare_realtime_and_historical.py",
+    "--end_timestamp '{{ execution_date - macros.timedelta(minutes=15) }}'",
+    "--start_timestamp '{{ execution_date - macros.timedelta(days=1) - macros.timedelta(minutes=15) }}'",
     "--db_stage 'dev'",
-    "--start_timestamp {{ execution_date - macros.timedelta(1) - macros.timedelta(minutes=15) }}",
-    "--end_timestamp {{ execution_date - macros.timedelta(minutes=15) }}",
     f"--exchange_id '{_EXCHANGE}'",
-    f"--db_table 'ccxt_ohlcv'",
+    f"--db_table '{_VENDOR}_ohlcv'",
     "--aws_profile 'ck'",
-    f"--s3_path '{s3_historical_data_path}'",
+    f"--s3_path '{s3_daily_staged_data_path}'",
 ]
+
 comparing_task = ECSOperator(
     task_id=f"compare_realtime_historical",
     dag=dag,
@@ -103,17 +104,23 @@ comparing_task = ECSOperator(
             {
                 "name": f"{ecs_task_definition}",
                 "command": compare_command,
-                "environment": [
-                    {
-                        "name": "ENABLE_DIND",
-                        "value": "0",
-                    }
-                ],
             }
         ]
     },
+    # This part ensures we do not get a random failure because of insufficient 
+    # HW resources. For unknown reasons, the ECS scheduling when using 
+    # your own EC2s is done  in a random way by default, so the task is placed 
+    # on an arbitrary instance in your cluster, hence sometimes the instance 
+    # did not have enough resources while other was empty. 
+    # This argument and the provided values ensure the tasks are
+    # evenly "spread" across all "instanceId"s.
+    placement_strategy=[
+        {"type": "spread", "field": "instanceId"},
+    ],
     awslogs_group=ecs_awslogs_group,
     awslogs_stream_prefix=ecs_awslogs_stream_prefix,
+    execution_timeout=datetime.timedelta(minutes=10),
 )
-# Execute the DAG.
+
+# downloading_task >> comparing_task
 downloading_task >> comparing_task
