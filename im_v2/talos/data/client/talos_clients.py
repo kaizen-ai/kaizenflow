@@ -185,7 +185,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self._db_connection = db_connection
         self._table_name = table_name
         self._mode = mode
-        self._numeric_id_mapping = self.build_numerical_to_string_id_mapping()
+        self._numerical_id_mapping = self.build_numerical_to_string_id_mapping()
 
     @staticmethod
     def should_be_online() -> bool:
