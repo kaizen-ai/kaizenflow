@@ -768,4 +768,4 @@ def get_ImClientMarketData_wall_clock_time2() -> pd.Timestamp:
     Get a wall clock time to build `ImClientMarketData` using
     `DataFrameImClient`.
     """
-    return pd.Timestamp("2000-01-01T09:45:00-00:00")
+    return pd.Timestamp("2000-01-01T10:10:00-00:00")
