@@ -317,6 +317,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 class TestRealTimeSqlTalosClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
+
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
@@ -451,7 +452,7 @@ class TestRealTimeSqlTalosClient1(
 
     def test_build_select_query7(self) -> None:
         """
-        Test SQL query with changed left_close and right_close arguments
+        Test SQL query with changed left_close and right_close arguments.
         """
         self._create_test_table()
         test_data = self._get_test_data()
@@ -477,10 +478,10 @@ class TestRealTimeSqlTalosClient1(
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
         hsql.remove_table(self.connection, "talos_ohlcv")
-    
+
     def test_build_select_query8(self) -> None:
         """
-        Test SQL query string with changed timestamp column name
+        Test SQL query string with changed timestamp column name.
         """
         self._create_test_table()
         test_data = self._get_test_data()
@@ -495,7 +496,7 @@ class TestRealTimeSqlTalosClient1(
             parsed_symbols,
             start_unix_epoch,
             end_unix_epoch,
-            ts_col_name='test_timestamp',
+            ts_col_name="test_timestamp",
         )
         expected_outcome = (
             "SELECT * FROM talos_ohlcv WHERE test_timestamp >= 1647470940000 AND test_timestamp <= "
@@ -508,7 +509,7 @@ class TestRealTimeSqlTalosClient1(
 
     def test_build_select_query9(self) -> None:
         """
-        Test SQL query string with given list of columns
+        Test SQL query string with given list of columns.
         """
         self._create_test_table()
         test_data = self._get_test_data()
