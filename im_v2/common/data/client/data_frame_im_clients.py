@@ -47,7 +47,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         # Set the input universe before calling the parent class ctor since
         # it is used by `get_universe()` which is necessary for the parent
         # class initialisation.
-        self._universe = universe
+        self._universe = sorted(universe)
         # Initialise the parent class.
         vendor = "data_frame"
         super().__init__(
