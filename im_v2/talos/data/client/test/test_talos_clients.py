@@ -498,7 +498,7 @@ class TestRealTimeSqlTalosClient1(
             ts_col_name='test_timestamp',
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv WHERE test_timestamp => 1647470940000 AND test_timestamp <= "
+            "SELECT * FROM talos_ohlcv WHERE test_timestamp >= 1647470940000 AND test_timestamp <= "
             "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
