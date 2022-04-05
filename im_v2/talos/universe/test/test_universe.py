@@ -2,7 +2,6 @@ import im_v2.common.universe.test.test_universe as imvcountt
 
 
 class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1_TestCase):
-
     def test_get_universe_file_path(self) -> None:
         """
         A smoke test to test correct file path return when correct version is
@@ -19,7 +18,6 @@ class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1_TestCase):
 
 
 class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
-
     def test_get_universe1(self) -> None:
         """
         A smoke test to verify that universe loads correctly.

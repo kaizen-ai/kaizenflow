@@ -133,7 +133,7 @@ class UnitTestRenamer:
             len(split_old_name),
             [1, 2],
             msg="Wrong test name format: it must contain no more than 1 dot",
-            )
+        )
         if len(split_old_name) == 1:
             # Class name split by `.` is one element array, e.g. `["TestClassName"]`.
             old_class_name, old_method_name = split_old_name[0], ""
@@ -222,8 +222,8 @@ class UnitTestRenamer:
         Check if the line is inside of the docstring.
 
         :param line: the line to check
-        :param quotes_count: the count of the quotes of two types 
-        :return: 
+        :param quotes_count: the count of the quotes of two types
+        :return:
             - whether the line is inside the docstring or not
             - the updated counter of the quotes
         """
@@ -289,7 +289,7 @@ class UnitTestRenamer:
         for ind, line in enumerate(lines):
             # Check if the line is inside of the docstring.
             in_docstring, quotes_count = self._is_docstring(line, quotes_count)
-            # Iterate over the lines of the file to find the specific method of the 
+            # Iterate over the lines of the file to find the specific method of the
             # class that should be renamed.
             if class_found and not in_docstring:
                 if line.startswith("class"):
