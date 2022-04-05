@@ -527,7 +527,7 @@ class TestRealTimeSqlTalosClient1(
             columns=test_columns,
         )
         expected_outcome = (
-            "SELECT open, high, low, close, volume, timestamp "
+            "SELECT open,high,low,close,volume,timestamp "
             "FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
             "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
