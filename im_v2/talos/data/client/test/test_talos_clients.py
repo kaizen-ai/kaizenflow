@@ -498,7 +498,7 @@ class TestRealTimeSqlTalosClient1(
             ts_col_name='test_timestamp',
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv WHERE timestamp => 1647470940000 AND test_timestamp <= "
+            "SELECT * FROM talos_ohlcv WHERE test_timestamp => 1647470940000 AND test_timestamp <= "
             "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
@@ -519,11 +519,12 @@ class TestRealTimeSqlTalosClient1(
         parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
+        test_columns = ["close", "volume", "timestamp"]
         actual_outcome = talos_sql_client._build_select_query(
             parsed_symbols,
             start_unix_epoch,
             end_unix_epoch,
-            columns=["open", "high", "low", "close", "volume", "timestamp"]
+            columns=test_columns,
         )
         expected_outcome = (
             "SELECT open, high, low, close, volume, timestamp "
