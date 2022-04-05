@@ -374,7 +374,7 @@ def to_str2(*variables_values: Any) -> str:
     :return: string e.g., `a=1, b=2`
     """
     # Check parameters.
-    hdbg.dassert_lt(1, len(variables_values))
+    hdbg.dassert_lte(1, len(variables_values))
     # Get frame object for the caller’s stack frame.
     frame_ = inspect.currentframe()
     # Get a list of frame records for a frame and all outer frames.
