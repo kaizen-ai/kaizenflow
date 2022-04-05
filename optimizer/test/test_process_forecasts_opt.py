@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 import core.config as cconfig
+import core.finance as cofinanc
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -65,7 +66,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             "2000-01-01 10:30:00-05:00", tz="America/New_York"
         )
         asset_ids = [100, 200]
-        market_data_df = mdata.generate_random_bars(
+        market_data_df = cofinanc.generate_random_bars(
             start_datetime, end_datetime, asset_ids
         )
         market_data_df.to_csv(os.path.join(dir_, "market_data_df.csv"))
