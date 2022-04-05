@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Dict, List, Optional
 
 import pandas as pd
@@ -8,7 +9,6 @@ import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
 import im_v2.talos.db.utils as imvtadbut
-from datetime import timedelta
 
 # #############################################################################
 # TestTalosParquetByTileClient1
@@ -870,8 +870,8 @@ class TestRealTimeSqlTalosClient1(
 
     def test_round_start_timestamp_behavior(self) -> None:
         """
-        Verify that the start round timestamps are extracted correctly according to the description
-        in class TalosHistoricalPqByTileClient.
+        Verify that the start round timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
         """
         # Load data.
         self._create_test_table()
@@ -894,8 +894,8 @@ class TestRealTimeSqlTalosClient1(
 
     def test_round_end_timestamp_behavior(self) -> None:
         """
-        Verify that the end round timestamps are extracted correctly according to the description
-        in class TalosHistoricalPqByTileClient.
+        Verify that the end round timestamps are extracted correctly according
+        to the description in class TalosHistoricalPqByTileClient.
         """
         # Load data.
         self._create_test_table()
@@ -921,8 +921,8 @@ class TestRealTimeSqlTalosClient1(
 
     def test_intermediate_start_timestamp_behavior(self) -> None:
         """
-        Verify that the start intermediate timestamps are extracted correctly according to the description
-        in class TalosHistoricalPqByTileClient.
+        Verify that the start intermediate timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
         """
         # Load data.
         self._create_test_table()
@@ -937,7 +937,7 @@ class TestRealTimeSqlTalosClient1(
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.iloc[[0]].index
         # Create the expected outcomes. Extracted timestamp should be equal to the rounded `start_ts` param.
-        expected_outcome = start_ts.round(freq='min', ambiguous=True)
+        expected_outcome = start_ts.round(freq="min", ambiguous=True)
         expected_outcome = expected_outcome.strftime("%Y-%m-%d %H:%M:%S+00:00")
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
@@ -946,8 +946,8 @@ class TestRealTimeSqlTalosClient1(
 
     def test_intermediate_end_timestamp_behavior(self) -> None:
         """
-        Verify that the end intermediate timestamps are extracted correctly according to the description
-        in class TalosHistoricalPqByTileClient.
+        Verify that the end intermediate timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
         """
         # Load data.
         self._create_test_table()
@@ -962,7 +962,7 @@ class TestRealTimeSqlTalosClient1(
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.iloc[[-1]].index
         # Create the expected outcomes. Extracted timestamp should be equal to the rounded `end_ts` param.
-        expected_outcome = end_ts.round(freq='min', ambiguous=True)
+        expected_outcome = end_ts.round(freq="min", ambiguous=True)
         expected_outcome = expected_outcome.strftime("%Y-%m-%d %H:%M:%S+00:00")
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
