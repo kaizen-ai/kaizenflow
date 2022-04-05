@@ -455,3 +455,104 @@ class TestImClientMarketData(mdtmdtca.MarketData_get_data_TestCase):
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
         # Run.
         self._test_should_be_online1(market_data, wall_clock_time)
+
+
+# #############################################################################
+# TestImClientMarketData2
+# #############################################################################
+
+
+class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
+    @staticmethod
+    def build_client(
+        asset_ids: Optional[List[int]],
+        columns: Optional[List[str]],
+        column_remap: Optional[Dict[str, str]],
+    ) -> mdata.MarketData:
+        """
+        Build `ImClientMarketData` client using `DataFrameImClient`.
+        """
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns=columns, column_remap=column_remap
+        )
+        return market_data
+
+    @staticmethod
+    def get_expected_column_names() -> List[str]:
+        """
+        Return a list of expected column names.
+        """
+        expected_column_names = [
+            "asset_id",
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "feature1",
+            "start_ts",
+        ]
+        return expected_column_names
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_is_online1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self.build_client(asset_ids, columns, columns_remap)
+        # Run.
+        actual = market_data.is_online()
+        self.assertTrue(actual)
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_get_data_for_interval3(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        columns_remap = None
+        market_data = self.build_client(asset_ids, columns, columns_remap)
+        start_ts = pd.Timestamp("2000-01-01T09:35:00+00:00")
+        end_ts = pd.Timestamp("2000-01-01T09:42:00+00:00")
+        #
+        expected_length = 16
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 04:35:00-05:00, 2000-01-01 04:42:00-05:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
+        shape=(16, 9)
+                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
+        end_ts
+        2000-01-01 04:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 04:34:00-05:00
+        2000-01-01 04:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 04:34:00-05:00
+        2000-01-01 04:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 04:35:00-05:00
+        ...
+        2000-01-01 04:41:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0      10       1.0 2000-01-01 04:40:00-05:00
+        2000-01-01 04:42:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0      11       1.0 2000-01-01 04:41:00-05:00
+        2000-01-01 04:42:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0      11       1.0 2000-01-01 04:41:00-05:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_for_interval3(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )

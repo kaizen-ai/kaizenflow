@@ -712,7 +712,7 @@ def get_ImClientMarketData_example1(
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
-    get_wall_clock_time = get_ImClientMarketData_wall_clock_time
+    get_wall_clock_time = get_ImClientMarketData_wall_clock_time1
     market_data_client = mdmdimcl.ImClientMarketData(
         asset_id_col,
         asset_ids,
@@ -726,9 +726,46 @@ def get_ImClientMarketData_example1(
     return market_data_client
 
 
+def get_ImClientMarketData_example2(
+    asset_ids: List[int],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+) -> mdmdimcl.ImClientMarketData:
+    """
+    Build a `ImClientMarketData` using `DataFrameImClient`.
+    """
+    import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
+
+    data_frame_client = imvcdcdfimce.get_DataFrameImClient_example1()
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    get_wall_clock_time = get_ImClientMarketData_wall_clock_time2
+    market_data_client = mdmdimcl.ImClientMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client=data_frame_client,
+        column_remap=column_remap,
+    )
+    return market_data_client
+
+
 # TODO(gp): We can also use a real wall clock.
-def get_ImClientMarketData_wall_clock_time() -> pd.Timestamp:
+def get_ImClientMarketData_wall_clock_time1() -> pd.Timestamp:
     """
     Get a wall clock time to build `ImClientMarketData` for tests.
     """
     return pd.Timestamp("2018-08-17T01:30:00+00:00")
+
+
+def get_ImClientMarketData_wall_clock_time2() -> pd.Timestamp:
+    """
+    Get a wall clock time to build `ImClientMarketData` using
+    `DataFrameImClient`.
+    """
+    return pd.Timestamp("2000-01-01T09:45:00-00:00")
