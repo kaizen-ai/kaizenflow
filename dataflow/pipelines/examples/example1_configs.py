@@ -71,9 +71,10 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     # Create HistoricalDataSource.
     stage = "read_data"
     asset_id_col = "asset_id"
-    ts_col_name = "timestamp_db"
+    ts_col_name = "end_ts"
     multiindex_output = True
-    col_names_to_remove = ["start_datetime", "timestamp_db"]
+    # col_names_to_remove = ["start_datetime", "timestamp_db"]
+    col_names_to_remove = ["start_ts"]
     node = dtfsysonod.HistoricalDataSource(
         stage,
         market_data,
@@ -85,6 +86,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     # Build the DAG.
     dag_builder = config["meta", "dag_builder"]
     dag = dag_builder.get_dag(config["DAG"])
+    dag.set_debug_mode("df_as_csv", False, "crypto_forever")
     if False:
         dag.force_freeing_nodes = True
     # Add the data source node.
@@ -95,13 +97,18 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
 
 
 def build_tile_configs(
-    asset_ids: List[int],
-    start_timestamp: pd.Timestamp,
-    end_timestamp: pd.Timestamp,
+    asset_ids_str: str,
+    start_timestamp: str,
+    end_timestamp: str,
 ) -> List[cconfig.Config]:
     """
     Build a tile configs for Example1 pipeline.
     """
+    #
+    asset_ids_str_list = asset_ids_str.strip("][").split(", ")
+    asset_ids = [int(x) for x in asset_ids_str_list]
+    start_timestamp = pd.Timestamp(start_timestamp)
+    end_timestamp = pd.Timestamp(end_timestamp)
     config = _build_base_config()
     #
     config["meta", "dag_runner"] = get_dag_runner
