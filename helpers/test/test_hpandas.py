@@ -715,3 +715,34 @@ class TestReadDataFromS3(hunitest.TestCase):
         hs3.dassert_path_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         hpandas.read_parquet_to_df(stream, **kwargs)
+
+
+class TestDropNa(hunitest.TestCase):
+    def get_test_data(self) -> pd.DataFrame:
+        test_data = {
+            "dummy_value_1": [0, 1, 3, 2, 0],
+            "dummy_value_2": ["0", "A", "C", "B", "D"],
+            "dummy_value_3": [0, 0, 0, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        df.index.name = "test"
+        return df
+
+    def test_dropna1(self) -> pd.DataFrame:
+        """
+        Test np.nan are dropped.
+        """
+        pass
+
+    def test_dropna2(self) -> pd.DataFrame:
+        """
+        Test infs
+        """
+        pass
+
+    def test_dropna3(self) -> pd.DataFrame:
+        """
+        Test None.
+        """
+        pass
+    
