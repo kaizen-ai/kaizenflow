@@ -61,8 +61,7 @@ def from_parquet(
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
-    if aws_profile is not None:
-        hdbg.dassert(hs3.is_s3_path(file_name))
+    if hs3.is_valid_s3_call(file_name, aws_profile):
         filesystem = get_pyarrow_s3fs(aws_profile)
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
@@ -70,7 +69,7 @@ def from_parquet(
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
-        hdbg.dassert_path_exists(file_name)
+        hs3.dassert_path_exists(file_name)
     # Load data.
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
@@ -148,14 +147,13 @@ def to_parquet(
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(file_name, str)
-    if aws_profile is not None:
-        hdbg.dassert(hs3.is_s3_path(file_name))
+    if hs3.is_valid_s3_call(file_name, aws_profile):
         filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_path_exists(file_name, filesystem)
+        hs3.dassert_path_not_exists(file_name, filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
-        hdbg.dassert_path_not_exists(file_name)
+        hs3.dassert_path_not_exists(file_name)
     hdbg.dassert_file_extension(file_name, "parquet")
     # There is no concept of directory on S3.
     # Only applicable to local filesystem.
