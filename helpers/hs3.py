@@ -7,6 +7,7 @@ import helpers.hs3 as hs3
 import argparse
 import configparser
 import functools
+import gzip
 import logging
 import os
 import pprint
@@ -186,6 +187,88 @@ def listdir(
             exclude_git_dirs=exclude_git_dirs,
         )
     return paths
+
+
+def to_file(
+    lines: str,
+    file_name: str,
+    *,
+    mode: Optional[str] = None,
+    force_flush: bool = False,
+    aws_profile: Optional[AwsProfile] = None,
+) -> None:
+    """
+    Counterpart to `hio.to_file` with S3 support.
+
+    If and only if `aws_profile` is specified, S3 is used instead of
+    local filesystem.
+    """
+    if aws_profile is not None:
+        # Ensure that `bytes` is used.
+        if mode is not None and "b" not in mode:
+            raise ValueError("S3 only allows binary mode!")
+        hdbg.dassert_isinstance(lines, str)
+        # Convert lines to bytes, only supported mode for S3.
+        # Also create a list of new lines as raw bytes is not supported.
+        os_sep = os.linesep
+        lines = [f"{line}{os_sep}".encode() for line in lines.split(os_sep)]
+        # Inspect file name and path.
+        hio.dassert_is_valid_file_name(file_name)
+        s3fs_ = get_s3fs(aws_profile)
+        mode = "wb" if mode is None else mode
+        # Open s3 file.
+        with s3fs_.open(file_name, mode) as s3_file:
+            if file_name.endswith((".gz", ".gzip")):
+                # Open and decompress gzipped file.
+                with gzip.GzipFile(fileobj=s3_file) as gzip_file:
+                    gzip_file.writelines(lines)
+            else:
+                # Any other file.
+                s3_file.writelines(lines)
+            if force_flush:
+                # TODO(Nikola): Investigate S3 alternative for `os.fsync(f.fileno())`.
+                s3_file.flush()
+    else:
+        use_gzip = file_name.endswith((".gz", ".gzip"))
+        hio.to_file(
+            file_name,
+            lines,
+            mode=mode,
+            use_gzip=use_gzip,
+            force_flush=force_flush,
+        )
+
+
+def from_file(
+    file_name: str,
+    encoding: Optional[Any] = None,
+    aws_profile: Optional[AwsProfile] = None,
+) -> str:
+    """
+    Counterpart to `hio.from_file` with S3 support.
+
+    If and only if `aws_profile` is specified, S3 is used instead of
+    local filesystem.
+    """
+    if aws_profile is not None:
+        if encoding:
+            raise ValueError("Encoding is not supported when reading from S3!")
+        # Inspect file name and path.
+        hio.dassert_is_valid_file_name(file_name)
+        s3fs_ = get_s3fs(aws_profile)
+        dassert_path_exists(file_name, s3fs_)
+        # Open s3 file.
+        with s3fs_.open(file_name, "rb") as s3_file:
+            if file_name.endswith((".gz", ".gzip")):
+                # Open and decompress gzipped file.
+                with gzip.GzipFile(fileobj=s3_file) as gzip_file:
+                    data = gzip_file.read().decode()
+            else:
+                # Any other file.
+                data = s3_file.read().decode()
+    else:
+        data = hio.from_file(file_name, encoding=encoding)
+    return data
 
 
 def get_local_or_s3_stream(
@@ -406,6 +489,7 @@ def get_aws_credentials(
     ]
     if any(set_env_vars):
         if not all(set_env_vars):
+            # TODO(Nikola): raise an error instead?
             _LOG.warning(
                 "Some but not all AWS env vars are set (%s): ignoring",
                 str(set_env_vars),
@@ -426,7 +510,7 @@ def get_aws_credentials(
         result["aws_session_token"] = None
         # TODO(gp): @all support also other S3 profiles. We can derive the names
         #  of the env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
-        hdbg.dassert_eq(aws_profile, "am")
+        hdbg.dassert_in(aws_profile, ("am", "ck"))
     else:
         _LOG.debug("Using AWS credentials from files")
         # > more ~/.aws/credentials
