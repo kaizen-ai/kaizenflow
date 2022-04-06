@@ -5,6 +5,7 @@ import os
 import uuid
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 import helpers.hpandas as hpandas
@@ -718,31 +719,39 @@ class TestReadDataFromS3(hunitest.TestCase):
 
 
 class TestDropNa(hunitest.TestCase):
-    def get_test_data(self) -> pd.DataFrame:
-        test_data = {
-            "dummy_value_1": [0, 1, 3, 2, 0],
-            "dummy_value_2": ["0", "A", "C", "B", "D"],
-            "dummy_value_3": [0, 0, 0, 0, 0],
-        }
-        df = pd.DataFrame(data=test_data)
-        df.index.name = "test"
-        return df
-
     def test_dropna1(self) -> pd.DataFrame:
         """
-        Test np.nan are dropped.
+        Test if all types of NaNs are dropped.
         """
-        pass
+        test_data = {
+            "dummy_value_1": [np.nan, 1, 3, 2, 0],
+            "dummy_value_2": ["0", "A", "B", None, "D"],
+            "dummy_value_3": [0, 0, pd.NA, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        expected = r"""   dummy_value_1 dummy_value_2 dummy_value_3
+        1            1.0             A             0
+        4            0.0             D             0"""
+        actual = hpandas.dropna(df)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+        
 
     def test_dropna2(self) -> pd.DataFrame:
         """
-        Test infs
+        Test is infs are dropped.
         """
-        pass
+        test_data = {
+            "dummy_value_1": [-np.inf, 1, 3, 2, 0],
+            "dummy_value_2": ["0", "A", "B", "C", "D"],
+            "dummy_value_3": [0, 0, np.inf, 0, 0],
+        }
+        df = pd.DataFrame(data=test_data)
+        expected = r"""   dummy_value_1 dummy_value_2  dummy_value_3
+1            1.0             A            0.0
+3            2.0             C            0.0
+4            0.0             D            0.0"""
+        actual = hpandas.dropna(df, drop_infs=True)
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test_dropna3(self) -> pd.DataFrame:
-        """
-        Test None.
-        """
-        pass
+
     
