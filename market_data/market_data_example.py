@@ -15,7 +15,9 @@ import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import market_data.market_data_im_client as mdmdimcl
+import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
+import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
+import market_data.im_client_market_data as mdimcmada
 import market_data.replayed_market_data as mdremada
 
 _LOG = logging.getLogger(__name__)
@@ -235,23 +237,29 @@ def get_ReplayedTimeMarketData_example5(
 
 
 def get_ImClientMarketData_example1(
-    asset_ids: List[int],
+    asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
-) -> mdmdimcl.ImClientMarketData:
+) -> mdimcmada.ImClientMarketData:
     """
-    Build a `ImClientMarketData` backed with loaded test data.
+    Build a `ImClientMarketData` backed with `CCXT` data.
     """
-    import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
-
     resample_1min = True
     ccxt_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
+    # Get the last available timestamp for an actual full symbol from universe
+    # and build a function that returns it to pass as a wall clock time caller.
+    last_timestamp = ccxt_client.get_end_ts_for_symbol(
+        "binance::BTC_USDT"
+    ) + pd.Timedelta(minutes=1)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return last_timestamp
+
     #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
-    get_wall_clock_time = get_ImClientMarketData_wall_clock_time
-    market_data_client = mdmdimcl.ImClientMarketData(
+    market_data_client = mdimcmada.ImClientMarketData(
         asset_id_col,
         asset_ids,
         start_time_col_name,
@@ -264,9 +272,36 @@ def get_ImClientMarketData_example1(
     return market_data_client
 
 
-# TODO(gp): We can also use a real wall clock.
-def get_ImClientMarketData_wall_clock_time() -> pd.Timestamp:
+def get_ImClientMarketData_example2(
+    asset_ids: Optional[List[int]],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+) -> mdimcmada.ImClientMarketData:
     """
-    Get a wall clock time to build `ImClientMarketData` for tests.
+    Build a `ImClientMarketData` backed with synthetic data.
     """
-    return pd.Timestamp("2018-08-17T01:30:00+00:00")
+    data_frame_client = imvcdcdfimce.get_DataFrameImClient_example1()
+    # Get the last available timestamp for an actual full symbol from universe
+    # and build a function that returns it to pass as a wall clock time caller.
+    last_timestamp = data_frame_client.get_end_ts_for_symbol(
+        "binance::BTC_USDT"
+    ) + pd.Timedelta(minutes=1)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return last_timestamp
+
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    market_data_client = mdimcmada.ImClientMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client=data_frame_client,
+        column_remap=column_remap,
+    )
+    return market_data_client
