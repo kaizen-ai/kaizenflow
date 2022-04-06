@@ -6,7 +6,7 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -14,8 +14,8 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import im_v2.common.data.client as icdc
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
-import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,83 +24,131 @@ class HistoricalPqByTileClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
-    Provide historical data stored as Parquet by-asset.
+    Provide historical data stored as Parquet by-tile.
     """
 
     def __init__(
         self,
+        # TODO(gp): We could use *args, **kwargs as params for ImClient.
         vendor: str,
-        full_symbol_col_name: str,
-        root_dir_name: str,
+        resample_1min: bool,
+        root_dir: str,
         partition_mode: str,
+        *,
+        aws_profile: Optional[str] = None,
+        full_symbol_col_name: Optional[str] = None,
     ):
         """
         Constructor.
 
-        :param full_symbol_col_name: column name storing the `full_symbol`
-        :param root_dir_name: directory storing the tiled Parquet data
+        :param root_dir: either a local root path (e.g., "/app/im") or
+            an S3 root path (e.g., "s3://cryptokaizen-data/historical")
+            to the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
+        :param aws_profile: AWS profile name (e.g., "ck")
         """
-        super().__init__(vendor)
-        self._full_symbol_col_name = full_symbol_col_name
-        self._root_dir_name = root_dir_name
+        super().__init__(
+            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+        )
+        hdbg.dassert_isinstance(root_dir, str)
+        self._root_dir = root_dir
         self._partition_mode = partition_mode
+        self._aws_profile = aws_profile
 
-    def _read_data_for_multiple_symbols(
-        self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        full_symbol_col_name: str,
-        *,
-        columns: Optional[List[str]] = None,
+    @staticmethod
+    def get_universe() -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        return []
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def _get_columns_for_query() -> Optional[List[str]]:
+        """
+        Get columns for Parquet data query.
+
+        For base implementation the columns are `None`
+        """
+        return None
+
+    @staticmethod
+    def _apply_transformations(
+        df: pd.DataFrame, full_symbol_col_name: str
     ) -> pd.DataFrame:
         """
-        Same as abstract method.
+        Apply transformations to loaded data.
         """
-        _LOG.debug(
-            hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name columns"
-            )
-        )
-        # Build the Parquet filtering condition.
-        hdbg.dassert_container_type(full_symbols, list, str)
-        asset_and_filter = (self._full_symbol_col_name, "in", full_symbols)
-        filters = hparque.get_parquet_filters_from_timestamp_interval(
-            self._partition_mode,
-            start_ts,
-            end_ts,
-            additional_filter=asset_and_filter,
-        )
-        # Read the data.
-        # TODO(gp): Add support for S3 passing aws_profile.
-        df = hparque.from_parquet(
-            self._root_dir_name,
-            columns=columns,
-            filters=filters,
-            log_level=logging.INFO,
-        )
-        hdbg.dassert(not df.empty)
-        # Convert to datetime.
-        df.index = pd.to_datetime(df.index)
         # The asset data can come back from Parquet as:
         # ```
         # Categories(540, int64): [10025, 10036, 10040, 10045, ..., 82711, 82939,
         #                         83317, 89970]
         # ```
         # which confuses `df.groupby()`, so we force that column to str.
-        df[self._full_symbol_col_name] = df[self._full_symbol_col_name].astype(
-            str
+        df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
+        return df
+
+    def _read_data_for_multiple_symbols(
+        self,
+        full_symbols: List[icdc.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        full_symbol_col_name: str,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        hdbg.dassert_container_type(full_symbols, list, str)
+        # Implement logging and add it to kwargs.
+        _LOG.debug(
+            hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
         )
-        # Rename column storing `full_symbols`, if needed.
-        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
-        if full_symbol_col_name != self._full_symbol_col_name:
-            hdbg.dassert_not_in(full_symbol_col_name, df.columns)
-            df.rename(
-                columns={self._full_symbol_col_name: full_symbol_col_name},
-                inplace=True,
-            )
-        # Since we have normalized the data, the index is a timestamp and we can
+        kwargs["log_level"] = logging.INFO
+        # Build root dir to the data and Parquet filtering condition.
+        root_dir, symbol_filter = self._get_root_dir_and_symbol_filter(
+            full_symbols, full_symbol_col_name
+        )
+        # Build list of filters for a query and add them to kwargs.
+        filters = hparque.get_parquet_filters_from_timestamp_interval(
+            self._partition_mode,
+            start_ts,
+            end_ts,
+            additional_filters=[symbol_filter],
+        )
+        kwargs["filters"] = filters
+        # Get columns and add them to kwargs if they were not specified.
+        if "columns" not in kwargs:
+            columns = self._get_columns_for_query()
+            kwargs["columns"] = columns
+        # Add AWS profile to kwargs.
+        kwargs["aws_profile"] = self._aws_profile
+        # Read data.
+        df = hparque.from_parquet(root_dir, **kwargs)
+        hdbg.dassert(not df.empty)
+        # TODO(Dan): Discuss if we should always convert index to timestamp
+        #  or make a function so it may change based on the vendor.
+        # Convert to datetime.
+        df.index = pd.to_datetime(df.index)
+        # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
+        #  Not sure if this is still needed.
+        #        # Rename column storing `full_symbols`, if needed.
+        #        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
+        #        if full_symbol_col_name != self._full_symbol_col_name:
+        #            hdbg.dassert_not_in(full_symbol_col_name, df.columns)
+        #            df.rename(
+        #                columns={self._full_symbol_col_name: full_symbol_col_name},
+        #                inplace=True,
+        #            )
+        # Transform data.
+        df = self._apply_transformations(df, full_symbol_col_name)
+        # Since we have normalized the data, the index is a timestamp, and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
         # from filtering in terms of days.
         ts_col_name = None
@@ -110,6 +158,19 @@ class HistoricalPqByTileClient(
             df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         return df
+
+    def _get_root_dir_and_symbol_filter(
+        self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
+    ) -> Tuple[str, hparque.ParquetFilter]:
+        """
+        Get a root dir to the data and filtering condition on full symbol
+        column.
+        """
+        # The root dir of the data is the one passed from the constructor.
+        root_dir = self._root_dir
+        # Add a filter on full symbols.
+        symbol_filter = (full_symbol_col_name, "in", full_symbols)
+        return root_dir, symbol_filter
 
 
 # #############################################################################
@@ -124,13 +185,22 @@ class HistoricalPqByDateClient(
     """
 
     # TODO(gp): Do not pass a read_func but use an abstract method.
-    def __init__(self, full_symbol_col_name: str, read_func):
-        self._full_symbol_col_name = full_symbol_col_name
+    def __init__(
+        self,
+        vendor: str,
+        resample_1min: bool,
+        read_func,
+        *,
+        full_symbol_col_name: Optional[str] = None,
+    ):
+        super().__init__(
+            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+        )
         self._read_func = read_func
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[icdc.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,

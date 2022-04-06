@@ -10,7 +10,7 @@ import logging
 import os
 import pprint
 import re
-from typing import Any, Dict, List, Match, Optional, Tuple
+from typing import Any, Dict, List, Match, Optional, Tuple, cast
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -51,7 +51,7 @@ def get_branch_name(dir_name: str = ".") -> str:
 
     E.g., `master` or `AmpTask672_Add_script_to_check_and_merge_PR`
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     # > git rev-parse --abbrev-ref HEAD
     # master
     cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
@@ -61,7 +61,10 @@ def get_branch_name(dir_name: str = ".") -> str:
 
 
 def get_branch_next_name(
-    dir_name: str = ".", log_verb: int = logging.DEBUG
+    dir_name: str = ".",
+    *,
+    curr_branch_name: Optional[str] = None,
+    log_verb: int = logging.DEBUG,
 ) -> str:
     """
     Return a name derived from the branch so that the branch doesn't exist.
@@ -69,11 +72,13 @@ def get_branch_next_name(
     E.g., `AmpTask1903_Implemented_system_Portfolio` ->
     `AmpTask1903_Implemented_system_Portfolio_3`
     """
-    curr_branch_name = get_branch_name(dir_name=dir_name)
+    if curr_branch_name is None:
+        curr_branch_name = get_branch_name(dir_name=dir_name)
     hdbg.dassert_ne(curr_branch_name, "master")
     _LOG.log(log_verb, "curr_branch_name='%s'", curr_branch_name)
     #
-    for i in range(1, 10):
+    max_num_ids = 20
+    for i in range(1, max_num_ids):
         new_branch_name = f"{curr_branch_name}_{i}"
         _LOG.log(log_verb, "Trying branch name '%s'", new_branch_name)
         mode = "all"
@@ -82,7 +87,10 @@ def get_branch_next_name(
         if not exists:
             _LOG.log(log_verb, "new_branch_name='%s'", new_branch_name)
             return new_branch_name
-    raise ValueError(f"Can't find the next branch name for '{curr_branch_name}'")
+    raise ValueError(
+        f"Can't find the next branch name for '{curr_branch_name}' within %s ids",
+        max_num_ids,
+    )
 
 
 def get_branch_hash(dir_name: str = ".") -> str:
@@ -97,6 +105,7 @@ def get_branch_hash(dir_name: str = ".") -> str:
     cmd = f"cd {dir_name} && git merge-base master {curr_branch_name}"
     _, hash_ = hsystem.system_to_string(cmd)
     hash_ = hash_.rstrip("\n").lstrip("\n")
+    hash_ = cast(str, hash_)
     hdbg.dassert_eq(len(hash_.split("\n")), 1)
     return hash_
 
@@ -272,7 +281,7 @@ def _get_submodule_hash(dir_name: str) -> str:
 
     > git ls-tree master | grep <dir_name>
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     cmd = "git ls-tree master | grep %s" % dir_name
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
     _, output = data
@@ -461,7 +470,7 @@ def get_repo_full_name_from_dirname(
         "github.com/alphamatic/amp"
     :return: the full name of the repo in `git_dir`, e.g., "alphamatic/amp".
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     #
     cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % dir_name
     _, output = hsystem.system_to_string(cmd)
@@ -693,7 +702,7 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
         file_name, "", "Can't find file '%s' in dir '%s'", file_name, root_dir
     )
     file_name: str = os.path.abspath(file_name)
-    hdbg.dassert_exists(file_name)
+    hdbg.dassert_path_exists(file_name)
     return file_name
 
 
@@ -844,7 +853,7 @@ def get_head_hash(dir_name: str = ".", short_hash: bool = False) -> str:
     4759b3685f903e6c669096e960b248ec31c63b69
     ```
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     opts = "--short " if short_hash else " "
     cmd = f"cd {dir_name} && git rev-parse {opts}HEAD"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
@@ -854,7 +863,7 @@ def get_head_hash(dir_name: str = ".", short_hash: bool = False) -> str:
 
 # TODO(gp): Use get_head_hash() and remove this.
 def get_current_commit_hash(dir_name: str = ".") -> str:
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     cmd = f"cd {dir_name} && git rev-parse HEAD"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
     _, sha = data
@@ -867,7 +876,7 @@ def get_remote_head_hash(dir_name: str) -> str:
     """
     Report the hash that the remote Git repo is at.
     """
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     sym_name = get_repo_full_name_from_dirname(dir_name, include_host_name=False)
     cmd = f"git ls-remote git@github.com:{sym_name} HEAD 2>/dev/null"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
@@ -1159,6 +1168,7 @@ def git_describe(
         cmd = f"{cmd} --match '{match}'"
     num, tag = hsystem.system_to_one_line(cmd, log_level=log_level)
     _ = num
+    tag = cast(str, tag)
     return tag
 
 
@@ -1234,6 +1244,7 @@ def _get_gh_pr_list() -> str:
     cmd = "gh pr list -s all --limit 10000"
     rc, txt = hsystem.system_to_string(cmd)
     _ = rc
+    txt = cast(str, txt)
     return txt
 
 
@@ -1250,8 +1261,10 @@ def does_branch_exist(
     # Handle the "all" case by recursion on all the possible modes.
     if mode == "all":
         exists = False
-        for mode in ("git_local", "git_remote", "github"):
-            exists_tmp = does_branch_exist(branch_name, mode, dir_name=dir_name)
+        for mode_tmp in ("git_local", "git_remote", "github"):
+            exists_tmp = does_branch_exist(
+                branch_name, mode_tmp, dir_name=dir_name
+            )
             exists |= exists_tmp
         return exists
     #
@@ -1284,6 +1297,7 @@ def does_branch_exist(
             fields = line.split("\t")
             hdbg.dassert_eq(len(fields), 4)
             number, gh_branch_name, git_branch_name, status = fields
+            _ = number, gh_branch_name
             if branch_name == git_branch_name:
                 exists = True
                 _LOG.debug(

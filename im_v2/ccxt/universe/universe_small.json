@@ -1,10 +1,8 @@
 {
-  "CCXT": {
-    "gateio": [
-      "XRP_USDT"
-    ],
-    "kucoin": [
-      "SOL_USDT"
-    ]
-  }
+  "gateio": [
+    "XRP_USDT"
+  ],
+  "kucoin": [
+    "SOL_USDT"
+  ]
 }

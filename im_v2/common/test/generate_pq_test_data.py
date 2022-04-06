@@ -39,13 +39,6 @@ _LOG = logging.getLogger(__name__)
 class ParquetDataFrameGenerator:
     # Allowed types.
     OUTPUT_TYPES = ("basic", "verbose_open", "cm_task_1103")
-    # Depending on output type, asset column varies. This mapping is always
-    # resolving to expected asset column name.
-    ASSET_COLUMN_NAME_MAP = {
-        "basic": "asset",
-        "verbose_open": "ticker",
-        "cm_task_1103": "asset_id",
-    }
 
     def __init__(
         self,
@@ -53,6 +46,7 @@ class ParquetDataFrameGenerator:
         end_date: str,
         output_type: str,
         assets: List[Union[str, int]],
+        asset_col_name: str,
         freq: str,
     ) -> None:
         """
@@ -62,12 +56,14 @@ class ParquetDataFrameGenerator:
         :param end_date: end of date range excluding end_date
         :param output_type: type of data that is generated
         :param assets: list of desired assets that can be names or ids
+        :param asset_col_name: name of the column that stores assets
         :param freq: frequency of steps between start and end date
         """
         self._start_date = start_date
         self._end_date = end_date
         self._output_type = output_type
         self._assets = assets
+        self._asset_col_name = asset_col_name
         self._freq = freq
         # TODO(Nikola): Use `inclusive` instead `closed` after 1.4.0
         self._dataframe_index = pd.date_range(
@@ -82,13 +78,6 @@ class ParquetDataFrameGenerator:
             "verbose_open": self._get_verbose_open_dataframe,
             "cm_task_1103": self._get_cm_task_1103_dataframe,
         }
-
-    @property
-    def asset_column_name(self) -> str:
-        """
-        Return proper asset column name from map depending on output type.
-        """
-        return self.ASSET_COLUMN_NAME_MAP[self._output_type]
 
     @property
     def output_type_function(self) -> Callable:
@@ -106,12 +95,18 @@ class ParquetDataFrameGenerator:
             raise ValueError(f"Unsupported data type `{self._output_type}`!")
         return self.output_type_function()
 
+    @staticmethod
+    def _wrap_all_assets_df(df: List[pd.DataFrame]) -> pd.DataFrame:
+        # Create a single dataframe for all the assets.
+        df = pd.concat(df)
+        _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="df"))
+        return df
+
     def _get_core_dataframes(self) -> List[pd.DataFrame]:
         """
         Create core dataframes that are updated according to the output type.
 
-        :return: list of core dataframes as presented below with asset column name
-            as `asset` with string values
+        :return: list of core dataframes for specified assets with string values
         ```
                      asset
         2000-01-01       A
@@ -123,7 +118,7 @@ class ParquetDataFrameGenerator:
         df = []
         for asset in self._assets:
             asset_df = pd.DataFrame(
-                {self.asset_column_name: asset},
+                {self._asset_col_name: asset},
                 index=self._dataframe_index,
             )
             _LOG.debug(
@@ -199,34 +194,28 @@ class ParquetDataFrameGenerator:
             asset_dataframe.insert(loc=7, column="id", value=id_)
         return self._wrap_all_assets_df(asset_dataframes)
 
+    # TODO(Dan): CmTask1490.
     def _get_cm_task_1103_dataframe(self) -> pd.DataFrame:
         """
         Update core dataframes with additional columns.
 
         :return: updated core dataframe as presented below
         ```
-                    asset_id   close
-        2000-01-01     10689     100
-        2000-01-02     10689     200
-        2000-01-03     10689     300
+                    full_symbol   close
+        2000-01-01        10689     100
+        2000-01-02        10689     200
+        2000-01-03        10689     300
         ```
         """
         asset_dataframes = self._get_core_dataframes()
         for asset_dataframe in asset_dataframes:
-            # Positioned right from `asset_id` column.
+            # Positioned right from asset column.
             asset_dataframe.insert(
                 loc=1,
                 column="close",
                 value=list(range(len(self._dataframe_index))),
             )
         return self._wrap_all_assets_df(asset_dataframes)
-
-    @staticmethod
-    def _wrap_all_assets_df(df: List[pd.DataFrame]) -> pd.DataFrame:
-        # Create a single dataframe for all the assets.
-        df = pd.concat(df)
-        _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="df"))
-        return df
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -269,6 +258,12 @@ def _parse() -> argparse.ArgumentParser:
         help="Comma separated string of assets that can be either names or ids",
     )
     parser.add_argument(
+        "--asset_col_name",
+        action="store",
+        type=str,
+        help="Name of the column that stores assets",
+    )
+    parser.add_argument(
         "--output_type",
         action="store",
         type=str,
@@ -307,10 +302,11 @@ def _run(parser: argparse.ArgumentParser) -> None:
     partition_mode = args.partition_mode
     assets = args.assets
     assets = assets.split(",")
+    asset_col_name = args.asset_col_name
     dst_dir = args.dst_dir
     # Run dataframe generation.
     pdg = ParquetDataFrameGenerator(
-        start_date, end_date, output_type, assets, freq
+        start_date, end_date, output_type, assets, asset_col_name, freq
     )
     parquet_df = pdg.generate()
     # Add partition columns to the dataframe.

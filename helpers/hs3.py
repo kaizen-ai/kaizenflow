@@ -7,10 +7,11 @@ import helpers.hs3 as hs3
 import argparse
 import configparser
 import functools
+import gzip
 import logging
 import os
 import pprint
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 _WARNING = "\033[33mWARNING\033[0m"
 
@@ -20,7 +21,10 @@ except ModuleNotFoundError:
     _module = "s3fs"
     print(_WARNING + f": Can't find {_module}: continuing")
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
+# Avoid the following dependency from other `helpers` modules to prevent import cycles.
+# import helpers.hpandas as hpandas
+# import helpers.hsql as hsql
+# import helpers.hunit_test as hunitest
 
 # To enforce this order of the imports we use the directive for the linter below.
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -37,6 +41,8 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 # Basic utils.
 # #############################################################################
+
+AwsProfile = Optional[Union[str, s3fs.core.S3FileSystem]]
 
 
 def is_s3_path(s3_path: str) -> bool:
@@ -72,21 +78,40 @@ def dassert_is_not_s3_path(s3_path: str) -> None:
     )
 
 
-# TODO(gp): -> dassert_s3_path_exists
-def dassert_s3_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
+def dassert_path_exists(
+    path: str, aws_profile: Optional[AwsProfile] = None
+) -> None:
     """
-    Assert if an S3 file or dir doesn't exist.
+    Assert if S3 or local path doesn't exist. `aws_profile` is specified if and
+    only if path is an S3 path.
+
+    :param path: S3 or local path
+    :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    dassert_is_s3_path(s3_path)
-    hdbg.dassert(s3fs_.exists(s3_path), "S3 file '%s' doesn't exist", s3_path)
+    if aws_profile is not None:
+        dassert_is_s3_path(path)
+        s3fs_ = get_s3fs(aws_profile)
+        hdbg.dassert(s3fs_.exists(path), "S3 path '%s' doesn't exist!" % path)
+    else:
+        hdbg.dassert_path_exists(path)
 
 
-def dassert_s3_not_exists(s3_path: str, s3fs_: s3fs.core.S3FileSystem) -> None:
+def dassert_path_not_exists(
+    path: str, aws_profile: Optional[AwsProfile] = None
+) -> None:
     """
-    Assert if an S3 file or dir exist.
+    Assert if S3 or local path exist. `aws_profile` is specified if and only if
+    path is an S3 path.
+
+    :param path: S3 or local path
+    :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    dassert_is_s3_path(s3_path)
-    hdbg.dassert(not s3fs_.exists(s3_path), "S3 file '%s' already exist", s3_path)
+    if aws_profile is not None:
+        dassert_is_s3_path(path)
+        s3fs_ = get_s3fs(aws_profile)
+        hdbg.dassert(not s3fs_.exists(path), "S3 path '%s' already exist!" % path)
+    else:
+        hdbg.dassert_path_not_exists(path)
 
 
 def split_path(s3_path: str) -> Tuple[str, str]:
@@ -112,6 +137,168 @@ def split_path(s3_path: str) -> Tuple[str, str]:
         abs_path,
     )
     return bucket, abs_path
+
+
+def listdir(
+    dir_name: str,
+    pattern: str,
+    only_files: bool,
+    use_relative_paths: bool,
+    *,
+    exclude_git_dirs: bool = True,
+    aws_profile: Optional[AwsProfile] = None,
+) -> List[str]:
+    """
+    Counterpart to `hio.listdir` with S3 support.
+
+    :param dir_name: a S3 or local path
+    :param aws_profile: AWS profile to use if and only if using an S3 path,
+        otherwise `None` for local path
+    """
+    if aws_profile is not None:
+        s3fs_ = get_s3fs(aws_profile)
+        dassert_path_exists(dir_name, s3fs_)
+        # Ensure that there are no multiple stars in pattern.
+        hdbg.dassert_not_in("**", pattern)
+        # `hio.listdir` is using `find` which looks for files and directories
+        # descending recursively in the directory.
+        # One star in glob will use `maxdepth=1`.
+        pattern = pattern.replace("*", "**")
+        # Detailed S3 objects in dict form with metadata.
+        path_objects = s3fs_.glob(f"{dir_name}/{pattern}", detail=True)
+        if only_files:
+            # Use metadata to distinguish files from directories without
+            # calling `s3fs_.isdir/isfile`.
+            for path_object in path_objects.values():
+                if path_object["type"] != "file":
+                    path_objects.pop(path_object["Key"])
+        paths = list(path_objects.keys())
+        if exclude_git_dirs:
+            paths = [path for path in paths if "/.git/" not in path]
+        if use_relative_paths:
+            # TODO(Nikola): Check if `s3://` causes a problem.
+            paths = [os.path.relpath(path, start=dir_name) for path in paths]
+    else:
+        paths = hio.listdir(
+            dir_name,
+            pattern,
+            only_files,
+            use_relative_paths,
+            exclude_git_dirs=exclude_git_dirs,
+        )
+    return paths
+
+
+def to_file(
+    lines: str,
+    file_name: str,
+    *,
+    mode: Optional[str] = None,
+    force_flush: bool = False,
+    aws_profile: Optional[AwsProfile] = None,
+) -> None:
+    """
+    Counterpart to `hio.to_file` with S3 support.
+
+    If and only if `aws_profile` is specified, S3 is used instead of
+    local filesystem.
+    """
+    if aws_profile is not None:
+        # Ensure that `bytes` is used.
+        if mode is not None and "b" not in mode:
+            raise ValueError("S3 only allows binary mode!")
+        hdbg.dassert_isinstance(lines, str)
+        # Convert lines to bytes, only supported mode for S3.
+        # Also create a list of new lines as raw bytes is not supported.
+        os_sep = os.linesep
+        lines = [f"{line}{os_sep}".encode() for line in lines.split(os_sep)]
+        # Inspect file name and path.
+        hio.dassert_is_valid_file_name(file_name)
+        s3fs_ = get_s3fs(aws_profile)
+        mode = "wb" if mode is None else mode
+        # Open s3 file.
+        with s3fs_.open(file_name, mode) as s3_file:
+            if file_name.endswith((".gz", ".gzip")):
+                # Open and decompress gzipped file.
+                with gzip.GzipFile(fileobj=s3_file) as gzip_file:
+                    gzip_file.writelines(lines)
+            else:
+                # Any other file.
+                s3_file.writelines(lines)
+            if force_flush:
+                # TODO(Nikola): Investigate S3 alternative for `os.fsync(f.fileno())`.
+                s3_file.flush()
+    else:
+        use_gzip = file_name.endswith((".gz", ".gzip"))
+        hio.to_file(
+            file_name,
+            lines,
+            mode=mode,
+            use_gzip=use_gzip,
+            force_flush=force_flush,
+        )
+
+
+def from_file(
+    file_name: str,
+    encoding: Optional[Any] = None,
+    aws_profile: Optional[AwsProfile] = None,
+) -> str:
+    """
+    Counterpart to `hio.from_file` with S3 support.
+
+    If and only if `aws_profile` is specified, S3 is used instead of
+    local filesystem.
+    """
+    if aws_profile is not None:
+        if encoding:
+            raise ValueError("Encoding is not supported when reading from S3!")
+        # Inspect file name and path.
+        hio.dassert_is_valid_file_name(file_name)
+        s3fs_ = get_s3fs(aws_profile)
+        dassert_path_exists(file_name, s3fs_)
+        # Open s3 file.
+        with s3fs_.open(file_name, "rb") as s3_file:
+            if file_name.endswith((".gz", ".gzip")):
+                # Open and decompress gzipped file.
+                with gzip.GzipFile(fileobj=s3_file) as gzip_file:
+                    data = gzip_file.read().decode()
+            else:
+                # Any other file.
+                data = s3_file.read().decode()
+    else:
+        data = hio.from_file(file_name, encoding=encoding)
+    return data
+
+
+def get_local_or_s3_stream(
+    file_name: str, **kwargs: Any
+) -> Tuple[Union[s3fs.core.S3FileSystem, str], Any]:
+    """
+    Gets S3 stream for desired file or simply returns file name.
+
+    :param file_name: file name or full path to file
+    """
+    _LOG.debug(hprint.to_str("file_name kwargs"))
+    # Handle the s3fs param, if needed.
+    if is_s3_path(file_name):
+        # For S3 files we need to have an `s3fs` parameter.
+        hdbg.dassert_in(
+            "s3fs",
+            kwargs,
+            "Credentials through s3fs are needed to access an S3 path",
+        )
+        s3fs_ = kwargs.pop("s3fs")
+        hdbg.dassert_isinstance(s3fs_, s3fs.core.S3FileSystem)
+        dassert_path_exists(file_name, s3fs_)
+        stream = s3fs_.open(file_name)
+    else:
+        if "s3fs" in kwargs:
+            _LOG.warning("Passed `s3fs` without an S3 file: ignoring it")
+            _ = kwargs.pop("s3fs")
+        hdbg.dassert_file_exists(file_name)
+        stream = file_name
+    return stream, kwargs
 
 
 # #############################################################################
@@ -146,7 +333,8 @@ def get_bucket() -> str:
 # TODO(gp): @all use get_s3_path() below.
 def get_path() -> str:
     """
-    Return the path to the S3 bucket (e.g., `s3://alphamatic-data`) for an account.
+    Return the path to the S3 bucket (e.g., `s3://alphamatic-data`) for an
+    account.
     """
     bucket = get_bucket()
     path = "s3://" + bucket
@@ -274,7 +462,8 @@ def get_aws_credentials(
     aws_profile: str,
 ) -> Dict[str, Optional[str]]:
     """
-    Read the AWS credentials for a given profile from `~/.aws` or from env vars.
+    Read the AWS credentials for a given profile from `~/.aws` or from env
+    vars.
 
     :return: a dictionary with `access_key_id`, `aws_secret_access_key`,
         `aws_region` and optionally `aws_session_token`
@@ -300,6 +489,7 @@ def get_aws_credentials(
     ]
     if any(set_env_vars):
         if not all(set_env_vars):
+            # TODO(Nikola): raise an error instead?
             _LOG.warning(
                 "Some but not all AWS env vars are set (%s): ignoring",
                 str(set_env_vars),
@@ -320,7 +510,7 @@ def get_aws_credentials(
         result["aws_session_token"] = None
         # TODO(gp): @all support also other S3 profiles. We can derive the names
         #  of the env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
-        hdbg.dassert_eq(aws_profile, "am")
+        hdbg.dassert_in(aws_profile, ("am", "ck"))
     else:
         _LOG.debug("Using AWS credentials from files")
         # > more ~/.aws/credentials
@@ -395,22 +585,27 @@ def get_key_value(
 # ///////////////////////////////////////////////////////////////////////////////
 
 
-def get_s3fs(*args: Any, **kwargs: Any) -> s3fs.core.S3FileSystem:
+def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
     """
-    Return an s3fs object from a given AWS profile.
+    Return a s3fs object from a given AWS profile.
 
-    Same parameters as `get_aws_credentials()`.
+    :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    # From https://stackoverflow.com/questions/62562945
-    aws_credentials = get_aws_credentials(*args, **kwargs)
-    _LOG.debug("%s", pprint.pformat(aws_credentials))
-    s3fs_ = s3fs.core.S3FileSystem(
-        anon=False,
-        key=aws_credentials["aws_access_key_id"],
-        secret=aws_credentials["aws_secret_access_key"],
-        token=aws_credentials["aws_session_token"],
-        client_kwargs={"region_name": aws_credentials["aws_region"]},
-    )
+    if isinstance(aws_profile, str):
+        # From https://stackoverflow.com/questions/62562945
+        aws_credentials = get_aws_credentials(aws_profile)
+        _LOG.debug("%s", pprint.pformat(aws_credentials))
+        s3fs_ = s3fs.core.S3FileSystem(
+            anon=False,
+            key=aws_credentials["aws_access_key_id"],
+            secret=aws_credentials["aws_secret_access_key"],
+            token=aws_credentials["aws_session_token"],
+            client_kwargs={"region_name": aws_credentials["aws_region"]},
+        )
+    elif isinstance(aws_profile, s3fs.core.S3FileSystem):
+        s3fs_ = aws_profile
+    else:
+        raise ValueError(f"Invalid aws_profile='{aws_profile}'")
     return s3fs_
 
 
@@ -432,8 +627,12 @@ def archive_data_on_s3(
     The tgz is created so that when expanded a dir with the name `src_dir` is
     created.
 
+    :param src_dir: directory that will be compressed
     :param s3_path: full S3 path starting with `s3://`
     :param aws_profile: the profile to use
+    :param aws_profile: the profile to use. We use a string and not an
+        `AwsProfile` since this is typically the outermost caller in the stack,
+        and it doesn't reuse an S3 fs object
     :param tag: a tag to add to the name of the file
     """
     aws_profile = get_aws_profile(aws_profile)
@@ -503,7 +702,9 @@ def retrieve_archived_data_from_s3(
     :param s3_file_path: path to the S3 file with the archived data. E.g.,
        `s3://.../experiment.20210802-121908.tgz`
     :param dst_dir: destination directory where to save the data
-    :param aws_profile: AWS profile to use to access the data
+    :param aws_profile: the profile to use. We use a string and not an
+        `AwsProfile` since this is typically the outermost caller in the stack,
+        and it doesn't reuse an S3 fs object
     :param incremental: skip if the tgz file is already present locally
     :return: path with the local tgz file
     """
@@ -524,7 +725,7 @@ def retrieve_archived_data_from_s3(
     else:
         # Download.
         s3fs_ = get_s3fs(aws_profile)
-        dassert_s3_exists(s3_file_path, s3fs_)
+        dassert_path_exists(s3_file_path, s3fs_)
         _LOG.debug("Getting from s3: '%s' -> '%s", s3_file_path, dst_file)
         s3fs_.get(s3_file_path, dst_file)
         _LOG.info("Saved to '%s'", dst_file)

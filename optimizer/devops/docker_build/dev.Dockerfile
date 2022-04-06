@@ -60,4 +60,6 @@ RUN echo "OPT_CONTAINER_VERSION=$OPT_CONTAINER_VERSION"
 # TODO(gp): Is this needed?
 WORKDIR $APP_DIR
 
+# To make lm* visible use this:
+# ENTRYPOINT ["amp/optimizer/devops/docker_run/entrypoint.sh"]
 ENTRYPOINT ["optimizer/devops/docker_run/entrypoint.sh"]

@@ -50,8 +50,9 @@ class AbstractDagRunner(abc.ABC):
         self.config = config
         # Build DAG using DAG builder.
         hdbg.dassert_is_not(dag_builder, None)
-        # TODO(gp): Now a DagRunner builds and runs a DAG. This creates some coupling.
-        #  Consider having a DagRunner accept a DAG however built and run it.
+        # TODO(gp): Now a DagRunner builds and runs a DAG. This creates some
+        #  coupling. Consider having a DagRunner accept a DAG however built and run
+        #  it.
         if isinstance(dag_builder, dtfcodabui.DagBuilder):
             self._dag_builder = dag_builder
             self.dag = self._dag_builder.get_dag(self.config)

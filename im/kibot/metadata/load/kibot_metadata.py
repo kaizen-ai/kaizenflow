@@ -15,7 +15,6 @@ import pandas as pd
 import pandas.tseries.offsets as ptoffs
 from tqdm.autonotebook import tqdm
 
-import core.pandas_helpers as cpanh
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
@@ -549,13 +548,14 @@ class FuturesContractLifetimes:
         symbol_to_contracts: _SymbolToContracts = {}
         for symbol in symbols:
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
-            hdbg.dassert_exists(file_name)
+            hdbg.dassert_path_exists(file_name)
             if hs3.is_s3_path(file_name):
                 s3fs = hs3.get_s3fs("am")
                 kwargs = {"s3fs": s3fs}
             else:
                 kwargs = {}
-            df = cpanh.read_csv(file_name, index_col=0, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
+            df = hpandas.read_csv_to_df(stream, index_col=0, **kwargs)
             hdbg.dassert_eq(
                 df.columns.tolist(),
                 ["symbol", "contract", "start_date", "end_date"],

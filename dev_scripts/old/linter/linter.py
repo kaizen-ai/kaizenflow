@@ -203,7 +203,7 @@ def _get_files(args: argparse.Namespace) -> List[str]:
                 dir_name = args.dir_name
             dir_name = os.path.abspath(dir_name)
             _LOG.info("Looking for all files in '%s'", dir_name)
-            hdbg.dassert_exists(dir_name)
+            hdbg.dassert_path_exists(dir_name)
             cmd = "find %s -name '*' -type f" % dir_name
             _, output = hsystem.system_to_string(cmd)
             file_names = output.split("\n")
@@ -331,7 +331,7 @@ class _Action:
         :return: list of strings representing the output
         """
         hdbg.dassert(file_name)
-        hdbg.dassert_exists(file_name)
+        hdbg.dassert_path_exists(file_name)
         output = self._execute(file_name, pedantic)
         _dassert_list_of_strings(output)
         return output
@@ -356,20 +356,6 @@ class _CheckFileProperty(_Action):
     def check_if_possible(self) -> bool:
         # We don't need any special executable, so we can always run this action.
         return True
-
-    def _execute(self, file_name: str, pedantic: int) -> List[str]:
-        _ = pedantic
-        output: List[str] = []
-        for func in [
-            self._check_size,
-            self._check_notebook_dir,
-            self._check_test_file_dir,
-        ]:
-            msg = func(file_name)
-            if msg:
-                _LOG.warning(msg)
-                output.append(msg)
-        return output
 
     @staticmethod
     def _check_size(file_name: str) -> str:
@@ -418,6 +404,20 @@ class _CheckFileProperty(_Action):
                     "be discovered by pytest" % file_name
                 )
         return msg
+
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
+        _ = pedantic
+        output: List[str] = []
+        for func in [
+            self._check_size,
+            self._check_notebook_dir,
+            self._check_test_file_dir,
+        ]:
+            msg = func(file_name)
+            if msg:
+                _LOG.warning(msg)
+                output.append(msg)
+        return output
 
 
 # #############################################################################
@@ -1180,37 +1180,6 @@ class _CustomPythonChecks(_Action):
         # We don't need any special executable, so we can always run this action.
         return True
 
-    def _execute(self, file_name: str, pedantic: int) -> List[str]:
-        _ = pedantic
-        output: List[str] = []
-        # Applicable only to python files that are not paired with Jupytext.
-        if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
-            _LOG.debug("Skipping file_name='%s'", file_name)
-            return output
-        # Read file.
-        txt = hio.from_file(file_name).split("\n")
-        # Only library code should be baptized.
-        should_baptize = True
-        should_baptize &= not os.path.basename("__init__.py")
-        should_baptize &= not is_test_code(file_name)
-        if should_baptize:
-            # Check shebang.
-            is_executable = os.access(file_name, os.X_OK)
-            msg = self._check_shebang(file_name, txt, is_executable)
-            if msg:
-                output.append(msg)
-            # Check that the module was baptized.
-            if not is_executable:
-                msg = self._was_baptized(file_name, txt)
-                if msg:
-                    output.append(msg)
-        # Process file.
-        output_tmp, txt_new = self._check_line_by_line(file_name, txt)
-        output.extend(output_tmp)
-        # Write file back.
-        _write_file_back(file_name, txt, txt_new)
-        return output
-
     @staticmethod
     def _check_shebang(
         file_name: str, txt: List[str], is_executable: bool
@@ -1354,6 +1323,37 @@ class _CustomPythonChecks(_Action):
             _dassert_list_of_strings(output)
         return output, txt_new
 
+    def _execute(self, file_name: str, pedantic: int) -> List[str]:
+        _ = pedantic
+        output: List[str] = []
+        # Applicable only to python files that are not paired with Jupytext.
+        if not is_py_file(file_name) or is_paired_jupytext_file(file_name):
+            _LOG.debug("Skipping file_name='%s'", file_name)
+            return output
+        # Read file.
+        txt = hio.from_file(file_name).split("\n")
+        # Only library code should be baptized.
+        should_baptize = True
+        should_baptize &= not os.path.basename("__init__.py")
+        should_baptize &= not is_test_code(file_name)
+        if should_baptize:
+            # Check shebang.
+            is_executable = os.access(file_name, os.X_OK)
+            msg = self._check_shebang(file_name, txt, is_executable)
+            if msg:
+                output.append(msg)
+            # Check that the module was baptized.
+            if not is_executable:
+                msg = self._was_baptized(file_name, txt)
+                if msg:
+                    output.append(msg)
+        # Process file.
+        output_tmp, txt_new = self._check_line_by_line(file_name, txt)
+        output.extend(output_tmp)
+        # Write file back.
+        _write_file_back(file_name, txt, txt_new)
+        return output
+
 
 # #############################################################################
 
@@ -1376,7 +1376,7 @@ class _LintMarkdown(_Action):
         # Run lint_txt.py.
         executable = "lint_txt.py"
         exec_path = hgit.find_file_in_git_tree(executable)
-        hdbg.dassert_exists(exec_path)
+        hdbg.dassert_path_exists(exec_path)
         #
         cmd = []
         cmd.append(exec_path)

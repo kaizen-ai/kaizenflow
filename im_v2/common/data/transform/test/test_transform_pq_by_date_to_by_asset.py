@@ -27,6 +27,7 @@ class TestPqByDateToByAsset1(hunitest.TestCase):
         cmd.append("--start_date 2021-12-30")
         cmd.append("--end_date 2022-01-02")
         cmd.append("--assets A,B,C")
+        cmd.append("--asset_col_name ticker")
         cmd.append(f"--dst_dir {by_date_dir}")
         if verbose:
             cmd.append("--output_type verbose_open")

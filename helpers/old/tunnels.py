@@ -157,7 +157,7 @@ def _create_tunnel(
     """
     ssh_key_path = os.path.expanduser(ssh_key_path)
     _LOG.debug("ssh_key_path=%s", ssh_key_path)
-    hdbg.dassert_exists(ssh_key_path)
+    hdbg.dassert_path_exists(ssh_key_path)
     #
     cmd = (
         "ssh -i {ssh_key_path} -f -nNT -L {local_port}:localhost:{remote_port}"

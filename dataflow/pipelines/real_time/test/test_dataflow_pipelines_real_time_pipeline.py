@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 import core.config as cconfig
+import core.finance as cofinanc
 import core.real_time_example as cretiexa
 import dataflow.core as dtfcore
 import dataflow.pipelines.dataflow_example as dtfpidtfexa
@@ -54,7 +55,7 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
             )
             columns = ["close", "vol"]
             asset_ids = [101]
-            df = mdata.generate_random_price_data(
+            df = cofinanc.generate_random_price_data(
                 start_datetime, end_datetime, columns, asset_ids
             )
             initial_replayed_delay = 5
@@ -123,7 +124,6 @@ class TestRealTimeReturnPipeline1(hunitest.TestCase):
 # TODO(gp): Use dag_builder = dtfsrtdaad.RealTimeDagAdapter(base_dag_builder,
 #   portfolio)
 # TODO(gp): -> TestRealTimeNaivePipelineWithOms1
-@pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
 class TestRealTimePipelineWithOms1(hunitest.TestCase):
     """
     This test uses:
@@ -152,7 +152,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
             )
             columns = ["price", "vol"]
             asset_ids = [1000]
-            df = mdata.generate_random_price_data(
+            df = cofinanc.generate_random_price_data(
                 start_datetime, end_datetime, columns, asset_ids
             )
             initial_replayed_delay = 5
@@ -392,6 +392,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
             prediction_col = "close"
             volatility_col = "close"
             returns_col = "close"
+            spread_col = None
             timedelta = pd.Timedelta("5T")
             asset_id_col = "asset_id"
             dag_builder = dtfsys.RealTimeDagAdapter(
@@ -400,6 +401,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
                 prediction_col,
                 volatility_col,
                 returns_col,
+                spread_col,
                 timedelta,
                 asset_id_col,
             )

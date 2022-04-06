@@ -422,7 +422,7 @@ def get_dir_signature(
     txt: List[str] = []
     # Find all the files under `dir_name`.
     _LOG.debug("dir_name=%s", dir_name)
-    hdbg.dassert_exists(dir_name)
+    hdbg.dassert_path_exists(dir_name)
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
     file_names = hsystem.system_to_files(cmd, dir_name, remove_files_non_present)
@@ -1227,7 +1227,7 @@ class TestCase(unittest.TestCase):
         )
         _LOG.debug("dir_name=%s", dir_name)
         hio.create_dir(dir_name, incremental=True)
-        hdbg.dassert_exists(dir_name)
+        hdbg.dassert_path_exists(dir_name)
         #
         test_name = self._get_test_name()
         is_equal = assert_equal(
@@ -1485,28 +1485,30 @@ class TestCase(unittest.TestCase):
             that they should contain
             - If `None`, skip the check
         :param expected_signature: expected outcome dataframe as string
+            - If `__CHECK_STRING__` use the value in `self.check_string()`
         """
         hdbg.dassert_isinstance(actual_df, pd.DataFrame)
         if expected_length:
-            # Verify that output length is correct.
-            self.assert_equal(str(expected_length), str(actual_df.shape[0]))
+            # Verify that the output length is correct.
+            actual_length = actual_df.shape[0]
+            self.assert_equal(str(actual_length), str(expected_length))
         if expected_column_names:
-            # Verify that column names are correct.
+            # Verify that the column names are correct.
             self.assert_equal(
-                str(sorted(expected_column_names)), str(sorted(actual_df.columns))
+                str(sorted(actual_df.columns)), str(sorted(expected_column_names))
             )
         if expected_column_unique_values:
             hdbg.dassert_is_subset(
                 list(expected_column_unique_values.keys()), actual_df.columns
             )
-            # Verify that unique values in specified columns are correct.
+            # Verify that the unique values in specified columns are correct.
             for column in expected_column_unique_values:
                 actual_one_column_unique_values = sorted(
                     list(actual_df[column].unique())
                 )
                 self.assert_equal(
-                    str(sorted(expected_column_unique_values[column])),
                     str(actual_one_column_unique_values),
+                    str(sorted(expected_column_unique_values[column])),
                 )
         # Build signature.
         actual_signature = hpandas.df_to_str(
@@ -1516,9 +1518,16 @@ class TestCase(unittest.TestCase):
         )
         _LOG.debug("\n%s", actual_signature)
         # Check signature.
-        self.assert_equal(
-            actual_signature, expected_signature, dedent=True, fuzzy_match=True
-        )
+        if expected_signature == "__CHECK_STRING__":
+            self.check_string(actual_signature, dedent=True, fuzzy_match=True)
+        else:
+            hdbg.dassert_isinstance(expected_signature, str)
+            self.assert_equal(
+                actual_signature,
+                expected_signature,
+                dedent=True,
+                fuzzy_match=True,
+            )
 
     def check_srs_output(
         self,
@@ -1540,20 +1549,27 @@ class TestCase(unittest.TestCase):
         hdbg.dassert_isinstance(actual_srs, pd.Series)
         if expected_length:
             # Verify that output length is correct.
-            self.assert_equal(str(expected_length), str(actual_srs.shape[0]))
+            self.assert_equal(str(actual_srs.shape[0]), str(expected_length))
         if expected_unique_values:
             # Verify that unique values in series are correct.
             self.assert_equal(
-                str(sorted(expected_unique_values)),
                 str(sorted(list(actual_srs.unique()))),
+                str(sorted(expected_unique_values)),
             )
         # Build signature.
         actual_signature = convert_df_to_string(actual_srs, index=True)
         _LOG.debug("\n%s", actual_signature)
         # Check signature.
-        self.assert_equal(
-            actual_signature, expected_signature, dedent=True, fuzzy_match=True
-        )
+        if expected_signature == "__CHECK_STRING__":
+            self.check_string(actual_signature, dedent=True, fuzzy_match=True)
+        else:
+            hdbg.dassert_isinstance(expected_signature, str)
+            self.assert_equal(
+                actual_signature,
+                expected_signature,
+                dedent=True,
+                fuzzy_match=True,
+            )
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1691,7 +1707,7 @@ class TestCase(unittest.TestCase):
         )
         _LOG.debug("dir_name=%s", dir_name)
         hio.create_dir(dir_name, incremental=True)
-        hdbg.dassert_exists(dir_name)
+        hdbg.dassert_path_exists(dir_name)
         # Get the expected outcome.
         file_name = self.get_output_dir() + f"/{tag}.txt"
         return dir_name, file_name

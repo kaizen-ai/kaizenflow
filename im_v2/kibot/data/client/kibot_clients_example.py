@@ -51,9 +51,11 @@ def get_KibotEquitiesCsvParquetByAssetClient_example1(
     """
     # Initialize client.
     root_dir = get_test_data_dir()
+    resample_1min = True
     extension = "csv.gz"
     asset_class = "stocks"
     kibot_file_client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
+        resample_1min,
         root_dir,
         extension,
         asset_class,
@@ -74,9 +76,11 @@ def get_KibotEquitiesCsvParquetByAssetClient_example2(
     :param unadjusted: whether asset class prices are unadjusted (i.e., True or False)
     """
     root_dir = get_test_data_dir()
+    resample_1min = True
     extension = "pq"
     asset_class = "stocks"
     kibot_file_client = imvkdckicl.KibotEquitiesCsvParquetByAssetClient(
+        resample_1min,
         root_dir,
         extension,
         asset_class,
@@ -86,7 +90,7 @@ def get_KibotEquitiesCsvParquetByAssetClient_example2(
 
 
 def get_KibotFuturesCsvParquetByAssetClient_example1(
-    contract_type: str,
+    contract_type: str, resample_1min: bool
 ) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
@@ -95,10 +99,12 @@ def get_KibotFuturesCsvParquetByAssetClient_example1(
        - using futures data
 
     :param contract_type: futures contract type (e.g., "continuous", "expiry")
+    :param resample_1min: whether to resample data to 1 minute or not
     """
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
+        resample_1min,
         root_dir,
         extension,
         contract_type,
@@ -107,7 +113,7 @@ def get_KibotFuturesCsvParquetByAssetClient_example1(
 
 
 def get_KibotFuturesCsvParquetByAssetClient_example2(
-    contract_type: str,
+    contract_type: str, resample_1min: bool
 ) -> imvkdckicl.KibotFuturesCsvParquetByAssetClient:
     """
     Return a Kibot object with:
@@ -116,10 +122,12 @@ def get_KibotFuturesCsvParquetByAssetClient_example2(
        - using futures data
 
     :param contract_type: futures contract type (e.g., "continuous", "expiry")
+    :param resample_1min: whether to resample data to 1 minute or not
     """
     root_dir = get_test_data_dir()
     extension = "pq"
     kibot_file_client = imvkdckicl.KibotFuturesCsvParquetByAssetClient(
+        resample_1min,
         root_dir,
         extension,
         contract_type,

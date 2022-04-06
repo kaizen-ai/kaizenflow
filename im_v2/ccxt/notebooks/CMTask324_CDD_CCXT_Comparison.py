@@ -110,12 +110,13 @@ print(config_cdd)
 # ## CCXT
 
 # %%
-ccxt_universe = imvccunun.get_vendor_universe(version="v03")
+ccxt_universe = imvccunun.get_vendor_universe(version="v3")
 
 # %% [markdown]
 # ## CDD
 
 # %% run_control={"marked": false}
+# TODO(Juraj): this got deprecated with #CmTask1493 and #CmTask1487
 cdd_universe = imvccunun.get_vendor_universe(version="v01", vendor="CDD")
 # Remove non-USDT elements, since we are not interested in them.
 cdd_universe = [element for element in cdd_universe if element.endswith("USDT")]

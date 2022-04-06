@@ -60,16 +60,68 @@ class ImClient(abc.ABC):
     ```
     """
 
-    def __init__(self, vendor: str) -> None:
+    def __init__(
+        self,
+        vendor: str,
+        resample_1min: bool,
+        *,
+        full_symbol_col_name: Optional[str] = None,
+    ) -> None:
         """
         Constructor.
 
         :param vendor: price data provider
+        :param resample_1min: whether to resample data to 1 minute or not
+        :param full_symbol_col_name: the name of the column storing the symbol
+            name. It can be overridden by other methods
         """
+        hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
+        hdbg.dassert_isinstance(resample_1min, bool)
+        self._resample_1min = resample_1min
+        # TODO(gp): This is the name of the column of the asset_id in the data
+        #  as it is read by the derived classes (e.g., `igid`, `asset_id`).
+        #  We should rename this as "full_symbol" so that all the code downstream
+        #  knows how to call it and / or we can add a column_remap.
+        if full_symbol_col_name is not None:
+            hdbg.dassert_isinstance(full_symbol_col_name, str)
+        self._full_symbol_col_name = full_symbol_col_name
+        #
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
+
+    # TODO(gp): Why static?
+    @staticmethod
+    @abc.abstractmethod
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+        """
+        Return the entire universe of valid full symbols.
+        """
+
+    # TODO(gp): Why static?
+    @staticmethod
+    @abc.abstractmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+
+    @staticmethod
+    def get_asset_ids_from_full_symbols(
+        full_symbols: List[imvcdcfusy.FullSymbol],
+    ) -> List[int]:
+        """
+        Convert full symbols into asset ids.
+
+        :param full_symbols: assets as full symbols
+        :return: assets as numerical ids
+        """
+        numerical_asset_id = [
+            imvcuunut.string_to_numerical_id(full_symbol)
+            for full_symbol in full_symbols
+        ]
+        return numerical_asset_id
 
     def read_data(
         self,
@@ -77,8 +129,8 @@ class ImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
-        full_symbol_col_name: str = "full_symbol",
-        **kwargs: Dict[str, Any],
+        full_symbol_col_name: Optional[str] = None,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Read data in `[start_ts, end_ts]` for `imvcdcfusy.FullSymbol` symbols.
@@ -107,6 +159,9 @@ class ImClient(abc.ABC):
             start_ts, end_ts, left_close, right_close
         )
         # Delegate to the derived classes to retrieve the data.
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
         df = self._read_data(
             full_symbols,
             start_ts,
@@ -138,10 +193,18 @@ class ImClient(abc.ABC):
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
-                df_tmp, full_symbol_col_name, start_ts, end_ts
+                df_tmp,
+                full_symbol_col_name,
+                self._resample_1min,
+                start_ts,
+                end_ts,
             )
             self._dassert_output_data_is_valid(
-                df_tmp, full_symbol_col_name, start_ts, end_ts
+                df_tmp,
+                full_symbol_col_name,
+                self._resample_1min,
+                start_ts,
+                end_ts,
             )
             dfs.append(df_tmp)
         # TODO(Nikola): raise error on empty df?
@@ -153,6 +216,9 @@ class ImClient(abc.ABC):
         df = df.reset_index()
         df = df.sort_values(by=["timestamp", full_symbol_col_name])
         df = df.set_index("timestamp", drop=True)
+        # The full_symbol should be a string.
+        if not df.empty:
+            hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
         return df
 
@@ -201,36 +267,117 @@ class ImClient(abc.ABC):
     # /////////////////////////////////////////////////////////////////////////
 
     @staticmethod
-    @abc.abstractmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+    def _apply_im_normalizations(
+        df: pd.DataFrame,
+        full_symbol_col_name: str,
+        resample_1min: bool,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+    ) -> pd.DataFrame:
         """
-        Return the entire universe of valid full symbols.
+        Apply normalizations to IM data.
         """
+        _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
+        hdbg.dassert(not df.empty, "Empty df=\n%s", df)
+        # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates
+        # from data".
+        # 1) Drop duplicates.
+        df = hpandas.drop_duplicates(df)
+        # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
+        # Trimming of the data is done because:
+        # - some data sources can be only queried at day resolution so we get
+        #   a date range and then we trim
+        # - we want to guarantee that no derived class returns data outside the
+        #   requested interval
+        ts_col_name = None
+        left_close = True
+        right_close = True
+        df = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        # 3) Resample index to 1 min frequency if specified.
+        if resample_1min:
+            df = hpandas.resample_df(df, "T")
+            # Fill NaN values appeared after resampling in full symbol column.
+            # Combination of full symbol and timestamp is a unique identifier,
+            # so full symbol cannot be NaN.
+            df[full_symbol_col_name] = df[full_symbol_col_name].fillna(
+                method="bfill"
+            )
+        # 4) Convert to UTC.
+        df.index = df.index.tz_convert("UTC")
+        return df
 
     @staticmethod
-    @abc.abstractmethod
-    def get_metadata() -> pd.DataFrame:
+    def _dassert_output_data_is_valid(
+        df: pd.DataFrame,
+        full_symbol_col_name: str,
+        resample_1min: bool,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+    ) -> None:
         """
-        Return metadata.
+        Verify that the normalized data is valid.
         """
-
-    @staticmethod
-    def get_asset_ids_from_full_symbols(
-        full_symbols: List[imvcdcfusy.FullSymbol],
-    ) -> List[int]:
-        """
-        Convert full symbols into asset ids.
-
-        :param full_symbols: assets as full symbols
-        :return: assets as numerical ids
-        """
-        numerical_asset_id = [
-            imvcuunut.string_to_numerical_id(full_symbol)
-            for full_symbol in full_symbols
-        ]
-        return numerical_asset_id
+        # Check that index is `pd.DatetimeIndex`.
+        hpandas.dassert_index_is_datetime(df)
+        if resample_1min:
+            # Check that index is monotonic increasing.
+            hpandas.dassert_strictly_increasing_index(df)
+            # Verify that index frequency is 1 minute.
+            hdbg.dassert_eq(df.index.freq, "T")
+        # Check that timezone info is correct.
+        expected_tz = ["UTC"]
+        # Assume that the first value of an index is representative.
+        hdateti.dassert_has_specified_tz(
+            df.index[0],
+            expected_tz,
+        )
+        # Check that full symbol column has no NaNs.
+        hdbg.dassert(df[full_symbol_col_name].notna().all())
+        # Check that there are no duplicates in data by index and full symbol.
+        n_duplicated_rows = (
+            df.reset_index()
+            .duplicated(subset=["timestamp", full_symbol_col_name])
+            .sum()
+        )
+        hdbg.dassert_eq(
+            n_duplicated_rows, 0, msg="There are duplicated rows in the data"
+        )
+        # Ensure that all the data is in [start_ts, end_ts].
+        if start_ts:
+            hdbg.dassert_lte(start_ts, df.index.min())
+        if end_ts:
+            hdbg.dassert_lte(df.index.max(), end_ts)
 
     # //////////////////////////////////////////////////////////////////////////
+
+    def _get_full_symbol_col_name(
+        self, full_symbol_col_name: Optional[str]
+    ) -> str:
+        """
+        Resolve the name of the `full_symbol_col_name` using the value in the
+        ctor and the one passed to the function.
+        """
+        ret = self._full_symbol_col_name
+        if full_symbol_col_name is not None:
+            # The function has specified it, so this value overwrites the
+            # constructor value.
+            hdbg.dassert_isinstance(full_symbol_col_name, str)
+            ret = full_symbol_col_name
+        else:
+            if self._full_symbol_col_name is None:
+                # Both constructor and method have not specified the value, so
+                # use the default value.
+                ret = "full_symbol"
+        hdbg.dassert_is_not(
+            ret,
+            None,
+            "No value for 'full_symbol_col_name' was specified: ctor value='%s', method value='%s'",
+            self._full_symbol_col_name,
+            full_symbol_col_name,
+        )
+        return ret
 
     @abc.abstractmethod
     def _read_data(
@@ -239,8 +386,8 @@ class ImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
-        full_symbol_col_name: str = "full_symbol",
-        **kwargs: Dict[str, Any],
+        full_symbol_col_name: Optional[str] = None,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         ...
 
@@ -276,82 +423,6 @@ class ImClient(abc.ABC):
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
 
-    @staticmethod
-    def _apply_im_normalizations(
-        df: pd.DataFrame,
-        full_symbol_col_name: str,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-    ) -> pd.DataFrame:
-        """
-        Apply normalizations to IM data.
-        """
-        _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
-        hdbg.dassert(not df.empty, "Empty df=\n%s", df)
-        # 1) Drop duplicates.
-        df = hpandas.drop_duplicates(df)
-        # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
-        # Trimming of the data is done because:
-        # - some data sources can be only queried at day resolution so we get
-        #   a date range and then we trim
-        # - we want to guarantee that no derived class returns data outside the
-        #   requested #   interval
-        ts_col_name = None
-        left_close = True
-        right_close = True
-        df = hpandas.trim_df(
-            df, ts_col_name, start_ts, end_ts, left_close, right_close
-        )
-        # 3) Resample index to 1 min frequency
-        df = hpandas.resample_df(df, "T")
-        # Fill NaN values appeared after resampling in full symbol column.
-        # Combination of full symbol and timestamp is a unique identifier,
-        # so full symbol cannot be NaN.
-        df[full_symbol_col_name] = df[full_symbol_col_name].fillna(method="bfill")
-        # 4) Convert to UTC.
-        df.index = df.index.tz_convert("UTC")
-        return df
-
-    @staticmethod
-    def _dassert_output_data_is_valid(
-        df: pd.DataFrame,
-        full_symbol_col_name: str,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-    ) -> None:
-        """
-        Verify that the normalized data is valid.
-        """
-        # Check that index is `pd.DatetimeIndex`.
-        hpandas.dassert_index_is_datetime(df)
-        # Check that index is monotonic increasing.
-        hpandas.dassert_strictly_increasing_index(df)
-        # Verify that index frequency is 1 minute.
-        hdbg.dassert_eq(df.index.freq, "T")
-        # Check that timezone info is correct.
-        expected_tz = ["UTC"]
-        # Assume that the first value of an index is representative.
-        hdateti.dassert_has_specified_tz(
-            df.index[0],
-            expected_tz,
-        )
-        # Check that full symbol column has no NaNs.
-        hdbg.dassert(df[full_symbol_col_name].notna().all())
-        # Check that there are no duplicates in data by index and full symbol.
-        n_duplicated_rows = (
-            df.reset_index()
-            .duplicated(subset=["timestamp", full_symbol_col_name])
-            .sum()
-        )
-        hdbg.dassert_eq(
-            n_duplicated_rows, 0, msg="There are duplicated rows in the data"
-        )
-        # Ensure that all the data is in [start_ts, end_ts].
-        if start_ts:
-            hdbg.dassert_lte(start_ts, df.index.min())
-        if end_ts:
-            hdbg.dassert_lte(df.index.max(), end_ts)
-
 
 # #############################################################################
 # ImClientReadingOneSymbol
@@ -371,8 +442,8 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
-        full_symbol_col_name: str = "full_symbol",
-        **kwargs: Dict[str, Any],
+        full_symbol_col_name: Optional[str] = None,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Same as the method in the parent class.
@@ -393,6 +464,9 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
             right_close=right_close,
         )
         # Load the data for each symbol.
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
         full_symbol_to_df = {}
         for full_symbol in sorted(full_symbols):
             df = self._read_data_for_one_symbol(
@@ -417,7 +491,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         full_symbol: imvcdcfusy.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Read data for a single symbol in [start_ts, end_ts].
@@ -446,8 +520,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
-        full_symbol_col_name: str = "full_symbol",
-        **kwargs: Dict[str, Any],
+        full_symbol_col_name: Optional[str] = None,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Same as the parent class.
@@ -457,8 +531,15 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
                 "full_symbols start_ts end_ts full_symbol_col_name kwargs"
             )
         )
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
         df = self._read_data_for_multiple_symbols(
-            full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
+            full_symbols,
+            start_ts,
+            end_ts,
+            full_symbol_col_name=full_symbol_col_name,
+            **kwargs,
         )
         return df
 
@@ -468,7 +549,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
         full_symbol_col_name: str,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         ...

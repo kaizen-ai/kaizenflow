@@ -13,6 +13,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
+import im_v2.talos.data.client.talos_clients as imvtdctacl
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
@@ -56,6 +57,18 @@ class RealTimeMarketData(mdabmada.MarketData):
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
+
+    @staticmethod
+    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+        """
+        Convert a timestamp into an SQL string to query the DB.
+        """
+        hdateti.dassert_has_tz(dt)
+        # Convert to UTC, if needed.
+        if dt.tzinfo != hdateti.get_UTC_tz().zone:
+            dt = dt.tz_convert(hdateti.get_UTC_tz())
+        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return ret
 
     def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -160,18 +173,6 @@ class RealTimeMarketData(mdabmada.MarketData):
         hdbg.dassert_eq(end_time, start_time + pd.Timedelta(minutes=1))
         return end_time
 
-    @staticmethod
-    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
-        """
-        Convert a timestamp into an SQL string to query the DB.
-        """
-        hdateti.dassert_has_tz(dt)
-        # Convert to UTC, if needed.
-        if dt.tzinfo != hdateti.get_UTC_tz().zone:
-            dt = dt.tz_convert(hdateti.get_UTC_tz())
-        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
-        return ret
-
     def _get_sql_query(
         self,
         columns: Optional[List[str]],
@@ -247,3 +248,47 @@ class RealTimeMarketData(mdabmada.MarketData):
             query.append(f"LIMIT {limit}")
         query = " ".join(query)
         return query
+
+
+class RealTimeMarketData2(mdabmada.MarketData):
+    """
+    Interface for real-time market data accessed through Talos API.
+
+    Note: RealTimeSqlTalosClient is passed at the initialization.
+    """
+
+    def __init__(
+            self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self._client = client
+
+    # TODO(Danya): A copy of the Talos client method.
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        return self._client.should_be_online()
+
+    # TODO(Danya): Should the last_end_time be returned for all symbols?
+    #  Since the client method accepts only a single full_symbol.
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        self._client.get_end_ts_for_symbol()
+
+    def _get_data(
+            self,
+            start_ts: Optional[pd.Timestamp],
+            end_ts: Optional[pd.Timestamp],
+            ts_col_name: str,
+            asset_ids: Optional[List[int]],
+            left_close: bool,
+            right_close: bool,
+            limit: Optional[int],
+    ) -> pd.DataFrame:
+        """
+        Build a query and load SQL data in MarketData format.
+        """
+        # TODO(Danya): Add `ts_col_name` as an optional argument to `client_build_select_query`
+        # TODO(Danya): Add left/right close arguments to `client_build_select_query`.
+        #  TODO(Danya): Transform asset_ids to `full_symbols`
+        #  TODO(Danya): The parent class expects US/Eastern, while data is in UTC.
+        #   We probably need to enforce the timezone.
+        # TODO(Danya): Utilize the `client._read_data` method once asset_ids are converted.
+        raise NotImplementedError

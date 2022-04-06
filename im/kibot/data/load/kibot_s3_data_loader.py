@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 """
 
 import logging
@@ -9,9 +9,9 @@ from typing import Optional
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
 import helpers.hcache as hcache
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im.common.data.load.abstract_data_loader as imcdladalo
 import im.common.data.types as imcodatyp
@@ -21,6 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
+
     def read_data(
         self,
         exchange: str,
@@ -52,35 +53,6 @@ class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
             end_ts=end_ts,
         )
 
-    def _read_data(
-        self,
-        symbol: str,
-        asset_class: imcodatyp.AssetClass,
-        frequency: imcodatyp.Frequency,
-        contract_type: Optional[imcodatyp.ContractType] = None,
-        exchange: Optional[str] = None,
-        currency: Optional[str] = None,
-        unadjusted: Optional[bool] = None,
-        nrows: Optional[int] = None,
-        normalize: bool = True,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-    ) -> pd.DataFrame:
-        file_path = imkdlkfpge.KibotFilePathGenerator().generate_file_path(
-            symbol=symbol,
-            asset_class=asset_class,
-            frequency=frequency,
-            contract_type=contract_type,
-            exchange=exchange,
-            currency=currency,
-            unadjusted=unadjusted,
-            ext=imcodatyp.Extension.CSV,
-        )
-        data = self._read_csv(file_path, frequency, start_ts, end_ts, nrows)
-        if normalize:
-            data = self.normalize(df=data, frequency=frequency)
-        return data
-
     @staticmethod
     @hcache.cache()
     def _read_csv(
@@ -94,11 +66,12 @@ class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
         Read data from S3 and cache it.
         """
         s3fs = hs3.get_s3fs("am")
-        data = cpanh.read_csv(
-            file_path,
-            s3fs=s3fs,
+        stream, kwargs = hs3.get_local_or_s3_stream(file_path, s3fs=s3fs)
+        data = hpandas.read_csv_to_df(
+            stream,
             header=None,
             nrows=nrows,
+            **kwargs,
         )
         data = KibotS3DataLoader._filter_by_dates(
             data, frequency=frequency, start_ts=start_ts, end_ts=end_ts
@@ -202,3 +175,32 @@ class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
         :return: Normalized Pandas DataFrame
         """
         return df
+
+    def _read_data(
+        self,
+        symbol: str,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        contract_type: Optional[imcodatyp.ContractType] = None,
+        exchange: Optional[str] = None,
+        currency: Optional[str] = None,
+        unadjusted: Optional[bool] = None,
+        nrows: Optional[int] = None,
+        normalize: bool = True,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+    ) -> pd.DataFrame:
+        file_path = imkdlkfpge.KibotFilePathGenerator().generate_file_path(
+            symbol=symbol,
+            asset_class=asset_class,
+            frequency=frequency,
+            contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+            unadjusted=unadjusted,
+            ext=imcodatyp.Extension.CSV,
+        )
+        data = self._read_csv(file_path, frequency, start_ts, end_ts, nrows)
+        if normalize:
+            data = self.normalize(df=data, frequency=frequency)
+        return data

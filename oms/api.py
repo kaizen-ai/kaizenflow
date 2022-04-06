@@ -121,6 +121,7 @@ class MarketOrder(Order):
 
 
 class LimitOrder(Order):
+
     def __init__(self, limit_price: float):
         self.limit_price = limit_price
 
@@ -264,6 +265,7 @@ class OMS:
     Modelled after:
     https://ib-insync.readthedocs.io/api.html#module-ib_insync.ib
     """
+
     def __init__(self) -> None:
         self._trades = []
         self._orders = []

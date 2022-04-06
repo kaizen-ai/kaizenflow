@@ -13,8 +13,10 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
-# Avoid dependency from other `helpers` modules, such as `helpers.hsql`and
-# `helpers.hunit_test`, to prevent import cycles.
+# Avoid the following dependency from other `helpers` modules to prevent import cycles.
+# import helpers.hs3 as hs3
+# import helpers.hsql as hsql
+# import helpers.hunit_test as hunitest
 
 
 _LOG = logging.getLogger(__name__)
@@ -795,9 +797,9 @@ def convert_col_to_int(
     """
     Convert a column to an integer column.
 
-    Example use case:
-        Parquet uses categoricals. If supplied with a categorical-type column,
-        this function will convert it to an integer column.
+    Example use case: Parquet uses categoricals. If supplied with a
+    categorical-type column, this function will convert it to an integer
+    column.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(col, str)
@@ -807,3 +809,103 @@ def convert_col_to_int(
     # Trust, but verify.
     dassert_series_type_is(df[col], np.int64)
     return df
+
+
+# #############################################################################
+
+
+def read_csv_to_df(
+    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Read a CSV file into a `pd.DataFrame`.
+    """
+    # Gets filename from stream if it is not already a string,
+    # so it can be inspected for extension type.
+    file_name = stream if isinstance(stream, str) else vars(stream)["path"]
+    # Handle zipped files.
+    if any(file_name.endswith(ext) for ext in (".gzip", ".gz", ".tgz")):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "gzip"
+    elif file_name.endswith(".zip"):
+        hdbg.dassert_not_in("compression", kwargs)
+        kwargs["compression"] = "zip"
+    # Read.
+    _LOG.debug(hprint.to_str("args kwargs"))
+    df = pd.read_csv(stream, *args, **kwargs)
+    return df
+
+
+def read_parquet_to_df(
+    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Read a Parquet file into a `pd.DataFrame`.
+    """
+    # Read.
+    _LOG.debug(hprint.to_str("args kwargs"))
+    df = pd.read_parquet(stream, *args, **kwargs)
+    return df
+
+
+# #############################################################################
+
+
+# TODO(Paul): Add unit tests.
+def compute_weighted_sum(
+    dfs: Dict[str, pd.DataFrame],
+    weights: pd.DataFrame,
+) -> Dict[str, pd.DataFrame]:
+    """
+    Compute weighted sums of `dfs` using `weights`.
+
+    :param dfs: dataframes keyed by id; all dfs should have the same index
+        and cols
+    :param weights: float weights indexed by id with unique col names
+    :return: weighted sums keyed by weight col names
+    """
+    hdbg.dassert_isinstance(dfs, dict)
+    hdbg.dassert(dfs, "dictionary of dfs must be nonempty")
+    # Get a dataframe from the dictionary and record its index and columns.
+    id_ = list(dfs)[0]
+    hdbg.dassert_isinstance(id_, str)
+    df = dfs[id_]
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    idx = df.index
+    cols = df.columns
+    # Sanity-check dataframes in dictionary.
+    for key, value in dfs.items():
+        hdbg.dassert_isinstance(key, str)
+        hdbg.dassert_isinstance(value, pd.DataFrame)
+        hdbg.dassert(
+            value.index.equals(idx),
+            "Index equality fails for keys=%s, %s",
+            id_,
+            key,
+        )
+        hdbg.dassert(
+            value.columns.equals(cols),
+            "Column equality fails for keys=%s, %s",
+            id_,
+            key,
+        )
+    # Sanity-check weights.
+    hdbg.dassert_isinstance(weights, pd.DataFrame)
+    hdbg.dassert_eq(weights.columns.nlevels, 1)
+    hdbg.dassert(not weights.columns.has_duplicates)
+    hdbg.dassert_set_eq(weights.index.to_list(), list(dfs))
+    # Create a multiindexed dataframe to facilitate computing the weighted sums.
+    weighted_dfs = {}
+    combined_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+    # TODO(Paul): Consider relaxing the NaN-handling.
+    for col in weights.columns:
+        weighted_combined_df = combined_df.multiply(weights[col], level=0)
+        weighted_sums = weighted_combined_df.groupby(axis=1, level=1).sum(
+            min_count=len(dfs)
+        )
+        weighted_dfs[col] = weighted_sums
+    return weighted_dfs

@@ -49,13 +49,6 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         )
         return txt
 
-    @abc.abstractmethod
-    def _test(self, *args: Any, **kwargs: Any) -> None:
-        """
-        Run the entire flow.
-        """
-        pass
-
     # TODO(gp): -> run_dag_config
     @staticmethod
     def _run_model(
@@ -95,7 +88,7 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         exec_filename = os.path.join(
             exec_filename, "amp/dataflow/model/run_experiment.py"
         )
-        hdbg.dassert_exists(exec_filename)
+        hdbg.dassert_path_exists(exec_filename)
         #
         cmd = []
         cmd.append(exec_filename)
@@ -116,6 +109,13 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         cmd = " ".join(cmd)
         _LOG.info("cmd=%s", cmd)
         hsystem.system(cmd)
+
+    @abc.abstractmethod
+    def _test(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Run the entire flow.
+        """
+        pass
 
 
 # #############################################################################

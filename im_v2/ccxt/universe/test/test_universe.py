@@ -1,28 +1,49 @@
-import helpers.hunit_test as hunitest
-import im_v2.ccxt.universe.universe as imvccunun
+import im_v2.common.universe.test.test_universe as imvcountt
 
 
-class TestGetUniverse(hunitest.TestCase):
+class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1_TestCase):
+    def test_get_universe_file_path(self) -> None:
+        """
+        A smoke test to test correct file path return when correct version is
+        provided.
+        """
+        self._test_get_universe_file_path("CCXT", "v1")
+        self._test_get_universe_file_path("CCXT", "v3")
+
+    def test_get_latest_file_version(self) -> None:
+        """
+        Verify that the max universe version is correctly detected and
+        returned.
+        """
+        self._test_get_latest_file_version("CCXT")
+
+
+class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
     def test_get_universe1(self) -> None:
         """
         A smoke test to verify that universe loads correctly.
         """
-        _ = imvccunun.get_trade_universe()
+        self._test_get_universe1("CCXT")
 
-    def test_get_universe2(self) -> None:
+    def test_get_universe_invalid_version(self) -> None:
         """
-        Verify that incorrect universe name is recognized.
+        Verify that incorrect universe version is recognized.
         """
-        with self.assertRaises(AssertionError):
-            _ = imvccunun.get_trade_universe("non-existent")
+        self._test_get_universe_invalid_version("CCXT")
 
+    def test_get_vendor_universe_small(self) -> None:
+        """
+        Test that vendor universe is loaded correctly as dict using small
+        universe file.
+        """
+        self._test_get_vendor_universe_small("CCXT", "gateio", "XRP_USDT")
+        self._test_get_vendor_universe_small("CCXT", "kucoin", "SOL_USDT")
 
-class TestGetVendorUniverse(hunitest.TestCase):
-    def test1(self) -> None:
+    def test_get_vendor_universe_as_full_symbol(self) -> None:
         """
-        Test that universe as full symbols is received correctly.
+        Test that universe as full symbols is received correctly from small
+        universal.
         """
-        universe_as_full_symbols = imvccunun.get_vendor_universe(version="small")
-        self.assertEqual(len(universe_as_full_symbols), 2)
-        self.assert_equal(universe_as_full_symbols[0], "gateio::XRP_USDT")
-        self.assert_equal(universe_as_full_symbols[1], "kucoin::SOL_USDT")
+        self._test_get_vendor_universe_as_full_symbol(
+            "CCXT", ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
+        )

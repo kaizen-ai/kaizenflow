@@ -11,7 +11,6 @@ import pandas as pd
 
 import dataflow.model as dtfmod
 import helpers.hpandas as hpandas
-import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -103,6 +102,84 @@ class SystemTester:
             returns_col=returns_col,
             volatility_col=volatility_col,
             prediction_col=prediction_col,
+        )
+        actual.append(signature)
+        if min(pnl.count(), research_pnl.count()) > 1:
+            # Resample `pnl` so that its datetime index aligns on even bars, like
+            #  research_pnl's does.
+            freq = research_pnl.index.freq
+            pnl = pnl.resample(rule=freq).sum(min_count=1)
+            _LOG.debug("resampled pnl=\n%s", pnl)
+            correlation = pnl.corr(research_pnl)
+            actual.append("\n# pnl agreement with research pnl\n")
+            actual.append(f"corr = {correlation:.3f}")
+        actual = "\n".join(map(str, actual))
+        return actual
+
+    def get_research_pnl_from_prices_signature(
+        self,
+        result_bundle,
+        *,
+        price_col: str,
+        volatility_col: str,
+        prediction_col: str,
+        target_gmv: float = 100000,
+        dollar_neutrality: str = "no_constraint",
+        quantization: str = "no_quantization",
+    ) -> Tuple[str, pd.Series]:
+        actual = ["\n# forecast_evaluator signature=\n"]
+        forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
+            price_col=price_col,
+            volatility_col=volatility_col,
+            prediction_col=prediction_col,
+        )
+        result_df = result_bundle.result_df
+        signature = forecast_evaluator.to_str(
+            result_df,
+            target_gmv=target_gmv,
+            dollar_neutrality=dollar_neutrality,
+            quantization=quantization,
+        )
+        actual.append(signature)
+        _, _, _, _, stats = forecast_evaluator.compute_portfolio(
+            result_df,
+            target_gmv=target_gmv,
+            dollar_neutrality=dollar_neutrality,
+            quantization=quantization,
+            reindex_like_input=True,
+        )
+        research_pnl = stats["pnl"]
+        actual = "\n".join(map(str, actual))
+        return actual, research_pnl
+
+    def compute_run_signature_from_prices(
+        self,
+        dag_runner,
+        portfolio,
+        result_bundle,
+        *,
+        price_col: str,
+        volatility_col: str,
+        prediction_col: str,
+        target_gmv: float = 100000,
+        dollar_neutrality: str = "no_constraint",
+        quantization: str = "no_quantization",
+    ) -> str:
+        # Check output.
+        actual = []
+        #
+        events = dag_runner.events
+        actual.append(self.get_events_signature(events))
+        signature, pnl = self.get_portfolio_signature(portfolio)
+        actual.append(signature)
+        signature, research_pnl = self.get_research_pnl_from_prices_signature(
+            result_bundle,
+            price_col=price_col,
+            volatility_col=volatility_col,
+            prediction_col=prediction_col,
+            target_gmv=target_gmv,
+            dollar_neutrality=dollar_neutrality,
+            quantization=quantization,
         )
         actual.append(signature)
         if min(pnl.count(), research_pnl.count()) > 1:

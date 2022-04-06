@@ -461,14 +461,6 @@ class TestSeriesToDfTransformer2(hunitest.TestCase):
         with pytest.raises(AssertionError):
             node.fit(data)["df_out"]
 
-    @staticmethod
-    def _add_lags(srs: pd.Series, num_lags: int) -> pd.DataFrame:
-        lags = []
-        for lag in range(0, num_lags):
-            lags.append(srs.shift(lag).rename("lag_" + str(lag)))
-        out_df = pd.concat(lags, axis=1)
-        return out_df
-
     def _get_data(self) -> pd.DataFrame:
         txt = """
 ,close,close,mid,mid
@@ -484,6 +476,14 @@ datetime,MN0,MN1,MN0,MN1
             io.StringIO(txt), index_col=0, parse_dates=True, header=[0, 1]
         )
         return df
+
+    @staticmethod
+    def _add_lags(srs: pd.Series, num_lags: int) -> pd.DataFrame:
+        lags = []
+        for lag in range(0, num_lags):
+            lags.append(srs.shift(lag).rename("lag_" + str(lag)))
+        out_df = pd.concat(lags, axis=1)
+        return out_df
 
 
 class TestSeriesToSeriesTransformer1(hunitest.TestCase):

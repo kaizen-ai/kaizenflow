@@ -131,7 +131,6 @@ def _gh_login() -> None:
 
 
 class TestGhLogin1(hunitest.TestCase):
-
     def test_gh_login(self) -> None:
         _gh_login()
 
@@ -152,64 +151,9 @@ class TestDryRunTasks1(hunitest.TestCase):
 
     # TODO(gp): -> TestGitCommands1
 
-    # TODO(gp): We can't test this since amp and cmamp have now different base image.
-    # def test_print_setup(self) -> None:
-    #     target = "print_setup"
-    #     self._dry_run(target)
-
-    def test_git_pull(self) -> None:
-        target = "git_pull"
-        self._dry_run(target)
-
-    def test_git_fetch_master(self) -> None:
-        target = "git_fetch_master"
-        self._dry_run(target)
-
-    def test_git_clean(self) -> None:
-        target = "git_clean"
-        self._dry_run(target)
-
-    # #########################################################################
-    # TODO(gp): -> TestDockerCommands1
-
-    @pytest.mark.skipif(
-        hsystem.is_inside_ci(), reason="In CI the output is different"
-    )
-    def test_docker_images_ls_repo(self) -> None:
-        target = "docker_images_ls_repo"
-        self._dry_run(target)
-
-    def test_docker_ps(self) -> None:
-        target = "docker_ps"
-        self._dry_run(target)
-
-    @pytest.mark.skip(
-        reason="AmpTask1347: Add support for mocking `system*()` "
-        "functions to unit test"
-    )
-    def test_docker_stats(self) -> None:
-        target = "docker_stats"
-        self._dry_run(target)
-
-    @pytest.mark.skip(
-        reason="AmpTask1347: Add support for mocking `system*()` "
-        "functions to unit test"
-    )
-    def test_docker_kill_last(self) -> None:
-        target = "docker_kill"
-        self._dry_run(target)
-
-    @pytest.mark.skip(
-        reason="AmpTask1347: Add support for mocking `system*()` "
-        "functions to unit test"
-    )
-    def test_docker_kill_all(self) -> None:
-        target = "docker_kill --all"
-        self._dry_run(target)
-
-    # #########################################################################
-
-    def _dry_run(self, target: str, dry_run: bool = True) -> None:
+    def dry_run(
+        self, target: str, dry_run: bool = True, check_string: bool = True
+    ) -> None:
         """
         Invoke the given target with dry run.
 
@@ -223,7 +167,68 @@ class TestDryRunTasks1(hunitest.TestCase):
         cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
         _, act = hsystem.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
-        self.check_string(act)
+        if check_string:
+            self.check_string(act)
+
+    # #########################################################################
+
+    # TODO(gp): We can't test this since amp and cmamp have now different base image.
+    # def test_print_setup(self) -> None:
+    #     target = "print_setup"
+    #     self.dry_run(target)
+
+    def test_git_pull(self) -> None:
+        target = "git_pull"
+        self.dry_run(target)
+
+    def test_git_fetch_master(self) -> None:
+        target = "git_fetch_master"
+        self.dry_run(target)
+
+    def test_git_clean(self) -> None:
+        target = "git_clean"
+        self.dry_run(target)
+
+    # #########################################################################
+    # TODO(gp): -> TestDockerCommands1
+
+    @pytest.mark.skipif(
+        hsystem.is_inside_ci(), reason="In CI the output is different"
+    )
+    def test_docker_images_ls_repo(self) -> None:
+        target = "docker_images_ls_repo"
+        # TODO(gp): amp and cmamp have different version of aws cli and so the
+        # output is different.
+        check_string = False
+        self.dry_run(target, check_string=check_string)
+
+    def test_docker_ps(self) -> None:
+        target = "docker_ps"
+        self.dry_run(target)
+
+    @pytest.mark.skip(
+        reason="AmpTask1347: Add support for mocking `system*()` "
+        "functions to unit test"
+    )
+    def test_docker_stats(self) -> None:
+        target = "docker_stats"
+        self.dry_run(target)
+
+    @pytest.mark.skip(
+        reason="AmpTask1347: Add support for mocking `system*()` "
+        "functions to unit test"
+    )
+    def test_docker_kill_last(self) -> None:
+        target = "docker_kill"
+        self.dry_run(target)
+
+    @pytest.mark.skip(
+        reason="AmpTask1347: Add support for mocking `system*()` "
+        "functions to unit test"
+    )
+    def test_docker_kill_all(self) -> None:
+        target = "docker_kill --all"
+        self.dry_run(target)
 
 
 # #############################################################################
@@ -509,7 +514,6 @@ class TestLibTasks1(hunitest.TestCase):
 
 
 class TestLibTasksRemoveSpaces1(hunitest.TestCase):
-
     def test1(self) -> None:
         txt = r"""
             IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/amp_test:dev \
@@ -569,6 +573,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             --entrypoint bash \
             app
         """
@@ -599,6 +604,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
                 --env-file devops/env/default.env \
                 run \
                 --rm \
+                --name $USER_NAME.amp_test.app.app \
                 app \
                 bash """
         self._check(act, exp)
@@ -633,6 +639,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             app \
             bash
         """
@@ -664,6 +671,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             --entrypoint bash \
             app
         """
@@ -696,6 +704,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.app.app \
             app \
             bash -c 'ls && cd ..'
         """
@@ -727,6 +736,7 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
             --env-file devops/env/default.env \
             run \
             --rm \
+            --name $USER_NAME.amp_test.jupyter_server_test.app \
             --service-ports \
             jupyter_server_test
         """
@@ -736,6 +746,10 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
         act = hunitest.purify_txt_from_client(act)
         # This is required when different repos run Docker with user vs root / remap.
         act = hunitest.filter_text("--user", act)
+        # Remove current timestamp (e.g., `20220317_232120``) from the `--name`
+        # so that the tests pass.
+        timestamp_regex = r"\.\d{8}_\d{6}"
+        act = re.sub(timestamp_regex, "", act)
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
@@ -743,11 +757,11 @@ class TestLibTasksGetDockerCmd1(_LibTasksTestCase):
 
 
 class Test_build_run_command_line1(hunitest.TestCase):
-
     def test_run_fast_tests1(self) -> None:
         """
         Basic run fast tests.
         """
+        custom_marker = ""
         pytest_opts = ""
         skip_submodules = False
         coverage = False
@@ -756,6 +770,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         act = hlibtask._build_run_command_line(
             "fast_tests",
+            custom_marker,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -773,6 +788,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         """
         Coverage and collect-only.
         """
+        custom_marker = ""
         pytest_opts = ""
         skip_submodules = False
         coverage = True
@@ -781,6 +797,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         act = hlibtask._build_run_command_line(
             "fast_tests",
+            custom_marker,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -828,6 +845,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         hunitest.create_test_dir(dir_name, incremental, file_dict)
         #
         test_list_name = "fast_tests"
+        custom_marker = ""
         pytest_opts = ""
         skip_submodules = True
         coverage = False
@@ -836,6 +854,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         act = hlibtask._build_run_command_line(
             test_list_name,
+            custom_marker,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -853,6 +872,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         Basic run fast tests tee-ing to a file.
         """
         test_list_name = "fast_tests"
+        custom_marker = ""
         pytest_opts = ""
         skip_submodules = False
         coverage = False
@@ -861,6 +881,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         #
         act = hlibtask._build_run_command_line(
             test_list_name,
+            custom_marker,
             pytest_opts,
             skip_submodules,
             coverage,
@@ -872,6 +893,33 @@ class Test_build_run_command_line1(hunitest.TestCase):
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
             '--only-rerun "Failed: Timeout" 2>&1'
             " | tee tmp.pytest.fast_tests.log"
+        )
+        self.assert_equal(act, exp)
+
+    def test_run_fast_tests6(self) -> None:
+        """
+        Run fast tests with a custom test marker.
+        """
+        custom_marker = "optimizer"
+        pytest_opts = ""
+        skip_submodules = False
+        coverage = False
+        collect_only = False
+        tee_to_file = False
+        #
+        act = hlibtask._build_run_command_line(
+            "fast_tests",
+            custom_marker,
+            pytest_opts,
+            skip_submodules,
+            coverage,
+            collect_only,
+            tee_to_file,
+        )
+        exp = (
+            'pytest -m "optimizer and not slow and not superslow" . '
+            "-o timeout_func_only=true --timeout 5 --reruns 2 "
+            '--only-rerun "Failed: Timeout"'
         )
         self.assert_equal(act, exp)
 
@@ -1273,7 +1321,6 @@ core/dataflow/builders.py:195:[pylint] [W0221(arguments-differ), ArmaReturnsBuil
 
 
 class Test_find_check_string_output1(hunitest.TestCase):
-
     def test1(self) -> None:
         """
         Test `find_check_string_output()` by searching the `check_string` of
@@ -1287,6 +1334,7 @@ class Test_find_check_string_output1(hunitest.TestCase):
         act =
         exp = r"""
         A fake check_string output to use for test1
+
         """.lstrip().rstrip()
         self.assert_equal(act, exp, fuzzy_match=False)
         '''
@@ -1304,6 +1352,7 @@ class Test_find_check_string_output1(hunitest.TestCase):
         act =
         exp = r"""
 A fake check_string output to use for test2
+
         """.lstrip().rstrip()
         self.assert_equal(act, exp, fuzzy_match=True)
         '''
@@ -1583,7 +1632,6 @@ class Test_get_files_to_process1(hunitest.TestCase):
 
 
 class Test_pytest_repro1(hunitest.TestCase):
-  
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
         ctx = _build_mock_context_returning_ok()
         act = hlibtask.pytest_repro(

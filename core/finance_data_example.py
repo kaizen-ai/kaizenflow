@@ -96,6 +96,85 @@ def get_forecast_dataframe(
     return df
 
 
+def get_forecast_price_based_dataframe(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
+    *,
+    num_features: int = 0,
+    bar_duration: str = "5T",
+    bar_volatility_in_bps: int = 10,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Return a multiindexed dataframe of returns, vol, predictions per asset.
+
+    Timestamps are to be regarded as knowledge times. The `prediction` and
+    `volatility` columns are to be interpreted as forecasts for two bars
+    ahead.
+
+    Example output (with `num_features=0`):
+                                 prediction             price          volatility
+                               100      200      100      200        100      200
+    2022-01-03 09:35:00   -0.00025 -0.00034 -0.00110  0.00048    0.00110  0.00048
+    2022-01-03 09:40:00    0.00013 -0.00005 -0.00073 -0.00045    0.00091  0.00046
+    2022-01-03 09:45:00    0.00084 -0.00097 -0.00078 -0.00075    0.00086  0.00060
+    2022-01-03 09:50:00    0.00086 -0.00113  0.00027 -0.00081    0.00071  0.00068
+
+    Note that changes to any inputs may change the random output on any
+    overlapping data.
+    """
+    hdbg.dassert_lte(0, num_features)
+    price_process = carsigen.PriceProcess(seed=seed)
+    dfs = {}
+    for asset_id in asset_ids:
+        price = price_process.generate_price_series_from_normal_log_returns(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        vol = csigproc.compute_rolling_norm(price.pct_change(), tau=4)
+        noise = price_process.generate_log_normal_series(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        dict_ = {
+            "price": price,
+            "volatility": vol,
+            "prediction": noise,
+        }
+        if num_features > 0:
+            for idx in range(1, num_features + 1):
+                feature = price_process.generate_log_normal_series(
+                    start_datetime,
+                    end_datetime,
+                    asset_id,
+                    bar_duration=bar_duration,
+                    bar_volatility_in_bps=bar_volatility_in_bps,
+                    start_time=start_time,
+                    end_time=end_time,
+                )
+                dict_[idx] = feature
+        df = pd.DataFrame(dict_)
+        dfs[asset_id] = df
+    df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+    # Swap column levels so that symbols are leaves.
+    df = df.swaplevel(i=0, j=1, axis=1)
+    df.sort_index(axis=1, level=0, inplace=True)
+    return df
+
+
 def get_portfolio_bar_metrics_dataframe(
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,

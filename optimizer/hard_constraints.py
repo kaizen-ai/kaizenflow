@@ -69,9 +69,10 @@ class TargetGmvHardConstraint(opbase.Expression):
 
     def get_expr(self, target_weights, target_weight_diffs, gmv) -> opbase.EXPR:
         _ = target_weight_diffs
+        _ = gmv
         return (
-            gmv * cvx.norm(target_weights, 1)
-            <= self._target_gmv * self._upper_bound_multiple
+            cvx.norm(target_weights, 1)
+            <= target_weights.shape[0] * self._upper_bound_multiple
         )
 
 

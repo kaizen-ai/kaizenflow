@@ -7,7 +7,6 @@ import helpers.hio as hio
 """
 
 import datetime
-import fnmatch
 import gzip
 import json
 import logging
@@ -15,11 +14,10 @@ import os
 import shutil
 import time
 import uuid
-from typing import Any, List, Optional, cast
+from typing import Any, List, Optional
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 
 # Avoid dependency from other `helpers` modules to prevent import cycles.
@@ -55,51 +53,25 @@ def purify_file_name(file_name: str) -> str:
 # #############################################################################
 
 
-# TODO(Nikola): Supports S3 and thus we should keep/merge it properly with `find_regex_files`.
-def find_files(
-    directory: str, pattern: str, aws_profile: Optional[str] = None
-) -> List[str]:
-    """
-    Find all files under `directory` that match a certain `pattern`.
-
-    :param directory: path to the directory where to look for files. It can be an S3 or local file.
-    :param pattern: pattern to match a filename against
-    :param aws_profile: If AWS profile is specified use S3FS, if not, local FS is assumed
-    """
-    file_names = []
-    if aws_profile:
-        s3fs_ = hs3.get_s3fs(aws_profile)
-        hs3.dassert_s3_exists(directory, s3fs_)
-        file_names = s3fs_.glob(f"{directory}/{pattern}")
-    else:
-        hdbg.dassert_dir_exists(directory)
-        for root, _, files in os.walk(directory):
-            for basename in files:
-                if fnmatch.fnmatch(basename, pattern):
-                    file_name = os.path.join(root, basename)
-                    # TODO(Nikola): Use glob.
-                    file_names.append(file_name)
-    return file_names
-
-
-def find_regex_files(
-    src_dir: str,
-    regex: str,
+def listdir(
+    dir_name: str,
+    pattern: str,
+    only_files: bool,
+    use_relative_paths: bool,
     *,
-    only_files: bool = False,
     exclude_git_dirs: bool = True,
 ) -> List[str]:
     """
-    Find all files under `src_dir`
+    Find all files and subdirectories under `directory` that match `pattern`.
 
-    :param regex: find regex to search for (e.g., `*.py`)
-    :param only_files: look for only files instead of both files and dirs
+    :param dir_name: path to the directory where to look for files
+    :param pattern: pattern to match a filename against (e.g., `*.py`)
+    :param only_files: look for only files instead of both files and directories
+    :param use_relative_paths: remove `dir_name` from path
     :param exclude_git_dirs: skip `.git` dirs
     """
-    hdbg.dassert_dir_exists(src_dir)
-    cmd = []
-    cmd.append(f"find {src_dir}")
-    cmd.append(f'-name "{regex}"')
+    hdbg.dassert_dir_exists(dir_name)
+    cmd = [f"find {dir_name}", f'-name "{pattern}"']
     if only_files:
         cmd.append("-type f")
     if exclude_git_dirs:
@@ -107,30 +79,12 @@ def find_regex_files(
     cmd = " ".join(cmd)
     _, output = hsystem.system_to_string(cmd)
     # TODO(gp): -> system_to_files
-    file_names = [f for f in output.split("\n") if f != ""]
-    _LOG.debug("Found %s files in %s", len(file_names), src_dir)
-    _LOG.debug("\n".join(file_names))
-    return file_names
-
-
-# TODO(gp): Redundant with `find_regex_files()`. Remove this.
-def find_all_files(dir_name: str, extension: Optional[str] = None) -> List[str]:
-    """
-    Find all files (not directory) under `dir_name`, skipping `.git`.
-    """
-    file_name = "*"
-    if extension is not None:
-        hdbg.dassert(
-            not extension.startswith("."),
-            "extension='%s' should not start with .",
-            extension,
-        )
-        file_name += f".{extension}"
-    cmd = fr'''cd {dir_name} && find . -type f -name "{file_name}" -not -path "*/\.git/*"'''
-    file_names = hsystem.system_to_files(cmd)
-    file_names = cast(List[str], file_names)
-    _LOG.debug("Found %s files", len(file_names))
-    return file_names
+    paths = [path for path in output.split("\n") if path != ""]
+    _LOG.debug("Found %s paths in %s", len(paths), dir_name)
+    _LOG.debug("\n".join(paths))
+    if use_relative_paths:
+        paths = [os.path.relpath(path, start=dir_name) for path in paths]
+    return paths
 
 
 def is_paired_jupytext_python_file(py_filename: str) -> bool:
@@ -305,7 +259,7 @@ def create_dir(
     is_dir = os.path.isdir(dir_name)
     _LOG.debug(hprint.to_str("dir_name exists is_dir"))
     if abort_if_exists:
-        hdbg.dassert_not_exists(dir_name)
+        hdbg.dassert_path_not_exists(dir_name)
     #                   dir exists / dir does not exist
     # incremental       no-op        mkdir
     # not incremental   rm+mkdir     mkdir
@@ -348,10 +302,8 @@ def create_dir(
             raise e
 
 
-def _dassert_is_valid_file_name(file_name: str) -> None:
-    # hdbg.dassert_in(type(file_name), (str, unicode))
-    hdbg.dassert_in(type(file_name), [str])
-    hdbg.dassert_is_not(file_name, None)
+def dassert_is_valid_file_name(file_name: str) -> None:
+    hdbg.dassert_isinstance(file_name, str)
     hdbg.dassert_ne(file_name, "")
 
 
@@ -363,7 +315,7 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
     :param incremental: same meaning as in `create_dir()`
     """
     _LOG.debug(hprint.to_str("file_name incremental"))
-    _dassert_is_valid_file_name(file_name)
+    dassert_is_valid_file_name(file_name)
     # hs3.dassert_is_not_s3_path(file_name)
     #
     dir_name = os.path.dirname(file_name)
@@ -383,6 +335,7 @@ def create_enclosing_dir(file_name: str, incremental: bool = False) -> str:
 
 
 # TODO(saggese): We should have `lines` first since it is an input param.
+# TODO(Nikola): Remove `use_gzip` and use `file_name` extension instead.
 def to_file(
     file_name: str,
     lines: str,
@@ -401,10 +354,11 @@ def to_file(
     :param force_flush: whether to forcibly clear the file buffer
     """
     _LOG.debug(hprint.to_str("file_name use_gzip mode force_flush"))
-    _dassert_is_valid_file_name(file_name)
+    dassert_is_valid_file_name(file_name)
     # Choose default writing mode based on compression.
     if mode is None:
         if use_gzip:
+            # Override default binary mode for `gzip`.
             mode = "wt"
         else:
             mode = "w"
@@ -458,9 +412,8 @@ def from_file(
     :param encoding: encoding to use when reading the string
     :return: contents of file as string
     """
-    hdbg.dassert_ne(file_name, "")
-    _dassert_is_valid_file_name(file_name)
-    hdbg.dassert_exists(file_name)
+    dassert_is_valid_file_name(file_name)
+    hdbg.dassert_path_exists(file_name)
     data: str = ""
     if file_name.endswith((".gz", ".gzip")):
         # Open gzipped file.
