@@ -14,7 +14,6 @@ import dataflow.core as dtfcore
 import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import dataflow.system.source_nodes as dtfsysonod
-import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
 import market_data as mdata
 
@@ -34,12 +33,11 @@ def _build_base_config() -> cconfig.Config:
 
 # TODO(gp): @all Generalize this by passing asset_ids.
 def build_configs_with_tiled_universe(
-    config: cconfig.Config, universe_str: str
+    config: cconfig.Config, asset_ids: List[int]
 ) -> List[cconfig.Config]:
     """
     Create a list of `Config`s tiled by universe.
     """
-    asset_ids = dtfuniver.get_universe(universe_str)
     if len(asset_ids) > 300:
         # if len(asset_ids) > 1000:
         # Split the universe in 2 parts.
@@ -64,23 +62,10 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     Build a DAG runner from a config.
     """
     # Create MarketData.
-    event_loop = None
-    start_datetime = pd.Timestamp("2020-01-01 09:30:00-05:00")
-    end_datetime = pd.Timestamp("2020-03-01 09:30:00-05:00")
-    initial_replayed_delay = 0
-    asset_ids = [1000]
-    # market_data, _ = mdata.get_ReplayedTimeMarketData_example2(
-    #     event_loop,
-    #     start_datetime,
-    #     end_datetime,
-    #     initial_replayed_delay,
-    #     asset_ids)
-    # TODO(gp): Implement a ImClient that serves a df, then we can put it inside a
-    #  MarketData
-    asset_ids = [1467591036]
+    asset_ids = [3303714233, 1467591036]
     columns: List[str] = []
     columns_remap = None
-    market_data = mdata.get_ImClientMarketData_example1(
+    market_data = mdata.get_ImClientMarketData_example2(
         asset_ids, columns, columns_remap
     )
     # Create HistoricalDataSource.
@@ -110,32 +95,25 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
 
 
 def build_tile_configs(
-    experiment_config: str,
+    asset_ids: List[int],
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
 ) -> List[cconfig.Config]:
     """
     Build a tile configs for Example1 pipeline.
     """
-    (
-        universe_str,
-        trading_period_str,
-        time_interval_str,
-    ) = dtfmoexcon.parse_experiment_config(experiment_config)
-    #
     config = _build_base_config()
-    # Apply specific config.
-    # config = _apply_config(config, trading_period_str)
     #
     config["meta", "dag_runner"] = get_dag_runner
     # Name of the asset_ids to save.
     config["meta", "asset_id_col_name"] = "asset_id"
     configs = [config]
     # Apply the cross-product by the universe tiles.
-    func = lambda cfg: build_configs_with_tiled_universe(cfg, universe_str)
+    func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)
     configs = dtfmoexcon.apply_build_configs(func, configs)
     _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
     hdbg.dassert_lte(1, len(configs))
     # Apply the cross-product by the time tiles.
-    start_timestamp, end_timestamp = dtfmoexcon.get_period(time_interval_str)
     freq_as_pd_str = "M"
     # Amount of history fed to the DAG.
     lookback_as_pd_str = "10D"
