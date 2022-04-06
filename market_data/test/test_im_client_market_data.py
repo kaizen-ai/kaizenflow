@@ -172,7 +172,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             exp_df_as_str,
         )
 
-    @pytest.mark.skip(reason="CmTask882.")
+    @pytest.mark.skip(reason="CmTask1633.")
     def test_get_data_for_interval1(self) -> None:
         # Prepare inputs.
         asset_ids = None

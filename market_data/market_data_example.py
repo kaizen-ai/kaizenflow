@@ -246,8 +246,7 @@ def get_ImClientMarketData_example1(
     """
     resample_1min = True
     ccxt_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
-    # Build a function that returns next minute after the last timestamp for
-    # the passed asset ids in order to pass it as wall clock time caller.
+    # Build a function that returns a wall clock to initialise `MarketData`.
     last_timestamp = _get_last_timestamp(ccxt_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
@@ -279,8 +278,7 @@ def get_ImClientMarketData_example2(
     Build a `ImClientMarketData` backed with synthetic data.
     """
     data_frame_client = icdc.get_DataFrameImClient_example1()
-    # Build a function that returns next minute after the last timestamp for
-    # the passed asset ids in order to pass it as a wall clock time.
+    # Build a function that returns a wall clock to initialise `MarketData`.
     last_timestamp = _get_last_timestamp(data_frame_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
@@ -307,10 +305,10 @@ def _get_last_timestamp(
     client: icdc.ImClient, asset_ids: Optional[List[int]]
 ) -> pd.Timestamp:
     """
-    Get nex minute after the last timestamp for the passed asset ids.
+    Get the latest timestamp + 1 minute for the provided asset ids.
     """
     full_symbols = client.get_full_symbols_from_asset_ids(asset_ids)
-    last_timestamps: List = []
+    last_timestamps = []
     for full_symbol in full_symbols:
         last_timestamp = client.get_end_ts_for_symbol(full_symbol)
         last_timestamps.append(last_timestamp)
