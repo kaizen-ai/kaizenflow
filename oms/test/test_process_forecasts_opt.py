@@ -19,6 +19,7 @@ import oms
 _LOG = logging.getLogger(__name__)
 
 
+#@pytest.mark.skip("CmTask #1580 Optimizer-related tests fail.")
 class TestDataFrameProcessForecasts1(hunitest.TestCase):
 
     # TODO(gp): This can become an _example.
@@ -54,6 +55,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
 
         This test might need to be run from an `amp` container.
         """
+        # TODO(gp): Why importing here? Move it up.
         import core.finance_data_example as cfidaexa
 
         dir_ = self.get_input_dir()
@@ -168,7 +170,6 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             predictions, volatility, portfolio, config, spread_df, restrictions_df
         )
         actual = str(portfolio)
-        print("ACTUAL \n", actual)
         expected = r"""
 # historical holdings=
 asset_id                     100    200    -1
@@ -235,7 +236,6 @@ asset_id                      100     200
 2000-01-01 10:25:01-05:00  155.78         35.55       18.41   99887.56  155.82  338.24      494.07    202.17
 2000-01-01 10:30:01-05:00 -165.84     200091.94      268.09  100166.57  258.07   70.15      328.23    305.17
         """
-        print("EXPECTED \n", expected)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     # TODO(gp): -> test1
