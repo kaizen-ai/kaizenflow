@@ -185,6 +185,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self._db_connection = db_connection
         self._table_name = table_name
         self._mode = mode
+        self._full_symbol_mapping = self.build_numerical_to_string_id_mapping()
 
     @staticmethod
     def should_be_online() -> bool:
@@ -346,7 +347,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             end_unix_epoch = end_ts
         # Read data from DB.
         select_query = self._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch, **kwargs
         )
         data = hsql.execute_query_to_df(self._db_connection, select_query)
         # Add a full symbol column.

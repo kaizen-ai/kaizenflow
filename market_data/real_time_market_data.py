@@ -261,16 +261,22 @@ class RealTimeMarketData2(mdabmada.MarketData):
             self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
+        hdbg.dassert_eq(
+            client._mode,
+            "market_data",
+            msg="Requires a RealTimeSqlTalosClient in 'market_data' mode.",
+        )
         self._client = client
 
     # TODO(Danya): A copy of the Talos client method.
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return self._client.should_be_online()
 
-    # TODO(Danya): Should the last_end_time be returned for all symbols?
-    #  Since the client method accepts only a single full_symbol.
+    #
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        self._client.get_end_ts_for_symbol()
+        # Note: Getting the end time for one symbol as a placeholder.
+        # TODO(Danya): CMTask1622.
+        self._client.get_end_ts_for_symbol("binance::BTC_USDT")
 
     def _get_data(
             self,
@@ -285,10 +291,10 @@ class RealTimeMarketData2(mdabmada.MarketData):
         """
         Build a query and load SQL data in MarketData format.
         """
-        # TODO(Danya): Add `ts_col_name` as an optional argument to `client_build_select_query`
-        # TODO(Danya): Add left/right close arguments to `client_build_select_query`.
-        #  TODO(Danya): Transform asset_ids to `full_symbols`
-        #  TODO(Danya): The parent class expects US/Eastern, while data is in UTC.
-        #   We probably need to enforce the timezone.
-        # TODO(Danya): Utilize the `client._read_data` method once asset_ids are converted.
-        raise NotImplementedError
+        if asset_ids:
+            [
+                self._client._full_symbol_mapping[asset_id]
+                for asset_id in asset_ids
+            ]
+        data = self._client.read_data()
+        return data
