@@ -15,8 +15,8 @@ import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
-import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
+import im_v2.ccxt.data.client as icdcl
+import im_v2.common.data.client as icdc
 import market_data.im_client_market_data as mdimcmada
 import market_data.replayed_market_data as mdremada
 
@@ -245,12 +245,10 @@ def get_ImClientMarketData_example1(
     Build a `ImClientMarketData` backed with `CCXT` data.
     """
     resample_1min = True
-    ccxt_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
-    # Get the last available timestamp for an actual full symbol from universe
-    # and build a function that returns it to pass as a wall clock time caller.
-    last_timestamp = ccxt_client.get_end_ts_for_symbol(
-        "binance::BTC_USDT"
-    ) + pd.Timedelta(minutes=1)
+    ccxt_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+    # Build a function that returns next minute after the last timestamp for
+    # the passed asset ids in order to pass it as wall clock time caller.
+    last_timestamp = _get_last_timestamp(ccxt_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
         return last_timestamp
@@ -280,12 +278,10 @@ def get_ImClientMarketData_example2(
     """
     Build a `ImClientMarketData` backed with synthetic data.
     """
-    data_frame_client = imvcdcdfimce.get_DataFrameImClient_example1()
-    # Get the last available timestamp for an actual full symbol from universe
-    # and build a function that returns it to pass as a wall clock time caller.
-    last_timestamp = data_frame_client.get_end_ts_for_symbol(
-        "binance::BTC_USDT"
-    ) + pd.Timedelta(minutes=1)
+    data_frame_client = icdc.get_DataFrameImClient_example1()
+    # Build a function that returns next minute after the last timestamp for
+    # the passed asset ids in order to pass it as a wall clock time.
+    last_timestamp = _get_last_timestamp(data_frame_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
         return last_timestamp
@@ -305,3 +301,18 @@ def get_ImClientMarketData_example2(
         column_remap=column_remap,
     )
     return market_data_client
+
+
+def _get_last_timestamp(
+    client: icdc.ImClient, asset_ids: Optional[List[int]]
+) -> pd.Timestamp:
+    """
+    Get nex minute after the last timestamp for the passed asset ids.
+    """
+    full_symbols = client.get_full_symbols_from_asset_ids(asset_ids)
+    last_timestamps: List = []
+    for full_symbol in full_symbols:
+        last_timestamp = client.get_end_ts_for_symbol(full_symbol)
+        last_timestamps.append(last_timestamp)
+    last_timestamp = max(last_timestamps) + pd.Timedelta(minutes=1)
+    return last_timestamp
