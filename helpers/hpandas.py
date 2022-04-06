@@ -376,6 +376,30 @@ def drop_duplicates(
     return data_no_dups
 
 
+def dropna(
+    df: pd.DataFrame,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Wrapper around pd.dropna() reporting information about the removed rows.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    num_rows_before = df.shape[0]
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
+    df = df.dropna(*args, **kwargs)
+    if report_stats:
+        num_rows_after = df.shape[0]
+        pct_removed = hprint.perc(
+            num_rows_before - num_rows_after, num_rows_before
+        )
+        _LOG.info("removed rows with nans: %s", pct_removed)
+    return df
+
+
 def reindex_on_unix_epoch(
     df: pd.DataFrame, in_col_name: str, unit: str = "s"
 ) -> pd.DataFrame:
