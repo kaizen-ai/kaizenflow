@@ -11,6 +11,7 @@ import helpers.hgit as hgit
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 
 
+# TODO(gp): We should have unit tests to document how this data was generated.
 def get_test_data_dir() -> str:
     """
     Get dir with data files for the tests.

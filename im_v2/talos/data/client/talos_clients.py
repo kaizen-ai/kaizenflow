@@ -54,7 +54,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         - For CCXT Client and Talos Client the data is in [10:06:00, 10:08:00]
 
     # TODO(gp): Change the Talos DB implementation to uniform the semantics,
-    # since `MarketData` will not be happy with rewinding one minute.
+    #  since `MarketData` will not be happy with rewinding one minute.
     """
 
     def __init__(
@@ -63,6 +63,8 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         root_dir: str,
         partition_mode: str,
         *,
+        # TODO(gp): @all we should always use a date of when the data was downloaded
+        #  otherwise latest change value.
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
@@ -171,17 +173,18 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        *,
         mode: str = "data_client",
     ) -> None:
         """
-        2 modes are available, depending on the purpose of the loaded data:
-        `data_client` and `market_data`.
+        Constructor.
 
-        `data_client` mode loads data compatible with other clients, including
-         historical ones, and is used for most prod and research tasks.
-
-        `market_data` mode enforces an output compatible with `MarketData` class.
-        This mode is required when loading data to use inside a model.
+        :param mode: data can be returned in two formats
+            - `data_client`
+                - load data compatible with prod tasks (e.g., Airflow reconciliation)
+                  and research tasks (e.g., notebooks)
+            - `market_data`
+                - enforce an output compatible with `MarketData` class.
         """
         vendor = "talos"
         super().__init__(vendor, resample_1min)
@@ -208,7 +211,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         See description in the parent class.
         """
-        # TODO(Danya): CmTask1420.
+        # TODO(Danya): CmTask1420 "Move Talos API-related functions to TalosAPI class".
         return []
 
     def build_numerical_to_string_id_mapping(self) -> Dict[int, str]:
@@ -233,8 +236,8 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         )
         return full_symbol_mapping
 
-    @staticmethod
     # TODO(Danya): Move up to hsql.
+    @staticmethod
     def _create_in_operator(values: List[str], column_name: str) -> str:
         """
         Transform a list of possible values into an IN operator clause.
@@ -259,7 +262,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         Apply Talos-specific normalization.
 
-         `data_client` mode:
+        `data_client` mode:
         - Convert `timestamp` column to a UTC timestamp and set index.
         - Keep `open`, `high`, `low`, `close`, `volume` columns.
 
@@ -274,6 +277,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         0.825 0.826 0.825 0.825 18427.9 2022-03-16 2:46:00+00:00 2022-03-16 2:47:00+00:00 3303714233
         0.825 0.826 0.825 0.825 52798.5 2022-03-16 2:47:00+00:00 2022-03-16 2:48:00+00:00 3303714233
         ```
+        TODO(gp): What's the index? We should use the Pandas output.
         """
         # Convert timestamp column with Unix epoch to timestamp format.
         data["timestamp"] = data["timestamp"].apply(
@@ -490,12 +494,11 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         Select a maximum/minimum timestamp for the given symbol.
 
-        Overrides the method in parent class to utilize
-        the MIN/MAX SQL operators.
+        Overrides the method in parent class to utilize the MIN/MAX SQL operators.
 
         :param full_symbol: unparsed full_symbol value
         :param mode: 'start' or 'end'
-        :return: min or max value of 'timestamp' column.
+        :return: min or max value of 'timestamp' column
         """
         _LOG.debug(hprint.to_str("full_symbol"))
         exchange, currency_pair = imvcdcfusy.parse_full_symbol(full_symbol)
