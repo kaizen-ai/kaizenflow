@@ -28,6 +28,8 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): A better naming scheme is (vendor, backend, historical / real_time)
+#  so TalosPqByTileHistoricalClient?
 class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     """
     Read historical data for `Talos` assets stored as Parquet dataset.
@@ -158,6 +160,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 # #############################################################################
 
 
+# TODO(gp): -> TalosRealTimeSqlClient or better TalosSqlRealTimeClient
 class RealTimeSqlTalosClient(icdc.ImClient):
     """
     Retrieve real-time Talos data from DB using SQL queries.
