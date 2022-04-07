@@ -6,10 +6,12 @@ import helpers.hs3 as hs3
 
 import argparse
 import configparser
+import copy
 import functools
 import gzip
 import logging
 import os
+import pathlib
 import pprint
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -167,17 +169,22 @@ def listdir(
         # Detailed S3 objects in dict form with metadata.
         path_objects = s3fs_.glob(f"{dir_name}/{pattern}", detail=True)
         if only_files:
+            # Original `path_objects` must not be changed during loop.
+            temp_path_objects = copy.deepcopy(list(path_objects.values()))
             # Use metadata to distinguish files from directories without
             # calling `s3fs_.isdir/isfile`.
-            for path_object in path_objects.values():
+            for path_object in temp_path_objects:
                 if path_object["type"] != "file":
                     path_objects.pop(path_object["Key"])
         paths = list(path_objects.keys())
         if exclude_git_dirs:
-            paths = [path for path in paths if "/.git/" not in path]
+            paths = [
+                path for path in paths if ".git" not in pathlib.Path(path).parts
+            ]
         if use_relative_paths:
-            # TODO(Nikola): Check if `s3://` causes a problem.
-            paths = [os.path.relpath(path, start=dir_name) for path in paths]
+            bucket, absolute_path = split_path(dir_name)
+            root_path = f"{bucket}{absolute_path}"
+            paths = [os.path.relpath(path, start=root_path) for path in paths]
     else:
         paths = hio.listdir(
             dir_name,

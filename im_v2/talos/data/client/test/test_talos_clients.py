@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Dict, List, Optional
 
 import pandas as pd
@@ -856,12 +857,110 @@ class TestRealTimeSqlTalosClient1(
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        # Initialize client and create testing oucomes.
+        # Initialize client and create testing outcomes.
         im_client = self.setup_talos_sql_client()
         actual_outcome = im_client.build_numerical_to_string_id_mapping()
         expected_outcome = self._get_test_numerical_to_string_id_mapping()
         # Message in case if test case got failed.
         message = "Actual and expected mappings are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    # ///////////////////////////////////////////////////////////////////////
+
+    def test_round_start_timestamp_behavior(self) -> None:
+        """
+        Verify that the start round timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00", tz='UTC')
+        end_ts = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        # Choose the last timestamp that is available in the loaded data.
+        actual_outcome = data.index.min()
+        # Create the expected outcomes. Extracted timestamp should be equal to `start_ts` param.
+        expected_outcome = start_ts
+        # Message in case if test case got failed.
+        message = "Actual and expected timestamps are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_round_end_timestamp_behavior(self) -> None:
+        """
+        Verify that the end round timestamps are extracted correctly according
+        to the description in class TalosHistoricalPqByTileClient.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = None
+        end_ts = pd.Timestamp("2022-03-24T16:23:00-00:00", tz='UTC')
+        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        # Choose the last timestamp that is available in the loaded data.
+        actual_outcome = data.index.max()
+        # Create the expected outcomes. Extracted timestamp should be equal to `end_ts` param.
+        expected_outcome = end_ts
+        # Message in case if test case got failed.
+        message = "Actual and expected timestamps are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_intermediate_start_timestamp_behavior(self) -> None:
+        """
+        Verify that the start intermediate timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2022-03-24T16:21:37-00:00", tz='UTC')
+        end_ts = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        # Choose the last timestamp that is available in the loaded data.
+        actual_outcome = data.index.min()
+        # Create the expected outcomes. Extracted timestamp should be equal to the rounded `start_ts` param.
+        expected_outcome = start_ts.round(freq="min", ambiguous=True)
+        # Message in case if test case got failed.
+        message = "Actual and expected timestamps are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_intermediate_end_timestamp_behavior(self) -> None:
+        """
+        Verify that the end intermediate timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = None
+        end_ts = pd.Timestamp("2022-03-24T16:23:28-00:00", tz='UTC')
+        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        # Choose the last timestamp that is available in the loaded data.
+        actual_outcome = data.index.max()
+        # Create the expected outcomes. Extracted timestamp should be equal to the rounded `end_ts` param.
+        expected_outcome = end_ts.round(freq="min", ambiguous=True)
+        # Message in case if test case got failed.
+        message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
         hsql.remove_table(self.connection, "talos_ohlcv")
 
