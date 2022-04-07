@@ -236,6 +236,23 @@ def get_ReplayedTimeMarketData_example5(
 # #############################################################################
 
 
+def _get_last_timestamp(
+    client: icdc.ImClient, asset_ids: Optional[List[int]]
+) -> pd.Timestamp:
+    """
+    Get the latest timestamp + 1 minute for the provided asset ids.
+    """
+    # To receive the latest timestamp from `ImClient` one should pass a full
+    # symbol, because `ImClient` operates with full symbols.
+    full_symbols = client.get_full_symbols_from_asset_ids(asset_ids)
+    last_timestamps = []
+    for full_symbol in full_symbols:
+        last_timestamp = client.get_end_ts_for_symbol(full_symbol)
+        last_timestamps.append(last_timestamp)
+    last_timestamp = max(last_timestamps) + pd.Timedelta(minutes=1)
+    return last_timestamp
+
+
 def get_ImClientMarketData_example1(
     asset_ids: Optional[List[int]],
     columns: List[str],
@@ -299,18 +316,3 @@ def get_ImClientMarketData_example2(
         column_remap=column_remap,
     )
     return market_data_client
-
-
-def _get_last_timestamp(
-    client: icdc.ImClient, asset_ids: Optional[List[int]]
-) -> pd.Timestamp:
-    """
-    Get the latest timestamp + 1 minute for the provided asset ids.
-    """
-    full_symbols = client.get_full_symbols_from_asset_ids(asset_ids)
-    last_timestamps = []
-    for full_symbol in full_symbols:
-        last_timestamp = client.get_end_ts_for_symbol(full_symbol)
-        last_timestamps.append(last_timestamp)
-    last_timestamp = max(last_timestamps) + pd.Timedelta(minutes=1)
-    return last_timestamp
