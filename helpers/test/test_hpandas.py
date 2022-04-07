@@ -2,6 +2,8 @@ import datetime
 import io
 import logging
 import os
+from pickle import NONE
+from unittest.mock import NonCallableMagicMock
 import uuid
 from typing import Any
 
@@ -719,7 +721,7 @@ class TestReadDataFromS3(hunitest.TestCase):
 
 
 class TestDropNa(hunitest.TestCase):
-    def test_dropna1(self) -> pd.DataFrame:
+    def test_dropna1(self) -> None:
         """
         Test if all types of NaNs are dropped.
         """
@@ -736,7 +738,7 @@ class TestDropNa(hunitest.TestCase):
         actual_str = hpandas.df_to_str(actual)
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)    
 
-    def test_dropna2(self) -> pd.DataFrame:
+    def test_dropna2(self) -> None:
         """
         Test is infs are dropped.
         """
@@ -753,3 +755,77 @@ class TestDropNa(hunitest.TestCase):
         actual = hpandas.dropna(df, drop_infs=True)
         actual_str = hpandas.df_to_str(actual)
         self.assert_equal(actual_str, expected_str, fuzzy_match=True) 
+
+
+class TestDropAxisWithAllNans(hunitest.TestCase):
+    def test_drop_rows1(self) -> None:
+        """
+        Test if row full of nans is dropped.
+        """
+        test_data = {
+            "dummy_value_1": [np.nan, 2, 3],
+            "dummy_value_2": [pd.NA, "B", "C"],
+            "dummy_value_3": [None, 1.0, 1.0],
+        }
+        df = pd.DataFrame(data=test_data)
+        expected_str = """   dummy_value_1 dummy_value_2  dummy_value_3
+1            2.0             B            1.0
+2            3.0             C            1.0"""
+        actual = hpandas.drop_axis_with_all_nans(df, drop_rows=True)
+        actual_str = hpandas.df_to_str(actual)
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True) 
+
+
+    def test_drop_rows2(self) -> None:
+        """
+        Test if non fully nan row is non dropped.
+        """
+        test_data = {
+            "dummy_value_1": [np.nan, 2, 3],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [None, 1.0, 1.0],
+        }
+        df = pd.DataFrame(data=test_data)
+        expected_str = """   dummy_value_1 dummy_value_2  dummy_value_3
+0            NaN             A            NaN
+1            2.0             B            1.0
+2            3.0             C            1.0"""
+        actual = hpandas.drop_axis_with_all_nans(df, drop_rows=True)
+        actual_str = hpandas.df_to_str(actual)
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        
+    def test_drop_columns1(self) -> None:
+        """
+        Test if column full of nans is dropped.
+        """
+        test_data = {
+            "dummy_value_1": [np.nan, pd.NA, None],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [1.0, 1.0, 1.0],
+        }
+        df = pd.DataFrame(data=test_data)
+        expected_str = """  dummy_value_2  dummy_value_3
+0             A            1.0
+1             B            1.0
+2             C            1.0"""
+        actual = hpandas.drop_axis_with_all_nans(df, drop_columns=True)
+        actual_str = hpandas.df_to_str(actual)
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+
+    def test_drop_columns2(self) -> None:
+        """
+        Test if column that is not full of nans is not dropped.
+        """
+        test_data = {
+            "dummy_value_1": [np.nan, 2, None],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [1.0, 1.0, 1.0],
+        }
+        df = pd.DataFrame(data=test_data)
+        expected_str = """   dummy_value_1 dummy_value_2  dummy_value_3
+0            NaN             A            1.0
+1            2.0             B            1.0
+2            NaN             C            1.0"""
+        actual = hpandas.drop_axis_with_all_nans(df, drop_columns=True)
+        actual_str = hpandas.df_to_str(actual)
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
