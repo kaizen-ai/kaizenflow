@@ -30,6 +30,7 @@ except ModuleNotFoundError:
 
 # To enforce this order of the imports we use the directive for the linter below.
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.hintrospection as hintros  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hio as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hsystem as hsystem  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -78,6 +79,21 @@ def dassert_is_not_s3_path(s3_path: str) -> None:
         "Passed an S3 file='%s' when it was not expected",
         s3_path,
     )
+
+
+def dassert_is_valid_aws_profile(path: str, aws_profile: AwsProfile) -> None:
+    """
+    Check that the value of `aws_profile` is compatible with the S3 or local
+    file `path`.
+
+    :param path: S3 or local path
+    :param aws_profile: AWS profile to use if and only if using an S3 path,
+        otherwise `None` for local path
+    """
+    if is_s3_path(path):
+        hdbg.dassert_is_not(aws_profile, None)
+    else:
+        hdbg.dassert_is(aws_profile, None)
 
 
 def dassert_path_exists(
@@ -196,6 +212,29 @@ def listdir(
     return paths
 
 
+def du(
+    path: str,
+    human_format: bool = False,
+    aws_profile: Optional[AwsProfile] = None,
+) -> Union[int, str]:
+    """
+    Counterpart to `hsystem.du` with S3 support.
+
+    If and only if `aws_profile` is specified, S3 is used instead of
+    local filesystem.
+    """
+    dassert_is_valid_aws_profile(path, aws_profile)
+    if is_s3_path(path):
+        s3fs_ = get_s3fs(aws_profile)
+        dassert_path_exists(path, s3fs_)
+        size = s3fs_.du(path)
+        if human_format:
+            size = hintros.format_size(size)
+    else:
+        size = hsystem.du(path, human_format=human_format)
+    return size
+
+
 def to_file(
     lines: str,
     file_name: str,
@@ -265,7 +304,7 @@ def from_file(
         s3fs_ = get_s3fs(aws_profile)
         dassert_path_exists(file_name, s3fs_)
         # Open s3 file.
-        with s3fs_.open(file_name, "rb") as s3_file:
+        with s3fs_.open(file_name) as s3_file:
             if file_name.endswith((".gz", ".gzip")):
                 # Open and decompress gzipped file.
                 with gzip.GzipFile(fileobj=s3_file) as gzip_file:

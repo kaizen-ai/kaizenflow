@@ -131,7 +131,7 @@ class TestToFileAndFromFile1(S3Mock_TestCase):
 class TestListdir1(S3Mock_TestCase):
     def prepare_test_data(self) -> Tuple[str, hs3.AwsProfile]:
         bucket_s3_path = f"s3://{self.bucket_name}"
-        depth_one_s3_path = f"s3://{bucket_s3_path}/depth_one"
+        depth_one_s3_path = f"{bucket_s3_path}/depth_one"
         # Prepare test files.
         moto_s3fs = hs3.get_s3fs("ck")
         first_s3_path = f"{depth_one_s3_path}/mock1.txt"
@@ -260,3 +260,37 @@ class TestListdir1(S3Mock_TestCase):
             "mock_bucket/depth_one/mock2.gzip",
         ]
         self.assertListEqual(paths, expected_paths)
+
+
+@pytest.mark.skip("Enable after CMTask1292 is resolved.")
+class TestDu1(S3Mock_TestCase):
+    def test_du1(self) -> None:
+        """
+        Verify that total file size is returned.
+        """
+        bucket_s3_path = f"s3://{self.bucket_name}"
+        depth_one_s3_path = f"{bucket_s3_path}/depth_one"
+        # Prepare test files.
+        moto_s3fs = hs3.get_s3fs("ck")
+        first_s3_path = f"{bucket_s3_path}/mock1.txt"
+        lines = [b"line_mock\n"] * 150
+        with moto_s3fs.open(first_s3_path, "wb") as s3_file:
+            s3_file.writelines(lines)
+        second_s3_path = f"{depth_one_s3_path}/mock2.txt"
+        with moto_s3fs.open(second_s3_path, "wb") as s3_file:
+            # One level deeper to test recursive `du`.
+            s3_file.writelines(lines)
+        # Get multiple files.
+        size = hs3.du(bucket_s3_path, aws_profile=moto_s3fs)
+        expected_size = 3000
+        self.assertEqual(size, expected_size)
+        size = hs3.du(depth_one_s3_path, aws_profile=moto_s3fs)
+        expected_size = 1500
+        self.assertEqual(size, expected_size)
+        # Get exactly one file.
+        size = hs3.du(second_s3_path, aws_profile=moto_s3fs)
+        self.assertEqual(size, expected_size)
+        # Verify size in human-readable form.
+        size = hs3.du(bucket_s3_path, human_format=True, aws_profile=moto_s3fs)
+        expected_size = r"2.9 KB"
+        self.assert_equal(size, expected_size)
