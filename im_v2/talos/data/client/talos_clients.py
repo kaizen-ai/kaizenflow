@@ -438,7 +438,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT')
         exchange_currency_conditions = [
             f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
-            for currency_pair, exchange_id in parsed_symbols
+            for exchange_id, currency_pair in parsed_symbols
             if exchange_id and currency_pair
         ]
         if exchange_currency_conditions:
