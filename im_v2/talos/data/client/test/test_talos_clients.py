@@ -880,13 +880,13 @@ class TestRealTimeSqlTalosClient1(
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
-        start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00")
+        start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00", tz='UTC')
         end_ts = None
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
-        actual_outcome = data.iloc[[0]].index
+        actual_outcome = data.index.min()
         # Create the expected outcomes. Extracted timestamp should be equal to `start_ts` param.
-        expected_outcome = start_ts.strftime("%Y-%m-%d %H:%M:%S+00:00")
+        expected_outcome = start_ts
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
@@ -905,15 +905,15 @@ class TestRealTimeSqlTalosClient1(
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
-        end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00")
+        end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00", tz='UTC')
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
-        actual_outcome = data.iloc[[-1]].index
+        actual_outcome = data.index.max()
         # Create the expected outcomes. Extracted timestamp should be equal to `end_ts` param.
         # We need to extract one minute from `end_ts` here due to the unusual behavior of timestamps in Talos SQL.
         # TODO(Max): Remove the row below once CMTask1567 - Fix timestamp behavior in Talos SQL is fixed.
         expected_outcome = end_ts - timedelta(minutes=1)
-        expected_outcome = expected_outcome.strftime("%Y-%m-%d %H:%M:%S+00:00")
+        expected_outcome = expected_outcome
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
@@ -931,14 +931,13 @@ class TestRealTimeSqlTalosClient1(
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
-        start_ts = pd.Timestamp("2022-03-24T16:21:37-00:00")
+        start_ts = pd.Timestamp("2022-03-24T16:21:37-00:00", tz='UTC')
         end_ts = None
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
-        actual_outcome = data.iloc[[0]].index
+        actual_outcome = data.index.min()
         # Create the expected outcomes. Extracted timestamp should be equal to the rounded `start_ts` param.
         expected_outcome = start_ts.round(freq="min", ambiguous=True)
-        expected_outcome = expected_outcome.strftime("%Y-%m-%d %H:%M:%S+00:00")
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
@@ -957,13 +956,12 @@ class TestRealTimeSqlTalosClient1(
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
-        end_ts = pd.Timestamp("2022-03-24T16:23:28-00:00")
+        end_ts = pd.Timestamp("2022-03-24T16:23:28-00:00", tz='UTC')
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
-        actual_outcome = data.iloc[[-1]].index
+        actual_outcome = data.index.max()
         # Create the expected outcomes. Extracted timestamp should be equal to the rounded `end_ts` param.
         expected_outcome = end_ts.round(freq="min", ambiguous=True)
-        expected_outcome = expected_outcome.strftime("%Y-%m-%d %H:%M:%S+00:00")
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
