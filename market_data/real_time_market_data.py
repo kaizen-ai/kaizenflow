@@ -291,7 +291,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
         """
         Build a query and load SQL data in MarketData format.
         """
-        # Convert asset ids to full symbols for communication with the DB.
+        # Convert asset ids to full symbols for passing to the DB.
         if asset_ids:
             full_symbols = [
                 self._client.numerical_id_mapping[asset_id]

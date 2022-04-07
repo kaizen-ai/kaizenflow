@@ -286,7 +286,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             "low",
             "close",
             "volume",
-            full_symbol_col_name
+            full_symbol_col_name,
         ]
         if self._mode == "data_client":
             pass
@@ -296,7 +296,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
                 imvcuunut.string_to_numerical_id
             )
             # Convert to int64 to keep NaNs alongside with int values.
-            data['asset_id'] = data['asset_id'].astype(pd.Int64Dtype())
+            data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
             # Generate `start_timestamp` from `end_timestamp` by substracting delta.
             delta = pd.Timedelta("1M")
             data["start_timestamp"] = data["timestamp"].apply(
@@ -328,10 +328,20 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
+        # Extra arguments for building a query.
         **kwargs: Dict[str, Any],
     ) -> pd.DataFrame:
         """
         Create a select query and load data from database.
+
+        Extra parameters for building a query can also be passed,
+        see keyword args for `_build_select_query`
+
+        :param full_symbols: a list of full symbols, e.g. ["ftx::BTC_USDT"]
+        :param start_ts: beginning of the time interval
+        :param end_ts: end of the time interval
+        :param full_symbol_col_name: name of column containg full symbols
+        :return:
         """
         # Parse symbols into exchange and currency pair.
         parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
@@ -388,6 +398,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
          AND ((exchange_id='binance' AND currency_pair='AVAX_USDT')
           OR (exchange_id='ftx' AND currency_pair='BTC_USDT'))
         ```
+
         :param parsed_symbols: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
         :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
         :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
@@ -396,6 +407,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :param ts_col_name: name of timestamp column
         :param left_close: if operator for `start_unix_epoch` is either > or >=
         :param right_close: if operator for `end_unix_epoch` is either < or <=
+        :param limit: number of rows to return
         :return: SELECT query for Talos data
         """
         hdbg.dassert_container_type(
