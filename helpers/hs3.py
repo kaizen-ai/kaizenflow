@@ -80,21 +80,19 @@ def dassert_is_not_s3_path(s3_path: str) -> None:
     )
 
 
-def is_valid_s3_call(path: str, aws_profile: AwsProfile) -> bool:
+def dassert_is_valid_aws_profile(path: str, aws_profile: AwsProfile) -> None:
     """
-    Use in functions that can do operations on S3 and local system as
-    precaution to ensure proper flow.
+    Check that the value of `aws_profile` is compatible with the S3 or local
+    file `path`.
 
     :param path: S3 or local path
     :param aws_profile: AWS profile to use if and only if using an S3 path,
         otherwise `None` for local path
     """
-    is_s3_path_ = is_s3_path(path)
-    if is_s3_path_:
+    if is_s3_path(path):
         hdbg.dassert_is_not(aws_profile, None)
     else:
         hdbg.dassert_is(aws_profile, None)
-    return is_s3_path_
 
 
 def dassert_path_exists(
@@ -107,12 +105,11 @@ def dassert_path_exists(
     :param path: S3 or local path
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    if aws_profile is not None:
-        dassert_is_s3_path(path)
+    dassert_is_valid_aws_profile(path, aws_profile)
+    if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
         hdbg.dassert(s3fs_.exists(path), "S3 path '%s' doesn't exist!" % path)
     else:
-        dassert_is_not_s3_path(path)
         hdbg.dassert_path_exists(path)
 
 
@@ -126,12 +123,11 @@ def dassert_path_not_exists(
     :param path: S3 or local path
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    if aws_profile is not None:
-        dassert_is_s3_path(path)
+    dassert_is_valid_aws_profile(path, aws_profile)
+    if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
         hdbg.dassert(not s3fs_.exists(path), "S3 path '%s' already exist!" % path)
     else:
-        dassert_is_not_s3_path(path)
         hdbg.dassert_path_not_exists(path)
 
 
@@ -176,7 +172,8 @@ def listdir(
     :param aws_profile: AWS profile to use if and only if using an S3 path,
         otherwise `None` for local path
     """
-    if is_valid_s3_call(dir_name, aws_profile):
+    dassert_is_valid_aws_profile(dir_name, aws_profile)
+    if is_s3_path(dir_name):
         s3fs_ = get_s3fs(aws_profile)
         dassert_path_exists(dir_name, s3fs_)
         # Ensure that there are no multiple stars in pattern.
@@ -229,7 +226,8 @@ def to_file(
     If and only if `aws_profile` is specified, S3 is used instead of
     local filesystem.
     """
-    if is_valid_s3_call(file_name, aws_profile):
+    dassert_is_valid_aws_profile(file_name, aws_profile)
+    if is_s3_path(file_name):
         # Ensure that `bytes` is used.
         if mode is not None and "b" not in mode:
             raise ValueError("S3 only allows binary mode!")
@@ -276,7 +274,8 @@ def from_file(
     If and only if `aws_profile` is specified, S3 is used instead of
     local filesystem.
     """
-    if is_valid_s3_call(file_name, aws_profile):
+    dassert_is_valid_aws_profile(file_name, aws_profile)
+    if is_s3_path(file_name):
         if encoding:
             raise ValueError("Encoding is not supported when reading from S3!")
         # Inspect file name and path.
