@@ -729,12 +729,12 @@ class TestDropNa(hunitest.TestCase):
             "dummy_value_3": [0, 0, pd.NA, 0, 0],
         }
         df = pd.DataFrame(data=test_data)
-        expected = r"""   dummy_value_1 dummy_value_2 dummy_value_3
-        1            1.0             A             0
-        4            0.0             D             0"""
+        expected_str = r"""   dummy_value_1 dummy_value_2 dummy_value_3
+1            1.0             A             0
+4            0.0             D             0"""
         actual = hpandas.dropna(df)
-        self.assert_equal(actual, expected, fuzzy_match=True)
-        
+        actual_str = hpandas.df_to_str(actual)
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)    
 
     def test_dropna2(self) -> pd.DataFrame:
         """
@@ -746,12 +746,10 @@ class TestDropNa(hunitest.TestCase):
             "dummy_value_3": [0, 0, np.inf, 0, 0],
         }
         df = pd.DataFrame(data=test_data)
-        expected = r"""   dummy_value_1 dummy_value_2  dummy_value_3
+        expected_str = r"""   dummy_value_1 dummy_value_2  dummy_value_3
 1            1.0             A            0.0
 3            2.0             C            0.0
 4            0.0             D            0.0"""
         actual = hpandas.dropna(df, drop_infs=True)
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-
-    
+        actual_str = hpandas.df_to_str(actual)
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True) 
