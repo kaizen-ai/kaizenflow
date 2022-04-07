@@ -24,32 +24,51 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# SystemRunner
+# System
 # #############################################################################
 
 
-# TODO(gp): Consider adding a `SystemRunner` that has the absolute minimum
-#  common behavior.
-#
-# class SystemRunner(abc.ABC):
-#     """
-#     Create the simplest possible end-to-end DataFlow-based system comprised
-#     of a `MarketData` and a `Dag`.
-#     """
-#
-#     @abc.abstractmethod
-#     def get_market_data(
-#             self, event_loop: asyncio.AbstractEventLoop
-#     ) -> mdata.MarketData:
-#         ...
-#
-#     @abc.abstractmethod
-#     def get_dag(
-#             self, portfolio: oms.AbstractPortfolio
-#     ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
-#         ...
-#
-#
+class System(abc.ABC):
+    """
+    Used as type to pass around.
+    """
+    pass
+
+
+# #############################################################################
+# ForecastSystem
+# #############################################################################
+
+
+class ForecastSystem(System):
+    """
+    The simplest DataFlow-based system comprised of a:
+    - `MarketData` that can be:
+        - historical
+        - replayed-time
+    - `Dag`
+
+    This system allows to make forecasts given data.
+
+    The forecasts can then be processed in terms of a PnL.
+    """
+
+    @abc.abstractmethod
+    def get_market_data(
+            self, event_loop: asyncio.AbstractEventLoop
+    ) -> mdata.MarketData:
+        ...
+
+    @abc.abstractmethod
+    def get_dag(
+            self, portfolio: oms.AbstractPortfolio
+    ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
+        ...
+
+    # TODO(gp): Is this needed?
+    # def get_dag_runner(
+
+
 # class ResearchSystemRunner(SystemRunner):
 #     """
 #     Create an end-to-end DataFlow-based system that can run a `Dag` in
@@ -58,36 +77,35 @@ _LOG = logging.getLogger(__name__)
 #     """
 
 
-# TODO(gp): This is really a -> RealTimeSystemRunner
-class SystemRunner(abc.ABC):
+# #############################################################################
+# RealTimeSystem
+# #############################################################################
+
+
+# TODO(gp): SystemRunner -> RealTimeSystem
+#class SystemRunner(ForecastSystem):
+class RealTimeSystem(ForecastSystem):
     """
     Create an end-to-end DataFlow-based system composed of:
-
     - `MarketData`
-    - `Portfolio`
     - `Dag`
     - `DagRunner`
+    - `Portfolio`
+
+    This can be run in replayed-time or real-time.
     """
 
-    @abc.abstractmethod
-    def get_market_data(
-        self, event_loop: asyncio.AbstractEventLoop
-    ) -> mdata.MarketData:
-        ...
-
-    @abc.abstractmethod
-    def get_portfolio(
-        self,
-        event_loop: asyncio.AbstractEventLoop,
-        market_data: mdata.MarketData,
-    ) -> oms.AbstractPortfolio:
-        ...
-
-    @abc.abstractmethod
-    def get_dag(
-        self, portfolio: oms.AbstractPortfolio
-    ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
-        ...
+    # @abc.abstractmethod
+    # def get_market_data(
+    #     self, event_loop: asyncio.AbstractEventLoop
+    # ) -> mdata.MarketData:
+    #     ...
+    #
+    # @abc.abstractmethod
+    # def get_dag(
+    #     self, portfolio: oms.AbstractPortfolio
+    # ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
+    #     ...
 
     # TODO(gp): This could be `get_DagRunner_example()`.
     def get_dag_runner(
@@ -116,18 +134,36 @@ class SystemRunner(abc.ABC):
         dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)
         return dag_runner
 
+    @abc.abstractmethod
+    def get_portfolio(
+        self,
+        event_loop: asyncio.AbstractEventLoop,
+        market_data: mdata.MarketData,
+    ) -> oms.AbstractPortfolio:
+        ...
+
 
 # #############################################################################
-# SystemWithOmsRunner
+# SystemWithSimulatedOmsRunner
 # #############################################################################
 
 
+# TODO(gp): SystemWithSimulatedOmsRunner -> SimulatedOmsSystem
 class SystemWithSimulatedOmsRunner(SystemRunner, abc.ABC):
     """
-    A system with a simulated OMS has always:
+    Create a system with:
+    - `MarketData`
+    - `Dag`
+    - `DagRunner`
+    - `Portfolio`
+    - `OrderProcessor`
 
+    A system with a simulated OMS needs always to have:
     - a `DataFramePortfolio` or a `MockedPortfolio`
-    - an `OrderProcessor`
+    - an `OrderProcessor` (to mock the execution of orders on behalf of the market)
+
+    This allows to simulate a trading system using detailed order placement and
+    execution..
     """
 
     def __init__(

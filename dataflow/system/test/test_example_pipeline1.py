@@ -12,16 +12,21 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): @Danya implement reusing / factoring out code from
+#  Test_Example1_SystemRunner.
+class Test_Example1_ForecastSystem(SystemTester):
+    """
+
+    """
 
 # TODO(gp): This should derive from SystemTester.
+# TODO(gp): Rename -> Test_Example1_SimulatedOmsSystem
 class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
     """
-    Test using fake data and features:
-
-    - `Example1` pipeline
-    - end-to-end inside a `System`
-    - with a `MarketData`
-    - with a `Portfolio` backed by DB or dataframe
+    Test a System composed of:
+    - a `MarketData` (providing fake data and features)
+    - an `Example1` DAG
+    - a `Portfolio` backed by DB or dataframe
     """
 
     def run_coroutines(

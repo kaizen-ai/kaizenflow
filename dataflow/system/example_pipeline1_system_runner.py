@@ -23,13 +23,21 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): -> system_runner_example.py for symmetry with the other _example?
 
 
+# TODO(gp): -> Example1_ForecastSystem
 class Example1_SystemRunner(dtfsysyrun.SystemRunner):
+    """
+    Create a system with:
+    - a ReplayedMarketData
+    - an Example1 DAG
+    """
+
     def __init__(self, asset_ids: List[int], event_loop=None):
         self._asset_ids = asset_ids
         self._event_loop = event_loop
 
     def get_market_data(
         self,
+        # TODO(gp): -> df
         data: pd.DataFrame,
         initial_replayed_delay: int = 5,
     ):
@@ -72,7 +80,16 @@ class Example1_SystemRunner(dtfsysyrun.SystemRunner):
 # #############################################################################
 
 
+# TODO(gp): -> Example1_DataFrameOmsSystem
 class Example1_Dataframe_SystemRunner(Example1_SystemRunner):
+    """
+    Create a system with:
+    - a ReplayedMarketData
+    - an Example1 Dag
+    - a DataFramePortfolio
+
+    Same as `Example1_ForecastSystem` but with a `DataFramePortfolio`.
+    """
     def get_portfolio(
         self,
         market_data: mdata.MarketData,
@@ -96,9 +113,19 @@ class Example1_Dataframe_SystemRunner(Example1_SystemRunner):
 # #############################################################################
 
 
+# TODO(gp): -> Example1_DataBaseOmsSystem
 class Example1_Database_SystemRunner(
     dtfsysyrun.SystemWithSimulatedOmsRunner, Example1_SystemRunner
 ):
+    """
+    Create a system with:
+    - a ReplayedMarketData
+    - an Example1 Dag
+    - a DataBasePortfolio
+
+    Same as `Example1_ForecastSystem` but with a `DataBasePortfolio`.
+    """
+
     def get_portfolio(
         self,
         market_data: mdata.MarketData,
