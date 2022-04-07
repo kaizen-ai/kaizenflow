@@ -35,9 +35,9 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         ```
                                         full_symbol ... close  volume  feature1
         timestamp
-        2021-07-26 13:42:00-05:00  binance:BTC_USDT     101.0     100       1.0
-        2021-07-26 13:43:00-05:00  binance:BTC_USDT     101.0     100       1.0
-        2021-07-26 13:44:00-05:00  binance:BTC_USDT     101.0     100       1.0
+        2021-07-26 13:42:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        2021-07-26 13:43:00+00:00  binance:BTC_USDT     101.0     100       1.0
+        2021-07-26 13:44:00+00:00  binance:BTC_USDT     101.0     100       1.0
         ```
         """
         # Validate that the input universe is a non-empty list.

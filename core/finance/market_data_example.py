@@ -540,14 +540,15 @@ def get_im_client_market_data_df1(full_symbols: List[str]) -> pd.DataFrame:
     ```
                                     full_symbol ... close  volume  feature1
     timestamp
-    2000-01-01 09:31:00-05:00  binance:BTC_USDT     101.0       0       1.0
-    2000-01-01 09:32:00-05:00  binance:BTC_USDT     101.0       1       1.0
-    2000-01-01 09:33:00-05:00  binance:BTC_USDT     101.0       2       1.0
+    2000-01-01 14:31:00+00:00  binance:BTC_USDT     101.0       0       1.0
+    2000-01-01 14:32:00+00:00  binance:BTC_USDT     101.0       1       1.0
+    2000-01-01 14:33:00+00:00  binance:BTC_USDT     101.0       2       1.0
     ```
     """
+    # Pass timestamps within the U.S. active trading hours.
     idx = pd.date_range(
-        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="utc"),
-        end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="utc"),
+        start=pd.Timestamp("2000-01-01 14:31:00+00:00", tz="utc"),
+        end=pd.Timestamp("2000-01-01 15:10:00+00:00", tz="utc"),
         freq="T",
     )
     # Set price and feature patterns for data alternating.
