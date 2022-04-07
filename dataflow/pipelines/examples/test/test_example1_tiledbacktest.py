@@ -16,18 +16,20 @@ class Test_Example1_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
     """
 
     @pytest.mark.superslow
-    @pytest.mark.skip("LimeTask416: Breaks_2022_03_28")
     def test1(self) -> None:
         """
         Run on a single name for a few months.
         """
-        backtest_config = "kibot_v1-top1.5T.JanFeb2020"
+        asset_ids = "[3303714233, 1467591036]"
+        start_ts = "2000-01-01T009:31:00-05:00"
+        end_ts = "2000-01-01T10:10:00-05:00"
         config_builder = (
             "dataflow.pipelines.examples.example1_configs."
-            + f'build_tile_configs("{backtest_config}")'
+            + f'build_tile_configs("{asset_ids}", "{start_ts}", "{end_ts}")'
         )
         experiment_builder = (
-            "amp.dataflow.model.master_experiment.run_tiled_experiment"
+            # "amp.dataflow.model.master_experiment.run_tiled_experiment"
+            "dataflow.model.master_experiment.run_tiled_experiment"
         )
         # We abort on error since we don't expect failures.
         run_model_extra_opts = ""
