@@ -185,7 +185,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self._db_connection = db_connection
         self._table_name = table_name
         self._mode = mode
-        self._numerical_id_mapping = self.build_numerical_to_string_id_mapping()
+        self.numerical_id_mapping = self.build_numerical_to_string_id_mapping()
 
     @staticmethod
     def should_be_online() -> bool:
@@ -289,18 +289,17 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             full_symbol_col_name
         ]
         if self._mode == "data_client":
-            # Update index.
-            data = data.set_index("timestamp")
+            pass
         elif self._mode == "market_data":
-            # Add `asset_id` column using maping on `full_symbol` column.
+            # Add `asset_id` column using mapping on `full_symbol` column.
             data["asset_id"] = data[full_symbol_col_name].apply(
                 imvcuunut.string_to_numerical_id
             )
-            # Rename column `timestamp` -> `end_timestamp`.
-            data = data.rename({"timestamp": "end_timestamp"}, axis=1)
+            # Convert to int64 to keep NaNs alongside with int values.
+            data['asset_id'] = data['asset_id'].astype(pd.Int64Dtype())
             # Generate `start_timestamp` from `end_timestamp` by substracting delta.
             delta = pd.Timedelta("1M")
-            data["start_timestamp"] = data["end_timestamp"].apply(
+            data["start_timestamp"] = data["timestamp"].apply(
                 lambda pd_timestamp: (pd_timestamp - delta)
             )
             # Columns that should left in the table.
@@ -310,13 +309,12 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             ]
             # Concatenate two lists of columns.
             ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
-            # Set index.
-            data = data.set_index("end_timestamp")
         else:
             hdbg.dfatal(
                 "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
                 % self._mode
             )
+        data = data.set_index("timestamp")
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.

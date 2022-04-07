@@ -276,7 +276,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         # Note: Getting the end time for one symbol as a placeholder.
         # TODO(Danya): CMTask1622.
-        self._client.get_end_ts_for_symbol("binance::BTC_USDT")
+        return self._client.get_end_ts_for_symbol("binance::BTC_USDT")
 
     def _get_data(
         self,
@@ -291,9 +291,10 @@ class RealTimeMarketData2(mdabmada.MarketData):
         """
         Build a query and load SQL data in MarketData format.
         """
+        # Convert asset ids to full symbols for communication with the DB.
         if asset_ids:
             full_symbols = [
-                self._client._full_symbol_mapping[asset_id]
+                self._client.numerical_id_mapping[asset_id]
                 for asset_id in asset_ids
             ]
         else:
@@ -307,4 +308,22 @@ class RealTimeMarketData2(mdabmada.MarketData):
             right_close=right_close,
             limit=limit,
         )
+        # Rename the index to fit the MarketData format.
+        # TODO(Danya): The client requires the data to have a `timestamp` index,
+        #  while AbstractMarketData requires to have integer index.
+        #  This conversion is redundant, but necessary to combine
+        #  the client and AbstractMarketData.
+        data.index.name = "end_timestamp"
+        data = data.reset_index()
+        market_data_columns = [
+            "end_timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "start_timestamp",
+            "asset_id",
+        ]
+        data = data[market_data_columns]
         return data
