@@ -95,7 +95,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
 
 
 def build_tile_configs(
-    asset_ids_str: str,
+    asset_ids: List[int],
     start_timestamp: str,
     end_timestamp: str,
 ) -> List[cconfig.Config]:
@@ -103,8 +103,6 @@ def build_tile_configs(
     Build a tile configs for Example1 pipeline.
     """
     #
-    asset_ids_str_list = asset_ids_str.strip("][").split(", ")
-    asset_ids = [int(x) for x in asset_ids_str_list]
     start_timestamp = pd.Timestamp(start_timestamp)
     end_timestamp = pd.Timestamp(end_timestamp)
     config = _build_base_config()
