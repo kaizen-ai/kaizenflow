@@ -2,8 +2,6 @@ import datetime
 import io
 import logging
 import os
-from pickle import NONE
-from unittest.mock import NonCallableMagicMock
 import uuid
 from typing import Any
 
@@ -736,7 +734,7 @@ class TestDropNa(hunitest.TestCase):
 4            0.0             D             0"""
         actual = hpandas.dropna(df)
         actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)    
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test_dropna2(self) -> None:
         """
@@ -754,7 +752,7 @@ class TestDropNa(hunitest.TestCase):
 4            0.0             D            0.0"""
         actual = hpandas.dropna(df, drop_infs=True)
         actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True) 
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
 
 class TestDropAxisWithAllNans(hunitest.TestCase):
@@ -773,8 +771,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
 2            3.0             C            1.0"""
         actual = hpandas.drop_axis_with_all_nans(df, drop_rows=True)
         actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True) 
-
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
 
     def test_drop_rows2(self) -> None:
         """
@@ -793,7 +790,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         actual = hpandas.drop_axis_with_all_nans(df, drop_rows=True)
         actual_str = hpandas.df_to_str(actual)
         self.assert_equal(actual_str, expected_str, fuzzy_match=True)
-        
+
     def test_drop_columns1(self) -> None:
         """
         Test if column full of nans is dropped.
