@@ -215,7 +215,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
         query = (
-            f"SELECT DISTINCT currency_pair, exchange_id FROM {self._table_name}"
+            f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
         )
         currency_exchange_df = hsql.execute_query_to_df(
             self._db_connection, query
@@ -286,11 +286,11 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             "low",
             "close",
             "volume",
+            full_symbol_col_name
         ]
         if self._mode == "data_client":
             # Update index.
             data = data.set_index("timestamp")
-            ohlcv_columns.append(full_symbol_col_name)
         elif self._mode == "market_data":
             # Add `asset_id` column using maping on `full_symbol` column.
             data["asset_id"] = data[full_symbol_col_name].apply(
@@ -306,11 +306,12 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             # Columns that should left in the table.
             market_data_ohlcv_columns = [
                 "start_timestamp",
-                "end_timestamp",
                 "asset_id",
             ]
             # Concatenate two lists of columns.
             ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
+            # Set index.
+            data = data.set_index("end_timestamp")
         else:
             hdbg.dfatal(
                 "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
@@ -437,7 +438,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT')
         exchange_currency_conditions = [
             f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
-            for exchange_id, currency_pair in parsed_symbols
+            for currency_pair, exchange_id in parsed_symbols
             if exchange_id and currency_pair
         ]
         if exchange_currency_conditions:

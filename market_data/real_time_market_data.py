@@ -258,7 +258,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
     """
 
     def __init__(
-            self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs
+        self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
         hdbg.dassert_eq(
@@ -279,22 +279,32 @@ class RealTimeMarketData2(mdabmada.MarketData):
         self._client.get_end_ts_for_symbol("binance::BTC_USDT")
 
     def _get_data(
-            self,
-            start_ts: Optional[pd.Timestamp],
-            end_ts: Optional[pd.Timestamp],
-            ts_col_name: str,
-            asset_ids: Optional[List[int]],
-            left_close: bool,
-            right_close: bool,
-            limit: Optional[int],
+        self,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        limit: Optional[int],
     ) -> pd.DataFrame:
         """
         Build a query and load SQL data in MarketData format.
         """
         if asset_ids:
-            [
+            full_symbols = [
                 self._client._full_symbol_mapping[asset_id]
                 for asset_id in asset_ids
             ]
-        data = self._client.read_data()
+        else:
+            full_symbols = None
+        data = self._client.read_data(
+            full_symbols,
+            start_ts,
+            end_ts,
+            ts_col_name=ts_col_name,
+            left_close=left_close,
+            right_close=right_close,
+            limit=limit,
+        )
         return data
