@@ -627,7 +627,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         expected_length = 2
         expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ['binance::ADA_USDT', 'binance::BTC_USDT']
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
         }
         # pylint: disable=line-too-long
         exp_df_as_str = r"""
@@ -636,7 +636,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
         shape=(2, 9)
                                      asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
-        end_ts                                                                                                                      
+        end_ts
         2000-01-01 09:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
         """
@@ -678,7 +678,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
         shape=(14, 9)
                                      asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
-        end_ts                                                                                                                      
+        end_ts
         2000-01-01 09:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
         2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
@@ -722,7 +722,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
         shape=(14, 9)
                                      asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
-        end_ts                                                                                                                      
+        end_ts
         2000-01-01 09:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
         2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
@@ -812,7 +812,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
         shape=(14, 9)
                                      asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
-        end_ts                                                                                                                      
+        end_ts
         2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
         2000-01-01 09:36:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
         2000-01-01 09:37:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       6      -1.0 2000-01-01 09:36:00-05:00
@@ -857,7 +857,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
         shape=(12, 9)
                                      asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
-        end_ts                                                                                                                      
+        end_ts
         2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
         2000-01-01 09:36:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
         2000-01-01 09:37:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       6      -1.0 2000-01-01 09:36:00-05:00
@@ -896,7 +896,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         expected_unique_values = None
         exp_srs_as_str = r"""
                       close
-        asset_id          
+        asset_id
         1467591036  100.29
         3303714233  100.29
         """
@@ -938,7 +938,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         expected_unique_values = None
         exp_srs_as_str = r"""
                       close
-        asset_id         
+        asset_id
         1467591036  100.0
         3303714233  100.0
         """
