@@ -905,15 +905,12 @@ class TestRealTimeSqlTalosClient1(
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
-        end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00", tz='UTC')
+        end_ts = pd.Timestamp("2022-03-24T16:23:00-00:00", tz='UTC')
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
         # Create the expected outcomes. Extracted timestamp should be equal to `end_ts` param.
-        # We need to extract one minute from `end_ts` here due to the unusual behavior of timestamps in Talos SQL.
-        # TODO(Max): Remove the row below once CMTask1567 - Fix timestamp behavior in Talos SQL is fixed.
-        expected_outcome = end_ts - timedelta(minutes=1)
-        expected_outcome = expected_outcome
+        expected_outcome = end_ts
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
