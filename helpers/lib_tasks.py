@@ -3244,7 +3244,7 @@ def _find_short_import(iterator: Iterator, short_import: str) -> _FindResults:
     """
     # E.g.,
     # `import dataflow.core.dag_runner as dtfcodarun`
-    regex = fr"import\s+(\S+)\s+as\s+({short_import})"
+    regex = rf"import\s+(\S+)\s+as\s+({short_import})"
     regex = re.compile(regex)
     #
     results: _FindResults = []
@@ -3268,9 +3268,9 @@ def _find_func_class_uses(iterator: Iterator, regex: str) -> _FindResults:
     regexs = []
     # E.g.,
     # `dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)`
-    regexs.append(fr"\s+(\w+)\.(\w*{regex})\(")
+    regexs.append(rf"\s+(\w+)\.(\w*{regex})\(")
     # `dag_builder: dtfcodabui.DagBuilder`
-    regexs.append(fr":\s*(\w+)\.(\w*{regex})")
+    regexs.append(rf":\s*(\w+)\.(\w*{regex})")
     #
     _LOG.debug("regexs=%s", str(regexs))
     regexs = [re.compile(regex_) for regex_ in regexs]
@@ -3743,26 +3743,26 @@ def _run_tests(
 
 @task
 def run_tests(
-        ctx,
-        test_lists,
-        abort_on_first_error=False,
-        stage="dev",
-        custom_marker="",
-        version="",
-        pytest_opts="",
-        skip_submodules=False,
-        coverage=False,
-        collect_only=False,
-        tee_to_file=False,
-        git_clean_=False,
-        **kwargs,
+    ctx,
+    test_lists,
+    abort_on_first_error=False,
+    stage="dev",
+    custom_marker="",
+    version="",
+    pytest_opts="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+    git_clean_=False,
+    **kwargs,
 ):
     """
     :param test_lists: comma separated list with test lists to run (e.g., `fast_test,slow_tests`)
     :param abort_on_first_error: stop after the first test list failing
     """
     results = []
-    for test_name in test_lists.split(','):
+    for test_name in test_lists.split(","):
         rc = _run_tests(
             ctx,
             stage,
