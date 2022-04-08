@@ -739,11 +739,13 @@ class TestDropNa(hunitest.TestCase):
             "dummy_value_3": [0, 0],
         }
         # Set the dtype of numeral columns to float to match the dataframe after NA dropping.
-        expected =  pd.DataFrame(data=expected).astype({"dummy_value_1": "float64"})
+        expected = pd.DataFrame(data=expected).astype(
+            {"dummy_value_1": "float64", "dummy_value_3": "object"}
+        )
         # Set the index of the rows that remained.
         expected = expected.set_index(pd.Index([1, 4]))
         # Check.
-        self.assert_equal(hpandas.convert_df_to_json_string(actual), hpandas.convert_df_to_json_string(expected))
+        hunitest.compare_df(actual, expected)
 
     def test_dropna2(self) -> None:
         """
@@ -765,7 +767,9 @@ class TestDropNa(hunitest.TestCase):
             "dummy_value_3": [0, 0, 0],
         }
         # Set the dtype of numeral columns to float to match the dataframe after NA dropping.
-        expected = pd.DataFrame(data=expected).astype({"dummy_value_1": "float64", "dummy_value_3": "float64"})
+        expected = pd.DataFrame(data=expected).astype(
+            {"dummy_value_1": "float64", "dummy_value_3": "float64"}
+        )
         # Set the index of the rows that remained.
         expected = expected.set_index(pd.Index([1, 3, 4]))
         # Check.
@@ -793,7 +797,9 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
             "dummy_value_3": [1.0, 1.0],
         }
         # Set the dtype of numeral columns to float to match the dataframe after NA dropping.
-        expected =  pd.DataFrame(data=expected).astype({"dummy_value_1": "float64"})
+        expected = pd.DataFrame(data=expected).astype(
+            {"dummy_value_1": "float64"}
+        )
         # Set the index of the rows that remained.
         expected = expected.set_index(pd.Index([1, 2]))
         # Check.
@@ -819,7 +825,9 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
             "dummy_value_3": [None, 1.0, 1.0],
         }
         # Set the dtype of numeral columns to float to match the dataframe after NA dropping.
-        expected = pd.DataFrame(data=expected).astype({"dummy_value_1": "float64"})
+        expected = pd.DataFrame(data=expected).astype(
+            {"dummy_value_1": "float64"}
+        )
         # Set the index of the rows that remained.
         expected = expected.set_index(pd.Index([0, 1, 2]))
         # Check.
@@ -843,7 +851,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
             "dummy_value_2": ["A", "B", "C"],
             "dummy_value_3": [1.0, 1.0, 1.0],
         }
-        expected =  pd.DataFrame(data=expected)
+        expected = pd.DataFrame(data=expected)
         # Check.
         hunitest.compare_df(actual, expected)
 
