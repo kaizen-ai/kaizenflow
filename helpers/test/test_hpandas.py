@@ -729,12 +729,18 @@ class TestDropNa(hunitest.TestCase):
             "dummy_value_3": [0, 0, pd.NA, 0, 0],
         }
         df = pd.DataFrame(data=test_data)
-        expected_str = r"""   dummy_value_1 dummy_value_2 dummy_value_3
-1            1.0             A             0
-4            0.0             D             0"""
+        expected = {
+            "dummy_value_1": [1, 0],
+            "dummy_value_2": ["A", "D"],
+            "dummy_value_3": [0, 0],
+        }
+        expected =  pd.DataFrame(data=expected)
+        # Set the index of the rows that remained.
+        expected = expected.set_index(pd.Index([1, 4]))
+        # Drop NA.
         actual = hpandas.dropna(df)
-        actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        # Check.
+        self.assert_dfs_close(actual, expected)
 
     def test_dropna2(self) -> None:
         """
@@ -746,13 +752,18 @@ class TestDropNa(hunitest.TestCase):
             "dummy_value_3": [0, 0, np.inf, 0, 0],
         }
         df = pd.DataFrame(data=test_data)
-        expected_str = r"""   dummy_value_1 dummy_value_2  dummy_value_3
-1            1.0             A            0.0
-3            2.0             C            0.0
-4            0.0             D            0.0"""
+        expected = {
+            "dummy_value_1": [1, 2, 0],
+            "dummy_value_2": ["A", "C", "D"],
+            "dummy_value_3": [0, 0, 0],
+        }
+        expected =  pd.DataFrame(data=expected)
+        # Set the index of the rows that remained.
+        expected = expected.set_index(pd.Index([1, 3, 4]))
+        # Drop NA.
         actual = hpandas.dropna(df, drop_infs=True)
-        actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        # Check.
+        self.assert_dfs_close(actual, expected)
 
 
 class TestDropAxisWithAllNans(hunitest.TestCase):
