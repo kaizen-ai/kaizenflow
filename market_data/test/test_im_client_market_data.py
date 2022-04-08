@@ -958,7 +958,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [1467591036]
         columns: List[str] = []
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
+        market_data = mdata.get_ImClientMarketData_example2(
             asset_ids, columns, column_remap
         )
         wall_clock_time = pd.Timestamp("2000-01-01T09:42:00-05:00")
