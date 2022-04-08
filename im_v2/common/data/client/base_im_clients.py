@@ -131,7 +131,6 @@ class ImClient(abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
-        # Extra arguments for building a query.
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -169,7 +168,6 @@ class ImClient(abc.ABC):
             start_ts,
             end_ts,
             full_symbol_col_name=full_symbol_col_name,
-            # Extra arguments for building a query.
             **kwargs,
         )
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
