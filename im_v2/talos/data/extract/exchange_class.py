@@ -109,6 +109,10 @@ class TalosExchange:
         #     "Currency pair is not present in exchange",
         # )
         # Workaround for including `end_timestamp` value.
+        # If proposing query for a complete minute (e.g., 10:07:00)
+        # Results will contain itemps with timestamp - 1min (i.e., 10:06:00).
+        # In order to get items including items with timestamp=`end_timestamp`
+        # `end_timestamp` should be shifted on 1 sec from complete minute.
         rounded_timestamp = end_timestamp.round(freq='T')
         if rounded_timestamp == end_timestamp:
             end_timestamp = end_timestamp + pd.Timedelta("1sec")
