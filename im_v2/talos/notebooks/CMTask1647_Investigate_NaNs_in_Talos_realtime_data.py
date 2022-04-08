@@ -16,10 +16,6 @@
 # ## Imports
 
 # %%
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
-
-# %%
 import logging
 
 import pandas as pd
@@ -59,7 +55,7 @@ def convert_to_the_format_for_analysis(df, suffix):
     df = df.dropna()
     df['diff_in_timestamps'] = df.timestamp - df.timestamp.shift(1)
     df = df.set_index("timestamp")
-    df = df[["diff_in_timestamps", "volume"]]
+    df = df[["diff_in_timestamps"]]
     df = df[df.index > "2022-03-17 00:00:00+00:00"]
     df = df[df["diff_in_timestamps"]!="0 days 00:01:00"]
     df = df.add_suffix(f"{suffix}")
@@ -117,27 +113,51 @@ display(ada_talos.head(3))
 # %%
 diff_ccxt = convert_to_the_format_for_analysis(ada_ccxt, "_ccxt")
 diff_talos = convert_to_the_format_for_analysis(ada_talos, "_talos")
-
-# %%
+# The unique DataFrame with the comparison of NaN data.
 df = pd.concat([diff_ccxt, diff_talos],axis=1)
+# Add a column that shows the difference between NaN sequences of vendors.
+df["diff"] = df["diff_in_timestamps_talos"]-df["diff_in_timestamps_ccxt"]
+df.head(3)
+
+# %% [markdown]
+# The description of the columns in the created DataFrame:
+# - `timestamp` - Shows the first piece of data that appears after NaN sequence.
+# - `diff_in_timestamps_ccxt` - Shows the time value of sequence of NaNs in CCXT data.
+# - `diff_in_timestamps_talos` - Same as above but for Talos.
+# - `diff` - Difference between NaN sequences of vendors.
 
 # %%
-df
+# Cases where both vendors have NaN sequences.
+df[(df.diff_in_timestamps_ccxt.notna())&df.diff_in_timestamps_talos.notna()]
+
+# %% [markdown]
+# An important notice is that the most NaN sequences are ending at the same time in both vendors that is an indicator of this data is absent on the data provider side.
 
 # %%
-df[(df.diff_in_timestamps_ccxt.isna())|df.diff_in_timestamps_talos.isna()]
-
-# %%
+# The data is presented in CCXT, but not in Talos.
 df[df.diff_in_timestamps_ccxt.isna()]
 
 # %%
+# The data is presented in Talos, but not in CCXT.
 df[df.diff_in_timestamps_talos.isna()]
 
 # %%
-df[(df.diff_in_timestamps_ccxt.notna())&df.diff_in_timestamps_talos.notna()]
+num_both_seq = df[(df.diff_in_timestamps_ccxt.notna())&df.diff_in_timestamps_talos.notna()].shape[0]
+num_unique_seq_ccxt = df[df.diff_in_timestamps_talos.isna()].shape[0]
+num_unique_seq_talos = df[df.diff_in_timestamps_ccxt.isna()].shape[0]
 
-# %%
-gg = df[(df.diff_in_timestamps_ccxt.notna())&df.diff_in_timestamps_talos.notna()]
-gg.volume_ccxt == gg.volume_talos
+total_time_talos = df["diff_in_timestamps_talos"].sum()
+total_time_ccxt = df["diff_in_timestamps_ccxt"].sum()
+diff_in_total_time = total_time_talos - total_time_ccxt
+mean_time_diff = df["diff"].mean()
+
+print(f"Number of NaN sequences that are the same in both vendors: {num_both_seq}")
+print(f"Number of NaN sequences that are presented in Talos, but not in CCXT: {num_unique_seq_ccxt}")
+print(f"Number of NaN sequences that are presented in CCXT, but not in Talos: {num_unique_seq_talos}")
+
+print(f"Total time of NaN sequences in Talos - {total_time_talos}")
+print(f"Total time of NaN sequences in CCXT - {total_time_ccxt}")
+print(f"Talos NaN sequences are greater than CCXT by the amount of {diff_in_total_time}")
+print(f"Mean difference of NaN sequence between two vendors (Talos has greater sequences) - {mean_time_diff}")
 
 # %%
