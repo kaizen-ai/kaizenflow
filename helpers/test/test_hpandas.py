@@ -723,47 +723,53 @@ class TestDropNa(hunitest.TestCase):
         """
         Test if all types of NaNs are dropped.
         """
+        # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, 1, 3, 2, 0],
             "dummy_value_2": ["0", "A", "B", None, "D"],
             "dummy_value_3": [0, 0, pd.NA, 0, 0],
         }
-        df = pd.DataFrame(data=test_data)
+        test_df = pd.DataFrame(data=test_data)
+        # Drop NA.
+        actual = hpandas.dropna(test_df, drop_infs=False)
+        # Prepare expected result.
         expected = {
             "dummy_value_1": [1, 0],
             "dummy_value_2": ["A", "D"],
             "dummy_value_3": [0, 0],
         }
-        expected =  pd.DataFrame(data=expected)
+        # Set the dtype of numeral columns to float to match the dataframe after NA dropping.
+        expected =  pd.DataFrame(data=expected).astype({"dummy_value_1": "float64"})
         # Set the index of the rows that remained.
         expected = expected.set_index(pd.Index([1, 4]))
-        # Drop NA.
-        actual = hpandas.dropna(df)
         # Check.
-        self.assert_dfs_close(actual, expected)
+        self.assert_equal(hpandas.convert_df_to_json_string(actual), hpandas.convert_df_to_json_string(expected))
 
     def test_dropna2(self) -> None:
         """
         Test if infs are dropped.
         """
+        # Prepare actual result.
         test_data = {
             "dummy_value_1": [-np.inf, 1, 3, 2, 0],
             "dummy_value_2": ["0", "A", "B", "C", "D"],
             "dummy_value_3": [0, 0, np.inf, 0, 0],
         }
-        df = pd.DataFrame(data=test_data)
+        test_df = pd.DataFrame(data=test_data)
+        # Drop NA.
+        actual = hpandas.dropna(test_df, drop_infs=True)
+        # Prepare expected result.
         expected = {
             "dummy_value_1": [1, 2, 0],
             "dummy_value_2": ["A", "C", "D"],
             "dummy_value_3": [0, 0, 0],
         }
-        expected =  pd.DataFrame(data=expected)
+        # Set the dtype of numeral columns to float to match the dataframe after NA dropping.
+        expected = pd.DataFrame(data=expected).astype({"dummy_value_1": "float64", "dummy_value_3": "float64"})
         # Set the index of the rows that remained.
         expected = expected.set_index(pd.Index([1, 3, 4]))
-        # Drop NA.
-        actual = hpandas.dropna(df, drop_infs=True)
         # Check.
-        self.assert_dfs_close(actual, expected)
+        hunitest.compare_df(actual, expected)
 
 
 class TestDropAxisWithAllNans(hunitest.TestCase):
@@ -771,69 +777,95 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         """
         Test if row full of nans is dropped.
         """
+        # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, 2, 3],
             "dummy_value_2": [pd.NA, "B", "C"],
             "dummy_value_3": [None, 1.0, 1.0],
         }
-        df = pd.DataFrame(data=test_data)
-        expected_str = """   dummy_value_1 dummy_value_2  dummy_value_3
-1            2.0             B            1.0
-2            3.0             C            1.0"""
-        actual = hpandas.drop_axis_with_all_nans(df, drop_rows=True)
-        actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        test_df = pd.DataFrame(data=test_data)
+        # Drop NA.
+        actual = hpandas.drop_axis_with_all_nans(test_df, drop_rows=True)
+        # Prepare expected result.
+        expected = {
+            "dummy_value_1": [2, 3],
+            "dummy_value_2": ["B", "C"],
+            "dummy_value_3": [1.0, 1.0],
+        }
+        # Set the dtype of numeral columns to float to match the dataframe after NA dropping.
+        expected =  pd.DataFrame(data=expected).astype({"dummy_value_1": "float64"})
+        # Set the index of the rows that remained.
+        expected = expected.set_index(pd.Index([1, 2]))
+        # Check.
+        hunitest.compare_df(actual, expected)
 
     def test_drop_rows2(self) -> None:
         """
         Test if non fully nan row is not dropped.
         """
+        # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, 2, 3],
             "dummy_value_2": ["A", "B", "C"],
             "dummy_value_3": [None, 1.0, 1.0],
         }
-        df = pd.DataFrame(data=test_data)
-        expected_str = """   dummy_value_1 dummy_value_2  dummy_value_3
-0            NaN             A            NaN
-1            2.0             B            1.0
-2            3.0             C            1.0"""
-        actual = hpandas.drop_axis_with_all_nans(df, drop_rows=True)
-        actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        test_df = pd.DataFrame(data=test_data)
+        # Drop NA.
+        actual = hpandas.drop_axis_with_all_nans(test_df, drop_rows=True)
+        # Prepare expected result.
+        expected = {
+            "dummy_value_1": [np.nan, 2, 3],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [None, 1.0, 1.0],
+        }
+        # Set the dtype of numeral columns to float to match the dataframe after NA dropping.
+        expected = pd.DataFrame(data=expected).astype({"dummy_value_1": "float64"})
+        # Set the index of the rows that remained.
+        expected = expected.set_index(pd.Index([0, 1, 2]))
+        # Check.
+        hunitest.compare_df(actual, expected)
 
     def test_drop_columns1(self) -> None:
         """
         Test if column full of nans is dropped.
         """
+        # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, pd.NA, None],
             "dummy_value_2": ["A", "B", "C"],
             "dummy_value_3": [1.0, 1.0, 1.0],
         }
-        df = pd.DataFrame(data=test_data)
-        expected_str = """  dummy_value_2  dummy_value_3
-0             A            1.0
-1             B            1.0
-2             C            1.0"""
-        actual = hpandas.drop_axis_with_all_nans(df, drop_columns=True)
-        actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        test_df = pd.DataFrame(data=test_data)
+        # Drop NA.
+        actual = hpandas.drop_axis_with_all_nans(test_df, drop_columns=True)
+        # Prepare expected result.
+        expected = {
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [1.0, 1.0, 1.0],
+        }
+        expected =  pd.DataFrame(data=expected)
+        # Check.
+        hunitest.compare_df(actual, expected)
 
     def test_drop_columns2(self) -> None:
         """
         Test if column that is not full of nans is not dropped.
         """
+        # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, 2, None],
             "dummy_value_2": ["A", "B", "C"],
             "dummy_value_3": [1.0, 1.0, 1.0],
         }
-        df = pd.DataFrame(data=test_data)
-        expected_str = """   dummy_value_1 dummy_value_2  dummy_value_3
-0            NaN             A            1.0
-1            2.0             B            1.0
-2            NaN             C            1.0"""
-        actual = hpandas.drop_axis_with_all_nans(df, drop_columns=True)
-        actual_str = hpandas.df_to_str(actual)
-        self.assert_equal(actual_str, expected_str, fuzzy_match=True)
+        test_df = pd.DataFrame(data=test_data)
+        # Drop NA.
+        actual = hpandas.drop_axis_with_all_nans(test_df, drop_columns=True)
+        # Prepare expected result.
+        expected = {
+            "dummy_value_1": [np.nan, 2, None],
+            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_3": [1.0, 1.0, 1.0],
+        }
+        expected = pd.DataFrame(data=expected)
+        # Check.
+        hunitest.compare_df(actual, expected)
