@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.7
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -69,18 +69,6 @@ def get_data_from_ccxt_client(start_time, end_time):
     return df
 
 
-def get_data_from_talos_client(start_time, end_time):
-    # Specify the params.
-    full_symbol_binance = "binance::BTC_USDT"
-    start_time = pd.to_datetime(start_time)
-    end_time = pd.to_datetime(end_time)
-    # Load the data.
-    df = talos_client._read_data_for_one_symbol(
-        full_symbol_binance, start_time, end_time
-    )
-    return df
-
-
 # %% [markdown]
 # # Talos DB
 
@@ -120,7 +108,7 @@ extension = "csv.gz"
 aws_profile_ccxt = "am"
 # Initialize CCXT client.
 ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-    vendor, root_dir, extension, aws_profile=aws_profile_ccxt
+    vendor, True, root_dir, extension, aws_profile=aws_profile_ccxt
 )
 
 # %% run_control={"marked": false}
@@ -151,32 +139,25 @@ display(data_ccxt_client.tail(3))
 
 # %%
 # Initialize Talos client.
-root_dir_talos = "s3://cryptokaizen-data/historical"
-aws_profile_talos = "ck"
-talos_client = imvtdctacl.TalosParquetByTileClient(
-    root_dir_talos, aws_profile=aws_profile_talos
+import im_v2.im_lib_tasks as imvimlita
+import helpers.hsql as hsql
+
+env_file = imvimlita.get_db_env_path("dev")
+connection_params = hsql.get_connection_info_from_env_file(env_file)
+connection = hsql.get_connection(*connection_params)
+table_name = "talos_ohlcv"
+talos_client = imvtdctacl.RealTimeSqlTalosClient(
+    True, connection, table_name
 )
-
-
-# %%
-def get_data_from_talos_client(start_time, end_time):
-    # Specify the params.
-    full_symbol_binance = "binance::BTC_USDT"
-    start_time = pd.to_datetime(start_time)
-    end_time = pd.to_datetime(end_time)
-    # Load the data.
-    df = talos_client._read_data_for_one_symbol(
-        full_symbol_binance, start_time, end_time
-    )
-    return df
-
-
-# %%
-data_talos_client = get_data_from_talos_client(
-    "2022-01-01 10:00:00", "2022-01-01 10:07:45"
+full_symbols = ["binance::BTC_USDT"]
+df = talos_client.read_data(
+     full_symbols,
+     start_ts=pd.Timestamp('2022-03-16 22:47:50+0000'),
+     end_ts=pd.Timestamp('2022-03-16 22:54:00+0000'),
 )
-display(data_talos_client.head(3))
-display(data_talos_client.tail(3))
+display(df.head(3))
+display(df.tail(3))
+
 
 # %% [markdown]
 # ### Talos client summary
