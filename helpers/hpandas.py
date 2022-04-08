@@ -385,6 +385,11 @@ def dropna(
 ) -> pd.DataFrame:
     """
     Wrapper around pd.dropna() reporting information about the removed rows.
+
+    :param df: dataframe to process
+    :param drop_infs: if +/- np.inf should be considered as nans
+    :param report_stats: is procesing stats should be reported
+    :return: dataframe with nans dropped
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     num_rows_before = df.shape[0]
@@ -413,11 +418,12 @@ def drop_axis_with_all_nans(
     The operation is not performed in place and the resulting df is returned.
     Assume that the index is timestamps.
 
-    :param df: data frame to process
+    :param df: dataframe to process
     :param drop_rows: remove rows with only nans
     :param drop_columns: remove columns with only nans
     :param drop_infs: remove also +/- np.inf
     :param report_stats: report the stats of the operations
+    :return: dataframe with specific nan axis dropped
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     if drop_infs:

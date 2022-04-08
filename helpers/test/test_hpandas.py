@@ -738,7 +738,7 @@ class TestDropNa(hunitest.TestCase):
 
     def test_dropna2(self) -> None:
         """
-        Test is infs are dropped.
+        Test if infs are dropped.
         """
         test_data = {
             "dummy_value_1": [-np.inf, 1, 3, 2, 0],
@@ -775,7 +775,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
 
     def test_drop_rows2(self) -> None:
         """
-        Test if non fully nan row is non dropped.
+        Test if non fully nan row is not dropped.
         """
         test_data = {
             "dummy_value_1": [np.nan, 2, 3],
