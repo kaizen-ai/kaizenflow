@@ -106,8 +106,8 @@ def dassert_path_exists(
     :param path: S3 or local path
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    if aws_profile is not None:
-        dassert_is_s3_path(path)
+    dassert_is_valid_aws_profile(path, aws_profile)
+    if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
         hdbg.dassert(s3fs_.exists(path), "S3 path '%s' doesn't exist!" % path)
     else:
@@ -124,8 +124,8 @@ def dassert_path_not_exists(
     :param path: S3 or local path
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    if aws_profile is not None:
-        dassert_is_s3_path(path)
+    dassert_is_valid_aws_profile(path, aws_profile)
+    if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
         hdbg.dassert(not s3fs_.exists(path), "S3 path '%s' already exist!" % path)
     else:
@@ -169,11 +169,12 @@ def listdir(
     """
     Counterpart to `hio.listdir` with S3 support.
 
-    :param dir_name: a S3 or local path
+    :param dir_name: S3 or local path
     :param aws_profile: AWS profile to use if and only if using an S3 path,
         otherwise `None` for local path
     """
-    if aws_profile is not None:
+    dassert_is_valid_aws_profile(dir_name, aws_profile)
+    if is_s3_path(dir_name):
         s3fs_ = get_s3fs(aws_profile)
         dassert_path_exists(dir_name, s3fs_)
         # Ensure that there are no multiple stars in pattern.
@@ -249,7 +250,8 @@ def to_file(
     If and only if `aws_profile` is specified, S3 is used instead of
     local filesystem.
     """
-    if aws_profile is not None:
+    dassert_is_valid_aws_profile(file_name, aws_profile)
+    if is_s3_path(file_name):
         # Ensure that `bytes` is used.
         if mode is not None and "b" not in mode:
             raise ValueError("S3 only allows binary mode!")
@@ -296,7 +298,8 @@ def from_file(
     If and only if `aws_profile` is specified, S3 is used instead of
     local filesystem.
     """
-    if aws_profile is not None:
+    dassert_is_valid_aws_profile(file_name, aws_profile)
+    if is_s3_path(file_name):
         if encoding:
             raise ValueError("Encoding is not supported when reading from S3!")
         # Inspect file name and path.
@@ -321,7 +324,7 @@ def get_local_or_s3_stream(
     file_name: str, **kwargs: Any
 ) -> Tuple[Union[s3fs.core.S3FileSystem, str], Any]:
     """
-    Gets S3 stream for desired file or simply returns file name.
+    Get S3 stream for desired file or simply returns file name.
 
     :param file_name: file name or full path to file
     """
