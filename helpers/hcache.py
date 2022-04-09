@@ -778,7 +778,7 @@ class _Cached:
         return memorized_result
 
     def _get_identifiers(
-        self, cache_type: str, *args: Any, **kwargs: Dict[str, Any]
+        self, cache_type: str, *args: Any, **kwargs: Any
     ) -> Tuple[str, str]:
         """
         Get digests for current function and arguments to be used in cache.
