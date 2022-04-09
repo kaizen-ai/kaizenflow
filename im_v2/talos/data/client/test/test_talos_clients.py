@@ -281,6 +281,48 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    def test_read_data8(self) -> None:
+        resample_1min = True
+        talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2022-01-01T00:01:00-00:00")
+        end_ts = pd.Timestamp("2022-01-01T00:05:00-00:00")
+        #
+        expected_length = 10
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2022-01-01 00:01:00+00:00, 2022-01-01 00:05:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(10, 6)
+                                         full_symbol            open            high             low           close           volume
+        timestamp                                                                                                                    
+        2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
+        2022-01-01 00:01:00+00:00  binance::BTC_USDT  46250.01000000  46344.23000000  46234.39000000  46312.76000000      42.38106000
+        2022-01-01 00:02:00+00:00  binance::ADA_USDT      1.31200000      1.31800000      1.31100000      1.31700000  708964.20000000
+        ...
+        2022-01-01 00:04:00+00:00  binance::BTC_USDT  46331.07000000  46336.10000000  46300.00000000  46321.34000000     20.96029000
+        2022-01-01 00:05:00+00:00  binance::ADA_USDT      1.31500000      1.31800000      1.31300000      1.31800000  75423.50000000
+        2022-01-01 00:05:00+00:00  binance::BTC_USDT  46321.34000000  46443.56000000  46280.00000000  46436.03000000     35.86682000
+                """
+        # pylint: enable=line-too-long
+        self._test_read_data5(
+            talos_client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
