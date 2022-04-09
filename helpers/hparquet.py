@@ -61,8 +61,8 @@ def from_parquet(
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
-    if aws_profile is not None:
-        hdbg.dassert(hs3.is_s3_path(file_name))
+    hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
+    if hs3.is_s3_path(file_name):
         filesystem = get_pyarrow_s3fs(aws_profile)
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
@@ -148,10 +148,10 @@ def to_parquet(
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(file_name, str)
-    if aws_profile is not None:
-        hdbg.dassert(hs3.is_s3_path(file_name))
+    hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
+    if hs3.is_s3_path(file_name):
         filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_path_exists(file_name, filesystem)
+        hs3.dassert_path_not_exists(file_name, filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
