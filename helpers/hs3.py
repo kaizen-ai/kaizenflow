@@ -132,6 +132,7 @@ def dassert_path_not_exists(
         hdbg.dassert_path_not_exists(path)
 
 
+# TODO(gp): Consider using `s3fs.split_path`.
 def split_path(s3_path: str) -> Tuple[str, str]:
     """
     Separate an S3 path in the bucket and the rest of the path as absolute from
@@ -215,6 +216,7 @@ def listdir(
 
 def du(
     path: str,
+    *,
     human_format: bool = False,
     aws_profile: Optional[AwsProfile] = None,
 ) -> Union[int, str]:
@@ -264,7 +266,7 @@ def to_file(
         hio.dassert_is_valid_file_name(file_name)
         s3fs_ = get_s3fs(aws_profile)
         mode = "wb" if mode is None else mode
-        # Open s3 file.
+        # Open S3 file. `rb` is the default mode for S3.
         with s3fs_.open(file_name, mode) as s3_file:
             if file_name.endswith((".gz", ".gzip")):
                 # Open and decompress gzipped file.

@@ -92,7 +92,7 @@ def from_parquet(
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
     # Report stats about the Parquet file size.
     if report_stats:
-        file_size = hs3.du(file_name, human_format=True)
+        file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
         _LOG.log(
             log_level,
             "Loaded '%s' (size=%s, time=%.1fs)",
@@ -172,7 +172,7 @@ def to_parquet(
         pq.write_table(table, file_name, filesystem=filesystem)
     # Report stats about the Parquet file size.
     if report_stats:
-        file_size = hs3.du(file_name, human_format=True)
+        file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
         _LOG.log(
             log_level,
             "Saved '%s' (size=%s, time=%.1fs)",
