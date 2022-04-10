@@ -60,6 +60,8 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     """
     Build a DAG runner from a config.
     """
+    # TODO(gp): In the previous code asset_ids was coming from:
+    #  asset_ids = dtfuniver.get_universe(universe_str)
     asset_ids = [3303714233, 1467591036]
     columns: List[str] = []
     columns_remap = None
@@ -69,6 +71,8 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     # Create HistoricalDataSource.
     stage = "read_data"
     asset_id_col = "asset_id"
+    # TODO(gp): This in the original code was
+    #  ts_col_name = "timestamp_db"
     ts_col_name = "end_ts"
     multiindex_output = True
     # col_names_to_remove = ["start_datetime", "timestamp_db"]
@@ -84,7 +88,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     # Build the DAG.
     dag_builder = config["meta", "dag_builder"]
     dag = dag_builder.get_dag(config["DAG"])
-    dag.set_debug_mode("df_as_csv", False, "crypto_forever")
+    # dag.set_debug_mode("df_as_csv", False, "crypto_forever")
     if False:
         dag.force_freeing_nodes = True
     # Add the data source node.
@@ -102,6 +106,8 @@ def build_tile_configs(
     """
     Build a tile configs for Example1 pipeline.
     """
+    # Apply specific config.
+    # config = _apply_config(config, trading_period_str)
     #
     start_timestamp = pd.Timestamp(start_timestamp)
     end_timestamp = pd.Timestamp(end_timestamp)
