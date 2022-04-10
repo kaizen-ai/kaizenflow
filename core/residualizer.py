@@ -73,7 +73,7 @@ class FactorComputer:
     def __init__(self) -> None:
         pass
 
-    def __call__(self, obj: pd.DataFrame, *args: int, **kwargs: Any) -> pd.Series:
+    def __call__(self, obj: pd.DataFrame, *args: Any, **kwargs: Any) -> pd.Series:
         if isinstance(obj, pd.Series):
             df = pd.DataFrame(obj)
         else:
