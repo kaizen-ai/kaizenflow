@@ -4,8 +4,11 @@
 Run the optimizer using an input file and save the results to an output file.
 
 E.g., to run optimizer using `input.pkl` as an input file and to save
-the output to `output.pkl` do: > optimizer_stub.py --input_file
-input.pkl --output_file output.pkl
+the output to `output.pkl` do:
+
+```
+> optimizer_stub.py --input_file input.pkl --output_file output.pkl
+```
 """
 
 import argparse
