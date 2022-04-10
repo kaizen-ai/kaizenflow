@@ -187,9 +187,10 @@ def call_optimizer(
         # TODO(Grisha): call `opt_docker_cmd` directly.
         hsystem.system(optimizer_cmd)
     elif mode == "service":
-        # Import here otherwise tests for `remote_call` are skipped due to 
-        # `cvxpy` dependency. 
+        # Import here otherwise tests for `remote_call` are skipped due to
+        # `cvxpy` dependency.
         import optimizer.single_period_optimization as osipeopt
+
         while True:
             while not os.path.exists(input_file):
                 time.sleep(0.1)
