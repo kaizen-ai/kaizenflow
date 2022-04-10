@@ -18,7 +18,6 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
-import optimizer.single_period_optimization as osipeopt
 
 _LOG = logging.getLogger(__name__)
 
@@ -188,6 +187,9 @@ def call_optimizer(
         # TODO(Grisha): call `opt_docker_cmd` directly.
         hsystem.system(optimizer_cmd)
     elif mode == "service":
+        # Import here otherwise tests for `remote_call` are skipped due to 
+        # `cvxpy` dependency. 
+        import optimizer.single_period_optimization as osipeopt
         while True:
             while not os.path.exists(input_file):
                 time.sleep(0.1)
