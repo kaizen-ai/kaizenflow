@@ -136,14 +136,16 @@ def call_optimizer(
     tmp_dir: str = "tmp.optimizer_stub",
 ) -> pd.DataFrame:
     """
-    Run the optimizer through Docker.
+    Call the optimizer.
 
     The flow is:
        - Save the input data in a temp dir
-       - Start an `opt` Docker container
        - Run the optimizer
        - Save the optimizer output to a temp dir
 
+    :param mode: the optimizer run mode
+        - "remote_call": call the optimizer through Docker
+        - "service": call the optimizer directly
     :param tmp_dir: local dir to use to exchange parameters with the "remote"
         optimizer
     """

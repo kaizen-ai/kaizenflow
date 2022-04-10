@@ -34,6 +34,10 @@ _LOG = logging.getLogger(__name__)
 
 def run_optimizer(input_file: str, output_file:str) -> None:
     """
+    Run the optimizer using the input data and save the results.
+
+    :param input_file: a file that contains inputs for the optimizer
+    :param output_file: a file with the optimizer results
     """
     # Read the input data.
     input_obj = hpickle.from_pickle(input_file)
