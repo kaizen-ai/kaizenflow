@@ -6,6 +6,7 @@ import oms.call_optimizer as ocalopti
 
 import logging
 import os
+import time
 from typing import List
 
 import invoke
@@ -17,6 +18,7 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
+import optimizer.single_period_optimization as osipeopt
 
 _LOG = logging.getLogger(__name__)
 
@@ -125,10 +127,26 @@ def compute_target_positions_in_cash(
     df["target_notional_trade"] = target_trades
     return df
 
+def _run_optimizer(input_file, output_file):
+    # Read the input data.
+    input_obj = hpickle.from_pickle(input_file)
+    hdbg.dassert_isinstance(input_obj, dict)
+    hdbg.dassert_eq(len(input_obj), 2)
+    hdbg.dassert_in("config", input_obj.keys())
+    config = input_obj["config"]
+    hdbg.dassert_in("df", input_obj.keys())
+    df = input_obj["df"]
+    # Run the optimizer.
+    spo = osipeopt.SinglePeriodOptimizer(config, df)
+    output_df = spo.optimize()
+    # Save the output.
+    hpickle.to_pickle(output_df, output_file)
+
 
 def run_optimizer(
     config: cconfig.Config,
     df: pd.DataFrame,
+    mode: str,
     *,
     tmp_dir: str = "tmp.optimizer_stub",
 ) -> pd.DataFrame:
@@ -144,42 +162,49 @@ def run_optimizer(
     :param tmp_dir: local dir to use to exchange parameters with the "remote"
         optimizer
     """
-    # Login in the Docker on AWS to pull the `opt` image.
-    # TODO(Grisha): Move this inside the `opt_docker_cmd`.
-    # TODO(Grisha): maybe move `docker_login` to the entrypoint?
-    # To avoid to call init_logger overwriting the call to it from `main`.
-    import helpers.lib_tasks as hlibtask
-
-    ctx = invoke.context.Context()
-    hlibtask.docker_login(ctx)
     # Serialize the inputs in `tmp_dir`.
     hio.create_dir(tmp_dir, incremental=True)
     input_obj = {"config": config, "df": df}
     input_file = os.path.join(tmp_dir, "input.pkl")
     hpickle.to_pickle(input_obj, input_file)
-    # Get path to the `optimizer_stub.py`.
-    root_dir = hgit.get_client_root(False)
-    optimizer_stub_file_path = os.path.join(
-        root_dir, "optimizer/optimizer_stub.py"
-    )
-    hdbg.dassert_file_exists(optimizer_stub_file_path)
-    # Build the command to be executed in `opt` container.
-    docker_cmd_: List[str] = []
-    docker_cmd_.append(optimizer_stub_file_path)
-    docker_cmd_.append(f"--input_file {input_file}")
+    #
     output_file = os.path.join(tmp_dir, "output.pkl")
-    docker_cmd_.append(f"--output_file {output_file}")
-    docker_cmd_.append("-v INFO")
-    docker_cmd = " ".join(docker_cmd_)
-    # Call `optimizer_stub` through `opt` Docker container.
-    optimizer_cmd_: List[str] = []
-    # `opt` invokes can only be run from `optimizer` dir.
-    optimizer_cmd_.append("cd optimizer &&")
-    optimizer_cmd_.append(f"invoke opt_docker_cmd --cmd '{docker_cmd}'")
-    optimizer_cmd = " ".join(optimizer_cmd_)
-    # TODO(Grisha): call `opt_docker_cmd` directly.
-    hsystem.system(optimizer_cmd)
+    if mode == "remote_call":
+        # Login in the Docker on AWS to pull the `opt` image.
+        # TODO(Grisha): Move this inside the `opt_docker_cmd`.
+        # TODO(Grisha): maybe move `docker_login` to the entrypoint?
+        # To avoid to call init_logger overwriting the call to it from `main`.
+        import helpers.lib_tasks as hlibtask
+
+        ctx = invoke.context.Context()
+        hlibtask.docker_login(ctx)
+        # Get path to the `optimizer_stub.py`.
+        root_dir = hgit.get_client_root(False)
+        optimizer_stub_file_path = os.path.join(
+            root_dir, "optimizer/optimizer_stub.py"
+        )
+        hdbg.dassert_file_exists(optimizer_stub_file_path)
+        # Build the command to be executed in `opt` container.
+        docker_cmd_: List[str] = []
+        docker_cmd_.append(optimizer_stub_file_path)
+        docker_cmd_.append(f"--input_file {input_file}")
+        output_file = os.path.join(tmp_dir, "output.pkl")
+        docker_cmd_.append(f"--output_file {output_file}")
+        docker_cmd_.append("-v INFO")
+        docker_cmd = " ".join(docker_cmd_)
+        # Call `optimizer_stub` through `opt` Docker container.
+        optimizer_cmd_: List[str] = []
+        # `opt` invokes can only be run from `optimizer` dir.
+        optimizer_cmd_.append("cd optimizer &&")
+        optimizer_cmd_.append(f"invoke opt_docker_cmd --cmd '{docker_cmd}'")
+        optimizer_cmd = " ".join(optimizer_cmd_)
+        # TODO(Grisha): call `opt_docker_cmd` directly.
+        hsystem.system(optimizer_cmd)
+    elif mode == "service":
+        while True:
+            while not os.path.exists(input_file):
+                time.sleep(0.1)
+            _run_optimizer(input_file, output_file)
     # Read the output from `tmp_dir`.
-    output_file = os.path.join(tmp_dir, "output.pkl")
     output_df = hpickle.from_pickle(output_file)
     return output_df
