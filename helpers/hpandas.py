@@ -388,7 +388,7 @@ def dropna(
 
     :param df: dataframe to process
     :param drop_infs: if +/- np.inf should be considered as nans
-    :param report_stats: is procesing stats should be reported
+    :param report_stats: if processing stats should be reported
     :return: dataframe with nans dropped
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
