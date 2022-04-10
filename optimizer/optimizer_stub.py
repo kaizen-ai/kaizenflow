@@ -16,7 +16,6 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.hpickle as hpickle
 import optimizer.single_period_optimization as osipeopt
 
 _LOG = logging.getLogger(__name__)
@@ -47,7 +46,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    
+    osipeopt.run_optimizer(args.input_file, args.output_file)
 
 
 if __name__ == "__main__":

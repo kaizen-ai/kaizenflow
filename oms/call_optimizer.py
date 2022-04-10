@@ -127,23 +127,8 @@ def compute_target_positions_in_cash(
     df["target_notional_trade"] = target_trades
     return df
 
-def _run_optimizer(input_file, output_file):
-    # Read the input data.
-    input_obj = hpickle.from_pickle(input_file)
-    hdbg.dassert_isinstance(input_obj, dict)
-    hdbg.dassert_eq(len(input_obj), 2)
-    hdbg.dassert_in("config", input_obj.keys())
-    config = input_obj["config"]
-    hdbg.dassert_in("df", input_obj.keys())
-    df = input_obj["df"]
-    # Run the optimizer.
-    spo = osipeopt.SinglePeriodOptimizer(config, df)
-    output_df = spo.optimize()
-    # Save the output.
-    hpickle.to_pickle(output_df, output_file)
 
-
-def run_optimizer(
+def call_optimizer(
     config: cconfig.Config,
     df: pd.DataFrame,
     mode: str,
@@ -204,7 +189,7 @@ def run_optimizer(
         while True:
             while not os.path.exists(input_file):
                 time.sleep(0.1)
-            _run_optimizer(input_file, output_file)
+            osipeopt.run_optimizer(input_file, output_file)
     # Read the output from `tmp_dir`.
     output_df = hpickle.from_pickle(output_file)
     return output_df

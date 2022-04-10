@@ -11,7 +11,7 @@ import oms.call_optimizer as ocalopti
 _LOG = logging.getLogger(__name__)
 
 
-#@pytest.mark.skip("Cannot update the goldens, see CmTask1357.")
+@pytest.mark.skip("Cannot update the goldens, see CmTask1357.")
 class TestOptimize(hunitest.TestCase):
     def test_only_gmv_constraint(self) -> None:
         """
@@ -60,7 +60,7 @@ class TestOptimize(hunitest.TestCase):
         Run the optimizer and covert output to string.
         """
         mode = "remote_call"
-        actual = ocalopti.run_optimizer(config, df, mode, tmp_dir=tmp_dir)
+        actual = ocalopti.call_optimizer(config, df, mode, tmp_dir=tmp_dir)
         precision = 5
         actual_str = hpandas.df_to_str(actual, precision=precision)
         return actual_str

@@ -13,6 +13,7 @@ import pandas as pd
 import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hpickle as hpickle
 import optimizer.base as opbase
 import optimizer.hard_constraints as oharcons
 import optimizer.soft_constraints as osofcons
@@ -29,6 +30,24 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 # Single period optimization with costs and constraints
 # #############################################################################
+
+
+def run_optimizer(input_file: str, output_file:str) -> None:
+    """
+    """
+    # Read the input data.
+    input_obj = hpickle.from_pickle(input_file)
+    hdbg.dassert_isinstance(input_obj, dict)
+    hdbg.dassert_eq(len(input_obj), 2)
+    hdbg.dassert_in("config", input_obj.keys())
+    config = input_obj["config"]
+    hdbg.dassert_in("df", input_obj.keys())
+    df = input_obj["df"]
+    # Run the optimizer.
+    spo = SinglePeriodOptimizer(config, df)
+    output_df = spo.optimize()
+    # Save the output.
+    hpickle.to_pickle(output_df, output_file)
 
 
 class SinglePeriodOptimizer:
