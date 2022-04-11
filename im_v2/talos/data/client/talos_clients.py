@@ -79,8 +79,13 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         """
         See description in the parent class.
         """
-        # TODO(Nina): Handle the empty universe properly CMTask #1633.
-        universe = ["binance::ADA_USDT", "binance::BTC_USDT", "coinbase::ADA_USDT", "coinbase::BTC_USDT"]
+        # TODO(Nina): CMTask #1658 Handle the empty universe properly.
+        universe = [
+            "binance::ADA_USDT",
+            "binance::BTC_USDT",
+            "coinbase::ADA_USDT",
+            "coinbase::BTC_USDT",
+        ]
         return universe
 
     @staticmethod

@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import Dict, List, Optional
 
 import pandas as pd
@@ -319,9 +318,9 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 @pytest.mark.skip(reason="CMTask1646")
 class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
     """
-        For all the test methods see description of corresponding private method in
-        the parent class.
-        """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
 
     @staticmethod
     def get_expected_column_names() -> List[str]:
@@ -359,7 +358,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(10, 6)
                                          full_symbol            open            high             low           close           volume
-        timestamp                                                                                                                    
+        timestamp
         2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
         2022-01-01 00:01:00+00:00  binance::BTC_USDT  46250.01000000  46344.23000000  46234.39000000  46312.76000000      42.38106000
         2022-01-01 00:02:00+00:00  binance::ADA_USDT      1.31200000      1.31800000      1.31100000      1.31700000  708964.20000000
@@ -380,6 +379,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+
 # #############################################################################
 # RealTimeSqlTalosClient
 # #############################################################################
@@ -388,7 +388,6 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
 class TestRealTimeSqlTalosClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
-
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
@@ -950,7 +949,7 @@ class TestRealTimeSqlTalosClient1(
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
-        start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00", tz='UTC')
+        start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00", tz="UTC")
         end_ts = None
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
@@ -975,7 +974,7 @@ class TestRealTimeSqlTalosClient1(
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
-        end_ts = pd.Timestamp("2022-03-24T16:23:00-00:00", tz='UTC')
+        end_ts = pd.Timestamp("2022-03-24T16:23:00-00:00", tz="UTC")
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
@@ -998,7 +997,7 @@ class TestRealTimeSqlTalosClient1(
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
-        start_ts = pd.Timestamp("2022-03-24T16:21:37-00:00", tz='UTC')
+        start_ts = pd.Timestamp("2022-03-24T16:21:37-00:00", tz="UTC")
         end_ts = None
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
@@ -1023,7 +1022,7 @@ class TestRealTimeSqlTalosClient1(
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
-        end_ts = pd.Timestamp("2022-03-24T16:23:28-00:00", tz='UTC')
+        end_ts = pd.Timestamp("2022-03-24T16:23:28-00:00", tz="UTC")
         data = im_client._read_data(full_symbols, start_ts, end_ts)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
