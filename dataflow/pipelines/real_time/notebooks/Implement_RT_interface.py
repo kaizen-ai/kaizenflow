@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.13.7
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -42,8 +42,8 @@ _LOG = logging.getLogger(__name__)
 # %% [markdown]
 # ## Build pipeline
 #
-
-import dataflow_amp.returns.pipeline as dtfamrepip
+#
+# import dataflow_amp.returns.pipeline as dtfamrepip
 
 # %%
 import core.config as cconfig
