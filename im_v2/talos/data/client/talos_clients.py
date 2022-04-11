@@ -44,15 +44,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     - E.g., for all the 3 clients:
         - [10:00:00, 10:00:36] retrieves data for [10:00:00, 10:00:00]
         - [10:07:00, 10:08:24] retrieves data for [10:07:00, 10:08:00]
-
-    Note that for Talos DB if `b` is already a round minute, it's rounded down
-    to the previous minute.
-    - E.g., [10:06:00, 10:08:00]
-        - For Talos DB client, retrieved data is in [10:06:00, 10:07:00]
-        - For CCXT Client and Talos Client the data is in [10:06:00, 10:08:00]
-
-    # TODO(gp): Change the Talos DB implementation to uniform the semantics,
-    # since `MarketData` will not be happy with rewinding one minute.
+        - [10:06:00, 10:08:00] retrieves data for [10:06:00, 10:08:00]
     """
 
     def __init__(
