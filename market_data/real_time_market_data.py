@@ -13,6 +13,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
+import im_v2.talos.data.client.talos_clients as imvtdctacl
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
@@ -38,8 +39,8 @@ class RealTimeMarketData(mdabmada.MarketData):
         where_clause: Optional[str],
         valid_id: Any,
         # Params from `MarketData`.
-        *args: List[Any],
-        **kwargs: Dict[str, Any],
+        *args: Any,
+        **kwargs: Any,
     ):
         """
         Constructor.
@@ -56,6 +57,18 @@ class RealTimeMarketData(mdabmada.MarketData):
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return True
+
+    @staticmethod
+    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+        """
+        Convert a timestamp into an SQL string to query the DB.
+        """
+        hdateti.dassert_has_tz(dt)
+        # Convert to UTC, if needed.
+        if dt.tzinfo != hdateti.get_UTC_tz().zone:
+            dt = dt.tz_convert(hdateti.get_UTC_tz())
+        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return ret
 
     def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -236,14 +249,81 @@ class RealTimeMarketData(mdabmada.MarketData):
         query = " ".join(query)
         return query
 
-    @staticmethod
-    def _to_sql_datetime_string(dt: pd.Timestamp) -> str:
+
+class RealTimeMarketData2(mdabmada.MarketData):
+    """
+    Interface for real-time market data accessed through Talos API.
+
+    Note: RealTimeSqlTalosClient is passed at the initialization.
+    """
+
+    def __init__(
+        self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        hdbg.dassert_eq(
+            client._mode,
+            "market_data",
+            msg="Requires a RealTimeSqlTalosClient in 'market_data' mode.",
+        )
+        self._client = client
+
+    # TODO(Danya): A copy of the Talos client method.
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        return self._client.should_be_online()
+
+    #
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        # Note: Getting the end time for one symbol as a placeholder.
+        # TODO(Danya): CMTask1622.
+        return self._client.get_end_ts_for_symbol("binance::BTC_USDT")
+
+    def _get_data(
+        self,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        limit: Optional[int],
+    ) -> pd.DataFrame:
         """
-        Convert a timestamp into an SQL string to query the DB.
+        Build a query and load SQL data in MarketData format.
         """
-        hdateti.dassert_has_tz(dt)
-        # Convert to UTC, if needed.
-        if dt.tzinfo != hdateti.get_UTC_tz().zone:
-            dt = dt.tz_convert(hdateti.get_UTC_tz())
-        ret: str = dt.strftime("%Y-%m-%d %H:%M:%S")
-        return ret
+        # Convert asset ids to full symbols for passing to the DB.
+        if asset_ids:
+            full_symbols = [
+                self._client.numerical_id_mapping[asset_id]
+                for asset_id in asset_ids
+            ]
+        else:
+            full_symbols = None
+        data = self._client.read_data(
+            full_symbols,
+            start_ts,
+            end_ts,
+            ts_col_name=ts_col_name,
+            left_close=left_close,
+            right_close=right_close,
+            limit=limit,
+        )
+        # Rename the index to fit the MarketData format.
+        # TODO(Danya): The client requires the data to have a `timestamp` index,
+        #  while AbstractMarketData requires to have integer index.
+        #  This conversion is redundant, but necessary to combine
+        #  the client and AbstractMarketData.
+        data.index.name = "end_timestamp"
+        data = data.reset_index()
+        market_data_columns = [
+            "end_timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "start_timestamp",
+            "asset_id",
+        ]
+        data = data[market_data_columns]
+        return data

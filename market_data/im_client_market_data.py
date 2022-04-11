@@ -1,7 +1,7 @@
 """
 Import as:
 
-import market_data.market_data_im_client as mdmdimcl
+import market_data.im_client_market_data as mdimcmada
 """
 
 import logging
@@ -117,9 +117,8 @@ class ImClientMarketData(mdabmada.MarketData):
         _LOG.debug("full_symbol_col_name=%s", full_symbol_col_name)
         _LOG.debug("market_data.columns=%s", sorted(list(market_data.columns)))
         hdbg.dassert_in(full_symbol_col_name, market_data.columns)
-
         transformed_asset_ids = self._im_client.get_asset_ids_from_full_symbols(
-            market_data[full_symbol_col_name]
+            market_data[full_symbol_col_name].tolist()
         )
         if self._asset_id_col in market_data.columns:
             _LOG.debug(

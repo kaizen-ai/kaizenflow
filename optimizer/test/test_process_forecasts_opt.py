@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 import core.config as cconfig
+import core.finance as cofinanc
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -15,12 +16,36 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms
 
-
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("CmTask #1580.")
 class TestDataFrameProcessForecasts1(hunitest.TestCase):
+
+    # TODO(gp): This can become an _example.
+    @staticmethod
+    def get_process_forecasts_config() -> cconfig.Config:
+        dict_ = {
+            "order_config": {
+                "order_type": "price@twap",
+                "order_duration": 5,
+            },
+            "optimizer_config": {
+                "backend": "batch_optimizer",
+                "dollar_neutrality_penalty": 0.1,
+                "volatility_penalty": 0.5,
+                "turnover_penalty": 0.0,
+                "target_gmv": 1e5,
+                "target_gmv_upper_bound_multiple": 1.0,
+            },
+            "execution_mode": "batch",
+            "ath_start_time": datetime.time(9, 30),
+            "trading_start_time": datetime.time(9, 35),
+            "ath_end_time": datetime.time(16, 00),
+            "trading_end_time": datetime.time(15, 55),
+        }
+        config = cconfig.get_config_from_nested_dict(dict_)
+        return config
+
     @pytest.mark.skip("Generate manually files used by other tests")
     def test_generate_data(self) -> None:
         """
@@ -41,7 +66,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             "2000-01-01 10:30:00-05:00", tz="America/New_York"
         )
         asset_ids = [100, 200]
-        market_data_df = mdata.generate_random_bars(
+        market_data_df = cofinanc.generate_random_bars(
             start_datetime, end_datetime, asset_ids
         )
         market_data_df.to_csv(os.path.join(dir_, "market_data_df.csv"))
@@ -63,7 +88,9 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
         hdbg.dassert_file_exists(filename)
         return filename
 
-    def get_market_data(self, event_loop) -> mdata.MarketData:
+    def get_market_data(
+        self, event_loop: asyncio.AbstractEventLoop
+    ) -> mdata.MarketData:
         filename = self.get_input_filename("market_data_df.csv")
         market_data_df = pd.read_csv(
             filename,
@@ -96,7 +123,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
     # TODO(gp): This can become an _example.
     def get_portfolio(
         self,
-        event_loop,
+        event_loop: asyncio.AbstractEventLoop,
     ) -> oms.DataFramePortfolio:
         market_data = self.get_market_data(event_loop)
         asset_ids = market_data._asset_ids
@@ -141,8 +168,9 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             predictions, volatility, portfolio, config, spread_df, restrictions_df
         )
         actual = str(portfolio)
+        print("ACTUAL \n", actual)
         expected = r"""
-# historical holdings=                                                                                                                     [15/30401]
+# historical holdings=
 asset_id                     100    200    -1
 2000-01-01 09:40:01-05:00 -50.00  50.00    0.00
 2000-01-01 09:45:01-05:00 -50.13  49.91  220.24
@@ -207,9 +235,11 @@ asset_id                      100     200
 2000-01-01 10:25:01-05:00  155.78         35.55       18.41   99887.56  155.82  338.24      494.07    202.17
 2000-01-01 10:30:01-05:00 -165.84     200091.94      268.09  100166.57  258.07   70.15      328.23    305.17
         """
+        print("EXPECTED \n", expected)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     # TODO(gp): -> test1
+    @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_initialization1(self) -> None:
         """
         Run the process forecasts.
@@ -218,28 +248,3 @@ asset_id                      100     200
             hasynci.run(
                 self.run_process_forecasts(event_loop), event_loop=event_loop
             )
-
-    # TODO(gp): This can become an _example.
-    @staticmethod
-    def get_process_forecasts_config() -> cconfig.Config:
-        dict_ = {
-            "order_config": {
-                "order_type": "price@twap",
-                "order_duration": 5,
-            },
-            "optimizer_config": {
-                "backend": "batch_optimizer",
-                "dollar_neutrality_penalty": 0.1,
-                "volatility_penalty": 0.5,
-                "turnover_penalty": 0.0,
-                "target_gmv": 1e5,
-                "target_gmv_upper_bound_multiple": 1.0,
-            },
-            "execution_mode": "batch",
-            "ath_start_time": datetime.time(9, 30),
-            "trading_start_time": datetime.time(9, 35),
-            "ath_end_time": datetime.time(16, 00),
-            "trading_end_time": datetime.time(15, 55),
-        }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        return config

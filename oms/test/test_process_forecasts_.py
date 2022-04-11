@@ -24,11 +24,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
-    def test_initialization1(self) -> None:
-        with hasynci.solipsism_context() as event_loop:
-            hasynci.run(
-                self._test_simulated_system1(event_loop), event_loop=event_loop
-            )
 
     @staticmethod
     def get_portfolio(
@@ -63,6 +58,12 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
+
+    def test_initialization1(self) -> None:
+        with hasynci.solipsism_context() as event_loop:
+            hasynci.run(
+                self._test_simulated_system1(event_loop), event_loop=event_loop
+            )
 
     async def _test_simulated_system1(
         self, event_loop: asyncio.AbstractEventLoop
@@ -135,12 +136,6 @@ asset_id                    101    202
 
 
 class TestSimulatedProcessForecasts2(hunitest.TestCase):
-    @pytest.mark.slow("~8 seconds")
-    def test_initialization1(self) -> None:
-        with hasynci.solipsism_context() as event_loop:
-            hasynci.run(
-                self._test_simulated_system1(event_loop), event_loop=event_loop
-            )
 
     @staticmethod
     def get_portfolio(
@@ -195,6 +190,13 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
+
+    @pytest.mark.slow("~8 seconds")
+    def test_initialization1(self) -> None:
+        with hasynci.solipsism_context() as event_loop:
+            hasynci.run(
+                self._test_simulated_system1(event_loop), event_loop=event_loop
+            )
 
     async def _test_simulated_system1(
         self, event_loop: asyncio.AbstractEventLoop
@@ -364,11 +366,6 @@ asset_id                      100     200
 
 
 class TestSimulatedProcessForecasts3(hunitest.TestCase):
-    def test_initialization1(self) -> None:
-        with hasynci.solipsism_context() as event_loop:
-            hasynci.run(
-                self._test_simulated_system1(event_loop), event_loop=event_loop
-            )
 
     @staticmethod
     def get_portfolio(
@@ -415,6 +412,12 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
+
+    def test_initialization1(self) -> None:
+        with hasynci.solipsism_context() as event_loop:
+            hasynci.run(
+                self._test_simulated_system1(event_loop), event_loop=event_loop
+            )
 
     async def _test_simulated_system1(
         self, event_loop: asyncio.AbstractEventLoop
@@ -487,6 +490,7 @@ asset_id                     101     202
 
 
 class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
+
     def test_mocked_system1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Build a Portfolio.
@@ -613,6 +617,7 @@ asset_id                    101    202
 
 
 class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
+
     def test_mocked_system1(self) -> None:
         data = self._get_market_data_df1()
         predictions, volatility = self._get_predictions_and_volatility1(data)
@@ -635,6 +640,120 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         data = self._get_market_data_df2()
         predictions, volatility = self._get_predictions_and_volatility2(data)
         self._run_coroutines(data, predictions, volatility)
+
+    # TODO(gp): Move to core/finance/market_data_example.py or reuse some of those functions.
+    @staticmethod
+    def _get_market_data_df1() -> pd.DataFrame:
+        """
+        Generate price series that alternates every 5 minutes.
+        """
+        idx = pd.date_range(
+            start=pd.Timestamp(
+                "2000-01-01 09:31:00-05:00", tz="America/New_York"
+            ),
+            end=pd.Timestamp("2000-01-01 09:55:00-05:00", tz="America/New_York"),
+            freq="T",
+        )
+        bar_duration = "1T"
+        bar_delay = "0T"
+        data = cofinanc.build_timestamp_df(idx, bar_duration, bar_delay)
+        price_pattern = [101.0] * 5 + [100.0] * 5
+        price = price_pattern * 2 + [101.0] * 5
+        data["price"] = price
+        data["asset_id"] = 101
+        return data
+
+    # TODO(gp): Move to core/finance/market_data_example.py or reuse some of those functions.
+    @staticmethod
+    def _get_market_data_df2() -> pd.DataFrame:
+        idx = pd.date_range(
+            start=pd.Timestamp(
+                "2000-01-01 09:31:00-05:00", tz="America/New_York"
+            ),
+            end=pd.Timestamp("2000-01-01 09:55:00-05:00", tz="America/New_York"),
+            freq="T",
+        )
+        bar_duration = "1T"
+        bar_delay = "0T"
+        data = cofinanc.build_timestamp_df(idx, bar_duration, bar_delay)
+        data["price"] = 100
+        data["asset_id"] = 101
+        return data
+
+    @staticmethod
+    def _get_predictions_and_volatility1(
+        market_data_df,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Generate a signal that alternates every 5 minutes.
+        """
+        # Build predictions.
+        asset_id = market_data_df["asset_id"][0]
+        index = [
+            pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:40:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:45:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:50:00-05:00", tz="America/New_York"),
+        ]
+        # Sanity check the index (e.g., in case we update the test).
+        hdbg.dassert_is_subset(index, market_data_df["end_datetime"].to_list())
+        columns = [asset_id]
+        prediction_data = [
+            [1],
+            [-1],
+            [1],
+            [-1],
+        ]
+        predictions = pd.DataFrame(prediction_data, index, columns)
+        volatility_data = [
+            [1],
+            [1],
+            [1],
+            [1],
+        ]
+        volatility = pd.DataFrame(volatility_data, index, columns)
+        return predictions, volatility
+
+    @staticmethod
+    def _get_predictions_and_volatility2(
+        market_data_df,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Generate a signal that is only long.
+        """
+        # Build predictions.
+        asset_id = market_data_df["asset_id"][0]
+        index = [
+            pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:40:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:45:00-05:00", tz="America/New_York"),
+            pd.Timestamp("2000-01-01 09:50:00-05:00", tz="America/New_York"),
+        ]
+        # Sanity check the index (e.g., in case we update the test).
+        hdbg.dassert_is_subset(index, market_data_df["end_datetime"].to_list())
+        columns = [asset_id]
+        prediction_data = [
+            [1],
+            [1],
+            [1],
+            [1],
+        ]
+        predictions = pd.DataFrame(prediction_data, index, columns)
+        volatility_data = [
+            [1],
+            [1],
+            [1],
+            [1],
+        ]
+        volatility = pd.DataFrame(volatility_data, index, columns)
+        return predictions, volatility
+
+    @staticmethod
+    def _append(
+        list_: List[str], label: str, data: Union[pd.Series, pd.DataFrame]
+    ) -> None:
+        data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        list_.append(f"{label}=\n{data_str}")
 
     def _run_coroutines(self, data, predictions, volatility):
         with hasynci.solipsism_context() as event_loop:
@@ -747,115 +866,3 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         actual.append(portfolio)
         actual = "\n".join(map(str, actual))
         self.check_string(actual)
-
-    @staticmethod
-    def _get_market_data_df1() -> pd.DataFrame:
-        """
-        Generate price series that alternates every 5 minutes.
-        """
-        idx = pd.date_range(
-            start=pd.Timestamp(
-                "2000-01-01 09:31:00-05:00", tz="America/New_York"
-            ),
-            end=pd.Timestamp("2000-01-01 09:55:00-05:00", tz="America/New_York"),
-            freq="T",
-        )
-        bar_duration = "1T"
-        bar_delay = "0T"
-        data = mdata.build_timestamp_df(idx, bar_duration, bar_delay)
-        price_pattern = [101.0] * 5 + [100.0] * 5
-        price = price_pattern * 2 + [101.0] * 5
-        data["price"] = price
-        data["asset_id"] = 101
-        return data
-
-    @staticmethod
-    def _get_market_data_df2() -> pd.DataFrame:
-        idx = pd.date_range(
-            start=pd.Timestamp(
-                "2000-01-01 09:31:00-05:00", tz="America/New_York"
-            ),
-            end=pd.Timestamp("2000-01-01 09:55:00-05:00", tz="America/New_York"),
-            freq="T",
-        )
-        bar_duration = "1T"
-        bar_delay = "0T"
-        data = mdata.build_timestamp_df(idx, bar_duration, bar_delay)
-        data["price"] = 100
-        data["asset_id"] = 101
-        return data
-
-    @staticmethod
-    def _get_predictions_and_volatility1(
-        market_data_df,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Generate a signal that alternates every 5 minutes.
-        """
-        # Build predictions.
-        asset_id = market_data_df["asset_id"][0]
-        index = [
-            pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York"),
-            pd.Timestamp("2000-01-01 09:40:00-05:00", tz="America/New_York"),
-            pd.Timestamp("2000-01-01 09:45:00-05:00", tz="America/New_York"),
-            pd.Timestamp("2000-01-01 09:50:00-05:00", tz="America/New_York"),
-        ]
-        # Sanity check the index (e.g., in case we update the test).
-        hdbg.dassert_is_subset(index, market_data_df["end_datetime"].to_list())
-        columns = [asset_id]
-        prediction_data = [
-            [1],
-            [-1],
-            [1],
-            [-1],
-        ]
-        predictions = pd.DataFrame(prediction_data, index, columns)
-        volatility_data = [
-            [1],
-            [1],
-            [1],
-            [1],
-        ]
-        volatility = pd.DataFrame(volatility_data, index, columns)
-        return predictions, volatility
-
-    @staticmethod
-    def _get_predictions_and_volatility2(
-        market_data_df,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        Generate a signal that is only long.
-        """
-        # Build predictions.
-        asset_id = market_data_df["asset_id"][0]
-        index = [
-            pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York"),
-            pd.Timestamp("2000-01-01 09:40:00-05:00", tz="America/New_York"),
-            pd.Timestamp("2000-01-01 09:45:00-05:00", tz="America/New_York"),
-            pd.Timestamp("2000-01-01 09:50:00-05:00", tz="America/New_York"),
-        ]
-        # Sanity check the index (e.g., in case we update the test).
-        hdbg.dassert_is_subset(index, market_data_df["end_datetime"].to_list())
-        columns = [asset_id]
-        prediction_data = [
-            [1],
-            [1],
-            [1],
-            [1],
-        ]
-        predictions = pd.DataFrame(prediction_data, index, columns)
-        volatility_data = [
-            [1],
-            [1],
-            [1],
-            [1],
-        ]
-        volatility = pd.DataFrame(volatility_data, index, columns)
-        return predictions, volatility
-
-    @staticmethod
-    def _append(
-        list_: List[str], label: str, data: Union[pd.Series, pd.DataFrame]
-    ) -> None:
-        data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
-        list_.append(f"{label}=\n{data_str}")

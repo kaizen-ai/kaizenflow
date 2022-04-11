@@ -376,6 +376,101 @@ def drop_duplicates(
     return data_no_dups
 
 
+def dropna(
+    df: pd.DataFrame,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Wrapper around pd.dropna() reporting information about the removed rows.
+
+    :param df: dataframe to process
+    :param drop_infs: if +/- np.inf should be considered as nans
+    :param report_stats: if processing stats should be reported
+    :return: dataframe with nans dropped
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    num_rows_before = df.shape[0]
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
+    df = df.dropna(*args, **kwargs)
+    if report_stats:
+        num_rows_after = df.shape[0]
+        pct_removed = hprint.perc(
+            num_rows_before - num_rows_after, num_rows_before
+        )
+        _LOG.info("removed rows with nans: %s", pct_removed)
+    return df
+
+
+def drop_axis_with_all_nans(
+    df: pd.DataFrame,
+    drop_rows: bool = True,
+    drop_columns: bool = False,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+) -> pd.DataFrame:
+    """
+    Remove columns and rows not containing information (e.g., with only nans).
+
+    The operation is not performed in place and the resulting df is returned.
+    Assume that the index is timestamps.
+
+    :param df: dataframe to process
+    :param drop_rows: remove rows with only nans
+    :param drop_columns: remove columns with only nans
+    :param drop_infs: remove also +/- np.inf
+    :param report_stats: report the stats of the operations
+    :return: dataframe with specific nan axis dropped
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
+    if drop_columns:
+        # Remove columns with all nans, if any.
+        cols_before = df.columns[:]
+        df = df.dropna(axis=1, how="all")
+        if report_stats:
+            # Report results.
+            cols_after = df.columns[:]
+            removed_cols = set(cols_before).difference(set(cols_after))
+            pct_removed = hprint.perc(
+                len(cols_before) - len(cols_after), len(cols_after)
+            )
+            _LOG.info(
+                "removed cols with all nans: %s %s",
+                pct_removed,
+                hprint.list_to_str(removed_cols),
+            )
+    if drop_rows:
+        # Remove rows with all nans, if any.
+        rows_before = df.index[:]
+        df = df.dropna(axis=0, how="all")
+        if report_stats:
+            # Report results.
+            rows_after = df.index[:]
+            removed_rows = set(rows_before).difference(set(rows_after))
+            if len(rows_before) == len(rows_after):
+                # Nothing was removed.
+                min_ts = max_ts = None
+            else:
+                # TODO(gp): Report as intervals of dates.
+                min_ts = min(removed_rows)
+                max_ts = max(removed_rows)
+            pct_removed = hprint.perc(
+                len(rows_before) - len(rows_after), len(rows_after)
+            )
+            _LOG.info(
+                "removed rows with all nans: %s [%s, %s]",
+                pct_removed,
+                min_ts,
+                max_ts,
+            )
+    return df
+
+
 def reindex_on_unix_epoch(
     df: pd.DataFrame, in_col_name: str, unit: str = "s"
 ) -> pd.DataFrame:
@@ -850,3 +945,62 @@ def read_parquet_to_df(
     _LOG.debug(hprint.to_str("args kwargs"))
     df = pd.read_parquet(stream, *args, **kwargs)
     return df
+
+
+# #############################################################################
+
+
+# TODO(Paul): Add unit tests.
+def compute_weighted_sum(
+    dfs: Dict[str, pd.DataFrame],
+    weights: pd.DataFrame,
+) -> Dict[str, pd.DataFrame]:
+    """
+    Compute weighted sums of `dfs` using `weights`.
+
+    :param dfs: dataframes keyed by id; all dfs should have the same index
+        and cols
+    :param weights: float weights indexed by id with unique col names
+    :return: weighted sums keyed by weight col names
+    """
+    hdbg.dassert_isinstance(dfs, dict)
+    hdbg.dassert(dfs, "dictionary of dfs must be nonempty")
+    # Get a dataframe from the dictionary and record its index and columns.
+    id_ = list(dfs)[0]
+    hdbg.dassert_isinstance(id_, str)
+    df = dfs[id_]
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    idx = df.index
+    cols = df.columns
+    # Sanity-check dataframes in dictionary.
+    for key, value in dfs.items():
+        hdbg.dassert_isinstance(key, str)
+        hdbg.dassert_isinstance(value, pd.DataFrame)
+        hdbg.dassert(
+            value.index.equals(idx),
+            "Index equality fails for keys=%s, %s",
+            id_,
+            key,
+        )
+        hdbg.dassert(
+            value.columns.equals(cols),
+            "Column equality fails for keys=%s, %s",
+            id_,
+            key,
+        )
+    # Sanity-check weights.
+    hdbg.dassert_isinstance(weights, pd.DataFrame)
+    hdbg.dassert_eq(weights.columns.nlevels, 1)
+    hdbg.dassert(not weights.columns.has_duplicates)
+    hdbg.dassert_set_eq(weights.index.to_list(), list(dfs))
+    # Create a multiindexed dataframe to facilitate computing the weighted sums.
+    weighted_dfs = {}
+    combined_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+    # TODO(Paul): Consider relaxing the NaN-handling.
+    for col in weights.columns:
+        weighted_combined_df = combined_df.multiply(weights[col], level=0)
+        weighted_sums = weighted_combined_df.groupby(axis=1, level=1).sum(
+            min_count=len(dfs)
+        )
+        weighted_dfs[col] = weighted_sums
+    return weighted_dfs

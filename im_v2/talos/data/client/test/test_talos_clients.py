@@ -1,4 +1,5 @@
-from typing import List, Optional
+from datetime import timedelta
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -326,19 +327,20 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = ["binance"]
-        currency_pair = ["AVAX_USDT"]
+        exchange_id = "binance"
+        currency_pair = "AVAX_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = "unsupported_type"
         end_unix_epoch = 1647471180000
         with self.assertRaises(AssertionError):
             talos_sql_client._build_select_query(
-                exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+                parsed_symbols, start_unix_epoch, end_unix_epoch
             )
         hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query2(self) -> None:
         """
-        `exchange_ids` is not a list of strings.
+        `parsed_symbols` is not a list of tuple.
         """
         self._create_test_table()
         test_data = self._get_test_data()
@@ -346,11 +348,12 @@ class TestRealTimeSqlTalosClient1(
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "unsupported_type"
         currency_pair = ["AVAX_USDT"]
+        parsed_symbols = [exchange_id, currency_pair]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
         with self.assertRaises(AssertionError):
             talos_sql_client._build_select_query(
-                exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+                parsed_symbols, start_unix_epoch, end_unix_epoch
             )
         hsql.remove_table(self.connection, "talos_ohlcv")
 
@@ -362,13 +365,14 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = ["binance"]
-        currency_pair = ["AVAX_USDT"]
+        exchange_id = "binance"
+        currency_pair = "AVAX_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647471200000
         end_unix_epoch = 1647471180000
         with self.assertRaises(AssertionError):
             talos_sql_client._build_select_query(
-                exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+                parsed_symbols, start_unix_epoch, end_unix_epoch
             )
         hsql.remove_table(self.connection, "talos_ohlcv")
 
@@ -380,16 +384,17 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = ["binance"]
-        currency_pair = ["BTC_USDT"]
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
         actual_outcome = talos_sql_client._build_select_query(
-            exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
         expected_outcome = (
             "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
-            "1647471180000 AND exchange_id IN ('binance') AND currency_pair IN ('BTC_USDT')"
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
@@ -404,14 +409,18 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = ["binance"]
-        currency_pair = ["BTC_USDT"]
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = None
         end_unix_epoch = None
         actual_outcome = talos_sql_client._build_select_query(
-            exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
-        expected_outcome = "SELECT * FROM talos_ohlcv WHERE exchange_id IN ('binance') AND currency_pair IN ('BTC_USDT')"
+        expected_outcome = (
+            "SELECT * FROM talos_ohlcv "
+            "WHERE ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
+        )
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
@@ -425,16 +434,104 @@ class TestRealTimeSqlTalosClient1(
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
-        exchange_id = []
-        currency_pair = []
+        exchange_id = ""
+        currency_pair = ""
+        parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
         actual_outcome = talos_sql_client._build_select_query(
-            exchange_id, currency_pair, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= 1647471180000 AND "
-            "exchange_id IN () AND currency_pair IN ()"
+            "SELECT * FROM talos_ohlcv "
+            "WHERE timestamp >= 1647470940000 AND timestamp <= 1647471180000"
+        )
+        # Message in case if test case got failed.
+        message = "Actual and expected SQL queries are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_build_select_query7(self) -> None:
+        """
+        Test SQL query with changed left_close and right_close arguments.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        talos_sql_client = self.setup_talos_sql_client()
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        actual_outcome = talos_sql_client._build_select_query(
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            left_close=False,
+            right_close=False,
+        )
+        expected_outcome = (
+            "SELECT * FROM talos_ohlcv WHERE timestamp > 1647470940000 AND timestamp < "
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
+        )
+        # Message in case if test case got failed.
+        message = "Actual and expected SQL queries are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_build_select_query8(self) -> None:
+        """
+        Test SQL query string with changed timestamp column name.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        talos_sql_client = self.setup_talos_sql_client()
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        actual_outcome = talos_sql_client._build_select_query(
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            ts_col_name="test_timestamp",
+        )
+        expected_outcome = (
+            "SELECT * FROM talos_ohlcv WHERE test_timestamp >= 1647470940000 AND test_timestamp <= "
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
+        )
+        # Message in case if test case got failed.
+        message = "Actual and expected SQL queries are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_build_select_query9(self) -> None:
+        """
+        Test SQL query string with given list of columns.
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        talos_sql_client = self.setup_talos_sql_client()
+        exchange_id = "binance"
+        currency_pair = "BTC_USDT"
+        parsed_symbols = [(exchange_id, currency_pair)]
+        start_unix_epoch = 1647470940000
+        end_unix_epoch = 1647471180000
+        test_columns = ["close", "volume", "timestamp"]
+        actual_outcome = talos_sql_client._build_select_query(
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            columns=test_columns,
+        )
+        expected_outcome = (
+            "SELECT close,volume,timestamp "
+            "FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
+            "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
@@ -751,6 +848,124 @@ class TestRealTimeSqlTalosClient1(
 
     # ///////////////////////////////////////////////////////////////////////
 
+    def test_build_numerical_to_string_id_mapping(self) -> None:
+        """
+        Verify that the mapping from numerical ids (e.g., encoding asset ids)
+        to the corresponding `full_symbol` is done correctly.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and create testing outcomes.
+        im_client = self.setup_talos_sql_client()
+        actual_outcome = im_client.build_numerical_to_string_id_mapping()
+        expected_outcome = self._get_test_numerical_to_string_id_mapping()
+        # Message in case if test case got failed.
+        message = "Actual and expected mappings are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    # ///////////////////////////////////////////////////////////////////////
+
+    def test_round_start_timestamp_behavior(self) -> None:
+        """
+        Verify that the start round timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00", tz='UTC')
+        end_ts = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        # Choose the last timestamp that is available in the loaded data.
+        actual_outcome = data.index.min()
+        # Create the expected outcomes. Extracted timestamp should be equal to `start_ts` param.
+        expected_outcome = start_ts
+        # Message in case if test case got failed.
+        message = "Actual and expected timestamps are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_round_end_timestamp_behavior(self) -> None:
+        """
+        Verify that the end round timestamps are extracted correctly according
+        to the description in class TalosHistoricalPqByTileClient.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = None
+        end_ts = pd.Timestamp("2022-03-24T16:23:00-00:00", tz='UTC')
+        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        # Choose the last timestamp that is available in the loaded data.
+        actual_outcome = data.index.max()
+        # Create the expected outcomes. Extracted timestamp should be equal to `end_ts` param.
+        expected_outcome = end_ts
+        # Message in case if test case got failed.
+        message = "Actual and expected timestamps are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_intermediate_start_timestamp_behavior(self) -> None:
+        """
+        Verify that the start intermediate timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2022-03-24T16:21:37-00:00", tz='UTC')
+        end_ts = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        # Choose the last timestamp that is available in the loaded data.
+        actual_outcome = data.index.min()
+        # Create the expected outcomes. Extracted timestamp should be equal to the rounded `start_ts` param.
+        expected_outcome = start_ts.round(freq="min", ambiguous=True)
+        # Message in case if test case got failed.
+        message = "Actual and expected timestamps are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_intermediate_end_timestamp_behavior(self) -> None:
+        """
+        Verify that the end intermediate timestamps are extracted correctly
+        according to the description in class TalosHistoricalPqByTileClient.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = None
+        end_ts = pd.Timestamp("2022-03-24T16:23:28-00:00", tz='UTC')
+        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        # Choose the last timestamp that is available in the loaded data.
+        actual_outcome = data.index.max()
+        # Create the expected outcomes. Extracted timestamp should be equal to the rounded `end_ts` param.
+        expected_outcome = end_ts.round(freq="min", ambiguous=True)
+        # Message in case if test case got failed.
+        message = "Actual and expected timestamps are not equal!"
+        self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    # ///////////////////////////////////////////////////////////////////////
+
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
         """
@@ -813,3 +1028,10 @@ class TestRealTimeSqlTalosClient1(
         """
         query = imvtadbut.get_talos_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
+
+    def _get_test_numerical_to_string_id_mapping(self) -> Dict[int, str]:
+        test_dict = {
+            1467591036: "binance::BTC_USDT",
+            1464553467: "binance::ETH_USDT",
+        }
+        return test_dict

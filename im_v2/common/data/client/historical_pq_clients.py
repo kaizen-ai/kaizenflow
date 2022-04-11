@@ -14,8 +14,8 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import im_v2.common.data.client as icdc
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
+import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,12 +50,13 @@ class HistoricalPqByTileClient(
         super().__init__(
             vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
         )
+        hdbg.dassert_isinstance(root_dir, str)
         self._root_dir = root_dir
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile
 
     @staticmethod
-    def get_universe() -> List[icdc.FullSymbol]:
+    def get_universe() -> List[imvcdcfusy.FullSymbol]:
         """
         See description in the parent class.
         """
@@ -95,7 +96,7 @@ class HistoricalPqByTileClient(
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,
@@ -159,7 +160,7 @@ class HistoricalPqByTileClient(
         return df
 
     def _get_root_dir_and_symbol_filter(
-        self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
+        self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
     ) -> Tuple[str, hparque.ParquetFilter]:
         """
         Get a root dir to the data and filtering condition on full symbol
@@ -199,11 +200,11 @@ class HistoricalPqByDateClient(
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[imvcdcfusy.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Same as abstract method.
