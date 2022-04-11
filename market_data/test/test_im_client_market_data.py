@@ -530,6 +530,220 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
 
     # //////////////////////////////////////////////////////////////////////////////
 
+    def test_get_data_for_last_period1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        timedelta = pd.Timedelta("1D")
+        # Run.
+        self._test_get_data_for_last_period(market_data, timedelta)
+
+    def test_get_data_for_last_period2(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        timedelta = pd.Timedelta("2D")
+        # Run.
+        self._test_get_data_for_last_period(market_data, timedelta)
+
+    def test_get_data_for_last_period3(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        timedelta = pd.Timedelta("1W")
+        # Run.
+        self._test_get_data_for_last_period(market_data, timedelta)
+
+    def test_get_data_for_last_period4(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        timedelta = pd.Timedelta("10T")
+        # Run.
+        self._test_get_data_for_last_period(market_data, timedelta)
+
+    def test_get_data_for_last_period5(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        timedelta = pd.Timedelta("5T")
+        # Run.
+        self._test_get_data_for_last_period(market_data, timedelta)
+
+    def test_get_data_for_last_period6(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        timedelta = pd.Timedelta("1T")
+        # Run.
+        self._test_get_data_for_last_period(market_data, timedelta)
+
+    def test_get_data_for_last_period7(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        timedelta = pd.Timedelta("365D")
+        # Run.
+        self._test_get_data_for_last_period(market_data, timedelta)
+
+    def test_get_data_at_timestamp1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        #
+        expected_length = 2
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:35:00-05:00, 2000-01-01 09:35:00-05:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
+        shape=(2, 9)
+                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
+        end_ts
+        2000-01-01 09:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
+        2000-01-01 09:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_at_timestamp1(
+            market_data,
+            ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
+
+    @pytest.mark.skip(
+        reason="CmTask #1633 Add unit test for universe in MarketData."
+    )
+    def test_get_data_for_interval1(self) -> None:
+        # Prepare inputs.
+        asset_ids = None
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        #
+        expected_length = 14
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:35:00-05:00, 2000-01-01 09:41:00-05:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
+        shape=(14, 9)
+                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
+        end_ts
+        2000-01-01 09:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
+        2000-01-01 09:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
+        2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
+        ...
+        2000-01-01 09:40:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       9      -1.0 2000-01-01 09:39:00-05:00
+        2000-01-01 09:41:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        2000-01-01 09:41:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_for_interval1(
+            market_data,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
+
+    def test_get_data_for_interval2(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns=columns, column_remap=column_remap
+        )
+        start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        #
+        expected_length = 14
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:35:00-05:00, 2000-01-01 09:41:00-05:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
+        shape=(14, 9)
+                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
+        end_ts
+        2000-01-01 09:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
+        2000-01-01 09:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
+        2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
+        ...
+        2000-01-01 09:40:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       9      -1.0 2000-01-01 09:39:00-05:00
+        2000-01-01 09:41:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        2000-01-01 09:41:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_for_interval2(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
+
     def test_get_data_for_interval3(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
@@ -574,3 +788,179 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             expected_column_unique_values,
             exp_df_as_str,
         )
+
+    def test_get_data_for_interval4(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        #
+        expected_length = 14
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:42:00-05:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
+        shape=(14, 9)
+                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
+        end_ts
+        2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
+        2000-01-01 09:36:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
+        2000-01-01 09:37:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       6      -1.0 2000-01-01 09:36:00-05:00
+        ...
+        2000-01-01 09:41:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        2000-01-01 09:42:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0      11       1.0 2000-01-01 09:41:00-05:00
+        2000-01-01 09:42:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0      11       1.0 2000-01-01 09:41:00-05:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_for_interval4(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
+
+    def test_get_data_for_interval5(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        #
+        expected_length = 12
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:41:00-05:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
+        shape=(12, 9)
+                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
+        end_ts
+        2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
+        2000-01-01 09:36:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
+        2000-01-01 09:37:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       6      -1.0 2000-01-01 09:36:00-05:00
+        ...
+        2000-01-01 09:40:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       9      -1.0 2000-01-01 09:39:00-05:00
+        2000-01-01 09:41:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        2000-01-01 09:41:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_for_interval5(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_get_twap_price1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036, 3303714233]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        #
+        expected_length = 2
+        expected_unique_values = None
+        exp_srs_as_str = r"""
+                      close
+        asset_id
+        1467591036  100.29
+        3303714233  100.29
+        """
+        # Run.
+        self._test_get_twap_price1(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_length,
+            expected_unique_values,
+            exp_srs_as_str,
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_get_last_end_time1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        exp_last_end_time = pd.Timestamp("2000-01-01T10:10:00-05:00")
+        # Run.
+        self._test_get_last_end_time1(market_data, exp_last_end_time)
+
+    def test_get_last_price1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036, 3303714233]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        #
+        expected_length = 2
+        expected_unique_values = None
+        exp_srs_as_str = r"""
+                      close
+        asset_id
+        1467591036  100.0
+        3303714233  100.0
+        """
+        # Run.
+        self._test_get_last_price1(
+            market_data,
+            asset_ids,
+            expected_length,
+            expected_unique_values,
+            exp_srs_as_str,
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_should_be_online1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        column_remap = None
+        market_data = mdata.get_ImClientMarketData_example2(
+            asset_ids, columns, column_remap
+        )
+        wall_clock_time = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        # Run.
+        self._test_should_be_online1(market_data, wall_clock_time)

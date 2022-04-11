@@ -204,7 +204,7 @@ class HistoricalPqByDateClient(
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Same as abstract method.
