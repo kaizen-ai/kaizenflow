@@ -1687,5 +1687,5 @@ class QaTestCase(TestCase, abc.ABC):
     that run the dev / prod container.
     """
 
-    # TODO(Grisha): Linter should not remove pass from an empty class
+    # TODO(Grisha): Linter should not remove pass statement from an empty class
     # DevToolsTask #476.
