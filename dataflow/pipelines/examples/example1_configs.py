@@ -61,7 +61,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     Build a DAG runner from a config.
     """
     # TODO(gp): In the previous code asset_ids was coming from:
-    #  asset_ids = dtfuniver.get_universe(universe_str)
+    #  `asset_ids = dtfuniver.get_universe(universe_str)`.
     asset_ids = [3303714233, 1467591036]
     columns: List[str] = []
     columns_remap = None
@@ -72,7 +72,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     stage = "read_data"
     asset_id_col = "asset_id"
     # TODO(gp): This in the original code was
-    #  ts_col_name = "timestamp_db"
+    #  `ts_col_name = "timestamp_db"`.
     ts_col_name = "end_ts"
     multiindex_output = True
     # col_names_to_remove = ["start_datetime", "timestamp_db"]
@@ -88,6 +88,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     # Build the DAG.
     dag_builder = config["meta", "dag_builder"]
     dag = dag_builder.get_dag(config["DAG"])
+    # This is for debugging. It saves the output of each node in a `csv` file.
     # dag.set_debug_mode("df_as_csv", False, "crypto_forever")
     if False:
         dag.force_freeing_nodes = True
@@ -98,8 +99,8 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     return dag_runner
 
 
-# TODO(gp): This in the original code was
-#  def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
+# TODO(gp): This used to be:
+#  `def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:`.
 def build_tile_configs(
     asset_ids: List[int],
     start_timestamp: str,
@@ -108,12 +109,12 @@ def build_tile_configs(
     """
     Build a tile configs for Example1 pipeline.
     """
-    # TODO(gp): This in the original code was
+    # TODO(gp): This used to be:
     #  (
     #      universe_str,
     #      trading_period_str,
     #      time_interval_str,
-    #  ) = dtfmoexcon.parse_experiment_config(experiment_config)
+    #  ) = dtfmoexcon.parse_experiment_config(experiment_config).
     #
     # Apply specific config.
     # config = _apply_config(config, trading_period_str)
@@ -127,15 +128,15 @@ def build_tile_configs(
     config["meta", "asset_id_col_name"] = "asset_id"
     configs = [config]
     # Apply the cross-product by the universe tiles.
-    # TODO(gp): This in the original code was
-    #  func = lambda cfg: build_configs_with_tiled_universe(cfg, universe_str)
+    # TODO(gp): This used to be:
+    #  `func = lambda cfg: build_configs_with_tiled_universe(cfg, universe_str)`.
     func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)
     configs = dtfmoexcon.apply_build_configs(func, configs)
     _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
     hdbg.dassert_lte(1, len(configs))
     # Apply the cross-product by the time tiles.
-    # TODO(gp): This is how timestamps were specified in the original code
-    #  start_timestamp, end_timestamp = dtfmoexcon.get_period(time_interval_str)
+    # TODO(gp): This is how timestamps were specified in the original code:
+    #  `start_timestamp, end_timestamp = dtfmoexcon.get_period(time_interval_str)`.
     freq_as_pd_str = "M"
     # Amount of history fed to the DAG.
     lookback_as_pd_str = "10D"
