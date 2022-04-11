@@ -50,6 +50,7 @@ def get_TalosHistoricalPqByTileClient_example2(
     """
     Get `TalosHistoricalPqByTileClient` object for the tests from S3.
     """
+    # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
     root_dir = "s3://cryptokaizen-data/historical"
     partition_mode = "by_year_month"
     talos_file_client = imvtdctacl.TalosHistoricalPqByTileClient(
