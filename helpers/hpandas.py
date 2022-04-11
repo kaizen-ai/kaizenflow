@@ -4,11 +4,11 @@ Import as:
 import helpers.hpandas as hpandas
 """
 import logging
+import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-import random
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -1008,6 +1008,14 @@ def compute_weighted_sum(
 
 
 def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
+    """
+    Remove N rows from the input data and shuffle the remaining ones.
+
+    :param df: input data
+    :param nrows: the number of rows to remove from the original data
+    :param seed: see `random.seed()`
+    :return: shuffled data with removed rows
+    """
     hdbg.dassert_lte(1, nrows)
     hdbg.dassert_lte(nrows, df.shape[0])
     idx = list(range(df.shape[0]))
@@ -1025,10 +1033,13 @@ def get_random_df(
     """
     Compute df with random data with `num_cols` columns and index obtained by
     calling `pd.date_range(**kwargs)`.
+
+    :param num_cols: the number of columns in a DataFrame to generate
+    :param seed: see `random.seed()`
+    :param date_range_kwargs: kwargs for `pd.date_range()`
     """
     if seed:
         np.random.seed(seed)
     dt = pd.date_range(**date_range_kwargs)
     df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
     return df
-

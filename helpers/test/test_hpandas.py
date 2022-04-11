@@ -728,13 +728,18 @@ class TestSubsetDf1(hunitest.TestCase):
         # Subset.
         df2 = hpandas.subset_df(df, nrows=5, seed=43)
         # Check.
-        act = []
-        act.append("df=")
-        act.append(str(df))
-        act.append("df2=")
-        act.append(str(df2))
-        act = "\n".join(act)
-        self.check_string(act)
+        actual = hpandas.df_to_str(df2)
+        expected = r"""
+        A   B   C   D
+        0  51  92  14  71
+        1  60  20  82  86
+        3  23   2  21  52
+        ...
+        17  80  35  49   3
+        18   1   5  53   3
+        19  53  92  62  17"""
+
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 class TestDropNa(hunitest.TestCase):

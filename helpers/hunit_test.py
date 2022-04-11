@@ -1399,6 +1399,7 @@ class TestCase(unittest.TestCase):
         """
         # TODO(Grisha): get rid of `hpandas` dependency.
         import helpers.hpandas as hpandas
+
         hdbg.dassert_isinstance(actual_df, pd.DataFrame)
         if expected_length:
             # Verify that the output length is correct.
@@ -1639,7 +1640,8 @@ class TestCase(unittest.TestCase):
     ) -> str:
         """
         Return the name of the directory containing the input / output data
-        (e.g., ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare)
+        (e.g.,
+        ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare)
 
         The parameters have the same meaning as in `get_input_dir()`.
         """
@@ -1681,5 +1683,3 @@ class QaTestCase(TestCase, abc.ABC):
     This unit test is used for QA to test functionalities (e.g., invoke tasks)
     that run the dev / prod container.
     """
-
-    pass
