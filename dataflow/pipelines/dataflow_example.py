@@ -13,7 +13,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import helpers.hunit_test as hunitest
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class _NaivePipeline(dtfcore.DagBuilder):
                 "end": pd.Timestamp("2010-01-10"),
                 "freq": "1B",
             }
-            data = hunitest.get_random_df(
+            data = hpandas.get_random_df(
                 num_cols, seed=seed, date_range_kwargs=date_range_kwargs
             )
             # This needs to be multi-index.
