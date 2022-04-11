@@ -718,6 +718,30 @@ class TestReadDataFromS3(hunitest.TestCase):
         hpandas.read_parquet_to_df(stream, **kwargs)
 
 
+class TestSubsetDf1(hunitest.TestCase):
+    def test1(self) -> None:
+        # Generate some random data.
+        np.random.seed(42)
+        df = pd.DataFrame(
+            np.random.randint(0, 100, size=(20, 4)), columns=list("ABCD")
+        )
+        # Subset.
+        df2 = hpandas.subset_df(df, nrows=5, seed=43)
+        # Check.
+        actual = hpandas.df_to_str(df2)
+        expected = r"""
+           A   B   C   D
+        0  51  92  14  71
+        1  60  20  82  86
+        3  23   2  21  52
+        ...
+        17  80  35  49   3
+        18   1   5  53   3
+        19  53  92  62  17
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
 class TestDropNa(hunitest.TestCase):
     def test_dropna1(self) -> None:
         """
