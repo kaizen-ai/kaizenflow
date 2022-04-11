@@ -1686,3 +1686,6 @@ class QaTestCase(TestCase, abc.ABC):
     This unit test is used for QA to test functionalities (e.g., invoke tasks)
     that run the dev / prod container.
     """
+
+    # TODO(Grisha): Linter should not remove pass from an empty class
+    # DevToolsTask #476.
