@@ -5,6 +5,7 @@ import os
 import uuid
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 import helpers.hpandas as hpandas
@@ -715,3 +716,22 @@ class TestReadDataFromS3(hunitest.TestCase):
         hs3.dassert_path_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         hpandas.read_parquet_to_df(stream, **kwargs)
+
+
+class TestSubsetDf1(hunitest.TestCase):
+    def test1(self) -> None:
+        # Generate some random data.
+        np.random.seed(42)
+        df = pd.DataFrame(
+            np.random.randint(0, 100, size=(20, 4)), columns=list("ABCD")
+        )
+        # Subset.
+        df2 = hpandas.subset_df(df, nrows=5, seed=43)
+        # Check.
+        act = []
+        act.append("df=")
+        act.append(str(df))
+        act.append("df2=")
+        act.append(str(df2))
+        act = "\n".join(act)
+        self.check_string(act)

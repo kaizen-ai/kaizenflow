@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import random
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -911,7 +912,7 @@ def compute_weighted_sum(
     return weighted_dfs
 
 
-def subset_df(df: "pd.DataFrame", nrows: int, seed: int = 42) -> "pd.DataFrame":
+def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
     hdbg.dassert_lte(1, nrows)
     hdbg.dassert_lte(nrows, df.shape[0])
     idx = list(range(df.shape[0]))
@@ -925,7 +926,7 @@ def get_random_df(
     num_cols: int,
     seed: Optional[int] = None,
     date_range_kwargs: Optional[Dict[str, Any]] = None,
-) -> "pd.DataFrame":
+) -> pd.DataFrame:
     """
     Compute df with random data with `num_cols` columns and index obtained by
     calling `pd.date_range(**kwargs)`.

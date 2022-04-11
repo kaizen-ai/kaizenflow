@@ -232,7 +232,7 @@ def compare_df(df1: "pd.DataFrame", df2: "pd.DataFrame") -> None:
         print(df1.compare(df2))
         raise ValueError("Dfs are different")
 
-    def _compute_df_signature(df: pd.DataFrame) -> str:
+    def _compute_df_signature(df: "pd.DataFrame") -> str:
         txt = []
         txt.append("df1=\n%s" % str(df))
         txt.append("df1.dtypes=\n%s" % str(df.dtypes))
