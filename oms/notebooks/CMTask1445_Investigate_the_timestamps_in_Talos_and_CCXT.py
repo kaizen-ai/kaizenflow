@@ -17,22 +17,15 @@
 
 # %%
 import logging
-
 import pandas as pd
-
+import helpers.hsql as hsql
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.talos.data.extract.exchange_class as imvtdeexcl
-
-# %%
-hdbg.init_logger(verbosity=logging.INFO)
-
-_LOG = logging.getLogger(__name__)
-
-hprint.config_notebook()
+import im_v2.im_lib_tasks as imvimlita
 
 
 # %% [markdown]
@@ -67,6 +60,17 @@ def get_data_from_ccxt_client(start_time, end_time):
         full_symbol_binance, start_time, end_time
     )
     return df
+
+
+def get_data_from_talos_client(start_time, end_time):
+    full_symbol_binance = ["binance::BTC_USDT"]
+    df = talos_client.read_data(
+         full_symbol_binance,
+         start_ts=pd.Timestamp(start_time),
+         end_ts=pd.Timestamp(end_time),
+    )
+    return df
+
 
 
 # %% [markdown]
@@ -138,10 +142,6 @@ display(data_ccxt_client.tail(3))
 # # Current implemented Talos client
 
 # %%
-# Initialize Talos client.
-import im_v2.im_lib_tasks as imvimlita
-import helpers.hsql as hsql
-
 env_file = imvimlita.get_db_env_path("dev")
 connection_params = hsql.get_connection_info_from_env_file(env_file)
 connection = hsql.get_connection(*connection_params)
@@ -149,15 +149,14 @@ table_name = "talos_ohlcv"
 talos_client = imvtdctacl.RealTimeSqlTalosClient(
     True, connection, table_name
 )
-full_symbols = ["binance::BTC_USDT"]
-df = talos_client.read_data(
-     full_symbols,
-     start_ts=pd.Timestamp('2022-03-16 22:47:50+0000'),
-     end_ts=pd.Timestamp('2022-03-16 22:54:00+0000'),
+
+# %%
+df = get_data_from_talos_client(
+    '2022-03-16 22:47:50+0000',
+    '2022-03-16 22:54:00+0000'
 )
 display(df.head(3))
 display(df.tail(3))
-
 
 # %% [markdown]
 # ### Talos client summary
