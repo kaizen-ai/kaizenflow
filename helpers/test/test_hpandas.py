@@ -895,4 +895,4 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         }
         expected = pd.DataFrame(data=expected)
         # Check.
-        hunitest.compare_df(actual, expected
+        hunitest.compare_df(actual, expected)
