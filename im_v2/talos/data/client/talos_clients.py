@@ -321,7 +321,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Create a select query and load data from database.
@@ -450,7 +450,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
         *,
         full_symbol_col_name: Optional[str] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Read data for the given time range and full symbols.
