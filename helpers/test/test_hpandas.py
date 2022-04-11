@@ -730,15 +730,15 @@ class TestSubsetDf1(hunitest.TestCase):
         # Check.
         actual = hpandas.df_to_str(df2)
         expected = r"""
-        A   B   C   D
+           A   B   C   D
         0  51  92  14  71
         1  60  20  82  86
         3  23   2  21  52
         ...
         17  80  35  49   3
         18   1   5  53   3
-        19  53  92  62  17"""
-
+        19  53  92  62  17
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
