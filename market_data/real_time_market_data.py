@@ -39,8 +39,8 @@ class RealTimeMarketData(mdabmada.MarketData):
         where_clause: Optional[str],
         valid_id: Any,
         # Params from `MarketData`.
-        *args: List[Any],
-        **kwargs: Dict[str, Any],
+        *args: Any,
+        **kwargs: Any,
     ):
         """
         Constructor.
