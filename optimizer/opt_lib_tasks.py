@@ -254,10 +254,10 @@ def opt_run_fast_tests(
     git_clean = False
     rc = hlibtask._run_tests(
         ctx,
-        stage,
         test_list_name,
-        custom_marker,
+        stage,
         version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
@@ -305,10 +305,10 @@ def opt_run_slow_tests(
     git_clean = False
     rc = hlibtask._run_tests(
         ctx,
-        stage,
         test_list_name,
-        custom_marker,
+        stage,
         version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
