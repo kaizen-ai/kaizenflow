@@ -17,7 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.talos.data.client.talos_clients_example as itdctcex
+import im_v2.talos.data.client as itdc
 import market_data.im_client_market_data as mdimcmada
 import market_data.replayed_market_data as mdremada
 
@@ -329,8 +329,10 @@ def get_ImClientMarketData_example3(
     Build a `ImClientMarketData` backed with `Talos` data.
     """
     resample_1min = False
-    talos_client = itdctcex.get_TalosHistoricalPqByTileClient_example2(
-        resample_1min
+    talos_client = (
+        itdc.talos_clients_example.get_TalosHistoricalPqByTileClient_example2(
+            resample_1min
+        )
     )
     # Build a function that returns a wall clock to initialise `MarketData`.
     last_timestamp = _get_last_timestamp(talos_client, asset_ids)
