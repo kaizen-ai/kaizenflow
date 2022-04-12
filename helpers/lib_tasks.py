@@ -4168,6 +4168,8 @@ def run_coverage_report(  # type: ignore
     """
     # TODO(Grisha): allow user to specify which tests to run.
     # Run tests for the target dir and collect coverage stats.
+    if target_dir == "cmamp":
+        target_dir = "/app"
     fast_tests_cmd = (
         f"invoke run_fast_tests --coverage -p {target_dir}; "
         "cp .coverage .coverage_fast_tests"
