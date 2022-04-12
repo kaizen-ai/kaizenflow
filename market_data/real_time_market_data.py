@@ -5,7 +5,7 @@ import market_data.real_time_market_data as mdrtmada
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
@@ -275,7 +275,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
     #
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         # Note: Getting the end time for one symbol as a placeholder.
-        # TODO(Danya): CMTask1622.
+        # TODO(Danya): CMTask1622: "Return `last_end_time` for all symbols".
         return self._client.get_end_ts_for_symbol("binance::BTC_USDT")
 
     def _get_data(
