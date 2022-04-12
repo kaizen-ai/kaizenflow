@@ -4192,6 +4192,8 @@ def run_coverage_report(  # type: ignore
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
     )
     # Only target dir is included in the reports.
+    if target_dir == '/app':
+        target_dir = 'app'
     include_in_report = f"*/{target_dir}/*"
     # Generate text report with the coverage stats.
     report_cmd.append(
