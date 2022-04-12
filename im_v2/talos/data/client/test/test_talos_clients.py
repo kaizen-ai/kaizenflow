@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 
 import pandas as pd
+import pytest
 
 import helpers.hsql as hsql
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
