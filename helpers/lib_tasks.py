@@ -3341,7 +3341,7 @@ def _find_short_import(iterator: Iterator, short_import: str) -> _FindResults:
     """
     # E.g.,
     # `import dataflow.core.dag_runner as dtfcodarun`
-    regex = fr"import\s+(\S+)\s+as\s+({short_import})"
+    regex = rf"import\s+(\S+)\s+as\s+({short_import})"
     regex = re.compile(regex)
     #
     results: _FindResults = []
@@ -3365,9 +3365,9 @@ def _find_func_class_uses(iterator: Iterator, regex: str) -> _FindResults:
     regexs = []
     # E.g.,
     # `dag_runner = dtfsys.RealTimeDagRunner(**dag_runner_kwargs)`
-    regexs.append(fr"\s+(\w+)\.(\w*{regex})\(")
+    regexs.append(rf"\s+(\w+)\.(\w*{regex})\(")
     # `dag_builder: dtfcodabui.DagBuilder`
-    regexs.append(fr":\s*(\w+)\.(\w*{regex})")
+    regexs.append(rf":\s*(\w+)\.(\w*{regex})")
     #
     _LOG.debug("regexs=%s", str(regexs))
     regexs = [re.compile(regex_) for regex_ in regexs]
@@ -3797,10 +3797,10 @@ def _run_test_cmd(
 
 def _run_tests(
     ctx: Any,
-    stage: str,
     test_list_name: str,
-    custom_marker: str,
+    stage: str,
     version: str,
+    custom_marker: str,
     pytest_opts: str,
     skip_submodules: bool,
     coverage: bool,
@@ -3841,6 +3841,54 @@ def _run_tests(
     return rc
 
 
+@task
+# TODO(Grisha): "Unit tests run_*_tests invokes" CmTask #1652.
+def run_tests(
+    ctx,
+    test_lists,
+    abort_on_first_error=False,
+    stage="dev",
+    version="",
+    custom_marker="",
+    pytest_opts="",
+    skip_submodules=False,
+    coverage=False,
+    collect_only=False,
+    tee_to_file=False,
+    git_clean_=False,
+    **kwargs,
+):
+    """
+    :param test_lists: comma separated list with test lists to run (e.g., `fast_test,slow_tests`)
+    :param abort_on_first_error: stop after the first test list failing
+    """
+    results = []
+    for test_list_name in test_lists.split(","):
+        rc = _run_tests(
+            ctx,
+            test_list_name,
+            stage,
+            version,
+            custom_marker,
+            pytest_opts,
+            skip_submodules,
+            coverage,
+            collect_only,
+            tee_to_file,
+            git_clean_,
+            warn=True,
+            **kwargs,
+        )
+        if rc != 0:
+            _LOG.error("'%s' tests failed" % test_list_name)
+            if abort_on_first_error:
+                sys.exit(-1)
+        results.append((test_list_name, rc))
+    #
+    rc = any(result[1] for result in results)
+    return rc
+
+
 # TODO(gp): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
 @task
 def run_fast_tests(  # type: ignore
@@ -3872,10 +3920,10 @@ def run_fast_tests(  # type: ignore
     custom_marker = ""
     rc = _run_tests(
         ctx,
-        stage,
         test_list_name,
-        custom_marker,
+        stage,
         version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
@@ -3910,10 +3958,10 @@ def run_slow_tests(  # type: ignore
     custom_marker = ""
     rc = _run_tests(
         ctx,
-        stage,
         test_list_name,
-        custom_marker,
+        stage,
         version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
@@ -3948,10 +3996,10 @@ def run_superslow_tests(  # type: ignore
     custom_marker = ""
     rc = _run_tests(
         ctx,
-        stage,
         test_list_name,
-        custom_marker,
+        stage,
         version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
@@ -3966,6 +4014,7 @@ def run_superslow_tests(  # type: ignore
 @task
 def run_fast_slow_tests(  # type: ignore
     ctx,
+    abort_on_first_error=False,
     stage="dev",
     version="",
     pytest_opts="",
@@ -3982,26 +4031,15 @@ def run_fast_slow_tests(  # type: ignore
     """
     _report_task()
     # Run fast tests but do not fail on error.
-    fast_test_rc = run_fast_tests(
+    test_lists = "fast_tests,slow_tests"
+    custom_marker = ""
+    rc = run_tests(
         ctx,
+        test_lists,
+        abort_on_first_error,
         stage,
         version,
-        pytest_opts,
-        skip_submodules,
-        coverage,
-        collect_only,
-        tee_to_file,
-        git_clean_,
-        warn=True,
-    )
-    if fast_test_rc != 0:
-        _LOG.error("Fast tests failed")
-    # Run slow tests.
-    git_clean_ = False
-    slow_test_rc = run_slow_tests(
-        ctx,
-        stage,
-        version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
@@ -4009,17 +4047,13 @@ def run_fast_slow_tests(  # type: ignore
         tee_to_file,
         git_clean_,
     )
-    if slow_test_rc != 0:
-        _LOG.error("Slow tests failed")
-    # Report error, if needed.
-    if fast_test_rc != 0 or slow_test_rc != 0:
-        raise RuntimeError("Fast / slow tests failed")
-    return fast_test_rc, slow_test_rc
+    return rc
 
 
 @task
 def run_fast_slow_superslow_tests(  # type: ignore
     ctx,
+    abort_on_first_error=False,
     stage="dev",
     version="",
     pytest_opts="",
@@ -4036,74 +4070,23 @@ def run_fast_slow_superslow_tests(  # type: ignore
     """
     _report_task()
     # Run fast tests but do not fail on error.
-    fast_test_rc = run_fast_tests(
+    test_lists = "fast_tests,slow_tests,superslow_tests"
+    custom_marker = ""
+    rc = run_tests(
         ctx,
+        test_lists,
+        abort_on_first_error,
         stage,
         version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
         git_clean_,
-        #
-        warn=True,
     )
-    if fast_test_rc != 0:
-        _LOG.error("Fast tests failed")
-    # Run slow tests.
-    git_clean_ = False
-    slow_test_rc = run_slow_tests(
-        ctx,
-        stage,
-        version,
-        pytest_opts,
-        skip_submodules,
-        coverage,
-        collect_only,
-        tee_to_file,
-        git_clean_,
-        #
-        warn=True,
-    )
-    if slow_test_rc != 0:
-        _LOG.error("Slow tests failed")
-    # Run superslow tests.
-    git_clean_ = False
-    superslow_test_rc = run_superslow_tests(
-        ctx,
-        stage,
-        version,
-        pytest_opts,
-        skip_submodules,
-        coverage,
-        collect_only,
-        tee_to_file,
-        git_clean_,
-        #
-        warn=True,
-    )
-    if superslow_test_rc != 0:
-        _LOG.error("Super slow tests failed")
-    # Report error, if needed.
-    if fast_test_rc != 0 or slow_test_rc != 0 or superslow_test_rc != 0:
-        if fast_test_rc != 0:
-            _LOG.error("Fast tests failed")
-        else:
-            _LOG.info("Fast tests passed")
-        #
-        if slow_test_rc != 0:
-            _LOG.error("Slow tests failed")
-        else:
-            _LOG.info("Slow tests passed")
-        #
-        if superslow_test_rc != 0:
-            _LOG.error("Superslow tests failed")
-        else:
-            _LOG.info("Superslow tests passed")
-        #
-        raise RuntimeError("Some tests failed")
-    return fast_test_rc, slow_test_rc
+    return rc
 
 
 @task

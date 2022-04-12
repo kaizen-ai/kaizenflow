@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.13.7
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -26,6 +26,7 @@ import amp.dataflow.pipelines.dataflow_example
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 hprint.config_notebook()
@@ -41,8 +42,8 @@ _LOG = logging.getLogger(__name__)
 # %% [markdown]
 # ## Build pipeline
 #
-
-import dataflow_amp.returns.pipeline as dtfamrepip
+#
+# import dataflow_amp.returns.pipeline as dtfamrepip
 
 # %%
 import core.config as cconfig
@@ -225,7 +226,6 @@ len(result[1])
 # %%
 import pandas as pd
 
-import helpers.hunit_test as hunitest
 
 num_cols = 2
 seed = 42
@@ -235,7 +235,7 @@ date_range_kwargs = {
     "freq": "1B",
 }
 # pd.date_range(**date_range_kwargs)
-data = hunitest.get_random_df(
+data = hpandas.get_random_df(
     num_cols, seed=seed, date_range_kwargs=date_range_kwargs
 )
 print(data)

@@ -22,7 +22,6 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
@@ -193,18 +192,6 @@ def convert_df_to_string(
     return output_str
 
 
-# TODO(gp): @all Move this to helpers/hpandas.py since unit_test.py should not
-#  depend on pandas.
-def subset_df(df: "pd.DataFrame", nrows: int, seed: int = 42) -> "pd.DataFrame":
-    hdbg.dassert_lte(1, nrows)
-    hdbg.dassert_lte(nrows, df.shape[0])
-    idx = list(range(df.shape[0]))
-    random.seed(seed)
-    random.shuffle(idx)
-    idx = sorted(idx[nrows:])
-    return df.iloc[idx]
-
-
 # TODO(gp): Is this dataflow Info? If so it should go somewhere else.
 def convert_info_to_string(info: Mapping) -> str:
     """
@@ -232,89 +219,12 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
-# TODO(gp): @all Move this to helpers/hpandas.py since unit_test.py should not
-#  depend on pandas.
-def convert_df_to_json_string(
-    df: "pd.DataFrame",
-    n_head: Optional[int] = 10,
-    n_tail: Optional[int] = 10,
-    columns_order: Optional[List[str]] = None,
-) -> str:
-    """
-    Convert dataframe to pretty-printed JSON string.
-
-    To select all rows of the dataframe, pass `n_head` as None.
-
-    :param df: dataframe to convert
-    :param n_head: number of printed top rows
-    :param n_tail: number of printed bottom rows
-    :param columns_order: order for the KG columns sort
-    :return: dataframe converted to JSON string
-    """
-    # Append shape of the initial dataframe.
-    shape = "original shape=%s" % (df.shape,)
-    # Reorder columns.
-    if columns_order is not None:
-        hdbg.dassert_set_eq(columns_order, df.cols)
-        df = df[columns_order]
-    # Select head.
-    if n_head is not None:
-        head_df = df.head(n_head)
-    else:
-        # If no n_head provided, append entire dataframe.
-        head_df = df
-    # Transform head to json.
-    head_json = head_df.to_json(
-        orient="index",
-        force_ascii=False,
-        indent=4,
-        default_handler=str,
-        date_format="iso",
-        date_unit="s",
-    )
-    if n_tail is not None:
-        # Transform tail to json.
-        tail = df.tail(n_tail)
-        tail_json = tail.to_json(
-            orient="index",
-            force_ascii=False,
-            indent=4,
-            default_handler=str,
-            date_format="iso",
-            date_unit="s",
-        )
-    else:
-        # If no tail specified, append an empty string.
-        tail_json = ""
-    # Join shape and dataframe to single string.
-    output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
-    return output_str
-
-
 # TODO(gp): This seems the python3.9 version of `to_str`. Remove if possible.
 def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
 
-# TODO(gp): @all Maybe we should move it to hpandas.py so we can limit the
-#  dependencies from pandas.
-def get_random_df(
-    num_cols: int,
-    seed: Optional[int] = None,
-    date_range_kwargs: Optional[Dict[str, Any]] = None,
-) -> "pd.DataFrame":
-    """
-    Compute df with random data with `num_cols` columns and index obtained by
-    calling `pd.date_range(**kwargs)`.
-    """
-    if seed:
-        np.random.seed(seed)
-    dt = pd.date_range(**date_range_kwargs)
-    df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
-    return df
-
-
-def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
+def compare_df(df1: "pd.DataFrame", df2: "pd.DataFrame") -> None:
     """
     Compare two dfs including their metadata.
     """
@@ -322,7 +232,7 @@ def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
         print(df1.compare(df2))
         raise ValueError("Dfs are different")
 
-    def _compute_df_signature(df: pd.DataFrame) -> str:
+    def _compute_df_signature(df: "pd.DataFrame") -> str:
         txt = []
         txt.append("df1=\n%s" % str(df))
         txt.append("df1.dtypes=\n%s" % str(df.dtypes))
@@ -1245,8 +1155,8 @@ class TestCase(unittest.TestCase):
 
     def assert_dfs_close(
         self,
-        actual: pd.DataFrame,
-        expected: pd.DataFrame,
+        actual: "pd.DataFrame",
+        expected: "pd.DataFrame",
         **kwargs,
     ) -> None:
         """
@@ -1467,7 +1377,7 @@ class TestCase(unittest.TestCase):
 
     def check_df_output(
         self,
-        actual_df: pd.DataFrame,
+        actual_df: "pd.DataFrame",
         expected_length: Optional[int],
         expected_column_names: Optional[List[str]],
         expected_column_unique_values: Optional[Dict[str, List[Any]]],
@@ -1487,6 +1397,9 @@ class TestCase(unittest.TestCase):
         :param expected_signature: expected outcome dataframe as string
             - If `__CHECK_STRING__` use the value in `self.check_string()`
         """
+        # TODO(Grisha): get rid of `hpandas` dependency.
+        import helpers.hpandas as hpandas
+
         hdbg.dassert_isinstance(actual_df, pd.DataFrame)
         if expected_length:
             # Verify that the output length is correct.
@@ -1531,7 +1444,7 @@ class TestCase(unittest.TestCase):
 
     def check_srs_output(
         self,
-        actual_srs: pd.Series,
+        actual_srs: "pd.Series",
         expected_length: Optional[int],
         expected_unique_values: Optional[List[Any]],
         expected_signature: str,
@@ -1726,8 +1639,12 @@ class TestCase(unittest.TestCase):
         use_absolute_path: bool,
     ) -> str:
         """
-        Return the name of the directory containing the input / output data
-        (e.g., ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare)
+        Return the name of the directory containing the input / output data.
+
+        E.g.,
+        ```
+        ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare
+        ```
 
         The parameters have the same meaning as in `get_input_dir()`.
         """
@@ -1770,4 +1687,5 @@ class QaTestCase(TestCase, abc.ABC):
     that run the dev / prod container.
     """
 
-    pass
+    # TODO(Grisha): Linter should not remove `pass` statement from an empty class
+    # DevToolsTask #476.
