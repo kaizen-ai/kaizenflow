@@ -330,7 +330,7 @@ def get_ImClientMarketData_example3(
     """
     resample_1min = False
     talos_client = (
-        itdc.talos_clients_example.get_TalosHistoricalPqByTileClient_example2(
+        itdcl.talos_clients_example.get_TalosHistoricalPqByTileClient_example2(
             resample_1min
         )
     )
