@@ -127,7 +127,13 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
         # Build a dict with exchange ids as values and lists of currency pairs
         # that belong to them as values.
+        full_symbol_tuples = [
+            icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+        ]
         symbol_dict = collections.defaultdict(list)
+        for exchange_id, *currency_pair in full_symbol_tuples:
+            symbol_dict[exchange_id].extend(currency_pair)
+        # Build filters by exchange id and full symbol directories.
         symbol_filters = []
         for exchange_id, currency_pairs in symbol_dict.items():
             symbol_filter = [
