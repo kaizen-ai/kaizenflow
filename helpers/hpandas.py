@@ -200,7 +200,7 @@ def dassert_time_indexed_df(df: pd.DataFrame, allow_empty: bool, strictly_increa
         dassert_strictly_increasing_index(df)
     else:
         dassert_increasing_index(df)
-    # Check that the indef is in datetime format.
+    # Check that the index is in datetime format.
     dassert_index_is_datetime(df)
     # Check that the passed timestamp has timezone info.
     hdateti.dassert_has_tz(df.index[0])
