@@ -14,13 +14,14 @@ import helpers.hunit_test as hunitest  # noqa: E402 module level import not at t
 # TODO(Nikola): Consider moving this class to `hunit_test_case.py`, `hs3.py`, or `hmoto.py`.
 class S3Mock_TestCase(hunitest.TestCase):
     # Mocked AWS credentials.
+    mock_aws_profile = "mock"
     # TODO(Nikola): Different behaviour if moved in `setUp`?
     mock_aws_credentials_patch = umock.patch.dict(
         hs3.os.environ,
         {
-            "AWS_ACCESS_KEY_ID": "mock_key_id",
-            "AWS_SECRET_ACCESS_KEY": "mock_secret_access_key",
-            "AWS_DEFAULT_REGION": "us-east-1",
+            "MOCK_AWS_ACCESS_KEY_ID": "mock_key_id",
+            "MOCK_AWS_SECRET_ACCESS_KEY": "mock_secret_access_key",
+            "MOCK_AWS_DEFAULT_REGION": "us-east-1",
         },
     )
     mock_aws_credentials = None
@@ -51,12 +52,11 @@ class S3Mock_TestCase(hunitest.TestCase):
         self.mock_aws_credentials_patch.stop()
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestToFileAndFromFile1(S3Mock_TestCase):
     def write_read_helper(self, file_name: str, force_flush: bool) -> None:
         # Prepare inputs.
         file_content = "line_mock1\nline_mock2\nline_mock3"
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{file_name}"
         # Save file.
         # TODO(Nikola): Is it possible to verify `force_flush`?
@@ -98,7 +98,7 @@ class TestToFileAndFromFile1(S3Mock_TestCase):
         # Prepare inputs.
         regular_file_name = "mock.txt"
         regular_file_content = "line_mock1\nline_mock2\nline_mock3"
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
         # Save file with `t` mode.
         with pytest.raises(ValueError) as fail:
@@ -116,7 +116,7 @@ class TestToFileAndFromFile1(S3Mock_TestCase):
         """
         # Prepare inputs.
         regular_file_name = "mock.txt"
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
         # Read with encoding.
         with pytest.raises(ValueError) as fail:
@@ -127,13 +127,12 @@ class TestToFileAndFromFile1(S3Mock_TestCase):
         self.assert_equal(actual, expected)
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestListdir1(S3Mock_TestCase):
     def prepare_test_data(self) -> Tuple[str, hs3.AwsProfile]:
         bucket_s3_path = f"s3://{self.bucket_name}"
         depth_one_s3_path = f"s3://{bucket_s3_path}/depth_one"
         # Prepare test files.
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         first_s3_path = f"{depth_one_s3_path}/mock1.txt"
         lines = [b"line_mock1"]
         with moto_s3fs.open(first_s3_path, "wb") as s3_file:
