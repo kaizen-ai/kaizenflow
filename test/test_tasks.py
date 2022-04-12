@@ -66,6 +66,7 @@ class TestExecuteTasks1(hunitest.QaTestCase):
         hsystem.system(cmd)
 
     def test_docker_bash(self) -> None:
+        # Pass the parameters via `pytest` command otherwise they are `None`.
         image_version = self._config.getoption("--image_version")
         image_stage = self._config.getoption("--image_stage")
         exit_command = "<(echo 'exit\n')"

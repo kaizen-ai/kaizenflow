@@ -4,6 +4,7 @@ Import as:
 import helpers.hpandas as hpandas
 """
 import logging
+import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -374,6 +375,101 @@ def drop_duplicates(
             hprint.perc(num_rows_before - num_rows_after, num_rows_before),
         )
     return data_no_dups
+
+
+def dropna(
+    df: pd.DataFrame,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Wrapper around pd.dropna() reporting information about the removed rows.
+
+    :param df: dataframe to process
+    :param drop_infs: if +/- np.inf should be considered as nans
+    :param report_stats: if processing stats should be reported
+    :return: dataframe with nans dropped
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    num_rows_before = df.shape[0]
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
+    df = df.dropna(*args, **kwargs)
+    if report_stats:
+        num_rows_after = df.shape[0]
+        pct_removed = hprint.perc(
+            num_rows_before - num_rows_after, num_rows_before
+        )
+        _LOG.info("removed rows with nans: %s", pct_removed)
+    return df
+
+
+def drop_axis_with_all_nans(
+    df: pd.DataFrame,
+    drop_rows: bool = True,
+    drop_columns: bool = False,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+) -> pd.DataFrame:
+    """
+    Remove columns and rows not containing information (e.g., with only nans).
+
+    The operation is not performed in place and the resulting df is returned.
+    Assume that the index is timestamps.
+
+    :param df: dataframe to process
+    :param drop_rows: remove rows with only nans
+    :param drop_columns: remove columns with only nans
+    :param drop_infs: remove also +/- np.inf
+    :param report_stats: report the stats of the operations
+    :return: dataframe with specific nan axis dropped
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
+    if drop_columns:
+        # Remove columns with all nans, if any.
+        cols_before = df.columns[:]
+        df = df.dropna(axis=1, how="all")
+        if report_stats:
+            # Report results.
+            cols_after = df.columns[:]
+            removed_cols = set(cols_before).difference(set(cols_after))
+            pct_removed = hprint.perc(
+                len(cols_before) - len(cols_after), len(cols_after)
+            )
+            _LOG.info(
+                "removed cols with all nans: %s %s",
+                pct_removed,
+                hprint.list_to_str(removed_cols),
+            )
+    if drop_rows:
+        # Remove rows with all nans, if any.
+        rows_before = df.index[:]
+        df = df.dropna(axis=0, how="all")
+        if report_stats:
+            # Report results.
+            rows_after = df.index[:]
+            removed_rows = set(rows_before).difference(set(rows_after))
+            if len(rows_before) == len(rows_after):
+                # Nothing was removed.
+                min_ts = max_ts = None
+            else:
+                # TODO(gp): Report as intervals of dates.
+                min_ts = min(removed_rows)
+                max_ts = max(removed_rows)
+            pct_removed = hprint.perc(
+                len(rows_before) - len(rows_after), len(rows_after)
+            )
+            _LOG.info(
+                "removed rows with all nans: %s [%s, %s]",
+                pct_removed,
+                min_ts,
+                max_ts,
+            )
+    return df
 
 
 def reindex_on_unix_epoch(
@@ -909,3 +1005,41 @@ def compute_weighted_sum(
         )
         weighted_dfs[col] = weighted_sums
     return weighted_dfs
+
+
+def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
+    """
+    Remove N rows from the input data and shuffle the remaining ones.
+
+    :param df: input data
+    :param nrows: the number of rows to remove from the original data
+    :param seed: see `random.seed()`
+    :return: shuffled data with removed rows
+    """
+    hdbg.dassert_lte(1, nrows)
+    hdbg.dassert_lte(nrows, df.shape[0])
+    idx = list(range(df.shape[0]))
+    random.seed(seed)
+    random.shuffle(idx)
+    idx = sorted(idx[nrows:])
+    return df.iloc[idx]
+
+
+def get_random_df(
+    num_cols: int,
+    seed: Optional[int] = None,
+    date_range_kwargs: Optional[Dict[str, Any]] = None,
+) -> pd.DataFrame:
+    """
+    Compute df with random data with `num_cols` columns and index obtained by
+    calling `pd.date_range(**kwargs)`.
+
+    :param num_cols: the number of columns in a DataFrame to generate
+    :param seed: see `random.seed()`
+    :param date_range_kwargs: kwargs for `pd.date_range()`
+    """
+    if seed:
+        np.random.seed(seed)
+    dt = pd.date_range(**date_range_kwargs)
+    df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
+    return df
