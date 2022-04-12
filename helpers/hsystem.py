@@ -653,18 +653,16 @@ def check_exec(tool: str) -> bool:
     return rc == 0
 
 
-def du(path_name: str, human_format: bool = False) -> Union[int, str]:
+# TODO(Nikola): Use filesystem's `du` and move to `hio` instead?
+def du(path: str, human_format: bool = False) -> Union[int, str]:
     """
     Return the size in bytes of a file or a directory (recursively).
 
     :param human_format: represent the size in KB, MB, ... instead of bytes
         using `hintrospection.format_size()`
     """
-    if not os.path.exists(path_name):
-        _LOG.warning("Path '%s' doesn't exist", path_name)
-        return 0
-    hdbg.dassert_path_exists(path_name)
-    cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
+    hdbg.dassert_path_exists(path)
+    cmd = f"du -d 0 {path}" + " | awk '{print $1}'"
     # > du -d 0 core
     # 20    core
     _, txt = system_to_one_line(cmd)
