@@ -17,7 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.talos.data.client.talos_clients_example as imvtdctcex
+import im_v2.talos.data.client.talos_clients_example as itdctcex
 import market_data.im_client_market_data as mdimcmada
 import market_data.replayed_market_data as mdremada
 
@@ -326,10 +326,10 @@ def get_ImClientMarketData_example3(
     column_remap: Optional[Dict[str, str]],
 ) -> mdimcmada.ImClientMarketData:
     """
-    Build a `ImClientMarketData` backed with synthetic data.
+    Build a `ImClientMarketData` backed with `Talos` data.
     """
     resample_1min = False
-    talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
+    talos_client = itdctcex.get_TalosHistoricalPqByTileClient_example2(
         resample_1min
     )
     # Build a function that returns a wall clock to initialise `MarketData`.

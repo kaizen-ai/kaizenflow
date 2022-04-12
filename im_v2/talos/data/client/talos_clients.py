@@ -79,7 +79,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         """
         See description in the parent class.
         """
-        # TODO(Nina): CMTask #1658 Handle the empty universe properly.
+        # TODO(Nina): CMTask #1658  Create `get_universe()` for `TalosHistoricalPqByTileClient`.
         universe = [
             "binance::ADA_USDT",
             "binance::BTC_USDT",

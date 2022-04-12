@@ -315,7 +315,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
-@pytest.mark.skip(reason="CMTask1646")
+@pytest.mark.skip(reason="Unit test `Talos` `ImClientMarketData` CmTask #1646.")
 class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
