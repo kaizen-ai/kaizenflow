@@ -354,7 +354,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(44640, 6)
                                          full_symbol        open        high         low       close           volume
-        timestamp                                                                                                    
+        timestamp
         2022-01-01 00:00:00+00:00  binance::ADA_USDT  1.30800000  1.31000000  1.30700000  1.31000000   98266.80000000
         2022-01-01 00:01:00+00:00  binance::ADA_USDT  1.31000000  1.31400000  1.30800000  1.31200000  132189.40000000
         2022-01-01 00:02:00+00:00  binance::ADA_USDT  1.31200000  1.31800000  1.31100000  1.31700000  708964.20000000
@@ -392,7 +392,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(89280, 6)
                                          full_symbol            open            high             low           close           volume
-        timestamp                                                                                                                    
+        timestamp
         2022-01-01 00:00:00+00:00  binance::ADA_USDT      1.30800000      1.31000000      1.30700000      1.31000000   98266.80000000
         2022-01-01 00:00:00+00:00  binance::BTC_USDT  46216.93000000  46271.08000000  46208.37000000  46250.00000000      40.57574000
         2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
@@ -431,7 +431,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(89278, 6)
                                          full_symbol            open            high             low           close           volume
-        timestamp                                                                                                                    
+        timestamp
         2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
         2022-01-01 00:01:00+00:00  binance::BTC_USDT  46250.01000000  46344.23000000  46234.39000000  46312.76000000      42.38106000
         2022-01-01 00:02:00+00:00  binance::ADA_USDT      1.31200000      1.31800000      1.31100000      1.31700000  708964.20000000
@@ -471,7 +471,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(12, 6)
                                          full_symbol            open            high             low           close           volume
-        timestamp                                                                                                                    
+        timestamp
         2022-01-01 00:00:00+00:00  binance::ADA_USDT      1.30800000      1.31000000      1.30700000      1.31000000   98266.80000000
         2022-01-01 00:00:00+00:00  binance::BTC_USDT  46216.93000000  46271.08000000  46208.37000000  46250.00000000      40.57574000
         2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
@@ -563,7 +563,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(89280, 6)
                                          full_symbol            open            high             low           close           volume
-        timestamp                                                                                                                    
+        timestamp
         2022-01-01 00:00:00+00:00  binance::ADA_USDT      1.30800000      1.31000000      1.30700000      1.31000000   98266.80000000
         2022-01-01 00:00:00+00:00  binance::BTC_USDT  46216.93000000  46271.08000000  46208.37000000  46250.00000000      40.57574000
         2022-01-01 00:01:00+00:00  binance::ADA_USDT      1.31000000      1.31400000      1.30800000      1.31200000  132189.40000000
