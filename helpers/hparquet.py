@@ -444,8 +444,8 @@ def get_parquet_filters_from_timestamp_interval(
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
     *,
-    additional_filters: Optional[List[ParquetFilter]] = None,
-) -> Union[ParquetOrAndFilter, ParquetAndFilter]:
+    additional_filters: Optional[ParquetOrAndFilter] = None,
+) -> Optional[Union[ParquetOrAndFilter, ParquetAndFilter]]:
     """
     Convert a constraint on a timestamp [start_timestamp, end_timestamp] into a
     Parquet filters expression, based on the passed partitioning / tiling
@@ -551,22 +551,23 @@ def get_parquet_filters_from_timestamp_interval(
             or_and_filter.append(and_filter)
     else:
         raise ValueError(f"Unknown partition mode `{partition_mode}`!")
+    all_filters = []
     if additional_filters:
         hdbg.dassert_isinstance(additional_filters, list)
         if or_and_filter:
-            # Append additional filters for every present timestamp filter.
-            or_and_filter = [
-                additional_filters + and_filter for and_filter in or_and_filter
-            ]
+            for additional_filter in additional_filters:
+                for and_filter in or_and_filter:
+                    # Append every additional filters to every present timestamp filter.
+                    all_filters.append(additional_filter + and_filter)
         else:
             # If no timestamp filters are provided, use additional filters.
-            or_and_filter = additional_filters
+            all_filters = additional_filters
     _LOG.debug("or_and_filter=%s", str(or_and_filter))
-    if len(or_and_filter) == 0:
+    if not all_filters:
         # Empty list is not acceptable value for pyarrow dataset.
         # Only logical expression or `None`.
-        or_and_filter = None
-    return or_and_filter
+        all_filters = None
+    return all_filters
 
 
 def add_date_partition_columns(

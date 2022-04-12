@@ -6,7 +6,7 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import pandas as pd
 
@@ -112,7 +112,7 @@ class HistoricalPqByTileClient(
         )
         kwargs["log_level"] = logging.INFO
         # Build root dir to the data and Parquet filtering condition.
-        root_dir, symbol_filter = self._get_root_dir_and_symbol_filter(
+        root_dir, symbol_filters = self._get_root_dir_and_symbol_filters(
             full_symbols, full_symbol_col_name
         )
         # Build list of filters for a query and add them to kwargs.
@@ -120,7 +120,7 @@ class HistoricalPqByTileClient(
             self._partition_mode,
             start_ts,
             end_ts,
-            additional_filters=[symbol_filter],
+            additional_filters=symbol_filters,
         )
         kwargs["filters"] = filters
         # Get columns and add them to kwargs if they were not specified.
@@ -159,9 +159,9 @@ class HistoricalPqByTileClient(
         )
         return df
 
-    def _get_root_dir_and_symbol_filter(
+    def _get_root_dir_and_symbol_filters(
         self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
-    ) -> Tuple[str, hparque.ParquetFilter]:
+    ) -> Tuple[str, hparque.ParquetOrAndFilter]:
         """
         Get a root dir to the data and filtering condition on full symbol
         column.
@@ -169,8 +169,8 @@ class HistoricalPqByTileClient(
         # The root dir of the data is the one passed from the constructor.
         root_dir = self._root_dir
         # Add a filter on full symbols.
-        symbol_filter = (full_symbol_col_name, "in", full_symbols)
-        return root_dir, symbol_filter
+        symbol_filters = [[(full_symbol_col_name, "in", full_symbols)]]
+        return root_dir, symbol_filters
 
 
 # #############################################################################
