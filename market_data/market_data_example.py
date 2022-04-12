@@ -17,7 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.talos.data.client as itdc
+import im_v2.talos.data.client as itdcl
 import market_data.im_client_market_data as mdimcmada
 import market_data.replayed_market_data as mdremada
 
