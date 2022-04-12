@@ -186,7 +186,7 @@ def dassert_time_indexed_df(df: pd.DataFrame, allow_empty: bool, strictly_increa
 
     :param df: dataframe to validate
     :param allow_empty: if True, empty dataframe won't be asserted 
-    :param strictly_increasing: ensure that a Pandas object has an increasing index in strict mode 
+    :param strictly_increasing: if True, increasing index will be evaluated in strict mode 
     """
     # Verify that pandas dataframe is passed as input.
     hdbg.dassert_isinstance(df, pd.DataFrame)
