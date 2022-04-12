@@ -5,6 +5,7 @@ import pandas as pd
 
 import core.artificial_signal_generators as carsigen
 import core.statistics.descriptive as cstadesc
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -595,7 +596,7 @@ class Test_summarize_time_index_info(hunitest.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hunitest.get_random_df(
+        series = hpandas.get_random_df(
             num_cols=1,
             seed=seed,
             date_range_kwargs=date_range,
