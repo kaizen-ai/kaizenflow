@@ -203,9 +203,18 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         See description in the parent class.
         """
         # TODO(Danya): CmTask1420.
-        universe = [
-        ]
-        return universe
+                # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
+        query = (
+            f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
+        )
+        currency_exchange_df = hsql.execute_query_to_df(
+            self._db_connection, query
+        )
+        # Merge these columns to the general `full_symbol` format.
+        full_symbols = currency_exchange_df.agg("::".join, axis=1)
+        # Convert to list.
+        full_symbols = full_symbols.to_list()
+        return full_symbols
 
     @staticmethod
     # TODO(Danya): Move up to hsql.
