@@ -4,7 +4,6 @@ Import as:
 import im.kibot.metadata.config as imkimecon
 """
 
-import os
 
 import helpers.hs3 as hs3
 

@@ -47,15 +47,11 @@ def _export_env_var(val_name: str, vals: List[Any]) -> List[str]:
     """
     Create a snippet of bash script equivalent to the following:
 
-    # Update variable.
-    ```
-    PYTHONPATH=$CURR_DIR:$PYTHONPATH
-    # Remove redundant paths.
-    PYTHONPATH="$(echo $PYTHONPATH | perl -e
-      'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')"
-    echo "PYTHONPATH=$PYTHONPATH"
-    echo $PYTHONPATH | $EXEC_PATH/print_paths.sh
-    ```
+    # Update variable. ``` PYTHONPATH=$CURR_DIR:$PYTHONPATH # Remove
+    redundant paths. PYTHONPATH="$(echo $PYTHONPATH | perl -e   'print
+    join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')" echo
+    "PYTHONPATH=$PYTHONPATH" echo $PYTHONPATH |
+    $EXEC_PATH/print_paths.sh ```
     """
     txt = []
     # Update variable.

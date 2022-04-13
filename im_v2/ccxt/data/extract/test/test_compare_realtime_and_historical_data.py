@@ -50,7 +50,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             )
             # Matching exact timespan as in test function call.
             self._ohlcv_dataframe_sample = ohlcv_sample.loc[
-                "2021-12-31 23:55:00":"2022-01-01 00:05:00"
+                "2021-12-31 23:55:00":"2022-01-01 00:05:00"  # type: ignore[misc]
             ]
         # Deep copy (which is default for `pd.DataFrame.copy()`) is used to
         # preserve original data for each test.

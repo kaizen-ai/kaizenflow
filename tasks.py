@@ -8,7 +8,7 @@ import repo_config as rconf
 # Extract with:
 # > i print_tasks --as-code
 from helpers.lib_tasks import set_default_params  # This is not an invoke target.
-from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import; TODO(gp): -> docker_release_rollback_dev_image; TODO(gp): -> docker_release_...; TODO(gp): -> git_branch_create; TODO(gp): -> git_patch_create; TODO(gp): -> git_files_list; TODO(gp): -> git_files_last_commit_; TODO(gp): -> git_master_merge; TODO(gp): -> git_master_fetch; TODO(gp): -> git_branch_rename
     docker_bash,
     docker_build_local_image,
     docker_build_prod_image,
@@ -26,11 +26,9 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     docker_release_all,
     docker_release_dev_image,
     docker_release_prod_image,
-    # TODO(gp): -> docker_release_rollback_dev_image
     docker_rollback_dev_image,
     docker_rollback_prod_image,
     docker_stats,
-    # TODO(gp): -> docker_release_...
     docker_tag_local_image_as_dev,
     find,
     find_check_string_output,
@@ -49,21 +47,14 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     git_branch_files,
     git_branch_next_name,
     git_clean,
-    # TODO(gp): -> git_branch_create
     git_create_branch,
-    # TODO(gp): -> git_patch_create
     git_create_patch,
     git_delete_merged_branches,
-    # TODO(gp): -> git_files_list
+    git_fetch_master,
     git_files,
-    # TODO(gp): -> git_files_last_commit_
     git_last_commit_files,
-    # TODO(gp): -> git_master_merge
     git_merge_master,
     git_pull,
-    # TODO(gp): -> git_master_fetch
-    git_fetch_master,
-    # TODO(gp): -> git_branch_rename
     git_rename_branch,
     integrate_create_branch,
     integrate_diff_dirs,

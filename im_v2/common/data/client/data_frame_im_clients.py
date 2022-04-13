@@ -16,7 +16,8 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
     """
-    `ImClient` that serves data from a passed dataframe indexed with timestamps.
+    `ImClient` that serves data from a passed dataframe indexed with
+    timestamps.
     """
 
     def __init__(
@@ -74,9 +75,10 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         Validate that input dataframe has the correct format.
 
-        Note that further sanity checks of the data (e.g., index has timestamps
-        with timezones, index is increasing) are performed when emitting the
-        data by parent's class `_dassert_output_data_is_valid()`.
+        Note that further sanity checks of the data (e.g., index has
+        timestamps with timezones, index is increasing) are performed
+        when emitting the data by parent's class
+        `_dassert_output_data_is_valid()`.
         """
         # Verify that a non-empty dataframe is passed as input.
         hdbg.dassert_isinstance(df, pd.DataFrame)

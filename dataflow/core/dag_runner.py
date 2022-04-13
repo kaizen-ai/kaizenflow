@@ -299,42 +299,6 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         predict_result_bundle = self._run_predict(predict_interval, datetime_)
         return fit_result_bundle, predict_result_bundle
 
-    # TODO(gp): -> _fit for symmetry with the rest of the code.
-    def _run_fit(
-        self, interval: Tuple[hdateti.Datetime, hdateti.Datetime]
-    ) -> dtfcorebun.ResultBundle:
-        # Set fit interval on all source nodes of the DAG.
-        for input_nid in self.dag.get_sources():
-            node = self.dag.get_node(input_nid)
-            node.set_fit_intervals([interval])
-        # Fit.
-        method = "fit"
-        df_out, info = self._run_dag_helper(method)
-        return self._to_result_bundle(method, df_out, info)
-
-    def _run_predict(
-        self,
-        # TODO(gp): Use Interval
-        interval: Tuple[hdateti.Datetime, hdateti.Datetime],
-        oos_start: hdateti.Datetime,
-    ) -> dtfcorebun.ResultBundle:
-        # Set predict interval on all source nodes of the DAG.
-        for input_nid in self.dag.get_sources():
-            self.dag.get_node(input_nid).set_predict_intervals([interval])
-        # Predict.
-        method = "predict"
-        df_out, info = self._run_dag_helper(method)
-        # Restrict `df_out` to out-of-sample portion.
-        df_out = df_out.loc[oos_start:]
-        return self._to_result_bundle(method, df_out, info)
-
-    def _run_dag(self, method: dtfcornode.Method) -> dtfcorebun.ResultBundle:
-        """
-        Run DAG and return a ResultBundle.
-        """
-        df_out, info = self._run_dag_helper(method)
-        return self._to_result_bundle(method, df_out, info)
-
     @staticmethod
     def _generate_retraining_datetimes(
         start_timestamp: pd.Timestamp,
@@ -376,6 +340,42 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
         #
         hdbg.dassert(not idx.empty)
         return idx
+
+    # TODO(gp): -> _fit for symmetry with the rest of the code.
+    def _run_fit(
+        self, interval: Tuple[hdateti.Datetime, hdateti.Datetime]
+    ) -> dtfcorebun.ResultBundle:
+        # Set fit interval on all source nodes of the DAG.
+        for input_nid in self.dag.get_sources():
+            node = self.dag.get_node(input_nid)
+            node.set_fit_intervals([interval])
+        # Fit.
+        method = "fit"
+        df_out, info = self._run_dag_helper(method)
+        return self._to_result_bundle(method, df_out, info)
+
+    def _run_predict(
+        self,
+        # TODO(gp): Use Interval
+        interval: Tuple[hdateti.Datetime, hdateti.Datetime],
+        oos_start: hdateti.Datetime,
+    ) -> dtfcorebun.ResultBundle:
+        # Set predict interval on all source nodes of the DAG.
+        for input_nid in self.dag.get_sources():
+            self.dag.get_node(input_nid).set_predict_intervals([interval])
+        # Predict.
+        method = "predict"
+        df_out, info = self._run_dag_helper(method)
+        # Restrict `df_out` to out-of-sample portion.
+        df_out = df_out.loc[oos_start:]
+        return self._to_result_bundle(method, df_out, info)
+
+    def _run_dag(self, method: dtfcornode.Method) -> dtfcorebun.ResultBundle:
+        """
+        Run DAG and return a ResultBundle.
+        """
+        df_out, info = self._run_dag_helper(method)
+        return self._to_result_bundle(method, df_out, info)
 
 
 # #############################################################################

@@ -91,8 +91,8 @@ class TestSmaModel(hunitest.TestCase):
         )
         node = SmaModel("sma", **config.to_dict())
         # Run `fit()`, then `predict()`.
-        node.fit(data.loc["2000-01-01":"2000-02-10"])
-        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        node.fit(data.loc["2000-01-01":"2000-02-10"])  # type: ignore[misc]
+        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]  # type: ignore[misc]
         # Package results.
         self._check_results(df_out)
 
@@ -108,25 +108,12 @@ class TestSmaModel(hunitest.TestCase):
                 "nan_mode": "drop",
             }
         )
-        fit_df = data.loc["2000-01-01":"2000-02-10"]
-        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        fit_df = data.loc["2000-01-01":"2000-02-10"]  # type: ignore[misc]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, SmaModel
         )
         self.assert_equal(actual, expected)
-
-    def _check_results(
-        self,
-        df: pd.DataFrame,
-    ) -> None:
-        """
-        Convert inputs to a string and check it against golden reference.
-        """
-        decimals = 3
-        actual = hunitest.convert_df_to_string(
-            df.round(decimals), index=True, decimals=decimals
-        )
-        self.check_string(actual)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -153,6 +140,19 @@ class TestSmaModel(hunitest.TestCase):
         # Assemble the data in a dataframe.
         df = pd.DataFrame(index=date_range, data=vol_sq)
         return df
+
+    def _check_results(
+        self,
+        df: pd.DataFrame,
+    ) -> None:
+        """
+        Convert inputs to a string and check it against golden reference.
+        """
+        decimals = 3
+        actual = hunitest.convert_df_to_string(
+            df.round(decimals), index=True, decimals=decimals
+        )
+        self.check_string(actual)
 
 
 class TestSingleColumnVolatilityModel(hunitest.TestCase):
@@ -191,8 +191,8 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
             }
         )
         node = SingleColumnVolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc[:"2000-02-10"])
-        df_out = node.predict(data.loc[:"2000-02-23"])["df_out"]
+        node.fit(data.loc[:"2000-02-10"])  # type: ignore[misc]
+        df_out = node.predict(data.loc[:"2000-02-23"])["df_out"]  # type: ignore[misc]
         info = collections.OrderedDict()
         info["fit"] = node.get_info("fit")
         info["predict"] = node.get_info("predict")
@@ -212,8 +212,8 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
                 "nan_mode": "leave_unchanged",
             }
         )
-        fit_df = data.loc["2000-01-01":"2000-02-10"]
-        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        fit_df = data.loc["2000-01-01":"2000-02-10"]  # type: ignore[misc]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, SingleColumnVolatilityModel
         )
@@ -317,9 +317,9 @@ class TestVolatilityModel(hunitest.TestCase):
             }
         )
         node = VolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc["2000-01-01":"2000-02-10"])
+        node.fit(data.loc["2000-01-01":"2000-02-10"])  # type: ignore[misc]
         # TODO(Paul): Update the `predict()` interval.
-        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]  # type: ignore[misc]
         # TODO(Paul): Propagate `fit()` and `predict()` info.
         info = node.get_info("fit")
         # Package results.
@@ -339,8 +339,8 @@ class TestVolatilityModel(hunitest.TestCase):
             }
         )
         node = VolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc["2000-01-01":"2000-02-10"])
-        vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        node.fit(data.loc["2000-01-01":"2000-02-10"])  # type: ignore[misc]
+        vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]  # type: ignore[misc]
         # Invert volatility adjustment.
         ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
         inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_vol_adj"]).rename(
@@ -631,7 +631,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
             }
         )
         node = MultiindexVolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc[:"2000-01-31"])["df_out"]
+        node.fit(data.loc[:"2000-01-31"])["df_out"]  # type: ignore[misc]
         # Package results.
         df_out = node.predict(data)["df_out"]
         info = node.get_info("predict")
@@ -650,28 +650,12 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
                 "nan_mode": "drop",
             }
         )
-        fit_df = data.loc["2000-01-01":"2000-02-10"]
-        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        fit_df = data.loc["2000-01-01":"2000-02-10"]  # type: ignore[misc]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, MultiindexVolatilityModel
         )
         self.assert_equal(actual, expected)
-
-    def _get_data(self) -> pd.DataFrame:
-        """
-        Generate multivariate normal returns.
-        """
-        mn_process = carsigen.MultivariateNormalProcess()
-        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
-        realization = mn_process.generate_sample(
-            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
-        )
-        realization = realization.rename(columns=lambda x: "MN" + str(x))
-        volume = pd.DataFrame(
-            index=realization.index, columns=realization.columns, data=100
-        )
-        data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
-        return data
 
     @staticmethod
     def _package_results1(
@@ -690,6 +674,22 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         )
         act = "\n".join(act)
         return act
+
+    def _get_data(self) -> pd.DataFrame:
+        """
+        Generate multivariate normal returns.
+        """
+        mn_process = carsigen.MultivariateNormalProcess()
+        mn_process.set_cov_from_inv_wishart_draw(dim=2, seed=0)
+        realization = mn_process.generate_sample(
+            {"start": "2000-01-01", "periods": 40, "freq": "B"}, seed=0
+        )
+        realization = realization.rename(columns=lambda x: "MN" + str(x))
+        volume = pd.DataFrame(
+            index=realization.index, columns=realization.columns, data=100
+        )
+        data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
+        return data
 
 
 class TestVolatilityModulator(hunitest.TestCase):
@@ -770,17 +770,6 @@ class TestVolatilityModulator(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_in, df_out)
 
-    def _check_results(
-        self, config: cconfig.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
-    ) -> None:
-        act: List[str] = []
-        act.append(hprint.frame("config"))
-        act.append(str(config))
-        act = "\n".join(act)
-        self.check_string(act)
-        self.check_dataframe(df_in, tag="df_in", err_threshold=0.01)
-        self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)
-
     @staticmethod
     def _get_signal_and_fwd_vol(
         steps_ahead: int,
@@ -795,3 +784,14 @@ class TestVolatilityModulator(hunitest.TestCase):
         return pd.concat(
             [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
         )
+
+    def _check_results(
+        self, config: cconfig.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
+    ) -> None:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act = "\n".join(act)
+        self.check_string(act)
+        self.check_dataframe(df_in, tag="df_in", err_threshold=0.01)
+        self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)

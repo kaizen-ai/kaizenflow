@@ -78,7 +78,8 @@ def split_list_in_tasks(
     num_elems_per_task: Optional[int] = None,
 ) -> List[List[Any]]:
     """
-    Split a list in tasks based on the number of threads or elements per partition.
+    Split a list in tasks based on the number of threads or elements per
+    partition.
 
     :param num_elems_per_task: force each task to have the given number of elements
     :param keep_order: split the list so that consecutive elements of the list
@@ -267,9 +268,10 @@ def reverse_workload(
     """
     Reverse the workload.
 
-    Typically we generate workload in chronological order, but sometimes we want to
-    run from most recent data to least recent, so that we have the results about the
-    most recent periods first, which is what we care most about.
+    Typically we generate workload in chronological order, but sometimes
+    we want to run from most recent data to least recent, so that we
+    have the results about the most recent periods first, which is what
+    we care most about.
     """
     validate_workload(workload)
     # Parse the workload.
@@ -308,23 +310,14 @@ def workload_to_string(workload: Workload, *, use_pprint: bool = True) -> str:
     """
     Print the workload.
 
-    E.g.,
-    ```
-    workload_func=_LimeTask317_process_chunk
-    func_name=_LimeTask317_process_chunk
-    # task 1 / 3
+    E.g., ``` workload_func=_LimeTask317_process_chunk
+    func_name=_LimeTask317_process_chunk # task 1 / 3
     args=([('./tmp.s3/20220110/data.parquet',
-       './tmp.s3_out/./tmp.s3/20220110/data.parquet')],)
-    kwargs={}
-    # task 2 / 3
-    args=([('./tmp.s3/20220111/data.parquet',
-       './tmp.s3_out/./tmp.s3/20220111/data.parquet')],)
-    kwargs={}
-    # task 3 / 3
-    args=([('./tmp.s3/20220112/data.parquet',
-       './tmp.s3_out/./tmp.s3/20220112/data.parquet')],)
-    kwargs={}
-    ```
+    './tmp.s3_out/./tmp.s3/20220110/data.parquet')],) kwargs={} # task 2
+    / 3 args=([('./tmp.s3/20220111/data.parquet',
+    './tmp.s3_out/./tmp.s3/20220111/data.parquet')],) kwargs={} # task 3
+    / 3 args=([('./tmp.s3/20220112/data.parquet',
+    './tmp.s3_out/./tmp.s3/20220112/data.parquet')],) kwargs={} ```
     """
     validate_workload(workload)
     workload_func, func_name, tasks = workload
@@ -381,7 +374,8 @@ def _get_workload(
 
 def get_num_executing_threads(args_num_threads: Union[str, int]) -> int:
     """
-    Return the number of executing threads based on the value of `args.num_threads`.
+    Return the number of executing threads based on the value of
+    `args.num_threads`.
 
     E.g.,
         - `serial` corresponds to 1

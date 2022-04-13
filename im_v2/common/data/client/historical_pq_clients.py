@@ -6,7 +6,7 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import pandas as pd
 

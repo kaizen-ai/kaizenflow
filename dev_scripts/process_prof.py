@@ -2,6 +2,10 @@
 
 """
 Process the output of Python profiling output.
+
+Import as:
+
+import dev_scripts.process_prof as dscprpro
 """
 
 # To run:

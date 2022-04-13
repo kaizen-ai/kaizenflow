@@ -260,7 +260,8 @@ class ForecastProcessor:
         """
         Parse logged `target_position` dataframes.
 
-        Returns a dataframe indexed by datetimes and with two column levels.
+        Returns a dataframe indexed by datetimes and with two column
+        levels.
         """
         name = "target_positions"
         dir_name = os.path.join(log_dir, name)

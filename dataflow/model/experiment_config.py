@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 
 def parse_universe_str(universe_str: str) -> Tuple[str, Optional[int]]:
     """
-    Parse a string representing an universe
+    Parse a string representing an universe.
 
     E.g., "kibot_v1_0-top100", "kibot_v2_0-all".
     """
@@ -204,10 +204,11 @@ def build_configs_varying_universe_tiles(
     universe_tiles: Iterable[List[int]],
 ) -> List[cconfig.Config]:
     """
-    Create a list of `Config`s based on `config` using different universe tiles.
+    Create a list of `Config`s based on `config` using different universe
+    tiles.
 
-    Note that the code is the same as `build_configs_varying_asset_id()` but the
-    interface is different.
+    Note that the code is the same as `build_configs_varying_asset_id()`
+    but the interface is different.
     """
     hdbg.dassert_isinstance(config, cconfig.Config)
     _LOG.debug("Universe has %d tiles: %s", len(universe_tiles), universe_tiles)
@@ -229,8 +230,9 @@ def build_configs_varying_tiled_periods(
     lookback_as_pd_str: str,
 ) -> List[cconfig.Config]:
     """
-    Create a list of `Config`s based on `config` using a partition of the interval
-    of time [`start_timestamp`, `end_timestamp`] using intervals like `[a, b]`
+    Create a list of `Config`s based on `config` using a partition of the
+    interval of time [`start_timestamp`, `end_timestamp`] using intervals like
+    `[a, b]`
 
     :param start_timestamp, end_timestamp: the interval of time to partition
     :param freq_as_pd_str: the frequency of partitioning (e.g., `M`, `W`)

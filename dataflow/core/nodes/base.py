@@ -347,17 +347,6 @@ class YConnector(FitPredictNode):
         self._set_info("predict", info)
         return {"df_out": df_out}
 
-    def _apply_connector_func(
-        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        self._df_in1_col_names = df_in1.columns.tolist()
-        self._df_in2_col_names = df_in2.columns.tolist()
-        # TODO(Paul): Add meaningful info.
-        df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
-        info = collections.OrderedDict()
-        info["df_merged_info"] = dtfcorutil.get_df_info_as_string(df_out)
-        return df_out, info
-
     @staticmethod
     def _get_col_names(col_names: Optional[List[str]]) -> List[str]:
         hdbg.dassert_is_not(
@@ -368,6 +357,17 @@ class YConnector(FitPredictNode):
         )
         col_names = cast(List[str], col_names)
         return col_names
+
+    def _apply_connector_func(
+        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        self._df_in1_col_names = df_in1.columns.tolist()
+        self._df_in2_col_names = df_in2.columns.tolist()
+        # TODO(Paul): Add meaningful info.
+        df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
+        info = collections.OrderedDict()
+        info["df_merged_info"] = dtfcorutil.get_df_info_as_string(df_out)
+        return df_out, info
 
 
 class ColModeMixin:
