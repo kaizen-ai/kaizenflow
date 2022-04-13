@@ -112,6 +112,7 @@ DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
     """
     Run QA tests to verify that the invoke tasks are working properly.
+    
     This is used when qualifying a docker image before releasing.
     """
     cmd = f"pytest -m qa test --image_stage {stage}"
