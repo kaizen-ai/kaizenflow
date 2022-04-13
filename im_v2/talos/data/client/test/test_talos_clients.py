@@ -560,6 +560,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
             full_symbol,
         )
 
+    # TODO(Nina): Choose timestamp intervals that will be demonstrative for this test case.
     def test_read_data7(self) -> None:
         resample_1min = False
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
