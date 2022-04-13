@@ -60,6 +60,7 @@ class Example1_SystemRunner(dtfsysyrun.SystemRunner):
         asset_id_col: str = "asset_id",
         log_dir: Optional[str] = None,
     ) -> Tuple[cconfig.Config, dtfcore.DagBuilder]:
+        # TODO(gp): We should replace the DagAdapter with the new approach.
         base_dag_builder = dtfpexexpi.Example1_DagBuilder()
         dag_builder = dtfsrtdaad.RealTimeDagAdapter(
             base_dag_builder,
