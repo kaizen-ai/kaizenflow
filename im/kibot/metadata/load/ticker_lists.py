@@ -58,7 +58,7 @@ class TickerListsLoader:
 
     @staticmethod
     def _get_lines(s3_path: str) -> List[str]:
-        pass
+        aws_profile = "am"
         # TODO(gp): Is it \t?
         sep = "/t"
         s3fs = hs3.get_s3fs("am")

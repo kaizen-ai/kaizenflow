@@ -2,10 +2,6 @@
 
 """
 Execute `process_forecasts.py` over a tiled backtest.
-
-Import as:
-
-import oms.run_process_forecasts as oruprfor
 """
 
 import argparse

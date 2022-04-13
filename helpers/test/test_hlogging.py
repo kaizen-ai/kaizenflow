@@ -53,13 +53,12 @@ class Test_hlogging_asyncio1(hunitest.TestCase):
 
     def test_real_time1(self) -> None:
         """
-        Use the logger.
-
-        The output is like: ``` 07:55:54 hunit_test.py setUp:932
-        Resetting random.seed to 20000101 07:55:54 hunit_test.py
-        setUp:935                             Resetting np.random.seed
-        to 20000101 07:55:54 hunit_test.py setUp:944
-        base_dir_name=/app/amp/helpers/test ```
+        Use the logger. The output is like:
+        ```
+        07:55:54 hunit_test.py setUp:932                             Resetting random.seed to 20000101
+        07:55:54 hunit_test.py setUp:935                             Resetting np.random.seed to 20000101
+        07:55:54 hunit_test.py setUp:944                             base_dir_name=/app/amp/helpers/test
+        ```
         """
         # Use the wall clock time with no special event loop.
         get_wall_clock_time = lambda: hdateti.get_current_time(tz="ET")
@@ -69,8 +68,8 @@ class Test_hlogging_asyncio1(hunitest.TestCase):
 
     def test_simulated_time1(self) -> None:
         """
-        Use the logger with event_loop and asyncio. The output is like: ```
-
+        Use the logger with event_loop and asyncio. The output is like: 
+        ```
         07:52:55 @ 2022-01-18 02:52:55 workload test_hlogging.py _print_time:28 wall_clock_time=2022-01-18 07:52:55.337574-05:00
         07:52:55 @ 2022-01-18 02:52:55 workload test_hlogging.py _print_time:30 event_loop_time=2022-01-18 07:52:55.310587-05:00
         07:52:55 @ 2022-01-18 02:52:55 workload test_hlogging.py workload:33     -> wait
