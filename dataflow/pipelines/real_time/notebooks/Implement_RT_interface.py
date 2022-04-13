@@ -226,7 +226,6 @@ len(result[1])
 # %%
 import pandas as pd
 
-
 num_cols = 2
 seed = 42
 date_range_kwargs = {

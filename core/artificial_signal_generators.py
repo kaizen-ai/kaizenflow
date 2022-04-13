@@ -428,7 +428,7 @@ class PriceProcess:
         #
         n_samples = index.size
         # Generate random absolute price movements.
-        n_binomial = 4 * (bar_volatility_in_ticks ** 2)
+        n_binomial = 4 * (bar_volatility_in_ticks**2)
         tick_movements = (
             self._rng.binomial(n_binomial, 0.5, n_samples) - n_binomial * 0.5
         )

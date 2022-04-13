@@ -71,12 +71,6 @@ class TestMapDictToDataframeTest1(hunitest.TestCase):
         actual_string = hunitest.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
-    def _get_dict_of_series(self, seed: int) -> Dict[Any, pd.Series]:
-        n_items = 15
-        test_keys = ["test_key_" + str(x) for x in range(n_items)]
-        result_dict = {key: self._get_series(seed) for key in test_keys}
-        return result_dict
-
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         arparams = np.array([0.75, -0.25])
@@ -87,3 +81,9 @@ class TestMapDictToDataframeTest1(hunitest.TestCase):
             date_range_kwargs=date_range, seed=seed
         )
         return series
+
+    def _get_dict_of_series(self, seed: int) -> Dict[Any, pd.Series]:
+        n_items = 15
+        test_keys = ["test_key_" + str(x) for x in range(n_items)]
+        result_dict = {key: self._get_series(seed) for key in test_keys}
+        return result_dict

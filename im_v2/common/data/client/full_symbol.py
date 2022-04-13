@@ -33,7 +33,7 @@ def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
     # TODO(gp): I think we might need non-leading numbers.
     letter_underscore_pattern = "[a-zA-Z_]"
     # Exchanges and symbols must be separated by `::`.
-    regex_pattern = fr"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
+    regex_pattern = rf"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
     # A valid full symbol must match the pattern.
     full_match = re.fullmatch(regex_pattern, full_symbol, re.IGNORECASE)
     hdbg.dassert(

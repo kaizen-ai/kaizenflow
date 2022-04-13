@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
+import im.kibot.data.load.kibot_sql_data_loader as imkdlksdlo
 """
 
 import helpers.hdbg as hdbg

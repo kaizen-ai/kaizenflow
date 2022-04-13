@@ -19,8 +19,8 @@ _LOG = logging.getLogger(__name__)
 
 class UnitTestRenamer:
     """
-    Rename a unit test in Python code and the corresponding directories containing
-    the inputs and the expected outputs.
+    Rename a unit test in Python code and the corresponding directories
+    containing the inputs and the expected outputs.
     """
 
     def __init__(

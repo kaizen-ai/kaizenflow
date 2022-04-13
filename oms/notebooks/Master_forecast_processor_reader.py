@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.3
+#       jupytext_version: 1.13.7
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -20,9 +20,6 @@
 import logging
 import os
 
-import pandas as pd
-
-import core.config as cconfig
 import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
@@ -52,12 +49,8 @@ coplotti.plot_portfolio_stats(paper_stats_df, freq="B")
 
 # %%
 stats_computer = dtfmod.StatsComputer()
-summary_stats, _ = stats_computer.compute_portfolio_stats(
-    paper_stats_df, "B"
-)
+summary_stats, _ = stats_computer.compute_portfolio_stats(paper_stats_df, "B")
 display(summary_stats)
 
 # %%
-target_positions = oms.ForecastProcessor.read_logged_target_positions(
-    log_dir
-)
+target_positions = oms.ForecastProcessor.read_logged_target_positions(log_dir)

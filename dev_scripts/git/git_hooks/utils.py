@@ -314,7 +314,7 @@ def _get_regex(decaesarify: bool) -> Any:
     if decaesarify:
         words = caesar(words, -_CAESAR_STEP)
     words_as_regex = "(" + "|".join(words.split()) + ")"
-    regex = fr"""
+    regex = rf"""
             (?<![^\W_])     # The preceding char should not be a letter or digit char.
             {words_as_regex}
             (?![^\W_])      # The next char cannot be a letter or digit.

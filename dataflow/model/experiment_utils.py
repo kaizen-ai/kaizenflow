@@ -38,8 +38,8 @@ def add_run_experiment_args(
     dst_dir_default: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add common command line options for `run_experiments.py` and notebooks.
-    It is not used by `run_experiment_stub.py`
+    Add common command line options for `run_experiments.py` and notebooks. It
+    is not used by `run_experiment_stub.py`
 
     :param dst_dir_required: whether the user must specify a destination directory
         or not. If not, a default value should be passed through `dst_dir_default`
@@ -179,7 +179,8 @@ def get_configs_from_command_line(
     args: argparse.Namespace,
 ) -> List[cconfig.Config]:
     """
-    Return all the (complete) `Config`s to run given the command line interface.
+    Return all the (complete) `Config`s to run given the command line
+    interface.
 
     This is used by only `run_experiment.py` and `run_notebook.py` through
     `add_run_experiment_args()`, but not by `run_experiment_stub.py` which uses
