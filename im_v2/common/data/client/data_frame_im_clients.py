@@ -16,7 +16,8 @@ import im_v2.common.data.client.full_symbol as imvcdcfusy
 
 class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
     """
-    `ImClient` that serves data from a passed dataframe indexed with timestamps.
+    `ImClient` that serves data from a passed dataframe indexed with
+    timestamps.
     """
 
     def __init__(
@@ -53,7 +54,9 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
             vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
         )
         # Validate and set input dataframe.
-        hpandas.dassert_time_indexed_df(df, allow_empty=False, strictly_increasing=False)
+        hpandas.dassert_time_indexed_df(
+            df, allow_empty=False, strictly_increasing=False
+        )
         self._df = df
 
     @staticmethod

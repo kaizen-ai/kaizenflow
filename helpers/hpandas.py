@@ -180,15 +180,18 @@ def dassert_monotonic_index(
     hdbg.dassert(cond, msg=msg, *args)
 
 
-def dassert_time_indexed_df(df: pd.DataFrame, allow_empty: bool, strictly_increasing: bool) -> None:
+def dassert_time_indexed_df(
+    df: pd.DataFrame, allow_empty: bool, strictly_increasing: bool
+) -> None:
     """
-    Validate that input dataframe is time indexed.
+    Validate that input dataframe is time indexed and well-formed.
 
     :param df: dataframe to validate
-    :param allow_empty: if True, empty dataframe won't be asserted 
-    :param strictly_increasing: if True, increasing index will be evaluated in strict mode 
+    :param allow_empty: allow empty data frames
+    :param strictly_increasing: if True the index needs to be strictly increasing,
+      instead of just increasing
     """
-    # Verify that pandas dataframe is passed as input.
+    # Verify that Pandas dataframe is passed as input.
     hdbg.dassert_isinstance(df, pd.DataFrame)
     if not allow_empty:
         # Verify that a non-empty dataframe is passed as input.

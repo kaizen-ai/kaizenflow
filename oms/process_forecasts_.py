@@ -61,9 +61,13 @@ async def process_forecasts(
         - `log_dir`: directory for logging state
     """
     # Check `predictions_df`.
-    hpandas.dassert_time_indexed_df(prediction_df, allow_empty=True, strictly_increasing=True)
+    hpandas.dassert_time_indexed_df(
+        prediction_df, allow_empty=True, strictly_increasing=True
+    )
     # Check `volatility_df`.
-    hpandas.dassert_time_indexed_df(volatility_df, allow_empty=True, strictly_increasing=True)
+    hpandas.dassert_time_indexed_df(
+        volatility_df, allow_empty=True, strictly_increasing=True
+    )
     if spread_df is None:
         _LOG.info("spread_df is `None`; imputing 0.0 spread")
         spread_df = pd.DataFrame(0.0, prediction_df.index, prediction_df.columns)
@@ -260,7 +264,8 @@ class ForecastProcessor:
         """
         Parse logged `target_position` dataframes.
 
-        Returns a dataframe indexed by datetimes and with two column levels.
+        Returns a dataframe indexed by datetimes and with two column
+        levels.
         """
         name = "target_positions"
         dir_name = os.path.join(log_dir, name)
