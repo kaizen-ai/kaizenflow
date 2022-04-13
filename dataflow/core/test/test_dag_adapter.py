@@ -10,6 +10,7 @@ import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.node as dtfcornode
 import dataflow.core.nodes.sinks as dtfconosin
 import dataflow.core.nodes.sources as dtfconosou
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -30,7 +31,7 @@ def _get_data() -> pd.DataFrame:
         "end": pd.Timestamp("2010-01-10"),
         "freq": "1B",
     }
-    data = hunitest.get_random_df(
+    data = hpandas.get_random_df(
         num_cols, seed=seed, date_range_kwargs=date_range_kwargs
     )
     return data

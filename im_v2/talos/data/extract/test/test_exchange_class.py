@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 
@@ -46,7 +47,7 @@ class TestTalosExchange1(hunitest.TestCase):
         self.assertEqual(1631231940000, last_date)
         # Check the output values.
         actual = actual.reset_index(drop=True)
-        actual = hunitest.convert_df_to_json_string(actual)
+        actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
 
     def test_download_ohlcv_data_invalid_input1(self) -> None:

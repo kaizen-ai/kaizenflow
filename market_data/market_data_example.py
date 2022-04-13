@@ -17,6 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
+import im_v2.talos.data.client as itdcl
 import market_data.im_client_market_data as mdimcmada
 import market_data.replayed_market_data as mdremada
 
@@ -314,6 +315,43 @@ def get_ImClientMarketData_example2(
         columns,
         get_wall_clock_time,
         im_client=data_frame_client,
+        column_remap=column_remap,
+    )
+    return market_data_client
+
+
+def get_ImClientMarketData_example3(
+    asset_ids: Optional[List[int]],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+) -> mdimcmada.ImClientMarketData:
+    """
+    Build a `ImClientMarketData` backed with `Talos` data.
+    """
+    resample_1min = False
+    talos_client = (
+        itdcl.talos_clients_example.get_TalosHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+    )
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    last_timestamp = _get_last_timestamp(talos_client, asset_ids)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return last_timestamp
+
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    market_data_client = mdimcmada.ImClientMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client=talos_client,
         column_remap=column_remap,
     )
     return market_data_client
