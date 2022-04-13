@@ -56,7 +56,8 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             #  `ts_col_name = "timestamp_db"`.
             #ts_col_name = "end_ts"
             multiindex_output = True
-            timedelta = pd.Timedelta("1M")
+            # How much history is needed for the DAG to compute.
+            timedelta = pd.Timedelta("5M")
             # col_names_to_remove = ["start_datetime", "timestamp_db"]
             #col_names_to_remove = ["start_ts"]
             get_wall_clock_time = market_data.get_wall_clock_time
@@ -99,7 +100,11 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             #     real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
             # )
 
-            sleep_interval_in_secs = 60
+            # This represents what's the increment of the simulated wall clock.
+            # TODO(gp): This is the bar alignment. Horrible name and also it should be
+            # a property of the DAG instead of the DagRunner.
+            #sleep_interval_in_secs = 60
+            sleep_interval_in_secs = 5 * 60
 
             # Set up the event loop.
             execute_rt_loop_kwargs = {
