@@ -24,6 +24,58 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
+# System
+# #############################################################################
+
+
+class System(abc.ABC):
+    """
+    Used as type to pass around.
+    """
+    pass
+
+
+# #############################################################################
+# ForecastSystem
+# #############################################################################
+
+
+class ForecastSystem(System):
+    """
+    The simplest DataFlow-based system comprised of a:
+    - `MarketData` that can be:
+        - historical
+        - replayed-time
+    - `Dag`
+    This system allows to make forecasts given data.
+    The forecasts can then be processed in terms of a PnL.
+    """
+
+    @abc.abstractmethod
+    def get_market_data(
+            self, event_loop: asyncio.AbstractEventLoop
+    ) -> mdata.MarketData:
+        ...
+
+    @abc.abstractmethod
+    def get_dag(
+        self,
+        *,
+        prediction_col: str = "feature1",
+        volatility_col: str = "vwap.ret_0.vol",
+        returns_col: str = "vwap.ret_0",
+        spread_col: Optional[str] = None,
+        timedelta: pd.Timedelta = pd.Timedelta("7D"),
+        asset_id_col: str = "asset_id",
+        log_dir: Optional[str] = None,
+    ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
+        ...
+
+    # TODO(gp): Is this needed?
+    # def get_dag_runner(
+
+
+# #############################################################################
 # SystemRunner
 # #############################################################################
 
