@@ -61,9 +61,13 @@ async def process_forecasts(
         - `log_dir`: directory for logging state
     """
     # Check `predictions_df`.
-    _validate_df(prediction_df)
+    hpandas.dassert_time_indexed_df(
+        prediction_df, allow_empty=True, strictly_increasing=True
+    )
     # Check `volatility_df`.
-    _validate_df(volatility_df)
+    hpandas.dassert_time_indexed_df(
+        volatility_df, allow_empty=True, strictly_increasing=True
+    )
     if spread_df is None:
         _LOG.info("spread_df is `None`; imputing 0.0 spread")
         spread_df = pd.DataFrame(0.0, prediction_df.index, prediction_df.columns)
@@ -742,12 +746,6 @@ def _validate_optimizer_config(config: cconfig.Config) -> None:
     hdbg.dassert_isinstance(config, cconfig.Config)
     _ = _get_object_from_config(config, "backend", str)
     _ = _get_object_from_config(config, "target_gmv", float)
-
-
-def _validate_df(df: pd.DataFrame) -> None:
-    hdbg.dassert_isinstance(df, pd.DataFrame)
-    hpandas.dassert_index_is_datetime(df)
-    hpandas.dassert_strictly_increasing_index(df)
 
 
 def _validate_compatibility(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
