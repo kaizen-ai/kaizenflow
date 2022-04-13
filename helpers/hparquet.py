@@ -21,7 +21,6 @@ import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -93,7 +92,7 @@ def from_parquet(
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
     # Report stats about the Parquet file size.
     if report_stats:
-        file_size = hsystem.du(file_name, human_format=True)
+        file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
         _LOG.log(
             log_level,
             "Loaded '%s' (size=%s, time=%.1fs)",
@@ -172,9 +171,8 @@ def to_parquet(
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_name, filesystem=filesystem)
     # Report stats about the Parquet file size.
-    # TODO(Nikola): CMTask1437 Extend hsystem.du to support S3.
-    if report_stats and aws_profile is None:
-        file_size = hsystem.du(file_name, human_format=True)
+    if report_stats:
+        file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
         _LOG.log(
             log_level,
             "Saved '%s' (size=%s, time=%.1fs)",
