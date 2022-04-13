@@ -325,7 +325,6 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
             "binance::BTC_USDT",
             "coinbase::ADA_USDT",
         ]
-        # Universe for the test data contains only 2 full symbols so expected
         # first and last elements of the universe should be equal.
         expected_last_elements = [
             "binance::BTC_USDT",
@@ -642,7 +641,6 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
             "binance::BTC_USDT",
             "coinbase::ADA_USDT",
         ]
-        # Universe for the test data contains only 2 full symbols so expected
         # first and last elements of the universe should be equal.
         expected_last_elements = [
             "binance::BTC_USDT",
