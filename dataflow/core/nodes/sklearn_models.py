@@ -535,19 +535,6 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
         self._model = fit_state["_model"]
         self._info["fit"] = fit_state["_info['fit']"]
 
-    def _to_sklearn_format(
-        self, df: pd.DataFrame
-    ) -> Tuple[
-        List[dtfcorutil.NodeColumn],
-        np.ndarray,
-        List[dtfcorutil.NodeColumn],
-        np.ndarray,
-    ]:
-        x_vars = dtfcorutil.convert_to_list(self._x_vars)
-        y_vars = dtfcorutil.convert_to_list(self._y_vars)
-        x_vals, y_vals = cdatadap.transform_to_sklearn_old(df, x_vars, y_vars)
-        return x_vars, x_vals, y_vars, y_vals
-
     @staticmethod
     def _validate_input_df(df: pd.DataFrame) -> None:
         """
@@ -586,3 +573,16 @@ class SkLearnModel(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
             idx, [f"{y}_hat" for y in y_vars], y_hat
         )
         return x, y, y_h
+
+    def _to_sklearn_format(
+        self, df: pd.DataFrame
+    ) -> Tuple[
+        List[dtfcorutil.NodeColumn],
+        np.ndarray,
+        List[dtfcorutil.NodeColumn],
+        np.ndarray,
+    ]:
+        x_vars = dtfcorutil.convert_to_list(self._x_vars)
+        y_vars = dtfcorutil.convert_to_list(self._y_vars)
+        x_vals, y_vals = cdatadap.transform_to_sklearn_old(df, x_vars, y_vars)
+        return x_vars, x_vals, y_vars, y_vals

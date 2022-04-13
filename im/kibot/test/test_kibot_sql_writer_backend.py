@@ -6,7 +6,6 @@ import im.common.data.types as imcodatyp
 import im.common.test.utils as ictuti
 import im.kibot.sql_writer as imkisqwri
 
-
 # TODO(*): -> TestKibotSqlWriterBackend1
 @pytest.mark.skip(reason="CmTask666")
 class TestSqlWriterBackend1(ictuti.SqlWriterBackendTestCase):

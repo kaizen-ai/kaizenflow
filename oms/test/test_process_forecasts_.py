@@ -24,7 +24,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
-
     @staticmethod
     def get_portfolio(
         event_loop, asset_ids: List[int]
@@ -136,7 +135,6 @@ asset_id                    101    202
 
 
 class TestSimulatedProcessForecasts2(hunitest.TestCase):
-
     @staticmethod
     def get_portfolio(
         event_loop,
@@ -366,7 +364,6 @@ asset_id                      100     200
 
 
 class TestSimulatedProcessForecasts3(hunitest.TestCase):
-
     @staticmethod
     def get_portfolio(
         event_loop, asset_ids: List[int]
@@ -490,7 +487,6 @@ asset_id                     101     202
 
 
 class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
-
     def test_mocked_system1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Build a Portfolio.
@@ -617,7 +613,6 @@ asset_id                    101    202
 
 
 class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
-
     def test_mocked_system1(self) -> None:
         data = self._get_market_data_df1()
         predictions, volatility = self._get_predictions_and_volatility1(data)

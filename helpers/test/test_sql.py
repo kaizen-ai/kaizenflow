@@ -148,18 +148,6 @@ class TestSql1(imvcddbut.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "test_table")
 
-    def _create_test_table(self) -> None:
-        """
-        Create a test table.
-        """
-        query = """CREATE TABLE IF NOT EXISTS test_table(
-                    id SERIAL PRIMARY KEY,
-                    column_1 NUMERIC,
-                    column_2 VARCHAR(255)
-                    )
-                    """
-        self.connection.cursor().execute(query)
-
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
         """
@@ -233,3 +221,15 @@ class TestSql1(imvcddbut.TestImDbHelper):
             ],
         )
         return test_data
+
+    def _create_test_table(self) -> None:
+        """
+        Create a test table.
+        """
+        query = """CREATE TABLE IF NOT EXISTS test_table(
+                    id SERIAL PRIMARY KEY,
+                    column_1 NUMERIC,
+                    column_2 VARCHAR(255)
+                    )
+                    """
+        self.connection.cursor().execute(query)

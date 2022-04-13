@@ -5,7 +5,6 @@ import im.ib.data.load.test.test_s3_data_loader as tsdloa
 """
 
 import pandas as pd
-import pytest
 
 import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp

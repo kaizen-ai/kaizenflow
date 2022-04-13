@@ -15,7 +15,6 @@ import argparse
 import configparser
 import logging
 import pathlib
-import re
 import sys
 from typing import Optional, Tuple
 
