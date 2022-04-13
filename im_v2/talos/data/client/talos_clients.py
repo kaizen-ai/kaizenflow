@@ -4,6 +4,7 @@ Import as:
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 """
 
+import collections
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
@@ -120,35 +121,35 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         df = df[columns]
         return df
 
-    def _get_root_dir_and_symbol_filter(
+    def _get_root_dir_symbol_filter_dict(
         self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
-    ) -> Tuple[str, hparque.ParquetFilter]:
+    ) -> Dict[str, hparque.ParquetFilter]:
         """
-        Get the root dir of the `Talos` data and filtering condition on
-        currency pair column.
+        Build a dict with exchange root dirs of the `Talos` data as keys and
+        filtering conditions on corresponding currency pairs as values.
         """
-        # Get the lists of exchange ids and currency pairs.
-        exchange_ids, currency_pairs = tuple(
-            zip(
-                *[
-                    icdc.parse_full_symbol(full_symbol)
-                    for full_symbol in full_symbols
-                ]
+        # Build a root dir to the list of exchange ids subdirs.
+        root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
+        # Split full symbols on exchange id and currency pair tuples.
+        full_symbol_tuples = [
+            icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+        ]
+        # Build a dict with exchange ids as keys and lists of the corresponding
+        # currency pairs as values.
+        symbol_dict = collections.defaultdict(list)
+        for exchange_id, *currency_pair in full_symbol_tuples:
+            symbol_dict[exchange_id].extend(currency_pair)
+        # Build a dict with exchange root dirs as keys and Parquet filters by
+        # the corresponding currency pairs as values.
+        root_dir_symbol_filter_dict = {
+            os.path.join(root_dir, exchange_id): (
+                "currency_pair",
+                "in",
+                currency_pairs,
             )
-        )
-        # TODO(Dan) Extend functionality to load data for multiple exchange
-        #  ids in one query when data partitioning on S3 is changed.
-        # Verify that all full symbols in a query belong to one exchange id
-        # since dataset is partitioned only by currency pairs.
-        hdbg.dassert_eq(1, len(set(exchange_ids)))
-        # Extend the root dir to include the exchange dir, e.g.,
-        # "s3://cryptokaizen-data/historical/talos/latest/binance"
-        root_dir = os.path.join(
-            self._root_dir, self._vendor, self._data_snapshot, exchange_ids[0]
-        )
-        # Add a filter on currency pairs.
-        symbol_filter = ("currency_pair", "in", currency_pairs)
-        return root_dir, symbol_filter
+            for exchange_id, currency_pairs in symbol_dict.items()
+        }
+        return root_dir_symbol_filter_dict
 
 
 # #############################################################################

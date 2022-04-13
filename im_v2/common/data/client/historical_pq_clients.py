@@ -6,7 +6,7 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -111,66 +111,78 @@ class HistoricalPqByTileClient(
             hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
         )
         kwargs["log_level"] = logging.INFO
-        # Build root dir to the data and Parquet filtering condition.
-        root_dir, symbol_filter = self._get_root_dir_and_symbol_filter(
-            full_symbols, full_symbol_col_name
-        )
-        # Build list of filters for a query and add them to kwargs.
-        filters = hparque.get_parquet_filters_from_timestamp_interval(
-            self._partition_mode,
-            start_ts,
-            end_ts,
-            additional_filters=[symbol_filter],
-        )
-        kwargs["filters"] = filters
         # Get columns and add them to kwargs if they were not specified.
         if "columns" not in kwargs:
             columns = self._get_columns_for_query()
             kwargs["columns"] = columns
         # Add AWS profile to kwargs.
         kwargs["aws_profile"] = self._aws_profile
-        # Read data.
-        df = hparque.from_parquet(root_dir, **kwargs)
-        hdbg.dassert(not df.empty)
-        # TODO(Dan): Discuss if we should always convert index to timestamp
-        #  or make a function so it may change based on the vendor.
-        # Convert to datetime.
-        df.index = pd.to_datetime(df.index)
-        # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
-        #  Not sure if this is still needed.
-        #        # Rename column storing `full_symbols`, if needed.
-        #        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
-        #        if full_symbol_col_name != self._full_symbol_col_name:
-        #            hdbg.dassert_not_in(full_symbol_col_name, df.columns)
-        #            df.rename(
-        #                columns={self._full_symbol_col_name: full_symbol_col_name},
-        #                inplace=True,
-        #            )
-        # Transform data.
-        df = self._apply_transformations(df, full_symbol_col_name)
+        # Build root dirs to the data and Parquet filtering condition.
+        root_dir_symbol_filter_dict = self._get_root_dir_symbol_filter_dict(
+            full_symbols, full_symbol_col_name
+        )
+        # Iterate over each root dir. load data for the corresponding symbols
+        # and gather it in one list.
+        res_df_list = []
+        for root_dir, symbol_filter in root_dir_symbol_filter_dict.items():
+            # Build list of filters for a query and add them to kwargs.
+            filters = hparque.get_parquet_filters_from_timestamp_interval(
+                self._partition_mode,
+                start_ts,
+                end_ts,
+                additional_filters=[symbol_filter],
+            )
+            kwargs["filters"] = filters
+            # Read the root dir data.
+            root_dir_df = hparque.from_parquet(root_dir, **kwargs)
+            hdbg.dassert(not root_dir_df.empty)
+            # TODO(Dan): Discuss if we should always convert index to timestamp
+            #  or make a function so it may change based on the vendor.
+            # Convert index to datetime.
+            root_dir_df.index = pd.to_datetime(root_dir_df.index)
+            # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
+            #  Not sure if this is still needed.
+            #        # Rename column storing `full_symbols`, if needed.
+            #        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
+            #        if full_symbol_col_name != self._full_symbol_col_name:
+            #            hdbg.dassert_not_in(full_symbol_col_name, df.columns)
+            #            df.rename(
+            #                columns={self._full_symbol_col_name: full_symbol_col_name},
+            #                inplace=True,
+            #            )
+            # Transform data.
+            root_dir_df = self._apply_transformations(
+                root_dir_df, full_symbol_col_name
+            )
+            # Add the root dir data to the result list.
+            res_df_list.append(root_dir_df)
+        # Combine the gathered data.
+        res_df = pd.concat(res_df_list, axis=0)
         # Since we have normalized the data, the index is a timestamp, and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
         # from filtering in terms of days.
         ts_col_name = None
         left_close = True
         right_close = True
-        df = hpandas.trim_df(
-            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        res_df = hpandas.trim_df(
+            res_df, ts_col_name, start_ts, end_ts, left_close, right_close
         )
-        return df
+        return res_df
 
-    def _get_root_dir_and_symbol_filter(
+    def _get_root_dir_symbol_filter_dict(
         self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
-    ) -> Tuple[str, hparque.ParquetFilter]:
+    ) -> Dict[str, hparque.ParquetFilter]:
         """
-        Get a root dir to the data and filtering condition on full symbol
-        column.
+        Get dict with root dirs to data as keys and corresponding symbol
+        filters as values.
         """
         # The root dir of the data is the one passed from the constructor.
         root_dir = self._root_dir
         # Add a filter on full symbols.
         symbol_filter = (full_symbol_col_name, "in", full_symbols)
-        return root_dir, symbol_filter
+        # Build a dict.
+        res_dict = {root_dir: symbol_filter}
+        return res_dict
 
 
 # #############################################################################
