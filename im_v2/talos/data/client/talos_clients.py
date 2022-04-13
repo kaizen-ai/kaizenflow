@@ -203,7 +203,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         See description in the parent class.
         """
         # TODO(Danya): CmTask1420.
-                # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
+        # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
         query = (
             f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
         )
