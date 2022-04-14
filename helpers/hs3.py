@@ -361,7 +361,7 @@ def get_local_or_s3_stream(
 # TODO(gp): @all Avoid using s3://alphamatic-data but always use this
 def get_bucket() -> str:
     """
-    Return the S3 bucket pointed by AM_S3_BUCKET (e.g., `alphamatic-data`).
+    Return the S3 bucket pointed by AM_AWS_S3_BUCKET (e.g., `alphamatic-data`).
 
     The name should not start with `s3://`.
 
@@ -451,14 +451,14 @@ def get_aws_profile(aws_profile: Optional[str] = None) -> str:
 
 
 # TODO(gp): @all this should be function also of `aws_profile`.
-# TODO(Nikola): is it used somewhere? Merge `get_path()` and `get_bucket()`.
+# TODO(Nikola): is it used somewhere? Tackle in CMTask #1667.
 def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
     """
     Return the S3 path to use, based on:
 
     - argument passed
     - command line option (i.e., `--s3_path` through `args.s3_path`)
-    - env vars (i.e., `AM_S3_BUCKET`)
+    - env vars (i.e., `AM_AWS_S3_BUCKET`)
     """
     env_var = "AM_AWS_S3_BUCKET"
     s3_path = _get_variable_value(s3_path, env_var)
