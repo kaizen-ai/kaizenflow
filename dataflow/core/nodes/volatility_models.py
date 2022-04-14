@@ -273,6 +273,16 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
     def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return {"df_out": self._fit_predict_helper(df_in, fit=False)}
 
+    # TODO(gp): This code has several copies. Move it to the base class.
+    @staticmethod
+    def _append(
+        dag: dtfcordag.DAG, tail_nid: Optional[str], node: dtfcornode.Node
+    ) -> str:
+        dag.add_node(node)
+        if tail_nid is not None:
+            dag.connect(tail_nid, node.nid)
+        return node.nid
+
     def _fit_predict_helper(self, df_in: pd.DataFrame, fit: bool) -> pd.DataFrame:
         info = collections.OrderedDict()
         name = self._out_col_prefix or self._col
@@ -394,16 +404,6 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
         )
         self._append(dag, tail_nid, node)
         return dag
-
-    # TODO(gp): This code has several copies. Move it to the base class.
-    @staticmethod
-    def _append(
-        dag: dtfcordag.DAG, tail_nid: Optional[str], node: dtfcornode.Node
-    ) -> str:
-        dag.add_node(node)
-        if tail_nid is not None:
-            dag.connect(tail_nid, node.nid)
-        return node.nid
 
 
 class _MultiColVolatilityModelMixin:

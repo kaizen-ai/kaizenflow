@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.regression as coregres
+import core.statistics.regression as cstaregr
 """
 
 import logging

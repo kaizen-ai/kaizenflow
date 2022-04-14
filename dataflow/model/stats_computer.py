@@ -25,6 +25,14 @@ class StatsComputer:
     Compute a particular piece of stats instead of the whole stats table.
     """
 
+    @staticmethod
+    def compute_autocorrelation_stats(srs: pd.Series) -> pd.Series:
+        # name = "autocorrelation"
+        # ljung_box = costatis.apply_ljung_box_test(srs)
+        # TODO(Paul): Only return pvals. Rename according to test and lag.
+        #     Change default lags reported.
+        raise NotImplementedError
+
     def compute_time_series_stats(self, srs: pd.Series) -> pd.Series:
         """
         Compute statistics for a non-necessarily financial time series.
@@ -314,13 +322,38 @@ class StatsComputer:
         hdbg.dassert_isinstance(result, pd.Series)
         return result
 
+    # TODO(Paul): Make this a decorator.
     @staticmethod
-    def compute_autocorrelation_stats(srs: pd.Series) -> pd.Series:
-        # name = "autocorrelation"
-        # ljung_box = costatis.apply_ljung_box_test(srs)
-        # TODO(Paul): Only return pvals. Rename according to test and lag.
-        #     Change default lags reported.
-        raise NotImplementedError
+    def _apply_func(
+        data: Union[pd.Series, pd.DataFrame],
+        func: Callable,
+    ) -> Union[pd.Series, pd.DataFrame]:
+        is_series = isinstance(data, pd.Series)
+        if is_series:
+            data = data.to_frame()
+        hdbg.dassert_isinstance(data, pd.DataFrame)
+        func_result = data.apply(func)
+        hdbg.dassert_isinstance(func_result, pd.DataFrame)
+        if is_series:
+            func_result = func_result.squeeze()
+            hdbg.dassert_isinstance(func_result, pd.Series)
+        return func_result
+
+    @staticmethod
+    def _compute_stat_functions(
+        srs: pd.Series,
+        name: str,
+        functions: List[Callable],
+    ) -> pd.Series:
+        """
+        Apply a list of functions to a series.
+        """
+        hdbg.dassert_isinstance(srs, pd.Series)
+        # Apply the functions.
+        stats = [function(srs).rename(name) for function in functions]
+        # Concat the list of series in a single one.
+        srs_out = pd.concat(stats)
+        return srs_out
 
     def _compute_portfolio_stats(
         self,
@@ -442,36 +475,3 @@ class StatsComputer:
         _LOG.info("stats=\n%s", stats)
         results.append(pd.concat([stats], keys=["portfolio"]))
         return pd.concat(results, axis=0)
-
-    # TODO(Paul): Make this a decorator.
-    @staticmethod
-    def _apply_func(
-        data: Union[pd.Series, pd.DataFrame],
-        func: Callable,
-    ) -> Union[pd.Series, pd.DataFrame]:
-        is_series = isinstance(data, pd.Series)
-        if is_series:
-            data = data.to_frame()
-        hdbg.dassert_isinstance(data, pd.DataFrame)
-        func_result = data.apply(func)
-        hdbg.dassert_isinstance(func_result, pd.DataFrame)
-        if is_series:
-            func_result = func_result.squeeze()
-            hdbg.dassert_isinstance(func_result, pd.Series)
-        return func_result
-
-    @staticmethod
-    def _compute_stat_functions(
-        srs: pd.Series,
-        name: str,
-        functions: List[Callable],
-    ) -> pd.Series:
-        """
-        Apply a list of functions to a series.
-        """
-        hdbg.dassert_isinstance(srs, pd.Series)
-        # Apply the functions.
-        stats = [function(srs).rename(name) for function in functions]
-        # Concat the list of series in a single one.
-        srs_out = pd.concat(stats)
-        return srs_out

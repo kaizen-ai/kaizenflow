@@ -338,7 +338,8 @@ def add_parallel_processing_arg(
     The "incremental idiom" means skipping processing computation that has
     already been performed. E.g., if we need to transform files from one dir to
     another we skip the files already processed (assuming that a file present
-    in the destination dir is an indication that it has already been processed).
+    in the destination dir is an indication that it has already been
+    processed).
 
     The default behavior should always be incremental since "incremental mode"
     is not destructive like the non-incremental, i.e., delete and restart
@@ -404,8 +405,8 @@ def create_incremental_dir(dst_dir: str, args: argparse.Namespace) -> None:
     """
     Create a dir using the "incremental idiom".
 
-    If the dir already exists and the user requested the not incremental, we
-    require `--force` to confirm deleting the dir.
+    If the dir already exists and the user requested the not
+    incremental, we require `--force` to confirm deleting the dir.
     """
     if args.force:
         hdbg.dassert(

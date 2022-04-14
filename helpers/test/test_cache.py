@@ -544,6 +544,31 @@ class TestCachePerformance(_ResetGlobalCacheHelper):
         print("testing pandas series, with sample size", s.shape)
         self._test_performance(s)
 
+    @staticmethod
+    # pylint: disable=unused-argument
+    def _computation(*args: Any) -> None:
+        """
+        Simulate work.
+
+        :param args: throw away arguments
+        """
+        # Emulate small quantity of work.
+        time.sleep(0.01)
+
+    @staticmethod
+    def _timeit(func: Callable, *args: Any) -> float:
+        """
+        Get performance measure of the call to fn with args.
+
+        :param fn: callable function
+        :param args: any arguments to pass to the function fn
+        :return: precise time in seconds
+        """
+        perf_start = time.perf_counter()
+        func(*args)
+        perf_diff = time.perf_counter() - perf_start
+        return perf_diff
+
     def _test_performance(self, val: Any) -> None:
         """
         Test performance of the cache over some argument val.
@@ -582,31 +607,6 @@ class TestCachePerformance(_ResetGlobalCacheHelper):
         disk_cache_ct = self._timeit(lambda: _disk_cached_computation(val))
         print("hot disk cache run time=%f" % disk_cache_ct)
         print("hot disk cache benefit=%f" % (no_cache_ct - disk_cache_ct))
-
-    @staticmethod
-    # pylint: disable=unused-argument
-    def _computation(*args: Any) -> None:
-        """
-        Simulate work.
-
-        :param args: throw away arguments
-        """
-        # Emulate small quantity of work.
-        time.sleep(0.01)
-
-    @staticmethod
-    def _timeit(func: Callable, *args: Any) -> float:
-        """
-        Get performance measure of the call to fn with args.
-
-        :param fn: callable function
-        :param args: any arguments to pass to the function fn
-        :return: precise time in seconds
-        """
-        perf_start = time.perf_counter()
-        func(*args)
-        perf_diff = time.perf_counter() - perf_start
-        return perf_diff
 
 
 # #############################################################################
@@ -685,13 +685,6 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
             def __init__(self, string: str) -> None:
                 self._string = string
 
-            @hcache.cache(tag=self.cache_tag)
-            def print(self, n: int) -> str:
-                string = ""
-                for _ in range(n):
-                    string += "hello" + ("o" * len(self._string)) + " "
-                return string
-
             @staticmethod
             @hcache.cache(tag=self.cache_tag)
             def static_print(n: int) -> str:
@@ -699,6 +692,13 @@ class TestAmpTask1407(_ResetGlobalCacheHelper):
                 string = ""
                 for _ in range(n):
                     string += "hello" + ("o" * len("world")) + " "
+                return string
+
+            @hcache.cache(tag=self.cache_tag)
+            def print(self, n: int) -> str:
+                string = ""
+                for _ in range(n):
+                    string += "hello" + ("o" * len(self._string)) + " "
                 return string
 
         obj = _AmpTask1407Class("test")

@@ -1242,8 +1242,8 @@ def _dassert_current_dir_matches(expected_dir_basename: str) -> None:
     """
     Ensure that the name of the current dir is the one expected.
 
-    E.g., `/Users/saggese/src/cmamp1` is a valid dir for an integration branch for
-    `cmamp1`.
+    E.g., `/Users/saggese/src/cmamp1` is a valid dir for an integration
+    branch for `cmamp1`.
     """
     _LOG.debug(hprint.to_str("expected_dir_basename"))
     # Get the basename of the current dir.
@@ -1263,7 +1263,8 @@ def _dassert_is_integration_branch(abs_dir: str) -> None:
     """
     Ensure that the branch in `abs_dir` is a valid integration or lint branch.
 
-    E.g., `AmpTask1786_Integrate_20220402` is a valid integration branch.
+    E.g., `AmpTask1786_Integrate_20220402` is a valid integration
+    branch.
     """
     _LOG.debug(hprint.to_str("abs_dir"))
     branch_name = hgit.get_branch_name(dir_name=abs_dir)
@@ -1294,8 +1295,8 @@ def _clean_both_integration_dirs(abs_dir1: str, abs_dir2: str) -> None:
 @task
 def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     """
-    Create the branch for integration of `dir_basename` (e.g., amp1) in the current
-    dir.
+    Create the branch for integration of `dir_basename` (e.g., amp1) in the
+    current dir.
 
     :param dir_basename: specify the dir name (e.g., `amp1`) to ensure the set-up is
         correct.
@@ -1684,7 +1685,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -1704,8 +1706,9 @@ def integrate_diff_overlapping_files(  # type: ignore
     ctx, src_dir_basename, dst_dir_basename, subdir=""
 ):
     """
-    Find the files modified in both branches `src_dir_basename` and `dst_dir_basename`
-    Compare these files from HEAD to master version before the branch point.
+    Find the files modified in both branches `src_dir_basename` and
+    `dst_dir_basename` Compare these files from HEAD to master version before
+    the branch point.
 
     This is used to check what changes were made to files modified by
     both branches.

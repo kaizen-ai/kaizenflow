@@ -47,33 +47,6 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         # verify the output.
         _ = events, result_bundles
 
-    # TODO(gp): Centralize this.
-    def _check(
-        self,
-        events: creatime.Events,
-        result_bundles: List[dtfcore.ResultBundle],
-    ) -> None:
-        # Check the events.
-        actual = "\n".join(
-            [
-                event.to_str(
-                    include_tenths_of_secs=False, include_wall_clock_time=False
-                )
-                for event in events
-            ]
-        )
-        expected = r"""
-        num_it=1 current_time='2010-01-04 09:30:00'
-        num_it=2 current_time='2010-01-04 09:30:01'
-        num_it=3 current_time='2010-01-04 09:30:02'"""
-        self.assert_equal(actual, expected, dedent=True)
-        # Check the result bundles.
-        actual = []
-        result_bundles_as_str = "\n".join(map(str, result_bundles))
-        actual.append("result_bundles=\n%s" % result_bundles_as_str)
-        actual = "\n".join(map(str, actual))
-        self.check_string(actual)
-
     @staticmethod
     def _helper(
         event_loop: Optional[asyncio.AbstractEventLoop],
@@ -133,3 +106,30 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         _LOG.debug("events=\n%s", events)
         _LOG.debug("result_bundles=\n%s", result_bundles)
         return events, result_bundles
+
+    # TODO(gp): Centralize this.
+    def _check(
+        self,
+        events: creatime.Events,
+        result_bundles: List[dtfcore.ResultBundle],
+    ) -> None:
+        # Check the events.
+        actual = "\n".join(
+            [
+                event.to_str(
+                    include_tenths_of_secs=False, include_wall_clock_time=False
+                )
+                for event in events
+            ]
+        )
+        expected = r"""
+        num_it=1 current_time='2010-01-04 09:30:00'
+        num_it=2 current_time='2010-01-04 09:30:01'
+        num_it=3 current_time='2010-01-04 09:30:02'"""
+        self.assert_equal(actual, expected, dedent=True)
+        # Check the result bundles.
+        actual = []
+        result_bundles_as_str = "\n".join(map(str, result_bundles))
+        actual.append("result_bundles=\n%s" % result_bundles_as_str)
+        actual = "\n".join(map(str, actual))
+        self.check_string(actual)
