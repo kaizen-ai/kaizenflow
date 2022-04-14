@@ -58,7 +58,11 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         aws_profile: Optional[str] = None,
     ) -> None:
         """
-        Load `Talos` data from local or S3 filesystem.
+        Constructor.
+
+        See the parent class for parameters description.
+
+        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         vendor = "talos"
         super().__init__(
@@ -107,16 +111,17 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str, **kwargs
+        df: pd.DataFrame, full_symbol_col_name: str
     ) -> pd.DataFrame:
         """
-        Apply transformations to loaded data.
+        See description in the parent class.
         """
-        # Create full symbols column and drop its components.
-        df[full_symbol_col_name] = (
-            df["exchange_id"].astype(str) + "::" + df["currency_pair"].astype(str)
-        )
-        # Select only necessary columns.
+        # Convert to string, see the parent class for details.
+        df["exchange_id"] = df["exchange_id"].astype(str)
+        df["currency_pair"] = df["currency_pair"].astype(str)
+        # Add full symbol column.
+        df[full_symbol_col_name] = df.apply(lambda x: imvcdcfusy.build_full_symbol(x["exchange_id"], x["currency_pair"]), axis=1)
+        # Keep only necessary columns.
         columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
         df = df[columns]
         return df
@@ -129,6 +134,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         filtering conditions on corresponding currency pairs as values.
 
         E.g.,
+        ```
         {
             "s3://cryptokaizen-data/historical/talos/latest/binance": (
                 "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
@@ -137,18 +143,20 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
                 "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
             ),
         }
+        ```
         """
         # Build a root dir to the list of exchange ids subdirs, e.g.,
-        # "s3://cryptokaizen-data/historical/talos/latest/binance"
+        # `s3://cryptokaizen-data/historical/talos/latest/binance`.
         root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
-        # Split full symbols into exchange id and currency pair tuples.
+        # Split full symbols into exchange id and currency pair tuples, e.g., 
+        # [('binance', 'ADA_USDT'),
+        # ('coinbase', 'BTC_USDT')].
         full_symbol_tuples = [
             icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
         ]
-        # Build a dict with exchange ids as keys and lists of the corresponding
-        # currency pairs as values.
-        # `defaultdict` is used in order to create a list with a currency pair
-        # for a new exchange id automatically.
+        # Store full symbols as a dictionary, e.g., `{"exchange_id1": [currency_pair1, currency_pair2]}`.
+        # `Defaultdict` provides a default value for the key that does not exists that prevents from
+        # getting `KeyError`.
         symbol_dict = collections.defaultdict(list)
         for exchange_id, *currency_pair in full_symbol_tuples:
             symbol_dict[exchange_id].extend(currency_pair)

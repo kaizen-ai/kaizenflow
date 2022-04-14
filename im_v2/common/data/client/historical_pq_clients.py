@@ -41,6 +41,8 @@ class HistoricalPqByTileClient(
         """
         Constructor.
 
+        See the parent class for parameters description.
+
         :param root_dir: either a local root path (e.g., "/app/im") or
             an S3 root path (e.g., "s3://cryptokaizen-data/historical")
             to the tiled Parquet data
@@ -121,8 +123,7 @@ class HistoricalPqByTileClient(
         root_dir_symbol_filter_dict = self._get_root_dirs_symbol_filters(
             full_symbols, full_symbol_col_name
         )
-        # Iterate over each root dir. load data for the corresponding symbols
-        # and gather it in one list.
+        # 
         res_df_list = []
         for root_dir, symbol_filter in root_dir_symbol_filter_dict.items():
             # Build list of filters for a query and add them to kwargs.
@@ -133,9 +134,9 @@ class HistoricalPqByTileClient(
                 additional_filters=[symbol_filter],
             )
             kwargs["filters"] = filters
-            # Read the root dir data.
+            # Read Parquet data from a root dir.
             root_dir_df = hparque.from_parquet(root_dir, **kwargs)
-            hdbg.dassert(not root_dir_df.empty)
+            hdbg.dassert_lte(1, root_dir_df.shape[0])
             # TODO(Dan): Discuss if we should always convert index to timestamp
             #  or make a function so it may change based on the vendor.
             # Convert index to datetime.
@@ -158,9 +159,9 @@ class HistoricalPqByTileClient(
             root_dir_df = self._apply_transformations(
                 root_dir_df, full_symbol_col_name, **transformation_kwargs
             )
-            # Add the root dir data to the result list.
+            # 
             res_df_list.append(root_dir_df)
-        # Combine the gathered data.
+        # Combine data from all root dirs into a single DataFrame.
         res_df = pd.concat(res_df_list, axis=0)
         # Since we have normalized the data, the index is a timestamp, and we can
         # trim the data with index in [start_ts, end_ts] to remove the excess
@@ -177,17 +178,20 @@ class HistoricalPqByTileClient(
         self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
     ) -> Dict[str, hparque.ParquetFilter]:
         """
-        Get dict with root dirs to data as keys and corresponding symbol
+        Get dict with root dir to data as keys and corresponding symbol
         filters as values.
 
-        Since in the base implementation filtering is done by full symbols,
-        the root dir will be common for all of them so the output has only one
-        key-value pair, e.g.,
+        Since in the base class filtering is done by full symbols, the root dir
+        will be common for all of them so the output has only one key-value pair.
+
+        E.g.,
+        ```
         {
             "s3://cryptokaizen-data/historical/ccxt/latest": (
                 "full_symbol", "in", ["binance::ADA_USDT", "ftx::BTC_USDT"]
             )
         }
+        ```
         """
         # The root dir of the data is the one passed from the constructor.
         root_dir = self._root_dir
