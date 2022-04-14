@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 import helpers.hsql as hsql
+import helpers.hsystem as hsystem
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
@@ -27,12 +28,14 @@ def get_expected_column_names() -> List[str]:
 
 
 # #############################################################################
-# TestTalosParquetByTileClient1
+# TestTalosHistoricalPqByTileClient1
 # #############################################################################
 
 
 class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
     """
+    TODO(Grisha): Test multiple exchanges CmTask #1533.
+
     For all the test methods see description of corresponding private method in
     the parent class.
     """
@@ -325,7 +328,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
             "binance::BTC_USDT",
             "coinbase::ADA_USDT",
         ]
-        # first and last elements of the universe should be equal.
+        #
         expected_last_elements = [
             "binance::BTC_USDT",
             "coinbase::ADA_USDT",
@@ -341,14 +344,18 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
 
 
 # #############################################################################
-# TestTalosParquetByTileClient2
+# TestTalosHistoricalPqByTileClient2
 # #############################################################################
 
 
-@pytest.mark.skip(reason="Extend AWS authentication system CmTask #1666.")
+@pytest.mark.skipif(
+    hsystem.is_inside_ci(),
+    reason="Extend AWS authentication system CmTask #1666.",
+)
 class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
+
     For all the test methods see description of corresponding private method in
     the parent class.
     """
@@ -560,7 +567,8 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
             full_symbol,
         )
 
-    # TODO(Nina): Choose timestamp intervals that will be demonstrative for this test case.
+    # TODO(Nina): Choose timestamp intervals that will be demonstrative for this
+    #  test case, i.e. the ones with gaps.
     def test_read_data7(self) -> None:
         resample_1min = False
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -642,7 +650,7 @@ class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
             "binance::BTC_USDT",
             "coinbase::ADA_USDT",
         ]
-        # first and last elements of the universe should be equal.
+        #
         expected_last_elements = [
             "binance::BTC_USDT",
             "coinbase::ADA_USDT",
