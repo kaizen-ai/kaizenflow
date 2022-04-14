@@ -455,7 +455,9 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         # Build a root dir to the list of exchange ids subdirs, e.g.,
         # "s3://cryptokaizen-data/historical/ccxt/latest/binance"
-        root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
+        root_dir = os.path.join(
+            self._root_dir, self._vendor.lower(), self._data_snapshot
+        )
         # Split full symbols into exchange id and currency pair tuples.
         full_symbol_tuples = [
             icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
