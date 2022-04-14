@@ -3893,9 +3893,9 @@ def run_tests(  # type: ignore
     _LOG.info("# Tests run summary:")
     for test_list_name, rc in results:
         if rc != 0:
-            _LOG.error("'%s' tests failed" % test_list_name)
+            _LOG.error("'%s' tests failed", test_list_name)
         else:
-            _LOG.info("'%s' tests succeeded" % test_list_name)
+            _LOG.info("'%s' tests succeeded", test_list_name)
     return rc
 
 
