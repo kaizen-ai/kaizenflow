@@ -118,7 +118,12 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         df["exchange_id"] = df["exchange_id"].astype(str)
         df["currency_pair"] = df["currency_pair"].astype(str)
         # Add full symbol column.
-        df[full_symbol_col_name] = df.apply(lambda x: icdc.build_full_symbol(x["exchange_id"], x["currency_pair"]), axis=1)
+        df[full_symbol_col_name] = df.apply(
+            lambda x: icdc.build_full_symbol(
+                x["exchange_id"], x["currency_pair"]
+            ),
+            axis=1,
+        )
         # Keep only necessary columns.
         columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
         df = df[columns]
@@ -146,7 +151,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # Build a root dir to the list of exchange ids subdirs, e.g.,
         # `s3://cryptokaizen-data/historical/talos/latest/binance`.
         root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
-        # Split full symbols into exchange id and currency pair tuples, e.g., 
+        # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),
         # ('coinbase', 'BTC_USDT')].
         full_symbol_tuples = [

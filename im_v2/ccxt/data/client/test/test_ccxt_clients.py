@@ -1027,8 +1027,8 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     # TODO(Grisha): @Nina add more tests from `ImClientTestCase`.
 
-    For all the test methods see description of corresponding private method in
-    the parent class.
+    For all the test methods see description of corresponding private
+    method in the parent class.
     """
 
     @pytest.mark.skipif(
@@ -1082,7 +1082,9 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_get_universe1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(resample_1min)
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         expected_length = 38
         expected_first_elements = [
             "binance::ADA_USDT",

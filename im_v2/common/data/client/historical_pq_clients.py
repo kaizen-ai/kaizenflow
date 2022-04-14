@@ -29,7 +29,7 @@ class HistoricalPqByTileClient(
 
     def __init__(
         self,
-        # TODO(gp): We could use *args, **kwargs as params for ImClient, 
+        # TODO(gp): We could use *args, **kwargs as params for ImClient,
         # same for the child classes.
         vendor: str,
         resample_1min: bool,
@@ -85,7 +85,9 @@ class HistoricalPqByTileClient(
     # TODO(Grisha): factor out the common code in the child classes, see `CCXT`, `Talos`.
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str, **kwargs: Any,
+        df: pd.DataFrame,
+        full_symbol_col_name: str,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Apply transformations to loaded data.
@@ -126,7 +128,7 @@ class HistoricalPqByTileClient(
         root_dir_symbol_filter_dict = self._get_root_dirs_symbol_filters(
             full_symbols, full_symbol_col_name
         )
-        # 
+        #
         res_df_list = []
         for root_dir, symbol_filter in root_dir_symbol_filter_dict.items():
             # Build list of filters for a query and add them to kwargs.
@@ -165,7 +167,7 @@ class HistoricalPqByTileClient(
             root_dir_df = self._apply_transformations(
                 root_dir_df, full_symbol_col_name, **transformation_kwargs
             )
-            # 
+            #
             res_df_list.append(root_dir_df)
         # Combine data from all root dirs into a single DataFrame.
         res_df = pd.concat(res_df_list, axis=0)
@@ -187,8 +189,8 @@ class HistoricalPqByTileClient(
         self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
     ) -> Dict[str, hparque.ParquetFilter]:
         """
-        Get dict with root dir to data as keys and corresponding symbol
-        filters as values.
+        Get dict with root dir to data as keys and corresponding symbol filters
+        as values.
 
         Since in the base class filtering is done by full symbols, the root dir
         will be common for all of them so the output has only one key-value pair.
