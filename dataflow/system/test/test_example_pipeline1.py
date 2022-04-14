@@ -119,6 +119,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
         actual = self.run_coroutines(
             data, real_time_loop_time_out_in_secs,
         )
+        # TODO(gp): PP freeze the output.
         #self.check_string(actual)
 
 

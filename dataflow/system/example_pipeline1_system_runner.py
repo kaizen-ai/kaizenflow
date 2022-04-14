@@ -73,7 +73,7 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
         # config = dag_builder.get_config_template()
         # return config, dag_builder
 
-        # TODO(gp): -> config
+        # TODO(gp): @Danya -> config
         backtest_config = cconfig.Config()
         # Save the `DagBuilder` and the `DagConfig` in the config.
         dag_builder = dtfpexexpi.Example1_DagBuilder()
@@ -88,31 +88,7 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
         """
         Build a DAG runner from a config.
         """
-        # # TODO(gp): In the previous code asset_ids was coming from:
-        # #  `asset_ids = dtfuniver.get_universe(universe_str)`.
-        # asset_ids = [3303714233, 1467591036]
-        # columns: List[str] = []
-        # columns_remap = None
-        # market_data = mdata.get_ImClientMarketData_example2(
-        #     asset_ids, columns, columns_remap
-        # )
-        # # Create HistoricalDataSource.
-        # stage = "read_data"
-        # asset_id_col = "asset_id"
-        # # TODO(gp): This in the original code was
-        # #  `ts_col_name = "timestamp_db"`.
-        # ts_col_name = "end_ts"
-        # multiindex_output = True
-        # # col_names_to_remove = ["start_datetime", "timestamp_db"]
-        # col_names_to_remove = ["start_ts"]
-        # node = dtfsysonod.HistoricalDataSource(
-        #     stage,
-        #     market_data,
-        #     asset_id_col,
-        #     ts_col_name,
-        #     multiindex_output,
-        #     col_names_to_remove=col_names_to_remove,
-        # )
+        # TODO(gp): @Danya move the code from the test here.
         # Build the DAG.
         dag_builder = config["meta", "dag_builder"]
         dag = dag_builder.get_dag(config["DAG"])
@@ -126,6 +102,7 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
 # #############################################################################
 
 
+# TODO(gp): @Danya Uncomment this code fixing the names.
 # class Example1_Dataframe_SystemRunner(Example1_SystemRunner):
 #     def get_portfolio(
 #         self,
