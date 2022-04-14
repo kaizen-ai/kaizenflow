@@ -80,7 +80,7 @@ class HistoricalPqByTileClient(
 
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str
+        df: pd.DataFrame, full_symbol_col_name: str, kwargs: Any,
     ) -> pd.DataFrame:
         """
         Apply transformations to loaded data.
@@ -150,9 +150,13 @@ class HistoricalPqByTileClient(
             #                columns={self._full_symbol_col_name: full_symbol_col_name},
             #                inplace=True,
             #            )
+            # TODO(Dan): Remove the hack.
+            transformation_kwargs: Dict = {}
+            if self._vendor == "CCXT":
+                transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
             root_dir_df = self._apply_transformations(
-                root_dir_df, full_symbol_col_name
+                root_dir_df, full_symbol_col_name, transformation_kwargs
             )
             # Add the root dir data to the result list.
             res_df_list.append(root_dir_df)
