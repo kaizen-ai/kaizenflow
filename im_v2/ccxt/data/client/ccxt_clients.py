@@ -19,7 +19,7 @@ import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as icunv
 
 _LOG = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         See description in the parent class.
         """
-        universe = imvcounun.get_vendor_universe(
+        universe = icunv.get_vendor_universe(
             vendor=self._vendor, as_full_symbol=True
         )
         return universe  # type: ignore[no-any-return]
@@ -403,7 +403,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         See description in the parent class.
         """
-        universe = imvcounun.get_vendor_universe(
+        universe = icunv.get_vendor_universe(
             vendor=self._vendor, as_full_symbol=True
         )
         return universe  # type: ignore[no-any-return]

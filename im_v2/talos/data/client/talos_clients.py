@@ -17,9 +17,7 @@ import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.data.client.full_symbol as imvcdcfusy
-import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
-import im_v2.common.universe.universe_utils as imvcuunut
+import im_v2.common.universe as icunv
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
+class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     """
     Read historical data for `Talos` assets stored as Parquet dataset.
 
@@ -120,7 +118,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         df["exchange_id"] = df["exchange_id"].astype(str)
         df["currency_pair"] = df["currency_pair"].astype(str)
         # Add full symbol column.
-        df[full_symbol_col_name] = df.apply(lambda x: imvcdcfusy.build_full_symbol(x["exchange_id"], x["currency_pair"]), axis=1)
+        df[full_symbol_col_name] = df.apply(lambda x: icdc.build_full_symbol(x["exchange_id"], x["currency_pair"]), axis=1)
         # Keep only necessary columns.
         columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
         df = df[columns]
@@ -245,7 +243,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # Convert to list.
         full_symbols = full_symbols.to_list()
         # Map full_symbol with the numerical ids.
-        full_symbol_mapping = imvcuunut.build_numerical_to_string_id_mapping(
+        full_symbol_mapping = icunv.build_numerical_to_string_id_mapping(
             full_symbols
         )
         return full_symbol_mapping
@@ -314,7 +312,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             # TODO (Danya): Move this transformation to MarketData.
             # Add `asset_id` column using mapping on `full_symbol` column.
             data["asset_id"] = data[full_symbol_col_name].apply(
-                imvcuunut.string_to_numerical_id
+                icunv.string_to_numerical_id
             )
             # Convert to int64 to keep NaNs alongside with int values.
             data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
@@ -344,7 +342,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def _read_data(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[icdc.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -365,7 +363,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :return:
         """
         # Parse symbols into exchange and currency pair.
-        parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
+        parsed_symbols = [icdc.parse_full_symbol(s) for s in full_symbols]
         # Convert timestamps to epochs.
         if start_ts:
             start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -486,7 +484,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[icdc.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
         *,
@@ -515,7 +513,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         raise NotImplementedError
 
     def _get_start_end_ts_for_symbol(
-        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+        self, full_symbol: icdc.FullSymbol, mode: str
     ) -> pd.Timestamp:
         """
         Select a maximum/minimum timestamp for the given symbol.
@@ -528,7 +526,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :return: min or max value of 'timestamp' column.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
-        exchange, currency_pair = imvcdcfusy.parse_full_symbol(full_symbol)
+        exchange, currency_pair = icdc.parse_full_symbol(full_symbol)
         # Build a MIN/MAX query.
         if mode == "start":
             query = (
