@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 import helpers.hsql as hsql
+import helpers.hsystem as hsystem
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
@@ -1024,10 +1025,16 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
 
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
+    # TODO(Grisha): @Nina add more tests from `ImClientTestCase`.
+
     For all the test methods see description of corresponding private method in
     the parent class.
     """
 
+    @pytest.mark.skipif(
+        hsystem.is_inside_ci(),
+        reason="Extend AWS authentication system CmTask #1666.",
+    )
     @pytest.mark.slow("~6 seconds.")
     def test_read_data5(self) -> None:
         resample_1min = True

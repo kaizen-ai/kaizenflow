@@ -398,7 +398,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         raise NotImplementedError
 
-    # TODO(Dan): Inherit from `CcxtCddClient`.
+    # TODO(Grisha): Use `CcxtCddClient.get_universe()`.
     def get_universe(self) -> List[icdc.FullSymbol]:
         """
         See description in the parent class.

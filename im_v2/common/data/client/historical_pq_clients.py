@@ -29,7 +29,8 @@ class HistoricalPqByTileClient(
 
     def __init__(
         self,
-        # TODO(gp): We could use *args, **kwargs as params for ImClient.
+        # TODO(gp): We could use *args, **kwargs as params for ImClient, 
+        # same for the child classes.
         vendor: str,
         resample_1min: bool,
         root_dir: str,
@@ -71,6 +72,7 @@ class HistoricalPqByTileClient(
         """
         raise NotImplementedError
 
+    # TODO(Grisha): factor out the column names in the child classes, see `CCXT`, `Talos`.
     @staticmethod
     def _get_columns_for_query() -> Optional[List[str]]:
         """
@@ -80,6 +82,7 @@ class HistoricalPqByTileClient(
         """
         return None
 
+    # TODO(Grisha): factor out the common code in the child classes, see `CCXT`, `Talos`.
     @staticmethod
     def _apply_transformations(
         df: pd.DataFrame, full_symbol_col_name: str, **kwargs: Any,
@@ -151,7 +154,7 @@ class HistoricalPqByTileClient(
             #                columns={self._full_symbol_col_name: full_symbol_col_name},
             #                inplace=True,
             #            )
-            # TODO(Dan): Remove the hack.
+            # TODO(Grisha): think how to pass `exchange_id` to `CCXT`.
             transformation_kwargs: Dict = {}
             if self._vendor == "CCXT":
                 # `CCXT` does not have `exchange_id` as column, so we have to add it in order to reconstruct
@@ -177,6 +180,9 @@ class HistoricalPqByTileClient(
         )
         return res_df
 
+    # TODO(Grisha): factor out the common code in the child classes, see `CCXT`, `Talos`.
+    # TODO(Grisha): remove the hack that allows to read data for multiple exchanges in
+    # the child classes, see CmTask #1533.
     def _get_root_dirs_symbol_filters(
         self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
     ) -> Dict[str, hparque.ParquetFilter]:
