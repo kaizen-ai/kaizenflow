@@ -185,6 +185,7 @@ class HistoricalPqByTileClient(
     # TODO(Grisha): factor out the common code in the child classes, see `CCXT`, `Talos`.
     # TODO(Grisha): remove the hack that allows to read data for multiple exchanges in
     # the child classes, see CmTask #1533.
+    # TODO(Grisha): param `full_symbol_col_name` is not used in the child classes.
     def _get_root_dirs_symbol_filters(
         self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
     ) -> Dict[str, hparque.ParquetFilter]:
