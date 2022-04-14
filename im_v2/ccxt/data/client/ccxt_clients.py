@@ -5,15 +5,17 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 """
 
 import abc
+import collections
 import logging
 import os
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -350,3 +352,121 @@ class CcxtCddCsvParquetByAssetClient(
             file_name,
         )
         return file_path
+
+
+# #############################################################################
+# CcxtHistoricalPqByTileClient
+# #############################################################################
+
+
+class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient, CcxtCddClient):
+    """
+    Read historical data for `CCXT` assets stored as Parquet dataset.
+
+    It can read data from local or S3 filesystem as backend.
+    """
+
+    def __init__(
+        self,
+        resample_1min: bool,
+        root_dir: str,
+        partition_mode: str,
+        *,
+        data_snapshot: str = "latest",
+        aws_profile: Optional[str] = None,
+    ) -> None:
+        """
+        Load `CCXT` data from local or S3 filesystem.
+        """
+        vendor = "CCXT"
+        icdc.HistoricalPqByTileClient.__init__(
+            self,
+            vendor,
+            resample_1min,
+            root_dir,
+            partition_mode,
+            aws_profile=aws_profile,
+        )
+        CcxtCddClient.__init__(self, vendor, resample_1min)
+        self._data_snapshot = data_snapshot
+
+    def get_metadata(self) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def _get_columns_for_query() -> List[str]:
+        """
+        Get columns for Parquet data query.
+        """
+        columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "exchange_id",
+            "currency_pair",
+        ]
+        return columns
+
+    @staticmethod
+    def _apply_transformations(
+        df: pd.DataFrame, full_symbol_col_name: str
+    ) -> pd.DataFrame:
+        """
+        Apply transformations to loaded data.
+        """
+        # Create full symbols column and drop its components.
+        df[full_symbol_col_name] = (
+            df["exchange_id"].astype(str) + "::" + df["currency_pair"].astype(str)
+        )
+        # Select only necessary columns.
+        columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
+        df = df[columns]
+        return df
+
+    def _get_root_dirs_symbol_filters(
+        self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
+    ) -> Dict[str, hparque.ParquetFilter]:
+        """
+        Build a dict with exchange root dirs of the `CCXT` data as keys and
+        filtering conditions on corresponding currency pairs as values.
+
+        E.g.,
+        {
+            "s3://cryptokaizen-data/historical/ccxt/latest/binance": (
+                "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
+            ),
+            "s3://cryptokaizen-data/historical/ccxt/latest/coinbase": (
+                "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
+            ),
+        }
+        """
+        # Build a root dir to the list of exchange ids subdirs, e.g.,
+        # "s3://cryptokaizen-data/historical/ccxt/latest/binance"
+        root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
+        # Split full symbols into exchange id and currency pair tuples.
+        full_symbol_tuples = [
+            icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+        ]
+        # Build a dict with exchange ids as keys and lists of the corresponding
+        # currency pairs as values.
+        # `defaultdict` is used in order to create a list with a currency pair
+        # for a new exchange id automatically.
+        symbol_dict = collections.defaultdict(list)
+        for exchange_id, *currency_pair in full_symbol_tuples:
+            symbol_dict[exchange_id].extend(currency_pair)
+        # Build a dict with exchange root dirs as keys and Parquet filters by
+        # the corresponding currency pairs as values.
+        root_dir_symbol_filter_dict = {
+            os.path.join(root_dir, exchange_id): (
+                "currency_pair",
+                "in",
+                currency_pairs,
+            )
+            for exchange_id, currency_pairs in symbol_dict.items()
+        }
+        return root_dir_symbol_filter_dict
