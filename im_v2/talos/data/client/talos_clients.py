@@ -121,21 +121,34 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         df = df[columns]
         return df
 
-    def _get_root_dir_symbol_filter_dict(
+    def _get_root_dirs_symbol_filters(
         self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
     ) -> Dict[str, hparque.ParquetFilter]:
         """
         Build a dict with exchange root dirs of the `Talos` data as keys and
         filtering conditions on corresponding currency pairs as values.
+
+        E.g.,
+        {
+            "s3://cryptokaizen-data/historical/ccxt/latest/binance": (
+                "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
+            ),
+            "s3://cryptokaizen-data/historical/ccxt/latest/coinbase": (
+                "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
+            ),
+        }
         """
-        # Build a root dir to the list of exchange ids subdirs.
+        # Build a root dir to the list of exchange ids subdirs, e.g.,
+        # "s3://cryptokaizen-data/historical/ccxt/latest/binance"
         root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
-        # Split full symbols on exchange id and currency pair tuples.
+        # Split full symbols into exchange id and currency pair tuples.
         full_symbol_tuples = [
             icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
         ]
         # Build a dict with exchange ids as keys and lists of the corresponding
         # currency pairs as values.
+        # `defaultdict` is used in order to create a list with a currency pair
+        # for a new exchange id automatically.
         symbol_dict = collections.defaultdict(list)
         for exchange_id, *currency_pair in full_symbol_tuples:
             symbol_dict[exchange_id].extend(currency_pair)

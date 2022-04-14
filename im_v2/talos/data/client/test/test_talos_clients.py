@@ -11,11 +11,11 @@ import im_v2.talos.data.client.talos_clients_example as imvtdctcex
 import im_v2.talos.db.utils as imvtadbut
 
 # #############################################################################
-# TestTalosParquetByTileClient1
+# TestTalosHistoricalPqByTileClient1
 # #############################################################################
 
 
-class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
+class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.

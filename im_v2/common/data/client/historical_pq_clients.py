@@ -118,7 +118,7 @@ class HistoricalPqByTileClient(
         # Add AWS profile to kwargs.
         kwargs["aws_profile"] = self._aws_profile
         # Build root dirs to the data and Parquet filtering condition.
-        root_dir_symbol_filter_dict = self._get_root_dir_symbol_filter_dict(
+        root_dir_symbol_filter_dict = self._get_root_dirs_symbol_filters(
             full_symbols, full_symbol_col_name
         )
         # Iterate over each root dir. load data for the corresponding symbols
@@ -169,12 +169,21 @@ class HistoricalPqByTileClient(
         )
         return res_df
 
-    def _get_root_dir_symbol_filter_dict(
+    def _get_root_dirs_symbol_filters(
         self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
     ) -> Dict[str, hparque.ParquetFilter]:
         """
         Get dict with root dirs to data as keys and corresponding symbol
         filters as values.
+
+        Since in the base implementation filtering is done by full symbols,
+        the root dir will be common for all of them so the output has only one
+        key-value pair, e.g.,
+        {
+            "s3://cryptokaizen-data/historical/ccxt/latest": (
+                "full_symbol", "in", ["binance::ADA_USDT", "ftx::BTC_USDT"]
+            )
+        }
         """
         # The root dir of the data is the one passed from the constructor.
         root_dir = self._root_dir
