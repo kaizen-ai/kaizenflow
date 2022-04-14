@@ -14,7 +14,6 @@ import im.kibot.metadata.types as imkimetyp
 
 
 class AdjustmentsLoader:
-
     @staticmethod
     def load(symbol: str) -> List[imkimetyp.Adjustment]:
         s3_path = os.path.join(

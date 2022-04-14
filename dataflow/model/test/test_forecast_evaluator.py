@@ -13,6 +13,22 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestForecastEvaluator1(hunitest.TestCase):
+    @staticmethod
+    def get_data(
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_ids: List[int],
+        *,
+        bar_duration: str = "5T",
+    ) -> pd.DataFrame:
+        df = cfidaexa.get_forecast_dataframe(
+            start_datetime,
+            end_datetime,
+            asset_ids,
+            bar_duration=bar_duration,
+        )
+        return df
+
     def test_to_str_intraday_1_asset_floating_gmv(self) -> None:
         data = self.get_data(
             pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
@@ -411,19 +427,3 @@ class TestForecastEvaluator1(hunitest.TestCase):
                              pnl  gross_volume  net_volume       gmv       nmv
 2022-01-04 09:30:00-05:00 -100.0             0           0  100000.0  100000.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
-
-    @staticmethod
-    def get_data(
-        start_datetime: pd.Timestamp,
-        end_datetime: pd.Timestamp,
-        asset_ids: List[int],
-        *,
-        bar_duration: str = "5T",
-    ) -> pd.DataFrame:
-        df = cfidaexa.get_forecast_dataframe(
-            start_datetime,
-            end_datetime,
-            asset_ids,
-            bar_duration=bar_duration,
-        )
-        return df

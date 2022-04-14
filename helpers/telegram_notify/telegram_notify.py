@@ -35,12 +35,6 @@ class TelegramNotebookNotify:
         self.launcher_name = _get_launcher_name()
         self.token, self.chat_id = htenocon.get_info()
 
-    def notify(self, message: str) -> None:
-        msg = "<pre>{notebook_name}</pre>: {message}".format(
-            notebook_name=self.launcher_name, message=message
-        )
-        self.send(msg, self.token, self.chat_id)
-
     @staticmethod
     def send(
         text: str, token: Optional[str], chat_id: Optional[str]
@@ -57,6 +51,12 @@ class TelegramNotebookNotify:
             "https://api.telegram.org/bot{token}/sendMessage".format(token=token),
             data=payload,
         ).content
+
+    def notify(self, message: str) -> None:
+        msg = "<pre>{notebook_name}</pre>: {message}".format(
+            notebook_name=self.launcher_name, message=message
+        )
+        self.send(msg, self.token, self.chat_id)
 
 
 def _get_launcher_name() -> str:

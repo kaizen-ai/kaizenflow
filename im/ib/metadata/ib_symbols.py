@@ -56,11 +56,7 @@ class IbSymbolUniverse(imcomesym.SymbolUniverse):
             kwargs = {}
         stream, kwargs = hs3.get_local_or_s3_stream(symbols_file, **kwargs)
         df = hpandas.read_csv_to_df(
-            stream,
-            sep="\t",
-            keep_default_na=False,
-            na_values=["_"],
-            **kwargs
+            stream, sep="\t", keep_default_na=False, na_values=["_"], **kwargs
         )
         _LOG.debug("head=%s", df.head())
         # The df looks like:

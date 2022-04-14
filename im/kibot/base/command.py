@@ -41,6 +41,12 @@ class KibotCommand:
         self._file_path = inspect.getfile(self.__class__)
         self._setup_parser()
 
+    @staticmethod
+    def customize_parser(parser: argparse.ArgumentParser) -> None:
+        """
+        Allow child classes to customize the parser further.
+        """
+
     def run(self) -> None:
         sys.exit(self._main())
 
@@ -49,12 +55,6 @@ class KibotCommand:
         Allow child classes to customize the run further.
         """
         return 0
-
-    @staticmethod
-    def customize_parser(parser: argparse.ArgumentParser) -> None:
-        """
-        Allow child classes to customize the parser further.
-        """
 
     def _setup_parser(self) -> None:
         self.parser = argparse.ArgumentParser(

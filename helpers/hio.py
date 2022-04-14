@@ -446,14 +446,14 @@ def from_file(
 def get_size_as_str(file_name: str) -> str:
     if os.path.exists(file_name):
         size_in_bytes = os.path.getsize(file_name)
-        if size_in_bytes < (1024 ** 2):
+        if size_in_bytes < (1024**2):
             size_in_kb = size_in_bytes / 1024.0
             res = "%.1f KB" % size_in_kb
-        elif size_in_bytes < (1024 ** 3):
-            size_in_mb = size_in_bytes / (1024.0 ** 2)
+        elif size_in_bytes < (1024**3):
+            size_in_mb = size_in_bytes / (1024.0**2)
             res = "%.1f MB" % size_in_mb
         else:
-            size_in_gb = size_in_bytes / (1024.0 ** 3)
+            size_in_gb = size_in_bytes / (1024.0**3)
             res = "%.1f GB" % size_in_gb
     else:
         res = "nan"

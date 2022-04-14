@@ -23,6 +23,26 @@ class Test_logging1(hunitest.TestCase):
 
 
 class Test_hlogging_asyncio1(hunitest.TestCase):
+    @staticmethod
+    async def workload(get_wall_clock_time: hdateti.GetWallClockTime) -> None:
+        """
+        Coroutine simulating a workload waiting for 1s.
+        """
+        # Set the coroutine name.
+        task = asyncio.Task.current_task()
+        task.set_name("workload")
+
+        def _print_time() -> None:
+            true_wall_clock_time = hdateti.get_current_time("ET")
+            _LOG.debug("wall_clock_time=%s", true_wall_clock_time)
+            event_loop_time = get_wall_clock_time()
+            _LOG.debug("event_loop_time=%s", event_loop_time)
+
+        _print_time()
+        _LOG.debug("  -> wait")
+        await asyncio.sleep(1.0)
+        _print_time()
+
     def run_test(
         self,
         event_loop: Optional[asyncio.AbstractEventLoop],
@@ -48,7 +68,7 @@ class Test_hlogging_asyncio1(hunitest.TestCase):
 
     def test_simulated_time1(self) -> None:
         """
-        Use the logger with event_loop and asyncio. The output is like:
+        Use the logger with event_loop and asyncio. The output is like: 
         ```
         07:52:55 @ 2022-01-18 02:52:55 workload test_hlogging.py _print_time:28 wall_clock_time=2022-01-18 07:52:55.337574-05:00
         07:52:55 @ 2022-01-18 02:52:55 workload test_hlogging.py _print_time:30 event_loop_time=2022-01-18 07:52:55.310587-05:00
@@ -63,23 +83,3 @@ class Test_hlogging_asyncio1(hunitest.TestCase):
             hwacltim.set_wall_clock_time(get_wall_clock_time)
             # Run.
             self.run_test(event_loop, get_wall_clock_time)
-
-    @staticmethod
-    async def workload(get_wall_clock_time: hdateti.GetWallClockTime) -> None:
-        """
-        Coroutine simulating a workload waiting for 1s.
-        """
-        # Set the coroutine name.
-        task = asyncio.Task.current_task()
-        task.set_name("workload")
-
-        def _print_time() -> None:
-            true_wall_clock_time = hdateti.get_current_time("ET")
-            _LOG.debug("wall_clock_time=%s", true_wall_clock_time)
-            event_loop_time = get_wall_clock_time()
-            _LOG.debug("event_loop_time=%s", event_loop_time)
-
-        _print_time()
-        _LOG.debug("  -> wait")
-        await asyncio.sleep(1.0)
-        _print_time()
