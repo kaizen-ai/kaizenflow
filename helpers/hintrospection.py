@@ -99,9 +99,9 @@ def format_size(num: float) -> str:
     # From http://stackoverflow.com/questions/1094841
     for x in ["b", "KB", "MB", "GB", "TB"]:
         if num < 1024.0:
-            return "%3.1f %s" % (num, x)
+            return f"%3.1f {x}" % num
         num /= 1024.0
-    assert 0, "Invalid num='%s'" % num
+    assert 0, f"Invalid num='{num}'"
 
 
 # #############################################################################
@@ -123,14 +123,14 @@ def get_methods(obj: Any, access: str = "all") -> List[str]:
     elif access == "public":
         methods = [method for method in methods if not method.startswith("_")]
     else:
-        raise ValueError("Invalid access='%s'" % access)
+        raise ValueError(f"Invalid access='{access}'")
     return methods
 
 
 # #############################################################################
 
 
-def print_stacktrace():
+def print_stacktrace() -> None:
     """
     Print the stack trace.
     """
@@ -161,6 +161,6 @@ def get_function_from_string(func_as_str: str) -> Callable:
     # eval.
     _ = imp
     python_code = f"imp.{function}"
-    func = eval(python_code)
+    func: Callable = eval(python_code)
     _LOG.debug("{txt} -> func=%s", func)
     return func
