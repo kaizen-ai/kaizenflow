@@ -282,7 +282,7 @@ def to_file(
         use_gzip = file_name.endswith((".gz", ".gzip"))
         hio.to_file(
             file_name,
-            lines_lst,
+            lines,
             mode=mode,
             use_gzip=use_gzip,
             force_flush=force_flush,
@@ -368,8 +368,7 @@ def get_bucket() -> str:
     Make sure your ~/.aws/credentials uses the right key to access this
     bucket as default.
     """
-    # TODO(gp): @all -> AM_AWS_S3_BUCKET
-    env_var = "AM_S3_BUCKET"
+    env_var = "AM_AWS_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
     hdbg.dassert(
@@ -452,6 +451,7 @@ def get_aws_profile(aws_profile: Optional[str] = None) -> str:
 
 
 # TODO(gp): @all this should be function also of `aws_profile`.
+# TODO(Nikola): is it used somewhere? Merge `get_path()` and `get_bucket()`.
 def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
     """
     Return the S3 path to use, based on:
@@ -460,7 +460,7 @@ def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
     - command line option (i.e., `--s3_path` through `args.s3_path`)
     - env vars (i.e., `AM_S3_BUCKET`)
     """
-    env_var = "AM_S3_BUCKET"
+    env_var = "AM_AWS_S3_BUCKET"
     s3_path = _get_variable_value(s3_path, env_var)
     dassert_is_s3_path(s3_path)
     return s3_path
@@ -522,8 +522,10 @@ def get_aws_credentials(
         `aws_region` and optionally `aws_session_token`
     """
     _LOG.debug("Getting credentials for aws_profile='%s'", aws_profile)
-    # `mock` profile is artificial construct used only in tests.
-    hdbg.dassert_in(aws_profile, ("am", "ck", "mock"))
+    hdbg.dassert_in(aws_profile, ("am", "ck", "__mock__"))
+    if aws_profile == "__mock__":
+        # `mock` profile is artificial construct used only in tests.
+        aws_profile = aws_profile.strip("__")
     profile_prefix = aws_profile.upper()
     result: Dict[str, Optional[str]] = {}
     key_to_env_var: Dict[str, str] = {
@@ -636,7 +638,7 @@ def get_key_value(
 
 def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
     """
-    Return a s3fs object from a given AWS profile.
+    Return a `s3fs` object from a given AWS profile.
 
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """

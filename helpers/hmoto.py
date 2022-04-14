@@ -28,13 +28,13 @@ class S3Mock_TestCase(hunitest.TestCase):
     mock_aws_credentials_patch = umock.patch.dict(
         hs3.os.environ,
         {
-            "AWS_ACCESS_KEY_ID": "mock_key_id",
-            "AWS_SECRET_ACCESS_KEY": "mock_secret_access_key",
-            "AWS_DEFAULT_REGION": "us-east-1",
+            "MOCK_AWS_ACCESS_KEY_ID": "mock_key_id",
+            "MOCK_AWS_SECRET_ACCESS_KEY": "mock_secret_access_key",
+            "MOCK_AWS_DEFAULT_REGION": "us-east-1",
         },
     )
     mock_aws_credentials = None
-    mock_aws_profile = "mock"
+    mock_aws_profile = "__mock__"
     # Mocked bucket.
     mock_s3 = moto.mock_s3()
     bucket_name = "mock_bucket"
