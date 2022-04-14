@@ -4,7 +4,6 @@ Import as:
 import helpers.hmoto as hmoto
 """
 
-import abc
 import unittest.mock as umock
 
 import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
@@ -13,14 +12,20 @@ import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
 # `moto` must be imported before `boto3` to properly mock it.
 moto = pytest.importorskip("moto")
 
+# It is necessary that boto3 is imported after moto.
+# If not, boto3 will access real AWS.
+import boto3
+
 import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-positiona
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import im_v2.common.db.db_utils as imvcddbut  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-positiona
 
 
-class S3Mock_Base(abc.ABC):
+class S3Mock_TestCase(hunitest.TestCase):
     # Mocked AWS credentials.
-    # TODO(Nikola): Different behaviour if moved in `setUp`?
+    # TODO(Nikola): Although this code belongs to `setUp`, when this code is
+    #   moved there patch is created for each test separately. We want to avoid
+    #   that and only start/stop same patch for each test.
     mock_aws_credentials_patch = umock.patch.dict(
         hs3.os.environ,
         {
@@ -36,14 +41,9 @@ class S3Mock_Base(abc.ABC):
     moto_client = None
 
     def setUp(self) -> None:
-        super().setUp()
-        # It is necessary that boto3 is imported after moto.
-        # If not, boto3 will access real AWS.
-        import boto3
-
         # Start boto3 mock.
         self.mock_s3.start()
-        # Start aws credentials mock. Must be started after moto mock,
+        # Start AWS credentials mock. Must be started after moto mock,
         # or it will be overridden by moto with `foobar` values.
         self.mock_aws_credentials = self.mock_aws_credentials_patch.start()
         # Initialize boto client and create bucket for testing.
@@ -54,17 +54,16 @@ class S3Mock_Base(abc.ABC):
         buckets = test_client.list_buckets()["Buckets"]
         self.assertEqual(len(buckets), 1)
         self.assertEqual(buckets[0]["Name"], self.bucket_name)
+        #
+        super().setUp()
 
     def tearDown(self) -> None:
-        super().tearDown()
         # Stop moto.
         self.mock_s3.stop()
         self.mock_aws_credentials_patch.stop()
+        #
+        super().tearDown()
 
 
-class S3Mock_TestCase(S3Mock_Base, hunitest.TestCase):
-    pass
-
-
-class S3Mock_TestImDbHelper(S3Mock_Base, imvcddbut.TestImDbHelper):
+class S3Mock_TestImDbHelper(S3Mock_TestCase, imvcddbut.TestImDbHelper):
     pass
