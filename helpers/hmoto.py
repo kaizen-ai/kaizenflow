@@ -18,7 +18,6 @@ import boto3
 
 import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-positiona
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import im_v2.common.db.db_utils as imvcddbut  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-positiona
 
 
 class S3Mock_TestCase(hunitest.TestCase):
@@ -63,7 +62,3 @@ class S3Mock_TestCase(hunitest.TestCase):
         self.mock_aws_credentials_patch.stop()
         #
         super().tearDown()
-
-
-class S3Mock_TestImDbHelper(S3Mock_TestCase, imvcddbut.TestImDbHelper):
-    pass
