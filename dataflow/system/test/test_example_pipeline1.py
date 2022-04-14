@@ -35,13 +35,15 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
         """
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [101]
-            # TODO(gp): -> system
+            # TODO(gp): @Danya -> system
             system_runner = dtfsepsyru.Example1_ForecastSystem(
                 asset_ids, event_loop,
             )
             #
             market_data = system_runner.get_market_data(data)
-            #
+            # TODO(gp): @Danya this is the union of get_dag() and get_dag_runner().
+            
+            # TODO(gp): This is exactly get_dag() so we can replace the code.
             config = cconfig.Config()
             # Save the `DagBuilder` and the `DagConfig` in the config.
             dag_builder = dtfpexexpi.Example1_DagBuilder()
@@ -49,18 +51,16 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             config["DAG"] = dag_config
             config["meta", "dag_builder"] = dag_builder
 
-            # Create HistoricalDataSource.
+            # TODO(gp): This is get_dag_runner(). Move it to the
+            # Example1_ForecastSystem.
+            # Create RealTimeDataSource.
             stage = "read_data"
             asset_id_col = "asset_id"
-            # TODO(gp): This in the original code was
-            #  `ts_col_name = "timestamp_db"`.
-            #ts_col_name = "end_ts"
+            # The DAG works on multi-index dataframe containing multiple
+            # features for multiple assets.
             multiindex_output = True
             # How much history is needed for the DAG to compute.
-            timedelta = pd.Timedelta("5M")
-            # col_names_to_remove = ["start_datetime", "timestamp_db"]
-            #col_names_to_remove = ["start_ts"]
-            get_wall_clock_time = market_data.get_wall_clock_time
+            timedelta = pd.Timedelta("20T")
             node = dtfsysonod.RealTimeDataSource(
                 stage,
                 market_data,
@@ -80,33 +80,16 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             # Add the data source node.
             dag.insert_at_head(stage, node)
 
-            #
-            # #portfolio = system_runner.get_portfolio(market_data)
-            # #
-            # returns_col = "vwap.ret_0"
-            # volatility_col = "vwap.ret_0.vol"
-            # prediction_col = "feature1"
-            # config, dag_builder = system_runner.get_dag(
-            #     prediction_col=prediction_col,
-            #     volatility_col=volatility_col,
-            #     returns_col=returns_col,
-            # )
-            # #
-            # get_wall_clock_time = market_data.get_wall_clock_time
-            # dag_runner = system_runner.get_dag_runner(
-            #     dag_builder,
-            #     config,
-            #     get_wall_clock_time,
-            #     real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
-            # )
-
-            # This represents what's the increment of the simulated wall clock.
             # TODO(gp): This is the bar alignment. Horrible name and also it should be
             # a property of the DAG instead of the DagRunner.
             #sleep_interval_in_secs = 60
             sleep_interval_in_secs = 5 * 60
 
             # Set up the event loop.
+            get_wall_clock_time = market_data.get_wall_clock_time
+
+            # time_out_in_secs = how long the system has to run.
+            # E.g., 10 * 60 it will run for 2 iterations of 5 mins and then stops.
             execute_rt_loop_kwargs = {
                 "get_wall_clock_time": get_wall_clock_time,
                 "sleep_interval_in_secs": sleep_interval_in_secs,
@@ -121,6 +104,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             }
             dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
 
+            # Run certain coroutines in asyncio.
             coroutines = [dag_runner.predict()]
             #
             result_bundles = hasynci.run(

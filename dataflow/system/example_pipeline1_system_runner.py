@@ -72,6 +72,8 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
         # #_LOG.debug("dag_builder=\n%s", dag_builder)
         # config = dag_builder.get_config_template()
         # return config, dag_builder
+
+        # TODO(gp): -> config
         backtest_config = cconfig.Config()
         # Save the `DagBuilder` and the `DagConfig` in the config.
         dag_builder = dtfpexexpi.Example1_DagBuilder()

@@ -44,11 +44,13 @@ class ForecastSystem(System):
     """
     The simplest DataFlow-based system comprised of a:
     - `MarketData` that can be:
-        - historical
-        - replayed-time
+        - historical (for backtesting)
+        - replayed-time (for simulating real time)
+        - real-time (for production)
     - `Dag`
     This system allows to make forecasts given data.
-    The forecasts can then be processed in terms of a PnL.
+    The forecasts can then be processed in terms of a PnL through a notebook or
+    other pipelines.
     """
 
     @abc.abstractmethod
@@ -61,6 +63,7 @@ class ForecastSystem(System):
     def get_dag(
         self,
         *,
+        # TODO(gp): @danya No defaults.
         prediction_col: str = "feature1",
         volatility_col: str = "vwap.ret_0.vol",
         returns_col: str = "vwap.ret_0",
@@ -69,6 +72,11 @@ class ForecastSystem(System):
         asset_id_col: str = "asset_id",
         log_dir: Optional[str] = None,
     ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
+        # TODO(gp): @danya complete / factor the docstring.
+        """
+        :param timedelta: how much history of the feature is needed to compute
+            the forecast
+        """
         ...
 
     # TODO(gp): Is this needed?
