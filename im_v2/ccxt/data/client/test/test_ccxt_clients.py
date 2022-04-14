@@ -1022,12 +1022,13 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
 # #############################################################################
 
 
-@pytest.mark.slow("~6 seconds.")
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
     """
+
+    @pytest.mark.slow("~6 seconds.")
     def test_read_data5(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
@@ -1068,4 +1069,27 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_column_names,
             expected_column_unique_values,
             expected_signature,
+        )
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_universe1(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(resample_1min)
+        expected_length = 38
+        expected_first_elements = [
+            "binance::ADA_USDT",
+            "binance::AVAX_USDT",
+            "binance::BNB_USDT",
+        ]
+        expected_last_elements = [
+            "kucoin::LINK_USDT",
+            "kucoin::SOL_USDT",
+            "kucoin::XRP_USDT",
+        ]
+        self._test_get_universe1(
+            im_client,
+            expected_length,
+            expected_first_elements,
+            expected_last_elements,
         )
