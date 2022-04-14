@@ -80,7 +80,7 @@ class HistoricalPqByTileClient(
 
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str, kwargs: Any,
+        df: pd.DataFrame, full_symbol_col_name: str, **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Apply transformations to loaded data.
