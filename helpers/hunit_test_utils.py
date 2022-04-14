@@ -139,8 +139,8 @@ class UnitTestRenamer:
             old_class_name, old_method_name = split_old_name[0], ""
             new_class_name, new_method_name = split_new_name[0], ""
             _LOG.debug(
-                f"Trying to change the name of `{old_test_name}` unit test \
-                     class to `{new_test_name}`."
+                "Trying to change the name of `{old_test_name}` unit test class to `%s`.",
+                new_test_name,
             )
         else:
             # Method name split by `.` is 2 element array, e.g.
@@ -154,8 +154,10 @@ class UnitTestRenamer:
                 same class. E.g.  `--old TestCache.test1 --new TestCache.new_test1`",
             )
             _LOG.debug(
-                f"Trying to change the name of `{old_method_name}` method of \
-                     `{old_class_name}` class to `{new_method_name}`."
+                "Trying to change the name of `%s` method of `%s` class to `%s`.",
+                old_method_name,
+                old_class_name,
+                new_method_name,
             )
         # Fill the processing parameters.
         config["old_class"] = old_class_name
@@ -163,6 +165,57 @@ class UnitTestRenamer:
         config["new_class"] = new_class_name
         config["new_method"] = new_method_name
         return config
+
+    @staticmethod
+    def _is_docstring(
+        line: str,
+        quotes_count: Dict[str, int],
+    ) -> Tuple[bool, Dict[str, int]]:
+        """
+        Check if the line is inside of the docstring.
+
+        :param line: the line to check
+        :param quotes_count: the count of the quotes of two types
+        :return:
+            - whether the line is inside the docstring or not
+            - the updated counter of the quotes
+        """
+        # Determine the current line's status: in a multi-line string
+        # or not.
+        for quotes in quotes_count:
+            if line.count(quotes) == 1:
+                quotes_count[quotes] += 1
+        # The line is in a string if the quotes have been opened but not
+        # closed yet.
+        in_docstring = any(
+            (quote_count % 2) == 1 for quote_count in quotes_count.values()
+        )
+        return in_docstring, quotes_count
+
+    @staticmethod
+    def _rename_directory(outcome_path_old: str, outcome_path_new: str) -> None:
+        """
+        Rename the outcomes directory and add it to git.
+
+        :param outcome_path_old: the old name of outcome directory, e.g.
+          `/src/cmamp1/helpers/test/outcomes/TestRename.test_old`
+        :param outcome_path_new: the new name of outcome directory, e.g.
+          `/src/cmamp1/helpers/test/outcomes/TestRename.test_new`
+        """
+        cmd = f"mv {outcome_path_old} {outcome_path_new}"
+        # Rename the directory.
+        rc = hsystem.system(cmd, abort_on_error=True, suppress_output=False)
+        _LOG.info(
+            "Renaming `%s` directory to `%s`. Output log: %s",
+            outcome_path_old,
+            outcome_path_new,
+            rc,
+        )
+        # Add to git new outcome directory and remove the old one.
+        # The sequence of commands is used because `git mv` does not work
+        # properly while unit testing.
+        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
+        hsystem.system(cmd, abort_on_error=True, suppress_output=False)
 
     def _rename_in_file(
         self,
@@ -182,7 +235,7 @@ class UnitTestRenamer:
         :param file_path: the path to the file, `/src/cmamp1/helpers/test/test_lib_tasks.py`
         """
         content = hio.from_file(file_path)
-        if not re.search(f"class {self.cfg['old_class']}\(", content):
+        if not re.search(rf"class {self.cfg['old_class']}\(", content):
             # Return if target test class does not appear in file content.
             return
         if self.cfg["old_method"] == "":
@@ -213,32 +266,6 @@ class UnitTestRenamer:
         # Write processed content back to file.
         hio.to_file(file_path, content)
 
-    def _is_docstring(
-        self,
-        line: str,
-        quotes_count: Dict[str, int],
-    ) -> Tuple[bool, Dict[str, int]]:
-        """
-        Check if the line is inside of the docstring.
-
-        :param line: the line to check
-        :param quotes_count: the count of the quotes of two types
-        :return:
-            - whether the line is inside the docstring or not
-            - the updated counter of the quotes
-        """
-        # Determine the current line's status: in a multi-line string
-        # or not.
-        for quotes in quotes_count:
-            if line.count(quotes) == 1:
-                quotes_count[quotes] += 1
-        # The line is in a string if the quotes have been opened but not
-        # closed yet.
-        in_docstring = any(
-            (quote_count % 2) == 1 for quote_count in quotes_count.values()
-        )
-        return in_docstring, quotes_count
-
     def _rename_class(
         self,
         content: str,
@@ -258,8 +285,8 @@ class UnitTestRenamer:
             if not in_docstring:
                 # Rename the class.
                 new_line, num_replaced = re.subn(
-                    f"class {self.cfg['old_class']}\(",
-                    f"class {self.cfg['new_class']}(",
+                    rf"class {self.cfg['old_class']}\(",
+                    rf"class {self.cfg['new_class']}(",
                     line,
                 )
                 if num_replaced != 0:
@@ -283,8 +310,8 @@ class UnitTestRenamer:
         class_found = False
         # The number of substitutions made in the content of the file.
         num_replaced = 0
-        class_pattern = f"class {self.cfg['old_class']}\("
-        method_pattern = f"def {self.cfg['old_method']}\("
+        class_pattern = rf"class {self.cfg['old_class']}\("
+        method_pattern = rf"def {self.cfg['old_method']}\("
         quotes_count = {"'''": 0, '"""': 0}
         for ind, line in enumerate(lines):
             # Check if the line is inside of the docstring.
@@ -308,32 +335,6 @@ class UnitTestRenamer:
                     class_found = True
         new_content = "\n".join(lines)
         return new_content, num_replaced
-
-    def _rename_directory(
-        self, outcome_path_old: str, outcome_path_new: str
-    ) -> None:
-        """
-        Rename the outcomes directory and add it to git.
-
-        :param outcome_path_old: the old name of outcome directory, e.g.
-          `/src/cmamp1/helpers/test/outcomes/TestRename.test_old`
-        :param outcome_path_new: the new name of outcome directory, e.g.
-          `/src/cmamp1/helpers/test/outcomes/TestRename.test_new`
-        """
-        cmd = f"mv {outcome_path_old} {outcome_path_new}"
-        # Rename the directory.
-        rc = hsystem.system(cmd, abort_on_error=True, suppress_output=False)
-        _LOG.info(
-            "Renaming `%s` directory to `%s`. Output log: %s",
-            outcome_path_old,
-            outcome_path_new,
-            rc,
-        )
-        # Add to git new outcome directory and remove the old one.
-        # The sequence of commands is used because `git mv` does not work
-        # properly while unit testing.
-        cmd = f"git add {outcome_path_new} && git rm -r {outcome_path_old}"
-        hsystem.system(cmd, abort_on_error=True, suppress_output=False)
 
     def _process_outcomes_dir(self, outcome_dir: str, outcomes_path: str) -> bool:
         """
@@ -368,7 +369,8 @@ class UnitTestRenamer:
         elif self.cfg["old_method"] != "" and outcome_dir == old_target:
             # Check if the dir should be renamed. E.g. given that `old_target`
             # is `TestOld.test1_new`, then if `outcome_dir` is `TestOld.test1`,
-            # it should not be renamed, and if `outcome_dir` is `TestOld.test1_new`, it should be renamed.
+            # it should not be renamed, and if `outcome_dir` is `TestOld.test1_new`,
+            # it should be renamed.
             outcome_path_new = os.path.join(outcomes_path, new_target)
         else:
             return False

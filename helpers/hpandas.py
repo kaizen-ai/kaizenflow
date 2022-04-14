@@ -103,7 +103,7 @@ def dassert_unique_index(
     if not index.is_unique:
         dup_indices = index.duplicated(keep=False)
         df_dup = obj[dup_indices]
-        dup_msg = "Duplicated rows are:\n%s\n" % df_to_str(df_dup)
+        dup_msg = f"Duplicated rows are:\n{df_to_str(df_dup)}\n"
         if msg is None:
             msg = dup_msg
         else:
@@ -141,7 +141,7 @@ def dassert_increasing_index(
         mask_shift[len(mask) - 1] = False
         #
         mask = mask | mask_shift
-        dup_msg = "Not increasing indices are:\n%s\n" % df_to_str(obj[mask])
+        dup_msg = f"Not increasing indices are:\n{df_to_str(obj[mask])}\n"
         if msg is None:
             msg = dup_msg
         else:
@@ -160,8 +160,8 @@ def dassert_strictly_increasing_index(
     """
     Ensure that a Pandas object has a strictly increasing index.
     """
-    dassert_unique_index(obj, msg=msg, *args)
-    dassert_increasing_index(obj, msg=msg, *args)
+    dassert_unique_index(obj, msg, *args)
+    dassert_increasing_index(obj, msg, *args)
 
 
 # TODO(gp): Not sure it's used or useful?
@@ -174,7 +174,7 @@ def dassert_monotonic_index(
     Ensure that a Pandas object has a monotonic (i.e., strictly increasing or
     decreasing index).
     """
-    dassert_unique_index(obj, msg=msg, *args)
+    dassert_unique_index(obj, msg, *args)
     index = _get_index(obj)
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)
@@ -384,7 +384,7 @@ def drop_duplicates(
     **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
     """
-    Wrapper around `pandas.drop_duplicates()`.
+    Create a wrapper around `pandas.drop_duplicates()`.
 
     See the official docs:
     - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
@@ -414,7 +414,8 @@ def dropna(
     **kwargs: Any,
 ) -> pd.DataFrame:
     """
-    Wrapper around pd.dropna() reporting information about the removed rows.
+    Create a wrapper around pd.dropna() reporting information about the removed
+    rows.
 
     :param df: dataframe to process
     :param drop_infs: if +/- np.inf should be considered as nans
@@ -532,17 +533,17 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 6) -> str:
     testing purposes.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
-    text: List[str] = ["df.shape=%s" % str(df.shape)]
+    text: List[str] = [f"df.shape={str(df.shape)}"]
     with pd.option_context(
         "display.max_colwidth", int(1e6), "display.max_columns", None
     ):
         # If dataframe size exceeds number of rows, show only subset in form of
         # first and last rows. Otherwise, whole dataframe is shown.
         if len(df) > num_rows:
-            text.append("df.head=\n%s" % df.head(num_rows // 2))
-            text.append("df.tail=\n%s" % df.tail(num_rows // 2))
+            text.append(f"df.head=\n{df.head(num_rows // 2)}")
+            text.append(f"df.tail=\n{df.tail(num_rows // 2)}")
         else:
-            text.append("df.full=\n%s" % df)
+            text.append(f"df.full=\n{df}")
     text: str = "\n".join(text)
     return text
 
@@ -738,11 +739,11 @@ def df_to_str(
             # TODO(gp): Unfortunately we can't improve this part of the output
             # since there are many golden inside the code that would need to be
             # updated. Consider automating updating the expected values in the code.
-            txt = "index=[%s, %s]" % (df.index.min(), df.index.max())
+            txt = f"index=[{df.index.min()}, {df.index.max()}]"
             out.append(txt)
-            txt = "columns=%s" % ",".join(map(str, df.columns))
+            txt = f"columns={','.join(map(str, df.columns))}"
             out.append(txt)
-            txt = "shape=%s" % str(df.shape)
+            txt = f"shape={str(df.shape)}"
             out.append(txt)
         # Print information about the types.
         if print_dtypes:
@@ -750,11 +751,11 @@ def df_to_str(
 
             table = []
 
-            def _report_srs_stats(srs: pd.Series) -> str:
+            def _report_srs_stats(srs: pd.Series) -> List[Any]:
                 """
                 Report dtype, the first element, and its type of series.
                 """
-                row = []
+                row: List[Any] = []
                 first_elem = srs.values[0]
                 num_unique = srs.nunique()
                 num_nans = srs.isna().sum()
@@ -776,11 +777,11 @@ def df_to_str(
             row = map(str, row)
             table.append(row)
             for col_name in df.columns:
-                row = []
-                row.append(col_name)
-                row.extend(_report_srs_stats(df[col_name]))
-                row = map(str, row)
-                table.append(row)
+                row_: List[Any] = []
+                row_.append(col_name)
+                row_.extend(_report_srs_stats(df[col_name]))
+                row_ = map(str, row_)
+                table.append(row_)
             #
             columns = [
                 "col_name",
@@ -813,7 +814,7 @@ def df_to_str(
                 mem_use_df = mem_use_df.applymap(hintros.format_size)
             else:
                 raise ValueError(
-                    "Invalid memory_usage_mode='%s'" % memory_usage_mode
+                    f"Invalid memory_usage_mode='{memory_usage_mode}'"
                 )
             memory_usage_as_txt = _df_to_str(mem_use_df, num_rows=None)
             out.append(memory_usage_as_txt)
@@ -821,11 +822,11 @@ def df_to_str(
         if print_nan_info:
             num_elems = df.shape[0] * df.shape[1]
             num_nans = df.isna().sum().sum()
-            txt = "num_nans=%s" % hprint.perc(num_nans, num_elems)
+            txt = f"num_nans={hprint.perc(num_nans, num_elems)}"
             out.append(txt)
             #
             num_zeros = df.isnull().sum().sum()
-            txt = "num_zeros=%s" % hprint.perc(num_zeros, num_elems)
+            txt = f"num_zeros={hprint.perc(num_zeros, num_elems)}"
             out.append(txt)
             # TODO(gp): np can't do isinf on objects like strings.
             # num_infinite = np.isinf(df).sum().sum()
@@ -833,11 +834,11 @@ def df_to_str(
             # out.append(txt)
             #
             num_nan_rows = df.dropna().shape[0]
-            txt = "num_nan_rows=%s" % hprint.perc(num_nan_rows, num_elems)
+            txt = f"num_nan_rows={hprint.perc(num_nan_rows, num_elems)}"
             out.append(txt)
             #
             num_nan_cols = df.dropna(axis=1).shape[1]
-            txt = "num_nan_cols=%s" % hprint.perc(num_nan_cols, num_elems)
+            txt = f"num_nan_cols={hprint.perc(num_nan_cols, num_elems)}"
             out.append(txt)
     # Print the df.
     df_as_str = _df_to_str(
@@ -873,7 +874,7 @@ def convert_df_to_json_string(
     :return: dataframe converted to JSON string
     """
     # Append shape of the initial dataframe.
-    shape = "original shape=%s" % (df.shape,)
+    shape = f"original shape={df.shape}"
     # Reorder columns.
     if columns_order is not None:
         hdbg.dassert_set_eq(columns_order, df.cols)

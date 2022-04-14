@@ -154,7 +154,7 @@ class Test_trim_df1(hunitest.TestCase):
         df = pd.read_csv(io.StringIO(txt), *args, index_col=0, **kwargs)
         return df
 
-    def test_types1(self):
+    def test_types1(self) -> None:
         """
         Check the types of a df coming from `read_csv()`.
 
@@ -195,7 +195,7 @@ class Test_trim_df1(hunitest.TestCase):
         df = self.get_df(parse_dates=["start_time"])
         return df
 
-    def test_types2(self):
+    def test_types2(self) -> None:
         """
         Check the types of a df coming from `read_csv()` forcing parsing some
         values as dates.
@@ -240,7 +240,7 @@ class Test_trim_df1(hunitest.TestCase):
         df[col_name] = pd.to_datetime(df[col_name])
         return df
 
-    def test_types3(self):
+    def test_types3(self) -> None:
         """
         Check the types of a df coming from `read_csv()` after conversion to
         tz-aware objects.
@@ -272,7 +272,7 @@ class Test_trim_df1(hunitest.TestCase):
 
     # //////////////////////////////////////////////////////////////////////////////
 
-    def test_trim_df1(self):
+    def test_trim_df1(self) -> None:
         """
         In general one can't filter a df with columns represented as `str`
         using `pd.Timestamp` (either tz-aware or tz-naive).
@@ -315,7 +315,7 @@ class Test_trim_df1(hunitest.TestCase):
         38  2022-01-04 21:35:00.000000  17085   179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_trim_df2(self):
+    def test_trim_df2(self) -> None:
         """
         Trim a df with a column that is `datetime64` without tz using a
         `pd.Timestamp` without tz.
@@ -356,7 +356,7 @@ class Test_trim_df1(hunitest.TestCase):
         38 2022-01-04 21:35:00  17085   179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_trim_df3(self):
+    def test_trim_df3(self) -> None:
         """
         Trim a df with a column that is `datetime64` with tz vs a `pd.Timestamp
         with tz.
@@ -397,7 +397,8 @@ class Test_trim_df1(hunitest.TestCase):
         38 2022-01-04 16:35:00-05:00  17085   179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_trim_df4(self):
+    # pylint: disable=line-too-long
+    def test_trim_df4(self) -> None:
         """
         Trim a df with a column that is `datetime64` with tz vs a `pd.Timestamp
         without tz.
@@ -808,7 +809,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, 2, 3],
-            "dummy_value_2": [pd.NA, "B", "C"],
+            "dummy_value_2": [pd.NA, "B", "C"],  # type: ignore
             "dummy_value_3": [None, 1.0, 1.0],
         }
         test_df = pd.DataFrame(data=test_data)
@@ -836,7 +837,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_2": ["A", "B", "C"],  # type: ignore
             "dummy_value_3": [None, 1.0, 1.0],
         }
         test_df = pd.DataFrame(data=test_data)
@@ -845,7 +846,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         # Prepare expected result.
         expected = {
             "dummy_value_1": [np.nan, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_2": ["A", "B", "C"],  # type: ignore
             "dummy_value_3": [None, 1.0, 1.0],
         }
         # Set the dtype of numeral columns to float to match the dataframe after NA dropping.

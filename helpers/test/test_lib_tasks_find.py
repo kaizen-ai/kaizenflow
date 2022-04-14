@@ -14,6 +14,7 @@ class Test_find_short_import1(hunitest.TestCase):
         ]
         results = hlibtask._find_short_import(iterator, "dtfcodarun")
         act = "\n".join(map(str, results))
+        # pylint: disable=line-too-long
         exp = r"""('file1.py', 10, 'import dataflow.core.dag_runner as dtfcodarun', 'dtfcodarun', 'import dataflow.core.dag_runner as dtfcodarun')"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
