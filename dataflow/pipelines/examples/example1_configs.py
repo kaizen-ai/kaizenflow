@@ -20,6 +20,9 @@ import market_data as mdata
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): We should unify with ForecastSystem. A System contains all the
+# info to build and run a DAG and then it can be simulated or put in prod.
+
 def _build_base_config() -> cconfig.Config:
     backtest_config = cconfig.Config()
     # Save the `DagBuilder` and the `DagConfig` in the config.
@@ -31,6 +34,7 @@ def _build_base_config() -> cconfig.Config:
     return backtest_config
 
 
+# TODO(gp): @grisha. Centralize this.
 def build_configs_with_tiled_universe(
     config: cconfig.Config, asset_ids: List[int]
 ) -> List[cconfig.Config]:
@@ -55,7 +59,7 @@ def build_configs_with_tiled_universe(
     return configs
 
 
-# TODO(gp): Should we use a SystemRunner also here?
+# TODO(gp): This corresponds to System.get_dag_runner().
 def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     """
     Build a DAG runner from a config.
@@ -119,6 +123,7 @@ def build_tile_configs(
     # Apply specific config.
     # config = _apply_config(config, trading_period_str)
     #
+    # Create the common part of the config.
     start_timestamp = pd.Timestamp(start_timestamp)
     end_timestamp = pd.Timestamp(end_timestamp)
     config = _build_base_config()
@@ -126,6 +131,7 @@ def build_tile_configs(
     config["meta", "dag_runner"] = get_dag_runner
     # Name of the asset_ids to save.
     config["meta", "asset_id_col_name"] = "asset_id"
+    # Create the list of configs.
     configs = [config]
     # Apply the cross-product by the universe tiles.
     # TODO(gp): This used to be:

@@ -19,8 +19,11 @@ class Test_Example1_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
     def test1(self) -> None:
         """
         Run on a single name for a few months.
+
+        The output is a single tile with both asset_ids.
         """
         asset_ids = [3303714233, 1467591036]
+        # Simulate 2 hours.
         start_ts = "2000-01-01T09:31:00-05:00"
         end_ts = "2000-01-01T10:10:00-05:00"
         config_builder = (

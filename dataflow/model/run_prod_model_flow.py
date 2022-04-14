@@ -33,7 +33,12 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
 
     @staticmethod
     def get_configs_signature(config_builder: str) -> str:
+        """
+        Compute a test signature from a `config_builder`.
+        """
+        # Create the configs.
         configs = cconfig.get_configs_from_builder(config_builder)
+        # Create a signature.
         txt = cconfig.configs_to_str(configs)
         return txt
 
@@ -118,31 +123,39 @@ class TiledBacktest_TestCase(Backtest_TestCase):
     """
     Run an end-to-end backtest for a model by:
 
-    - checking the configs against frozen representation
-    - running model using tiled backtest
-    - checking that the output is a valid tiled results
-    - running the analysis flow to make sure that it works
+    1) checking the configs against frozen representation
+    2) running model using tiled backtest
+    3) checking that the output is a valid tiled results
+    4) running the analysis flow to make sure that the postprocessing works
     """
 
     def compute_tile_output_signature(self, file_name: str) -> str:
+        """
+        Create a test signature from a backtesting (Parquet) output.
+        """
+        # 3) check that the output is a valid tiled result.
         parquet_tile_analyzer = dtfmod.ParquetTileAnalyzer()
         parquet_tile_metadata = (
             parquet_tile_analyzer.collate_parquet_tile_metadata(file_name)
         )
         signature = []
-        #         n_years    n_unique_months    n_files        size
+        # ```
+        #          n_years    n_unique_months    n_files        size
         # egid
         # 10025          1                  2          2    711.7 KB
+        # ```
         df = parquet_tile_analyzer.compute_metadata_stats_by_asset_id(
             parquet_tile_metadata
         )
         df_as_str = hpandas.df_to_str(df.drop("size", axis="columns"))
         signature.append("# compute_metadata_stats_by_asset_id")
         signature.append(df_as_str)
+        # ```
         #                 n_asset_ids    size
         # year    month
         # 2020        1             1    360.3 KB
-        #           2             1    351.4 KB
+        #             2             1    351.4 KB
+        # ```
         df = parquet_tile_analyzer.compute_universe_size_by_time(
             parquet_tile_metadata
         )
@@ -159,8 +172,13 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         experiment_builder: str,
         run_model_extra_opts: str,
     ) -> None:
+        # TODO(gp): @grisha improve the comments
         """
         Run the entire flow.
+
+        :param config_builder: pointer to the function used to build configs
+        :param experiment_builder:
+        :param ...
         """
         scratch_dir = self.get_scratch_space()
         # 1) Test config builder.

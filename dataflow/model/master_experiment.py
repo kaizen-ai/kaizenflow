@@ -96,10 +96,15 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
 
 
 # TODO(gp): move to experiment_utils.py?
+# TODO(gp): @grisha -> add types.
 def _save_tiled_output(config, result_bundle):
+    # Extract the part of the simulation for this tile (i.e.,
+    # [start_timestamp, end_timestamp])
+    # discarding the warm up period (i.e., the data in [start_timestamp_with_lookback, start_timestamp]).
     result_df = result_bundle.result_df.loc[
         config["meta", "start_timestamp"] : config["meta", "end_timestamp"]
     ]
+    # Convert the result into Parquet.
     df = result_df.stack()
     asset_id_col_name = config["meta", "asset_id_col_name"]
     df.index.names = ["end_ts", asset_id_col_name]
@@ -114,7 +119,7 @@ def _save_tiled_output(config, result_bundle):
     _LOG.info("Tiled results written in '%s'", tiled_dst_dir)
 
 
-# TODO(gp): -> run_tiled_backtest
+# TODO(gp): @grisha -> run_tiled_backtest
 def run_tiled_experiment(config: cconfig.Config) -> None:
     """
     Run an experiment by:
@@ -126,6 +131,7 @@ def run_tiled_experiment(config: cconfig.Config) -> None:
     All parameters are passed through a `Config`.
     """
     _LOG.debug("config=\n%s", config)
+    # Create the DAG runner.
     dag_runner = config["meta", "dag_runner"](config)
     hdbg.dassert_isinstance(dag_runner, cdataf.AbstractDagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
@@ -138,4 +144,5 @@ def run_tiled_experiment(config: cconfig.Config) -> None:
         ],
     )
     fit_result_bundle = dag_runner.fit()
+    # Save results.
     _save_tiled_output(config, fit_result_bundle)
