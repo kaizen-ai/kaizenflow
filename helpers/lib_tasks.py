@@ -3889,6 +3889,13 @@ def run_tests(
         results.append((test_list_name, rc))
     #
     rc = any(result[1] for result in results)
+    # Summarize the results.
+    _LOG.info("# Tests run summary:")
+    for test_list_name, rc in results:
+        if rc != 0:
+            _LOG.error("'%s' tests failed" % test_list_name)
+        else:
+            _LOG.info("'%s' tests succeeded" % test_list_name)
     return rc
 
 
