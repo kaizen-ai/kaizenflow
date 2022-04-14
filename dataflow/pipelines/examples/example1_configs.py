@@ -52,7 +52,8 @@ def build_configs_with_tiled_universe(
         universe_tiles = (asset_ids_part1, asset_ids_part2)
     else:
         universe_tiles = (asset_ids,)
-    egid_key = ("meta", "asset_ids")
+    # TODO(gp): egid -> asset_id
+    egid_key = ("meta", "dst_dir")
     configs = dtfmoexcon.build_configs_varying_universe_tiles(
         config, egid_key, universe_tiles
     )
@@ -66,7 +67,8 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     """
     # TODO(gp): In the previous code asset_ids was coming from:
     #  `asset_ids = dtfuniver.get_universe(universe_str)`.
-    asset_ids = [3303714233, 1467591036]
+    #asset_ids = [3303714233, 1467591036]
+    asset_ids = config["meta", "asset_ids"]
     columns: List[str] = []
     columns_remap = None
     market_data = mdata.get_ImClientMarketData_example2(
@@ -106,26 +108,34 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
 # TODO(gp): This used to be:
 #  `def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:`.
 def build_tile_configs(
-    asset_ids: List[int],
-    start_timestamp: str,
-    end_timestamp: str,
+    #asset_ids: List[int],
+    #start_timestamp: str,
+    #end_timestamp: str,
+    experiment_config: str,
 ) -> List[cconfig.Config]:
     """
     Build a tile configs for Example1 pipeline.
     """
-    # TODO(gp): This used to be:
-    #  (
-    #      universe_str,
-    #      trading_period_str,
-    #      time_interval_str,
-    #  ) = dtfmoexcon.parse_experiment_config(experiment_config).
-    #
+
+    (
+        universe_str,
+        trading_period_str,
+        time_interval_str,
+    ) = dtfmoexcon.parse_experiment_config(experiment_config)
     # Apply specific config.
     # config = _apply_config(config, trading_period_str)
-    #
+    # TODO(gp): trading_period_str is not used for Example1 pipeline.
+
+    # TODO(gp): Call the function get_vendor_universe(universe_str)
+    # TODO(gp): Convert the full_symbols to asset_ids
+    im_client = ...
+    .convert(asset_ids)
+
     # Create the common part of the config.
-    start_timestamp = pd.Timestamp(start_timestamp)
-    end_timestamp = pd.Timestamp(end_timestamp)
+    #start_timestamp = pd.Timestamp(start_timestamp)
+    #end_timestamp = pd.Timestamp(end_timestamp)
+    start_timestamp, end_timestamp = dtfmoexcon.get_period(time_interval_str)
+    #
     config = _build_base_config()
     #
     config["meta", "dag_runner"] = get_dag_runner

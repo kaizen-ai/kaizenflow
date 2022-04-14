@@ -125,6 +125,9 @@ def get_vendor_universe(
         }
         or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
+    # TODO(gp): Create a mock Example1 universe with the same mechanism we
+    # used for CCXT and ... else.
+    # universe = ["binance::BTC_USDT", "binance::ADA_USDT"]
     vendor_universe = _get_trade_universe(vendor, version=version)
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.

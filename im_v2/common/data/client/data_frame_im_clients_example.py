@@ -14,7 +14,11 @@ def get_DataFrameImClient_example1() -> imvcdcdfimc.DataFrameImClient:
     Build a `ImClient` backed by data stored in a dataframe.
     """
     # Generate input dataframe and universe for client initialization.
-    universe = ["binance::BTC_USDT", "binance::ADA_USDT"]
+    #universe = ["binance::BTC_USDT", "binance::ADA_USDT"]
+    # TODO(gp): This should call
+    universe = get_vendor_universe(
+        "eample1", "v1"
+    )
     df = cofinanc.get_im_client_market_data_df1(universe)
     # Init the client for testing.
     resample_1min = False

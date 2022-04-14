@@ -119,7 +119,7 @@ def _save_tiled_output(config, result_bundle):
     _LOG.info("Tiled results written in '%s'", tiled_dst_dir)
 
 
-# TODO(gp): @grisha -> run_tiled_backtest
+# TODO(gp): P1, @grisha -> run_tiled_backtest
 def run_tiled_experiment(config: cconfig.Config) -> None:
     """
     Run an experiment by:
