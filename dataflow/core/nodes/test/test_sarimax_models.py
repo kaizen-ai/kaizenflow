@@ -297,20 +297,6 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         )
         self.check_string(act)
 
-    def _check_results(
-        self,
-        config: cconfig.Config,
-        df_out: pd.DataFrame,
-        err_threshold: float = 0.01,
-    ) -> None:
-        act: List[str] = []
-        act.append(hprint.frame("config"))
-        act.append(str(config))
-        act = "\n".join(act)
-        self.check_string(act)
-        #
-        self.check_dataframe(df_out, err_threshold=err_threshold)
-
     @staticmethod
     def _get_data(
         ar_coeffs: List[int],
@@ -349,6 +335,20 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
             }
         )
         return config
+
+    def _check_results(
+        self,
+        config: cconfig.Config,
+        df_out: pd.DataFrame,
+        err_threshold: float = 0.01,
+    ) -> None:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act = "\n".join(act)
+        self.check_string(act)
+        #
+        self.check_dataframe(df_out, err_threshold=err_threshold)
 
 
 class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):

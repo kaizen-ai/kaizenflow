@@ -352,7 +352,8 @@ def regress(
     """
     Perform per-asset regressions over a tiled backtest.
 
-    For each asset, the regression is performed over the entire time window.
+    For each asset, the regression is performed over the entire time
+    window.
     """
     # Perform sanity-checks.
     hdbg.dassert_dir_exists(file_name)

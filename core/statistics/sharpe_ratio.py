@@ -175,7 +175,7 @@ def compute_sharpe_ratio_standard_error(
     sr = compute_sharpe_ratio(pnl, time_scaling=1)
     srs_size = hdatafr.apply_nan_mode(pnl, mode="drop").size
     hdbg.dassert_lt(1, srs_size)
-    sr_var_estimate = (1 + (sr ** 2) / 2) / (srs_size - 1)
+    sr_var_estimate = (1 + (sr**2) / 2) / (srs_size - 1)
     sr_se_estimate = np.sqrt(sr_var_estimate)
     # Rescale.
     rescaled_sr_se_estimate = np.sqrt(time_scaling) * sr_se_estimate
@@ -218,7 +218,7 @@ def apply_ttest_power_rule(
     )
     if years is None and sharpe_ratio is not None:
         hdbg.dassert_isinstance(sharpe_ratio, numbers.Number)
-        years = const / (sharpe_ratio ** 2)
+        years = const / (sharpe_ratio**2)
     elif years is not None and sharpe_ratio is None:
         hdbg.dassert_isinstance(years, numbers.Number)
         sharpe_ratio = np.sqrt(const / years)
@@ -296,9 +296,9 @@ def apply_sharpe_ratio_correlation_conversion(
     """
     if sharpe_ratio is not None and correlation is None:
         sharpe_ratio /= np.sqrt(points_per_year)
-        return sharpe_ratio / np.sqrt(1 - sharpe_ratio ** 2)
+        return sharpe_ratio / np.sqrt(1 - sharpe_ratio**2)
     if sharpe_ratio is None and correlation is not None:
-        sharpe_ratio = correlation / np.sqrt(1 + correlation ** 2)
+        sharpe_ratio = correlation / np.sqrt(1 + correlation**2)
         return sharpe_ratio * np.sqrt(points_per_year)
     raise ValueError(
         "Precisely one of `sharpe_ratio` and `correlation` should not be `None`"
