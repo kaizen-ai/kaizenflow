@@ -96,7 +96,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     @staticmethod
     def _get_columns_for_query() -> List[str]:
         """
-        Get columns for Parquet data query.
+        See description in the parent class.
         """
         columns = [
             "open",

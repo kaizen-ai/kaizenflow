@@ -154,6 +154,9 @@ class HistoricalPqByTileClient(
             # TODO(Dan): Remove the hack.
             transformation_kwargs: Dict = {}
             if self._vendor == "CCXT":
+                # `CCXT` does not have `exchange_id` as column, so we have to add it in order to reconstruct
+                # full symbol further.
+                # E.g., `s3://cryptokaizen-data/historical/ccxt/latest/binance` -> `binance`.
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
             root_dir_df = self._apply_transformations(
