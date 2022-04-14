@@ -390,7 +390,7 @@ def to_str2(*variables_values: Any) -> str:
     ]
     source_code_string = "".join(stripped_code_lines)
     # Find the name of the current function in the code.
-    regex = fr"{current_frame.function}\((.*?)\)"
+    regex = rf"{current_frame.function}\((.*?)\)"
     matches = re.findall(regex, source_code_string)
     hdbg.dassert_ne(
         len(matches),

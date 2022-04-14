@@ -216,6 +216,12 @@ class AbstractBroker(abc.ABC):
         """
         ...
 
+    @staticmethod
+    def _get_next_submitted_order_id() -> int:
+        submitted_order_id = AbstractBroker._submitted_order_id
+        AbstractBroker._submitted_order_id += 1
+        return submitted_order_id
+
     @abc.abstractmethod
     async def _submit_orders(
         self,
@@ -325,12 +331,6 @@ class AbstractBroker(abc.ABC):
             last_timestamp = next(reversed(self._orders))
             hdbg.dassert_lt(last_timestamp, wall_clock_timestamp)
         self._orders[wall_clock_timestamp] = orders
-
-    @staticmethod
-    def _get_next_submitted_order_id() -> int:
-        submitted_order_id = AbstractBroker._submitted_order_id
-        AbstractBroker._submitted_order_id += 1
-        return submitted_order_id
 
 
 # #############################################################################

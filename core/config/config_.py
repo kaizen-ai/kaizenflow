@@ -380,6 +380,16 @@ class Config:
             % (key, self._config[key], hprint.indent(str(self)))
         )
 
+    @staticmethod
+    def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
+        hdbg.dassert(hintros.is_iterable(key), "Key='%s' is not iterable", key)
+        head_key, tail_key = key[0], key[1:]  # type: ignore
+        _LOG.debug(
+            "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
+        )
+        hdbg.dassert_isinstance(head_key, str, "Keys can only be string")
+        return head_key, tail_key
+
     def _check_base_case(self, key: Key) -> bool:
         _LOG.debug("key=%s", key)
         hdbg.dassert_isinstance(key, str, "Keys can only be string")
@@ -398,13 +408,3 @@ class Config:
             else:
                 dict_[k] = v
         return dict_
-
-    @staticmethod
-    def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
-        hdbg.dassert(hintros.is_iterable(key), "Key='%s' is not iterable", key)
-        head_key, tail_key = key[0], key[1:]  # type: ignore
-        _LOG.debug(
-            "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
-        )
-        hdbg.dassert_isinstance(head_key, str, "Keys can only be string")
-        return head_key, tail_key

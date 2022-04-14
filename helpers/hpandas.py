@@ -180,6 +180,35 @@ def dassert_monotonic_index(
     hdbg.dassert(cond, msg=msg, *args)
 
 
+def dassert_time_indexed_df(
+    df: pd.DataFrame, allow_empty: bool, strictly_increasing: bool
+) -> None:
+    """
+    Validate that input dataframe is time indexed and well-formed.
+
+    :param df: dataframe to validate
+    :param allow_empty: allow empty data frames
+    :param strictly_increasing: if True the index needs to be strictly increasing,
+      instead of just increasing
+    """
+    # Verify that Pandas dataframe is passed as input.
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    if not allow_empty:
+        # Verify that a non-empty dataframe is passed as input.
+        hdbg.dassert_lt(0, df.shape[0])
+        # Verify that the dataframe has at least 1 column.
+        hdbg.dassert_lte(1, len(df.columns))
+    # Verify that the index is increasing.
+    if strictly_increasing:
+        dassert_strictly_increasing_index(df)
+    else:
+        dassert_increasing_index(df)
+    # Check that the index is in datetime format.
+    dassert_index_is_datetime(df)
+    # Check that the passed timestamp has timezone info.
+    hdateti.dassert_has_tz(df.index[0])
+
+
 def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
     """
     Ensure that remapping rows / columns is valid.

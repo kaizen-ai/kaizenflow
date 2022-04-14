@@ -82,6 +82,94 @@ class ResultBundle(abc.ABC):
         """
         return str(self)
 
+    # TODO(gp): Use classmethod.
+    @staticmethod
+    def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
+        """
+        Initialize `ResultBundle` from a nested dict.
+        """
+        result_bundle_config = cconfig.get_config_from_nested_dict(
+            result_bundle_dict
+        )
+        result_bundle_class = eval(result_bundle_config["class"])
+        result_bundle: ResultBundle = result_bundle_class.from_config(
+            result_bundle_config
+        )
+        return result_bundle
+
+    # TODO(gp): Use classmethod.
+    @staticmethod
+    def from_pickle(
+        file_name: str,
+        use_pq: bool = True,
+        columns: Optional[List[str]] = None,
+    ) -> "ResultBundle":
+        """
+        Deserialize the current `ResultBundle`.
+
+        :param use_pq: load multiple files storing the data
+        :param columns: columns of `result_df` to load
+        """
+        # TODO(gp): We should pass file_name without an extension, since the
+        #  extension(s) depend on the format used.
+        if use_pq:
+            # Load the part of the `ResultBundle` stored as pickle.
+            hdbg.dassert(
+                file_name.endswith("v2_0.pkl"),
+                "Invalid file_name='%s'",
+                file_name,
+            )
+            with htimer.TimedScope(logging.DEBUG, "Load pickle"):
+                obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
+                # TODO(gp): This is a workaround waiting for LimeTask164.
+                #  We load 200MB of data and then discard 198MB.
+                if hasattr(obj, "payload"):
+                    obj.payload = None
+                hdbg.dassert_isinstance(obj, ResultBundle)
+            # Load the `result_df` as parquet.
+            file_name_pq = hio.change_filename_extension(file_name, "pkl", "pq")
+            if columns is None:
+                _LOG.warning(
+                    "Loading the entire `result_df` without filtering by columns: "
+                    "this is slow and requires a lot of memory"
+                )
+            with htimer.TimedScope(logging.DEBUG, "Load parquet"):
+                obj.result_df = hparque.from_parquet(
+                    file_name_pq, columns=columns, log_level=logging.DEBUG
+                )
+            file_name_metadata_df = hio.change_filename_extension(
+                file_name, "pkl", "metadata_df.pkl"
+            )
+            metadata_df = hpickle.from_pickle(
+                file_name_metadata_df, log_level=logging.DEBUG
+            )
+            # metadata_df = {
+            #     "index.freq": result_df.index.freq
+            # }
+            obj.result_df.index.freq = metadata_df.pop("index.freq")
+            # TODO(gp): See AmpTask1732 about disabling this.
+            # obj.result_df = _trim_df_trading_hours(obj.result_df)
+            hdbg.dassert(
+                not metadata_df, "metadata_df='%s' is not empty", str(metadata_df)
+            )
+        else:
+            # Load the `ResultBundle` as a single pickle.
+            hdbg.dassert(
+                file_name.endswith("v1_0.pkl"),
+                "Invalid file_name='%s'",
+                file_name,
+            )
+            hdbg.dassert_is(
+                columns,
+                None,
+                "`columns` can be specified only with `use_pq=True`",
+            )
+            file_name = hio.change_filename_extension(
+                file_name, "pkl", "v1_0.pkl"
+            )
+            obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
+        return obj  # type: ignore
+
     # Accessors.
 
     @property
@@ -245,94 +333,6 @@ class ResultBundle(abc.ABC):
             hpickle.to_pickle(obj, file_name, log_level=logging.DEBUG)
             res = [file_name]
         return res
-
-    # TODO(gp): Use classmethod.
-    @staticmethod
-    def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
-        """
-        Initialize `ResultBundle` from a nested dict.
-        """
-        result_bundle_config = cconfig.get_config_from_nested_dict(
-            result_bundle_dict
-        )
-        result_bundle_class = eval(result_bundle_config["class"])
-        result_bundle: ResultBundle = result_bundle_class.from_config(
-            result_bundle_config
-        )
-        return result_bundle
-
-    # TODO(gp): Use classmethod.
-    @staticmethod
-    def from_pickle(
-        file_name: str,
-        use_pq: bool = True,
-        columns: Optional[List[str]] = None,
-    ) -> "ResultBundle":
-        """
-        Deserialize the current `ResultBundle`.
-
-        :param use_pq: load multiple files storing the data
-        :param columns: columns of `result_df` to load
-        """
-        # TODO(gp): We should pass file_name without an extension, since the
-        #  extension(s) depend on the format used.
-        if use_pq:
-            # Load the part of the `ResultBundle` stored as pickle.
-            hdbg.dassert(
-                file_name.endswith("v2_0.pkl"),
-                "Invalid file_name='%s'",
-                file_name,
-            )
-            with htimer.TimedScope(logging.DEBUG, "Load pickle"):
-                obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
-                # TODO(gp): This is a workaround waiting for LimeTask164.
-                #  We load 200MB of data and then discard 198MB.
-                if hasattr(obj, "payload"):
-                    obj.payload = None
-                hdbg.dassert_isinstance(obj, ResultBundle)
-            # Load the `result_df` as parquet.
-            file_name_pq = hio.change_filename_extension(file_name, "pkl", "pq")
-            if columns is None:
-                _LOG.warning(
-                    "Loading the entire `result_df` without filtering by columns: "
-                    "this is slow and requires a lot of memory"
-                )
-            with htimer.TimedScope(logging.DEBUG, "Load parquet"):
-                obj.result_df = hparque.from_parquet(
-                    file_name_pq, columns=columns, log_level=logging.DEBUG
-                )
-            file_name_metadata_df = hio.change_filename_extension(
-                file_name, "pkl", "metadata_df.pkl"
-            )
-            metadata_df = hpickle.from_pickle(
-                file_name_metadata_df, log_level=logging.DEBUG
-            )
-            # metadata_df = {
-            #     "index.freq": result_df.index.freq
-            # }
-            obj.result_df.index.freq = metadata_df.pop("index.freq")
-            # TODO(gp): See AmpTask1732 about disabling this.
-            # obj.result_df = _trim_df_trading_hours(obj.result_df)
-            hdbg.dassert(
-                not metadata_df, "metadata_df='%s' is not empty", str(metadata_df)
-            )
-        else:
-            # Load the `ResultBundle` as a single pickle.
-            hdbg.dassert(
-                file_name.endswith("v1_0.pkl"),
-                "Invalid file_name='%s'",
-                file_name,
-            )
-            hdbg.dassert_is(
-                columns,
-                None,
-                "`columns` can be specified only with `use_pq=True`",
-            )
-            file_name = hio.change_filename_extension(
-                file_name, "pkl", "v1_0.pkl"
-            )
-            obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
-        return obj  # type: ignore
 
     @staticmethod
     def _search_mapping(

@@ -82,7 +82,6 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             print(henv.get_system_signature()[0])
         except:
             print(f"\n{_WARNING}: Can't print system_signature")
-            pass
         if config.getoption("--update_outcomes"):
             print(f"\n{_WARNING}: Updating test outcomes")
             hut.set_update_tests(True)
