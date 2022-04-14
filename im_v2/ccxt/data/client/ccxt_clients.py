@@ -359,7 +359,7 @@ class CcxtCddCsvParquetByAssetClient(
 # #############################################################################
 
 
-class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient, CcxtCddClient):
+class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     """
     Read historical data for `CCXT` assets stored as Parquet dataset.
 
@@ -379,15 +379,13 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient, CcxtCddClient)
         Load `CCXT` data from local or S3 filesystem.
         """
         vendor = "CCXT"
-        icdc.HistoricalPqByTileClient.__init__(
-            self,
+        super().__init__(
             vendor,
             resample_1min,
             root_dir,
             partition_mode,
             aws_profile=aws_profile,
         )
-        CcxtCddClient.__init__(self, vendor, resample_1min)
         self._data_snapshot = data_snapshot
 
     def get_metadata(self) -> pd.DataFrame:
@@ -395,6 +393,16 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient, CcxtCddClient)
         See description in the parent class.
         """
         raise NotImplementedError
+
+    # TODO(Dan): Inherit from `CcxtCddClient`.
+    def get_universe(self) -> List[icdc.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        universe = imvcounun.get_vendor_universe(
+            vendor=self._vendor, as_full_symbol=True
+        )
+        return universe  # type: ignore[no-any-return]
 
     @staticmethod
     def _get_columns_for_query() -> List[str]:
