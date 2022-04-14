@@ -66,6 +66,7 @@ class Test_hlogging_asyncio1(hunitest.TestCase):
         # Run.
         self.run_test(event_loop, get_wall_clock_time)
 
+    # pylint: disable=line-too-long
     def test_simulated_time1(self) -> None:
         """
         Use the logger with event_loop and asyncio. The output is like: 

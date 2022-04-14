@@ -40,7 +40,7 @@ def tunnel_info_to_string(tunnel_info: list) -> str:
     return ret
 
 
-def parse_service(service: str) -> Dict[str, str]:
+def parse_service(service: Tuple[str, str, int, int]) -> Dict[str, str]:
     hdbg.dassert_eq(len(service), 4, "service=%s", service)
     service_name, server, local_port, remote_port = service
     return {
@@ -51,17 +51,17 @@ def parse_service(service: str) -> Dict[str, str]:
     }
 
 
-def find_service(service_name: str, tunnel_info: list) -> str:
+def find_service(service_name: str, tunnel_info: list) -> Tuple[str, str, int, int]:
     ret = None
     for service in tunnel_info:
         if service_name == parse_service(service)["service_name"]:
             hdbg.dassert_is(ret, None)
-            ret = service
+            ret: Tuple[str, str, int, int] = service
     hdbg.dassert_is_not(ret, None)
     return ret
 
 
-def get_server_ip(service_name: str):  # pylint: disable=unused-argument
+def get_server_ip(service_name: str) -> str:  # pylint: disable=unused-argument
     tunnel_info, _ = get_tunnel_info()
     _LOG.debug("tunnels=\n%s", tunnel_info_to_string(tunnel_info))
     service = find_service("Doc server", tunnel_info)
@@ -130,11 +130,11 @@ def _get_ssh_tunnel_process(
         keep = "ssh -i" in line
         if keep:
             if fuzzy_match:
-                keep = (" %d:localhost " % local_port in line) or (
-                    " localhost:%d " % remote_port in line
+                keep = (f" {local_port}:localhost " in line) or (
+                    f" localhost:{remote_port} " in line
                 )
             else:
-                keep = " %d:localhost:%d " % (local_port, remote_port) in line
+                keep = f" {local_port}:localhost:{remote_port} " in line
         return keep
 
     _LOG.debug("local_port=%d -> remote_port=%d", local_port, remote_port)
@@ -242,7 +242,7 @@ def check_tunnels() -> None:
             local_port, remote_port, fuzzy_match=False
         )
         if pids:
-            msg = "exists with pid=%s" % pids
+            msg = f"exists with pid={pids}"
         else:
             msg = "doesn't exist"
         _LOG.info("%s -> %s", _service_to_string(service), msg)

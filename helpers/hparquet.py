@@ -104,7 +104,7 @@ def from_parquet(
 
 
 # Copied from `hio.create_enclosing_dir()` to avoid circular dependencies.
-def _create_enclosing_dir(file_name: str) -> str:
+def _create_enclosing_dir(file_name: str) -> Optional[str]:
     dir_name = os.path.dirname(file_name)
     if dir_name != "":
         _LOG.debug(
@@ -259,10 +259,9 @@ def yield_parquet_tiles_by_assets(
         asset_ids[i : i + asset_batch_size]
         for i in range(0, len(asset_ids), asset_batch_size)
     ]
+    columns: Optional[List[str]] = None
     if cols:
         columns = [str(col) for col in cols]
-    else:
-        columns = None
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
         filter_ = build_asset_id_filter(batch, asset_id_col)
@@ -388,8 +387,8 @@ def collate_parquet_tile_metadata(
 #  if needed, but if we do, then we should continue to handle string ints as
 #  ints as we do here (e.g., there are sorting advantages, among others).
 def _process_walk_triple(
-    triple: tuple, start_depth
-) -> Tuple[Tuple[str], Tuple[int]]:
+    triple: tuple, start_depth: int
+) -> Tuple[Tuple[str, ...], Tuple[int, ...]]:
     """
     Process a triple returned by `os.walk()`
 
@@ -409,8 +408,8 @@ def _process_walk_triple(
     if len(key) == 0:
         return tuple(lhs_vals), tuple(rhs_vals)
     hdbg.dassert_eq(len(key), rel_depth)
-    lhs_vals = []
-    rhs_vals = []
+    lhs_vals: List[str] = []
+    rhs_vals: List[int] = []
     for string in key:
         lhs, rhs = string.split("=")
         lhs_vals.append(lhs)
@@ -758,6 +757,6 @@ def maybe_cast_to_int(string: str) -> Union[str, int]:
     hdbg.dassert_isinstance(string, str)
     try:
         val = int(string)
+        return val
     except ValueError:
-        val = string
-    return val
+        return string

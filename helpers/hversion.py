@@ -62,9 +62,7 @@ def check_version(container_dir_name: str) -> None:
         f", is_inside_docker={is_inside_docker}"
         f", is_inside_ci={is_inside_ci}"
     )
-    msg += ", CI_defined=%s" % (
-        "CI" in os.environ
-    ) + ", CI='%s'" % os.environ.get("CI", "nan")
+    msg += f", CI_defined={'CI' in os.environ}, CI='{os.environ.get('CI', 'nan')}'"
     print(msg)
     # Check which env vars are defined.
     msg = ">>ENV<<:"
@@ -78,7 +76,7 @@ def check_version(container_dir_name: str) -> None:
         "AWS_SECRET_ACCESS_KEY",
         "GH_ACTION_ACCESS_TOKEN",
     ]:
-        msg += " %s=%s" % (env_var, env_var in os.environ)
+        msg += f" {env_var}={env_var in os.environ}"
     print(msg)
     # Check version, if possible.
     if container_version is None:
@@ -148,7 +146,7 @@ You need to:
 - pull the latest container with `invoke docker_pull`
 """
         msg = msg.rstrip().lstrip()
-        msg = "\033[31m%s\033[0m" % msg
+        msg = f"\033[31m{msg}\033[0m"
         print(msg)
         # raise RuntimeError(msg)
     return is_ok

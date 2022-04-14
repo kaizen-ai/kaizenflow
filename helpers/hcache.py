@@ -92,10 +92,10 @@ def get_global_cache_info(
     txt = []
     if add_banner:
         txt.append(hprint.frame("get_global_cache_info()", char1="<"))
-    txt.append("is global cache enabled=%s" % is_caching_enabled())
+    txt.append(f"is global cache enabled={is_caching_enabled()}")
     #
     cache_types = _get_cache_types()
-    txt.append("cache_types=%s" % str(cache_types))
+    txt.append(f"cache_types={str(cache_types)}")
     for cache_type in cache_types:
         path = _get_global_cache_path(cache_type, tag=tag)
         description = f"global {cache_type}"
@@ -178,7 +178,7 @@ def _get_cache_size(path: str, description: str) -> str:
     if _TRACE_FUNCS:
         _LOG.debug("")
     if path is None:
-        txt = "'%s' cache: path='%s' doesn't exist yet" % (description, path)
+        txt = f"'{description}' cache: path='{path}' doesn't exist yet"
     else:
         if os.path.exists(path):
             size_in_bytes = hsystem.du(path)
@@ -186,7 +186,7 @@ def _get_cache_size(path: str, description: str) -> str:
         else:
             size_as_str = "nan"
         # TODO(gp): Compute number of files.
-        txt = "'%s' cache: path='%s', size=%s" % (description, path, size_as_str)
+        txt = f"'{description}' cache: path='{path}', size={size_as_str}"
     return txt
 
 
@@ -287,7 +287,7 @@ def clear_global_cache(
     # Clear and / or destroy the cache `cache_type` with the given `tag`.
     cache_path = _get_global_cache_path(cache_type, tag)
     if not _IS_CLEAR_CACHE_ENABLED:
-        hdbg.dfatal("Trying to delete cache '%s'" % cache_path)
+        hdbg.dfatal(f"Trying to delete cache '{cache_path}'")
     description = f"global {cache_type}"
     info_before = _get_cache_size(cache_path, description)
     _LOG.info("Before clear_global_cache: %s", info_before)
@@ -362,7 +362,7 @@ class _Cached:
         aws_profile: Optional[str] = None,
     ):
         """
-        Constructor.
+        Construct the class.
 
         :param func: function to cache
         :param use_mem_cache, use_disk_cache: whether we allow memory and disk caching
@@ -473,12 +473,12 @@ class _Cached:
         if add_banner:
             txt.append(hprint.frame("get_global_cache_info()", char1="<"))
         has_func_cache = self.has_function_cache()
-        txt.append("has function-specific cache=%s" % has_func_cache)
+        txt.append(f"has function-specific cache={has_func_cache}")
         if has_func_cache:
             # Function-specific cache: print the paths of the local cache.
             cache_type = "disk"
             txt.append(
-                "local %s cache path=%s" % (cache_type, self._disk_cache_path)
+                f"local {cache_type} cache path={self._disk_cache_path}"
             )
         txt = "\n".join(txt)
         return txt
@@ -600,7 +600,7 @@ class _Cached:
         hdbg.dassert_is_not(cache_path, None)
         cache_path = cast(str, cache_path)
         if not _IS_CLEAR_CACHE_ENABLED:
-            hdbg.dfatal("Trying to delete function cache '%s'" % cache_path)
+            hdbg.dfatal(f"Trying to delete function cache '{cache_path}'")
         # Collect info before.
         cache_type = "disk"
         description = f"function {cache_type}"
@@ -881,11 +881,7 @@ class _Cached:
     def _execute_func_from_disk_cache(self, *args: Any, **kwargs: Any) -> Any:
         if _TRACE_FUNCS:
             _LOG.debug("")
-        func_info = "%s(args=%s kwargs=%s)" % (
-            self._func.__name__,
-            str(args),
-            str(kwargs),
-        )
+        func_info = f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
         # Get the function signature.
         func_id, args_id = self._get_identifiers("disk", *args, **kwargs)
         if self._has_cached_version("disk", func_id, args_id):
@@ -925,11 +921,7 @@ class _Cached:
         """
         if _TRACE_FUNCS:
             _LOG.debug("")
-        func_info = "%s(args=%s kwargs=%s)" % (
-            self._func.__name__,
-            str(args),
-            str(kwargs),
-        )
+        func_info = f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
         # Get the function signature.
         func_id, args_id = self._get_identifiers("mem", *args, **kwargs)
         if self._has_cached_version("mem", func_id, args_id):
@@ -965,11 +957,7 @@ class _Cached:
         if _TRACE_FUNCS:
             _LOG.debug("")
         with htimer.TimedScope(logging.INFO, "Executing intrinsic function"):
-            func_info = "%s(args=%s kwargs=%s)" % (
-                self._func.__name__,
-                str(args),
-                str(kwargs),
-            )
+            func_info = f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
             _LOG.debug("%s: execute intrinsic function", func_info)
             if self._enable_read_only:
                 msg = f"{func_info}: trying to execute"
@@ -980,11 +968,7 @@ class _Cached:
     def _execute_func(self, *args: Any, **kwargs: Any) -> Any:
         if _TRACE_FUNCS:
             _LOG.debug("")
-        func_info = "%s(args=%s kwargs=%s)" % (
-            self._func.__name__,
-            str(args),
-            str(kwargs),
-        )
+        func_info = f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
         _LOG.debug(
             "%s: use_mem_cache=%s use_disk_cache=%s",
             func_info,

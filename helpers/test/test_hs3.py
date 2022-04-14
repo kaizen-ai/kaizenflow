@@ -11,6 +11,7 @@ moto = pytest.importorskip("moto")
 import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
+
 # TODO(Nikola): Consider moving this class to `hunit_test_case.py`, `hs3.py`, or `hmoto.py`.
 class S3Mock_TestCase(hunitest.TestCase):
     # Mocked AWS credentials.

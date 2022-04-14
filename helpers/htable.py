@@ -68,9 +68,9 @@ class Table:
 
     def __repr__(self) -> str:
         res = ""
-        res += "cols=%s" % str(self._column_names)
-        res += "\ntable=\n%s" % "\n".join(map(str, self._table))
-        res += "\nsize=%s" % str(self.size())
+        res += f"cols={str(self._column_names)}"
+        res += f"\ntable=\n{'\n'.join(map(str, self._table))}"
+        res += f"\nsize={str(self.size())}"
         return res
 
     @classmethod
@@ -79,9 +79,7 @@ class Table:
         Build a table from a list of columns and the body of a CSV file.
         """
         hdbg.dassert_isinstance(txt, str)
-        table = [
-            line for line in csv.reader(txt.split("\n"), delimiter=delimiter)
-        ]
+        table = list(csv.reader(txt.split("\n"), delimiter=delimiter))
         return cls(table, cols)
 
     def size(self) -> Tuple[int, int]:

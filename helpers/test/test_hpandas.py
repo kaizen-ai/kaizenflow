@@ -154,7 +154,7 @@ class Test_trim_df1(hunitest.TestCase):
         df = pd.read_csv(io.StringIO(txt), *args, index_col=0, **kwargs)
         return df
 
-    def test_types1(self):
+    def test_types1(self) -> None:
         """
         Check the types of a df coming from `read_csv()`.
 
@@ -195,7 +195,7 @@ class Test_trim_df1(hunitest.TestCase):
         df = self.get_df(parse_dates=["start_time"])
         return df
 
-    def test_types2(self):
+    def test_types2(self) -> None:
         """
         Check the types of a df coming from `read_csv()` forcing parsing some
         values as dates.
@@ -240,7 +240,7 @@ class Test_trim_df1(hunitest.TestCase):
         df[col_name] = pd.to_datetime(df[col_name])
         return df
 
-    def test_types3(self):
+    def test_types3(self) -> None:
         """
         Check the types of a df coming from `read_csv()` after conversion to
         tz-aware objects.
@@ -272,7 +272,7 @@ class Test_trim_df1(hunitest.TestCase):
 
     # //////////////////////////////////////////////////////////////////////////////
 
-    def test_trim_df1(self):
+    def test_trim_df1(self) -> None:
         """
         In general one can't filter a df with columns represented as `str`
         using `pd.Timestamp` (either tz-aware or tz-naive).
@@ -315,7 +315,7 @@ class Test_trim_df1(hunitest.TestCase):
         38  2022-01-04 21:35:00.000000  17085   179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_trim_df2(self):
+    def test_trim_df2(self) -> None:
         """
         Trim a df with a column that is `datetime64` without tz using a
         `pd.Timestamp` without tz.
@@ -356,7 +356,7 @@ class Test_trim_df1(hunitest.TestCase):
         38 2022-01-04 21:35:00  17085   179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_trim_df3(self):
+    def test_trim_df3(self) -> None:
         """
         Trim a df with a column that is `datetime64` with tz vs a `pd.Timestamp
         with tz.
@@ -396,8 +396,9 @@ class Test_trim_df1(hunitest.TestCase):
         34 2022-01-04 16:35:00-05:00  13684  1146.00
         38 2022-01-04 16:35:00-05:00  17085   179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
-
-    def test_trim_df4(self):
+    
+    # pylint: disable=line-too-long
+    def test_trim_df4(self) -> None:
         """
         Trim a df with a column that is `datetime64` with tz vs a `pd.Timestamp
         without tz.

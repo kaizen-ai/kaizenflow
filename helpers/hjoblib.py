@@ -116,9 +116,8 @@ def split_list_in_tasks(
             None,
             "Can't specify num_elems_per_task with keep_order",
         )
-        list_out = [[] for _ in range(n)]
-        for i in range(len(list_in)):
-            elem = list_in[i]
+        list_out: List[list] = [[] for _ in range(n)]
+        for i, elem in enumerate(list_in):
             _LOG.debug("%s: %s -> %s", i, elem, i % n)
             list_out[i % n].append(elem)
     else:
@@ -129,7 +128,7 @@ def split_list_in_tasks(
         hdbg.dassert_lte(1, k)
         list_out = [list_in[i : i + k] for i in range(0, len(list_in), k)]
     # Ensure that the elements are all distributed.
-    hdbg.dassert_eq(sum(len(l) for l in list_out), len(list_in))
+    hdbg.dassert_eq(sum(len(l_) for l_ in list_out), len(list_in))
     return list_out
 
 
@@ -191,11 +190,11 @@ def task_to_string(task: Task, *, use_pprint: bool = True) -> str:
     args, kwargs = task
     txt = []
     if use_pprint:
-        txt.append("args=%s" % pprint.pformat(args))
-        txt.append("kwargs=%s" % pprint.pformat(kwargs))
+        txt.append(f"args={pprint.pformat(args)}")
+        txt.append(f"kwargs={pprint.pformat(kwargs)}")
     else:
-        txt.append("args=%s" % str(args))
-        txt.append("kwargs=%s" % str(kwargs))
+        txt.append(f"args={str(args)}")
+        txt.append(f"kwargs={str(kwargs)}")
     txt = "\n".join(txt)
     return txt
 
@@ -330,10 +329,10 @@ def workload_to_string(workload: Workload, *, use_pprint: bool = True) -> str:
     validate_workload(workload)
     workload_func, func_name, tasks = workload
     txt = []
-    txt.append("workload_func=%s" % workload_func.__name__)
-    txt.append("func_name=%s" % func_name)
+    txt.append(f"workload_func={workload_func.__name__}")
+    txt.append(f"func_name={func_name}")
     for i, task in enumerate(tasks):
-        txt.append("# task %s / %s" % (i + 1, len(tasks)))
+        txt.append(f"# task {i + 1} / {len(tasks)}")
         txt.append(task_to_string(task, use_pprint=use_pprint))
     txt = "\n".join(txt)
     return txt
@@ -455,24 +454,24 @@ def _parallel_execute_decorator(
     txt = []
     # `start_ts` needs to be before running the function.
     start_ts = hdateti.get_current_timestamp_as_string("naive_ET")
-    tag = "%s/%s (%s)" % (task_idx + 1, task_len, start_ts)
+    tag = f"{task_idx + 1}/{task_len} ({start_ts})"
     txt.append("\n" + hprint.frame(tag) + "\n")
-    txt.append("tag=%s" % tag)
-    txt.append("workload_func=%s" % workload_func.__name__)
-    txt.append("func_name=%s" % func_name)
+    txt.append(f"tag={tag}")
+    txt.append(f"workload_func={workload_func.__name__}")
+    txt.append(f"func_name={func_name}")
     txt.append(task_to_string(task))
     # Run the workload.
     args, kwargs = task
     kwargs.update({"incremental": incremental, "num_attempts": num_attempts})
     with htimer.TimedScope(
-        logging.DEBUG, "Execute '%s'" % workload_func.__name__
+        logging.DEBUG, f"Execute '{workload_func.__name__}'"
     ) as ts:
         try:
             res = workload_func(*args, **kwargs)
             error = False
         except Exception as e:  # pylint: disable=broad-except
             exception = e
-            txt.append("exception='%s'" % str(e))
+            txt.append(f"exception='{str(e)}'")
             res = None
             error = True
             _LOG.error("Execution failed")
@@ -480,11 +479,11 @@ def _parallel_execute_decorator(
     elapsed_time = ts.elapsed_time
     end_ts = hdateti.get_current_timestamp_as_string("naive_ET")
     # TODO(gp): -> func_result
-    txt.append("func_res=\n%s" % hprint.indent(str(res)))
-    txt.append("elapsed_time_in_secs=%s" % elapsed_time)
-    txt.append("start_ts=%s" % start_ts)
-    txt.append("end_ts=%s" % end_ts)
-    txt.append("error=%s" % error)
+    txt.append(f"func_res=\n{hprint.indent(str(res))}")
+    txt.append(f"elapsed_time_in_secs={elapsed_time}")
+    txt.append(f"start_ts={start_ts}")
+    txt.append(f"end_ts={end_ts}")
+    txt.append(f"error={error}")
     # Update log file.
     txt = "\n".join(txt)
     _LOG.debug("txt=\n%s", hprint.indent(txt))
@@ -582,7 +581,7 @@ def parallel_execute(
         res = []
         for task_idx, task in tqdm_iter:
             _LOG.debug(
-                "\n%s", hprint.frame("Task %s / %s" % (task_idx + 1, task_len))
+                "\n%s", hprint.frame(f"Task {task_idx + 1} / {task_len}")
             )
             # Execute.
             res_tmp = _parallel_execute_decorator(
@@ -633,7 +632,7 @@ def parallel_execute(
             elif backend == "asyncio_multiprocessing":
                 executor = concurrent.futures.ProcessPoolExecutor
             else:
-                raise ValueError("Invalid backend='%s'" % backend)
+                raise ValueError(f"Invalid backend='{backend}'")
             func = lambda args_: _parallel_execute_decorator(
                 args_[0],
                 task_len,
@@ -666,7 +665,7 @@ def parallel_execute(
                             res.append(res_tmp)
                             pbar.update(1)
         else:
-            raise ValueError("Invalid backend='%s'" % backend)
+            raise ValueError(f"Invalid backend='{backend}'")
     _LOG.info("Saved log info in '%s'", log_file)
     return res
 

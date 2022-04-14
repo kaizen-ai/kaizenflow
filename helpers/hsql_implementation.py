@@ -227,9 +227,7 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
     cursor = connection.cursor()
     for table in tables:
         query = (
-            """SELECT * FROM pg_indexes WHERE tablename = '{table}' """.format(
-                table=table
-            )
+            f"""SELECT * FROM pg_indexes WHERE tablename = '{table}' """
         )
         cursor.execute(query)
         z = cursor.fetchall()
@@ -398,7 +396,7 @@ def head_table(
     Report the head of the table as str.
     """
     txt = []
-    query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+    query = f"SELECT * FROM {table} LIMIT {limit} "
     df = execute_query_to_df(connection, query)
     # pd.options.display.max_columns = 1000
     # pd.options.display.width = 130
@@ -446,13 +444,13 @@ def find_tables_common_columns(
     df = []
     for i, table in enumerate(tables):
         table = tables[i]
-        query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+        query = f"SELECT * FROM {table} LIMIT {limit} "
         df1 = execute_query_to_df(connection, query, verbose=False)
         if df1 is None:
             continue
         for j in range(i + 1, len(tables)):
             table = tables[j]
-            query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+            query = f"SELECT * FROM {table} LIMIT {limit} "
             df2 = execute_query_to_df(connection, query, verbose=False)
             if df2 is None:
                 continue
@@ -467,9 +465,9 @@ def find_tables_common_columns(
                     )
                 )
             else:
-                print(("'%s' vs '%s'" % (tables[i], tables[j])))
+                print(f"'{tables[i]}' vs '{tables[j]}'")
                 print(
-                    ("    (%s): %s" % (len(common_cols), " ".join(common_cols)))
+                    f"    ({len(common_cols)}): {' '.join(common_cols)}"
                 )
     obj = None
     if as_df:
@@ -529,14 +527,14 @@ def execute_query_to_df(
     """
     if False:
         # Ask the user before executing a query.
-        print("query=\n%s", query)
+        print(f"query=\n{query}")
         import helpers.hsystem as hsystem
 
         hsystem.query_yes_no("Ok to execute?")
     if limit is not None:
-        query += " LIMIT %s" % limit
+        query += f" LIMIT {limit}"
     if offset is not None:
-        query += " OFFSET %s" % offset
+        query += f" OFFSET {offset}"
     if profile:
         query = "EXPLAIN ANALYZE " + query
     if verbose:
@@ -665,7 +663,7 @@ def execute_insert_query(
 
 def execute_query(connection: DbConnection, query: str) -> None:
     """
-    Used for generic simple operations.
+    Use for generic simple operations.
 
     :param connection: connection to the DB
     :param query: generic query that can be: insert, update, delete, etc.
@@ -745,7 +743,7 @@ def is_row_with_value_present(
     show_db_state: bool = True,
 ) -> hasynci.PollOutput:
     """
-    A polling function that checks if a row with `field_name` == `target_value`
+    Check with a polling function if a row with `field_name` == `target_value`
     is present in the table `table_name` of the DB.
 
     E.g., this can be used with polling to wait for the target value

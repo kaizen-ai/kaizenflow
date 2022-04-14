@@ -109,7 +109,7 @@ def dassert_path_exists(
     dassert_is_valid_aws_profile(path, aws_profile)
     if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
-        hdbg.dassert(s3fs_.exists(path), "S3 path '%s' doesn't exist!" % path)
+        hdbg.dassert(s3fs_.exists(path), f"S3 path '{path}' doesn't exist!")
     else:
         hdbg.dassert_path_exists(path)
 
@@ -127,7 +127,7 @@ def dassert_path_not_exists(
     dassert_is_valid_aws_profile(path, aws_profile)
     if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
-        hdbg.dassert(not s3fs_.exists(path), "S3 path '%s' already exist!" % path)
+        hdbg.dassert(not s3fs_.exists(path), f"S3 path '{path}' already exist!")
     else:
         hdbg.dassert_path_not_exists(path)
 
