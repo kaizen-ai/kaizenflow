@@ -421,12 +421,13 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str, *, exchange_id: str
+        df: pd.DataFrame, full_symbol_col_name: str, **kwargs
     ) -> pd.DataFrame:
         """
         Apply transformations to loaded data.
         """
-        df["exchange_id"] = exchange_id
+        if "exchange_id" in kwargs:
+            df["exchange_id"] = kwargs["exchange_id"]
         # Create full symbols column and drop its components.
         df[full_symbol_col_name] = (
             df["exchange_id"].astype(str) + "::" + df["currency_pair"].astype(str)

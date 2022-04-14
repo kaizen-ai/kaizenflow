@@ -156,7 +156,7 @@ class HistoricalPqByTileClient(
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
             root_dir_df = self._apply_transformations(
-                root_dir_df, full_symbol_col_name, transformation_kwargs
+                root_dir_df, full_symbol_col_name, **transformation_kwargs
             )
             # Add the root dir data to the result list.
             res_df_list.append(root_dir_df)
