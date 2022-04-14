@@ -107,7 +107,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str
+        df: pd.DataFrame, full_symbol_col_name: str, **kwargs
     ) -> pd.DataFrame:
         """
         Apply transformations to loaded data.
