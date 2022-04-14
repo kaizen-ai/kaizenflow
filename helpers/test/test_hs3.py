@@ -5,13 +5,8 @@ import pytest
 
 import helpers.hmoto as hmoto
 import helpers.hs3 as hs3
-import helpers.hsystem as hsystem
 
 
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1292/1666.",
-)
 class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
     def write_read_helper(self, file_name: str, force_flush: bool) -> None:
         # Prepare inputs.
@@ -87,10 +82,6 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
         self.assert_equal(actual, expected)
 
 
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1292/1666.",
-)
 class TestListdir1(hmoto.S3Mock_TestCase):
     def prepare_test_data(self) -> Tuple[str, hs3.AwsProfile]:
         bucket_s3_path = f"s3://{self.bucket_name}"
@@ -225,10 +216,6 @@ class TestListdir1(hmoto.S3Mock_TestCase):
         self.assertListEqual(paths, expected_paths)
 
 
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1292/1666.",
-)
 class TestDu1(hmoto.S3Mock_TestCase):
     def test_du1(self) -> None:
         """
