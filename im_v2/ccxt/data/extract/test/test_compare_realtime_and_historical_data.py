@@ -6,27 +6,21 @@ import pytest
 
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
+import helpers.hsystem as hsystem
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
+@pytest.mark.skipif(
+    hsystem.is_inside_ci(),
+    reason="Extend AWS authentication system CmTask #1292/1666.",
+)
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
     S3_PATH = "s3://cryptokaizen-data/unit_test/parquet/historical"
     FILTERS = [
-        [
-            ("year", "==", 2021),
-            ("month", ">=", 12),
-            ("year", "==", 2021),
-            ("month", "<=", 12),
-        ],
-        [
-            ("year", "==", 2022),
-            ("month", ">=", 1),
-            ("year", "==", 2022),
-            ("month", "<=", 1),
-        ],
+        [("year", "==", 2021), ("month", ">=", 12)],
+        [("year", "==", 2022), ("month", "<=", 1)],
     ]
     _ohlcv_dataframe_sample = None
 
@@ -50,7 +44,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             )
             # Matching exact timespan as in test function call.
             self._ohlcv_dataframe_sample = ohlcv_sample.loc[
-                "2021-12-31 23:55:00":"2022-01-01 00:05:00"
+                "2021-12-31 23:55:00":"2022-01-01 00:05:00"  # type: ignore[misc]
             ]
         # Deep copy (which is default for `pd.DataFrame.copy()`) is used to
         # preserve original data for each test.
@@ -209,22 +203,22 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         1640995020000 ADA_USDT       1.309  1.31  1.309  1.310   23032.3
         1640995080000 ADA_USDT       1.310  1.31  1.306  1.306  179644.8
         Differing table contents:
-        df.shape=(6, 2)
+        df.shape=(6, 4)
         df.full=
-                 open
-                 self    other
-        2   46285.790  666.000
-        33    109.410  666.000
-        46    999.000    3.033
-        51    999.000  109.750
-        67      1.317  666.000
-        83    999.000    1.315
+                open              timestamp currency_pair
+                self   other
+        2   46285.79   666.0  1640994900000      BTC_USDT
+        33    109.41   666.0  1640995140000     AVAX_USDT
+        46     999.0   3.033  1640995200000      EOS_USDT
+        51     999.0  109.75  1640995260000     AVAX_USDT
+        67     1.317   666.0  1640995380000      ADA_USDT
+        83     999.0   1.315  1640995500000      ADA_USDT
         ################################################################################"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_parser(self) -> None:
         """
-        Tests arg parser for predefined args in the script.
+        Test arg parser for predefined args in the script.
 
         Mostly for coverage and to detect argument changes.
         """
@@ -268,7 +262,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
     def _test_function_call(self) -> None:
         """
-        Tests directly _run function for coverage increase.
+        Test directly _run function for coverage increase.
         """
         # Prepare inputs.
         kwargs = {

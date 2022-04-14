@@ -8,7 +8,6 @@ import contextlib
 import datetime
 import logging
 import math
-import random
 from typing import (
     Any,
     Callable,
@@ -23,6 +22,7 @@ from typing import (
 )
 
 import async_solipsism
+import numpy as np
 import pandas as pd
 
 import helpers.hdatetime as hdateti
@@ -111,7 +111,7 @@ async def gather_coroutines_with_wall_clock(
     # function.
     coroutines = [coro(get_wall_clock_time) for coro in coroutines]
     #
-    result = await asyncio.gather(*coroutines)
+    result: List[Any] = await asyncio.gather(*coroutines)
     return result
 
 
@@ -268,9 +268,9 @@ async def sleep(
         min_, max_ = delay_in_secs
         hdbg.dassert_lte(0, min_)
         hdbg.dassert_lte(min_, max_)
-        delay_in_secs = random.rand(min_, max_)
+        delay_in_secs = np.random.rand(min_, max_)
     else:
-        raise ValueError(f"Invalid delay_in_secs='delay_in_secs'")
+        raise ValueError(f"Invalid delay_in_secs='{delay_in_secs}'")
     # Wait.
     hprint.log_frame(
         _LOG,

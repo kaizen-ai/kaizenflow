@@ -1,15 +1,5 @@
 import logging
-import os
-import re
-from typing import Dict, List
 
-import invoke
-import pytest
-
-import helpers.hgit as hgit
-import helpers.hio as hio
-import helpers.hprint as hprint
-import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks as hlibtask
 
@@ -24,6 +14,7 @@ class Test_find_short_import1(hunitest.TestCase):
         ]
         results = hlibtask._find_short_import(iterator, "dtfcodarun")
         act = "\n".join(map(str, results))
+        # pylint: disable=line-too-long
         exp = r"""('file1.py', 10, 'import dataflow.core.dag_runner as dtfcodarun', 'dtfcodarun', 'import dataflow.core.dag_runner as dtfcodarun')"""
         self.assert_equal(act, exp, fuzzy_match=True)
 

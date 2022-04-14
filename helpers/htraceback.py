@@ -180,7 +180,7 @@ def parse_traceback(
         hdbg.dassert_lt(end_idx, len(lines))
         traceback = "\n".join(lines[start_idx:end_idx])
     else:
-        raise ValueError("Invalid state='%s'" % state)
+        raise ValueError(f"Invalid state='{state}'")
     _LOG.debug("traceback=\n%s", traceback)
     _LOG.debug("cfile=\n%s", cfile_to_str(cfile))
     # Purify filenames from client so that refer to files in this client.

@@ -30,6 +30,7 @@ except ModuleNotFoundError:
 
 # To enforce this order of the imports we use the directive for the linter below.
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.hintrospection as hintros  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hio as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hsystem as hsystem  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -108,7 +109,7 @@ def dassert_path_exists(
     dassert_is_valid_aws_profile(path, aws_profile)
     if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
-        hdbg.dassert(s3fs_.exists(path), "S3 path '%s' doesn't exist!" % path)
+        hdbg.dassert(s3fs_.exists(path), f"S3 path '{path}' doesn't exist!")
     else:
         hdbg.dassert_path_exists(path)
 
@@ -126,11 +127,12 @@ def dassert_path_not_exists(
     dassert_is_valid_aws_profile(path, aws_profile)
     if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
-        hdbg.dassert(not s3fs_.exists(path), "S3 path '%s' already exist!" % path)
+        hdbg.dassert(not s3fs_.exists(path), f"S3 path '{path}' already exist!")
     else:
         hdbg.dassert_path_not_exists(path)
 
 
+# TODO(gp): Consider using `s3fs.split_path`.
 def split_path(s3_path: str) -> Tuple[str, str]:
     """
     Separate an S3 path in the bucket and the rest of the path as absolute from
@@ -212,6 +214,30 @@ def listdir(
     return paths
 
 
+def du(
+    path: str,
+    *,
+    human_format: bool = False,
+    aws_profile: Optional[AwsProfile] = None,
+) -> Union[int, str]:
+    """
+    Counterpart to `hsystem.du` with S3 support.
+
+    If and only if `aws_profile` is specified, S3 is used instead of
+    local filesystem.
+    """
+    dassert_is_valid_aws_profile(path, aws_profile)
+    if is_s3_path(path):
+        s3fs_ = get_s3fs(aws_profile)
+        dassert_path_exists(path, s3fs_)
+        size: Union[int, str] = s3fs_.du(path)
+        if human_format:
+            size = hintros.format_size(size)
+    else:
+        size = hsystem.du(path, human_format=human_format)
+    return size
+
+
 def to_file(
     lines: str,
     file_name: str,
@@ -235,20 +261,20 @@ def to_file(
         # Convert lines to bytes, only supported mode for S3.
         # Also create a list of new lines as raw bytes is not supported.
         os_sep = os.linesep
-        lines = [f"{line}{os_sep}".encode() for line in lines.split(os_sep)]
+        lines_lst = [f"{line}{os_sep}".encode() for line in lines.split(os_sep)]
         # Inspect file name and path.
         hio.dassert_is_valid_file_name(file_name)
         s3fs_ = get_s3fs(aws_profile)
         mode = "wb" if mode is None else mode
-        # Open s3 file.
+        # Open S3 file. `rb` is the default mode for S3.
         with s3fs_.open(file_name, mode) as s3_file:
             if file_name.endswith((".gz", ".gzip")):
                 # Open and decompress gzipped file.
                 with gzip.GzipFile(fileobj=s3_file) as gzip_file:
-                    gzip_file.writelines(lines)
+                    gzip_file.writelines(lines_lst)
             else:
                 # Any other file.
-                s3_file.writelines(lines)
+                s3_file.writelines(lines_lst)
             if force_flush:
                 # TODO(Nikola): Investigate S3 alternative for `os.fsync(f.fileno())`.
                 s3_file.flush()
@@ -256,7 +282,7 @@ def to_file(
         use_gzip = file_name.endswith((".gz", ".gzip"))
         hio.to_file(
             file_name,
-            lines,
+            lines_lst,
             mode=mode,
             use_gzip=use_gzip,
             force_flush=force_flush,
@@ -283,7 +309,7 @@ def from_file(
         s3fs_ = get_s3fs(aws_profile)
         dassert_path_exists(file_name, s3fs_)
         # Open s3 file.
-        with s3fs_.open(file_name, "rb") as s3_file:
+        with s3fs_.open(file_name) as s3_file:
             if file_name.endswith((".gz", ".gzip")):
                 # Open and decompress gzipped file.
                 with gzip.GzipFile(fileobj=s3_file) as gzip_file:

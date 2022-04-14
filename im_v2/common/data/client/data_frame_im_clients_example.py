@@ -5,8 +5,8 @@ import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
 """
 
 
-import im_v2.common.data.client.data_frame_im_clients as imvcdcdfimc
 import core.finance as cofinanc
+import im_v2.common.data.client.data_frame_im_clients as imvcdcdfimc
 
 
 def get_DataFrameImClient_example1() -> imvcdcdfimc.DataFrameImClient:

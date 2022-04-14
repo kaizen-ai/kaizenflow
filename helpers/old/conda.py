@@ -32,7 +32,7 @@ def conda_system(cmd: str, *args: Any, **kwargs: Any) -> int:
     path = holuscre.get_credentials()["conda_sh_path"]
     hdbg.dassert_path_exists(path)
     hdbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
-    cmd = "source %s && %s" % (path, cmd)
+    cmd = f"source {path} && {cmd}"
     output: int = hsystem.system(cmd, *args, **kwargs)
     return output
 
@@ -43,7 +43,7 @@ def conda_system_to_string(
     path = holuscre.get_credentials()["conda_sh_path"]
     hdbg.dassert_path_exists(path)
     hdbg.dassert(os.path.isfile(path), "'%s' is not a file", path)
-    cmd = "source %s && %s" % (path, cmd)
+    cmd = f"source {path} && {cmd}"
     output: Tuple[int, str] = hsystem.system_to_string(cmd, *args, **kwargs)
     return output
 
@@ -84,7 +84,7 @@ def set_conda_env_root(conda_env_path: str) -> None:
         _LOG.debug("Resetting envs_dir %s", str(envs))
         for env in envs:
             _LOG.debug("Deleting %s", env)
-            cmd = "conda config --remove envs_dirs %s" % env
+            cmd = f"conda config --remove envs_dirs {env}"
             # We don't abort because of a bug in conda not deleting the key
             # when asked for.
             # CondaKeyError: 'envs_dirs': u'/data/shared/anaconda2/envs' is not
@@ -93,13 +93,13 @@ def set_conda_env_root(conda_env_path: str) -> None:
         envs = get_conda_envs_dirs()
         _LOG.debug("Current envs: %s", str(envs))
         # Add the conda env.
-        cmd = r"conda config --prepend envs_dirs %s" % conda_env_path
+        cmd = f"conda config --prepend envs_dirs {conda_env_path}"
         conda_system(cmd)
         # Check.
         envs = get_conda_envs_dirs()
         hdbg.dassert(
             envs or envs[0] != conda_env_path,
-            msg="%s is not first env dir in %s" % (conda_env_path, envs),
+            msg=f"{conda_env_path} is not first env dir in {envs}",
         )
     else:
         _LOG.debug(
@@ -161,7 +161,7 @@ def get_conda_list(conda_env_name: str) -> Dict[str, Dict[str, str]]:
     # agate-dbf                 0.2.0                    py27_0    conda-forge
     # agate-excel               0.2.2                      py_0    conda-forge
     # TODO(gp): Use --json but we need to parse the json without any module.
-    cmd = r"(conda activate %s 2>&1) >/dev/null && conda list" % conda_env_name
+    cmd = rf"(conda activate {conda_env_name} 2>&1) >/dev/null && conda list"
     ret = conda_system_to_string(cmd)[1]
     ret = ret.split("\n")
     env_dict = {}

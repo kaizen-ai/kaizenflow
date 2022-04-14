@@ -42,6 +42,30 @@ class IbDataExtractor(imcdedaex.AbstractDataExtractor):
                 self._MAX_IB_CONNECTION_ATTEMPTS
             )
 
+    @staticmethod
+    def get_default_part_files_dir(
+        symbol: str,
+        frequency: imcodatyp.Frequency,
+        asset_class: imcodatyp.AssetClass,
+        contract_type: imcodatyp.ContractType,
+        exchange: str,
+        currency: str,
+    ) -> str:
+        """
+        Return a `symbol` directory on S3 near the main archive file.
+        """
+        arch_file = imidlifpge.IbFilePathGenerator().generate_file_path(
+            symbol=symbol,
+            frequency=frequency,
+            asset_class=asset_class,
+            contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+            ext=imcodatyp.Extension.CSV,
+        )
+        arch_path, _ = os.path.split(arch_file)
+        return os.path.join(arch_path, symbol)
+
     def extract_data(
         self,
         exchange: str,
@@ -249,17 +273,75 @@ class IbDataExtractor(imcdedaex.AbstractDataExtractor):
         return data
 
     @staticmethod
-    def get_default_part_files_dir(
-        symbol: str,
-        frequency: imcodatyp.Frequency,
+    def _get_ib_target(
         asset_class: imcodatyp.AssetClass,
-        contract_type: imcodatyp.ContractType,
-        exchange: str,
-        currency: str,
+        contract_type: Optional[imcodatyp.ContractType],
     ) -> str:
         """
-        Return a `symbol` directory on S3 near the main archive file.
+        Transform asset to a format known by IB gateway code.
         """
+        target: str
+        if (
+            asset_class == imcodatyp.AssetClass.Futures
+            and contract_type == imcodatyp.ContractType.Continuous
+        ):
+            target = "continuous_futures"
+        elif (
+            asset_class == imcodatyp.AssetClass.Futures
+            and contract_type == imcodatyp.ContractType.Expiry
+        ):
+            target = "futures"
+        elif asset_class == imcodatyp.AssetClass.Stocks:
+            target = "stocks"
+        elif asset_class == imcodatyp.AssetClass.Forex:
+            target = "forex"
+        else:
+            raise ValueError(
+                "Couldn't find corresponding IB target for asset class %s and contract type %s"
+                % (asset_class, contract_type)
+            )
+        return target
+
+    @staticmethod
+    def _get_ib_frequency(frequency: imcodatyp.Frequency) -> str:
+        """
+        Transform frequency to a format known by IB gateway code.
+        """
+        ib_frequency: str
+        if frequency == imcodatyp.Frequency.Daily:
+            ib_frequency = "day"
+        elif frequency == imcodatyp.Frequency.Hourly:
+            ib_frequency = "hour"
+        elif frequency == imcodatyp.Frequency.Minutely:
+            ib_frequency = "intraday"
+        else:
+            raise ValueError(
+                "Couldn't find corresponding IB frequency for %s" % frequency
+            )
+        return ib_frequency
+
+    @staticmethod
+    def _get_init_intervals(
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        symbol: str,
+        asset_class: imcodatyp.AssetClass,
+        contract_type: Optional[imcodatyp.ContractType],
+        exchange: str,
+        currency: str,
+        frequency: imcodatyp.Frequency,
+        incremental: Optional[bool],
+    ) -> List[Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]]:
+        """
+        Find starting intervals to load the data.
+
+        For non-incremental case it is just [`start_ts`, `end_ts`). For
+        incremental we remove already loaded piece.
+        """
+        # Nothing to do for non-incremental mode.
+        if not incremental:
+            return [(start_ts, end_ts)]
+        # For incremental mode, find first and last loaded timestamp.
         arch_file = imidlifpge.IbFilePathGenerator().generate_file_path(
             symbol=symbol,
             frequency=frequency,
@@ -269,8 +351,25 @@ class IbDataExtractor(imcdedaex.AbstractDataExtractor):
             currency=currency,
             ext=imcodatyp.Extension.CSV,
         )
-        arch_path, _ = os.path.split(arch_file)
-        return os.path.join(arch_path, symbol)
+        if not imidegaut.check_file_exists(arch_file):
+            return [(start_ts, end_ts)]
+        df = imidegddil.load_historical_data(arch_file)
+        min_ts = df.index.min()
+        max_ts = df.index.max()
+        # Find intervals to run.
+        intervals: List[
+            Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]
+        ] = []
+        if end_ts is None or imidegaut.to_ET(end_ts) > max_ts:
+            intervals.append((max_ts, end_ts))
+        if start_ts is None or imidegaut.to_ET(start_ts) < min_ts:
+            intervals.append((start_ts, min_ts))
+        _LOG.warning(
+            "Incremental mode. Found file '%s': extracting data for %s",
+            arch_file,
+            intervals,
+        )
+        return intervals
 
     def _extract_data_parts(
         self,
@@ -377,102 +476,3 @@ class IbDataExtractor(imcdedaex.AbstractDataExtractor):
                     failed_tasks_intervals.append(interval)
         # Return failed intervals.
         return failed_tasks_intervals
-
-    @staticmethod
-    def _get_ib_target(
-        asset_class: imcodatyp.AssetClass,
-        contract_type: Optional[imcodatyp.ContractType],
-    ) -> str:
-        """
-        Transform asset to a format known by IB gateway code.
-        """
-        target: str
-        if (
-            asset_class == imcodatyp.AssetClass.Futures
-            and contract_type == imcodatyp.ContractType.Continuous
-        ):
-            target = "continuous_futures"
-        elif (
-            asset_class == imcodatyp.AssetClass.Futures
-            and contract_type == imcodatyp.ContractType.Expiry
-        ):
-            target = "futures"
-        elif asset_class == imcodatyp.AssetClass.Stocks:
-            target = "stocks"
-        elif asset_class == imcodatyp.AssetClass.Forex:
-            target = "forex"
-        else:
-            raise ValueError(
-                "Couldn't find corresponding IB target for asset class %s and contract type %s"
-                % (asset_class, contract_type)
-            )
-        return target
-
-    @staticmethod
-    def _get_ib_frequency(frequency: imcodatyp.Frequency) -> str:
-        """
-        Transform frequency to a format known by IB gateway code.
-        """
-        ib_frequency: str
-        if frequency == imcodatyp.Frequency.Daily:
-            ib_frequency = "day"
-        elif frequency == imcodatyp.Frequency.Hourly:
-            ib_frequency = "hour"
-        elif frequency == imcodatyp.Frequency.Minutely:
-            ib_frequency = "intraday"
-        else:
-            raise ValueError(
-                "Couldn't find corresponding IB frequency for %s" % frequency
-            )
-        return ib_frequency
-
-    @staticmethod
-    def _get_init_intervals(
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        symbol: str,
-        asset_class: imcodatyp.AssetClass,
-        contract_type: Optional[imcodatyp.ContractType],
-        exchange: str,
-        currency: str,
-        frequency: imcodatyp.Frequency,
-        incremental: Optional[bool],
-    ) -> List[Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]]:
-        """
-        Find starting intervals to load the data.
-
-        For non-incremental case it is just [`start_ts`, `end_ts`). For
-        incremental we remove already loaded piece.
-        """
-        # Nothing to do for non-incremental mode.
-        if not incremental:
-            return [(start_ts, end_ts)]
-        # For incremental mode, find first and last loaded timestamp.
-        arch_file = imidlifpge.IbFilePathGenerator().generate_file_path(
-            symbol=symbol,
-            frequency=frequency,
-            asset_class=asset_class,
-            contract_type=contract_type,
-            exchange=exchange,
-            currency=currency,
-            ext=imcodatyp.Extension.CSV,
-        )
-        if not imidegaut.check_file_exists(arch_file):
-            return [(start_ts, end_ts)]
-        df = imidegddil.load_historical_data(arch_file)
-        min_ts = df.index.min()
-        max_ts = df.index.max()
-        # Find intervals to run.
-        intervals: List[
-            Tuple[Optional[pd.Timestamp], Optional[pd.Timestamp]]
-        ] = []
-        if end_ts is None or imidegaut.to_ET(end_ts) > max_ts:
-            intervals.append((max_ts, end_ts))
-        if start_ts is None or imidegaut.to_ET(start_ts) < min_ts:
-            intervals.append((start_ts, min_ts))
-        _LOG.warning(
-            "Incremental mode. Found file '%s': extracting data for %s",
-            arch_file,
-            intervals,
-        )
-        return intervals

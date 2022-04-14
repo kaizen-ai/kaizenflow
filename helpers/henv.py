@@ -16,13 +16,13 @@ _WARNING = "\033[33mWARNING\033[0m"
 
 def _get_library_version(lib_name: str) -> str:
     try:
-        cmd = "import %s" % lib_name
+        cmd = f"import {lib_name}"
         # pylint: disable=exec-used
         exec(cmd)
     except ImportError:
         version = "?"
     else:
-        cmd = "%s.__version__" % lib_name
+        cmd = f"{lib_name}.__version__"
         version = eval(cmd)
     return version
 
@@ -59,11 +59,11 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     try:
         cmd = "git branch --show-current"
         _, branch_name = hsystem.system_to_one_line(cmd)
-        txt_tmp.append("branch_name='%s'" % branch_name)
+        txt_tmp.append(f"branch_name='{branch_name}'")
         #
         cmd = "git rev-parse --short HEAD"
         _, hash_ = hsystem.system_to_one_line(cmd)
-        txt_tmp.append("hash='%s'" % hash_)
+        txt_tmp.append(f"hash='{hash_}'")
         #
         num_commits = 3
         if git_commit_type == "all":
@@ -77,7 +77,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         elif git_commit_type == "none":
             pass
         else:
-            raise ValueError("Invalid value='%s'" % git_commit_type)
+            raise ValueError(f"Invalid value='{git_commit_type}'")
     except RuntimeError as e:
         _LOG.error(str(e))
     txt, txt_tmp = _append(txt, txt_tmp)
@@ -101,11 +101,11 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         print(e)
         has_psutil = False
     if has_psutil:
-        txt_tmp.append("cpu count=%s" % psutil.cpu_count())
-        txt_tmp.append("cpu freq=%s" % str(psutil.cpu_freq()))
+        txt_tmp.append(f"cpu count={psutil.cpu_count()}")
+        txt_tmp.append(f"cpu freq={str(psutil.cpu_freq())}")
         # TODO(gp): Report in MB or GB.
-        txt_tmp.append("memory=%s" % str(psutil.virtual_memory()))
-        txt_tmp.append("disk usage=%s" % str(psutil.disk_usage("/")))
+        txt_tmp.append(f"memory={str(psutil.virtual_memory())}")
+        txt_tmp.append(f"disk usage={str(psutil.disk_usage('/'))}")
         txt, txt_tmp = _append(txt, txt_tmp)
     # Add package info.
     txt.append("# Packages")
@@ -133,7 +133,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         if version.startswith("ERROR"):
             failed_imports += 1
         packages.append((lib, version))
-    txt_tmp.extend(["%s: %s" % (l, v) for (l, v) in packages])
+    txt_tmp.extend([f"{l}: {v}" for (l, v) in packages])
     txt, txt_tmp = _append(txt, txt_tmp)
     #
     txt = "\n".join(txt)

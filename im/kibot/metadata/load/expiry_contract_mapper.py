@@ -49,30 +49,6 @@ class ExpiryContractMapper:
     _EXPIRY_TO_MONTH = {v: k for k, v in _MONTH_TO_EXPIRY.items()}
     _EXPIRY_TO_MONTH_NUM = {v: k for k, v in _MONTH_TO_EXPIRY_NUM.items()}
 
-    def month_to_expiry(self, month: str) -> str:
-        hdbg.dassert_in(month, self._MONTH_TO_EXPIRY)
-        return self._MONTH_TO_EXPIRY[month]
-
-    def expiry_to_month(self, expiry: str) -> str:
-        hdbg.dassert_in(expiry, self._EXPIRY_TO_MONTH)
-        return self._EXPIRY_TO_MONTH[expiry]
-
-    def month_to_expiry_num(self, month: int) -> str:
-        hdbg.dassert_in(month, self._MONTH_TO_EXPIRY_NUM)
-        return self._MONTH_TO_EXPIRY_NUM[month]
-
-    def expiry_to_month_num(self, expiry: str) -> int:
-        hdbg.dassert_in(expiry, self._EXPIRY_TO_MONTH_NUM)
-        return self._EXPIRY_TO_MONTH_NUM[expiry]
-
-    def parse_year(self, year: str) -> int:
-        """
-        Convert 2 digit years to 4 digit years, e.g. 20 -> 2020 & 99 -> 1999.
-        """
-        year = int(year)
-        year = year + 2000 if year < 50 else year + 1900
-        return year
-
     @staticmethod
     def parse_expiry_contract(v: str) -> Tuple[str, str, int]:
         """
@@ -125,3 +101,27 @@ class ExpiryContractMapper:
             ),
         )
         return contracts
+
+    def month_to_expiry(self, month: str) -> str:
+        hdbg.dassert_in(month, self._MONTH_TO_EXPIRY)
+        return self._MONTH_TO_EXPIRY[month]
+
+    def expiry_to_month(self, expiry: str) -> str:
+        hdbg.dassert_in(expiry, self._EXPIRY_TO_MONTH)
+        return self._EXPIRY_TO_MONTH[expiry]
+
+    def month_to_expiry_num(self, month: int) -> str:
+        hdbg.dassert_in(month, self._MONTH_TO_EXPIRY_NUM)
+        return self._MONTH_TO_EXPIRY_NUM[month]
+
+    def expiry_to_month_num(self, expiry: str) -> int:
+        hdbg.dassert_in(expiry, self._EXPIRY_TO_MONTH_NUM)
+        return self._EXPIRY_TO_MONTH_NUM[expiry]
+
+    def parse_year(self, year: str) -> int:
+        """
+        Convert 2 digit years to 4 digit years, e.g. 20 -> 2020 & 99 -> 1999.
+        """
+        year = int(year)
+        year = year + 2000 if year < 50 else year + 1900
+        return year

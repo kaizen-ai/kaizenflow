@@ -409,7 +409,7 @@ class TestPlaybackFilePath1(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        test writing to file when number of tests is more than generated (10).
+        Test writing to file when number of tests is more than generated (10).
         """
         test_file = hplayba.Playback._get_test_file_name("./path/to/somewhere.py")
         self.assert_equal(
@@ -458,7 +458,7 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         # Save the code to the file.
         hio.to_file(tmp_py_file, self._code(max_tests))
         # Executes the code.
-        hsystem.system("python %s" % tmp_py_file)
+        hsystem.system(f"python {tmp_py_file}")
         playback_code = hio.from_file(tmp_test_file)
         return playback_code
 
@@ -466,7 +466,7 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         """
         Return a code for executable file to run.
         """
-        max_tests_str = "" if max_tests is None else ", max_tests=%i" % max_tests
+        max_tests_str = "" if max_tests is None else f", max_tests={max_tests}"
         code = (
             "\n".join(
                 [

@@ -83,14 +83,6 @@ class TestResultBundle(hunitest.TestCase):
         expected = ["col2", "col4"]
         self.assert_equal(str(actual), str(expected))
 
-    def _get_result_bundle(self) -> dtfcorebun.ResultBundle:
-        """
-        Initialize a `ResultBundle` from a config.
-        """
-        init_config = self._get_init_config()
-        rb = dtfcorebun.ResultBundle.from_config(init_config)
-        return rb
-
     @staticmethod
     def _get_init_config() -> cconfig.Config:
         # TODO(gp): Factor out common part.
@@ -115,6 +107,14 @@ class TestResultBundle(hunitest.TestCase):
             }
         )
         return init_config
+
+    def _get_result_bundle(self) -> dtfcorebun.ResultBundle:
+        """
+        Initialize a `ResultBundle` from a config.
+        """
+        init_config = self._get_init_config()
+        rb = dtfcorebun.ResultBundle.from_config(init_config)
+        return rb
 
 
 # #############################################################################

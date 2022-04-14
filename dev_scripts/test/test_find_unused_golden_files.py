@@ -8,7 +8,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_parse_test_code(hunitest.TestCase):
-
     def test1(self) -> None:
         code = """
         class TestClass(hunitest.TestCase):

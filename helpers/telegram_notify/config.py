@@ -26,5 +26,5 @@ def get_info() -> Tuple[str, str]:
         telegram_token = NOTIFY_JUPYTER_TOKEN
         chat_id = "967103049"
     else:
-        hdbg.dfatal("User `%s` is not in the config.py" % user)
+        hdbg.dfatal(f"User `{user}` is not in the config.py")
     return telegram_token, chat_id

@@ -153,7 +153,7 @@ def _combine_masks(
     elif mode == "or":
         combined_mask = masks.any(axis=1)
     else:
-        raise ValueError("Invalid `mode`='%s'" % mode)
+        raise ValueError(f"Invalid `mode`='{mode}'")
     if combined_mask.sum() == 0:
         _LOG.warning("No data remaining after filtering.")
     info["nrows_remaining"] = combined_mask.sum()
