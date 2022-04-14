@@ -928,7 +928,7 @@ class TestRealTimeSqlTalosClient1(
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         # Initialize client and create testing outcomes.
         im_client = self.setup_talos_sql_client()
-        actual_outcome = im_client.build_numerical_to_string_id_mapping()
+        actual_outcome = im_client._build_asset_id_to_full_symbol_mapping()
         expected_outcome = self._get_test_numerical_to_string_id_mapping()
         # Message in case if test case got failed.
         message = "Actual and expected mappings are not equal!"
