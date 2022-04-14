@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+import pytest
 
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
@@ -8,6 +9,22 @@ import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
+
+
+def get_expected_column_names() -> List[str]:
+    """
+    Return a list of expected column names.
+    """
+    expected_column_names = [
+        "full_symbol",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+    ]
+    return expected_column_names
+
 
 # #############################################################################
 # TestCcxtCsvClient1
@@ -25,7 +42,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 100
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -59,7 +76,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 199
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -96,7 +113,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
         #
         expected_length = 196
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -134,7 +151,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 9
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -173,7 +190,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 8
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -217,7 +234,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 174
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -285,24 +302,6 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
             expected_last_elements,
         )
 
-    # ////////////////////////////////////////////////////////////////////////
-
-    # TODO(gp): @all if this is common, move it outside the classes.
-    @staticmethod
-    def _get_expected_column_names() -> List[str]:
-        """
-        Return a list of expected column names.
-        """
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        return expected_column_names
-
 
 # #############################################################################
 # TestCcxtPqByAssetClient1
@@ -323,7 +322,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 100
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -359,7 +358,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 199
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -398,7 +397,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
         #
         expected_length = 196
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -438,7 +437,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 9
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -479,7 +478,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 8
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -527,7 +526,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         #
         expected_length = 174
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -604,23 +603,6 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
             expected_last_elements,
         )
 
-    # ////////////////////////////////////////////////////////////////////////
-
-    @staticmethod
-    def _get_expected_column_names() -> List[str]:
-        """
-        Return a list of expected column names.
-        """
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        return expected_column_names
-
 
 # #############################################################################
 # TestCcxtDbClient1
@@ -649,7 +631,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 5
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -693,7 +675,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 8
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
@@ -742,7 +724,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 4
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
@@ -789,7 +771,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 3
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
@@ -836,7 +818,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 2
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
@@ -892,7 +874,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 5
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
@@ -1027,21 +1009,6 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         )
         return test_data
 
-    @staticmethod
-    def _get_expected_column_names() -> List[str]:
-        """
-        Return a list of expected column names.
-        """
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        return expected_column_names
-
     def _create_test_table(self) -> None:
         """
         Create a test CCXT OHLCV table in DB.
@@ -1055,6 +1022,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
 # #############################################################################
 
 
+@pytest.mark.slow("~6 seconds.")
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -1062,7 +1030,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     def test_read_data5(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
             resample_1min
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -1070,7 +1038,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 8
-        expected_column_names = self._get_expected_column_names()
+        expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
         }
@@ -1101,20 +1069,3 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
-
-    # ////////////////////////////////////////////////////////////////////////
-
-    @staticmethod
-    def _get_expected_column_names() -> List[str]:
-        """
-        Return a list of expected column names.
-        """
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        return expected_column_names
