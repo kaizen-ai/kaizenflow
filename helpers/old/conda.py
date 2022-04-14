@@ -99,7 +99,7 @@ def set_conda_env_root(conda_env_path: str) -> None:
         envs = get_conda_envs_dirs()
         hdbg.dassert(
             envs or envs[0] != conda_env_path,
-            msg=f"{conda_env_path} is not first env dir in {envs}"
+            msg=f"{conda_env_path} is not first env dir in {envs}",
         )
     else:
         _LOG.debug(

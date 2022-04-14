@@ -6,12 +6,10 @@ except ImportError:
     # Break 2022-02-22").
     import helpers.hgit as hgit
 
-    assert (
-        not hgit.is_cmamp()
-    ), (
+    assert not hgit.is_cmamp(), (
         "`cmamp` should have moto, while other repos (e.g., `amp` or `dev_tools`) "
         "are allowed to not have it)"
-       )
+    )
     _HAS_MOTO = False
 
 if _HAS_MOTO:

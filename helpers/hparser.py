@@ -336,7 +336,7 @@ def add_parallel_processing_arg(
 ) -> argparse.ArgumentParser:
     """
     Add parallel processing args.
-    
+
     The "incremental idiom" means skipping processing computation that has
     already been performed. E.g., if we need to transform files from one dir to
     another we skip the files already processed (assuming that a file present

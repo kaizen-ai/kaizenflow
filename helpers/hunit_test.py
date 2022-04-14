@@ -567,7 +567,7 @@ def diff_files(
         log_msg_as_str = (
             msg_as_str
             + "\n"
-            + hprint.frame("Traceback", "-")
+            + hprint.frame("Traceback", char1="-")
             + "\n"
             + "".join(traceback.format_stack())
         )
@@ -1676,8 +1676,8 @@ class TestCase(unittest.TestCase):
 )
 class QaTestCase(TestCase, abc.ABC):
     """
-    Use for QA to test functionalities (e.g., invoke tasks)
-    that run the dev / prod container.
+    Use for QA to test functionalities (e.g., invoke tasks) that run the dev /
+    prod container.
     """
 
     # TODO(Grisha): Linter should not remove `pass` statement from an empty class

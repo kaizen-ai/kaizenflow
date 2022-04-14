@@ -648,23 +648,17 @@ def set_diff_to_str(
         res.append("")
     # obj1 intersect obj2.
     intersection = obj1.intersection(obj2)
-    res.append(
-        f"* intersect=({len(intersection)}) {_to_string(intersection)}"
-    )
+    res.append(f"* intersect=({len(intersection)}) {_to_string(intersection)}")
     if add_space:
         res.append("")
     # obj1 - obj2.
     diff = obj1 - obj2
-    res.append(
-        f"* {obj1_name}-{obj2_name}=({len(diff)}) {_to_string(diff)}"
-    )
+    res.append(f"* {obj1_name}-{obj2_name}=({len(diff)}) {_to_string(diff)}")
     if add_space:
         res.append("")
     # obj2 - obj1.
     diff = obj2 - obj1
-    res.append(
-        f"* {obj2_name}-{obj1_name}=({len(diff)}) {_to_string(diff)}"
-    )
+    res.append(f"* {obj2_name}-{obj1_name}=({len(diff)}) {_to_string(diff)}")
     if add_space:
         res.append("")
     #

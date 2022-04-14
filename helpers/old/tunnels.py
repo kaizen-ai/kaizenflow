@@ -6,7 +6,7 @@ import helpers.old.tunnels as holdtunn
 
 import logging
 import os
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Tuple, Union, cast
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -40,7 +40,9 @@ def tunnel_info_to_string(tunnel_info: list) -> str:
     return ret
 
 
-def parse_service(service: Tuple[str, str, int, int]) -> Dict[str, str]:
+def parse_service(
+    service: Tuple[str, str, int, int]
+) -> Dict[str, Union[str, int]]:
     hdbg.dassert_eq(len(service), 4, "service=%s", service)
     service_name, server, local_port, remote_port = service
     return {
@@ -51,13 +53,16 @@ def parse_service(service: Tuple[str, str, int, int]) -> Dict[str, str]:
     }
 
 
-def find_service(service_name: str, tunnel_info: list) -> Tuple[str, str, int, int]:
-    ret = None
+def find_service(
+    service_name: str, tunnel_info: list
+) -> Tuple[str, str, int, int]:
+    found_service = False
     for service in tunnel_info:
         if service_name == parse_service(service)["service_name"]:
-            hdbg.dassert_is(ret, None)
+            hdbg.dassert(not found_service)
+            found_service = True
             ret: Tuple[str, str, int, int] = service
-    hdbg.dassert_is_not(ret, None)
+    hdbg.dassert(found_service)
     return ret
 
 
@@ -66,6 +71,7 @@ def get_server_ip(service_name: str) -> str:  # pylint: disable=unused-argument
     _LOG.debug("tunnels=\n%s", tunnel_info_to_string(tunnel_info))
     service = find_service("Doc server", tunnel_info)
     server = parse_service(service)["server"]
+    server = cast(str, server)
     return server
 
 

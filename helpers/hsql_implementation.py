@@ -226,9 +226,7 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
     tables = get_table_names(connection)
     cursor = connection.cursor()
     for table in tables:
-        query = (
-            f"""SELECT * FROM pg_indexes WHERE tablename = '{table}' """
-        )
+        query = f"""SELECT * FROM pg_indexes WHERE tablename = '{table}' """
         cursor.execute(query)
         z = cursor.fetchall()
         res.append(pd.DataFrame(z))
@@ -466,9 +464,7 @@ def find_tables_common_columns(
                 )
             else:
                 print(f"'{tables[i]}' vs '{tables[j]}'")
-                print(
-                    f"    ({len(common_cols)}): {' '.join(common_cols)}"
-                )
+                print(f"    ({len(common_cols)}): {' '.join(common_cols)}")
     obj = None
     if as_df:
         obj = pd.DataFrame(

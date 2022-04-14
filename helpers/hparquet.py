@@ -117,7 +117,7 @@ def _create_enclosing_dir(file_name: str) -> Optional[str]:
         if os.path.exists(dir_name):
             # The dir exists and we want to keep it, so we are done.
             _LOG.debug("The dir '%s' exists: exiting", dir_name)
-            return
+            return None
         _LOG.debug("Creating directory '%s'", dir_name)
         try:
             os.makedirs(dir_name)
@@ -397,8 +397,8 @@ def _process_walk_triple(
         `os.walk(path)`
     :return: tuple(lhs_vals), tuple(rhs_vals)
     """
-    lhs_vals = []
-    rhs_vals = []
+    lhs_vals: List[str] = []
+    rhs_vals: List[int] = []
     # If there are subdirectories, do not process.
     if triple[1]:
         return tuple(lhs_vals), tuple(rhs_vals)
@@ -408,8 +408,8 @@ def _process_walk_triple(
     if len(key) == 0:
         return tuple(lhs_vals), tuple(rhs_vals)
     hdbg.dassert_eq(len(key), rel_depth)
-    lhs_vals: List[str] = []
-    rhs_vals: List[int] = []
+    lhs_vals = []
+    rhs_vals = []
     for string in key:
         lhs, rhs = string.split("=")
         lhs_vals.append(lhs)

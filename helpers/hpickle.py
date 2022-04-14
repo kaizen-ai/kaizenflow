@@ -93,9 +93,7 @@ def from_pickle(
     Unpickle and return object stored in `file_name`.
     """
     hdbg.dassert_isinstance(file_name, str)
-    with htimer.TimedScope(
-        logging.DEBUG, f"Unpickling from '{file_name}'"
-    ) as ts:
+    with htimer.TimedScope(logging.DEBUG, f"Unpickling from '{file_name}'") as ts:
         # We assume that the user always specifies a .pkl extension and then we
         # change the extension based on the backend.
         if backend in ("pickle", "dill"):

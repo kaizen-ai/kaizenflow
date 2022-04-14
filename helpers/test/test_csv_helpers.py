@@ -52,8 +52,8 @@ class Test_from_typed_csv(hunitest.TestCase):
 
 class Test_to_typed_csv(hunitest.TestCase):
     """
-    Check whether the function 'to_typed_csv' create file
-    with '.types' prefix or not.
+    Check whether the function 'to_typed_csv' create file with '.types' prefix
+    or not.
     """
 
     def test1(self) -> None:

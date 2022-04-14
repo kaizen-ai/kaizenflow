@@ -8,7 +8,6 @@ import contextlib
 import datetime
 import logging
 import math
-import numpy as np
 from typing import (
     Any,
     Callable,
@@ -23,6 +22,7 @@ from typing import (
 )
 
 import async_solipsism
+import numpy as np
 import pandas as pd
 
 import helpers.hdatetime as hdateti

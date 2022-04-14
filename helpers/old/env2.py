@@ -48,9 +48,7 @@ def get_conda_export_list(conda_env_name: str, add_frame: bool) -> str:
     msg = ""
     if add_frame:
         msg += hprint.frame("Package summary") + "\n"
-    cmd = (
-        rf"(conda activate {conda_env_name} 2>&1 >/dev/null) && conda list --export"
-    )
+    cmd = rf"(conda activate {conda_env_name} 2>&1 >/dev/null) && conda list --export"
     _, msg_tmp = holdcond.conda_system_to_string(cmd)
     msg += msg_tmp
     return msg

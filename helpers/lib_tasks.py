@@ -1379,7 +1379,7 @@ def integrate_diff_dirs(  # type: ignore
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
         _LOG.warning(
             "Reversing dirs: %s",
-            hprint.to_str2(src_dir_basename, dst_dir_basename)
+            hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
@@ -1593,7 +1593,7 @@ def integrate_files(  # type: ignore
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
         _LOG.warning(
             "Reversing dirs: %s",
-            hprint.to_str2(src_dir_basename, dst_dir_basename)
+            hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
@@ -4820,6 +4820,7 @@ def lint_detect_cycles(  # type: ignore
     _run(ctx, cmd)
 
 
+# pylint: disable=line-too-long
 @task
 def lint(  # type: ignore
     ctx,
@@ -4849,7 +4850,7 @@ def lint(  # type: ignore
 
     # To lint only a repo (e.g., lime, lemonade) including `amp` but not `amp` itself:
     > i lint --files="$(find . -name '*.py' -not -path './compute/*' -not -path './amp/*')"
-    
+
     # To lint dev_tools:
     > i lint --files="$(find . -name '*.py' -not -path './amp/*' -not -path './import_check/example/*' -not -path './import_check/test/outcomes/*')"
     ```

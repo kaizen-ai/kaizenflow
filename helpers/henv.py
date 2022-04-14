@@ -105,7 +105,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         txt_tmp.append(f"cpu freq={str(psutil.cpu_freq())}")
         # TODO(gp): Report in MB or GB.
         txt_tmp.append(f"memory={str(psutil.virtual_memory())}")
-        txt_tmp.append(f"disk usage={str(psutil.disk_usage("/"))}")
+        txt_tmp.append(f"disk usage={str(psutil.disk_usage('/'))}")
         txt, txt_tmp = _append(txt, txt_tmp)
     # Add package info.
     txt.append("# Packages")

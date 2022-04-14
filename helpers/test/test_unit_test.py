@@ -37,7 +37,7 @@ def _git_add(file_name: str) -> None:
 def _to_skip_on_update_outcomes() -> bool:
     """
     Determine whether to skip on `--update_outcomes`.
-    
+
     Some tests can't pass with `--update_outcomes`, since they exercise the
     logic in `--update_outcomes` itself.
 

@@ -665,7 +665,7 @@ def set_v2_formatter(
     if verbose_format:
         # Force to report memory / CPU usage.
         # report_memory_usage = report_cpu_usage = True
-        formatter = CustomFormatter(
+        formatter: Union[logging.Formatter, CustomFormatter] = CustomFormatter(
             report_memory_usage=report_memory_usage,
             report_cpu_usage=report_cpu_usage,
         )

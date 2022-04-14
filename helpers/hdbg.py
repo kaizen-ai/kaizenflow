@@ -892,9 +892,7 @@ def set_logger_verbosity(
         assert 0, "ERROR: Logger not initialized"
     logger.setLevel(verbosity)
     eff_level = logger.getEffectiveLevel()
-    print(
-        f"effective level= {eff_level} ({logging.getLevelName(eff_level)})"
-    )
+    print(f"effective level= {eff_level} ({logging.getLevelName(eff_level)})")
     dassert_eq(logger.getEffectiveLevel(), verbosity)
 
 

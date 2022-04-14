@@ -67,7 +67,8 @@ def to_python_code(obj: Any) -> str:
     elif isinstance(obj, pd.Series):
         # Series init as pd.Series([1, 2])
         output.append(
-            f'pd.Series(data={obj.tolist()}, index={obj.index}, name="{obj.name}", dtype={obj.dtype})'
+            f'pd.Series(data={obj.tolist()}, index={obj.index}, name="{obj.name}", '
+            f"dtype={obj.dtype})"
         )
     elif isinstance(obj, cconfig.Config):
         # Config -> python_code -> "cconfig.Config.from_python(python_code)"
@@ -307,9 +308,7 @@ class Playback:
         self._append("# Call function to test.", 2)
         if self._parent_class is None:
             fnc_call = [f"{k}={k}" for k in self._kwargs.keys()]
-            self._append(
-                f"act = {self._func_name}({', '.join(fnc_call)})", 2
-            )
+            self._append(f"act = {self._func_name}({', '.join(fnc_call)})", 2)
         else:
             var_code = to_python_code(self._parent_class)
             # Re-create the parent class.

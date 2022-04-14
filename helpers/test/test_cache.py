@@ -588,9 +588,7 @@ class TestCachePerformance(_ResetGlobalCacheHelper):
         # Second step: memory cache.
         memory_no_cache_ct = self._timeit(lambda: _mem_cached_computation(val))
         print(f"empty memory cache run time={memory_no_cache_ct}")
-        print(
-            f"empty memory cache overhead={memory_no_cache_ct - no_cache_ct}"
-        )
+        print(f"empty memory cache overhead={memory_no_cache_ct - no_cache_ct}")
         memory_cache_ct = self._timeit(lambda: _mem_cached_computation(val))
         print(f"hot memory cache run time={memory_cache_ct}")
         print(f"hot memory cache benefit={no_cache_ct - memory_cache_ct}")

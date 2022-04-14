@@ -465,7 +465,7 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
             hdbg.dfatal(f"mode={mode}: didn't find file")
         elif len(files) > 1:
             hdbg.dfatal(
-                f"mode={mode}: found multiple files:\n{'\n'.join(files)}"
+                "mode=%s: found multiple files:\n%s" % (mode, "\n".join(files))
             )
         res = [files[0]]
     elif mode == "return_all_results":

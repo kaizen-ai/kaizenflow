@@ -635,5 +635,7 @@ def convert_timestamp_to_unix_epoch(
     if timestamp.tz:
         timestamp = timestamp.tz_convert(None)
     # Convert to epoch.
-    epoch: int = (timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta("1" + unit)
+    epoch: int = (timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta(
+        "1" + unit
+    )
     return epoch

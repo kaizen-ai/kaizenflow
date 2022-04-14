@@ -477,9 +477,7 @@ class _Cached:
         if has_func_cache:
             # Function-specific cache: print the paths of the local cache.
             cache_type = "disk"
-            txt.append(
-                f"local {cache_type} cache path={self._disk_cache_path}"
-            )
+            txt.append(f"local {cache_type} cache path={self._disk_cache_path}")
         txt = "\n".join(txt)
         return txt
 
@@ -881,7 +879,9 @@ class _Cached:
     def _execute_func_from_disk_cache(self, *args: Any, **kwargs: Any) -> Any:
         if _TRACE_FUNCS:
             _LOG.debug("")
-        func_info = f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
+        func_info = (
+            f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
+        )
         # Get the function signature.
         func_id, args_id = self._get_identifiers("disk", *args, **kwargs)
         if self._has_cached_version("disk", func_id, args_id):
@@ -921,7 +921,9 @@ class _Cached:
         """
         if _TRACE_FUNCS:
             _LOG.debug("")
-        func_info = f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
+        func_info = (
+            f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
+        )
         # Get the function signature.
         func_id, args_id = self._get_identifiers("mem", *args, **kwargs)
         if self._has_cached_version("mem", func_id, args_id):
@@ -957,7 +959,9 @@ class _Cached:
         if _TRACE_FUNCS:
             _LOG.debug("")
         with htimer.TimedScope(logging.INFO, "Executing intrinsic function"):
-            func_info = f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
+            func_info = (
+                f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
+            )
             _LOG.debug("%s: execute intrinsic function", func_info)
             if self._enable_read_only:
                 msg = f"{func_info}: trying to execute"
@@ -968,7 +972,9 @@ class _Cached:
     def _execute_func(self, *args: Any, **kwargs: Any) -> Any:
         if _TRACE_FUNCS:
             _LOG.debug("")
-        func_info = f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
+        func_info = (
+            f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
+        )
         _LOG.debug(
             "%s: use_mem_cache=%s use_disk_cache=%s",
             func_info,

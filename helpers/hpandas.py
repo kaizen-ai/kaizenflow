@@ -174,7 +174,7 @@ def dassert_monotonic_index(
     Ensure that a Pandas object has a monotonic (i.e., strictly increasing or
     decreasing index).
     """
-    dassert_unique_index(obj, msg=msg, *args)
+    dassert_unique_index(obj, msg, *args)
     index = _get_index(obj)
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)
@@ -414,7 +414,8 @@ def dropna(
     **kwargs: Any,
 ) -> pd.DataFrame:
     """
-    Create a wrapper around pd.dropna() reporting information about the removed rows.
+    Create a wrapper around pd.dropna() reporting information about the removed
+    rows.
 
     :param df: dataframe to process
     :param drop_infs: if +/- np.inf should be considered as nans
@@ -821,11 +822,11 @@ def df_to_str(
         if print_nan_info:
             num_elems = df.shape[0] * df.shape[1]
             num_nans = df.isna().sum().sum()
-            txt = "num_nans=%s" % hprint.perc(num_nans, num_elems)
+            txt = f"num_nans={hprint.perc(num_nans, num_elems)}"
             out.append(txt)
             #
             num_zeros = df.isnull().sum().sum()
-            txt = "num_zeros=%s" % hprint.perc(num_zeros, num_elems)
+            txt = f"num_zeros={hprint.perc(num_zeros, num_elems)}"
             out.append(txt)
             # TODO(gp): np can't do isinf on objects like strings.
             # num_infinite = np.isinf(df).sum().sum()

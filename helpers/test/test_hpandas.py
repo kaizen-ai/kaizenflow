@@ -396,7 +396,7 @@ class Test_trim_df1(hunitest.TestCase):
         34 2022-01-04 16:35:00-05:00  13684  1146.00
         38 2022-01-04 16:35:00-05:00  17085   179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
-    
+
     # pylint: disable=line-too-long
     def test_trim_df4(self) -> None:
         """
@@ -809,7 +809,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, 2, 3],
-            "dummy_value_2": [pd.NA, "B", "C"],
+            "dummy_value_2": [pd.NA, "B", "C"],  # type: ignore
             "dummy_value_3": [None, 1.0, 1.0],
         }
         test_df = pd.DataFrame(data=test_data)
@@ -837,7 +837,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         # Prepare actual result.
         test_data = {
             "dummy_value_1": [np.nan, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_2": ["A", "B", "C"],  # type: ignore
             "dummy_value_3": [None, 1.0, 1.0],
         }
         test_df = pd.DataFrame(data=test_data)
@@ -846,7 +846,7 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         # Prepare expected result.
         expected = {
             "dummy_value_1": [np.nan, 2, 3],
-            "dummy_value_2": ["A", "B", "C"],
+            "dummy_value_2": ["A", "B", "C"],  # type: ignore
             "dummy_value_3": [None, 1.0, 1.0],
         }
         # Set the dtype of numeral columns to float to match the dataframe after NA dropping.

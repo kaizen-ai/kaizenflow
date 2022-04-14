@@ -57,9 +57,7 @@ def get_workload1(
     workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
     if randomize:
         # Randomize workload.
-        workload = hjoblib.randomize_workload(
-            workload, seed=seed
-        )
+        workload = hjoblib.randomize_workload(workload, seed=seed)
     return workload
 
 
@@ -257,9 +255,7 @@ def get_workload3(
     tasks.append(task)
     if randomize:
         # Randomize workload.
-        workload = hjoblib.randomize_workload(
-            workload, seed=seed
-        )
+        workload = hjoblib.randomize_workload(workload, seed=seed)
     return workload
 
 

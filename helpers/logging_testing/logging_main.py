@@ -24,7 +24,9 @@ def install_basic_formatter() -> None:
     logging.basicConfig()
 
 
-def _install_formatter(formatter: Union[hloggin.CustomFormatter, logging.Formatter]) -> None:
+def _install_formatter(
+    formatter: Union[hloggin.CustomFormatter, logging.Formatter]
+) -> None:
     root_logger_ = logging.getLogger()
     ch = logging.StreamHandler(sys.stdout)
     ch.setFormatter(formatter)

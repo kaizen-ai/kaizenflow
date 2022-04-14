@@ -18,7 +18,7 @@ import helpers.hversion as hversio
 import logging
 import os
 import re
-from typing import Optional
+from typing import Optional, cast
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -62,7 +62,9 @@ def check_version(container_dir_name: str) -> None:
         f", is_inside_docker={is_inside_docker}"
         f", is_inside_ci={is_inside_ci}"
     )
-    msg += f", CI_defined={'CI' in os.environ}, CI='{os.environ.get('CI', 'nan')}'"
+    msg += (
+        f", CI_defined={'CI' in os.environ}, CI='{os.environ.get('CI', 'nan')}'"
+    )
     print(msg)
     # Check which env vars are defined.
     msg = ">>ENV<<:"
@@ -82,6 +84,7 @@ def check_version(container_dir_name: str) -> None:
     if container_version is None:
         # No need to check.
         return
+    code_version = cast(str, code_version)
     _check_version(code_version, container_version)
 
 

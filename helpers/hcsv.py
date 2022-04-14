@@ -7,7 +7,7 @@ import helpers.hcsv as hcsv
 import ast
 import logging
 import os
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 
@@ -247,7 +247,7 @@ def convert_csv_dir_to_pq_dir(
     pq_dir: str,
     *,
     normalizer: Optional[Callable] = None,
-    header: Optional[str] = None,
+    header: Optional[int] = None,
 ) -> None:
     """
     Apply `convert_csv_to_pq()` to all files in `csv_dir`.

@@ -252,9 +252,7 @@ def dmemory_stop(memento: _MemoryMemento, *, mode: str = "all") -> str:
     verbose = False
     start_mem = hloggin.memory_to_str(start_memory_usage, verbose=verbose)
     end_mem = hloggin.memory_to_str(end_memory_usage, verbose=verbose)
-    diff_mem = tuple(
-        x - y for x, y in zip(end_memory_usage, start_memory_usage)
-    )
+    diff_mem = tuple(x - y for x, y in zip(end_memory_usage, start_memory_usage))
     diff_mem = hloggin.memory_to_str(diff_mem, verbose=verbose)
     # Package the output.
     msg = []
