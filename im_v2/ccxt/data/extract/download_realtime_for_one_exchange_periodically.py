@@ -14,8 +14,8 @@ Use as:
     --db_table 'ccxt_ohlcv_test' \
     --aws_profile 'ck' \
     --s3_path 's3://cryptokaizen-data-test/realtime/'\
-    --run_for_sec '600'\
-    --interval_sec '30'
+    --run_for_min '10'\
+    --interval_min '1'
 """
 
 import argparse
@@ -30,6 +30,9 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
+from datetime import datetime
+
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -39,15 +42,15 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("--incremental", action="store_true")
-    parser.add_argument("--run_for_sec",
+    parser.add_argument("--run_for_min",
                         type=int,
                         default=None,
-                        help="Total running time, in seconds",
+                        help="Total running time, in minutes",
     )
-    parser.add_argument("--interval_sec",
+    parser.add_argument("--interval_min",
                         type=int,
                         default=None,
-                        help="Interval between download attempts, in seconds",
+                        help="Interval between download attempts, in minutes",
     )
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcdeexut.add_exchange_download_args(parser)
@@ -59,10 +62,18 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    run_for = args.run_for_sec
-    interval = args.interval_sec
-    # Execute downloading with the given intervals.
-    start_time = time.perf_counter()
+    # Error will be raised if we miss full 5 minute window of data,
+    # even if the next download succeeds, we dont recover all of the previous data.
+    failures_limit = 5
+    concurrent_failures_left = failures_limit
+    #
+    sec_in_minute = 60
+    run_for_sec = args.run_for_min * sec_in_minute
+    interval_sec = args.interval_min * sec_in_minute
+    # Delay start in order to align to the minutes grid of the realtime clock.
+    time.sleep(sec_in_minute - datetime.now().second) if datetime.now().minute != 0 else None
+    script_start_time = time.perf_counter()
+    #
     continue_running = True
     while continue_running:
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -72,14 +83,24 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 args,
                 imvcdeexcl.CcxtExchange
             )
-            if interval:
-                # Wait until next run.
-                time.sleep(interval)
-                if not executor.done():
-                    raise RuntimeError(f"The download could not finish in {interval} seconds.")
+            # Wait until next run.
+            time.sleep(interval_sec)
+            # Check if download finished in time.
+            if not executor.done():
+                raise RuntimeError(f"The download was not finished in {interval_sec} seconds.")
+            # Check if there were no errors during download.
+            try:
+                executor.result()
+                # Reset failures counter.
+                concurrent_failures_left = failures_limit
+            except Exception as exc:
+                concurrent_failures_left -= 1
+                # Download failed.
+                if not concurrent_failures_left:
+                    raise RuntimeError(f"More then {failures_limit} concurrent downloads failed")
             # Check running time if running time argument was given.
-            running_time = time.perf_counter() - start_time
-            continue_running = running_time < run_for if run_for else False
+            running_time = time.perf_counter() - script_start_time
+            continue_running = running_time < run_for_sec if run_for_sec else False
 
 
 if __name__ == "__main__":
