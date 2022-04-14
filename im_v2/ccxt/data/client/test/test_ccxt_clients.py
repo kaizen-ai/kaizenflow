@@ -1048,3 +1048,73 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         """
         query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
+
+
+# #############################################################################
+# TestCcxtHistoricalPqByTileClient1
+# #############################################################################
+
+
+class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+    def test_read_data5(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
+            resample_1min
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
+        #
+        expected_length = 8
+        expected_column_names = self._get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:01:00+00:00, 2018-08-17 00:04:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(8, 6)
+                                         full_symbol         open         high          low        close     volume
+        timestamp
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
+        ...
+        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
+        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
+        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    @staticmethod
+    def _get_expected_column_names() -> List[str]:
+        """
+        Return a list of expected column names.
+        """
+        expected_column_names = [
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
+        return expected_column_names
