@@ -67,7 +67,7 @@ class Test_set_env_amp(hunitest.TestCase):
         executable = os.path.abspath(executable)
         _LOG.debug("executable=%s", executable)
         hdbg.dassert_path_exists(executable)
-        cmd = "source %s amp_develop" % executable
+        cmd = f"source {executable} amp_develop"
         hsystem.system(cmd)
 
 
@@ -183,12 +183,13 @@ dependencies:
         """
         self._run_create_conda(cmd_opts, cleanup=False)
         #
-        cmd = "conda activate %s && conda info --envs" % env_name
+        cmd = f"conda activate {env_name} && conda info --envs"
         holdcond.conda_system(cmd, suppress_output=False)
         # Clean up the env.
         self._run_create_conda(cmd_opts, cleanup=True)
 
 
+# pylint: disable=line-too-long
 ## #############################################################################
 ## linter.py
 ## #############################################################################
@@ -622,7 +623,7 @@ dependencies:
 #        _LOG.debug("txt=\n%s", txt)
 #        # There is a date in output, so we remove date using split.
 #        # Output example:
-#        # [0m02-19_20:56 [33mWARNING[0m: _is_jupytext_version_different:108 :
+#        # \x1B[0m02-19_20:56 \x1B[33mWARNING\x1B[0m: _is_jupytext_version_different:108 :
 #        #    There is a mismatch of jupytext version:
 #        #    'jupytext_version: 1.1.2' vs 'jupytext_version: 1.3.2': skipping
 #        txts = txt.split("WARNING")

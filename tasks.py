@@ -8,7 +8,8 @@ import repo_config as rconf
 # Extract with:
 # > i print_tasks --as-code
 from helpers.lib_tasks import set_default_params  # This is not an invoke target.
-from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+
+from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
     docker_bash,
     docker_build_local_image,
     docker_build_prod_image,
@@ -54,6 +55,8 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     # TODO(gp): -> git_patch_create
     git_create_patch,
     git_delete_merged_branches,
+    # TODO(gp): -> git_master_fetch
+    git_fetch_master,
     # TODO(gp): -> git_files_list
     git_files,
     # TODO(gp): -> git_files_last_commit_
@@ -61,8 +64,6 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     # TODO(gp): -> git_master_merge
     git_merge_master,
     git_pull,
-    # TODO(gp): -> git_master_fetch
-    git_fetch_master,
     # TODO(gp): -> git_branch_rename
     git_rename_branch,
     integrate_create_branch,

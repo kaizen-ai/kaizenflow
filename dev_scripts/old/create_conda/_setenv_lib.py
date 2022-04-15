@@ -1,7 +1,6 @@
 """
-This library contains functions used by a `setenv_*.py` script in a repo to
-generate a bash script that is executed to configure the development
-environment.
+Contains functions used by a `setenv_*.py` script in a repo to generate a bash
+script that is executed to configure the development environment.
 
 Import as:
 
@@ -29,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): This is kind of useless since the cleaning of the path is done at
 #  run-time now.
-def _remove_redundant_paths(paths: List[str]):
+def _remove_redundant_paths(paths: List[str]) -> List[str]:
     # Set of unique paths.
     found_paths = set()
     paths_out = []
@@ -47,8 +46,8 @@ def _export_env_var(val_name: str, vals: List[Any]) -> List[str]:
     """
     Create a snippet of bash script equivalent to the following:
 
-    # Update variable.
     ```
+    # Update variable.
     PYTHONPATH=$CURR_DIR:$PYTHONPATH
     # Remove redundant paths.
     PYTHONPATH="$(echo $PYTHONPATH | perl -e
@@ -61,9 +60,9 @@ def _export_env_var(val_name: str, vals: List[Any]) -> List[str]:
     # Update variable.
     txt.append("# Update variable.")
     vals = _remove_redundant_paths(vals)
-    txt.append("%s=" % val_name + ":".join(vals))
-    txt_tmp = "%s=" % val_name
-    txt_tmp += "$(echo $%s" % val_name
+    txt.append(f"{val_name}=" + ":".join(vals))
+    txt_tmp = f"{val_name}="
+    txt_tmp += f"$(echo ${val_name}"
     # TODO(gp): Improve this script. It doesn't seem to work for the empty
     #  paths and with repeated paths.
     txt_tmp += (
@@ -74,33 +73,33 @@ def _export_env_var(val_name: str, vals: List[Any]) -> List[str]:
     txt.append(txt_tmp)
     #
     txt.append("# Print variable.")
-    txt.append("echo %s=$%s" % (val_name, val_name))
+    txt.append(f"echo {val_name}=${val_name}")
     txt.append(
-        "echo $%s" % val_name
+        f"echo ${val_name}"
         + """ | perl -e 'print "  "; print join("\\n  ", split(/:/, scalar <>))'"""
     )
     #
     txt.append("# Export variable.")
-    txt.append("export %s" % val_name)
+    txt.append(f"export {val_name}")
     return txt
 
 
-def _frame(comment, txt):
+def _frame(comment: str, txt: List[str]) -> None:
     txt_tmp = []
     line = "#" * 80
-    txt_tmp.append("\necho '%s'" % line)
+    txt_tmp.append("\n" + f"echo '{line}'")
     txt_tmp.append("echo " + comment)
-    txt_tmp.append("echo '%s'" % line)
+    txt_tmp.append(f"echo '{line}'")
     txt.extend(txt_tmp)
 
 
-def _execute(cmd, txt):
-    txt.append("echo '> %s'" % cmd)
+def _execute(cmd: str, txt: List[str]) -> None:
+    txt.append(f"echo '> {cmd}'")
     txt.append(cmd)
 
 
-def _log_var(var_name, var_val, txt):
-    txt.append("echo '%s=%s'" % (var_name, var_val))
+def _log_var(var_name: str, var_val: str, txt: List[str]) -> None:
+    txt.append(f"echo '{var_name}={var_val}'")
     _LOG.debug("%s='%s'", var_name, var_val)
 
 
@@ -109,7 +108,7 @@ def _log_var(var_name, var_val, txt):
 # #############################################################################
 
 
-def report_info(txt: str) -> Tuple[str, str]:
+def report_info(txt: List[str]) -> Tuple[str, str]:
     """
     Add to the bash script `txt` diagnostic informations.
 
@@ -144,7 +143,7 @@ def report_info(txt: str) -> Tuple[str, str]:
 
 
 def config_git(
-    user_name: str, user_credentials: Dict[str, str], txt: str
+    user_name: str, user_credentials: Dict[str, str], txt: List[str]
 ) -> None:
     """
     Add to the bash script in `txt` instructions to:
@@ -154,12 +153,12 @@ def config_git(
     _frame("Config git", txt)
     git_user_name = user_credentials["git_user_name"]
     if git_user_name:
-        cmd = 'git config --local user.name "%s"' % git_user_name
+        cmd = f'git config --local user.name "{git_user_name}"'
         _execute(cmd, txt)
     #
     git_user_email = user_credentials["git_user_email"]
     if git_user_email:
-        cmd = 'git config --local user.email "%s"' % git_user_email
+        cmd = f'git config --local user.email "{git_user_email}"'
         _execute(cmd, txt)
     #
     if user_name == "jenkins":
@@ -167,7 +166,7 @@ def config_git(
         _execute(cmd, txt)
 
 
-def config_python(dirs: List[str], txt: str) -> None:
+def config_python(dirs: List[str], txt: List[str]) -> None:
     """
     Add to the bash script `txt` instructions to configure python by:
 
@@ -192,7 +191,7 @@ def config_python(dirs: List[str], txt: str) -> None:
 
 
 def config_conda(
-    conda_env: str, user_credentials: Dict[str, str], txt: str
+    conda_env: str, user_credentials: Dict[str, str], txt: List[str]
 ) -> None:
     """
     Add to the bash script `txt` instructions to activate a conda environment.
@@ -214,7 +213,7 @@ def config_conda(
     cmd = "which python"
     _execute(cmd, txt)
     #
-    cmd = "conda activate %s" % conda_env
+    cmd = f"conda activate {conda_env}"
     _execute(cmd, txt)
     #
     cmd = "conda info --envs"
@@ -228,7 +227,7 @@ def get_dev_scripts_subdirs() -> Tuple:
     return (".", "aws", "git", "infra", "install", "notebooks", "testing")
 
 
-def config_path(dirs: List[str], txt: str) -> str:
+def config_path(dirs: List[str], txt: List[str]) -> List[str]:
     """
     Prepend to PATH the directories `dirs` rooted in `path`.
     """
@@ -243,7 +242,7 @@ def config_path(dirs: List[str], txt: str) -> str:
     return txt
 
 
-def test_packages(amp_path: str, txt: str) -> None:
+def test_packages(amp_path: str, txt: List[str]) -> None:
     _frame("Test packages", txt)
     script = os.path.join(
         amp_path, "dev_scripts/install/check_develop_packages.py"
@@ -253,13 +252,13 @@ def test_packages(amp_path: str, txt: str) -> None:
     _execute(script, txt)
 
 
-def save_script(args: argparse.Namespace, txt: str):
-    txt = "\n".join(txt)
+def save_script(args: argparse.Namespace, txt: List[str]) -> None:
+    txt_str = "\n".join(txt)
     if args.output_file:
-        hio.to_file(args.output_file, txt)
+        hio.to_file(args.output_file, txt_str)
     else:
         # stdout.
-        print(txt)
+        print(txt_str)
 
 
 # #############################################################################
