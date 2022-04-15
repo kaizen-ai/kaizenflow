@@ -206,11 +206,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         This mode is required when loading data to use inside a model.
         """
         vendor = "talos"
-        super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
         self._mode = mode
-        self.numerical_id_mapping = self.build_numerical_to_string_id_mapping()
+        super().__init__(vendor, resample_1min)
 
     @staticmethod
     def should_be_online() -> bool:
@@ -231,13 +230,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         See description in the parent class.
         """
         # TODO(Danya): CmTask1420.
-        return []
-
-    def build_numerical_to_string_id_mapping(self) -> Dict[int, str]:
-        """
-        Create a mapping from numerical ids (e.g., encoding asset ids) to the
-        corresponding `full_symbol`.
-        """
         # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
         query = (
             f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
@@ -249,11 +241,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         full_symbols = currency_exchange_df.agg("::".join, axis=1)
         # Convert to list.
         full_symbols = full_symbols.to_list()
-        # Map full_symbol with the numerical ids.
-        full_symbol_mapping = icunv.build_numerical_to_string_id_mapping(
-            full_symbols
-        )
-        return full_symbol_mapping
+        return full_symbols
 
     @staticmethod
     # TODO(Danya): Move up to hsql.
