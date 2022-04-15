@@ -10,13 +10,13 @@ import argparse
 import logging
 
 import helpers.hdbg as hdbg
-import helpers.henv as henv
 import helpers.hparser as hparser
+import helpers.old.env2 as holdenv2
 
 _LOG = logging.getLogger(__name__)
 
 
-def _main():
+def _main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -29,8 +29,8 @@ def _main():
     )
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level)
-    msg, file_name = henv.save_env_file(args.conda_env_name, dir_name=None)
-    print("file_name=%s", file_name)
+    msg, file_name = holdenv2.save_env_file(args.conda_env_name, dir_name=None)
+    print(f"file_name={file_name}")
     print(msg)
 
 
