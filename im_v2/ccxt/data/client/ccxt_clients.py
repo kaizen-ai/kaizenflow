@@ -17,7 +17,7 @@ import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,11 +49,11 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
-        universe = imvcounun.get_vendor_universe(
+        universe = ivcu.get_vendor_universe(
             vendor=self._vendor, as_full_symbol=True
         )
         return universe  # type: ignore[no-any-return]
@@ -157,7 +157,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_sql_kwargs: Any,
@@ -171,7 +171,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Initialize a list for SQL conditions.
         sql_conditions = []
         # Fill SQL conditions list for each provided data parameter.
@@ -256,7 +256,7 @@ class CcxtCddCsvParquetByAssetClient(
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **kwargs: Any,
@@ -265,7 +265,7 @@ class CcxtCddCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with crypto price data.
         file_path = self._get_file_path(
             self._data_snapshot, exchange_id, currency_pair
