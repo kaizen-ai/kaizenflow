@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-This script allows translating text using AWS Translate. It can be used as a
-module or CLI tool.
+Allow translating text using AWS Translate. It can be used as a module or CLI
+tool.
 
 Supported languages and languages codes:
 https://docs.aws.amazon.com/translate/latest/dg/what-is.html

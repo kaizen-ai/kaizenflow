@@ -47,8 +47,8 @@ def get_prefixes(jupyter_port: Optional[int] = None) -> Tuple[str, str]:
         )
     repo_name = hgit.get_repo_full_name_from_client(super_module=False)
     _LOG.debug("repo_name=%s", repo_name)
-    github_prefix = "https://github.com/%s/blob/master" % repo_name
-    jupyter_prefix = "http://localhost:%s/tree" % jupyter_port
+    github_prefix = f"https://github.com/{repo_name}/blob/master"
+    jupyter_prefix = f"http://localhost:{jupyter_port}/tree"
     return github_prefix, jupyter_prefix
 
 

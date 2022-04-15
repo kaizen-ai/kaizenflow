@@ -133,7 +133,7 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
             _LOG.warning("Dir '%s' already exists", dst_dir)
             if not args.no_confirm:
                 hsystem.query_yes_no(
-                    "Do you want to delete the dir '%s'" % dst_dir,
+                    f"Do you want to delete the dir '{dst_dir}'",
                     abort_on_no=True,
                 )
             hio.create_dir(dst_dir, incremental=False)
@@ -169,7 +169,7 @@ def add_action_arg(
         parser.add_argument(
             "--all",
             action="store_true",
-            help="Run all the actions (%s)" % (" ".join(default_actions)),
+            help=f"Run all the actions ({' '.join(default_actions)})",
         )
     return parser
 
@@ -216,7 +216,7 @@ def select_actions(
     # Validate actions.
     for action in set(actions):
         if action not in valid_actions:
-            raise ValueError("Invalid action '%s'" % action)
+            raise ValueError(f"Invalid action '{action}'")
     # Remove actions, if needed.
     if args.skip_action:
         hdbg.dassert_isinstance(args.skip_action, list)
@@ -230,7 +230,7 @@ def select_actions(
 
 def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
     to_execute = action in actions
-    _LOG.debug("\n%s", hprint.frame("action=%s" % action))
+    _LOG.debug("\n%s", hprint.frame(f"action={action}"))
     if to_execute:
         actions = [a for a in actions if a != action]
     else:
@@ -288,8 +288,8 @@ def parse_input_output_args(
     if in_file_name != "-":
         if clear_screen:
             os.system("clear")
-        print("in_file_name='%s'" % in_file_name)
-        print("out_file_name='%s'" % out_file_name)
+        print(f"in_file_name='{in_file_name}'")
+        print(f"out_file_name='{out_file_name}'")
     return in_file_name, out_file_name
 
 
@@ -329,12 +329,14 @@ def write_file(txt: List[str], file_name: str) -> None:
 # Command line options for parallel processing.
 # #############################################################################
 
-
+# pylint: disable=line-too-long
 # TODO(gp): These should go in hjoblib.py
 def add_parallel_processing_arg(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
+    Add parallel processing args.
+
     The "incremental idiom" means skipping processing computation that has
     already been performed. E.g., if we need to transform files from one dir to
     another we skip the files already processed (assuming that a file present

@@ -15,7 +15,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.data.client.full_symbol as imvcdcfusy
-import im_v2.common.universe.universe_utils as imvcuunut
+import im_v2.common.universe as icunv
 
 _LOG = logging.getLogger(__name__)
 
@@ -119,7 +119,7 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_container_type(full_symbols, list, imvcdcfusy.FullSymbol)
         numerical_asset_id = [
-            imvcuunut.string_to_numerical_id(full_symbol)
+            icunv.string_to_numerical_id(full_symbol)
             for full_symbol in full_symbols
         ]
         return numerical_asset_id
@@ -400,7 +400,7 @@ class ImClient(abc.ABC):
         full_symbol_universe = self.get_universe()
         # Build the mapping.
         asset_id_to_full_symbol_mapping = (
-            imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
+            icunv.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
         return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
 
