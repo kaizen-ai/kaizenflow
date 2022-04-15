@@ -307,15 +307,26 @@ def truncate_workload(
 
 def workload_to_string(workload: Workload, *, use_pprint: bool = True) -> str:
     """
-    Print the workload. E.g., ``` workload_func=_LimeTask317_process_chunk
-    func_name=_LimeTask317_process_chunk.
+    Print the workload.
 
-    # task 1 / 3 args=([('./tmp.s3/20220110/data.parquet',
-    './tmp.s3_out/./tmp.s3/20220110/data.parquet')],) kwargs={} # task 2
-    / 3 args=([('./tmp.s3/20220111/data.parquet',
-    './tmp.s3_out/./tmp.s3/20220111/data.parquet')],) kwargs={} # task 3
-    / 3 args=([('./tmp.s3/20220112/data.parquet',
-    './tmp.s3_out/./tmp.s3/20220112/data.parquet')],) kwargs={} ```
+    E.g.,
+
+    ```
+    workload_func=_LimeTask317_process_chunk
+    func_name=_LimeTask317_process_chunk
+    # task 1 / 3
+    args=([('./tmp.s3/20220110/data.parquet',
+       './tmp.s3_out/./tmp.s3/20220110/data.parquet')],)
+    kwargs={}
+    # task 2 / 3
+    args=([('./tmp.s3/20220111/data.parquet',
+       './tmp.s3_out/./tmp.s3/20220111/data.parquet')],)
+    kwargs={}
+    # task 3 / 3
+    args=([('./tmp.s3/20220112/data.parquet',
+       './tmp.s3_out/./tmp.s3/20220112/data.parquet')],)
+    kwargs={}
+    ```
     """
     validate_workload(workload)
     workload_func, func_name, tasks = workload
