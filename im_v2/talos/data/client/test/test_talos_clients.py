@@ -906,9 +906,7 @@ class TestRealTimeSqlTalosClient1(
         return sql_talos_client
 
     def test_get_universe1(self) -> None:
-        """
-        """
-        
+        """ """
 
     def test_read_data1(self) -> None:
         # Load test data.
@@ -1336,7 +1334,9 @@ class TestRealTimeSqlTalosClient1(
         actual = im_client.get_universe()
         # Message in case if test case got failed.
         message = "Actual and expected universes are not equal!"
-        self.assertEqual(actual, ["binance::BTC_USDT", "binance::ETH_USDT"], message)
+        self.assertEqual(
+            actual, ["binance::BTC_USDT", "binance::ETH_USDT"], message
+        )
         hsql.remove_table(self.connection, "talos_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
