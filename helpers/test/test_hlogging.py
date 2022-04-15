@@ -66,9 +66,10 @@ class Test_hlogging_asyncio1(hunitest.TestCase):
         # Run.
         self.run_test(event_loop, get_wall_clock_time)
 
+    # pylint: disable=line-too-long
     def test_simulated_time1(self) -> None:
         """
-        Use the logger with event_loop and asyncio. The output is like: 
+        Use the logger with event_loop and asyncio. The output is like:
         ```
         07:52:55 @ 2022-01-18 02:52:55 workload test_hlogging.py _print_time:28 wall_clock_time=2022-01-18 07:52:55.337574-05:00
         07:52:55 @ 2022-01-18 02:52:55 workload test_hlogging.py _print_time:30 event_loop_time=2022-01-18 07:52:55.310587-05:00

@@ -64,10 +64,7 @@ class _ResetGlobalCacheHelper(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         # Create a tag like "TestCacheFeatures::test_without_caching1".
-        self.cache_tag = "%s::%s" % (
-            self.__class__.__name__,
-            self._testMethodName,
-        )
+        self.cache_tag = f"{self.__class__.__name__}::{self._testMethodName}"
         # Clean all the caches before this test method is run.
         self._remove_all_caches()
 
@@ -119,16 +116,13 @@ class _ResetGlobalCacheHelper(hunitest.TestCase):
         val2)` and check whether the intrinsic function was executed and what
         caches were used, according to `exp_f_state` and `exp_cf_state`.
         """
-        if exp_cf_state == "no_cache":
-            # If there was no caching then we must have executed the function.
-            exp_f_state = True
-        else:
-            exp_f_state = False
+        # If there was no caching then we must have executed the function.
+        exp_f_state = exp_cf_state == "no_cache"
         _LOG.debug(
             "\n%s",
             hprint.frame(
-                "val1=%s, val2=%s, exp_f_state=%s, exp_cf_state=%s"
-                % (val1, val2, exp_f_state, exp_cf_state),
+                f"val1={val1}, val2={val2}, exp_f_state={exp_f_state}, "
+                f"exp_cf_state={exp_cf_state}",
                 char1="<",
             ),
         )
@@ -590,23 +584,21 @@ class TestCachePerformance(_ResetGlobalCacheHelper):
         )
         # First step: no cache.
         no_cache_ct = self._timeit(lambda: self._computation(val))
-        print("no cache run time=%f" % no_cache_ct)
+        print(f"no cache run time={no_cache_ct}")
         # Second step: memory cache.
         memory_no_cache_ct = self._timeit(lambda: _mem_cached_computation(val))
-        print("empty memory cache run time=%f" % memory_no_cache_ct)
-        print(
-            "empty memory cache overhead=%f" % (memory_no_cache_ct - no_cache_ct)
-        )
+        print(f"empty memory cache run time={memory_no_cache_ct}")
+        print(f"empty memory cache overhead={memory_no_cache_ct - no_cache_ct}")
         memory_cache_ct = self._timeit(lambda: _mem_cached_computation(val))
-        print("hot memory cache run time=%f" % memory_cache_ct)
-        print("hot memory cache benefit=%f" % (no_cache_ct - memory_cache_ct))
+        print(f"hot memory cache run time={memory_cache_ct}")
+        print(f"hot memory cache benefit={no_cache_ct - memory_cache_ct}")
         # Third step: disk cache.
         disk_no_cache_ct = self._timeit(lambda: _disk_cached_computation(val))
-        print("empty disk cache run time=%f" % disk_no_cache_ct)
-        print("empty disk cache overhead=%f" % (disk_no_cache_ct - no_cache_ct))
+        print(f"empty disk cache run time={disk_no_cache_ct}")
+        print(f"empty disk cache overhead={disk_no_cache_ct - no_cache_ct}")
         disk_cache_ct = self._timeit(lambda: _disk_cached_computation(val))
-        print("hot disk cache run time=%f" % disk_cache_ct)
-        print("hot disk cache benefit=%f" % (no_cache_ct - disk_cache_ct))
+        print(f"hot disk cache run time={disk_cache_ct}")
+        print(f"hot disk cache benefit={no_cache_ct - disk_cache_ct}")
 
 
 # #############################################################################

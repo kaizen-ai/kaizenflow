@@ -21,7 +21,7 @@ def workload_function(
     **kwargs: Any,
 ) -> str:
     """
-    Function executing the test workload.
+    Execute the test workload.
     """
     _LOG.info("Starting workload %s", val1)
     incremental = kwargs.pop("incremental")
@@ -57,9 +57,7 @@ def get_workload1(
     workload: hjoblib.Workload = (workload_function, "workload_function", tasks)
     if randomize:
         # Randomize workload.
-        workload: hjoblib.Workload = hjoblib.randomize_workload(
-            workload, seed=seed
-        )
+        workload = hjoblib.randomize_workload(workload, seed=seed)
     return workload
 
 
@@ -249,7 +247,7 @@ def get_workload3(
     Return a workload for `workload_function()` with 5 tasks succeeding and one
     task failing.
     """
-    workload = get_workload1(randomize=True)
+    workload: hjoblib.Workload = get_workload1(randomize=True)
     # Modify the workflow in place.
     (workload_func, func_name, tasks) = workload
     _ = workload_func, func_name
@@ -257,9 +255,7 @@ def get_workload3(
     tasks.append(task)
     if randomize:
         # Randomize workload.
-        workload: hjoblib.Workload = hjoblib.randomize_workload(
-            workload, seed=seed
-        )
+        workload = hjoblib.randomize_workload(workload, seed=seed)
     return workload
 
 
@@ -408,10 +404,10 @@ val1=4, val2=8, incremental=True, num_attempts=1, kwargs={'hello4': 'world8', 'g
 class Test_joblib_example1(hunitest.TestCase):
     @staticmethod
     def func(val: int) -> int:
-        print("val=%s" % val)
+        print(f"val={val}")
         if val == -1:
             raise ValueError(f"val={val}")
-        print("  out=%s" % val)
+        print(f"  out={val}")
         return val
 
     def test1(self) -> None:
@@ -430,7 +426,7 @@ class Test_joblib_example1(hunitest.TestCase):
         res = joblib.Parallel(n_jobs=num_threads, backend=backend, verbose=200)(
             joblib.delayed(Test_joblib_example1.func)(val) for val in vals
         )
-        print("res=%s" % str(res))
+        print(f"res={str(res)}")
 
 
 # #############################################################################

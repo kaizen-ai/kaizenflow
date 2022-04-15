@@ -7,7 +7,7 @@ import helpers.hcsv as hcsv
 import ast
 import logging
 import os
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 
@@ -81,7 +81,7 @@ def build_chunk(
     """
     hdbg.dassert_lt(0, start)
     stop = False
-    dfs = []
+    dfs: List[pd.DataFrame] = []
     init_df = _read_csv_range(csv_path, start, start + 1, **kwargs)
     if init_df.shape[0] < 1:
         return init_df
@@ -103,7 +103,7 @@ def build_chunk(
         # Stop if we have reached a new value.
         if idx_max < (df.shape[0] - 1):
             stop = True
-        dfs._append_csv(df.iloc[0 : idx_max + 1])
+        dfs.append(df.iloc[0 : idx_max + 1])
         counter += 1
     if not dfs:
         return pd.DataFrame()
@@ -193,7 +193,7 @@ def convert_csv_to_pq(
     pq_path: str,
     *,
     normalizer: Optional[Callable] = None,
-    header: Optional[str] = 0,
+    header: Optional[int] = 0,
     compression: Optional[str] = "gzip",
 ) -> None:
     """
@@ -247,7 +247,7 @@ def convert_csv_dir_to_pq_dir(
     pq_dir: str,
     *,
     normalizer: Optional[Callable] = None,
-    header: Optional[str] = None,
+    header: Optional[int] = None,
 ) -> None:
     """
     Apply `convert_csv_to_pq()` to all files in `csv_dir`.

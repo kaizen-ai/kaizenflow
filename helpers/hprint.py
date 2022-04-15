@@ -91,7 +91,7 @@ def frame(
         char2 = char1
     elif char1 is None and char2 is not None:
         # User specified the second char, but not the first.
-        hdbg.dfatal("Invalid char1='%s' char2='%s'" % (char1, char2))
+        hdbg.dfatal(f"Invalid char1='{char1}' char2='{char2}'")
     else:
         # User specified both chars. Nothing to do.
         pass
@@ -541,7 +541,7 @@ def type_to_string(type_as_str: str) -> str:
 
 
 def type_obj_to_str(obj: Any) -> str:
-    ret = "(%s) %s" % (type(obj), obj)
+    ret = f"({type(obj)}) {obj}"
     return ret
 
 
@@ -562,8 +562,8 @@ def format_list(
     n = len(list_)
     txt = ""
     if tag is not None:
-        txt += "%s: " % tag
-    txt += "(%s) " % n
+        txt += f"{tag}: "
+    txt += f"({n}) "
     if n < max_n:
         txt += sep.join(map(str, list_))
     else:
@@ -592,21 +592,21 @@ def list_to_str(
     txt = ""
     if axis == 0:
         if list_ is None:
-            txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
+            txt += f"{tag}: (0) None\n"
         else:
             # hdbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
             vals = list(map(str, list_))
             if sort:
                 vals = sorted(vals)
-            txt += "%s: (%s) %s" % (tag, len(list_), " ".join(vals)) + "\n"
+            txt += f"{tag}: ({len(list_)}) {' '.join(vals)}\n"
     elif axis == 1:
-        txt += "%s (%s):" % (tag, len(list_)) + "\n"
+        txt += f"{tag} ({len(list_)}):\n"
         vals = list(map(str, list_))
         if sort:
             vals = sorted(vals)
         txt += "\n".join(vals) + "\n"
     else:
-        raise ValueError("Invalid axis='%s'" % axis)
+        raise ValueError(f"Invalid axis='{axis}'")
     return txt
 
 
@@ -637,34 +637,28 @@ def set_diff_to_str(
     # obj1.
     obj1 = set(obj1)
     hdbg.dassert_lte(1, len(obj1))
-    res.append("* %s: (%s) %s" % (obj1_name, len(obj1), _to_string(obj1)))
+    res.append(f"* {obj1_name}: ({len(obj1)}) {_to_string(obj1)}")
     if add_space:
         res.append("")
     # obj2.
     obj2 = set(obj2)
     hdbg.dassert_lte(1, len(obj2))
-    res.append("* %s: (%s) %s" % (obj2_name, len(obj2), _to_string(obj2)))
+    res.append(f"* {obj2_name}: ({len(obj2)}) {_to_string(obj2)}")
     if add_space:
         res.append("")
     # obj1 intersect obj2.
     intersection = obj1.intersection(obj2)
-    res.append(
-        "* intersect=(%s) %s" % (len(intersection), _to_string(intersection))
-    )
+    res.append(f"* intersect=({len(intersection)}) {_to_string(intersection)}")
     if add_space:
         res.append("")
     # obj1 - obj2.
     diff = obj1 - obj2
-    res.append(
-        "* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff), _to_string(diff))
-    )
+    res.append(f"* {obj1_name}-{obj2_name}=({len(diff)}) {_to_string(diff)}")
     if add_space:
         res.append("")
     # obj2 - obj1.
     diff = obj2 - obj1
-    res.append(
-        "* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff), _to_string(diff))
-    )
+    res.append(f"* {obj2_name}-{obj1_name}=({len(diff)}) {_to_string(diff)}")
     if add_space:
         res.append("")
     #
@@ -721,9 +715,9 @@ def obj_to_str(
 
     def _to_str(attr: Any, print_type: bool) -> str:
         if print_type:
-            out = "%s= (%s) %s" % (v, type(attr), str(attr))
+            out = f"{v}= ({type(attr)}) {str(attr)}"
         else:
-            out = "%s= %s" % (v, str(attr))
+            out = f"{v}= {str(attr)}"
         return out
 
     ret = []
@@ -756,7 +750,7 @@ def obj_to_str(
             out = _to_str(attr, print_type)
             ret.append(out)
     else:
-        hdbg.dassert("Invalid attr_mode='%s'" % attr_mode)
+        hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
     return "\n".join(ret)
 
 
