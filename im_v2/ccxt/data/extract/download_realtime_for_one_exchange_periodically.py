@@ -19,9 +19,9 @@ Use as:
 """
 
 import argparse
-import concurrent.futures
 import logging
 import time
+from datetime import datetime, timedelta
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
@@ -30,10 +30,22 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
-from datetime import datetime
-
-
 _LOG = logging.getLogger(__name__)
+
+
+def _minute_type(int: amount_of_minutes) -> int:
+    """
+    Check if value is greater then zero.
+
+    :param amount_of_minutes: input argument value
+    :return: argument value if valid
+    """
+    amount_of_minutes = int(amount_of_minutes)
+    if amount_of_minutes <= 0:
+        raise argparse.ArgumentTypeError(
+            f"Value: '{amount_of_minutes}' should be greater then 0"
+        )
+    return amount_of_minutes
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -42,15 +54,15 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("--incremental", action="store_true")
-    parser.add_argument("--run_for_min",
-                        type=int,
-                        default=None,
-                        help="Total running time, in minutes",
+    parser.add_argument(
+        "--run_for_min",
+        type=_minute_type,
+        help="Total running time, in minutes",
     )
-    parser.add_argument("--interval_min",
-                        type=int,
-                        default=None,
-                        help="Interval between download attempts, in minutes",
+    parser.add_argument(
+        "--interval_min",
+        type=_minute_type,
+        help="Interval between download attempts, in minutes",
     )
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcdeexut.add_exchange_download_args(parser)
@@ -62,45 +74,51 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    # Error will be raised if we miss full 5 minute window of data,
-    # even if the next download succeeds, we dont recover all of the previous data.
-    failures_limit = 5
-    concurrent_failures_left = failures_limit
     #
-    sec_in_minute = 60
-    run_for_sec = args.run_for_min * sec_in_minute
-    interval_sec = args.interval_min * sec_in_minute
+    run_for = args.run_for_min
+    interval = args.interval_min
+    # Error will be raised if we miss full 5 minute window of data,
+    # even if the next download succeeds, we don't recover all of the previous data.
+    failures_limit = 5 // interval + 5 % interval
+    concurrent_failures_left = failures_limit
     # Delay start in order to align to the minutes grid of the realtime clock.
-    time.sleep(sec_in_minute - datetime.now().second) if datetime.now().minute != 0 else None
-    script_start_time = time.perf_counter()
+    next_start_time = datetime.now()
+    run_delay_sec = 0
+    if next_start_time.second != 0:
+        next_start_time = next_start_time.replace(
+            second=0, microsecond=0
+        ) + timedelta(minutes=1)
+        run_delay_sec = (next_start_time - datetime.now()).total_seconds()
+    # Save time limit.
+    script_stop_time = next_start_time + timedelta(minutes=run_for)
     #
     continue_running = True
     while continue_running:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            # Start downloading thread.
-            executor = executor.submit(
-                imvcdeexut.download_realtime_for_one_exchange,
+        # Wait until next run.
+        time.sleep(run_delay_sec)
+        # Add interval in order to get next download time.
+        next_start_time = next_start_time + timedelta(minutes=interval)
+        try:
+            imvcdeexut.download_realtime_for_one_exchange(
                 args,
-                imvcdeexcl.CcxtExchange
+                imvcdeexcl.CcxtExchange,
             )
-            # Wait until next run.
-            time.sleep(interval_sec)
-            # Check if download finished in time.
-            if not executor.done():
-                raise RuntimeError(f"The download was not finished in {interval_sec} seconds.")
-            # Check if there were no errors during download.
-            try:
-                executor.result()
-                # Reset failures counter.
-                concurrent_failures_left = failures_limit
-            except Exception as exc:
-                concurrent_failures_left -= 1
-                # Download failed.
-                if not concurrent_failures_left:
-                    raise RuntimeError(f"More then {failures_limit} concurrent downloads failed")
-            # Check running time if running time argument was given.
-            running_time = time.perf_counter() - script_start_time
-            continue_running = running_time < run_for_sec if run_for_sec else False
+            # Reset failures counter.
+            concurrent_failures_left = failures_limit
+        except Exception as e:
+            concurrent_failures_left -= 1
+            # Download failed.
+            if not concurrent_failures_left:
+                raise RuntimeError(f"{failures_limit} concurrent downloads were failed") from e
+        # if Download took more then expected.
+        if datetime.now() > next_start_time:
+            raise RuntimeError(
+                f"The download was not finished in {interval} minutes."
+            )
+        # Calculate delay before next download.
+        run_delay_sec = (next_start_time - datetime.now()).total_seconds()
+        # Check if there is a time for the next iteration.
+        continue_running = True if datetime.now() < script_stop_time else False
 
 
 if __name__ == "__main__":
