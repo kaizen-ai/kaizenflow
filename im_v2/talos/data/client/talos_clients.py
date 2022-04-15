@@ -63,11 +63,13 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         vendor = "talos"
+        infer_exchange_id = False
         super().__init__(
             vendor,
             resample_1min,
             root_dir,
             partition_mode,
+            infer_exchange_id,
             aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot

@@ -35,6 +35,7 @@ class HistoricalPqByTileClient(
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
+        infer_exchange_id: bool,
         *,
         aws_profile: Optional[str] = None,
         full_symbol_col_name: Optional[str] = None,
@@ -48,6 +49,9 @@ class HistoricalPqByTileClient(
             an S3 root path (e.g., "s3://cryptokaizen-data/historical")
             to the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
+        :param infer_exchange_id: use the last part of a dir to indicate the exchange originating the data. 
+            This allows to merging multiple Parquet files on exchange. See CmTask #1533 "Add exchange to 
+            the ParquetDataset partition #1533".
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__(
@@ -55,6 +59,7 @@ class HistoricalPqByTileClient(
         )
         hdbg.dassert_isinstance(root_dir, str)
         self._root_dir = root_dir
+        self._infer_exchange_id = infer_exchange_id
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile
 
@@ -142,8 +147,6 @@ class HistoricalPqByTileClient(
             # Read Parquet data from a root dir.
             root_dir_df = hparque.from_parquet(root_dir, **kwargs)
             hdbg.dassert_lte(1, root_dir_df.shape[0])
-            # TODO(Dan): Discuss if we should always convert index to timestamp
-            #  or make a function so it may change based on the vendor.
             # Convert index to datetime.
             root_dir_df.index = pd.to_datetime(root_dir_df.index)
             # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
@@ -158,9 +161,8 @@ class HistoricalPqByTileClient(
             #            )
             # TODO(Grisha): think how to pass `exchange_id` to `CCXT`.
             transformation_kwargs: Dict = {}
-            if self._vendor == "CCXT":
-                # `CCXT` does not have `exchange_id` as column, so we have to add it in order to reconstruct
-                # full symbol further.
+            if self._infer_exchange_id:
+                # Infer `exchange_id` from a file path if it is not present in data.
                 # E.g., `s3://cryptokaizen-data/historical/ccxt/latest/binance` -> `binance`.
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
