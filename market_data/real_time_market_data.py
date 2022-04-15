@@ -294,7 +294,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
         # Convert asset ids to full symbols for passing to the DB.
         if asset_ids:
             full_symbols = [
-                self._client.numerical_id_mapping[asset_id]
+                self._client._asset_id_to_full_symbol_mapping[asset_id]
                 for asset_id in asset_ids
             ]
         else:
