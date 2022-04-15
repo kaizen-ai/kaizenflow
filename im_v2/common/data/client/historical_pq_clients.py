@@ -49,8 +49,8 @@ class HistoricalPqByTileClient(
             an S3 root path (e.g., "s3://cryptokaizen-data/historical")
             to the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
-        :param infer_exchange_id: use the last part of a dir to indicate the exchange 
-            originating the data. This allows to merging multiple Parquet files on 
+        :param infer_exchange_id: use the last part of a dir to indicate the exchange
+            originating the data. This allows to merging multiple Parquet files on
             exchange. See CmTask #1533 "Add exchange to the ParquetDataset partition".
         :param aws_profile: AWS profile name (e.g., "ck")
         """
@@ -184,11 +184,11 @@ class HistoricalPqByTileClient(
         )
         return res_df
 
-    # TODO(Grisha): try to unify child classes with the base class, see CmTask #1696 
+    # TODO(Grisha): try to unify child classes with the base class, see CmTask #1696
     # "Refactor HistoricalPqByTileClient and its child classes".
     # TODO(Grisha): remove the hack that allows to read data for multiple exchanges in
     # the child classes, see CmTask #1533 "Add exchange to the ParquetDataset partition".
-    # TODO(Grisha): param `full_symbol_col_name` is not used in the child classes, 
+    # TODO(Grisha): param `full_symbol_col_name` is not used in the child classes,
     # see CmTask #1696 "Refactor HistoricalPqByTileClient and its child classes".
     def _get_root_dirs_symbol_filters(
         self, full_symbols: List[imvcdcfusy.FullSymbol], full_symbol_col_name: str
