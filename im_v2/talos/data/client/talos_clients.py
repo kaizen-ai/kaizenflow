@@ -159,7 +159,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         full_symbol_tuples = [
             icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
         ]
-        # Store full symbols as a dictionary, e.g., `{"exchange_id1": [currency_pair1, currency_pair2]}`.
+        # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
         # `Defaultdict` provides a default value for the key that does not exists that prevents from
         # getting `KeyError`.
         symbol_dict = collections.defaultdict(list)
