@@ -67,7 +67,7 @@ def _get_df_example1() -> pd.DataFrame:
 
 
 def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
-    df1_as_str = hpandas.df_to_str(df1, print_shape_info=True, tag="")
+    df1_as_str: str = hpandas.df_to_str(df1, print_shape_info=True, tag="")
     df2_as_str = hpandas.df_to_str(df2, print_shape_info=True, tag="")
     self.assert_equal(df1_as_str, df2_as_str, fuzzy_match=True)
     # When Parquet reads partitioned dataset can convert partitioning columns into
@@ -82,7 +82,6 @@ def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
 
 
 class TestParquet1(hunitest.TestCase):
-
     def test_get_df1(self) -> None:
         """
         Check the output of `_get_df()`.
@@ -487,7 +486,6 @@ class TestPartitionedParquet1(hunitest.TestCase):
 
 
 class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
-
     def test_no_interval(self) -> None:
         """
         No timestamps provided.
@@ -692,7 +690,6 @@ class TestGetParquetFiltersFromTimestampInterval1(hunitest.TestCase):
 
 
 class TestAddDatePartitionColumns(hunitest.TestCase):
-
     def add_date_partition_columns_helper(
         self, partition_mode: str, expected: str
     ) -> None:
@@ -749,7 +746,6 @@ class TestAddDatePartitionColumns(hunitest.TestCase):
 
 
 class TestToPartitionedDataset(hunitest.TestCase):
-
     @staticmethod
     def get_test_data1() -> pd.DataFrame:
         test_data = {

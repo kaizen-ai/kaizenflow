@@ -5,9 +5,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.13.7
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -30,7 +30,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import im.kibot.data.load.futures_forward_contracts as imkdlffoco
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 import im.kibot.metadata.load.kibot_metadata as imkmlkime
 
 # %%
@@ -87,7 +87,7 @@ srs = fcem.get_nth_contracts("NG", "2010-01-10", "2010-01-20", freq="B", n=1)
 srs
 
 # %%
-kdl = imkdlksdlo.KibotS3DataLoader()
+kdl = ikdlksdlo.KibotS3DataLoader()
 
 # %%
 ffc_obj = imkdlffoco.FuturesForwardContracts(kdl)

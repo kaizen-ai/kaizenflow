@@ -83,7 +83,8 @@ class Test_to_str2(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Test printing arguments that are declared on the different than function call line.
+        Test printing arguments that are declared on the different than
+        function call line.
         """
         x = [1, "hello", "world"]
         y = "Hello"

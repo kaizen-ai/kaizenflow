@@ -79,7 +79,8 @@ def store_secret(
         # response then the secret was stored successfully.
         return_name = create_secret_value_response["Name"]
         hdbg.dassert_isinstance(return_name, str)
-        return create_secret_value_response["Name"] == secret_name
+        res: bool = create_secret_value_response["Name"] == secret_name
+        return res
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceExistsException":
             # Let user know the secret with this name already exists.

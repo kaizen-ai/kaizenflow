@@ -32,6 +32,26 @@ class IbFilePathGenerator(imcdlfpage.FilePathGenerator):
         imcodatyp.Frequency.Tick: "tick",
     }
 
+    @staticmethod
+    @functools.lru_cache(maxsize=16)
+    def get_latest_symbols_file() -> str:
+        """
+        Get the latest available file with symbols on S3.
+        """
+        file_prefix = os.path.join(imibdacon.S3_METADATA_PREFIX, "symbols-")
+        s3fs = hs3.get_s3fs("am")
+        files = s3fs.glob(file_prefix + "*")
+        # E.g., files=
+        #   ['alphamatic-data/data/ib/metadata/symbols-2021-04-01-143112738505.csv']
+        _LOG.debug("files='%s'", files)
+        latest_file: str = max(files)
+        _LOG.debug("latest_file='%s'", latest_file)
+        # Add the prefix.
+        latest_file = "s3://" + latest_file
+        _LOG.debug("latest_file=%s", latest_file)
+        hdbg.dassert(s3fs.exists(latest_file))
+        return latest_file
+
     def generate_file_path(
         self,
         symbol: str,
@@ -82,23 +102,3 @@ class IbFilePathGenerator(imcdlfpage.FilePathGenerator):
             file_name,
         )
         return file_path
-
-    @staticmethod
-    @functools.lru_cache(maxsize=16)
-    def get_latest_symbols_file() -> str:
-        """
-        Get the latest available file with symbols on S3.
-        """
-        file_prefix = os.path.join(imibdacon.S3_METADATA_PREFIX, "symbols-")
-        s3fs = hs3.get_s3fs("am")
-        files = s3fs.glob(file_prefix + "*")
-        # E.g., files=
-        #   ['alphamatic-data/data/ib/metadata/symbols-2021-04-01-143112738505.csv']
-        _LOG.debug("files='%s'", files)
-        latest_file: str = max(files)
-        _LOG.debug("latest_file='%s'", latest_file)
-        # Add the prefix.
-        latest_file = "s3://" + latest_file
-        _LOG.debug("latest_file=%s", latest_file)
-        hdbg.dassert(s3fs.exists(latest_file))
-        return latest_file

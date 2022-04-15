@@ -75,7 +75,7 @@ def log_into_exchange(exchange_id: str):
 
 
 def describe_exchange_data(exchange_id: str):
-    """"""
+    """ """
     exchange = log_into_exchange(exchange_id)
     print("%s:" % exchange_id)
     print("Has fetchOHLCV: %s" % exchange.has["fetchOHLCV"])

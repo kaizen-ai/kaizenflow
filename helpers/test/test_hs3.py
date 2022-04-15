@@ -1,58 +1,18 @@
 import os.path
-import unittest.mock as umock
 from typing import Tuple
 
-import pytest  # isort:skip # noqa: E402 # pylint: disable=wrong-import-position
+import pytest
 
-# Equivalent to `import moto`, but skip this module if the module is not present.
-# `moto` must be imported before `boto3` to properly mock it.
-moto = pytest.importorskip("moto")
-
-import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-
-# TODO(Nikola): Consider moving this class to `hunit_test_case.py`, `hs3.py`, or `hmoto.py`.
-class S3Mock_TestCase(hunitest.TestCase):
-    # Mocked AWS credentials.
-    # TODO(Nikola): Different behaviour if moved in `setUp`?
-    mock_aws_credentials_patch = umock.patch.dict(
-        hs3.os.environ,
-        {
-            "AWS_ACCESS_KEY_ID": "mock_key_id",
-            "AWS_SECRET_ACCESS_KEY": "mock_secret_access_key",
-            "AWS_DEFAULT_REGION": "us-east-1",
-        },
-    )
-    mock_aws_credentials = None
-    # Mocked bucket.
-    mock_s3 = moto.mock_s3()
-    bucket_name = "mock_bucket"
-    moto_client = None
-
-    def setUp(self) -> None:
-        super().setUp()
-        # It is necessary that boto3 is imported after moto.
-        # If not, boto3 will access real AWS.
-        import boto3
-
-        # Start boto3 mock.
-        self.mock_s3.start()
-        # Start aws credentials mock. Must be started after moto mock,
-        # or it will be overridden by moto with `foobar` values.
-        self.mock_aws_credentials = self.mock_aws_credentials_patch.start()
-        # Initialize boto client and create bucket for testing.
-        self.moto_client = boto3.client("s3")
-        self.moto_client.create_bucket(Bucket=self.bucket_name)
-
-    def tearDown(self) -> None:
-        super().tearDown()
-        # Stop moto.
-        self.mock_s3.stop()
-        self.mock_aws_credentials_patch.stop()
+import helpers.hmoto as hmoto
+import helpers.hs3 as hs3
+import helpers.hsystem as hsystem
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
-class TestToFileAndFromFile1(S3Mock_TestCase):
+@pytest.mark.skipif(
+    hsystem.is_inside_ci(),
+    reason="Extend AWS authentication system CmTask #1292/1666.",
+)
+class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
     def write_read_helper(self, file_name: str, force_flush: bool) -> None:
         # Prepare inputs.
         file_content = "line_mock1\nline_mock2\nline_mock3"
@@ -127,8 +87,11 @@ class TestToFileAndFromFile1(S3Mock_TestCase):
         self.assert_equal(actual, expected)
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
-class TestListdir1(S3Mock_TestCase):
+@pytest.mark.skipif(
+    hsystem.is_inside_ci(),
+    reason="Extend AWS authentication system CmTask #1292/1666.",
+)
+class TestListdir1(hmoto.S3Mock_TestCase):
     def prepare_test_data(self) -> Tuple[str, hs3.AwsProfile]:
         bucket_s3_path = f"s3://{self.bucket_name}"
         depth_one_s3_path = f"{bucket_s3_path}/depth_one"
@@ -262,8 +225,11 @@ class TestListdir1(S3Mock_TestCase):
         self.assertListEqual(paths, expected_paths)
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
-class TestDu1(S3Mock_TestCase):
+@pytest.mark.skipif(
+    hsystem.is_inside_ci(),
+    reason="Extend AWS authentication system CmTask #1292/1666.",
+)
+class TestDu1(hmoto.S3Mock_TestCase):
     def test_du1(self) -> None:
         """
         Verify that total file size is returned.

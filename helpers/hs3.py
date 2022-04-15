@@ -109,7 +109,7 @@ def dassert_path_exists(
     dassert_is_valid_aws_profile(path, aws_profile)
     if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
-        hdbg.dassert(s3fs_.exists(path), "S3 path '%s' doesn't exist!" % path)
+        hdbg.dassert(s3fs_.exists(path), f"S3 path '{path}' doesn't exist!")
     else:
         hdbg.dassert_path_exists(path)
 
@@ -127,7 +127,7 @@ def dassert_path_not_exists(
     dassert_is_valid_aws_profile(path, aws_profile)
     if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
-        hdbg.dassert(not s3fs_.exists(path), "S3 path '%s' already exist!" % path)
+        hdbg.dassert(not s3fs_.exists(path), f"S3 path '{path}' already exist!")
     else:
         hdbg.dassert_path_not_exists(path)
 
@@ -230,7 +230,7 @@ def du(
     if is_s3_path(path):
         s3fs_ = get_s3fs(aws_profile)
         dassert_path_exists(path, s3fs_)
-        size = s3fs_.du(path)
+        size: Union[int, str] = s3fs_.du(path)
         if human_format:
             size = hintros.format_size(size)
     else:
@@ -261,7 +261,7 @@ def to_file(
         # Convert lines to bytes, only supported mode for S3.
         # Also create a list of new lines as raw bytes is not supported.
         os_sep = os.linesep
-        lines = [f"{line}{os_sep}".encode() for line in lines.split(os_sep)]
+        lines_lst = [f"{line}{os_sep}".encode() for line in lines.split(os_sep)]
         # Inspect file name and path.
         hio.dassert_is_valid_file_name(file_name)
         s3fs_ = get_s3fs(aws_profile)
@@ -271,10 +271,10 @@ def to_file(
             if file_name.endswith((".gz", ".gzip")):
                 # Open and decompress gzipped file.
                 with gzip.GzipFile(fileobj=s3_file) as gzip_file:
-                    gzip_file.writelines(lines)
+                    gzip_file.writelines(lines_lst)
             else:
                 # Any other file.
-                s3_file.writelines(lines)
+                s3_file.writelines(lines_lst)
             if force_flush:
                 # TODO(Nikola): Investigate S3 alternative for `os.fsync(f.fileno())`.
                 s3_file.flush()
@@ -282,7 +282,7 @@ def to_file(
         use_gzip = file_name.endswith((".gz", ".gzip"))
         hio.to_file(
             file_name,
-            lines,
+            lines_lst,
             mode=mode,
             use_gzip=use_gzip,
             force_flush=force_flush,

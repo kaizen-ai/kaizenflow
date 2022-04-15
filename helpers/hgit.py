@@ -54,7 +54,7 @@ def get_branch_name(dir_name: str = ".") -> str:
     hdbg.dassert_path_exists(dir_name)
     # > git rev-parse --abbrev-ref HEAD
     # master
-    cmd = "cd %s && git rev-parse --abbrev-ref HEAD" % dir_name
+    cmd = f"cd {dir_name} && git rev-parse --abbrev-ref HEAD"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
     _, output = data
     return output
@@ -138,7 +138,7 @@ def get_client_root(super_module: bool) -> str:
     # TODO(gp): Use system_to_one_line().
     _, out = hsystem.system_to_string(cmd)
     out = out.rstrip("\n")
-    hdbg.dassert_eq(len(out.split("\n")), 1, msg="Invalid out='%s'" % out)
+    hdbg.dassert_eq(len(out.split("\n")), 1, msg=f"Invalid out='{out}'")
     client_root: str = os.path.realpath(out)
     return client_root
 
@@ -183,7 +183,7 @@ def is_inside_submodule(git_dir: str = ".") -> bool:
     # - Find the git root of the current directory
     # - Check if the dir one level up is a valid Git repo
     # Go to the dir.
-    cmd.append("cd %s" % git_dir)
+    cmd.append(f"cd {git_dir}")
     # > cd im/
     # > git rev-parse --show-toplevel
     # /Users/saggese/src/.../amp
@@ -282,7 +282,7 @@ def _get_submodule_hash(dir_name: str) -> str:
     > git ls-tree master | grep <dir_name>
     """
     hdbg.dassert_path_exists(dir_name)
-    cmd = "git ls-tree master | grep %s" % dir_name
+    cmd = f"git ls-tree master | grep {dir_name}"
     data: Tuple[int, str] = hsystem.system_to_one_line(cmd)
     _, output = data
     # 160000 commit 0011776388b4c0582161eb2749b665fc45b87e7e  amp
@@ -382,7 +382,7 @@ def _group_hashes(head_hash: str, remh_hash: str, subm_hash: str) -> str:
         #   ('a2bfc704', ['head_hash', 'remh_hash'])
         # into
         #   'head_hash = remh_hash = a2bfc704'
-        txt.append("%s = %s" % (" = ".join(v), k))
+        txt.append(f"{' = '.join(v)} = {k}")
     txt = "\n".join(txt)
     return txt
 
@@ -393,26 +393,26 @@ def report_submodule_status(dir_names: List[str], short_hash: bool) -> str:
     """
     txt = []
     for dir_name in dir_names:
-        txt.append("dir_name='%s'" % dir_name)
-        txt.append("  is_inside_submodule: %s" % is_inside_submodule(dir_name))
+        txt.append(f"dir_name='{dir_name}'")
+        txt.append(f"  is_inside_submodule: {is_inside_submodule(dir_name)}")
         #
         branch_name = get_branch_name(dir_name)
         if branch_name != "master":
-            branch_name = "!!! %s !!!" % branch_name
-        txt.append("  branch: %s" % branch_name)
+            branch_name = f"!!! {branch_name} !!!"
+        txt.append(f"  branch: {branch_name}")
         #
         head_hash = get_head_hash(dir_name)
         head_hash = _get_hash(head_hash, short_hash)
-        txt.append("  head_hash: %s" % head_hash)
+        txt.append(f"  head_hash: {head_hash}")
         #
         remh_hash = get_remote_head_hash(dir_name)
         remh_hash = _get_hash(remh_hash, short_hash)
-        txt.append("  remh_hash: %s" % remh_hash)
+        txt.append(f"  remh_hash: {remh_hash}")
         #
         if dir_name != ".":
             subm_hash = _get_submodule_hash(dir_name)
             subm_hash = _get_hash(subm_hash, short_hash)
-            txt.append("  subm_hash: %s" % subm_hash)
+            txt.append(f"  subm_hash: {subm_hash}")
     txt_as_str = "\n".join(txt)
     return txt_as_str
 
@@ -472,7 +472,7 @@ def get_repo_full_name_from_dirname(
     """
     hdbg.dassert_path_exists(dir_name)
     #
-    cmd = "cd %s; (git remote -v | grep origin | grep fetch)" % dir_name
+    cmd = f"cd {dir_name}; (git remote -v | grep origin | grep fetch)"
     _, output = hsystem.system_to_string(cmd)
     # > git remote -v
     # origin  git@github.com:alphamatic/amp (fetch)
@@ -624,7 +624,7 @@ def get_complete_repo_map(
     elif in_mode == "short_name":
         pass
     else:
-        raise ValueError("Invalid in_mode='%s'" % in_mode)
+        raise ValueError(f"Invalid in_mode='{in_mode}'")
     _LOG.debug(
         "For in_mode=%s, include_host_name=%s, repo_map=\n%s",
         in_mode,
@@ -695,7 +695,7 @@ def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
     """
     root_dir = get_client_root(super_module=super_module)
     # TODO(gp): Use -not -path '*/\.git/*'
-    cmd = "find %s -name '%s' | grep -v .git" % (root_dir, file_name)
+    cmd = f"find {root_dir} -name '{file_name}' | grep -v .git"
     _, file_name = hsystem.system_to_one_line(cmd)
     _LOG.debug("file_name=%s", file_name)
     hdbg.dassert_ne(
@@ -735,8 +735,7 @@ def get_path_from_git_root(
     else:
         # If the file is not under the root, we can't normalize it.
         raise ValueError(
-            "Can't normalize file_name='%s' for git_root='%s'"
-            % (file_name, git_root)
+            f"Can't normalize file_name='{file_name}' for git_root='{git_root}'"
         )
     _LOG.debug(
         "file_name=%s, git_root=%s (super_module=%s) -> ret=%s",
@@ -944,7 +943,7 @@ def get_previous_committed_files(
     """
     cmd = []
     cmd.append('git show --pretty="" --name-only')
-    cmd.append("$(git log --author $(git config user.name) -%d" % num_commits)
+    cmd.append(f"$(git log --author $(git config user.name) -{num_commits}")
     cmd.append(r"""| \grep "^commit " | perl -pe 's/commit (.*)/$1/')""")
     cmd_as_str = " ".join(cmd)
     files: List[str] = hsystem.system_to_files(
@@ -1048,7 +1047,7 @@ def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
     cmd.append(
         "--pretty=format:" "'%h %<(8)%aN%  %<(65)%s (%>(14)%ar) %ad %<(10)%d'"
     )
-    cmd.append("-%d" % num_commits)
+    cmd.append(f"-{num_commits}")
     if my_commits:
         # This doesn't work in a container if the user relies on `~/.gitconfig` to
         # set the user name.
@@ -1068,7 +1067,7 @@ def git_stash_push(
     user_name = hsystem.get_user_name()
     server_name = hsystem.get_server_name()
     timestamp = hdateti.get_current_timestamp_as_string("naive_ET")
-    tag = "%s-%s-%s" % (user_name, server_name, timestamp)
+    tag = f"{user_name}-{server_name}-{timestamp}"
     tag = prefix + "." + tag
     _LOG.debug("tag='%s'", tag)
     cmd = "git stash push"
@@ -1076,10 +1075,10 @@ def git_stash_push(
     push_msg = tag[:]
     if msg:
         push_msg += ": " + msg
-    cmd += " -m '%s'" % push_msg
+    cmd += f" -m '{push_msg}'"
     hsystem.system(cmd, suppress_output=False, log_level=log_level)
     # Check if we actually stashed anything.
-    cmd = r"git stash list | \grep '%s' | wc -l" % tag
+    cmd = rf"git stash list | \grep '{tag}' | wc -l"
     _, output = hsystem.system_to_string(cmd)
     was_stashed = int(output) > 0
     if not was_stashed:
@@ -1100,7 +1099,7 @@ def git_stash_apply(mode: str, log_level: int = logging.DEBUG) -> None:
     elif mode == "apply":
         cmd = "git stash apply --quiet"
     else:
-        raise ValueError("mode='%s'" % mode)
+        raise ValueError(f"mode='{mode}'")
     hsystem.system(cmd, suppress_output=False, log_level=log_level)
 
 
@@ -1183,7 +1182,7 @@ def git_add_update(
     :param file_list: list of files to `git add`
     """
     _LOG.debug("# Adding all changed files to staging ...")
-    cmd = "git add %s" % (" ".join(file_list) if file_list is not None else "-u")
+    cmd = f"git add {' '.join(file_list) if file_list is not None else '-u'}"
     hsystem.system(cmd, suppress_output=False, log_level=log_level)
 
 
@@ -1296,7 +1295,7 @@ def does_branch_exist(
             # number, GH branch name, Git branch name, status.
             fields = line.split("\t")
             hdbg.dassert_eq(len(fields), 4)
-            number, gh_branch_name, git_branch_name, status = fields
+            number, gh_branch_name, git_branch_name, _ = fields
             _ = number, gh_branch_name
             if branch_name == git_branch_name:
                 exists = True

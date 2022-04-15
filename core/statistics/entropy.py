@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.entropy as coentrop
+import core.statistics.entropy as cstaentr
 """
 
 
@@ -65,7 +65,7 @@ def compute_diversity(data: pd.Series, alpha: float) -> float:
         entropy = -(normalized_data * log_normalized_data).sum()
         diversity = np.exp(entropy)
     else:
-        sum_of_powers = (normalized_data ** alpha).sum()
+        sum_of_powers = (normalized_data**alpha).sum()
         diversity = (1 - sum_of_powers) / (alpha - 1)
     return diversity
 
@@ -102,7 +102,7 @@ def compute_cardinality(data: pd.Series, alpha: float) -> float:
         entropy = -(normalized_data * log_normalized_data).sum()
         cardinality = np.exp(entropy)
     else:
-        sum_of_powers = (normalized_data ** alpha).sum()
+        sum_of_powers = (normalized_data**alpha).sum()
         cardinality = sum_of_powers ** (1 / (1 - alpha))
     return cardinality
 

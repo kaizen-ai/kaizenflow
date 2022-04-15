@@ -24,6 +24,15 @@ class ReturnsPipeline(dtfcore.DagBuilder):
     Pipeline for computing returns from price data.
     """
 
+    @staticmethod
+    def validate_config(config: cconfig.Config) -> None:
+        """
+        Sanity-check config.
+
+        :param config: config object to validate
+        """
+        hdbg.dassert(cconfig.check_no_dummy_values(config))
+
     def get_config_template(self) -> cconfig.Config:
         """
         Return a template configuration for this pipeline.
@@ -84,15 +93,6 @@ class ReturnsPipeline(dtfcore.DagBuilder):
         }
         config = cconfig.get_config_from_nested_dict(dict_)
         return config
-
-    @staticmethod
-    def validate_config(config: cconfig.Config) -> None:
-        """
-        Sanity-check config.
-
-        :param config: config object to validate
-        """
-        hdbg.dassert(cconfig.check_no_dummy_values(config))
 
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"

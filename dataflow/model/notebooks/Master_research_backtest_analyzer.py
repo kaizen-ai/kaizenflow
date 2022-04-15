@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.3
+#       jupytext_version: 1.13.7
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -20,13 +20,11 @@
 import datetime
 import logging
 
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
 import core.finance as cofinanc
 import core.plotting as coplotti
-import core.statistics as costatis
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
