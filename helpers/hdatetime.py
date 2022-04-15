@@ -109,7 +109,7 @@ def to_timestamp(datetime_: Datetime) -> pd.Timestamp:
     """
     dassert_is_datetime(datetime_)
     timestamp = pd.Timestamp(datetime_)
-    return timestamp  # type: ignore
+    return timestamp
 
 
 # //////////////////////////////////////////////////////////////////////////////////O
@@ -635,5 +635,7 @@ def convert_timestamp_to_unix_epoch(
     if timestamp.tz:
         timestamp = timestamp.tz_convert(None)
     # Convert to epoch.
-    epoch = (timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta("1" + unit)
+    epoch: int = (timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta(
+        "1" + unit
+    )
     return epoch

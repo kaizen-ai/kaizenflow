@@ -21,7 +21,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TalosBroker(ombroker.AbstractBroker):
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Path for order request.

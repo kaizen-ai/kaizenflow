@@ -205,7 +205,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
             dbname="test_db",
             credentials="host=localhost dbname=im_postgres_db_local port=54",
         )
-        expected = fr"""
+        expected = rf"""
         docker-compose \
             --file $GIT_ROOT/devops/compose/docker-compose.yml \
             run --rm im_postgres \

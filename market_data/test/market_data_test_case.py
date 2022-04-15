@@ -37,6 +37,29 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     # //////////////////////////////////////////////////////////////////////////////
 
+    @staticmethod
+    def _test_get_data_for_last_period(
+        market_data: mdata.MarketData,
+        timedelta: pd.Timestamp,
+    ) -> None:
+        """
+        Call `get_data_for_last_period()` all conditional periods.
+
+        This method is typically tested as smoke test, since it is a
+        real-time method and we can't easily check the content of its
+        output.
+        """
+        if skip_test_since_not_online(market_data):
+            pytest.skip("Market not on-line")
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_last_period:" + hprint.to_str("timedelta"),
+        )
+        # Run.
+        _ = market_data.get_data_for_last_period(timedelta)
+
+    # //////////////////////////////////////////////////////////////////////////////
+
     def _test_get_data_at_timestamp1(
         self,
         market_data: mdata.MarketData,
@@ -331,29 +354,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         actual = market_data.should_be_online(wall_clock_time)
         # Check output.
         self.assertTrue(actual)
-
-    # //////////////////////////////////////////////////////////////////////////////
-
-    @staticmethod
-    def _test_get_data_for_last_period(
-        market_data: mdata.MarketData,
-        timedelta: pd.Timestamp,
-    ) -> None:
-        """
-        Call `get_data_for_last_period()` all conditional periods.
-
-        This method is typically tested as smoke test, since it is a
-        real-time method and we can't easily check the content of its
-        output.
-        """
-        if skip_test_since_not_online(market_data):
-            pytest.skip("Market not on-line")
-        hprint.log_frame(
-            _LOG,
-            "get_data_for_last_period:" + hprint.to_str("timedelta"),
-        )
-        # Run.
-        _ = market_data.get_data_for_last_period(timedelta)
 
     # TODO(GP): Implement test for `wait_for_latest_data()`.
 

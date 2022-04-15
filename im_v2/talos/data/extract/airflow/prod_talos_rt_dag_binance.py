@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im_v2.talos.data.extract.airflow.prod_talos_rt_dag_binance as imvtdeaptrdb
+"""
+
 import datetime
 
 import airflow

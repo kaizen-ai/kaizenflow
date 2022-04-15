@@ -136,20 +136,6 @@ class DagBuilder(abc.ABC):
         _ = self, config
         return None
 
-    def _get_nid(self, stage_name: str) -> str:
-        hdbg.dassert_isinstance(stage_name, str)
-        nid = self._nid_prefix + stage_name
-        return nid
-
-    @abc.abstractmethod
-    def _get_dag(
-        self, config: cconfig.Config, mode: str = "strict"
-    ) -> dtfcordag.DAG:
-        """
-        Implement the DAG.
-        """
-        ...
-
     # ////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
@@ -194,3 +180,17 @@ class DagBuilder(abc.ABC):
         nid = node.nid
         nid = cast(str, nid)
         return nid
+
+    def _get_nid(self, stage_name: str) -> str:
+        hdbg.dassert_isinstance(stage_name, str)
+        nid = self._nid_prefix + stage_name
+        return nid
+
+    @abc.abstractmethod
+    def _get_dag(
+        self, config: cconfig.Config, mode: str = "strict"
+    ) -> dtfcordag.DAG:
+        """
+        Implement the DAG.
+        """
+        ...

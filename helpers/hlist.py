@@ -8,7 +8,6 @@ from typing import Any, List, Optional, Set
 
 import helpers.hdbg as hdbg
 
-
 # TODO(gp): -> return_single_element, return_single_element_or_assert?
 def assert_single_element_and_return(list_: List[Any]) -> Any:
     """

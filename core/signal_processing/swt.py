@@ -377,7 +377,7 @@ def _compute_fir_zscore(
     )[dyadic_tau].shift(delay)
     demeaned = signal - mean
     var = get_swt(
-        demeaned ** 2,
+        demeaned**2,
         wavelet=variance_wavelet,
         depth=variance_dyadic_tau,
         output_mode="smooth",

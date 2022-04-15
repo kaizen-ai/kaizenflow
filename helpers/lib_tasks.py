@@ -122,7 +122,7 @@ def _report_task(txt: str = "", container_dir_name: str = ".") -> None:
         hversio.check_version(container_dir_name)
     # Print the name of the function.
     func_name = hintros.get_function_name(count=1)
-    msg = "## %s: %s" % (func_name, txt)
+    msg = f"## {func_name}: {txt}"
     print(hprint.color_highlight(msg, color="purple"))
 
 
@@ -378,7 +378,7 @@ def print_setup(ctx):  # type: ignore
     _ = ctx
     var_names = "ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
-        print("%s=%s" % (v, get_default_param(v)))
+        print(f"{v}={get_default_param(v)}")
 
 
 @task
@@ -784,7 +784,7 @@ def git_create_branch(  # type: ignore
     if curr_branch != "master":
         if only_branch_from_master:
             hdbg.dfatal(
-                "You should branch from master and not from '%s'" % curr_branch
+                f"You should branch from master and not from '{curr_branch}'"
             )
     # Fetch master.
     cmd = "git pull --autostash"
@@ -1242,8 +1242,8 @@ def _dassert_current_dir_matches(expected_dir_basename: str) -> None:
     """
     Ensure that the name of the current dir is the one expected.
 
-    E.g., `/Users/saggese/src/cmamp1` is a valid dir for an integration branch for
-    `cmamp1`.
+    E.g., `/Users/saggese/src/cmamp1` is a valid dir for an integration
+    branch for `cmamp1`.
     """
     _LOG.debug(hprint.to_str("expected_dir_basename"))
     # Get the basename of the current dir.
@@ -1263,7 +1263,8 @@ def _dassert_is_integration_branch(abs_dir: str) -> None:
     """
     Ensure that the branch in `abs_dir` is a valid integration or lint branch.
 
-    E.g., `AmpTask1786_Integrate_20220402` is a valid integration branch.
+    E.g., `AmpTask1786_Integrate_20220402` is a valid integration
+    branch.
     """
     _LOG.debug(hprint.to_str("abs_dir"))
     branch_name = hgit.get_branch_name(dir_name=abs_dir)
@@ -1294,8 +1295,8 @@ def _clean_both_integration_dirs(abs_dir1: str, abs_dir2: str) -> None:
 @task
 def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     """
-    Create the branch for integration of `dir_basename` (e.g., amp1) in the current
-    dir.
+    Create the branch for integration of `dir_basename` (e.g., amp1) in the
+    current dir.
 
     :param dir_basename: specify the dir name (e.g., `amp1`) to ensure the set-up is
         correct.
@@ -1377,8 +1378,8 @@ def integrate_diff_dirs(  # type: ignore
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
         _LOG.warning(
-            "Reversing dirs: "
-            + hprint.to_str2(src_dir_basename, dst_dir_basename)
+            "Reversing dirs: %s",
+            hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
@@ -1445,7 +1446,7 @@ def _find_files_touched_since_last_integration(
         # 2acfd6d7 AmpTask1786_Integrate_20211214 (#1950)
         # 318ab0ff AmpTask1786_Integrate_20211210 (#1933)
         hdbg.dassert_lte(2, len(txt))
-        print("# last_integration: '%s'" % txt[0])
+        print(f"# last_integration: '{txt[0]}'")
         last_integration_hash = txt[0].split()[0]
         print("* " + hprint.to_str("last_integration_hash"))
         # Find the first commit after the commit with the last integration.
@@ -1591,8 +1592,8 @@ def integrate_files(  # type: ignore
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
         _LOG.warning(
-            "Reversing dirs: "
-            + hprint.to_str2(src_dir_basename, dst_dir_basename)
+            "Reversing dirs: %s",
+            hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)
@@ -1623,7 +1624,7 @@ def integrate_files(  # type: ignore
     elif file_direction == "union_files":
         files = src_files.union(dst_files)
     else:
-        raise ValueError("Invalid file_direction='%s'" % file_direction)
+        raise ValueError(f"Invalid file_direction='{file_direction}'")
     #
     files_to_diff = _integrate_files(
         files,
@@ -1643,15 +1644,15 @@ def integrate_files(  # type: ignore
     print(hprint.indent(txt))
     # Process the files touched.
     if mode == "print_dirs":
-        files = []
+        files_lst = []
         for file, left_file, right_file in files_to_diff:
             dirname = os.path.dirname(file)
             # Skip empty dir, e.g., for `pytest.ini`.
             if dirname != "":
-                files.append(dirname)
-        files = sorted(list(set(files)))
+                files_lst.append(dirname)
+        files_lst = sorted(list(set(files_lst)))
         print(hprint.frame("Dirs changed"))
-        print("\n".join(files))
+        print("\n".join(files_lst))
     else:
         # Build the script with the operations to perform.
         script_txt = []
@@ -1661,7 +1662,7 @@ def integrate_files(  # type: ignore
             elif mode == "vimdiff":
                 cmd = f"vimdiff {left_file} {right_file}"
             else:
-                raise ValueError("Invalid mode='%s'" % mode)
+                raise ValueError(f"Invalid mode='{mode}'")
             _LOG.debug("  -> %s", cmd)
             script_txt.append(cmd)
         script_txt = "\n".join(script_txt)
@@ -1675,7 +1676,7 @@ def integrate_files(  # type: ignore
             hio.create_executable_script(script_file_name, script_txt)
             print(f"# To diff run:\n> {script_file_name}")
         else:
-            raise ValueError("Invalid mode='%s'" % mode)
+            raise ValueError(f"Invalid mode='{mode}'")
 
 
 @task
@@ -1684,7 +1685,8 @@ def integrate_find_files(  # type: ignore
     subdir="",
 ):
     """
-    Find the files that are touched in the current branch since last integration.
+    Find the files that are touched in the current branch since last
+    integration.
     """
     _report_task()
     _ = ctx
@@ -1704,8 +1706,9 @@ def integrate_diff_overlapping_files(  # type: ignore
     ctx, src_dir_basename, dst_dir_basename, subdir=""
 ):
     """
-    Find the files modified in both branches `src_dir_basename` and `dst_dir_basename`
-    Compare these files from HEAD to master version before the branch point.
+    Find the files modified in both branches `src_dir_basename` and
+    `dst_dir_basename` Compare these files from HEAD to master version before
+    the branch point.
 
     This is used to check what changes were made to files modified by
     both branches.
@@ -1760,7 +1763,7 @@ def integrate_diff_overlapping_files(  # type: ignore
             # not in 'ce54877016204315766e90df7c45192bec1fbf20'
             src_file = "/dev/null"
         else:
-            raise ValueError("cmd='%s' returned %s" % (cmd, rc))
+            raise ValueError(f"cmd='{cmd}' returned {rc}")
         # Update the script to diff.
         script_txt.append(f"vimdiff {dst_file} {src_file}")
     # Save the script to compare.
@@ -2078,7 +2081,7 @@ _IMAGE_VERSION_RE = r"\d+\.\d+\.\d+"
 
 def _dassert_is_version_valid(version: str) -> None:
     """
-    A valid version looks like: `1.0.0`.
+    Check that the version is valid, i.e. looks like `1.0.0`.
     """
     hdbg.dassert_isinstance(version, str)
     hdbg.dassert_ne(version, "")
@@ -2169,7 +2172,7 @@ def _dassert_is_image_name_valid(image: str) -> None:
 
 def _dassert_is_base_image_name_valid(base_image: str) -> None:
     """
-    A base image should look like.
+    Check that the base image is valid, i.e. looks like below.
 
     *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
@@ -2307,7 +2310,7 @@ def _get_docker_base_cmd(
     extra_env_vars: Optional[List[str]],
     extra_docker_compose_files: Optional[List[str]],
 ) -> List[str]:
-    """
+    r"""
     Get base `docker-compose` command encoded as a list of strings.
 
     It can be used as a base to build more complicated commands, e.g., `run`, `up`, `down`.
@@ -3489,8 +3492,8 @@ def _find_test_decorator(decorator_name: str, file_names: List[str]) -> List[str
     # E.g.,
     #   @pytest.mark.slow(...)
     #   @pytest.mark.qa
-    string = "@pytest.mark.%s" % decorator_name
-    regex = r"^\s*%s\s*[\(]?" % re.escape(string)
+    string = f"@pytest.mark.{decorator_name}"
+    regex = rf"^\s*{re.escape(string)}\s*[\(]?"
     _LOG.debug("regex='%s'", regex)
     res: List[str] = []
     # Scan all the files.
@@ -3719,7 +3722,7 @@ def _build_run_command_line(
             "Skipping %d submodules: %s", len(submodule_paths), submodule_paths
         )
         pytest_opts_tmp.append(
-            " ".join(["--ignore %s" % path for path in submodule_paths])
+            " ".join([f"--ignore {path}" for path in submodule_paths])
         )
     if coverage:
         pytest_opts_tmp.append(" ".join(_COV_PYTEST_OPTS))
@@ -3748,7 +3751,7 @@ def _run_test_cmd(
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     """
-    Same params as `run_fast_tests()`.
+    See params in `run_fast_tests()`.
     """
     if collect_only:
         # Clean files.
@@ -3812,7 +3815,7 @@ def _run_tests(
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     """
-    Same params as `run_fast_tests()`.
+    See params in `run_fast_tests()`.
     """
     if git_clean_:
         cmd = "invoke git_clean --fix-perms"
@@ -3843,7 +3846,7 @@ def _run_tests(
 
 @task
 # TODO(Grisha): "Unit tests run_*_tests invokes" CmTask #1652.
-def run_tests(
+def run_tests(  # type: ignore
     ctx,
     test_lists,
     abort_on_first_error=False,
@@ -3880,12 +3883,19 @@ def run_tests(
             **kwargs,
         )
         if rc != 0:
-            _LOG.error("'%s' tests failed" % test_list_name)
+            _LOG.error("'%s' tests failed", test_list_name)
             if abort_on_first_error:
                 sys.exit(-1)
         results.append((test_list_name, rc))
     #
     rc = any(result[1] for result in results)
+    # Summarize the results.
+    _LOG.info("# Tests run summary:")
+    for test_list_name, rc in results:
+        if rc != 0:
+            _LOG.error("'%s' tests failed", test_list_name)
+        else:
+            _LOG.info("'%s' tests succeeded", test_list_name)
     return rc
 
 
@@ -4397,7 +4407,7 @@ def pytest_repro(  # type: ignore
         f"Found {len(targets)} failed pytest '{mode}' target(s); "
         "to reproduce run:\n"
     )
-    res = ["pytest %s" % t for t in targets]
+    res = [f"pytest {t}" for t in targets]
     res = "\n".join(res)
     failed_test_output_str += res
     #
@@ -4496,7 +4506,7 @@ def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
     dst_file_name2 = file_name2 + ".purified"
     _purify_test_output(file_name2, dst_file_name2)
     # TODO(gp): Call vimdiff automatically.
-    cmd = "vimdiff %s %s" % (dst_file_name1, dst_file_name2)
+    cmd = f"vimdiff {dst_file_name1} {dst_file_name2}"
     print(f"> {cmd}")
 
 
@@ -4624,7 +4634,7 @@ def lint_check_python_files_in_docker(  # type: ignore
             success = compileall.compile_file(file_name, force=True, quiet=1)
             _LOG.debug("file_name='%s' -> python_compile=%s", file_name, success)
             if not success:
-                msg = "'%s' doesn't compile correctly" % file_name
+                msg = f"'{file_name}' doesn't compile correctly"
                 _LOG.error(msg)
                 failed_filenames.append(file_name)
         # TODO(gp): Add also `python -c "import ..."`, if not equivalent to `compileall`.
@@ -4633,12 +4643,12 @@ def lint_check_python_files_in_docker(  # type: ignore
             rc = hsystem.system(cmd, abort_on_error=False, suppress_output=False)
             _LOG.debug("file_name='%s' -> python_compile=%s", file_name, rc)
             if rc != 0:
-                msg = "'%s' doesn't execute correctly" % file_name
+                msg = f"'{file_name}' doesn't execute correctly"
                 _LOG.error(msg)
                 failed_filenames.append(file_name)
     hprint.log_frame(
         _LOG,
-        "failed_filenames=%s" % len(failed_filenames),
+        f"failed_filenames={len(failed_filenames)}",
         verbosity=logging.INFO,
     )
     _LOG.info("\n".join(failed_filenames))
@@ -4817,6 +4827,7 @@ def lint_detect_cycles(  # type: ignore
     _run(ctx, cmd)
 
 
+# pylint: disable=line-too-long
 @task
 def lint(  # type: ignore
     ctx,
@@ -4844,8 +4855,11 @@ def lint(  # type: ignore
     # To lint all the files:
     > i lint --dir-name . --only-format
 
-    # To lint only a repo including `amp` but not `amp` itself:
+    # To lint only a repo (e.g., lime, lemonade) including `amp` but not `amp` itself:
     > i lint --files="$(find . -name '*.py' -not -path './compute/*' -not -path './amp/*')"
+
+    # To lint dev_tools:
+    > i lint --files="$(find . -name '*.py' -not -path './amp/*' -not -path './import_check/example/*' -not -path './import_check/test/outcomes/*')"
     ```
 
     :param modified: select the files modified in the client
@@ -4891,7 +4905,6 @@ def lint(  # type: ignore
     # amp_format_separating_line.......................(no files to check)Skipped
     # amp_black........................................(no files to check)Skipped
     # amp_processjupytext..............................(no files to check)Skipped
-    # amp_remove_eof_newlines..........................(no files to check)Skipped
     # amp_check_filename...............................(no files to check)Skipped
     # amp_warn_incorrectly_formatted_todo..............(no files to check)Skipped
     # amp_flake8.......................................(no files to check)Skipped
@@ -5060,7 +5073,7 @@ def _get_branch_name(branch_mode: str) -> Optional[str]:
     elif branch_mode == "all":
         branch_name = None
     else:
-        raise ValueError("Invalid branch='%s'" % branch_mode)
+        raise ValueError(f"Invalid branch='{branch_mode}'")
     return branch_name
 
 
@@ -5197,7 +5210,7 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
     elif branch == "master":
         branch_name = "master"
     else:
-        raise ValueError("Invalid branch='%s'" % branch)
+        raise ValueError(f"Invalid branch='{branch}'")
     _LOG.debug(hprint.to_str("branch_name"))
     # Get the workflows.
     if workflows == "all":
@@ -5284,7 +5297,7 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     # Add the prefix `AmpTaskXYZ_...`
     task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
-    title = "%s%d_%s" % (task_prefix, issue_id, title)
+    title = f"{task_prefix}{issue_id}_{title}"
     return title, url
 
 
@@ -5493,12 +5506,12 @@ def _compute_stats_by_user_and_group(dir_name: str) -> Tuple[Dict, Dict, Dict]:
     # Print stats.
     txt1 = ""
     for user, files in user_to_files.items():
-        txt1 += "%s(%s), " % (user, len(files))
+        txt1 += f"{user}({len(files)}), "
     _LOG.info("user=%s", txt1)
     #
     txt2 = ""
     for group, files in group_to_files.items():
-        txt2 += "%s(%s), " % (group, len(files))
+        txt2 += f"{group}({len(files)}), "
     _LOG.info("group=%s", txt2)
     return user_to_files, group_to_files, file_to_user_group
 
@@ -5511,7 +5524,7 @@ def _ls_l(files: List[str], size: int = 100) -> str:
     for pos in range(0, len(files), size):
         files_tmp = files[pos : pos + size]
         files_tmp = [f"'{f}'" for f in files_tmp]
-        cmd = "ls -ld %s" % " ".join(files_tmp)
+        cmd = f"ls -ld {' '.join(files_tmp)}"
         _, txt_tmp = hsystem.system_to_string(cmd)
         txt.append(txt_tmp)
     return "\n".join(txt)
@@ -5526,7 +5539,7 @@ def _exec_cmd_by_chunks(
     for pos in range(0, len(files), size):
         files_tmp = files[pos : pos + size]
         files_tmp = [f"'{f}'" for f in files_tmp]
-        cmd = "%s %s" % (cmd, " ".join(files_tmp))
+        cmd = f"{cmd} {' '.join(files_tmp)}"
         hsystem.system(cmd, abort_on_error=abort_on_error)
 
 

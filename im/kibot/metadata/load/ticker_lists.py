@@ -8,8 +8,6 @@ import enum
 import os
 from typing import List, Tuple
 
-import pandas as pd
-
 import im.kibot.metadata.config as imkimecon
 import im.kibot.metadata.types as imkimetyp
 
@@ -58,34 +56,6 @@ class TickerListsLoader:
         listed_tickers, delisted_tickers = self._parse_lines(lines=lines)
         return listed_tickers if listed else delisted_tickers
 
-    def _parse_lines(
-        self, lines: List[str]
-    ) -> Tuple[List[imkimetyp.Ticker], List[imkimetyp.Ticker]]:
-        """
-        Get a list of listed & delisted tickers from lines.
-        """
-        listed_tickers: List[imkimetyp.Ticker] = []
-        delisted_tickers: List[imkimetyp.Ticker] = []
-        state = ParsingState.Started
-        for line in lines:
-            if not line.strip():
-                # Skip empty lines.
-                continue
-            if state == ParsingState.Started:
-                if line.strip() == "Listed:":
-                    state = ParsingState.ListedSectionStarted
-            elif state == ParsingState.ListedSectionStarted:
-                # First non-empty line after 'listed' section header is always the header.
-                state = ParsingState.HeaderSkipped
-            elif state == ParsingState.HeaderSkipped:
-                if line.strip() == "Delisted:":
-                    state = ParsingState.DelistedSectionStarted
-                else:
-                    listed_tickers.append(self._get_ticker_from_line(line))
-            elif state == ParsingState.DelistedSectionStarted:
-                delisted_tickers.append(self._get_ticker_from_line(line))
-        return listed_tickers, delisted_tickers
-
     @staticmethod
     def _get_lines(s3_path: str) -> List[str]:
         aws_profile = "am"
@@ -114,3 +84,31 @@ class TickerListsLoader:
         args = args[1:]
         ret = imkimetyp.Ticker(*args)
         return ret
+
+    def _parse_lines(
+        self, lines: List[str]
+    ) -> Tuple[List[imkimetyp.Ticker], List[imkimetyp.Ticker]]:
+        """
+        Get a list of listed & delisted tickers from lines.
+        """
+        listed_tickers: List[imkimetyp.Ticker] = []
+        delisted_tickers: List[imkimetyp.Ticker] = []
+        state = ParsingState.Started
+        for line in lines:
+            if not line.strip():
+                # Skip empty lines.
+                continue
+            if state == ParsingState.Started:
+                if line.strip() == "Listed:":
+                    state = ParsingState.ListedSectionStarted
+            elif state == ParsingState.ListedSectionStarted:
+                # First non-empty line after 'listed' section header is always the header.
+                state = ParsingState.HeaderSkipped
+            elif state == ParsingState.HeaderSkipped:
+                if line.strip() == "Delisted:":
+                    state = ParsingState.DelistedSectionStarted
+                else:
+                    listed_tickers.append(self._get_ticker_from_line(line))
+            elif state == ParsingState.DelistedSectionStarted:
+                delisted_tickers.append(self._get_ticker_from_line(line))
+        return listed_tickers, delisted_tickers
