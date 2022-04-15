@@ -620,6 +620,11 @@ class TestRealTimeSqlTalosClient1(
         )
         return sql_talos_client
 
+    def test_get_universe1(self) -> None:
+        """
+        """
+        
+
     def test_read_data1(self) -> None:
         # Load test data.
         self._create_test_table()
@@ -1031,6 +1036,22 @@ class TestRealTimeSqlTalosClient1(
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_get_universe1(self) -> pd.DataFrame:
+        """
+        Verify that the universes are extracted correctly.
+        """
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Initialize client and load the data.
+        im_client = self.setup_talos_sql_client()
+        actual = im_client.get_universe()
+        # Message in case if test case got failed.
+        message = "Actual and expected universes are not equal!"
+        self.assertEqual(actual, ["binance::BTC_USDT", "binance::ETH_USDT"], message)
         hsql.remove_table(self.connection, "talos_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
