@@ -98,7 +98,7 @@ def _get_trade_universe(
 
 def get_vendor_universe(
     vendor: str, *, version: Optional[str] = None, as_full_symbol: bool = False
-) -> Union[List[icdc.FullSymbol], Dict[str, Dict[str, List[str]]]]:
+) -> Union[List[str], Dict[str, Dict[str, List[str]]]]:
     """
     Load vendor universe either as a list of currency pairs per each vendor or
     list of full symbols.

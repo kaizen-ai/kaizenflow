@@ -10,7 +10,7 @@ Use as:
      --end_timestamp '2022-02-09' \
      --start_timestamp '2022-02-08' \
      --exchange_id 'binance' \
-     --universe 'v03' \
+     --universe 'v3' \
      --aws_profile 'ck' \
      --s3_path 's3://cryptokaizen-data/historical/'
 """

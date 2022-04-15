@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 )
 class TestDbHelper(hunitest.TestCase, abc.ABC):
     """
-    This class allows testing code that interacts with a DB.
+    Allow testing code that interacts with a DB.
 
     It creates / destroys a test DB during setup / teardown of the class. This means
     that the same DB is reused for multiple test methods of the same class.

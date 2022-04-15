@@ -94,7 +94,7 @@ class Test_filter_data_by_comparison(hunitest.TestCase):
 
 class TestFilterDataByMethod(hunitest.TestCase):
     """
-    This test was generated automatically with Playback.
+    Test was generated automatically with Playback.
     """
 
     def test1(self) -> None:

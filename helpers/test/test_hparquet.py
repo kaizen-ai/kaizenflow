@@ -67,7 +67,7 @@ def _get_df_example1() -> pd.DataFrame:
 
 
 def _compare_dfs(self: Any, df1: pd.DataFrame, df2: pd.DataFrame) -> str:
-    df1_as_str = hpandas.df_to_str(df1, print_shape_info=True, tag="")
+    df1_as_str: str = hpandas.df_to_str(df1, print_shape_info=True, tag="")
     df2_as_str = hpandas.df_to_str(df2, print_shape_info=True, tag="")
     self.assert_equal(df1_as_str, df2_as_str, fuzzy_match=True)
     # When Parquet reads partitioned dataset can convert partitioning columns into

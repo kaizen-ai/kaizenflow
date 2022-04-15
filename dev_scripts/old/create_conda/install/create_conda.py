@@ -48,21 +48,21 @@ _CURR_DIR = os.path.dirname(sys.argv[0])
 # up two levels to reach `//amp`.
 _AMP_REL_PATH = "../.."
 _AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
-assert os.path.exists(_AMP_PATH), "Can't find '%s'" % _AMP_PATH
+assert os.path.exists(_AMP_PATH), f"Can't find '{_AMP_PATH}'"
 sys.path.insert(0, _AMP_PATH)
 # pylint: disable=wrong-import-position
-import dev_scripts._bootstrap as boot  # isort:skip # noqa: E402
+import dev_scripts.old.create_conda._bootstrap as dsoccobo  # isort:skip # noqa: E402
 
-boot.bootstrap(_AMP_REL_PATH)
+dsoccobo.bootstrap(_AMP_REL_PATH)
 
 # pylint: disable=wrong-import-position
-import helpers.conda as hco  # isort:skip # noqa: E402
+import helpers.old.conda as holdcond  # isort:skip # noqa: E402
 import helpers.hdbg as hdbg  # isort:skip # noqa: E402
-import helpers.henv as henv  # isort:skip # noqa: E402
+import helpers.old.env2 as holdenv2  # isort:skip # noqa: E402
 import helpers.hio as hio  # isort:skip # noqa: E402
 import helpers.hparser as hparser  # isort:skip # noqa: E402
 import helpers.hprint as hprint  # isort:skip # noqa: E402
-import helpers.user_credentials as usc  # isort:skip # noqa: E402
+import helpers.old.user_credentials as holuscre  # isort:skip # noqa: E402
 
 _LOG = logging.getLogger(__name__)
 
@@ -79,14 +79,14 @@ _CONDA_ENVS_DIR = os.path.abspath(os.path.join(_CURR_DIR, "conda_envs"))
 
 
 def _set_conda_root_dir() -> None:
-    conda_env_path = usc.get_credentials()["conda_env_path"]
-    hco.set_conda_env_root(conda_env_path)
+    conda_env_path = holuscre.get_credentials()["conda_env_path"]
+    holdcond.set_conda_env_root(conda_env_path)
     #
     # conda info
     #
     _LOG.info("\n%s", hprint.frame("Current conda status"))
     cmd = "conda info"
-    hco.conda_system(cmd, suppress_output=False)
+    holdcond.conda_system(cmd, suppress_output=False)
 
 
 def _delete_conda_env(args: Any, conda_env_name: str) -> None:
@@ -100,16 +100,16 @@ def _delete_conda_env(args: Any, conda_env_name: str) -> None:
     _LOG.info("\n%s", hprint.frame("Check conda status after deactivation"))
     #
     cmd = "conda deactivate; conda info --envs"
-    hco.conda_system(cmd, suppress_output=False)
+    holdcond.conda_system(cmd, suppress_output=False)
     #
     # Create a package from scratch (otherwise conda is unhappy).
     #
     _LOG.info(
         "\n%s",
-        hprint.frame("Delete old conda env '%s', if exists" % conda_env_name),
+        hprint.frame(f"Delete old conda env '{conda_env_name}', if exists"),
     )
-    conda_env_dict, _ = hco.get_conda_info_envs()
-    conda_env_root = hco.get_conda_envs_dirs()[0]
+    conda_env_dict, _ = holdcond.get_conda_info_envs()
+    conda_env_root = holdcond.get_conda_envs_dirs()[0]
     conda_env_path = os.path.join(conda_env_root, conda_env_name)
     #
     conda_env_exists = conda_env_name in conda_env_dict
@@ -135,12 +135,12 @@ def _delete_conda_env(args: Any, conda_env_name: str) -> None:
             # Remove old dir to make conda happy.
             _LOG.warning("Deleting conda env '%s'", conda_env_path)
             # $CONDA remove -y -n $ENV_NAME --all
-            cmd = "conda deactivate; rm -rf %s" % conda_env_path
-            hco.conda_system(cmd, suppress_output=False)
+            cmd = f"conda deactivate; rm -rf {conda_env_path}"
+            holdcond.conda_system(cmd, suppress_output=False)
         else:
             msg = (
-                "Conda env '%s' already exists. You need to use"
-                " --delete_env_if_exists to delete it" % conda_env_name
+                f"Conda env '{conda_env_name}' already exists. You need to use"
+                " --delete_env_if_exists to delete it"
             )
             _LOG.error(msg)
             sys.exit(-1)
@@ -203,7 +203,7 @@ def _create_conda_env(args: Any, conda_env_name: str) -> None:
     """
     Process requirements file and create conda henv.
     """
-    _LOG.info("\n%s", hprint.frame("Create new conda env '%s'" % conda_env_name))
+    _LOG.info("\n%s", hprint.frame(f"Create new conda env '{conda_env_name}'"))
     #
     if args.test_install:
         cmd_txt = f"conda create --yes --name {conda_env_name} -c conda-forge"
@@ -235,7 +235,7 @@ def _create_conda_env(args: Any, conda_env_name: str) -> None:
             cmd.append("--yes")
             # cmd.append("--override-channels")
             cmd.append("-c conda-forge")
-        cmd.append("--name %s" % conda_env_name)
+        cmd.append(f"--name {conda_env_name}")
         req_files = args.req_file
         tmp_req_files = _process_requirements_files(req_files)
         _LOG.debug("tmp_req_files=%s", tmp_req_files)
@@ -245,11 +245,11 @@ def _create_conda_env(args: Any, conda_env_name: str) -> None:
         # TODO(gp): Merge the yaml files (see #579).
         # We leverage the fact that `conda create` can merge multiple
         # requirements files.
-        cmd.append(" ".join(["--file %s" % f for f in tmp_req_files]))
+        cmd.append(" ".join([f"--file {f}" for f in tmp_req_files]))
         if args.python_version is not None:
-            cmd.append("python=%s" % args.python_version)
+            cmd.append(f"python={args.python_version}")
         cmd_txt = " ".join(cmd)
-    hco.conda_system(cmd_txt, suppress_output=False)
+    holdcond.conda_system(cmd_txt, suppress_output=False)
 
 
 def _run_pip_install(args: Any, conda_env_name: str) -> None:
@@ -260,23 +260,21 @@ def _run_pip_install(args: Any, conda_env_name: str) -> None:
         if False:
             # PTask1005: Moved to pip and pinned for gluonts.
             cmd = [
-                "conda activate %s" % conda_env_name,
+                f"conda activate {conda_env_name}",
                 'pip install --no-deps "mxnet>=1.6.0"',
                 "pip install --no-deps gluonnlp",
             ]
             cmd = " && ".join(cmd)
-            hco.conda_system(cmd, suppress_output=False)
+            holdcond.conda_system(cmd, suppress_output=False)
 
 
 def _test_conda_env(conda_env_name: str) -> None:
     # Test activating.
-    _LOG.info(
-        "\n%s", hprint.frame("Test activate conda env '%s'" % conda_env_name)
-    )
-    cmd = "conda activate %s && conda info --envs" % conda_env_name
-    hco.conda_system(cmd, suppress_output=False)
+    _LOG.info("\n%s", hprint.frame(f"Test activate conda env '{conda_env_name}'"))
+    cmd = f"conda activate {conda_env_name} && conda info --envs"
+    holdcond.conda_system(cmd, suppress_output=False)
     # Check packages.
-    _, file_name = henv.save_env_file(conda_env_name, _CONDA_ENVS_DIR)
+    _, file_name = holdenv2.save_env_file(conda_env_name, _CONDA_ENVS_DIR)
     # TODO(gp): Not happy to save all the package list in amp. It should go in
     #  a spot with respect to the git root.
     _LOG.warning(
@@ -325,7 +323,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
-    _LOG.info("\n%s", henv.get_system_info(add_frame=True))
+    _LOG.info("\n%s", holdenv2.get_system_info(add_frame=True))
     hdbg.dassert_path_exists(_REQUIREMENTS_DIR)
     hdbg.dassert_path_exists(_CONDA_ENVS_DIR)
     #

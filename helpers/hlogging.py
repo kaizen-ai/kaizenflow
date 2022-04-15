@@ -120,7 +120,7 @@ def get_matching_loggers(
     sel_loggers = []
     for module_name in module_names:
         if verbose:
-            print("module_name=%s" % module_name)
+            print(f"module_name={module_name}")
         # TODO(gp): We should have a regex.
         # str(logger) looks like `<Logger tornado.application (DEBUG)>`
         sel_loggers_tmp = [
@@ -132,7 +132,7 @@ def get_matching_loggers(
         # print(sel_loggers_tmp)
         sel_loggers.extend(sel_loggers_tmp)
     if verbose:
-        print("sel_loggers=%s" % sel_loggers)
+        print(f"sel_loggers={sel_loggers}")
     return sel_loggers
 
 
@@ -214,7 +214,7 @@ class _LocalTimeZoneFormatter:
             # self._tzinfo = pytz.timezone('America/New_York')
             self._tzinfo = tz.gettz("America/New_York")
         except ModuleNotFoundError as e:
-            print("Can't import dateutil: using UTC\n%s" % str(e))
+            print(f"Can't import dateutil: using UTC\n{str(e)}")
             self._tzinfo = None
 
     def converter(self, timestamp: float) -> datetime.datetime:
@@ -287,9 +287,7 @@ class _ColoredFormatter(  # type: ignore[misc]
             assert levelname in self.MAPPING, "Can't find info '%s'"
             color_code, tag = self.MAPPING[levelname]
             # Align the level name.
-            colored_levelname = "{0}{1}m{2}{3}".format(
-                prefix, color_code, tag, suffix
-            )
+            colored_levelname = f"{prefix}{color_code}m{tag}{suffix}"
         colored_record.levelname = colored_levelname
         return logging.Formatter.format(self, colored_record)
 
@@ -410,7 +408,7 @@ def _get_logging_format(
         elif date_format_mode == "date_timestamp":
             date_fmt = "%Y-%m-%d %I:%M:%S %p"
         else:
-            raise ValueError("Invalid date_format_mode='%s'" % date_format_mode)
+            raise ValueError(f"Invalid date_format_mode='{date_format_mode}'")
     else:
         # Make logging look like a normal print().
         # TODO(gp): We want to still prefix with WARNING and ERROR.
@@ -427,7 +425,7 @@ def set_v1_formatter(
     force_verbose_format: bool,
     report_cpu_usage: bool,
     report_memory_usage: bool,
-):
+) -> _ColoredFormatter:
     # Decide whether to use verbose or print format.
     date_fmt, log_format = _get_logging_format(
         force_print_format,
@@ -457,6 +455,7 @@ def set_v1_formatter(
 # #############################################################################
 
 
+# pylint: disable=line-too-long
 class CustomFormatter(logging.Formatter):
     """
     Override `format` to implement a completely custom logging formatting.
@@ -479,7 +478,7 @@ class CustomFormatter(logging.Formatter):
         report_cpu_usage: bool = False,
         **kwargs: Any,
     ):
-        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
+        super().__init__(*args, **kwargs)
         self._date_fmt = self._get_date_format(date_format_mode)
         #
         try:
@@ -489,7 +488,7 @@ class CustomFormatter(logging.Formatter):
 
             self._tzinfo = tz.gettz("America/New_York")
         except ModuleNotFoundError as e:
-            print("Can't import dateutil: using UTC\n%s" % str(e))
+            print(f"Can't import dateutil: using UTC\n{str(e)}")
             self._tzinfo = None
         #
         self._report_memory_usage = report_memory_usage
@@ -555,13 +554,13 @@ class CustomFormatter(logging.Formatter):
             )
         # Colorize / shorten the logging level if it's not DEBUG.
         if record.levelno != logging.DEBUG:
-            msg += " - %s" % self._colorize_level(record.levelname)
+            msg += f" - {self._colorize_level(record.levelname)}"
         # Add information about which coroutine we are running in.
         try:
             asyncio.get_running_loop()
             task = asyncio.Task.current_task()
             if task is not None:
-                msg += " %s" % task.get_name()
+                msg += f" {task.get_name()}"
         except (RuntimeError, AttributeError):
             pass
         # Add information about the caller.
@@ -569,18 +568,18 @@ class CustomFormatter(logging.Formatter):
         # /helpers/hunit_test.py setUp:932
         # ```
         # pathname = record.pathname.replace("/amp", "")
-        # msg += " %s %s:%s" % (pathname, record.funcName, record.lineno)
+        # msg += f" {pathname} {record.funcName}:{record.lineno}"
         # ```
         # test_hlogging.py _print_time:28
         # ```
-        msg += " %s %s:%s" % (record.filename, record.funcName, record.lineno)
+        msg += f" {record.filename} {record.funcName}:{record.lineno}"
         # Indent.
         if len(msg) < 50:
             msg = "%-60s" % msg
         else:
             msg = "%-80s" % msg
         # Add the caller string.
-        msg += " %s" % record.msg
+        msg += f" {record.msg}"
         record.msg = msg
         return super().format(record)
 
@@ -631,9 +630,7 @@ class CustomFormatter(logging.Formatter):
         suffix = "\033[0m"
         assert level_name in self._COLOR_MAPPING, "Can't find info '%s'"
         color_code, tag = self._COLOR_MAPPING[level_name]
-        colored_level_name = "{0}{1}m{2}{3}".format(
-            prefix, color_code, tag, suffix
-        )
+        colored_level_name = f"{prefix}{color_code}m{tag}{suffix}"
         return colored_level_name
 
 
@@ -645,9 +642,9 @@ def set_v2_formatter(
     force_verbose_format: bool,
     report_memory_usage: bool,
     report_cpu_usage: bool,
-):
+) -> Union[logging.Formatter, CustomFormatter]:
     """
-    Same params as `init_logger()`.
+    See params in `init_logger()`.
     """
     assert not (force_verbose_format and force_print_format), (
         f"Can't use both force_verbose_format={force_verbose_format} "
@@ -668,7 +665,7 @@ def set_v2_formatter(
     if verbose_format:
         # Force to report memory / CPU usage.
         # report_memory_usage = report_cpu_usage = True
-        formatter = CustomFormatter(
+        formatter: Union[logging.Formatter, CustomFormatter] = CustomFormatter(
             report_memory_usage=report_memory_usage,
             report_cpu_usage=report_cpu_usage,
         )
