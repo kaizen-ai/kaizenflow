@@ -211,20 +211,6 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self._mode = mode
         super().__init__(vendor, resample_1min)
 
-    @staticmethod
-    def should_be_online() -> bool:
-        """
-        The real-time system for Talos should always be online.
-        """
-        return True
-
-    @staticmethod
-    def get_metadata() -> pd.DataFrame:
-        """
-        Return metadata.
-        """
-        raise NotImplementedError
-
     def get_universe(self) -> List[icdc.FullSymbol]:
         """
         See description in the parent class.
@@ -242,6 +228,20 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         # Convert to list.
         full_symbols = full_symbols.to_list()
         return full_symbols
+
+    @staticmethod
+    def should_be_online() -> bool:
+        """
+        The real-time system for Talos should always be online.
+        """
+        return True
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+        raise NotImplementedError
 
     @staticmethod
     # TODO(Danya): Move up to hsql.
