@@ -7,7 +7,7 @@ import dataflow.universe as dtfuniver
 """
 import logging
 import os
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pandas as pd
 
@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Move it to a better place.
-Amid = str
+Amid = Union[int, str]
 
 
 def get_sp500() -> pd.DataFrame:
@@ -221,6 +221,15 @@ def _get_kibot_universe_v3(n: Optional[int]) -> List[Amid]:
     return amids
 
 
+def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
+    """
+    Create universe for backtest example.
+    """
+    asset_ids = [3303714233, 1467591036]
+    amids = _get_top_n(asset_ids, n)
+    return amids
+
+
 def get_universe(universe_str: str) -> List[Amid]:
     # E.g., universe_str == "v1_0-top100"
     universe_version, top_n = dtfmod.parse_universe_str(universe_str)
@@ -230,6 +239,8 @@ def get_universe(universe_str: str) -> List[Amid]:
         ret = _get_kibot_universe_v2(top_n)
     elif universe_version == "kibot_v3":
         ret = _get_kibot_universe_v3(top_n)
+    elif universe_version == "example1_v1":
+        ret = _get_example1_universe_v1(top_n)
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret
