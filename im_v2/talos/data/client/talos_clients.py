@@ -4,6 +4,7 @@ Import as:
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 """
 
+import collections
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
@@ -16,7 +17,6 @@ import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
+class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     """
     Read historical data for `Talos` assets stored as Parquet dataset.
 
@@ -56,14 +56,20 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         aws_profile: Optional[str] = None,
     ) -> None:
         """
-        Load `Talos` data from local or S3 filesystem.
+        Constructor.
+
+        See the parent class for parameters description.
+
+        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         vendor = "talos"
+        infer_exchange_id = False
         super().__init__(
             vendor,
             resample_1min,
             root_dir,
             partition_mode,
+            infer_exchange_id,
             aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot
@@ -90,7 +96,7 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
     @staticmethod
     def _get_columns_for_query() -> List[str]:
         """
-        Get columns for Parquet data query.
+        See description in the parent class.
         """
         columns = [
             "open",
@@ -108,46 +114,68 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         df: pd.DataFrame, full_symbol_col_name: str
     ) -> pd.DataFrame:
         """
-        Apply transformations to loaded data.
+        See description in the parent class.
         """
-        # Create full symbols column and drop its components.
-        df[full_symbol_col_name] = (
-            df["exchange_id"].astype(str) + "::" + df["currency_pair"].astype(str)
+        # Convert to string, see the parent class for details.
+        df["exchange_id"] = df["exchange_id"].astype(str)
+        df["currency_pair"] = df["currency_pair"].astype(str)
+        # Add full symbol column.
+        df[full_symbol_col_name] = df.apply(
+            lambda x: ivcu.build_full_symbol(
+                x["exchange_id"], x["currency_pair"]
+            ),
+            axis=1,
         )
-        # Select only necessary columns.
+        # Keep only necessary columns.
         columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
         df = df[columns]
         return df
 
-    def _get_root_dir_and_symbol_filter(
+    def _get_root_dirs_symbol_filters(
         self, full_symbols: List[ivcu.FullSymbol], full_symbol_col_name: str
-    ) -> Tuple[str, hparque.ParquetFilter]:
+    ) -> Dict[str, hparque.ParquetFilter]:
         """
-        Get the root dir of the `Talos` data and filtering condition on
-        currency pair column.
+        Build a dict with exchange root dirs of the `Talos` data as keys and
+        filtering conditions on corresponding currency pairs as values.
+
+        E.g.,
+        ```
+        {
+            "s3://cryptokaizen-data/historical/talos/latest/binance": (
+                "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
+            ),
+            "s3://cryptokaizen-data/historical/talos/latest/coinbase": (
+                "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
+            ),
+        }
+        ```
         """
-        # Get the lists of exchange ids and currency pairs.
-        exchange_ids, currency_pairs = tuple(
-            zip(
-                *[
-                    ivcu.parse_full_symbol(full_symbol)
-                    for full_symbol in full_symbols
-                ]
+        # Build a root dir to the list of exchange ids subdirs, e.g.,
+        # `s3://cryptokaizen-data/historical/talos/latest/binance`.
+        root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
+        # Split full symbols into exchange id and currency pair tuples, e.g.,
+        # [('binance', 'ADA_USDT'),
+        # ('coinbase', 'BTC_USDT')].
+        full_symbol_tuples = [
+            ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+        ]
+        # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
+        # `Defaultdict` provides a default value for the key that does not exists that prevents from
+        # getting `KeyError`.
+        symbol_dict = collections.defaultdict(list)
+        for exchange_id, *currency_pair in full_symbol_tuples:
+            symbol_dict[exchange_id].extend(currency_pair)
+        # Build a dict with exchange root dirs as keys and Parquet filters by
+        # the corresponding currency pairs as values.
+        root_dir_symbol_filter_dict = {
+            os.path.join(root_dir, exchange_id): (
+                "currency_pair",
+                "in",
+                currency_pairs,
             )
-        )
-        # TODO(Dan) Extend functionality to load data for multiple exchange
-        #  ids in one query when data partitioning on S3 is changed.
-        # Verify that all full symbols in a query belong to one exchange id
-        # since dataset is partitioned only by currency pairs.
-        hdbg.dassert_eq(1, len(set(exchange_ids)))
-        # Extend the root dir to include the exchange dir, e.g.,
-        # "s3://cryptokaizen-data/historical/talos/latest/binance"
-        root_dir = os.path.join(
-            self._root_dir, self._vendor, self._data_snapshot, exchange_ids[0]
-        )
-        # Add a filter on currency pairs.
-        symbol_filter = ("currency_pair", "in", currency_pairs)
-        return root_dir, symbol_filter
+            for exchange_id, currency_pairs in symbol_dict.items()
+        }
+        return root_dir_symbol_filter_dict
 
 
 # #############################################################################
