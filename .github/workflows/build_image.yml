@@ -39,6 +39,12 @@ jobs:
 
       - name: Pull image
         env:
+          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
+          # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
+        run: invoke docker_pull
+
+      - name: Run 'docker_release_dev_image' workflow
+        env:
           PYTHONPATH: ".:amp"
           GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
           AM_AWS_ACCESS_KEY_ID: ${{ secrets.AM_AWS_ACCESS_KEY_ID }}
@@ -50,7 +56,7 @@ jobs:
           CK_AWS_ACCESS_KEY_ID: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
           CK_AWS_SECRET_ACCESS_KEY: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
           CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
-          CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
+          # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
         run: invoke docker_release_dev_image --version=FROM_CHANGELOG
