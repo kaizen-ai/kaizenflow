@@ -32,7 +32,7 @@ def get_expected_column_names() -> List[str]:
 # #############################################################################
 
 
-class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
+class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
 
@@ -352,7 +352,7 @@ class TestTalosParquetByTileClient1(icdctictc.ImClientTestCase):
     hsystem.is_inside_ci(),
     reason="Extend AWS authentication system CmTask #1666.",
 )
-class TestTalosParquetByTileClient2(icdctictc.ImClientTestCase):
+class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
 
