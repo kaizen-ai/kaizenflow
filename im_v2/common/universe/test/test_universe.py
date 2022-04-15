@@ -12,7 +12,7 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hunit_test as hunitest
-import im_v2.common.universe.full_symbol as ivcufusy
+import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 
 
@@ -201,7 +201,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         self.assertEqual([currency_pair], universe[exchange])
 
     def _test_get_vendor_universe_as_full_symbol(
-        self, vendor: str, universe_as_full_symbols: List[ivcufusy.FullSymbol]
+        self, vendor: str, universe_as_full_symbols: List[imvcufusy.FullSymbol]
     ) -> None:
         """
         Test that universe as full symbols is received correctly from small

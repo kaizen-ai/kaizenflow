@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.universe.full_symbol as ivcufusy
+import im_v2.common.universe.full_symbol as imvcufusy
 """
 
 import logging

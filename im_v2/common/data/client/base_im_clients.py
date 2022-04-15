@@ -237,9 +237,7 @@ class ImClient(abc.ABC):
         mode = "start"
         return self._get_start_end_ts_for_symbol(full_symbol, mode)
 
-    def get_end_ts_for_symbol(
-        self, full_symbol: ivcu.FullSymbol
-    ) -> pd.Timestamp:
+    def get_end_ts_for_symbol(self, full_symbol: ivcu.FullSymbol) -> pd.Timestamp:
         """
         Same as `get_start_ts_for_symbol()`.
         """
