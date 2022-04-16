@@ -376,7 +376,7 @@ def print_setup(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    var_names = "ECR_BASE_PATH BASE_IMAGE".split()
+    var_names = "AM_ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
         print(f"{v}={get_default_param(v)}")
 
@@ -1792,9 +1792,9 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     _report_task()
     docker_login(ctx)
-    ecr_base_path = get_default_param("ECR_BASE_PATH")
+    am_ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
-    _run(ctx, f"{docker_exec} image ls {ecr_base_path}")
+    _run(ctx, f"{docker_exec} image ls {am_ecr_base_path}")
 
 
 @task
@@ -1987,7 +1987,7 @@ def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
     """
     _report_task()
     #
-    base_image = get_default_param("ECR_BASE_PATH") + "/dev_tools"
+    base_image = get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
     _docker_pull(ctx, base_image, stage, version)
 
 
@@ -2029,10 +2029,10 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
     else:
-        ecr_base_path = get_default_param("ECR_BASE_PATH")
+        am_ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
-            + f"https://{ecr_base_path}"
+            + f"https://{am_ecr_base_path}"
         )
     # cmd = ("aws ecr get-login-password" +
     #       " | docker login --username AWS --password-stdin "
@@ -2189,7 +2189,7 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            get_default_param("ECR_BASE_PATH")
+            get_default_param("AM_ECR_BASE_PATH")
             + "/"
             + get_default_param("BASE_IMAGE")
         )
@@ -4712,8 +4712,8 @@ def _get_lint_docker_cmd(
     # TODO(gp): Do not hardwire the repo_short_name.
     # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
     # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
-    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-    image = f"{ecr_base_path}/dev_tools:{stage}"
+    am_ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+    image = f"{am_ecr_base_path}/dev_tools:{stage}"
     docker_wrapper_cmd = ["docker run", "--rm"]
     if stage in ("local", "dev"):
         # Map repository root to /app in the container, so that we can

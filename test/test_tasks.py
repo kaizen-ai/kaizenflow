@@ -15,11 +15,11 @@ def _get_default_params() -> Dict[str, str]:
     Get fake params pointing to a different image so we can test the code
     without affecting the official images.
     """
-    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+    am_ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     default_params = {
-        "ECR_BASE_PATH": ecr_base_path,
+        "AM_ECR_BASE_PATH": am_ecr_base_path,
         "BASE_IMAGE": "amp_test",
-        "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
+        "DEV_TOOLS_IMAGE_PROD": f"{am_ecr_base_path}/dev_tools:prod",
     }
     return default_params
 
@@ -95,7 +95,7 @@ class TestExecuteTasks2(hunitest.QaTestCase):
 
     def test_docker_build_local_image(self) -> None:
         params = _get_default_params()
-        base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
+        base_image = params["AM_ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
         # Version must be bigger than any version in `changelog.txt`.
         cmd = f"invoke docker_build_local_image --version 999.0.0 --cache --base-image={base_image}"
         hsystem.system(cmd)
@@ -103,7 +103,7 @@ class TestExecuteTasks2(hunitest.QaTestCase):
     @pytest.mark.skip("No prod image for amp yet")
     def test_docker_build_prod_image(self) -> None:
         params = _get_default_params()
-        base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
+        base_image = params["AM_ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
         # Version must be bigger than any version in `changelog.txt`.
         cmd = f"invoke docker_build_prod_image --version 999.0.0 --cache --base-image={base_image}"
         hsystem.system(cmd)

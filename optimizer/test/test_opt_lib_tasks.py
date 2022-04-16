@@ -13,11 +13,11 @@ def _get_default_params() -> Dict[str, str]:
     Get fake params pointing to a different image so we can test the code
     without affecting the official images.
     """
-    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+    am_ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     default_params = {
-        "ECR_BASE_PATH": ecr_base_path,
+        "AM_ECR_BASE_PATH": am_ecr_base_path,
         "BASE_IMAGE": "opt_test",
-        "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
+        "DEV_TOOLS_IMAGE_PROD": f"{am_ecr_base_path}/dev_tools:prod",
         "USE_ONLY_ONE_DOCKER_COMPOSE": True,
     }
     return default_params
