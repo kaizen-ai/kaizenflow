@@ -265,6 +265,9 @@ def yield_parquet_tiles_by_assets(
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
         filter_ = build_asset_id_filter(batch, asset_id_col)
+        print(cols)
+        print(filter_)
+        print(filter_)
         tile = from_parquet(
             file_name,
             columns=columns,

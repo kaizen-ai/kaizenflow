@@ -46,8 +46,8 @@ hprint.config_notebook()
 
 # %%
 tile_dict = {
-    "dir_name": "/app/build_tile_configs.../tiled_results/",
-    "asset_id_col": "",
+    "dir_name": "/app/experiment.RH1E.ccxt_v3-top2.5T.JanFeb2020/tiled_results",
+    "asset_id_col": "asset_id",
 }
 tile_config = cconfig.get_config_from_nested_dict(tile_dict)
 
@@ -68,10 +68,28 @@ parquet_tile_analyzer.compute_universe_size_by_time(parquet_tile_metadata)
 
 # %%
 asset_ids = parquet_tile_metadata.index.levels[0].to_list()
+# TODO(gp): asset id are integer but in Parquet file are saved as str.
+asset_ids = list(map(str, asset_ids))
 display(asset_ids)
 
 # %% [markdown]
 # ## Load a single-asset tile
+
+# %%
+import helpers.hparquet as hparquet
+#hparquet.
+
+file_name = "/app/experiment.RH1E.ccxt_v3-top2.5T.JanFeb2020/tiled_results"
+columns = None
+filter_ = None
+
+tile = hparquet.from_parquet(
+    file_name,
+    columns=columns,
+    filters=filter_,
+)
+
+print(tile)
 
 # %%
 single_asset_tile = next(
@@ -125,12 +143,25 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 # %%
 backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     tile_config["dir_name"],
-    datetime.date(2011, 1, 1),
-    datetime.date(2018, 12, 31),
+    datetime.date(2020, 1, 1),
+    datetime.date(2020, 12, 31),
     tile_config["asset_id_col"],
     data_cols=fep.get_cols(),
     asset_ids=None,
 )
+
+# %%
+df = next(backtest_df_iter)
+print(df)
+    
+    
+    
+# _, bar_metrics_slice = fep.annotate_forecasts(
+#     df,
+#     target_gmv=fep_config["target_gmv"],
+#     dollar_neutrality=fep_config["dollar_neutrality"],
+#     quantization=fep_config["quantization"],
+# )
 
 # %%
 bar_metrics = []

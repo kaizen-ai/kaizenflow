@@ -541,6 +541,10 @@ class HistoricalDataSource(dtfcore.DataSource):
             left_close=left_close,
             right_close=right_close,
         )
+        # TODO(gp): Since CCXT has no spread data we add fake data to make the
+        #  pipeline happy.
+        df["day_spread"] = 0
+        df["day_num_spread"] = 0
         # Remove the columns that are not needed.
         if self._col_names_to_remove is not None:
             _LOG.debug(
