@@ -14,6 +14,7 @@ import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
+import im_v2.common.data.client as icdcl
 import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
@@ -107,15 +108,19 @@ def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
     ) = dtfmoexcon.parse_experiment_config(experiment_config)
     #
     config = _build_base_config()
+    # TODO(gp): `trading_period_str` is not used for Example1 pipeline.
     # Apply specific config.
     # config = _apply_config(config, trading_period_str)
+    full_symbols = dtfuniver.get_universe(universe_str)
+    im_client = icdcl.get_DataFrameImClient_example1()
+    asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
     #
     config["meta", "dag_runner"] = get_dag_runner
     # Name of the asset_ids to save.
     config["meta", "asset_id_col_name"] = "asset_id"
     configs = [config]
     # Apply the cross-product by the universe tiles.
-    func = lambda cfg: build_configs_with_tiled_universe(cfg, universe_str)
+    func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)
     configs = dtfmoexcon.apply_build_configs(func, configs)
     _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
     hdbg.dassert_lte(1, len(configs))

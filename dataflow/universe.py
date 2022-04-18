@@ -14,6 +14,8 @@ import pandas as pd
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import im_v2.common.universe as unvss
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -225,9 +227,10 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
     """
     Create universe for backtest example.
     """
-    asset_ids = [3303714233, 1467591036]
-    amids = _get_top_n(asset_ids, n)
-    return amids
+    vendor = "example1"
+    full_symbols = unvss.get_vendor_universe(vendor, version="v1", as_full_symbol=True)
+    full_symbols = _get_top_n(full_symbols, n)
+    return full_symbols
 
 
 def get_universe(universe_str: str) -> List[Amid]:
