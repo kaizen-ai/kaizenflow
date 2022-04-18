@@ -290,6 +290,7 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
+@pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
 class TestCrossSectionalDfToDfTransformer1(hunitest.TestCase):
     def test_demean(self) -> None:
         data = self._get_data()
