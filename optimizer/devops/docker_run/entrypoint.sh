@@ -17,12 +17,12 @@ source devops/docker_run/setenv.sh
 #umask 000
 
 # Enable dind unless the user specifies otherwise (needed for prod image).
-if [ -z "$ENABLE_DIND" ]; then
-    ENABLE_DIND=0
-    echo "ENABLE_DIND=$ENABLE_DIND"
+if [ -z "$AM_ENABLE_DIND" ]; then
+    AM_ENABLE_DIND=0
+    echo "AM_ENABLE_DIND=$AM_ENABLE_DIND"
 fi;
 
-if [[ $ENABLE_DIND == 1 ]]; then
+if [[ $AM_ENABLE_DIND == 1 ]]; then
     echo "Setting up Docker-in-docker"
     if [[ ! -d /etc/docker ]]; then
         sudo mkdir /etc/docker
@@ -67,7 +67,7 @@ aws configure --profile am list || true
 echo "OPT_CONTAINER_VERSION='$OPT_CONTAINER_VERSION'"
 
 # Test the installed packages.
-if [[ $ENABLE_DIND == 1 ]]; then
+if [[ $AM_ENABLE_DIND == 1 ]]; then
     echo "docker -v: "$(docker -v)
     echo "docker-compose -v: "$(docker-compose -v)
 fi;
