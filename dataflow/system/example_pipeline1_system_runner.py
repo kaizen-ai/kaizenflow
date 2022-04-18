@@ -71,16 +71,15 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
         # # )
         # #_LOG.debug("dag_builder=\n%s", dag_builder)
         # config = dag_builder.get_config_template()
-        # return config, dag_builder
-
-        # TODO(gp): @Danya -> config
-        backtest_config = cconfig.Config()
+        # return config, dag_bu
+        #
+        config = cconfig.Config()
         # Save the `DagBuilder` and the `DagConfig` in the config.
         dag_builder = dtfpexexpi.Example1_DagBuilder()
         dag_config = dag_builder.get_config_template()
-        backtest_config["DAG"] = dag_config
-        backtest_config["meta", "dag_builder"] = dag_builder
-        return backtest_config
+        config["DAG"] = dag_config
+        config["meta", "dag_builder"] = dag_builder
+        return config
 
     def get_dag_runner(config: cconfig.Config,
                        market_data

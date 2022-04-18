@@ -48,7 +48,7 @@ class ForecastSystem(System):
         - replayed-time (for simulating real time)
         - real-time (for production)
     - `Dag`
-    This system allows to make forecasts given data.
+    This system allows making forecasts given data.
     The forecasts can then be processed in terms of a PnL through a notebook or
     other pipelines.
     """
@@ -74,8 +74,17 @@ class ForecastSystem(System):
     ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
         # TODO(gp): @danya complete / factor the docstring.
         """
+
+
+        :param prediction_col: column with features to base predictions on
+        :param volatility_col: column with volatility data
+        :param returns_col: column with returns, e.g. VWAP
+        :param spread_col: Column with spread data, optional
         :param timedelta: how much history of the feature is needed to compute
             the forecast
+        :param asset_id_col: column with asset ids
+        :param log_dir: directory for saving stdout logs
+        :return: a DAG builder object with a
         """
         ...
 
