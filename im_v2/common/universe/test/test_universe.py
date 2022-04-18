@@ -15,6 +15,10 @@ import helpers.hunit_test as hunitest
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 
+# #############################################################################
+# TestExtractUniverseVersion1
+# #############################################################################
+
 
 class TestExtractUniverseVersion1(hunitest.TestCase):
     def test_extract_universe_version1(self) -> None:
@@ -102,6 +106,11 @@ class TestExtractUniverseVersion1(hunitest.TestCase):
         with pytest.raises(AssertionError) as fail:
             _ = imvcounun._extract_universe_version(file_name)
         self.assertIn(expected_fail, str(fail.value))
+
+
+# #############################################################################
+# TestGetUniverse
+# #############################################################################
 
 
 class TestGetUniverseGeneral1(hunitest.TestCase):
