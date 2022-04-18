@@ -62,11 +62,6 @@ def get_cmtask1704_config_ccxt() -> cconconf.Config:
     config["data"]["vendor"] = "CCXT"
     config["data"]["start_date"] = pd.Timestamp("2022-04-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2022-04-15", tz="UTC")
-    # Column names.
-    # config.add_subconfig("column_names")
-    # config["column_names"]["close_price"] = "close"
-    # config["column_names"]["currency_pair"] = "currency_pair"
-    # config["column_names"]["exchange_id"] = "exchange_id"
     return config
 
 
@@ -127,7 +122,11 @@ aws_profile = config["load"]["aws_profile"]
 
 # Initiate the client.
 historical_client = imvcdccccl.CcxtHistoricalPqByTileClient(
-    resample_1min, root_dir, partition_mode, data_snapshot=data_snapshot, aws_profile=aws_profile
+    resample_1min,
+    root_dir,
+    partition_mode,
+    data_snapshot=data_snapshot,
+    aws_profile=aws_profile,
 )
 
 # %% [markdown]
