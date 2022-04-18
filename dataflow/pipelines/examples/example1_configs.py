@@ -31,12 +31,11 @@ def _build_base_config() -> cconfig.Config:
 
 
 def build_configs_with_tiled_universe(
-    config: cconfig.Config, universe_str: str
+    config: cconfig.Config, asset_ids: List[int]
 ) -> List[cconfig.Config]:
     """
     Create a list of `Config`s tiled by universe.
     """
-    asset_ids = dtfuniver.get_universe(universe_str)
     if len(asset_ids) > 300:
         # if len(asset_ids) > 1000:
         # Split the universe in 2 parts.
@@ -48,9 +47,9 @@ def build_configs_with_tiled_universe(
         universe_tiles = (asset_ids_part1, asset_ids_part2)
     else:
         universe_tiles = (asset_ids,)
-    egid_key = ("meta", "asset_ids")
+    asset_id_key = ("meta", "asset_ids")
     configs = dtfmoexcon.build_configs_varying_universe_tiles(
-        config, egid_key, universe_tiles
+        config, asset_id_key, universe_tiles
     )
     return configs
 
