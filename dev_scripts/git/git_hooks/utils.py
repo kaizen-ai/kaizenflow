@@ -444,7 +444,9 @@ def check_python_compile(
     abort_on_error: bool = True, file_list: Optional[List[str]] = None
 ) -> None:
     """
-    Check that code can be compiled. This is not as thorough as executing it.
+    Check that code can be compiled.
+
+    This is not as thorough as executing it.
     """
     func_name = _report()
     # Get the files.

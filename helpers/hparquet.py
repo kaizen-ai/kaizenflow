@@ -757,6 +757,6 @@ def maybe_cast_to_int(string: str) -> Union[str, int]:
     hdbg.dassert_isinstance(string, str)
     try:
         val = int(string)
-        return val
     except ValueError:
-        return string
+        val = string
+    return val

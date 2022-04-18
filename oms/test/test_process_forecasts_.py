@@ -6,6 +6,8 @@ from typing import List, Tuple, Union
 import pandas as pd
 import pytest
 
+# TODO(gp): Why does this file ends with _.py?
+
 import core.config as cconfig
 import core.finance as cofinanc
 import core.finance_data_example as cfidaexa
