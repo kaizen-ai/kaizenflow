@@ -45,6 +45,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # preserve original data for each test.
         return self._ohlcv_dataframe_sample.copy()
 
+    @pytest.mark.slow
     def test_function_call1(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
@@ -56,6 +57,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self._save_sample_in_db(sample)
         self._test_function_call()
 
+    @pytest.mark.slow
     def test_function_call2(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
@@ -90,6 +92,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         ################################################################################"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.slow
     def test_function_call3(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
@@ -144,6 +147,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         ################################################################################"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.slow
     def test_function_call4(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
