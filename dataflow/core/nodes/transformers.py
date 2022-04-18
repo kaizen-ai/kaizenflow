@@ -300,14 +300,15 @@ class GroupedColDfToDfTransformer(dtfconobas.Transformer):
             same.
         :param transformer_func: df -> {df, srs}
         :param transformer_kwargs: transformer_func kwargs
+        :param col_mapping: dictionary of output column names keyed by input
+            column names
+        :param permitted_exceptions: exceptions to ignore when applying the
+            transformer function
         :param drop_nans: apply `dropna()` after grouping and extracting
             `in_col_groups` columns
         :param reindex_like_input: reindex result of `transformer_func` like
             the input dataframe
-        join_output_with_input: whether to join the output with the input. A
-            common case where this should typically be set to `False` is in
-            resampling.
-        join_output_with_input: whether to join the output with the input. A
+        :param join_output_with_input: whether to join the output with the input. A
             common case where this should typically be set to `False` is in
             resampling.
         """
@@ -331,7 +332,8 @@ class GroupedColDfToDfTransformer(dtfconobas.Transformer):
         self, df: pd.DataFrame
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
         #
-        df_in = df.copy()
+        if self._join_output_with_input:
+            df_in = df.copy()
         #
         in_dfs = dtfconobas.GroupedColDfToDfColProcessor.preprocess(
             df, self._in_col_groups
@@ -365,6 +367,82 @@ class GroupedColDfToDfTransformer(dtfconobas.Transformer):
         info["func_info"] = func_info
         df = dtfconobas.GroupedColDfToDfColProcessor.postprocess(
             out_dfs, self._out_col_group
+        )
+        if self._join_output_with_input:
+            df = dtfcorutil.merge_dataframes(df_in, df)
+        info["df_transformed_info"] = dtfcorutil.get_df_info_as_string(df)
+        return df, info
+
+
+class CrossSectionalDfToDfTransformer(dtfconobas.Transformer):
+    """
+    Wrap transformers using the `CrossSectionalDfToDfProcessor` pattern.
+    """
+
+    def __init__(
+        self,
+        nid: dtfcornode.NodeId,
+        in_col_group: Tuple[dtfcorutil.NodeColumn],
+        out_col_group: Tuple[dtfcorutil.NodeColumn],
+        transformer_func: Callable[..., Union[pd.Series, pd.DataFrame]],
+        transformer_kwargs: Optional[Dict[str, Any]] = None,
+        col_mapping: Optional[
+            Dict[dtfcorutil.NodeColumn, dtfcorutil.NodeColumn]
+        ] = None,
+        permitted_exceptions: Tuple[Any] = (),
+        *,
+        drop_nans: bool = False,
+        reindex_like_input: bool = True,
+        join_output_with_input: bool = True,
+    ) -> None:
+        """
+        Params same as in `GroupedColDfToDfTransformer.__init__()`.
+        """
+        super().__init__(nid)
+        # TODO(Paul): Add more checks here.
+        hdbg.dassert_isinstance(in_col_group, tuple)
+        hdbg.dassert_isinstance(out_col_group, tuple)
+        self._in_col_group = in_col_group
+        self._out_col_group = out_col_group
+        self._transformer_func = transformer_func
+        self._transformer_kwargs = transformer_kwargs or {}
+        self._col_mapping = col_mapping or {}
+        self._drop_nans = drop_nans
+        self._reindex_like_input = reindex_like_input
+        self._join_output_with_input = join_output_with_input
+        self._permitted_exceptions = permitted_exceptions
+        # The leaf col names are determined from the dataframe at runtime.
+        self._leaf_cols = None
+
+    def _transform(
+        self, df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
+        #
+        if self._join_output_with_input:
+            df_in = df.copy()
+        #
+        in_df = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
+            df, self._in_col_group
+        )
+        #
+        info = collections.OrderedDict()  # type: ignore
+        info["func_info"] = collections.OrderedDict()
+        #
+        df_out, func_info = _apply_func_to_data(
+            in_df,
+            self._transformer_func,
+            self._transformer_kwargs,
+            self._drop_nans,
+            self._reindex_like_input,
+            self._permitted_exceptions,
+        )
+        hdbg.dassert_isinstance(df_out, pd.DataFrame)
+        info["func_info"] = func_info
+        if self._col_mapping:
+            df_out = df_out.rename(columns=self._col_mapping)
+        #
+        df = dtfconobas.CrossSectionalDfToDfColProcessor.postprocess(
+            df_out, self._out_col_group
         )
         if self._join_output_with_input:
             df = dtfcorutil.merge_dataframes(df_in, df)
