@@ -2711,6 +2711,7 @@ def docker_build_local_image(  # type: ignore
     base_image="",
     update_poetry=False,
     container_dir_name=".",
+    just_do_it=False,
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
@@ -2719,9 +2720,15 @@ def docker_build_local_image(  # type: ignore
     :param cache: use the cache
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param update_poetry: run poetry lock to update the packages
+    :param just_do_it: execute the action ignoring the checks
     """
     _report_task(container_dir_name=container_dir_name)
-    _dassert_is_subsequent_version(version, container_dir_name=container_dir_name)
+    if just_do_it:
+        _LOG.warning("Skipping subsequent version check")
+    else:
+        _dassert_is_subsequent_version(
+            version, container_dir_name=container_dir_name
+        )
     version = _resolve_version_value(
         version, container_dir_name=container_dir_name
     )
@@ -3684,6 +3691,7 @@ def _build_run_command_line(
     Build the pytest run command.
 
     E.g.,
+
     ```
     pytest -m "optimizer and not slow and not superslow" \
                 . \
