@@ -55,10 +55,11 @@ def get_cmtask1704_config_ccxt() -> cconconf.Config:
     config["load"]["data_dir"] = os.path.join(
         "s3://cryptokaizen-data", "daily_staged"
     )
+    config["load"]["data_snapshot"] = ""
+    config["load"]["partition_mode"] = "by_year_month"
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["vendor"] = "CCXT"
-    config["data"]["extension"] = "csv.gz"
     config["data"]["start_date"] = pd.Timestamp("2022-04-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2022-04-15", tz="UTC")
     # Column names.
@@ -120,12 +121,13 @@ display(data.head(3))
 # Specify params.
 resample_1min = True
 root_dir = config["load"]["data_dir"]
+partition_mode = config["load"]["partition_mode"]
+data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
-partition_mode = "by_year_month"
 
 # Initiate the client.
 historical_client = imvcdccccl.CcxtHistoricalPqByTileClient(
-    resample_1min, root_dir, partition_mode, aws_profile=aws_profile
+    resample_1min, root_dir, partition_mode, data_snapshot=data_snapshot, aws_profile=aws_profile
 )
 
 # %% [markdown]
@@ -172,5 +174,3 @@ ba_df
 
 # %% [markdown]
 # As one can see, the current implementation of bid-ask data loader only allows to show the order book at the exact moment of its initiation.
-
-# %%
