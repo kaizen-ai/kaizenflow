@@ -33,37 +33,14 @@ import im_v2.common.db.db_utils as imvcddbut
 _LOG = logging.getLogger(__name__)
 
 
-def _minute_type(int: amount_of_minutes) -> int:
-    """
-    Check if value is greater then zero.
-
-    :param amount_of_minutes: input argument value
-    :return: argument value if valid
-    """
-    amount_of_minutes = int(amount_of_minutes)
-    if amount_of_minutes <= 0:
-        raise argparse.ArgumentTypeError(
-            f"Value: '{amount_of_minutes}' should be greater then 0"
-        )
-    return amount_of_minutes
-
-
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("--incremental", action="store_true")
-    parser.add_argument(
-        "--run_for_min",
-        type=_minute_type,
-        help="Total running time, in minutes",
-    )
-    parser.add_argument(
-        "--interval_min",
-        type=_minute_type,
-        help="Interval between download attempts, in minutes",
-    )
+    parser.add_argument("--run_for_min", help="Total running time, in minutes")
+    parser.add_argument("--interval_min", help="Interval between download attempts, in minutes")
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = imvcddbut.add_db_args(parser)
@@ -75,11 +52,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     #
-    run_for = args.run_for_min
-    interval = args.interval_min
+    run_for_min = args.run_for_min
+    interval_min = args.interval_min
+    # Check values.
+    for value in run_for_min, interval_min:
+        hdbg.dassert_isinstance(value, int)
+        hdbg.dassert_lt(1, value, msg="Value: '{value}' should be greater then 0")
     # Error will be raised if we miss full 5 minute window of data,
     # even if the next download succeeds, we don't recover all of the previous data.
-    failures_limit = 5 // interval + 5 % interval
+    failures_limit = 5 // interval_min + 5 % interval_min
     concurrent_failures_left = failures_limit
     # Delay start in order to align to the minutes grid of the realtime clock.
     next_start_time = datetime.now()
@@ -90,14 +71,14 @@ def _main(parser: argparse.ArgumentParser) -> None:
         ) + timedelta(minutes=1)
         run_delay_sec = (next_start_time - datetime.now()).total_seconds()
     # Save time limit.
-    script_stop_time = next_start_time + timedelta(minutes=run_for)
+    script_stop_time = next_start_time + timedelta(minutes=run_for_min)
     #
     continue_running = True
     while continue_running:
         # Wait until next run.
         time.sleep(run_delay_sec)
         # Add interval in order to get next download time.
-        next_start_time = next_start_time + timedelta(minutes=interval)
+        next_start_time = next_start_time + timedelta(minutes=interval_min)
         try:
             imvcdeexut.download_realtime_for_one_exchange(
                 args,
@@ -113,7 +94,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # if Download took more then expected.
         if datetime.now() > next_start_time:
             raise RuntimeError(
-                f"The download was not finished in {interval} minutes."
+                f"The download was not finished in {interval_min} minutes."
             )
         # Calculate delay before next download.
         run_delay_sec = (next_start_time - datetime.now()).total_seconds()
