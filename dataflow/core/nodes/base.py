@@ -526,7 +526,6 @@ class GroupedColDfToDfColProcessor:
         keys = df_out[col_groups[0]].columns.to_list()
         _LOG.debug("keys=%s", keys)
         # Ensure all groups have the same keys.
-        # print("df_out=%s", df_out)
         for col_group in col_groups:
             hdbg.dassert_in(col_group, df_out.columns)
             col_group_keys = df_out[col_group].columns.to_list()
@@ -598,9 +597,9 @@ class CrossSectionalDfToDfColProcessor:
         0 1 2 3
         ```
     2.  If we perform residualization on `df` as given above instead of
-        principcal component projection, then column names are preserved
+        principal component projection, then column names are preserved
         after the residualization, and we may apply `postprocess()` with
-        `col_group = "residual"` to obtian
+        `col_group = "residual"` to obtain
         ```
         residual
         MN0 MN1 MN2 MN3
