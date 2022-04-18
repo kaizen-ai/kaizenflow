@@ -106,7 +106,7 @@ def get_vendor_universe(
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
     :param version: release version
     :param as_full_symbol: if True transform the universe into list of
-     full symbols e.g. gateio::XRP_USDT
+        full symbols e.g. gateio::XRP_USDT
     :return: vendor universe as a list of symbol or list of full symbols e.g.:
         {
             "Talos": {
