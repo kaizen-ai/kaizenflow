@@ -52,10 +52,13 @@ def get_cmtask1704_config_ccxt() -> cconconf.Config:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     config["load"]["connection"] = hsql.get_connection(*connection_params)
     config["load"]["aws_profile"] = "ck"
-    config["load"]["data_dir"] = os.path.join(
-        "s3://cryptokaizen-data", "daily_staged"
+    #config["load"]["data_dir_rt"] = os.path.join(
+    #    "s3://cryptokaizen-data", "real_time"
+    #)
+    config["load"]["data_dir_hist"] = os.path.join(
+        "s3://cryptokaizen-data", "historical"
     )
-    config["load"]["data_snapshot"] = ""
+    config["load"]["data_snapshot"] = "latest"
     config["load"]["partition_mode"] = "by_year_month"
     # Data parameters.
     config.add_subconfig("data")
@@ -115,7 +118,7 @@ display(data.head(3))
 # %%
 # Specify params.
 resample_1min = True
-root_dir = config["load"]["data_dir"]
+root_dir = config["load"]["data_dir_hist"]
 partition_mode = config["load"]["partition_mode"]
 data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
@@ -147,11 +150,13 @@ full_symbols
 
 # %%
 # Specify time period.
-start_date = config["data"]["start_date"]
-end_date = config["data"]["end_date"]
+start_date = pd.Timestamp("2021-09-01", tz="UTC")
+end_date = pd.Timestamp("2021-09-15", tz="UTC")
 
 # Load the data.
-historical_client.read_data(full_symbols, start_date, end_date)
+data_hist = historical_client.read_data(full_symbols, start_date, end_date)
+display(data_hist.shape)
+display(data_hist.head(3))
 
 # %% [markdown]
 # ## Bid-ask data snippet
