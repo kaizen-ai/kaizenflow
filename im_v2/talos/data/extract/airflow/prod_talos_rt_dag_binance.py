@@ -71,7 +71,7 @@ downloading_task = ECSOperator(
                 "command": bash_command,
                 "environment": [
                     {
-                        "name": "ENABLE_DIND",
+                        "name": "AM_ENABLE_DIND",
                         "value": "0",
                     },
                 ],
