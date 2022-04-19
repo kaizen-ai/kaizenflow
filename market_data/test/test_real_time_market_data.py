@@ -1,21 +1,27 @@
 import logging
-from typing import Optional, List
+from typing import Any, Callable, Optional, List
 
 import pandas as pd
+
 import helpers.hdatetime as hdateti
 import helpers.hsql as hsql
-import im_v2.common.data.client.test.im_client_test_case as icdctictc
+import helpers.hunit_test as hunitest
+import helpers.hasyncio as hasynci
+import helpers.hpandas as hpandas
+
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.common.db.db_utils as imvcddbut
 import market_data.real_time_market_data as mdrtmda
+import market_data.market_data_example as mdmadaex
+import market_data.test.market_data_test_case as mdtmdtca
+
 import im_v2.talos.db.utils as imvtadbut
 
 
 _LOG = logging.getLogger(__name__)
 
 
-class TestRealTimeMarketData2(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
-
+class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, mdtmdtca.MarketData_get_data_TestCase):
     def setup_sql_talos_client(
         self,
         resample_1min: Optional[bool] = True,
@@ -33,7 +39,7 @@ class TestRealTimeMarketData2(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelp
         )
         return sql_talos_client
 
-    def test_check_last_end_time(
+    def check_last_end_time(
         self,
     ) -> None:
         """
@@ -41,19 +47,9 @@ class TestRealTimeMarketData2(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelp
         """
         #
         sql_talos_client = self.setup_sql_talos_client()
-
-        get_wall_clock_time = hdateti.get_current_time(tz="UTC")
-        #asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
-        asset_ids = None
-        asset_id_col = "asset_id"
-        start_time_col_name = "start_ts"
-        end_time_col_name = "end_ts"
-        market_data = mdrtmda.RealTimeMarketData2(sql_talos_client, get_wall_clock_time=get_wall_clock_time,
-        columns=columns, asset_ids=asset_ids, asset_id_col=asset_id_col,
-        start_time_col_name=start_time_col_name, end_time_col_name=end_time_col_name)
-        #
+        market_data, _ =  mdmadaex.get_RealTimeMarketData2(sql_talos_client)
         last_end_time = market_data.get_last_end_time()
+
         _LOG.info("-> last_end_time=%s", last_end_time)
         expected_last_end_time = ""
         self.assertEqual(last_end_time, expected_last_end_time)
@@ -63,9 +59,25 @@ class TestRealTimeMarketData2(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelp
         _LOG.info("-> is_online=%s", is_online)
         self.assertEqual(is_online, expected_is_online)
         
+    def test_is_online1(self) -> None:
+        # Prepare inputs.
+        sql_talos_client = self.setup_sql_talos_client()
+        market_data, _ = mdmadaex.get_RealTimeMarketData2(sql_talos_client)
+        # Run.
+        actual = market_data.is_online()
+        self.assertTrue(actual)
 
-    def test_get_data1(self) -> None:
-        pass
+    def test_get_data_for_last_period1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = []
+        sql_talos_client = self.setup_sql_talos_client()
+        market_data, _ = mdmadaex.get_RealTimeMarketData2(
+            sql_talos_client, asset_ids=asset_ids, columns=columns
+        )
+        timedelta = pd.Timedelta("1D")
+        # Run.
+        self._test_get_data_for_last_period(market_data, timedelta)
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:

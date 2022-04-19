@@ -18,6 +18,9 @@ import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
 import im_v2.talos.data.client as itdcl
+import im_v2.talos.data.client.talos_clients as imvtdctacl
+
+import market_data.real_time_market_data as mdrtmada
 import market_data.im_client_market_data as mdimcmada
 import market_data.replayed_market_data as mdremada
 
@@ -355,3 +358,87 @@ def get_ImClientMarketData_example3(
         column_remap=column_remap,
     )
     return market_data_client
+
+
+# #############################################################################
+# RealTimeMarketData2 examples
+# #############################################################################
+
+
+# TODO(gp): Return only MarketData since the wall clock is inside it.
+def get_RealTimeMarketData2(
+    talos_client: imvtdctacl.RealTimeSqlTalosClient, 
+    *,
+    columns: List[str] = [],
+    asset_ids: Optional[List[int]] = None,
+    asset_id_col_name: str = "asset_id",
+    start_time_col_name: str = "start_ts",
+    end_time_col_name: str = "end_ts",
+) -> Tuple[mdrtmada.RealTimeMarketData2, hdateti.GetWallClockTime]:
+    """
+    Build a `RealTimeMarketData2` backed by data stored in a dataframe.
+
+    :param df: dataframe including the columns
+        ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
+    :param initial_replayed_delay: how many minutes after the beginning of the
+        data the real time starts. This is useful to simulate the beginning
+        / end of the trading day.
+    """
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    get_wall_clock_time = lambda: pd.Timestamp("2000-01-01 22:00:00.12345", tz="America/New_York")
+    
+    #
+    # Build a `ReplayedMarketData`.
+    
+    market_data = mdrtmada.RealTimeMarketData2(
+        talos_client,
+        asset_id_col_name,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time
+    )
+    return market_data, get_wall_clock_time
+
+
+# TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
+def get_RealTimeMarketData2_example2(
+    event_loop: asyncio.AbstractEventLoop,
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    initial_replayed_delay: int,
+    asset_ids: List[int],
+    *,
+    delay_in_secs: int = 0,
+    columns: Optional[List[str]] = None,
+    sleep_in_secs: float = 1.0,
+    time_out_in_secs: int = 60 * 2,
+) -> Tuple[mdrtmada.RealTimeMarketData2, hdateti.GetWallClockTime]:
+    """
+    Build a `ReplayedMarketData` backed by synthetic data.
+
+    :param start_datetime: start time for the generation of the synthetic data
+    :param end_datetime: end time for the generation of the synthetic data
+    :param initial_replayed_delay: how many minutes after the beginning of the data
+        the replayed time starts. This is useful to simulate the beginning / end of
+        the trading day
+    :param asset_ids: asset ids to generate data for. `None` defaults to all the
+        available asset ids in the data frame
+    """
+    # Build the df with the data.
+    if columns is None:
+        columns = ["last_price"]
+    hdbg.dassert_is_not(asset_ids, None)
+    df = cofinanc.generate_random_price_data(
+        start_datetime, end_datetime, columns, asset_ids
+    )
+    (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
+        event_loop,
+        initial_replayed_delay,
+        df,
+        delay_in_secs=delay_in_secs,
+        sleep_in_secs=sleep_in_secs,
+        time_out_in_secs=time_out_in_secs,
+    )
+    return market_data, get_wall_clock_time
