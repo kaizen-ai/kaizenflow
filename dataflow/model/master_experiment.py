@@ -125,7 +125,7 @@ def _save_tiled_output(config: cconfig.Config, result_bundle: dtfcore.ResultBund
 
 def run_tiled_backtest(config: cconfig.Config) -> None:
     """
-    Run an experiment by:
+    Run a backtest by:
 
     - creating a DAG from the passed config
     - running the DAG
