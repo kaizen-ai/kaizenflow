@@ -84,40 +84,23 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, mdtmdtca.MarketData_get_
         """
         Create a test Talos OHLCV dataframe.
         """
-        test_data = pd.DataFrame(
-            columns=[
-                "id",
-                "timestamp",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "ticks",
-                "currency_pair",
-                "exchange_id",
-                "end_download_timestamp",
-                "knowledge_timestamp",
-            ],
-            # fmt: off
-            # pylint: disable=line-too-long
-            data=[
-                [0, 1648138860000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [1, 1648138860000, 31, 41, 51, 61, 71, 72, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [2, 1648138920000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [3, 1648138920000, 34, 44, 54, 64, 74, 74, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [4, 1648138980000, 35, 45, 55, 65, 75, 75, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [5, 1648138980000, 36, 46, 56, 66, 76, 76, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")]
-            ]
-            # pylint: enable=line-too-long
-            # fmt: on
-        )
+        columns = [
+            "asset_id",
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "feature1",
+            "start_ts",
+        ]
+        index = [pd.Timestamp("2000-01-01T09:36:00-05:00"),  pd.Timestamp("2000-01-01T09:36:00-05:00")]
+        data = [[1467591036,  "binance::BTC_USDT", 100, 101, 99, 100.0, 5, -1.0, pd.Timestamp("2000-01-01T09:35:00-05:00")],
+                [3303714233,  "binance::ADA_USDT", 100, 101, 99, 100.0, 6, -1.0, pd.Timestamp("2000-01-01T09:36:00-05:00")]
+        ]
+        test_data = pd.DataFrame(data, index=index, columns=columns)
+        test_data.index.name = "end_ts"
         return test_data
 
     def _create_test_table(self) -> None:
