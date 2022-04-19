@@ -34,7 +34,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as ivcu
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -76,7 +76,7 @@ print(config)
 # # Get price data for a given universe
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe(
+vendor_universe = ivcu.get_vendor_universe(
     config["data"]["vendor"],
     version=config["data"]["universe_version"],
     as_full_symbol=True,

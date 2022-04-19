@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.data.client.full_symbol as imvcdcfusy
+import im_v2.common.universe.full_symbol as imvcufusy
 """
 
 import logging
