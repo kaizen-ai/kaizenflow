@@ -12,7 +12,13 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hunit_test as hunitest
+import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
+
+
+# #############################################################################
+# TestExtractUniverseVersion1
+# #############################################################################
 
 
 class TestExtractUniverseVersion1(hunitest.TestCase):
@@ -101,6 +107,11 @@ class TestExtractUniverseVersion1(hunitest.TestCase):
         with pytest.raises(AssertionError) as fail:
             _ = imvcounun._extract_universe_version(file_name)
         self.assertIn(expected_fail, str(fail.value))
+
+
+# #############################################################################
+# TestGetUniverse
+# #############################################################################
 
 
 class TestGetUniverseGeneral1(hunitest.TestCase):
@@ -200,7 +211,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         self.assertEqual([currency_pair], universe[exchange])
 
     def _test_get_vendor_universe_as_full_symbol(
-        self, vendor: str, universe_as_full_symbols: List[str]
+        self, vendor: str, universe_as_full_symbols: List[imvcufusy.FullSymbol]
     ) -> None:
         """
         Test that universe as full symbols is received correctly from small
@@ -208,7 +219,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
 
         :param vendor: vendor to apply test to, e.g. CCXT or Talos
         :param universe_as_full_symbols: list of currency pairs as
-         full symbols in format exchange_id::SYMBOL_SYMBOL
+            full symbols in format exchange_id::SYMBOL_SYMBOL
         """
         actual = imvcounun.get_vendor_universe(
             vendor, version="small", as_full_symbol=True

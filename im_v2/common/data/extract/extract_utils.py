@@ -20,7 +20,7 @@ import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.transform.transform_utils as imvcdttrut
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
 
 
@@ -90,7 +90,7 @@ def download_realtime_for_one_exchange(
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
-    universe = imvcounun.get_vendor_universe(vendor, version=args.universe)
+    universe = ivcu.get_vendor_universe(vendor, version=args.universe)
     currency_pairs = universe[args.exchange_id]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
@@ -178,7 +178,7 @@ def download_historical_data(
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
-    universe = imvcounun.get_vendor_universe(vendor, version=args.universe)
+    universe = ivcu.get_vendor_universe(vendor, version=args.universe)
     currency_pairs = universe[args.exchange_id]
     # Convert timestamps.
     end_timestamp = pd.Timestamp(args.end_timestamp)
