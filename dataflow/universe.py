@@ -19,7 +19,7 @@ import im_v2.common.universe as ivcu
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Grisha): "Move universe-related function to im" CmTask #1724.
+# TODO(Grisha): "Move universe-related functions to `im_v2`" CmTask #1724.
 
 
 # TODO(gp): Move it to a better place.
