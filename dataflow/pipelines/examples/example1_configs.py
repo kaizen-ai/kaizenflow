@@ -113,6 +113,7 @@ def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
     # config = _apply_config(config, trading_period_str)
     # TODO(Grisha): do not specify `ImClient` twice, it is already specified
     # in `market_data`.
+    # Get universe from `ImClient` and convert it to asset ids.
     full_symbols = dtfuniver.get_universe(universe_str)
     im_client = icdcl.get_DataFrameImClient_example1()
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
