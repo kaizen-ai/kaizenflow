@@ -11,7 +11,7 @@ OPTS="$OPTS --num_threads serial"
 OPTS="$OPTS $*"
 
 tag="example1"
-backtest_config="kibot_v2-top2.5T.JanFeb2020"
+backtest_config="example1_v1-top2.1T.Jan2000"
 config_builder="dataflow.pipelines.examples.example1_configs.build_tile_configs(\"${backtest_config}\")"
 
 dst_dir="build_tile_configs.${tag}.${backtest_config}.run1"
