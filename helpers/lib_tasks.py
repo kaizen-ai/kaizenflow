@@ -2045,7 +2045,7 @@ def docker_login(ctx):  # type: ignore
         ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
-            + f"https://{am_ecr_base_path}"
+            + f"https://{ecr_base_path}"
         )
     # cmd = ("aws ecr get-login-password" +
     #       " | docker login --username AWS --password-stdin "
@@ -4734,7 +4734,7 @@ def _get_lint_docker_cmd(
     # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
     # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-    image = f"{am_ecr_base_path}/dev_tools:{stage}"
+    image = f"{ecr_base_path}/dev_tools:{stage}"
     docker_wrapper_cmd = ["docker run", "--rm"]
     if stage in ("local", "dev"):
         # Map repository root to /app in the container, so that we can

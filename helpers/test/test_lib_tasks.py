@@ -27,9 +27,9 @@ def _get_default_params() -> Dict[str, str]:
     """
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     default_params = {
-        "AM_ECR_BASE_PATH": am_ecr_base_path,
+        "AM_ECR_BASE_PATH": ecr_base_path,
         "BASE_IMAGE": "amp_test",
-        "DEV_TOOLS_IMAGE_PROD": f"{am_ecr_base_path}/dev_tools:prod",
+        "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
     }
     return default_params
 
