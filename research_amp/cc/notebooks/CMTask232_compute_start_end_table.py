@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.13.7
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -30,7 +30,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as ivcu
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -80,8 +80,10 @@ print(config)
 # ## Per exchange id and currency pair for a specified vendor
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe(
-    config["data"]["vendor"], version=config["data"]["universe_version"], as_full_symbol=True
+vendor_universe = ivcu.get_vendor_universe(
+    config["data"]["vendor"],
+    version=config["data"]["universe_version"],
+    as_full_symbol=True,
 )
 vendor_universe
 

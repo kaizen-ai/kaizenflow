@@ -46,9 +46,9 @@ class TestUnsupervisedSkLearnModel(hunitest.TestCase):
             }
         )
         node = dtfcnuskmo.UnsupervisedSkLearnModel("sklearn", **config.to_dict())
-        node.fit(data.loc["2000-01-03":"2000-01-31"])
+        node.fit(data.loc["2000-01-03":"2000-01-31"])  # type: ignore[misc]
         # Predict.
-        df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
+        df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]  # type: ignore[misc]
         df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
@@ -64,8 +64,8 @@ class TestUnsupervisedSkLearnModel(hunitest.TestCase):
                 "model_kwargs": {"n_components": 2},
             }
         )
-        fit_df = data.loc["2000-01-03":"2000-01-31"]
-        predict_df = data.loc["2000-02-01":"2000-02-25"]
+        fit_df = data.loc["2000-01-03":"2000-01-31"]  # type: ignore[misc]
+        predict_df = data.loc["2000-02-01":"2000-02-25"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, dtfcnuskmo.UnsupervisedSkLearnModel
         )
@@ -120,9 +120,9 @@ class TestMultiindexUnsupervisedSkLearnModel(hunitest.TestCase):
         node = dtfcnuskmo.MultiindexUnsupervisedSkLearnModel(
             "sklearn", **config.to_dict()
         )
-        node.fit(data.loc["2000-01-03":"2000-01-31"])
+        node.fit(data.loc["2000-01-03":"2000-01-31"])  # type: ignore[misc]
         # Predict.
-        df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
+        df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]  # type: ignore[misc]
         df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
@@ -139,8 +139,8 @@ class TestMultiindexUnsupervisedSkLearnModel(hunitest.TestCase):
                 "model_kwargs": {"n_components": 2},
             }
         )
-        fit_df = data.loc["2000-01-03":"2000-01-31"]
-        predict_df = data.loc["2000-02-01":"2000-02-25"]
+        fit_df = data.loc["2000-01-03":"2000-01-31"]  # type: ignore[misc]
+        predict_df = data.loc["2000-02-01":"2000-02-25"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df,
             predict_df,
@@ -204,9 +204,9 @@ class TestResidualizer(hunitest.TestCase):
             }
         )
         node = dtfcnuskmo.Residualizer("sklearn", **config.to_dict())
-        node.fit(data.loc["2000-01-03":"2000-01-31"])
+        node.fit(data.loc["2000-01-03":"2000-01-31"])  # type: ignore[misc]
         # Predict.
-        df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]
+        df_out = node.predict(data.loc["2000-02-01":"2000-02-25"])["df_out"]  # type: ignore[misc]
         df_str = hunitest.convert_df_to_string(df_out.round(3), index=True)
         self.check_string(df_str)
 
@@ -223,8 +223,8 @@ class TestResidualizer(hunitest.TestCase):
                 "model_kwargs": {"n_components": 2},
             }
         )
-        fit_df = data.loc["2000-01-03":"2000-01-31"]
-        predict_df = data.loc["2000-02-01":"2000-02-25"]
+        fit_df = data.loc["2000-01-03":"2000-01-31"]  # type: ignore[misc]
+        predict_df = data.loc["2000-02-01":"2000-02-25"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, dtfcnuskmo.Residualizer
         )

@@ -80,6 +80,6 @@ def c_infinity_bump_function(x: float, a: float, b: float) -> float:
     """
     hdbg.dassert_lt(0, a)
     hdbg.dassert_lt(a, b)
-    y = (x ** 2 - a ** 2) / (b ** 2 - a ** 2)
+    y = (x**2 - a**2) / (b**2 - a**2)
     inverse_bump = c_infinity_step_function(y)
     return 1 - inverse_bump

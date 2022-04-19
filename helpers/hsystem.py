@@ -115,7 +115,7 @@ def get_os_name() -> str:
 
 def get_env_var(env_var_name: str) -> str:
     if env_var_name not in os.environ:
-        msg = "Can't find '%s': re-run dev_scripts/setenv.sh?" % env_var_name
+        msg = f"Can't find '{env_var_name}': re-run dev_scripts/setenv.sh?"
         _LOG.error(msg)
         raise RuntimeError(msg)
     return os.environ[env_var_name]
@@ -184,7 +184,7 @@ def _system(
         suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
     _LOG.debug(hprint.to_str("suppress_output"))
     # Prepare the command line.
-    cmd = "(%s)" % cmd
+    cmd = f"({cmd})"
     hdbg.dassert_imply(tee, output_file is not None)
     if output_file is not None:
         # Redirect to a file.
@@ -194,9 +194,9 @@ def _system(
             hdbg.dassert(bool(dir_name), "dir_name='%s'", dir_name)
             os.makedirs(dir_name)
         if tee:
-            cmd += " 2>&1 | tee %s" % output_file
+            cmd += f" 2>&1 | tee {output_file}"
         else:
-            cmd += " 2>&1 >%s" % output_file
+            cmd += f" 2>&1 >{output_file}"
     else:
         # Do not redirect to a file.
         cmd += " 2>&1"
@@ -208,7 +208,7 @@ def _system(
     # TODO(gp): Make it "ECHO".
     if isinstance(log_level, str):
         hdbg.dassert_eq(log_level, "echo")
-        print("> %s" % orig_cmd)
+        print(f"> {orig_cmd}")
         _LOG.debug("> %s", cmd)
     else:
         _LOG.log(log_level, "> %s", cmd)
@@ -267,17 +267,16 @@ def _system(
     if abort_on_error and rc != 0:
         msg = (
             "\n"
-            + hprint.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
-            + "\nOutput of the failing command is:\n%s\n%s\n%s"
-            % (hprint.line(">"), output, hprint.line("<"))
+            + hprint.frame(f"cmd='{cmd}' failed with rc='{rc}'")
+            + f"\nOutput of the failing command is:\n{hprint.line('>')}"
+            + f"\n{output}\n{hprint.line('<')}"
         )
         _LOG.error("%s", msg)
         # Report the first `num_error_lines` of the output.
         num_error_lines = num_error_lines or 30
         output_error = "\n".join(output.split("\n")[:num_error_lines])
         raise RuntimeError(
-            "cmd='%s' failed with rc='%s'\ntruncated output=\n%s"
-            % (cmd, rc, output_error)
+            f"cmd='{cmd}' failed with rc='{rc}'\ntruncated output=\n{output_error}"
         )
     # hdbg.dassert_type_in(output, (str, ))
     return rc, output
@@ -463,7 +462,7 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
     if mode == "assert_unless_one_result":
         # Expect to have a single result and return that.
         if len(files) == 0:
-            hdbg.dfatal("mode=%s: didn't find file" % mode)
+            hdbg.dfatal(f"mode={mode}: didn't find file")
         elif len(files) > 1:
             hdbg.dfatal(
                 "mode=%s: found multiple files:\n%s" % (mode, "\n".join(files))
@@ -473,7 +472,7 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
         # Return all files.
         res = files
     else:
-        hdbg.dfatal("Invalid mode='%s'" % mode)
+        hdbg.dfatal(f"Invalid mode='{mode}'")
     return res
 
 
@@ -642,7 +641,7 @@ def check_exec(tool: str) -> bool:
     :return: True if the executables "tool" can be executed.
     """
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    cmd = "which %s" % tool
+    cmd = f"which {tool}"
     abort_on_error = False
     rc = system(
         cmd,
@@ -653,18 +652,16 @@ def check_exec(tool: str) -> bool:
     return rc == 0
 
 
-def du(path_name: str, human_format: bool = False) -> Union[int, str]:
+# TODO(Nikola): Use filesystem's `du` and move to `hio` instead?
+def du(path: str, human_format: bool = False) -> Union[int, str]:
     """
     Return the size in bytes of a file or a directory (recursively).
 
     :param human_format: represent the size in KB, MB, ... instead of bytes
         using `hintrospection.format_size()`
     """
-    if not os.path.exists(path_name):
-        _LOG.warning("Path '%s' doesn't exist", path_name)
-        return 0
-    hdbg.dassert_path_exists(path_name)
-    cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
+    hdbg.dassert_path_exists(path)
+    cmd = f"du -d 0 {path}" + " | awk '{print $1}'"
     # > du -d 0 core
     # 20    core
     _, txt = system_to_one_line(cmd)

@@ -11,7 +11,6 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 
 
 class TestDataFrameImClient1(icdctictc.ImClientTestCase):
-
     @staticmethod
     def get_expected_column_names() -> List[str]:
         """

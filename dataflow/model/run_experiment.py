@@ -107,8 +107,8 @@ def _run_experiment_stub(
 
 def _get_joblib_workload(args: argparse.Namespace) -> hjoblib.Workload:
     """
-    Prepare the joblib workload by building all the Configs using the parameters
-    from command line.
+    Prepare the joblib workload by building all the Configs using the
+    parameters from command line.
     """
     # Get the configs to run.
     configs = dtfmoexuti.get_configs_from_command_line(args)

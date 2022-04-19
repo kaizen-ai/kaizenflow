@@ -299,7 +299,7 @@ def compute_swt_sum(
     timing_mode: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Get swt coeffcient sums using levels up to `depth`.
+    Get swt coefficient sums using levels up to `depth`.
 
     Params as in `get_swt()`.
     """
@@ -377,7 +377,7 @@ def _compute_fir_zscore(
     )[dyadic_tau].shift(delay)
     demeaned = signal - mean
     var = get_swt(
-        demeaned ** 2,
+        demeaned**2,
         wavelet=variance_wavelet,
         depth=variance_dyadic_tau,
         output_mode="smooth",

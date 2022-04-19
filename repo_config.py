@@ -1,8 +1,14 @@
 """
-This file contains info specific of this repo.
+This file contains info specific of `//amp` repo.
 """
 
+import logging
+import os
 from typing import Dict, List
+
+_LOG = logging.getLogger(__name__)
+# We can't use `__file__` since this file is imported with an exec.
+_LOG.debug("Importing //amp/repo_config.py")
 
 
 def get_repo_map() -> Dict[str, str]:

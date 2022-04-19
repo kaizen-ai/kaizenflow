@@ -47,7 +47,7 @@ def compute_local_level_model_stats(
     rho1 = gamma1 / gamma0
     # The signal-to-noise ratio `snr` is commonly denoted `q`.
     snr = var_eta / var_epsilon
-    p = 0.5 * (snr + np.sqrt(snr ** 2 + 4 * snr))
+    p = 0.5 * (snr + np.sqrt(snr**2 + 4 * snr))
     # Equivalent to EMA lambda in m_t = (1 - \lambda) m_{t - 1} + \lambda y_t.
     kalman_gain = p / (p + 1)
     # Convert to center-of-mass.

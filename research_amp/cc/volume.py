@@ -188,7 +188,8 @@ def compare_weekday_volumes(
     plot_distr_by_weekdays: bool = True,
 ) -> pd.Series:
     """
-    Compute total volume by weekdays, plot them on barchart and plot distribution graphs.
+    Compute total volume by weekdays, plot them on barchart and plot
+    distribution graphs.
 
     :param data: daily cumulative volume per exchange per currency pair
     :param config: config
