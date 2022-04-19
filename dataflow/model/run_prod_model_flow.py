@@ -123,9 +123,9 @@ class TiledBacktest_TestCase(Backtest_TestCase):
     """
     Run an end-to-end backtest for a model by:
 
-    - Checking the configs against frozen representation 
-    - Running model using tiled backtest 
-    - Checking the dir signature against frozen representation 
+    - Checking the configs against frozen representation
+    - Running model using tiled backtest
+    - Checking the dir signature against frozen representation
     - Checking that the output is a valid tiled results
     """
 
