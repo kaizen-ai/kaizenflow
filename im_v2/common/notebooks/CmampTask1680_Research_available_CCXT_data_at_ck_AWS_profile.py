@@ -46,7 +46,7 @@ hprint.config_notebook()
 # %%
 def get_cmtask1680_config_ccxt() -> cconconf.Config:
     """
-    Get task232-specific config.
+    Get task1680-specific config.
     """
     config = cconconf.Config()
     # Load parameters.
@@ -98,27 +98,29 @@ def compute_currency_pair_data_stats(currency_pair_list: list) -> pd.DataFrame:
                 ]
             }
         )
-    return pd.DataFrame(
-        data=res.values(),
-        columns=[
-            "min_ts",
-            "max_ts",
-            "n_data_points",
-            "coverage",
-            "days_available",
-            "avg_data_points_per_day",
-        ],
-        index=res.keys(),
-    )
+        df_res = pd.DataFrame(
+            data=res.values(),
+            columns=[
+                "min_ts",
+                "max_ts",
+                "n_data_points",
+                "coverage",
+                "days_available",
+                "avg_data_points_per_day",
+            ],
+            index=res.keys(),
+        )
+    return df_res
 
 
 # %%
 def read_exchange_df(paths: list) -> pd.DataFrame:
-    df = pd.DataFrame()
+    all_data = []
     for currency_pair, path in paths:
         data = hpandas.read_csv_to_df(path)
         data["currency_pair"] = currency_pair
-        df = pd.concat([df, data])
+        all_data.append(data)
+    df = pd.concat(all_data)
     return df
 
 
@@ -129,27 +131,6 @@ def set_datetime_index(timestamps):
         times.append(hdateti.convert_unix_epoch_to_timestamp(time))
     return times
 
-
-# %% [markdown] heading_collapsed=true
-# # Load CCXT at cryptokaizen-data/daily_staged
-
-# %% hidden=true
-file_path = "%s/ccxt/binance/" % config["load"]["data_dir"]
-kwargs = {"aws_profile": "ck"}
-data = hparque.from_parquet(file_path, **kwargs)
-data.head()
-
-# %% [markdown] hidden=true
-# ## Calculate stats
-
-# %% hidden=true
-dfb = compute_currency_pair_data_stats(currency_pairs)
-dfb["exchange_id"] = "binance"
-dfb["vendor"] = config["data"]["vendor"]
-dfb
-
-# %% hidden=true
-currency_pairs = list(data["currency_pair"].unique())
 
 # %% [markdown]
 # # Load CCXT at cryptokaizen-data/historical/
@@ -234,13 +215,13 @@ dfb["exchange_id"] = "kucoin"
 dfb["vendor"] = config["data"]["vendor"]
 dfb
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Load CCXT at cryptokaizen-data2/historical/
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## binance stat
 
-# %%
+# %% hidden=true
 paths = [
     (
         "ADA_USDT",
@@ -282,16 +263,16 @@ paths = [
 data = read_exchange_df(paths)
 data.head()
 
-# %%
+# %% hidden=true
 hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
 
-# %%
+# %% hidden=true
 hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## bitfinex stat
 
-# %%
+# %% hidden=true
 paths = [
     (
         "ADA_USDT",
@@ -337,16 +318,16 @@ paths = [
 data = read_exchange_df(paths)
 data.head()
 
-# %%
+# %% hidden=true
 hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
 
-# %%
+# %% hidden=true
 hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## ftx stat
 
-# %%
+# %% hidden=true
 paths = [
     (
         "BNB_USDT",
@@ -388,16 +369,16 @@ paths = [
 data = read_exchange_df(paths)
 data.head()
 
-# %%
+# %% hidden=true
 hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
 
-# %%
+# %% hidden=true
 hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## gateio stat
 
-# %%
+# %% hidden=true
 paths = [
     (
         "BNB_USDT",
@@ -447,8 +428,29 @@ paths = [
 data = read_exchange_df(paths)
 data.head()
 
-# %%
+# %% hidden=true
 hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
 
-# %%
+# %% hidden=true
 hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
+
+# %% [markdown] heading_collapsed=true
+# # Load CCXT at cryptokaizen-data/daily_staged
+
+# %% hidden=true
+file_path = "%s/ccxt/binance/" % config["load"]["data_dir"]
+kwargs = {"aws_profile": "ck"}
+data = hparque.from_parquet(file_path, **kwargs)
+data.head()
+
+# %% [markdown] hidden=true
+# ## Calculate stats
+
+# %% hidden=true
+currency_pairs = list(data["currency_pair"].unique())
+
+# %% hidden=true
+dfb = compute_currency_pair_data_stats(currency_pairs)
+dfb["exchange_id"] = "binance"
+dfb["vendor"] = config["data"]["vendor"]
+dfb
