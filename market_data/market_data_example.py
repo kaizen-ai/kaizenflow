@@ -296,11 +296,7 @@ def get_CcxtPqImClientMarketData_example1(
     Build a `ImClientMarketData` backed with `CCXT` Parquet by tile data.
     """
     resample_1min = False
-    im_client = (
-        icdcl.get_CcxtHistoricalPqByTileClient_example1(
-            resample_1min
-        )
-    )
+    im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(resample_1min)
     # Build a function that returns a wall clock to initialise `MarketData`.
     last_timestamp = _get_last_timestamp(im_client, asset_ids)
 
@@ -365,11 +361,7 @@ def get_TalosPqImClientMarketData_example1(
     Build a `ImClientMarketData` backed with `Talos` Parquet by tile data.
     """
     resample_1min = False
-    im_client = (
-        itdcl.get_TalosHistoricalPqByTileClient_example2(
-            resample_1min
-        )
-    )
+    im_client = itdcl.get_TalosHistoricalPqByTileClient_example2(resample_1min)
     # Build a function that returns a wall clock to initialise `MarketData`.
     last_timestamp = _get_last_timestamp(im_client, asset_ids)
 

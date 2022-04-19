@@ -96,14 +96,16 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
 
 
 # TODO(gp): move to experiment_utils.py?
-def _save_tiled_output(config: cconfig.Config, result_bundle: dtfcore.ResultBundle) -> None:
+def _save_tiled_output(
+    config: cconfig.Config, result_bundle: dtfcore.ResultBundle
+) -> None:
     """
     Serialize the results of a tiled experiment.
 
     :param result_bundle: DAG results to save
     """
     # Extract the part of the simulation for this tile (i.e., [start_timestamp,
-    # end_timestamp]) discarding the warm up period (i.e., the data in 
+    # end_timestamp]) discarding the warm up period (i.e., the data in
     # [start_timestamp_with_lookback, start_timestamp]).
     result_df = result_bundle.result_df.loc[
         config["meta", "start_timestamp"] : config["meta", "end_timestamp"]

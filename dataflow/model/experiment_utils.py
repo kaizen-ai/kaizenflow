@@ -4,7 +4,7 @@ experiments.
 
 Import as:
 
-import dataflow.model.experiment_utils as dtfcoremoexuti
+import dataflow.model.experiment_utils as dtfmoexuti
 """
 
 import argparse
