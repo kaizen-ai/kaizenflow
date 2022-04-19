@@ -62,19 +62,18 @@ class ForecastSystem(System):
     @abc.abstractmethod
     def get_dag(
         self,
-        *,
-        # TODO(gp): @danya No defaults.
-        prediction_col: str = "feature1",
-        volatility_col: str = "vwap.ret_0.vol",
-        returns_col: str = "vwap.ret_0",
-        spread_col: Optional[str] = None,
-        timedelta: pd.Timedelta = pd.Timedelta("7D"),
-        asset_id_col: str = "asset_id",
-        log_dir: Optional[str] = None,
+        prediction_col: str,
+        volatility_col: str,
+        returns_col: str,
+        timedelta: pd.Timedelta,
+        asset_id_col: str,
+        *
+        spread_col: Optional[str],
+        log_dir: Optional[str],
     ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
         # TODO(gp): @danya complete / factor the docstring.
         """
-
+        Create a Dataflow DAG config and a corresponding DAG builder.
 
         :param prediction_col: column with features to base predictions on
         :param volatility_col: column with volatility data
@@ -84,7 +83,7 @@ class ForecastSystem(System):
             the forecast
         :param asset_id_col: column with asset ids
         :param log_dir: directory for saving stdout logs
-        :return: a DAG builder object with a
+        :return: a DAG builder object with a corresponding config
         """
         ...
 

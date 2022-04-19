@@ -36,11 +36,11 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [101]
             # TODO(gp): @Danya -> system
-            system_runner = dtfsepsyru.Example1_ForecastSystem(
+            system = dtfsepsyru.Example1_ForecastSystem(
                 asset_ids, event_loop,
             )
             #
-            market_data = system_runner.get_market_data(data)
+            market_data = system.get_market_data(data)
             # TODO(gp): @Danya this is the union of get_dag() and get_dag_runner().
             
             # TODO(gp): This is exactly get_dag() so we can replace the code.
@@ -53,7 +53,9 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
 
             # TODO(gp): This is get_dag_runner(). Move it to the
             # Example1_ForecastSystem.
+            # ############# START OF DAG RUNNER ##################
             # Create RealTimeDataSource.
+
             stage = "read_data"
             asset_id_col = "asset_id"
             # The DAG works on multi-index dataframe containing multiple
@@ -127,8 +129,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
 
 
 # TODO(gp): This should derive from SystemTester.
-# TODO(gp): Rename -> Test_Example1_SimulatedOmsSystem
-class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
+class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     """
     Test using fake data and features:
 
