@@ -87,8 +87,11 @@ class ForecastSystem(System):
         """
         ...
 
-    # TODO(gp): @Danya this is needed.
-    # def get_dag_runner(
+    def get_dag_runner():
+        ...
+    """
+    Create a DAG runner.
+    """
 
 
 # #############################################################################
