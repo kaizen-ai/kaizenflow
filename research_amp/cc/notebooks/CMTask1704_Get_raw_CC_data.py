@@ -25,8 +25,7 @@ import core.config.config_ as cconconf
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
-import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 
 # %%
@@ -52,9 +51,6 @@ def get_cmtask1704_config_ccxt() -> cconconf.Config:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     config["load"]["connection"] = hsql.get_connection(*connection_params)
     config["load"]["aws_profile"] = "ck"
-    #config["load"]["data_dir_rt"] = os.path.join(
-    #    "s3://cryptokaizen-data", "real_time"
-    #)
     config["load"]["data_dir_hist"] = os.path.join(
         "s3://cryptokaizen-data", "historical"
     )
@@ -84,7 +80,7 @@ vendor = config["data"]["vendor"]
 resample_1min = True
 connection = config["load"]["connection"]
 # Initiate the client.
-ccxt_rt_client = imvcdccccl.CcxtCddDbClient(vendor, resample_1min, connection)
+ccxt_rt_client = icdcl.CcxtCddDbClient(vendor, resample_1min, connection)
 
 # %% [markdown]
 # ### Universe
@@ -124,7 +120,7 @@ data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
 
 # Initiate the client.
-historical_client = imvcdccccl.CcxtHistoricalPqByTileClient(
+historical_client = icdcl.CcxtHistoricalPqByTileClient(
     resample_1min,
     root_dir,
     partition_mode,
@@ -157,24 +153,3 @@ end_date = pd.Timestamp("2021-09-15", tz="UTC")
 data_hist = historical_client.read_data(full_symbols, start_date, end_date)
 display(data_hist.shape)
 display(data_hist.head(3))
-
-# %% [markdown]
-# ## Bid-ask data snippet
-
-# %%
-# Specify params.
-exchange_id = "binance"
-
-# Initiate the client.
-bid_ask_client = imvcdeexcl.CcxtExchange(exchange_id)
-
-# %%
-# Load the data snippet for BTC.
-currency_pair = "BTC_USDT"
-ba_df = bid_ask_client.download_order_book(currency_pair)
-
-# %%
-ba_df
-
-# %% [markdown]
-# As one can see, the current implementation of bid-ask data loader only allows to show the order book at the exact moment of its initiation.
