@@ -8,6 +8,8 @@ import enum
 import os
 from typing import List, Tuple
 
+import helpers.hpandas as hpandas
+import helpers.hs3 as hs3
 import im.kibot.metadata.config as imkimecon
 import im.kibot.metadata.types as imkimetyp
 
@@ -23,9 +25,10 @@ class ParsingState(enum.Enum):
     DelistedSectionStarted = 3
 
 
+# pylint: disable=line-too-long
 class TickerListsLoader:
-    # pylint: disable=line-too-long
-    """Parse text in the following form:
+    """
+    Parse text in the following form:
 
     ```
     Listed: 43 symbols and 4 gigabytes
@@ -42,6 +45,7 @@ class TickerListsLoader:
     - 1    XOM    12/1/1999    102    "Exxon Mobil Corporation"    NYSE    "Integrated oil Companies"    "Energy"
     ```
     """
+
     # pylint: enable=line-too-long
 
     def get(
@@ -62,7 +66,9 @@ class TickerListsLoader:
         s3fs = hs3.get_s3fs(aws_profile)
         # TODO(gp): Is it \t?
         sep = "/t"
-        lines = pdhelp.read_csv(s3_path, s3fs=s3fs, sep=sep).values.tolist()
+        lines = hpandas.read_csv_to_df(
+            s3_path, s3fs=s3fs, sep=sep
+        ).values.tolist()
         res = [line[0] for line in lines]
         return res
 

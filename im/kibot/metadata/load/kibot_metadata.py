@@ -46,8 +46,8 @@ TOP_KIBOT = {
 _SymbolToContracts = Dict[str, pd.DataFrame]
 
 
+# pylint: disable=line-too-long
 class KibotMetadata:
-    # pylint: disable=line-too-long
     """
     Generate Kibot metadata.
 
@@ -76,6 +76,7 @@ class KibotMetadata:
     AD   CONTINUOUS AUSTRALIAN DOLLAR CONTRACT  9/27/2009  Chicago Mercantile Exchange (CME GLOBEX)           65.0      11.2009      11.2020          12.0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     AEX          CONTINUOUS AEX INDEX CONTRACT        NaN                                       NaN          116.0      03.2010      02.2020          12.0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     """
+
     # pylint: enable=line-too-long
 
     def __init__(self) -> None:
@@ -93,7 +94,7 @@ class KibotMetadata:
         elif contract_type == "tick-bid-ask":
             metadata = self.tickbidask_metadata.copy()
         else:
-            raise ValueError("Invalid `contract_type`='%s'" % contract_type)
+            raise ValueError(f"Invalid `contract_type`='{contract_type}'")
         return metadata
 
     def get_futures(self, contract_type: str = "1min") -> List[str]:
@@ -170,7 +171,7 @@ class KibotMetadata:
         elif contract_type == "tick-bid-ask":
             one_min_contract_metadata = cls.read_tickbidask_contract_metadata()
         else:
-            raise ValueError("Invalid `contract_type`='%s'" % contract_type)
+            raise ValueError(f"Invalid `contract_type`='{contract_type}'")
         continuous_contract_metadata = cls.read_continuous_contract_metadata()
         # Extract month, year, expiries and SymbolBase from the Symbol col.
         (
