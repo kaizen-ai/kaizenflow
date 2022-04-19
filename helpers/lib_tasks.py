@@ -62,14 +62,27 @@ def set_default_params(params: Dict[str, Any]) -> None:
     _LOG.debug("Assigning:\n%s", pprint.pformat(params))
 
 
-def get_default_param(key: str) -> Any:
-    hdbg.dassert_in(key, _DEFAULT_PARAMS)
-    hdbg.dassert_isinstance(key, str)
-    return _DEFAULT_PARAMS[key]
-
-
 def has_default_param(key: str) -> bool:
+    hdbg.dassert_isinstance(key, str)
     return key in _DEFAULT_PARAMS
+
+
+def get_default_param(key: str, *, override_value: Any = None) -> Any:
+    """
+    Return the value from the default parameters dictionary, optionally
+    overriding it.
+    """
+    hdbg.dassert_isinstance(key, str)
+    value = None
+    if has_default_param(key):
+        value = _DEFAULT_PARAMS[key]
+    if override_value:
+        _LOG.info("Overriding value %s with %s", value, override_value)
+        value = override_value
+    hdbg.dassert_is_not(
+        value, None, "key='%s' not defined from %s", key, _DEFAULT_PARAMS
+    )
+    return value
 
 
 def reset_default_params() -> None:
@@ -1132,9 +1145,9 @@ def git_branch_diff_with_master(  # type: ignore
 # - Create the integration branches
 #   ```
 #   > cd amp1
-#   > i integrate_create_branch --dir-name amp1
+#   > i integrate_create_branch --dir-basename amp1
 #   > cd cmamp1
-#   > i integrate_create_branch --dir-name cmamp1
+#   > i integrate_create_branch --dir-basename cmamp1
 #   ```
 
 # ## Preparation
@@ -2698,6 +2711,7 @@ def docker_build_local_image(  # type: ignore
     base_image="",
     update_poetry=False,
     container_dir_name=".",
+    just_do_it=False,
 ):
     """
     Build a local image (i.e., a release candidate "dev" image).
@@ -2706,9 +2720,15 @@ def docker_build_local_image(  # type: ignore
     :param cache: use the cache
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param update_poetry: run poetry lock to update the packages
+    :param just_do_it: execute the action ignoring the checks
     """
     _report_task(container_dir_name=container_dir_name)
-    _dassert_is_subsequent_version(version, container_dir_name=container_dir_name)
+    if just_do_it:
+        _LOG.warning("Skipping subsequent version check")
+    else:
+        _dassert_is_subsequent_version(
+            version, container_dir_name=container_dir_name
+        )
     version = _resolve_version_value(
         version, container_dir_name=container_dir_name
     )
@@ -3671,6 +3691,7 @@ def _build_run_command_line(
     Build the pytest run command.
 
     E.g.,
+
     ```
     pytest -m "optimizer and not slow and not superslow" \
                 . \
