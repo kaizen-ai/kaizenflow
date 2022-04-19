@@ -58,10 +58,15 @@ def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
 
 
 # TODO(gp): -> get_time_interval
+# TODO(Grisha): "Refactor or remove `get_period()`" CmTask #1723.
 def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
         end_datetime = datetime.datetime(2020, 1, 7)
+    elif period == "Jan2000":
+        # Jan and Feb of 2000.
+        start_datetime = datetime.datetime(2000, 1, 1)
+        end_datetime = datetime.datetime(2000, 2, 1)
     elif period == "Jan2020":
         # Jan in 2020.
         start_datetime = datetime.datetime(2020, 1, 1)

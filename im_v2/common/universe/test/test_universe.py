@@ -208,7 +208,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
 
         :param vendor: vendor to apply test to, e.g. CCXT or Talos
         :param universe_as_full_symbols: list of currency pairs as
-         full symbols in format exchange_id::SYMBOL_SYMBOL
+            full symbols in format exchange_id::SYMBOL_SYMBOL
         """
         actual = imvcounun.get_vendor_universe(
             vendor, version="small", as_full_symbol=True
