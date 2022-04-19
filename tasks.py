@@ -105,7 +105,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Move it to lib_tasks.
-AM_ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
+ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 
 

@@ -16,7 +16,7 @@ def _get_default_params_mock() -> Dict[str, str]:
     Get fake params pointing to a different image so we can test the code
     without affecting the official images.
     """
-    am_ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     default_params = {
         "AM_ECR_BASE_PATH": am_ecr_base_path,
         "BASE_IMAGE": "amp_test",

@@ -1805,9 +1805,9 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     _report_task()
     docker_login(ctx)
-    am_ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
+    ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
-    _run(ctx, f"{docker_exec} image ls {am_ecr_base_path}")
+    _run(ctx, f"{docker_exec} image ls {ecr_base_path}")
 
 
 @task
@@ -2042,7 +2042,7 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
     else:
-        am_ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
+        ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{am_ecr_base_path}"
@@ -4733,7 +4733,7 @@ def _get_lint_docker_cmd(
     # TODO(gp): Do not hardwire the repo_short_name.
     # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
     # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
-    am_ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     image = f"{am_ecr_base_path}/dev_tools:{stage}"
     docker_wrapper_cmd = ["docker run", "--rm"]
     if stage in ("local", "dev"):

@@ -29,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-AM_ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
+ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 
 
 default_params = {
