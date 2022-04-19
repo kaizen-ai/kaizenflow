@@ -1,13 +1,9 @@
 import logging
-from typing import Any, Callable, Optional, List
+from typing import Optional, List
 
 import pandas as pd
 
-import helpers.hdatetime as hdateti
 import helpers.hsql as hsql
-import helpers.hunit_test as hunitest
-import helpers.hasyncio as hasynci
-import helpers.hpandas as hpandas
 
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.common.db.db_utils as imvcddbut
@@ -78,6 +74,44 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, mdtmdtca.MarketData_get_
         timedelta = pd.Timedelta("1D")
         # Run.
         self._test_get_data_for_last_period(market_data, timedelta)
+
+    def test_get_data_at_timestamp1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = []
+        market_data = mdmadaex.get_RealTimeMarketData2(
+            asset_ids, columns
+        )
+        ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        #
+        expected_length = 2
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:35:00-05:00, 2000-01-01 09:35:00-05:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
+        shape=(2, 9)
+                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
+        end_ts
+        2000-01-01 09:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
+        2000-01-01 09:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_at_timestamp1(
+            market_data,
+            ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
+
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
