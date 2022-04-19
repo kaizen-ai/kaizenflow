@@ -23,7 +23,59 @@ _LOG = logging.getLogger(__name__)
 # Resampling.
 # #############################################################################
 
-# TODO(Paul): Consider moving resampling code to a new `resampling.py`
+
+# TODO(gp): @max Reorg the code in dependency order.
+# TODO(gp): @max Add * before the default params.
+# TODO(gp): Remove Kwargs
+# TODO(gp): @max Make sure each function is somehow tested.
+
+
+def resample(
+    data: Union[pd.Series, pd.DataFrame],
+    **resample_kwargs: Dict[str, Any],
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Execute series resampling with specified `.resample()` arguments.
+
+    The `rule` argument must always be specified and the `closed` and `label`
+    arguments are treated specially by default.
+
+    The default values of `closed` and `label` arguments are intended to make
+    pandas `resample()` behavior consistent for every value of `rule` and to
+    make resampling causal. So if we have sampling times t_0 < t_1 < t_2, then,
+    after resampling, the values at t_1 and t_2 should not be incorporated
+    into the resampled value timestamped with t_0. Note that this behavior is
+    at odds with what may be intuitive for plotting lower-frequency data, e.g.,
+    yearly data is typically labeled in a plot by the start of the year.
+
+    :data: pd.Series or pd.DataFrame with a datetime index
+    :resample_kwargs: arguments for pd.DataFrame.resample
+    :return: DatetimeIndexResampler object
+    """
+    hdbg.dassert_in("rule", resample_kwargs, "Argument 'rule' must be specified")
+    # Unless specified by the user, the resampling intervals are intended as
+    # (a, b] with label on the right.
+    if "closed" not in resample_kwargs:
+        resample_kwargs["closed"] = "right"
+    if "label" not in resample_kwargs:
+        resample_kwargs["label"] = "right"
+    # Execute resampling with specified kwargs.
+    resampled_data = data.resample(**resample_kwargs)
+    # _LOG.debug("resampled_data.size=%s" % str(resampled_data.size))
+    return resampled_data
+
+
+def maybe_resample(srs: pd.Series) -> pd.Series:
+    """
+    Return `srs` resampled to "B" `srs.index.freq` if is `None`.
+
+    This is a no-op if `srs.index.freq` is not `None`.
+    """
+    hdbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
+    if srs.index.freq is None:
+        _LOG.debug("No `freq` detected; resampling to 'B'.")
+        srs = srs.resample("B").sum(min_count=1)
+    return srs
 
 
 def compute_vwap(
@@ -71,12 +123,16 @@ def compute_vwap(
     return vwap
 
 
+# #################################################################################
+
+
 def _resample_with_aggregate_function(
     df: pd.DataFrame,
     rule: str,
     cols: List[str],
     agg_func: str,
     agg_func_kwargs: htypes.Kwargs,
+    *,
     resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
@@ -88,6 +144,7 @@ def _resample_with_aggregate_function(
     hdbg.dassert_is_subset(cols, df.columns)
     if resample_kwargs is None:
         resample_kwargs = {}
+    #
     resampler = resample(df[cols], rule=rule, **resample_kwargs)
     resampled = resampler.agg(agg_func, **agg_func_kwargs)
     return resampled
@@ -96,6 +153,7 @@ def _resample_with_aggregate_function(
 def resample_bars(
     df: pd.DataFrame,
     rule: str,
+    *,
     resampling_groups: List[Tuple[Dict[str, str], str, htypes.Kwargs]],
     vwap_groups: List[Tuple[str, str, str]],
     resample_kwargs: Optional[Dict[str, Any]] = None,
@@ -106,10 +164,13 @@ def resample_bars(
     Output column names must not collide.
 
     :param resampling_groups: list of tuples of the following form:
-        (col_dict, aggregation function, aggregation kwargs)
+        (col_dict, aggregation function, aggregation kwargs
+    # TODO(gp): Add example.
     :param vwap_groups: list of tuples of the following form:
         (in_price_col_name, in_vol_col_name, vwap_col_name)
+    # TODO(gp): Add example.
     """
+    # Resample the columns in each group.
     results = []
     for col_dict, agg_func, agg_func_kwargs in resampling_groups:
         resampled = _resample_with_aggregate_function(
@@ -121,18 +182,67 @@ def resample_bars(
             resample_kwargs=resample_kwargs,
         )
         resampled = resampled.rename(columns=col_dict)
+        # TODO(gp): Use proper dassert?
         hdbg.dassert(not resampled.columns.has_duplicates)
         results.append(resampled)
+    # Accumulate with VWAP.
     for price_col, volume_col, vwap_col in vwap_groups:
         vwap = compute_vwap(
             df, rule=rule, price_col=price_col, volume_col=volume_col
         )
         vwap.name = vwap_col
         results.append(vwap)
+    # Concat.
     out_df = pd.concat(results, axis=1)
     hdbg.dassert(not out_df.columns.has_duplicates)
     hdbg.dassert(out_df.index.freq)
     return out_df
+
+
+# #################################################################################
+
+
+def _resample_portfolio_bar_metrics(
+    df: pd.DataFrame,
+    freq: str,
+    pnl_col: str,
+    gross_volume_col: str,
+    net_volume_col: str,
+    gmv_col: str,
+    nmv_col: str,
+) -> pd.DataFrame:
+    # TODO(Paul): For this type of resampling, we generally want to
+    # annotate with the left side of the interval. Plumb this through
+    # the call stack.
+    resampled_df = resample_bars(
+        df,
+        freq,
+        resampling_groups=[
+            (
+                {
+                    pnl_col: "pnl",
+                    gross_volume_col: "gross_volume",
+                    net_volume_col: "net_volume",
+                },
+                "sum",
+                {"min_count": 1},
+            ),
+            (
+                {
+                    gmv_col: "gmv",
+                    nmv_col: "nmv",
+                },
+                "mean",
+                {},
+            ),
+        ],
+        vwap_groups=[],
+        resample_kwargs={
+            "closed": None,
+            "label": None,
+        },
+    )
+    return resampled_df
 
 
 def resample_portfolio_bar_metrics(
@@ -145,48 +255,6 @@ def resample_portfolio_bar_metrics(
     gmv_col: str = "gmv",
     nmv_col: str = "nmv",
 ) -> pd.DataFrame:
-    def _resample_portfolio_bar_metrics(
-        df: pd.DataFrame,
-        freq: str,
-        pnl_col: str,
-        gross_volume_col: str,
-        net_volume_col: str,
-        gmv_col: str,
-        nmv_col: str,
-    ) -> pd.DataFrame:
-        # TODO(Paul): For this type of resampling, we generally want to
-        # annotate with the left side of the interval. Plumb this through
-        # the call stack.
-        resampled_df = resample_bars(
-            df,
-            freq,
-            resampling_groups=[
-                (
-                    {
-                        pnl_col: "pnl",
-                        gross_volume_col: "gross_volume",
-                        net_volume_col: "net_volume",
-                    },
-                    "sum",
-                    {"min_count": 1},
-                ),
-                (
-                    {
-                        gmv_col: "gmv",
-                        nmv_col: "nmv",
-                    },
-                    "mean",
-                    {},
-                ),
-            ],
-            vwap_groups=[],
-            resample_kwargs={
-                "closed": None,
-                "label": None,
-            },
-        )
-        return resampled_df
-
     if df.columns.nlevels == 1:
         resampled_df = _resample_portfolio_bar_metrics(
             df,
@@ -220,6 +288,9 @@ def resample_portfolio_bar_metrics(
             df.columns.nlevels,
         )
     return resampled_df
+
+
+# #################################################################################
 
 
 # TODO(Paul): Consider deprecating.
@@ -295,6 +366,71 @@ def resample_time_bars(
     return result_df
 
 
+# #################################################################################
+
+
+# TODO(Paul): Deprecate this function. The bells and whistles do not really
+# fit, and the core functionality can be accessed through the above functions.
+def compute_twap_vwap(
+    df: pd.DataFrame,
+    rule: str,
+    *,
+    price_col: str,
+    volume_col: str,
+    offset: Optional[str] = None,
+    add_bar_volume: bool = False,
+    add_bar_start_timestamps: bool = False,
+    add_epoch: bool = False,
+    add_last_price: bool = False,
+) -> pd.DataFrame:
+    """
+    Compute TWAP/VWAP from price and volume columns.
+
+    :param df: input dataframe with datetime index
+    :param rule: resampling frequency and TWAP/VWAP aggregation window
+    :param price_col: price for bar
+    :param volume_col: volume for bar
+    :param offset: offset in the Pandas format (e.g., `1T`) used to shift the
+        sampling
+    :return: twap and vwap price series
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    # TODO(*): Determine whether we really need this. Disabling for now to
+    #  accommodate data that is not perfectly aligned with a pandas freq
+    #  (e.g., Kibot).
+    # hdbg.dassert(df.index.freq)
+    vwap = compute_vwap(
+        df, rule=rule, price_col=price_col, volume_col=volume_col, offset=offset
+    )
+    price = df[price_col]
+    # Calculate TWAP, but preserve NaNs for all-NaN bars.
+    twap = resample(price, rule=rule, offset=offset).mean()
+    twap.name = "twap"
+    dfs = [vwap, twap]
+    if add_last_price:
+        # Calculate last price (regardless of whether we have volume data).
+        last_price = resample(price, rule=rule, offset=offset).last(min_count=1)
+        last_price.name = "last"
+        dfs.append(last_price)
+    if add_bar_volume:
+        volume = df[volume_col]
+        # Calculate bar volume (regardless of whether we have price data).
+        bar_volume = resample(volume, rule=rule, offset=offset).sum(min_count=1)
+        bar_volume.name = "volume"
+        dfs.append(bar_volume)
+    if add_bar_start_timestamps:
+        bar_start_timestamps = cfiprpro.compute_bar_start_timestamps(vwap)
+        dfs.append(bar_start_timestamps)
+    if add_epoch:
+        epoch = cfiprpro.compute_epoch(vwap)
+        dfs.append(epoch)
+    df_out = pd.concat(dfs, axis=1)
+    return df_out
+
+
+# #################################################################################
+
+
 def resample_ohlcv_bars(
     df: pd.DataFrame,
     rule: str,
@@ -365,108 +501,3 @@ def resample_ohlcv_bars(
     return result_df
 
 
-# TODO(Paul): Deprecate this function. The bells and whistles do not really
-# fit, and the core functionality can be accessed through the above functions.
-def compute_twap_vwap(
-    df: pd.DataFrame,
-    rule: str,
-    *,
-    price_col: str,
-    volume_col: str,
-    offset: Optional[str] = None,
-    add_bar_volume: bool = False,
-    add_bar_start_timestamps: bool = False,
-    add_epoch: bool = False,
-    add_last_price: bool = False,
-) -> pd.DataFrame:
-    """
-    Compute TWAP/VWAP from price and volume columns.
-
-    :param df: input dataframe with datetime index
-    :param rule: resampling frequency and TWAP/VWAP aggregation window
-    :param price_col: price for bar
-    :param volume_col: volume for bar
-    :param offset: offset in the Pandas format (e.g., `1T`) used to shift the
-        sampling
-    :return: twap and vwap price series
-    """
-    hdbg.dassert_isinstance(df, pd.DataFrame)
-    # TODO(*): Determine whether we really need this. Disabling for now to
-    #  accommodate data that is not perfectly aligned with a pandas freq
-    #  (e.g., Kibot).
-    # hdbg.dassert(df.index.freq)
-    vwap = compute_vwap(
-        df, rule=rule, price_col=price_col, volume_col=volume_col, offset=offset
-    )
-    price = df[price_col]
-    # Calculate TWAP, but preserve NaNs for all-NaN bars.
-    twap = resample(price, rule=rule, offset=offset).mean()
-    twap.name = "twap"
-    dfs = [vwap, twap]
-    if add_last_price:
-        # Calculate last price (regardless of whether we have volume data).
-        last_price = resample(price, rule=rule, offset=offset).last(min_count=1)
-        last_price.name = "last"
-        dfs.append(last_price)
-    if add_bar_volume:
-        volume = df[volume_col]
-        # Calculate bar volume (regardless of whether we have price data).
-        bar_volume = resample(volume, rule=rule, offset=offset).sum(min_count=1)
-        bar_volume.name = "volume"
-        dfs.append(bar_volume)
-    if add_bar_start_timestamps:
-        bar_start_timestamps = cfiprpro.compute_bar_start_timestamps(vwap)
-        dfs.append(bar_start_timestamps)
-    if add_epoch:
-        epoch = cfiprpro.compute_epoch(vwap)
-        dfs.append(epoch)
-    df_out = pd.concat(dfs, axis=1)
-    return df_out
-
-
-def resample(
-    data: Union[pd.Series, pd.DataFrame],
-    **resample_kwargs: Dict[str, Any],
-) -> Union[pd.Series, pd.DataFrame]:
-    """
-    Execute series resampling with specified `.resample()` arguments.
-
-    The `rule` argument must always be specified and the `closed` and `label`
-    arguments are treated specially by default.
-
-    The default values of `closed` and `label` arguments are intended to make
-    pandas `resample()` behavior consistent for every value of `rule` and to
-    make resampling causal. So if we have sampling times t_0 < t_1 < t_2, then,
-    after resampling, the values at t_1 and t_2 should not be incorporated
-    into the resampled value timestamped with t_0. Note that this behavior is
-    at odds with what may be intuitive for plotting lower-frequency data, e.g.,
-    yearly data is typically labeled in a plot by the start of the year.
-
-    :data: pd.Series or pd.DataFrame with a datetime index
-    :resample_kwargs: arguments for pd.DataFrame.resample
-    :return: DatetimeIndexResampler object
-    """
-    hdbg.dassert_in("rule", resample_kwargs, "Argument 'rule' must be specified")
-    # Unless specified by the user, the resampling intervals are intended as
-    # (a, b] with label on the right.
-    if "closed" not in resample_kwargs:
-        resample_kwargs["closed"] = "right"
-    if "label" not in resample_kwargs:
-        resample_kwargs["label"] = "right"
-    # Execute resampling with specified kwargs.
-    resampled_data = data.resample(**resample_kwargs)
-    # _LOG.debug("resampled_data.size=%s" % str(resampled_data.size))
-    return resampled_data
-
-
-def maybe_resample(srs: pd.Series) -> pd.Series:
-    """
-    Return `srs` resampled to "B" `srs.index.freq` if is `None`.
-
-    This is a no-op if `srs.index.freq` is not `None`.
-    """
-    hdbg.dassert_isinstance(srs.index, pd.DatetimeIndex)
-    if srs.index.freq is None:
-        _LOG.debug("No `freq` detected; resampling to 'B'.")
-        srs = srs.resample("B").sum(min_count=1)
-    return srs
