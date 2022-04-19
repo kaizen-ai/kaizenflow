@@ -26,8 +26,8 @@ class Test_Example1_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
             + f'build_tile_configs("{backtest_config}")'
         )
         experiment_builder = (
-            # "amp.dataflow.model.master_experiment.run_tiled_experiment"
-            "dataflow.model.master_experiment.run_tiled_experiment"
+            # "amp.dataflow.model.master_experiment.run_tiled_backtest"
+            "dataflow.model.master_experiment.run_tiled_backtest"
         )
         # We abort on error since we don't expect failures.
         run_model_extra_opts = ""

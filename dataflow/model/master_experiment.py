@@ -100,7 +100,6 @@ def _save_tiled_output(config: cconfig.Config, result_bundle: dtfcore.ResultBund
     """
     Serialize the results of a tiled experiment.
 
-    :param config: config
     :param result_bundle: DAG results to save
     """
     # Extract the part of the simulation for this tile (i.e., [start_timestamp,
@@ -124,8 +123,7 @@ def _save_tiled_output(config: cconfig.Config, result_bundle: dtfcore.ResultBund
     _LOG.info("Tiled results written in '%s'", tiled_dst_dir)
 
 
-# TODO(gp): -> run_tiled_backtest
-def run_tiled_experiment(config: cconfig.Config) -> None:
+def run_tiled_backtest(config: cconfig.Config) -> None:
     """
     Run an experiment by:
 
@@ -136,6 +134,7 @@ def run_tiled_experiment(config: cconfig.Config) -> None:
     All parameters are passed through a `Config`.
     """
     _LOG.debug("config=\n%s", config)
+    # Create the DAG runner.
     dag_runner = config["meta", "dag_runner"](config)
     hdbg.dassert_isinstance(dag_runner, dtfcore.AbstractDagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
@@ -148,4 +147,5 @@ def run_tiled_experiment(config: cconfig.Config) -> None:
         ],
     )
     fit_result_bundle = dag_runner.fit()
+    # Save results.
     _save_tiled_output(config, fit_result_bundle)

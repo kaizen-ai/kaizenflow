@@ -18,7 +18,7 @@ dst_dir="build_tile_configs.${tag}.${backtest_config}.run1"
 
 # TODO(gp): -> run_configs.py
 ./amp/dataflow/model/run_experiment.py \
-    --experiment_builder "amp.dataflow.model.master_experiment.run_tiled_experiment" \
+    --experiment_builder "amp.dataflow.model.master_experiment.run_tiled_backtest" \
     --config_builder $config_builder \
     --dst_dir $dst_dir \
     $OPTS 2>&1 | tee run_experiment.txt
