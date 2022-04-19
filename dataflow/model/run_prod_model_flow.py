@@ -123,10 +123,10 @@ class TiledBacktest_TestCase(Backtest_TestCase):
     """
     Run an end-to-end backtest for a model by:
 
-    1) Checking the configs against frozen representation 2) Running
-    model using tiled backtest 3) Checking the dir signature against
-    frozen representation 4) Checking that the output is a valid tiled
-    results
+    - Checking the configs against frozen representation 
+    - Running model using tiled backtest 
+    - Checking the dir signature against frozen representation 
+    - Checking that the output is a valid tiled results
     """
 
     def compute_tile_output_signature(self, file_name: str) -> str:
@@ -154,23 +154,14 @@ class TiledBacktest_TestCase(Backtest_TestCase):
             parquet_tile_analyzer.collate_parquet_tile_metadata(file_name)
         )
         signature = []
-        # ```
-        #         n_years    n_unique_months    n_files        size
-        # egid
-        # 10025          1                  2          2    711.7 KB
-        # ```
+        # Compute metadata stats by asset id.
         df = parquet_tile_analyzer.compute_metadata_stats_by_asset_id(
             parquet_tile_metadata
         )
         df_as_str = hpandas.df_to_str(df.drop("size", axis="columns"))
         signature.append("# compute_metadata_stats_by_asset_id")
         signature.append(df_as_str)
-        # ```
-        #                 n_asset_ids    size
-        # year    month
-        # 2020        1             1    360.3 KB
-        #           2             1    351.4 KB
-        # ```
+        # Compute metadata stats by time.
         df = parquet_tile_analyzer.compute_universe_size_by_time(
             parquet_tile_metadata
         )
