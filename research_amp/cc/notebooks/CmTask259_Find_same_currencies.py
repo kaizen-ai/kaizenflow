@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.7
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -77,7 +77,9 @@ print(config)
 
 # %%
 vendor_universe = imvcounun.get_vendor_universe(
-    config["data"]["vendor"], version=config["data"]["universe_version"], as_full_symbol=True
+    config["data"]["vendor"],
+    version=config["data"]["universe_version"],
+    as_full_symbol=True,
 )
 vendor_universe
 

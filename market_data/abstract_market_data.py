@@ -264,7 +264,9 @@ class MarketData(abc.ABC):
         # data that we didn't request.
         # TODO(Danya): How do we handle NaNs?
         #
-        hdbg.dassert_is_subset(df[self._asset_id_col].dropna().unique(), asset_ids)
+        hdbg.dassert_is_subset(
+            df[self._asset_id_col].dropna().unique(), asset_ids
+        )
         # TODO(gp): If asset_ids was specified but the backend has a universe
         #  specified already, we might need to apply a filter by asset_ids.
         # TODO(gp): Check data with respect to start_ts, end_ts.

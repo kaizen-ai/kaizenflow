@@ -22,9 +22,9 @@
 import logging
 
 # %%
-import amp.dataflow.pipelines.dataflow_example
 import pandas as pd
 
+import amp.dataflow.pipelines.dataflow_example
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -225,7 +225,6 @@ len(result[1])
 
 # %%
 import pandas as pd
-
 
 num_cols = 2
 seed = 42

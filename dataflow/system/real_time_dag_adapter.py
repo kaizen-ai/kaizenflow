@@ -14,7 +14,6 @@ import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import oms.portfolio as omportfo
 
-
 # TODO(gp): Replace DagAdapter and build the Dag in a single place.
 #  We want to create the config below in one place with a _example().
 class RealTimeDagAdapter(dtfcore.DagAdapter):

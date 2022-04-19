@@ -113,7 +113,7 @@ class TalosExchange:
         # Results will contain itemps with timestamp - 1min (i.e., 10:06:00).
         # In order to get items including items with timestamp=`end_timestamp`
         # `end_timestamp` should be shifted on 1 sec from complete minute.
-        rounded_timestamp = end_timestamp.round(freq='T')
+        rounded_timestamp = end_timestamp.round(freq="T")
         if rounded_timestamp == end_timestamp:
             end_timestamp = end_timestamp + pd.Timedelta("1sec")
         #

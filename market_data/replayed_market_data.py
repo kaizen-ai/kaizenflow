@@ -5,7 +5,7 @@ import market_data.replayed_market_data as mdremada
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 

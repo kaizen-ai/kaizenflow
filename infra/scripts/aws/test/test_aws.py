@@ -5,13 +5,12 @@ if False:
     import boto3
     from moto import mock_ec2
 
-    import helpers.hdbg as hdbg
     import infra.scripts.aws.aws_manager as isawawma
 
     """
     Unit tests for the aws_manager class
     Double check to not make real calls by exporting fake credentials as env variables
-        
+
     """
     _LOG = logging.getLogger(__name__)
 

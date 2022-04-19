@@ -290,6 +290,56 @@ datetime,MN0,MN1,MN0,MN1
         return df
 
 
+@pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
+class TestCrossSectionalDfToDfTransformer1(hunitest.TestCase):
+    def test_demean(self) -> None:
+        data = self._get_data()
+
+        def demean(df: pd.DataFrame) -> pd.DataFrame:
+            mean = df.mean(axis=1)
+            demeaned = df.subtract(mean, axis=0)
+            return demeaned
+
+        config = cconfig.get_config_from_nested_dict(
+            {
+                "in_col_group": ("ret",),
+                "out_col_group": ("ret.demeaned",),
+                "transformer_func": demean,
+            },
+        )
+        node = dtfconotra.CrossSectionalDfToDfTransformer(
+            "adj", **config.to_dict()
+        )
+        actual = node.fit(data)["df_out"]
+        expected_txt = """
+,ret.demeaned,ret.demeaned,ret,ret,vol,vol
+,MN0,MN1,MN0,MN1,MN0,MN1,MN0,MN1
+2016-01-04 09:30:00,0.5,-0.5,0.5,-0.5,1.25,1.25
+2016-01-04 09:31:00,0.0,0.0,0.25,0.25,1,1
+2016-01-04 09:32:00,-1.0,1.0,-1.0,1.0,1.25,1.25
+"""
+        expected = pd.read_csv(
+            io.StringIO(expected_txt),
+            index_col=0,
+            parse_dates=True,
+            header=[0, 1],
+        )
+        self.assert_dfs_close(actual, expected)
+
+    def _get_data(self) -> pd.DataFrame:
+        txt = """
+,ret,ret,vol,vol
+datetime,MN0,MN1,MN0,MN1
+2016-01-04 09:30:00,0.5,-0.5,1.25,1.25
+2016-01-04 09:31:00,0.25,0.25,1,1
+2016-01-04 09:32:00,-1,1,1.25,1.25
+"""
+        df = pd.read_csv(
+            io.StringIO(txt), index_col=0, parse_dates=True, header=[0, 1]
+        )
+        return df
+
+
 class TestSeriesToDfTransformer1(hunitest.TestCase):
     def test1(self) -> None:
         def add_lags(srs: pd.Series, num_lags: int) -> pd.DataFrame:
@@ -461,6 +511,14 @@ class TestSeriesToDfTransformer2(hunitest.TestCase):
         with pytest.raises(AssertionError):
             node.fit(data)["df_out"]
 
+    @staticmethod
+    def _add_lags(srs: pd.Series, num_lags: int) -> pd.DataFrame:
+        lags = []
+        for lag in range(0, num_lags):
+            lags.append(srs.shift(lag).rename("lag_" + str(lag)))
+        out_df = pd.concat(lags, axis=1)
+        return out_df
+
     def _get_data(self) -> pd.DataFrame:
         txt = """
 ,close,close,mid,mid
@@ -476,14 +534,6 @@ datetime,MN0,MN1,MN0,MN1
             io.StringIO(txt), index_col=0, parse_dates=True, header=[0, 1]
         )
         return df
-
-    @staticmethod
-    def _add_lags(srs: pd.Series, num_lags: int) -> pd.DataFrame:
-        lags = []
-        for lag in range(0, num_lags):
-            lags.append(srs.shift(lag).rename("lag_" + str(lag)))
-        out_df = pd.concat(lags, axis=1)
-        return out_df
 
 
 class TestSeriesToSeriesTransformer1(hunitest.TestCase):

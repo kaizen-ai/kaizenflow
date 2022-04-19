@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.13.7
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -16,17 +16,14 @@
 # ## Imports
 
 # %%
-import logging
 import pandas as pd
-import helpers.hsql as hsql
+
 import helpers.hdatetime as hdateti
-import helpers.hdbg as hdbg
-import helpers.hprint as hprint
+import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+import im_v2.im_lib_tasks as imvimlita
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.talos.data.extract.exchange_class as imvtdeexcl
-import im_v2.im_lib_tasks as imvimlita
-
 
 # %% [markdown]
 # ## Functions
@@ -65,12 +62,11 @@ def get_data_from_ccxt_client(start_time, end_time):
 def get_data_from_talos_client(start_time, end_time):
     full_symbol_binance = ["binance::BTC_USDT"]
     df = talos_client.read_data(
-         full_symbol_binance,
-         start_ts=pd.Timestamp(start_time),
-         end_ts=pd.Timestamp(end_time),
+        full_symbol_binance,
+        start_ts=pd.Timestamp(start_time),
+        end_ts=pd.Timestamp(end_time),
     )
     return df
-
 
 
 # %% [markdown]
@@ -146,14 +142,11 @@ env_file = imvimlita.get_db_env_path("dev")
 connection_params = hsql.get_connection_info_from_env_file(env_file)
 connection = hsql.get_connection(*connection_params)
 table_name = "talos_ohlcv"
-talos_client = imvtdctacl.RealTimeSqlTalosClient(
-    True, connection, table_name
-)
+talos_client = imvtdctacl.RealTimeSqlTalosClient(True, connection, table_name)
 
 # %%
 df = get_data_from_talos_client(
-    '2022-03-16 22:47:50+0000',
-    '2022-03-16 22:54:00+0000'
+    "2022-03-16 22:47:50+0000", "2022-03-16 22:54:00+0000"
 )
 display(df.head(3))
 display(df.tail(3))

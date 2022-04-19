@@ -190,7 +190,7 @@ class Node(_Node):
                     hintros.format_size(used_mem_tmp),
                     gc.get_referrers(obj),
                 )
-                rss_used_mem_in_gb += used_mem_tmp / (1024 ** 3)
+                rss_used_mem_in_gb += used_mem_tmp / (1024**3)
         # Remove all the outstanding references to the objects.
         del obj
         del self._output_vals

@@ -6,9 +6,10 @@ except ImportError:
     # Break 2022-02-22").
     import helpers.hgit as hgit
 
-    assert (
-        not hgit.is_cmamp()
-    ), "`cmamp` should have moto, while other repos (e.g., `amp` or `dev_tools`) are allowed to not have it)"
+    assert not hgit.is_cmamp(), (
+        "`cmamp` should have moto, while other repos (e.g., `amp` or `dev_tools`) "
+        "are allowed to not have it)"
+    )
     _HAS_MOTO = False
 
 if _HAS_MOTO:
@@ -27,7 +28,10 @@ if _HAS_MOTO:
     # The `mock_secretsmanager` decorator ensures the calls to the AWS API are
     # mocked.
 
-    _REASON_TO_SKIP_TEST = "Need to add `ck` profile to GH actions CmTask961, test has passed on dev stage."
+    _REASON_TO_SKIP_TEST = (
+        "Need to add `ck` profile to GH actions CmTask961, test has passed "
+        "on dev stage."
+    )
 
     class TestCreateClient(hunitest.TestCase):
         @pytest.mark.skip(reason=_REASON_TO_SKIP_TEST)
