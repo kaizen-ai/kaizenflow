@@ -16,7 +16,9 @@ def get_DataFrameImClient_example1() -> imvcdcdfimc.DataFrameImClient:
     """
     # Generate input dataframe and universe for client initialization.
     vendor = "example1"
-    universe = unvss.get_vendor_universe(vendor, version="v1", as_full_symbol=True)
+    universe = unvss.get_vendor_universe(
+        vendor, version="v1", as_full_symbol=True
+    )
     df = cofinanc.get_im_client_market_data_df1(universe)
     # Init the client for testing.
     resample_1min = False

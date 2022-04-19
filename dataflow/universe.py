@@ -16,7 +16,6 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import im_v2.common.universe as unvss
 
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -243,7 +242,9 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
     Create universe for Example1 DAG.
     """
     vendor = "example1"
-    full_symbols = unvss.get_vendor_universe(vendor, version="v1", as_full_symbol=True)
+    full_symbols = unvss.get_vendor_universe(
+        vendor, version="v1", as_full_symbol=True
+    )
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
 
