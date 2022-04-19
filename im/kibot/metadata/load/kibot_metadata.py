@@ -46,8 +46,8 @@ TOP_KIBOT = {
 _SymbolToContracts = Dict[str, pd.DataFrame]
 
 
-# pylint: disable=line-too-long
 class KibotMetadata:
+    # pylint: disable=line-too-long
     """
     Generate Kibot metadata.
 
@@ -76,7 +76,6 @@ class KibotMetadata:
     AD   CONTINUOUS AUSTRALIAN DOLLAR CONTRACT  9/27/2009  Chicago Mercantile Exchange (CME GLOBEX)           65.0      11.2009      11.2020          12.0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     AEX          CONTINUOUS AEX INDEX CONTRACT        NaN                                       NaN          116.0      03.2010      02.2020          12.0  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     """
-
     # pylint: enable=line-too-long
 
     def __init__(self) -> None:
