@@ -12,7 +12,7 @@ import logging
 import os
 
 import core.config as cconfig
-import dataflow.core as cdataf
+import dataflow.core as dtfcore
 import dataflow.model.experiment_utils as dtfmoexuti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
@@ -34,12 +34,12 @@ def run_experiment(config: cconfig.Config) -> None:
     _LOG.debug("config=\n%s", config)
     config = config.copy()
     # dag_config = config.pop("DAG")
-    # dag_runner = cdataf.PredictionDagRunner(
+    # dag_runner = dtfcore.PredictionDagRunner(
     #    dag_config, config["meta"]["dag_builder"]
     # )
     dag_runner = config["meta", "dag_runner"](config)
     # TODO(gp): Maybe save the drawing to file?
-    # cdataf.draw(dag_runner.dag)
+    # dtfcore.draw(dag_runner.dag)
     # TODO(gp): Why passing function instead of the values directly?
     # if "set_fit_intervals" in config["meta"].to_dict():
     #     dag_runner.set_fit_intervals(
@@ -68,7 +68,7 @@ def run_experiment(config: cconfig.Config) -> None:
 def run_rolling_experiment(config: cconfig.Config) -> None:
     _LOG.debug("config=\n%s", config)
     dag_config = config.pop("DAG")
-    dag_runner = cdataf.RollingFitPredictDagRunner(
+    dag_runner = dtfcore.RollingFitPredictDagRunner(
         dag_config,
         config["meta"]["dag_builder"],
         config["meta"]["start"],
@@ -96,10 +96,20 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
 
 
 # TODO(gp): move to experiment_utils.py?
-def _save_tiled_output(config, result_bundle):
+def _save_tiled_output(config: cconfig.Config, result_bundle: dtfcore.ResultBundle) -> None:
+    """
+    Serialize the results of a tiled experiment.
+
+    :param config: config
+    :param result_bundle: DAG results to save
+    """
+    # Extract the part of the simulation for this tile (i.e., [start_timestamp,
+    # end_timestamp]) discarding the warm up period (i.e., the data in 
+    # [start_timestamp_with_lookback, start_timestamp]).
     result_df = result_bundle.result_df.loc[
         config["meta", "start_timestamp"] : config["meta", "end_timestamp"]
     ]
+    # Convert the result into Parquet.
     df = result_df.stack()
     asset_id_col_name = config["meta", "asset_id_col_name"]
     df.index.names = ["end_ts", asset_id_col_name]
@@ -127,7 +137,7 @@ def run_tiled_experiment(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     dag_runner = config["meta", "dag_runner"](config)
-    hdbg.dassert_isinstance(dag_runner, cdataf.AbstractDagRunner)
+    hdbg.dassert_isinstance(dag_runner, dtfcore.AbstractDagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
         [
