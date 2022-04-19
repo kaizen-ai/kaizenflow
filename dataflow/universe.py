@@ -20,8 +20,16 @@ import im_v2.common.universe as unvss
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Grisha): "Move universe-related function to im" CmTask #1724.
+
+
 # TODO(gp): Move it to a better place.
 Amid = Union[int, str]
+
+
+# #############################################################################
+# S&P 500
+# #############################################################################
 
 
 def get_sp500() -> pd.DataFrame:
@@ -56,6 +64,8 @@ def get_sp500_sample(n: int, seed: int) -> List[str]:
     return df["ticker"].to_list()
 
 
+# #############################################################################
+# Kibot
 # #############################################################################
 
 
@@ -223,14 +233,24 @@ def _get_kibot_universe_v3(n: Optional[int]) -> List[Amid]:
     return amids
 
 
+# #############################################################################
+# Example1
+# #############################################################################
+
+
 def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
     """
-    Create universe for backtest example.
+    Create universe for Example1 DAG.
     """
     vendor = "example1"
     full_symbols = unvss.get_vendor_universe(vendor, version="v1", as_full_symbol=True)
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
+
+
+# #############################################################################
+# General
+# #############################################################################
 
 
 def get_universe(universe_str: str) -> List[Amid]:
