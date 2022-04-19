@@ -14,7 +14,7 @@ import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
-import im_v2.common.data.client as icdcl
+import im_v2.common.data.client as icdc
 import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
@@ -115,7 +115,7 @@ def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
     # in `market_data`.
     # Get universe from `ImClient` and convert it to asset ids.
     full_symbols = dtfuniver.get_universe(universe_str)
-    im_client = icdcl.get_DataFrameImClient_example1()
+    im_client = icdc.get_DataFrameImClient_example1()
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
     #
     config["meta", "dag_runner"] = get_dag_runner

@@ -7,7 +7,7 @@ import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
 
 import core.finance as cofinanc
 import im_v2.common.data.client.data_frame_im_clients as imvcdcdfimc
-import im_v2.common.universe as unvss
+import im_v2.common.universe as ivcu
 
 
 def get_DataFrameImClient_example1() -> imvcdcdfimc.DataFrameImClient:
@@ -16,7 +16,7 @@ def get_DataFrameImClient_example1() -> imvcdcdfimc.DataFrameImClient:
     """
     # Generate input dataframe and universe for client initialization.
     vendor = "example1"
-    universe = unvss.get_vendor_universe(
+    universe = ivcu.get_vendor_universe(
         vendor, version="v1", as_full_symbol=True
     )
     df = cofinanc.get_im_client_market_data_df1(universe)
