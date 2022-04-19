@@ -154,6 +154,6 @@ meta:
   dag_runner: <function get_dag_runner>
   asset_id_col_name: asset_id
   asset_ids: [3303714233, 1467591036]
-  start_timestamp_with_lookback: 1999-12-22 09:31:00-05:00
-  start_timestamp: 2000-01-01 09:31:00-05:00
-  end_timestamp: 2000-01-31 09:31:00-05:00
+  start_timestamp_with_lookback: 1999-12-22 00:00:00+00:00
+  start_timestamp: 2000-01-01 00:00:00+00:00
+  end_timestamp: 2000-01-31 00:00:00+00:00

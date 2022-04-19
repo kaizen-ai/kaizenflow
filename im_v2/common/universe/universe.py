@@ -106,7 +106,7 @@ def get_vendor_universe(
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
     :param version: release version
     :param as_full_symbol: if True transform the universe into list of
-     full symbols e.g. gateio::XRP_USDT
+        full symbols e.g. gateio::XRP_USDT
     :return: vendor universe as a list of symbol or list of full symbols e.g.:
         {
             "Talos": {
@@ -125,6 +125,7 @@ def get_vendor_universe(
         }
         or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
+    # TODO(Grisha): "Unify universe files format" CmTask #1725.
     vendor_universe = _get_trade_universe(vendor, version=version)
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.
