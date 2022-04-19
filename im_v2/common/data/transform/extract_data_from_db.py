@@ -22,7 +22,7 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     resample_1min = False
     ccxt_db_client = icdcl.CcxtCddDbClient(vendor, resample_1min, connection)
     # Get universe of symbols.
-    symbols = imvcounun.get_vendor_universe(vendor, as_full_symbol=True)
+    symbols = ivcu.get_vendor_universe(vendor, as_full_symbol=True)
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         # TODO(Nikola): Refactor to use one db call.

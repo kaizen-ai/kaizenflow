@@ -17,7 +17,7 @@ import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.universe as icunv
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         raise NotImplementedError
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
@@ -121,7 +121,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         df["currency_pair"] = df["currency_pair"].astype(str)
         # Add full symbol column.
         df[full_symbol_col_name] = df.apply(
-            lambda x: icdc.build_full_symbol(
+            lambda x: ivcu.build_full_symbol(
                 x["exchange_id"], x["currency_pair"]
             ),
             axis=1,
@@ -132,7 +132,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         return df
 
     def _get_root_dirs_symbol_filters(
-        self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
+        self, full_symbols: List[ivcu.FullSymbol], full_symbol_col_name: str
     ) -> Dict[str, hparque.ParquetFilter]:
         """
         Build a dict with exchange root dirs of the `Talos` data as keys and
@@ -157,7 +157,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # [('binance', 'ADA_USDT'),
         # ('coinbase', 'BTC_USDT')].
         full_symbol_tuples = [
-            icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+            ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
         ]
         # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
         # `Defaultdict` provides a default value for the key that does not exists that prevents from
@@ -225,7 +225,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         raise NotImplementedError
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
@@ -307,7 +307,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             # TODO (Danya): Move this transformation to MarketData.
             # Add `asset_id` column using mapping on `full_symbol` column.
             data["asset_id"] = data[full_symbol_col_name].apply(
-                icunv.string_to_numerical_id
+                ivcu.string_to_numerical_id
             )
             # Convert to int64 to keep NaNs alongside with int values.
             data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
@@ -337,7 +337,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def _read_data(
         self,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -358,7 +358,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :return:
         """
         # Parse symbols into exchange and currency pair.
-        parsed_symbols = [icdc.parse_full_symbol(s) for s in full_symbols]
+        parsed_symbols = [ivcu.parse_full_symbol(s) for s in full_symbols]
         # Convert timestamps to epochs.
         if start_ts:
             start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -479,7 +479,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
         *,
@@ -508,7 +508,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         raise NotImplementedError
 
     def _get_start_end_ts_for_symbol(
-        self, full_symbol: icdc.FullSymbol, mode: str
+        self, full_symbol: ivcu.FullSymbol, mode: str
     ) -> pd.Timestamp:
         """
         Select a maximum/minimum timestamp for the given symbol.
@@ -521,7 +521,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :return: min or max value of 'timestamp' column.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
-        exchange, currency_pair = icdc.parse_full_symbol(full_symbol)
+        exchange, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Build a MIN/MAX query.
         if mode == "start":
             query = (
