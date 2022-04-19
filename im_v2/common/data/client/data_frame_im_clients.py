@@ -11,7 +11,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
-import im_v2.common.data.client.full_symbol as imvcdcfusy
+import im_v2.common.universe as ivcu
 
 
 class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
@@ -23,7 +23,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
     def __init__(
         self,
         df: pd.DataFrame,
-        universe: List[imvcdcfusy.FullSymbol],
+        universe: List[ivcu.FullSymbol],
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
@@ -42,7 +42,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         ```
         """
         # Validate that the input universe is a non-empty list.
-        hdbg.dassert_container_type(universe, list, imvcdcfusy.FullSymbol)
+        hdbg.dassert_container_type(universe, list, ivcu.FullSymbol)
         hdbg.dassert_lte(1, len(universe))
         # Set the input universe before calling the parent class ctor since
         # it is used by `get_universe()` which is necessary for the parent
@@ -66,7 +66,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         raise NotImplementedError
 
-    def get_universe(self) -> List[imvcdcfusy.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
@@ -74,7 +74,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,

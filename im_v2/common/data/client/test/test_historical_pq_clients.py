@@ -8,6 +8,7 @@ import pytest
 import helpers.hdatetime as hdateti
 import im_v2.common.data.client.historical_pq_clients_example as imvcdchpce
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -752,7 +753,7 @@ class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
     def _check_output(
         self,
         actual_df: pd.DataFrame,
-        full_symbols: List[str],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
     ) -> None:

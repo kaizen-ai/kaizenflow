@@ -13,6 +13,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
@@ -102,7 +103,7 @@ class ImClientMarketData(mdabmada.MarketData):
                 asset_ids
             )
         # Load the data using `im_client`.
-        icdc.dassert_valid_full_symbols(full_symbols)
+        ivcu.dassert_valid_full_symbols(full_symbols)
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
