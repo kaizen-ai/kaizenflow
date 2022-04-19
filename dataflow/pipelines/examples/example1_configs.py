@@ -63,7 +63,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     asset_ids = config["meta", "asset_ids"]
     columns: List[str] = []
     columns_remap = None
-    market_data = mdata.get_ImClientMarketData_example2(
+    market_data = mdata.get_CcxtPqImClientMarketData_example1(
         asset_ids, columns, columns_remap
     )
     # Create HistoricalDataSource.
