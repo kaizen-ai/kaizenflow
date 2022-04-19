@@ -12,10 +12,10 @@
 #     name: python3
 # ---
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # # Imports
 
-# %% hidden=true
+# %%
 import logging
 import os
 
@@ -29,8 +29,11 @@ import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+import research_amp.cc.statistics as ramccsta
 
-# %% hidden=true
+# %%
 hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
@@ -54,7 +57,7 @@ def get_cmtask1680_config_ccxt() -> cconconf.Config:
     config["load"]["aws_profile"] = "ck"
     # TODO(Nina): replace `s3://cryptokaizen-data` on get_s3_bucket() after #1667 is implemented.
     config["load"]["data_dir"] = os.path.join(
-        "s3://cryptokaizen-data", "daily_staged"
+        "s3://cryptokaizen-data", "historical"
     )
     # Data parameters.
     config.add_subconfig("data")
@@ -124,19 +127,36 @@ def read_exchange_df(paths: list) -> pd.DataFrame:
     return df
 
 
-# %%
-def set_datetime_index(timestamps):
-    times = []
-    for time in timestamps:
-        times.append(hdateti.convert_unix_epoch_to_timestamp(time))
-    return times
-
-
 # %% [markdown]
 # # Load CCXT at cryptokaizen-data/historical/
 
 # %% [markdown]
 # ## binance stat
+
+# %%
+ccxt_historical_client = imvcdccccl.CcxtHistoricalPqByTileClient(True, 
+                                                                 "s3://cryptokaizen-data/historical/", 
+                                                                "by_year_month",
+                                                                aws_profile="ck")
+
+# %%
+universe = ccxt_historical_client.get_universe()
+universe
+
+# %%
+universe = ccxt_historical_client.get_universe()
+# TODO (Nina): kernel's dead for all data due to CMTask1726
+data = ccxt_historical_client.read_data([universe[0]], None, None)
+
+# %%
+data.head()
+
+# %%
+# TODO(Nina): refactor functions from `research_amp.cc.statistics` to properly work with `ImClient` data
+compute_start_end_stats =  ramccsta.compute_start_end_stats(
+    data, config
+)
+compute_start_end_stats
 
 # %%
 file_path = "s3://cryptokaizen-data/historical/ccxt/latest/binance/"
@@ -214,6 +234,9 @@ dfb = compute_currency_pair_data_stats(currency_pairs)
 dfb["exchange_id"] = "kucoin"
 dfb["vendor"] = config["data"]["vendor"]
 dfb
+
+# %%
+# Below data decided to research later.
 
 # %% [markdown] heading_collapsed=true
 # # Load CCXT at cryptokaizen-data2/historical/
