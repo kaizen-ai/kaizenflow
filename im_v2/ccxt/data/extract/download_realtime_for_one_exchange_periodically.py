@@ -81,38 +81,47 @@ def _main(parser: argparse.ArgumentParser) -> None:
         run_delay_sec = (next_start_time - datetime.now()).total_seconds()
     # Save time limit.
     script_stop_time = next_start_time + timedelta(minutes=run_for_min)
+    # Add interval in order to get next download time.
+    next_start_time = next_start_time + timedelta(minutes=interval_min)
     #
-    continue_running = True
-    while continue_running:
-        # Wait until next run.
+    while datetime.now() < script_stop_time:
+        # Wait until next download.
         time.sleep(run_delay_sec)
-        # Add interval in order to get next download time.
-        next_start_time = next_start_time + timedelta(minutes=interval_min)
         try:
-            _LOG.debug("Starting next download")
+            _LOG.debug("Starting download")
             imvcdeexut.download_realtime_for_one_exchange(
-                args,
-                imvcdeexcl.CcxtExchange,
+                args, imvcdeexcl.CcxtExchange
             )
             # Reset failures counter.
             concurrent_failures_left = failures_limit
         except Exception as e:
             concurrent_failures_left -= 1
+            _LOG.error(str(e))
             # Download failed.
             if not concurrent_failures_left:
                 raise RuntimeError(
                     f"{failures_limit} concurrent downloads were failed"
                 ) from e
-            _LOG.error(str(e))
         # if Download took more then expected.
         if datetime.now() > next_start_time:
-            raise RuntimeError(
-                f"The download was not finished in {interval_min} minutes."
+            _LOG.error(
+                "The download was not finished in %s minutes.", interval_min
             )
-        # Calculate delay before next download.
-        run_delay_sec = (next_start_time - datetime.now()).total_seconds()
-        # Check if there is a time for the next iteration.
-        continue_running = True if datetime.now() < script_stop_time else False
+            run_delay_sec = 0
+            # Download that will start after repeated one, should follow to the initial schedule.
+            while datetime.now() > next_start_time:
+                next_start_time = next_start_time + timedelta(
+                    minutes=interval_min
+                )
+        # If download failed, but there are time before next download.
+        elif concurrent_failures_left < failures_limit:
+            # Start repeat download immediately.
+            run_delay_sec = 0
+        else:
+            # Calculate delay before next download.
+            run_delay_sec = (next_start_time - datetime.now()).total_seconds()
+            # Add interval in order to get next download time.
+            next_start_time = next_start_time + timedelta(minutes=interval_min)
 
 
 if __name__ == "__main__":
