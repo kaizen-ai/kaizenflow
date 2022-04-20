@@ -24,6 +24,7 @@ import pandas as pd
 
 import core.config.config_ as cconconf
 import core.finance.resampling as cfinresa
+import core.finance.returns as cfinretu
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
@@ -367,3 +368,60 @@ ada_ex = rets_df.loc[["binance::ADA_USDT"]].reset_index("full_symbol")[
 ]
 display(ada_ex.corr())
 ada_ex.plot()
+
+
+# %% [markdown]
+# ## New proposal
+
+# %%
+def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
+    result = []
+    full_symbol_list = df["full_symbol"].unique()
+    for cc in full_symbol_list:
+        # DataFrame with a specific `full_symbol`
+        cc_df = df[df["full_symbol"] == cc]
+        # Resample OHLCV data inside `full_symbol`-specific DataFrame.
+        resampled_cc_df = cfinresa.resample_ohlcv_bars(
+            cc_df, rule=resampling_freq
+        )
+        # Attach VWAP, TWAP.
+        resampled_cc_df[["vwap", "twap"]] = cfinresa.compute_twap_vwap(
+            cc_df, resampling_freq, price_col="close", volume_col="volume"
+        )
+        # Calculate returns.
+        resampled_cc_df["vwap_rets"] = cfinretu.compute_ret_0(
+            resampled_cc_df[["vwap"]], "pct_change"
+        )
+        resampled_cc_df["twap_rets"] = cfinretu.compute_ret_0(
+            resampled_cc_df[["twap"]], "pct_change"
+        )
+        resampled_cc_df["log_rets"] = cfinretu.compute_ret_0(
+            resampled_cc_df[["close"]], "log_rets"
+        )
+        # Add a column with `full_symbol` indication.
+        resampled_cc_df["full_symbol"] = cc
+        # Omit unnecesary columns.
+        resampled_cc_df = resampled_cc_df.drop(columns=["open", "high", "low"])
+        result.append(resampled_cc_df)
+    final_df = pd.concat(result)
+    return final_df
+
+
+# %%
+df = resample_calculate_twap_vwap_and_returns(data, "5T")
+df.head(3)
+
+# %%
+# The only missing part here is to place timestamps at the end of the bar.
+# Right now I have only this hardcoded solution:
+new_df = df.shift(5, freq="T")
+
+# %% run_control={"marked": false}
+# Stats and vizualisation to check the outcomes.
+ada_ex = new_df[new_df["full_symbol"] == "binance::ADA_USDT"][
+    ["log_rets", "vwap_rets", "twap_rets"]
+]
+display(ada_ex.corr())
+ada_ex.plot()
+
+# %%
