@@ -250,6 +250,44 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    def test_read_data8(self) -> None:
+        # Generate Parquet test data and initialize client.
+        full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        resample_1min = True
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
+            self, full_symbols, resample_1min
+        )
+        # Compare the expected values.
+        expected_length = 8640
+        columns = ["full_symbol", "close"]
+        expected_column_names = ["full_symbol", "close"]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
+        columns=full_symbol,close
+        shape=(8640, 2)
+                                        full_symbol  close
+        timestamp                                          
+        2021-12-30 00:00:00+00:00  binance::BTC_USDT      0
+        2021-12-30 00:00:00+00:00   kucoin::FIL_USDT      0
+        2021-12-30 00:01:00+00:00  binance::BTC_USDT      1
+        ...
+        2022-01-01 23:58:00+00:00   kucoin::FIL_USDT   4318
+        2022-01-01 23:59:00+00:00  binance::BTC_USDT   4319
+        2022-01-01 23:59:00+00:00   kucoin::FIL_USDT   4319
+        """
+        self._test_read_data8(
+            im_client,
+            full_symbols,
+            columns,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:

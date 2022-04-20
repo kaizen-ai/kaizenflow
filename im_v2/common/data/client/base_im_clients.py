@@ -130,6 +130,7 @@ class ImClient(abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
+        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -143,6 +144,7 @@ class ImClient(abc.ABC):
             - `None` means end at the end of the available data
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
+        :param columns: columns to return. `None` means all available
         :return: combined data for all the requested symbols
         """
         _LOG.debug(
@@ -167,6 +169,7 @@ class ImClient(abc.ABC):
             start_ts,
             end_ts,
             full_symbol_col_name=full_symbol_col_name,
+            columns=columns,
             **kwargs,
         )
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
@@ -385,6 +388,7 @@ class ImClient(abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
+        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         ...
@@ -441,6 +445,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
+        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -489,6 +494,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -519,6 +525,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         end_ts: Optional[pd.Timestamp],
         *,
         full_symbol_col_name: Optional[str] = None,
+        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -537,6 +544,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
             start_ts,
             end_ts,
             full_symbol_col_name=full_symbol_col_name,
+            columns=columns,
             **kwargs,
         )
         return df
@@ -547,8 +555,9 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
         full_symbol_col_name: str,
+        *,
+        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         ...

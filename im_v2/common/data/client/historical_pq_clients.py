@@ -113,17 +113,21 @@ class HistoricalPqByTileClient(
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         full_symbol_col_name: str,
+        *,
+        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
         See description in the parent class.
         """
+        print("PQ _read_data_for_multiple_symbols", columns)
         hdbg.dassert_container_type(full_symbols, list, str)
         # Implement logging and add it to kwargs.
         _LOG.debug(
             hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
         )
         kwargs["log_level"] = logging.INFO
+        kwargs["columns"] = columns
         # Get columns and add them to kwargs if they were not specified.
         if "columns" not in kwargs:
             columns = self._get_columns_for_query()

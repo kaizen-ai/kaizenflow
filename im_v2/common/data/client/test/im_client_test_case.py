@@ -159,6 +159,29 @@ class ImClientTestCase(hunitest.TestCase):
         actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
         self.check_df_output(actual_df, *args, **kwargs)
 
+    def _test_read_data8(
+        self,
+        im_client: icdc.ImClient,
+        full_symbols: List[ivcu.FullSymbol],
+        columns: List[str],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Test:
+        - reading data for two or more full symbols
+        - start_ts = end_ts = None
+        - resample_1min = True
+        - keep only specified columns
+        """
+        print("_test_read_data8", columns)
+        start_ts = None
+        end_ts = None
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns=columns
+        )
+        self.check_df_output(actual_df, *args, **kwargs)
+
     # ////////////////////////////////////////////////////////////////////////
 
     def _test_get_start_ts_for_symbol1(
