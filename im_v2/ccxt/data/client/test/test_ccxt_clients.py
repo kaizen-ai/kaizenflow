@@ -1025,11 +1025,164 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
 
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
-    # TODO(Grisha): @Nina add more tests from `ImClientTestCase`.
-
     For all the test methods see description of corresponding private
     method in the parent class.
     """
+    def test_read_data1(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        #
+        expected_length = 1833200
+        expected_column_names = get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2022-02-10 01:19:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(1833200, 6)
+                                         full_symbol     open     high      low    close     volume
+        timestamp                                                                                  
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206
+        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226
+        ...
+        2022-02-10 01:17:00+00:00  binance::BTC_USDT  44182.70  44190.87  44178.75  44189.94  21.68128
+        2022-02-10 01:18:00+00:00  binance::BTC_USDT  44189.94  44189.95  44165.78  44169.70  18.46772
+        2022-02-10 01:19:00+00:00  binance::BTC_USDT  44169.70  44169.70  44130.51  44151.49  17.63726
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data1(
+            im_client,
+            full_symbol,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data2(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 3667229
+        expected_column_names = get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2022-02-10 15:09:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(3667229, 6)
+                                         full_symbol         open         high          low        close     volume
+        timestamp                                                                                                  
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        ...
+        2022-02-10 15:07:00+00:00  kucoin::ETH_USDT  3216.48  3226.29  3216.01  3217.94  424.741192
+        2022-02-10 15:08:00+00:00  kucoin::ETH_USDT  3217.94  3230.00  3217.94  3220.58  469.850280
+        2022-02-10 15:09:00+00:00  kucoin::ETH_USDT  3220.59  3228.13  3220.59  3226.63  106.590614
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data2(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data3(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
+        #
+        expected_length = 3667228
+        expected_column_names = get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:01:00+00:00, 2022-02-10 15:09:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(3667228, 6)
+                                         full_symbol         open         high          low        close     volume
+        timestamp                                                                                                  
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
+        ...
+        2022-02-10 15:07:00+00:00  kucoin::ETH_USDT  3216.48  3226.29  3216.01  3217.94  424.741192
+        2022-02-10 15:08:00+00:00  kucoin::ETH_USDT  3217.94  3230.00  3217.94  3220.58  469.850280
+        2022-02-10 15:09:00+00:00  kucoin::ETH_USDT  3220.59  3228.13  3220.59  3226.63  106.590614
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data3(
+            im_client,
+            full_symbols,
+            start_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data4(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
+        #
+        expected_length = 9
+        expected_column_names = get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2018-08-17 00:04:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(9, 6)
+                                         full_symbol         open         high          low        close     volume
+        timestamp                                                                                                  
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        ...
+        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
+        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
+        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
+                """
+        # pylint: enable=line-too-long
+        self._test_read_data4(
+            im_client,
+            full_symbols,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
 
     @pytest.mark.skipif(
         hsystem.is_inside_ci(),
@@ -1077,6 +1230,74 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
+
+    def test_read_data6(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbol = "unsupported_exchange::unsupported_currency"
+        self._test_read_data6(im_client, full_symbol)
+
+    def test_read_data7(self) -> None:
+        resample_1min = False
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 3298382
+        expected_column_names = get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2022-02-10 15:09:00+00:00]
+        columns=full_symbol,open,high,low,close,volume
+        shape=(3298382, 6)
+                                         full_symbol         open         high          low        close     volume
+        timestamp                                                                                                  
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        ...
+        2022-02-10 15:07:00+00:00  kucoin::ETH_USDT  3216.48  3226.29  3216.01  3217.94  424.741192
+        2022-02-10 15:08:00+00:00  kucoin::ETH_USDT  3217.94  3230.00  3217.94  3220.58  469.850280
+        2022-02-10 15:09:00+00:00  kucoin::ETH_USDT  3220.59  3228.13  3220.59  3226.63  106.590614
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            im_client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    # ////////////////////////////////////////////////////////////////////////
+
+    def test_get_start_ts_for_symbol1(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
+        self._test_get_start_ts_for_symbol1(
+            im_client, full_symbol, expected_start_ts
+        )
+
+    def test_get_end_ts_for_symbol1(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        expected_end_ts = pd.to_datetime("2022-02-10 01:19:00", utc=True)
+        self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
     # ////////////////////////////////////////////////////////////////////////
 
