@@ -77,16 +77,21 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
         full_symbol_col_name: str,
+        *,
+        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
         See the parent class for description.
         """
+        data = self._df
+        if columns is not None:
+            # Keep only specified columns.
+            data = data[columns]
         # Filter by full symbols.
-        full_symbols_mask = self._df[full_symbol_col_name].isin(full_symbols)
-        data = self._df[full_symbols_mask]
+        full_symbols_mask = data[full_symbol_col_name].isin(full_symbols)
+        data = data[full_symbols_mask]
         # Filter data by specified timestamps.
         if start_ts:
             data = data.loc[data.index >= start_ts]

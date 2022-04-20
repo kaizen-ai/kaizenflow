@@ -209,6 +209,44 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
     # generated for these tests should alternate every 5 rows and does not
     # contain any data gaps. Thus, resampling cannot be tested properly.
 
+
+    def test_read_data8(self) -> None:
+        # Initialize client.
+        im_client = imvcdcdfimce.get_DataFrameImClient_example1()
+        # Set expected values.
+        expected_length = 80
+        columns = ["full_symbol", "close", "volume"]
+        expected_column_names = columns
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2000-01-01 14:31:00+00:00, 2000-01-01 15:10:00+00:00]
+        columns=full_symbol,close,volume
+        shape=(80, 3)
+                                        full_symbol  close  volume
+        timestamp                                                  
+        2000-01-01 14:31:00+00:00  binance::ADA_USDT  101.0       0
+        2000-01-01 14:31:00+00:00  binance::BTC_USDT  101.0       0
+        2000-01-01 14:32:00+00:00  binance::ADA_USDT  101.0       1
+        ...
+        2000-01-01 15:09:00+00:00  binance::BTC_USDT  100.0      38
+        2000-01-01 15:10:00+00:00  binance::ADA_USDT  100.0      39
+        2000-01-01 15:10:00+00:00  binance::BTC_USDT  100.0      39
+        """
+        # Run test.
+        full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
+        self._test_read_data8(
+            im_client,
+            full_symbols,
+            columns,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:

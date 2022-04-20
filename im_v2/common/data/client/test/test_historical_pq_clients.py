@@ -260,7 +260,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Compare the expected values.
         expected_length = 8640
         columns = ["full_symbol", "close"]
-        expected_column_names = ["full_symbol", "close"]
+        expected_column_names = columns
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         }
