@@ -11,6 +11,7 @@ import gzip
 import json
 import logging
 import os
+import re
 import shutil
 import time
 import uuid
@@ -582,8 +583,18 @@ def from_json(file_name: str) -> dict:
     if not file_name.endswith(".json"):
         _LOG.warning("The file '%s' doesn't end in .json", file_name)
     hdbg.dassert_file_exists(file_name)
-    with open(file_name, "r") as f:
-        data: dict = json.loads(f.read())
+    txt = from_file(file_name)
+    # Remove comments.
+    txt_tmp = []
+    for line in txt.split("\n"):
+        if re.match("^\s*#", line):
+            continue
+        txt_tmp.append(line)
+    txt_tmp = "\n".join(txt_tmp) 
+    _LOG.info("txt_tmp=\n%s", txt_tmp)
+    data = json.loads(txt_tmp)
+    #with open(file_name, "r") as f:
+    #    data: dict = json.loads(f.read())
     return data
 
 
