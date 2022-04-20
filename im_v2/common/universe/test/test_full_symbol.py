@@ -1,3 +1,5 @@
+import pandas as pd
+
 import helpers.hunit_test as hunitest
 import im_v2.common.universe.full_symbol as imvcufusy
 
@@ -58,6 +60,15 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
+    def test8(self) -> None:
+        """
+        Test correct format series.
+        """
+        full_symbol = pd.Series(
+            ["binance::BTC_USDT", "ftx::ETH_USDT", "exchange::symbol"]
+        )
+        imvcufusy.dassert_is_full_symbol_valid(full_symbol)
+
 
 class TestParseFullSymbol(hunitest.TestCase):
     def test1(self) -> None:
@@ -78,6 +89,23 @@ class TestParseFullSymbol(hunitest.TestCase):
         self.assert_equal(exchange, "kucoin")
         self.assert_equal(symbol, "XPR_USDT")
 
+    def test3(self) -> None:
+        """
+        Test split full symbol column into exchange and symbol columns.
+        """
+        full_symbol = pd.Series(
+            ["binance::BTC_USDT", "ftx::ETH_USDT", "exchange::symbol"]
+        )
+        exchange, symbol = imvcufusy.parse_full_symbol(full_symbol)
+        self.assert_equal(
+            exchange.to_string(),
+            pd.Series(["binance", "ftx", "exchange"]).to_string(),
+        )
+        self.assert_equal(
+            symbol.to_string(),
+            pd.Series(["BTC_USDT", "ETH_USDT", "symbol"]).to_string(),
+        )
+
 
 class TestBuildFullSymbol(hunitest.TestCase):
     def test1(self) -> None:
@@ -97,3 +125,15 @@ class TestBuildFullSymbol(hunitest.TestCase):
         symbol = "symbol"
         full_symbol = imvcufusy.build_full_symbol(exchange, symbol)
         self.assert_equal(full_symbol, "exchange::symbol")
+
+    def test3(self) -> None:
+        """
+        Test construct full symbol column from exchange and symbol columns.
+        """
+        exchange = pd.Series(["binance", "ftx", "exchange"])
+        symbol = pd.Series(["BTC_USDT", "ETH_USDT", "symbol"])
+        actual = imvcufusy.build_full_symbol(exchange, symbol)
+        expected = pd.Series(
+            ["binance::BTC_USDT", "ftx::ETH_USDT", "exchange::symbol"]
+        )
+        self.assert_equal(actual.to_string(), expected.to_string())
