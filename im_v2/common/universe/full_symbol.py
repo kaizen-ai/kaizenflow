@@ -6,7 +6,7 @@ import im_v2.common.universe.full_symbol as imvcufusy
 
 import logging
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import helpers.hdbg as hdbg
 
@@ -43,6 +43,7 @@ def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
     )
 
 
+# TODO(Dan): Research if this can be done in a vectorized approach to a `pd.Series`.
 def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
     """
     Split a full_symbol into a tuple of exchange and symbol.
@@ -54,18 +55,25 @@ def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
     return exchange, symbol
 
 
-def build_full_symbol(exchange: str, symbol: str) -> FullSymbol:
+def build_full_symbol(
+    exchange: Union[str, pd.Series], symbol: Union[str, pd.Series]
+) -> Union[FullSymbol, pd.Series]:
     """
     Combine exchange and symbol in `FullSymbol`.
     """
-    hdbg.dassert_isinstance(exchange, str)
-    hdbg.dassert_ne(exchange, "")
-    #
-    hdbg.dassert_isinstance(symbol, str)
-    hdbg.dassert_ne(symbol, "")
-    #
-    full_symbol = f"{exchange}::{symbol}"
-    dassert_is_full_symbol_valid(full_symbol)
+    if isinstance(exchange, pd.Series) and isinstance(symbol, pd.Series):
+        # TODO(Dan): Think of a more appropriate approach.
+        full_symbol = exchange + "::" + symbol
+        # TODO(Dan): Try to find a vectorized approach for asserting column values.
+        full_symbol = full_symbol.apply(lambda x: dassert_is_full_symbol_valid(x))
+    elif isinstance(exchange, str) and isinstance(symbol, str):
+        hdbg.dassert_ne(exchange, "")
+        hdbg.dassert_ne(symbol, "")
+        #
+        full_symbol = f"{exchange}::{symbol}"
+        dassert_is_full_symbol_valid(full_symbol)
+    else:
+        raise TypeError("Both inputs should be either strings or `pd.Series`")
     return full_symbol
 
 
