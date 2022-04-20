@@ -47,7 +47,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         Test incorrect format: not string.
         """
         full_symbol = 123
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
     def test7(self) -> None:
@@ -79,7 +79,7 @@ class TestParseFullSymbol(hunitest.TestCase):
         self.assert_equal(symbol, "XPR_USDT")
 
 
-class TestConstructFullSymbol(hunitest.TestCase):
+class TestBuildFullSymbol(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test construct full symbol from exchange, symbol.
