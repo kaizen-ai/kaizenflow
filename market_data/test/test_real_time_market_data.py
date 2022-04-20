@@ -1,9 +1,11 @@
 import logging
-from typing import Optional, List
+from typing import Any, Callable, Optional, List
 
 import pandas as pd
 
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
+import helpers.hpandas as hpandas
 
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.common.db.db_utils as imvcddbut
@@ -17,7 +19,40 @@ import im_v2.talos.db.utils as imvtadbut
 _LOG = logging.getLogger(__name__)
 
 
-class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, mdtmdtca.MarketData_get_data_TestCase):
+# TODO(gp): Factor out this test in a ReplayedMarketData_TestCase
+def _check_get_data(
+    self_: Any,
+    func: Callable,
+    expected_df_as_str: str,
+    sql_talos_client: mdrtmda.RealTimeMarketData2,
+) -> mdrtmda.RealTimeMarketData2:
+    """
+    - Build `RealTimeMarketData2`
+    - Execute the function `get_data*` in `func`
+    - Check actual output against expected.
+    """
+    asset_ids = [3450]
+    columns: List[str] = []
+    market_data, _ = mdmadaex.get_RealTimeMarketData2(
+        sql_talos_client, asset_ids=asset_ids, columns=columns
+    )
+    # Execute function under test.
+    actual_df = func(market_data)
+    actual_df_as_str = hpandas.df_to_str(
+        actual_df, print_shape_info=True, tag="df"
+    )
+    _LOG.info("-> %s", actual_df_as_str)
+    self_.assert_equal(
+        actual_df_as_str,
+        expected_df_as_str,
+        dedent=True,
+        fuzzy_match=True,
+    )
+    return market_data
+
+
+class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, 
+    hunitest.TestCase):
     def setup_sql_talos_client(
         self,
         resample_1min: Optional[bool] = True,
@@ -37,80 +72,81 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, mdtmdtca.MarketData_get_
 
     def check_last_end_time(
         self,
+        market_data: mdrtmda.RealTimeMarketData2,
+        expected_last_end_time: pd.Timestamp,
+        expected_is_online: bool,
     ) -> None:
         """
-        Check output of `_get_last_end_time()` and `is_online()`.
+        Check output of `get_last_end_time()` and `is_online()`.
         """
         #
-        sql_talos_client = self.setup_sql_talos_client()
-        market_data, _ =  mdmadaex.get_RealTimeMarketData2(sql_talos_client)
         last_end_time = market_data.get_last_end_time()
-
         _LOG.info("-> last_end_time=%s", last_end_time)
-        expected_last_end_time = ""
         self.assertEqual(last_end_time, expected_last_end_time)
         #
         is_online = market_data.is_online()
-        expected_is_online = True
         _LOG.info("-> is_online=%s", is_online)
         self.assertEqual(is_online, expected_is_online)
         
-    def test_is_online1(self) -> None:
-        # Prepare inputs.
-        sql_talos_client = self.setup_sql_talos_client()
-        market_data, _ = mdmadaex.get_RealTimeMarketData2(sql_talos_client)
-        # Run.
-        actual = market_data.is_online()
-        self.assertTrue(actual)
-
-    def test_get_data_for_last_period1(self) -> None:
-        # Prepare inputs.
-        asset_ids = [1467591036]
-        columns: List[str] = []
-        sql_talos_client = self.setup_sql_talos_client()
-        market_data, _ = mdmadaex.get_RealTimeMarketData2(
-            sql_talos_client, asset_ids=asset_ids, columns=columns
+    def test_get_data1(self) -> None:
+        """
+        - Set the current time to 9:35
+        - Get the last 5 mins of data
+        - The returned data should be in [9:30, 9:35]
+        """
+        timedelta = pd.Timedelta("5T")
+        func = lambda market_data: market_data.get_data_for_last_period(timedelta)
+        # pylint: disable=line-too-long
+        expected_df_as_str = """
+        # df=
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(5, 4)
+                                   asset_id     last_price             start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:31:00-05:00      1000    999.874540   2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
+        2000-01-01 09:32:00-05:00      1000    1000.325254  2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
+        2000-01-01 09:33:00-05:00      1000    1000.557248  2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
+        2000-01-01 09:34:00-05:00      1000    1000.655907  2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
+        2000-01-01 09:35:00-05:00      1000    1000.311925  2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
+        # pylint: enable=line-too-long
+        client = self.setup_sql_talos_client()
+        market_data = _check_get_data(
+            self, func, expected_df_as_str, client
         )
-        timedelta = pd.Timedelta("1D")
-        # Run.
-        self._test_get_data_for_last_period(market_data, timedelta)
+        #
+        expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        expected_is_online = True
+        self.check_last_end_time(
+            market_data, expected_last_end_time, expected_is_online
+        )
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_get_data_at_timestamp1(self) -> None:
-        # Prepare inputs.
-        asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
-        market_data = mdmadaex.get_RealTimeMarketData2(
-            asset_ids, columns
-        )
-        ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
-        #
-        expected_length = 2
-        expected_column_names = self.get_expected_column_names()
-        expected_column_unique_values = {
-            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
-        }
-        # pylint: disable=line-too-long
-        exp_df_as_str = r"""
-        # df=
-        index=[2000-01-01 09:35:00-05:00, 2000-01-01 09:35:00-05:00]
-        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
-        shape=(2, 9)
-                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
-        end_ts
-        2000-01-01 09:35:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
-        2000-01-01 09:35:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0       4       1.0 2000-01-01 09:34:00-05:00
         """
-        # pylint: enable=line-too-long
-        # Run.
-        self._test_get_data_at_timestamp1(
-            market_data,
-            ts,
-            asset_ids,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            exp_df_as_str,
+        - Current time is 9:45
+        - Ask data for 9:35
+        - The returned data is for 9:35
+        """
+        ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        ts_col_name = "start_datetime"
+        asset_ids = None
+        func = lambda market_data: market_data.get_data_at_timestamp(
+            ts, ts_col_name, asset_ids
         )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:36:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(1, 4)
+                                   asset_id  last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:36:00-05:00      1000   999.96792  2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""
+        # pylint: enable=line-too-long
+        client = self.setup_sql_talos_client()
+        _check_get_data(self, func, expected_df_as_str, client)
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
 
     @staticmethod
@@ -118,23 +154,30 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, mdtmdtca.MarketData_get_
         """
         Create a test Talos OHLCV dataframe.
         """
-        columns = [
-            "asset_id",
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "feature1",
-            "start_ts",
-        ]
-        index = [pd.Timestamp("2000-01-01T09:36:00-05:00"),  pd.Timestamp("2000-01-01T09:36:00-05:00")]
-        data = [[1467591036,  "binance::BTC_USDT", 100, 101, 99, 100.0, 5, -1.0, pd.Timestamp("2000-01-01T09:35:00-05:00")],
-                [3303714233,  "binance::ADA_USDT", 100, 101, 99, 100.0, 6, -1.0, pd.Timestamp("2000-01-01T09:36:00-05:00")]
-        ]
-        test_data = pd.DataFrame(data, index=index, columns=columns)
-        test_data.index.name = "end_ts"
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "ticks",
+                "currency_pair",
+                "exchange_id",
+                "end_download_timestamp",
+                "knowledge_timestamp",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [3450, 1648138860000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")]
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
         return test_data
 
     def _create_test_table(self) -> None:
