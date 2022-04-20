@@ -123,7 +123,8 @@ def compute_currency_pair_data_stats(currency_pair_list: list) -> pd.DataFrame:
 # %%
 def read_exchange_df(paths: list) -> pd.DataFrame:
     """
-    Read csv files from `s3://cryptokaizen-data2/historical/ and convert it to a DataFrame.
+    Read csv files from `s3://cryptokaizen-data2/historical/ and convert it to
+    a DataFrame.
     """
     all_data = []
     for currency_pair, path in paths:
@@ -164,7 +165,8 @@ _LOG.info(data.shape)
 data.head(3)
 
 # %%
-# TODO(Nina): @all Refactor functions from `research_amp.cc.statistics` to properly work with `ImClient` data.
+# TODO(Nina): @all Refactor functions from `research_amp.cc.statistics` to properly work with
+# `ImClient` data.
 compute_start_end_stats = ramccsta.compute_start_end_stats(data, config)
 compute_start_end_stats
 
@@ -253,7 +255,7 @@ dfb
 
 # %%
 # See the stats for buckets `cryptokaizen-data2/historical/` and `cryptokaizen-data/daily_staged`,
-# we decided not to include them in the analysis at the moment. Feel free to remove if it is not 
+# we decided not to include them in the analysis at the moment. Feel free to remove if it is not
 # needed.
 
 # %% [markdown]
