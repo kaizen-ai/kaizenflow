@@ -108,6 +108,7 @@ class ImClientMarketData(mdabmada.MarketData):
             full_symbols,
             start_ts,
             end_ts,
+            columns=self._columns,
         )
         # Add `asset_id` column.
         _LOG.debug("asset_id_col=%s", self._asset_id_col)
@@ -133,6 +134,9 @@ class ImClientMarketData(mdabmada.MarketData):
                 transformed_asset_ids,
             )
         hdbg.dassert_in(self._asset_id_col, market_data.columns)
+        # TODO(Grisha): probably this is a bug, since we need additional filtering.
+        # E.g., we cannot filter out `asset_id` column by just propagating `columns`
+        # to `ImClient`, because `ImClient` does not have this column yet.
         if self._columns:
             # Select only specified columns.
             hdbg.dassert_is_subset(self._columns, market_data.columns)

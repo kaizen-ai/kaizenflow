@@ -879,6 +879,56 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             exp_df_as_str,
         )
 
+
+    def test_get_data_for_interval5_2(self) -> None:
+        """
+        Same as `test_get_data_for_interval5` but with columns filtering.
+        """
+        # Prepare inputs.
+        asset_ids = [3303714233, 1467591036]
+        columns: List[str] = ["full_symbol", "close", "volume"]
+        column_remap = None
+        market_data = mdata.get_DataFrameImClientMarketData_example1(
+            asset_ids, columns, column_remap
+        )
+        start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        #
+        expected_length = 12
+        expected_column_names = columns
+        expected_column_unique_values = {
+            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:41:00-05:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,feature1,start_ts
+        shape=(12, 9)
+                                     asset_id        full_symbol  open  high  low  close  volume  feature1                  start_ts
+        end_ts
+        2000-01-01 09:36:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
+        2000-01-01 09:36:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       5      -1.0 2000-01-01 09:35:00-05:00
+        2000-01-01 09:37:00-05:00  1467591036  binance::BTC_USDT   100   101   99  100.0       6      -1.0 2000-01-01 09:36:00-05:00
+        ...
+        2000-01-01 09:40:00-05:00  3303714233  binance::ADA_USDT   100   101   99  100.0       9      -1.0 2000-01-01 09:39:00-05:00
+        2000-01-01 09:41:00-05:00  1467591036  binance::BTC_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        2000-01-01 09:41:00-05:00  3303714233  binance::ADA_USDT   100   101   99  101.0      10       1.0 2000-01-01 09:40:00-05:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_for_interval5(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
+
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def test_get_twap_price1(self) -> None:

@@ -86,7 +86,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         See the parent class for description.
         """
         data = self._df
-        if columns is not None:
+        if columns:
             # Keep only specified columns.
             data = data[columns]
         # Filter by full symbols.

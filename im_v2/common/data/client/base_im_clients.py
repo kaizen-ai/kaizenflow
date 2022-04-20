@@ -188,6 +188,14 @@ class ImClient(abc.ABC):
         #
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
+        #
+        if columns:
+            # TODO(Grisha): introduce `filter_data_mode`.
+            # Check that columns were filtered correctly.
+            hdbg.dassert_set_eq(
+                columns,
+                df.columns.to_list(),
+            )
         # Rename index.
         df.index.name = "timestamp"
         # Normalize data for each symbol.

@@ -273,6 +273,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             **kwargs,
         )
 
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_get_twap_price1(
