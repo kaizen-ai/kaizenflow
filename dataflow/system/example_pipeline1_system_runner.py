@@ -12,10 +12,8 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
-import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 import dataflow.system.system_runner as dtfsysyrun
 import market_data as mdata
-import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,9 +24,11 @@ _LOG = logging.getLogger(__name__)
 class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
     """
     Create a system with:
+
     - a ReplayedMarketData
     - an Example1 DAG
     """
+
     def __init__(self, asset_ids: List[int], event_loop=None):
         self._asset_ids = asset_ids
         self._event_loop = event_loop
@@ -81,9 +81,9 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
         config["meta", "dag_builder"] = dag_builder
         return config
 
-    def get_dag_runner(config: cconfig.Config,
-                       market_data
-                       ) -> dtfcore.AbstractDagRunner:
+    def get_dag_runner(
+        config: cconfig.Config, market_data
+    ) -> dtfcore.AbstractDagRunner:
         """
         Build a DAG runner from a config.
         """
@@ -97,6 +97,7 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
             dag.force_freeing_nodes = True
         # Add the data source node.
         dag.insert_at_head(stage, node)
+
 
 # #############################################################################
 

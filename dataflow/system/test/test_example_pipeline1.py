@@ -35,78 +35,21 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
         """
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [101]
-            # TODO(gp): @Danya -> system
             system = dtfsepsyru.Example1_ForecastSystem(
                 asset_ids, event_loop,
             )
             #
-            market_data = system.get_market_data(data)
-            # TODO(gp): @Danya this is the union of get_dag() and get_dag_runner().
-            
-            # TODO(gp): This is exactly get_dag() so we can replace the code.
-            config = cconfig.Config()
-            # Save the `DagBuilder` and the `DagConfig` in the config.
-            dag_builder = dtfpexexpi.Example1_DagBuilder()
-            dag_config = dag_builder.get_config_template()
-            config["DAG"] = dag_config
-            config["meta", "dag_builder"] = dag_builder
-
-            # TODO(gp): This is get_dag_runner(). Move it to the
-            # Example1_ForecastSystem.
-            # ############# START OF DAG RUNNER ##################
-            # Create RealTimeDataSource.
-
-            stage = "read_data"
-            asset_id_col = "asset_id"
-            # The DAG works on multi-index dataframe containing multiple
-            # features for multiple assets.
-            multiindex_output = True
-            # How much history is needed for the DAG to compute.
-            timedelta = pd.Timedelta("20T")
-            node = dtfsysonod.RealTimeDataSource(
-                stage,
-                market_data,
-                timedelta,
-                asset_id_col,
-                #ts_col_name,
-                multiindex_output,
-                #col_names_to_remove=col_names_to_remove,
+            config = system.get_dag_config(
+                "feature1",
+                "vwap.ret_0.vol",
+                "vwap.ret_0",
+                pd.Timedelta("7D"),
+                "asset_id",
+                spread_col=None,
+                log_dir=None
             )
-            # Build the DAG.
-            dag_builder = config["meta", "dag_builder"]
-            dag = dag_builder.get_dag(config["DAG"])
-            # This is for debugging. It saves the output of each node in a `csv` file.
-            # dag.set_debug_mode("df_as_csv", False, "crypto_forever")
-            if False:
-                dag.force_freeing_nodes = True
-            # Add the data source node.
-            dag.insert_at_head(stage, node)
-
-            # TODO(gp): This is the bar alignment. Horrible name and also it should be
-            # a property of the DAG instead of the DagRunner.
-            #sleep_interval_in_secs = 60
-            sleep_interval_in_secs = 5 * 60
-
-            # Set up the event loop.
-            get_wall_clock_time = market_data.get_wall_clock_time
-
-            # time_out_in_secs = how long the system has to run.
-            # E.g., 10 * 60 it will run for 2 iterations of 5 mins and then stops.
-            execute_rt_loop_kwargs = {
-                "get_wall_clock_time": get_wall_clock_time,
-                "sleep_interval_in_secs": sleep_interval_in_secs,
-                "time_out_in_secs": real_time_loop_time_out_in_secs,
-            }
-            dag_runner_kwargs = {
-                "config": config,
-                "dag_builder": dag,
-                "fit_state": None,
-                "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-                "dst_dir": None,
-            }
-            dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
-
-            # Run certain coroutines in asyncio.
+            market_data = system.get_market_data(data)
+            dag_runner = system.get_dag_runner(config, market_data, 60*5, real_time_loop_time_out_in_secs = None)
             coroutines = [dag_runner.predict()]
             #
             result_bundles = hasynci.run(
@@ -122,7 +65,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             data, real_time_loop_time_out_in_secs,
         )
         # TODO(gp): PP freeze the output.
-        #self.check_string(actual)
+        # self.check_string(actual)
 
 
 # ######################################################
