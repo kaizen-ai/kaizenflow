@@ -14,8 +14,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import im_v2.common.data.client.full_symbol as imvcdcfusy
-import im_v2.common.universe as icunv
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -94,7 +93,7 @@ class ImClient(abc.ABC):
     # TODO(gp): Why static?
     @staticmethod
     @abc.abstractmethod
-    def get_universe() -> List[imvcdcfusy.FullSymbol]:
+    def get_universe() -> List[ivcu.FullSymbol]:
         """
         Return the entire universe of valid full symbols.
         """
@@ -109,7 +108,7 @@ class ImClient(abc.ABC):
 
     @staticmethod
     def get_asset_ids_from_full_symbols(
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
     ) -> List[int]:
         """
         Convert full symbols into asset ids.
@@ -117,16 +116,16 @@ class ImClient(abc.ABC):
         :param full_symbols: assets as full symbols
         :return: assets as numerical ids
         """
-        hdbg.dassert_container_type(full_symbols, list, imvcdcfusy.FullSymbol)
+        hdbg.dassert_container_type(full_symbols, list, ivcu.FullSymbol)
         numerical_asset_id = [
-            icunv.string_to_numerical_id(full_symbol)
+            ivcu.string_to_numerical_id(full_symbol)
             for full_symbol in full_symbols
         ]
         return numerical_asset_id
 
     def read_data(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -134,7 +133,7 @@ class ImClient(abc.ABC):
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
-        Read data in `[start_ts, end_ts]` for `imvcdcfusy.FullSymbol` symbols.
+        Read data in `[start_ts, end_ts]` for `ivcu.FullSymbol` symbols.
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
@@ -152,7 +151,7 @@ class ImClient(abc.ABC):
             )
         )
         # Verify the requested parameters.
-        imvcdcfusy.dassert_valid_full_symbols(full_symbols)
+        ivcu.dassert_valid_full_symbols(full_symbols)
         #
         left_close = True
         right_close = True
@@ -176,7 +175,7 @@ class ImClient(abc.ABC):
         #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
-        imvcdcfusy.dassert_valid_full_symbols(loaded_full_symbols)
+        ivcu.dassert_valid_full_symbols(loaded_full_symbols)
         hdbg.dassert_set_eq(
             full_symbols,
             loaded_full_symbols,
@@ -226,7 +225,7 @@ class ImClient(abc.ABC):
     # /////////////////////////////////////////////////////////////////////////
 
     def get_start_ts_for_symbol(
-        self, full_symbol: imvcdcfusy.FullSymbol
+        self, full_symbol: ivcu.FullSymbol
     ) -> pd.Timestamp:
         """
         Return the earliest timestamp available for a given `full_symbol`.
@@ -238,9 +237,7 @@ class ImClient(abc.ABC):
         mode = "start"
         return self._get_start_end_ts_for_symbol(full_symbol, mode)
 
-    def get_end_ts_for_symbol(
-        self, full_symbol: imvcdcfusy.FullSymbol
-    ) -> pd.Timestamp:
+    def get_end_ts_for_symbol(self, full_symbol: ivcu.FullSymbol) -> pd.Timestamp:
         """
         Same as `get_start_ts_for_symbol()`.
         """
@@ -249,7 +246,7 @@ class ImClient(abc.ABC):
 
     def get_full_symbols_from_asset_ids(
         self, asset_ids: List[int]
-    ) -> List[imvcdcfusy.FullSymbol]:
+    ) -> List[ivcu.FullSymbol]:
         """
         Convert asset ids into full symbols.
 
@@ -383,7 +380,7 @@ class ImClient(abc.ABC):
     @abc.abstractmethod
     def _read_data(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -400,12 +397,12 @@ class ImClient(abc.ABC):
         full_symbol_universe = self.get_universe()
         # Build the mapping.
         asset_id_to_full_symbol_mapping = (
-            icunv.build_numerical_to_string_id_mapping(full_symbol_universe)
+            ivcu.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
         return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
 
     def _get_start_end_ts_for_symbol(
-        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+        self, full_symbol: ivcu.FullSymbol, mode: str
     ) -> pd.Timestamp:
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
@@ -439,7 +436,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
 
     def _read_data(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -489,7 +486,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
     @abc.abstractmethod
     def _read_data_for_one_symbol(
         self,
-        full_symbol: imvcdcfusy.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **kwargs: Any,
@@ -517,7 +514,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 
     def _read_data(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -547,7 +544,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
     @abc.abstractmethod
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
