@@ -260,7 +260,7 @@ def get_CcxtCsvImClientMarketData_example1(
     column_remap: Optional[Dict[str, str]],
 ) -> mdimcmada.ImClientMarketData:
     """
-    Build a `ImClientMarketData` backed with `CCXT` csv data.
+    Build a `ImClientMarketData` backed with `CCXT` CSV data.
     """
     resample_1min = True
     im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
