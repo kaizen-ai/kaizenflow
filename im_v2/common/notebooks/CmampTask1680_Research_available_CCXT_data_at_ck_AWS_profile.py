@@ -29,7 +29,7 @@ import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import im_v2.ccxt.data.client as imvcdcc
+import im_v2.ccxt.data.client as icdcl
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -78,11 +78,18 @@ print(config)
 # # Functions
 
 # %%
-# TODO(*): Use functions from `research_amp.cc.statistics` instead.
-def compute_currency_pair_data_stats(currency_pair_list: list) -> pd.DataFrame:
+# TODO(Nina): @all Use functions from `research_amp.cc.statistics` instead.
+def compute_stats_per_currency_pair(currency_pair_list: list) -> pd.DataFrame:
     """
-    Compute statistics for each currency pair: days_availiable, n_data_points,
-    coverage.
+    For each currency pair in the list compute stats that include:
+    - minimum timestamp 
+    - maximum timestamp
+    - the number of data points
+    - days of data available
+    - coverage
+    - average data points per day
+    
+    :param currency_pair_list: list of currency pairs to compute stats for.
     """
     res = {}
     for currency_pair in currency_pair_list:
@@ -120,21 +127,6 @@ def compute_currency_pair_data_stats(currency_pair_list: list) -> pd.DataFrame:
     return df_res
 
 
-# %%
-def read_exchange_df(paths: list) -> pd.DataFrame:
-    """
-    Read csv files from `s3://cryptokaizen-data2/historical/ and convert it to
-    a DataFrame.
-    """
-    all_data = []
-    for currency_pair, path in paths:
-        data = hpandas.read_csv_to_df(path)
-        data["currency_pair"] = currency_pair
-        all_data.append(data)
-    df = pd.concat(all_data)
-    return df
-
-
 # %% [markdown]
 # # Load CCXT at cryptokaizen-data/historical/
 
@@ -144,12 +136,13 @@ def read_exchange_df(paths: list) -> pd.DataFrame:
 # %%
 # TODO(Nina): @all Usage of the client is very slow due to CMTask1726.
 #  Until this issue is fixed, you can speed up the client by a temporary hack by changing
-#  `apply()` usage to vectorized actions: `df['exchange_id'] + "::" + df['currency_pair']
-ccxt_historical_client = imvcdcc.ccxt_clients.CcxtHistoricalPqByTileClient(
-    True,
-    "s3://cryptokaizen-data/historical/",
+#  `apply()` usage to vectorized actions: `df['exchange_id'] + "::" + df['currency_pair'].
+resample_1min = True
+ccxt_historical_client = icdcl.ccxt_clients.CcxtHistoricalPqByTileClient(
+    resample_1min,
+    config["load"]["data_dir"],
     "by_year_month",
-    aws_profile="ck",
+    aws_profile=config["load"]["aws_profile"],
 )
 
 # %%
@@ -171,7 +164,7 @@ compute_start_end_stats = ramccsta.compute_start_end_stats(data, config)
 compute_start_end_stats
 
 # %%
-# All exchange ids in a bucker can be extracted via `listdir()` from `helpers.hs3`.
+# All exchange ids in a bucket can be extracted via `listdir()` from `helpers.hs3`.
 file_path = "s3://cryptokaizen-data/historical/ccxt/latest/binance/"
 kwargs = {"aws_profile": "ck"}
 data = hparque.from_parquet(file_path, **kwargs)
@@ -197,7 +190,7 @@ data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
-dfb = compute_currency_pair_data_stats(currency_pairs)
+dfb = compute_stats_per_currency_pair(currency_pairs)
 dfb["exchange_id"] = "bitfinex"
 dfb["vendor"] = config["data"]["vendor"]
 dfb
@@ -214,7 +207,7 @@ data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
-dfb = compute_currency_pair_data_stats(currency_pairs)
+dfb = compute_stats_per_currency_pair(currency_pairs)
 dfb["exchange_id"] = "ftx"
 dfb["vendor"] = config["data"]["vendor"]
 dfb
@@ -231,7 +224,7 @@ data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
-dfb = compute_currency_pair_data_stats(currency_pairs)
+dfb = compute_stats_per_currency_pair(currency_pairs)
 dfb["exchange_id"] = "gateio"
 dfb["vendor"] = config["data"]["vendor"]
 dfb
@@ -248,7 +241,7 @@ data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
-dfb = compute_currency_pair_data_stats(currency_pairs)
+dfb = compute_stats_per_currency_pair(currency_pairs)
 dfb["exchange_id"] = "kucoin"
 dfb["vendor"] = config["data"]["vendor"]
 dfb
@@ -261,230 +254,244 @@ dfb
 # %% [markdown]
 # # Load CCXT at cryptokaizen-data2/historical/
 
+# %%
+# def read_exchange_df(paths: list) -> pd.DataFrame:
+#     """
+#     Read csv files from `s3://cryptokaizen-data2/historical/ and convert it to
+#     a DataFrame.
+#     """
+#     all_data = []
+#     for currency_pair, path in paths:
+#         data = hpandas.read_csv_to_df(path)
+#         data["currency_pair"] = currency_pair
+#         all_data.append(data)
+#     df = pd.concat(all_data)
+#     return df
+
 # %% [markdown]
 # ## binance stat
 
 # %%
-paths = [
-    (
-        "ADA_USDT",
-        "s3://cryptokaizen-data2/historical/binance/ADA_USDT_20220210-104334.csv",
-    ),
-    (
-        "AVAX_USDT",
-        "s3://cryptokaizen-data2/historical/binance/AVAX_USDT_20220210-105623.csv",
-    ),
-    (
-        "BNB_USDT",
-        "s3://cryptokaizen-data2/historical/binance/BNB_USDT_20220210-110910.csv",
-    ),
-    (
-        "BTC_USDT",
-        "s3://cryptokaizen-data2/historical/binance/BTC_USDT_20220210-112208.csv",
-    ),
-    (
-        "DOGE_USDT",
-        "s3://cryptokaizen-data2/historical/binance/DOGE_USDT_20220210-113502.csv",
-    ),
-    (
-        "EOS_USDT",
-        "s3://cryptokaizen-data2/historical/binance/EOS_USDT_20220210-114748.csv",
-    ),
-    (
-        "ETH_USDT",
-        "s3://cryptokaizen-data2/historical/binance/ETH_USDT_20220210-120031.csv",
-    ),
-    (
-        "LINK_USDT",
-        "s3://cryptokaizen-data2/historical/binance/LINK_USDT_20220210-121311.csv",
-    ),
-    (
-        "SOL_USDT",
-        "s3://cryptokaizen-data2/historical/binance/SOL_USDT_20220210-122551.csv",
-    ),
-]
-data = read_exchange_df(paths)
-data.head()
+# paths = [
+#     (
+#         "ADA_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/ADA_USDT_20220210-104334.csv",
+#     ),
+#     (
+#         "AVAX_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/AVAX_USDT_20220210-105623.csv",
+#     ),
+#     (
+#         "BNB_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/BNB_USDT_20220210-110910.csv",
+#     ),
+#     (
+#         "BTC_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/BTC_USDT_20220210-112208.csv",
+#     ),
+#     (
+#         "DOGE_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/DOGE_USDT_20220210-113502.csv",
+#     ),
+#     (
+#         "EOS_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/EOS_USDT_20220210-114748.csv",
+#     ),
+#     (
+#         "ETH_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/ETH_USDT_20220210-120031.csv",
+#     ),
+#     (
+#         "LINK_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/LINK_USDT_20220210-121311.csv",
+#     ),
+#     (
+#         "SOL_USDT",
+#         "s3://cryptokaizen-data2/historical/binance/SOL_USDT_20220210-122551.csv",
+#     ),
+# ]
+# data = read_exchange_df(paths)
+# data.head()
 
 # %%
-hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
+# hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
 
 # %%
-hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
+# hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
 
 # %% [markdown]
 # ## bitfinex stat
 
 # %%
-paths = [
-    (
-        "ADA_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/ADA_USDT_20220211-161045.csv",
-    ),
-    (
-        "AVAX_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/AVAX_USDT_20220211-161212.csv",
-    ),
-    (
-        "BTC_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/BTC_USDT_20220211-161338.csv",
-    ),
-    (
-        "DOGE_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/DOGE_USDT_20220211-161507.csv",
-    ),
-    (
-        "EOS_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/EOS_USDT_20220211-161634.csv",
-    ),
-    (
-        "ETH_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/ETH_USDT_20220211-161801.csv",
-    ),
-    (
-        "FIL_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/FIL_USDT_20220211-161926.csv",
-    ),
-    (
-        "LINK_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/LINK_USDT_20220211-162053.csv",
-    ),
-    (
-        "SOL_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/SOL_USDT_20220211-162219.csv",
-    ),
-    (
-        "XRP_USDT",
-        "s3://cryptokaizen-data2/historical/bitfinex/XRP_USDT_20220211-162345.csv",
-    ),
-]
-data = read_exchange_df(paths)
-data.head()
+# paths = [
+#     (
+#         "ADA_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/ADA_USDT_20220211-161045.csv",
+#     ),
+#     (
+#         "AVAX_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/AVAX_USDT_20220211-161212.csv",
+#     ),
+#     (
+#         "BTC_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/BTC_USDT_20220211-161338.csv",
+#     ),
+#     (
+#         "DOGE_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/DOGE_USDT_20220211-161507.csv",
+#     ),
+#     (
+#         "EOS_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/EOS_USDT_20220211-161634.csv",
+#     ),
+#     (
+#         "ETH_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/ETH_USDT_20220211-161801.csv",
+#     ),
+#     (
+#         "FIL_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/FIL_USDT_20220211-161926.csv",
+#     ),
+#     (
+#         "LINK_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/LINK_USDT_20220211-162053.csv",
+#     ),
+#     (
+#         "SOL_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/SOL_USDT_20220211-162219.csv",
+#     ),
+#     (
+#         "XRP_USDT",
+#         "s3://cryptokaizen-data2/historical/bitfinex/XRP_USDT_20220211-162345.csv",
+#     ),
+# ]
+# data = read_exchange_df(paths)
+# data.head()
 
 # %%
-hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
+# hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
 
 # %%
-hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
+# hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
 
 # %% [markdown]
 # ## ftx stat
 
 # %%
-paths = [
-    (
-        "BNB_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/BNB_USDT_20220210-104642.csv",
-    ),
-    (
-        "BNB_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/BNB_USDT_20220210-123958.csv",
-    ),
-    (
-        "BTC_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/BTC_USDT_20220210-110047.csv",
-    ),
-    (
-        "BTC_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/BTC_USDT_20220210-125404.csv",
-    ),
-    (
-        "DOGE_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/DOGE_USDT_20220210-111452.csv",
-    ),
-    (
-        "ETH_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/ETH_USDT_20220210-112851.csv",
-    ),
-    (
-        "LINK_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/LINK_USDT_20220210-114240.csv",
-    ),
-    (
-        "SOL_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/SOL_USDT_20220210-115701.csv",
-    ),
-    (
-        "XRP_USDT",
-        "s3://cryptokaizen-data2/historical/ftx/XRP_USDT_20220210-121122.csv",
-    ),
-]
-data = read_exchange_df(paths)
-data.head()
+# paths = [
+#     (
+#         "BNB_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/BNB_USDT_20220210-104642.csv",
+#     ),
+#     (
+#         "BNB_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/BNB_USDT_20220210-123958.csv",
+#     ),
+#     (
+#         "BTC_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/BTC_USDT_20220210-110047.csv",
+#     ),
+#     (
+#         "BTC_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/BTC_USDT_20220210-125404.csv",
+#     ),
+#     (
+#         "DOGE_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/DOGE_USDT_20220210-111452.csv",
+#     ),
+#     (
+#         "ETH_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/ETH_USDT_20220210-112851.csv",
+#     ),
+#     (
+#         "LINK_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/LINK_USDT_20220210-114240.csv",
+#     ),
+#     (
+#         "SOL_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/SOL_USDT_20220210-115701.csv",
+#     ),
+#     (
+#         "XRP_USDT",
+#         "s3://cryptokaizen-data2/historical/ftx/XRP_USDT_20220210-121122.csv",
+#     ),
+# ]
+# data = read_exchange_df(paths)
+# data.head()
 
 # %%
-hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
+# hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
 
 # %%
-hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
+# hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
 
 # %% [markdown]
 # ## gateio stat
 
 # %%
-paths = [
-    (
-        "BNB_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/ADA_USDT_20220210-112115.csv",
-    ),
-    (
-        "AVAX_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/AVAX_USDT_20220210-113306.csv",
-    ),
-    (
-        "BNB_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/BNB_USDT_20220210-114500.csv",
-    ),
-    (
-        "BTC_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/BTC_USDT_20220210-115659.csv",
-    ),
-    (
-        "DOGE_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/DOGE_USDT_20220210-120851.csv",
-    ),
-    (
-        "EOS_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/EOS_USDT_20220210-122048.csv",
-    ),
-    (
-        "ETH_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/ETH_USDT_20220210-123244.csv",
-    ),
-    (
-        "FIL_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/FIL_USDT_20220210-124438.csv",
-    ),
-    (
-        "LINK_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/LINK_USDT_20220210-125629.csv",
-    ),
-    (
-        "SOL_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/SOL_USDT_20220210-130821.csv",
-    ),
-    (
-        "XRP_USDT",
-        "s3://cryptokaizen-data2/historical/gateio/XRP_USDT_20220210-132013.csv",
-    ),
-]
-data = read_exchange_df(paths)
-data.head()
+# paths = [
+#     (
+#         "BNB_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/ADA_USDT_20220210-112115.csv",
+#     ),
+#     (
+#         "AVAX_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/AVAX_USDT_20220210-113306.csv",
+#     ),
+#     (
+#         "BNB_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/BNB_USDT_20220210-114500.csv",
+#     ),
+#     (
+#         "BTC_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/BTC_USDT_20220210-115659.csv",
+#     ),
+#     (
+#         "DOGE_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/DOGE_USDT_20220210-120851.csv",
+#     ),
+#     (
+#         "EOS_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/EOS_USDT_20220210-122048.csv",
+#     ),
+#     (
+#         "ETH_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/ETH_USDT_20220210-123244.csv",
+#     ),
+#     (
+#         "FIL_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/FIL_USDT_20220210-124438.csv",
+#     ),
+#     (
+#         "LINK_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/LINK_USDT_20220210-125629.csv",
+#     ),
+#     (
+#         "SOL_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/SOL_USDT_20220210-130821.csv",
+#     ),
+#     (
+#         "XRP_USDT",
+#         "s3://cryptokaizen-data2/historical/gateio/XRP_USDT_20220210-132013.csv",
+#     ),
+# ]
+# data = read_exchange_df(paths)
+# data.head()
 
 # %%
-hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
+# hdateti.convert_unix_epoch_to_timestamp(data.timestamp.max())
 
 # %%
-hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
+# hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
 
 # %% [markdown]
 # # Load CCXT at cryptokaizen-data/daily_staged
 
 # %%
-file_path = "%s/ccxt/binance/" % config["load"]["data_dir"]
-kwargs = {"aws_profile": "ck"}
-data = hparque.from_parquet(file_path, **kwargs)
-data.head()
+# file_path = "%s/ccxt/binance/" % config["load"]["data_dir"]
+# kwargs = {"aws_profile": "ck"}
+# data = hparque.from_parquet(file_path, **kwargs)
+# data.head()
 
 # %% [markdown]
 # ## Calculate stats
@@ -493,7 +500,7 @@ data.head()
 currency_pairs = list(data["currency_pair"].unique())
 
 # %%
-dfb = compute_currency_pair_data_stats(currency_pairs)
+dfb = compute_stats_per_currency_pair(currency_pairs)
 dfb["exchange_id"] = "binance"
 dfb["vendor"] = config["data"]["vendor"]
 dfb
