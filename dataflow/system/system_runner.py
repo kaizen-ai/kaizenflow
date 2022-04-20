@@ -90,9 +90,8 @@ class ForecastSystem(System):
     def get_dag_runner(
         self,
         config: cconfig.Config,
-        get_wall_clock_time: hdateti.GetWallClockTime,
+        market_data,
         *,
-        sleep_interval_in_secs: int = 60 * 5,
         real_time_loop_time_out_in_secs: Optional[int] = None,
     ):
         """

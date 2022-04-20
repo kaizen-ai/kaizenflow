@@ -1,19 +1,15 @@
 import asyncio
 import logging
+import unittest
 
 import pandas as pd
 import pytest
 
-import core.config as cconfig
 import core.finance as cofinanc
 import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
-import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
-import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system_tester as dtfsysytes
-import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import helpers.hasyncio as hasynci
 import oms.test.oms_db_helper as otodh
-import unittest
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,6 +17,7 @@ _LOG = logging.getLogger(__name__)
 class Test_Example1_ForecastSystem(unittest.TestCase):
     """
     Test a System composed of:
+
     - a `ReplayedMarketData` (providing fake data and features)
     - an `Example1` DAG
     """
@@ -36,9 +33,10 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [101]
             system = dtfsepsyru.Example1_ForecastSystem(
-                asset_ids, event_loop,
+                asset_ids,
+                event_loop,
             )
-            #§
+            # §
             config = system.get_dag_config(
                 "feature1",
                 "vwap.ret_0.vol",
@@ -46,10 +44,15 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
                 pd.Timedelta("7D"),
                 "asset_id",
                 spread_col=None,
-                log_dir=None
+                log_dir=None,
             )
             market_data = system.get_market_data(data)
-            dag_runner = system.get_dag_runner(config, market_data, 60*5, real_time_loop_time_out_in_secs = real_time_loop_time_out_in_secs)
+            dag_runner = system.get_dag_runner(
+                config,
+                market_data,
+                60 * 5,
+                real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
+            )
             coroutines = [dag_runner.predict()]
             #
             result_bundles = hasynci.run(
@@ -62,13 +65,14 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
     def test1(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         actual = self.run_coroutines(
-            data, real_time_loop_time_out_in_secs,
+            data,
+            real_time_loop_time_out_in_secs,
         )
         # TODO(gp): PP freeze the output.
         # self.check_string(actual)
 
 
-# ######################################################
+# #############################################################################
 
 
 # TODO(gp): This should derive from SystemTester.
