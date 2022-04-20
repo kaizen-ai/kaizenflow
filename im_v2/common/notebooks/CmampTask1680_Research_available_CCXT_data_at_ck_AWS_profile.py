@@ -29,7 +29,7 @@ import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+import im_v2.ccxt.data.client as imvcdcc
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -80,6 +80,10 @@ print(config)
 # %%
 # TODO(*): Use functions from `research_amp.cc.statistics` instead.
 def compute_currency_pair_data_stats(currency_pair_list: list) -> pd.DataFrame:
+    """
+    Compute statistics for each currency pair: days_availiable, n_data_points,
+    coverage.
+    """
     res = {}
     for currency_pair in currency_pair_list:
         data_currency_pair = data.loc[data["currency_pair"] == currency_pair]
@@ -118,6 +122,9 @@ def compute_currency_pair_data_stats(currency_pair_list: list) -> pd.DataFrame:
 
 # %%
 def read_exchange_df(paths: list) -> pd.DataFrame:
+    """
+    Read csv files from `s3://cryptokaizen-data2/historical/ and convert it to a DataFrame.
+    """
     all_data = []
     for currency_pair, path in paths:
         data = hpandas.read_csv_to_df(path)
@@ -134,10 +141,10 @@ def read_exchange_df(paths: list) -> pd.DataFrame:
 # ## binance stat
 
 # %%
-# TODO(*): Usage of the client is very slow due to CMTask1726.
+# TODO(Nina): @all Usage of the client is very slow due to CMTask1726.
 #  Until this issue is fixed, you can speed up the client by a temporary hack by changing
-#  `apply()` usage to vectorized actions.
-ccxt_historical_client = imvcdccccl.CcxtHistoricalPqByTileClient(
+#  `apply()` usage to vectorized actions: `df['exchange_id'] + "::" + df['currency_pair']
+ccxt_historical_client = imvcdcc.ccxt_clients.CcxtHistoricalPqByTileClient(
     True,
     "s3://cryptokaizen-data/historical/",
     "by_year_month",
@@ -149,15 +156,15 @@ universe = ccxt_historical_client.get_universe()
 universe
 
 # %%
-universe = ccxt_historical_client.get_universe()
-# TODO(*): Kernel's dead after trying to load data for the whole universe due to CMTask1726.
+# TODO(Nina): @all Kernel's dead after trying to load data for the whole universe due to CMTask1726.
 data = ccxt_historical_client.read_data([universe[0]], None, None)
 
 # %%
-data.head()
+_LOG.info(data.shape)
+data.head(3)
 
 # %%
-# TODO(*): Refactor functions from `research_amp.cc.statistics` to properly work with `ImClient` data.
+# TODO(Nina): @all Refactor functions from `research_amp.cc.statistics` to properly work with `ImClient` data.
 compute_start_end_stats = ramccsta.compute_start_end_stats(data, config)
 compute_start_end_stats
 
@@ -166,7 +173,8 @@ compute_start_end_stats
 file_path = "s3://cryptokaizen-data/historical/ccxt/latest/binance/"
 kwargs = {"aws_profile": "ck"}
 data = hparque.from_parquet(file_path, **kwargs)
-data.head()
+_LOG.info(data.shape)
+data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
@@ -182,7 +190,8 @@ dfb
 file_path = "s3://cryptokaizen-data/historical/ccxt/latest/bitfinex/"
 kwargs = {"aws_profile": "ck"}
 data = hparque.from_parquet(file_path, **kwargs)
-data.head()
+_LOG.info(data.shape)
+data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
@@ -198,7 +207,8 @@ dfb
 file_path = "s3://cryptokaizen-data/historical/ccxt/latest/ftx/"
 kwargs = {"aws_profile": "ck"}
 data = hparque.from_parquet(file_path, **kwargs)
-data.head()
+_LOG.info(data.shape)
+data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
@@ -214,7 +224,8 @@ dfb
 file_path = "s3://cryptokaizen-data/historical/ccxt/latest/gateio/"
 kwargs = {"aws_profile": "ck"}
 data = hparque.from_parquet(file_path, **kwargs)
-data.head()
+_LOG.info(data.shape)
+data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
@@ -230,7 +241,8 @@ dfb
 file_path = "s3://cryptokaizen-data/historical/ccxt/latest/kucoin/"
 kwargs = {"aws_profile": "ck"}
 data = hparque.from_parquet(file_path, **kwargs)
-data.head()
+_LOG.info(data.shape)
+data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
@@ -240,7 +252,9 @@ dfb["vendor"] = config["data"]["vendor"]
 dfb
 
 # %%
-# Below is an initial research for buckets that were postponed.
+# See the stats for buckets `cryptokaizen-data2/historical/` and `cryptokaizen-data/daily_staged`,
+# we decided not to include them in the analysis at the moment. Feel free to remove if it is not 
+# needed.
 
 # %% [markdown]
 # # Load CCXT at cryptokaizen-data2/historical/
