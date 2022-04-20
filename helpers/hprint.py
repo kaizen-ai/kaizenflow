@@ -120,6 +120,7 @@ def prepend(txt: str, prefix: str) -> str:
     return res
 
 
+# TODO(gp): It should use *.
 def indent(txt: str, num_spaces: int = 2) -> str:
     """
     Add `num_spaces` spaces before each line of the passed string.
@@ -136,6 +137,7 @@ def indent(txt: str, num_spaces: int = 2) -> str:
     return res
 
 
+# TODO(gp): It should use *.
 def dedent(txt: str, remove_empty_leading_trailing_lines: bool = True) -> str:
     """
     Remove from each line the minimum number of spaces to align the text on the

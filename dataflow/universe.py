@@ -7,19 +7,28 @@ import dataflow.universe as dtfuniver
 """
 import logging
 import os
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pandas as pd
 
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Grisha): "Move universe-related functions to `im_v2`" CmTask #1724.
+
+
 # TODO(gp): Move it to a better place.
-Amid = str
+Amid = Union[int, str]
+
+
+# #############################################################################
+# S&P 500
+# #############################################################################
 
 
 def get_sp500() -> pd.DataFrame:
@@ -54,6 +63,8 @@ def get_sp500_sample(n: int, seed: int) -> List[str]:
     return df["ticker"].to_list()
 
 
+# #############################################################################
+# Kibot
 # #############################################################################
 
 
@@ -221,6 +232,28 @@ def _get_kibot_universe_v3(n: Optional[int]) -> List[Amid]:
     return amids
 
 
+# #############################################################################
+# Example1
+# #############################################################################
+
+
+def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
+    """
+    Create universe for Example1 DAG.
+    """
+    vendor = "example1"
+    full_symbols = ivcu.get_vendor_universe(
+        vendor, version="v1", as_full_symbol=True
+    )
+    full_symbols = _get_top_n(full_symbols, n)
+    return full_symbols
+
+
+# #############################################################################
+# General
+# #############################################################################
+
+
 def get_universe(universe_str: str) -> List[Amid]:
     # E.g., universe_str == "v1_0-top100"
     universe_version, top_n = dtfmod.parse_universe_str(universe_str)
@@ -230,6 +263,8 @@ def get_universe(universe_str: str) -> List[Amid]:
         ret = _get_kibot_universe_v2(top_n)
     elif universe_version == "kibot_v3":
         ret = _get_kibot_universe_v3(top_n)
+    elif universe_version == "example1_v1":
+        ret = _get_example1_universe_v1(top_n)
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret

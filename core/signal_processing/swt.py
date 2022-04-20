@@ -299,7 +299,7 @@ def compute_swt_sum(
     timing_mode: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Get swt coeffcient sums using levels up to `depth`.
+    Get swt coefficient sums using levels up to `depth`.
 
     Params as in `get_swt()`.
     """
