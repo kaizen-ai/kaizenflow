@@ -886,7 +886,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = ["full_symbol", "close", "volume"]
+        columns: List[str] = ["asset_id", "full_symbol", "close", "volume"]
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
