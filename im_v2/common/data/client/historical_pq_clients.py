@@ -126,11 +126,12 @@ class HistoricalPqByTileClient(
             hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
         )
         kwargs["log_level"] = logging.INFO
-        kwargs["columns"] = columns
-        # Get columns and add them to kwargs if they were not specified.
-        if "columns" not in kwargs:
+        # 
+        if columns is None:
+            # Get columns from the class.
             columns = self._get_columns_for_query()
-            kwargs["columns"] = columns
+        # Add columns to kwargs.
+        kwargs["columns"] = columns
         # Add AWS profile to kwargs.
         kwargs["aws_profile"] = self._aws_profile
         # Build root dirs to the data and Parquet filtering condition.
