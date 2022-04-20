@@ -120,7 +120,6 @@ class HistoricalPqByTileClient(
         """
         See description in the parent class.
         """
-        print("PQ _read_data_for_multiple_symbols", columns)
         hdbg.dassert_container_type(full_symbols, list, str)
         # Implement logging and add it to kwargs.
         _LOG.debug(

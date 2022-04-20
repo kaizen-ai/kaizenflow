@@ -174,7 +174,6 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         - keep only specified columns
         """
-        print("_test_read_data8", columns)
         start_ts = None
         end_ts = None
         actual_df = im_client.read_data(
