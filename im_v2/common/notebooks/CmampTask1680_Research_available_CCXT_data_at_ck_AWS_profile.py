@@ -54,13 +54,14 @@ def get_cmtask1680_config_ccxt() -> cconconf.Config:
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "ck"
-    # TODO(*): Replace `s3://cryptokaizen-data` on get_s3_bucket() after #1667 is implemented.
+    # TODO(Nina): @all replace `s3://cryptokaizen-data` with `get_s3_bucket()` after #1667 is implemented.
     config["load"]["data_dir"] = os.path.join(
-        "s3://cryptokaizen-data", "historical"
+        "s3://cryptokaizen-data", "historical",
     )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["vendor"] = "CCXT"
+    config["data"]["data_snapshot"] = "latest"
     # Column names.
     config.add_subconfig("column_names")
     config["column_names"]["close_price"] = "close"
@@ -81,25 +82,33 @@ print(config)
 # TODO(Nina): @all Use functions from `research_amp.cc.statistics` instead.
 def compute_stats_per_currency_pair(currency_pair_list: list) -> pd.DataFrame:
     """
-    For each currency pair in the list compute stats that include:
-    - minimum timestamp 
-    - maximum timestamp
-    - the number of data points
-    - days of data available
-    - coverage
-    - average data points per day
+    For each currency pair in the list compute stats.
+    
+    Statistics include: 
+       - minimum timestamp 
+       - maximum timestamp
+       - the number of data points
+       - days of data available
+       - coverage, i.e. the number of not NaN data points divided
+         by the number of all data points as percentage
+       - average data points per day
     
     :param currency_pair_list: list of currency pairs to compute stats for.
     """
     res = {}
+    # Iterate over currency pairs.
     for currency_pair in currency_pair_list:
         data_currency_pair = data.loc[data["currency_pair"] == currency_pair]
+        # Compute the number of days available.
         days_availiable = (
             data_currency_pair.last_valid_index()
             - data_currency_pair.first_valid_index()
         ).days
+        # Compute the number of data points.
         n_data_points = data_currency_pair.close.count()
+        # Compute data coverage.
         coverage = 100 * (1 - cstats.compute_frac_nan(data_currency_pair.close))
+        # Combine the stats in a single dict.
         res.update(
             {
                 currency_pair: [
@@ -112,6 +121,7 @@ def compute_stats_per_currency_pair(currency_pair_list: list) -> pd.DataFrame:
                 ]
             }
         )
+        # Covert into a DataFrame.
         df_res = pd.DataFrame(
             data=res.values(),
             columns=[
@@ -127,16 +137,29 @@ def compute_stats_per_currency_pair(currency_pair_list: list) -> pd.DataFrame:
     return df_res
 
 
-# %% [markdown]
-# # Load CCXT at cryptokaizen-data/historical/
+def get_file_path_for_exchange(config: cconconf.Config, exchange: str) -> str:
+    """
+    Get file path for exchange-specific data.
+    
+    E.g., `"s3://cryptokaizen-data/historical/ccxt/latest/binance/"`.
+    """
+    data_dir = config["load"]["data_dir"]
+    vendor = config["data"]["vendor"].lower()
+    data_snapshot = config["data"]["data_snapshot"]
+    file_path = os.path.join(data_dir, vendor, data_snapshot, exchange)
+    return file_path
+
 
 # %% [markdown]
-# ## binance stat
+# # Load CCXT data from the historical bucket
+
+# %% [markdown]
+# ## binance stats
 
 # %%
 # TODO(Nina): @all Usage of the client is very slow due to CMTask1726.
-#  Until this issue is fixed, you can speed up the client by a temporary hack by changing
-#  `apply()` usage to vectorized actions: `df['exchange_id'] + "::" + df['currency_pair'].
+#  Until this issue is fixed, you can speed up the client by replacing `apply`
+#  with the vectorasied counterpart: `df['exchange_id'] + "::" + df['currency_pair']`.
 resample_1min = True
 ccxt_historical_client = icdcl.ccxt_clients.CcxtHistoricalPqByTileClient(
     resample_1min,
@@ -151,7 +174,10 @@ universe
 
 # %%
 # TODO(Nina): @all Kernel's dead after trying to load data for the whole universe due to CMTask1726.
-data = ccxt_historical_client.read_data([universe[0]], None, None)
+# Load all the data available for the 1st full symbol in the universe.
+start_ts = None
+end_ts = None
+data = ccxt_historical_client.read_data([universe[0]], start_ts, end_ts)
 
 # %%
 _LOG.info(data.shape)
@@ -164,68 +190,68 @@ compute_start_end_stats = ramccsta.compute_start_end_stats(data, config)
 compute_start_end_stats
 
 # %%
-# All exchange ids in a bucket can be extracted via `listdir()` from `helpers.hs3`.
-file_path = "s3://cryptokaizen-data/historical/ccxt/latest/binance/"
-kwargs = {"aws_profile": "ck"}
-data = hparque.from_parquet(file_path, **kwargs)
+# TODO(Nina): @all all exchange ids in a bucket could be extracted via `listdir()` from `helpers.hs3`.
+binance_exchange = "binance"
+file_path = get_file_path_for_exchange(config, binance_exchange)
+data = hparque.from_parquet(file_path, aws_profile=config["load"]["aws_profile"])
 _LOG.info(data.shape)
 data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
 dfb = compute_currency_pair_data_stats(currency_pairs)
-dfb["exchange_id"] = "binance"
+dfb["exchange_id"] = binance_exchange
 dfb["vendor"] = config["data"]["vendor"]
 dfb
 
 # %% [markdown]
-# ## bitfinex stat
+# ## bitfinex stats
 
 # %%
-file_path = "s3://cryptokaizen-data/historical/ccxt/latest/bitfinex/"
-kwargs = {"aws_profile": "ck"}
-data = hparque.from_parquet(file_path, **kwargs)
+bitfinex_exchange = "bitfinex"
+file_path = get_file_path_for_exchange(config, bitfinex_exchange)
+data = hparque.from_parquet(file_path, aws_profile=config["load"]["aws_profile"])
 _LOG.info(data.shape)
 data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
 dfb = compute_stats_per_currency_pair(currency_pairs)
-dfb["exchange_id"] = "bitfinex"
+dfb["exchange_id"] = bitfinex_exchange
 dfb["vendor"] = config["data"]["vendor"]
 dfb
 
 # %% [markdown]
-# ## ftx stat
+# ## ftx stats
 
 # %%
-file_path = "s3://cryptokaizen-data/historical/ccxt/latest/ftx/"
-kwargs = {"aws_profile": "ck"}
-data = hparque.from_parquet(file_path, **kwargs)
+ftx_exchange = "ftx"
+file_path = get_file_path_for_exchange(config, ftx_exchange)
+data = hparque.from_parquet(file_path, aws_profile=config["load"]["aws_profile"])
 _LOG.info(data.shape)
 data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
 dfb = compute_stats_per_currency_pair(currency_pairs)
-dfb["exchange_id"] = "ftx"
+dfb["exchange_id"] = ftx_exchange
 dfb["vendor"] = config["data"]["vendor"]
 dfb
 
 # %% [markdown]
-# ## gateio stat
+# ## gateio stats
 
 # %%
-file_path = "s3://cryptokaizen-data/historical/ccxt/latest/gateio/"
-kwargs = {"aws_profile": "ck"}
-data = hparque.from_parquet(file_path, **kwargs)
+gateio_exchange = "gateio"
+file_path = get_file_path_for_exchange(config, gateio_exchange)
+data = hparque.from_parquet(file_path, aws_profile=config["load"]["aws_profile"])
 _LOG.info(data.shape)
 data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
 dfb = compute_stats_per_currency_pair(currency_pairs)
-dfb["exchange_id"] = "gateio"
+dfb["exchange_id"] = gateio_exchange
 dfb["vendor"] = config["data"]["vendor"]
 dfb
 
@@ -233,16 +259,16 @@ dfb
 # ## kucoin stat
 
 # %%
-file_path = "s3://cryptokaizen-data/historical/ccxt/latest/kucoin/"
-kwargs = {"aws_profile": "ck"}
-data = hparque.from_parquet(file_path, **kwargs)
+kucoin_exchange = "kucoin"
+file_path = get_file_path_for_exchange(config, kucoin_exchange)
+data = hparque.from_parquet(file_path, aws_profile=config["load"]["aws_profile"])
 _LOG.info(data.shape)
 data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
 dfb = compute_stats_per_currency_pair(currency_pairs)
-dfb["exchange_id"] = "kucoin"
+dfb["exchange_id"] = kucoin_exchange
 dfb["vendor"] = config["data"]["vendor"]
 dfb
 
@@ -252,7 +278,7 @@ dfb
 # needed.
 
 # %% [markdown]
-# # Load CCXT at cryptokaizen-data2/historical/
+# # Load CCXT data from data2 bucket
 
 # %%
 # def read_exchange_df(paths: list) -> pd.DataFrame:
@@ -485,22 +511,10 @@ dfb
 # hdateti.convert_unix_epoch_to_timestamp(data.timestamp.min())
 
 # %% [markdown]
-# # Load CCXT at cryptokaizen-data/daily_staged
+# # Load CCXT data from daily staged bucket
 
 # %%
 # file_path = "%s/ccxt/binance/" % config["load"]["data_dir"]
 # kwargs = {"aws_profile": "ck"}
 # data = hparque.from_parquet(file_path, **kwargs)
 # data.head()
-
-# %% [markdown]
-# ## Calculate stats
-
-# %%
-currency_pairs = list(data["currency_pair"].unique())
-
-# %%
-dfb = compute_stats_per_currency_pair(currency_pairs)
-dfb["exchange_id"] = "binance"
-dfb["vendor"] = config["data"]["vendor"]
-dfb
