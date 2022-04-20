@@ -23,10 +23,8 @@ import pandas as pd
 
 import core.config.config_ as cconconf
 import core.statistics as cstats
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.ccxt.data.client as icdcl
@@ -56,7 +54,8 @@ def get_cmtask1680_config_ccxt() -> cconconf.Config:
     config["load"]["aws_profile"] = "ck"
     # TODO(Nina): @all replace `s3://cryptokaizen-data` with `get_s3_bucket()` after #1667 is implemented.
     config["load"]["data_dir"] = os.path.join(
-        "s3://cryptokaizen-data", "historical",
+        "s3://cryptokaizen-data",
+        "historical",
     )
     # Data parameters.
     config.add_subconfig("data")
@@ -83,16 +82,16 @@ print(config)
 def compute_stats_per_currency_pair(currency_pair_list: list) -> pd.DataFrame:
     """
     For each currency pair in the list compute stats.
-    
-    Statistics include: 
-       - minimum timestamp 
+
+    Statistics include:
+       - minimum timestamp
        - maximum timestamp
        - the number of data points
        - days of data available
        - coverage, i.e. the number of not NaN data points divided
          by the number of all data points as percentage
        - average data points per day
-    
+
     :param currency_pair_list: list of currency pairs to compute stats for.
     """
     res = {}
@@ -140,7 +139,7 @@ def compute_stats_per_currency_pair(currency_pair_list: list) -> pd.DataFrame:
 def get_file_path_for_exchange(config: cconconf.Config, exchange: str) -> str:
     """
     Get file path for exchange-specific data.
-    
+
     E.g., `"s3://cryptokaizen-data/historical/ccxt/latest/binance/"`.
     """
     data_dir = config["load"]["data_dir"]
@@ -199,7 +198,7 @@ data.head(3)
 
 # %%
 currency_pairs = list(data["currency_pair"].unique())
-dfb = compute_currency_pair_data_stats(currency_pairs)
+dfb = compute_stats_per_currency_pair(currency_pairs)
 dfb["exchange_id"] = binance_exchange
 dfb["vendor"] = config["data"]["vendor"]
 dfb
