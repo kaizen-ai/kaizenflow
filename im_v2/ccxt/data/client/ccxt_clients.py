@@ -19,7 +19,7 @@ import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.universe as icunv
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -51,11 +51,11 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
-        universe = icunv.get_vendor_universe(
+        universe = ivcu.get_vendor_universe(
             vendor=self._vendor, as_full_symbol=True
         )
         return universe  # type: ignore[no-any-return]
@@ -159,7 +159,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_sql_kwargs: Any,
@@ -173,7 +173,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Initialize a list for SQL conditions.
         sql_conditions = []
         # Fill SQL conditions list for each provided data parameter.
@@ -258,7 +258,7 @@ class CcxtCddCsvParquetByAssetClient(
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **kwargs: Any,
@@ -267,7 +267,7 @@ class CcxtCddCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with crypto price data.
         file_path = self._get_file_path(
             self._data_snapshot, exchange_id, currency_pair
@@ -400,11 +400,11 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         raise NotImplementedError
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
-        universe = icunv.get_vendor_universe(
+        universe = ivcu.get_vendor_universe(
             vendor=self._vendor, as_full_symbol=True
         )
         return universe  # type: ignore[no-any-return]
@@ -438,7 +438,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         df["currency_pair"] = df["currency_pair"].astype(str)
         # Add full symbol column.
         df[full_symbol_col_name] = df.apply(
-            lambda x: icdc.build_full_symbol(
+            lambda x: ivcu.build_full_symbol(
                 x["exchange_id"], x["currency_pair"]
             ),
             axis=1,
@@ -449,7 +449,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         return df
 
     def _get_root_dirs_symbol_filters(
-        self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
+        self, full_symbols: List[ivcu.FullSymbol], full_symbol_col_name: str
     ) -> Dict[str, hparque.ParquetFilter]:
         """
         Build a dict with exchange root dirs of the `CCXT` data as keys and
@@ -476,7 +476,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # [('binance', 'ADA_USDT'),
         # ('coinbase', 'BTC_USDT')].
         full_symbol_tuples = [
-            icdc.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+            ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
         ]
         # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
         # `Defaultdict` provides a default value for the key that does not exists that prevents from

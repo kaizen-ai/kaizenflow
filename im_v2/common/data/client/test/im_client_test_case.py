@@ -10,6 +10,7 @@ import pandas as pd
 
 import helpers.hunit_test as hunitest
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 
 # #############################################################################
 # ImClientTestCase
@@ -31,7 +32,7 @@ class ImClientTestCase(hunitest.TestCase):
     def _test_read_data1(
         self,
         im_client: icdc.ImClient,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -51,7 +52,7 @@ class ImClientTestCase(hunitest.TestCase):
     def _test_read_data2(
         self,
         im_client: icdc.ImClient,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -69,7 +70,7 @@ class ImClientTestCase(hunitest.TestCase):
     def _test_read_data3(
         self,
         im_client: icdc.ImClient,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: pd.Timestamp,
         *args: Any,
         **kwargs: Any,
@@ -88,7 +89,7 @@ class ImClientTestCase(hunitest.TestCase):
     def _test_read_data4(
         self,
         im_client: icdc.ImClient,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         end_ts: pd.Timestamp,
         *args: Any,
         **kwargs: Any,
@@ -107,7 +108,7 @@ class ImClientTestCase(hunitest.TestCase):
     def _test_read_data5(
         self,
         im_client: icdc.ImClient,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
         *args: Any,
@@ -123,7 +124,7 @@ class ImClientTestCase(hunitest.TestCase):
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data6(
-        self, im_client: icdc.ImClient, full_symbol: icdc.FullSymbol
+        self, im_client: icdc.ImClient, full_symbol: ivcu.FullSymbol
     ) -> None:
         """
         Test:
@@ -142,7 +143,7 @@ class ImClientTestCase(hunitest.TestCase):
     def _test_read_data7(
         self,
         im_client: icdc.ImClient,
-        full_symbols: List[icdc.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -163,7 +164,7 @@ class ImClientTestCase(hunitest.TestCase):
     def _test_get_start_ts_for_symbol1(
         self,
         im_client: icdc.ImClient,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         expected_start_ts: pd.Timestamp,
     ) -> None:
         """
@@ -175,7 +176,7 @@ class ImClientTestCase(hunitest.TestCase):
     def _test_get_end_ts_for_symbol1(
         self,
         im_client: icdc.ImClient,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         expected_end_ts: pd.Timestamp,
     ) -> None:
         """
@@ -192,8 +193,8 @@ class ImClientTestCase(hunitest.TestCase):
         # TODO(Grisha): pass vendor when we start testing `CDD`.
         im_client: icdc.ImClient,
         expected_length: int,
-        expected_first_elements: List[icdc.FullSymbol],
-        expected_last_elements: List[icdc.FullSymbol],
+        expected_first_elements: List[ivcu.FullSymbol],
+        expected_last_elements: List[ivcu.FullSymbol],
     ) -> None:
         """
         Test that universe is computed correctly.
