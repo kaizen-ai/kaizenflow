@@ -14,6 +14,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ class KibotClient(icdc.ImClient):
         vendor = "kibot"
         super().__init__(vendor, resample_1min)
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
@@ -185,7 +186,7 @@ class KibotEquitiesCsvParquetByAssetClient(
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **kwargs: Any,
@@ -194,7 +195,7 @@ class KibotEquitiesCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and trade symbol.
-        exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
+        exchange_id, trade_symbol = ivcu.parse_full_symbol(full_symbol)
         hdbg.dassert_eq(exchange_id, "kibot")
         # Get absolute file path for a file with equity data.
         file_path = self._get_file_path(trade_symbol)
@@ -386,7 +387,7 @@ class KibotFuturesCsvParquetByAssetClient(
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **kwargs: Any,
@@ -395,7 +396,7 @@ class KibotFuturesCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and trade symbol.
-        exchange_id, trade_symbol = icdc.parse_full_symbol(full_symbol)
+        exchange_id, trade_symbol = ivcu.parse_full_symbol(full_symbol)
         hdbg.dassert_eq(exchange_id, "kibot")
         # Get absolute file path for a file with futures data.
         file_path = self._get_file_path(trade_symbol)

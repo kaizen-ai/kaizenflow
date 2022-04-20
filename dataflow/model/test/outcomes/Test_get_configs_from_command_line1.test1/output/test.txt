@@ -160,5 +160,5 @@ meta:
   id: 0
   config_builder: dataflow.model.test.test_experiment_utils.build_tile_configs("universe_v2_0-top2.5T.JanFeb2020")
   dst_dir: ./dst_dir
-  experiment_builder: dataflow.model.master_experiment.run_tiled_experiment
+  experiment_builder: dataflow.model.master_experiment.run_tiled_backtest
   experiment_result_dir: ./dst_dir/result_0
