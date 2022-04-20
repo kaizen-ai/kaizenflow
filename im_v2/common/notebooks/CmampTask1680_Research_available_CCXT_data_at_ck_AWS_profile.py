@@ -29,7 +29,6 @@ import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import research_amp.cc.statistics as ramccsta
 
@@ -139,8 +138,8 @@ def read_exchange_df(paths: list) -> pd.DataFrame:
 #  Until this issue is fixed, you can speed up the client by a temporary hack by changing
 #  `apply()` usage to vectorized actions.
 ccxt_historical_client = imvcdccccl.CcxtHistoricalPqByTileClient(
-    True, 
-    "s3://cryptokaizen-data/historical/", 
+    True,
+    "s3://cryptokaizen-data/historical/",
     "by_year_month",
     aws_profile="ck",
 )
@@ -159,9 +158,7 @@ data.head()
 
 # %%
 # TODO(*): Refactor functions from `research_amp.cc.statistics` to properly work with `ImClient` data.
-compute_start_end_stats =  ramccsta.compute_start_end_stats(
-    data, config
-)
+compute_start_end_stats = ramccsta.compute_start_end_stats(data, config)
 compute_start_end_stats
 
 # %%
