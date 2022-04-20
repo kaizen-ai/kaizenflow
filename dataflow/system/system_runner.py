@@ -60,7 +60,7 @@ class ForecastSystem(System):
         ...
 
     @abc.abstractmethod
-    def get_dag(
+    def get_dag_config(
         self,
         prediction_col: str,
         volatility_col: str,
@@ -71,7 +71,6 @@ class ForecastSystem(System):
         spread_col: Optional[str],
         log_dir: Optional[str],
     ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
-        # TODO(gp): @danya complete / factor the docstring.
         """
         Create a Dataflow DAG config and a corresponding DAG builder.
 
@@ -86,13 +85,25 @@ class ForecastSystem(System):
         :return: a DAG builder object with a corresponding config
         """
         ...
+    
+    @abc.abstractmethod
+    def get_dag_runner(
+        self,
+        config: cconfig.Config,
+        get_wall_clock_time: hdateti.GetWallClockTime,
+        *,
+        sleep_interval_in_secs: int = 60 * 5,
+        real_time_loop_time_out_in_secs: Optional[int] = None,
+    ):
+        """
+        Create a DAG runner.
 
-    def get_dag_runner():
-        ...
-    """
-    Create a DAG runner.
-    """
-
+        :param config: a DAG config including DAG builder object
+        :param get_wall_clock_time: function for getting current time
+        :param sleep_interval_in_secs: time between DAG runs
+        :param real_time_loop_time_out_in_secs: max time for single DAG run
+        """
+    ...
 
 # #############################################################################
 # SystemRunner

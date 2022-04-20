@@ -38,7 +38,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             system = dtfsepsyru.Example1_ForecastSystem(
                 asset_ids, event_loop,
             )
-            #
+            #§
             config = system.get_dag_config(
                 "feature1",
                 "vwap.ret_0.vol",
@@ -49,7 +49,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
                 log_dir=None
             )
             market_data = system.get_market_data(data)
-            dag_runner = system.get_dag_runner(config, market_data, 60*5, real_time_loop_time_out_in_secs = None)
+            dag_runner = system.get_dag_runner(config, market_data, 60*5, real_time_loop_time_out_in_secs = real_time_loop_time_out_in_secs)
             coroutines = [dag_runner.predict()]
             #
             result_bundles = hasynci.run(
