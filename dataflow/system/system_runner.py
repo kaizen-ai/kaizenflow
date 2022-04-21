@@ -141,6 +141,7 @@ class ForecastSystem(System):
 
 
 # TODO(gp): This is really a -> RealTimeSystemRunner
+# TODO(gp): This should derive from ForecastSystem
 class SystemRunner(abc.ABC):
     """
     Create an end-to-end DataFlow-based system composed of:

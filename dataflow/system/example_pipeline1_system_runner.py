@@ -5,16 +5,18 @@ import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 """
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
 
 import asyncio
 import core.config as cconfig
+import dataflow.core as dtfcore
 import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system_runner as dtfsysyrun
+import dataflow.system.real_time_dag_adapter as dtfsrtdaad
 import market_data as mdata
 import oms
 import market_data.replayed_market_data as mdremada
@@ -115,7 +117,60 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
 
 
 # #############################################################################
-class Example1_Dataframe_ForecastSystem(Example1_ForecastSystem):
+
+
+# TODO(gp): This should be merged with ForecastSystem and we should build the
+#  DAG directly instead of using DagAdapter.
+class Example1_SystemRunner(dtfsysyrun.SystemRunner):
+    def __init__(self, asset_ids: List[int], event_loop=None):
+        self._asset_ids = asset_ids
+        self._event_loop = event_loop
+
+    def get_market_data(
+            self,
+            data: pd.DataFrame,
+            initial_replayed_delay: int = 5,
+    ):
+        market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
+            self._event_loop,
+            initial_replayed_delay,
+            data,
+        )
+        return market_data
+
+    def get_dag(
+        self,
+        portfolio: oms.AbstractPortfolio,
+        *,
+        prediction_col: str = "feature1",
+        volatility_col: str = "vwap.ret_0.vol",
+        returns_col: str = "vwap.ret_0",
+        spread_col: Optional[str] = None,
+        timedelta: pd.Timedelta = pd.Timedelta("7D"),
+        asset_id_col: str = "asset_id",
+        log_dir: Optional[str] = None,
+    ) -> Tuple[cconfig.Config, dtfcore.DagBuilder]:
+        base_dag_builder = dtfpexexpi.Example1_DagBuilder()
+        dag_builder = dtfsrtdaad.RealTimeDagAdapter(
+            base_dag_builder,
+            portfolio,
+            prediction_col,
+            volatility_col,
+            returns_col,
+            spread_col,
+            timedelta,
+            asset_id_col,
+            log_dir=log_dir,
+        )
+        _LOG.debug("dag_builder=\n%s", dag_builder)
+        config = dag_builder.get_config_template()
+        return config, dag_builder
+
+
+class Example1_Dataframe_ForecastSystem(
+    Example1_SystemRunner
+    # Example1_ForecastSystem
+):
     def get_portfolio(
         self,
         market_data: mdata.MarketData,
@@ -137,8 +192,39 @@ class Example1_Dataframe_ForecastSystem(Example1_ForecastSystem):
 
 
 class Example1_Database_SystemRunner(
-    dtfsysyrun.SystemWithSimulatedOmsRunner, Example1_ForecastSystem
+    dtfsysyrun.SystemWithSimulatedOmsRunner,
+    Example1_SystemRunner
+    # Example1_ForecastSystem
 ):
+
+    def get_dag(
+            self,
+            portfolio: oms.AbstractPortfolio,
+            *,
+            prediction_col: str = "feature1",
+            volatility_col: str = "vwap.ret_0.vol",
+            returns_col: str = "vwap.ret_0",
+            spread_col: Optional[str] = None,
+            timedelta: pd.Timedelta = pd.Timedelta("7D"),
+            asset_id_col: str = "asset_id",
+            log_dir: Optional[str] = None,
+    ) -> Tuple[cconfig.Config, dtfcore.DagBuilder]:
+        base_dag_builder = dtfpexexpi.Example1_DagBuilder()
+        dag_builder = dtfsrtdaad.RealTimeDagAdapter(
+            base_dag_builder,
+            portfolio,
+            prediction_col,
+            volatility_col,
+            returns_col,
+            spread_col,
+            timedelta,
+            asset_id_col,
+            log_dir=log_dir,
+        )
+        _LOG.debug("dag_builder=\n%s", dag_builder)
+        config = dag_builder.get_config_template()
+        return config, dag_builder
+
     def get_portfolio(
         self,
         market_data: mdata.MarketData,
