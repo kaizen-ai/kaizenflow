@@ -67,7 +67,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry_run",
         action="store_true",
-        help="Prints out the secrets values and exits immediately.",
+        help="Print out the secrets and exits immediately.",
     )
     return parser
 
