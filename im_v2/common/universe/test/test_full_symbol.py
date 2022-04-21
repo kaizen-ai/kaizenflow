@@ -71,7 +71,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
 
     def test9(self) -> None:
         """
-        Test series with incorrectly formatted full symbol.
+        Test series with an incorrectly formatted full symbol.
         """
         full_symbol = pd.Series(
             ["binance::BTC_USDT", "ftx::ETH_USDT", "bi nance::BTC USDT"]
@@ -89,7 +89,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
 
     def test11(self) -> None:
         """
-        Test series with integer.
+        Test series with an integer.
         """
         full_symbol = pd.Series(["binance::BTC_USDT", "ftx::ETH_USDT", 123])
         with self.assertRaises(AssertionError):
