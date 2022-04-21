@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import unittest
 
 import pandas as pd
 import pytest
@@ -13,8 +14,59 @@ import oms.test.oms_db_helper as otodh
 _LOG = logging.getLogger(__name__)
 
 
+class Test_Example1_ForecastSystem(unittest.TestCase):
+    """
+    Test a System composed of:
+
+    - a `ReplayedMarketData` (providing fake data and features)
+    - an `Example1` DAG
+    """
+
+    def run_coroutines(
+        self,
+        data: pd.DataFrame,
+        real_time_loop_time_out_in_secs: int,
+    ) -> str:
+        """
+        Run a system using the desired portfolio based on DB or dataframe.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            asset_ids = [101]
+            system = dtfsepsyru.Example1_ForecastSystem(
+                asset_ids,
+                event_loop,
+            )
+            config = system.get_dag_config()
+            market_data = system.get_market_data(data)
+            dag_runner = system.get_dag_runner(
+                config,
+                market_data,
+                real_time_loop_time_out_in_secs=60 * 5,
+            )
+            coroutines = [dag_runner.predict()]
+            #
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+        return str
+
+    # ///////////////////////////////////////////////////////////////////////////
+
+    def test1(self) -> None:
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        actual = self.run_coroutines(
+            data,
+            real_time_loop_time_out_in_secs,
+        )
+        # TODO(gp): PP freeze the output.
+        # self.check_string(actual)
+
+
+# #############################################################################
+
+
 # TODO(gp): This should derive from SystemTester.
-class Test_Example1_SystemRunner(otodh.TestOmsDbHelper):
+class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     """
     Test using fake data and features:
 
