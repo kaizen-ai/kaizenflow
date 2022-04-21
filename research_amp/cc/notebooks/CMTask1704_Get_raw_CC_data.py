@@ -408,7 +408,7 @@ def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
 
 
 # %%
-df = resample_calculate_twap_vwap_and_returns(data, "5T")
+df = resample_calculate_twap_vwap_and_returns(data_hist, "5T")
 df.head(3)
 
 # %%
@@ -432,7 +432,7 @@ ada_ex.plot()
 import dataflow.system.source_nodes as dtfsysonod
 
 # %%
-data
+data = data_hist
 
 # %%
 mm = dtfsysonod._convert_to_multiindex(data, "full_symbol")
@@ -452,9 +452,19 @@ cfinresa.resample_ohlcv_bars(
         )
 
 
-# %%
+# %% [markdown]
+# 4 level of compatibility
+# - reinvent the wheel(s)
+#     - This is not ok!
+# 1) use the "low level" functions and do loops
+# 2) use pandas Multi-index
+# 3) use Dataflow nodes
+#
+#
+# TODO(Max): Extract from this notebook a Gallery_dataflow_example notebook that reads the historical data, computes the same stuff in the 3 ways
 
 # %%
+# Approach 1) does both resampling and ret.
 def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
     result = []
     full_symbol_list = df["full_symbol"].unique()
@@ -507,6 +517,117 @@ cfinresa.compute_twap_vwap(
 
 # %%
 
-# %%
+# %% [markdown]
+# ## Approach 2): multi-index
 
 # %%
+# TWAP.
+mm.resample("5T").mean()
+
+# %%
+# Approach 2) resampling VWAP (besides potential errors)
+(mm["close"] * mm["volume"]).resample("5T").mean() / mm["volume"].resample("5T").sum()
+
+# %%
+# Approach 2) multi-index.
+
+# Conceptually the operation above is the same.
+# Compute the ret_0 on all assets. You don't need a loop! But the data needs to be in the "right" format
+# (the variable you want to loop on needs to be the outermost in the levels, so you do swaplevel)
+df2.swaplevel(axis=1).pct_change()
+
+# %% [markdown]
+# ## Approach 3) data-flow style
+
+# %%
+# Approach 3): one node does resampling, the other does return.
+import dataflow.core as dtfcore
+import core.finance as cofinanc
+
+# Put the data in the DataFlow format (which is multi-index).
+mm = dtfsysonod._convert_to_multiindex(data, "full_symbol")
+
+# Configure the node to do the TWAP / VWAP resampling.
+node_config = {
+        "in_col_groups": [
+            ("close",),
+            ("volume",),
+            #("day_spread",),
+            #("day_num_spread",),
+        ],
+        "out_col_group": (),
+        "transformer_kwargs": {
+            "rule": "5T",
+            "resampling_groups": [
+                ({"close": "close"}, "last", {}),
+                (
+                    {
+                        "close": "twap",
+                    },
+                    "mean",
+                    {},
+                ),
+                (
+                    {
+                        #"day_spread": "day_spread",
+                        #"day_num_spread": "day_num_spread",
+                        "volume": "volume",
+                    },
+                    "sum",
+                    {"min_count": 1},
+                ),
+            ],
+            "vwap_groups": [
+                ("close", "volume", "vwap"),
+            ],
+        },
+        "reindex_like_input": False,
+        "join_output_with_input": False,
+    }
+
+# Create the node.
+nid = "resample"
+node = dtfcore.GroupedColDfToDfTransformer(
+    nid, transformer_func=cofinanc.resample_bars, **node_config,
+)
+
+# Compute the node on the data.
+df = node.fit(mm)
+
+# %%
+# Show the result.
+df2 = df["df_out"]
+df2
+
+# %%
+# Compute returns on the resampled data DataFlow-style.
+
+# Those are the parameters to pass to the node.
+node_config = {
+    "in_col_groups": [
+        ("close",),
+        ("vwap",),
+        ("twap",),
+    ],
+    "out_col_group": (),
+    "transformer_kwargs": {
+        #"mode": "log_rets",
+        "mode": "pct_change",
+    },
+    "col_mapping": {
+        "close": "close.ret_0",
+        "vwap": "vwap.ret_0",
+        "twap": "twap.ret_0",
+    },
+}
+
+# Create the node that computes ret_0.
+nid = "ret0"
+node = dtfcore.GroupedColDfToDfTransformer(
+    nid, transformer_func=cofinanc.compute_ret_0, **node_config,
+)
+
+df3 = node.fit(df2)
+
+# %%
+df3["df_out"]
