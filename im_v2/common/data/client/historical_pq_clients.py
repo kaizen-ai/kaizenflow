@@ -147,7 +147,8 @@ class HistoricalPqByTileClient(
             kwargs["filters"] = filters
             # Read Parquet data from a root dir.
             root_dir_df = hparque.from_parquet(root_dir, **kwargs)
-            hdbg.dassert_lte(1, root_dir_df.shape[0])
+            hdbg.dassert_lte(1, root_dir_df.shape[0], "Can't find data for root_dir='%s' and symbol_filter='%s'",
+                             root_dir, symbol_filter)
             # Convert index to datetime.
             root_dir_df.index = pd.to_datetime(root_dir_df.index)
             # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
