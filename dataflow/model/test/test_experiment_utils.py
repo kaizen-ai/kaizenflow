@@ -111,7 +111,7 @@ class Test_get_configs_from_command_line1(hunitest.TestCase):
             )
             dst_dir = "./dst_dir"
             experiment_builder = (
-                "dataflow.model.master_experiment.run_tiled_experiment"
+                "dataflow.model.master_experiment.run_tiled_backtest"
             )
             index = 0
             start_from_index = 0
