@@ -7,19 +7,21 @@ import dataflow.pipelines.examples.example1_configs as dtfpexexco
 import logging
 from typing import List
 
-import pandas as pd
-
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import dataflow.system.source_nodes as dtfsysonod
+import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
+import im_v2.common.data.client as icdc
 import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): We should unify with `ForecastSystem`. A `System` contains all the
+# info to build and run a DAG and then it can be simulated or put in prod.
 def _build_base_config() -> cconfig.Config:
     backtest_config = cconfig.Config()
     # Save the `DagBuilder` and the `DagConfig` in the config.
@@ -31,6 +33,7 @@ def _build_base_config() -> cconfig.Config:
     return backtest_config
 
 
+# TODO(gp): @grisha. Centralize this.
 def build_configs_with_tiled_universe(
     config: cconfig.Config, asset_ids: List[int]
 ) -> List[cconfig.Config]:
@@ -48,24 +51,22 @@ def build_configs_with_tiled_universe(
         universe_tiles = (asset_ids_part1, asset_ids_part2)
     else:
         universe_tiles = (asset_ids,)
-    egid_key = ("meta", "asset_ids")
+    asset_id_key = ("meta", "asset_ids")
     configs = dtfmoexcon.build_configs_varying_universe_tiles(
-        config, egid_key, universe_tiles
+        config, asset_id_key, universe_tiles
     )
     return configs
 
 
-# TODO(gp): Should we use a SystemRunner also here?
+# TODO(gp): This corresponds to `System.get_dag_runner()`.
 def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     """
     Build a DAG runner from a config.
     """
-    # TODO(gp): In the previous code asset_ids was coming from:
-    #  `asset_ids = dtfuniver.get_universe(universe_str)`.
-    asset_ids = [3303714233, 1467591036]
+    asset_ids = config["meta", "asset_ids"]
     columns: List[str] = []
     columns_remap = None
-    market_data = mdata.get_ImClientMarketData_example2(
+    market_data = mdata.get_DataFrameImClientMarketData_example1(
         asset_ids, columns, columns_remap
     )
     # Create HistoricalDataSource.
@@ -99,44 +100,39 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     return dag_runner
 
 
-# TODO(gp): This used to be:
-#  `def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:`.
-def build_tile_configs(
-    asset_ids: List[int],
-    start_timestamp: str,
-    end_timestamp: str,
-) -> List[cconfig.Config]:
+def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
     """
     Build a tile configs for Example1 pipeline.
     """
-    # TODO(gp): This used to be:
-    #  (
-    #      universe_str,
-    #      trading_period_str,
-    #      time_interval_str,
-    #  ) = dtfmoexcon.parse_experiment_config(experiment_config).
+    (
+        universe_str,
+        trading_period_str,
+        time_interval_str,
+    ) = dtfmoexcon.parse_experiment_config(experiment_config)
     #
+    config = _build_base_config()
+    # TODO(gp): `trading_period_str` is not used for Example1 pipeline.
     # Apply specific config.
     # config = _apply_config(config, trading_period_str)
-    #
-    start_timestamp = pd.Timestamp(start_timestamp)
-    end_timestamp = pd.Timestamp(end_timestamp)
-    config = _build_base_config()
+    # TODO(Grisha): do not specify `ImClient` twice, it is already specified
+    # in `market_data`.
+    # Get universe from `ImClient` and convert it to asset ids.
+    full_symbols = dtfuniver.get_universe(universe_str)
+    im_client = icdc.get_DataFrameImClient_example1()
+    asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
     #
     config["meta", "dag_runner"] = get_dag_runner
     # Name of the asset_ids to save.
     config["meta", "asset_id_col_name"] = "asset_id"
+    # Create the list of configs.
     configs = [config]
     # Apply the cross-product by the universe tiles.
-    # TODO(gp): This used to be:
-    #  `func = lambda cfg: build_configs_with_tiled_universe(cfg, universe_str)`.
     func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)
     configs = dtfmoexcon.apply_build_configs(func, configs)
     _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
     hdbg.dassert_lte(1, len(configs))
     # Apply the cross-product by the time tiles.
-    # TODO(gp): This is how timestamps were specified in the original code:
-    #  `start_timestamp, end_timestamp = dtfmoexcon.get_period(time_interval_str)`.
+    start_timestamp, end_timestamp = dtfmoexcon.get_period(time_interval_str)
     freq_as_pd_str = "M"
     # Amount of history fed to the DAG.
     lookback_as_pd_str = "10D"

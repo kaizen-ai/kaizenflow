@@ -5,6 +5,7 @@ Execute `process_forecasts.py` over a tiled backtest.
 """
 
 import argparse
+import asyncio
 import datetime
 import logging
 
@@ -71,11 +72,11 @@ def get_backtest_tile_config() -> cconfig.Config:
 
 
 async def _run_coro(
-    event_loop,
+    event_loop: asyncio.AbstractEventLoop,
     market_data_tile_config: cconfig.Config,
     backtest_tile_config: cconfig.Config,
     process_forecasts_config: cconfig.Config,
-):
+) -> None:
     await otiprfor.run_tiled_process_forecasts(
         event_loop,
         market_data_tile_config,

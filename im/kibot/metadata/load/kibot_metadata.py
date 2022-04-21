@@ -93,7 +93,7 @@ class KibotMetadata:
         elif contract_type == "tick-bid-ask":
             metadata = self.tickbidask_metadata.copy()
         else:
-            raise ValueError("Invalid `contract_type`='%s'" % contract_type)
+            raise ValueError(f"Invalid `contract_type`='{contract_type}'")
         return metadata
 
     def get_futures(self, contract_type: str = "1min") -> List[str]:
@@ -170,7 +170,7 @@ class KibotMetadata:
         elif contract_type == "tick-bid-ask":
             one_min_contract_metadata = cls.read_tickbidask_contract_metadata()
         else:
-            raise ValueError("Invalid `contract_type`='%s'" % contract_type)
+            raise ValueError(f"Invalid `contract_type`='{contract_type}'")
         continuous_contract_metadata = cls.read_continuous_contract_metadata()
         # Extract month, year, expiries and SymbolBase from the Symbol col.
         (
