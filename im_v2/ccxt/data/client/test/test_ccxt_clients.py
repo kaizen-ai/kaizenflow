@@ -6,7 +6,6 @@ import pytest
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import helpers.hsystem as hsystem
-import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
