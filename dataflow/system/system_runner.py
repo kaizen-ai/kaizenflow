@@ -19,8 +19,90 @@ import helpers.hdatetime as hdateti
 import helpers.hsql as hsql
 import market_data as mdata
 import oms as oms
+import dataflow.core as dtfcore
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# System
+# #############################################################################
+
+
+class System(abc.ABC):
+    """
+    The simplest possible System, i.e. an empty one.
+    """
+
+
+# #############################################################################
+# ForecastSystem
+# #############################################################################
+
+
+class ForecastSystem(System):
+    """
+    The simplest DataFlow-based system comprised of a:
+
+    - `MarketData` that can be:
+        - historical (for backtesting)
+        - replayed-time (for simulating real time)
+        - real-time (for production)
+    - `Dag`
+    This system allows making forecasts given data.
+    The forecasts can then be processed in terms of a PnL through a notebook or
+    other pipelines.
+    """
+
+    @abc.abstractmethod
+    def get_market_data(
+        self, event_loop: asyncio.AbstractEventLoop
+    ) -> mdata.MarketData:
+        ...
+
+    @abc.abstractmethod
+    def get_dag_config(
+        self,
+        prediction_col: str,
+        volatility_col: str,
+        returns_col: str,
+        timedelta: pd.Timedelta,
+        asset_id_col: str,
+        *spread_col: Optional[str],
+        log_dir: Optional[str],
+    ) -> cconfig.Config:
+        """
+        Create a Dataflow DAG config.
+
+        :param prediction_col: column with features to base predictions on
+        :param volatility_col: column with volatility data
+        :param returns_col: column with returns, e.g. VWAP
+        :param spread_col: Column with spread data, optional
+        :param timedelta: how much history of the feature is needed to compute
+            the forecast
+        :param asset_id_col: column with asset ids
+        :param log_dir: directory for saving stdout logs
+        :return: a DAG config
+        """
+        ...
+
+    @abc.abstractmethod
+    def get_dag_runner(
+        self,
+        config: cconfig.Config,
+        market_data: mdata.MarketData,
+        *,
+        real_time_loop_time_out_in_secs: Optional[int] = None,
+    ) -> dtfcore.AbstractDagRunner:
+        """
+        Create a DAG runner.
+
+        :param config: a DAG config including DAG builder object
+        :param get_wall_clock_time: function for getting current time
+        :param sleep_interval_in_secs: time between DAG runs
+        :param real_time_loop_time_out_in_secs: max time for single DAG run
+        """
+        ...
 
 
 # #############################################################################
@@ -59,6 +141,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): This is really a -> RealTimeSystemRunner
+# TODO(gp): This should derive from ForecastSystem
 class SystemRunner(abc.ABC):
     """
     Create an end-to-end DataFlow-based system composed of:
@@ -98,7 +181,7 @@ class SystemRunner(abc.ABC):
         *,
         sleep_interval_in_secs: int = 60 * 5,
         real_time_loop_time_out_in_secs: Optional[int] = None,
-    ):
+    ) -> dtfsys.RealTimeDagRunner:
         _ = self
         # Set up the event loop.
         execute_rt_loop_kwargs = {
