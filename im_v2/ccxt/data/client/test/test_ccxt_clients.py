@@ -3,8 +3,10 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import helpers.hsystem as hsystem
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
@@ -1024,9 +1026,9 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
 
 
 @pytest.mark.skipif(
-        hsystem.is_inside_ci(),
-        reason="Extend AWS authentication system CmTask #1666.",
-    )
+    hsystem.is_inside_ci(),
+    reason="Extend AWS authentication system CmTask #1666.",
+)
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -1322,3 +1324,26 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_first_elements,
             expected_last_elements,
         )
+
+
+@pytest.mark.skip
+class GetCcxtHistoricalPqByTileClientExample1(hunitest.TestCase):
+    def write_test_data_to_s3(self) -> None:
+        data = self._get_cut_data()
+        partition_columns = ["asset_id", "year", "month"]
+        dst_dir = "s3://cryptokaizen-data/unit_test/historical/ccxt/latest"
+        aws_profile = "ck"
+        hparque.to_partitioned_parquet(
+            data, partition_columns, dst_dir, aws_profile=aws_profile
+        )
+
+    def _get_cut_data(self) -> pd.DataFrame:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+        full_symbols = ["binance::BTC_USDT"]
+        start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
+        end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
+        data = im_client.read_data(full_symbols, start_ts, end_ts)
+        return data
