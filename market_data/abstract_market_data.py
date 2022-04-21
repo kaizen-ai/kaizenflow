@@ -260,6 +260,7 @@ class MarketData(abc.ABC):
             right_close,
             limit,
         )
+        print("get_data_for_interval", df.columns)
         # If the assets were specified, check that the returned data doesn't contain
         # data that we didn't request.
         # TODO(Danya): How do we handle NaNs?

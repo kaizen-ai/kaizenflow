@@ -110,6 +110,7 @@ class ImClientMarketData(mdabmada.MarketData):
             end_ts,
             columns=self._columns,
         )
+        print("read_data", market_data.columns)
         # Add `asset_id` column.
         _LOG.debug("asset_id_col=%s", self._asset_id_col)
         # TODO(gp): im_client should always return the name of the column storing
