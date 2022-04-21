@@ -180,6 +180,7 @@ def dassert_monotonic_index(
     hdbg.dassert(cond, msg=msg, *args)
 
 
+# TODO(Paul): @gp -> dassert_datetime_indexed_df
 def dassert_time_indexed_df(
     df: pd.DataFrame, allow_empty: bool, strictly_increasing: bool
 ) -> None:
