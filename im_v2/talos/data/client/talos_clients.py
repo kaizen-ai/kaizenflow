@@ -374,9 +374,8 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
-        # TODO(Danya): Extend the `build_full_symbol()` function to apply to Series.
-        data[full_symbol_col_name] = data[["exchange_id", "currency_pair"]].agg(
-            "::".join, axis=1
+        data[full_symbol_col_name] = ivcu.build_full_symbol(
+            data["exchange_id"], data["currency_pair"]
         )
         # Remove extra columns and create a timestamp index.
         # TODO(Danya): The normalization may change depending on use of the class.

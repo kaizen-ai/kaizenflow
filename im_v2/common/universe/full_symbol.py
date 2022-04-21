@@ -37,18 +37,13 @@ def dassert_is_full_symbol_valid(
     letter_underscore_pattern = "[a-zA-Z_]"
     # Exchanges and symbols must be separated by `::`.
     regex_pattern = rf"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
-    #
+    # Set match pattern.
     if isinstance(full_symbol, pd.Series):
-        # Assert that the series has no empty strings.
-        full_symbol = full_symbol.replace("", None)
-        no_nans = ~full_symbol.isna().any()
-        hdbg.dassert(no_nans)
-        # Set match pattern.
-        full_match = full_symbol.str.fullmatch(regex_pattern).all()
+        full_match = full_symbol.str.fullmatch(
+            regex_pattern, flags=re.IGNORECASE
+        ).all()
     elif isinstance(full_symbol, FullSymbol):
         hdbg.dassert_isinstance(full_symbol, str)
-        hdbg.dassert_ne(full_symbol, "")
-        # Set match pattern.
         full_match = re.fullmatch(regex_pattern, full_symbol, re.IGNORECASE)
     else:
         raise TypeError(
@@ -67,14 +62,15 @@ def parse_full_symbol(
     full_symbol: Union[pd.Series, FullSymbol]
 ) -> Tuple[Union[pd.Series, str], Union[pd.Series, str]]:
     """
-    Split a full symbol into a tuple of exchange and symbol or a column of full
-    symbols on columns of exchanges and symbols.
+    Split a full symbol into exchange and symbol or a series of full symbols
+    into series of exchanges and symbols.
     """
     dassert_is_full_symbol_valid(full_symbol)
     if isinstance(full_symbol, pd.Series):
         # Get a dataframe with exchange and symbol columns.
         df_exchange_symbol = full_symbol.str.split("::", expand=True)
-        # Get exchange and symbol columns.
+        hdbg.dassert_eq(2, df_exchange_symbol.shape[1])
+        # Get exchange and symbol series.
         exchange = df_exchange_symbol[0]
         symbol = df_exchange_symbol[1]
     elif isinstance(full_symbol, FullSymbol):
@@ -92,26 +88,24 @@ def build_full_symbol(
     exchange: Union[pd.Series, str], symbol: Union[pd.Series, str]
 ) -> Union[pd.Series, FullSymbol]:
     """
-    Combine exchange and symbol in a full symbol or exchange and symbol columns
-    in a full symbol column.
+    Combine exchange and symbol in a full symbol or exchange and symbol series
+    in a full symbol series.
     """
     if isinstance(exchange, pd.Series) and isinstance(symbol, pd.Series):
-        # Combine exchange and symbol columns in a full symbol column.
+        hdbg.dassert_eq(exchange.shape[0], symbol.shape[0])
         full_symbol = exchange + "::" + symbol
-        dassert_is_full_symbol_valid(full_symbol)
     elif isinstance(exchange, str) and isinstance(symbol, str):
         hdbg.dassert_ne(exchange, "")
         hdbg.dassert_ne(symbol, "")
-        # Combine exchange and symbol in a full symbol.
         full_symbol = f"{exchange}::{symbol}"
-        dassert_is_full_symbol_valid(full_symbol)
     else:
         raise TypeError(
             "type(exchange) = `%s`, type(symbol)= `%s` but both inputs should"
-            "have the same type and be either a string or a `pd.Series`",
+            "have the same type and be either strings or `pd.Series`",
             type(exchange),
             type(symbol),
         )
+    dassert_is_full_symbol_valid(full_symbol)
     return full_symbol
 
 
