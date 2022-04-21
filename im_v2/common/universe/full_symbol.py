@@ -40,7 +40,7 @@ def dassert_is_full_symbol_valid(
     # Set match pattern.
     if isinstance(full_symbol, pd.Series):
         full_match = full_symbol.str.fullmatch(
-            regex_pattern, flags=re.IGNORECASE
+            regex_pattern, flags=re.IGNORECASE, na=False
         ).all()
     elif isinstance(full_symbol, FullSymbol):
         hdbg.dassert_isinstance(full_symbol, str)

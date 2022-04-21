@@ -69,6 +69,32 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         )
         imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
+    def test9(self) -> None:
+        """
+        Test series with incorrectly formatted full symbol.
+        """
+        full_symbol = pd.Series(
+            ["binance::BTC_USDT", "ftx::ETH_USDT", "bi nance::BTC USDT"]
+        )
+        with self.assertRaises(AssertionError):
+            imvcufusy.dassert_is_full_symbol_valid(full_symbol)
+
+    def test10(self) -> None:
+        """
+        Test series with an empty string.
+        """
+        full_symbol = pd.Series(["binance::BTC_USDT", "ftx::ETH_USDT", ""])
+        with self.assertRaises(AssertionError):
+            imvcufusy.dassert_is_full_symbol_valid(full_symbol)
+
+    def test11(self) -> None:
+        """
+        Test series with integer.
+        """
+        full_symbol = pd.Series(["binance::BTC_USDT", "ftx::ETH_USDT", 123])
+        with self.assertRaises(AssertionError):
+            imvcufusy.dassert_is_full_symbol_valid(full_symbol)
+
 
 class TestParseFullSymbol(hunitest.TestCase):
     def test1(self) -> None:
