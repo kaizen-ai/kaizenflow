@@ -250,6 +250,23 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
 
 
 # #############################################################################
+# CCXT
+# #############################################################################
+
+
+def _get_ccxt_universe_v3(n: Optional[int]) -> List[Amid]:
+    """
+    Create universe for Example1 DAG.
+    """
+    vendor = "CCXT"
+    full_symbols = ivcu.get_vendor_universe(
+        vendor, version="v3", as_full_symbol=True
+    )
+    full_symbols = _get_top_n(full_symbols, n)
+    return full_symbols
+
+
+# #############################################################################
 # General
 # #############################################################################
 
@@ -265,6 +282,8 @@ def get_universe(universe_str: str) -> List[Amid]:
         ret = _get_kibot_universe_v3(top_n)
     elif universe_version == "example1_v1":
         ret = _get_example1_universe_v1(top_n)
+    elif universe_version == "ccxt_v3":
+        ret = _get_ccxt_universe_v3(top_n)
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret
