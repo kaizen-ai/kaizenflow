@@ -13,7 +13,10 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): -> test_example1_pipeline.py (to confirm)
 
+
+# TODO(gp): Test_Example1_ReplayedForecastSystem
 class Test_Example1_ForecastSystem(unittest.TestCase):
     """
     Test a System composed of:
