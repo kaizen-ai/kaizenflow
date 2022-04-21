@@ -26,6 +26,7 @@ def compute_stats_for_universe(
     vendor_universe: List[ivcu.FullSymbol],
     config: cconconf.Config,
     stats_func: Callable,
+    data_type: str,
 ) -> pd.DataFrame:
     """
     Compute stats on the vendor universe level.
@@ -40,14 +41,16 @@ def compute_stats_for_universe(
     """
     hdbg.dassert_isinstance(stats_func, Callable)
     # Initialize loader.
-    loader = get_loader_for_vendor(config)
+    loader = get_loader_for_vendor(config, data_type)
     # Initialize stats data list.
     stats_data = []
     # Iterate over vendor universe tuples.
     for full_symbol in vendor_universe:
         # Read data for current exchange and currency pair.
         start_ts = None
-        end_ts = None
+        # End timestamp is hardcoded fro now, since for real-time CCXT data 
+        # there are problems with the latest timestamp index.
+        end_ts = pd.Timestamp("2022-04-15", tz="UTC")
         data = loader.read_data(
             [full_symbol],
             start_ts,
@@ -93,8 +96,7 @@ def compute_start_end_stats(
     hdbg.dassert_is_subset(
         [
             config["column_names"]["close_price"],
-            config["column_names"]["currency_pair"],
-            config["column_names"]["exchange_id"],
+            config["column_names"]["full_symbol"],
         ],
         price_data.columns,
     )
@@ -111,9 +113,8 @@ def compute_start_end_stats(
     longest_not_nan_seq = find_longest_not_nan_sequence(close_price_srs)
     # Compute necessary stats and put them in a series.
     res_srs = pd.Series(dtype="object")
-    res_srs["exchange_id"] = price_data[config["column_names"]["exchange_id"]][0]
-    res_srs["currency_pair"] = price_data[
-        config["column_names"]["currency_pair"]
+    res_srs["full_symbol"] = price_data[
+        config["column_names"]["full_symbol"]
     ][0]
     res_srs["min_timestamp"] = first_idx
     res_srs["max_timestamp"] = last_idx
@@ -200,6 +201,7 @@ def postprocess_stats_table(
 # TODO(Grisha): move `get_loader_for_vendor` out in and use the abstract class in #313.
 def get_loader_for_vendor(
     config: cconconf.Config,
+    data_type: str,
 ) -> icdc.ImClient:
     """
     Get vendor specific loader instance.
@@ -207,17 +209,23 @@ def get_loader_for_vendor(
     :param config: config
     :return: loader instance
     """
-    vendor = config["data"]["vendor"]
     resample_1min = True
-    root_dir = config["load"]["data_dir"]
-    extension = "csv.gz"
-    loader = icdcl.CcxtCddCsvParquetByAssetClient(
-        vendor,
-        resample_1min,
-        root_dir,
-        extension,
-        aws_profile=config["load"]["aws_profile"],
-    )
+    if data_type == "real_time":
+        vendor = config["data"]["vendor"]
+        connection = config["load"]["connection"]
+        loader = icdcl.CcxtCddDbClient(vendor, resample_1min, connection)
+    if data_type == "historical":
+        root_dir = config["load"]["data_dir"]
+        partition_mode = config["load"]["partition_mode"]
+        data_snapshot = config["load"]["data_snapshot"]
+        aws_profile = config["load"]["aws_profile"]
+        loader = icdcl.CcxtHistoricalPqByTileClient(
+                                                    resample_1min,
+                                                    root_dir,
+                                                    partition_mode,
+                                                    data_snapshot=data_snapshot,
+                                                    aws_profile=aws_profile,
+                                                )
     return loader
 
 
