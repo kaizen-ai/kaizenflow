@@ -46,10 +46,12 @@ class DAG:
         name: Optional[str] = None,
         mode: Optional[str] = None,
         *,
+        # TODO(gp): Remove "interface" from the name.
         save_node_interface: str = "",
         profile_execution: bool = False,
         dst_dir: Optional[str] = None,
         #
+        # TODO(gp): Rename `force_free_nodes`.
         force_freeing_nodes: bool = False,
     ) -> None:
         """
