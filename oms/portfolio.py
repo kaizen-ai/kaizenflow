@@ -66,6 +66,7 @@ class AbstractPortfolio(abc.ABC):
         pricing_method: str,
         initial_holdings: pd.Series,
         *,
+        retrieve_initial_holdings_from_db: bool = False,
         max_num_bars: Optional[int] = 100,
     ):
         """
@@ -77,7 +78,12 @@ class AbstractPortfolio(abc.ABC):
             If e.g. "twap", then we also include the bar duration as a
             pandas-style suffix: "twap.5T"
         :param initial_holdings: initial positions in shares indexed by integer
-            asset_ids
+            asset_ids; no NaNs allowed unless
+            `retrieve_initial_holdings_from_db=True`, in which case all values
+            must be NaN.
+        :param retrieve_initial_holdings_from_db: `True` iff holdings are
+            initialized via an external database. The asset ids of nonzero
+            holdings must be a subset of the index of `initial_holdings`.
         :param max_num_bars: maximum number of bars to store in memory; if
             `None`, then impose no restriction.
         """
@@ -97,11 +103,6 @@ class AbstractPortfolio(abc.ABC):
         self._pricing_type, self._bar_duration = self._parse_pricing_method(
             pricing_method
         )
-        # Validate universe and holdings.
-        self._validate_initial_holdings(initial_holdings)
-        initial_holdings.index.name = "asset_id"
-        initial_holdings.name = "curr_num_shares"
-        self._initial_holdings = initial_holdings
         # Initialize bookkeeping dictionaries.
         # At each call to `mark_to_market()`, we capture `wall_clock_time` and
         # perform a sequence of updates to the following dictionaries.
@@ -127,6 +128,18 @@ class AbstractPortfolio(abc.ABC):
         self._statistics = cksoordi.KeySortedOrderedDict(
             pd.Timestamp, self._max_num_bars
         )
+        # Validate universe and holdings.
+        self._retrieve_initial_holdings_from_db = (
+            retrieve_initial_holdings_from_db
+        )
+        # The client passed initial holdings and not just the allowed
+        # universe, so we need to make sure that the holdings are valid
+        # (e.g., contain no NaNs).
+        if not self._retrieve_initial_holdings_from_db:
+            self._validate_initial_holdings(initial_holdings)
+        initial_holdings.index.name = "asset_id"
+        initial_holdings.name = "curr_num_shares"
+        self._initial_holdings = initial_holdings
         # Set the initial universe.
         self._initial_universe = initial_holdings.index.drop(
             AbstractPortfolio.CASH_ID
@@ -700,7 +713,7 @@ class AbstractPortfolio(abc.ABC):
         self._asset_holdings[timestamp] = asset_holdings
         _LOG.debug("asset_holdings set.")
         _LOG.debug("Setting cash...")
-        cash = holdings.iloc[AbstractPortfolio.CASH_ID]
+        cash = holdings.loc[AbstractPortfolio.CASH_ID]
         _LOG.debug("`cash`=%0.2f", cash)
         self._cash[timestamp] = cash
         _LOG.debug("cash set.")
@@ -717,6 +730,19 @@ class AbstractPortfolio(abc.ABC):
     def _observe_holdings(self) -> None:
         """
         Update holdings and cash at the current wall clock time.
+        """
+        ...
+
+    @abc.abstractmethod
+    def _initialize_holdings_from_db(
+        self, initial_holdings: pd.Series
+    ) -> pd.Series:
+        """
+        Initialize holdings after querying an external db.
+
+        Use for:
+        - BOD initialization
+        - Intraday recovery
         """
         ...
 
@@ -897,6 +923,13 @@ class DataFramePortfolio(AbstractPortfolio):
         self._asset_holdings[wall_clock_timestamp] = new_asset_holdings_srs
         self._cash[wall_clock_timestamp] = new_cash
 
+    def _initialize_holdings_from_db(self) -> pd.Series:
+        # For now we don't assume that `DataFramePortfolio` is saved on permanent
+        # storage, since it is typically used for simulations.
+        # TODO(Paul, GP): Consider allowing saving and retrieval of
+        #  `DataFramePortfolio`.
+        raise NotImplementedError
+
     def _get_fills(self) -> pd.DataFrame:
         """
         Get the fills from the broker and convert it into a `fills_df`.
@@ -976,6 +1009,11 @@ class MockedPortfolio(AbstractPortfolio):
         self._timestamp_to_snapshot_df = collections.OrderedDict()
         # wall clock timestamp -> total net cost of transactions since the BOD.
         self._net_cost = cksoordi.KeySortedOrderedDict(pd.Timestamp)
+        if self._retrieve_initial_holdings_from_db:
+            self._initial_holdings = self._initialize_holdings_from_db(
+                self._initial_holdings
+            )
+            self._validate_initial_holdings(self._initial_holdings)
 
     def _observe_holdings(self) -> None:
         # The current positions table has the following fields:
@@ -1084,6 +1122,56 @@ class MockedPortfolio(AbstractPortfolio):
         # Update snapshot_df.
         hdbg.dassert(not snapshot_df.index.has_duplicates)
         self._timestamp_to_snapshot_df[wall_clock_timestamp] = snapshot_df
+
+    def _initialize_holdings_from_db(
+        self, initial_holdings: pd.Series
+    ) -> pd.Series:
+        # TODO(*): Factor out the query.
+        # All initial holdings must be NaN when we invoke this method.
+        hdbg.dassert_eq(initial_holdings.count(), 0)
+        #
+        query = []
+        query.append(f"SELECT * FROM {self._table_name}")
+        wall_clock_timestamp = self._get_wall_clock_time()
+        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
+        trade_date = wall_clock_timestamp.date()
+        where_clause = [f"WHERE tradedate='{trade_date}'"]
+        if self._account is not None:
+            where_clause.append(f"AND account='{self._account}'")
+        query.append(" ".join(where_clause))
+        #
+        query.append(f"ORDER BY {self._asset_id_col}")
+        query = "\n".join(query)
+        _LOG.debug("query=%s", query)
+        # Retrieve the data from the DB.
+        snapshot_df = hsql.execute_query_to_df(self._db_connection, query)
+        snapshot_df.rename(columns={self._asset_id_col: "asset_id"}, inplace=True)
+        _LOG.debug(
+            "snapshot_df=\n%s",
+            hpandas.df_to_str(snapshot_df, num_rows=None, precision=2),
+        )
+        if not snapshot_df.empty:
+            hdbg.dassert_no_duplicates(
+                snapshot_df["asset_id"],
+                "Each asset_id should be unique in a snapshot_df",
+            )
+        # Get current nonzero positions.
+        holdings = snapshot_df[["asset_id", "current_position"]].set_index(
+            "asset_id"
+        )["current_position"]
+        hdbg.dassert_isinstance(holdings, pd.Series)
+        nonzero_holdings = holdings[holdings != 0]
+        hdbg.dassert_isinstance(nonzero_holdings, pd.Series)
+        # Ensure that the nonzero positions are a subset of the universe
+        # specified by the index of `initial_holdings`.
+        hdbg.dassert_is_subset(
+            nonzero_holdings.index.to_list(), initial_holdings.index.to_list()
+        )
+        # Set zero holdings and combine with nonzero initial holdings.
+        initial_holdings = initial_holdings.fillna(0)
+        hdbg.dassert_isinstance(initial_holdings, pd.Series)
+        initial_holdings = initial_holdings.add(nonzero_holdings, fill_value=0)
+        return initial_holdings
 
     def _convert_to_holdings_df(
         self, snapshot_df: pd.DataFrame, as_of_timestamp: pd.Timestamp

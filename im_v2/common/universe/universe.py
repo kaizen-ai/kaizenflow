@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
-import im_v2.common.data.client as icdc
+import im_v2.common.universe.full_symbol as imvcufusy
 
 
 def _extract_universe_version(universe_file: str) -> Tuple[int, int]:
@@ -98,7 +98,7 @@ def _get_trade_universe(
 
 def get_vendor_universe(
     vendor: str, *, version: Optional[str] = None, as_full_symbol: bool = False
-) -> Union[List[str], Dict[str, Dict[str, List[str]]]]:
+) -> Union[List[imvcufusy.FullSymbol], Dict[str, Dict[str, List[str]]]]:
     """
     Load vendor universe either as a list of currency pairs per each vendor or
     list of full symbols.
@@ -106,7 +106,7 @@ def get_vendor_universe(
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
     :param version: release version
     :param as_full_symbol: if True transform the universe into list of
-     full symbols e.g. gateio::XRP_USDT
+        full symbols e.g. gateio::XRP_USDT
     :return: vendor universe as a list of symbol or list of full symbols e.g.:
         {
             "Talos": {
@@ -125,11 +125,12 @@ def get_vendor_universe(
         }
         or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
+    # TODO(Grisha): "Unify universe files format" CmTask #1725.
     vendor_universe = _get_trade_universe(vendor, version=version)
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.
         vendor_universe = [
-            icdc.build_full_symbol(exchange_id, currency_pair)
+            imvcufusy.build_full_symbol(exchange_id, currency_pair)
             for exchange_id, currency_pairs in vendor_universe.items()
             for currency_pair in currency_pairs
         ]
