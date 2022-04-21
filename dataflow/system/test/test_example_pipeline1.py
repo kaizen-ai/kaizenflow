@@ -36,16 +36,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
                 asset_ids,
                 event_loop,
             )
-            # §
-            config = system.get_dag_config(
-                "feature1",
-                "vwap.ret_0.vol",
-                "vwap.ret_0",
-                pd.Timedelta("7D"),
-                "asset_id",
-                spread_col=None,
-                log_dir=None,
-            )
+            config = system.get_dag_config()
             market_data = system.get_market_data(data)
             dag_runner = system.get_dag_runner(
                 config,

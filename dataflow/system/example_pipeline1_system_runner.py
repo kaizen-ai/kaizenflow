@@ -5,18 +5,18 @@ import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 """
 
 import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import pandas as pd
 
 import core.config as cconfig
-import dataflow.core.dag_builder as dtfcodabui
 import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system_runner as dtfsysyrun
 import market_data as mdata
 import oms
+import market_data.replayed_market_data as mdremada
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,36 +31,12 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
     - a ReplayedMarketData
     - an Example1 DAG
     """
-
     def __init__(self, asset_ids: List[int], event_loop=None):
         self._asset_ids = asset_ids
         self._event_loop = event_loop
 
-    def get_market_data(
-        self,
-        data: pd.DataFrame,
-        initial_replayed_delay: int = 5,
-    ):
-        market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
-            self._event_loop,
-            initial_replayed_delay,
-            data,
-        )
-        return market_data
-
-    def get_dag_config(
-        self,
-        # TODO(Danya): These parameters don't go anywhere,
-        #  and it seems like they didn't in the original version.
-        #  @gp should these be added to `get_config_template`?
-        prediction_col: str,
-        volatility_col: str,
-        returns_col: str,
-        timedelta: pd.Timedelta,
-        asset_id_col: str,
-        *spread_col: Optional[str],
-        log_dir: Optional[str],
-    ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
+    @staticmethod
+    def get_dag_config() -> cconfig.Config: #pylint disable=arguments-differ
         """
         See description in parent class.
         """
@@ -72,17 +48,28 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
         config["meta", "dag_builder"] = dag_builder
         return config
 
+    def get_market_data(
+        self,
+        data: pd.DataFrame,
+        initial_replayed_delay: int = 5,
+    ) -> mdremada.ReplayedMarketData:
+        market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
+            self._event_loop,
+            initial_replayed_delay,
+            data,
+        )
+        return market_data
+
     def get_dag_runner(
         self,
         config: cconfig.Config,
-        market_data,
+        market_data: mdremada.ReplayedMarketData,
         *,
         real_time_loop_time_out_in_secs: Optional[int] = None,
     ) -> dtfsrtdaru.RealTimeDagRunner:
         """
         Build a DAG runner from a config.
         """
-
         stage = "read_data"
         asset_id_col = "asset_id"
         # The DAG works on multi-index dataframe containing multiple
@@ -95,9 +82,7 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
             market_data,
             timedelta,
             asset_id_col,
-            # ts_col_name,
             multiindex_output,
-            # col_names_to_remove=col_names_to_remove,
         )
         # Build the DAG.
         dag_builder = config["meta", "dag_builder"]

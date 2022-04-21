@@ -19,6 +19,7 @@ import helpers.hdatetime as hdateti
 import helpers.hsql as hsql
 import market_data as mdata
 import oms as oms
+import dataflow.core as dtfcore
 
 _LOG = logging.getLogger(__name__)
 
@@ -30,9 +31,8 @@ _LOG = logging.getLogger(__name__)
 
 class System(abc.ABC):
     """
-    Used as type to pass around.
+    The simplest possible System, i.e. an empty one.
     """
-    pass
 
 
 # #############################################################################
@@ -43,6 +43,7 @@ class System(abc.ABC):
 class ForecastSystem(System):
     """
     The simplest DataFlow-based system comprised of a:
+
     - `MarketData` that can be:
         - historical (for backtesting)
         - replayed-time (for simulating real time)
@@ -55,7 +56,7 @@ class ForecastSystem(System):
 
     @abc.abstractmethod
     def get_market_data(
-            self, event_loop: asyncio.AbstractEventLoop
+        self, event_loop: asyncio.AbstractEventLoop
     ) -> mdata.MarketData:
         ...
 
@@ -67,12 +68,11 @@ class ForecastSystem(System):
         returns_col: str,
         timedelta: pd.Timedelta,
         asset_id_col: str,
-        *
-        spread_col: Optional[str],
+        *spread_col: Optional[str],
         log_dir: Optional[str],
-    ) -> Tuple[cconfig.Config, dtfcodabui.DagBuilder]:
+    ) -> cconfig.Config:
         """
-        Create a Dataflow DAG config and a corresponding DAG builder.
+        Create a Dataflow DAG config.
 
         :param prediction_col: column with features to base predictions on
         :param volatility_col: column with volatility data
@@ -82,18 +82,18 @@ class ForecastSystem(System):
             the forecast
         :param asset_id_col: column with asset ids
         :param log_dir: directory for saving stdout logs
-        :return: a DAG builder object with a corresponding config
+        :return: a DAG config
         """
         ...
-    
+
     @abc.abstractmethod
     def get_dag_runner(
         self,
         config: cconfig.Config,
-        market_data,
+        market_data: mdata.MarketData,
         *,
         real_time_loop_time_out_in_secs: Optional[int] = None,
-    ):
+    ) -> dtfcore.AbstractDagRunner:
         """
         Create a DAG runner.
 
@@ -102,7 +102,8 @@ class ForecastSystem(System):
         :param sleep_interval_in_secs: time between DAG runs
         :param real_time_loop_time_out_in_secs: max time for single DAG run
         """
-    ...
+        ...
+
 
 # #############################################################################
 # SystemRunner
@@ -179,7 +180,7 @@ class SystemRunner(abc.ABC):
         *,
         sleep_interval_in_secs: int = 60 * 5,
         real_time_loop_time_out_in_secs: Optional[int] = None,
-    ):
+    ) -> dtfsys.RealTimeDagRunner:
         _ = self
         # Set up the event loop.
         execute_rt_loop_kwargs = {
