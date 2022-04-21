@@ -41,8 +41,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             dag_runner = system.get_dag_runner(
                 config,
                 market_data,
-                60 * 5,
-                real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
+                real_time_loop_time_out_in_secs=60 * 5,
             )
             coroutines = [dag_runner.predict()]
             #
