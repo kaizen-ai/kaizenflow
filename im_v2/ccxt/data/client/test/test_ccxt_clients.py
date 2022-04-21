@@ -1342,8 +1342,9 @@ class TestCcxtHistoricalPqByTileClient_DataGeneration1(hunitest.TestCase):
 
     def _get_unit_test_data(self) -> pd.DataFrame:
         """
-        Get small part of historical data from s3 for 2 days.
-        Add missing columns:
+        Get small part of historical data from s3 for 2 days. Add missing
+        columns:
+
         - currency_pair
         - year
         - month
@@ -1358,7 +1359,9 @@ class TestCcxtHistoricalPqByTileClient_DataGeneration1(hunitest.TestCase):
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
         data = im_client.read_data(full_symbols, start_ts, end_ts)
         # add missing columns
-        data["currency_pair"] = data["full_symbol"].apply(lambda x: x.split("::")[1])
+        data["currency_pair"] = data["full_symbol"].apply(
+            lambda x: x.split("::")[1]
+        )
         data.drop(columns="full_symbol", inplace=True)
         data["year"] = "2018"
         data["month"] = "08"
