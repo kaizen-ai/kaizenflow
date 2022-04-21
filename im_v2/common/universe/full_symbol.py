@@ -95,8 +95,6 @@ def build_full_symbol(
         hdbg.dassert_eq(exchange.shape[0], symbol.shape[0])
         full_symbol = exchange + "::" + symbol
     elif isinstance(exchange, str) and isinstance(symbol, str):
-        hdbg.dassert_ne(exchange, "")
-        hdbg.dassert_ne(symbol, "")
         full_symbol = f"{exchange}::{symbol}"
     else:
         raise TypeError(
