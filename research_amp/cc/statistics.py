@@ -48,7 +48,7 @@ def compute_stats_for_universe(
     for full_symbol in vendor_universe:
         # Read data for current exchange and currency pair.
         start_ts = None
-        # End timestamp is hardcoded fro now, since for real-time CCXT data 
+        # End timestamp is hardcoded fro now, since for real-time CCXT data
         # there are problems with the latest timestamp index.
         end_ts = pd.Timestamp("2022-04-15", tz="UTC")
         data = loader.read_data(
@@ -113,9 +113,7 @@ def compute_start_end_stats(
     longest_not_nan_seq = find_longest_not_nan_sequence(close_price_srs)
     # Compute necessary stats and put them in a series.
     res_srs = pd.Series(dtype="object")
-    res_srs["full_symbol"] = price_data[
-        config["column_names"]["full_symbol"]
-    ][0]
+    res_srs["full_symbol"] = price_data[config["column_names"]["full_symbol"]][0]
     res_srs["min_timestamp"] = first_idx
     res_srs["max_timestamp"] = last_idx
     res_srs["n_data_points"] = close_price_srs.count()
@@ -220,12 +218,12 @@ def get_loader_for_vendor(
         data_snapshot = config["load"]["data_snapshot"]
         aws_profile = config["load"]["aws_profile"]
         loader = icdcl.CcxtHistoricalPqByTileClient(
-                                                    resample_1min,
-                                                    root_dir,
-                                                    partition_mode,
-                                                    data_snapshot=data_snapshot,
-                                                    aws_profile=aws_profile,
-                                                )
+            resample_1min,
+            root_dir,
+            partition_mode,
+            data_snapshot=data_snapshot,
+            aws_profile=aws_profile,
+        )
     return loader
 
 

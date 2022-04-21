@@ -16,23 +16,12 @@
 # # Imports
 
 # %%
-import logging
 import os
 
-import numpy as np
-import pandas as pd
-
 import core.config.config_ as cconconf
-import core.finance.resampling as cfinresa
-import core.finance.returns as cfinretu
-import helpers.hdbg as hdbg
-import helpers.hprint as hprint
 import helpers.hsql as hsql
-import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
-
 import research_amp.cc.statistics as ramccsta
-
 
 # %% [markdown]
 # # Config
@@ -43,7 +32,7 @@ def get_cmtask1706_config() -> cconconf.Config:
     Config for calculating quality assurance statistics.
     """
     config = cconconf.Config()
-        # Load parameters.
+    # Load parameters.
     config.add_subconfig("load")
     env_file = imvimlita.get_db_env_path("dev")
     connection_params = hsql.get_connection_info_from_env_file(env_file)
@@ -77,7 +66,7 @@ print(config)
 # # QA stats
 
 # %%
-full_symbols = ['binance::ADA_USDT', 'binance::AVAX_USDT']
+full_symbols = ["binance::ADA_USDT", "binance::AVAX_USDT"]
 
 # %% [markdown]
 # ## Real-time
