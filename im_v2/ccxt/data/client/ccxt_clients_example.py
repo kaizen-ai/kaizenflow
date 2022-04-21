@@ -82,6 +82,8 @@ def get_CcxtHistoricalPqByTileClient_example1(
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the tests.
+
+    Reads actual historical data.
     """
     # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
     root_dir = "s3://cryptokaizen-data/historical"
@@ -97,6 +99,8 @@ def get_CcxtHistoricalPqByTileClient_example2(
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the tests.
+
+    Reads data snippets created for unit tests.
     """
     # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
     root_dir = "s3://cryptokaizen-data/unit_test/historical"

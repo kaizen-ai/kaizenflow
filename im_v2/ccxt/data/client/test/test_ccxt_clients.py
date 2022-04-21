@@ -12,6 +12,7 @@ import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
+import im_v2.common.universe as ivcu
 
 
 def get_expected_column_names() -> List[str]:
@@ -1325,9 +1326,9 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_last_elements,
         )
 
+    # ////////////////////////////////////////////////////////////////////////
 
-@pytest.mark.skip("Enable when unit test data needs to be generated.")
-class TestCcxtHistoricalPqByTileClient_DataGeneration1(hunitest.TestCase):
+    @pytest.mark.skip("Enable when unit test data needs to be generated.")
     def test_write_test_data_to_s3(self) -> None:
         """
         Write unit test data to s3.
@@ -1342,13 +1343,14 @@ class TestCcxtHistoricalPqByTileClient_DataGeneration1(hunitest.TestCase):
 
     def _get_unit_test_data(self) -> pd.DataFrame:
         """
-        Get small part of historical data from s3 for 2 days. Add missing
-        columns:
+        Get small part of historical data from s3 for unit testing.
 
-        - currency_pair
-        - year
-        - month
-        Return DataFrame to be loaded to s3.
+        Implemented transformations:
+        - Add necessary columns for partitioning
+        - Remove unnecessary column
+        - Cut data up to 2 days of data
+
+        return: data to be loaded to s3
         """
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
@@ -1359,10 +1361,8 @@ class TestCcxtHistoricalPqByTileClient_DataGeneration1(hunitest.TestCase):
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
         data = im_client.read_data(full_symbols, start_ts, end_ts)
         # add missing columns
-        data["currency_pair"] = data["full_symbol"].apply(
-            lambda x: x.split("::")[1]
-        )
+        data["currency_pair"] = ivcu.parse_full_symbol(data["full_symbol"])
         data.drop(columns="full_symbol", inplace=True)
-        data["year"] = "2018"
-        data["month"] = "08"
+        data["year"] = data.index.year
+        data["month"] = data.index.month
         return data
