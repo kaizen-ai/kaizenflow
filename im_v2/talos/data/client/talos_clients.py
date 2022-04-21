@@ -235,7 +235,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             self._db_connection, query
         )
         # Merge these columns to the general `full_symbol` format.
-        full_symbols = currency_exchange_df.agg("::".join, axis=1)
+        full_symbols = ivcu.build_full_symbol(
+            currency_exchange_df["exchange_id"],
+            currency_exchange_df["currency_pair"],
+        )
         # Convert to list.
         full_symbols = full_symbols.to_list()
         return full_symbols
