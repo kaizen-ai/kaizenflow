@@ -43,12 +43,11 @@ def dassert_is_full_symbol_valid(
             regex_pattern, flags=re.IGNORECASE, na=False
         ).all()
     elif isinstance(full_symbol, FullSymbol):
-        hdbg.dassert_isinstance(full_symbol, str)
         full_match = re.fullmatch(regex_pattern, full_symbol, re.IGNORECASE)
     else:
         raise TypeError(
-            "Input type is `%s` but should be either a string or a `pd.Series`",
-            type(full_symbol),
+            f"Input type is `{type(full_symbol)}` but should be either a string"
+            f" or a `pd.Series`"
         )
     # Valid full symbols must match the pattern.
     hdbg.dassert(
@@ -93,10 +92,9 @@ def build_full_symbol(
         full_symbol = f"{exchange}::{symbol}"
     else:
         raise TypeError(
-            "type(exchange) = `%s`, type(symbol)= `%s` but both inputs should"
-            "have the same type and be either strings or `pd.Series`",
-            type(exchange),
-            type(symbol),
+            f"type(exchange) = `{type(exchange)}`,"
+            f" type(symbol)= `{type(symbol)}` but both inputs should have"
+            f" the same type and be either strings or `pd.Series`"
         )
     dassert_is_full_symbol_valid(full_symbol)
     return full_symbol
