@@ -163,3 +163,12 @@ class TestBuildFullSymbol(hunitest.TestCase):
             ["binance::BTC_USDT", "ftx::ETH_USDT", "exchange::symbol"]
         )
         self.assert_equal(actual.to_string(), expected.to_string())
+
+    def test4(self) -> None:
+        """
+        Test exchange and symbol have different formats.
+        """
+        exchange = "binance"
+        symbol = pd.Series(["BTC_USDT", "ETH_USDT", "symbol"])
+        with self.assertRaises(TypeError):
+            imvcufusy.build_full_symbol(exchange, symbol)

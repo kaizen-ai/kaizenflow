@@ -73,14 +73,9 @@ def parse_full_symbol(
         # Get exchange and symbol series.
         exchange = df_exchange_symbol[0]
         symbol = df_exchange_symbol[1]
-    elif isinstance(full_symbol, FullSymbol):
+    else:
         # Split full symbol on exchange and symbol.
         exchange, symbol = full_symbol.split("::")
-    else:
-        raise TypeError(
-            "Input type is `%s` but should be either a string or a `pd.Series`",
-            type(full_symbol),
-        )
     return exchange, symbol
 
 
