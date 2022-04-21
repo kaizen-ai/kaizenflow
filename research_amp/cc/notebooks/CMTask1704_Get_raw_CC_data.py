@@ -425,3 +425,88 @@ display(ada_ex.corr())
 ada_ex.plot()
 
 # %%
+
+# %%
+
+# %%
+import dataflow.system.source_nodes as dtfsysonod
+
+# %%
+data
+
+# %%
+mm = dtfsysonod._convert_to_multiindex(data, "full_symbol")
+mm
+
+# %%
+mm.info()
+
+# %%
+cfinresa.resample(
+            mm, rule="5T"
+        )#.agg({"close":"last"})
+
+# %%
+cfinresa.resample_ohlcv_bars(
+            mm, rule="5T"
+        )
+
+
+# %%
+
+# %%
+def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
+    result = []
+    full_symbol_list = df["full_symbol"].unique()
+    for cc in full_symbol_list:
+        # DataFrame with a specific `full_symbol`
+        cc_df = df[df["full_symbol"] == cc]
+        # Resample OHLCV data inside `full_symbol`-specific DataFrame.
+        resampled_cc_df = cfinresa.resample_ohlcv_bars(
+            cc_df, rule=resampling_freq
+        )
+        # Attach VWAP, TWAP.
+        resampled_cc_df[["vwap", "twap"]] = cfinresa.compute_twap_vwap(
+            cc_df, resampling_freq, price_col="close", volume_col="volume"
+        )
+        # Calculate returns.
+        resampled_cc_df["vwap_rets"] = cfinretu.compute_ret_0(
+            resampled_cc_df[["vwap"]], "pct_change"
+        )
+        resampled_cc_df["twap_rets"] = cfinretu.compute_ret_0(
+            resampled_cc_df[["twap"]], "pct_change"
+        )
+        resampled_cc_df["log_rets"] = cfinretu.compute_ret_0(
+            resampled_cc_df[["close"]], "log_rets"
+        )
+        # Add a column with `full_symbol` indication.
+        resampled_cc_df["full_symbol"] = cc
+        # Omit unnecesary columns.
+        resampled_cc_df = resampled_cc_df.drop(columns=["open", "high", "low"])
+        result.append(resampled_cc_df)
+    final_df = pd.concat(result)
+    return final_df
+
+
+# %%
+dd = mm.copy()
+dd.columns = ['_'.join(col) for col in dd.columns]
+
+# %%
+mm.info()
+
+# %%
+dd.head(3)
+
+# %%
+
+# %%
+cfinresa.compute_twap_vwap(
+            dd, "5T", price_col="close_binance::ADA_USDT", volume_col="volume_binance::AVAX_USDT"
+        )
+
+# %%
+
+# %%
+
+# %%
