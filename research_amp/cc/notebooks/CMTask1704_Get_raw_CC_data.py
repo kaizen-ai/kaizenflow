@@ -460,8 +460,12 @@ cfinresa.resample_ohlcv_bars(
 # 2) use pandas Multi-index
 # 3) use Dataflow nodes
 #
-#
 # TODO(Max): Extract from this notebook a Gallery_dataflow_example notebook that reads the historical data, computes the same stuff in the 3 ways
+#
+# For the real work, you can mix the approaches:
+# - use 2) or 3) when possible, and 1) as a backup
+#
+# If there is not a node or a low-level function that does what you want, you can use approach 1)
 
 # %%
 # Approach 1) does both resampling and ret.
@@ -535,6 +539,12 @@ mm.resample("5T").mean()
 # Compute the ret_0 on all assets. You don't need a loop! But the data needs to be in the "right" format
 # (the variable you want to loop on needs to be the outermost in the levels, so you do swaplevel)
 df2.swaplevel(axis=1).pct_change()
+
+# %%
+# To go back to a flat index representation.
+df3.columns = df2["df_out"].columns.to_flat_index().str.join('.')
+#df2.T.reset_index().T
+df3
 
 # %% [markdown]
 # ## Approach 3) data-flow style
