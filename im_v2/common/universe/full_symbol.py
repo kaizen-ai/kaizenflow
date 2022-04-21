@@ -47,7 +47,7 @@ def dassert_is_full_symbol_valid(
     else:
         raise TypeError(
             f"Input type is `{type(full_symbol)}` but should be either a string"
-            f" or a `pd.Series`"
+            " or a `pd.Series`"
         )
     # Valid full symbols must match the pattern.
     hdbg.dassert(
@@ -94,7 +94,7 @@ def build_full_symbol(
         raise TypeError(
             f"type(exchange) = `{type(exchange)}`,"
             f" type(symbol)= `{type(symbol)}` but both inputs should have"
-            f" the same type and be either strings or `pd.Series`"
+            " the same type and be either strings or `pd.Series`"
         )
     dassert_is_full_symbol_valid(full_symbol)
     return full_symbol
