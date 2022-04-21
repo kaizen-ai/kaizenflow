@@ -666,7 +666,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
 
 # #############################################################################
-# RealTimeSqlTalosClient
+# TestRealTimeSqlTalosClient1
 # #############################################################################
 
 

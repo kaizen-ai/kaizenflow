@@ -437,11 +437,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         df["exchange_id"] = df["exchange_id"].astype(str)
         df["currency_pair"] = df["currency_pair"].astype(str)
         # Add full symbol column.
-        df[full_symbol_col_name] = df.apply(
-            lambda x: ivcu.build_full_symbol(
-                x["exchange_id"], x["currency_pair"]
-            ),
-            axis=1,
+        df[full_symbol_col_name] = ivcu.build_full_symbol(
+            df["exchange_id"], df["currency_pair"]
         )
         # Select only necessary columns.
         columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
