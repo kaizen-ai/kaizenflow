@@ -19,21 +19,17 @@
 import logging
 import os
 
-import numpy as np
 import pandas as pd
 
 import core.config.config_ as cconconf
-import core.finance.resampling as cfinresa
-import core.finance.returns as cfinretu
+import core.finance as cofinanc
+import dataflow.core as dtfcore
+import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
-
-import dataflow.system.source_nodes as dtfsysonod
-import dataflow.core as dtfcore
-import core.finance as cofinanc
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -173,50 +169,52 @@ display(data_hist.head(3))
 def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     """
     Resample the data and calculate VWAP, TWAP using DataFlow methods.
-    
-    :param df: Raw data 
+
+    :param df: Raw data
     :param resampling_rule: Desired resampling frequency
     :return: Resampled multiindex DataFrame with computed metrics
     """
     # Configure the node to do the TWAP / VWAP resampling.
     node_resampling_config = {
-            "in_col_groups": [
-                ("close",),
-                ("volume",),
+        "in_col_groups": [
+            ("close",),
+            ("volume",),
+        ],
+        "out_col_group": (),
+        "transformer_kwargs": {
+            "rule": resampling_rule,
+            "resampling_groups": [
+                ({"close": "close"}, "last", {}),
+                (
+                    {
+                        "close": "twap",
+                    },
+                    "mean",
+                    {},
+                ),
+                (
+                    {
+                        "volume": "volume",
+                    },
+                    "sum",
+                    {"min_count": 1},
+                ),
             ],
-            "out_col_group": (),
-            "transformer_kwargs": {
-                "rule": resampling_rule,
-                "resampling_groups": [
-                    ({"close": "close"}, "last", {}),
-                    (
-                        {
-                            "close": "twap",
-                        },
-                        "mean",
-                        {},
-                    ),
-                    (
-                        {
-                            "volume": "volume",
-                        },
-                        "sum",
-                        {"min_count": 1},
-                    ),
-                ],
-                "vwap_groups": [
-                    ("close", "volume", "vwap"),
-                ],
-            },
-            "reindex_like_input": False,
-            "join_output_with_input": False,
-        }
+            "vwap_groups": [
+                ("close", "volume", "vwap"),
+            ],
+        },
+        "reindex_like_input": False,
+        "join_output_with_input": False,
+    }
     # Put the data in the DataFlow format (which is multi-index).
     converted_data = dtfsysonod._convert_to_multiindex(df, "full_symbol")
     # Create the node.
     nid = "resample"
     node = dtfcore.GroupedColDfToDfTransformer(
-        nid, transformer_func=cofinanc.resample_bars, **node_resampling_config,
+        nid,
+        transformer_func=cofinanc.resample_bars,
+        **node_resampling_config,
     )
     # Compute the node on the data.
     vwap_twap = node.fit(converted_data)
@@ -229,10 +227,10 @@ def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
 def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
     """
     Compute returns on the resampled data DataFlow-style.
-    
+
     :param df: Resampled multiindex DataFrame
     :param rets_type: i.e., "log_rets" or "pct_change"
-    :return: The same DataFrame but with attached columns with returns 
+    :return: The same DataFrame but with attached columns with returns
     """
     # Configure the node to calculate the returns.
     node_returns_config = {
@@ -254,7 +252,9 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
     # Create the node that computes ret_0.
     nid = "ret0"
     node = dtfcore.GroupedColDfToDfTransformer(
-        nid, transformer_func=cofinanc.compute_ret_0, **node_returns_config,
+        nid,
+        transformer_func=cofinanc.compute_ret_0,
+        **node_returns_config,
     )
     # Compute the node on the data.
     rets = node.fit(df)
@@ -265,11 +265,11 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 
 # %%
 # VWAP, TWAP transformation.
-resampling_rule = config["transform"]["resampling_rule"] = "5T"
+resampling_rule = config["transform"]["resampling_rule"]
 vwap_twap_df = calculate_vwap_twap(data, resampling_rule)
 
 # Returns calculation.
-rets_type = config["transform"]["rets_type"] = "pct_change"
+rets_type = config["transform"]["rets_type"]
 vwap_twap_rets_df = calculate_returns(vwap_twap_df, rets_type)
 
 # %% run_control={"marked": false}
@@ -282,9 +282,3 @@ ada_ex = vwap_twap_rets_df.swaplevel(axis=1)
 ada_ex = ada_ex["binance::ADA_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
 display(ada_ex.corr())
 ada_ex.plot()
-
-# %%
-
-# %%
-
-# %%
