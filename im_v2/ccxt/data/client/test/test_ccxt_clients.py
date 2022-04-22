@@ -1334,11 +1334,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         """
         data = self._get_unit_test_data()
         partition_columns = ["currency_pair", "year", "month"]
-        dst_dir = "s3://cryptokaizen-data/unit_test/historical/ccxt/latest"
         aws_profile = "ck"
-        hparque.to_partitioned_parquet(
-            data, partition_columns, dst_dir, aws_profile=aws_profile
-        )
+        full_symbol_col_name = "exchange_id"
+        for full_symbol, df_tmp in data.groupby(full_symbol_col_name):
+            dst_dir = "s3://cryptokaizen-data/unit_test/historical/ccxt/latest/%s" % df_tmp[full_symbol_col_name][0]
+            hparque.to_partitioned_parquet(
+                df_tmp, partition_columns, dst_dir, aws_profile=aws_profile
+            )
 
     def _get_unit_test_data(self) -> pd.DataFrame:
         """
@@ -1357,11 +1359,11 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
         data = im_client.read_data(full_symbols, start_ts, end_ts)
         # Add missing columns
-        data["currency_pair"] = ivcu.parse_full_symbol(data["full_symbol"])
-        data.drop(columns="full_symbol", inplace=True)
+        data['exchange_id'], data["currency_pair"] = ivcu.parse_full_symbol(data["full_symbol"])
+        data = data.drop(columns="full_symbol")
         data["year"] = data.index.year
         data["month"] = data.index.month
         # Creating data gaps
         indexes = data.index
-        data.drop(index=indexes[100:115], inplace=True)
+        data = data.drop(index=indexes[100:115])
         return data
