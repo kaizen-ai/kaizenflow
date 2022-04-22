@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import unittest
+import helpers.hunit_test as hunitest
 
 import pandas as pd
 import pytest
@@ -14,7 +14,7 @@ import oms.test.oms_db_helper as otodh
 _LOG = logging.getLogger(__name__)
 
 
-class Test_Example1_ForecastSystem(unittest.TestCase):
+class Test_Example1_ForecastSystem(hunitest.TestCase):
     """
     Test a System composed of:
 
@@ -48,7 +48,8 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-        return str
+            result_bundles = result_bundles[0]
+        return result_bundles
 
     # ///////////////////////////////////////////////////////////////////////////
 
@@ -59,7 +60,7 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             real_time_loop_time_out_in_secs,
         )
         # TODO(gp): PP freeze the output.
-        # self.check_string(actual)
+        self.check_string(str(actual))
 
 
 # #############################################################################
