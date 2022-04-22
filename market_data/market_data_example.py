@@ -237,14 +237,21 @@ def get_ReplayedTimeMarketData_example5(
 # #############################################################################
 
 
-def _get_last_timestamp() -> pd.Timestamp:
+def _get_last_timestamp(
+    client: icdc.ImClient, asset_ids: Optional[List[int]]
+) -> pd.Timestamp:
     """
-    Get the latest timestamp.
-
-    To get the maximum timestamp we need to read all the data but since
-    it is an expensive operation we just use the hard-wired timestamp.
+    Get the latest timestamp + 1 minute for the provided asset ids.
     """
-    return pd.Timestamp("2100-01-01T00:00:00+00:00")
+    # To receive the latest timestamp from `ImClient` one should pass a full
+    # symbol, because `ImClient` operates with full symbols.
+    full_symbols = client.get_full_symbols_from_asset_ids(asset_ids)
+    last_timestamps = []
+    for full_symbol in full_symbols:
+        last_timestamp = client.get_end_ts_for_symbol(full_symbol)
+        last_timestamps.append(last_timestamp)
+    last_timestamp = max(last_timestamps) + pd.Timedelta(minutes=1)
+    return last_timestamp
 
 
 def get_CcxtCsvImClientMarketData_example1(
@@ -257,6 +264,13 @@ def get_CcxtCsvImClientMarketData_example1(
     """
     resample_1min = True
     im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    last_timestamp = _get_last_timestamp(im_client, asset_ids)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return last_timestamp
+
+    #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
@@ -266,7 +280,7 @@ def get_CcxtCsvImClientMarketData_example1(
         start_time_col_name,
         end_time_col_name,
         columns,
-        _get_last_timestamp,
+        get_wall_clock_time,
         im_client=im_client,
         column_remap=column_remap,
     )
@@ -280,9 +294,18 @@ def get_CcxtPqImClientMarketData_example1(
 ) -> mdimcmada.ImClientMarketData:
     """
     Build a `ImClientMarketData` backed with `CCXT` Parquet by tile data.
+
+    The wall clock is the maximum timestamp.
     """
     resample_1min = False
     im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(resample_1min)
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    last_timestamp = _get_last_timestamp(im_client, asset_ids)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return last_timestamp
+
+    #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
@@ -292,7 +315,42 @@ def get_CcxtPqImClientMarketData_example1(
         start_time_col_name,
         end_time_col_name,
         columns,
-        _get_last_timestamp,
+        get_wall_clock_time,
+        im_client=im_client,
+        column_remap=column_remap,
+    )
+    return market_data
+
+
+def get_CcxtPqImClientMarketData_example2(
+    asset_ids: Optional[List[int]],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+) -> mdimcmada.ImClientMarketData:
+    """
+    Build a `ImClientMarketData` backed with `CCXT` Parquet by tile data.
+
+    The wall clock is a hard-wired timestamp. To get the maximum timestamp 
+    we need to read all the data which is an expensive operation.
+    """
+    resample_1min = False
+    im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(resample_1min)
+    # Build a function that returns a wall clock to initialise `MarketData`.
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return pd.Timestamp("2100-01-01T00:00:00+00:00")
+
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    market_data = mdimcmada.ImClientMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
         im_client=im_client,
         column_remap=column_remap,
     )
@@ -308,6 +366,13 @@ def get_DataFrameImClientMarketData_example1(
     Build a `ImClientMarketData` backed with synthetic data.
     """
     im_client = icdc.get_DataFrameImClient_example1()
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    last_timestamp = _get_last_timestamp(im_client, asset_ids)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return last_timestamp
+
+    #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
@@ -317,7 +382,7 @@ def get_DataFrameImClientMarketData_example1(
         start_time_col_name,
         end_time_col_name,
         columns,
-        _get_last_timestamp,
+        get_wall_clock_time,
         im_client=im_client,
         column_remap=column_remap,
     )
@@ -334,6 +399,13 @@ def get_TalosPqImClientMarketData_example1(
     """
     resample_1min = False
     im_client = itdcl.get_TalosHistoricalPqByTileClient_example2(resample_1min)
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    last_timestamp = _get_last_timestamp(im_client, asset_ids)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return last_timestamp
+
+    #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
@@ -343,7 +415,7 @@ def get_TalosPqImClientMarketData_example1(
         start_time_col_name,
         end_time_col_name,
         columns,
-        _get_last_timestamp,
+        get_wall_clock_time,
         im_client=im_client,
         column_remap=column_remap,
     )
