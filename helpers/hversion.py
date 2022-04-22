@@ -147,8 +147,15 @@ def _check_version(code_version: str, container_version: str) -> bool:
     # `_VERSION_RE` regex, we apply the same regex to the container version
     # to keep the representations comparable.
     match = re.search(_VERSION_RE, container_version)
-    if match:
-        container_version = match.group()
+    hdbg.dassert(
+        match,
+        (
+            "Invalid format of the container code version '%s'; "
+            "it should contain a number like '1.0.0'"
+        ),
+        container_version,
+    )
+    container_version = match.group()  # type: ignore
     # Check if the versions are the same.
     is_ok = container_version == code_version
     if not is_ok:
