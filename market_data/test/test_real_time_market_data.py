@@ -19,7 +19,6 @@ import im_v2.talos.db.utils as imvtadbut
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Factor out this test in a ReplayedMarketData_TestCase
 def _check_get_data(
     self_: Any,
     client: imvtdctacl.RealTimeSqlTalosClient,
@@ -78,18 +77,15 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
 
     def test_get_data_for_interval1(self) -> None:
         """
-        - Start replaying time 5 minutes after the beginning of the day, i.e., the
-          current time is 9:35.
         - Ask data for [9:30, 9:45]
-        - The returned data is [9:30, 9:35].
         """
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         client = self.setup_talos_sql_client()
         
-        start_ts = pd.Timestamp("2022-04-21 02:30:00-05:00")
-        end_ts = pd.Timestamp("2022-04-22 15:45:00-05:00")
+        start_ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
+        end_ts = pd.Timestamp("2022-04-22 09:45:00-05:00")
         ts_col_name = "timestamp"
         asset_ids = None
         func = lambda market_data: market_data.get_data_for_interval(
@@ -97,12 +93,77 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         )
         # pylint: disable=line-too-long
         expected_df_as_str = r"""# df=
-index=[2022-04-21 09:43:49-04:00, 2022-04-21 09:43:49-04:00]
-columns=asset_id,close,high,low,open,start_timestamp,volume
-shape=(1, 7)
-                             asset_id  close  high   low  open           start_timestamp  volume
-end_timestamp
-2022-04-21 09:43:49-04:00  1464553467   65.0  45.0  55.0  35.0 2022-04-21 09:42:49-04:00    75.0"""
+        index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
+        columns=asset_id,close,high,low,open,start_timestamp,volume
+        shape=(1, 7)
+                                    asset_id  close  high   low  open           start_timestamp  volume
+        end_timestamp
+        2022-04-22 10:30:00-04:00  1464553467   60.0  40.0  50.0  30.0 2022-04-22 10:29:00-04:00    70.0"""
+        # pylint: enable=line-too-long
+        _check_get_data(self, client, func, expected_df_as_str)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_get_data_for_interval2(self) -> None:
+        """
+        - Ask data for [10:30, 12:00]
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        client = self.setup_talos_sql_client()
+        
+        start_ts = pd.Timestamp("2022-04-22 10:30:00-05:00")
+        end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
+        ts_col_name = "timestamp"
+        asset_ids = None
+        func = lambda market_data: market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""# df=
+        index=[2022-04-22 12:30:00-04:00, 2022-04-22 12:30:00-04:00]
+        columns=asset_id,close,high,low,open,start_timestamp,volume
+        shape=(1, 7)
+                                    asset_id  close  high   low  open           start_timestamp  volume
+        end_timestamp
+        2022-04-22 12:30:00-04:00  1464553467   65.0  45.0  55.0  35.0 2022-04-22 12:29:00-04:00    75.0"""
+        # pylint: enable=line-too-long
+        _check_get_data(self, client, func, expected_df_as_str)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+
+    def test_get_data_for_interval3(self) -> None:
+        """
+        - Ask data for [08:30, 12:00]
+        """
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        client = self.setup_talos_sql_client()
+        
+        start_ts = pd.Timestamp("2022-04-22 08:30:00-05:00")
+        end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
+        ts_col_name = "timestamp"
+        asset_ids = None
+        func = lambda market_data: market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""# df=
+        index=[2022-04-22 10:30:00-04:00, 2022-04-22 12:30:00-04:00]
+        columns=asset_id,close,high,low,open,start_timestamp,volume
+        shape=(121, 7)
+                                    asset_id  close  high   low  open           start_timestamp  volume
+        end_timestamp
+        2022-04-22 10:30:00-04:00  1464553467   60.0  40.0  50.0  30.0 2022-04-22 10:29:00-04:00    70.0
+        2022-04-22 10:31:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
+        2022-04-22 10:32:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
+        ...
+        2022-04-22 12:28:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
+        2022-04-22 12:29:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
+        2022-04-22 12:30:00-04:00  1464553467   65.0  45.0  55.0  35.0 2022-04-22 12:29:00-04:00    75.0"""
         # pylint: enable=line-too-long
         _check_get_data(self, client, func, expected_df_as_str)
         # Delete the table.
@@ -131,18 +192,18 @@ end_timestamp
             # fmt: off
             # pylint: disable=line-too-long
             data=[
-                [0, 1650455029000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [1, 1650469429000, 31, 41, 51, 61, 71, 72, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [2, 1650483829000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [3, 1650530629000, 34, 44, 54, 64, 74, 74, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [4, 1650548629000, 35, 45, 55, 65, 75, 75, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")],
-                [5, 1650613429000, 36, 46, 56, 66, 76, 76, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
-                 pd.Timestamp("2022-03-26")]
+                [0, 1650637800000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
+                 pd.Timestamp("2022-04-22")],
+                [1, 1650638400000, 31, 41, 51, 61, 71, 72, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
+                 pd.Timestamp("2022-04-22")],
+                [2, 1650639600000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
+                 pd.Timestamp("2022-04-22")],
+                [3, 1650641400000, 34, 44, 54, 64, 74, 74, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
+                 pd.Timestamp("2022-04-22")],
+                [4, 1650645000000, 35, 45, 55, 65, 75, 75, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
+                 pd.Timestamp("2022-04-22")],
+                [5, 1650647400000, 36, 46, 56, 66, 76, 76, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
+                 pd.Timestamp("2022-04-22")]
             ]
             # pylint: enable=line-too-long
             # fmt: on
