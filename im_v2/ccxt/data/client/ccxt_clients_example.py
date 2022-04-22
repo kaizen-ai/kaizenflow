@@ -77,14 +77,13 @@ def get_CcxtParquetByAssetClient_example1(
     return ccxt_client
 
 
-def get_CcxtHistoricalPqByTileClient_example1(
-    resample_1min: bool,
-) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+def get_CcxtHistoricalPqByTileClient_example1() -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the tests reading actual
     historical data.
     """
     # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
+    resample_1min = False
     root_dir = "s3://cryptokaizen-data/historical"
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(

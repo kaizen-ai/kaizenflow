@@ -1037,7 +1037,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbol = "binance::BTC_USDT"
@@ -1073,7 +1073,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data2(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -1111,7 +1111,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data3(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -1151,7 +1151,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data4(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -1192,7 +1192,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     @pytest.mark.slow("~6 seconds.")
     def test_read_data5(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -1234,7 +1234,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data6(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
@@ -1242,7 +1242,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_read_data7(self) -> None:
         resample_1min = False
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -1282,7 +1282,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbol = "binance::BTC_USDT"
@@ -1293,7 +1293,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         full_symbol = "binance::BTC_USDT"
@@ -1304,7 +1304,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def test_get_universe1(self) -> None:
         resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
         expected_length = 38
@@ -1351,10 +1351,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
         return: data to be loaded to s3
         """
-        resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
-            resample_1min
-        )
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
