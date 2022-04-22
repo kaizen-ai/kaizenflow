@@ -567,7 +567,7 @@ class ForecastEvaluatorFromPrices:
         # Restrict to required columns.
         hdbg.dassert_is_subset(
             [self._price_col, self._volatility_col, self._prediction_col],
-            df.columns
+            df.columns,
         )
         df = df[[self._price_col, self._volatility_col, self._prediction_col]]
         active_index = cofinanc.infer_active_bars(df[self._price_col])
