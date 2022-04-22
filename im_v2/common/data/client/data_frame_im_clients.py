@@ -77,9 +77,9 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        full_symbol_col_name: str,
         *,
-        columns: Optional[List[str]] = None,
+        columns: Optional[List[str]],
+        full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """

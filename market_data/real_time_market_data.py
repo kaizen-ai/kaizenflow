@@ -303,6 +303,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
             full_symbols,
             start_ts,
             end_ts,
+            columns=self._columns,
             ts_col_name=ts_col_name,
             left_close=left_close,
             right_close=right_close,

@@ -94,24 +94,25 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         return universe
 
     @staticmethod
-    def _get_columns_for_query() -> List[str]:
+    def _get_columns_for_query(columns: Optional[List[str]]) -> List[str]:
         """
         See description in the parent class.
         """
-        columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "exchange_id",
-            "currency_pair",
-        ]
+        if not columns:
+            columns = [
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "exchange_id",
+                "currency_pair",
+            ]
         return columns
 
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str
+        df: pd.DataFrame, full_symbol_col_name: str, columns: str
     ) -> pd.DataFrame:
         """
         See description in the parent class.
@@ -124,7 +125,6 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
             df["exchange_id"], df["currency_pair"]
         )
         # Keep only necessary columns.
-        columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
         df = df[columns]
         return df
 

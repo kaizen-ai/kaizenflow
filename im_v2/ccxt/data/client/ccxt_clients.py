@@ -61,7 +61,9 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         return universe  # type: ignore[no-any-return]
 
     @staticmethod
-    def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_ohlcv_transformations(
+        data: pd.DataFrame, columns: str
+    ) -> pd.DataFrame:
         """
         Apply transformations for OHLCV data.
         """
@@ -75,10 +77,13 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
-        data = data[ohlcv_columns]
+        cols_to_use = [col for col in data.columns if col in columns]
+        data = data[cols_to_use]
         return data
 
-    def _apply_vendor_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_vendor_normalization(
+        self, data: pd.DataFrame, columns: str
+    ) -> pd.DataFrame:
         """
         Input data is indexed with numbers and looks like:
         ```
@@ -98,7 +103,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         # Apply vendor-specific transformations.
         data = self._apply_ccxt_cdd_normalization(data)
         # Apply transformations specific of the type of data.
-        data = self._apply_ohlcv_transformations(data)
+        data = self._apply_ohlcv_transformations(data, columns)
         return data
 
     def _apply_ccxt_cdd_normalization(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -162,6 +167,8 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
+        columns: Optional[List[str]],
         **read_sql_kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -191,7 +198,8 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         # Execute SQL query.
         data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
         # Normalize data according to the vendor.
-        data = self._apply_vendor_normalization(data)
+        # TODO(Dan): Consider using column names in SQL query above.
+        data = self._apply_vendor_normalization(data, columns)
         return data
 
 
@@ -261,6 +269,8 @@ class CcxtCddCsvParquetByAssetClient(
         full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
+        columns: Optional[List[str]],
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -298,14 +308,18 @@ class CcxtCddCsvParquetByAssetClient(
                 # Add filtering by end timestamp if specified.
                 end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
                 filters.append(("timestamp", "<=", end_ts))
+            # Add filters to kwargs if any were set.
             if filters:
-                # Add filters to kwargs if any were set.
                 kwargs["filters"] = filters
+            # Add columns to kwargs if any were set.
+            if columns:
+                kwargs["columns"] = columns
             # Load data.
             stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
             data = hpandas.read_parquet_to_df(stream, **kwargs)
         elif self._extension in ["csv", "csv.gz"]:
             stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
+            # TODO(Dan): Figure out if columns can be passed here.
             data = hpandas.read_csv_to_df(stream, **kwargs)
             # Filter by dates if specified.
             if start_ts:
@@ -320,7 +334,7 @@ class CcxtCddCsvParquetByAssetClient(
                 f"Supported extensions are: `pq`, `csv`, `csv.gz`"
             )
         # Normalize data according to the vendor.
-        data = self._apply_vendor_normalization(data)
+        data = self._apply_vendor_normalization(data, columns)
         return data
 
     def _get_file_path(

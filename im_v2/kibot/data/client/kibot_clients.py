@@ -83,7 +83,9 @@ class KibotClient(icdc.ImClient):
         return data
 
     @staticmethod
-    def _apply_kibot_parquet_normalization(data: pd.DataFrame) -> pd.DataFrame:
+    def _apply_kibot_parquet_normalization(
+        data: pd.DataFrame, columns: Optional[str]
+    ) -> pd.DataFrame:
         """
         Apply transformations to `Kibot` data in Parquet by asset format.
 
@@ -111,6 +113,11 @@ class KibotClient(icdc.ImClient):
         data.index.name = None
         data.index = data.index.tz_localize("utc")
         data = data.rename(columns={"vol": "volume"})
+        if not columns:
+            cols_to_use = [
+                col for col in data.columns if col in columns
+            ]
+            data = data[cols_to_use]
         return data
 
 
@@ -189,6 +196,8 @@ class KibotEquitiesCsvParquetByAssetClient(
         full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
+        columns: Optional[List[str]],
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -229,7 +238,7 @@ class KibotEquitiesCsvParquetByAssetClient(
             # Load and normalize data.
             stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
             data = hpandas.read_parquet_to_df(stream, **kwargs)
-            data = self._apply_kibot_parquet_normalization(data)
+            data = self._apply_kibot_parquet_normalization(data, columns)
         elif self._extension in ["csv", "csv.gz"]:
             # Avoid using the 1st data row as columns and set column names.
             kwargs["header"] = None
@@ -390,6 +399,8 @@ class KibotFuturesCsvParquetByAssetClient(
         full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        *,
+        columns: Optional[List[str]],
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -429,7 +440,7 @@ class KibotFuturesCsvParquetByAssetClient(
             # Load and normalize data.
             stream, kwargs = hs3.get_local_or_s3_stream(file_path, **kwargs)
             data = hpandas.read_parquet_to_df(stream, **kwargs)
-            data = self._apply_kibot_parquet_normalization(data)
+            data = self._apply_kibot_parquet_normalization(data, columns)
         elif self._extension in ["csv", "csv.gz"]:
             # Avoid using the 1st data row as columns and set column names.
             kwargs["header"] = None

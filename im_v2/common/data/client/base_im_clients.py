@@ -129,8 +129,9 @@ class ImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
+        columns: Optional[List[str]],
         full_symbol_col_name: Optional[str] = None,
-        columns: Optional[List[str]] = None,
+        filter_data_mode: str = "assert",
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -142,9 +143,11 @@ class ImClient(abc.ABC):
             - `None` means start from the beginning of the available data
         :param end_ts: the latest date timestamp to load data for
             - `None` means end at the end of the available data
+        :param columns: columns to return. `None` means all available
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
-        :param columns: columns to return. `None` means all available
+        :param filter_data_mode: switch to control method robustness towards
+            unexpected return. Can be "assert" or "warn"
         :return: combined data for all the requested symbols
         """
         _LOG.debug(
@@ -168,8 +171,8 @@ class ImClient(abc.ABC):
             full_symbols,
             start_ts,
             end_ts,
-            full_symbol_col_name=full_symbol_col_name,
             columns=columns,
+            full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
@@ -188,14 +191,28 @@ class ImClient(abc.ABC):
         #
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
-        #
+        # TODO(Dan): Consider moving it to a separate method.
+        # Verify that columns were filtered correctly.
         if columns:
-            # TODO(Grisha): introduce `filter_data_mode`.
-            # Check that columns were filtered correctly.
-            hdbg.dassert_set_eq(
-                columns,
-                df.columns.to_list(),
-            )
+            # Remove full symbol column from check since it is required for
+            # `MarketData` transformations and may be removed later.
+            columns_to_check = [
+                col for col in df.columns if col != self._full_symbol_col_name
+            ]
+            if filter_data_mode is "assert":
+                # Throw an error if columns were not filtered correctly.
+                hdbg.dassert_is_subset(columns_to_check, columns)
+            else:
+                # Get columns that were not filtered at data reading stage.
+                not_filtered_columns = set(columns_to_check) - set(columns)
+                if not_filtered_columns:
+                    # If not filtered columns were found, throw a warning and
+                    # remove them from data.
+                    _LOG.warning(
+                        "Extra columns=`%s` were found and removed.",
+                        not_filtered_columns,
+                    )
+                    df = df.drop(not_filtered_columns, axis=1)
         # Rename index.
         df.index.name = "timestamp"
         # Normalize data for each symbol.
@@ -216,6 +233,7 @@ class ImClient(abc.ABC):
                 self._resample_1min,
                 start_ts,
                 end_ts,
+                filter_data_mode,
             )
             dfs.append(df_tmp)
         # TODO(Nikola): raise error on empty df?
@@ -324,6 +342,7 @@ class ImClient(abc.ABC):
         resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        filter_data_mode: str,
     ) -> None:
         """
         Verify that the normalized data is valid.
@@ -353,11 +372,29 @@ class ImClient(abc.ABC):
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
+        # TODO(Dan): Consider moving it to a separate method.
         # Ensure that all the data is in [start_ts, end_ts].
-        if start_ts:
-            hdbg.dassert_lte(start_ts, df.index.min())
-        if end_ts:
-            hdbg.dassert_lte(df.index.max(), end_ts)
+        if filter_data_mode is "assert":
+            # Throw and error if timestamps were not filtered correctly.
+            hdateti.dassert_timestamp_lte(start_ts, df.index.min())
+            hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
+        else:
+            if start_ts > df.index.min():
+                _LOG.warning(
+                    "Min timestamp=`%s` is earlier than start timestamp=`%s`."
+                    "Additional filtering is implemented.",
+                    df.index.min(),
+                    start_ts,
+                )
+                df.drop(df[df.index < start_ts].index, inplace=True)
+            if end_ts < df.index.max():
+                _LOG.warning(
+                    "Max timestamp=`%s` is later than end timestamp=`%s`."
+                    "Additional filtering is implemented.",
+                    df.index.max(),
+                    end_ts,
+                )
+                df.drop(df[df.index > end_ts].index, inplace=True)
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -395,8 +432,8 @@ class ImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
+        columns: Optional[List[str]],
         full_symbol_col_name: Optional[str] = None,
-        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         ...
@@ -420,7 +457,9 @@ class ImClient(abc.ABC):
         # Read data for the entire period of time available.
         start_timestamp = None
         end_timestamp = None
-        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
+        data = self.read_data(
+            [full_symbol], start_timestamp, end_timestamp, columns=None
+        )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
             timestamp = data.index.min()
@@ -452,8 +491,8 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
+        columns: Optional[List[str]],
         full_symbol_col_name: Optional[str] = None,
-        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -484,6 +523,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
                 full_symbol,
                 start_ts,
                 end_ts,
+                columns=columns,
                 **kwargs,
             )
             # Insert column with full symbol into the result dataframe.
@@ -502,7 +542,8 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        columns: Optional[List[str]] = None,
+        *,
+        columns: Optional[List[str]],
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -532,8 +573,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
+        columns: Optional[List[str]],
         full_symbol_col_name: Optional[str] = None,
-        columns: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -551,8 +592,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
             full_symbols,
             start_ts,
             end_ts,
-            full_symbol_col_name=full_symbol_col_name,
             columns=columns,
+            full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
         return df
@@ -563,9 +604,9 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        full_symbol_col_name: str,
         *,
-        columns: Optional[List[str]] = None,
+        columns: Optional[List[str]],
+        full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
         ...

@@ -79,7 +79,9 @@ class HistoricalPqByTileClient(
 
     # TODO(Grisha): factor out the column names in the child classes, see `CCXT`, `Talos`.
     @staticmethod
-    def _get_columns_for_query() -> Optional[List[str]]:
+    def _get_columns_for_query(
+        columns: Optional[List[str]]
+    ) -> Optional[List[str]]:
         """
         Get columns for Parquet data query.
 
@@ -93,6 +95,7 @@ class HistoricalPqByTileClient(
     def _apply_transformations(
         df: pd.DataFrame,
         full_symbol_col_name: str,
+        columns: Optional[List[str]],
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -112,9 +115,9 @@ class HistoricalPqByTileClient(
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        full_symbol_col_name: str,
         *,
-        columns: Optional[List[str]] = None,
+        columns: Optional[List[str]],
+        full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -126,10 +129,9 @@ class HistoricalPqByTileClient(
             hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
         )
         kwargs["log_level"] = logging.INFO
-        # 
-        if columns is None:
-            # Get columns from the class.
-            columns = self._get_columns_for_query()
+        #
+        # Get columns from the class.
+        columns = self._get_columns_for_query(columns)
         # Add columns to kwargs.
         kwargs["columns"] = columns
         # Add AWS profile to kwargs.

@@ -27,6 +27,7 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # #############################################################################
 
 
+# TODO(Dan): Consider exposing `filter_data_mode` param.
 # TODO(gp): This should have a delay and / or we should use timestamp_db.
 class ReplayedMarketData(mdabmada.MarketData):
     """
