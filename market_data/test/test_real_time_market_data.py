@@ -22,22 +22,30 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Factor out this test in a ReplayedMarketData_TestCase
 def _check_get_data(
     self_: Any,
+    client: imvtdctacl.RealTimeSqlTalosClient,
     func: Callable,
     expected_df_as_str: str,
-    sql_talos_client: mdrtmda.RealTimeMarketData2,
 ) -> mdrtmda.RealTimeMarketData2:
     """
-    - Build `RealTimeMarketData2`
-    - Execute the function `get_data*` in `func`
-    - Check actual output against expected.
+
     """
-    asset_ids = []
-    columns: List[str] = []
-    market_data, _ = mdmadaex.get_RealTimeMarketData2(
-        sql_talos_client, asset_ids=asset_ids, columns=columns
-    )
+    asset_id_col = "asset_id"
+    asset_ids = [1464553467]
+    start_time_col_name = "start_timestamp"
+    end_time_col_name = "end_timestamp"
+    columns = None
+    get_wall_clock_time = lambda x: pd.Timestamp("2022-04-22")
+    market_data = mdrtmda.RealTimeMarketData2(client,
+                                asset_id_col,
+                                asset_ids,
+                                start_time_col_name,
+                                end_time_col_name,
+                                columns,
+                                get_wall_clock_time)  
     # Execute function under test.
     actual_df = func(market_data)
+    # Check.
+    actual_df = actual_df[sorted(actual_df.columns)]
     actual_df_as_str = hpandas.df_to_str(
         actual_df, print_shape_info=True, tag="df"
     )
@@ -50,45 +58,55 @@ def _check_get_data(
     )
     return market_data
 
-
 class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, 
-    mdtmdtca.MarketData_get_data_TestCase):
-    def setup_sql_talos_client(
+    ):
+
+    def setup_talos_sql_client(
         self,
         resample_1min: Optional[bool] = True,
-    ) -> mdrtmda.RealTimeMarketData2:
+    ) -> imvtdctacl.RealTimeSqlTalosClient:
         """
         Setup RealTimeMarketData2 interface.
         """
-        self._create_test_table()
-        test_data = self._get_test_data()
         table_name = "talos_ohlcv"
         mode = "market_data"
-        hsql.copy_rows_with_copy_from(self.connection, test_data, table_name)
         sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
             resample_1min, self.connection, table_name, mode
         )
         return sql_talos_client
 
 
-    def check_last_end_time(
-        self,
-        market_data: mdrtmda.RealTimeMarketData2,
-        expected_last_end_time: pd.Timestamp,
-        expected_is_online: bool,
-    ) -> None:
+    def test_get_data_for_interval1(self) -> None:
         """
-        Check output of `get_last_end_time()` and `is_online()`.
+        - Start replaying time 5 minutes after the beginning of the day, i.e., the
+          current time is 9:35.
+        - Ask data for [9:30, 9:45]
+        - The returned data is [9:30, 9:35].
         """
-        #
-        last_end_time = market_data.get_last_end_time()
-        _LOG.info("-> last_end_time=%s", last_end_time)
-        self.assertEqual(last_end_time, expected_last_end_time)
-        #
-        is_online = market_data.is_online()
-        _LOG.info("-> is_online=%s", is_online)
-        self.assertEqual(is_online, expected_is_online)
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        client = self.setup_talos_sql_client()
         
+        start_ts = pd.Timestamp("2022-04-21 02:30:00-05:00")
+        end_ts = pd.Timestamp("2022-04-22 15:45:00-05:00")
+        ts_col_name = "timestamp"
+        asset_ids = None
+        func = lambda market_data: market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""# df=
+index=[2022-04-21 09:43:49-04:00, 2022-04-21 09:43:49-04:00]
+columns=asset_id,close,high,low,open,start_timestamp,volume
+shape=(1, 7)
+                             asset_id  close  high   low  open           start_timestamp  volume
+end_timestamp
+2022-04-21 09:43:49-04:00  1464553467   65.0  45.0  55.0  35.0 2022-04-21 09:42:49-04:00    75.0"""
+        # pylint: enable=line-too-long
+        _check_get_data(self, client, func, expected_df_as_str)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
@@ -113,7 +131,17 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
             # fmt: off
             # pylint: disable=line-too-long
             data=[
-                [3450, 1648138860000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                [0, 1650455029000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [1, 1650469429000, 31, 41, 51, 61, 71, 72, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [2, 1650483829000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [3, 1650530629000, 34, 44, 54, 64, 74, 74, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [4, 1650548629000, 35, 45, 55, 65, 75, 75, "ETH_USDT", "binance", pd.Timestamp("2022-03-26"),
+                 pd.Timestamp("2022-03-26")],
+                [5, 1650613429000, 36, 46, 56, 66, 76, 76, "BTC_USDT", "binance", pd.Timestamp("2022-03-26"),
                  pd.Timestamp("2022-03-26")]
             ]
             # pylint: enable=line-too-long
