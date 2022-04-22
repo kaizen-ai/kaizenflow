@@ -256,7 +256,7 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
 
 def _get_ccxt_universe_v3(n: Optional[int]) -> List[Amid]:
     """
-    Create universe for Example1 DAG.
+    Create universe for `CCXT`.
     """
     vendor = "CCXT"
     full_symbols = ivcu.get_vendor_universe(
