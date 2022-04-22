@@ -25,7 +25,6 @@ class Test_Example1_ForecastSystem(hunitest.TestCase):
     def run_coroutines(
         self,
         data: pd.DataFrame,
-        real_time_loop_time_out_in_secs: int,
     ) -> str:
         """
         Run a system using the desired portfolio based on DB or dataframe.
@@ -54,12 +53,13 @@ class Test_Example1_ForecastSystem(hunitest.TestCase):
     # ///////////////////////////////////////////////////////////////////////////
 
     def test1(self) -> None:
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        """
+        Verify the contents of DAG prediction.
+        """
+        data, _ = cofinanc.get_market_data_df1()
         actual = self.run_coroutines(
             data,
-            real_time_loop_time_out_in_secs,
         )
-        # TODO(gp): PP freeze the output.
         self.check_string(str(actual))
 
 
