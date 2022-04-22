@@ -20,6 +20,8 @@ import market_data as mdata
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): We should unify with `ForecastSystem`. A `System` contains all the
+# info to build and run a DAG and then it can be simulated or put in prod.
 def _build_base_config() -> cconfig.Config:
     backtest_config = cconfig.Config()
     # Save the `DagBuilder` and the `DagConfig` in the config.
@@ -31,6 +33,7 @@ def _build_base_config() -> cconfig.Config:
     return backtest_config
 
 
+# TODO(gp): @grisha. Centralize this.
 def build_configs_with_tiled_universe(
     config: cconfig.Config, asset_ids: List[int]
 ) -> List[cconfig.Config]:
@@ -55,7 +58,7 @@ def build_configs_with_tiled_universe(
     return configs
 
 
-# TODO(gp): Should we use a SystemRunner also here?
+# TODO(gp): This corresponds to `System.get_dag_runner()`.
 def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     """
     Build a DAG runner from a config.
@@ -63,7 +66,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     asset_ids = config["meta", "asset_ids"]
     columns: List[str] = []
     columns_remap = None
-    market_data = mdata.get_ImClientMarketData_example2(
+    market_data = mdata.get_DataFrameImClientMarketData_example1(
         asset_ids, columns, columns_remap
     )
     # Create HistoricalDataSource.
@@ -121,6 +124,7 @@ def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
     config["meta", "dag_runner"] = get_dag_runner
     # Name of the asset_ids to save.
     config["meta", "asset_id_col_name"] = "asset_id"
+    # Create the list of configs.
     configs = [config]
     # Apply the cross-product by the universe tiles.
     func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)

@@ -281,6 +281,25 @@ def _get_row2() -> pd.Series:
     return srs
 
 
+def _get_row3() -> pd.Series:
+    row = """
+    strategyid,SAU1
+    account,candidate
+    id,0
+    tradedate,2000-01-01
+    timestamp_db,2000-01-01 09:10:39.419536
+    asset_id,101
+    target_position,20.0
+    current_position,20.0
+    open_quantity,0
+    net_cost,0
+    bod_position,20.0
+    bod_price,1000.00
+    """
+    srs = hsql.csv_to_series(row, sep=",")
+    return srs
+
+
 class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
     def test1(self) -> None:
         """
@@ -471,3 +490,65 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
 2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02
 2000-01-01 09:45:00-05:00     -5.66           0.0         0.0  19998.37  19998.37  1000000.0    1.02e+06      0.02"""
         self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)
+
+
+class TestMockedPortfolio3(omtodh.TestOmsDbHelper):
+    def test1(self) -> None:
+        """
+        Test initialization from db.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            # Create current positions in the table.
+            row = _get_row3()
+            table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+            oomsdb.create_current_positions_table(
+                self.connection, incremental=False, table_name=table_name
+            )
+            hsql.execute_insert_query(self.connection, row, table_name)
+            if False:
+                # Print the DB status.
+                query = """SELECT * FROM current_positions"""
+                df = hsql.execute_query_to_df(self.connection, query)
+                print(hpandas.df_to_str(df))
+                assert 0
+            #
+            # Create MockedPortfolio from the DB.
+            portfolio = oporexam.get_MockedPortfolio_example2(
+                event_loop,
+                self.connection,
+                table_name,
+                universe=[101, -1],
+            )
+            coroutines = [self._coroutine1(portfolio)]
+            hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+
+    async def _coroutine1(
+        self,
+        portfolio,
+    ):
+        portfolio.mark_to_market()
+        await asyncio.sleep(60 * 5)
+        portfolio.mark_to_market()
+        #
+        actual = str(portfolio)
+        expected = r"""
+# historical holdings=
+asset_id                    101  -1
+2000-01-01 09:35:00-05:00  20.0  0.0
+2000-01-01 09:40:00-05:00  20.0  0.0
+# historical holdings marked to market=
+asset_id                        101  -1
+2000-01-01 09:35:00-05:00  20006.24  0.0
+2000-01-01 09:40:00-05:00  20004.03  0.0
+# historical flows=
+asset_id                   101
+2000-01-01 09:40:00-05:00  0.0
+# historical pnl=
+asset_id                    101
+2000-01-01 09:35:00-05:00   NaN
+2000-01-01 09:40:00-05:00 -2.21
+# historical statistics=
+                            pnl  gross_volume  net_volume       gmv       nmv  cash  net_wealth  leverage
+2000-01-01 09:35:00-05:00   NaN           0.0         0.0  20006.24  20006.24   0.0    20006.24       1.0
+2000-01-01 09:40:00-05:00 -2.21           0.0         0.0  20004.03  20004.03   0.0    20004.03       1.0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)

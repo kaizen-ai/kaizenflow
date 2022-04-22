@@ -6,7 +6,9 @@ import im_v2.common.universe.full_symbol as imvcufusy
 
 import logging
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Union
+
+import pandas as pd
 
 import helpers.hdbg as hdbg
 
@@ -21,21 +23,33 @@ FullSymbol = str
 
 
 # TODO(gp): -> dassert_valid_full_symbol
-def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
+def dassert_is_full_symbol_valid(
+    full_symbol: Union[pd.Series, FullSymbol]
+) -> None:
     """
-    Check that a full symbol has valid format, i.e. `exchange::symbol`.
+    Check that a full symbol or all the symbols in a series have valid format,
+    i.e. `exchange::symbol`.
 
     Note: digits and special symbols (except underscore) are not allowed.
     """
-    hdbg.dassert_isinstance(full_symbol, str)
-    hdbg.dassert_ne(full_symbol, "")
     # Only letters and underscores are allowed.
     # TODO(gp): I think we might need non-leading numbers.
     letter_underscore_pattern = "[a-zA-Z_]"
     # Exchanges and symbols must be separated by `::`.
     regex_pattern = rf"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
-    # A valid full symbol must match the pattern.
-    full_match = re.fullmatch(regex_pattern, full_symbol, re.IGNORECASE)
+    # Set match pattern.
+    if isinstance(full_symbol, pd.Series):
+        full_match = full_symbol.str.fullmatch(
+            regex_pattern, flags=re.IGNORECASE, na=False
+        ).all()
+    elif isinstance(full_symbol, FullSymbol):
+        full_match = re.fullmatch(regex_pattern, full_symbol, re.IGNORECASE)
+    else:
+        raise TypeError(
+            f"Input type is `{type(full_symbol)}` but should be either a string"
+            " or a `pd.Series`"
+        )
+    # Valid full symbols must match the pattern.
     hdbg.dassert(
         full_match,
         "Incorrect full_symbol '%s', it must be `exchange::symbol`",
@@ -43,28 +57,45 @@ def dassert_is_full_symbol_valid(full_symbol: FullSymbol) -> None:
     )
 
 
-def parse_full_symbol(full_symbol: FullSymbol) -> Tuple[str, str]:
+def parse_full_symbol(
+    full_symbol: Union[pd.Series, FullSymbol]
+) -> Tuple[Union[pd.Series, str], Union[pd.Series, str]]:
     """
-    Split a full_symbol into a tuple of exchange and symbol.
-
-    :return: exchange, symbol
+    Split a full symbol into exchange and symbol or a series of full symbols
+    into series of exchanges and symbols.
     """
     dassert_is_full_symbol_valid(full_symbol)
-    exchange, symbol = full_symbol.split("::")
+    if isinstance(full_symbol, pd.Series):
+        # Get a dataframe with exchange and symbol columns.
+        df_exchange_symbol = full_symbol.str.split("::", expand=True)
+        hdbg.dassert_eq(2, df_exchange_symbol.shape[1])
+        # Get exchange and symbol series.
+        exchange = df_exchange_symbol[0]
+        symbol = df_exchange_symbol[1]
+    else:
+        # Split full symbol on exchange and symbol.
+        exchange, symbol = full_symbol.split("::")
     return exchange, symbol
 
 
-def build_full_symbol(exchange: str, symbol: str) -> FullSymbol:
+def build_full_symbol(
+    exchange: Union[pd.Series, str], symbol: Union[pd.Series, str]
+) -> Union[pd.Series, FullSymbol]:
     """
-    Combine exchange and symbol in `FullSymbol`.
+    Combine exchange and symbol in a full symbol or exchange and symbol series
+    in a full symbol series.
     """
-    hdbg.dassert_isinstance(exchange, str)
-    hdbg.dassert_ne(exchange, "")
-    #
-    hdbg.dassert_isinstance(symbol, str)
-    hdbg.dassert_ne(symbol, "")
-    #
-    full_symbol = f"{exchange}::{symbol}"
+    if isinstance(exchange, pd.Series) and isinstance(symbol, pd.Series):
+        hdbg.dassert_eq(exchange.shape[0], symbol.shape[0])
+        full_symbol = exchange + "::" + symbol
+    elif isinstance(exchange, str) and isinstance(symbol, str):
+        full_symbol = f"{exchange}::{symbol}"
+    else:
+        raise TypeError(
+            f"type(exchange) = `{type(exchange)}`,"
+            f" type(symbol)= `{type(symbol)}` but both inputs should have"
+            " the same type and be either strings or `pd.Series`"
+        )
     dassert_is_full_symbol_valid(full_symbol)
     return full_symbol
 

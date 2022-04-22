@@ -1169,7 +1169,7 @@ def git_branch_diff_with_master(  # type: ignore
 #
 # - Add end-of-file:
 #   ```
-#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs sed -i '' -e '$a\'
+#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" -o -name "*.sh" -o -name "*.sh" | xargs sed -i '' -e '$a\'
 #
 #   # Remove end-of-file.
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
@@ -2538,6 +2538,8 @@ def _docker_cmd(
 
     :param kwargs: kwargs for `ctx.run`
     """
+    _LOG.info("Pulling the latest version of Docker")
+    docker_pull(ctx)
     _LOG.debug("cmd=%s", docker_cmd_)
     rc: Optional[int] = _run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
     return rc
