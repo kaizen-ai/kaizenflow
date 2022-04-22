@@ -68,6 +68,10 @@ def get_cmtask1704_config_ccxt() -> cconconf.Config:
     config["data"]["vendor"] = "CCXT"
     config["data"]["start_date"] = pd.Timestamp("2022-04-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2022-04-15", tz="UTC")
+    # Transformation parameters.
+    config.add_subconfig("transform")
+    config["transform"]["resampling_rule"] = "5T"
+    config["transform"]["rets_type"] = "pct_change"
     return config
 
 
@@ -160,272 +164,6 @@ end_date = pd.Timestamp("2021-09-15", tz="UTC")
 data_hist = historical_client.read_data(full_symbols, start_date, end_date)
 display(data_hist.shape)
 display(data_hist.head(3))
-
-# %% [markdown]
-# # Resample and calculate TWAP, VWAP
-
-# %% [markdown]
-# Here, I want to propose two versions of calculating VWAP and TWAP using the method that is already exists - `compute_twap_vwap()`.
-#
-# Note: I am aware of some already existing resampling functions, however, due to the format of the data, they are not completely relevant for the mixed data where groupby methods are needed.
-#
-# However, this method returns only VWAP, TWAP columns, so we also need to attach OHLCV data to them as well as adjust timestamps to the closed bars.
-#
-# Due to the complexity of calculations, I came up with two options:
-# 1) First, calculate VWAP, TWAP, then resample and attach OHLCV data
-#
-# 2) First, resample OHLCV data, then calculate and attach VWAP, TWAP
-
-# %%
-# For this draft let's put the resampling frequency equals to 5 mins (of course, it can be customized to any value)
-resampling_freq = 5
-
-
-# %% [markdown]
-# ## Version 1
-
-# %% [markdown]
-# - Resample and attach OHLCV data
-# - Calculate vwap, twap on the basis of previously resampled data
-
-# %%
-def resampling_func_v1(df, freq):
-    """
-    Group by `full_symbols` and resample to the desired timing.
-
-    :param df: Initial OHLCV data for cc
-    :param freq: Desired resampling frequency (in minutes)
-    :return: Grouped and resampled cc OHLCV data
-    """
-    # Shift timestamps to indicate the end of the bar in the initial data.
-    df = df.shift(1, freq="T")
-    # Construct the resampling frequency.
-    resampling_freq = f"{freq}min"
-    # Create a resampler that takes data for each `full_symbol` and resample it to the given time.
-    resampler = df.reset_index().groupby(
-        [
-            "full_symbol",
-            pd.Grouper(key="timestamp", freq=resampling_freq, closed="right"),
-        ]
-    )
-    # Organize OHLCV values according to the resampler.
-    new_df = resampler.agg(
-        {
-            "open": "first",
-            "high": "max",
-            "low": "min",
-            "close": "last",
-            "volume": "sum",
-        }
-    )
-    # Shift timestamps to indicate the end of the bar in the resampled data.
-    new_df = new_df.reset_index("full_symbol").shift(freq, freq="T")
-    return new_df
-
-
-# %%
-def calculate_twap_vwap_v1(cc_df, res_rule):
-    """
-    :param cc_df: Grouped and resampled cc OHLCV data form `resampling_func()`
-    :param res_rule: Desired resampling frequency (same as in `resampling_func()`)
-    :return: Resampled data with TWAP and VWAP values
-    """
-    # Supported variables.
-    result = []
-    full_symbols = cc_df["full_symbol"].unique()
-    # Calculate TWAP and VWAP for each `full_symbol`
-    for cc in full_symbols:
-        df = cc_df[cc_df["full_symbol"] == cc]
-        df = pd.concat(
-            [
-                df,
-                cfinresa.compute_twap_vwap(
-                    df, f"{res_rule}T", price_col="close", volume_col="volume"
-                ),
-            ],
-            axis=1,
-        )
-        result.append(df)
-    # Collect the results into a single dataframe.
-    twap_vwap_df = pd.concat(result)
-    return twap_vwap_df
-
-
-# %%
-resampled_v1 = resampling_func_v1(data, resampling_freq)
-resampled_v1.head(3)
-
-# %%
-twap_vwap_v1 = calculate_twap_vwap_v1(resampled_v1, resampling_freq)
-twap_vwap_v1.head(3)
-
-
-# %% [markdown]
-# ## Version 2
-
-# %% [markdown]
-# - Calculate vwap, twap on the basis of the initial data
-# - Resample and attach OHLCV data
-
-# %%
-def calculate_twap_vwap_v2(cc_df, res_rule):
-    """
-    :param cc_df: Initial OHLCV data
-    :param res_rule: Desired resampling frequency
-    :return: Resampled timestamps with TWAP and VWAP values
-    """
-    # Supported variables.
-    result = []
-    full_symbols = cc_df["full_symbol"].unique()
-    # Calculate TWAP and VWAP for each `full_symbol`
-    for cc in full_symbols:
-        df = cc_df[cc_df["full_symbol"] == cc]
-        twap_vwap_values = cfinresa.compute_twap_vwap(
-            df, f"{res_rule}T", price_col="close", volume_col="volume"
-        )
-        # Move timestamp to the end of the bar.
-        cc_wp = twap_vwap_values.shift(res_rule, freq="T")
-        # Add `full_symbol` column.
-        cc_wp["full_symbol"] = cc
-        result.append(cc_wp)
-    # Collect the results into a single dataframe.
-    twap_vwap_df = pd.concat(result)
-    return twap_vwap_df
-
-
-# %%
-def resampling_func_v2(df, freq):
-    """
-    Group by `full_symbols` and resample to the desired timing.
-
-    :param df: Initial OHLCV data for cc
-    :param freq: Desired resampling frequency (in minutes)
-    :return: Grouped and resampled cc OHLCV data
-    """
-    # Shift timestamps to indicate the end of the bar in the initial data.
-    df = df.shift(1, freq="T")
-    # Construct the resampling frequency.
-    resampling_freq = f"{freq}min"
-    # Create a resampler that takes data for each `full_symbol` and resample it to the given time.
-    resampler = df.reset_index().groupby(
-        [
-            "full_symbol",
-            pd.Grouper(key="timestamp", freq=resampling_freq, closed="right"),
-        ]
-    )
-    # Organize OHLCV values according to the resampler.
-    new_df = resampler.agg(
-        {
-            "open": "first",
-            "high": "max",
-            "low": "min",
-            "close": "last",
-            "volume": "sum",
-        }
-    )
-    # Shift timestamps to indicate the end of the bar in the resampled data.
-    new_df = new_df.reset_index("full_symbol").shift(freq, freq="T")
-    # Cosmetic improvements.
-    new_df = new_df.set_index("full_symbol", append=True)
-    new_df = new_df.reorder_levels(order=["full_symbol", "timestamp"])
-    return new_df
-
-
-# %%
-twap_vwap_v2 = calculate_twap_vwap_v2(data, resampling_freq)
-twap_vwap_v2.head(3)
-
-# %%
-resampled_v2 = resampling_func_v2(data, resampling_freq)
-resampled_v2.head(3)
-
-# %%
-# Some cosmetic improvements to vwap, twap df.
-indexed_twap_vwap_v2 = twap_vwap_v2.set_index(
-    "full_symbol", append=True
-).reorder_levels(order=["full_symbol", "timestamp"])
-# Combine vwap, twap and ohlcv data.
-twap_vwap_v2 = pd.concat([resampled_v2, indexed_twap_vwap_v2], axis=1)
-twap_vwap_v2.head(3)
-
-
-# %% [markdown]
-# # Calculate returns
-
-# %%
-def calculate_returns(df):
-    grouper = df.groupby(["full_symbol"])
-    df["vwap_ret"] = (df["vwap"] / grouper["vwap"].shift(1)) - 1
-    df["twap_ret"] = (df["twap"] / grouper["twap"].shift(1)) - 1
-    df["log_ret"] = np.log(df["close"]) - np.log(grouper["close"].shift(1))
-    return df
-
-
-# %%
-rets_df = calculate_returns(twap_vwap_v2)
-rets_df
-
-# %%
-# Some stats and visualizations.
-ada_ex = rets_df.loc[["binance::ADA_USDT"]].reset_index("full_symbol")[
-    ["log_ret", "vwap_ret", "twap_ret"]
-]
-display(ada_ex.corr())
-ada_ex.plot()
-
-
-# %% [markdown]
-# ## New proposal
-
-# %%
-def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
-    result = []
-    full_symbol_list = df["full_symbol"].unique()
-    for cc in full_symbol_list:
-        # DataFrame with a specific `full_symbol`
-        cc_df = df[df["full_symbol"] == cc]
-        # Resample OHLCV data inside `full_symbol`-specific DataFrame.
-        resampled_cc_df = cfinresa.resample_ohlcv_bars(
-            cc_df, rule=resampling_freq
-        )
-        # Attach VWAP, TWAP.
-        resampled_cc_df[["vwap", "twap"]] = cfinresa.compute_twap_vwap(
-            cc_df, resampling_freq, price_col="close", volume_col="volume"
-        )
-        # Calculate returns.
-        resampled_cc_df["vwap_rets"] = cfinretu.compute_ret_0(
-            resampled_cc_df[["vwap"]], "pct_change"
-        )
-        resampled_cc_df["twap_rets"] = cfinretu.compute_ret_0(
-            resampled_cc_df[["twap"]], "pct_change"
-        )
-        resampled_cc_df["log_rets"] = cfinretu.compute_ret_0(
-            resampled_cc_df[["close"]], "log_rets"
-        )
-        # Add a column with `full_symbol` indication.
-        resampled_cc_df["full_symbol"] = cc
-        # Omit unnecesary columns.
-        resampled_cc_df = resampled_cc_df.drop(columns=["open", "high", "low"])
-        result.append(resampled_cc_df)
-    final_df = pd.concat(result)
-    return final_df
-
-
-# %%
-df = resample_calculate_twap_vwap_and_returns(data_hist, "5T")
-df.head(3)
-
-# %%
-# The only missing part here is to place timestamps at the end of the bar.
-# Right now I have only this hardcoded solution:
-new_df = df.shift(5, freq="T")
-
-# %% run_control={"marked": false}
-
-ada_ex = new_df[new_df["full_symbol"] == "binance::ADA_USDT"][
-    ["log_rets", "vwap_rets", "twap_rets"]
-]
-display(ada_ex.corr())
 
 
 # %% [markdown]
@@ -526,10 +264,16 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 
 
 # %%
-vwap_twap_df = calculate_vwap_twap(data, "5T")
-vwap_twap_rets_df = calculate_returns(vwap_twap_df, "pct_change")
+# VWAP, TWAP transformation.
+resampling_rule = config["transform"]["resampling_rule"] = "5T"
+vwap_twap_df = calculate_vwap_twap(data, resampling_rule)
 
-# %%
+# Returns calculation.
+rets_type = config["transform"]["rets_type"] = "pct_change"
+vwap_twap_rets_df = calculate_returns(vwap_twap_df, rets_type)
+
+# %% run_control={"marked": false}
+# Show the snippet.
 vwap_twap_rets_df.head(3)
 
 # %% run_control={"marked": false}
