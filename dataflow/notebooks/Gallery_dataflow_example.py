@@ -25,21 +25,17 @@
 import logging
 import os
 
-import numpy as np
 import pandas as pd
 
 import core.config.config_ as cconconf
+import core.finance as cofinanc
 import core.finance.resampling as cfinresa
 import core.finance.returns as cfinretu
+import dataflow.core as dtfcore
+import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.im_lib_tasks as imvimlita
-
-import dataflow.system.source_nodes as dtfsysonod
-import dataflow.core as dtfcore
-import core.finance as cofinanc
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -70,6 +66,7 @@ def get_gallery_dataflow_example_config() -> cconconf.Config:
     config.add_subconfig("data")
     config["data"]["start_date"] = pd.Timestamp("2021-09-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2021-09-15", tz="UTC")
+    config["data"]["resampling_rule"] = "5T"
     return config
 
 
@@ -102,7 +99,7 @@ historical_client = icdcl.CcxtHistoricalPqByTileClient(
 
 # %%
 # Specify time period.
-full_symbols = ['binance::ADA_USDT', 'binance::AVAX_USDT']
+full_symbols = ["binance::ADA_USDT", "binance::AVAX_USDT"]
 start_date = config["data"]["start_date"]
 end_date = config["data"]["end_date"]
 
@@ -111,7 +108,6 @@ data_hist = historical_client.read_data(full_symbols, start_date, end_date)
 display(data_hist.shape)
 display(data_hist.head(3))
 
-
 # %% [markdown]
 # # Task description
 
@@ -119,7 +115,7 @@ display(data_hist.head(3))
 # The goal of this exercise is to implement the following transformations to the historical data:
 # - resampling
 # - VWAP, TWAP computation
-# - Calculation of returns 
+# - Calculation of returns
 #
 # While using the different approaches to working with `dataflow` methods.
 # The main feature that these methods are trying to overcome is the fact that when the raw data consists of two and more `full_symbols`, then one needs to be careful to apply transformations that needs to be implemented specifically to each `full_symbol`.
@@ -130,6 +126,11 @@ display(data_hist.head(3))
 # - 3) Use Dataflow nodes
 #
 # The general rule is to use the third and second approach when possible, while keeping the first approach as a bacjup.
+
+# %%
+# The resampling frequency is the same for all approaches.
+resampling_freq = config["data"]["resampling_rule"]
+
 
 # %% [markdown]
 # # Approach 1 - Use the "low level" functions and do loops
@@ -171,8 +172,8 @@ def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
     return final_df
 
 
-# %%
-df_approach_1 = resample_calculate_twap_vwap_and_returns(data_hist, "5T")
+# %% run_control={"marked": false}
+df_approach_1 = resample_calculate_twap_vwap_and_returns(data_hist, resampling_freq)
 df_approach_1.head(3)
 
 # %% [markdown]
@@ -185,7 +186,9 @@ converted_data.head(3)
 
 # %%
 # Resampling VWAP (besides potential errors). This implies hardcoded formula in a mix with resampling functions.
-vwap_approach_2 = (converted_data["close"] * converted_data["volume"]).resample("5T").mean() / converted_data["volume"].resample("5T").sum()
+vwap_approach_2 = (converted_data["close"] * converted_data["volume"]).resample(
+    resampling_freq
+).mean() / converted_data["volume"].resample(resampling_freq).sum()
 vwap_approach_2.head(3)
 
 # %%
@@ -196,7 +199,7 @@ rets_approach_2.head(3)
 
 # %% run_control={"marked": false}
 # To go back to a flat index representation.
-rets_approach_2.columns = ['_'.join(col) for col in rets_approach_2.columns]
+rets_approach_2.columns = ["_".join(col) for col in rets_approach_2.columns]
 rets_approach_2.head(3)
 
 # %% [markdown]
@@ -214,7 +217,7 @@ node_resampling_config = {
     ],
     "out_col_group": (),
     "transformer_kwargs": {
-        "rule": "5T",
+        "rule": resampling_freq,
         "resampling_groups": [
             ({"close": "close"}, "last", {}),
             (
