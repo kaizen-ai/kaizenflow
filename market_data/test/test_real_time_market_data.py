@@ -31,7 +31,7 @@ def _check_get_data(
     - Execute the function `get_data*` in `func`
     - Check actual output against expected.
     """
-    asset_ids = [3450]
+    asset_ids = []
     columns: List[str] = []
     market_data, _ = mdmadaex.get_RealTimeMarketData2(
         sql_talos_client, asset_ids=asset_ids, columns=columns
@@ -52,7 +52,7 @@ def _check_get_data(
 
 
 class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, 
-    hunitest.TestCase):
+    mdtmdtca.MarketData_get_data_TestCase):
     def setup_sql_talos_client(
         self,
         resample_1min: Optional[bool] = True,
@@ -69,6 +69,7 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
             resample_1min, self.connection, table_name, mode
         )
         return sql_talos_client
+
 
     def check_last_end_time(
         self,
@@ -88,66 +89,6 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         _LOG.info("-> is_online=%s", is_online)
         self.assertEqual(is_online, expected_is_online)
         
-    def test_get_data1(self) -> None:
-        """
-        - Set the current time to 9:35
-        - Get the last 5 mins of data
-        - The returned data should be in [9:30, 9:35]
-        """
-        timedelta = pd.Timedelta("5T")
-        func = lambda market_data: market_data.get_data_for_last_period(timedelta)
-        # pylint: disable=line-too-long
-        expected_df_as_str = """
-        # df=
-        index=[2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
-        columns=asset_id,last_price,start_datetime,timestamp_db
-        shape=(5, 4)
-                                   asset_id     last_price             start_datetime              timestamp_db
-        end_datetime
-        2000-01-01 09:31:00-05:00      1000    999.874540   2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
-        2000-01-01 09:32:00-05:00      1000    1000.325254  2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
-        2000-01-01 09:33:00-05:00      1000    1000.557248  2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
-        2000-01-01 09:34:00-05:00      1000    1000.655907  2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
-        2000-01-01 09:35:00-05:00      1000    1000.311925  2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
-        # pylint: enable=line-too-long
-        client = self.setup_sql_talos_client()
-        market_data = _check_get_data(
-            self, func, expected_df_as_str, client
-        )
-        #
-        expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        expected_is_online = True
-        self.check_last_end_time(
-            market_data, expected_last_end_time, expected_is_online
-        )
-        hsql.remove_table(self.connection, "talos_ohlcv")
-
-    def test_get_data_at_timestamp1(self) -> None:
-        """
-        - Current time is 9:45
-        - Ask data for 9:35
-        - The returned data is for 9:35
-        """
-        ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
-        ts_col_name = "start_datetime"
-        asset_ids = None
-        func = lambda market_data: market_data.get_data_at_timestamp(
-            ts, ts_col_name, asset_ids
-        )
-        # pylint: disable=line-too-long
-        expected_df_as_str = r"""
-        # df=
-        index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:36:00-05:00]
-        columns=asset_id,last_price,start_datetime,timestamp_db
-        shape=(1, 4)
-                                   asset_id  last_price            start_datetime              timestamp_db
-        end_datetime
-        2000-01-01 09:36:00-05:00      1000   999.96792  2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""
-        # pylint: enable=line-too-long
-        client = self.setup_sql_talos_client()
-        _check_get_data(self, func, expected_df_as_str, client)
-        hsql.remove_table(self.connection, "talos_ohlcv")
-
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
