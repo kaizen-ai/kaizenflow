@@ -1,8 +1,6 @@
 import logging
 import os
 
-import pytest
-
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import helpers.hversion as hversio
@@ -36,15 +34,20 @@ class TestVersioning1(hunitest.TestCase):
         container_dir_name = "."
         hversio.check_version(container_dir_name)
 
-    @pytest.mark.skip(reason="CmampTask570")
     def test__check_version1(self) -> None:
-        code_version = "amp-1.0.0"
-        container_version = "amp-1.0.2"
+        code_version = "1.0.0"
+        container_version = "1.0.2"
         is_ok = hversio._check_version(code_version, container_version)
         self.assertFalse(is_ok)
 
     def test__check_version2(self) -> None:
-        code_version = "amp-1.0.0"
+        code_version = "1.0.0"
+        container_version = "1.0.0"
+        is_ok = hversio._check_version(code_version, container_version)
+        self.assertTrue(is_ok)
+
+    def test__check_version3(self) -> None:
+        code_version = "1.0.0"
         container_version = "amp-1.0.0"
         is_ok = hversio._check_version(code_version, container_version)
         self.assertTrue(is_ok)
