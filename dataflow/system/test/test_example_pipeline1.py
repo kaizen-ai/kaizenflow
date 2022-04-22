@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import helpers.hunit_test as hunitest
 
 import pandas as pd
 import pytest
@@ -9,6 +8,7 @@ import core.finance as cofinanc
 import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
+import helpers.hunit_test as hunitest
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class Test_Example1_ForecastSystem(hunitest.TestCase):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            result_bundles = result_bundles[0]
+            result_bundles = result_bundles[0][0]
         return result_bundles
 
     # ///////////////////////////////////////////////////////////////////////////
