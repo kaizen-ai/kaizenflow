@@ -746,7 +746,11 @@ class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
             start_ts, end_ts = self.generate_random_time_interval(
                 left_boundary, right_boundary, seed_
             )
-            data = im_client.read_data(full_symbols, start_ts, end_ts)
+            columns = None
+            filter_data_mode = "assert"
+            data = im_client.read_data(
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
+            )
             # Compare the expected values.
             self._check_output(data, full_symbols, start_ts, end_ts)
 

@@ -79,9 +79,14 @@ class HistoricalPqByTileClient(
 
     # TODO(Grisha): factor out the column names in the child classes, see `CCXT`, `Talos`.
     @staticmethod
-    def _get_columns_for_query() -> Optional[List[str]]:
+    def _get_columns_for_query(
+        columns: Optional[List[str]],
+    ) -> Optional[List[str]]:
         """
         Get columns for Parquet data query.
+
+        If passed columns are not `None`, select the columns that are among
+        available for the class and belong to the passed ones.
 
         For base implementation the columns are `None`
         """
@@ -112,6 +117,8 @@ class HistoricalPqByTileClient(
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
+        *,
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -124,10 +131,9 @@ class HistoricalPqByTileClient(
             hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
         )
         kwargs["log_level"] = logging.INFO
-        # Get columns and add them to kwargs if they were not specified.
-        if "columns" not in kwargs:
-            columns = self._get_columns_for_query()
-            kwargs["columns"] = columns
+        # Get columns for query and add them to kwargs.
+        columns_for_query = self._get_columns_for_query(columns)
+        kwargs["columns"] = columns_for_query
         # Add AWS profile to kwargs.
         kwargs["aws_profile"] = self._aws_profile
         # Build root dirs to the data and Parquet filtering condition.
@@ -173,15 +179,6 @@ class HistoricalPqByTileClient(
             res_df_list.append(root_dir_df)
         # Combine data from all root dirs into a single DataFrame.
         res_df = pd.concat(res_df_list, axis=0)
-        # Since we have normalized the data, the index is a timestamp, and we can
-        # trim the data with index in [start_ts, end_ts] to remove the excess
-        # from filtering in terms of days.
-        ts_col_name = None
-        left_close = True
-        right_close = True
-        res_df = hpandas.trim_df(
-            res_df, ts_col_name, start_ts, end_ts, left_close, right_close
-        )
         return res_df
 
     # TODO(Grisha): try to unify child classes with the base class, see CmTask #1696

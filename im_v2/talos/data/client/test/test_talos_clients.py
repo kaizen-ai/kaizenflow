@@ -1239,7 +1239,8 @@ class TestRealTimeSqlTalosClient1(
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00", tz="UTC")
         end_ts = None
-        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.min()
         # Create the expected outcomes. Extracted timestamp should be equal to `start_ts` param.
@@ -1263,7 +1264,8 @@ class TestRealTimeSqlTalosClient1(
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
         end_ts = pd.Timestamp("2022-03-24T16:23:00-00:00", tz="UTC")
-        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
         # Create the expected outcomes. Extracted timestamp should be equal to `end_ts` param.
@@ -1287,7 +1289,8 @@ class TestRealTimeSqlTalosClient1(
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:37-00:00", tz="UTC")
         end_ts = None
-        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.min()
         # Create the expected outcomes. Extracted timestamp should be equal to the rounded `start_ts` param.
@@ -1311,7 +1314,8 @@ class TestRealTimeSqlTalosClient1(
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
         end_ts = pd.Timestamp("2022-03-24T16:23:28-00:00", tz="UTC")
-        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
         # Create the expected outcomes. Extracted timestamp should be equal to the rounded `end_ts` param.

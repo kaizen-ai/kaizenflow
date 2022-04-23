@@ -93,8 +93,9 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         ]
         return universe
 
+    # TODO(Dan): Implement usage of `columns` parameter.
     @staticmethod
-    def _get_columns_for_query() -> List[str]:
+    def _get_columns_for_query(columns: Optional[List[str]]) -> List[str]:
         """
         See description in the parent class.
         """
@@ -340,6 +341,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         # Extra arguments for building a query.
@@ -481,6 +483,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,

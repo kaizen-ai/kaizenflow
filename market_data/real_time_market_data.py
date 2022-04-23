@@ -299,10 +299,14 @@ class RealTimeMarketData2(mdabmada.MarketData):
             ]
         else:
             full_symbols = None
+        columns = None
+        filter_data_mode = "assert"
         data = self._client.read_data(
             full_symbols,
             start_ts,
             end_ts,
+            columns,
+            filter_data_mode,
             ts_col_name=ts_col_name,
             left_close=left_close,
             right_close=right_close,
