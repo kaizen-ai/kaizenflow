@@ -204,11 +204,7 @@ class ImClient(abc.ABC):
                 end_ts,
             )
             self._dassert_output_data_is_valid(
-                df_tmp,
-                full_symbol_col_name,
-                self._resample_1min,
-                start_ts,
-                end_ts,
+                df_tmp, full_symbol_col_name, self._resample_1min
             )
             dfs.append(df_tmp)
         hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
@@ -315,11 +311,7 @@ class ImClient(abc.ABC):
 
     @staticmethod
     def _dassert_output_data_is_valid(
-        df: pd.DataFrame,
-        full_symbol_col_name: str,
-        resample_1min: bool,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
+        df: pd.DataFrame, full_symbol_col_name: str, resample_1min: bool
     ) -> None:
         """
         Verify that the normalized data is valid.
@@ -349,11 +341,6 @@ class ImClient(abc.ABC):
         hdbg.dassert_eq(
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
-        # Ensure that all the data is in [start_ts, end_ts].
-        if start_ts:
-            hdbg.dassert_lte(start_ts, df.index.min())
-        if end_ts:
-            hdbg.dassert_lte(df.index.max(), end_ts)
 
     def _process_by_filter_data_mode(
         self,
