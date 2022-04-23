@@ -1327,14 +1327,14 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
-    @pytest.mark.skip("Enable when unit test data needs to be generated.")
+    # @pytest.mark.skip("Enable when unit test data needs to be generated.")
     def test_write_test_data_to_s3(self) -> None:
         """
         Write unit test data to s3.
         """
         data = self._get_unit_test_data()
         partition_columns = ["currency_pair", "year", "month"]
-        dst_dir = "s3://cryptokaizen-data/unit_test/historical/ccxt/latest/%s"
+        dst_dir = "s3://cryptokaizen-data/unit_test/historical/ccxt/latest"
         aws_profile = "ck"
         exchange_id_col_name = "exchange_id"
         for exchange_id, df_exchange_id in data.groupby(exchange_id_col_name):
