@@ -187,6 +187,15 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             _ = imvcounun._get_trade_universe(vendor, version=version)
 
+    def _test_get_universe_invalid_vendor(self, vendor: str = "unknown", *, version: str) -> None:
+        """
+        Verify that incorrect vendor is recognized.
+
+        :param version: version of vendor universe, e.g. v1
+        """
+        with self.assertRaises(AssertionError):
+            _ = imvcounun._get_trade_universe(vendor, version=version)
+
     def _test_get_vendor_universe_small(
         self, vendor: str, exchange: str, currency_pair: str
     ) -> None:

@@ -31,6 +31,13 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         """
         self._test_get_universe_invalid_version("CCXT")
 
+    def test_get_universe_invalid_vendor(self) -> None:
+        """
+        Verify that incorrect vendor is recognized.
+        """
+        version = "v1"
+        self._test_get_universe_invalid_vendor(version=version)
+
     def test_get_vendor_universe_small(self) -> None:
         """
         Test that vendor universe is loaded correctly as dict using small
