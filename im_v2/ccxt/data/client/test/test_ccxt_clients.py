@@ -1327,7 +1327,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
-    # @pytest.mark.skip("Enable when unit test data needs to be generated.")
+    @pytest.mark.skip("Enable when unit test data needs to be generated.")
     def test_write_test_data_to_s3(self) -> None:
         """
         Write unit test data to s3.
@@ -1341,7 +1341,10 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             exchange_dir = "/".join([dst_dir, exchange_id])
             df_exchange_id = df_exchange_id.drop(columns="exchange_id")
             hparque.to_partitioned_parquet(
-                df_exchange_id, partition_columns, exchange_dir, aws_profile=aws_profile
+                df_exchange_id,
+                partition_columns,
+                exchange_dir,
+                aws_profile=aws_profile,
             )
 
     def _get_unit_test_data(self) -> pd.DataFrame:
