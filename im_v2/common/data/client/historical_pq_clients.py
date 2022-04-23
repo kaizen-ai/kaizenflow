@@ -110,6 +110,7 @@ class HistoricalPqByTileClient(
         # ```
         # which confuses `df.groupby()`, so we force that column to str.
         df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
+        df = df.drop(["month", "year"], axis=1)
         return df
 
     def _read_data_for_multiple_symbols(
