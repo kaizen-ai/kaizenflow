@@ -15,7 +15,6 @@ import helpers.hunit_test as hunitest
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 
-
 # #############################################################################
 # TestExtractUniverseVersion1
 # #############################################################################
@@ -187,7 +186,9 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             _ = imvcounun._get_trade_universe(vendor, version=version)
 
-    def _test_get_universe_invalid_vendor(self, vendor: str = "unknown", *, version: str) -> None:
+    def _test_get_universe_invalid_vendor(
+        self, vendor: str = "unknown", *, version: str
+    ) -> None:
         """
         Verify that incorrect vendor is recognized.
 
