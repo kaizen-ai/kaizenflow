@@ -254,13 +254,13 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
 # #############################################################################
 
 
-def _get_ccxt_universe_v3(n: Optional[int]) -> List[Amid]:
+def _get_ccxt_universe(version: str, n: Optional[int]) -> List[Amid]:
     """
     Create universe for `CCXT`.
     """
     vendor = "CCXT"
     full_symbols = ivcu.get_vendor_universe(
-        vendor, version="v3", as_full_symbol=True
+        vendor, version=version, as_full_symbol=True
     )
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
@@ -283,7 +283,11 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "example1_v1":
         ret = _get_example1_universe_v1(top_n)
     elif universe_version == "ccxt_v3":
-        ret = _get_ccxt_universe_v3(top_n)
+        version = "v3"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v4":
+        version = "v4"
+        ret = _get_ccxt_universe(version, top_n)
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret
