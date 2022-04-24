@@ -13,6 +13,23 @@ class TestOmsDbHelper(hsqltest.TestDbHelper):
     Configure the helper to build an OMS test DB.
     """
 
+    @staticmethod
+    def _get_compose_file() -> str:
+        return "oms/devops/compose/docker-compose.yml"
+
+    @staticmethod
+    def _get_service_name() -> str:
+        return "oms_postgres"
+
+    @staticmethod
+    def _get_db_env_path() -> str:
+        """
+        See `_get_db_env_path()` in the parent class.
+        """
+        # Use the `local` stage for testing.
+        env_file_path = oomlitas.get_db_env_path("local")
+        return env_file_path  # type: ignore[no-any-return]
+
     def _test_create_table_helper(
         self: Any,
         table_name: str,
@@ -44,20 +61,3 @@ class TestOmsDbHelper(hsqltest.TestDbHelper):
         self.assertIn(table_name, db_tables)
         # Delete the table.
         hsql.remove_table(self.connection, table_name)
-
-    @staticmethod
-    def _get_compose_file() -> str:
-        return "oms/devops/compose/docker-compose.yml"
-
-    @staticmethod
-    def _get_service_name() -> str:
-        return "oms_postgres"
-
-    @staticmethod
-    def _get_db_env_path() -> str:
-        """
-        See `_get_db_env_path()` in the parent class.
-        """
-        # Use the `local` stage for testing.
-        env_file_path = oomlitas.get_db_env_path("local")
-        return env_file_path  # type: ignore[no-any-return]

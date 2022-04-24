@@ -4,6 +4,7 @@ Import as:
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 """
 
+import collections
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
@@ -16,9 +17,7 @@ import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.data.client.full_symbol as imvcdcfusy
-import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
-import im_v2.common.universe.universe_utils as imvcuunut
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
+class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     """
     Read historical data for `Talos` assets stored as Parquet dataset.
 
@@ -57,14 +56,20 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         aws_profile: Optional[str] = None,
     ) -> None:
         """
-        Load `Talos` data from local or S3 filesystem.
+        Constructor.
+
+        See the parent class for parameters description.
+
+        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         vendor = "talos"
+        infer_exchange_id = False
         super().__init__(
             vendor,
             resample_1min,
             root_dir,
             partition_mode,
+            infer_exchange_id,
             aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot
@@ -75,17 +80,23 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         """
         raise NotImplementedError
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
-        # TODO(Danya): CmTask1420.
-        return []
+        # TODO(Nina): CMTask #1658  Create `get_universe()` for `TalosHistoricalPqByTileClient`.
+        universe = [
+            "binance::ADA_USDT",
+            "binance::BTC_USDT",
+            "coinbase::ADA_USDT",
+            "coinbase::BTC_USDT",
+        ]
+        return universe
 
     @staticmethod
     def _get_columns_for_query() -> List[str]:
         """
-        Get columns for Parquet data query.
+        See description in the parent class.
         """
         columns = [
             "open",
@@ -103,46 +114,65 @@ class TalosHistoricalPqByTileClient(imvcdchpcl.HistoricalPqByTileClient):
         df: pd.DataFrame, full_symbol_col_name: str
     ) -> pd.DataFrame:
         """
-        Apply transformations to loaded data.
+        See description in the parent class.
         """
-        # Create full symbols column and drop its components.
-        df[full_symbol_col_name] = (
-            df["exchange_id"].astype(str) + "::" + df["currency_pair"].astype(str)
+        # Convert to string, see the parent class for details.
+        df["exchange_id"] = df["exchange_id"].astype(str)
+        df["currency_pair"] = df["currency_pair"].astype(str)
+        # Add full symbol column.
+        df[full_symbol_col_name] = ivcu.build_full_symbol(
+            df["exchange_id"], df["currency_pair"]
         )
-        # Select only necessary columns.
+        # Keep only necessary columns.
         columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
         df = df[columns]
         return df
 
-    def _get_root_dir_and_symbol_filter(
-        self, full_symbols: List[icdc.FullSymbol], full_symbol_col_name: str
-    ) -> Tuple[str, hparque.ParquetFilter]:
+    def _get_root_dirs_symbol_filters(
+        self, full_symbols: List[ivcu.FullSymbol], full_symbol_col_name: str
+    ) -> Dict[str, hparque.ParquetFilter]:
         """
-        Get the root dir of the `Talos` data and filtering condition on
-        currency pair column.
+        Build a dict with exchange root dirs of the `Talos` data as keys and
+        filtering conditions on corresponding currency pairs as values.
+
+        E.g.,
+        ```
+        {
+            "s3://cryptokaizen-data/historical/talos/latest/binance": (
+                "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
+            ),
+            "s3://cryptokaizen-data/historical/talos/latest/coinbase": (
+                "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
+            ),
+        }
+        ```
         """
-        # Get the lists of exchange ids and currency pairs.
-        exchange_ids, currency_pairs = tuple(
-            zip(
-                *[
-                    icdc.parse_full_symbol(full_symbol)
-                    for full_symbol in full_symbols
-                ]
+        # Build a root dir to the list of exchange ids subdirs, e.g.,
+        # `s3://cryptokaizen-data/historical/talos/latest/binance`.
+        root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
+        # Split full symbols into exchange id and currency pair tuples, e.g.,
+        # [('binance', 'ADA_USDT'),
+        # ('coinbase', 'BTC_USDT')].
+        full_symbol_tuples = [
+            ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+        ]
+        # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
+        # `Defaultdict` provides a default value for the key that does not exists that prevents from
+        # getting `KeyError`.
+        symbol_dict = collections.defaultdict(list)
+        for exchange_id, *currency_pair in full_symbol_tuples:
+            symbol_dict[exchange_id].extend(currency_pair)
+        # Build a dict with exchange root dirs as keys and Parquet filters by
+        # the corresponding currency pairs as values.
+        root_dir_symbol_filter_dict = {
+            os.path.join(root_dir, exchange_id): (
+                "currency_pair",
+                "in",
+                currency_pairs,
             )
-        )
-        # TODO(Dan) Extend functionality to load data for multiple exchange
-        #  ids in one query when data partitioning on S3 is changed.
-        # Verify that all full symbols in a query belong to one exchange id
-        # since dataset is partitioned only by currency pairs.
-        hdbg.dassert_eq(1, len(set(exchange_ids)))
-        # Extend the root dir to include the exchange dir, e.g.,
-        # "s3://cryptokaizen-data/historical/talos/latest/binance"
-        root_dir = os.path.join(
-            self._root_dir, self._vendor, self._data_snapshot, exchange_ids[0]
-        )
-        # Add a filter on currency pairs.
-        symbol_filter = ("currency_pair", "in", currency_pairs)
-        return root_dir, symbol_filter
+            for exchange_id, currency_pairs in symbol_dict.items()
+        }
+        return root_dir_symbol_filter_dict
 
 
 # #############################################################################
@@ -173,11 +203,10 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         This mode is required when loading data to use inside a model.
         """
         vendor = "talos"
-        super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
         self._mode = mode
-        self.numerical_id_mapping = self.build_numerical_to_string_id_mapping()
+        super().__init__(vendor, resample_1min)
 
     @staticmethod
     def should_be_online() -> bool:
@@ -193,18 +222,11 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         """
         raise NotImplementedError
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
         # TODO(Danya): CmTask1420.
-        return []
-
-    def build_numerical_to_string_id_mapping(self) -> Dict[int, str]:
-        """
-        Create a mapping from numerical ids (e.g., encoding asset ids) to the
-        corresponding `full_symbol`.
-        """
         # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
         query = (
             f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
@@ -213,14 +235,13 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             self._db_connection, query
         )
         # Merge these columns to the general `full_symbol` format.
-        full_symbols = currency_exchange_df.agg("::".join, axis=1)
+        full_symbols = ivcu.build_full_symbol(
+            currency_exchange_df["exchange_id"],
+            currency_exchange_df["currency_pair"],
+        )
         # Convert to list.
         full_symbols = full_symbols.to_list()
-        # Map full_symbol with the numerical ids.
-        full_symbol_mapping = imvcuunut.build_numerical_to_string_id_mapping(
-            full_symbols
-        )
-        return full_symbol_mapping
+        return full_symbols
 
     @staticmethod
     # TODO(Danya): Move up to hsql.
@@ -286,7 +307,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             # TODO (Danya): Move this transformation to MarketData.
             # Add `asset_id` column using mapping on `full_symbol` column.
             data["asset_id"] = data[full_symbol_col_name].apply(
-                imvcuunut.string_to_numerical_id
+                ivcu.string_to_numerical_id
             )
             # Convert to int64 to keep NaNs alongside with int values.
             data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
@@ -316,7 +337,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def _read_data(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         *,
@@ -337,7 +358,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :return:
         """
         # Parse symbols into exchange and currency pair.
-        parsed_symbols = [imvcdcfusy.parse_full_symbol(s) for s in full_symbols]
+        parsed_symbols = [ivcu.parse_full_symbol(s) for s in full_symbols]
         # Convert timestamps to epochs.
         if start_ts:
             start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
@@ -356,9 +377,8 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
-        # TODO(Danya): Extend the `build_full_symbol()` function to apply to Series.
-        data[full_symbol_col_name] = data[["exchange_id", "currency_pair"]].agg(
-            "::".join, axis=1
+        data[full_symbol_col_name] = ivcu.build_full_symbol(
+            data["exchange_id"], data["currency_pair"]
         )
         # Remove extra columns and create a timestamp index.
         # TODO(Danya): The normalization may change depending on use of the class.
@@ -458,7 +478,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
         *,
@@ -487,7 +507,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         raise NotImplementedError
 
     def _get_start_end_ts_for_symbol(
-        self, full_symbol: imvcdcfusy.FullSymbol, mode: str
+        self, full_symbol: ivcu.FullSymbol, mode: str
     ) -> pd.Timestamp:
         """
         Select a maximum/minimum timestamp for the given symbol.
@@ -500,7 +520,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         :return: min or max value of 'timestamp' column.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
-        exchange, currency_pair = imvcdcfusy.parse_full_symbol(full_symbol)
+        exchange, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Build a MIN/MAX query.
         if mode == "start":
             query = (

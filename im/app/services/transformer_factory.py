@@ -8,7 +8,6 @@ import im.app.services.transformer_factory as imasetrfa
 
 import im.common.data.transform.s3_to_sql_transformer as imcdtststr
 
-
 # TODO(*): -> S3ToSqlTransformerFactory
 class TransformerFactory:
     @classmethod

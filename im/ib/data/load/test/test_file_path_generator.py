@@ -4,7 +4,6 @@ Import as:
 import im.ib.data.load.test.test_file_path_generator as tfpgen
 """
 
-import os
 
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest

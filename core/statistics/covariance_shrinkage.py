@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.covariance_shrinkage as ccovshri
+import core.statistics.covariance_shrinkage as cstcoshr
 """
 
 import logging
@@ -106,7 +106,7 @@ def compute_epanechnikov_kernel(
     :param real: a real number
     :return: the value of the kernel at `real`
     """
-    sq = real ** 2
+    sq = real**2
     scale = 3 / (4 * np.sqrt(5))
     val = scale * max(0, 1 - sq / 5)
     return val
@@ -125,7 +125,7 @@ def compute_epanechnikov_hilbert_transform(
     if np.abs(real) == np.sqrt(5):
         term2 = 0
     else:
-        sq = real ** 2
+        sq = real**2
         scale = 3 / (4 * np.sqrt(5) * np.pi)
         log = np.abs((np.sqrt(5) - real) / (np.sqrt(5) + real))
         term2 = scale * (1 - sq / 5) * np.log(log)

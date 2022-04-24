@@ -10,10 +10,6 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 
-# TODO(gp): @Grisha -> move the example file in parallel to ccxt_clients
-#  We want to expose this from the package, we don't like exporting stuff from
-#  test.
-
 
 def get_test_data_dir() -> str:
     """
@@ -79,3 +75,18 @@ def get_CcxtParquetByAssetClient_example1(
         vendor, resample_1min, root_dir, extension
     )
     return ccxt_client
+
+
+def get_CcxtHistoricalPqByTileClient_example1(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+    """
+    Get `CcxtHistoricalPqByTileClient` object for the tests.
+    """
+    # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
+    root_dir = "s3://cryptokaizen-data/historical"
+    partition_mode = "by_year_month"
+    ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
+        resample_1min, root_dir, partition_mode, aws_profile="ck"
+    )
+    return ccxt_parquet_client

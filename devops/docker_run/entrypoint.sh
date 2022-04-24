@@ -17,12 +17,12 @@ source devops/docker_run/setenv.sh
 #umask 000
 
 # Enable dind unless the user specifies otherwise (needed for prod image).
-if [ -z "$ENABLE_DIND" ]; then
-    ENABLE_DIND=1
-    echo "ENABLE_DIND=$ENABLE_DIND"
+if [ -z "$AM_ENABLE_DIND" ]; then
+    AM_ENABLE_DIND=1
+    echo "AM_ENABLE_DIND=$AM_ENABLE_DIND"
 fi;
 
-if [[ $ENABLE_DIND == 1 ]]; then
+if [[ $AM_ENABLE_DIND == 1 ]]; then
     echo "# Setting up Docker-in-docker"
     if [[ ! -d /etc/docker ]]; then
         sudo mkdir /etc/docker
@@ -33,7 +33,7 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # Start Docker Engine.
     sudo /etc/init.d/docker start
     sudo /etc/init.d/docker status
-    # Wait for Docker Engine to be started, otherwise `docker.sock` file is 
+    # Wait for Docker Engine to be started, otherwise `docker.sock` file is
     # not created so fast. This is needed to change `docker.sock` permissions.
     DOCKER_SOCK_FILE=/var/run/docker.sock
     COUNTER=0
@@ -95,7 +95,7 @@ aws configure --profile am list || true
 echo "AM_CONTAINER_VERSION='$AM_CONTAINER_VERSION'"
 
 # Test the installed packages.
-if [[ $ENABLE_DIND == 1 ]]; then
+if [[ $AM_ENABLE_DIND == 1 ]]; then
     echo "docker -v: "$(docker -v)
     echo "docker-compose -v: "$(docker-compose -v)
 fi;

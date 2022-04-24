@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
- Transform the output of `diff -r --brief dir1 dir2` into a script using
+Transform the output of `diff -r --brief dir1 dir2` into a script using
 vimdiff.
 
 # To clean up the crap in the dirs:
@@ -85,6 +85,7 @@ def _diff(dir1: str, dir2: str) -> str:
 def _get_symbolic_filepath(dir1: str, dir2: str, file_name: str) -> str:
     """
     Transform a path like:
+
         /Users/saggese/src/...2/amp/vendors/first_rate/utils.py
     into:
         $DIR1/amp/vendors/first_rate/utils.py
@@ -133,7 +134,7 @@ def _parse_diff_output(
             hdbg.dassert(m, "Invalid line='%s'", line)
             m: Match[Any]
             file_name = "%s/%s" % (m.group(1), m.group(2))
-            # hdbg.dassert_exists(file_name)
+            # hdbg.dassert_path_exists(file_name)
             dir_ = _get_symbolic_filepath(dir1, dir2, m.group(1))
             dirs = dir_.split("/")
             dir_ = dirs[0]

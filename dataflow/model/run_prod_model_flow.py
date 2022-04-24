@@ -9,15 +9,12 @@ import dataflow.model.run_prod_model_flow as dtfmrpmofl
 import abc
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 import core.config as cconfig
 import dataflow.model as dtfmod
-import dataflow.model.model_evaluator as dtfmomoeva
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.hintrospection as hintros
-import helpers.hjupyter as hjupyte
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
@@ -36,7 +33,12 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
 
     @staticmethod
     def get_configs_signature(config_builder: str) -> str:
+        """
+        Compute a test signature from a `config_builder`.
+        """
+        # Create the configs.
         configs = cconfig.get_configs_from_builder(config_builder)
+        # Create a signature.
         txt = cconfig.configs_to_str(configs)
         return txt
 
@@ -84,9 +86,7 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         opts = " ".join(opts)
         #
         amp_dir = hgit.get_amp_abs_path()
-        exec_filename = os.path.join(
-            amp_dir, "dataflow/model/run_experiment.py"
-        )
+        exec_filename = os.path.join(amp_dir, "dataflow/model/run_experiment.py")
         hdbg.dassert_path_exists(exec_filename)
         #
         cmd = []
@@ -114,7 +114,6 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         """
         Run the entire flow.
         """
-        pass
 
 
 # #############################################################################
@@ -123,31 +122,46 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
 class TiledBacktest_TestCase(Backtest_TestCase):
     """
     Run an end-to-end backtest for a model by:
-    - checking the configs against frozen representation
-    - running model using tiled backtest
-    - checking that the output is a valid tiled results
-    - running the analysis flow to make sure that it works
+
+    - Checking the configs against frozen representation
+    - Running model using tiled backtest
+    - Checking the dir signature against frozen representation
+    - Checking that the output is a valid tiled results
     """
 
     def compute_tile_output_signature(self, file_name: str) -> str:
+        """
+        Create a test signature from a backtesting (Parquet) output.
+
+        E.g.,
+        ```
+        # compute_metadata_stats_by_asset_id
+                    n_years  n_unique_months  n_files
+        asset_id
+        1467591036        1                1        1
+        3303714233        1                1        1
+        # compute_universe_size_by_time
+                    n_asset_ids
+        year month
+        2000 1                2
+        ```
+
+        :param file_name: name of a file with Parquet metadata
+        :return: config signature
+        """
         parquet_tile_analyzer = dtfmod.ParquetTileAnalyzer()
         parquet_tile_metadata = (
             parquet_tile_analyzer.collate_parquet_tile_metadata(file_name)
         )
         signature = []
-        # 	    n_years	n_unique_months	n_files	    size
-        # egid
-        # 10025	      1	              2	      2	711.7 KB
+        # Compute metadata stats by asset id.
         df = parquet_tile_analyzer.compute_metadata_stats_by_asset_id(
             parquet_tile_metadata
         )
         df_as_str = hpandas.df_to_str(df.drop("size", axis="columns"))
         signature.append("# compute_metadata_stats_by_asset_id")
         signature.append(df_as_str)
-        # 		        n_asset_ids	size
-        # year	month
-        # 2020	    1	         1	360.3 KB
-        #           2	         1	351.4 KB
+        # Compute metadata stats by time.
         df = parquet_tile_analyzer.compute_universe_size_by_time(
             parquet_tile_metadata
         )
@@ -165,14 +179,18 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         run_model_extra_opts: str,
     ) -> None:
         """
-        Run the entire flow.
+        Run the entire backtest flow.
+
+        :param config_builder: pointer to the function used to build configs
+        :param experiment_builder: pointer to the function used to build an experiment
+        :param run_model_extra_opts: extra options passed to a model run command
         """
         scratch_dir = self.get_scratch_space()
-        # 1) Test config builder.
+        # 1) Check the configs against frozen representation.
         configs_signature = self.get_configs_signature(config_builder)
         tag = "configs_signature"
         self.check_string(configs_signature, fuzzy_match=True, tag=tag)
-        # 2) Run the model.
+        # 2) Run the model using tiled backtest.
         run_model_dir = os.path.join(scratch_dir, "run_model")
         if hunitest.get_incremental_tests() and os.path.exists(run_model_dir):
             _LOG.warning(
@@ -186,13 +204,13 @@ class TiledBacktest_TestCase(Backtest_TestCase):
                 run_model_extra_opts,
                 run_model_dir,
             )
-        # 3) Freeze the output of the entire dir.
+        # 3) Check the dir signature against frozen representation.
         tag = "output_signature"
         output_signature = self.get_dir_signature(run_model_dir)
         # Remove lines like 'log.20220304-200306.txt'.
         output_signature = hprint.filter_text(r"log\..*\.txt", output_signature)
         self.check_string(output_signature, fuzzy_match=True, tag=tag)
-        # 4) Run the analysis.
+        # 4) Check that the output is a valid tiled results.
         tile_output_dir = os.path.join(run_model_dir, "tiled_results")
         tile_output_signature = self.compute_tile_output_signature(
             tile_output_dir

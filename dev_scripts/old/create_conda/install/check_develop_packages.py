@@ -9,6 +9,8 @@ import dev_scripts.old.create_conda.install.check_develop_packages as dsoccicdp
 import os
 import sys
 
+import helpers.henv as henv
+
 # Dir of the current executable.
 _CURR_DIR = os.path.dirname(sys.argv[0])
 
@@ -16,16 +18,14 @@ _CURR_DIR = os.path.dirname(sys.argv[0])
 # need to go up two levels to reach `//amp`.
 _AMP_REL_PATH = "../.."
 _AMP_PATH = os.path.abspath(os.path.join(_CURR_DIR, _AMP_REL_PATH))
-assert os.path.exists(_AMP_PATH), "Can't find '%s'" % _AMP_PATH
+assert os.path.exists(_AMP_PATH), f"Can't find '{_AMP_PATH}'"
 sys.path.insert(0, _AMP_PATH)
 
-# pylint: wrong-import-position
-import dev_scripts._bootstrap as boot  # isort:skip
+# pylint: disable=wrong-import-position
+import dev_scripts.old.create_conda._bootstrap as dsoccobo  # isort:skip # noqa: E402
 
-boot.bootstrap(_AMP_REL_PATH)
+dsoccobo.bootstrap(_AMP_REL_PATH)
 
-# pylint: wrong-import-position
-import helpers.henv as henv  # isort:skip
 
 if __name__ == "__main__":
     txt, failed = henv.get_system_signature()

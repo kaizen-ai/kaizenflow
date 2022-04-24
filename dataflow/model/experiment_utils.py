@@ -21,7 +21,7 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.finance as cofinanc
-import dataflow.core as dtf
+import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hlogging as hloggin
@@ -38,8 +38,8 @@ def add_run_experiment_args(
     dst_dir_default: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add common command line options for `run_experiments.py` and notebooks.
-    It is not used by `run_experiment_stub.py`
+    Add common command line options for `run_experiments.py` and notebooks. It
+    is not used by `run_experiment_stub.py`
 
     :param dst_dir_required: whether the user must specify a destination directory
         or not. If not, a default value should be passed through `dst_dir_default`
@@ -179,7 +179,8 @@ def get_configs_from_command_line(
     args: argparse.Namespace,
 ) -> List[cconfig.Config]:
     """
-    Return all the (complete) `Config`s to run given the command line interface.
+    Return all the (complete) `Config`s to run given the command line
+    interface.
 
     This is used by only `run_experiment.py` and `run_notebook.py` through
     `add_run_experiment_args()`, but not by `run_experiment_stub.py` which uses
@@ -264,7 +265,7 @@ def report_failed_experiments(
 
 def save_experiment_result_bundle(
     config: cconfig.Config,
-    result_bundle: dtf.ResultBundle,
+    result_bundle: dtfcore.ResultBundle,
     file_name: str = "result_bundle.pkl",
 ) -> None:
     """
@@ -396,12 +397,12 @@ def _load_experiment_artifact(
     base_name = os.path.basename(file_name)
     if base_name == "result_bundle.v2_0.pkl":
         # Load a `ResultBundle` stored in `rb` format.
-        res = dtf.ResultBundle.from_pickle(
+        res = dtfcore.ResultBundle.from_pickle(
             file_name, use_pq=True, **load_rb_kwargs
         )
     elif base_name == "result_bundle.v1_0.pkl":
         # Load `ResultBundle` stored as a single pickle.
-        res = dtf.ResultBundle.from_pickle(
+        res = dtfcore.ResultBundle.from_pickle(
             file_name, use_pq=False, **load_rb_kwargs
         )
     elif base_name == "config.pkl":

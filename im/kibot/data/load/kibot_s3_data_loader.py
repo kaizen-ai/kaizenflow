@@ -21,7 +21,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class KibotS3DataLoader(imcdladalo.AbstractS3DataLoader):
-
     def read_data(
         self,
         exchange: str,

@@ -8,6 +8,7 @@ import asyncio
 import logging
 from typing import Dict, List, Optional
 
+import numpy as np
 import pandas as pd
 
 import helpers.hsql as hsql
@@ -112,5 +113,42 @@ def get_mocked_portfolio_example1(
         #
         initial_cash=initial_cash,
         asset_ids=asset_ids,
+    )
+    return portfolio
+
+
+def get_MockedPortfolio_example2(
+    event_loop: Optional[asyncio.AbstractEventLoop],
+    db_connection: hsql.DbConnection,
+    # TODO(gp): For symmetry with get_mocked_broker_example1 we should have a
+    #  default value.
+    table_name: str,
+    universe: List[int],
+    *,
+    market_data: Optional[mdata.MarketData] = None,
+    mark_to_market_col: str = "price",
+    pricing_method: str = "last",
+    timestamp_col: str = "end_datetime",
+) -> omportfo.MockedPortfolio:
+    """
+    Get a Portfolio initialized from the database.
+    """
+    # Build MockedBroker.
+    broker = obroexam.get_mocked_broker_example1(
+        event_loop,
+        db_connection,
+        market_data=market_data,
+        timestamp_col=timestamp_col,
+    )
+    # Build MockedPortfolio.
+    initial_holdings = pd.Series(np.nan, universe)
+    portfolio = omportfo.MockedPortfolio(
+        broker,
+        mark_to_market_col,
+        pricing_method,
+        initial_holdings,
+        db_connection=db_connection,
+        table_name=table_name,
+        retrieve_initial_holdings_from_db=True,
     )
     return portfolio

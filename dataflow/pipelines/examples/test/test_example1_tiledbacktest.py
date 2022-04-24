@@ -9,7 +9,7 @@ _LOG = logging.getLogger(__name__)
 
 class Test_Example1_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
     """
-    Run end-to-end experiment for an Example1 pipeline:
+    Run end-to-end backtest for an Example1 pipeline:
 
     - run model
     - run the analysis flow to make sure that it works
@@ -18,18 +18,18 @@ class Test_Example1_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
     @pytest.mark.superslow
     def test1(self) -> None:
         """
-        Run on a single name for a few months.
+        Run on a couple of asset ids for a single month.
+
+        The output is a single tile with both asset_ids.
         """
-        asset_ids = [3303714233, 1467591036]
-        start_ts = "2000-01-01T09:31:00-05:00"
-        end_ts = "2000-01-01T10:10:00-05:00"
+        backtest_config = "example1_v1-top2.1T.Jan2000"
         config_builder = (
             "dataflow.pipelines.examples.example1_configs."
-            + f'build_tile_configs({asset_ids}, "{start_ts}", "{end_ts}")'
+            + f'build_tile_configs("{backtest_config}")'
         )
         experiment_builder = (
-            # "amp.dataflow.model.master_experiment.run_tiled_experiment"
-            "dataflow.model.master_experiment.run_tiled_experiment"
+            # "amp.dataflow.model.master_experiment.run_tiled_backtest"
+            "dataflow.model.master_experiment.run_tiled_backtest"
         )
         # We abort on error since we don't expect failures.
         run_model_extra_opts = ""

@@ -43,8 +43,8 @@ def purify_file_name(file_name: str) -> str:
         basename = basename.replace(char, "_")
     #
     dir_name = os.path.dirname(file_name)
-    file_name_out = os.path(dir_name, basename)
-    file_name_out = os.path.normpath(file_name_out)
+    file_name_out = os.path.join(dir_name, basename)
+    file_name_out: str = os.path.normpath(file_name_out)
     return file_name_out
 
 
@@ -159,7 +159,7 @@ def create_soft_link(src: str, dst: str) -> None:
     create_dir(enclosing_dir, incremental=True)
     # Create the link. Note that the link source needs to be an absolute path.
     src = os.path.abspath(src)
-    cmd = "ln -s %s %s" % (src, dst)
+    cmd = f"ln -s {src} {dst}"
     hsystem.system(cmd)
 
 
@@ -223,8 +223,7 @@ def delete_dir(
                 i += 1
                 if i > num_retries:
                     hdbg.dfatal(
-                        "Couldn't delete %s after %s attempts (%s)"
-                        % (dir_, num_retries, str(e))
+                        f"Couldn't delete {dir_} after {num_retries} attempts ({str(e)})"
                     )
                 else:
                     time.sleep(num_secs_retry)
@@ -274,7 +273,7 @@ def create_dir(
             return
         if ask_to_delete:
             hsystem.query_yes_no(
-                "Do you really want to delete dir '%s'?" % dir_name,
+                f"Do you really want to delete dir '{dir_name}'?",
                 abort_on_no=True,
             )
         # The dir exists and we want to create it from scratch (i.e., not
@@ -394,8 +393,8 @@ def _raise_file_decode_error(error: Exception, file_name: str) -> None:
     :param file_name: name of read file that raised the exception
     """
     msg = []
-    msg.append("error=%s" % error)
-    msg.append("file_name='%s'" % file_name)
+    msg.append(f"error={error}")
+    msg.append(f"file_name='{file_name}'")
     msg_as_str = "\n".join(msg)
     _LOG.error(msg_as_str)
     raise RuntimeError(msg_as_str)
@@ -446,14 +445,14 @@ def from_file(
 def get_size_as_str(file_name: str) -> str:
     if os.path.exists(file_name):
         size_in_bytes = os.path.getsize(file_name)
-        if size_in_bytes < (1024 ** 2):
+        if size_in_bytes < (1024**2):
             size_in_kb = size_in_bytes / 1024.0
             res = "%.1f KB" % size_in_kb
-        elif size_in_bytes < (1024 ** 3):
-            size_in_mb = size_in_bytes / (1024.0 ** 2)
+        elif size_in_bytes < (1024**3):
+            size_in_mb = size_in_bytes / (1024.0**2)
             res = "%.1f MB" % size_in_mb
         else:
-            size_in_gb = size_in_bytes / (1024.0 ** 3)
+            size_in_gb = size_in_bytes / (1024.0**3)
             res = "%.1f GB" % size_in_gb
     else:
         res = "nan"
@@ -547,7 +546,7 @@ def serialize_custom_types_for_json_encoder(obj: Any) -> Any:
     elif isinstance(obj, type(pd.NA)):
         result = None
     else:
-        raise TypeError("Can not serialize %s of type %s" % (obj, type(obj)))
+        raise TypeError(f"Can not serialize {obj} of type {type(obj)}")
     return result
 
 
