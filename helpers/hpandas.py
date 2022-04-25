@@ -697,7 +697,7 @@ def _df_to_str(
 
 
 def df_to_str(
-    df: Union[pd.DataFrame, pd.Series],
+    df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
     num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
@@ -728,7 +728,7 @@ def df_to_str(
         return ""
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
-    if isinstance(df, pd.Index):
+    elif isinstance(df, pd.Index):
         df = df.to_frame()
     hdbg.dassert_isinstance(df, pd.DataFrame)
     out = []
