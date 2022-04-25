@@ -14,7 +14,7 @@ if henv.has_module("psycopg2"):
     from helpers.hsql_implementation import *  # isort:skip  # noqa: F401,F403 # pylint: disable=unused-import,unused-wildcard-import,wildcard-import
 
 else:
-    from typing import Any
+    from typing import Any, List
 
     DbConnection = Any
 
@@ -25,12 +25,10 @@ def create_in_operator(values: List[str], column_name: str) -> str:
 
     :param values: the array of values to transform, e.g. `["binance", "ftx"]`
     :param column_name: the name of the column, e.g. 'exchange_id'
-    :return: IN operator clause with specified values, 
+    :return: IN operator clause with specified values,
       e.g. `"exchange_id IN ('binance', 'ftx')"`
     """
     in_operator = (
-        f"{column_name} IN ("
-        + ",".join([f"'{value}'" for value in values])
-        + ")"
+        f"{column_name} IN (" + ",".join([f"'{value}'" for value in values]) + ")"
     )
     return in_operator
