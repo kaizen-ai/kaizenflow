@@ -25,6 +25,7 @@ def _check_series(
     expected_unique_values: Optional[List[Any]],
 ) -> None:
     """
+    Check test results for pd.Series format.
     """
     # Get data.
     actual = _check_get_data(client, func)
@@ -39,6 +40,7 @@ def _check_dataframe(
     expected_df_as_str: str,
 ) -> None:
     """
+     Check test results for pd.DataFrame format.
     """
     # Get data.
     actual_df = _check_get_data(client, func)
@@ -60,7 +62,7 @@ def _check_get_data(
     func: Callable,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
-
+    Process the data with specified function.
     """
     asset_id_col = "asset_id"
     asset_ids = [1464553467]
@@ -96,14 +98,38 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         )
         return sql_talos_client
 
+    def test_get_data_for_last_period1(self) -> None:
+        """
+        Test `get_data_for_last_period()` all conditional periods.
+        """
+        # Create test table.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Set up DB client.
+        client = self.setup_talos_sql_client()
+        # Set up processing parameters.
+        timedelta = pd.Timedelta("1D")
+        func = lambda market_data: market_data.get_data_for_last_period(
+            timedelta
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r""""""
+        # pylint: enable=line-too-long
+        _check_dataframe(self, client, func, expected_df_as_str)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
 
     def test_get_data_for_interval1(self) -> None:
         """
         - Ask data for [9:30, 9:45]
         """
+        # Create test table.
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Set up DB client.
         client = self.setup_talos_sql_client()
         
         start_ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
@@ -130,11 +156,13 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         """
         - Ask data for [10:30, 12:00]
         """
+        # Create test table.
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Set up DB client.
         client = self.setup_talos_sql_client()
-        
+        # Set up processing parameters.
         start_ts = pd.Timestamp("2022-04-22 10:30:00-05:00")
         end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
         ts_col_name = "timestamp"
@@ -237,13 +265,42 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         client = self.setup_talos_sql_client()
         #
         start_ts = pd.Timestamp("2022-04-22 10:30:00-05:00")
-        end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
+        end_ts = pd.Timestamp("2022-04-22 15:00:00-05:00")
         ts_col_name = "timestamp"
         asset_ids = None
         column = "close"
         #
         func = lambda market_data: market_data.get_twap_price(
             start_ts, end_ts, ts_col_name, asset_ids, column
+        )
+        expected_df_as_str = r"""            close
+        asset_id
+        1464553467   65.0"""
+        expected_length = None
+        expected_unique_values = None
+        # pylint: enable=line-too-long
+        _check_series(self, client, func, expected_df_as_str, expected_length, expected_unique_values)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    def test_get_last_twap_price1(self) -> None:
+        """
+        Test `get_last_twap_price()` for specified parameters.
+        """        
+        # Create test table.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Set up DB client.
+        client = self.setup_talos_sql_client()
+        #
+        ts_col_name = "timestamp"
+        asset_ids = None
+        column = "close"
+        bar_duration = "1T"
+        #
+        func = lambda market_data: market_data.get_last_twap_price(
+            bar_duration, ts_col_name, asset_ids, column
         )
         expected_df_as_str = r"""            close
         asset_id
