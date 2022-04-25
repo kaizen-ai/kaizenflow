@@ -1361,7 +1361,9 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         return: data to be loaded to S3
         """
         resample_1min = False
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(resample_1min)
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)

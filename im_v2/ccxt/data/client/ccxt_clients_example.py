@@ -77,7 +77,9 @@ def get_CcxtParquetByAssetClient_example1(
     return ccxt_client
 
 
-def get_CcxtHistoricalPqByTileClient_example1(resample_1min: bool) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+def get_CcxtHistoricalPqByTileClient_example1(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the tests reading actual
     historical data.
