@@ -425,7 +425,6 @@ def _parse() -> argparse.ArgumentParser:
         "--aws_profile",
         action="store",
         type=str,
-        default=None,
         help="The AWS profile to use for `.aws/credentials` or for env vars",
     )
     parser = hparser.add_parallel_processing_arg(parser)

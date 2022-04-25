@@ -29,6 +29,8 @@ import helpers.hs3 as hs3
 import im_v2.common.universe as ivcu
 import research_amp.cc.statistics as ramccsta
 
+AM_AWS_PROFILE = "am"
+
 # %% [markdown]
 # # Config
 
@@ -40,8 +42,8 @@ def get_cmtask323_config() -> cconconf.Config:
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
-    config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    config["load"]["aws_profile"] = AM_AWS_PROFILE
+    config["load"]["data_dir"] = os.path.join(hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data")
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"

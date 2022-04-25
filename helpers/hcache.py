@@ -704,7 +704,7 @@ class _Cached:
                 hjoblib.register_s3fs_store_backend()
                 # Use the default profile, unless it was explicitly passed.
                 if self._aws_profile is None:
-                    aws_profile = hs3.get_aws_profile()
+                    aws_profile = hs3.get_aws_profile("am")
                 else:
                     aws_profile = self._aws_profile
                 s3fs = hs3.get_s3fs(aws_profile)
