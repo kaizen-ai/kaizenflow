@@ -250,9 +250,14 @@ class RealTimeMarketData(mdabmada.MarketData):
         return query
 
 
+# #############################################################################
+# RealTimeMarketData2
+# #############################################################################
+
+
 class RealTimeMarketData2(mdabmada.MarketData):
     """
-    Interface for real-time market data accessed through Talos API.
+    Interface for real-time market data accessed through SQL client.
 
     Note: RealTimeSqlTalosClient is passed at the initialization.
     """
