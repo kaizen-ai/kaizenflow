@@ -44,7 +44,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
 
     def __init__(
-        self, vendor: str, universe_version, resample_1min: bool
+        self, vendor: str, universe_version: str, resample_1min: bool
     ) -> None:
         """
         Constructor.

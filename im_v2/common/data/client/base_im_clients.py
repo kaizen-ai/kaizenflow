@@ -118,7 +118,6 @@ class ImClient(abc.ABC):
         ]
         return numerical_asset_id
 
-    # TODO(gp): Why static?
     def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         Return the entire universe of valid full symbols.

@@ -36,7 +36,7 @@ def get_CcxtCsvClient_example1(
     Extension is `csv.gz`.
     """
     vendor = "CCXT"
-    universe_version = "v3"
+    universe_version = "small"
     root_dir = get_test_data_dir()
     extension = "csv.gz"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
@@ -53,7 +53,7 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     resample_1min = True
     vendor = "CCXT"
-    universe_version = "v3"
+    universe_version = "small"
     root_dir = get_test_data_dir()
     extension = "csv"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
@@ -71,7 +71,7 @@ def get_CcxtParquetByAssetClient_example1(
     Extension is `pq`.
     """
     vendor = "CCXT"
-    universe_version = "v3"
+    universe_version = "small"
     root_dir = get_test_data_dir()
     extension = "pq"
     ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
@@ -87,11 +87,16 @@ def get_CcxtHistoricalPqByTileClient_example1(
     Get `CcxtHistoricalPqByTileClient` object for the tests reading actual
     historical data, which is stored on S3.
     """
+    universe_version = "small"
     # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
     root_dir = "s3://cryptokaizen-data/historical"
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
-        resample_1min, root_dir, partition_mode, aws_profile="ck"
+        universe_version,
+        resample_1min,
+        root_dir,
+        partition_mode,
+        aws_profile="ck",
     )
     return ccxt_parquet_client
 
@@ -103,7 +108,7 @@ def get_CcxtHistoricalPqByTileClient_example2(
     Get `CcxtHistoricalPqByTileClient` object for the tests reading data
     snippets created for unit tests.
     """
-    universe_version = "v3"
+    universe_version = "small"
     # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
     root_dir = "s3://cryptokaizen-data/unit_test/historical"
     partition_mode = "by_year_month"

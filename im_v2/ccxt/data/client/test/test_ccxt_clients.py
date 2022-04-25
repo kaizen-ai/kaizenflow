@@ -672,7 +672,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
+        # TODO(Grisha): add example client for `CcxtCddDbClient`.
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
