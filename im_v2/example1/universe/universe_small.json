@@ -1,8 +1,10 @@
 {
   "example1": {
     "binance": [
-      "ADA_USDT",
-      "BTC_USDT"
+      "ADA_USDT"
+    ],
+    "kucoin": [
+      "ETH_USDT"
     ]
   }
 }
