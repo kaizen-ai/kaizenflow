@@ -172,17 +172,19 @@ for date in datelist:
     r = requests.get(
         f"https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?startTime={date}"
     )
-    data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")
-    # Transforming the data.
-    processed_data = process_bid_ask_data(data)
+    data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")  
     # Attaching it day-by-day to the final DataFrame.
-    result.append(processed_data)
+    result.append(data)
 bid_ask_df = pd.concat(result)
 
 # %%
+# Transforming the data.
+processed_data = process_bid_ask_data(bid_ask_df)
+
+# %%
 # Show the data.
-display(bid_ask_df.shape)
-display(bid_ask_df)
+display(processed_data.shape)
+display(processed_data)
 
 # %% [markdown]
 # Now, this data is in the format that is compatible for working with CCXT/Talos OHLCV data.
