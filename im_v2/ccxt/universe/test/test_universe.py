@@ -25,24 +25,11 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         """
         self._test_get_universe1("CCXT")
 
-    def test_get_universe_example1(self) -> None:
-        """
-        A smoke test to verify that example universe loads correctly.
-        """
-        self._test_get_universe1("example1")
-
     def test_get_universe_invalid_version(self) -> None:
         """
         Verify that incorrect universe version is recognized.
         """
         self._test_get_universe_invalid_version("CCXT")
-
-    def test_get_universe_invalid_vendor(self) -> None:
-        """
-        Verify that incorrect vendor is recognized.
-        """
-        version = "v1"
-        self._test_get_universe_invalid_vendor(version=version)
 
     def test_get_vendor_universe_small(self) -> None:
         """
