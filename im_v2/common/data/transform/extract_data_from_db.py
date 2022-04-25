@@ -105,14 +105,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         columns = None
-        filter_data_mode = "assert"
         # TODO(Nikola): Refactor to use one db call.
         df = ccxt_db_client.read_data(
             symbols,
             start_ts=timespan[date_index],
             end_ts=timespan[date_index + 1],
             columns=columns,
-            filter_data_mode=filter_data_mode,
         )
         try:
             # Check if directory already exists in specified path.

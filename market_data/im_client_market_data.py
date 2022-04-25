@@ -109,7 +109,6 @@ class ImClientMarketData(mdabmada.MarketData):
             start_ts,
             end_ts,
             self._columns,
-            self._filter_data_mode,
         )
         # Add `asset_id` column.
         _LOG.debug("asset_id_col=%s", self._asset_id_col)

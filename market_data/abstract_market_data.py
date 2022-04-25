@@ -98,7 +98,6 @@ class MarketData(abc.ABC):
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
-        filter_data_mode: str = "assert",
     ):
         """
         Constructor.
@@ -109,12 +108,6 @@ class MarketData(abc.ABC):
 
         All the column names in the interface (e.g., `start_time_col_name`) are
         before the remapping.
-
-        `filter_data_mode` adds an additional level of robustness when return's
-         columns or/and datetime intervals differ from the expected.
-         If its value is "assert", an error is raised, if its value is
-         "warn_and_trim", the data is transformed to the expected format with a
-         warning that additional transformations were required.
 
         :param asset_id_col: the name of the column used to select the asset ids
         :param asset_ids: as described in the class docstring
@@ -127,8 +120,6 @@ class MarketData(abc.ABC):
             seconds waiting up to `time_out_in_secs` seconds
         :param column_remap: dict of columns to remap the output data or `None` for
             no remapping
-        :param filter_data_mode: switch to control class robustness towards
-             unexpected return. Can be "assert" or "warn_and_trim"
         """
         _LOG.debug("")
         self._asset_id_col = asset_id_col
@@ -148,9 +139,6 @@ class MarketData(abc.ABC):
         self._column_remap = column_remap
         if (self._columns is not None) & (self._column_remap is not None):
             hdbg.dassert_is_subset(self._column_remap, self._columns)
-        #
-        hdbg.dassert_in(filter_data_mode, ["assert", "warn_and_trim"])
-        self._filter_data_mode = filter_data_mode
         # Compute the max number of iterations.
         hdbg.dassert_lt(0, time_out_in_secs)
         max_iterations = int(time_out_in_secs / sleep_in_secs)

@@ -47,9 +47,8 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
@@ -69,9 +68,8 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
@@ -92,9 +90,8 @@ class ImClientTestCase(hunitest.TestCase):
         """
         end_ts = None
         columns = None
-        filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
@@ -115,9 +112,8 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         columns = None
-        filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
@@ -137,9 +133,8 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         columns = None
-        filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
@@ -156,12 +151,11 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        filter_data_mode = "assert"
         # TODO(gp): We should raise a more specific assertion and / or
         #  check part of the exception as a string.
         with self.assertRaises(AssertionError):
             im_client.read_data(
-                full_symbols, start_ts, end_ts, columns, filter_data_mode
+                full_symbols, start_ts, end_ts, columns
             )
 
     def _test_read_data7(
@@ -181,9 +175,8 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
@@ -204,9 +197,8 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         end_ts = None
-        filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
