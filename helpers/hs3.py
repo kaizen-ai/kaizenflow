@@ -357,13 +357,16 @@ def get_local_or_s3_stream(
 # #############################################################################
 
 
+# TODO(Nikola): Add small unit test.
 def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     """
     Return the S3 bucket from environment variable corresponding to a given
-    `aws_profile` (e.g., `s3://alphamatic-data` for `am`).
+    `aws_profile`. E.g., `aws_profile="am"` uses the value in `AM_AWS_S3_BUCKET`
+    which is usually set to `s3://alphamatic-data`.
     """
     prefix = aws_profile.upper()
-    env_var = f"{prefix}_AWS_S3_BUCKET"
+    # TODO(Nikola): Rename after #1292 is merged.
+    env_var = f"{prefix}_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
     hdbg.dassert(
