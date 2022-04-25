@@ -17,15 +17,15 @@
 
 # %%
 import logging
+
+import pandas as pd
+import requests
+
+import core.finance.resampling as cfinresa
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
-import requests
-import pandas as pd
-import helpers.hdatetime as hdateti
-import core.finance.resampling as cfinresa
-import datetime
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -76,7 +76,9 @@ ba_df
 
 # %% run_control={"marked": false}
 example_date = "2022-01-01"
-r = requests.get(f"https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?startTime={example_date}")
+r = requests.get(
+    f"https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?startTime={example_date}"
+)
 example_data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")
 
 # %%
@@ -95,12 +97,18 @@ example_data.head()
 # %%
 def clean_up_raw_bid_ask_data(df):
     # Split the columns to differentiate between `price` and `size`.
-    df[["bid_price", "bid_size"]] = df['bid_price_bid_size'].str.split("_", expand=True)
-    df[["ask_price", "ask_size"]] = df['ask_price_ask_size'].str.split("_", expand=True)
+    df[["bid_price", "bid_size"]] = df["bid_price_bid_size"].str.split(
+        "_", expand=True
+    )
+    df[["ask_price", "ask_size"]] = df["ask_price_ask_size"].str.split(
+        "_", expand=True
+    )
     df = df.drop(columns=["bid_price_bid_size", "ask_price_ask_size"])
     # Convert `timestamps` to the usual format.
     df = df.rename(columns={"time_seconds": "timestamp"})
-    df["timestamp"] = df["timestamp"].apply(lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s"))
+    df["timestamp"] = df["timestamp"].apply(
+        lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
+    )
     df = df.set_index("timestamp")
     # Convert to `float`.
     for cols in df.columns:
@@ -113,19 +121,22 @@ def clean_up_raw_bid_ask_data(df):
 # %%
 def resample_bid_ask(df, resampling_rule):
     """
-    In the current format the data is presented in the `seconds` frequency.
-    In order to convert it to the minutely (or other) frequencies the following 
+    In the current format the data is presented in the `seconds` frequency. In
+    order to convert it to the minutely (or other) frequencies the following
     aggregation rules are applied:
+
     - Size is the sum of all sizes during the resampling period
     - Price is the mean of all prices during the resampling period
     """
-    new_df = cfinresa.resample(df, rule=resampling_rule).agg({
-                "bid_price": "mean",
-                "bid_size": "sum",
-                "ask_price": "mean",
-                "ask_size": "sum",
-                "full_symbol": "last",
-            })
+    new_df = cfinresa.resample(df, rule=resampling_rule).agg(
+        {
+            "bid_price": "mean",
+            "bid_size": "sum",
+            "ask_price": "mean",
+            "ask_size": "sum",
+            "full_symbol": "last",
+        }
+    )
     return new_df
 
 
@@ -151,14 +162,16 @@ def process_bid_ask_data(df):
 # %%
 # Get the list of all dates in the range.
 datelist = pd.date_range("2022-01-01", periods=30).tolist()
-datelist = [str(x.strftime('%Y-%m-%d')) for x in datelist]
+datelist = [str(x.strftime("%Y-%m-%d")) for x in datelist]
 
 # %%
 # Using the variables from `datelist` the multiple requests can be sent to the API.
 result = []
 for date in datelist:
     # Interaction with the API.
-    r = requests.get(f"https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?startTime={date}")
+    r = requests.get(
+        f"https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?startTime={date}"
+    )
     data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")
     # Transforming the data.
     processed_data = process_bid_ask_data(data)
@@ -174,4 +187,4 @@ display(bid_ask_df)
 # %% [markdown]
 # Now, this data is in the format that is compatible for working with CCXT/Talos OHLCV data.
 #
-# It takes ±1.5mins to load and process data for 1 month (30 days), so it shouldn't take much time to load big chunks of historical data.  
+# It takes ±1.5mins to load and process data for 1 month (30 days), so it shouldn't take much time to load big chunks of historical data.
