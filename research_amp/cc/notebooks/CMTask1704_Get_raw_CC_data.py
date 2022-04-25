@@ -31,6 +31,8 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 
+import im_v2.talos.data.client.talos_clients as imvtdctacl
+
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
@@ -79,7 +81,10 @@ print(config)
 # # Load the data
 
 # %% [markdown]
-# ## Real-time
+# ## CCXT
+
+# %% [markdown]
+# ### Real-time
 
 # %%
 # Specify params.
@@ -90,20 +95,20 @@ connection = config["load"]["connection"]
 ccxt_rt_client = icdcl.CcxtCddDbClient(vendor, resample_1min, connection)
 
 # %% [markdown]
-# ### Universe
+# #### Universe
 
 # %%
 # Specify the universe.
-rt_universe = ccxt_rt_client.get_universe()
-len(rt_universe)
+rt_universe_ccxt = ccxt_rt_client.get_universe()
+len(rt_universe_ccxt)
 
 # %%
 # Choose cc for analysis.
-full_symbols = rt_universe[0:2]
+full_symbols = rt_universe_ccxt[0:2]
 full_symbols
 
 # %% [markdown]
-# ### Data Loader
+# #### Data Loader
 
 # %%
 # Specify time period.
@@ -111,12 +116,12 @@ start_date = config["data"]["start_date"]
 end_date = config["data"]["end_date"]
 
 # Load the data.
-data = ccxt_rt_client.read_data(full_symbols, start_date, end_date)
-display(data.shape)
-display(data.head(3))
+data_rt_ccxt = ccxt_rt_client.read_data(full_symbols, start_date, end_date)
+display(data_rt_ccxt.shape)
+display(data_rt_ccxt.head(3))
 
 # %% [markdown]
-# ## Historical
+# ### Historical
 
 # %%
 # Specify params.
@@ -127,7 +132,7 @@ data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
 
 # Initiate the client.
-historical_client = icdcl.CcxtHistoricalPqByTileClient(
+historical_client_ccxt = icdcl.CcxtHistoricalPqByTileClient(
     resample_1min,
     root_dir,
     partition_mode,
@@ -136,11 +141,11 @@ historical_client = icdcl.CcxtHistoricalPqByTileClient(
 )
 
 # %% [markdown]
-# ### Universe
+# #### Universe
 
 # %%
 # Specify the universe.
-historical_universe = historical_client.get_universe()
+historical_universe = historical_client_ccxt.get_universe()
 len(historical_universe)
 
 # %%
@@ -149,7 +154,7 @@ full_symbols = historical_universe[0:2]
 full_symbols
 
 # %% [markdown]
-# ### Data Loader
+# #### Data Loader
 
 # %%
 # Specify time period.
@@ -157,9 +162,99 @@ start_date = pd.Timestamp("2021-09-01", tz="UTC")
 end_date = pd.Timestamp("2021-09-15", tz="UTC")
 
 # Load the data.
-data_hist = historical_client.read_data(full_symbols, start_date, end_date)
-display(data_hist.shape)
-display(data_hist.head(3))
+data_hist_ccxt = historical_client_ccxt.read_data(full_symbols, start_date, end_date)
+display(data_hist_ccxt.shape)
+display(data_hist_ccxt.head(3))
+
+# %% [markdown]
+# ## Talos
+
+# %% [markdown]
+# ### Real-time
+
+# %%
+# Specify params.
+resample_1min = True
+db_connection = config["load"]["connection"]
+table_name = "talos_ohlcv"
+
+talos_rt_client = imvtdctacl.RealTimeSqlTalosClient(
+resample_1min,
+db_connection,
+table_name)
+
+# %% [markdown]
+# #### Universe
+
+# %%
+# Specify the universe.
+rt_universe_talos = sorted(talos_rt_client.get_universe())
+len(rt_universe_talos)
+
+# %%
+# Choose cc for analysis.
+full_symbols = rt_universe_talos[0:2]
+full_symbols
+
+# %% [markdown]
+# #### Data Loader
+
+# %%
+start_date = config["data"]["start_date"]
+end_date = config["data"]["end_date"]
+
+data_rt_talos = talos_rt_client.read_data(
+full_symbols,
+start_date,
+end_date)
+display(data_rt_talos.shape)
+display(data_rt_talos.head(3))
+
+# %% [markdown]
+# ### Historical
+
+# %%
+# Specify params.
+resample_1min = True
+root_dir = config["load"]["data_dir_hist"]
+partition_mode = config["load"]["partition_mode"]
+data_snapshot = config["load"]["data_snapshot"]
+aws_profile = config["load"]["aws_profile"]
+
+talos_hist_client = imvtdctacl.TalosHistoricalPqByTileClient(
+resample_1min,
+root_dir,
+partition_mode,
+data_snapshot=data_snapshot,
+aws_profile=aws_profile)
+
+# %% [markdown]
+# #### Universe
+
+# %%
+# Specify the universe.
+hist_universe_talos = talos_hist_client.get_universe()
+len(hist_universe_talos)
+
+# %%
+# Choose cc for analysis.
+full_symbols_hist_talos = hist_universe_talos[0:2]
+full_symbols_hist_talos
+
+# %% [markdown]
+# #### Data Loader
+
+# %%
+start_date = pd.Timestamp("2022-01-01", tz="UTC")
+end_date = pd.Timestamp("2022-01-15", tz="UTC")
+
+data_hist_talos = talos_hist_client.read_data(
+    full_symbols_hist_talos,
+    start_date,
+    end_date
+)
+display(data_hist_talos.shape)
+display(data_hist_talos.head(3))
 
 
 # %% [markdown]
@@ -266,7 +361,7 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 # %%
 # VWAP, TWAP transformation.
 resampling_rule = config["transform"]["resampling_rule"]
-vwap_twap_df = calculate_vwap_twap(data, resampling_rule)
+vwap_twap_df = calculate_vwap_twap(data_rt_ccxt, resampling_rule)
 
 # Returns calculation.
 rets_type = config["transform"]["rets_type"]
