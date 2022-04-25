@@ -43,7 +43,9 @@ def get_cmtask323_config() -> cconconf.Config:
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = AM_AWS_PROFILE
-    config["load"]["data_dir"] = os.path.join(hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data")
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["data_type"] = "OHLCV"
@@ -260,9 +262,7 @@ type(18)
 
 # %% run_control={"marked": false}
 frequency = "1D"
-universe = ivcu.get_vendor_universe(
-    "CCXT", version="v3", as_full_symbol=True
-)
+universe = ivcu.get_vendor_universe("CCXT", version="v3", as_full_symbol=True)
 compute_daily_vix_ema = lambda data: compute_volatility_for_each_coin(
     data, freq=frequency, span=18
 )

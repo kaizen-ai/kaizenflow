@@ -56,7 +56,9 @@ def get_cmtask324_config_ccxt() -> cconconf.Config:
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = AM_AWS_PROFILE
-    config["load"]["data_dir"] = os.path.join(hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data")
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["target_frequency"] = "T"
@@ -85,7 +87,9 @@ def get_cmtask324_config_cdd() -> cconconf.Config:
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = AM_AWS_PROFILE
-    config["load"]["data_dir"] = os.path.join(hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data")
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["target_frequency"] = "T"

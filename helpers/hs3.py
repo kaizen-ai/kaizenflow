@@ -373,7 +373,7 @@ def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
         s3_bucket,
     )
     if add_s3_prefix:
-       s3_bucket = "s3://" + s3_bucket
+        s3_bucket = "s3://" + s3_bucket
     return s3_bucket
 
 
