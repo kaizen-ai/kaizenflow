@@ -11,7 +11,8 @@ import im.common.data.types as imcodatyp
 import im.ib.data.config as imibdacon
 import im.ib.data.load.ib_file_path_generator as imidlifpge
 
-_S3_BUCKET = hs3.get_bucket()
+AM_AWS_PROFILE = "am"
+_S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 
 
 class TestIbFilePathGenerator(hunitest.TestCase):
