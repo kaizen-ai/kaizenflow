@@ -1116,9 +1116,9 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             resample_1min
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
+        start_ts = pd.Timestamp("2018-08-18T00:23:00-00:00")
         #
-        expected_length = 5760
+        expected_length = 2836
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -1126,14 +1126,14 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
-        index=[2018-08-17 00:01:00+00:00, 2018-08-19 00:00:00+00:00]
+        index=[2018-08-18 00:23:00+00:00, 2018-08-19 00:00:00+00:00]
         columns=full_symbol,open,high,low,close,volume
-        shape=(5760, 6)
+        shape=(2836, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
+        2018-08-18 00:23:00+00:00  binance::BTC_USDT  6570.830000  6573.800000  6567.980000  6573.800000  43.493238
+        2018-08-18 00:23:00+00:00   kucoin::ETH_USDT   316.138881   316.138881   316.021676   316.021676   0.800971
+        2018-08-18 00:24:00+00:00  binance::BTC_USDT  6573.560000  6575.000000  6564.470000  6567.010000  58.972297
         ...
         2018-08-18 23:59:00+00:00   kucoin::ETH_USDT          NaN      NaN          NaN      NaN        NaN
         2018-08-19 00:00:00+00:00  binance::BTC_USDT  6387.960000  6387.97  6375.640000  6377.25  39.426236
