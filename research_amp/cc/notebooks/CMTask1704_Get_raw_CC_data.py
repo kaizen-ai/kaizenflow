@@ -30,7 +30,6 @@ import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
-
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 
 # %%
@@ -218,8 +217,8 @@ full_symbols
 
 # %%
 # Specify time period.
-start_date = config["data"]["start_date"]
-end_date = config["data"]["end_date"]
+start_date = config["data"]["start_date_rt"]
+end_date = config["data"]["end_date_rt"]
 
 # Load the data.
 data_rt_ccxt = ccxt_rt_client.read_data(full_symbols, start_date, end_date)
@@ -268,7 +267,9 @@ start_date = config["data"]["start_date_hist"]
 end_date = config["data"]["end_date_hist"]
 
 # Load the data.
-data_hist_ccxt = historical_client_ccxt.read_data(full_symbols, start_date, end_date)
+data_hist_ccxt = historical_client_ccxt.read_data(
+    full_symbols, start_date, end_date
+)
 display(data_hist_ccxt.shape)
 display(data_hist_ccxt.head(3))
 
@@ -285,9 +286,8 @@ db_connection = config["load"]["connection"]
 table_name = "talos_ohlcv"
 
 talos_rt_client = imvtdctacl.RealTimeSqlTalosClient(
-resample_1min,
-db_connection,
-table_name)
+    resample_1min, db_connection, table_name
+)
 
 # %% [markdown]
 # #### Universe
@@ -307,14 +307,11 @@ full_symbols
 
 # %%
 # Specify the period.
-start_date = config["data"]["start_date"]
-end_date = config["data"]["end_date"]
+start_date = config["data"]["start_date_rt"]
+end_date = config["data"]["end_date_rt"]
 
 # Load the data.
-data_rt_talos = talos_rt_client.read_data(
-full_symbols,
-start_date,
-end_date)
+data_rt_talos = talos_rt_client.read_data(full_symbols, start_date, end_date)
 display(data_rt_talos.shape)
 display(data_rt_talos.head(3))
 
@@ -330,11 +327,12 @@ data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
 
 talos_hist_client = imvtdctacl.TalosHistoricalPqByTileClient(
-resample_1min,
-root_dir,
-partition_mode,
-data_snapshot=data_snapshot,
-aws_profile=aws_profile)
+    resample_1min,
+    root_dir,
+    partition_mode,
+    data_snapshot=data_snapshot,
+    aws_profile=aws_profile,
+)
 
 # %% [markdown]
 # #### Universe
@@ -359,9 +357,7 @@ end_date = config["data"]["end_date_hist"]
 
 # Load the data.
 data_hist_talos = talos_hist_client.read_data(
-    full_symbols_hist_talos,
-    start_date,
-    end_date
+    full_symbols_hist_talos, start_date, end_date
 )
 # Hardcoded solution to convert OHLCV to the 'float' type for the further use.
 for cols in data_hist_talos.columns[1:]:
