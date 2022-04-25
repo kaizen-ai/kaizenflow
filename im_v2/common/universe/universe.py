@@ -95,9 +95,7 @@ def _get_trade_universe(
     file_path = _get_universe_file_path(vendor, version=version)
     hdbg.dassert_path_exists(file_path)
     universe = hio.from_json(file_path)
-    hdbg.dassert_in(
-        vendor, universe, "Invalid vendor=`%s`", vendor
-    )
+    hdbg.dassert_in(vendor, universe, "Invalid vendor=`%s`", vendor)
     vendor_universe = universe[vendor]
     return vendor_universe  # type: ignore[no-any-return]
 

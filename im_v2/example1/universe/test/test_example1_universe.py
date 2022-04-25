@@ -23,4 +23,3 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         A smoke test to verify that example universe loads correctly.
         """
         self._test_get_universe1("example1")
-
