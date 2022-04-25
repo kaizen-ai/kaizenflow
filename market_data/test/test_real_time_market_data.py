@@ -1,17 +1,14 @@
 import logging
-from typing import Any, Callable, Optional, List
+from typing import Any, Callable, List, Optional, Union
 
 import pandas as pd
 
 import helpers.hsql as hsql
-import helpers.hunit_test as hunitest
 import helpers.hpandas as hpandas
 
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.common.db.db_utils as imvcddbut
 import market_data.real_time_market_data as mdrtmda
-import market_data.market_data_example as mdmadaex
-import market_data.test.market_data_test_case as mdtmdtca
 
 import im_v2.talos.db.utils as imvtadbut
 
@@ -19,12 +16,49 @@ import im_v2.talos.db.utils as imvtadbut
 _LOG = logging.getLogger(__name__)
 
 
-def _check_get_data(
+def _check_series(
     self_: Any,
     client: imvtdctacl.RealTimeSqlTalosClient,
     func: Callable,
     expected_df_as_str: str,
-) -> mdrtmda.RealTimeMarketData2:
+    expected_length: Optional[int],
+    expected_unique_values: Optional[List[Any]],
+) -> None:
+    """
+    """
+    # Get data.
+    actual = _check_get_data(client, func)
+    # Run.
+    self_.check_srs_output(actual, expected_length, expected_unique_values, expected_df_as_str)
+
+
+def _check_dataframe(
+    self_: Any,
+    client: imvtdctacl.RealTimeSqlTalosClient,
+    func: Callable,
+    expected_df_as_str: str,
+) -> None:
+    """
+    """
+    # Get data.
+    actual_df = _check_get_data(client, func)
+    # Check.
+    actual_df = actual_df[sorted(actual_df.columns)]
+    actual_df_as_str = hpandas.df_to_str(
+        actual_df, print_shape_info=True, tag="df"
+    )
+    _LOG.info("-> %s", actual_df_as_str)
+    self_.assert_equal(
+        actual_df_as_str,
+        expected_df_as_str,
+        dedent=True,
+        fuzzy_match=True,
+    )
+
+def _check_get_data(
+    client: imvtdctacl.RealTimeSqlTalosClient,
+    func: Callable,
+) -> Union[pd.DataFrame, pd.Series]:
     """
 
     """
@@ -42,20 +76,8 @@ def _check_get_data(
                                 columns,
                                 get_wall_clock_time)  
     # Execute function under test.
-    actual_df = func(market_data)
-    # Check.
-    actual_df = actual_df[sorted(actual_df.columns)]
-    actual_df_as_str = hpandas.df_to_str(
-        actual_df, print_shape_info=True, tag="df"
-    )
-    _LOG.info("-> %s", actual_df_as_str)
-    self_.assert_equal(
-        actual_df_as_str,
-        expected_df_as_str,
-        dedent=True,
-        fuzzy_match=True,
-    )
-    return market_data
+    actual = func(market_data)
+    return actual
 
 class TestRealTimeMarketData2(imvcddbut.TestImDbHelper, 
     ):
@@ -100,7 +122,7 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         end_timestamp
         2022-04-22 10:30:00-04:00  1464553467   60.0  40.0  50.0  30.0 2022-04-22 10:29:00-04:00    70.0"""
         # pylint: enable=line-too-long
-        _check_get_data(self, client, func, expected_df_as_str)
+        _check_dataframe(self, client, func, expected_df_as_str)
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
 
@@ -129,7 +151,7 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         end_timestamp
         2022-04-22 12:30:00-04:00  1464553467   65.0  45.0  55.0  35.0 2022-04-22 12:29:00-04:00    75.0"""
         # pylint: enable=line-too-long
-        _check_get_data(self, client, func, expected_df_as_str)
+        _check_dataframe(self, client, func, expected_df_as_str)
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
 
@@ -138,11 +160,13 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         """
         - Ask data for [08:30, 12:00]
         """
+        # Create test table.
         self._create_test_table()
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Set up DB client.
         client = self.setup_talos_sql_client()
-        
+        # Set up processing parameters.
         start_ts = pd.Timestamp("2022-04-22 08:30:00-05:00")
         end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
         ts_col_name = "timestamp"
@@ -165,7 +189,69 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper,
         2022-04-22 12:29:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
         2022-04-22 12:30:00-04:00  1464553467   65.0  45.0  55.0  35.0 2022-04-22 12:29:00-04:00    75.0"""
         # pylint: enable=line-too-long
-        _check_get_data(self, client, func, expected_df_as_str)
+        _check_dataframe(self, client, func, expected_df_as_str)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+
+    def test_get_data_at_timestamp1(self) -> None:
+        """
+        - Ask data for 9:35
+        - The returned data is for 9:35
+        """
+        # Create test table.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Set up DB client.
+        client = self.setup_talos_sql_client()
+        ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
+        ts_col_name = "timestamp"
+        asset_ids = None
+        func = lambda market_data: market_data.get_data_at_timestamp(
+            ts, ts_col_name, asset_ids
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""# df=
+        index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
+        columns=asset_id,close,high,low,open,start_timestamp,volume
+        shape=(1, 7)
+                                    asset_id  close  high   low  open           start_timestamp  volume
+        end_timestamp
+        2022-04-22 10:30:00-04:00  1464553467   60.0  40.0  50.0  30.0 2022-04-22 10:29:00-04:00    70.0"""
+        # pylint: enable=line-too-long
+        _check_dataframe(self, client, func, expected_df_as_str)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+
+    def test_get_twap_price1(self) -> None:
+        """
+        Test `get_twap_price()` for specified parameters.
+        """        
+        # Create test table.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Set up DB client.
+        client = self.setup_talos_sql_client()
+        #
+        start_ts = pd.Timestamp("2022-04-22 10:30:00-05:00")
+        end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
+        ts_col_name = "timestamp"
+        asset_ids = None
+        column = "close"
+        #
+        func = lambda market_data: market_data.get_twap_price(
+            start_ts, end_ts, ts_col_name, asset_ids, column
+        )
+        expected_df_as_str = r"""            close
+        asset_id
+        1464553467   65.0"""
+        expected_length = None
+        expected_unique_values = None
+        # pylint: enable=line-too-long
+        _check_series(self, client, func, expected_df_as_str, expected_length, expected_unique_values)
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
 
