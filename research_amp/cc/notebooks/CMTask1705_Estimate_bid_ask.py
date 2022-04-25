@@ -17,6 +17,8 @@
 
 # %%
 import logging
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import requests
