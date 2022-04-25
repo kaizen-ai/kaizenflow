@@ -526,6 +526,32 @@ class TestDfToStr(hunitest.TestCase):
         2              3             C              0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    def test_df_to_str6(self) -> None:
+        """
+        Test common call to `df_to_str` with series.
+        """
+        df = self.get_test_data()
+        series = df.squeeze()
+        actual = hpandas.df_to_str(series)
+        expected = r"""   dummy_value_1 dummy_value_2  dummy_value_3
+        0              1             A              0
+        1              2             B              0
+        2              3             C              0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_df_to_str7(self) -> None:
+        """
+        Test common call to `df_to_str` with df index.
+        """
+        df = self.get_test_data()
+        index = df.index
+        actual = hpandas.df_to_str(index)
+        expected = r"""   0
+        0  0
+        1  1
+        2  2"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
 
 # #############################################################################
 
