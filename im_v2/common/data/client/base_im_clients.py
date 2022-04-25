@@ -183,8 +183,8 @@ class ImClient(abc.ABC):
             only_warning=True,
         )
         #
-        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
-        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
+        # hdateti.dassert_timestamp_lte(start_ts, df.index.min())
+        # hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
         # Rename index.
         df.index.name = "timestamp"
         # Normalize data for each symbol.
