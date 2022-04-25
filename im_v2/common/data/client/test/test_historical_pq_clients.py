@@ -785,9 +785,7 @@ class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
                 left_boundary, right_boundary, seed_
             )
             columns = None
-            data = im_client.read_data(
-                full_symbols, start_ts, end_ts, columns
-            )
+            data = im_client.read_data(full_symbols, start_ts, end_ts, columns)
             # Compare the expected values.
             self._check_output(data, full_symbols, start_ts, end_ts)
 

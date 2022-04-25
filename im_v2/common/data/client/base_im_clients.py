@@ -310,7 +310,7 @@ class ImClient(abc.ABC):
     def _dassert_output_data_is_valid(
         df: pd.DataFrame,
         full_symbol_col_name: str,
-        resample_1min: boolб
+        resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
     ) -> None:
@@ -343,10 +343,10 @@ class ImClient(abc.ABC):
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
         # Ensure that all the data is in [start_ts, end_ts].
-         if start_ts:
-             hdbg.dassert_lte(start_ts, df.index.min())
-         if end_ts:
-             hdbg.dassert_lte(df.index.max(), end_ts)
+        if start_ts:
+            hdbg.dassert_lte(start_ts, df.index.min())
+        if end_ts:
+            hdbg.dassert_lte(df.index.max(), end_ts)
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -410,7 +410,6 @@ class ImClient(abc.ABC):
         start_timestamp = None
         end_timestamp = None
         columns = None
-        # TODO(Dan): Consider passing this parameter to the method.
         data = self.read_data(
             [full_symbol], start_timestamp, end_timestamp, columns
         )
