@@ -62,6 +62,7 @@ class ImClient(abc.ABC):
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
@@ -70,12 +71,14 @@ class ImClient(abc.ABC):
         Constructor.
 
         :param vendor: price data provider
+        :param universe_version: version of universe file
         :param resample_1min: whether to resample data to 1 minute or not
         :param full_symbol_col_name: the name of the column storing the symbol
             name. It can be overridden by other methods
         """
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
+        self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
         # TODO(gp): This is the name of the column of the asset_id in the data
@@ -91,12 +94,14 @@ class ImClient(abc.ABC):
         )
 
     # TODO(gp): Why static?
-    @staticmethod
-    @abc.abstractmethod
-    def get_universe() -> List[ivcu.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         Return the entire universe of valid full symbols.
         """
+        universe = ivcu.get_vendor_universe(
+            vendor=self._vendor, version=self._universe_version, as_full_symbol=True
+        )
+        return universe  # type: ignore[no-any-return]
 
     # TODO(gp): Why static?
     @staticmethod

@@ -32,6 +32,7 @@ class HistoricalPqByTileClient(
         # TODO(gp): We could use *args, **kwargs as params for ImClient,
         # same for the child classes.
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
@@ -55,7 +56,7 @@ class HistoricalPqByTileClient(
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__(
-            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor, universe_version, resample_1min, full_symbol_col_name=full_symbol_col_name
         )
         hdbg.dassert_isinstance(root_dir, str)
         self._root_dir = root_dir
