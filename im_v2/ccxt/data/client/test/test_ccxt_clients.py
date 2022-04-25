@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 import pandas as pd
@@ -1189,7 +1190,6 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    @pytest.mark.slow("~6 seconds.")
     def test_read_data5(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1330,15 +1330,16 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     @pytest.mark.skip("Enable when unit test data needs to be generated.")
     def test_write_test_data_to_s3(self) -> None:
         """
-        Write unit test data to s3.
+        Write unit test data to S3.
         """
         data = self._get_unit_test_data()
         partition_columns = ["currency_pair", "year", "month"]
+        # TODO(Grisha): Do not hard-wire the path, use `helpers/hs3.py`.
         dst_dir = "s3://cryptokaizen-data/unit_test/historical/ccxt/latest"
         aws_profile = "ck"
         exchange_id_col_name = "exchange_id"
         for exchange_id, df_exchange_id in data.groupby(exchange_id_col_name):
-            exchange_dir = "/".join([dst_dir, exchange_id])
+            exchange_dir = os.path.join(dst_dir, exchange_id)
             df_exchange_id = df_exchange_id.drop(columns="exchange_id")
             hparque.to_partitioned_parquet(
                 df_exchange_id,
@@ -1349,14 +1350,15 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     def _get_unit_test_data(self) -> pd.DataFrame:
         """
-        Get small part of historical data from s3 for unit testing.
+        Get small part of historical data from S3 for unit testing.
 
         Implemented transformations:
         - Add necessary columns for partitioning
         - Remove unnecessary column
-        - Cut data up to 2 days of data
+        - Cut the data so that is light-weight enough for testing
+        - Create gaps in data to test resampling
 
-        return: data to be loaded to s3
+        return: data to be loaded to S3
         """
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
@@ -1371,6 +1373,6 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         data["month"] = data.index.month
         # Remove unnecessary column.
         data = data.drop(columns="full_symbol")
-        # Creating data gap.
+        # Artificially create gaps in data in order test resampling.
         data = pd.concat([data[:100], data[115:]])
         return data
