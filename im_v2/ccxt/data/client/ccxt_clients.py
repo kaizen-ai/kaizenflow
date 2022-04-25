@@ -43,7 +43,9 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
-    def __init__(self, vendor: str, universe_version, resample_1min: bool) -> None:
+    def __init__(
+        self, vendor: str, universe_version, resample_1min: bool
+    ) -> None:
         """
         Constructor.
         """

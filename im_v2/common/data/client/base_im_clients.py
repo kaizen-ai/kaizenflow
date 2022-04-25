@@ -94,16 +94,6 @@ class ImClient(abc.ABC):
         )
 
     # TODO(gp): Why static?
-    def get_universe(self) -> List[ivcu.FullSymbol]:
-        """
-        Return the entire universe of valid full symbols.
-        """
-        universe = ivcu.get_vendor_universe(
-            vendor=self._vendor, version=self._universe_version, as_full_symbol=True
-        )
-        return universe  # type: ignore[no-any-return]
-
-    # TODO(gp): Why static?
     @staticmethod
     @abc.abstractmethod
     def get_metadata() -> pd.DataFrame:
@@ -127,6 +117,18 @@ class ImClient(abc.ABC):
             for full_symbol in full_symbols
         ]
         return numerical_asset_id
+
+    # TODO(gp): Why static?
+    def get_universe(self) -> List[ivcu.FullSymbol]:
+        """
+        Return the entire universe of valid full symbols.
+        """
+        universe = ivcu.get_vendor_universe(
+            vendor=self._vendor,
+            version=self._universe_version,
+            as_full_symbol=True,
+        )
+        return universe  # type: ignore[no-any-return]
 
     def read_data(
         self,
