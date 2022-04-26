@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.3
+#       jupytext_version: 1.13.7
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -46,8 +46,9 @@ hprint.config_notebook()
 
 # %%
 tile_dict = {
-    "dir_name": "/app/build_tile_configs.../tiled_results/",
-    "asset_id_col": "",
+    #"dir_name": "/app/build_tile_configs.../tiled_results/",
+    "dir_name": "/app/experiment.RH1E.ccxt_v4-all.5T.2021_2022/tiled_results/",
+    "asset_id_col": "asset_id",
 }
 tile_config = cconfig.get_config_from_nested_dict(tile_dict)
 
@@ -68,6 +69,7 @@ parquet_tile_analyzer.compute_universe_size_by_time(parquet_tile_metadata)
 
 # %%
 asset_ids = parquet_tile_metadata.index.levels[0].to_list()
+asset_ids = list(map(str, asset_ids))
 display(asset_ids)
 
 # %% [markdown]
@@ -120,12 +122,15 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 # %%
 backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     tile_config["dir_name"],
-    datetime.date(2011, 1, 1),
-    datetime.date(2018, 12, 31),
+    datetime.date(2021, 1, 1),
+    datetime.date(2022, 12, 31),
     tile_config["asset_id_col"],
     data_cols=fep.get_cols(),
     asset_ids=None,
 )
+
+# %%
+#df[["prediction", "vwap"]]
 
 # %%
 bar_metrics = []
