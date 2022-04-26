@@ -71,7 +71,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Error will be raised if we miss full 5 minute window of data,
     # even if the next download succeeds, we don't recover all of the previous data.
     failures_limit = 5 // interval_min + 5 % interval_min
-    concurrent_failures_left = failures_limit
+    consecutive_failures_left = failures_limit
     # Delay start in order to align to the minutes grid of the realtime clock.
     next_start_time = datetime.now()
     run_delay_sec = 0.0
@@ -94,12 +94,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 args, imvcdeexcl.CcxtExchange
             )
             # Reset failures counter.
-            concurrent_failures_left = failures_limit
+            consecutive_failures_left = failures_limit
         except Exception as e:
-            concurrent_failures_left -= 1
+            consecutive_failures_left -= 1
             _LOG.error(str(e))
             # Download failed.
-            if not concurrent_failures_left:
+            if not consecutive_failures_left:
                 raise RuntimeError(
                     f"{failures_limit} concurrent downloads were failed"
                 ) from e
@@ -115,7 +115,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     minutes=interval_min
                 )
         # If download failed, but there are time before next download.
-        elif concurrent_failures_left < failures_limit:
+        elif consecutive_failures_left < failures_limit:
             # Start repeat download immediately.
             run_delay_sec = 0
         else:
