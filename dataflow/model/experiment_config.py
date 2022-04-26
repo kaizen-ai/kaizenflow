@@ -101,8 +101,11 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     elif period == "2012_2022":
         start_datetime = datetime.datetime(2012, 1, 1)
         end_datetime = datetime.datetime(2022, 1, 1)
-    elif period == "2019_2022":
-        start_datetime = datetime.datetime(2019, 1, 1)
+    elif period == "2018_2022":
+        start_datetime = datetime.datetime(2012, 1, 1)
+        end_datetime = datetime.datetime(2022, 3, 1)
+    elif period == "2021_2022":
+        start_datetime = datetime.datetime(2021, 5, 1)
         end_datetime = datetime.datetime(2022, 4, 1)
     else:
         hdbg.dfatal("Invalid period='%s'" % period)
