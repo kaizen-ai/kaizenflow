@@ -33,7 +33,7 @@ class TestRealTimeMarketData2(
         start_time_col_name = "start_timestamp"
         end_time_col_name = "end_timestamp"
         columns = None
-        get_wall_clock_time = lambda x: pd.Timestamp("2022-04-22")
+        get_wall_clock_time = lambda: pd.Timestamp("2022-04-22", tz="America/New_York")
         market_data = mdrtmada.RealTimeMarketData2(
             sql_talos_client,
             asset_id_col,
@@ -44,6 +44,28 @@ class TestRealTimeMarketData2(
             get_wall_clock_time,
         )
         return market_data
+
+    def test_get_data_for_last_period1(self) -> None:
+        """
+        Test get_data_for_last_period() all conditional periods.
+        """
+        # Create test table.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        # Set up market data client.
+        market_data = self.setup_talos_market_data()
+        # Set up processing parameters.
+        timedelta = pd.Timedelta("1D")
+        actual = market_data.get_data_for_last_period(
+            timedelta
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""df="""
+        # pylint: enable=line-too-long
+        self._check_dataframe(actual, expected_df_as_str)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_get_data_for_interval1(self) -> None:
         """
