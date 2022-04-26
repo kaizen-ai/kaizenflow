@@ -15,6 +15,8 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
+_AWS_PROFILE = "am"
+
 
 class Test_dassert_is_unique1(hunitest.TestCase):
     def get_df1(self) -> pd.DataFrame:
@@ -727,18 +729,20 @@ class TestCompareDataframeRows(hunitest.TestCase):
 
 class TestReadDataFromS3(hunitest.TestCase):
     def test_read_csv1(self) -> None:
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
-            hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
+            hs3.get_s3_bucket_path(_AWS_PROFILE),
+            "data/kibot/all_stocks_1min/RIMG.csv.gz",
         )
         hs3.dassert_path_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         hpandas.read_csv_to_df(stream, **kwargs)
 
     def test_read_parquet1(self) -> None:
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
-            hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
+            hs3.get_s3_bucket_path(_AWS_PROFILE),
+            "data/kibot/pq/sp_500_1min/AAPL.pq",
         )
         hs3.dassert_path_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)

@@ -40,6 +40,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+AM_AWS_PROFILE = "am"
 
 # %% [markdown]
 # # Config
@@ -52,8 +53,10 @@ def get_cmtask260_config() -> cconconf.Config:
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
-    config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    config["load"]["aws_profile"] = AM_AWS_PROFILE
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["universe_version"] = "v03"

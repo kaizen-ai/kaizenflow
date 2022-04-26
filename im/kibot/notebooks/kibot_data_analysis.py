@@ -23,7 +23,8 @@ import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 
 # %%
-S3_BUCKET = hs3.get_bucket()
+AM_AWS_PROFILE = "am"
+S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 file_name = f"s3://{S3_BUCKET}/data/kibot/sp_500_1min/AAPL.csv.gz"
 
 s3fs = hs3.get_s3fs("am")
