@@ -552,6 +552,7 @@ def get_aws_credentials(
     return result
 
 
+# TODO(Nikola): Not used anymore. Remove/refactor?
 @functools.lru_cache()
 def get_key_value(
     aws_profile: str,
@@ -636,7 +637,6 @@ def archive_data_on_s3(
 
     :param src_dir: directory that will be compressed
     :param s3_path: full S3 path starting with `s3://`
-    :param aws_profile: the profile to use
     :param aws_profile: the profile to use. We use a string and not an
         `AwsProfile` since this is typically the outermost caller in the stack,
         and it doesn't reuse an S3 fs object
