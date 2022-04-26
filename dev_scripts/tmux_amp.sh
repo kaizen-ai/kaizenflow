@@ -1,7 +1,7 @@
 #!/bin/bash -e
 #
 # Create a standard tmux session for this repo.
-# 
+#
 # # Create an amp tmux session for $HOME/src/amp1
 # > dev_scripts/tmux_amp.sh amp 1
 #
@@ -10,7 +10,7 @@
 
 echo "##> dev_scripts/tmux_amp.sh"
 
-set -x
+#set -x
 
 SERVER_NAME=$(uname -n)
 echo "SERVER_NAME=$SERVER_NAME"
@@ -26,6 +26,10 @@ else
   if [[ -d $DIR_NAME ]]; then
     echo "Inferred AWS setup"
     HOME_DIR=$DIR_NAME
+  else
+    if [[ $SERVER_NAME == "cf-spm-dev4" ]]; then
+      HOME_DIR=$HOME
+    fi;
   fi;
 fi;
 

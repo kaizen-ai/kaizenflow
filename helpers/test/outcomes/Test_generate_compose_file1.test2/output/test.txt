@@ -1,4 +1,4 @@
-use_privileged_mode=False, use_sibling_container=False, use_shared_cache=True, mount_as_submodule=False
+use_privileged_mode=False, use_sibling_container=False, use_shared_cache=True, mount_as_submodule=False, use_network_mode_host=True
 version: '3'
 
 services:
@@ -38,6 +38,12 @@ services:
       base_app
     volumes:
       - ../../:/app
+
+    # Default network mode set to host so we can reach e.g.
+    # a database container pointing to localhost:5432.
+    # In tests we use dind so we need set back to the default "bridge".
+    # See CmTask988 and https://stackoverflow.com/questions/24319662
+    network_mode: ${NETWORK_MODE:-host}
 
   jupyter_server:
     command: devops/docker_run/run_jupyter_server.sh
