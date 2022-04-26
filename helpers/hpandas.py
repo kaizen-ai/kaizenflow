@@ -729,7 +729,7 @@ def df_to_str(
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
     elif isinstance(df, pd.Index):
-        df = df.to_frame()
+        df = df.to_frame(index=False)
     hdbg.dassert_isinstance(df, pd.DataFrame)
     out = []
     # Print the tag.
