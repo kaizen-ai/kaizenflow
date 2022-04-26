@@ -11,8 +11,9 @@ ENDPOINT = "http://www.kibot.com/"
 
 API_ENDPOINT = "http://api.kibot.com/"
 
+AM_AWS_PROFILE = "am"
 # TODO(gp): Inline this reference everywhere, if needed.
-S3_BUCKET = hs3.get_bucket()
+S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 S3_PREFIX = f"s3://{S3_BUCKET}/data/kibot"
 
 DATASETS = [
