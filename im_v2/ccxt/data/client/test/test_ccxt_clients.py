@@ -292,7 +292,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         expected_first_elements = [
             "binance::BTC_USDT",
             "gateio::XRP_USDT",
-            "kucoin::ETH_USDT"
+            "kucoin::ETH_USDT",
         ]
         expected_last_elements = [
             "binance::BTC_USDT",
@@ -593,7 +593,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         expected_first_elements = [
             "binance::BTC_USDT",
             "gateio::XRP_USDT",
-            "kucoin::ETH_USDT"
+            "kucoin::ETH_USDT",
         ]
         expected_last_elements = [
             "binance::BTC_USDT",

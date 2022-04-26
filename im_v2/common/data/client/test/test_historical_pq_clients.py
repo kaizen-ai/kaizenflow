@@ -289,7 +289,12 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         partition_mode = "by_year_month"
         infer_exachange_id = False
         im_client = imvcdchpce.MockHistoricalByTileClient(
-            vendor, universe_version, resample_1min, test_dir, partition_mode, infer_exachange_id
+            vendor,
+            universe_version,
+            resample_1min,
+            test_dir,
+            partition_mode,
+            infer_exachange_id,
         )
         # Compare the expected values.
         expected_length = 2

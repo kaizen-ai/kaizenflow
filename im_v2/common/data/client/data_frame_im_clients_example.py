@@ -23,5 +23,7 @@ def get_DataFrameImClient_example1() -> imvcdcdfimc.DataFrameImClient:
     # Init the client for testing.
     universe_version = "v1"
     resample_1min = False
-    im_client = imvcdcdfimc.DataFrameImClient(df, universe, universe_version, resample_1min)
+    im_client = imvcdcdfimc.DataFrameImClient(
+        df, universe, universe_version, resample_1min
+    )
     return im_client

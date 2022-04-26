@@ -36,7 +36,11 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
 
     def test_get_vendor_universe_as_full_symbol(self) -> None:
         vendor = "example1"
-        universe_as_full_symbols = ["binance::ADA_USDT", "gateio::XRP_USDT", "kucoin::ETH_USDT"]
+        universe_as_full_symbols = [
+            "binance::ADA_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
+        ]
         self._test_get_vendor_universe_as_full_symbol(
             vendor, universe_as_full_symbols
         )

@@ -52,7 +52,10 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         # Initialise the parent class.
         vendor = "data_frame"
         super().__init__(
-            vendor, universe_version, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor,
+            universe_version,
+            resample_1min,
+            full_symbol_col_name=full_symbol_col_name,
         )
         # Validate and set input dataframe.
         hpandas.dassert_time_indexed_df(
