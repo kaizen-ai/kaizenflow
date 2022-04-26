@@ -18,21 +18,15 @@
 # %% run_control={"marked": false}
 import logging
 import os
+from datetime import timedelta
 
 import pandas as pd
+import requests
 
-import core.config.config_ as cconconf
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.client.talos_clients as imvtdctacl
-
-import requests
-import helpers.hdatetime as hdateti
-from datetime import timedelta
-import helpers.hs3 as hs3
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -47,9 +41,7 @@ hprint.config_notebook()
 # %%
 # Specify params.
 resample_1min = True
-root_dir = os.path.join(
-        "s3://cryptokaizen-data", "historical"
-    )
+root_dir = os.path.join("s3://cryptokaizen-data", "historical")
 partition_mode = "by_year_month"
 data_snapshot = "latest"
 aws_profile = "ck"
@@ -72,10 +64,10 @@ def load_crypto_chassis_ohlcv(exhange_id, currency_pair):
     r = requests.get(
         f"https://api.cryptochassis.com/v1/ohlc/{exhange_id}/{currency_pair}?startTime=0"
     )
-    df = pd.read_csv(r.json()["historical"]['urls'][0]["url"], compression="gzip")
+    df = pd.read_csv(r.json()["historical"]["urls"][0]["url"], compression="gzip")
     df["time_seconds"] = df["time_seconds"].apply(
-            lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
-        )
+        lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
+    )
     df = df.set_index("time_seconds")
     return df
 
@@ -94,21 +86,29 @@ def load_crypto_chassis_ohlcv(exhange_id, currency_pair):
 
 # %%
 # Load historical data from CCXT.
-full_symbols= ['kucoin::ADA_USDT']
+full_symbols = ["kucoin::ADA_USDT"]
 start_date = None
 end_date = None
 ada_kucoin_ccxt = historical_client.read_data(full_symbols, start_date, end_date)
-# Load historical data from crypto-chassis. 
+# Load historical data from crypto-chassis.
 ada_kucoin_ch = load_crypto_chassis_ohlcv("kucoin", "ada-usdt")
 
 # %% [markdown]
 # #### Take a specific period of time - [2022-02-09 00:00, 2022-02-09 13:33]
 
 # %%
-ccxt_ada_nans = ada_kucoin_ccxt.loc[(ada_kucoin_ccxt.index>"2022-02-09 00:00:00+00:00")&(ada_kucoin_ccxt.index<"2022-02-09 13:33:00+00:00")]
-chassis_ada = ada_kucoin_ch.loc[(ada_kucoin_ch.index>"2022-02-09 00:00:00+00:00")&(ada_kucoin_ch.index<"2022-02-09 13:33:00+00:00")]
+ccxt_ada_nans = ada_kucoin_ccxt.loc[
+    (ada_kucoin_ccxt.index > "2022-02-09 00:00:00+00:00")
+    & (ada_kucoin_ccxt.index < "2022-02-09 13:33:00+00:00")
+]
+chassis_ada = ada_kucoin_ch.loc[
+    (ada_kucoin_ch.index > "2022-02-09 00:00:00+00:00")
+    & (ada_kucoin_ch.index < "2022-02-09 13:33:00+00:00")
+]
 # Check that the lenght is identical.
-print(f"Both datasets have the same length: {len(ccxt_ada_nans)==len(chassis_ada)}")
+print(
+    f"Both datasets have the same length: {len(ccxt_ada_nans)==len(chassis_ada)}"
+)
 
 # %% [markdown]
 # #### Data snapshot
@@ -120,8 +120,12 @@ print("Complete data in chassis:")
 display(chassis_ada)
 
 # %%
-print(f"Percentage of NaNs in CCXT data for the period: {len(ccxt_ada_nans[ccxt_ada_nans.open.isna()])*100/len(ccxt_ada_nans)}")
-print(f"Percentage of NaNs in crypto-chassis data for the period: {len(chassis_ada[chassis_ada.open.isna()])*100/len(chassis_ada)}")
+print(
+    f"Percentage of NaNs in CCXT data for the period: {len(ccxt_ada_nans[ccxt_ada_nans.open.isna()])*100/len(ccxt_ada_nans)}"
+)
+print(
+    f"Percentage of NaNs in crypto-chassis data for the period: {len(chassis_ada[chassis_ada.open.isna()])*100/len(chassis_ada)}"
+)
 
 # %% [markdown]
 # ### `full_symbol` = kucoin::BTC_USDT
@@ -134,42 +138,59 @@ print(f"Percentage of NaNs in crypto-chassis data for the period: {len(chassis_a
 
 # %%
 # Load historical data from CCXT.
-full_symbols= ['kucoin::BTC_USDT']
+full_symbols = ["kucoin::BTC_USDT"]
 start_date = None
 end_date = None
 btc_kucoin_ccxt = historical_client.read_data(full_symbols, start_date, end_date)
-# Load historical data from crypto-chassis. 
+# Load historical data from crypto-chassis.
 btc_kucoin_ch = load_crypto_chassis_ohlcv("kucoin", "btc-usdt")
 
 # %% [markdown]
 # #### Take a specific period of time - a year 2021
 
 # %%
-ccxt_btc = btc_kucoin_ccxt.loc[(btc_kucoin_ccxt.index>"2021-08-07")&(btc_kucoin_ccxt.index<"2021-12-31")]
-chassis_btc = btc_kucoin_ch.loc[(btc_kucoin_ch.index>"2021-08-07")&(btc_kucoin_ch.index<"2021-12-31")]
+ccxt_btc = btc_kucoin_ccxt.loc[
+    (btc_kucoin_ccxt.index > "2021-08-07")
+    & (btc_kucoin_ccxt.index < "2021-12-31")
+]
+chassis_btc = btc_kucoin_ch.loc[
+    (btc_kucoin_ch.index > "2021-08-07") & (btc_kucoin_ch.index < "2021-12-31")
+]
 
 # %%
 # From crypto-chassis docs:
-# If there is a gap in "time_seconds", it means that 
+# If there is a gap in "time_seconds", it means that
 # the market depth snapshot at that moment is the same as the previous moment.
 # It means that NaNs there are 'gaps' between timestamps.
 chassis_btc["timestamp_diff"] = chassis_btc.index.to_series().diff()
 # Exclude 1min gaps (means no NaNs) and calculate the num of mins in gaps (equals to num of NaNs).
-chassis_btc[chassis_btc["timestamp_diff"]!="0 days 00:01:00"] 
+chassis_btc[chassis_btc["timestamp_diff"] != "0 days 00:01:00"]
 # Calculate the total rows with NaNs.
-num_of_nans_chassis = chassis_btc["timestamp_diff"].sum()/timedelta(minutes=1)
+num_of_nans_chassis = chassis_btc["timestamp_diff"].sum() / timedelta(minutes=1)
 
 # %%
-print(f"NaNs percentage in CCXT for `kucoin::BTC_USDT` for 2021: {100*len(ccxt_btc[ccxt_btc.open.isna()])/len(ccxt_btc)}")
-print(f"NaNs percentage in crypto-chassis for `kucoin::BTC_USDT` for 2021: {100*num_of_nans_chassis/(len(chassis_btc)+num_of_nans_chassis)}")
+print(
+    f"NaNs percentage in CCXT for `kucoin::BTC_USDT` for 2021: {100*len(ccxt_btc[ccxt_btc.open.isna()])/len(ccxt_btc)}"
+)
+print(
+    f"NaNs percentage in crypto-chassis for `kucoin::BTC_USDT` for 2021: {100*num_of_nans_chassis/(len(chassis_btc)+num_of_nans_chassis)}"
+)
 
 # %% [markdown]
 # #### Take a specific period of time - [2022-01-15 12:00, 2022-01-15 21:00]
 
 # %%
-ccxt_btc2022 = btc_kucoin_ccxt.loc[(btc_kucoin_ccxt.index>"2022-01-15 12:00:00")&(btc_kucoin_ccxt.index<"2022-01-15 21:00:00")]
-chassis_btc2022 = btc_kucoin_ch.loc[(btc_kucoin_ch.index>"2022-01-15 12:00:00")&(btc_kucoin_ch.index<"2022-01-15 21:00:00")]
-print(f"Both datasets have the same length: {len(ccxt_btc2022)==len(chassis_btc2022)}")
+ccxt_btc2022 = btc_kucoin_ccxt.loc[
+    (btc_kucoin_ccxt.index > "2022-01-15 12:00:00")
+    & (btc_kucoin_ccxt.index < "2022-01-15 21:00:00")
+]
+chassis_btc2022 = btc_kucoin_ch.loc[
+    (btc_kucoin_ch.index > "2022-01-15 12:00:00")
+    & (btc_kucoin_ch.index < "2022-01-15 21:00:00")
+]
+print(
+    f"Both datasets have the same length: {len(ccxt_btc2022)==len(chassis_btc2022)}"
+)
 
 # %%
 print("Period of NaNs in CCXT:")
@@ -188,11 +209,16 @@ display(chassis_btc2022)
 
 # %%
 # Take the previously spotted NaN sequence.
-ccxt_ada_nans = ada_kucoin_ccxt.loc[(ada_kucoin_ccxt.index>"2022-02-01 00:00:00+00:00")&(ada_kucoin_ccxt.index<"2022-02-09 13:33:00+00:00")]
+ccxt_ada_nans = ada_kucoin_ccxt.loc[
+    (ada_kucoin_ccxt.index > "2022-02-01 00:00:00+00:00")
+    & (ada_kucoin_ccxt.index < "2022-02-09 13:33:00+00:00")
+]
 ccxt_ada_nans
 
 # %%
-print(f"Percentage of NaN data: {100*len(ccxt_ada_nans[ccxt_ada_nans.open.isna()])/len(ccxt_ada_nans)}")
+print(
+    f"Percentage of NaN data: {100*len(ccxt_ada_nans[ccxt_ada_nans.open.isna()])/len(ccxt_ada_nans)}"
+)
 
 # %% [markdown]
 # S3 has the only file in the February for `kucoin::ADA_USDT`:
@@ -200,7 +226,6 @@ print(f"Percentage of NaN data: {100*len(ccxt_ada_nans[ccxt_ada_nans.open.isna()
 # ![%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%202022-04-26%20%D0%B2%2019.14.16.png](attachment:%D0%A1%D0%BD%D0%B8%D0%BC%D0%BE%D0%BA%20%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0%202022-04-26%20%D0%B2%2019.14.16.png)
 
 # %%
-#s3fs = hs3.get_s3fs("ck")
 file_path = "s3://cryptokaizen-data/historical/ccxt/latest/kucoin/currency_pair=ADA_USDT/year=2022/month=2/d5ea82924aa046f59a559985a95ea1c9.parquet"
 pq_ada = pd.read_parquet(file_path)
 pq_ada
