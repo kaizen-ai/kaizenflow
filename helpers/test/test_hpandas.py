@@ -449,7 +449,8 @@ class TestDfToStr(hunitest.TestCase):
         """
         df = self.get_test_data()
         actual = hpandas.df_to_str(df)
-        expected = r"""   dummy_value_1 dummy_value_2  dummy_value_3
+        expected = r"""   
+            dummy_value_1 dummy_value_2  dummy_value_3
         0              1             A              0
         1              2             B              0
         2              3             C              0"""
@@ -530,28 +531,32 @@ class TestDfToStr(hunitest.TestCase):
 
     def test_df_to_str6(self) -> None:
         """
-        Test common call to `df_to_str` with series.
+        Test common call to `df_to_str` with `pd.Series`.
         """
         df = self.get_test_data()
         actual = hpandas.df_to_str(df["dummy_value_2"])
-        expected = r"""    dummy_value_2
+        expected = r"""    
+            dummy_value_2
         0             A
         1             B
-        2             C"""
+        2             C
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_df_to_str7(self) -> None:
         """
-        Test common call to `df_to_str` with df index.
+        Test common call to `df_to_str` with `pd.Index`.
         """
         df = self.get_test_data()
         index = df.index
         index.name = "index_name"
         actual = hpandas.df_to_str(index)
-        expected = r"""    index_name
+        expected = r"""    
+        index_name
         0  0
         1  1
-        2  2"""
+        2  2
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
