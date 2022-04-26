@@ -17,3 +17,18 @@ else:
     from typing import Any
 
     DbConnection = Any
+
+
+def create_in_operator(values: List[str], column_name: str) -> str:
+    """
+    Transform a list of possible values into an IN operator clause.
+
+    :param values: a list of possible values for the given column, e.g. `["binance", "ftx"]`
+    :param column_name: the name of the column, e.g. 'exchange_id'
+    :return: IN operator clause with specified values,
+      e.g. `"exchange_id IN ('binance', 'ftx')"`
+    """
+    in_operator = (
+        f"{column_name} IN (" + ",".join([f"'{value}'" for value in values]) + ")"
+    )
+    return in_operator
