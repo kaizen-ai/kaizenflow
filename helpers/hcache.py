@@ -359,7 +359,7 @@ class _Cached:
         verbose: bool = False,
         tag: Optional[str] = None,
         disk_cache_path: Optional[str] = None,
-        aws_profile: Optional[str] = None,
+        aws_profile: Optional[str] = "am",
     ):
         """
         Construct the class.
@@ -702,12 +702,7 @@ class _Cached:
 
                 # Register the S3 backend.
                 hjoblib.register_s3fs_store_backend()
-                # Use the default profile, unless it was explicitly passed.
-                if self._aws_profile is None:
-                    aws_profile = hs3.get_aws_profile()
-                else:
-                    aws_profile = self._aws_profile
-                s3fs = hs3.get_s3fs(aws_profile)
+                s3fs = hs3.get_s3fs(self._aws_profile)
                 bucket, path = hs3.split_path(self._disk_cache_path)
                 # Remove the initial `/` from the path that makes the path
                 # absolute, since `Joblib.Memory` wants a path relative to the

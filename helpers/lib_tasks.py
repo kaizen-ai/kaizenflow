@@ -4908,6 +4908,8 @@ def lint(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
+    _LOG.info("Pulling the latest dev_tools image")
+    docker_pull_dev_tools(ctx)
     # The available phases are:
     # ```
     # > i lint -f "foobar.py"
