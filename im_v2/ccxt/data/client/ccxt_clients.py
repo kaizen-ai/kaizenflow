@@ -418,7 +418,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         query_columns = ["open", "high", "low", "close", "volume"]
         if columns:
             # Get only those OHLCV columns that were specified for the query.
-            query_columns = list(set(query_columns) - set(columns))
+            query_columns = list(set(query_columns).intersection(columns))
         # Append currency pair column required for further computations.
         query_columns.append("currency_pair")
         return query_columns

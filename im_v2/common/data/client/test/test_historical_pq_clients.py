@@ -250,6 +250,9 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    # TODO(Dan): Update test outcomes after implementing CmTask1588
+    # "Consider possible flaws of dropping duplicates from data".
+    # TODO(Dan): Update test data generator with adding one more column to it.
     def test_read_data8(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
@@ -258,26 +261,21 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             self, full_symbols, resample_1min
         )
         # Compare the expected values.
-        expected_length = 8640
-        columns = ["asset_id", "full_symbol", "close"]
-        expected_column_names = ["full_symbol", "close"]
+        expected_length = 2
+        expected_column_names = ["full_symbol"]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         }
         expected_signature = r"""# df=
-        index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
-        columns=full_symbol,close
-        shape=(8640, 2)
-                                        full_symbol  close
+        index=[2021-12-30 00:00:00+00:00, 2021-12-30 00:00:00+00:00]
+        columns=full_symbol
+        shape=(2, 1)
+                                        full_symbol
         timestamp
-        2021-12-30 00:00:00+00:00  binance::BTC_USDT      0
-        2021-12-30 00:00:00+00:00   kucoin::FIL_USDT      0
-        2021-12-30 00:01:00+00:00  binance::BTC_USDT      1
-        ...
-        2022-01-01 23:58:00+00:00   kucoin::FIL_USDT   4318
-        2022-01-01 23:59:00+00:00  binance::BTC_USDT   4319
-        2022-01-01 23:59:00+00:00   kucoin::FIL_USDT   4319
+        2021-12-30 00:00:00+00:00  binance::BTC_USDT
+        2021-12-30 00:00:00+00:00   kucoin::FIL_USDT
         """
+        columns = ["asset_id", "full_symbol"]
         self._test_read_data8(
             im_client,
             full_symbols,

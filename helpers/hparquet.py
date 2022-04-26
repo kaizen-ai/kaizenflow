@@ -74,6 +74,9 @@ def from_parquet(
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
+        # TODO(Dan): Consider increasing robustness of the function by comparing
+        # the requested columns with the ones present in data using `ParquetDataset`
+        # metadata.
         dataset = pq.ParquetDataset(
             # Replace URI with path.
             file_name,

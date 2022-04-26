@@ -1278,6 +1278,46 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    # TODO(Dan): Update test outcomes after implementing CmTask1588
+    # "Consider possible flaws of dropping duplicates from data".
+    def test_read_data8(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 5758
+        expected_column_names = ["full_symbol", "close"]
+        expected_column_unique_values = {
+            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        }
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2018-08-19 00:00:00+00:00]
+        columns=full_symbol,close
+        shape=(5758, 2)
+                                         full_symbol        close
+        timestamp
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6311.640000
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6302.810000
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987
+        ...
+        2018-08-18 23:58:00+00:00  binance::BTC_USDT  6387.01
+        2018-08-18 23:59:00+00:00  binance::BTC_USDT  6387.96
+        2018-08-19 00:00:00+00:00  binance::BTC_USDT  6377.25
+        """
+        columns = ["asset_id", "full_symbol", "close"]
+        self._test_read_data8(
+            im_client,
+            full_symbols,
+            columns,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
