@@ -238,7 +238,6 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
             cmd_opts = [
                 "--config_builder 'dev_scripts.test.test_run_notebook.build_configs3()'",
                 "--num_threads 'serial'",
-                f"--aws_profile '{aws_profile}'",
                 f"--s3_path {s3_tmp_path}",
                 f"--json_output_metadata {output_metadata_file}",
                 "--archive_on_S3",

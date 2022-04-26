@@ -61,7 +61,8 @@ jobs:
         # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
         # Do not run on draft pull requests.
         if: github.event.pull_request.draft == false
-        run: invoke run_slow_tests
+        # run: invoke run_slow_tests
+        run: invoke run_slow_tests --pytest-opts="dataflow/model/test/test_run_experiment.py::TestRunExperimentArchiveOnS3::test_serial1 -s --dbg"
 
       - name: Post status if was triggered manually
         if: ${{ always() && github.event_name == 'workflow_dispatch' }}

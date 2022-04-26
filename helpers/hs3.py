@@ -414,6 +414,8 @@ def get_aws_profile(aws_profile: str) -> str:
     - command line option (i.e., `args.aws_profile`)
     - env vars (i.e., `AM_AWS_PROFILE`)
     """
+    if aws_profile not in ("am", "ck"):
+        raise Exception(f"profile: {aws_profile}")
     prefix = aws_profile.upper()
     env_var = f"{prefix}_AWS_PROFILE"
     hdbg.dassert_in(env_var, os.environ)
@@ -552,6 +554,7 @@ def get_aws_credentials(
     return result
 
 
+# TODO(Nikola): Remove in favour of env vars? Use cache in other `hs3` functions?
 @functools.lru_cache()
 def get_key_value(
     aws_profile: str,
@@ -625,7 +628,7 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
 
 
 def archive_data_on_s3(
-    src_dir: str, s3_path: str, aws_profile: Optional[str], tag: str = ""
+    src_dir: str, s3_path: str, aws_profile: str, tag: str = ""
 ) -> str:
     """
     Compress dir `src_dir` and save it on AWS S3 under `s3_path`.
@@ -636,19 +639,11 @@ def archive_data_on_s3(
 
     :param src_dir: directory that will be compressed
     :param s3_path: full S3 path starting with `s3://`
-    :param aws_profile: the profile to use
     :param aws_profile: the profile to use. We use a string and not an
         `AwsProfile` since this is typically the outermost caller in the stack,
         and it doesn't reuse an S3 fs object
     :param tag: a tag to add to the name of the file
     """
-    aws_profile = get_aws_profile(aws_profile)
-    _LOG.info(
-        "# Archiving '%s' to '%s' with aws_profile='%s'",
-        src_dir,
-        s3_path,
-        aws_profile,
-    )
     hdbg.dassert_dir_exists(src_dir)
     dassert_is_s3_path(s3_path)
     _LOG.info(
@@ -700,7 +695,7 @@ def archive_data_on_s3(
 def retrieve_archived_data_from_s3(
     s3_file_path: str,
     dst_dir: str,
-    aws_profile: Optional[str] = None,
+    aws_profile: str,
     incremental: bool = True,
 ) -> str:
     """
@@ -715,13 +710,6 @@ def retrieve_archived_data_from_s3(
     :param incremental: skip if the tgz file is already present locally
     :return: path with the local tgz file
     """
-    aws_profile = get_aws_profile(aws_profile)
-    _LOG.info(
-        "# Retrieving archive from '%s' to '%s' with aws_profile='%s'",
-        s3_file_path,
-        dst_dir,
-        aws_profile,
-    )
     dassert_is_s3_path(s3_file_path)
     # Download the tgz file.
     hio.create_dir(dst_dir, incremental=True)

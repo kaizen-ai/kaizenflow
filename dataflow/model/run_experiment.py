@@ -39,6 +39,7 @@ _LOG = logging.getLogger(__name__)
 
 # #############################################################################
 
+AM_AWS_PROFILE = "am"
 
 # TODO(gp): _run_configs_stub
 def _run_experiment_stub(
@@ -152,7 +153,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="Archive the results on S3",
     )
-    parser = hs3.add_s3_args(parser)
+    parser.add_argument(
+        "--s3_path",
+        action="store",
+        type=str,
+        default=None,
+        help="Full S3 dir path to use (e.g., `s3://alphamatic-data/foobar/`), "
+        "overriding any other setting",
+    )
     parser = hparser.add_json_output_metadata_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore
@@ -203,8 +211,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Archive on S3.
     if args.archive_on_S3:
         _LOG.info("Archiving results to S3")
-        aws_profile = hs3.get_aws_profile(args.aws_profile)
-        _LOG.debug("aws_profile='%s'", aws_profile)
+        _LOG.debug("aws_profile='%s'", AM_AWS_PROFILE)
         # Get the S3 path from command line.
         s3_path = args.s3_path
         _LOG.debug("s3_path=%s", s3_path)
@@ -212,12 +219,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # The user didn't specified the path, so we derive it from the
             # credentials or from the env vars.
             _LOG.debug("Getting s3_path from credentials file")
-            s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
-            hdbg.dassert(not s3_path.startswith("s3://"), "Invalid value '%s'")
-            s3_path = "s3://" + s3_path + "/experiments"
+            s3_bucket_path = hs3.get_s3_bucket_path(AM_AWS_PROFILE)
+            s3_path = s3_bucket_path + "/experiments"
         hs3.is_s3_path(s3_path)
         # Archive on S3.
-        s3_path = hs3.archive_data_on_s3(dst_dir, s3_path, aws_profile)
+        s3_path = hs3.archive_data_on_s3(dst_dir, s3_path, AM_AWS_PROFILE)
     else:
         _LOG.warning("To archive results on S3 use --archive_on_S3")
         s3_path = None
