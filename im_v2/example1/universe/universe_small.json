@@ -1,10 +1,10 @@
 {
-  "Talos": {
+  "example1": {
     "binance": [
       "ADA_USDT"
     ],
-    "ftx": [
-      "BNB_USDT"
+    "kucoin": [
+      "ETH_USDT"
     ]
   }
 }
