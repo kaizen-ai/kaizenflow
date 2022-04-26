@@ -35,7 +35,8 @@ if False:
     hdbg.dassert(len(files), 1)
     file_name = files[0]
 
-S3_BUCKET = hs3.get_bucket()
+AM_AWS_PROFILE = "am"
+S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 file_name = (
     f"s3://{S3_BUCKET}/data/ib/metadata/symbols-2021-04-01-143112738505.csv"
 )
