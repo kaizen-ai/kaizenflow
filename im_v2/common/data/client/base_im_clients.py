@@ -6,7 +6,7 @@ import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -14,6 +14,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hsql as hsql
 import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
@@ -552,3 +553,253 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         **kwargs: Any,
     ) -> pd.DataFrame:
         ...
+
+
+# #############################################################################
+# SqlRealTimeImClient
+# #############################################################################
+
+
+class SqlRealTimeImClient(ImClient, abc.ABC):
+    def __init__(
+        self,
+        resample_1min: bool,
+        db_connection: hsql.DbConnection,
+        table_name: str,
+        # TODO(Danya): @gp `vendor` parameter violates the
+        #   "parent should not know about the children" rule.
+        #  `IMClient` requires providing `vendor` at the init.
+        #  The main method used multiple times from the `IMClient` is `read_data`,
+        #  but reimplementing it will violate the DRY principle.
+        #  I suggest removing 'vendor' from parent class, since the vendor
+        #  is used only by derived classes.
+        vendor: str,
+    ) -> None:
+        self._db_connection = db_connection
+        self._table_name = table_name
+        super().__init__(vendor, resample_1min)
+
+    @staticmethod
+    def should_be_online() -> bool:
+        """
+        Return online status.
+
+        Real-time system should always be online.
+        """
+        return True
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+        raise NotImplementedError
+
+    def get_universe(self) -> List[ivcu.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
+        query = (
+            f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
+        )
+        currency_exchange_df = hsql.execute_query_to_df(
+            self._db_connection, query
+        )
+        # Merge these columns to the general `full_symbol` format.
+        full_symbols = ivcu.build_full_symbol(
+            currency_exchange_df["exchange_id"],
+            currency_exchange_df["currency_pair"],
+        )
+        # Convert to list.
+        full_symbols = full_symbols.to_list()
+        return full_symbols
+
+    @abc.abstractmethod
+    def _apply_normalization(
+        self,
+        data: pd.DataFrame,
+        *,
+        full_symbol_col_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Apply vendor-specific normalization.
+        """
+
+    def _read_data(
+        self,
+        full_symbols: List[ivcu.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        *,
+        full_symbol_col_name: Optional[str] = None,
+        # Extra arguments for building a query.
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Create a select query and load data from database.
+
+        Extra parameters for building a query can also be passed,
+        see keyword args for `_build_select_query`
+
+        :param full_symbols: a list of full symbols, e.g. ["ftx::BTC_USDT"]
+        :param start_ts: beginning of the time interval
+        :param end_ts: end of the time interval
+        :param full_symbol_col_name: name of column containg full symbols
+        :return:
+        """
+        # Parse symbols into exchange and currency pair.
+        parsed_symbols = [ivcu.parse_full_symbol(s) for s in full_symbols]
+        # Convert timestamps to epochs.
+        if start_ts:
+            start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+        else:
+            start_unix_epoch = start_ts
+        if end_ts:
+            end_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+        else:
+            end_unix_epoch = end_ts
+        # Read data from DB.
+        select_query = self._build_select_query(
+            parsed_symbols, start_unix_epoch, end_unix_epoch, **kwargs
+        )
+        data = hsql.execute_query_to_df(self._db_connection, select_query)
+        # Add a full symbol column.
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
+        data[full_symbol_col_name] = ivcu.build_full_symbol(
+            data["exchange_id"], data["currency_pair"]
+        )
+        # Remove extra columns and create a timestamp index.
+        data = self._apply_normalization(
+            data, full_symbol_col_name=full_symbol_col_name
+        )
+        return data
+
+    def _build_select_query(
+        self,
+        parsed_symbols: List[Tuple],
+        start_unix_epoch: Optional[int],
+        end_unix_epoch: Optional[int],
+        *,
+        columns: Optional[List[str]] = None,
+        ts_col_name: Optional[str] = "timestamp",
+        left_close: bool = True,
+        right_close: bool = True,
+        limit: Optional[int] = None,
+    ) -> str:
+        """
+        Build a SELECT query for SQL DB.
+
+        Time is provided as unix epochs in ms, the time range
+        is considered closed on both sides, i.e. [1647470940000, 1647471180000]
+
+        Example of a full query:
+        ```
+        "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000
+        AND timestamp <= 1647471180000
+        AND ((exchange_id='binance' AND currency_pair='AVAX_USDT')
+        OR (exchange_id='ftx' AND currency_pair='BTC_USDT'))
+        ```
+
+        :param parsed_symbols: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
+        :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
+        :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
+        :param columns: columns to select from `table_name`
+        - `None` means all columns.
+        :param ts_col_name: name of timestamp column
+        :param left_close: if operator for `start_unix_epoch` is either > or >=
+        :param right_close: if operator for `end_unix_epoch` is either < or <=
+        :param limit: number of rows to return
+        :return: SELECT query for SQL data
+        """
+        hdbg.dassert_container_type(
+            obj=parsed_symbols,
+            container_type=List,
+            elem_type=tuple,
+            msg="`parsed_symbols` should be a list of tuple",
+        )
+        # Add columns to the SELECT query
+        columns_as_str = "*" if columns is None else ",".join(columns)
+        # Build a SELECT query.
+        select_query = f"SELECT {columns_as_str} FROM {self._table_name} WHERE "
+        # Build a WHERE query.
+        # TODO(Danya): Generalize to hsql with dictionary input.
+        where_clause = []
+        if start_unix_epoch:
+            hdbg.dassert_isinstance(
+                start_unix_epoch,
+                int,
+            )
+            operator = ">=" if left_close else ">"
+            where_clause.append(f"{ts_col_name} {operator} {start_unix_epoch}")
+        if end_unix_epoch:
+            hdbg.dassert_isinstance(
+                end_unix_epoch,
+                int,
+            )
+            operator = "<=" if right_close else "<"
+            where_clause.append(f"{ts_col_name} {operator} {end_unix_epoch}")
+        if start_unix_epoch and end_unix_epoch:
+            hdbg.dassert_lte(
+                start_unix_epoch,
+                end_unix_epoch,
+                msg="Start unix epoch should be smaller than end.",
+            )
+        # Create conditions for getting values by exchange_id and currency_pair
+        # In the end there should be something like:
+        # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT') # pylint: disable=line-too-long
+        exchange_currency_conditions = [
+            f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
+            for exchange_id, currency_pair in parsed_symbols
+            if exchange_id and currency_pair
+        ]
+        if exchange_currency_conditions:
+            # Add OR conditions between each pair of `exchange_id` and `currency_pair`
+            where_clause.append(
+                "(" + " OR ".join(exchange_currency_conditions) + ")"
+            )
+        # Build whole query.
+        query = select_query + " AND ".join(where_clause)
+        if limit:
+            query += f" LIMIT {limit}"
+        return query
+
+    def _get_start_end_ts_for_symbol(
+        self, full_symbol: ivcu.FullSymbol, mode: str
+    ) -> pd.Timestamp:
+        """
+        Select a maximum/minimum timestamp for the given symbol.
+
+        Overrides the method in parent class to utilize
+        the MIN/MAX SQL operators.
+
+        :param full_symbol: unparsed full_symbol value
+        :param mode: 'start' or 'end'
+        :return: min or max value of 'timestamp' column.
+        """
+        _LOG.debug(hprint.to_str("full_symbol"))
+        exchange, currency_pair = ivcu.parse_full_symbol(full_symbol)
+        # Build a MIN/MAX query.
+        if mode == "start":
+            query = (
+                f"SELECT MIN(timestamp) from {self._table_name}"
+                f" WHERE currency_pair='{currency_pair}'"
+                f" AND exchange_id='{exchange}'"
+            )
+        elif mode == "end":
+            query = (
+                f"SELECT MAX(timestamp) from {self._table_name}"
+                f" WHERE currency_pair='{currency_pair}'"
+                f" AND exchange_id='{exchange}'"
+            )
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
+        # TODO(Danya): factor out min/max as helper function.
+        # Load the target timestamp as unix epoch.
+        timestamp = hsql.execute_query_to_df(self._db_connection, query).loc[0][0]
+        # Convert to `pd.Timestamp` type.
+        timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
+        hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
+        return timestamp
