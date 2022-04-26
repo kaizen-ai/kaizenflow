@@ -449,7 +449,7 @@ class TestDfToStr(hunitest.TestCase):
         """
         df = self.get_test_data()
         actual = hpandas.df_to_str(df)
-        expected = r"""   
+        expected = r"""
             dummy_value_1 dummy_value_2  dummy_value_3
         0              1             A              0
         1              2             B              0
@@ -535,7 +535,7 @@ class TestDfToStr(hunitest.TestCase):
         """
         df = self.get_test_data()
         actual = hpandas.df_to_str(df["dummy_value_2"])
-        expected = r"""    
+        expected = r"""
             dummy_value_2
         0             A
         1             B
@@ -551,7 +551,7 @@ class TestDfToStr(hunitest.TestCase):
         index = df.index
         index.name = "index_name"
         actual = hpandas.df_to_str(index)
-        expected = r"""    
+        expected = r"""
         index_name
         0  0
         1  1
