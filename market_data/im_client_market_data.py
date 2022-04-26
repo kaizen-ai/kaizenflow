@@ -104,11 +104,14 @@ class ImClientMarketData(mdabmada.MarketData):
             )
         # Load the data using `im_client`.
         ivcu.dassert_valid_full_symbols(full_symbols)
+        # TODO(Grisha): @Dan improve the code, add comments.
+        columns_to_exclude_in_im = [self._start_time_col_name, self._end_time_col_name, self._asset_id_col]
+        query_columns = [col for col in self._columns if col not in columns_to_exclude_in_im]
         market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
             end_ts,
-            self._columns,
+            query_columns,
         )
         # Add `asset_id` column.
         _LOG.debug("asset_id_col=%s", self._asset_id_col)
@@ -134,10 +137,6 @@ class ImClientMarketData(mdabmada.MarketData):
                 transformed_asset_ids,
             )
         hdbg.dassert_in(self._asset_id_col, market_data.columns)
-        if self._columns:
-            # Select only specified columns.
-            hdbg.dassert_is_subset(self._columns, market_data.columns)
-            market_data = market_data[self._columns]
         if limit:
             # Keep only top N records.
             hdbg.dassert_lte(1, limit)

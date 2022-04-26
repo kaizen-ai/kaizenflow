@@ -86,6 +86,8 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     # //////////////////////////////////////////////////////////////////////////////
 
+    # TODO(Grisha): @Dan add 2 tests: one for cols filtering, another for cols filtering but
+    # with unsupported columns.
     def _get_data_for_interval_helper(
         self,
         market_data: mdata.MarketData,
