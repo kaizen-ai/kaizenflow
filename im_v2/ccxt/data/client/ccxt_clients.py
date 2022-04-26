@@ -417,8 +417,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # Specify OHLCV columns available for CCXT Parquet data query.
         query_columns = ["open", "high", "low", "close", "volume"]
         if columns:
-            # Filter OHLCV columns if requested return columns are specified.
-            query_columns = [col for col in query_columns if col in columns]
+            # Get only those OHLCV columns that were specified for the query.
+            query_columns = list(set(query_columns) - set(columns))
         # Append currency pair column required for further computations.
         query_columns.append("currency_pair")
         return query_columns

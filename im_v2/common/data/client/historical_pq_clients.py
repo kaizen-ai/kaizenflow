@@ -110,10 +110,8 @@ class HistoricalPqByTileClient(
         # ```
         # which confuses `df.groupby()`, so we force that column to str.
         df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
-        # Drop partitioned columns if they are not specified in the columns.
-        if "columns" in kwargs:
-            columns_to_drop = {"month", "year"} - set(kwargs["columns"])
-            df = df.drop(columns_to_drop, axis=1)
+        # Drop partitioning columns.
+        df = df.drop(["month", "year"], axis=1)
         return df
 
     def _read_data_for_multiple_symbols(
@@ -175,9 +173,6 @@ class HistoricalPqByTileClient(
                 # Infer `exchange_id` from a file path if it is not present in data.
                 # E.g., `s3://cryptokaizen-data/historical/ccxt/latest/binance` -> `binance`.
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
-            if columns:
-                # If columns are specified, put them in kwargs for filtering.
-                transformation_kwargs["columns"] = columns
             # Transform data.
             root_dir_df = self._apply_transformations(
                 root_dir_df, full_symbol_col_name, **transformation_kwargs
