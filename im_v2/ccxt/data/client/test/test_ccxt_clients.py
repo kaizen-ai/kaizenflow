@@ -288,17 +288,12 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
 
     def test_get_universe1(self) -> None:
         im_client = imvcdcccex.get_CcxtCsvClient_example2()
-        expected_length = 38
+        expected_length = 2
         expected_first_elements = [
-            "binance::ADA_USDT",
-            "binance::AVAX_USDT",
-            "binance::BNB_USDT",
-        ]
-        expected_last_elements = [
-            "kucoin::LINK_USDT",
+            "gateio::XRP_USDT",
             "kucoin::SOL_USDT",
-            "kucoin::XRP_USDT",
         ]
+        expected_last_elements = expected_first_elements
         self._test_get_universe1(
             im_client,
             expected_length,
@@ -589,17 +584,12 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        expected_length = 38
+        expected_length = 2
         expected_first_elements = [
-            "binance::ADA_USDT",
-            "binance::AVAX_USDT",
-            "binance::BNB_USDT",
-        ]
-        expected_last_elements = [
-            "kucoin::LINK_USDT",
+            "gateio::XRP_USDT",
             "kucoin::SOL_USDT",
-            "kucoin::XRP_USDT",
         ]
+        expected_last_elements = expected_first_elements
         self._test_get_universe1(
             im_client,
             expected_length,
