@@ -5,7 +5,7 @@ import helpers.hunit_test as hunitest
 class TestCreateInOperator(hunitest.TestCase):
     def test_create_in_operator1(self) -> None:
         """
-        Test creating IN operator for more than one values.
+        Test creating IN operator for more than one value.
         """
         values = ["binance", "ftx"]
         column = "exchange_id"
