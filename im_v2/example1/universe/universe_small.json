@@ -5,6 +5,9 @@
     ],
     "kucoin": [
       "ETH_USDT"
+    ],
+    "gateio": [
+      "XRP_USDT"
     ]
   }
 }
