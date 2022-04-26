@@ -690,6 +690,24 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     _to_pbcopy(res, pbcopy)
 
 
+@task
+def git_roll_amp_forward(ctx):
+    """
+    Rolls amp forward.
+    """
+    _report_task()
+    cmd = """
+    cd amp &&
+    git checkout master &&
+    git pull --recurse-submodules &&
+    cd .. &&
+    git add amp &&
+    git commit -m "Roll amp fwd" &&
+    git push
+    """
+    _run(ctx, cmd)
+
+
 # TODO(gp): Add git_co(ctx)
 # Reuse hgit.git_stash_push() and hgit.stash_apply()
 # git stash save your-file-name

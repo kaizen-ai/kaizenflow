@@ -66,6 +66,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     git_pull,
     # TODO(gp): -> git_branch_rename
     git_rename_branch,
+    git_roll_amp_forward,
     integrate_create_branch,
     integrate_diff_dirs,
     integrate_diff_overlapping_files,
