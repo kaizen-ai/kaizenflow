@@ -15,7 +15,6 @@ import helpers.hunit_test as hunitest
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 
-
 # #############################################################################
 # TestExtractUniverseVersion1
 # #############################################################################
