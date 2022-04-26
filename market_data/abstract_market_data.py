@@ -137,8 +137,6 @@ class MarketData(abc.ABC):
         #
         self._timezone = timezone
         self._column_remap = column_remap
-        if (self._columns is not None) & (self._column_remap is not None):
-            hdbg.dassert_is_subset(self._column_remap, self._columns)
         # Compute the max number of iterations.
         hdbg.dassert_lt(0, time_out_in_secs)
         max_iterations = int(time_out_in_secs / sleep_in_secs)
