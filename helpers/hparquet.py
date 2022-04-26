@@ -84,6 +84,9 @@ def from_parquet(
             filters=filters,
             use_legacy_dataset=False,
         )
+        if columns:
+            # TODO(Grisha): add comment explaining `dataset.schema.names` and maybe mention this `__level__`.
+            hdbg.dassert_is_subset(columns, dataset.schema.names)
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.
         # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.

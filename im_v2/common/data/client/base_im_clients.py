@@ -186,6 +186,12 @@ class ImClient(abc.ABC):
             msg="Not all the requested symbols were retrieved",
             only_warning=True,
         )
+        #
+        if columns:
+            hdbg.dassert_set_eq(columns, df.columns.to_list())
+        #
+        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
+        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
         # Rename index.
         df.index.name = "timestamp"
         # Normalize data for each symbol.
