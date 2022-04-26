@@ -35,13 +35,12 @@ _INFO = "\033[36mINFO\033[0m"
 _WARNING = "\033[33mWARNING\033[0m"
 _ERROR = "\033[31mERROR\033[0m"
 #
-_CHANGELOG_VERSION_RE = r"\d+\.\d+\.\d+"
+_VERSION_RE = r"\d+\.\d+\.\d+"
 
 
 def check_version(container_dir_name: str) -> None:
     """
-    Check that the code and container code have compatible version, otherwise
-    raises `RuntimeError`.
+    Check whether the code and the container code have compatible versions.
 
     :param container_dir_name: container directory relative to the root directory
     """
@@ -93,6 +92,7 @@ def get_changelog_version(container_dir_name: str) -> Optional[str]:
     Return latest version from changelog.txt file.
 
     :param container_dir_name: container directory relative to the root directory
+    :return: code version from the changelog
     """
     version: Optional[str] = None
     supermodule = True
@@ -103,7 +103,7 @@ def get_changelog_version(container_dir_name: str) -> Optional[str]:
     changelog_file = os.path.join(root_dir, container_dir_name, "changelog.txt")
     hdbg.dassert_file_exists(changelog_file)
     changelog = hio.from_file(changelog_file)
-    match = re.search(_CHANGELOG_VERSION_RE, changelog)
+    match = re.search(_VERSION_RE, changelog)
     if match:
         version = match.group()
     return version
@@ -112,6 +112,8 @@ def get_changelog_version(container_dir_name: str) -> Optional[str]:
 def _get_container_version() -> Optional[str]:
     """
     Return the container version.
+
+    :return: container code version from the env var
     """
     container_version: Optional[str] = None
     if _is_inside_container():
@@ -134,9 +136,27 @@ def _get_container_version() -> Optional[str]:
 
 
 def _check_version(code_version: str, container_version: str) -> bool:
-    # We are running inside a container.
-    # Keep the code and the container in sync by versioning both and requiring
-    # to be the same.
+    """
+    Check whether the code version and the container version are the same.
+
+    :param code_version: code version from the changelog
+    :param container_version: container code version from the env var
+    :return: whether the versions are the same or not
+    """
+    # Since the code version from the changelog is extracted with the
+    # `_VERSION_RE` regex, we apply the same regex to the container version
+    # to keep the representations comparable.
+    match = re.search(_VERSION_RE, container_version)
+    hdbg.dassert(
+        match,
+        (
+            "Invalid format of the container code version '%s'; "
+            "it should contain a number like '1.0.0'"
+        ),
+        container_version,
+    )
+    container_version = match.group()  # type: ignore
+    # Check if the versions are the same.
     is_ok = container_version == code_version
     if not is_ok:
         msg = f"""

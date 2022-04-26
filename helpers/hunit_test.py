@@ -1092,7 +1092,8 @@ class TestCase(unittest.TestCase):
         # Assemble everything in a single path.
         import helpers.hs3 as hs3
 
-        s3_bucket = hs3.get_path()
+        aws_profile = "am"
+        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
 

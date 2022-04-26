@@ -2538,6 +2538,8 @@ def _docker_cmd(
 
     :param kwargs: kwargs for `ctx.run`
     """
+    _LOG.info("Pulling the latest version of Docker")
+    docker_pull(ctx)
     _LOG.debug("cmd=%s", docker_cmd_)
     rc: Optional[int] = _run(ctx, docker_cmd_, pty=True, **ctx_run_kwargs)
     return rc
@@ -4906,6 +4908,8 @@ def lint(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
+    _LOG.info("Pulling the latest dev_tools image")
+    docker_pull_dev_tools(ctx)
     # The available phases are:
     # ```
     # > i lint -f "foobar.py"

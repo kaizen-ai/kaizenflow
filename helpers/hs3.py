@@ -357,18 +357,15 @@ def get_local_or_s3_stream(
 # #############################################################################
 
 
-# TODO(gp): @all Merge with get_path() below
-# TODO(gp): @all Avoid using s3://alphamatic-data but always use this
-def get_bucket() -> str:
+# TODO(Nikola): Add small unit test.
+def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     """
-    Return the S3 bucket pointed by AM_AWS_S3_BUCKET (e.g., `alphamatic-data`).
-
-    The name should not start with `s3://`.
-
-    Make sure your ~/.aws/credentials uses the right key to access this
-    bucket as default.
+    Return the S3 bucket from environment variable corresponding to a given
+    `aws_profile`. E.g., `aws_profile="am"` uses the value in `AM_AWS_S3_BUCKET`
+    which is usually set to `s3://alphamatic-data`.
     """
-    env_var = "AM_AWS_S3_BUCKET"
+    prefix = aws_profile.upper()
+    env_var = f"{prefix}_AWS_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
     hdbg.dassert(
@@ -377,18 +374,9 @@ def get_bucket() -> str:
         env_var,
         s3_bucket,
     )
+    if add_s3_prefix:
+        s3_bucket = "s3://" + s3_bucket
     return s3_bucket
-
-
-# TODO(gp): @all use get_s3_path() below.
-def get_path() -> str:
-    """
-    Return the path to the S3 bucket (e.g., `s3://alphamatic-data`) for an
-    account.
-    """
-    bucket = get_bucket()
-    path = "s3://" + bucket
-    return path
 
 
 # #############################################################################
@@ -404,7 +392,6 @@ def add_s3_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--aws_profile",
         action="store",
         type=str,
-        default=None,
         help="The AWS profile to use for `.aws/credentials` or for env vars",
     )
     parser.add_argument(
@@ -418,25 +405,7 @@ def add_s3_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     return parser
 
 
-def _get_variable_value(var_value: Optional[str], env_var: str) -> str:
-    """
-    Get the variable from the environment if `var_value` is `None`.
-    """
-    _LOG.debug("var_value=%s", var_value)
-    if var_value is None:
-        hdbg.dassert_isinstance(env_var, str)
-        _LOG.debug("Using the env var '%s'", env_var)
-        hdbg.dassert_in(env_var, os.environ, "Env var '%s' is not set", env_var)
-        var_value = os.environ[env_var]
-    else:
-        hdbg.dassert_isinstance(var_value, str)
-        _LOG.debug("Using the passed value '%s'", var_value)
-    return var_value
-
-
-# TODO(Nikola): This is void now. As `AWS_PROFILE` should be now always
-#   specified in the code, ENV var and GH secret is also void?
-def get_aws_profile(aws_profile: Optional[str] = None) -> str:
+def get_aws_profile(aws_profile: str) -> str:
     """
     Return the AWS profile to access S3, based on:
 
@@ -444,26 +413,10 @@ def get_aws_profile(aws_profile: Optional[str] = None) -> str:
     - command line option (i.e., `args.aws_profile`)
     - env vars (i.e., `AM_AWS_PROFILE`)
     """
-    # TODO(gp): @all This should be function of aws_profile.
-    env_var = "AM_AWS_PROFILE"
-    aws_profile = _get_variable_value(aws_profile, env_var)
-    return aws_profile
-
-
-# TODO(gp): @all this should be function also of `aws_profile`.
-# TODO(Nikola): is it used somewhere? Tackle in CMTask #1667.
-def get_s3_path(s3_path: Optional[str] = None) -> Optional[str]:
-    """
-    Return the S3 path to use, based on:
-
-    - argument passed
-    - command line option (i.e., `--s3_path` through `args.s3_path`)
-    - env vars (i.e., `AM_AWS_S3_BUCKET`)
-    """
-    env_var = "AM_AWS_S3_BUCKET"
-    s3_path = _get_variable_value(s3_path, env_var)
-    dassert_is_s3_path(s3_path)
-    return s3_path
+    prefix = aws_profile.upper()
+    env_var = f"{prefix}_AWS_PROFILE"
+    hdbg.dassert_in(env_var, os.environ)
+    return os.environ[env_var]
 
 
 def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
