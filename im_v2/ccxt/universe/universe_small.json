@@ -3,6 +3,10 @@
     "XRP_USDT"
   ],
   "kucoin": [
+    "ETH_USDT",
     "SOL_USDT"
+  ],
+  "binance": [
+    "BTC_USDT"
   ]
 }
