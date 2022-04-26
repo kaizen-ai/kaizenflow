@@ -48,6 +48,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
     def __init__(
         self,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
@@ -66,6 +67,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         infer_exchange_id = False
         super().__init__(
             vendor,
+            universe_version,
             resample_1min,
             root_dir,
             partition_mode,
@@ -187,6 +189,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
 
     def __init__(
         self,
+        universe_version: str,
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
@@ -206,7 +209,7 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         self._db_connection = db_connection
         self._table_name = table_name
         self._mode = mode
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
 
     @staticmethod
     def should_be_online() -> bool:
