@@ -73,26 +73,22 @@ def _main(parser: argparse.ArgumentParser) -> None:
     failures_limit = time_window // interval_min + time_window % interval_min
     consecutive_failures_left = failures_limit
     # Delay start
-    next_start_time = datetime.now()
-    run_delay_sec = 0.0
-    if next_start_time.second != 0:
-        next_start_time = next_start_time.replace(second=0, microsecond=0) + timedelta(minutes=1)
-        run_delay_sec = (next_start_time - datetime.now()).total_seconds()
-        _LOG.info("Delay: %s seconds before first download", run_delay_sec)
+    iteration_start_time = datetime.now()
+    iteration_delay_sec = 0.0
+    if iteration_start_time.second != 0:
+        iteration_start_time = iteration_start_time.replace(second=0, microsecond=0) + timedelta(minutes=1)
+        iteration_delay_sec = (iteration_start_time - datetime.now()).total_seconds()
+        _LOG.info("Delay: %s seconds before first download", iteration_delay_sec)
     # Save time limit.
-    script_stop_time = next_start_time + timedelta(minutes=run_for_min)
-    # Add interval in order to get next download time.
-    next_start_time = next_start_time + timedelta(minutes=interval_min)
-    #
+    script_stop_time = iteration_start_time + timedelta(minutes=run_for_min)
     while datetime.now() < script_stop_time:
         # Wait until next download.
-        time.sleep(run_delay_sec)
+        time.sleep(iteration_delay_sec)
+        # TODO(timurg): investigate why end_timestamp ignored, and returned data up to now.
+        args.start_timestamp = iteration_start_time - timedelta(minutes=time_window)
+        args.end_timestamp = datetime.now()
+        _LOG.info("Starting download data from: %s, till: %s", args.start_timestamp, args.end_timestamp)
         try:
-            current_iteration_time = next_start_time - timedelta(minutes=interval_min) 
-            args.start_timestamp = current_iteration_time - timedelta(minutes=time_window)
-            args.end_timestamp = current_iteration_time
-            _LOG.info("Starting download data from: %s, till: %s",
-                      args.start_timestamp, args.end_timestamp)
             imvcdeexut.download_realtime_for_one_exchange(args, imvcdeexcl.CcxtExchange)
             # Reset failures counter.
             consecutive_failures_left = failures_limit
@@ -101,23 +97,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
             _LOG.error("Download failed: %s, %s failures left", str(e), consecutive_failures_left)
             # Download failed.
             if not consecutive_failures_left:
-                raise RuntimeError(f"{failures_limit} concurrent downloads were failed") from e
+                raise RuntimeError(f"{failures_limit} consecutive downloads were failed") from e
         # if Download took more then expected.
-        if datetime.now() > next_start_time:
+        if datetime.now() > iteration_start_time + timedelta(minutes=interval_min):
             _LOG.error("The download was not finished in %s minutes.", interval_min)
-            run_delay_sec = 0
+            iteration_delay_sec = 0
             # Download that will start after repeated one, should follow to the initial schedule.
-            while datetime.now() > next_start_time:
-                next_start_time = next_start_time + timedelta(minutes=interval_min)
+            while datetime.now() > iteration_start_time + timedelta(minutes=interval_min):
+                iteration_start_time = iteration_start_time + timedelta(minutes=interval_min)
         # If download failed, but there are time before next download.
         elif consecutive_failures_left < failures_limit:
             _LOG.info("Start repeat download immediately.")
-            run_delay_sec = 0
+            iteration_delay_sec = 0
         else:
+            download_duration_sec = (datetime.now() - iteration_start_time).total_seconds()
             # Calculate delay before next download.
-            run_delay_sec = (next_start_time - datetime.now()).total_seconds()
+            iteration_delay_sec = (iteration_start_time + timedelta(minutes=interval_min) - datetime.now()).total_seconds()
             # Add interval in order to get next download time.
-            next_start_time = next_start_time + timedelta(minutes=interval_min)
+            iteration_start_time = iteration_start_time + timedelta(minutes=interval_min)
+            _LOG.info("Succesfull download, took %s sec, delay %s sec until next iteration", download_duration_sec, iteration_delay_sec)
 
 
 if __name__ == "__main__":
