@@ -2264,6 +2264,7 @@ def _generate_compose_file(
             - PORT=${PORT}
           extends:
             app
+          network_mode: ${NETWORK_MODE:-bridge}
           ports:
             # TODO(gp): Rename `AM_PORT`.
             - "${PORT}:${PORT}"
