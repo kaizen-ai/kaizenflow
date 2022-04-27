@@ -575,14 +575,9 @@ class SqlRealTimeImClient(ImClient):
         table_name: str,
         vendor: str,
     ) -> None:
-<<<<<<< Updated upstream
         # Real-time implementation has a different mechanism for getting universe.
         # Passing to make the parent class happy.
         universe_version = "not_supported"
-=======
-        universe_version = "no_version"
-        # Universe version is not used, passing to make the parent class happy.
->>>>>>> Stashed changes
         super().__init__(vendor, universe_version, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
