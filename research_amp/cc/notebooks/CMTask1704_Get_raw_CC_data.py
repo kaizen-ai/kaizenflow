@@ -18,6 +18,7 @@
 # %%
 import logging
 import os
+import requests
 
 import pandas as pd
 
@@ -31,6 +32,11 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 import im_v2.talos.data.client.talos_clients as imvtdctacl
+import helpers.hdatetime as hdateti
+import core.finance.resampling as cfinresa
+
+import core.finance.bid_ask as cfibiask
+import core.plotting.normality as cplonorm
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -209,7 +215,7 @@ len(rt_universe_ccxt)
 
 # %%
 # Choose cc for analysis.
-full_symbols = rt_universe_ccxt[0:2]
+full_symbols = rt_universe_ccxt[2:4]
 full_symbols
 
 # %% [markdown]
@@ -255,7 +261,7 @@ len(historical_universe)
 
 # %%
 # Choose cc for analysis.
-full_symbols = historical_universe[0:2]
+full_symbols = historical_universe[2:4]
 full_symbols
 
 # %% [markdown]
@@ -299,7 +305,7 @@ len(rt_universe_talos)
 
 # %%
 # Choose cc for analysis.
-full_symbols = rt_universe_talos[0:2]
+full_symbols = rt_universe_talos[2:4]
 full_symbols
 
 # %% [markdown]
@@ -387,10 +393,10 @@ vwap_twap_rets_df.head(3)
 
 # %% run_control={"marked": false}
 # Stats and vizualisation to check the outcomes.
-ada_ex = vwap_twap_rets_df.swaplevel(axis=1)
-ada_ex = ada_ex["binance::ADA_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
-display(ada_ex.corr())
-ada_ex.plot()
+bnb_ex = vwap_twap_rets_df.swaplevel(axis=1)
+bnb_ex = bnb_ex["binance::BNB_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
+display(bnb_ex.corr())
+bnb_ex.plot()
 
 # %% [markdown]
 # ## Talos
@@ -495,7 +501,7 @@ def calculate_bid_ask_statistics(df, full_symbol):
     ask_volume_col = "ask_size"
     # Calculate bid-ask statistics.
     ba = cfibiask.process_bid_ask(
-        processed_bid_ask_ada,
+        df,
         bid_col,
         ask_col,
         bid_volume_col,
@@ -547,10 +553,7 @@ final_df.tail()
 
 # %%
 # Metrics visualizations.
-final_df.swaplevel(axis=1)["binance::BTC_USDT"][["quoted_spread"]].plot()
-final_df.swaplevel(axis=1)["binance::BTC_USDT"][["relative_spread"]].plot()
-
-# %%
+final_df.swaplevel(axis=1)["binance::BNB_USDT"][["quoted_spread"]].plot()
 
 # %%
 
