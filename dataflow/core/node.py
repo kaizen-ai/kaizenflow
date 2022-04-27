@@ -196,6 +196,8 @@ class Node(_Node):
         del self._output_vals
         # Force garbage collection.
         gc.collect()
+        # Recreate an empty data structure for the next DAG execution.
+        self._output_vals: Dict[Method, NodeOutput] = {}  # type: ignore[no-redef]
         #
         rss_mem_after_in_gb = hloggin.get_memory_usage(process=None)[0]
         memory_as_str = str(hloggin.get_memory_usage_as_str(process=None))
@@ -209,13 +211,13 @@ class Node(_Node):
             % (self._nid, rss_mem_diff_in_gb, rss_used_mem_in_gb)
         )
         _log(msg)
-        txt_msg = "\n".join(txt)
-        hdbg.dassert_lte(
-            0.9 * rss_used_mem_in_gb,
-            rss_mem_diff_in_gb,
-            msg=txt_msg,
-            only_warning=only_warning,
-        )
+        # txt_msg = "\n".join(txt)
+        # hdbg.dassert_lte(
+        #     0.9 * rss_used_mem_in_gb,
+        #     rss_mem_diff_in_gb,
+        #     msg=txt_msg,
+        #     only_warning=only_warning,
+        # )
 
     def _store_output(self, method: Method, output_name: str, value: Any) -> None:
         """

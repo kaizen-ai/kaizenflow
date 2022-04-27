@@ -25,7 +25,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             self.binance_secret = hsecret.get_secret("binance")
         super().setUp()
 
-    @pytest.mark.slow
+    @pytest.mark.superslow("Around 40s")
     @umock.patch.object(imvcdedhda.imvcdeexcl.hsecret, "get_secret")
     @umock.patch.object(imvcdedhda.hdateti, "get_current_time")
     def test_function_call1(
