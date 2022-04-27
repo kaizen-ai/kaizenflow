@@ -290,7 +290,7 @@ resample_1min = True
 db_connection = config["load"]["connection"]
 table_name = "talos_ohlcv"
 
-talos_rt_client = imvtdctacl.RealTimeSqlTalosClient(
+talos_rt_client = imvtdctacl.TalosSqlRealTimeImClient(
     universe_version, resample_1min, db_connection, table_name
 )
 

@@ -573,16 +573,11 @@ class SqlRealTimeImClient(ImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
-        # TODO(Danya): @gp `vendor` parameter violates the
-        #   "parent should not know about the children" rule.
-        #  `IMClient` requires providing `vendor` at the init.
-        #  The main method used multiple times from the `IMClient` is `read_data`,
-        #  but reimplementing it will violate the DRY principle.
-        #  I suggest removing 'vendor' from parent class, since the vendor
-        #  is used only by derived classes.
         vendor: str,
     ) -> None:
-        universe_version = "no_version"
+        # Real-time implementation has a different mechanism for getting universe.
+        # Passing to make the parent class happy.
+        universe_version = "not_supported"
         super().__init__(vendor, universe_version, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
@@ -768,6 +763,36 @@ class SqlRealTimeImClient(ImClient):
         if limit:
             query += f" LIMIT {limit}"
         return query
+
+    def _read_data_for_multiple_symbols(
+        self,
+        full_symbols: List[ivcu.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
+        *,
+        full_symbol_col_name: Optional[str] = None,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Read data for the given time range and full symbols.
+
+        The method builds a SELECT query like:
+
+        SELECT * FROM {self._table_name} WHERE exchange_id="binance" AND currency_pair="ADA_USDT"
+
+        The WHERE clause with AND/OR operators is built using a built-in method.
+
+        :param full_symbols: a list of symbols, e.g. ["binance::ADA_USDT"]
+        :param start_ts: beginning of the period, is converted to unix epoch
+        :param end_ts: end of the period, is converted to unix epoch
+        :param full_symbol_col_name: the name of the full_symbol column
+        """
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
+        # TODO(Danya): Convert timestamps to int when reading.
+        # TODO(Danya): add a full symbol column to the output
+        raise NotImplementedError
 
     def _get_start_end_ts_for_symbol(
         self, full_symbol: ivcu.FullSymbol, mode: str

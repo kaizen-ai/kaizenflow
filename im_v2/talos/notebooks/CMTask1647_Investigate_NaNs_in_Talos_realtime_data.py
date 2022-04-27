@@ -101,7 +101,7 @@ display(ada_ccxt.head(3))
 universe_version = "v1"
 table_name = "talos_ohlcv"
 mode = "market_data"
-talos_client = imvtdctacl.RealTimeSqlTalosClient(
+talos_client = imvtdctacl.TalosSqlRealTimeImClient(
     universe_version, resample_1min, connection, table_name, mode
 )
 
