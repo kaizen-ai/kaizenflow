@@ -555,18 +555,21 @@ final_df.tail()
 # Metrics visualizations.
 final_df.swaplevel(axis=1)["binance::BNB_USDT"][["quoted_spread"]].plot()
 
-# %%
+# %% [markdown]
+# ## Compute the distribution of (return - spread)
 
 # %%
+# Choose the specific `full_symbol`.
+df_bnb = final_df.swaplevel(axis=1)["binance::BNB_USDT"]
+df_bnb.head(3)
 
 # %%
+# Calculate (|returns| - spread) and display descriptive stats.
+df_bnb["ret_spr_diff"] = abs(df_bnb["close.ret_0"])-df_bnb["quoted_spread"]
+display(df_bnb["ret_spr_diff"].describe())
 
 # %%
-
-# %%
-
-# %%
-
-# %%
+# Visualize the result
+cplonorm.plot_qq(df_bnb["ret_spr_diff"])
 
 # %%
