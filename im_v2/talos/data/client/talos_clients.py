@@ -202,11 +202,8 @@ class RealTimeSqlTalosClient(icdc.SqlRealTimeImClient):
         `market_data` mode enforces an output compatible with `MarketData` class.
         This mode is required when loading data to use inside a model.
         """
-        vendor = "talos"
-        self._db_connection = db_connection
-        self._table_name = table_name
+        super().__init__(resample_1min, db_connection, table_name, vendor="talos")
         self._mode = mode
-        super().__init__(vendor, resample_1min)
 
     @staticmethod
     def should_be_online() -> bool:
