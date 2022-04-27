@@ -514,6 +514,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("6 seconds.")
     def test_multiple_months2(self) -> None:
         """
         Interval of multiple month length capturing data for 2 years.

@@ -14,7 +14,7 @@ moto = pytest.importorskip("moto")
 
 # It is necessary that boto3 is imported after moto.
 # If not, boto3 will access real AWS.
-import boto3
+import boto3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-positiona
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -57,8 +57,8 @@ class S3Mock_TestCase(hunitest.TestCase):
         super().setUp()
 
     def tearDown(self) -> None:
-        # Stop moto.
-        self.mock_s3.stop()
-        self.mock_aws_credentials_patch.stop()
-        #
+        # We need to deallocate in reverse order to avoid race conditions.
         super().tearDown()
+        # Stop moto.
+        self.mock_aws_credentials_patch.stop()
+        self.mock_s3.stop()
