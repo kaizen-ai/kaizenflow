@@ -6085,7 +6085,7 @@ def fix_perms(  # type: ignore
         #
         cmd = f"To compare run:\n> vimdiff {file_name1} {file_name2}"
         print(cmd)
-    elif hgit.execute_repo_config_code("is_dev1()"):
+    elif hgit.execute_repo_config_code("is_dev_ck()"):
         user = hsystem.get_user_name()
         group = user
         cmd = f"sudo chown -R {user}:{group} *"
