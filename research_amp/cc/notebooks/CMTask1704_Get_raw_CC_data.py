@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.7
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -414,3 +414,156 @@ ada_ex = vwap_twap_rets_df_talos.swaplevel(axis=1)
 ada_ex = ada_ex["binance::ADA_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
 display(ada_ex.corr())
 ada_ex.plot()
+
+
+# %% [markdown]
+# # Bid-ask data
+
+# %%
+# TODO(Max): Refactor the loading part once #1766 is implemented.
+
+# %%
+# Functions to deal with `crypto-chassis` data.
+def load_bid_ask_data(exchange_id, currency_pair, list_of_dates):
+    # Using the variables from `datelist` the multiple requests can be sent to the API.
+    result = []
+    for date in list_of_dates:
+        # Interaction with the API.
+        r = requests.get(
+            f"https://api.cryptochassis.com/v1/market-depth/{exchange_id}/{currency_pair}?startTime={date}"
+        )
+        data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")  
+        # Attaching it day-by-day to the final DataFrame.
+        result.append(data)
+    bid_ask_df = pd.concat(result)
+    return bid_ask_df
+
+def clean_up_raw_bid_ask_data(df, full_symbol):
+    # Split the columns to differentiate between `price` and `size`.
+    df[["bid_price", "bid_size"]] = df["bid_price_bid_size"].str.split(
+        "_", expand=True
+    )
+    df[["ask_price", "ask_size"]] = df["ask_price_ask_size"].str.split(
+        "_", expand=True
+    )
+    df = df.drop(columns=["bid_price_bid_size", "ask_price_ask_size"])
+    # Convert `timestamps` to the usual format.
+    df = df.rename(columns={"time_seconds": "timestamp"})
+    df["timestamp"] = df["timestamp"].apply(
+        lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
+    )
+    df = df.set_index("timestamp")
+    # Convert to `float`.
+    for cols in df.columns:
+        df[cols] = df[cols].astype(float)
+    # Add `full_symbol` (hardcoded solution).
+    df["full_symbol"] = full_symbol
+    return df
+
+def resample_bid_ask(df, resampling_rule):
+    """
+    In the current format the data is presented in the `seconds` frequency. In
+    order to convert it to the minutely (or other) frequencies the following
+    aggregation rules are applied:
+
+    - Size is the sum of all sizes during the resampling period
+    - Price is the mean of all prices during the resampling period
+    """
+    new_df = cfinresa.resample(df, rule=resampling_rule).agg(
+        {
+            "bid_price": "mean",
+            "bid_size": "sum",
+            "ask_price": "mean",
+            "ask_size": "sum",
+            "full_symbol": "last",
+        }
+    )
+    return new_df
+
+def process_bid_ask_data(df, full_symbol, resampling_rule):
+    # Convert the data to the right format.
+    converted_df = clean_up_raw_bid_ask_data(df, full_symbol)
+    # Resample.
+    converted_resampled_df = resample_bid_ask(converted_df, resampling_rule)
+    return converted_resampled_df
+
+def calculate_bid_ask_statistics(df, full_symbol): 
+    # Set up params.
+    bid_col = "bid_price"
+    ask_col = "ask_price"
+    bid_volume_col = "bid_size"
+    ask_volume_col = "ask_size"
+    # Calculate bid-ask statistics.
+    ba = cfibiask.process_bid_ask(
+        processed_bid_ask_ada,
+        bid_col,
+        ask_col,
+        bid_volume_col,
+        ask_volume_col)
+    # Few additions to the desired format.
+    ba["full_symbol"] = full_symbol
+    converted_ba = dtfsysonod._convert_to_multiindex(ba, "full_symbol")
+    return converted_ba
+
+
+# %% [markdown]
+# ## Load, process and calculate metrics for raw bid ask data from crypto-chassis
+
+# %%
+# Get the list of all dates in the range.
+datelist = pd.date_range("2022-01-01", periods=14).tolist()
+datelist = [str(x.strftime("%Y-%m-%d")) for x in datelist]
+
+# %%
+# These `full_symbols` need to be loaded (to attach it to historical CCXT data).
+full_symbols
+
+# %%
+# Load `binance::BNB_USDT`.
+bid_ask_bnb = load_bid_ask_data("binance", "bnb-usdt", datelist)
+# Transforming the data. Data is resampled during its transformation.
+processed_bid_ask_bnb = process_bid_ask_data(bid_ask_bnb, "binance::BNB_USDT", "5T")
+# Bid ask stats.
+bid_ask_stats_bnb = calculate_bid_ask_statistics(processed_bid_ask_bnb, "binance::BNB_USDT")
+
+# %%
+# Load `binance::BTC_USDT`.
+bid_ask_btc = load_bid_ask_data("binance", "btc-usdt", datelist)
+# Transforming the data. Data is resampled during its transformation.
+processed_bid_ask_btc = process_bid_ask_data(bid_ask_btc, "binance::BTC_USDT", "5T")
+# Bid ask stats.
+bid_ask_stats_btc = calculate_bid_ask_statistics(processed_bid_ask_btc, "binance::BTC_USDT")
+
+# %%
+bid_ask_df = pd.concat([bid_ask_stats_bnb, bid_ask_stats_btc],axis=1)
+bid_ask_df.head(3)
+
+# %% [markdown]
+# ## Unite VWAP, TWAP, rets statistics with bid-ask stats
+
+# %%
+final_df = pd.concat([vwap_twap_rets_df, bid_ask_df],axis=1)
+final_df.tail()
+
+# %%
+# Metrics visualizations.
+final_df.swaplevel(axis=1)["binance::BTC_USDT"][["quoted_spread"]].plot()
+final_df.swaplevel(axis=1)["binance::BTC_USDT"][["relative_spread"]].plot()
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
