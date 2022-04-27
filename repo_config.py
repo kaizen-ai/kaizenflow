@@ -146,16 +146,19 @@ def enable_privileged_mode() -> bool:
     """
     Return whether an host supports privileged mode for its containers.
     """
-    if is_mac():
-        val = True
-    elif is_dev_ck():
-        val = True
-    elif is_dev4():
+    if get_name() == "//dev_tools":
         val = False
-    elif is_inside_ci():
-        val = True
     else:
-        _raise_invalid_host()
+        if is_mac():
+            val = True
+        elif is_dev_ck():
+            val = True
+        elif is_dev4():
+            val = False
+        elif is_inside_ci():
+            val = True
+        else:
+            _raise_invalid_host()
     return val
 
 
@@ -207,12 +210,15 @@ def has_dind_support() -> bool:
     rc = os.system(cmd)
     # dind is supported on both Mac and GH Actions.
     if True:
-        if is_mac() or is_dev_ck() or is_inside_ci():
-            assert has_dind, "Expected privileged mode"
-        elif is_dev4():
+        if get_name() == "//dev_tools":
             assert not has_dind, "Not expected privileged mode"
         else:
-            _raise_invalid_host()
+            if is_mac() or is_dev_ck() or is_inside_ci():
+                assert has_dind, "Expected privileged mode"
+            elif is_dev4():
+                assert not has_dind, "Not expected privileged mode"
+            else:
+                _raise_invalid_host()
     return has_dind
 
 
@@ -321,7 +327,7 @@ def is_CK_S3_available() -> bool:
         # CK bucket is not available on dev4.
         val = False
     elif is_inside_ci():
-        if get_name() == "//cmamp":
+        if get_name() in ("//amp", "//dev_tools"):
             # No CK bucket.
             val = False
     _LOG.debug("val=%s", val)
