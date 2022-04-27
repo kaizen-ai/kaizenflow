@@ -48,6 +48,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
     def __init__(
         self,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
@@ -66,6 +67,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         infer_exchange_id = False
         super().__init__(
             vendor,
+            universe_version,
             resample_1min,
             root_dir,
             partition_mode,
@@ -79,19 +81,6 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         See description in the parent class.
         """
         raise NotImplementedError
-
-    def get_universe(self) -> List[ivcu.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        # TODO(Nina): CMTask #1658  Create `get_universe()` for `TalosHistoricalPqByTileClient`.
-        universe = [
-            "binance::ADA_USDT",
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
-            "coinbase::BTC_USDT",
-        ]
-        return universe
 
     @staticmethod
     def _get_columns_for_query() -> List[str]:

@@ -63,6 +63,7 @@ class ImClient(abc.ABC):
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
@@ -71,12 +72,15 @@ class ImClient(abc.ABC):
         Constructor.
 
         :param vendor: price data provider
+        :param universe_version: version of universe file
         :param resample_1min: whether to resample data to 1 minute or not
         :param full_symbol_col_name: the name of the column storing the symbol
             name. It can be overridden by other methods
         """
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
+        hdbg.dassert_isinstance(universe_version, str)
+        self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
         # TODO(gp): This is the name of the column of the asset_id in the data
@@ -90,14 +94,6 @@ class ImClient(abc.ABC):
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
-
-    # TODO(gp): Why static?
-    @staticmethod
-    @abc.abstractmethod
-    def get_universe() -> List[ivcu.FullSymbol]:
-        """
-        Return the entire universe of valid full symbols.
-        """
 
     # TODO(gp): Why static?
     @staticmethod
@@ -123,6 +119,17 @@ class ImClient(abc.ABC):
             for full_symbol in full_symbols
         ]
         return numerical_asset_id
+
+    def get_universe(self) -> List[ivcu.FullSymbol]:
+        """
+        Return the entire universe of valid full symbols.
+        """
+        universe = ivcu.get_vendor_universe(
+            self._vendor,
+            version=self._universe_version,
+            as_full_symbol=True,
+        )
+        return universe  # type: ignore[no-any-return]
 
     def read_data(
         self,
@@ -568,9 +575,14 @@ class SqlRealTimeImClient(ImClient):
         table_name: str,
         vendor: str,
     ) -> None:
-        self._db_connection = db_connection
+        # Real-time implementation has a different mechanism for getting universe.
+        # Passing to make the parent class happy.
+        universe_version = "not_supported"
+        # These parameters are needed to get the universe which is needed to init
+        # the parent class so they go before the parent's init.
         self._table_name = table_name
-        super().__init__(vendor, resample_1min)
+        self._db_connection = db_connection
+        super().__init__(vendor, universe_version, resample_1min)
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
