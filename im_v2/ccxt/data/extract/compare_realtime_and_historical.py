@@ -18,7 +18,6 @@ Import as:
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
-import logging
 import os
 
 import pandas as pd
@@ -33,7 +32,6 @@ import helpers.hsql as hsql
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.im_lib_tasks as imvimlita
 
-_LOG = logging.getLogger(__name__)
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -78,7 +76,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser = hparser.add_verbosity_arg(parser)
     parser = hs3.add_s3_args(parser)
-    return parser
+    return parser  # type: ignore[no-any-return]
 
 
 def _run(args: argparse.Namespace) -> None:
@@ -131,8 +129,10 @@ def _run(args: argparse.Namespace) -> None:
     # Inform if both dataframes are empty,
     # most likely there is a wrong arg value given.
     if rt_data_reindex.empty and daily_data_reindex.empty:
-        message = "Both realtime and staged data are missing, \n" + \
-                  "Did you provide correct arguments?"
+        message = (
+            "Both realtime and staged data are missing, \n"
+            + "Did you provide correct arguments?"
+        )
         hdbg.dfatal(message=message)
     # Get missing data.
     rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
