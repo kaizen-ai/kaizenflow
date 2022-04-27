@@ -55,7 +55,6 @@ def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
     """
     Print an error message and exits.
     """
-    ret = ""
     message = str(message)
     ret = "\n" + _frame(message, "#", 80)
     if assertion_type is None:
@@ -818,9 +817,11 @@ def init_logger(
     # Exit to avoid to replicate the same output multiple times.
     if not in_pytest and root_logger.handlers:
         print(WARNING + ": Logger already initialized: skipping")
-        import traceback
+        if False:
+            # Print info about the caller.
+            import traceback
 
-        traceback.print_stack()
+            traceback.print_stack()
         return
     #
     print(INFO + f": > cmd='{get_command_line()}'")

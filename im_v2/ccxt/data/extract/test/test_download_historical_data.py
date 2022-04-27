@@ -5,14 +5,9 @@ import unittest.mock as umock
 import pytest
 
 import helpers.hmoto as hmoto
-import helpers.hsystem as hsystem
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
 
 
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1292/1666.",
-)
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
     # Secret needed for getting historical data.
     binance_secret = None
@@ -25,7 +20,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             self.binance_secret = hsecret.get_secret("binance")
         super().setUp()
 
-    @pytest.mark.slow
+    @pytest.mark.superslow("Around 40s")
     @umock.patch.object(imvcdedhda.imvcdeexcl.hsecret, "get_secret")
     @umock.patch.object(imvcdedhda.hdateti, "get_current_time")
     def test_function_call1(
