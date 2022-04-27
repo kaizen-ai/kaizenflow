@@ -666,11 +666,11 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
 
 # #############################################################################
-# TestRealTimeSqlTalosClient1
+# TestTalosSqlRealTimeImClient1
 # #############################################################################
 
 
-class TestRealTimeSqlTalosClient1(
+class TestTalosSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
     def test_build_select_query1(self) -> None:
@@ -895,12 +895,12 @@ class TestRealTimeSqlTalosClient1(
     def setup_talos_sql_client(
         self,
         resample_1min: Optional[bool] = True,
-    ) -> imvtdctacl.RealTimeSqlTalosClient:
+    ) -> imvtdctacl.TalosSqlRealTimeImClient:
         """
         Initialize Talos SQL Client.
         """
         table_name = "talos_ohlcv"
-        sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
+        sql_talos_client = imvtdctacl.TalosSqlRealTimeImClient(
             resample_1min, self.connection, table_name
         )
         return sql_talos_client
