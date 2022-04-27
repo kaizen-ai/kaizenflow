@@ -363,7 +363,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
     def __init__(
         self,
-        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
@@ -379,6 +378,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         vendor = "CCXT"
+        universe_version = "no_version"
         infer_exchange_id = True
         super().__init__(
             vendor,

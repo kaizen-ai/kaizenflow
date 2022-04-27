@@ -24,7 +24,6 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         self,
         df: pd.DataFrame,
         universe: List[ivcu.FullSymbol],
-        universe_version: str,
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
@@ -51,6 +50,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         self._universe = sorted(universe)
         # Initialise the parent class.
         vendor = "data_frame"
+        universe_version = "not_implemented"
         super().__init__(
             vendor,
             universe_version,

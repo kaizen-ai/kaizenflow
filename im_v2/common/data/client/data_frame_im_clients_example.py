@@ -21,9 +21,8 @@ def get_DataFrameImClient_example1() -> imvcdcdfimc.DataFrameImClient:
     )
     df = cofinanc.get_im_client_market_data_df1(universe)
     # Init the client for testing.
-    universe_version = "v1"
     resample_1min = False
     im_client = imvcdcdfimc.DataFrameImClient(
-        df, universe, universe_version, resample_1min
+        df, universe, resample_1min
     )
     return im_client
