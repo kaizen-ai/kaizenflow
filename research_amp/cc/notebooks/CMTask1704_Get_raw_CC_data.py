@@ -246,7 +246,7 @@ data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
 
 # Initiate the client.
-historical_client = icdcl.CcxtHistoricalPqByTileClient(
+historical_client_ccxt = icdcl.CcxtHistoricalPqByTileClient(
     universe_version,
     resample_1min,
     root_dir,
@@ -261,9 +261,6 @@ historical_client = icdcl.CcxtHistoricalPqByTileClient(
 # %%
 # Specify the universe.
 historical_universe = historical_client_ccxt.get_universe()
-len(historical_universe)
-
-# %%
 # Choose cc for analysis.
 full_symbols = historical_universe[2:4]
 full_symbols
@@ -296,7 +293,7 @@ db_connection = config["load"]["connection"]
 table_name = "talos_ohlcv"
 
 talos_rt_client = imvtdctacl.TalosSqlRealTimeImClient(
-    universe_version, resample_1min, db_connection, table_name
+    resample_1min, db_connection, table_name
 )
 
 # %% [markdown]
@@ -352,9 +349,6 @@ talos_hist_client = imvtdctacl.TalosHistoricalPqByTileClient(
 # %%
 # Specify the universe.
 hist_universe_talos = talos_hist_client.get_universe()
-len(hist_universe_talos)
-
-# %%
 # Choose cc for analysis.
 full_symbols_hist_talos = hist_universe_talos[0:2]
 full_symbols_hist_talos
