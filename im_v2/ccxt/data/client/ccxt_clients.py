@@ -410,17 +410,18 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         return universe  # type: ignore[no-any-return]
 
     @staticmethod
-    def _get_columns_for_query(columns: Optional[List[str]]) -> List[str]:
+    def _get_columns_for_query(full_symbol_col_name: str, columns: Optional[List[str]]) -> List[str]:
         """
         See description in the parent class.
         """
-        # Specify OHLCV columns available for CCXT Parquet data query.
-        query_columns = ["open", "high", "low", "close", "volume"]
         if columns:
-            # Get only those OHLCV columns that were specified for the query.
-            query_columns = list(set(query_columns).intersection(columns))
-        # Append currency pair column required for further computations.
-        query_columns.append("currency_pair")
+            # TODO(Grisha): @Dan explain why we did this.
+            query_columns = columns.copy()
+            query_columns.append("currency_pair")
+            if full_symbol_col_name in query_columns:
+                query_columns = [col for col in query_columns if col != full_symbol_col_name]
+        else:
+            query_columns = columns
         return query_columns
 
     @staticmethod
@@ -432,16 +433,16 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         if "exchange_id" in kwargs:
             df["exchange_id"] = kwargs["exchange_id"]
-        hdbg.dassert_in("exchange_id", df.columns)
         # Convert to string, see the parent class for details.
         df["exchange_id"] = df["exchange_id"].astype(str)
         df["currency_pair"] = df["currency_pair"].astype(str)
-        # Create full symbol column and make it first in the data.
+        # Add full symbol column.
         full_symbol_col = ivcu.build_full_symbol(
             df["exchange_id"], df["currency_pair"]
         )
         df.insert(0, full_symbol_col_name, full_symbol_col)
         # Drop exchange id and currency pair columns.
+        # TODO(Grisha): @Dan elaborate on this.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
         return df
 

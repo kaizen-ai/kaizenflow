@@ -202,6 +202,23 @@ class ImClientTestCase(hunitest.TestCase):
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
+    def _test_read_data9(
+        self, im_client: icdc.ImClient, full_symbol: ivcu.FullSymbol, columns: List[str],
+    ) -> None:
+        """
+        Test:
+        - error is raised when unsupported columns are provided
+        - start_ts = end_ts = None
+        - resample_1min = True
+        """
+        full_symbols = [full_symbol]
+        start_ts = None
+        end_ts = None
+        with self.assertRaises(AssertionError):
+            im_client.read_data(
+                full_symbols, start_ts, end_ts, columns
+            )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def _test_get_start_ts_for_symbol1(

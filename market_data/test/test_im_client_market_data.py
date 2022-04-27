@@ -11,6 +11,7 @@ import market_data.test.market_data_test_case as mdtmdtca
 # #############################################################################
 
 
+# TODO(Grisha): @Dan, can we use CcxtHistoricalPqByTileClient?
 class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -354,10 +355,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             exp_df_as_str,
         )
 
+
+    # TODO(Grisha): @Dan make columns None after implementing the new test cases.
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns: List[str] = ["asset_id", "close"]
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap

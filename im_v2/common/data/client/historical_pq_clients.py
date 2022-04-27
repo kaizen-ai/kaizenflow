@@ -79,18 +79,19 @@ class HistoricalPqByTileClient(
 
     # TODO(Grisha): factor out the column names in the child classes, see `CCXT`, `Talos`.
     @staticmethod
-    def _get_columns_for_query(
-        columns: Optional[List[str]],
-    ) -> Optional[List[str]]:
+    def _get_columns_for_query(full_symbol_col_name: str, columns: Optional[List[str]]) -> Optional[List[str]]:
         """
         Get columns for Parquet data query.
 
-        If passed columns are not `None`, select the columns that are among
-        available for the class and belong to the passed ones.
-
         For base implementation the columns are `None`
         """
-        return None
+        # TODO(Grisha): @Dan explain why we did this.
+        if columns and (full_symbol_col_name not in columns):
+            query_columns = columns.copy()
+            query_columns.append(full_symbol_col_name)
+        else:
+            query_columns = columns
+        return query_columns
 
     # TODO(Grisha): factor out the common code in the child classes, see CmTask #1696
     # "Refactor HistoricalPqByTileClient and its child classes".
@@ -110,18 +111,6 @@ class HistoricalPqByTileClient(
         # ```
         # which confuses `df.groupby()`, so we force that column to str.
         df[full_symbol_col_name] = df[full_symbol_col_name].astype(str)
-        # Set columns to drop.
-        if "columns" in kwargs:
-            # Get data columns that were not specified for return.
-            columns_to_drop = set(df.columns) - set(kwargs["columns"])
-            if full_symbol_col_name in columns_to_drop:
-                # Exclude full symbol columns since it is required.
-                columns_to_drop.remove(full_symbol_col_name)
-        else:
-            # Get partitioning columns to drop.
-            columns_to_drop = ["month", "year"]
-        # Drop unnecessary columns.
-        df = df.drop(columns_to_drop, axis=1)
         return df
 
     def _read_data_for_multiple_symbols(
@@ -130,7 +119,6 @@ class HistoricalPqByTileClient(
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         columns: Optional[List[str]],
-        *,
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -139,13 +127,13 @@ class HistoricalPqByTileClient(
         """
         hdbg.dassert_container_type(full_symbols, list, str)
         # Implement logging and add it to kwargs.
+        # TODO(Grisha): @Dan add columns to `LOG.debug` everywhere where it makes sense.
         _LOG.debug(
-            hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
+            hprint.to_str("full_symbols start_ts end_ts columns full_symbol_col_name")
         )
         kwargs["log_level"] = logging.INFO
         # Get columns for query and add them to kwargs.
-        columns_for_query = self._get_columns_for_query(columns)
-        kwargs["columns"] = columns_for_query
+        kwargs["columns"] = self._get_columns_for_query(full_symbol_col_name, columns)
         # Add AWS profile to kwargs.
         kwargs["aws_profile"] = self._aws_profile
         # Build root dirs to the data and Parquet filtering condition.
@@ -183,13 +171,14 @@ class HistoricalPqByTileClient(
                 # Infer `exchange_id` from a file path if it is not present in data.
                 # E.g., `s3://cryptokaizen-data/historical/ccxt/latest/binance` -> `binance`.
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
-            if columns:
-                # Put specified columns in transformation kwargs for filtering.
-                transformation_kwargs["columns"] = columns
             # Transform data.
             root_dir_df = self._apply_transformations(
                 root_dir_df, full_symbol_col_name, **transformation_kwargs
             )
+            # TODO(Grisha): @Dan elaborate on this.
+            month_year_columns = ["month", "year"]
+            if all(col in root_dir_df.columns.to_list() for col in month_year_columns):
+                root_dir_df = root_dir_df.drop(month_year_columns, axis=1)
             #
             res_df_list.append(root_dir_df)
         # Combine data from all root dirs into a single DataFrame.
