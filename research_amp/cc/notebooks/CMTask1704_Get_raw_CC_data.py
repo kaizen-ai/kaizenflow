@@ -18,25 +18,24 @@
 # %%
 import logging
 import os
-import requests
 
 import pandas as pd
+import requests
 
 import core.config.config_ as cconconf
 import core.finance as cofinanc
+import core.finance.bid_ask as cfibiask
+import core.finance.resampling as cfinresa
+import core.plotting.normality as cplonorm
 import dataflow.core as dtfcore
 import dataflow.system.source_nodes as dtfsysonod
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 import im_v2.talos.data.client.talos_clients as imvtdctacl
-import helpers.hdatetime as hdateti
-import core.finance.resampling as cfinresa
-
-import core.finance.bid_ask as cfibiask
-import core.plotting.normality as cplonorm
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -438,11 +437,12 @@ def load_bid_ask_data(exchange_id, currency_pair, list_of_dates):
         r = requests.get(
             f"https://api.cryptochassis.com/v1/market-depth/{exchange_id}/{currency_pair}?startTime={date}"
         )
-        data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")  
+        data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")
         # Attaching it day-by-day to the final DataFrame.
         result.append(data)
     bid_ask_df = pd.concat(result)
     return bid_ask_df
+
 
 def clean_up_raw_bid_ask_data(df, full_symbol):
     # Split the columns to differentiate between `price` and `size`.
@@ -466,6 +466,7 @@ def clean_up_raw_bid_ask_data(df, full_symbol):
     df["full_symbol"] = full_symbol
     return df
 
+
 def resample_bid_ask(df, resampling_rule):
     """
     In the current format the data is presented in the `seconds` frequency. In
@@ -486,6 +487,7 @@ def resample_bid_ask(df, resampling_rule):
     )
     return new_df
 
+
 def process_bid_ask_data(df, full_symbol, resampling_rule):
     # Convert the data to the right format.
     converted_df = clean_up_raw_bid_ask_data(df, full_symbol)
@@ -493,7 +495,8 @@ def process_bid_ask_data(df, full_symbol, resampling_rule):
     converted_resampled_df = resample_bid_ask(converted_df, resampling_rule)
     return converted_resampled_df
 
-def calculate_bid_ask_statistics(df, full_symbol): 
+
+def calculate_bid_ask_statistics(df, full_symbol):
     # Set up params.
     bid_col = "bid_price"
     ask_col = "ask_price"
@@ -501,11 +504,8 @@ def calculate_bid_ask_statistics(df, full_symbol):
     ask_volume_col = "ask_size"
     # Calculate bid-ask statistics.
     ba = cfibiask.process_bid_ask(
-        df,
-        bid_col,
-        ask_col,
-        bid_volume_col,
-        ask_volume_col)
+        df, bid_col, ask_col, bid_volume_col, ask_volume_col
+    )
     # Few additions to the desired format.
     ba["full_symbol"] = full_symbol
     converted_ba = dtfsysonod._convert_to_multiindex(ba, "full_symbol")
@@ -528,27 +528,35 @@ full_symbols
 # Load `binance::BNB_USDT`.
 bid_ask_bnb = load_bid_ask_data("binance", "bnb-usdt", datelist)
 # Transforming the data. Data is resampled during its transformation.
-processed_bid_ask_bnb = process_bid_ask_data(bid_ask_bnb, "binance::BNB_USDT", "5T")
+processed_bid_ask_bnb = process_bid_ask_data(
+    bid_ask_bnb, "binance::BNB_USDT", "5T"
+)
 # Bid ask stats.
-bid_ask_stats_bnb = calculate_bid_ask_statistics(processed_bid_ask_bnb, "binance::BNB_USDT")
+bid_ask_stats_bnb = calculate_bid_ask_statistics(
+    processed_bid_ask_bnb, "binance::BNB_USDT"
+)
 
 # %%
 # Load `binance::BTC_USDT`.
 bid_ask_btc = load_bid_ask_data("binance", "btc-usdt", datelist)
 # Transforming the data. Data is resampled during its transformation.
-processed_bid_ask_btc = process_bid_ask_data(bid_ask_btc, "binance::BTC_USDT", "5T")
+processed_bid_ask_btc = process_bid_ask_data(
+    bid_ask_btc, "binance::BTC_USDT", "5T"
+)
 # Bid ask stats.
-bid_ask_stats_btc = calculate_bid_ask_statistics(processed_bid_ask_btc, "binance::BTC_USDT")
+bid_ask_stats_btc = calculate_bid_ask_statistics(
+    processed_bid_ask_btc, "binance::BTC_USDT"
+)
 
 # %%
-bid_ask_df = pd.concat([bid_ask_stats_bnb, bid_ask_stats_btc],axis=1)
+bid_ask_df = pd.concat([bid_ask_stats_bnb, bid_ask_stats_btc], axis=1)
 bid_ask_df.head(3)
 
 # %% [markdown]
 # ## Unite VWAP, TWAP, rets statistics with bid-ask stats
 
 # %%
-final_df = pd.concat([vwap_twap_rets_df, bid_ask_df],axis=1)
+final_df = pd.concat([vwap_twap_rets_df, bid_ask_df], axis=1)
 final_df.tail()
 
 # %%
@@ -565,11 +573,9 @@ df_bnb.head(3)
 
 # %%
 # Calculate (|returns| - spread) and display descriptive stats.
-df_bnb["ret_spr_diff"] = abs(df_bnb["close.ret_0"])-df_bnb["quoted_spread"]
+df_bnb["ret_spr_diff"] = abs(df_bnb["close.ret_0"]) - df_bnb["quoted_spread"]
 display(df_bnb["ret_spr_diff"].describe())
 
 # %%
 # Visualize the result
 cplonorm.plot_qq(df_bnb["ret_spr_diff"])
-
-# %%
