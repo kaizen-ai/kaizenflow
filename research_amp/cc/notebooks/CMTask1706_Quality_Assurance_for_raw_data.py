@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.7
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -27,6 +27,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import im_v2.ccxt.data.client as icdcl
+import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -230,6 +231,7 @@ file_path = "s3://cryptokaizen-data/historical/ccxt/latest/kucoin/currency_pair=
 pq_ada = pd.read_parquet(file_path)
 pq_ada
 
+
 # %% [markdown]
 # One can notice that the data for February starts exactly from the point where NaN sequence is ending.
 
@@ -238,3 +240,86 @@ pq_ada
 
 # %% [markdown]
 # The raw data doesn't have include the data for NaN sequences in client which means that with great probability, __the client doesn't distorts the raw data and it comes initially with these NaN sequences__.
+
+# %% [markdown]
+# # Load CCXT data using requests from CCXT
+
+# %% [markdown]
+# ## Function
+
+# %%
+def timestamp_to_datetime(timestamps):
+    times = []
+    for time in timestamps:
+        times.append(hdateti.convert_unix_epoch_to_timestamp(time))
+    return times
+
+
+# %% [markdown]
+# ## Load data
+
+# %%
+ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
+ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data("ADA/USDT")
+
+# %%
+_LOG.info(ccxt_kucoin_ada_data.shape)
+ccxt_kucoin_ada_data.head()
+
+# %% [markdown]
+# ## Set Datetime index to loaded data
+
+# %%
+indexes = timestamp_to_datetime(ccxt_kucoin_ada_data['timestamp'])
+ccxt_kucoin_ada_data.set_index(pd.to_datetime(indexes), inplace=True)
+ccxt_kucoin_ada_data.head(2)
+
+# %% [markdown]
+# ## Take a specific period of time - ["2019-02-18 00:00:00+00:00"]
+
+# %%
+ccxt_ada_nans = ada_kucoin_ccxt.loc[
+    (ada_kucoin_ccxt.index > "2019-02-18 00:00:00+00:00")
+    & (ada_kucoin_ccxt["open"].isna == True)
+]
+ccxt_exchange_ada = ccxt_kucoin_ada_data.loc[
+    (ccxt_kucoin_ada_data.index > "2019-02-18 00:00:00+00:00")
+]
+# Check that the lenght is identical.
+print(
+    f"Both datasets have the same length: {len(ccxt_ada_nans)==len(ccxt_exchange_ada)}"
+)
+
+# %%
+print("Period of NaNs in CCXT:")
+_LOG.info(ccxt_ada_nans.shape)
+display(ccxt_ada_nans.head())
+print("\n******************************************\n")
+print("Complete data:")
+_LOG.info(ccxt_exchange_ada.shape)
+display(ccxt_exchange_ada.head())
+
+# %%
+ccxt_ada_nans = ada_kucoin_ccxt.loc[
+    (ada_kucoin_ccxt.index < "2019-02-18 00:00:00+00:00")
+    & (ada_kucoin_ccxt["open"].isna == True)
+]
+ccxt_exchange_ada = ccxt_kucoin_ada_data.loc[
+    (ccxt_kucoin_ada_data.index < "2019-02-18 00:00:00+00:00")
+]
+# Check that the lenght is identical.
+print(
+    f"Both datasets have the same length: {len(ccxt_ada_nans)==len(ccxt_exchange_ada)}"
+)
+
+# %%
+print("Period of NaNs in CCXT:")
+_LOG.info(ccxt_ada_nans.shape)
+display(ccxt_ada_nans.head())
+print("\n******************************************\n")
+print("Complete data:")
+_LOG.info(ccxt_exchange_ada.shape)
+display(ccxt_exchange_ada.head())
+
+# %%
+print(f"Start: {ccxt_kucoin_ada_data.index.min()}\nEnd: {ccxt_kucoin_ada_data.index.max()}")
