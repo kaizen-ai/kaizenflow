@@ -175,7 +175,9 @@ def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
 
 
 # %% run_control={"marked": false}
-df_approach_1 = resample_calculate_twap_vwap_and_returns(data_hist, resampling_freq)
+df_approach_1 = resample_calculate_twap_vwap_and_returns(
+    data_hist, resampling_freq
+)
 df_approach_1.head(3)
 
 # %% [markdown]

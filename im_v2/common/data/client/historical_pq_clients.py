@@ -235,8 +235,12 @@ class HistoricalPqByDateClient(
         *,
         full_symbol_col_name: Optional[str] = None,
     ):
+        universe_version = "not_implemented"
         super().__init__(
-            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor,
+            universe_version,
+            resample_1min,
+            full_symbol_col_name=full_symbol_col_name,
         )
         self._read_func = read_func
 

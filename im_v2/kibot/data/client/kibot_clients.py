@@ -322,7 +322,7 @@ class KibotFuturesCsvParquetByAssetClient(
 
     def __init__(
         self,
-        universe_version,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         extension: str,

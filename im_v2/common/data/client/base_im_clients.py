@@ -581,13 +581,10 @@ class SqlRealTimeImClient(ImClient):
         #  is used only by derived classes.
         vendor: str,
     ) -> None:
-        super().__init__(vendor, resample_1min)
+        universe_version = "no_version"
+        super().__init__(vendor, universe_version, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
-
-    @abc.abstractmethod
-    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
-         pass
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
@@ -595,6 +592,10 @@ class SqlRealTimeImClient(ImClient):
         Return metadata.
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        pass
 
     def get_universe(self) -> List[ivcu.FullSymbol]:
         """

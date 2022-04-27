@@ -99,7 +99,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     vendor = "CCXT"
     universe_version = "v3"
     resample_1min = False
-    ccxt_db_client = icdcl.CcxtCddDbClient(vendor, universe_version, resample_1min, connection)
+    ccxt_db_client = icdcl.CcxtCddDbClient(
+        vendor, universe_version, resample_1min, connection
+    )
     # Get universe of symbols.
     symbols = ivcu.get_vendor_universe(vendor, as_full_symbol=True)
     for date_index in range(len(timespan) - 1):

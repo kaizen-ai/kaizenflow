@@ -83,7 +83,9 @@ start_date = end_date = None
 # Initiate the client.
 vendor = "CCXT"
 universe_version = "v3"
-ccxt_client = imvcdccccl.CcxtCddDbClient(vendor, universe_version, resample_1min, connection)
+ccxt_client = imvcdccccl.CcxtCddDbClient(
+    vendor, universe_version, resample_1min, connection
+)
 
 # %%
 # Load the data.
