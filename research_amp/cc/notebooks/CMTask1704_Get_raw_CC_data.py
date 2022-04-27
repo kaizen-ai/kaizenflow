@@ -199,10 +199,13 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 # %%
 # Specify params.
 vendor = config["data"]["vendor"]
+universe_version = "v3"
 resample_1min = True
 connection = config["load"]["connection"]
 # Initiate the client.
-ccxt_rt_client = icdcl.CcxtCddDbClient(vendor, resample_1min, connection)
+ccxt_rt_client = icdcl.CcxtCddDbClient(
+    vendor, universe_version, resample_1min, connection
+)
 
 # %% [markdown]
 # #### Universe
@@ -235,6 +238,7 @@ display(data_rt_ccxt.head(3))
 
 # %%
 # Specify params.
+universe_version = "v3"
 resample_1min = True
 root_dir = config["load"]["data_dir_hist"]
 partition_mode = config["load"]["partition_mode"]
@@ -242,7 +246,8 @@ data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
 
 # Initiate the client.
-historical_client_ccxt = icdcl.CcxtHistoricalPqByTileClient(
+historical_client = icdcl.CcxtHistoricalPqByTileClient(
+    universe_version,
     resample_1min,
     root_dir,
     partition_mode,
@@ -290,8 +295,8 @@ resample_1min = True
 db_connection = config["load"]["connection"]
 table_name = "talos_ohlcv"
 
-talos_rt_client = imvtdctacl.RealTimeSqlTalosClient(
-    resample_1min, db_connection, table_name
+talos_rt_client = imvtdctacl.TalosSqlRealTimeImClient(
+    universe_version, resample_1min, db_connection, table_name
 )
 
 # %% [markdown]
@@ -325,6 +330,7 @@ display(data_rt_talos.head(3))
 
 # %%
 # Specify params.
+universe_version = "v1"
 resample_1min = True
 root_dir = config["load"]["data_dir_hist"]
 partition_mode = config["load"]["partition_mode"]
@@ -332,6 +338,7 @@ data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
 
 talos_hist_client = imvtdctacl.TalosHistoricalPqByTileClient(
+    universe_version,
     resample_1min,
     root_dir,
     partition_mode,

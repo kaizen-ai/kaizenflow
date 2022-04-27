@@ -53,7 +53,6 @@ jobs:
 
       - name: Run slow tests
         env:
-          GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
           AM_AWS_ACCESS_KEY_ID: ${{ secrets.AM_AWS_ACCESS_KEY_ID }}
           AM_AWS_SECRET_ACCESS_KEY: ${{ secrets.AM_AWS_SECRET_ACCESS_KEY }}
           AM_AWS_DEFAULT_REGION: ${{ secrets.AM_AWS_DEFAULT_REGION }}
@@ -65,6 +64,7 @@ jobs:
           CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
+          GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
         # https://github.community/t/dont-run-actions-on-draft-pull-requests/16817/19
         # Do not run on draft pull requests.
         if: github.event.pull_request.draft == false
