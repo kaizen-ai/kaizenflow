@@ -360,7 +360,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = ["asset_id", "close"]
+        columns: List[str] = []
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap

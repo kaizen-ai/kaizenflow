@@ -1026,7 +1026,6 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
 # #############################################################################
 
 
-# TODO(Grisha): @Dan fix timestamp assertions.
 @pytest.mark.skipif(
     hsystem.is_inside_ci(),
     reason="Extend AWS authentication system CmTask #1666.",

@@ -79,19 +79,22 @@ class HistoricalPqByTileClient(
 
     # TODO(Grisha): factor out the column names in the child classes, see `CCXT`, `Talos`.
     @staticmethod
-    def _get_columns_for_query(full_symbol_col_name: str, columns: Optional[List[str]]) -> Optional[List[str]]:
+    def _get_columns_for_query(
+        full_symbol_col_name: str, columns: Optional[List[str]]
+    ) -> Optional[List[str]]:
         """
         Get columns for Parquet data query.
 
-        For base implementation the columns are `None`
+        For base implementation query columns are equal to the passed.
         """
-        # TODO(Grisha): @Dan explain why we did this.
-        if columns and (full_symbol_col_name not in columns):
-            query_columns = columns.copy()
-            query_columns.append(full_symbol_col_name)
-        else:
-            query_columns = columns
-        return query_columns
+        if columns:
+            hdbg.dassert_in(
+                full_symbol_col_name,
+                columns,
+                "Full symbol column name = `%s` is required for the query",
+                full_symbol_col_name,
+            )
+        return columns
 
     # TODO(Grisha): factor out the common code in the child classes, see CmTask #1696
     # "Refactor HistoricalPqByTileClient and its child classes".
@@ -127,7 +130,6 @@ class HistoricalPqByTileClient(
         """
         hdbg.dassert_container_type(full_symbols, list, str)
         # Implement logging and add it to kwargs.
-        # TODO(Grisha): @Dan add columns to `LOG.debug` everywhere where it makes sense.
         _LOG.debug(
             hprint.to_str("full_symbols start_ts end_ts columns full_symbol_col_name")
         )
@@ -175,7 +177,8 @@ class HistoricalPqByTileClient(
             root_dir_df = self._apply_transformations(
                 root_dir_df, full_symbol_col_name, **transformation_kwargs
             )
-            # TODO(Grisha): @Dan elaborate on this.
+            # Month and year columns stay in data if no column filtering was
+            # done in the query. Drop them in this case.
             month_year_columns = ["month", "year"]
             if all(col in root_dir_df.columns.to_list() for col in month_year_columns):
                 root_dir_df = root_dir_df.drop(month_year_columns, axis=1)

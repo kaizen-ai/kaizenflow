@@ -150,7 +150,7 @@ class ImClient(abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         # Verify the requested parameters.
@@ -189,9 +189,6 @@ class ImClient(abc.ABC):
         #
         if columns:
             hdbg.dassert_set_eq(columns, df.columns.to_list())
-        #
-        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
-        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
         # Rename index.
         df.index.name = "timestamp"
         # Normalize data for each symbol.
@@ -460,7 +457,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         hdbg.dassert_container_type(full_symbols, list, str)
@@ -539,7 +536,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         full_symbol_col_name = self._get_full_symbol_col_name(
@@ -550,7 +547,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
             start_ts,
             end_ts,
             columns,
-            full_symbol_col_name=full_symbol_col_name,
+            full_symbol_col_name,
             **kwargs,
         )
         return df
@@ -562,7 +559,6 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         columns: Optional[List[str]],
-        *,
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:

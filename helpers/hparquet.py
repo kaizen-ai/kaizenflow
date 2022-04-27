@@ -43,6 +43,7 @@ def get_pyarrow_s3fs(*args: Any, **kwargs: Any) -> pafs.S3FileSystem:
     return s3fs_
 
 
+# TODO(Dan): Add mode to allow querying even when some non-existing columns are passed.
 def from_parquet(
     file_name: str,
     *,
@@ -74,9 +75,6 @@ def from_parquet(
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
-        # TODO(Dan): Consider increasing robustness of the function by comparing
-        # the requested columns with the ones present in data using `ParquetDataset`
-        # metadata.
         dataset = pq.ParquetDataset(
             # Replace URI with path.
             file_name,
@@ -85,7 +83,9 @@ def from_parquet(
             use_legacy_dataset=False,
         )
         if columns:
-            # TODO(Grisha): add comment explaining `dataset.schema.names` and maybe mention this `__level__`.
+            # Verify that the passed columns are present in data.
+            # Available data columns and `"__index_level_0__"` as index column
+            # name are extracted from dataset metadata with `.shema.names`.
             hdbg.dassert_is_subset(columns, dataset.schema.names)
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.

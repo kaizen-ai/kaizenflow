@@ -276,11 +276,10 @@ class MarketData(abc.ABC):
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
         # If columns are specified, filter data by them.
-        # TODO(Grisha): @Dan explain why we do it before the remap.
         if self._columns:
             hdbg.dassert_set_eq(self._columns, df.columns)
             df = df[self._columns]
-        # Remap column names.
+        # Remap result columns to the required names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -630,7 +629,6 @@ class MarketData(abc.ABC):
         #     _LOG.debug(hprint.to_str("wall_clock_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), wall_clock_time)
         # _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="after process_data"))
-        #
         return df
 
     def _remap_columns(self, df: pd.DataFrame) -> pd.DataFrame:

@@ -410,17 +410,23 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         return universe  # type: ignore[no-any-return]
 
     @staticmethod
-    def _get_columns_for_query(full_symbol_col_name: str, columns: Optional[List[str]]) -> List[str]:
+    def _get_columns_for_query(
+        full_symbol_col_name: str, columns: Optional[List[str]]
+    ) -> Optional[List[str]]:
         """
         See description in the parent class.
         """
         if columns:
-            # TODO(Grisha): @Dan explain why we did this.
+            # Copy the passed columns in order to build query columns from them
+            # and not change original column list.
             query_columns = columns.copy()
+            # Add currency pair column that is requied for the query.
             query_columns.append("currency_pair")
             if full_symbol_col_name in query_columns:
-                query_columns = [col for col in query_columns if col != full_symbol_col_name]
+                # Exclude full symbol column from the query.
+                query_columns.remove(full_symbol_col_name)
         else:
+            # If the passed columns are `None`, pass it to the query.
             query_columns = columns
         return query_columns
 
@@ -436,13 +442,13 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # Convert to string, see the parent class for details.
         df["exchange_id"] = df["exchange_id"].astype(str)
         df["currency_pair"] = df["currency_pair"].astype(str)
-        # Add full symbol column.
+        # Add full symbol column at first position in data.
         full_symbol_col = ivcu.build_full_symbol(
             df["exchange_id"], df["currency_pair"]
         )
         df.insert(0, full_symbol_col_name, full_symbol_col)
-        # Drop exchange id and currency pair columns.
-        # TODO(Grisha): @Dan elaborate on this.
+        # Drop exchange id and currency pair columns because we do not need
+        # them in the output.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
         return df
 
