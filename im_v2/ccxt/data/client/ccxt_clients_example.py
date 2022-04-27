@@ -108,10 +108,12 @@ def get_CcxtHistoricalPqByTileClient_example2(
     Get `CcxtHistoricalPqByTileClient` object for the tests reading data
     snippets created for unit tests.
     """
+    universe_version = "small"
     # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
     root_dir = "s3://cryptokaizen-data/unit_test/historical"
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
+        universe_version,
         resample_1min,
         root_dir,
         partition_mode,

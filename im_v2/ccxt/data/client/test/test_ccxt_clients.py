@@ -1318,16 +1318,16 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        expected_length = 38
+        expected_length = 3
         expected_first_elements = [
-            "binance::ADA_USDT",
-            "binance::AVAX_USDT",
-            "binance::BNB_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         expected_last_elements = [
-            "kucoin::LINK_USDT",
-            "kucoin::SOL_USDT",
-            "kucoin::XRP_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
