@@ -68,13 +68,6 @@ class HistoricalPqByTileClient(
         self._aws_profile = aws_profile
 
     @staticmethod
-    def get_universe() -> List[ivcu.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        return []
-
-    @staticmethod
     def get_metadata() -> pd.DataFrame:
         """
         See description in the parent class.
