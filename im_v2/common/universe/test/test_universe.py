@@ -223,7 +223,10 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         actual = imvcounun.get_vendor_universe(
             vendor, version="small", as_full_symbol=True
         )
-        self.assertEqual(len(universe_as_full_symbols), 2)
-        self.assertEqual(len(actual), 2)
+        # TODO(Grisha): we should not hard-wire the expected values. They may differ
+        # accross the vendors.
+        self.assertEqual(len(universe_as_full_symbols), 3)
+        self.assertEqual(len(actual), 3)
         self.assertEqual(actual[0], universe_as_full_symbols[0])
         self.assertEqual(actual[1], universe_as_full_symbols[1])
+        self.assertEqual(actual[2], universe_as_full_symbols[2])
