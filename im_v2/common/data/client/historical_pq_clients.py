@@ -32,6 +32,8 @@ class HistoricalPqByTileClient(
         # TODO(gp): We could use *args, **kwargs as params for ImClient,
         # same for the child classes.
         vendor: str,
+        # The version is not strictly needed for this class, but it is used by
+        # the child classes, e.g., by `CcxtHistoricalPqByTileClient`.
         universe_version: str,
         resample_1min: bool,
         root_dir: str,

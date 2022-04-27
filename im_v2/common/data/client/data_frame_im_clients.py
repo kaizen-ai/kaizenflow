@@ -50,6 +50,9 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         self._universe = sorted(universe)
         # Initialise the parent class.
         vendor = "data_frame"
+        # For this specific client we pass the universe to the ctor, so
+        # the version is not needed, i.e. could be any. Passing here just
+        # to make the parent class happy.
         universe_version = "not_implemented"
         super().__init__(
             vendor,

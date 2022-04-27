@@ -97,6 +97,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initiate DB client.
     # Not sure what vendor is calling below, passing `CCXT` by default.
     vendor = "CCXT"
+    # TODO(Grisha): @all pass version as an argument if needed.
     universe_version = "v3"
     resample_1min = False
     ccxt_db_client = icdcl.CcxtCddDbClient(

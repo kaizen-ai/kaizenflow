@@ -613,6 +613,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
+# TODO(Grisha): add example client for `CcxtCddDbClient`.
 class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
     """
     For all the test methods see description of corresponding private method in
@@ -627,7 +628,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -673,7 +674,6 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         resample_1min = True
         vendor = "CCXT"
         universe_version = "small"
-        # TODO(Grisha): add example client for `CcxtCddDbClient`.
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -722,7 +722,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -770,7 +770,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -817,7 +817,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -860,7 +860,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
     def test_read_data6(self) -> None:
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -877,7 +877,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         resample_1min = False
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -926,7 +926,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -948,7 +948,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         #
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
@@ -965,22 +965,22 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
     def test_get_universe1(self) -> None:
         resample_1min = True
         vendor = "CCXT"
-        universe_version = "v3"
+        universe_version = "small"
         im_client = (
             icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
                 vendor, universe_version, resample_1min, self.connection
             )
         )
-        expected_length = 38
+        expected_length = 3
         expected_first_elements = [
-            "binance::ADA_USDT",
-            "binance::AVAX_USDT",
-            "binance::BNB_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         expected_last_elements = [
-            "kucoin::LINK_USDT",
-            "kucoin::SOL_USDT",
-            "kucoin::XRP_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,

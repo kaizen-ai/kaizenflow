@@ -79,6 +79,7 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
+        hdbg.dassert_isinstance(universe_version, str)
         self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
@@ -124,7 +125,7 @@ class ImClient(abc.ABC):
         Return the entire universe of valid full symbols.
         """
         universe = ivcu.get_vendor_universe(
-            vendor=self._vendor,
+            self._vendor,
             version=self._universe_version,
             as_full_symbol=True,
         )
