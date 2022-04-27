@@ -23,7 +23,7 @@ if [ -z "$AM_ENABLE_DIND" ]; then
 fi;
 
 if [[ $AM_ENABLE_DIND == 1 ]]; then
-    echo "# Setting up Docker-in-docker"
+    echo "# Set up Docker-in-docker"
     if [[ ! -d /etc/docker ]]; then
         sudo mkdir /etc/docker
     fi;
@@ -63,10 +63,19 @@ if [[ $AM_ENABLE_DIND == 1 ]]; then
     done
 fi;
 
-
 # Mount other file systems.
 # mount -a || true
 # sudo change perms to /mnt/tmpfs
+
+# Check git.
+VAL=$(git --version)
+echo "git --version: $VAL"
+# TODO(gp): Check https://github.com/alphamatic/amp/issues/2200#issuecomment-1101756708
+git config --global --add safe.directory /app
+if [[ -d /app/amp ]]; then
+    git config --global --add safe.directory /app/amp
+fi;
+git rev-parse --show-toplevel
 
 # Check set-up.
 ./devops/docker_run/test_setup.sh
@@ -111,6 +120,8 @@ echo "helpers: $VAL"
 echo "PATH=$PATH"
 echo "PYTHONPATH=$PYTHONPATH"
 echo "entrypoint.sh: '$@'"
+
+invoke print_env
 
 # TODO(gp): eval seems to be more general, but it creates a new executable.
 eval "$@"

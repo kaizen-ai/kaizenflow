@@ -5,13 +5,136 @@ import helpers.henv as henv
 """
 
 import logging
+import os
 from typing import List, Tuple
+
+# This module should not depend on any other helper or 3rd party modules.
 
 _LOG = logging.getLogger(__name__)
 
+
 # #############################################################################
 
+
 _WARNING = "\033[33mWARNING\033[0m"
+
+
+def has_module(module: str) -> bool:
+    """
+    Return whether a Python module can be imported or not.
+    """
+    code = f"""
+try:
+    import {module}
+    has_module_ = True
+except ImportError as e:
+    print(_WARNING + ": " + str(e))
+    has_module_ = False
+"""
+    # To make the linter happy.
+    has_module_ = True
+    exec(code, globals())
+    return has_module_
+
+
+# #############################################################################
+# Print the env vars.
+# #############################################################################
+
+
+def get_env_vars() -> List[str]:
+    """
+    Return all the env vars that are expected to be set in Docker.
+    """
+    # Keep in sync with `lib_tasks.py:_generate_compose_file()`.
+    env_var_names = [
+        "AM_AWS_PROFILE",
+        "AM_ECR_BASE_PATH",
+        "AM_ENABLE_DIND",
+        "AM_FORCE_TEST_FAIL",
+        "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
+        "AM_S3_BUCKET",
+        "AM_TELEGRAM_TOKEN",
+        "AM_HOST_NAME",
+        "AM_HOST_OS_NAME",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_DEFAULT_REGION",
+        "AWS_SECRET_ACCESS_KEY",
+        "GH_ACTION_ACCESS_TOKEN",
+        "CI",
+    ]
+    # No duplicates.
+    assert len(set(env_var_names)) == len(
+        env_var_names
+    ), f"There are duplicates: {str(env_var_names)}"
+    # Sort.
+    env_var_names = sorted(env_var_names)
+    return env_var_names
+
+
+def get_secret_env_vars() -> List[str]:
+    """
+    Return the list of env vars that are secrets.
+    """
+    secret_env_var_names = [
+        "AM_TELEGRAM_TOKEN",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "GH_ACTION_ACCESS_TOKEN",
+    ]
+    # No duplicates.
+    assert len(set(secret_env_var_names)) == len(
+        secret_env_var_names
+    ), f"There are duplicates: {str(secret_env_var_names)}"
+    # Secret env vars are a subset of the env vars.
+    env_vars = get_env_vars()
+    assert set(secret_env_var_names).issubset(set(env_vars)), (
+        f"There are secret vars in `{str(secret_env_var_names)} that are not in "
+        + f"'{str(env_vars)}'"
+    )
+    # Sort.
+    secret_env_var_names = sorted(secret_env_var_names)
+    return secret_env_var_names
+
+
+def check_env_vars() -> None:
+    """
+    Make sure all the env vars are defined.
+    """
+    env_vars = get_env_vars()
+    for env_var in env_vars:
+        assert (
+            env_var in os.environ
+        ), f"env_var='{str(env_var)}' is not in env_vars='{str(os.environ.keys())}''"
+
+
+def env_vars_to_string() -> str:
+    msg = []
+    # Get the expected env vars and the secret ones.
+    env_vars = get_env_vars()
+    secret_env_vars = get_secret_env_vars()
+    # Print a signature.
+    for env_name in env_vars:
+        is_defined = env_name in os.environ
+        is_empty = is_defined and os.environ[env_name] == ""
+        if not is_defined:
+            msg.append(f"{env_name}=undef")
+        else:
+            if env_name in secret_env_vars:
+                if is_empty:
+                    msg.append(f"{env_name}=empty")
+                else:
+                    msg.append(f"{env_name}=***")
+            else:
+                # Not a secret var: print the value.
+                msg.append(f"{env_name}='{os.environ[env_name]}'")
+    msg = "\n".join(msg)
+    return msg
+
+
+# #############################################################################
+# Print the library versions.
+# #############################################################################
 
 
 def _get_library_version(lib_name: str) -> str:
@@ -138,22 +261,3 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     #
     txt = "\n".join(txt)
     return txt, failed_imports
-
-
-# #############################################################################
-
-
-def has_module(module: str) -> bool:
-    """
-    Return whether a module can be imported or not.
-    """
-    code = f"""
-try:
-    import {module}
-    has_module_ = True
-except ImportError as e:
-    print(_WARNING + ": " + str(e))
-    has_module_ = False
-"""
-    exec(code, globals())
-    return has_module_
