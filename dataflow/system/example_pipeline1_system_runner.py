@@ -191,7 +191,7 @@ class Example1_Dataframe_ForecastSystem(
         return portfolio
 
 
-class Example1_Database_SystemRunner(
+class Example1_Database_ForecastSystem(
     dtfsysyrun.SystemWithSimulatedOmsRunner,
     Example1_SystemRunner
     # Example1_ForecastSystem
