@@ -560,7 +560,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # #############################################################################
 
 
-class SqlRealTimeImClient(ImClient, abc.ABC):
+class SqlRealTimeImClient(ImClient):
     def __init__(
         self,
         resample_1min: bool,
@@ -575,18 +575,13 @@ class SqlRealTimeImClient(ImClient, abc.ABC):
         #  is used only by derived classes.
         vendor: str,
     ) -> None:
+        super().__init__(vendor, resample_1min)
         self._db_connection = db_connection
         self._table_name = table_name
-        super().__init__(vendor, resample_1min)
 
-    @staticmethod
-    def should_be_online() -> bool:
-        """
-        Return online status.
-
-        Real-time system should always be online.
-        """
-        return True
+    @abc.abstractmethod
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+         pass
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
