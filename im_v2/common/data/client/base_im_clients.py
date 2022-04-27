@@ -578,9 +578,11 @@ class SqlRealTimeImClient(ImClient):
         # Real-time implementation has a different mechanism for getting universe.
         # Passing to make the parent class happy.
         universe_version = "not_supported"
-        super().__init__(vendor, universe_version, resample_1min)
-        self._db_connection = db_connection
+        # These parameters are needed to get the universe which is needed to init
+        # the parent class so they go before the parent's init.
         self._table_name = table_name
+        self._db_connection = db_connection
+        super().__init__(vendor, universe_version, resample_1min)
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
