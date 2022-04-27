@@ -92,6 +92,7 @@ def _get_trade_universe(
             }
         }
     """
+    # TODO(Grisha): consider always converting a vendor to lowercase.
     file_path = _get_universe_file_path(vendor, version=version)
     hdbg.dassert_path_exists(file_path)
     universe = hio.from_json(file_path)
@@ -113,7 +114,7 @@ def get_vendor_universe(
         full symbols e.g. gateio::XRP_USDT
     :return: vendor universe as a list of symbol or list of full symbols e.g.:
         {
-            "Talos": {
+            "talos": {
                 "binance": [
                 "ADA_USDT",
                 "AVAX_USDT",
