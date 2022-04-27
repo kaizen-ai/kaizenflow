@@ -493,23 +493,42 @@ def process_bid_ask_data(df, full_symbol, resampling_rule):
     converted_df = clean_up_raw_bid_ask_data(df, full_symbol)
     # Resample.
     converted_resampled_df = resample_bid_ask(converted_df, resampling_rule)
+    # Convert to multiindex.
+    converted_resampled_df = dtfsysonod._convert_to_multiindex(
+        converted_resampled_df, "full_symbol"
+    )
     return converted_resampled_df
 
 
-def calculate_bid_ask_statistics(df, full_symbol):
-    # Set up params.
-    bid_col = "bid_price"
-    ask_col = "ask_price"
-    bid_volume_col = "bid_size"
-    ask_volume_col = "ask_size"
-    # Calculate bid-ask statistics.
-    ba = cfibiask.process_bid_ask(
-        df, bid_col, ask_col, bid_volume_col, ask_volume_col
+def calculate_bid_ask_statistics(df):
+    # Configure the node to calculate the returns.
+    node_returns_config = {
+        "in_col_groups": [
+            ("ask_price",),
+            ("ask_size",),
+            ("bid_price",),
+            ("bid_size",),
+        ],
+        "out_col_group": (),
+        "transformer_kwargs": {
+            "bid_col": "bid_price",
+            "ask_col": "ask_price",
+            "bid_volume_col": "bid_size",
+            "ask_volume_col": "ask_size",
+        },
+    }
+    # Create the node that computes bid ask metrics.
+    nid = "process_bid_ask"
+    node = dtfcore.GroupedColDfToDfTransformer(
+        nid,
+        transformer_func=cfibiask.process_bid_ask,
+        **node_returns_config,
     )
-    # Few additions to the desired format.
-    ba["full_symbol"] = full_symbol
-    converted_ba = dtfsysonod._convert_to_multiindex(ba, "full_symbol")
-    return converted_ba
+    # Compute the node on the data.
+    bid_ask_metrics = node.fit(df)
+    # Save the result.
+    bid_ask_metrics = bid_ask_metrics["df_out"]
+    return bid_ask_metrics
 
 
 # %% [markdown]
@@ -531,10 +550,6 @@ bid_ask_bnb = load_bid_ask_data("binance", "bnb-usdt", datelist)
 processed_bid_ask_bnb = process_bid_ask_data(
     bid_ask_bnb, "binance::BNB_USDT", "5T"
 )
-# Bid ask stats.
-bid_ask_stats_bnb = calculate_bid_ask_statistics(
-    processed_bid_ask_bnb, "binance::BNB_USDT"
-)
 
 # %%
 # Load `binance::BTC_USDT`.
@@ -543,14 +558,13 @@ bid_ask_btc = load_bid_ask_data("binance", "btc-usdt", datelist)
 processed_bid_ask_btc = process_bid_ask_data(
     bid_ask_btc, "binance::BTC_USDT", "5T"
 )
-# Bid ask stats.
-bid_ask_stats_btc = calculate_bid_ask_statistics(
-    processed_bid_ask_btc, "binance::BTC_USDT"
-)
 
 # %%
-bid_ask_df = pd.concat([bid_ask_stats_bnb, bid_ask_stats_btc], axis=1)
-bid_ask_df.head(3)
+# Unite two `full_symbols`.
+bid_ask_df = pd.concat([processed_bid_ask_bnb, processed_bid_ask_btc], axis=1)
+# Calculate bid-ask metrics.
+bid_ask_df = calculate_bid_ask_statistics(bid_ask_df)
+bid_ask_df.tail(3)
 
 # %% [markdown]
 # ## Unite VWAP, TWAP, rets statistics with bid-ask stats
@@ -562,6 +576,7 @@ final_df.tail()
 # %%
 # Metrics visualizations.
 final_df.swaplevel(axis=1)["binance::BNB_USDT"][["quoted_spread"]].plot()
+final_df.swaplevel(axis=1)["binance::BNB_USDT"][["relative_spread"]].plot()
 
 # %% [markdown]
 # ## Compute the distribution of (return - spread)
