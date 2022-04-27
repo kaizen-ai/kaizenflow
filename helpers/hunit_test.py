@@ -787,6 +787,7 @@ def assert_equal(
     # Dedent expected, if needed.
     if dedent:
         _LOG.debug("# Dedent expected")
+        #actual = hprint.dedent(actual)
         expected = hprint.dedent(expected)
         _LOG.debug("exp='\n%s'", expected)
     # Purify actual text, if needed.

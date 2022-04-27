@@ -90,11 +90,11 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsepsyru.Example1_Database_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Database_ForecastSystem(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = dtfsepsyru.Example1_Dataframe_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Dataframe_ForecastSystem(
                     asset_ids, event_loop
                 )
             #
@@ -172,7 +172,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.check_string(actual)
 
     @pytest.mark.slow
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data1_database_vs_dataframe_portfolio(self) -> None:
         """
         Compare the output between using a DB and dataframe portfolio.
@@ -187,7 +186,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.slow
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data2_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         expected = self.run_coroutines(
@@ -199,7 +197,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.superslow("Times out in GH Actions.")
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         expected = self.run_coroutines(

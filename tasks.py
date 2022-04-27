@@ -77,6 +77,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     lint_check_python_files_in_docker,
     lint_create_branch,
     lint_detect_cycles,
+    print_env,
     print_setup,
     print_tasks,
     pytest_clean,
@@ -109,14 +110,18 @@ ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 
 
-# pylint: disable=unused-argument
 def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
     """
     Run QA tests to verify that the invoke tasks are working properly.
 
     This is used when qualifying a docker image before releasing.
     """
-    cmd = f"pytest -m qa test --image_stage {stage}"
+    _ = ctx
+    # The QA tests are in `qa_test_dir` and are marked with `qa_test_tag`.
+    qa_test_dir = "test"
+    #qa_test_dir = "test/test_tasks.py::TestExecuteTasks1::test_docker_bash"
+    qa_test_tag = "qa and not superslow"
+    cmd = f'pytest -m "{qa_test_tag}" {qa_test_dir} --image_stage {stage}'
     if version:
         cmd = f"{cmd} --image_version {version}"
     ctx.run(cmd)
