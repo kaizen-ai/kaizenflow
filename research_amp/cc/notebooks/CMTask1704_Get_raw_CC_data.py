@@ -503,7 +503,7 @@ def process_bid_ask_data(df, full_symbol, resampling_rule):
 
 def calculate_bid_ask_statistics(df):
     # Configure the node to calculate the returns.
-    node_returns_config = {
+    node_bid_ask_config = {
         "in_col_groups": [
             ("ask_price",),
             ("ask_size",),
@@ -523,7 +523,7 @@ def calculate_bid_ask_statistics(df):
     node = dtfcore.GroupedColDfToDfTransformer(
         nid,
         transformer_func=cfibiask.process_bid_ask,
-        **node_returns_config,
+        **node_bid_ask_config,
     )
     # Compute the node on the data.
     bid_ask_metrics = node.fit(df)
