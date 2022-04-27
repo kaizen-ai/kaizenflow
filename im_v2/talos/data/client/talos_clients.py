@@ -176,11 +176,10 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
 
 # #############################################################################
-# RealTimeSqlTalosClient
+# TalosSqlRealTimeImClient
 # #############################################################################
 
-
-class RealTimeSqlTalosClient(icdc.SqlRealTimeImClient):
+class TalosSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     """
     Retrieve real-time Talos data from DB using SQL queries.
     """

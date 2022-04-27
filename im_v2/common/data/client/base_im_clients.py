@@ -572,16 +572,16 @@ class SqlRealTimeImClient(ImClient):
         self._table_name = table_name
         super().__init__(vendor, resample_1min)
 
-    @abc.abstractmethod
-    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
-         pass
-
     @staticmethod
     def get_metadata() -> pd.DataFrame:
         """
         Return metadata.
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        pass
 
     def get_universe(self) -> List[ivcu.FullSymbol]:
         """
@@ -753,16 +753,16 @@ class SqlRealTimeImClient(ImClient):
         if limit:
             query += f" LIMIT {limit}"
         return query
-    
+
     def _read_data_for_multiple_symbols(
-    self,
-    full_symbols: List[ivcu.FullSymbol],
-    start_ts: Optional[pd.Timestamp],
-    end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
-    *,
-    full_symbol_col_name: Optional[str] = None,
-    **kwargs: Any,
-) -> pd.DataFrame:
+        self,
+        full_symbols: List[ivcu.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
+        *,
+        full_symbol_col_name: Optional[str] = None,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
         """
         Read data for the given time range and full symbols.
 
