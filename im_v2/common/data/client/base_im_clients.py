@@ -560,7 +560,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # #############################################################################
 
 
-class SqlRealTimeImClient(ImClient, abc.ABC):
+class SqlRealTimeImClient(ImClient):
     def __init__(
         self,
         resample_1min: bool,
