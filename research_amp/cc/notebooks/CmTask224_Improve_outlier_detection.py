@@ -44,16 +44,17 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+AM_AWS_PROFILE = "am"
+
 # %% [markdown]
 # # Load test data
 
 # %%
 vendor = "CCXT"
-root_dir = os.path.join(hs3.get_path(), "data")
+root_dir = os.path.join(hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data")
 extension = "csv.gz"
-aws_profile = "am"
 ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
-    vendor, root_dir, extension, aws_profile=aws_profile
+    vendor, root_dir, extension, aws_profile=AM_AWS_PROFILE
 )
 start_ts = None
 end_ts = None

@@ -120,11 +120,8 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         df["exchange_id"] = df["exchange_id"].astype(str)
         df["currency_pair"] = df["currency_pair"].astype(str)
         # Add full symbol column.
-        df[full_symbol_col_name] = df.apply(
-            lambda x: ivcu.build_full_symbol(
-                x["exchange_id"], x["currency_pair"]
-            ),
-            axis=1,
+        df[full_symbol_col_name] = ivcu.build_full_symbol(
+            df["exchange_id"], df["currency_pair"]
         )
         # Keep only necessary columns.
         columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
@@ -238,27 +235,13 @@ class RealTimeSqlTalosClient(icdc.ImClient):
             self._db_connection, query
         )
         # Merge these columns to the general `full_symbol` format.
-        full_symbols = currency_exchange_df.agg("::".join, axis=1)
+        full_symbols = ivcu.build_full_symbol(
+            currency_exchange_df["exchange_id"],
+            currency_exchange_df["currency_pair"],
+        )
         # Convert to list.
         full_symbols = full_symbols.to_list()
         return full_symbols
-
-    @staticmethod
-    # TODO(Danya): Move up to hsql.
-    def _create_in_operator(values: List[str], column_name: str) -> str:
-        """
-        Transform a list of possible values into an IN operator clause.
-
-        Example:
-            (`["binance", "ftx"]`, 'exchange_id') =>
-            "exchange_id IN ('binance', 'ftx')"
-        """
-        in_operator = (
-            f"{column_name} IN ("
-            + ",".join([f"'{value}'" for value in values])
-            + ")"
-        )
-        return in_operator
 
     def _apply_talos_normalization(
         self,
@@ -377,9 +360,8 @@ class RealTimeSqlTalosClient(icdc.ImClient):
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
-        # TODO(Danya): Extend the `build_full_symbol()` function to apply to Series.
-        data[full_symbol_col_name] = data[["exchange_id", "currency_pair"]].agg(
-            "::".join, axis=1
+        data[full_symbol_col_name] = ivcu.build_full_symbol(
+            data["exchange_id"], data["currency_pair"]
         )
         # Remove extra columns and create a timestamp index.
         # TODO(Danya): The normalization may change depending on use of the class.
