@@ -99,18 +99,18 @@ def is_inside_docker() -> bool:
 # vars (e.g., `AM_HOST_NAME`, `AM_HOST_OS_NAME`).
 
 
-def is_dev1() -> bool:
+def is_dev_ck() -> bool:
     # sysname='Darwin'
     # nodename='gpmac.lan'
     # release='19.6.0'
     # version='Darwin Kernel Version 19.6.0: Mon Aug 31 22:12:52 PDT 2020; root:xnu-6153.141.2~1/RELEASE_X86_64'
     # machine='x86_64'
     host_name = os.uname()[1]
-    dev1 = "dev1"
+    host_names = ("dev1", "dev2")
     am_host_name = os.environ.get("AM_HOST_NAME")
     _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
-    is_dev1_ = host_name == dev1 or am_host_name == dev1
-    return is_dev1_
+    is_dev_ck_ = host_name in host_names or am_host_name in host_names
+    return is_dev_ck_
 
 
 def is_dev4() -> bool:
@@ -148,7 +148,7 @@ def enable_privileged_mode() -> bool:
     """
     if is_mac():
         val = True
-    elif is_dev1():
+    elif is_dev_ck():
         val = True
     elif is_dev4():
         val = False
@@ -163,7 +163,7 @@ def has_docker_sudo() -> bool:
     """
     Return whether commands should be run with sudo or not.
     """
-    if is_dev1():
+    if is_dev_ck():
         val = False
     elif is_dev4():
         val = False
@@ -191,23 +191,23 @@ def has_dind_support() -> bool:
     # checking if we can execute.
     # Sometimes there is some state left, so we need to clean it up.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
-    if is_mac() or is_dev1():
+    if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
     os.system(cmd)
     #
     cmd = "ip link add dummy0 type dummy >/dev/null 2>&1"
-    if is_mac() or is_dev1():
+    if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
     has_dind = rc == 0
     # Clean up, after the fact.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
-    if is_mac() or is_dev1():
+    if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
     # dind is supported on both Mac and GH Actions.
     if True:
-        if is_mac() or is_dev1() or is_inside_ci():
+        if is_mac() or is_dev_ck() or is_inside_ci():
             assert has_dind, "Expected privileged mode"
         elif is_dev4():
             assert not has_dind, "Not expected privileged mode"
@@ -233,7 +233,7 @@ def use_docker_shared_cache() -> bool:
 
 
 def use_docker_network_mode_host() -> bool:
-    if is_mac() or is_dev1():
+    if is_mac() or is_dev_ck():
         ret = True
     else:
         ret = False
@@ -258,8 +258,9 @@ def run_docker_as_root() -> bool:
         # //lime runs on a system with Docker remap which assumes we don't
         # specify user credentials.
         res = True
-    elif is_dev1():
-        # On dev1 we run as users specifying the user / group id as outside.
+    elif is_dev_ck():
+        # On dev1 / dev2 we run as users specifying the user / group id as
+        # outside.
         res = False
     elif is_mac():
         res = False
@@ -345,7 +346,7 @@ def config_func_to_str() -> str:
         "has_dind_support",
         "is_AM_S3_available",
         "is_CK_S3_available",
-        "is_dev1",
+        "is_dev_ck",
         "is_dev4",
         "is_inside_ci",
         "is_inside_docker",
