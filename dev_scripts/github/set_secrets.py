@@ -91,8 +91,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         ]
         if not args.remove:
             cmd.insert(1, f'--body "{secret_value}"')
-        hsystem.system(" ".join(cmd))
-        _LOG.info("%s %s!", operation, secret_key)
+        cmd = " ".join(cmd)
+        rc = hsystem.system(cmd, abort_on_error=False)
+        if rc != 0:
+            _LOG.warning("cmd='%s' failed: continuing", cmd)
+        else:
+            _LOG.info("%s %s!", operation, secret_key)
     _LOG.info("All secrets are processed!")
 
 
