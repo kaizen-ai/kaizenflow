@@ -77,10 +77,11 @@ print(config)
 # %%
 # Specify params.
 vendor = config["data"]["vendor"]
+universe_version = "v3"
 resample_1min = True
 connection = config["load"]["connection"]
 # Initiate the client.
-ccxt_rt_client = icdcl.CcxtCddDbClient(vendor, resample_1min, connection)
+ccxt_rt_client = icdcl.CcxtCddDbClient(vendor, universe_version, resample_1min, connection)
 
 # %% [markdown]
 # ### Universe
@@ -113,6 +114,7 @@ display(data.head(3))
 
 # %%
 # Specify params.
+universe_version = "v3"
 resample_1min = True
 root_dir = config["load"]["data_dir_hist"]
 partition_mode = config["load"]["partition_mode"]
@@ -121,6 +123,7 @@ aws_profile = config["load"]["aws_profile"]
 
 # Initiate the client.
 historical_client = icdcl.CcxtHistoricalPqByTileClient(
+    universe_version,
     resample_1min,
     root_dir,
     partition_mode,

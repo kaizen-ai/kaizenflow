@@ -208,11 +208,13 @@ def get_loader_for_vendor(
     :return: loader instance
     """
     vendor = config["data"]["vendor"]
+    universe_version = "v3"
     resample_1min = True
     root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
     loader = icdcl.CcxtCddCsvParquetByAssetClient(
         vendor,
+        universe_version,
         resample_1min,
         root_dir,
         extension,

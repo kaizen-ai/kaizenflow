@@ -95,11 +95,13 @@ print(config)
 
 # %%
 vendor = config["data"]["vendor"]
+universe_version = "v3"
 root_dir = config["load"]["data_dir"]
 extension = config["data"]["extension"]
 aws_profile = config["load"]["aws_profile"]
 ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
     vendor,
+    universe_version,
     root_dir,
     extension,
     aws_profile=aws_profile,
