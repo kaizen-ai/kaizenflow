@@ -2360,7 +2360,7 @@ def _get_docker_compose_paths(
     _LOG.debug("repo_short_name=%s", repo_short_name)
     # Check submodule status, if needed.
     mount_as_submodule = False
-    if repo_short_name == "amp":
+    if repo_short_name in ("amp", "cm"):
         # Check if `amp` is a submodule.
         path, _ = hgit.get_path_from_supermodule()
         docker_compose_path: Optional[str]
