@@ -90,11 +90,11 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsepsyru.Example1_Database_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Database_ForecastSystem(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = dtfsepsyru.Example1_Dataframe_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Dataframe_ForecastSystem(
                     asset_ids, event_loop
                 )
             #
