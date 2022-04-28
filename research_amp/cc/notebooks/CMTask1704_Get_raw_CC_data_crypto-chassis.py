@@ -197,6 +197,11 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 # ## Functions to extract and process data
 
 # %%
+def get_exchange_currency_for_api_request(full_symbol):
+    cc_exchange_id, cc_currency_pair = ivcu.parse_full_symbol(full_symbol)
+    cc_currency_pair = cc_currency_pair.lower().replace("_", "-")
+    return cc_exchange_id, cc_currency_pair
+
 def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol):
     """
     - Transform CK `full_symbol` to the `crypto-chassis` request format.
@@ -204,8 +209,7 @@ def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol):
     - Save the data as a DataFrame.
     """
     # Deconstruct `full_symbol`.
-    cc_exchange_id, cc_currency_pair = ivcu.parse_full_symbol(full_symbol)
-    cc_currency_pair = cc_currency_pair.lower().replace("_", "-")
+    cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(full_symbol)
     # Build a request.
     r = requests.get(
         f"https://api.cryptochassis.com/v1/ohlc/{cc_exchange_id}/{cc_currency_pair}?startTime=0"
@@ -275,9 +279,6 @@ ohlcv_cc.head(3)
 # %% [markdown]
 # # Calculate VWAP, TWAP and returns in `Dataflow` style
 
-# %% [markdown]
-# ## CCXT
-
 # %%
 # VWAP, TWAP transformation.
 resampling_rule = config["transform"]["resampling_rule"]
@@ -304,6 +305,99 @@ bnb_ex.plot()
 
 # %%
 # TODO(Max): Refactor the loading part once #1766 is implemented.
+
+# %%
+def load_bid_ask_data_for_one_symbol(full_symbol, list_of_dates):
+    # Using the variables from `datelist` the multiple requests can be sent to the API.
+    result = []
+    for date in list_of_dates:
+        # Deconstruct `full_symbol` for API request.
+        cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(full_symbol)
+        # Interaction with the API.
+        r = requests.get(
+            f"https://api.cryptochassis.com/v1/market-depth/{cc_exchange_id}/{cc_currency_pair}?startTime={date}"
+        )
+        data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")
+        # Attaching it day-by-day to the final DataFrame.
+        result.append(data)
+    bid_ask_df = pd.concat(result)
+    return bid_ask_df
+
+
+# %%
+def apply_bid_ask_transformation(df, full_symbol):
+    # Split the columns to differentiate between `price` and `size`.
+    df[["bid_price", "bid_size"]] = df["bid_price_bid_size"].str.split(
+        "_", expand=True
+    )
+    df[["ask_price", "ask_size"]] = df["ask_price_ask_size"].str.split(
+        "_", expand=True
+    )
+    df = df.drop(columns=["bid_price_bid_size", "ask_price_ask_size"])
+    # Convert `timestamps` to the usual format.
+    df = df.rename(columns={"time_seconds": "timestamp"})
+    df["timestamp"] = df["timestamp"].apply(
+        lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
+    )
+    df = df.set_index("timestamp")
+    # Convert to `float`.
+    for cols in df.columns:
+        df[cols] = df[cols].astype(float)
+    # Add `full_symbol` column.
+    df["full_symbol"] = full_symbol
+    return df
+
+
+# %%
+def resample_bid_ask(df, resampling_rule):
+    """
+    In the current format the data is presented in the `seconds` frequency. In
+    order to convert it to the minutely (or other) frequencies the following
+    aggregation rules are applied:
+
+    - Size is the sum of all sizes during the resampling period
+    - Price is the mean of all prices during the resampling period
+    """
+    new_df = cfinresa.resample(df, rule=resampling_rule).agg(
+        {
+            "bid_price": "mean",
+            "bid_size": "sum",
+            "ask_price": "mean",
+            "ask_size": "sum",
+            "full_symbol": "last",
+        }
+    )
+    return new_df
+
+
+# %%
+def read_and_resample_bid_ask_data(full_symbols, list_of_dates, resampling_rule):
+    result = []
+    for full_symbol in full_symbols:
+        # Load raw bid ask data.
+        df = load_bid_ask_data_for_one_symbol(full_symbol, list_of_dates)
+        # Apply transformation.
+        df = apply_bid_ask_transformation(df, full_symbol)
+        # Resample the data.
+        df = resample_bid_ask(df, resampling_rule)
+        result.append(df)
+    bid_ask_df = pd.concat(result) 
+    return bid_ask_df
+
+
+# %%
+full_symbols
+
+# %%
+df = read_and_resample_bid_ask_data(full_symbols, datelist, "5T")
+
+# %%
+df
+
+
+# %%
+
+# %%
 
 # %%
 # Functions to deal with `crypto-chassis` data.
@@ -376,6 +470,10 @@ def process_bid_ask_data(df, full_symbol, resampling_rule):
 
 
 def calculate_bid_ask_statistics(df):
+    # Convert to multiindex.
+    converted_df = dtfsysonod._convert_to_multiindex(
+        df, "full_symbol"
+    )
     # Configure the node to calculate the returns.
     node_bid_ask_config = {
         "in_col_groups": [
@@ -400,7 +498,7 @@ def calculate_bid_ask_statistics(df):
         **node_bid_ask_config,
     )
     # Compute the node on the data.
-    bid_ask_metrics = node.fit(df)
+    bid_ask_metrics = node.fit(converted_df)
     # Save the result.
     bid_ask_metrics = bid_ask_metrics["df_out"]
     return bid_ask_metrics
@@ -436,9 +534,13 @@ processed_bid_ask_btc = process_bid_ask_data(
 
 # %%
 # Unite two `full_symbols`.
-bid_ask_df = pd.concat([processed_bid_ask_bnb, processed_bid_ask_btc], axis=1)
+#bid_ask_df = pd.concat([processed_bid_ask_bnb, processed_bid_ask_btc], axis=1)
 # Calculate bid-ask metrics.
 bid_ask_df = calculate_bid_ask_statistics(bid_ask_df)
+bid_ask_df.tail(3)
+
+# %%
+bid_ask_df = calculate_bid_ask_statistics(df)
 bid_ask_df.tail(3)
 
 # %% [markdown]
