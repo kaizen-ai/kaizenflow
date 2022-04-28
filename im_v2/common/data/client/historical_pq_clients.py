@@ -182,6 +182,12 @@ class HistoricalPqByTileClient(
             month_year_columns = ["month", "year"]
             if all(col in root_dir_df.columns.to_list() for col in month_year_columns):
                 root_dir_df = root_dir_df.drop(month_year_columns, axis=1)
+            # Column with name "timestamp" that stores epochs remain in most,
+            # vendors data if no column filtering was done. Drop it since it
+            # replicates data from index and has the same name as index column
+            # which causes a break when we try to reset it.
+            if "timestamp" in root_dir_df.columns:
+                root_dir_df = root_dir_df.drop(["timestamp"], axis=1)
             #
             res_df_list.append(root_dir_df)
         # Combine data from all root dirs into a single DataFrame.

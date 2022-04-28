@@ -450,11 +450,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # Drop exchange id and currency pair columns because we do not need
         # them in the output.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
-        # Drop "timestamp" column that stores epochs if it remained in data,
-        # since it replicates data from index and has the same name as index
-        # column which causes a break when we try to reset it.
-        if "timestamp" in df.columns:
-            df = df.drop(["timestamp"], axis=1)
         return df
 
     def _get_root_dirs_symbol_filters(
