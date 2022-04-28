@@ -8,7 +8,7 @@ import contextlib
 import datetime
 import logging
 import math
-import random
+import time
 from typing import (
     Any,
     Callable,
@@ -23,6 +23,7 @@ from typing import (
 )
 
 import async_solipsism
+import numpy as np
 import pandas as pd
 
 import helpers.hdatetime as hdateti
@@ -111,7 +112,7 @@ async def gather_coroutines_with_wall_clock(
     # function.
     coroutines = [coro(get_wall_clock_time) for coro in coroutines]
     #
-    result = await asyncio.gather(*coroutines)
+    result: List[Any] = await asyncio.gather(*coroutines)
     return result
 
 
@@ -268,9 +269,9 @@ async def sleep(
         min_, max_ = delay_in_secs
         hdbg.dassert_lte(0, min_)
         hdbg.dassert_lte(min_, max_)
-        delay_in_secs = random.rand(min_, max_)
+        delay_in_secs = np.random.rand(min_, max_)
     else:
-        raise ValueError(f"Invalid delay_in_secs='delay_in_secs'")
+        raise ValueError(f"Invalid delay_in_secs='{delay_in_secs}'")
     # Wait.
     hprint.log_frame(
         _LOG,
@@ -291,36 +292,78 @@ async def sleep(
     )
 
 
-async def wait_until(
+# //////////////////////////////////////////////////////////////////////////////////
+
+
+def _wait_until(
+    wait_until_timestamp: pd.Timestamp,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+    *,
+    tag: Optional[str] = None,
+) -> float:
+    if tag is None:
+        # Use the name of the function calling this function.
+        tag = hintros.get_function_name(count=2)
+    curr_timestamp = get_wall_clock_time()
+    _LOG.debug(
+        "wait_until_timestamp=%s, curr_timestamp=%s",
+        wait_until_timestamp,
+        curr_timestamp,
+    )
+    # We can only wait for times in the future.
+    if curr_timestamp > wait_until_timestamp:
+        _LOG.warning(
+            "curr_timestamp=%s, wait_until_timestamp=%s is in the future: "
+            "continuing ",
+            wait_until_timestamp,
+            curr_timestamp,
+        )
+        time_in_secs = 0
+    else:
+        time_in_secs = (wait_until_timestamp - curr_timestamp).seconds
+        _LOG.debug(
+            "%s: wall_clock_time=%s: sleep for %s secs",
+            tag,
+            get_wall_clock_time(),
+            time_in_secs,
+        )
+    return time_in_secs
+
+
+def sync_wait_until(
     wait_until_timestamp: pd.Timestamp,
     get_wall_clock_time: hdateti.GetWallClockTime,
     *,
     tag: Optional[str] = None,
 ) -> None:
     """
-    Wait until the wall clock time is `timestamp`.
+    Synchronous wait until the wall clock time is `timestamp`.
     """
-    if tag is None:
-        # Use the name of the function calling this function.
-        tag = hintros.get_function_name(count=1)
-    curr_timestamp = get_wall_clock_time()
-    _LOG.debug(
-        "wait until timestamp=%s, curr_timestamp=%s",
-        wait_until_timestamp,
-        curr_timestamp,
-    )
-    # We only wait for times in the future.
-    hdbg.dassert_lte(curr_timestamp, wait_until_timestamp)
+    # Sync wait.
+    time_in_secs = _wait_until(wait_until_timestamp, get_wall_clock_time, tag=tag)
+    hdbg.dassert_lte(0, time_in_secs)
+    # TODO(gp): Consider using part of align_on_time_grid for high-precision clock.
+    time.sleep(time_in_secs)
     #
-    time_in_secs = (wait_until_timestamp - curr_timestamp).seconds
-    _LOG.debug(
-        "%s: wall_clock_time=%s: sleep for %s secs",
-        tag,
-        get_wall_clock_time(),
-        time_in_secs,
+    hprint.log_frame(
+        _LOG, "%s: wall_clock_time=%s: done waiting", tag, get_wall_clock_time()
     )
+
+
+async def async_wait_until(
+    wait_until_timestamp: pd.Timestamp,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+    *,
+    tag: Optional[str] = None,
+) -> None:
+    """
+    Asynchronous wait until the wall clock time is `timestamp`.
+    """
+    time_in_secs = _wait_until(wait_until_timestamp, get_wall_clock_time, tag=tag)
+    # Async wait.
     hdbg.dassert_lte(0, time_in_secs)
     await asyncio.sleep(time_in_secs)
+    #
     hprint.log_frame(
         _LOG, "%s: wall_clock_time=%s: done waiting", tag, get_wall_clock_time()
     )

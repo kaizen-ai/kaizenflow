@@ -5,19 +5,21 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 """
 
 import abc
+import collections
 import logging
 import os
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,22 +43,15 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
-    def __init__(self, vendor: str, resample_1min: bool) -> None:
+    def __init__(
+        self, vendor: str, universe_version: str, resample_1min: bool
+    ) -> None:
         """
         Constructor.
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
-
-    def get_universe(self) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        universe = imvcounun.get_vendor_universe(
-            vendor=self._vendor, as_full_symbol=True
-        )
-        return universe  # type: ignore[no-any-return]
 
     @staticmethod
     def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
@@ -136,6 +131,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         connection: hsql.DbConnection,
     ) -> None:
@@ -146,7 +142,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
         :param connection: connection for a SQL database
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         self._connection = connection
 
     def get_metadata(self) -> pd.DataFrame:
@@ -157,7 +153,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **read_sql_kwargs: Any,
@@ -171,7 +167,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
         # Initialize SQL query.
         sql_query = "SELECT * FROM %s" % table_name
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Initialize a list for SQL conditions.
         sql_conditions = []
         # Fill SQL conditions list for each provided data parameter.
@@ -215,6 +211,7 @@ class CcxtCddCsvParquetByAssetClient(
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         # TODO(gp): -> file_extension
@@ -234,7 +231,7 @@ class CcxtCddCsvParquetByAssetClient(
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -256,7 +253,7 @@ class CcxtCddCsvParquetByAssetClient(
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **kwargs: Any,
@@ -265,7 +262,7 @@ class CcxtCddCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with crypto price data.
         file_path = self._get_file_path(
             self._data_snapshot, exchange_id, currency_pair
@@ -350,3 +347,136 @@ class CcxtCddCsvParquetByAssetClient(
             file_name,
         )
         return file_path
+
+
+# #############################################################################
+# CcxtHistoricalPqByTileClient
+# #############################################################################
+
+
+class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
+    """
+    Read historical data for `CCXT` assets stored as Parquet dataset.
+
+    It can read data from local or S3 filesystem as backend.
+    """
+
+    def __init__(
+        self,
+        universe_version: str,
+        resample_1min: bool,
+        root_dir: str,
+        partition_mode: str,
+        *,
+        data_snapshot: str = "latest",
+        aws_profile: Optional[str] = None,
+    ) -> None:
+        """
+        Constructor.
+
+        See the parent class for parameters description.
+
+        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
+        """
+        vendor = "CCXT"
+        infer_exchange_id = True
+        super().__init__(
+            vendor,
+            universe_version,
+            resample_1min,
+            root_dir,
+            partition_mode,
+            infer_exchange_id,
+            aws_profile=aws_profile,
+        )
+        self._data_snapshot = data_snapshot
+
+    def get_metadata(self) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def _get_columns_for_query() -> List[str]:
+        """
+        See description in the parent class.
+        """
+        columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "currency_pair",
+        ]
+        return columns
+
+    @staticmethod
+    def _apply_transformations(
+        df: pd.DataFrame, full_symbol_col_name: str, **kwargs
+    ) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        if "exchange_id" in kwargs:
+            df["exchange_id"] = kwargs["exchange_id"]
+        # Convert to string, see the parent class for details.
+        df["exchange_id"] = df["exchange_id"].astype(str)
+        df["currency_pair"] = df["currency_pair"].astype(str)
+        # Add full symbol column.
+        df[full_symbol_col_name] = ivcu.build_full_symbol(
+            df["exchange_id"], df["currency_pair"]
+        )
+        # Select only necessary columns.
+        columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
+        df = df[columns]
+        return df
+
+    def _get_root_dirs_symbol_filters(
+        self, full_symbols: List[ivcu.FullSymbol], full_symbol_col_name: str
+    ) -> Dict[str, hparque.ParquetFilter]:
+        """
+        Build a dict with exchange root dirs of the `CCXT` data as keys and
+        filtering conditions on corresponding currency pairs as values.
+
+        E.g.,
+        ```
+        {
+            "s3://cryptokaizen-data/historical/ccxt/latest/binance": (
+                "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
+            ),
+            "s3://cryptokaizen-data/historical/ccxt/latest/coinbase": (
+                "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
+            ),
+        }
+        ```
+        """
+        # Build a root dir to the list of exchange ids subdirs, e.g.,
+        # "s3://cryptokaizen-data/historical/ccxt/latest/binance".
+        root_dir = os.path.join(
+            self._root_dir, self._vendor.lower(), self._data_snapshot
+        )
+        # Split full symbols into exchange id and currency pair tuples, e.g.,
+        # [('binance', 'ADA_USDT'),
+        # ('coinbase', 'BTC_USDT')].
+        full_symbol_tuples = [
+            ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+        ]
+        # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
+        # `Defaultdict` provides a default value for the key that does not exists that prevents from
+        # getting `KeyError`.
+        symbol_dict = collections.defaultdict(list)
+        for exchange_id, *currency_pair in full_symbol_tuples:
+            symbol_dict[exchange_id].extend(currency_pair)
+        # Build a dict with exchange root dirs as keys and Parquet filters by
+        # the corresponding currency pairs as values.
+        root_dir_symbol_filter_dict = {
+            os.path.join(root_dir, exchange_id): (
+                "currency_pair",
+                "in",
+                currency_pairs,
+            )
+            for exchange_id, currency_pairs in symbol_dict.items()
+        }
+        return root_dir_symbol_filter_dict

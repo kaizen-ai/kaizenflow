@@ -98,7 +98,7 @@ class TalosExchange:
         :param currency_pair: a currency pair, e.g. "BTC_USDT"
         :param exchange: crypto exchange, e.g. "binance"
         :param start_timestamp: starting point for data
-        :param end_timestamp: end point for data (NOT included)
+        :param end_timestamp: end point for data
         :param bar_per_iteration: number of bars per iteration
         :return: dataframe with OHLCV data
         """
@@ -108,6 +108,15 @@ class TalosExchange:
         #     self.currency_pairs,
         #     "Currency pair is not present in exchange",
         # )
+        # Workaround for including `end_timestamp` value.
+        # If proposing query for a complete minute (e.g., 10:07:00)
+        # Results will contain itemps with timestamp - 1min (i.e., 10:06:00).
+        # In order to get items including items with timestamp=`end_timestamp`
+        # `end_timestamp` should be shifted on 1 sec from complete minute.
+        rounded_timestamp = end_timestamp.round(freq="T")
+        if rounded_timestamp == end_timestamp:
+            end_timestamp = end_timestamp + pd.Timedelta("1sec")
+        #
         return self._fetch_ohlcv(
             currency_pair,
             exchange,

@@ -21,7 +21,6 @@ import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -61,8 +60,8 @@ def from_parquet(
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
-    if aws_profile is not None:
-        hdbg.dassert(hs3.is_s3_path(file_name))
+    hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
+    if hs3.is_s3_path(file_name):
         filesystem = get_pyarrow_s3fs(aws_profile)
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
@@ -93,7 +92,7 @@ def from_parquet(
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
     # Report stats about the Parquet file size.
     if report_stats:
-        file_size = hsystem.du(file_name, human_format=True)
+        file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
         _LOG.log(
             log_level,
             "Loaded '%s' (size=%s, time=%.1fs)",
@@ -105,7 +104,7 @@ def from_parquet(
 
 
 # Copied from `hio.create_enclosing_dir()` to avoid circular dependencies.
-def _create_enclosing_dir(file_name: str) -> str:
+def _create_enclosing_dir(file_name: str) -> Optional[str]:
     dir_name = os.path.dirname(file_name)
     if dir_name != "":
         _LOG.debug(
@@ -118,7 +117,7 @@ def _create_enclosing_dir(file_name: str) -> str:
         if os.path.exists(dir_name):
             # The dir exists and we want to keep it, so we are done.
             _LOG.debug("The dir '%s' exists: exiting", dir_name)
-            return
+            return None
         _LOG.debug("Creating directory '%s'", dir_name)
         try:
             os.makedirs(dir_name)
@@ -148,10 +147,10 @@ def to_parquet(
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(file_name, str)
-    if aws_profile is not None:
-        hdbg.dassert(hs3.is_s3_path(file_name))
+    hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
+    if hs3.is_s3_path(file_name):
         filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_path_exists(file_name, filesystem)
+        hs3.dassert_path_not_exists(file_name, filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
@@ -172,9 +171,8 @@ def to_parquet(
         table = pa.Table.from_pandas(df)
         pq.write_table(table, file_name, filesystem=filesystem)
     # Report stats about the Parquet file size.
-    # TODO(Nikola): CMTask1437 Extend hsystem.du to support S3.
-    if report_stats and aws_profile is None:
-        file_size = hsystem.du(file_name, human_format=True)
+    if report_stats:
+        file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
         _LOG.log(
             log_level,
             "Saved '%s' (size=%s, time=%.1fs)",
@@ -261,10 +259,9 @@ def yield_parquet_tiles_by_assets(
         asset_ids[i : i + asset_batch_size]
         for i in range(0, len(asset_ids), asset_batch_size)
     ]
+    columns: Optional[List[str]] = None
     if cols:
         columns = [str(col) for col in cols]
-    else:
-        columns = None
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
         filter_ = build_asset_id_filter(batch, asset_id_col)
@@ -390,8 +387,8 @@ def collate_parquet_tile_metadata(
 #  if needed, but if we do, then we should continue to handle string ints as
 #  ints as we do here (e.g., there are sorting advantages, among others).
 def _process_walk_triple(
-    triple: tuple, start_depth
-) -> Tuple[Tuple[str], Tuple[int]]:
+    triple: tuple, start_depth: int
+) -> Tuple[Tuple[str, ...], Tuple[int, ...]]:
     """
     Process a triple returned by `os.walk()`
 
@@ -400,8 +397,8 @@ def _process_walk_triple(
         `os.walk(path)`
     :return: tuple(lhs_vals), tuple(rhs_vals)
     """
-    lhs_vals = []
-    rhs_vals = []
+    lhs_vals: List[str] = []
+    rhs_vals: List[int] = []
     # If there are subdirectories, do not process.
     if triple[1]:
         return tuple(lhs_vals), tuple(rhs_vals)

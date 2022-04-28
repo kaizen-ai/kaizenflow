@@ -8,7 +8,8 @@ import repo_config as rconf
 # Extract with:
 # > i print_tasks --as-code
 from helpers.lib_tasks import set_default_params  # This is not an invoke target.
-from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
+
+from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
     docker_bash,
     docker_build_local_image,
     docker_build_prod_image,
@@ -54,6 +55,8 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     # TODO(gp): -> git_patch_create
     git_create_patch,
     git_delete_merged_branches,
+    # TODO(gp): -> git_master_fetch
+    git_fetch_master,
     # TODO(gp): -> git_files_list
     git_files,
     # TODO(gp): -> git_files_last_commit_
@@ -61,8 +64,6 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     # TODO(gp): -> git_master_merge
     git_merge_master,
     git_pull,
-    # TODO(gp): -> git_master_fetch
-    git_fetch_master,
     # TODO(gp): -> git_branch_rename
     git_rename_branch,
     integrate_create_branch,
@@ -76,6 +77,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     lint_check_python_files_in_docker,
     lint_create_branch,
     lint_detect_cycles,
+    print_env,
     print_setup,
     print_tasks,
     pytest_clean,
@@ -91,6 +93,7 @@ from helpers.lib_tasks import (  # noqa: F401  # pylint: disable=unused-import
     run_qa_tests,
     run_slow_tests,
     run_superslow_tests,
+    run_tests,
     traceback,
 )
 
@@ -107,14 +110,18 @@ ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 DOCKER_BASE_IMAGE_NAME = rconf.get_docker_base_image_name()
 
 
-# pylint: disable=unused-argument
 def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
     """
     Run QA tests to verify that the invoke tasks are working properly.
 
     This is used when qualifying a docker image before releasing.
     """
-    cmd = f"pytest -m qa test --image_stage {stage}"
+    _ = ctx
+    # The QA tests are in `qa_test_dir` and are marked with `qa_test_tag`.
+    qa_test_dir = "test"
+    #qa_test_dir = "test/test_tasks.py::TestExecuteTasks1::test_docker_bash"
+    qa_test_tag = "qa and not superslow"
+    cmd = f'pytest -m "{qa_test_tag}" {qa_test_dir} --image_stage {stage}'
     if version:
         cmd = f"{cmd} --image_version {version}"
     ctx.run(cmd)
@@ -122,7 +129,7 @@ def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
 
 
 default_params = {
-    "ECR_BASE_PATH": ECR_BASE_PATH,
+    "AM_ECR_BASE_PATH": ECR_BASE_PATH,
     # When testing a change to the build system in a branch you can use a different
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "amp_tmp",

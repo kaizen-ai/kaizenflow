@@ -30,7 +30,6 @@ _LOG = logging.getLogger("amp" + __name__)
 
 
 class S3Backend:
-
     def __init__(self, max_rows: Optional[int] = None):
         self._max_rows = max_rows
 

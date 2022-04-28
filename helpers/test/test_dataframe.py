@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.hdataframe as hdatafr
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -93,7 +94,7 @@ class Test_filter_data_by_comparison(hunitest.TestCase):
 
 class TestFilterDataByMethod(hunitest.TestCase):
     """
-    This test was generated automatically with Playback.
+    Test was generated automatically with Playback.
     """
 
     def test1(self) -> None:
@@ -170,7 +171,7 @@ class Test_apply_nan_mode(hunitest.TestCase):
     @staticmethod
     def _get_series_with_nans(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hunitest.get_random_df(
+        series = hpandas.get_random_df(
             num_cols=1,
             seed=seed,
             date_range_kwargs=date_range,

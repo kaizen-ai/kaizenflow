@@ -80,6 +80,23 @@ class TestDiskDataSource(hunitest.TestCase):
         dds_kwargs = {"start_date": "2010-01-02"}
         self._helper(df, ext, timestamp_col, **dds_kwargs)
 
+    @staticmethod
+    def _generate_df(num_periods: int = 10) -> pd.DataFrame:
+        """
+        Generate a df with a format like:
+        ```
+                    0
+        timestamp
+        2010-01-02  1
+        2010-01-03  2
+        2010-01-04  3
+        2010-01-05  4
+        ```
+        """
+        idx = pd.date_range("2010-01-01", periods=num_periods, name="timestamp")
+        df = pd.DataFrame(range(num_periods), index=idx, columns=["0"])
+        return df
+
     def _save_df(self, df: pd.DataFrame, ext: str) -> str:
         scratch_space = self.get_scratch_space()
         file_path = os.path.join(scratch_space, f"df{ext}")
@@ -116,23 +133,6 @@ class TestDiskDataSource(hunitest.TestCase):
         # Check output.
         act_result = loaded_df.to_string()
         self.check_string(act_result)
-
-    @staticmethod
-    def _generate_df(num_periods: int = 10) -> pd.DataFrame:
-        """
-        Generate a df with a format like:
-        ```
-                    0
-        timestamp
-        2010-01-02  1
-        2010-01-03  2
-        2010-01-04  3
-        2010-01-05  4
-        ```
-        """
-        idx = pd.date_range("2010-01-01", periods=num_periods, name="timestamp")
-        df = pd.DataFrame(range(num_periods), index=idx, columns=["0"])
-        return df
 
 
 # #############################################################################

@@ -17,12 +17,13 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
 
 def compute_stats_for_universe(
-    vendor_universe: List[icdc.FullSymbol],
+    vendor_universe: List[ivcu.FullSymbol],
     config: cconconf.Config,
     stats_func: Callable,
 ) -> pd.DataFrame:
@@ -207,10 +208,15 @@ def get_loader_for_vendor(
     :return: loader instance
     """
     vendor = config["data"]["vendor"]
+    # TODO(Grisha): pass universe version via config.
+    universe_version = "v3"
+    resample_1min = True
     root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
     loader = icdcl.CcxtCddCsvParquetByAssetClient(
         vendor,
+        universe_version,
+        resample_1min,
         root_dir,
         extension,
         aws_profile=config["load"]["aws_profile"],
@@ -246,7 +252,7 @@ def find_longest_not_nan_sequence(
 
 
 def get_universe_price_data(
-    vendor_universe: List[icdc.FullSymbol],
+    vendor_universe: List[ivcu.FullSymbol],
     config: cconconf.Config,
 ) -> pd.DataFrame:
     """

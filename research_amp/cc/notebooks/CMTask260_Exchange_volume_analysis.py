@@ -27,7 +27,7 @@ import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdcl
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as ivcu
 import research_amp.cc.statistics as ramccsta
 import research_amp.cc.volume as ramccvol
 
@@ -40,6 +40,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+AM_AWS_PROFILE = "am"
 
 # %% [markdown]
 # # Config
@@ -52,8 +53,10 @@ def get_cmtask260_config() -> cconconf.Config:
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
-    config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    config["load"]["aws_profile"] = AM_AWS_PROFILE
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["universe_version"] = "v03"
@@ -74,7 +77,7 @@ print(config)
 # # Load the data
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe(
+vendor_universe = ivcu.get_vendor_universe(
     config["data"]["vendor"],
     version=config["data"]["universe_version"],
     as_full_symbol=True,
@@ -159,10 +162,14 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     """
     result = []
     vendor = config["data"]["vendor"]
+    universe_version = "v3"
+    resample_1min = True
     root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
     ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
         vendor,
+        universe_version,
+        resample_1min,
         root_dir,
         extension,
         aws_profile=config["load"]["aws_profile"],
@@ -213,10 +220,10 @@ def plot_ath_volumes_comparison(df_list):
 
 # %%
 # get the list of all coin paires for each exchange
-binance_coins = imvcounun.get_vendor_universe("CCXT", version="v3")["binance"]
-ftx_coins = imvcounun.get_vendor_universe("CCXT", version="v3")["ftx"]
-gateio_coins = imvcounun.get_vendor_universe("CCXT", version="v3")["gateio"]
-kucoin_coins = imvcounun.get_vendor_universe("CCXT", version="v3")["kucoin"]
+binance_coins = ivcu.get_vendor_universe("CCXT", version="v3")["binance"]
+ftx_coins = ivcu.get_vendor_universe("CCXT", version="v3")["ftx"]
+gateio_coins = ivcu.get_vendor_universe("CCXT", version="v3")["gateio"]
+kucoin_coins = ivcu.get_vendor_universe("CCXT", version="v3")["kucoin"]
 
 # load all the dataframes
 binance_1 = get_initial_df_with_volumes(
