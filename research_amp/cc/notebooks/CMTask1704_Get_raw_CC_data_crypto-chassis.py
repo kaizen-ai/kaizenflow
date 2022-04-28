@@ -70,10 +70,6 @@ def get_cmtask1704_config_ccxt() -> cconconf.Config:
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["full_symbols"] = ['binance::BNB_USDT', 'binance::BTC_USDT']
-    # Data range for real-time data.
-    #config["data"]["start_date_rt"] = pd.Timestamp("2022-04-01", tz="UTC")
-    #config["data"]["end_date_rt"] = pd.Timestamp("2022-04-15", tz="UTC")
-    # Data range for historical data.
     config["data"]["start_date"] = pd.Timestamp("2022-01-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2022-01-15", tz="UTC")
     # Transformation parameters.
@@ -270,7 +266,6 @@ full_symbols = config["data"]["full_symbols"]
 start_date = config["data"]["start_date"]
 end_date = config["data"]["end_date"]
 
-
 ohlcv_cc = read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
 
 # %%
@@ -307,8 +302,16 @@ bnb_ex.plot()
 # TODO(Max): Refactor the loading part once #1766 is implemented.
 
 # %%
-def load_bid_ask_data_for_one_symbol(full_symbol, list_of_dates):
+def get_list_of_dates_for_period(start_date, end_date):
+    # Get the list of all dates in the range.
+    num_of_periods = (end_date-start_date).days
+    datelist = pd.date_range(start_date, periods=num_of_periods).tolist()
+    datelist = [str(x.strftime("%Y-%m-%d")) for x in datelist]
+    return datelist
+
+def load_bid_ask_data_for_one_symbol(full_symbol, start_date, end_date):
     # Using the variables from `datelist` the multiple requests can be sent to the API.
+    list_of_dates = get_list_of_dates_for_period(start_date, end_date)
     result = []
     for date in list_of_dates:
         # Deconstruct `full_symbol` for API request.
@@ -323,8 +326,6 @@ def load_bid_ask_data_for_one_symbol(full_symbol, list_of_dates):
     bid_ask_df = pd.concat(result)
     return bid_ask_df
 
-
-# %%
 def apply_bid_ask_transformation(df, full_symbol):
     # Split the columns to differentiate between `price` and `size`.
     df[["bid_price", "bid_size"]] = df["bid_price_bid_size"].str.split(
@@ -347,8 +348,6 @@ def apply_bid_ask_transformation(df, full_symbol):
     df["full_symbol"] = full_symbol
     return df
 
-
-# %%
 def resample_bid_ask(df, resampling_rule):
     """
     In the current format the data is presented in the `seconds` frequency. In
@@ -369,13 +368,11 @@ def resample_bid_ask(df, resampling_rule):
     )
     return new_df
 
-
-# %%
-def read_and_resample_bid_ask_data(full_symbols, list_of_dates, resampling_rule):
+def read_and_resample_bid_ask_data(full_symbols, start_date, end_date, resampling_rule):
     result = []
     for full_symbol in full_symbols:
         # Load raw bid ask data.
-        df = load_bid_ask_data_for_one_symbol(full_symbol, list_of_dates)
+        df = load_bid_ask_data_for_one_symbol(full_symbol, start_date, end_date)
         # Apply transformation.
         df = apply_bid_ask_transformation(df, full_symbol)
         # Resample the data.
@@ -383,91 +380,6 @@ def read_and_resample_bid_ask_data(full_symbols, list_of_dates, resampling_rule)
         result.append(df)
     bid_ask_df = pd.concat(result) 
     return bid_ask_df
-
-
-# %%
-full_symbols
-
-# %%
-df = read_and_resample_bid_ask_data(full_symbols, datelist, "5T")
-
-# %%
-df
-
-
-# %%
-
-# %%
-
-# %%
-# Functions to deal with `crypto-chassis` data.
-def load_bid_ask_data(exchange_id, currency_pair, list_of_dates):
-    # Using the variables from `datelist` the multiple requests can be sent to the API.
-    result = []
-    for date in list_of_dates:
-        # Interaction with the API.
-        r = requests.get(
-            f"https://api.cryptochassis.com/v1/market-depth/{exchange_id}/{currency_pair}?startTime={date}"
-        )
-        data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")
-        # Attaching it day-by-day to the final DataFrame.
-        result.append(data)
-    bid_ask_df = pd.concat(result)
-    return bid_ask_df
-
-def clean_up_raw_bid_ask_data(df, full_symbol):
-    # Split the columns to differentiate between `price` and `size`.
-    df[["bid_price", "bid_size"]] = df["bid_price_bid_size"].str.split(
-        "_", expand=True
-    )
-    df[["ask_price", "ask_size"]] = df["ask_price_ask_size"].str.split(
-        "_", expand=True
-    )
-    df = df.drop(columns=["bid_price_bid_size", "ask_price_ask_size"])
-    # Convert `timestamps` to the usual format.
-    df = df.rename(columns={"time_seconds": "timestamp"})
-    df["timestamp"] = df["timestamp"].apply(
-        lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
-    )
-    df = df.set_index("timestamp")
-    # Convert to `float`.
-    for cols in df.columns:
-        df[cols] = df[cols].astype(float)
-    # Add `full_symbol` (hardcoded solution).
-    df["full_symbol"] = full_symbol
-    return df
-
-def resample_bid_ask(df, resampling_rule):
-    """
-    In the current format the data is presented in the `seconds` frequency. In
-    order to convert it to the minutely (or other) frequencies the following
-    aggregation rules are applied:
-
-    - Size is the sum of all sizes during the resampling period
-    - Price is the mean of all prices during the resampling period
-    """
-    new_df = cfinresa.resample(df, rule=resampling_rule).agg(
-        {
-            "bid_price": "mean",
-            "bid_size": "sum",
-            "ask_price": "mean",
-            "ask_size": "sum",
-            "full_symbol": "last",
-        }
-    )
-    return new_df
-
-def process_bid_ask_data(df, full_symbol, resampling_rule):
-    # Convert the data to the right format.
-    converted_df = clean_up_raw_bid_ask_data(df, full_symbol)
-    # Resample.
-    converted_resampled_df = resample_bid_ask(converted_df, resampling_rule)
-    # Convert to multiindex.
-    converted_resampled_df = dtfsysonod._convert_to_multiindex(
-        converted_resampled_df, "full_symbol"
-    )
-    return converted_resampled_df
-
 
 def calculate_bid_ask_statistics(df):
     # Convert to multiindex.
@@ -504,43 +416,17 @@ def calculate_bid_ask_statistics(df):
     return bid_ask_metrics
 
 
-# %% [markdown]
-# ## Load, process and calculate metrics for raw bid ask data from crypto-chassis
+# %%
+full_symbols = config["data"]["full_symbols"]
+start_date = config["data"]["start_date"]
+end_date = config["data"]["end_date"]
+
+bid_ask_df = read_and_resample_bid_ask_data(full_symbols, start_date, end_date, "5T")
+bid_ask_df.head(3)
 
 # %%
-# Get the list of all dates in the range.
-datelist = pd.date_range("2022-01-01", periods=14).tolist()
-datelist = [str(x.strftime("%Y-%m-%d")) for x in datelist]
-
-# %%
-# These `full_symbols` need to be loaded (to attach it to historical CCXT data).
-full_symbols
-
-# %%
-# Load `binance::BNB_USDT`.
-bid_ask_bnb = load_bid_ask_data("binance", "bnb-usdt", datelist)
-# Transforming the data. Data is resampled during its transformation.
-processed_bid_ask_bnb = process_bid_ask_data(
-    bid_ask_bnb, "binance::BNB_USDT", "5T"
-)
-
-# %%
-# Load `binance::BTC_USDT`.
-bid_ask_btc = load_bid_ask_data("binance", "btc-usdt", datelist)
-# Transforming the data. Data is resampled during its transformation.
-processed_bid_ask_btc = process_bid_ask_data(
-    bid_ask_btc, "binance::BTC_USDT", "5T"
-)
-
-# %%
-# Unite two `full_symbols`.
-#bid_ask_df = pd.concat([processed_bid_ask_bnb, processed_bid_ask_btc], axis=1)
 # Calculate bid-ask metrics.
 bid_ask_df = calculate_bid_ask_statistics(bid_ask_df)
-bid_ask_df.tail(3)
-
-# %%
-bid_ask_df = calculate_bid_ask_statistics(df)
 bid_ask_df.tail(3)
 
 # %% [markdown]
