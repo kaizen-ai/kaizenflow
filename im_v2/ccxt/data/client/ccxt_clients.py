@@ -121,7 +121,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 # CcxtCddDbClient
 # #############################################################################
 
-
 class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(
         self,
@@ -173,13 +172,12 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
             full_symbol_col_name
         )
         ohlcv_columns = [
-            # "timestamp",
+            full_symbol_col_name,
             "open",
             "high",
             "low",
             "close",
             "volume",
-            full_symbol_col_name,
         ]
         if self._mode == "data_client":
             pass
