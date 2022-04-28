@@ -41,7 +41,7 @@ def _send_mwaa_cli_post_request(
     mwaa_cli_token: Dict[str, str], mwaa_cli_command: str
 ) -> str:
     """
-    Send a post to the AWS MWAA cli which executes an Airflow command on our
+    Send a post to the AWS MWAA CLI which executes an Airflow command on our
     behalf. Docs available at:
     https://docs.aws.amazon.com/mwaa/latest/userguide/airflow-cli-command-
     reference.html.
@@ -88,7 +88,7 @@ def _clear_long_running_tasks(
     time. i.e. A DAG can have Run set to: 2022-04-28 14:05:00 UTC but and
     Started: 2022-04-28 14:06:40.
 
-    :param dags_list: List of DAGs to iterate through
+    :param dags_list: list of DAGs to iterate through
     :param dag_duration_threshold: Max allowed DAG Task run time, tasks
      with duration time above the threshold get cleared.
     :param mwaa_cli_token: token consisting of CliToken and WebServerHostName parts
