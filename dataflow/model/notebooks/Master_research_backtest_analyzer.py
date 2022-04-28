@@ -122,8 +122,8 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 # %%
 backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     tile_config["dir_name"],
-    datetime.date(2021, 1, 1),
-    datetime.date(2022, 12, 31),
+    datetime.date(2019, 1, 1),
+    datetime.date(2022, 3, 1),
     tile_config["asset_id_col"],
     data_cols=fep.get_cols(),
     asset_ids=None,

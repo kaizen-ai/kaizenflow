@@ -146,6 +146,7 @@ class HistoricalPqByTileClient(
             kwargs["filters"] = filters
             # Read Parquet data from a root dir.
             root_dir_df = hparque.from_parquet(root_dir, **kwargs)
+            # TODO(Grisha): "Handle missing tiles" CmTask #1775.
             # hdbg.dassert_lte(
             #     1,
             #     root_dir_df.shape[0],

@@ -258,7 +258,7 @@ class ForecastEvaluatorFromPrices:
         :param burn_in_bars:
         :return: (holdings, position, flow, pnl, stats)
         """
-        #self._validate_df(df)
+        self._validate_df(df)
         # Record index in case we reindex the results.
         if reindex_like_input:
             idx = df.index
@@ -588,13 +588,7 @@ class ForecastEvaluatorFromPrices:
         Trim `df` according to ATH, weekends, missing data.
         """
         # Restrict to required columns.
-        #hdbg.dassert_is_subset([self._price_col, self._volatility_col, self._prediction_col],
-        #        df.columns)
-        print([self._price_col, self._volatility_col, self._prediction_col])
-        print(df.columns.levels[0])
-        #print(df)
         df = df[[self._price_col, self._volatility_col, self._prediction_col]]
-        #assert 0
         active_index = cofinanc.infer_active_bars(df[self._price_col])
         # Drop rows with no prices (this is an approximate way to handle weekends,
         # market holidays, and shortened trading sessions).
