@@ -159,8 +159,10 @@ def get_file_path_for_exchange(config: cconconf.Config, exchange: str) -> str:
 # TODO(Nina): @all Usage of the client is very slow due to CMTask1726.
 #  Until this issue is fixed, you can speed up the client by replacing `apply`
 #  with the vectorasied counterpart: `df['exchange_id'] + "::" + df['currency_pair']`.
+universe_version = "v3"
 resample_1min = True
 ccxt_historical_client = icdcl.ccxt_clients.CcxtHistoricalPqByTileClient(
+    universe_version,
     resample_1min,
     config["load"]["data_dir"],
     "by_year_month",

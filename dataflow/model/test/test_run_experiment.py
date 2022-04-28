@@ -1,5 +1,6 @@
 import logging
 import os
+import unittest.mock as umock
 from typing import Any, List
 
 import pytest
@@ -219,6 +220,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
     #  gave access to the entire bucket. It would be better to give only access to
     #  `tmp`.
     @pytest.mark.slow
+    @umock.patch.dict(hs3.os.environ, {"AM_AWS_PROFILE": "am"})
     def test_serial1(self) -> None:
         """
         Execute:

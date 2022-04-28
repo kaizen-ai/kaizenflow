@@ -212,7 +212,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # The user didn't specified the path, so we derive it from the
             # credentials or from the env vars.
             _LOG.debug("Getting s3_path from credentials file")
-            s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
+            s3_path = hs3.get_s3_bucket_path(aws_profile, add_s3_prefix=False)
             hdbg.dassert(not s3_path.startswith("s3://"), "Invalid value '%s'")
             s3_path = "s3://" + s3_path + "/experiments"
         hs3.is_s3_path(s3_path)

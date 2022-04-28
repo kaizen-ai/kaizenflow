@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import unittest
 
 import pandas as pd
 import pytest
@@ -9,12 +8,13 @@ import core.finance as cofinanc
 import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
+import helpers.hunit_test as hunitest
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_Example1_ForecastSystem(unittest.TestCase):
+class Test_Example1_ForecastSystem(hunitest.TestCase):
     """
     Test a System composed of:
 
@@ -25,7 +25,6 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
     def run_coroutines(
         self,
         data: pd.DataFrame,
-        real_time_loop_time_out_in_secs: int,
     ) -> str:
         """
         Run a system using the desired portfolio based on DB or dataframe.
@@ -48,18 +47,20 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-        return str
+            result_bundles = result_bundles[0][0]
+        return result_bundles
 
     # ///////////////////////////////////////////////////////////////////////////
 
     def test1(self) -> None:
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        """
+        Verify the contents of DAG prediction.
+        """
+        data, _ = cofinanc.get_market_data_df1()
         actual = self.run_coroutines(
             data,
-            real_time_loop_time_out_in_secs,
         )
-        # TODO(gp): PP freeze the output.
-        # self.check_string(actual)
+        self.check_string(str(actual))
 
 
 # #############################################################################
@@ -89,11 +90,11 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsepsyru.Example1_Database_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Database_ForecastSystem(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = dtfsepsyru.Example1_Dataframe_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Dataframe_ForecastSystem(
                     asset_ids, event_loop
                 )
             #
@@ -171,7 +172,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.check_string(actual)
 
     @pytest.mark.slow
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data1_database_vs_dataframe_portfolio(self) -> None:
         """
         Compare the output between using a DB and dataframe portfolio.
@@ -186,7 +186,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.slow
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data2_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         expected = self.run_coroutines(
@@ -198,7 +197,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.superslow("Times out in GH Actions.")
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         expected = self.run_coroutines(

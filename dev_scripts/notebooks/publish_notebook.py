@@ -319,7 +319,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # The user didn't specified the path, so we derive it from the
             # credentials or from the env vars.
             _LOG.debug("Getting s3_path from credentials file")
-            s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
+            s3_path = hs3.get_s3_bucket_path(aws_profile, add_s3_prefix=False)
         s3_path = "s3://" + s3_path + "/notebooks"
         s3_file_name = _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.

@@ -15,6 +15,8 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
+_AWS_PROFILE = "am"
+
 
 class Test_dassert_is_unique1(hunitest.TestCase):
     def get_df1(self) -> pd.DataFrame:
@@ -447,7 +449,8 @@ class TestDfToStr(hunitest.TestCase):
         """
         df = self.get_test_data()
         actual = hpandas.df_to_str(df)
-        expected = r"""   dummy_value_1 dummy_value_2  dummy_value_3
+        expected = r"""
+            dummy_value_1 dummy_value_2  dummy_value_3
         0              1             A              0
         1              2             B              0
         2              3             C              0"""
@@ -524,6 +527,36 @@ class TestDfToStr(hunitest.TestCase):
         0              1             A              0
         1              2             B              0
         2              3             C              0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_df_to_str6(self) -> None:
+        """
+        Test common call to `df_to_str` with `pd.Series`.
+        """
+        df = self.get_test_data()
+        actual = hpandas.df_to_str(df["dummy_value_2"])
+        expected = r"""
+            dummy_value_2
+        0             A
+        1             B
+        2             C
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_df_to_str7(self) -> None:
+        """
+        Test common call to `df_to_str` with `pd.Index`.
+        """
+        df = self.get_test_data()
+        index = df.index
+        index.name = "index_name"
+        actual = hpandas.df_to_str(index)
+        expected = r"""
+        index_name
+        0  0
+        1  1
+        2  2
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
@@ -701,18 +734,20 @@ class TestCompareDataframeRows(hunitest.TestCase):
 
 class TestReadDataFromS3(hunitest.TestCase):
     def test_read_csv1(self) -> None:
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
-            hs3.get_path(), "data/kibot/all_stocks_1min/RIMG.csv.gz"
+            hs3.get_s3_bucket_path(_AWS_PROFILE),
+            "data/kibot/all_stocks_1min/RIMG.csv.gz",
         )
         hs3.dassert_path_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
         hpandas.read_csv_to_df(stream, **kwargs)
 
     def test_read_parquet1(self) -> None:
-        s3fs = hs3.get_s3fs("am")
+        s3fs = hs3.get_s3fs(_AWS_PROFILE)
         file_name = os.path.join(
-            hs3.get_path(), "data/kibot/pq/sp_500_1min/AAPL.pq"
+            hs3.get_s3_bucket_path(_AWS_PROFILE),
+            "data/kibot/pq/sp_500_1min/AAPL.pq",
         )
         hs3.dassert_path_exists(file_name, s3fs)
         stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
