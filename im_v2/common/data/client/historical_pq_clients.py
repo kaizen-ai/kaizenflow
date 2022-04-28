@@ -86,14 +86,14 @@ class HistoricalPqByTileClient(
 
         For base implementation the queries columns are equal to the passed ones.
         """
-        if columns:
-            hdbg.dassert_in(
-                full_symbol_col_name,
-                columns,
-                "Full symbol column name = `%s` is required for the query",
-                full_symbol_col_name,
-            )
-        return columns
+        if (columns is not None) and (full_symbol_col_name not in columns):
+            # In order not to modify the input.
+            query_columns = columns.copy()
+            # Data is partitioned by full symbols so the column is mandatory.
+            query_columns.append(full_symbol_col_name)
+        else:
+            query_columns = columns
+        return query_columns
 
     # TODO(Grisha): factor out the common code in the child classes, see CmTask #1696
     # "Refactor HistoricalPqByTileClient and its child classes".
@@ -176,17 +176,22 @@ class HistoricalPqByTileClient(
             root_dir_df = self._apply_transformations(
                 root_dir_df, full_symbol_col_name, **transformation_kwargs
             )
-            # Month and year columns stay in data if no column filtering was
-            # done in the query. Drop them in this case.
-            month_year_columns = ["month", "year"]
-            if all(col in root_dir_df.columns.to_list() for col in month_year_columns):
-                root_dir_df = root_dir_df.drop(month_year_columns, axis=1)
+            # The columns are used just to partition the data but these columns
+            # are not included in the `ImClient` output.
+            current_columns = root_dir_df.columns.to_list()
+            month_column = "month"
+            if month_column in current_columns:
+                root_dir_df = root_dir_df.drop(month_column, axis=1)
+            year_column = "year"
+            if year_column in current_columns:
+                root_dir_df = root_dir_df.drop(year_column, axis=1)
             # Column with name "timestamp" that stores epochs remain in most,
             # vendors data if no column filtering was done. Drop it since it
             # replicates data from index and has the same name as index column
             # which causes a break when we try to reset it.
-            if "timestamp" in root_dir_df.columns:
-                root_dir_df = root_dir_df.drop(["timestamp"], axis=1)
+            timestamp_column = "timestamp"
+            if timestamp_column in current_columns:
+                root_dir_df = root_dir_df.drop(timestamp_column, axis=1)
             #
             res_df_list.append(root_dir_df)
         # Combine data from all root dirs into a single DataFrame.

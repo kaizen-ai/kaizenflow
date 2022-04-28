@@ -405,16 +405,14 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         See description in the parent class.
         """
         if columns is not None:
-            hdbg.dassert_lte(1, len(columns))
-            # Add currency pair column that is required for the query, without
-            # modifying the passed parameter.
+            # In order not to modify the input.
             query_columns = columns.copy()
+            # Data is partitioned by currency pairs so the column is mandatory.
             query_columns.append("currency_pair")
-            # Exclude full symbol column from the query, if present.
+            # Full symbol column is added after we read data, so skipping here.
             if full_symbol_col_name in query_columns:
                 query_columns.remove(full_symbol_col_name)
         else:
-            # If the passed columns are `None`, pass it to the query.
             query_columns = columns
         return query_columns
 
@@ -435,8 +433,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
             df["exchange_id"], df["currency_pair"]
         )
         df.insert(0, full_symbol_col_name, full_symbol_col)
-        # Drop exchange id and currency pair columns because we do not need
-        # them in the output.
+        # The columns are used just to partition the data but these columns
+        # are not included in the `ImClient` output.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
         return df
 

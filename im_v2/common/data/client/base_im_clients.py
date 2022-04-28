@@ -173,6 +173,10 @@ class ImClient(abc.ABC):
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
+        if columns is not None:
+            # Check before reading the data.
+            hdbg.dassert_container_type(columns, list, str)
+            hdbg.dassert_lte(1, len(columns))
         df = self._read_data(
             full_symbols,
             start_ts,
@@ -194,10 +198,6 @@ class ImClient(abc.ABC):
             msg="Not all the requested symbols were retrieved",
             only_warning=True,
         )
-        #
-        if columns is not None:
-            # TODO(Dan): Decide what to do if "full_symbol" is not passed to `columns`.
-            hdbg.dassert_set_eq(columns, df.columns.to_list())
         # Rename index.
         df.index.name = "timestamp"
         # Normalize data for each symbol.
@@ -218,6 +218,7 @@ class ImClient(abc.ABC):
                 self._resample_1min,
                 start_ts,
                 end_ts,
+                columns,
             )
             dfs.append(df_tmp)
         hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
@@ -230,8 +231,7 @@ class ImClient(abc.ABC):
         df = df.sort_values(by=["timestamp", full_symbol_col_name])
         df = df.set_index("timestamp", drop=True)
         # The full_symbol should be a string.
-        if not df.empty:
-            hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
+        hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
         return df
 
@@ -325,6 +325,7 @@ class ImClient(abc.ABC):
         resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
     ) -> None:
         """
         Verify that the normalized data is valid.
@@ -355,10 +356,13 @@ class ImClient(abc.ABC):
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
         # Ensure that all the data is in [start_ts, end_ts].
-        if start_ts:
-            hdbg.dassert_lte(start_ts, df.index.min())
-        if end_ts:
-            hdbg.dassert_lte(df.index.max(), end_ts)
+        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
+        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
+        #
+        if columns is not None:
+            # TODO(Grisha): @Dan trim columns depending on `filter_data_mode`.
+            # Ensure all requested columns are received.
+            hdbg.dassert_set_eq(columns, df.columns.to_list())
 
     # //////////////////////////////////////////////////////////////////////////
 

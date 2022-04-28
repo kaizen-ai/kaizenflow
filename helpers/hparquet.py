@@ -59,12 +59,13 @@ def from_parquet(
     The difference with `pd.read_pq` is that here we use Parquet
     Dataset.
 
-    :param file_name: path to Parquet dataset
-    :param columns: columns to load data for
+    :param file_name: path to a Parquet dataset
+    :param columns: columns to return, skipping reading columns that are not requested
+       - `None` means return all available columns
     :param filters: Parquet query filters
-    :param log_level: logger's level
-    :param report_stats: swith to report Parquet file size
-    :param aws_rofile: AWS profile name (e.g., "ck")
+    :param log_level: logging level to execute at
+    :param report_stats: whether to report Parquet file size or not
+    :param aws_rofile: AWS profile, e.g., `ck`
     :return: data from Parquet dataset
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
@@ -91,7 +92,7 @@ def from_parquet(
             use_legacy_dataset=False,
         )
         if columns:
-            # Verify that the passed columns are present in dataset metadata.
+            # Note: `schema.names` also includes and index.
             hdbg.dassert_is_subset(columns, dataset.schema.names)
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.
