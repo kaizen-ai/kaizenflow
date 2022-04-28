@@ -76,24 +76,29 @@ def _get_trade_universe(
     :return: trade universe as a nested dictionary of
       exchange name (e.g., binance) to list of symbols e.g.,
         {
-            "binance": [
-            "ADA_USDT",
-            "AVAX_USDT",
-            "BNB_USDT",
-            "BTC_USDT",
-            "DOGE_USDT",
-            "EOS_USDT",
-            "ETH_USDT",
-            "LINK_USDT",
-            "SOL_USDT"
-            ],
-            ...
+            "CCXT": {
+                "binance": [
+                "ADA_USDT",
+                "AVAX_USDT",
+                "BNB_USDT",
+                "BTC_USDT",
+                "DOGE_USDT",
+                "EOS_USDT",
+                "ETH_USDT",
+                "LINK_USDT",
+                "SOL_USDT"
+                ],
+                ...
+            }
         }
     """
+    # TODO(Grisha): consider always converting a vendor to lowercase.
     file_path = _get_universe_file_path(vendor, version=version)
     hdbg.dassert_path_exists(file_path)
     universe = hio.from_json(file_path)
-    return universe  # type: ignore[no-any-return]
+    hdbg.dassert_in(vendor, universe, "Invalid vendor=`%s`", vendor)
+    vendor_universe = universe[vendor]
+    return vendor_universe  # type: ignore[no-any-return]
 
 
 def get_vendor_universe(
@@ -109,7 +114,7 @@ def get_vendor_universe(
         full symbols e.g. gateio::XRP_USDT
     :return: vendor universe as a list of symbol or list of full symbols e.g.:
         {
-            "Talos": {
+            "talos": {
                 "binance": [
                 "ADA_USDT",
                 "AVAX_USDT",
@@ -125,7 +130,6 @@ def get_vendor_universe(
         }
         or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
-    # TODO(Grisha): "Unify universe files format" CmTask #1725.
     vendor_universe = _get_trade_universe(vendor, version=version)
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.

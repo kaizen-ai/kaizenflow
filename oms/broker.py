@@ -194,6 +194,11 @@ class AbstractBroker(abc.ABC):
             self._deadline_timestamp_to_orders[order.end_timestamp].append(order)
         # Submit the orders to the actual OMS.
         _LOG.debug("Submitting orders=\n%s", omorder.orders_to_string(orders))
+        if self._strategy_id == "null":
+            _LOG.warning(
+                "Using dry-run mode since strategy_id='%s'", self._strategy_id
+            )
+            dry_run = True
         file_name = await self._submit_orders(
             orders, wall_clock_timestamp, dry_run=dry_run
         )
