@@ -413,6 +413,7 @@ class ImClient(abc.ABC):
         # Read data for the entire period of time available.
         start_timestamp = None
         end_timestamp = None
+        # Use only `self._full_symbol_col_name` after CmTask1588 is fixed.
         columns = None
         data = self.read_data(
             [full_symbol], start_timestamp, end_timestamp, columns
