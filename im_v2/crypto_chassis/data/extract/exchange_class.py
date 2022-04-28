@@ -6,6 +6,7 @@ Import as:
 
 import im_v2.crypto_chassis.data.extract.exchange_class as imvccdeecl
 """
+from typing import Optional
 
 import pandas as pd
 
@@ -18,19 +19,57 @@ class CryptoChassisExchange:
     """
 
     def __init__(self) -> None:
-        self._endpoint = ...  # This is the so-called "base_url" from CCh docs.
+        self._endpoint = "https://api.cryptochassis.com/v1"
+        self.exchanges = ["coinbase",
+        "gemini",
+        "kraken",
+        "bitstamp",
+        "bitfinex"
+        "bitmex",
+        "binance",
+        "binance-us",
+        "binance-usds-futures",
+        "binance-coin-futures",
+        "huobi",
+        "huobi-usdt-swap",
+        "huobi-coin-swap",
+        "okex",
+        "kucoin",
+        "ftx",
+        "ftx-us",
+        "deribit",
+        ]
 
-    def build_url(data_type: str, exchange: str, currency_pair: str):
+
+    def build_url(self, 
+        data_type: str, 
+        exchange: str, 
+        currency_pair: str, 
+        depth: Optional[str]=None, 
+        interval: Optional[str]=None,
+        start_time: Optional[str]=None, 
+        end_time: Optional[str]=None,
+        include_real_time: Optional[int]=None
+        ):
         """
-        TODO(danya): @toma
-        Example on an url here:
-        https://github.com/crypto-chassis/cryptochassis-data-api-docs#market-depth
-
-        Up until the query (i.e. `?`)
-
-        Use an f-string.
         """
-        return url
+        core_url = f"{self.url}/{data_type}/{exchange}/{currency_pair}"
+        params = []
+        if depth:
+            params.append(f"depth={depth}")
+        if interval:
+            params.append(f"interval={interval}")
+        if start_time:
+            params.append(f"startTime={start_time}")
+        if end_time:
+            params.append(f"endTime={end_time}")
+        if include_real_time:
+            params.append(f"includeRealTime={str(include_real_time)}")
+        #
+        joined_params = "&".join(params)
+        #
+        parametrized_url = f"{core_url}?{joined_params}"
+        return parametrized_url
 
     def download_market_depth(
         self,
@@ -43,6 +82,30 @@ class CryptoChassisExchange:
         # TODO(Danya): @toma put data type assertions here before calling `fetch_market_depth`
         return market_depth
 
+    def download_trade(
+        self,
+        exchange: str,
+        currency_pair: str,
+        start_timestamp: Optional[pd.Timestamp],
+    ) -> pd.DataFrame:
+        # TODO(Danya): @toma put data type assertions here before calling `fetch_market_depth`
+
+        return market_depth
+
+    def download_ohlc(
+        self,
+        exchange: str,
+        currency_pair: str,
+        interval: Optional[str],
+        start_timestamp: Optional[pd.Timestamp],
+        end_timestamp: Optional[pd.Timestamp],
+        include_real_time: Optional[int]=None
+    ) -> pd.DataFrame:
+        # TODO(Danya): @toma put data type assertions here before calling `fetch_market_depth`
+        
+        return market_depth
+
+
     def _fetch_market_depth(
         self,
         exchange: str,
@@ -54,10 +117,31 @@ class CryptoChassisExchange:
         Example here: https://github.com/crypto-chassis/cryptochassis-data-api-
         docs#market-depth.
         """
-        # TODO(danya): @toma Build an url and then add query parameters if they are provided;
-        #   transform timestamp to string via imv2tauti.timestamp_to_talos_iso_8601 (added a TODO to move up);
-        #   read the link at requests.get(url).json()['urls'][0]['url'], compression is 'gzip';
-        #   separate the columns as in the notebook in CMTask1705;
-        #   return raw data.
-        #  Note: no need to handle pagination,
+        url = self.build_url(data_type="market_data", exchange=exchange, currency_pair=currency_pair, depth=depth, start_timestamp=start_timestamp)
+        return market_depth
+
+    def _fetch_trade(
+        self,
+        exchange: str,
+        currency_pair: str,
+        start_timestamp: Optional[pd.Timestamp],
+    ) -> pd.DataFrame:
+        """
+        Example here: https://github.com/crypto-chassis/cryptochassis-data-api-
+        docs#market-depth.
+        """
+        url = self.build_url(data_type="trade", exchange=exchange, currency_pair=currency_pair)
+        return market_depth
+
+    def _fetch_ohlc(
+        self,
+        exchange: str,
+        currency_pair: str,
+        start_timestamp: Optional[pd.Timestamp],
+    ) -> pd.DataFrame:
+        """
+        Example here: https://github.com/crypto-chassis/cryptochassis-data-api-
+        docs#market-depth.
+        """
+        url = self.build_url(data_type="ohlc", exchange=exchange, currency_pair=currency_pair, )
         return market_depth
