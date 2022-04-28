@@ -122,6 +122,18 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 # #############################################################################
 
 
+class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
+    def __init__(
+        self,
+        resample_1min: bool,
+        db_connection: hsql.DbConnection,
+        table_name: str,
+        mode: str = "data_client",
+    ) -> None:
+        super().__init__(resample_1min, db_connection, table_name, vendor="ccxt")
+        self._mode = mode
+
+
 # TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
 class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     """
