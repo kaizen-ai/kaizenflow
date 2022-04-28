@@ -582,4 +582,30 @@ cplpluti.plot_barplot(liquidity_stats)
 # %% [markdown]
 # ## Is the quoted spread constant over the day?
 
+# %% [markdown]
+# ## Have a function to average / median / sum quantities over different time scales (minutes, hours, etc)
+# - Like generalizing plot_time_distributions from explore.py
+
+# %%
+final_df.swaplevel(axis=1)["binance::BNB_USDT"][["close.ret_0"]].index
+
+# %%
+coexplor.plot_time_distributions(final_df.swaplevel(axis=1)["binance::BNB_USDT"][["close.ret_0"]].index, "time_of_the_day")
+
+# %%
+
+# %%
+resampler = cfinresa.resample(final_df, rule="1D")
+coexplor.display_df(resampler.mean())
+coexplor.display_df(resampler.median())
+coexplor.display_df(resampler.sum())
+
+# %%
+
+# %%
+#cplpluti.get_multiple_plots(2, 2)
+resampler.mean()["close.ret_0"].plot()
+resampler.median()["close.ret_0"].plot()
+resampler.sum()["close.ret_0"].plot()
+
 # %%
