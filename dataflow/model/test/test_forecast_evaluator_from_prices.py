@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import List
 
@@ -143,6 +144,78 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
 2022-01-03 09:50:00-05:00    -95.63     176577.07  -108708.25   99761.41  -27918.73
 2022-01-03 09:55:00-05:00    -21.06      84810.48   -72836.80  100776.60 -100776.60
 2022-01-03 10:00:00-05:00     98.11      50871.12     6979.46   99700.25  -93699.02"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_to_str_intraday_3_assets_targeted_varying_gmv(self) -> None:
+        start_timestamp = pd.Timestamp(
+            "2022-01-03 09:35:00", tz="America/New_York"
+        )
+        end_timestamp = pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York")
+        data = self.get_data(
+            start_timestamp,
+            end_timestamp,
+            asset_ids=[101, 201, 301],
+        )
+        forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
+            price_col="price",
+            volatility_col="volatility",
+            prediction_col="prediction",
+        )
+        target_gmv = pd.Series(
+            [0.0, 0.0, 1e3, 1e4, 1e3, 1e2],
+            [
+                datetime.time(9, 35),
+                datetime.time(9, 40),
+                datetime.time(9, 45),
+                datetime.time(9, 50),
+                datetime.time(9, 55),
+                datetime.time(10, 0),
+            ],
+        )
+        actual = forecast_evaluator.to_str(
+            data, target_gmv=target_gmv, quantization="nearest_share"
+        )
+        expected = r"""
+# holdings=
+                           101  201  301
+2022-01-03 09:35:00-05:00  NaN  NaN  NaN
+2022-01-03 09:40:00-05:00  NaN  NaN  NaN
+2022-01-03 09:45:00-05:00  0.0  0.0 -0.0
+2022-01-03 09:50:00-05:00  0.0 -1.0  0.0
+2022-01-03 09:55:00-05:00 -4.0 -6.0 -1.0
+2022-01-03 10:00:00-05:00 -1.0 -0.0  0.0
+# holdings marked to market=
+                               101      201     301
+2022-01-03 09:35:00-05:00      NaN      NaN     NaN
+2022-01-03 09:40:00-05:00      NaN      NaN     NaN
+2022-01-03 09:45:00-05:00     0.00     0.00   -0.00
+2022-01-03 09:50:00-05:00     0.00  -997.50    0.00
+2022-01-03 09:55:00-05:00 -3989.65 -5986.84 -999.57
+2022-01-03 10:00:00-05:00  -997.54    -0.00    0.00
+# flows=
+                               101      201      301
+2022-01-03 09:35:00-05:00      NaN      NaN      NaN
+2022-01-03 09:40:00-05:00      NaN      NaN      NaN
+2022-01-03 09:45:00-05:00    -0.00    -0.00     0.00
+2022-01-03 09:50:00-05:00    -0.00   997.50    -0.00
+2022-01-03 09:55:00-05:00  3989.65  4989.03   999.57
+2022-01-03 10:00:00-05:00 -2992.61 -5975.76 -1000.20
+# pnl=
+                           101    201   301
+2022-01-03 09:35:00-05:00  NaN    NaN   NaN
+2022-01-03 09:40:00-05:00  NaN    NaN   NaN
+2022-01-03 09:45:00-05:00  0.0   0.00  0.00
+2022-01-03 09:50:00-05:00  0.0   0.00  0.00
+2022-01-03 09:55:00-05:00  0.0  -0.30  0.00
+2022-01-03 10:00:00-05:00 -0.5  11.08 -0.63
+# statistics=
+                            pnl  gross_volume  net_volume       gmv       nmv
+2022-01-03 09:35:00-05:00   NaN           NaN         NaN       NaN       NaN
+2022-01-03 09:40:00-05:00   NaN           NaN         NaN       NaN       NaN
+2022-01-03 09:45:00-05:00  0.00          0.00        0.00      0.00      0.00
+2022-01-03 09:50:00-05:00  0.00        997.50     -997.50    997.50   -997.50
+2022-01-03 09:55:00-05:00 -0.30       9978.25    -9978.25  10976.06 -10976.06
+2022-01-03 10:00:00-05:00  9.94       9968.58     9968.58    997.54   -997.54"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_log_portfolio_read_portfolio(self) -> None:

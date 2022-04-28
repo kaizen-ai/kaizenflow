@@ -3,6 +3,7 @@ Import as:
 
 import core.finance.bar_processing as cfibapro
 """
+import datetime
 import logging
 
 import numpy as np
@@ -26,6 +27,14 @@ def infer_active_bars(df: pd.DataFrame) -> pd.DatetimeIndex:
     """
     _is_valid_df(df)
     return df.dropna(how="all").index
+
+
+def infer_active_times(df: pd.DataFrame) -> pd.Index:
+    _is_valid_df(df)
+    active_time_counts = df.dropna(how="all").groupby(lambda x: x.time()).count()
+    active_times = active_time_counts.index
+    hdbg.dassert_container_type(active_times, pd.Index, datetime.time)
+    return active_times
 
 
 def infer_daily_universe(df: pd.DataFrame) -> pd.DataFrame:
@@ -54,7 +63,7 @@ def infer_splits(df: pd.DataFrame) -> pd.DataFrame:
     bod = retrieve_beginning_of_day_values(df)
     eod = retrieve_end_of_day_values(df)
     overnight_pct_change = (bod - eod.shift(1)) / eod.shift(1)
-    inferred_splits = 1 / (1 + overnight_pct_change).round()
+    inferred_splits = (1 / (1 + overnight_pct_change)).round()
     return inferred_splits
 
 

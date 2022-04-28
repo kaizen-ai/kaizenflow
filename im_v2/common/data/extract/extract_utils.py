@@ -85,7 +85,7 @@ def download_realtime_for_one_exchange(
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
-        vendor = "Talos"
+        vendor = "talos"
         additional_args.append(args.exchange_id)
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
@@ -173,7 +173,7 @@ def download_historical_data(
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
-        vendor = "Talos"
+        vendor = "talos"
         additional_args.append(args.exchange_id)
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
