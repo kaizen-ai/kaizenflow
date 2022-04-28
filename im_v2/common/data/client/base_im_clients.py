@@ -648,6 +648,7 @@ class SqlRealTimeImClient(ImClient):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         # Extra arguments for building a query.
@@ -788,7 +789,7 @@ class SqlRealTimeImClient(ImClient):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
