@@ -275,6 +275,72 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             **kwargs,
         )
 
+    def _test_get_data_for_interval6(
+        self,
+        market_data: mdata.MarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: List[int],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` with:
+
+        - `asset_ids` is a list
+        - interval type is [a, b]
+        - columns for data filtering are passed to the client
+        """
+        # Prepare inputs.
+        left_close = True
+        right_close = True
+        # Run.
+        self._get_data_for_interval_helper(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            left_close,
+            right_close,
+            *args,
+            **kwargs,
+        )
+
+    def _test_get_data_for_interval7(
+        self,
+        market_data: mdata.MarketData,
+        asset_ids: List[int],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Test that error is raised when unsupported columns are provided to
+        `get_data_for_interval()`.
+        """
+        # TODO(Dan): Discuss changing this approach since it uses `read_data()`.
+        # if skip_test_since_not_online(market_data):
+        #     pytest.skip("Market not on-line")
+        # Prepare inputs.
+        start_ts = None
+        end_ts = None
+        ts_col_name = "end_ts"
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_interval:"
+            + hprint.to_str(
+                "start_ts end_ts ts_col_name asset_ids"
+            ),
+        )
+        # TODO(gp): We should raise a more specific assertion and / or
+        #  check part of the exception as a string.
+        with self.assertRaises(AssertionError):
+            market_data.get_data_for_interval(
+                start_ts,
+                end_ts,
+                ts_col_name,
+                asset_ids,
+            )
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_get_twap_price1(

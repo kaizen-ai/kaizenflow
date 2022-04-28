@@ -188,6 +188,7 @@ class ImClient(abc.ABC):
         )
         #
         if columns:
+            # TODO(Dan): Decide what to do if "full_symbol" is not passed to `columns`.
             hdbg.dassert_set_eq(columns, df.columns.to_list())
         # Rename index.
         df.index.name = "timestamp"

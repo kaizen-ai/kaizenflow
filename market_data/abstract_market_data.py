@@ -277,7 +277,7 @@ class MarketData(abc.ABC):
         df = self._convert_timestamps_to_timezone(df)
         # If columns are specified, filter data by them.
         if self._columns:
-            hdbg.dassert_set_eq(self._columns, df.columns)
+            hdbg.dassert_is_subset(self._columns, df.columns)
             df = df[self._columns]
         # Remap result columns to the required names.
         df = self._remap_columns(df)
