@@ -18,7 +18,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(Grisha): @Dan fix timestamp assertions.
 class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.
