@@ -41,6 +41,7 @@ hprint.config_notebook()
 
 # %%
 # Specify params.
+universe_version = "v3"
 resample_1min = True
 root_dir = os.path.join("s3://cryptokaizen-data", "historical")
 partition_mode = "by_year_month"
@@ -49,6 +50,7 @@ aws_profile = "ck"
 
 # Initiate the client.
 historical_client = icdcl.CcxtHistoricalPqByTileClient(
+    universe_version,
     resample_1min,
     root_dir,
     partition_mode,
@@ -261,6 +263,35 @@ def timestamp_to_datetime(timestamps):
 # %%
 ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
 ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data("ADA/USDT")
+
+# %%
+
+# %%
+ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
+
+# %%
+currency_pair = "ADA/USDT"
+start_timestamp = pd.Timestamp("2020-01-01")
+end_timestamp = pd.Timestamp("2020-01-02")
+sleep_time_in_secs = 20
+ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data(
+    currency_pair,
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+df = ccxt_kucoin_ada_data.copy()
+
+# %%
+indexes = timestamp_to_datetime(df['timestamp'])
+df.set_index(pd.to_datetime(indexes), inplace=True)
+df
+
+# %%
+
+# %%
 
 # %%
 _LOG.info(ccxt_kucoin_ada_data.shape)
