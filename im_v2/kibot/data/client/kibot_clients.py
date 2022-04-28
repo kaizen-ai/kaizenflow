@@ -37,12 +37,12 @@ class KibotClient(icdc.ImClient):
     we do not forget about it.
     """
 
-    def __init__(self, resample_1min: bool) -> None:
+    def __init__(self, universe_version: str, resample_1min: bool) -> None:
         """
         Constructor.
         """
         vendor = "kibot"
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
 
     def get_universe(self) -> List[ivcu.FullSymbol]:
         """
@@ -131,6 +131,7 @@ class KibotEquitiesCsvParquetByAssetClient(
 
     def __init__(
         self,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         extension: str,
@@ -150,7 +151,7 @@ class KibotEquitiesCsvParquetByAssetClient(
             required for all asset classes except for "forex"
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        super().__init__(resample_1min)
+        super().__init__(universe_version, resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -321,6 +322,7 @@ class KibotFuturesCsvParquetByAssetClient(
 
     def __init__(
         self,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         extension: str,
@@ -337,7 +339,7 @@ class KibotFuturesCsvParquetByAssetClient(
         :param contract_type: futures contract type (e.g., "continuous", "expiry")
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        super().__init__(resample_1min)
+        super().__init__(universe_version, resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(

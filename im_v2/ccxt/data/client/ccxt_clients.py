@@ -43,22 +43,15 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
-    def __init__(self, vendor: str, resample_1min: bool) -> None:
+    def __init__(
+        self, vendor: str, universe_version: str, resample_1min: bool
+    ) -> None:
         """
         Constructor.
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
-
-    def get_universe(self) -> List[ivcu.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        universe = ivcu.get_vendor_universe(
-            vendor=self._vendor, as_full_symbol=True
-        )
-        return universe  # type: ignore[no-any-return]
 
     @staticmethod
     def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
@@ -138,6 +131,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         connection: hsql.DbConnection,
     ) -> None:
@@ -148,7 +142,7 @@ class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
 
         :param connection: connection for a SQL database
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         self._connection = connection
 
     def get_metadata(self) -> pd.DataFrame:
@@ -217,6 +211,7 @@ class CcxtCddCsvParquetByAssetClient(
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         # TODO(gp): -> file_extension
@@ -236,7 +231,7 @@ class CcxtCddCsvParquetByAssetClient(
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -368,6 +363,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
     def __init__(
         self,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
@@ -386,6 +382,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         infer_exchange_id = True
         super().__init__(
             vendor,
+            universe_version,
             resample_1min,
             root_dir,
             partition_mode,
@@ -399,15 +396,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         See description in the parent class.
         """
         raise NotImplementedError
-
-    def get_universe(self) -> List[ivcu.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        universe = ivcu.get_vendor_universe(
-            vendor=self._vendor, as_full_symbol=True
-        )
-        return universe  # type: ignore[no-any-return]
 
     @staticmethod
     def _get_columns_for_query(
