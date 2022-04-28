@@ -18,6 +18,7 @@
 # %%
 import logging
 import os
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import requests
@@ -51,22 +52,13 @@ hprint.config_notebook()
 # # Config
 
 # %%
-def get_cmtask1704_config_ccxt() -> cconconf.Config:
+def get_cmtask1704_config_crypto_chassis() -> cconconf.Config:
     """
-    Get config, that specifies params for getting raw data.
+    Get config, that specifies params for getting raw data from `crypto chassis`.
     """
     config = cconconf.Config()
     # Load parameters.
     #config.add_subconfig("load")
-    #env_file = imvimlita.get_db_env_path("dev")
-    #connection_params = hsql.get_connection_info_from_env_file(env_file)
-    #config["load"]["connection"] = hsql.get_connection(*connection_params)
-    #config["load"]["aws_profile"] = "ck"
-    #config["load"]["data_dir_hist"] = os.path.join(
-    #    "s3://cryptokaizen-data", "historical"
-    #)
-    #config["load"]["data_snapshot"] = "latest"
-    #config["load"]["partition_mode"] = "by_year_month"
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["full_symbols"] = ['binance::BNB_USDT', 'binance::BTC_USDT']
@@ -80,7 +72,7 @@ def get_cmtask1704_config_ccxt() -> cconconf.Config:
 
 
 # %%
-config = get_cmtask1704_config_ccxt()
+config = get_cmtask1704_config_crypto_chassis()
 print(config)
 
 
@@ -193,12 +185,15 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 # ## Functions to extract and process data
 
 # %%
-def get_exchange_currency_for_api_request(full_symbol):
+def get_exchange_currency_for_api_request(full_symbol: str) -> str:
+    """
+    Returns `exchange_id` and `currency_pair` in a format for requests to cc API.
+    """
     cc_exchange_id, cc_currency_pair = ivcu.parse_full_symbol(full_symbol)
     cc_currency_pair = cc_currency_pair.lower().replace("_", "-")
     return cc_exchange_id, cc_currency_pair
 
-def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol):
+def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol: str) -> pd.DataFrame:
     """
     - Transform CK `full_symbol` to the `crypto-chassis` request format.
     - Construct OHLCV data request for `crypto-chassis` API.
@@ -216,7 +211,11 @@ def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol):
     df = pd.read_csv(url, compression="gzip")
     return df
 
-def apply_ohlcv_transformation(df, full_symbol, start_date, end_date):
+def apply_ohlcv_transformation(
+    df: pd.DataFrame, 
+    full_symbol: str, 
+    start_date: pd.Timestamp, 
+    end_date: pd.Timestamp) -> pd.DataFrame:
     """
     The following transformations are applied:
     - Convert `timestamps` to the usual format.
@@ -240,7 +239,10 @@ def apply_ohlcv_transformation(df, full_symbol, start_date, end_date):
     df = df.loc[(df.index>=start_date)&(df.index<=end_date)]
     return df
 
-def read_crypto_chassis_ohlcv(full_symbols, start_date, end_date):
+def read_crypto_chassis_ohlcv(
+    full_symbols: List[str], 
+    start_date: pd.Timestamp, 
+    end_date: pd.Timestamp) -> pd.DataFrame:
     """
     - Load the raw data for one symbol.
     - Convert it to CK format.
@@ -302,14 +304,26 @@ bnb_ex.plot()
 # TODO(Max): Refactor the loading part once #1766 is implemented.
 
 # %%
-def get_list_of_dates_for_period(start_date, end_date):
+def get_list_of_dates_for_period(
+    start_date: pd.Timestamp, 
+    end_date: pd.Timestamp) -> str:
+    """
+    Since cc API only loads the data for one day, on need to get all
+    the timestamps for days in the interval.
+    """
     # Get the list of all dates in the range.
     num_of_periods = (end_date-start_date).days
     datelist = pd.date_range(start_date, periods=num_of_periods).tolist()
     datelist = [str(x.strftime("%Y-%m-%d")) for x in datelist]
     return datelist
 
-def load_bid_ask_data_for_one_symbol(full_symbol, start_date, end_date):
+def load_bid_ask_data_for_one_symbol(
+    full_symbol: str, 
+    start_date: pd.Timestamp, 
+    end_date: pd.Timestamp) -> pd.DataFrame:
+    """
+    For each date inside the period load the bid-ask data.
+    """
     # Using the variables from `datelist` the multiple requests can be sent to the API.
     list_of_dates = get_list_of_dates_for_period(start_date, end_date)
     result = []
@@ -326,7 +340,15 @@ def load_bid_ask_data_for_one_symbol(full_symbol, start_date, end_date):
     bid_ask_df = pd.concat(result)
     return bid_ask_df
 
-def apply_bid_ask_transformation(df, full_symbol):
+def apply_bid_ask_transformation(
+    df: pd.DataFrame, 
+    full_symbol: str) -> pd.DataFrame:
+    """
+    - Divide (price, size) columns.
+    - Convert timestamps and set them as index.
+    - Convert data columns to `float`.
+    - Add `full_symbol` column.
+    """
     # Split the columns to differentiate between `price` and `size`.
     df[["bid_price", "bid_size"]] = df["bid_price_bid_size"].str.split(
         "_", expand=True
@@ -348,7 +370,7 @@ def apply_bid_ask_transformation(df, full_symbol):
     df["full_symbol"] = full_symbol
     return df
 
-def resample_bid_ask(df, resampling_rule):
+def resample_bid_ask(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     """
     In the current format the data is presented in the `seconds` frequency. In
     order to convert it to the minutely (or other) frequencies the following
@@ -368,7 +390,17 @@ def resample_bid_ask(df, resampling_rule):
     )
     return new_df
 
-def read_and_resample_bid_ask_data(full_symbols, start_date, end_date, resampling_rule):
+def read_and_resample_bid_ask_data(
+    full_symbols: List[str], 
+    start_date: pd.Timestamp, 
+    end_date: pd.Timestamp, 
+    resampling_rule: str) -> pd.DataFrame:
+    """
+    General method that does:
+    - Data loading
+    - Transformation to CK format
+    - Resampling
+    """
     result = []
     for full_symbol in full_symbols:
         # Load raw bid ask data.
@@ -381,7 +413,7 @@ def read_and_resample_bid_ask_data(full_symbols, start_date, end_date, resamplin
     bid_ask_df = pd.concat(result) 
     return bid_ask_df
 
-def calculate_bid_ask_statistics(df):
+def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     # Convert to multiindex.
     converted_df = dtfsysonod._convert_to_multiindex(
         df, "full_symbol"
@@ -417,10 +449,11 @@ def calculate_bid_ask_statistics(df):
 
 
 # %%
+# Specify the params.
 full_symbols = config["data"]["full_symbols"]
 start_date = config["data"]["start_date"]
 end_date = config["data"]["end_date"]
-
+# Get the data.
 bid_ask_df = read_and_resample_bid_ask_data(full_symbols, start_date, end_date, "5T")
 bid_ask_df.head(3)
 
