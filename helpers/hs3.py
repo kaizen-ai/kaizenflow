@@ -365,7 +365,7 @@ def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     which is usually set to `s3://alphamatic-data`.
     """
     prefix = aws_profile.upper()
-    env_var = f"{prefix}_S3_BUCKET"
+    env_var = f"{prefix}_AWS_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
     hdbg.dassert(
