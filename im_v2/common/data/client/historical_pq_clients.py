@@ -85,7 +85,7 @@ class HistoricalPqByTileClient(
         """
         Get columns for Parquet data query.
 
-        For base implementation query columns are equal to the passed.
+        For base implementation the queries columns are equal to the passed ones.
         """
         if columns:
             hdbg.dassert_in(

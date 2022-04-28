@@ -142,7 +142,7 @@ class ImClient(abc.ABC):
             - `None` means start from the beginning of the available data
         :param end_ts: the latest date timestamp to load data for
             - `None` means end at the end of the available data
-        :param columns: columns to return
+        :param columns: columns to return, skipping reading columns that are not requested
             - `None` means return all available columns
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
@@ -187,7 +187,7 @@ class ImClient(abc.ABC):
             only_warning=True,
         )
         #
-        if columns:
+        if columns is not None:
             # TODO(Dan): Decide what to do if "full_symbol" is not passed to `columns`.
             hdbg.dassert_set_eq(columns, df.columns.to_list())
         # Rename index.

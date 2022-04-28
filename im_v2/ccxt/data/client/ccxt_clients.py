@@ -416,14 +416,14 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         See description in the parent class.
         """
-        if columns:
-            # Copy the passed columns in order to build query columns from them
-            # and not change original column list.
+        if columns is not None:
+            hdbg.dassert_lte(1, len(columns))
+            # Add currency pair column that is required for the query, without
+            # modifying the passed parameter.
             query_columns = columns.copy()
-            # Add currency pair column that is requied for the query.
             query_columns.append("currency_pair")
+            # Exclude full symbol column from the query, if present.
             if full_symbol_col_name in query_columns:
-                # Exclude full symbol column from the query.
                 query_columns.remove(full_symbol_col_name)
         else:
             # If the passed columns are `None`, pass it to the query.
