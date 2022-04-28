@@ -322,18 +322,13 @@ class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             resample_1min
         )
         # Set expected values.
-        expected_length = 4
+        expected_length = 2
         expected_first_elements = [
             "binance::ADA_USDT",
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
+            "ftx::BNB_USDT",
         ]
         #
-        expected_last_elements = [
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
-            "coinbase::BTC_USDT",
-        ]
+        expected_last_elements = expected_first_elements
         # Run test.
         self._test_get_universe1(
             talos_client,
@@ -644,18 +639,13 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             resample_1min
         )
         # Set expected values.
-        expected_length = 4
+        expected_length = 2
         expected_first_elements = [
             "binance::ADA_USDT",
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
+            "ftx::BNB_USDT",
         ]
         #
-        expected_last_elements = [
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
-            "coinbase::BTC_USDT",
-        ]
+        expected_last_elements = expected_first_elements
         # Run test.
         self._test_get_universe1(
             talos_client,
@@ -666,11 +656,11 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
 
 # #############################################################################
-# TestRealTimeSqlTalosClient1
+# TestTalosSqlRealTimeImClient1
 # #############################################################################
 
 
-class TestRealTimeSqlTalosClient1(
+class TestTalosSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
     def test_build_select_query1(self) -> None:
@@ -895,12 +885,12 @@ class TestRealTimeSqlTalosClient1(
     def setup_talos_sql_client(
         self,
         resample_1min: Optional[bool] = True,
-    ) -> imvtdctacl.RealTimeSqlTalosClient:
+    ) -> imvtdctacl.TalosSqlRealTimeImClient:
         """
         Initialize Talos SQL Client.
         """
         table_name = "talos_ohlcv"
-        sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
+        sql_talos_client = imvtdctacl.TalosSqlRealTimeImClient(
             resample_1min, self.connection, table_name
         )
         return sql_talos_client

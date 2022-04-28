@@ -391,7 +391,7 @@ def print_setup(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    var_names = "ECR_BASE_PATH BASE_IMAGE".split()
+    var_names = "AM_ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
         print(f"{v}={get_default_param(v)}")
 
@@ -1816,7 +1816,7 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     _report_task()
     docker_login(ctx)
-    ecr_base_path = get_default_param("ECR_BASE_PATH")
+    ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
     _run(ctx, f"{docker_exec} image ls {ecr_base_path}")
 
@@ -2011,7 +2011,7 @@ def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
     """
     _report_task()
     #
-    base_image = get_default_param("ECR_BASE_PATH") + "/dev_tools"
+    base_image = get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
     _docker_pull(ctx, base_image, stage, version)
 
 
@@ -2053,7 +2053,7 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
     else:
-        ecr_base_path = get_default_param("ECR_BASE_PATH")
+        ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
@@ -2135,13 +2135,25 @@ def _generate_compose_file(
           - AM_ENABLE_DIND=%s
           - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
           - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - AM_S3_BUCKET=$AM_S3_BUCKET
+          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
           - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
           - AM_HOST_NAME=%s
           - AM_HOST_OS_NAME=%s
-          - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-          - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-          - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+          - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
+          - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
+          - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
+          - CK_AWS_PROFILE=$CK_AWS_PROFILE
+          # - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
+          # - CK_ENABLE_DIND=
+          # - CK_FORCE_TEST_FAIL=$CK_FORCE_TEST_FAIL
+          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
+          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
+          # - CK_HOST_NAME=
+          # - CK_HOST_OS_NAME=
+          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
+          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
+          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
           - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
           # This env var is used by GH Action to signal that we are inside the CI.
           - CI=$CI
@@ -2348,7 +2360,7 @@ def _get_docker_compose_paths(
     _LOG.debug("repo_short_name=%s", repo_short_name)
     # Check submodule status, if needed.
     mount_as_submodule = False
-    if repo_short_name == "amp":
+    if repo_short_name in ("amp", "cm"):
         # Check if `amp` is a submodule.
         path, _ = hgit.get_path_from_supermodule()
         docker_compose_path: Optional[str]
@@ -2524,7 +2536,7 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            get_default_param("ECR_BASE_PATH")
+            get_default_param("AM_ECR_BASE_PATH")
             + "/"
             + get_default_param("BASE_IMAGE")
         )

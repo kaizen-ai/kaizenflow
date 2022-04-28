@@ -51,10 +51,17 @@ AM_AWS_PROFILE = "am"
 
 # %%
 vendor = "CCXT"
+universe_version = "v3"
+resample_1min = True
 root_dir = os.path.join(hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data")
 extension = "csv.gz"
 ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
-    vendor, root_dir, extension, aws_profile=AM_AWS_PROFILE
+    vendor,
+    universe_version,
+    resample_1min,
+    root_dir,
+    extension,
+    aws_profile=AM_AWS_PROFILE,
 )
 start_ts = None
 end_ts = None
