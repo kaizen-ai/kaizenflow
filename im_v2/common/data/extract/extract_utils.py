@@ -22,7 +22,7 @@ import helpers.hsql as hsql
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-
+from helpers.htimeout_decorator import exit_after
 
 def add_exchange_download_args(
     parser: argparse.ArgumentParser,
@@ -32,8 +32,8 @@ def add_exchange_download_args(
     """
     parser.add_argument(
         "--start_timestamp",
-        action="store",
         required=True,
+        action="store",
         type=str,
         help="Beginning of the downloaded period",
     )
@@ -64,7 +64,7 @@ def add_exchange_download_args(
 CCXT_EXCHANGE = "CcxtExchange"
 TALOS_EXCHANGE = "TalosExchange"
 
-
+@exit_after(300)
 def download_realtime_for_one_exchange(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
