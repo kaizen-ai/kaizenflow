@@ -362,7 +362,7 @@ class ImClient(abc.ABC):
         if columns is not None:
             # TODO(Grisha): @Dan trim columns depending on `filter_data_mode`.
             # Ensure all requested columns are received.
-            hdbg.dassert_set_eq(columns, df.columns.to_list())
+            hdbg.dassert_is_subset(columns, df.columns.to_list())
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -643,6 +643,7 @@ class SqlRealTimeImClient(ImClient):
         Apply vendor-specific normalization.
         """
 
+    # TODO(Danya): Propagate usage of `columns` parameter here and in descendant classes.
     def _read_data(
         self,
         full_symbols: List[ivcu.FullSymbol],

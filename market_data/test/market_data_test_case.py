@@ -316,6 +316,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         Test that error is raised when unsupported columns are provided to
         `get_data_for_interval()`.
         """
+        # TODO(Dan): Consider usage of `skip_test_since_not_online()`.
         # Prepare inputs.
         start_ts = None
         end_ts = None
