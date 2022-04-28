@@ -33,6 +33,8 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import im_v2.common.universe as ivcu
+import core.explore as coexplor
+import core.plotting.plotting_utils as cplpluti
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -454,6 +456,8 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     bid_ask_metrics = node.fit(converted_df)
     # Save the result.
     bid_ask_metrics = bid_ask_metrics["df_out"]
+    # Convert relative spread to bps.
+    bid_ask_metrics["relative_spread"] = bid_ask_metrics["relative_spread"]*10000
     return bid_ask_metrics
 
 
@@ -482,8 +486,7 @@ final_df.tail()
 
 # %%
 # Metrics visualizations.
-final_df.swaplevel(axis=1)["binance::BNB_USDT"][["quoted_spread"]].plot()
-final_df.swaplevel(axis=1)["binance::BNB_USDT"][["relative_spread"]].plot()
+final_df[["relative_spread"]].plot()
 
 # %% [markdown]
 # ## Compute the distribution of (return - spread)
@@ -501,3 +504,82 @@ display(df_bnb["ret_spr_diff"].describe())
 # %%
 # Visualize the result
 cplonorm.plot_qq(df_bnb["ret_spr_diff"])
+
+# %% [markdown]
+# # Deep dive into quantitative statistics #1805
+
+# %% [markdown]
+# ## Check that our VWAP and TWAP match the version reported by Chassis
+
+# %% run_control={"marked": false}
+# Load minutely OHLCV data from crypto-chassis (so we don't corrupt initial vwap, twap).
+# Time interval = 2 years
+full_symbol = ["binance::BTC_USDT"]
+start_date = pd.Timestamp("2020-01-01", tz="UTC")
+end_date = pd.Timestamp("2022-01-01", tz="UTC")
+df = read_crypto_chassis_ohlcv(full_symbol, start_date, end_date)
+
+# %%
+# VWAP, TWAP transformation.
+resampling_rule = "1T"
+vwap_twap_df = calculate_vwap_twap(df, resampling_rule)
+
+# %%
+# Construct DataFrame with VWAP, TWAP from different sources.
+# _chassis - vwap,twap from raw data.
+cc_vwap = df[["vwap", "twap"]]
+cc_vwap = cc_vwap.add_suffix('_chassis')
+# _ck - vwap,twap calculated with the nodes.
+ck_vwap = vwap_twap_df.swaplevel(axis=1)["binance::BTC_USDT"][["vwap", "twap"]]
+ck_vwap = ck_vwap.add_suffix('_ck')
+# Unique DataFrame.
+ols_df = pd.concat([cc_vwap, 
+                    ck_vwap],axis=1)
+
+# %%
+# OLS VWAP.
+predicted_var = "vwap_chassis"
+predictor_vars = "vwap_ck"
+intercept = False
+# Run OLS.
+coexplor.ols_regress(
+    ols_df,
+    predicted_var,
+    predictor_vars,
+    intercept,
+)
+
+# %%
+# OLS TWAP.
+predicted_var = "twap_chassis"
+predictor_vars = "twap_ck"
+intercept = False
+# Run OLS.
+coexplor.ols_regress(
+    ols_df,
+    predicted_var,
+    predictor_vars,
+    intercept,
+)
+
+# %%
+display(ols_df.corr())
+
+# %% [markdown]
+# ### Summary
+
+# %% [markdown]
+# Judging by the numbers above, I think it's fair to say that the vwap,twap from raw data is almost a perfect match with the ones computed with internal methods.
+
+# %% [markdown]
+# ## How much liquidity is available at the top of the book?
+
+# %%
+liquidity_stats = (final_df["ask_size"] * final_df["ask_price"]).median()
+display(liquidity_stats)
+cplpluti.plot_barplot(liquidity_stats)
+
+# %% [markdown]
+# ## Is the quoted spread constant over the day?
+
+# %%
