@@ -194,7 +194,8 @@ overnight_returns = cofinanc.compute_overnight_returns(
 # %%
 regression_dict = {
     "target_col": "vwap.ret_0.vol_adj",
-    "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
+    #"feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
+    "feature_cols": ["prediction"],
     "feature_lag": 2,
     "batch_size": 50,
 }
@@ -215,5 +216,3 @@ coefficients.head(3)
 
 # %%
 corr.head()
-
-# %%
