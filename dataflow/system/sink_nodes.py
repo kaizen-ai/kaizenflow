@@ -106,6 +106,7 @@ class ProcessForecasts(dtfcore.FitPredictNode):
 
     def _evaluate_forecasts(self, df: pd.DataFrame) -> None:
         log_dir = self._evaluate_forecasts_config["log_dir"]
+        _LOG.info("log_dir=%s", log_dir)
         target_gmv = self._evaluate_forecasts_config["target_gmv"]
         returns_col = self._evaluate_forecasts_config["returns_col"]
         forecast_evaluator = dtfmod.ForecastEvaluator(

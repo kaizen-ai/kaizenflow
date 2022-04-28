@@ -23,7 +23,7 @@ if [ -z "$AM_ENABLE_DIND" ]; then
 fi;
 
 if [[ $AM_ENABLE_DIND == 1 ]]; then
-    echo "# Setting up Docker-in-docker"
+    echo "# Set up Docker-in-docker"
     if [[ ! -d /etc/docker ]]; then
         sudo mkdir /etc/docker
     fi;
@@ -63,32 +63,41 @@ if [[ $AM_ENABLE_DIND == 1 ]]; then
     done
 fi;
 
-
 # Mount other file systems.
 # mount -a || true
 # sudo change perms to /mnt/tmpfs
+
+# Check git.
+VAL=$(git --version)
+echo "git --version: $VAL"
+# TODO(gp): Check https://github.com/alphamatic/amp/issues/2200#issuecomment-1101756708
+git config --global --add safe.directory /app
+if [[ -d /app/amp ]]; then
+    git config --global --add safe.directory /app/amp
+fi;
+git rev-parse --show-toplevel
 
 # Check set-up.
 ./devops/docker_run/test_setup.sh
 
 # AWS.
 echo "# Check AWS authentication setup"
-if [[ $AWS_ACCESS_KEY_ID == "" ]]; then
-    unset AWS_ACCESS_KEY_ID
+if [[ $AM_AWS_ACCESS_KEY_ID == "" ]]; then
+    unset AM_AWS_ACCESS_KEY_ID
 else
-    echo "AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'"
+    echo "AM_AWS_ACCESS_KEY_ID='$AM_AWS_ACCESS_KEY_ID'"
 fi;
 
-if [[ $AWS_SECRET_ACCESS_KEY == "" ]]; then
-    unset AWS_SECRET_ACCESS_KEY
+if [[ $AM_AWS_SECRET_ACCESS_KEY == "" ]]; then
+    unset AM_AWS_SECRET_ACCESS_KEY
 else
-    echo "AWS_SECRET_ACCESS_KEY='***'"
+    echo "AM_AWS_SECRET_ACCESS_KEY='***'"
 fi;
 
-if [[ $AWS_DEFAULT_REGION == "" ]]; then
-    unset AWS_DEFAULT_REGION
+if [[ $AM_AWS_DEFAULT_REGION == "" ]]; then
+    unset AM_AWS_DEFAULT_REGION
 else
-    echo "AWS_DEFAULT_REGION='$AWS_DEFAULT_REGION'"
+    echo "AM_AWS_DEFAULT_REGION='$AM_AWS_DEFAULT_REGION'"
 fi;
 aws configure --profile am list || true
 
@@ -111,6 +120,8 @@ echo "helpers: $VAL"
 echo "PATH=$PATH"
 echo "PYTHONPATH=$PYTHONPATH"
 echo "entrypoint.sh: '$@'"
+
+invoke print_env
 
 # TODO(gp): eval seems to be more general, but it creates a new executable.
 eval "$@"
