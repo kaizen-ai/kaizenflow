@@ -166,7 +166,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dags_list = filter(lambda x: x["paused"] == "False", dags_list)
     dags_list = map(lambda x: x["dag_id"], dags_list) # type: ignore[no-any-return]
     if args.test:
-        dags_list = filter(lambda x: x.startswith("test_mock_long"), dags_list)
+        dags_list = filter(lambda x: x.startswith("test_"), dags_list)
     _clear_long_running_tasks(
         list(dags_list), args.dag_duration_threshold, mwaa_cli_token
     )
