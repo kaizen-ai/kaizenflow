@@ -17,8 +17,7 @@
 
 # %%
 import logging
-import os
-from typing import Any, Dict, List, Optional
+from typing import List
 
 import pandas as pd
 import requests
@@ -33,11 +32,6 @@ import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hsql as hsql
-import im_v2.ccxt.data.client as icdcl
-import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.client.talos_clients as imvtdctacl
-
 import im_v2.common.universe as ivcu
 
 # %%
@@ -54,14 +48,15 @@ hprint.config_notebook()
 # %%
 def get_cmtask1704_config_crypto_chassis() -> cconconf.Config:
     """
-    Get config, that specifies params for getting raw data from `crypto chassis`.
+    Get config, that specifies params for getting raw data from `crypto
+    chassis`.
     """
     config = cconconf.Config()
     # Load parameters.
-    #config.add_subconfig("load")
+    # config.add_subconfig("load")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["full_symbols"] = ['binance::BNB_USDT', 'binance::BTC_USDT']
+    config["data"]["full_symbols"] = ["binance::BNB_USDT", "binance::BTC_USDT"]
     config["data"]["start_date"] = pd.Timestamp("2022-01-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2022-01-15", tz="UTC")
     # Transformation parameters.
@@ -136,6 +131,7 @@ def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     vwap_twap_df = vwap_twap["df_out"]
     return vwap_twap_df
 
+
 def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
     """
     Compute returns on the resampled data DataFlow-style.
@@ -187,11 +183,13 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 # %%
 def get_exchange_currency_for_api_request(full_symbol: str) -> str:
     """
-    Returns `exchange_id` and `currency_pair` in a format for requests to cc API.
+    Returns `exchange_id` and `currency_pair` in a format for requests to cc
+    API.
     """
     cc_exchange_id, cc_currency_pair = ivcu.parse_full_symbol(full_symbol)
     cc_currency_pair = cc_currency_pair.lower().replace("_", "-")
     return cc_exchange_id, cc_currency_pair
+
 
 def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol: str) -> pd.DataFrame:
     """
@@ -200,7 +198,9 @@ def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol: str) -> pd.DataFrame:
     - Save the data as a DataFrame.
     """
     # Deconstruct `full_symbol`.
-    cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(full_symbol)
+    cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(
+        full_symbol
+    )
     # Build a request.
     r = requests.get(
         f"https://api.cryptochassis.com/v1/ohlc/{cc_exchange_id}/{cc_currency_pair}?startTime=0"
@@ -211,13 +211,16 @@ def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol: str) -> pd.DataFrame:
     df = pd.read_csv(url, compression="gzip")
     return df
 
+
 def apply_ohlcv_transformation(
-    df: pd.DataFrame, 
-    full_symbol: str, 
-    start_date: pd.Timestamp, 
-    end_date: pd.Timestamp) -> pd.DataFrame:
+    df: pd.DataFrame,
+    full_symbol: str,
+    start_date: pd.Timestamp,
+    end_date: pd.Timestamp,
+) -> pd.DataFrame:
     """
     The following transformations are applied:
+
     - Convert `timestamps` to the usual format.
     - Convert data columns to `float`.
     - Add `full_symbol` column.
@@ -236,13 +239,13 @@ def apply_ohlcv_transformation(
     # Note: I failed to put [start_time, end_time] to historical request.
     # Now it loads all the available data.
     # For that reason the time interval is hardcoded on this stage.
-    df = df.loc[(df.index>=start_date)&(df.index<=end_date)]
+    df = df.loc[(df.index >= start_date) & (df.index <= end_date)]
     return df
 
+
 def read_crypto_chassis_ohlcv(
-    full_symbols: List[str], 
-    start_date: pd.Timestamp, 
-    end_date: pd.Timestamp) -> pd.DataFrame:
+    full_symbols: List[str], start_date: pd.Timestamp, end_date: pd.Timestamp
+) -> pd.DataFrame:
     """
     - Load the raw data for one symbol.
     - Convert it to CK format.
@@ -305,22 +308,22 @@ bnb_ex.plot()
 
 # %%
 def get_list_of_dates_for_period(
-    start_date: pd.Timestamp, 
-    end_date: pd.Timestamp) -> str:
+    start_date: pd.Timestamp, end_date: pd.Timestamp
+) -> str:
     """
-    Since cc API only loads the data for one day, on need to get all
-    the timestamps for days in the interval.
+    Since cc API only loads the data for one day, on need to get all the
+    timestamps for days in the interval.
     """
     # Get the list of all dates in the range.
-    num_of_periods = (end_date-start_date).days
+    num_of_periods = (end_date - start_date).days
     datelist = pd.date_range(start_date, periods=num_of_periods).tolist()
     datelist = [str(x.strftime("%Y-%m-%d")) for x in datelist]
     return datelist
 
+
 def load_bid_ask_data_for_one_symbol(
-    full_symbol: str, 
-    start_date: pd.Timestamp, 
-    end_date: pd.Timestamp) -> pd.DataFrame:
+    full_symbol: str, start_date: pd.Timestamp, end_date: pd.Timestamp
+) -> pd.DataFrame:
     """
     For each date inside the period load the bid-ask data.
     """
@@ -329,7 +332,9 @@ def load_bid_ask_data_for_one_symbol(
     result = []
     for date in list_of_dates:
         # Deconstruct `full_symbol` for API request.
-        cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(full_symbol)
+        cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(
+            full_symbol
+        )
         # Interaction with the API.
         r = requests.get(
             f"https://api.cryptochassis.com/v1/market-depth/{cc_exchange_id}/{cc_currency_pair}?startTime={date}"
@@ -340,9 +345,10 @@ def load_bid_ask_data_for_one_symbol(
     bid_ask_df = pd.concat(result)
     return bid_ask_df
 
+
 def apply_bid_ask_transformation(
-    df: pd.DataFrame, 
-    full_symbol: str) -> pd.DataFrame:
+    df: pd.DataFrame, full_symbol: str
+) -> pd.DataFrame:
     """
     - Divide (price, size) columns.
     - Convert timestamps and set them as index.
@@ -370,6 +376,7 @@ def apply_bid_ask_transformation(
     df["full_symbol"] = full_symbol
     return df
 
+
 def resample_bid_ask(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     """
     In the current format the data is presented in the `seconds` frequency. In
@@ -390,13 +397,16 @@ def resample_bid_ask(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     )
     return new_df
 
+
 def read_and_resample_bid_ask_data(
-    full_symbols: List[str], 
-    start_date: pd.Timestamp, 
-    end_date: pd.Timestamp, 
-    resampling_rule: str) -> pd.DataFrame:
+    full_symbols: List[str],
+    start_date: pd.Timestamp,
+    end_date: pd.Timestamp,
+    resampling_rule: str,
+) -> pd.DataFrame:
     """
     General method that does:
+
     - Data loading
     - Transformation to CK format
     - Resampling
@@ -410,14 +420,13 @@ def read_and_resample_bid_ask_data(
         # Resample the data.
         df = resample_bid_ask(df, resampling_rule)
         result.append(df)
-    bid_ask_df = pd.concat(result) 
+    bid_ask_df = pd.concat(result)
     return bid_ask_df
+
 
 def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     # Convert to multiindex.
-    converted_df = dtfsysonod._convert_to_multiindex(
-        df, "full_symbol"
-    )
+    converted_df = dtfsysonod._convert_to_multiindex(df, "full_symbol")
     # Configure the node to calculate the returns.
     node_bid_ask_config = {
         "in_col_groups": [
@@ -454,7 +463,9 @@ full_symbols = config["data"]["full_symbols"]
 start_date = config["data"]["start_date"]
 end_date = config["data"]["end_date"]
 # Get the data.
-bid_ask_df = read_and_resample_bid_ask_data(full_symbols, start_date, end_date, "5T")
+bid_ask_df = read_and_resample_bid_ask_data(
+    full_symbols, start_date, end_date, "5T"
+)
 bid_ask_df.head(3)
 
 # %%
