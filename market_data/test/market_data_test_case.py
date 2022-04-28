@@ -86,8 +86,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     # //////////////////////////////////////////////////////////////////////////////
 
-    # TODO(Grisha): @Dan add 2 tests: one for cols filtering, another for cols filtering but
-    # with unsupported columns.
+  
     def _get_data_for_interval_helper(
         self,
         market_data: mdata.MarketData,
@@ -317,9 +316,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         Test that error is raised when unsupported columns are provided to
         `get_data_for_interval()`.
         """
-        # TODO(Dan): Discuss changing this approach since it uses `read_data()`.
-        # if skip_test_since_not_online(market_data):
-        #     pytest.skip("Market not on-line")
         # Prepare inputs.
         start_ts = None
         end_ts = None

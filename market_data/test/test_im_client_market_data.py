@@ -972,11 +972,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
 # TestImClientMarketData3
 # #############################################################################
 
-# TODO(Dan): Move to testing on locally stored data snippets.
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1666.",
-)
+
 # TODO(Dan): Replace `TestImClientMarketData1` on this one when extended.
 class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     """
