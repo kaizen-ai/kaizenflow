@@ -16,6 +16,7 @@
 # # Imports
 
 # %% run_control={"marked": false}
+import json
 import logging
 import os
 from datetime import timedelta
@@ -270,6 +271,7 @@ ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data("ADA/USDT")
 ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
 
 # %%
+# Nina: data is hard to load for the whole month using CcxtExchange. Duration of downloading more than 5 hours.
 currency_pair = "ADA/USDT"
 start_timestamp = pd.Timestamp("2020-01-01")
 end_timestamp = pd.Timestamp("2020-01-02")
@@ -285,11 +287,9 @@ ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data(
 df = ccxt_kucoin_ada_data.copy()
 
 # %%
-indexes = timestamp_to_datetime(df['timestamp'])
+indexes = timestamp_to_datetime(df["timestamp"])
 df.set_index(pd.to_datetime(indexes), inplace=True)
 df
-
-# %%
 
 # %%
 
@@ -297,13 +297,120 @@ df
 _LOG.info(ccxt_kucoin_ada_data.shape)
 ccxt_kucoin_ada_data.head()
 
+
+# %% [markdown]
+# ### Load data using simple requests
+
+# %%
+def get_url(symbol: str, start_ts: int, end_ts: int) -> str:
+    url = f"https://openapi-v2.kucoin.com/api/v1/market/candles?symbol={symbol}&type=1min&startAt={start_ts}&endAt={end_ts}"
+    return url
+
+
+# %%
+symbol = "ADA-USDT"
+# 2019-08-01 00:00:00 GMT+0000
+start = 1564617600
+# 2019-08-31 23:59:59 GMT+0000
+end = 1567295999
+url = get_url(symbol, start, end)
+response = requests.get(url)
+# check if data in response.
+response.text[:100]
+
+# %%
+data = json.loads(response.text)
+data = data["data"]
+columns = ["timestamp", "open", "high", "low", "close", "volume", "unknown_col"]
+df_2019 = pd.DataFrame(data, columns=columns)
+df_2019.head(3)
+
+# %%
+# Data is loaded for one day (roughly) but IDK why, maybe because of some limits.
+df_2019["timestamp"].sort_values()
+
+# %%
+symbol = "ADA-USDT"
+# 2020-01-30 23:00:00 GMT+0000
+start = 1580425200
+# 2020-01-31 23:59:59 GMT+0000
+end = 1580515199
+url = get_url(symbol, start, end)
+response = requests.get(url)
+# check if data in response.
+response.text[:100]
+
+# %%
+data_2020 = json.loads(response.text)
+data_2020 = data_2020["data"]
+columns = ["timestamp", "open", "high", "low", "close", "volume", "unknown_col"]
+df_2020 = pd.DataFrame(data_2020, columns=columns)
+_LOG.info(df_2020.shape)
+df_2020.head(3)
+
+# %%
+symbol = "ADA-USDT"
+# 2020-12-29 23:00:00 GMT+0000
+start = 1640818800
+# 2020-12-30 23:59:59 GMT+0000
+end = 1640908799
+url = get_url(symbol, start, end)
+response = requests.get(url)
+# check if data in response.
+response.text[:100]
+
+# %%
+data_2021 = json.loads(response.text)
+data_2021 = data_2021["data"]
+columns = ["timestamp", "open", "high", "low", "close", "volume", "unknown_col"]
+df_2021 = pd.DataFrame(data_2021, columns=columns)
+_LOG.info(df_2021.shape)
+df_2021.head(3)
+
 # %% [markdown]
 # ## Set Datetime index to loaded data
 
 # %%
-indexes = timestamp_to_datetime(ccxt_kucoin_ada_data['timestamp'])
+indexes = timestamp_to_datetime(ccxt_kucoin_ada_data["timestamp"])
 ccxt_kucoin_ada_data.set_index(pd.to_datetime(indexes), inplace=True)
 ccxt_kucoin_ada_data.head(2)
+
+
+# %%
+# Tricky manipulations to create a correct timestamp to convert to datetime.
+def change_timestamp(df):
+    for timestamp in df["timestamp"]:
+        df["timestamp"].loc[df["timestamp"] == timestamp] = f"{timestamp}000"
+    return df
+
+
+# %% run_control={"marked": true}
+df_2019 = change_timestamp(df_2019)
+df_2019 = df_2019.convert_dtypes()
+df_2019["timestamp"] = pd.to_numeric(df_2019["timestamp"])
+
+# %%
+indexes = timestamp_to_datetime(df_2019["timestamp"])
+df_2019.set_index(pd.to_datetime(indexes), inplace=True)
+df_2019.head(2)
+
+# %%
+# Data of 2020-01-30 ~ 2020-01-31
+df_2020 = change_timestamp(df_2020)
+df_2020 = df_2020.convert_dtypes()
+df_2020["timestamp"] = pd.to_numeric(df_2020["timestamp"])
+indexes = timestamp_to_datetime(df_2020["timestamp"])
+df_2020.set_index(pd.to_datetime(indexes), inplace=True)
+df_2020.head(2)
+
+# %%
+# Data of 2021-12-29 ~ 2021-12-30
+df_2021 = change_timestamp(df_2021)
+df_2021 = df_2021.convert_dtypes()
+df_2021["timestamp"] = pd.to_numeric(df_2021["timestamp"])
+indexes = timestamp_to_datetime(df_2021["timestamp"])
+df_2021.set_index(pd.to_datetime(indexes), inplace=True)
+df_2021.head(2)
 
 # %% [markdown]
 # ## Take a specific period of time - ["2019-02-18 00:00:00+00:00"]
@@ -353,4 +460,93 @@ _LOG.info(ccxt_exchange_ada.shape)
 display(ccxt_exchange_ada.head())
 
 # %%
-print(f"Start: {ccxt_kucoin_ada_data.index.min()}\nEnd: {ccxt_kucoin_ada_data.index.max()}")
+print(
+    f"Start: {ccxt_kucoin_ada_data.index.min()}\nEnd: {ccxt_kucoin_ada_data.index.max()}"
+)
+
+# %% [markdown]
+# ##  Take a specific period of time 2019-08-30, 2019-08-31
+
+# %%
+# Data is loaded for about 24 hours.
+df_2019.index.min(), df_2019.index.max()
+
+# %%
+ccxt_ada_nans_2019 = ada_kucoin_ccxt.loc[
+    (ada_kucoin_ccxt.index > "2019-08-30 23:00:00+00:00")
+    & (ada_kucoin_ccxt.index < "2019-08-31 23:59:59+00:00")
+    & (ada_kucoin_ccxt["open"].isna() == True)
+]
+_LOG.info(ccxt_ada_nans_2019.shape)
+display(ccxt_ada_nans_2019.head(3))
+_LOG.info(df.shape)
+display(df.head(3))
+
+# %%
+print(
+    f"Percentage of NaN data: {100*len(ccxt_ada_nans_2019[ccxt_ada_nans_2019.open.isna()])/len(ccxt_ada_nans_2019)}"
+)
+
+# %% [markdown]
+# ##  Take a specific period of time 2020-01-30, 2020-01-31
+
+# %%
+ccxt_ada_nans_2020 = ada_kucoin_ccxt.loc[ada_kucoin_ccxt["open"].isna() == True]
+ccxt_ada_nans_2020.loc[ccxt_ada_nans_2020.index.year == 2020].index.month.unique()
+
+# %%
+df_2020.index.min(), df_2020.index.max()
+
+# %%
+ccxt_ada_nans_2020 = ada_kucoin_ccxt.loc[
+    (ada_kucoin_ccxt.index > "2020-01-30 23:00:00+00:00")
+    & (ada_kucoin_ccxt.index < "2020-01-31 23:59:00+00:00")
+    & (ada_kucoin_ccxt["open"].isna() == True)
+]
+_LOG.info(ccxt_ada_nans_2020.shape)
+display(ccxt_ada_nans_2020.head(3))
+_LOG.info(df_2020.shape)
+display(df_2020.head(3))
+
+# %%
+print(
+    f"Percentage of NaN data: {100*len(ccxt_ada_nans_2020[ccxt_ada_nans_2020.open.isna()])/len(ccxt_ada_nans_2020)}"
+)
+
+# %% [markdown]
+# ##  Take a specific period of time 2021-12-29, 2021-12-30
+
+# %%
+ccxt_ada_nans_2021 = ada_kucoin_ccxt.loc[ada_kucoin_ccxt["open"].isna() == True]
+ccxt_ada_nans_2021.loc[ccxt_ada_nans_2021.index.year == 2021].index.month.unique()
+
+# %%
+df_2021.index.min(), df_2021.index.max()
+
+# %%
+ccxt_ada_nans_2021 = ada_kucoin_ccxt.loc[
+    (ada_kucoin_ccxt.index > "2021-12-29 23:00:00+00:00")
+    & (ada_kucoin_ccxt.index < "2021-12-30 23:59:00+00:00")
+    & (ada_kucoin_ccxt["open"].isna() == True)
+]
+_LOG.info(ccxt_ada_nans_2021.shape)
+display(ccxt_ada_nans_2021.head(3))
+_LOG.info(df_2021.shape)
+display(df_2021.head(3))
+
+# %%
+df_2021_nans = df_2021.loc[(df_2021["volume"] == "0")]
+_LOG.info(df_2021_nans.shape)
+df_2021_nans.head(3)
+
+# %%
+print(
+    f"Percentage of NaN data: {100*len(ccxt_ada_nans_2020[ccxt_ada_nans_2020.open.isna()])/len(ccxt_ada_nans_2020)}"
+)
+
+# %% [markdown]
+# # Summary
+#
+# ## Data of 2019 and 2020 have following common pattern: `volume = 0`, columns `open`, `close`, `high`, `low` have the same value in the row. Apparently this type of data becomes NaNs. However, data of 2021 doesn't have that pattern and still has NaNs in loaded via `CCXT` client.
+#
+# ## Data shapes of all 3 datasets are different from CCXT data. Apparently some data has been lost.
