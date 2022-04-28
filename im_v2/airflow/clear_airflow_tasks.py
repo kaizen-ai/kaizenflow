@@ -6,10 +6,9 @@ https://docs.aws.amazon.com/mwaa/latest/userguide/call-mwaa-apis-cli.html.
 
 Use as:
 
-# Download OHLCV data for binance 'v03', saving dev_stage:
 > im_v2/airflow/clear_airflow_tasks.py \
     --mwaa_environment 'Crypto_Airflow' \
-    --dag_duration_threshold '180' \
+    --dag_duration_threshold '210' \
     --test
 """
 
@@ -133,7 +132,10 @@ def _clear_long_running_tasks(
     start_datetime = start_datetime.strftime("%Y-%m-%dT%H:%M:%S+00:00")
     for dag in dags_list:
         _LOG.info("Clearing %s if task run started before %s", dag, start_datetime)
-        # Clear all RUNNING tasks which started earlier than: now - threshold.
+        # Clear all RUNNING DAGs which have RUN attribute earlier than: now - threshold.
+        # Important note, DAG "run" time attribute is not the same time as "started" time.
+        # i.e. A DAG can have Run set to: 2022-04-28 14:05:00 UTC but and Started:
+        # 2022-04-28 14:06:40, we are overriding the "Run" attribute in the command.
         # There is a bug in the CLI implementation, use --end-date but apply start_date value.
         mwaa_cli_command = (
             f"tasks clear -y -u -d --only-running --end-date {start_datetime} {dag}"
@@ -164,7 +166,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     dags_list = filter(lambda x: x["paused"] == "False", dags_list)
     dags_list = map(lambda x: x["dag_id"], dags_list) # type: ignore[no-any-return]
     if args.test:
-        dags_list = filter(lambda x: x.startswith("test"), dags_list)
+        dags_list = filter(lambda x: x.startswith("test_mock_long"), dags_list)
     _clear_long_running_tasks(
         list(dags_list), args.dag_duration_threshold, mwaa_cli_token
     )
