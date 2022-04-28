@@ -614,7 +614,9 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 
 
 # TODO(Danya): add example client for `CcxtSqlRealTimeImClient`.
-class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
+class CcxtSqlRealTimeImClient1(
+    icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
+):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -627,10 +629,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         #
@@ -670,10 +670,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -717,10 +715,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
@@ -763,10 +759,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
@@ -808,10 +802,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
@@ -853,10 +845,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
@@ -869,10 +859,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = False
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -916,10 +904,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2021-09-09 00:00:00", utc=True)
@@ -936,10 +922,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2021-09-09 00:04:00", utc=True)
@@ -955,10 +939,8 @@ class CcxtSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHel
         test_data = self._get_test_data()
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         resample_1min = True
-        im_client = (
-            icdcl.CcxtSqlRealTimeImClient(
-                resample_1min, self.connection, "ccxt_ohlcv"
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         expected_length = 3
         expected_first_elements = [

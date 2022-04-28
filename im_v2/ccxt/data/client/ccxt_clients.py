@@ -118,8 +118,9 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 
 
 # #############################################################################
-# CcxtCddDbClient
+# CcxtSqlRealTimeImClient
 # #############################################################################
+
 
 class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(
@@ -131,14 +132,14 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     ) -> None:
         super().__init__(resample_1min, db_connection, table_name, vendor="ccxt")
         self._mode = mode
-    
+
     @staticmethod
-    def should_be_online() -> bool:
+    def should_be_online() -> bool:  # pylint: disable=arguments-differ'
         """
         The real-time system for CCXT should always be online.
         """
         return True
-    
+
     def _apply_normalization(
         self,
         data: pd.DataFrame,
@@ -182,7 +183,7 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         if self._mode == "data_client":
             pass
         elif self._mode == "market_data":
-            # TODO (Danya): Move this transformation to MarketData.
+            # TODO(Danya): Move this transformation to MarketData.
             # Add `asset_id` column using mapping on `full_symbol` column.
             data["asset_id"] = data[full_symbol_col_name].apply(
                 ivcu.string_to_numerical_id
@@ -211,72 +212,6 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
         # Rearrange the columns.
         data = data.loc[:, ohlcv_columns]
-        return data
-
-# TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
-class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
-    """
-    `CCXT` client for data stored in an SQL database.
-    """
-
-    def __init__(
-        self,
-        vendor: str,
-        universe_version: str,
-        resample_1min: bool,
-        connection: hsql.DbConnection,
-    ) -> None:
-        """
-        Load `CCXT` and `CDD` price data from the database.
-
-        This code path is typically used for the real-time data.
-
-        :param connection: connection for a SQL database
-        """
-        super().__init__(vendor, universe_version, resample_1min)
-        self._connection = connection
-
-    def get_metadata(self) -> pd.DataFrame:
-        """
-        See description in the parent class.
-        """
-        raise NotImplementedError
-
-    def _read_data_for_one_symbol(
-        self,
-        full_symbol: ivcu.FullSymbol,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        **read_sql_kwargs: Any,
-    ) -> pd.DataFrame:
-        """
-        Same as parent class.
-        """
-        table_name = self._vendor.lower() + "_ohlcv"
-        # Verify that table with specified name exists.
-        hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
-        # Initialize SQL query.
-        sql_query = "SELECT * FROM %s" % table_name
-        # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
-        # Initialize a list for SQL conditions.
-        sql_conditions = []
-        # Fill SQL conditions list for each provided data parameter.
-        sql_conditions.append(f"exchange_id = '{exchange_id}'")
-        sql_conditions.append(f"currency_pair = '{currency_pair}'")
-        if start_ts:
-            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            sql_conditions.append(f"timestamp >= {start_ts}")
-        if end_ts:
-            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            sql_conditions.append(f"timestamp <= {end_ts}")
-        # Append all the provided SQL conditions to the main SQL query.
-        sql_conditions = " AND ".join(sql_conditions)
-        sql_query = " WHERE ".join([sql_query, sql_conditions])
-        # Execute SQL query.
-        data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
-        # Normalize data according to the vendor.
-        data = self._apply_vendor_normalization(data)
         return data
 
 
