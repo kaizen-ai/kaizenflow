@@ -148,6 +148,7 @@ class MarketData(abc.ABC):
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
+        ts_col_name: Optional[str] = None,
         *,
         # TODO(gp): @Grisha not sure limit is really needed. We could move it
         # to the DB implementation.
@@ -162,14 +163,21 @@ class MarketData(abc.ABC):
         Note that we use `asset_ids` from the constructor instead of passing it
         since the use case is for clients to just ask data that has been
         configured upstream when this object was built.
+
+        :param timedelta: length of last time period
+        :param ts_col_name: name of timestamp column, None to use start_timestamp
+        :param limit: max number of rows to output
+        :return: DataFrame with data for last given period
         """
         # Handle `timedelta`.
         _LOG.verb_debug(hprint.to_str("timedelta"))
         wall_clock_time = self.get_wall_clock_time()
         start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = None
-        # By convention to get the last chunk of data we use the start_time column.
-        ts_col_name = self._start_time_col_name
+        if ts_col_name is None:
+            # By convention to get the last chunk of data we use the start_time column.
+            # TODO(Danya): Make passing of ts_col_name mandatory.
+            ts_col_name = self._start_time_col_name
         asset_ids = self._asset_ids
         # Get the data.
         df = self.get_data_for_interval(
