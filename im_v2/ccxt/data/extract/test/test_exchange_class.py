@@ -13,7 +13,6 @@ import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestCcxtExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """

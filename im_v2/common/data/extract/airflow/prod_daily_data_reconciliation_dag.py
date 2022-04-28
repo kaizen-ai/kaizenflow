@@ -1,6 +1,10 @@
 """
-This DAG is used to compare data downloaded via 
-rt DAG with data downloaded once per day in bulk.
+This DAG is used to compare data downloaded via rt DAG with data downloaded
+once per day in bulk.
+
+Import as:
+
+import im_v2.common.data.extract.airflow.prod_daily_data_reconciliation_dag as imvcdeapddrd
 """
 import datetime
 
@@ -107,11 +111,11 @@ comparing_task = ECSOperator(
             }
         ]
     },
-    # This part ensures we do not get a random failure because of insufficient 
-    # HW resources. For unknown reasons, the ECS scheduling when using 
-    # your own EC2s is done  in a random way by default, so the task is placed 
-    # on an arbitrary instance in your cluster, hence sometimes the instance 
-    # did not have enough resources while other was empty. 
+    # This part ensures we do not get a random failure because of insufficient
+    # HW resources. For unknown reasons, the ECS scheduling when using
+    # your own EC2s is done  in a random way by default, so the task is placed
+    # on an arbitrary instance in your cluster, hence sometimes the instance
+    # did not have enough resources while other was empty.
     # This argument and the provided values ensure the tasks are
     # evenly "spread" across all "instanceId"s.
     placement_strategy=[

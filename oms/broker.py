@@ -194,6 +194,11 @@ class AbstractBroker(abc.ABC):
             self._deadline_timestamp_to_orders[order.end_timestamp].append(order)
         # Submit the orders to the actual OMS.
         _LOG.debug("Submitting orders=\n%s", omorder.orders_to_string(orders))
+        if self._strategy_id == "null":
+            _LOG.warning(
+                "Using dry-run mode since strategy_id='%s'", self._strategy_id
+            )
+            dry_run = True
         file_name = await self._submit_orders(
             orders, wall_clock_timestamp, dry_run=dry_run
         )
@@ -215,6 +220,12 @@ class AbstractBroker(abc.ABC):
         Get any new fills filled since last execution.
         """
         ...
+
+    @staticmethod
+    def _get_next_submitted_order_id() -> int:
+        submitted_order_id = AbstractBroker._submitted_order_id
+        AbstractBroker._submitted_order_id += 1
+        return submitted_order_id
 
     @abc.abstractmethod
     async def _submit_orders(
@@ -325,12 +336,6 @@ class AbstractBroker(abc.ABC):
             last_timestamp = next(reversed(self._orders))
             hdbg.dassert_lt(last_timestamp, wall_clock_timestamp)
         self._orders[wall_clock_timestamp] = orders
-
-    @staticmethod
-    def _get_next_submitted_order_id() -> int:
-        submitted_order_id = AbstractBroker._submitted_order_id
-        AbstractBroker._submitted_order_id += 1
-        return submitted_order_id
 
 
 # #############################################################################

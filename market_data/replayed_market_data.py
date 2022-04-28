@@ -5,7 +5,7 @@ import market_data.replayed_market_data as mdremada
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
@@ -42,8 +42,8 @@ class ReplayedMarketData(mdabmada.MarketData):
         knowledge_datetime_col_name: str,
         delay_in_secs: int,
         # Params from `MarketData`.
-        *args: List[Any],
-        **kwargs: Dict[str, Any],
+        *args: Any,
+        **kwargs: Any,
     ):
         """
         Constructor.
@@ -190,7 +190,7 @@ def save_market_data(
 def load_market_data(
     file_name: str,
     aws_profile: hs3.AwsProfile = None,
-    **kwargs: Dict[str, Any],
+    **kwargs: Any,
 ) -> pd.DataFrame:
     """
     Load some example data from the RT DB.

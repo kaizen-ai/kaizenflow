@@ -657,6 +657,19 @@ datetime,close,vol
 
 
 class TestResamplePortfolioBarMetrics1(hunitest.TestCase):
+    @staticmethod
+    def get_data(
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        *,
+        bar_duration: str = "5T",
+        seed: int = 10,
+    ) -> pd.DataFrame:
+        df = cfidaexa.get_portfolio_bar_metrics_dataframe(
+            start_datetime, end_datetime, bar_duration=bar_duration, seed=seed
+        )
+        return df
+
     def test_resampling_invariance(self) -> None:
         """
         Preserve data when resampling at the same frequency.
@@ -732,19 +745,6 @@ class TestResamplePortfolioBarMetrics1(hunitest.TestCase):
 2022-01-03 00:00:00-05:00 -167.88        650519      256.55  1000000.0  11.12
 2022-01-04 00:00:00-05:00 -271.28        650884       -8.48  1000000.0 -14.92"""
         self.assert_equal(actual, expected, fuzzy_match=True)
-
-    @staticmethod
-    def get_data(
-        start_datetime: pd.Timestamp,
-        end_datetime: pd.Timestamp,
-        *,
-        bar_duration: str = "5T",
-        seed: int = 10,
-    ) -> pd.DataFrame:
-        df = cfidaexa.get_portfolio_bar_metrics_dataframe(
-            start_datetime, end_datetime, bar_duration=bar_duration, seed=seed
-        )
-        return df
 
 
 class Test_resample_srs(hunitest.TestCase):

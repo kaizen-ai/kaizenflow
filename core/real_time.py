@@ -8,7 +8,7 @@ import asyncio
 import collections
 import datetime
 import logging
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, Tuple
+from typing import Any, AsyncGenerator, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -17,12 +17,12 @@ import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
-_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
+_LOG.verb_debug = hprint.install_log_verb_debug(  # type: ignore[attr-defined]
+        _LOG, verbose=False)
 
 # There are different ways of reproducing real-time behaviors:
 # 1) True real-time
@@ -276,8 +276,8 @@ def align_on_time_grid(
             event_loop, None, "High resolution sleep works only in real-time"
         )
         _wait(secs_to_wait - 1)
-        # Busy waiting. OS courses says to never do this, but in this case we need
-        # a high-resolution wait.
+        # Busy waiting. Operating system courses say to never do this, but in this
+        # case we need a high-resolution wait.
         while True:
             current_time = get_wall_clock_time()
             if current_time >= target_time:
@@ -339,7 +339,8 @@ class Events(List[Event]):
 async def execute_with_real_time_loop(
     get_wall_clock_time: hdateti.GetWallClockTime,
     sleep_interval_in_secs: float,
-    time_out_in_secs: Optional[int],
+    # TODO(gp): -> exit_condition
+    time_out_in_secs: Union[float, int, datetime.time, None],
     workload: Callable[[pd.Timestamp], Any],
 ) -> AsyncGenerator[Tuple[Event, Any], None]:
     """
@@ -348,7 +349,11 @@ async def execute_with_real_time_loop(
     :param get_wall_clock_time: function returning the current true or simulated time
     :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
         true or simulated seconds
-    :param time_out_in_secs: for how long to execute the loop. `None` means an infinite loop
+    :param time_out_in_secs: for how long to execute the loop
+        - int: number of iterations to execute
+        - datetime.time: time of the day to iterate until, in the same timezone
+            as `get_wall_clock_time()`
+        - `None` means an infinite loop
     :param workload: function executing the workload
 
     :return: a Tuple with:
@@ -362,13 +367,7 @@ async def execute_with_real_time_loop(
         str(get_wall_clock_time),
     )
     hdbg.dassert_lt(0, sleep_interval_in_secs)
-    num_iterations: Optional[int] = None
-    if time_out_in_secs is not None:
-        # TODO(gp): Consider using a real-time check instead of number of iterations.
-        num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
-        hdbg.dassert_lt(0, num_iterations)
-    _LOG.debug(hprint.to_str("num_iterations"))
-    #
+    # Number of iterations executed.
     num_it = 1
     while True:
         wall_clock_time = get_wall_clock_time()
@@ -380,7 +379,7 @@ async def execute_with_real_time_loop(
             "Real-time loop: "
             + "num_it=%s / %s: wall_clock_time='%s' real_wall_clock_time='%s'",
             num_it,
-            num_iterations,
+            time_out_in_secs,
             wall_clock_time,
             real_wall_clock_time,
             level=1,
@@ -401,13 +400,35 @@ async def execute_with_real_time_loop(
         _, workload_result = result
         yield event, workload_result
         # Exit, if needed.
-        if num_iterations is not None and num_it >= num_iterations:
-            break
+        if time_out_in_secs is not None:
+            if isinstance(time_out_in_secs, (int, float)):
+                num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
+                hdbg.dassert_lt(0, num_iterations)
+                _LOG.debug(hprint.to_str("num_it num_iterations"))
+                if num_it >= num_iterations:
+                    _LOG.debug(
+                        "Exiting loop: " + hprint.to_str("num_it num_iterations")
+                    )
+                    break
+            elif isinstance(time_out_in_secs, datetime.time):
+                curr_time = wall_clock_time.time()
+                _LOG.debug(hprint.to_str("curr_time time_out_in_secs"))
+                if curr_time >= time_out_in_secs:
+                    _LOG.debug(
+                        "Exiting loop: "
+                        + hprint.to_str("curr_time time_out_in_secs")
+                    )
+                    break
+            else:
+                raise ValueError(
+                    f"Can't process time_out_in_secs={time_out_in_secs} of type "
+                    + f"'{type(time_out_in_secs)}'"
+                )
         num_it += 1
 
 
 async def execute_all_with_real_time_loop(
-    *args: Tuple[Any], **kwargs: Dict[str, Any]
+    *args: Any, **kwargs: Any
 ) -> Tuple[List[Event], List[Any]]:
     """
     Execute the entire event loop until the end.
@@ -419,7 +440,7 @@ async def execute_all_with_real_time_loop(
         *[
             v
             async for v in execute_with_real_time_loop(
-                *args, **kwargs  # type: ignore[arg-type]
+                *args, **kwargs
             )
         ]
     )

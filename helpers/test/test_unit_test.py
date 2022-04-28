@@ -9,7 +9,6 @@ import tempfile
 import unittest.mock as umock
 from typing import Optional, Tuple
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -25,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 
 def _git_add(file_name: str) -> None:
     # pylint: disable=unreachable
-    cmd = "git add -u %s" % file_name
+    cmd = f"git add -u {file_name}"
     _LOG.debug("> %s", cmd)
     rc = hsystem.system(cmd, abort_on_error=False)
     if rc:
@@ -37,6 +36,8 @@ def _git_add(file_name: str) -> None:
 
 def _to_skip_on_update_outcomes() -> bool:
     """
+    Determine whether to skip on `--update_outcomes`.
+
     Some tests can't pass with `--update_outcomes`, since they exercise the
     logic in `--update_outcomes` itself.
 
@@ -904,28 +905,6 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         exp = txt
         act = hunitest.purify_txt_from_client(txt)
         self.assertEqual(act, exp)
-
-
-# #############################################################################
-
-
-class TestSubsetDf1(hunitest.TestCase):
-    def test1(self) -> None:
-        # Generate some random data.
-        np.random.seed(42)
-        df = pd.DataFrame(
-            np.random.randint(0, 100, size=(20, 4)), columns=list("ABCD")
-        )
-        # Subset.
-        df2 = hunitest.subset_df(df, nrows=5, seed=43)
-        # Check.
-        act = []
-        act.append("df=")
-        act.append(str(df))
-        act.append("df2=")
-        act.append(str(df2))
-        act = "\n".join(act)
-        self.check_string(act)
 
 
 # #############################################################################

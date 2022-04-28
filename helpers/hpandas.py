@@ -4,6 +4,7 @@ Import as:
 import helpers.hpandas as hpandas
 """
 import logging
+import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -102,7 +103,7 @@ def dassert_unique_index(
     if not index.is_unique:
         dup_indices = index.duplicated(keep=False)
         df_dup = obj[dup_indices]
-        dup_msg = "Duplicated rows are:\n%s\n" % df_to_str(df_dup)
+        dup_msg = f"Duplicated rows are:\n{df_to_str(df_dup)}\n"
         if msg is None:
             msg = dup_msg
         else:
@@ -140,7 +141,7 @@ def dassert_increasing_index(
         mask_shift[len(mask) - 1] = False
         #
         mask = mask | mask_shift
-        dup_msg = "Not increasing indices are:\n%s\n" % df_to_str(obj[mask])
+        dup_msg = f"Not increasing indices are:\n{df_to_str(obj[mask])}\n"
         if msg is None:
             msg = dup_msg
         else:
@@ -159,8 +160,8 @@ def dassert_strictly_increasing_index(
     """
     Ensure that a Pandas object has a strictly increasing index.
     """
-    dassert_unique_index(obj, msg=msg, *args)
-    dassert_increasing_index(obj, msg=msg, *args)
+    dassert_unique_index(obj, msg, *args)
+    dassert_increasing_index(obj, msg, *args)
 
 
 # TODO(gp): Not sure it's used or useful?
@@ -173,10 +174,40 @@ def dassert_monotonic_index(
     Ensure that a Pandas object has a monotonic (i.e., strictly increasing or
     decreasing index).
     """
-    dassert_unique_index(obj, msg=msg, *args)
+    dassert_unique_index(obj, msg, *args)
     index = _get_index(obj)
     cond = index.is_monotonic_increasing or index.is_monotonic_decreasing
     hdbg.dassert(cond, msg=msg, *args)
+
+
+# TODO(Paul): @gp -> dassert_datetime_indexed_df
+def dassert_time_indexed_df(
+    df: pd.DataFrame, allow_empty: bool, strictly_increasing: bool
+) -> None:
+    """
+    Validate that input dataframe is time indexed and well-formed.
+
+    :param df: dataframe to validate
+    :param allow_empty: allow empty data frames
+    :param strictly_increasing: if True the index needs to be strictly increasing,
+      instead of just increasing
+    """
+    # Verify that Pandas dataframe is passed as input.
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    if not allow_empty:
+        # Verify that a non-empty dataframe is passed as input.
+        hdbg.dassert_lt(0, df.shape[0])
+        # Verify that the dataframe has at least 1 column.
+        hdbg.dassert_lte(1, len(df.columns))
+    # Verify that the index is increasing.
+    if strictly_increasing:
+        dassert_strictly_increasing_index(df)
+    else:
+        dassert_increasing_index(df)
+    # Check that the index is in datetime format.
+    dassert_index_is_datetime(df)
+    # Check that the passed timestamp has timezone info.
+    hdateti.dassert_has_tz(df.index[0])
 
 
 def dassert_valid_remap(to_remap: List[str], remap_dict: Dict[str, str]) -> None:
@@ -354,7 +385,7 @@ def drop_duplicates(
     **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
     """
-    Wrapper around `pandas.drop_duplicates()`.
+    Create a wrapper around `pandas.drop_duplicates()`.
 
     See the official docs:
     - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
@@ -374,6 +405,102 @@ def drop_duplicates(
             hprint.perc(num_rows_before - num_rows_after, num_rows_before),
         )
     return data_no_dups
+
+
+def dropna(
+    df: pd.DataFrame,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+    *args: Any,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Create a wrapper around pd.dropna() reporting information about the removed
+    rows.
+
+    :param df: dataframe to process
+    :param drop_infs: if +/- np.inf should be considered as nans
+    :param report_stats: if processing stats should be reported
+    :return: dataframe with nans dropped
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    num_rows_before = df.shape[0]
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
+    df = df.dropna(*args, **kwargs)
+    if report_stats:
+        num_rows_after = df.shape[0]
+        pct_removed = hprint.perc(
+            num_rows_before - num_rows_after, num_rows_before
+        )
+        _LOG.info("removed rows with nans: %s", pct_removed)
+    return df
+
+
+def drop_axis_with_all_nans(
+    df: pd.DataFrame,
+    drop_rows: bool = True,
+    drop_columns: bool = False,
+    drop_infs: bool = False,
+    report_stats: bool = False,
+) -> pd.DataFrame:
+    """
+    Remove columns and rows not containing information (e.g., with only nans).
+
+    The operation is not performed in place and the resulting df is returned.
+    Assume that the index is timestamps.
+
+    :param df: dataframe to process
+    :param drop_rows: remove rows with only nans
+    :param drop_columns: remove columns with only nans
+    :param drop_infs: remove also +/- np.inf
+    :param report_stats: report the stats of the operations
+    :return: dataframe with specific nan axis dropped
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    if drop_infs:
+        df = df.replace([np.inf, -np.inf], np.nan)
+    if drop_columns:
+        # Remove columns with all nans, if any.
+        cols_before = df.columns[:]
+        df = df.dropna(axis=1, how="all")
+        if report_stats:
+            # Report results.
+            cols_after = df.columns[:]
+            removed_cols = set(cols_before).difference(set(cols_after))
+            pct_removed = hprint.perc(
+                len(cols_before) - len(cols_after), len(cols_after)
+            )
+            _LOG.info(
+                "removed cols with all nans: %s %s",
+                pct_removed,
+                hprint.list_to_str(removed_cols),
+            )
+    if drop_rows:
+        # Remove rows with all nans, if any.
+        rows_before = df.index[:]
+        df = df.dropna(axis=0, how="all")
+        if report_stats:
+            # Report results.
+            rows_after = df.index[:]
+            removed_rows = set(rows_before).difference(set(rows_after))
+            if len(rows_before) == len(rows_after):
+                # Nothing was removed.
+                min_ts = max_ts = None
+            else:
+                # TODO(gp): Report as intervals of dates.
+                min_ts = min(removed_rows)
+                max_ts = max(removed_rows)
+            pct_removed = hprint.perc(
+                len(rows_before) - len(rows_after), len(rows_after)
+            )
+            _LOG.info(
+                "removed rows with all nans: %s [%s, %s]",
+                pct_removed,
+                min_ts,
+                max_ts,
+            )
+    return df
 
 
 def reindex_on_unix_epoch(
@@ -407,17 +534,17 @@ def get_df_signature(df: pd.DataFrame, num_rows: int = 6) -> str:
     testing purposes.
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
-    text: List[str] = ["df.shape=%s" % str(df.shape)]
+    text: List[str] = [f"df.shape={str(df.shape)}"]
     with pd.option_context(
         "display.max_colwidth", int(1e6), "display.max_columns", None
     ):
         # If dataframe size exceeds number of rows, show only subset in form of
         # first and last rows. Otherwise, whole dataframe is shown.
         if len(df) > num_rows:
-            text.append("df.head=\n%s" % df.head(num_rows // 2))
-            text.append("df.tail=\n%s" % df.tail(num_rows // 2))
+            text.append(f"df.head=\n{df.head(num_rows // 2)}")
+            text.append(f"df.tail=\n{df.tail(num_rows // 2)}")
         else:
-            text.append("df.full=\n%s" % df)
+            text.append(f"df.full=\n{df}")
     text: str = "\n".join(text)
     return text
 
@@ -570,7 +697,7 @@ def _df_to_str(
 
 
 def df_to_str(
-    df: Union[pd.DataFrame, pd.Series],
+    df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
     num_rows: Optional[int] = 6,
     print_dtypes: bool = False,
@@ -601,6 +728,8 @@ def df_to_str(
         return ""
     if isinstance(df, pd.Series):
         df = pd.DataFrame(df)
+    elif isinstance(df, pd.Index):
+        df = df.to_frame(index=False)
     hdbg.dassert_isinstance(df, pd.DataFrame)
     out = []
     # Print the tag.
@@ -613,11 +742,11 @@ def df_to_str(
             # TODO(gp): Unfortunately we can't improve this part of the output
             # since there are many golden inside the code that would need to be
             # updated. Consider automating updating the expected values in the code.
-            txt = "index=[%s, %s]" % (df.index.min(), df.index.max())
+            txt = f"index=[{df.index.min()}, {df.index.max()}]"
             out.append(txt)
-            txt = "columns=%s" % ",".join(map(str, df.columns))
+            txt = f"columns={','.join(map(str, df.columns))}"
             out.append(txt)
-            txt = "shape=%s" % str(df.shape)
+            txt = f"shape={str(df.shape)}"
             out.append(txt)
         # Print information about the types.
         if print_dtypes:
@@ -625,11 +754,11 @@ def df_to_str(
 
             table = []
 
-            def _report_srs_stats(srs: pd.Series) -> str:
+            def _report_srs_stats(srs: pd.Series) -> List[Any]:
                 """
                 Report dtype, the first element, and its type of series.
                 """
-                row = []
+                row: List[Any] = []
                 first_elem = srs.values[0]
                 num_unique = srs.nunique()
                 num_nans = srs.isna().sum()
@@ -651,11 +780,11 @@ def df_to_str(
             row = map(str, row)
             table.append(row)
             for col_name in df.columns:
-                row = []
-                row.append(col_name)
-                row.extend(_report_srs_stats(df[col_name]))
-                row = map(str, row)
-                table.append(row)
+                row_: List[Any] = []
+                row_.append(col_name)
+                row_.extend(_report_srs_stats(df[col_name]))
+                row_ = map(str, row_)
+                table.append(row_)
             #
             columns = [
                 "col_name",
@@ -688,7 +817,7 @@ def df_to_str(
                 mem_use_df = mem_use_df.applymap(hintros.format_size)
             else:
                 raise ValueError(
-                    "Invalid memory_usage_mode='%s'" % memory_usage_mode
+                    f"Invalid memory_usage_mode='{memory_usage_mode}'"
                 )
             memory_usage_as_txt = _df_to_str(mem_use_df, num_rows=None)
             out.append(memory_usage_as_txt)
@@ -696,11 +825,11 @@ def df_to_str(
         if print_nan_info:
             num_elems = df.shape[0] * df.shape[1]
             num_nans = df.isna().sum().sum()
-            txt = "num_nans=%s" % hprint.perc(num_nans, num_elems)
+            txt = f"num_nans={hprint.perc(num_nans, num_elems)}"
             out.append(txt)
             #
             num_zeros = df.isnull().sum().sum()
-            txt = "num_zeros=%s" % hprint.perc(num_zeros, num_elems)
+            txt = f"num_zeros={hprint.perc(num_zeros, num_elems)}"
             out.append(txt)
             # TODO(gp): np can't do isinf on objects like strings.
             # num_infinite = np.isinf(df).sum().sum()
@@ -708,11 +837,11 @@ def df_to_str(
             # out.append(txt)
             #
             num_nan_rows = df.dropna().shape[0]
-            txt = "num_nan_rows=%s" % hprint.perc(num_nan_rows, num_elems)
+            txt = f"num_nan_rows={hprint.perc(num_nan_rows, num_elems)}"
             out.append(txt)
             #
             num_nan_cols = df.dropna(axis=1).shape[1]
-            txt = "num_nan_cols=%s" % hprint.perc(num_nan_cols, num_elems)
+            txt = f"num_nan_cols={hprint.perc(num_nan_cols, num_elems)}"
             out.append(txt)
     # Print the df.
     df_as_str = _df_to_str(
@@ -748,7 +877,7 @@ def convert_df_to_json_string(
     :return: dataframe converted to JSON string
     """
     # Append shape of the initial dataframe.
-    shape = "original shape=%s" % (df.shape,)
+    shape = f"original shape={df.shape}"
     # Reorder columns.
     if columns_order is not None:
         hdbg.dassert_set_eq(columns_order, df.cols)
@@ -909,3 +1038,41 @@ def compute_weighted_sum(
         )
         weighted_dfs[col] = weighted_sums
     return weighted_dfs
+
+
+def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
+    """
+    Remove N rows from the input data and shuffle the remaining ones.
+
+    :param df: input data
+    :param nrows: the number of rows to remove from the original data
+    :param seed: see `random.seed()`
+    :return: shuffled data with removed rows
+    """
+    hdbg.dassert_lte(1, nrows)
+    hdbg.dassert_lte(nrows, df.shape[0])
+    idx = list(range(df.shape[0]))
+    random.seed(seed)
+    random.shuffle(idx)
+    idx = sorted(idx[nrows:])
+    return df.iloc[idx]
+
+
+def get_random_df(
+    num_cols: int,
+    seed: Optional[int] = None,
+    date_range_kwargs: Optional[Dict[str, Any]] = None,
+) -> pd.DataFrame:
+    """
+    Compute df with random data with `num_cols` columns and index obtained by
+    calling `pd.date_range(**kwargs)`.
+
+    :param num_cols: the number of columns in a DataFrame to generate
+    :param seed: see `random.seed()`
+    :param date_range_kwargs: kwargs for `pd.date_range()`
+    """
+    if seed:
+        np.random.seed(seed)
+    dt = pd.date_range(**date_range_kwargs)
+    df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
+    return df

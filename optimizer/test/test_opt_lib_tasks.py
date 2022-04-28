@@ -1,6 +1,9 @@
 import os
 from typing import Dict
 
+import pytest
+
+import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks as hlibtask
 import optimizer.opt_lib_tasks as ooplitas
@@ -15,10 +18,9 @@ def _get_default_params() -> Dict[str, str]:
     """
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     default_params = {
-        "ECR_BASE_PATH": ecr_base_path,
+        "AM_ECR_BASE_PATH": ecr_base_path,
         "BASE_IMAGE": "opt_test",
         "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
-        "USE_ONLY_ONE_DOCKER_COMPOSE": True,
     }
     return default_params
 
@@ -39,6 +41,7 @@ class _OptLibTasksTestCase(hunitest.TestCase):
         super().tearDown()
 
 
+@pytest.mark.skipif(hgit.is_amp(), reason="Doesn't run in amp")
 class TestGetOptDockerUpDownCmd(_OptLibTasksTestCase):
     """
     Test optimizer `docker-compose up/down`.

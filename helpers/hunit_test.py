@@ -22,7 +22,6 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
@@ -193,18 +192,6 @@ def convert_df_to_string(
     return output_str
 
 
-# TODO(gp): @all Move this to helpers/hpandas.py since unit_test.py should not
-#  depend on pandas.
-def subset_df(df: "pd.DataFrame", nrows: int, seed: int = 42) -> "pd.DataFrame":
-    hdbg.dassert_lte(1, nrows)
-    hdbg.dassert_lte(nrows, df.shape[0])
-    idx = list(range(df.shape[0]))
-    random.seed(seed)
-    random.shuffle(idx)
-    idx = sorted(idx[nrows:])
-    return df.iloc[idx]
-
-
 # TODO(gp): Is this dataflow Info? If so it should go somewhere else.
 def convert_info_to_string(info: Mapping) -> str:
     """
@@ -232,89 +219,12 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
-# TODO(gp): @all Move this to helpers/hpandas.py since unit_test.py should not
-#  depend on pandas.
-def convert_df_to_json_string(
-    df: "pd.DataFrame",
-    n_head: Optional[int] = 10,
-    n_tail: Optional[int] = 10,
-    columns_order: Optional[List[str]] = None,
-) -> str:
-    """
-    Convert dataframe to pretty-printed JSON string.
-
-    To select all rows of the dataframe, pass `n_head` as None.
-
-    :param df: dataframe to convert
-    :param n_head: number of printed top rows
-    :param n_tail: number of printed bottom rows
-    :param columns_order: order for the KG columns sort
-    :return: dataframe converted to JSON string
-    """
-    # Append shape of the initial dataframe.
-    shape = "original shape=%s" % (df.shape,)
-    # Reorder columns.
-    if columns_order is not None:
-        hdbg.dassert_set_eq(columns_order, df.cols)
-        df = df[columns_order]
-    # Select head.
-    if n_head is not None:
-        head_df = df.head(n_head)
-    else:
-        # If no n_head provided, append entire dataframe.
-        head_df = df
-    # Transform head to json.
-    head_json = head_df.to_json(
-        orient="index",
-        force_ascii=False,
-        indent=4,
-        default_handler=str,
-        date_format="iso",
-        date_unit="s",
-    )
-    if n_tail is not None:
-        # Transform tail to json.
-        tail = df.tail(n_tail)
-        tail_json = tail.to_json(
-            orient="index",
-            force_ascii=False,
-            indent=4,
-            default_handler=str,
-            date_format="iso",
-            date_unit="s",
-        )
-    else:
-        # If no tail specified, append an empty string.
-        tail_json = ""
-    # Join shape and dataframe to single string.
-    output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
-    return output_str
-
-
 # TODO(gp): This seems the python3.9 version of `to_str`. Remove if possible.
 def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
 
-# TODO(gp): @all Maybe we should move it to hpandas.py so we can limit the
-#  dependencies from pandas.
-def get_random_df(
-    num_cols: int,
-    seed: Optional[int] = None,
-    date_range_kwargs: Optional[Dict[str, Any]] = None,
-) -> "pd.DataFrame":
-    """
-    Compute df with random data with `num_cols` columns and index obtained by
-    calling `pd.date_range(**kwargs)`.
-    """
-    if seed:
-        np.random.seed(seed)
-    dt = pd.date_range(**date_range_kwargs)
-    df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
-    return df
-
-
-def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
+def compare_df(df1: "pd.DataFrame", df2: "pd.DataFrame") -> None:
     """
     Compare two dfs including their metadata.
     """
@@ -322,12 +232,12 @@ def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
         print(df1.compare(df2))
         raise ValueError("Dfs are different")
 
-    def _compute_df_signature(df: pd.DataFrame) -> str:
+    def _compute_df_signature(df: "pd.DataFrame") -> str:
         txt = []
-        txt.append("df1=\n%s" % str(df))
-        txt.append("df1.dtypes=\n%s" % str(df.dtypes))
+        txt.append(f"df1=\n{str(df)}")
+        txt.append(f"df1.dtypes=\n{str(df.dtypes)}")
         if hasattr(df.index, "freq"):
-            txt.append("df1.index.freq=\n%s" % str(df.index.freq))
+            txt.append(f"df1.index.freq=\n{str(df.index.freq)}")
         return "\n".join(txt)
 
     full_test_name = "dummy"
@@ -436,8 +346,8 @@ def get_dir_signature(
         # Remove the directories.
         file_names = hsystem.remove_dirs(file_names)
         # Scan the files.
-        txt.append("len(file_names)=%s" % len(file_names))
-        txt.append("file_names=%s" % ", ".join(map(_remove_dir_name, file_names)))
+        txt.append(f"len(file_names)={len(file_names)}")
+        txt.append(f"file_names={', '.join(map(_remove_dir_name, file_names))}")
         for file_name in file_names:
             _LOG.debug("file_name=%s", file_name)
             txt.append("# " + _remove_dir_name(file_name))
@@ -447,7 +357,7 @@ def get_dir_signature(
             # txt.append("num_chars=%s" % len(txt_tmp))
             txt_tmp = txt_tmp.split("\n")
             # Filter lines, if needed.
-            txt.append("num_lines=%s" % len(txt_tmp))
+            txt.append(f"num_lines={len(txt_tmp)}")
             if num_lines is not None:
                 hdbg.dassert_lte(1, num_lines)
                 txt_tmp = txt_tmp[:num_lines]
@@ -552,9 +462,9 @@ def purify_app_references(txt: str) -> str:
     """
     Remove references to `/app`.
     """
-    txt = re.sub("/app/", "", txt, flags=re.MULTILINE)
-    txt = re.sub("app\.helpers", "helpers", txt, flags=re.MULTILINE)
-    txt = re.sub("app\.amp\.helpers", "amp.helpers", txt, flags=re.MULTILINE)
+    txt = re.sub(r"/app/", "", txt, flags=re.MULTILINE)
+    txt = re.sub(r"app\.helpers", "helpers", txt, flags=re.MULTILINE)
+    txt = re.sub(r"app\.amp\.helpers", "amp.helpers", txt, flags=re.MULTILINE)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -572,7 +482,7 @@ def purify_file_names(file_names: List[str]) -> List[str]:
 
 
 def purify_from_env_vars(txt: str) -> str:
-    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
+    for env_var in ["AM_ECR_BASE_PATH", "AM_AWS_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
         if env_var in os.environ:
             val = os.environ[env_var]
             hdbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
@@ -631,14 +541,14 @@ def diff_files(
         msg.append("\n" + hprint.frame(tag, char1="-"))
     # Diff to screen.
     _, res = hsystem.system_to_string(
-        "echo; sdiff --expand-tabs -l -w 150 %s %s" % (file_name1, file_name2),
+        f"echo; sdiff --expand-tabs -l -w 150 {file_name1} {file_name2}",
         abort_on_error=False,
         log_level=logging.DEBUG,
     )
     msg.append(res)
     # Save a script to diff.
     diff_script = os.path.join(dst_dir, "tmp_diff.sh")
-    vimdiff_cmd = "vimdiff %s %s" % (file_name1, file_name2)
+    vimdiff_cmd = f"vimdiff {file_name1} {file_name2}"
     # TODO(gp): Use hio.create_executable_script().
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
@@ -657,7 +567,7 @@ def diff_files(
         log_msg_as_str = (
             msg_as_str
             + "\n"
-            + hprint.frame("Traceback", "-")
+            + hprint.frame("Traceback", char1="-")
             + "\n"
             + "".join(traceback.format_stack())
         )
@@ -682,10 +592,10 @@ def diff_strings(
     """
     _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
     # Save the actual and expected strings to files.
-    file_name1 = "%s/tmp.string1.txt" % dst_dir
+    file_name1 = f"{dst_dir}/tmp.string1.txt"
     hio.to_file(file_name1, string1)
     #
-    file_name2 = "%s/tmp.string2.txt" % dst_dir
+    file_name2 = f"{dst_dir}/tmp.string2.txt"
     hio.to_file(file_name2, string2)
     # Compare with diff_files.
     if tag is None:
@@ -775,7 +685,7 @@ def set_pd_default_values() -> None:
     for key, new_val in default_pd_values.items():
         if isinstance(new_val, dict):
             continue
-        full_key = "%s.%s" % (section, key)
+        full_key = f"{section}.{key}"
         old_val = pd.get_option(full_key)
         if old_val != new_val:
             _LOG.debug(
@@ -858,7 +768,7 @@ def assert_equal(
     error_msg: str = "",
 ) -> bool:
     """
-    Same interface as in `TestCase.assert_equal()`.
+    See interface in `TestCase.assert_equal()`.
 
     :param full_test_name: e.g., `TestRunNotebook1.test2`
     """
@@ -877,6 +787,7 @@ def assert_equal(
     # Dedent expected, if needed.
     if dedent:
         _LOG.debug("# Dedent expected")
+        #actual = hprint.dedent(actual)
         expected = hprint.dedent(expected)
         _LOG.debug("exp='\n%s'", expected)
     # Purify actual text, if needed.
@@ -901,7 +812,7 @@ def assert_equal(
             "%s",
             "\n"
             + hprint.frame(
-                "Test '%s' failed" % full_test_name, char1="=", num_chars=80
+                f"Test '{full_test_name}' failed", char1="=", num_chars=80
             ),
         )
         # Print the correct output, like:
@@ -924,7 +835,7 @@ def assert_equal(
             # txt.append(f"expected = r'''{actual_orig}'''")
             exp_var = f'exp = r"""{actual_orig}"""'
         # Save the expected variable to files.
-        exp_var_file_name = "%s/tmp.exp_var.txt" % test_dir
+        exp_var_file_name = f"{test_dir}/tmp.exp_var.txt"
         hio.to_file(exp_var_file_name, exp_var)
         #
         exp_var_file_name = "tmp.exp_var.txt"
@@ -947,10 +858,10 @@ def assert_equal(
                 tag = "ACTUAL vs EXPECTED"
         tag += f": {full_test_name}"
         # Save the actual and expected strings to files.
-        act_file_name = "%s/tmp.actual.txt" % test_dir
+        act_file_name = f"{test_dir}/tmp.actual.txt"
         hio.to_file(act_file_name, actual)
         #
-        exp_file_name = "%s/tmp.expected.txt" % test_dir
+        exp_file_name = f"{test_dir}/tmp.expected.txt"
         hio.to_file(exp_file_name, expected)
         #
         _LOG.debug("Actual:\n'%s'", actual)
@@ -985,7 +896,7 @@ class TestCase(unittest.TestCase):
         Execute before any test method.
         """
         # Print banner to signal the start of a new test.
-        func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
+        func_name = f"{self.__class__.__name__}.{self._testMethodName}"
         _LOG.info("\n%s", hprint.frame(func_name))
         # Set the random seed.
         random_seed = 20000101
@@ -1182,7 +1093,8 @@ class TestCase(unittest.TestCase):
         # Assemble everything in a single path.
         import helpers.hs3 as hs3
 
-        s3_bucket = hs3.get_path()
+        aws_profile = "am"
+        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
 
@@ -1245,9 +1157,9 @@ class TestCase(unittest.TestCase):
 
     def assert_dfs_close(
         self,
-        actual: pd.DataFrame,
-        expected: pd.DataFrame,
-        **kwargs,
+        actual: "pd.DataFrame",
+        expected: "pd.DataFrame",
+        **kwargs: Any,
     ) -> None:
         """
         Assert dfs have same indexes and columns and that all values are close.
@@ -1467,7 +1379,7 @@ class TestCase(unittest.TestCase):
 
     def check_df_output(
         self,
-        actual_df: pd.DataFrame,
+        actual_df: "pd.DataFrame",
         expected_length: Optional[int],
         expected_column_names: Optional[List[str]],
         expected_column_unique_values: Optional[Dict[str, List[Any]]],
@@ -1487,6 +1399,9 @@ class TestCase(unittest.TestCase):
         :param expected_signature: expected outcome dataframe as string
             - If `__CHECK_STRING__` use the value in `self.check_string()`
         """
+        # TODO(Grisha): get rid of `hpandas` dependency.
+        import helpers.hpandas as hpandas
+
         hdbg.dassert_isinstance(actual_df, pd.DataFrame)
         if expected_length:
             # Verify that the output length is correct.
@@ -1531,7 +1446,7 @@ class TestCase(unittest.TestCase):
 
     def check_srs_output(
         self,
-        actual_srs: pd.Series,
+        actual_srs: "pd.Series",
         expected_length: Optional[int],
         expected_unique_values: Optional[List[Any]],
         expected_signature: str,
@@ -1592,9 +1507,9 @@ class TestCase(unittest.TestCase):
                 # TODO(gp): This needs to be generalized to `lm`. We should `cd`
                 # in the dir of the repo that includes the file.
                 file_name_in_amp = os.path.relpath(file_name_tmp, "amp")
-                cmd = "cd amp; git add -u %s" % file_name_in_amp
+                cmd = f"cd amp; git add -u {file_name_in_amp}"
             else:
-                cmd = "git add -u %s" % file_name_tmp
+                cmd = f"git add -u {file_name_tmp}"
             rc = hsystem.system(cmd, abort_on_error=False)
             if rc:
                 pytest_warning(
@@ -1640,10 +1555,7 @@ class TestCase(unittest.TestCase):
         ret = True
         # Compare columns.
         if actual.columns.tolist() != expected.columns.tolist():
-            msg = "Columns are different:\n%s\n%s" % (
-                str(actual.columns),
-                str(expected.columns),
-            )
+            msg = f"Columns are different:\n{str(actual.columns)}\n{str(expected.columns)}"
             self._to_error(msg)
             ret = False
         # Compare the values.
@@ -1660,22 +1572,22 @@ class TestCase(unittest.TestCase):
             if actual.shape == expected.shape:
                 close_mask = np.isclose(actual, expected, equal_nan=True)
                 #
-                msg = "actual=\n%s" % actual
+                msg = f"actual=\n{actual}"
                 self._to_error(msg)
                 #
-                msg = "expected=\n%s" % expected
+                msg = f"expected=\n{expected}"
                 self._to_error(msg)
                 #
                 actual_masked = np.where(close_mask, np.nan, actual)
-                msg = "actual_masked=\n%s" % actual_masked
+                msg = f"actual_masked=\n{actual_masked}"
                 self._to_error(msg)
                 #
                 expected_masked = np.where(close_mask, np.nan, expected)
-                msg = "expected_masked=\n%s" % expected_masked
+                msg = f"expected_masked=\n{expected_masked}"
                 self._to_error(msg)
                 #
                 err = np.abs((actual_masked - expected_masked) / expected_masked)
-                msg = "err=\n%s" % err
+                msg = f"err=\n{err}"
                 self._to_error(msg)
                 max_err = np.nanmax(np.nanmax(err))
                 msg = "max_err=%.3f" % max_err
@@ -1683,8 +1595,7 @@ class TestCase(unittest.TestCase):
             else:
                 msg = (
                     "Shapes are different:\n"
-                    "actual.shape=%s\n"
-                    "expected.shape=%s" % (str(actual.shape), str(expected.shape))
+                    f"actual.shape={str(actual.shape)}\nexpected.shape={str(expected.shape)}"
                 )
                 self._to_error(msg)
             ret = False
@@ -1716,7 +1627,7 @@ class TestCase(unittest.TestCase):
         """
         Return the full test name as `class.method`.
         """
-        return "%s.%s" % (self.__class__.__name__, self._testMethodName)
+        return f"{self.__class__.__name__}.{self._testMethodName}"
 
     def _get_current_path(
         self,
@@ -1726,8 +1637,12 @@ class TestCase(unittest.TestCase):
         use_absolute_path: bool,
     ) -> str:
         """
-        Return the name of the directory containing the input / output data
-        (e.g., ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare)
+        Return the name of the directory containing the input / output data.
+
+        E.g.,
+        ```
+        ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare
+        ```
 
         The parameters have the same meaning as in `get_input_dir()`.
         """
@@ -1740,10 +1655,7 @@ class TestCase(unittest.TestCase):
             # Use both class and test method.
             if test_method_name is None:
                 test_method_name = self._testMethodName
-            dir_name = "%s.%s" % (
-                test_class_name,
-                test_method_name,
-            )
+            dir_name = f"{test_class_name}.{test_method_name}"
         if use_absolute_path:
             # E.g., `.../dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare`.
             dir_name = os.path.join(self._base_dir_name, "outcomes", dir_name)
@@ -1766,8 +1678,9 @@ class TestCase(unittest.TestCase):
 )
 class QaTestCase(TestCase, abc.ABC):
     """
-    This unit test is used for QA to test functionalities (e.g., invoke tasks)
-    that run the dev / prod container.
+    Use for QA to test functionalities (e.g., invoke tasks) that run the dev /
+    prod container.
     """
 
-    pass
+    # TODO(Grisha): Linter should not remove `pass` statement from an empty class
+    # DevToolsTask #476.

@@ -10,7 +10,7 @@ Use as:
      --end_timestamp '2022-02-09' \
      --start_timestamp '2022-02-08' \
      --exchange_id 'binance' \
-     --universe 'v03' \
+     --universe 'v3' \
      --aws_profile 'ck' \
      --s3_path 's3://cryptokaizen-data/historical/'
 """
@@ -28,9 +28,9 @@ import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
-import im_v2.common.universe.universe as imvcounun
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.transform_utils as imvcdttrut
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def _run(args: argparse.Namespace) -> None:
     # Initialize exchange class.
     exchange = imvcdeexcl.CcxtExchange(args.exchange_id)
     # Load trading universe.
-    universe = imvcounun.get_vendor_universe("CCXT", version=args.universe)
+    universe = ivcu.get_vendor_universe("CCXT", version=args.universe)
     # Load a list of currency pars.
     currency_pairs = universe[args.exchange_id]
     # Convert timestamps.

@@ -108,8 +108,12 @@ class TestLinearRegression(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_frozen_input()
-        data_fit = data.loc[:"2000-01-10"]  # type: error[misc]
-        data_predict = data.loc["2000-01-10":]  # type: error[misc]
+        data_fit = data.loc[
+            :"2000-01-10"  # type: ignore[misc]
+        ]  # type: error[misc]  # type: ignore[misc]
+        data_predict = data.loc[
+            "2000-01-10":  # type: ignore[misc]
+        ]  # type: error[misc]  # type: ignore[misc]
         # Generate node config.
         config = cconfig.get_config_from_nested_dict(
             {
@@ -171,8 +175,12 @@ class TestLinearRegression(hunitest.TestCase):
         data["weight"] = pd.Series(
             index=data.index, data=range(1, data.shape[0] + 1)
         )
-        data_fit = data.loc[:"2000-01-10"]  # type: error[misc]
-        data_predict = data.loc["2000-01-10":]  # type: error[misc]
+        data_fit = data.loc[
+            :"2000-01-10"  # type: ignore[misc]
+        ]  # type: error[misc]  # type: ignore[misc]
+        data_predict = data.loc[
+            "2000-01-10":  # type: ignore[misc]
+        ]  # type: error[misc]  # type: ignore[misc]
         # Generate node config.
         config = cconfig.get_config_from_nested_dict(
             {

@@ -20,13 +20,11 @@
 import datetime
 import logging
 
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
 import core.finance as cofinanc
 import core.plotting as coplotti
-import core.statistics as costatis
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -105,12 +103,10 @@ fep_dict = {
     "price_col": "vwap",
     "volatility_col": "vwap.ret_0.vol",
     "prediction_col": "prediction",
-    "first_bar_of_day_open": datetime.time(9, 30),
-    "first_bar_of_day_close": datetime.time(9, 45),
-    "last_bar_of_day_close": datetime.time(16, 0),
     "target_gmv": 1e6,
     "dollar_neutrality": "gaussian_rank",
     "quantization": "nearest_lot",
+    "burn_in_bars": 3,
 }
 fep_config = cconfig.get_config_from_nested_dict(fep_dict)
 
@@ -119,9 +115,6 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
     fep_config["price_col"],
     fep_config["volatility_col"],
     fep_config["prediction_col"],
-    first_bar_of_day_open=fep_config["first_bar_of_day_open"],
-    first_bar_of_day_close=fep_config["first_bar_of_day_close"],
-    last_bar_of_day_close=fep_config["last_bar_of_day_close"],
 )
 
 # %%
@@ -142,6 +135,7 @@ for df in backtest_df_iter:
         target_gmv=fep_config["target_gmv"],
         dollar_neutrality=fep_config["dollar_neutrality"],
         quantization=fep_config["quantization"],
+        burn_in_bars=fep_config["burn_in_bars"],
     )
     bar_metrics.append(bar_metrics_slice)
 bar_metrics = pd.concat(bar_metrics)

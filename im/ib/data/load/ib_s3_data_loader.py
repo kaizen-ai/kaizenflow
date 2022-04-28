@@ -181,9 +181,7 @@ class IbS3DataLoader(imcdladalo.AbstractS3DataLoader):
         # https://github.com/pandas-dev/pandas/issues/36928 fixed in Pandas 1.1.4
         names = list(self.S3_COLUMNS.keys())
         stream, kwargs = hs3.get_local_or_s3_stream(file_path, s3fs=s3fs)
-        data = hpandas.read_csv_to_df(
-            stream, nrows=nrows, names=names, **kwargs
-        )
+        data = hpandas.read_csv_to_df(stream, nrows=nrows, names=names, **kwargs)
         # TODO(plyq): Reload ES data with a new extractor to have a header.
         # If header was already in data, remove it.
         if list(data.iloc[0]) == list(self.S3_COLUMNS.keys()):
