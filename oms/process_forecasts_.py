@@ -120,6 +120,7 @@ async def process_forecasts(
         spread_df = cofinanc.remove_weekends(spread_df)
     # Get log dir.
     log_dir = config.get("log_dir", None)
+    _LOG.info("log_dir=%s", log_dir)
     # We should not have anything left in the config that we didn't extract.
     # hdbg.dassert(not config, "config=%s", str(config))
     #
@@ -160,7 +161,7 @@ async def process_forecasts(
             # it's later, either assert or log it as a problem.
             hdbg.dassert_lte(get_wall_clock_time(), timestamp + offset_min)
         else:
-            await hasynci.wait_until(timestamp, get_wall_clock_time)
+            await hasynci.async_wait_until(timestamp, get_wall_clock_time)
         # Get the wall clock timestamp.
         wall_clock_timestamp = get_wall_clock_time()
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)

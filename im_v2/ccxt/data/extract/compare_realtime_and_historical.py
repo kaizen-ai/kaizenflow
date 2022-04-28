@@ -9,9 +9,9 @@ Use as:
    --start_timestamp 20220216-000000 \
    --end_timestamp 20220217-000000 \
    --exchange_id 'binance' \
-   --db_table 'ccxt_ohlcv' \
+   --db_table 'ccxt_ohlcv_test' \
    --aws_profile 'ck' \
-   --s3_path 's3://cryptokaizen-data/historical/'
+   --s3_path 's3://cryptokaizen-data-test/daily_staged/'
 
 Import as:
 
@@ -76,7 +76,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser = hparser.add_verbosity_arg(parser)
     parser = hs3.add_s3_args(parser)
-    return parser
+    return parser  # type: ignore[no-any-return]
 
 
 def _run(args: argparse.Namespace) -> None:
@@ -94,7 +94,7 @@ def _run(args: argparse.Namespace) -> None:
     unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
     # Read data from DB.
     query = (
-        f"SELECT * FROM ccxt_ohlcv WHERE timestamp >='{unix_start_timestamp}'"
+        f"SELECT * FROM {args.db_table} WHERE timestamp >='{unix_start_timestamp}'"
         f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
     )
     rt_data = hsql.execute_query_to_df(connection, query)
@@ -107,6 +107,7 @@ def _run(args: argparse.Namespace) -> None:
         "close",
         "volume",
     ]
+
     rt_data_reindex = imvcdttrut.reindex_on_custom_columns(
         rt_data, expected_columns[:2], expected_columns
     )
@@ -119,11 +120,20 @@ def _run(args: argparse.Namespace) -> None:
     daily_data = hparque.from_parquet(
         exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile
     )
+
     daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
     daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
     daily_data_reindex = imvcdttrut.reindex_on_custom_columns(
         daily_data, expected_columns[:2], expected_columns
     )
+    # Inform if both dataframes are empty,
+    # most likely there is a wrong arg value given.
+    if rt_data_reindex.empty and daily_data_reindex.empty:
+        message = (
+            "Both realtime and staged data are missing, \n"
+            + "Did you provide correct arguments?"
+        )
+        hdbg.dfatal(message=message)
     # Get missing data.
     rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
         rt_data_reindex, daily_data_reindex
