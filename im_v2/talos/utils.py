@@ -21,8 +21,6 @@ _TALOS_HOST = "talostrading.com"
 
 
 def timestamp_to_talos_iso_8601(timestamp: pd.Timestamp) -> str:
-    # TODO(Danya) @toma Move this function up to helpers, renaming as
-    #  `timestamp_to_iso_8601`.
     """
     Transform Timestamp into a string in the format accepted by Talos API.
 
