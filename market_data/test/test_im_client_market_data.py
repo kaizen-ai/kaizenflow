@@ -40,7 +40,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_is_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -54,7 +54,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -66,7 +66,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period2(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -78,7 +78,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period3(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -90,7 +90,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period4(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -102,7 +102,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -114,7 +114,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period6(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -126,7 +126,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period7(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -138,7 +138,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_at_timestamp1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -179,7 +179,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval1(self) -> None:
         # Prepare inputs.
         asset_ids = None
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -223,7 +223,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval2(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -268,7 +268,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval3(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -313,7 +313,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval4(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -358,7 +358,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -404,7 +404,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_twap_price1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -436,7 +436,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_last_end_time1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -448,7 +448,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_last_price1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -476,7 +476,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_should_be_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtCsvImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -520,7 +520,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_is_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns=columns, column_remap=column_remap
@@ -534,7 +534,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period1(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -546,7 +546,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period2(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -558,7 +558,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period3(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -570,7 +570,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period4(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -582,7 +582,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period5(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -594,7 +594,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period6(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -606,7 +606,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period7(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -618,7 +618,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_at_timestamp1(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -659,7 +659,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval1(self) -> None:
         # Prepare inputs.
         asset_ids = None
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -703,7 +703,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval2(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns=columns, column_remap=column_remap
@@ -748,7 +748,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval3(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns=columns, column_remap=column_remap
@@ -793,7 +793,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval4(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -838,7 +838,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -885,7 +885,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_twap_price1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036, 3303714233]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -917,7 +917,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_last_end_time1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -929,7 +929,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_last_price1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036, 3303714233]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -957,7 +957,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_should_be_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_DataFrameImClientMarketData_example1(
             asset_ids, columns, column_remap
@@ -1001,7 +1001,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     def test_is_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
             asset_ids, columns, column_remap
@@ -1015,7 +1015,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = None
+        columns = None
         column_remap = None
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
             asset_ids, columns, column_remap
