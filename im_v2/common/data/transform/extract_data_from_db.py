@@ -95,15 +95,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Initiate DB client.
-    # Not sure what vendor is calling below, passing `CCXT` by default.
-    vendor = "CCXT"
-    # TODO(Grisha): @all pass version as an argument if needed.
-    universe_version = "v3"
     resample_1min = False
-    ccxt_db_client = icdcl.CcxtCddDbClient(
-        vendor, universe_version, resample_1min, connection
+    table_name = "ccxt_ohlcv"
+    ccxt_db_client = icdcl.CcxtSqlRealTimeImClient(
+        resample_1min, connection, table_name
     )
     # Get universe of symbols.
+    vendor = "CCXT"
     symbols = ivcu.get_vendor_universe(vendor, as_full_symbol=True)
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
