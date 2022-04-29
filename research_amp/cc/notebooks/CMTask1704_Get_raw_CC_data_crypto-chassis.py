@@ -28,6 +28,7 @@ import core.finance.bid_ask as cfibiask
 import core.finance.resampling as cfinresa
 import core.plotting.normality as cplonorm
 import dataflow.core as dtfcore
+import dataflow.model.stats_computer as dtfmostcom
 import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -582,6 +583,44 @@ cplpluti.plot_barplot(liquidity_stats)
 # %% [markdown]
 # ## Is the quoted spread constant over the day?
 
+# %%
+# Initiate the class.
+stats = dtfmostcom.StatsComputer()
+
+
+# %%
+def perform_daily_adf_tests_for_spread_stationarity(df, full_symbols):
+    """
+    For each `full_symbol` and for each day inside the interval perform ADF test to check
+    the stationarity of `quoted_spread`.
+    """
+    result = []
+    for full_symb in full_symbols:
+        # For each coin highlight the column with `quoted spread`.
+        coin_df = df["quoted_spread"][[full_symb]]
+        # Transform datetime column into daily format.
+        coin_df["date"] = coin_df.index.date
+        daily_stats = pd.DataFrame()
+        # For each date calculate ADF stats.
+        for date in coin_df["date"].unique():
+            coin_df_daily = coin_df[coin_df['date']==date][full_symb]
+            adf_stats = stats.compute_stationarity_stats(coin_df_daily)
+            daily_stats.loc[f"{date}", "adf.stat"] = adf_stats["adf.stat"]
+            daily_stats.loc[f"{date}", "adf.pval"] = adf_stats["adf.pval"]
+            daily_stats.loc[f"{date}", "is_stationary (5% sign. level)"] = (adf_stats["adf.pval"]<0.05)
+            daily_stats["full_symbol"] = full_symb
+        result_days = dtfsysonod._convert_to_multiindex(daily_stats, "full_symbol").swaplevel(axis=1)
+        result.append(result_days)
+    result_days = pd.concat(result,axis=1)
+    return result_days.iloc[:-1]
+
+
+# %%
+daily_adf_tests_results = perform_daily_adf_tests_for_spread_stationarity(final_df, full_symbols)
+
+# %%
+daily_adf_tests_results
+
 # %% [markdown]
 # ## Have a function to average / median / sum quantities over different time scales (minutes, hours, etc)
 # - Like generalizing plot_time_distributions from explore.py
@@ -621,3 +660,5 @@ high_level_stats["volatility_for_period"] = final_df['close.ret_0'].std()*final_
 
 # %%
 high_level_stats
+
+# %%
