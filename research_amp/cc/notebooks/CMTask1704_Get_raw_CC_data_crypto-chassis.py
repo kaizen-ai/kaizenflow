@@ -608,4 +608,16 @@ resampler.mean()["close.ret_0"].plot()
 resampler.median()["close.ret_0"].plot()
 resampler.sum()["close.ret_0"].plot()
 
+# %% [markdown]
+# ## - Compute some high-level stats (e.g., median relative spread, median bid / ask notional, volatility, volume) by coins
+
 # %%
+high_level_stats = pd.DataFrame()
+high_level_stats["median_relative_spread"] = final_df["relative_spread"].median()
+high_level_stats["median_notional_bid"] = final_df["bid_value"].median()
+high_level_stats["median_notional_ask"] = final_df["ask_value"].median()
+high_level_stats["median_notional_volume"] = (final_df["volume"]*final_df["close"]).median()
+high_level_stats["volatility_for_period"] = final_df['close.ret_0'].std()*final_df.shape[0]**0.5
+
+# %%
+high_level_stats
