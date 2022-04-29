@@ -609,12 +609,14 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 
 
 # #############################################################################
-# TestCcxtDbClient1
+# CcxtSqlRealTimeImClient1
 # #############################################################################
 
 
-# TODO(Grisha): add example client for `CcxtCddDbClient`.
-class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
+# TODO(Danya): add example client for `CcxtSqlRealTimeImClient`.
+class CcxtSqlRealTimeImClient1(
+    icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
+):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -627,12 +629,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         #
@@ -672,12 +670,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -721,12 +715,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
@@ -769,12 +759,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
@@ -816,12 +802,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
@@ -858,16 +840,17 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data6(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data7(self) -> None:
         # Load test data.
@@ -876,12 +859,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = False
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -925,12 +904,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2021-09-09 00:00:00", utc=True)
@@ -947,12 +922,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2021-09-09 00:04:00", utc=True)
@@ -963,24 +934,24 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_universe1(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         resample_1min = True
-        vendor = "CCXT"
-        universe_version = "small"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, universe_version, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         expected_length = 3
         expected_first_elements = [
-            "binance::BTC_USDT",
-            "gateio::XRP_USDT",
             "kucoin::ETH_USDT",
+            "binance::BTC_USDT",
+            "binance::ETH_USDT",
         ]
         expected_last_elements = [
-            "binance::BTC_USDT",
-            "gateio::XRP_USDT",
             "kucoin::ETH_USDT",
+            "binance::BTC_USDT",
+            "binance::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -988,6 +959,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             expected_first_elements,
             expected_last_elements,
         )
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1018,6 +990,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
                 [3, 1631145720000, 32, 42, 52, 62, 72, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
                 [4, 1631145840000, 34, 44, 54, 64, 74, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
                 [5, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [6, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "kucoin", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
             ]
             # pylint: enable=line-too-long
             # fmt: on
