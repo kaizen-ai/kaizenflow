@@ -541,6 +541,7 @@ class HistoricalDataSource(dtfcore.DataSource):
             left_close=left_close,
             right_close=right_close,
         )
+        # Remove the columns that are not needed.
         if self._col_names_to_remove is not None:
             _LOG.debug(
                 "Before column removal\n:%s",
