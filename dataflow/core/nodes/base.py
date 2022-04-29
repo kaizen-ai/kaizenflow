@@ -511,6 +511,7 @@ class GroupedColDfToDfColProcessor:
         # Sanity check each column group tuple.
         for col_group in col_groups:
             hdbg.dassert_isinstance(col_group, tuple)
+            hdbg.dassert_in(col_group, df.columns)
             hdbg.dassert_eq(
                 len(col_group),
                 df.columns.nlevels - 1,

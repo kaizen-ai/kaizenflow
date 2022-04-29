@@ -294,14 +294,16 @@ def get_CcxtPqImClientMarketData_example1(
 ) -> mdimcmada.ImClientMarketData:
     """
     Build a `ImClientMarketData` backed with `CCXT` Parquet by tile data.
+
+    The wall clock is a hard-wired timestamp. To get the maximum timestamp 
+    we need to read all the data which is an expensive operation.
     """
     resample_1min = False
     im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(resample_1min)
     # Build a function that returns a wall clock to initialise `MarketData`.
-    last_timestamp = _get_last_timestamp(im_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
-        return last_timestamp
+        return pd.Timestamp("2100-01-01T00:00:00+00:00")
 
     #
     asset_id_col = "asset_id"
