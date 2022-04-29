@@ -83,8 +83,9 @@ start_date = end_date = None
 # Initiate the client.
 vendor = "CCXT"
 universe_version = "v3"
-ccxt_client = imvcdccccl.CcxtCddDbClient(
-    vendor, universe_version, resample_1min, connection
+table_name = "ccxt_ohlcv"
+ccxt_client = imvcdccccl.CcxtSqlRealTimeImClient(
+    resample_1min, connection, table_name
 )
 
 # %%
