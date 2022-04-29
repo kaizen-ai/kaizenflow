@@ -81,6 +81,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         raise NotImplementedError
 
+    # TODO(Dan): Implement usage of `columns` parameter.
     @staticmethod
     def _get_columns_for_query(
         full_symbol_col_name: str, columns: Optional[List[str]]
