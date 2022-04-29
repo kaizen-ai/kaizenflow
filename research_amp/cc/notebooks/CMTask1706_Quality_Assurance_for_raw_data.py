@@ -479,8 +479,8 @@ ccxt_ada_nans_2019 = ada_kucoin_ccxt.loc[
 ]
 _LOG.info(ccxt_ada_nans_2019.shape)
 display(ccxt_ada_nans_2019.head(3))
-_LOG.info(df.shape)
-display(df.head(3))
+_LOG.info(df_2019.shape)
+display(df_2019.head(3))
 
 # %%
 print(
@@ -549,4 +549,12 @@ print(
 #
 # ## Data of 2019 and 2020 have following common pattern: `volume = 0`, columns `open`, `close`, `high`, `low` have the same value in the row. Apparently this type of data becomes NaNs. However, data of 2021 doesn't have that pattern and still has NaNs in loaded via `CCXT` client.
 #
-# ## Data shapes of all 3 datasets are different from CCXT data. Apparently some data has been lost.
+# ## Data shapes of all 3 datasets are different from CCXT data. Lost data < 1%.
+#
+# | date | rows of NaN data | rows of full data| rows of loaded data| rows lost |
+# |------|------------------|------------------|-|-----------|
+# |2019-08-30, 2019-08-31 | 1456 |43 | 1500 | 1 |
+# |2020-01-30, 2020-01-31| 865 | 633 | 1500 | 2|
+# |2021-12-29, 2021-12-30| 1119 |379| 1500| 2|
+#
+#
