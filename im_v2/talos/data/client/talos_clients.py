@@ -27,8 +27,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): The naming should
-# Client -> Historical -> PqByTile -> Talos
+# TODO(gp): The naming should reflect the class hierarchy
+# Client -> Historical -> PqByTile (like Sql) -> Talos
+# -> TalosPqByTileHistoricalClient
 class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     """
     Read historical data for `Talos` assets stored as Parquet dataset.

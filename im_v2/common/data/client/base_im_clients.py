@@ -566,8 +566,15 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # SqlRealTimeImClient
 # #############################################################################
 
+# TODO(gp): We might want to have a placeholder for all RealTimeImClient, from
+#  which SQL version descend. Although in practice all the real-time clients
+#  will use an SQL backend.
+class RealTimeImClient(ImClient):
+    pass
 
-class SqlRealTimeImClient(ImClient):
+
+# TODO(gp): Descend ImClient.
+class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,
         resample_1min: bool,
@@ -833,3 +840,6 @@ class SqlRealTimeImClient(ImClient):
         timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
+
+
+# TODO(gp): Implement an Example1SqlRealTimeImClient

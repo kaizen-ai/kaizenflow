@@ -13,10 +13,10 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> test_example1_pipeline.py (to confirm)
+# TODO(gp): @Danya -> test_example1_pipeline.py (to confirm)
 
 
-# TODO(gp): Test_Example1_ReplayedForecastSystem
+# TODO(gp): @Danya -> Test_Example1_ReplayedForecastSystem
 class Test_Example1_ForecastSystem(unittest.TestCase):
     """
     Test a System composed of:
@@ -30,14 +30,16 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
         data: pd.DataFrame,
     ) -> str:
         """
-        Run a system using the desired portfolio based on DB or dataframe.
+        # TO
         """
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [101]
+            # Get the system to simulate.
             system = dtfsepsyru.Example1_ForecastSystem(
                 asset_ids,
                 event_loop,
             )
+            # Instantiate the system.
             config = system.get_dag_config()
             market_data = system.get_market_data(data)
             dag_runner = system.get_dag_runner(
@@ -45,15 +47,13 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
                 market_data,
                 real_time_loop_time_out_in_secs=60 * 5,
             )
+            # Run.
             coroutines = [dag_runner.predict()]
-            #
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             result_bundles = result_bundles[0][0]
         return result_bundles
-
-    # ///////////////////////////////////////////////////////////////////////////
 
     def test1(self) -> None:
         """
@@ -63,6 +63,62 @@ class Test_Example1_ForecastSystem(unittest.TestCase):
         actual = self.run_coroutines(
             data,
         )
+        # TODO(gp): PP to make sure the output is correct.
+        self.check_string(str(actual))
+
+
+# #############################################################################
+
+
+class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
+    """
+    Test a System composed of:
+
+    - a `RealTimeMarketData` connected to a DB with fake data
+    - an `Example1` DAG
+
+    The system is simulated in real-time in the past.
+    """
+
+    def run_coroutines(
+            self,
+            data: pd.DataFrame,
+    ) -> str:
+        """
+        # TO
+        """
+        with hasynci.solipsism_context() as event_loop:
+            asset_ids = [101]
+            # Get the system to simulate.
+            system = dtfsepsyru.Example1_ForecastSystem(
+                asset_ids,
+                event_loop,
+            )
+            # Instantiate the system.
+            config = system.get_dag_config()
+            market_data = system.get_market_data(data)
+            dag_runner = system.get_dag_runner(
+                config,
+                market_data,
+                real_time_loop_time_out_in_secs=60 * 5,
+            )
+            # Run.
+            coroutines = [dag_runner.predict()]
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            result_bundles = result_bundles[0][0]
+        return result_bundles
+
+    def test1(self) -> None:
+        """
+        Verify the contents of DAG prediction.
+        """
+        data, _ = cofinanc.get_market_data_df1()
+        actual = self.run_coroutines(
+            data,
+        )
+        # TODO(gp): PP to make sure the output is correct.
         self.check_string(str(actual))
 
 

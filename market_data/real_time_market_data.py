@@ -26,7 +26,8 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # RealTimeMarketData
 # #############################################################################
 
-# TODO(gp): This should be pushed to the IM
+# TODO(gp): This should be deprecated since it has the SQL connection bolted in.
+#  Instead we want to have a RealTime
 class RealTimeMarketData(mdabmada.MarketData):
     """
     Implement an interface to a real-time SQL database with 1-minute bar data.
@@ -255,9 +256,13 @@ class RealTimeMarketData(mdabmada.MarketData):
 # #############################################################################
 
 
+# TODO(gp): This should be Talos independent.
 class RealTimeMarketData2(mdabmada.MarketData):
     """
     Interface for real-time market data accessed through SQL client.
+
+    The SQL client reads data from a DB which is continously updated by Airflow
+    DAG downloading data from Talos API.
 
     Note: RealTimeSqlTalosClient is passed at the initialization.
     """

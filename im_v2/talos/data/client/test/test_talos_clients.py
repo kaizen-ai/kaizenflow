@@ -660,9 +660,44 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
+# TODO(gp): @Danya we need the same thing for TestExample1SqlRealTimeImClient1
+# The schema of the DB needs to match get_market_data_df1()
+
 class TestTalosSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
+
+    # TODO(gp): -> get_expected
+    @staticmethod
+    def _get_expected_column_names() -> List[str]:
+        """
+        Return a list of expected column names.
+        """
+        expected_column_names = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "full_symbol",
+        ]
+        return expected_column_names
+
+    # TODO(gp): -> create_test_table
+    def _create_test_table(self) -> None:
+        """
+        Create a test Talos OHLCV table in DB.
+        """
+        query = imvtadbut.get_talos_ohlcv_create_table_query()
+        self.connection.cursor().execute(query)
+
+    def _get_test_numerical_to_string_id_mapping(self) -> Dict[int, str]:
+        test_dict = {
+            1467591036: "binance::BTC_USDT",
+            1464553467: "binance::ETH_USDT",
+        }
+        return test_dict
+
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
@@ -1371,32 +1406,3 @@ class TestTalosSqlRealTimeImClient1(
             # fmt: on
         )
         return test_data
-
-    @staticmethod
-    def _get_expected_column_names() -> List[str]:
-        """
-        Return a list of expected column names.
-        """
-        expected_column_names = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "full_symbol",
-        ]
-        return expected_column_names
-
-    def _create_test_table(self) -> None:
-        """
-        Create a test Talos OHLCV table in DB.
-        """
-        query = imvtadbut.get_talos_ohlcv_create_table_query()
-        self.connection.cursor().execute(query)
-
-    def _get_test_numerical_to_string_id_mapping(self) -> Dict[int, str]:
-        test_dict = {
-            1467591036: "binance::BTC_USDT",
-            1464553467: "binance::ETH_USDT",
-        }
-        return test_dict
