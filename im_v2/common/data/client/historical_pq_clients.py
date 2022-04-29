@@ -32,6 +32,9 @@ class HistoricalPqByTileClient(
         # TODO(gp): We could use *args, **kwargs as params for ImClient,
         # same for the child classes.
         vendor: str,
+        # The version is not strictly needed for this class, but it is used by
+        # the child classes, e.g., by `CcxtHistoricalPqByTileClient`.
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
@@ -55,20 +58,16 @@ class HistoricalPqByTileClient(
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__(
-            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor,
+            universe_version,
+            resample_1min,
+            full_symbol_col_name=full_symbol_col_name,
         )
         hdbg.dassert_isinstance(root_dir, str)
         self._root_dir = root_dir
         self._infer_exchange_id = infer_exchange_id
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile
-
-    @staticmethod
-    def get_universe() -> List[ivcu.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        return []
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
@@ -239,8 +238,12 @@ class HistoricalPqByDateClient(
         *,
         full_symbol_col_name: Optional[str] = None,
     ):
+        universe_version = "not_implemented"
         super().__init__(
-            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor,
+            universe_version,
+            resample_1min,
+            full_symbol_col_name=full_symbol_col_name,
         )
         self._read_func = read_func
 

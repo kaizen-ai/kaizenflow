@@ -1,0 +1,287 @@
+config:
+  DAG:
+    filter_ath:
+      col_mode: replace_all
+      transformer_kwargs:
+        start_time: 09:30:00
+        end_time: 16:00:00
+    resample:
+      in_col_groups: [('close',), ('volume',), ('feature1',)]
+      out_col_group: ()
+      transformer_kwargs:
+        rule: 5T
+        resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'feature1': 'feature1'}, 'mean', {})]
+        vwap_groups: [('close', 'volume', 'vwap')]
+      reindex_like_input: False
+      join_output_with_input: False
+    compute_ret_0:
+      in_col_groups: [('close',), ('vwap',), ('twap',)]
+      out_col_group: ()
+      transformer_kwargs:
+        mode: log_rets
+      col_mapping:
+        close: close.ret_0
+        vwap: vwap.ret_0
+        twap: twap.ret_0
+    compute_vol:
+      in_col_group: ('vwap.ret_0',)
+      out_col_group: ('vwap.ret_0.vol',)
+      drop_nans: True
+      permitted_exceptions: (<class 'ValueError'>,)
+    adjust_rets:
+      in_col_groups: [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+      out_col_group: ()
+      transformer_kwargs:
+        term1_col: vwap.ret_0
+        term2_col: vwap.ret_0.vol
+        out_col: vwap.ret_0.vol_adj
+        term2_delay: 2
+        operation: div
+      drop_nans: True
+    compress_rets:
+      in_col_groups: [('vwap.ret_0.vol_adj',)]
+      out_col_group: ()
+      col_mapping:
+        vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
+  meta:
+    dag_builder: nid_prefix=
+    get_config_template=
+      filter_ath:
+        col_mode: replace_all
+        transformer_kwargs:
+          start_time: 09:30:00
+          end_time: 16:00:00
+      resample:
+        in_col_groups: [('close',), ('volume',), ('feature1',)]
+        out_col_group: ()
+        transformer_kwargs:
+          rule: 5T
+          resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'feature1': 'feature1'}, 'mean', {})]
+          vwap_groups: [('close', 'volume', 'vwap')]
+        reindex_like_input: False
+        join_output_with_input: False
+      compute_ret_0:
+        in_col_groups: [('close',), ('vwap',), ('twap',)]
+        out_col_group: ()
+        transformer_kwargs:
+          mode: log_rets
+        col_mapping:
+          close: close.ret_0
+          vwap: vwap.ret_0
+          twap: twap.ret_0
+      compute_vol:
+        in_col_group: ('vwap.ret_0',)
+        out_col_group: ('vwap.ret_0.vol',)
+        drop_nans: True
+        permitted_exceptions: (<class 'ValueError'>,)
+      adjust_rets:
+        in_col_groups: [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+        out_col_group: ()
+        transformer_kwargs:
+          term1_col: vwap.ret_0
+          term2_col: vwap.ret_0.vol
+          out_col: vwap.ret_0.vol_adj
+          term2_delay: 2
+          operation: div
+        drop_nans: True
+      compress_rets:
+        in_col_groups: [('vwap.ret_0.vol_adj',)]
+        out_col_group: ()
+        col_mapping:
+          vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
+    dag=
+      name=None
+      mode=strict
+      json=
+        {
+            "directed": true,
+            "graph": {},
+            "links": [
+                {
+                    "df_in": "df_out",
+                    "source": "filter_ath",
+                    "target": "resample"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "resample",
+                    "target": "compute_ret_0"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "compute_ret_0",
+                    "target": "compute_vol"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "compute_vol",
+                    "target": "adjust_rets"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "adjust_rets",
+                    "target": "compress_rets"
+                }
+            ],
+            "multigraph": false,
+            "nodes": [
+                {
+                    "id": "filter_ath",
+                    "stage": "ColumnTransformer"
+                },
+                {
+                    "id": "resample",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compute_ret_0",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compute_vol",
+                    "stage": "SeriesToSeriesTransformer"
+                },
+                {
+                    "id": "adjust_rets",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compress_rets",
+                    "stage": "GroupedColDfToDfTransformer"
+                }
+            ]
+        }
+result_nid: compress_rets
+method: predict
+result_df:                           vwap.ret_0.vol_adj.c vwap.ret_0.vol_adj  \
+                                           101                101   
+end_datetime                                                        
+2000-01-01 09:35:00-05:00                  NaN                NaN   
+
+                          vwap.ret_0.vol close.ret_0 twap.ret_0 vwap.ret_0  \
+                                     101         101        101        101   
+end_datetime                                                                 
+2000-01-01 09:35:00-05:00            NaN         NaN        NaN        NaN   
+
+                           close feature1   twap   vwap  
+                             101      101    101    101  
+end_datetime                                             
+2000-01-01 09:35:00-05:00  101.0      1.0  101.0  101.0  
+column_to_tags: []
+info:
+  filter_ath:
+    predict:
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 5 entries, 2000-01-01 09:31:00-05:00 to 2000-01-01 09:35:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (close, 101)           5 non-null      float64                         
+       1   (feature1, 101)        5 non-null      float64                         
+       2   (start_datetime, 101)  5 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    5 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          5 non-null      int64                           
+      dtypes: datetime64[ns, America/New_York](2), float64(2), int64(1)
+  resample:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-01 09:35:00-05:00 to 2000-01-01 09:35:00-05:00
+      Freq: 5T
+      Data columns (total 4 columns):
+       #   Column           Non-Null Count  Dtype  
+      ---  ------           --------------  -----  
+       0   (close, 101)     1 non-null      float64
+       1   (feature1, 101)  1 non-null      float64
+       2   (twap, 101)      1 non-null      float64
+       3   (vwap, 101)      1 non-null      float64
+      dtypes: float64(4)
+  compute_ret_0:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-01 09:35:00-05:00 to 2000-01-01 09:35:00-05:00
+      Freq: 5T
+      Data columns (total 7 columns):
+       #   Column              Non-Null Count  Dtype  
+      ---  ------              --------------  -----  
+       0   (close.ret_0, 101)  0 non-null      float64
+       1   (twap.ret_0, 101)   0 non-null      float64
+       2   (vwap.ret_0, 101)   0 non-null      float64
+       3   (close, 101)        1 non-null      float64
+       4   (feature1, 101)     1 non-null      float64
+       5   (twap, 101)         1 non-null      float64
+       6   (vwap, 101)         1 non-null      float64
+      dtypes: float64(7)
+  compute_vol:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-01 09:35:00-05:00 to 2000-01-01 09:35:00-05:00
+      Freq: 5T
+      Data columns (total 8 columns):
+       #   Column                 Non-Null Count  Dtype  
+      ---  ------                 --------------  -----  
+       0   (vwap.ret_0.vol, 101)  0 non-null      float64
+       1   (close.ret_0, 101)     0 non-null      float64
+       2   (twap.ret_0, 101)      0 non-null      float64
+       3   (vwap.ret_0, 101)      0 non-null      float64
+       4   (close, 101)           1 non-null      float64
+       5   (feature1, 101)        1 non-null      float64
+       6   (twap, 101)            1 non-null      float64
+       7   (vwap, 101)            1 non-null      float64
+      dtypes: float64(8)
+  adjust_rets:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-01 09:35:00-05:00 to 2000-01-01 09:35:00-05:00
+      Freq: 5T
+      Data columns (total 9 columns):
+       #   Column                     Non-Null Count  Dtype  
+      ---  ------                     --------------  -----  
+       0   (vwap.ret_0.vol_adj, 101)  0 non-null      float64
+       1   (vwap.ret_0.vol, 101)      0 non-null      float64
+       2   (close.ret_0, 101)         0 non-null      float64
+       3   (twap.ret_0, 101)          0 non-null      float64
+       4   (vwap.ret_0, 101)          0 non-null      float64
+       5   (close, 101)               1 non-null      float64
+       6   (feature1, 101)            1 non-null      float64
+       7   (twap, 101)                1 non-null      float64
+       8   (vwap, 101)                1 non-null      float64
+      dtypes: float64(9)
+  compress_rets:
+    predict:
+      func_info: OrderedDict()
+      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 1 entries, 2000-01-01 09:35:00-05:00 to 2000-01-01 09:35:00-05:00
+      Freq: 5T
+      Data columns (total 10 columns):
+       #   Column                       Non-Null Count  Dtype  
+      ---  ------                       --------------  -----  
+       0   (vwap.ret_0.vol_adj.c, 101)  0 non-null      float64
+       1   (vwap.ret_0.vol_adj, 101)    0 non-null      float64
+       2   (vwap.ret_0.vol, 101)        0 non-null      float64
+       3   (close.ret_0, 101)           0 non-null      float64
+       4   (twap.ret_0, 101)            0 non-null      float64
+       5   (vwap.ret_0, 101)            0 non-null      float64
+       6   (close, 101)                 1 non-null      float64
+       7   (feature1, 101)              1 non-null      float64
+       8   (twap, 101)                  1 non-null      float64
+       9   (vwap, 101)                  1 non-null      float64
+      dtypes: float64(10)
+  read_data:
+    predict:
+      predict_df_info: <class 'pandas.core.frame.DataFrame'>
+      DatetimeIndex: 5 entries, 2000-01-01 09:31:00-05:00 to 2000-01-01 09:35:00-05:00
+      Data columns (total 5 columns):
+       #   Column                 Non-Null Count  Dtype                           
+      ---  ------                 --------------  -----                           
+       0   (close, 101)           5 non-null      float64                         
+       1   (feature1, 101)        5 non-null      float64                         
+       2   (start_datetime, 101)  5 non-null      datetime64[ns, America/New_York]
+       3   (timestamp_db, 101)    5 non-null      datetime64[ns, America/New_York]
+       4   (volume, 101)          5 non-null      int64                           
+      dtypes: datetime64[ns, America/New_York](2), float64(2), int64(1)
+payload: None
+class: ResultBundle

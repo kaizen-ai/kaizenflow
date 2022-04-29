@@ -263,7 +263,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
     """
 
     def __init__(
-        self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs
+        self, client: imvtdctacl.TalosSqlRealTimeImClient, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
         hdbg.dassert_eq(

@@ -6,7 +6,7 @@ import dataflow.model.forecast_evaluator_from_prices as dtfmfefrpr
 
 import logging
 import os
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -122,7 +122,7 @@ class ForecastEvaluatorFromPrices:
         self,
         df: pd.DataFrame,
         *,
-        target_gmv: Optional[float] = None,
+        target_gmv: Optional[Union[float, pd.Series]] = None,
         dollar_neutrality: str = "no_constraint",
         quantization: str = "no_quantization",
         burn_in_bars: int = 0,
@@ -190,7 +190,7 @@ class ForecastEvaluatorFromPrices:
         df: pd.DataFrame,
         log_dir: str,
         *,
-        target_gmv: Optional[float] = None,
+        target_gmv: Optional[Union[float, pd.Series]] = None,
         dollar_neutrality: str = "no_constraint",
         quantization: str = "no_quantization",
         reindex_like_input: bool = False,
@@ -311,7 +311,7 @@ class ForecastEvaluatorFromPrices:
         self,
         df: pd.DataFrame,
         *,
-        target_gmv: Optional[float] = None,
+        target_gmv: Optional[Union[float, pd.Series]] = None,
         dollar_neutrality: str = "no_constraint",
         quantization: str = "no_quantization",
         reindex_like_input: bool = True,
@@ -428,7 +428,7 @@ class ForecastEvaluatorFromPrices:
         volatility: pd.DataFrame,
         predictions: pd.DataFrame,
         *,
-        target_gmv: Optional[float] = None,
+        target_gmv: Optional[Union[float, pd.Series]] = None,
         dollar_neutrality: str = "no_constraint",
     ) -> pd.DataFrame:
         """
@@ -484,20 +484,43 @@ class ForecastEvaluatorFromPrices:
     @staticmethod
     def _apply_gmv_scaling(
         target_positions: pd.DataFrame,
-        target_gmv: Optional[float],
+        target_gmv: Optional[Union[float, pd.Series]],
     ) -> pd.DataFrame:
-        if target_gmv is not None:
-            hdbg.dassert_lt(0, target_gmv)
-            l1_norm = target_positions.abs().sum(axis=1, min_count=1)
-            scale_factor = l1_norm / target_gmv
-            _LOG.debug(
-                "scale factor=\n%s",
-                hpandas.df_to_str(scale_factor, num_rows=None),
-            )
-            target_positions = target_positions.divide(scale_factor, axis=0)
+        if target_gmv is None:
+            pass
+        elif isinstance(target_gmv, float):
+            if target_gmv > 0:
+                l1_norm = target_positions.abs().sum(axis=1, min_count=1)
+                scale_factor = l1_norm / target_gmv
+                _LOG.debug(
+                    "scale factor=\n%s",
+                    hpandas.df_to_str(scale_factor, num_rows=None),
+                )
+                target_positions = target_positions.divide(scale_factor, axis=0)
+            else:
+                target_positions *= 0
             _LOG.debug(
                 "gmv scaled target_positions=\n%s",
                 hpandas.df_to_str(target_positions, num_rows=None),
+            )
+        elif isinstance(target_gmv, pd.Series):
+            hdbg.dassert_lte(0, target_gmv.min())
+            active_times = cofinanc.infer_active_times(target_positions)
+            hdbg.dassert(
+                active_times.difference(target_gmv.index).empty,
+                "No `target_gmv` available at times=%s",
+                active_times.difference(target_gmv.index),
+            )
+            new_target_positions = []
+            for time, df in target_positions.groupby(lambda x: x.time()):
+                df = ForecastEvaluatorFromPrices._apply_gmv_scaling(
+                    df, target_gmv.loc[time]
+                )
+                new_target_positions.append(df)
+            target_positions = pd.concat(new_target_positions).sort_index()
+        else:
+            raise ValueError(
+                "`target_gmv` type=%s not supported", type(target_gmv)
             )
         return target_positions
 

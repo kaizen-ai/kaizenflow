@@ -284,11 +284,17 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         # Init client for testing.
         resample_1min = True
         vendor = "mock"
+        universe_version = "small"
         test_dir = "dummy"
         partition_mode = "by_year_month"
         infer_exachange_id = False
         im_client = imvcdchpce.MockHistoricalByTileClient(
-            vendor, resample_1min, test_dir, partition_mode, infer_exachange_id
+            vendor,
+            universe_version,
+            resample_1min,
+            test_dir,
+            partition_mode,
+            infer_exachange_id,
         )
         # Compare the expected values.
         expected_length = 2
@@ -514,6 +520,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("6 seconds.")
     def test_multiple_months2(self) -> None:
         """
         Interval of multiple month length capturing data for 2 years.

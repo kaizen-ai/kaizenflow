@@ -15,7 +15,6 @@ import helpers.hunit_test as hunitest
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 
-
 # #############################################################################
 # TestExtractUniverseVersion1
 # #############################################################################
@@ -224,7 +223,6 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         actual = imvcounun.get_vendor_universe(
             vendor, version="small", as_full_symbol=True
         )
-        self.assertEqual(len(universe_as_full_symbols), 2)
-        self.assertEqual(len(actual), 2)
+        self.assertEqual(len(universe_as_full_symbols), len(actual))
         self.assertEqual(actual[0], universe_as_full_symbols[0])
         self.assertEqual(actual[1], universe_as_full_symbols[1])
