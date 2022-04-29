@@ -137,6 +137,7 @@ class ImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         columns: Optional[List[str]],
+        filter_data_mode: str,
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -152,6 +153,8 @@ class ImClient(abc.ABC):
             - `None` means end at the end of the available data
         :param columns: columns to return, skipping reading columns that are not requested
             - `None` means return all available columns
+        :param filter_data_mode: switch to control method robustness towards
+            unexpected return. Can be "assert" or "warn_and_trim"
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
         :return: combined data for all the requested symbols
@@ -233,6 +236,10 @@ class ImClient(abc.ABC):
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
+        # Verify that loaded data is correct.
+        df = self._process_by_filter_data_mode(
+            df, start_ts, end_ts, columns, filter_data_mode
+        )
         return df
 
     # /////////////////////////////////////////////////////////////////////////
@@ -363,6 +370,41 @@ class ImClient(abc.ABC):
             # TODO(Grisha): @Dan trim columns depending on `filter_data_mode`.
             # Ensure all requested columns are received.
             hdbg.dassert_is_subset(columns, df.columns.to_list())
+
+    def _process_by_filter_data_mode(
+         self,
+         df: pd.DataFrame,
+         start_ts: Optional[pd.Timestamp],
+         end_ts: Optional[pd.Timestamp],
+         columns: Optional[List[str]],
+         filter_data_mode: str,
+     ) -> pd.DataFrame:
+         """
+         Process correctness of data index and columns via `filter_data_mode`.
+         """
+         # Ensure that all the data is in [start_ts, end_ts].
+         if filter_data_mode == "assert":
+             if columns:
+                 # Throw an error if columns were not filtered correctly.
+                 hdbg.dassert_is_subset(columns_to_check, columns)
+         elif filter_data_mode == "warn_and_trim":
+             if columns:
+                 # Get columns that were not filtered at data reading stage.
+                 not_filtered_columns = set(columns_to_check) - set(columns)
+                 if not_filtered_columns:
+                     # If not filtered columns were found, throw a warning and
+                     # remove them from data.
+                     _LOG.warning(
+                         "Extra columns=`%s` were found and removed.",
+                         not_filtered_columns,
+                     )
+                     df = df.drop(not_filtered_columns, axis=1)
+         else:
+             raise ValueError(
+                 f"`filter_data_mode`=`{filter_data_mode}` should be in"
+                 f" ['assert', 'warn_and_trim']"
+             )
+         return df
 
     # //////////////////////////////////////////////////////////////////////////
 
