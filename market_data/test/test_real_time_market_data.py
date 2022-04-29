@@ -25,7 +25,7 @@ class TestRealTimeMarketData2(
         """
         table_name = "talos_ohlcv"
         mode = "market_data"
-        sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
+        sql_talos_client = imvtdctacl.TalosSqlRealTimeImClient(
             resample_1min, self.connection, table_name, mode
         )
         asset_id_col = "asset_id"
@@ -63,7 +63,19 @@ class TestRealTimeMarketData2(
             ts_column_name,
         )
         # pylint: disable=line-too-long
-        expected_df_as_str = r"""df="""
+        expected_df_as_str = r"""# df=
+        index=[2022-04-22 10:30:00-04:00, 2022-04-22 12:30:00-04:00]
+        columns=asset_id,close,high,low,open,start_timestamp,volume
+        shape=(121, 7)
+                                    asset_id  close  high   low  open           start_timestamp  volume
+        end_timestamp
+        2022-04-22 10:30:00-04:00  1464553467   60.0  40.0  50.0  30.0 2022-04-22 10:29:00-04:00    70.0
+        2022-04-22 10:31:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
+        2022-04-22 10:32:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
+        ...
+        2022-04-22 12:28:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
+        2022-04-22 12:29:00-04:00        <NA>    NaN   NaN   NaN   NaN                       NaT     NaN
+        2022-04-22 12:30:00-04:00  1464553467   65.0  45.0  55.0  35.0 2022-04-22 12:29:00-04:00    75.0"""
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
         # Delete the table.
