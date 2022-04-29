@@ -271,7 +271,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,close
         shape=(8640, 2)
                                         full_symbol  close
-        timestamp                                          
+        timestamp
         2021-12-30 00:00:00+00:00  binance::BTC_USDT      0
         2021-12-30 00:00:00+00:00   kucoin::FIL_USDT      0
         2021-12-30 00:01:00+00:00  binance::BTC_USDT      1

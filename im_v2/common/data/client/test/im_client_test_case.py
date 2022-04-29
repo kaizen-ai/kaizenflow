@@ -47,9 +47,7 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data2(
@@ -68,9 +66,7 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data3(
@@ -90,9 +86,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         end_ts = None
         columns = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data4(
@@ -112,9 +106,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         columns = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data5(
@@ -133,9 +125,7 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         columns = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data6(
@@ -154,9 +144,7 @@ class ImClientTestCase(hunitest.TestCase):
         # TODO(gp): We should raise a more specific assertion and / or
         #  check part of the exception as a string.
         with self.assertRaises(AssertionError):
-            im_client.read_data(
-                full_symbols, start_ts, end_ts, columns
-            )
+            im_client.read_data(full_symbols, start_ts, end_ts, columns)
 
     def _test_read_data7(
         self,
@@ -175,9 +163,7 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data8(
@@ -197,13 +183,14 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         end_ts = None
-        actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns
-        )
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data9(
-        self, im_client: icdc.ImClient, full_symbol: ivcu.FullSymbol, columns: List[str],
+        self,
+        im_client: icdc.ImClient,
+        full_symbol: ivcu.FullSymbol,
+        columns: List[str],
     ) -> None:
         """
         Test:
@@ -215,9 +202,7 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         with self.assertRaises(AssertionError):
-            im_client.read_data(
-                full_symbols, start_ts, end_ts, columns
-            )
+            im_client.read_data(full_symbols, start_ts, end_ts, columns)
 
     # ////////////////////////////////////////////////////////////////////////
 

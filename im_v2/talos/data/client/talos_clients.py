@@ -7,14 +7,13 @@ import im_v2.talos.data.client.talos_clients as imvtdctacl
 import collections
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
-import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
@@ -169,6 +168,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 # #############################################################################
 # TalosSqlRealTimeImClient
 # #############################################################################
+
 
 class TalosSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     """

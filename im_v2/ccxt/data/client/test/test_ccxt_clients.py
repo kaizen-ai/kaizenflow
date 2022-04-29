@@ -1309,7 +1309,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,close
         shape=(5761, 3)
                                         full_symbol         open        close
-        timestamp                                                             
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6311.640000
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6302.810000
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987

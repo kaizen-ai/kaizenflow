@@ -86,7 +86,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     # //////////////////////////////////////////////////////////////////////////////
 
-  
     def _get_data_for_interval_helper(
         self,
         market_data: mdata.MarketData,
@@ -324,9 +323,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         hprint.log_frame(
             _LOG,
             "get_data_for_interval:"
-            + hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids"
-            ),
+            + hprint.to_str("start_ts end_ts ts_col_name asset_ids"),
         )
         # TODO(gp): We should raise a more specific assertion and / or
         #  check part of the exception as a string.

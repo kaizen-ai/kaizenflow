@@ -104,16 +104,18 @@ class ImClientMarketData(mdabmada.MarketData):
             )
         # Load the data using `im_client`.
         ivcu.dassert_valid_full_symbols(full_symbols)
-        # 
+        #
         if self._columns is not None:
-            # Exlcude columns specific of `MarketData` when querying `ImClient`. 
+            # Exlcude columns specific of `MarketData` when querying `ImClient`.
             columns_to_exclude_in_im = [
                 self._asset_id_col,
                 self._start_time_col_name,
                 self._end_time_col_name,
             ]
             query_columns = [
-                col for col in self._columns if col not in columns_to_exclude_in_im
+                col
+                for col in self._columns
+                if col not in columns_to_exclude_in_im
             ]
         else:
             query_columns = self._columns

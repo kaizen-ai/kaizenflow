@@ -84,7 +84,8 @@ class HistoricalPqByTileClient(
         """
         Get columns for Parquet data query.
 
-        For base implementation the queries columns are equal to the passed ones.
+        For base implementation the queries columns are equal to the
+        passed ones.
         """
         if (columns is not None) and (full_symbol_col_name not in columns):
             # In order not to modify the input.
@@ -130,11 +131,15 @@ class HistoricalPqByTileClient(
         hdbg.dassert_container_type(full_symbols, list, str)
         # Implement logging and add it to kwargs.
         _LOG.debug(
-            hprint.to_str("full_symbols start_ts end_ts columns full_symbol_col_name")
+            hprint.to_str(
+                "full_symbols start_ts end_ts columns full_symbol_col_name"
+            )
         )
         kwargs["log_level"] = logging.INFO
         # Get columns for query and add them to kwargs.
-        kwargs["columns"] = self._get_columns_for_query(full_symbol_col_name, columns)
+        kwargs["columns"] = self._get_columns_for_query(
+            full_symbol_col_name, columns
+        )
         # Add AWS profile to kwargs.
         kwargs["aws_profile"] = self._aws_profile
         # Build root dirs to the data and Parquet filtering condition.

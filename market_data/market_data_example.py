@@ -326,7 +326,8 @@ def get_CcxtPqImClientMarketData_example2(
     column_remap: Optional[Dict[str, str]],
 ) -> mdimcmada.ImClientMarketData:
     """
-    Build a `ImClientMarketData` backed with `CCXT` Parquet by tile unit test data.
+    Build a `ImClientMarketData` backed with `CCXT` Parquet by tile unit test
+    data.
     """
     resample_1min = False
     im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)

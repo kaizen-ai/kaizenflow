@@ -3,7 +3,6 @@ from typing import List
 import pandas as pd
 import pytest
 
-import helpers.hsystem as hsystem
 import market_data as mdata
 import market_data.test.market_data_test_case as mdtmdtca
 
@@ -1056,7 +1055,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
             expected_column_unique_values,
             exp_df_as_str,
         )
-    
+
     def test_get_data_for_interval6(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
@@ -1081,7 +1080,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,close
         shape=(10, 3)
                                     asset_id        full_symbol        close
-        end_ts                                                               
+        end_ts
         2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6302.810000
         2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6297.260000
@@ -1106,7 +1105,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval7(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        # TODO(Dan): Decide if "full_symbol" is necessary to pass. 
+        # TODO(Dan): Decide if "full_symbol" is necessary to pass.
         columns: List[str] = ["asset_id", "full_symbol", "close", "whatever"]
         column_remap = None
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
