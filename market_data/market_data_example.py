@@ -237,47 +237,47 @@ def get_ReplayedTimeMarketData_example5(
 # #############################################################################
 
 
-def get_RealTimeImClientMarketData_example1(
-    im_client: RealTimeImClient,
-    event_loop: asyncio.AbstractEventLoop,
-    asset_ids: List[int],
-) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
-    """
-    Build a `RealTimeMarketData` with data coming from an `RealTimeImClient`.
-    """
-    resample_1min = False
-    asset_id_col = "asset_id"
-    start_time_col_name = "start_ts"
-    end_time_col_name = "end_ts"
-    columns = None
-    # Build a `ReplayedMarketData`.
-    tz = "ET"
-    initial_replayed_dt = pd.Timestamp(
-        "2000-01-01 09:30:00-05:00", tz="America/New_York"
-    )
-    speed_up_factor = 1.0
-    get_wall_clock_time = creatime.get_replayed_wall_clock_time(
-        tz,
-        initial_replayed_dt,
-        event_loop=event_loop,
-        speed_up_factor=speed_up_factor,
-    )
-    # Build a `ReplayedMarketData`.
-    sleep_in_secs = 1.0
-    time_out_in_secs = 60 * 2
-    market_data = mdremada.RealTimeMarketData2(
-        im_client,
-        #
-        asset_id_col,
-        asset_ids,
-        start_time_col_name,
-        end_time_col_name,
-        columns,
-        get_wall_clock_time,
-        sleep_in_secs=sleep_in_secs,
-        time_out_in_secs=time_out_in_secs,
-    )
-    return market_data, get_wall_clock_time
+#def get_RealTimeImClientMarketData_example1(
+#    im_client: RealTimeImClient,
+#    event_loop: asyncio.AbstractEventLoop,
+#    asset_ids: List[int],
+#) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
+#    """
+#    Build a `RealTimeMarketData` with data coming from an `RealTimeImClient`.
+#    """
+#    resample_1min = False
+#    asset_id_col = "asset_id"
+#    start_time_col_name = "start_ts"
+#    end_time_col_name = "end_ts"
+#    columns = None
+#    # Build a `ReplayedMarketData`.
+#    tz = "ET"
+#    initial_replayed_dt = pd.Timestamp(
+#        "2000-01-01 09:30:00-05:00", tz="America/New_York"
+#    )
+#    speed_up_factor = 1.0
+#    get_wall_clock_time = creatime.get_replayed_wall_clock_time(
+#        tz,
+#        initial_replayed_dt,
+#        event_loop=event_loop,
+#        speed_up_factor=speed_up_factor,
+#    )
+#    # Build a `ReplayedMarketData`.
+#    sleep_in_secs = 1.0
+#    time_out_in_secs = 60 * 2
+#    market_data = mdremada.RealTimeMarketData2(
+#        im_client,
+#        #
+#        asset_id_col,
+#        asset_ids,
+#        start_time_col_name,
+#        end_time_col_name,
+#        columns,
+#        get_wall_clock_time,
+#        sleep_in_secs=sleep_in_secs,
+#        time_out_in_secs=time_out_in_secs,
+#    )
+#    return market_data, get_wall_clock_time
 
 
 # #############################################################################
