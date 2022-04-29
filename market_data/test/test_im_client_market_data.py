@@ -974,10 +974,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
 
 
 # TODO(Dan): Replace `TestImClientMarketData1` on this one when extended.
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1666.",
-)
+@pytest.mark.slow
 class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
