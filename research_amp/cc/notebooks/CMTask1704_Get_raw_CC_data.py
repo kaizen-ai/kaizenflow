@@ -201,10 +201,11 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 vendor = config["data"]["vendor"]
 universe_version = "v3"
 resample_1min = True
+table_name = "ccxt_ohlcv"
 connection = config["load"]["connection"]
 # Initiate the client.
-ccxt_rt_client = icdcl.CcxtCddDbClient(
-    vendor, universe_version, resample_1min, connection
+ccxt_rt_client = icdcl.CcxtSqlRealTimeImClient(
+    resample_1min, connection, table_name
 )
 
 # %% [markdown]
