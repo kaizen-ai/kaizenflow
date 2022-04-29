@@ -136,6 +136,7 @@ class ImClient(abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -149,13 +150,15 @@ class ImClient(abc.ABC):
             - `None` means start from the beginning of the available data
         :param end_ts: the latest date timestamp to load data for
             - `None` means end at the end of the available data
+        :param columns: columns to return, skipping reading columns that are not requested
+            - `None` means return all available columns
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
         :return: combined data for all the requested symbols
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         # Verify the requested parameters.
@@ -170,10 +173,15 @@ class ImClient(abc.ABC):
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
+        if columns is not None:
+            # Check before reading the data.
+            hdbg.dassert_container_type(columns, list, str)
+            hdbg.dassert_lte(1, len(columns))
         df = self._read_data(
             full_symbols,
             start_ts,
             end_ts,
+            columns,
             full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
@@ -190,9 +198,6 @@ class ImClient(abc.ABC):
             msg="Not all the requested symbols were retrieved",
             only_warning=True,
         )
-        #
-        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
-        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
         # Rename index.
         df.index.name = "timestamp"
         # Normalize data for each symbol.
@@ -213,9 +218,10 @@ class ImClient(abc.ABC):
                 self._resample_1min,
                 start_ts,
                 end_ts,
+                columns,
             )
             dfs.append(df_tmp)
-        # TODO(Nikola): raise error on empty df?
+        hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
         # Sort by index and `full_symbol_col_name`.
@@ -225,8 +231,7 @@ class ImClient(abc.ABC):
         df = df.sort_values(by=["timestamp", full_symbol_col_name])
         df = df.set_index("timestamp", drop=True)
         # The full_symbol should be a string.
-        if not df.empty:
-            hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
+        hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
         return df
 
@@ -284,7 +289,6 @@ class ImClient(abc.ABC):
         Apply normalizations to IM data.
         """
         _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
-        hdbg.dassert(not df.empty, "Empty df=\n%s", df)
         # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates
         # from data".
         # 1) Drop duplicates.
@@ -321,6 +325,7 @@ class ImClient(abc.ABC):
         resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
     ) -> None:
         """
         Verify that the normalized data is valid.
@@ -351,10 +356,13 @@ class ImClient(abc.ABC):
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
         # Ensure that all the data is in [start_ts, end_ts].
-        if start_ts:
-            hdbg.dassert_lte(start_ts, df.index.min())
-        if end_ts:
-            hdbg.dassert_lte(df.index.max(), end_ts)
+        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
+        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
+        #
+        if columns is not None:
+            # TODO(Grisha): @Dan trim columns depending on `filter_data_mode`.
+            # Ensure all requested columns are received.
+            hdbg.dassert_is_subset(columns, df.columns.to_list())
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -391,6 +399,7 @@ class ImClient(abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -416,7 +425,11 @@ class ImClient(abc.ABC):
         # Read data for the entire period of time available.
         start_timestamp = None
         end_timestamp = None
-        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
+        # Use only `self._full_symbol_col_name` after CmTask1588 is fixed.
+        columns = None
+        data = self.read_data(
+            [full_symbol], start_timestamp, end_timestamp, columns
+        )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
             timestamp = data.index.min()
@@ -435,6 +448,7 @@ class ImClient(abc.ABC):
 # #############################################################################
 
 
+# TODO(Dan): Implement usage of `columns` parameter in descendant classes.
 class ImClientReadingOneSymbol(ImClient, abc.ABC):
     """
     IM client for a backend that can only read one symbol at a time.
@@ -447,6 +461,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -456,7 +471,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         hdbg.dassert_container_type(full_symbols, list, str)
@@ -525,6 +540,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -534,7 +550,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         full_symbol_col_name = self._get_full_symbol_col_name(
@@ -544,7 +560,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
             full_symbols,
             start_ts,
             end_ts,
-            full_symbol_col_name=full_symbol_col_name,
+            columns,
+            full_symbol_col_name,
             **kwargs,
         )
         return df
@@ -555,7 +572,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -626,11 +643,13 @@ class SqlRealTimeImClient(ImClient):
         Apply vendor-specific normalization.
         """
 
+    # TODO(Danya): Propagate usage of `columns` parameter here and in descendant classes.
     def _read_data(
         self,
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         # Extra arguments for building a query.
@@ -771,7 +790,7 @@ class SqlRealTimeImClient(ImClient):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:

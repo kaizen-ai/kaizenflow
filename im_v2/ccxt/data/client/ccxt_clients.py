@@ -424,19 +424,23 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         raise NotImplementedError
 
     @staticmethod
-    def _get_columns_for_query() -> List[str]:
+    def _get_columns_for_query(
+        full_symbol_col_name: str, columns: Optional[List[str]]
+    ) -> Optional[List[str]]:
         """
         See description in the parent class.
         """
-        columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "currency_pair",
-        ]
-        return columns
+        if columns is not None:
+            # In order not to modify the input.
+            query_columns = columns.copy()
+            # Data is partitioned by currency pairs so the column is mandatory.
+            query_columns.append("currency_pair")
+            # Full symbol column is added after we read data, so skipping here.
+            if full_symbol_col_name in query_columns:
+                query_columns.remove(full_symbol_col_name)
+        else:
+            query_columns = columns
+        return query_columns
 
     @staticmethod
     def _apply_transformations(
@@ -450,13 +454,14 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # Convert to string, see the parent class for details.
         df["exchange_id"] = df["exchange_id"].astype(str)
         df["currency_pair"] = df["currency_pair"].astype(str)
-        # Add full symbol column.
-        df[full_symbol_col_name] = ivcu.build_full_symbol(
+        # Add full symbol column at first position in data.
+        full_symbol_col = ivcu.build_full_symbol(
             df["exchange_id"], df["currency_pair"]
         )
-        # Select only necessary columns.
-        columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
-        df = df[columns]
+        df.insert(0, full_symbol_col_name, full_symbol_col)
+        # The columns are used just to partition the data but these columns
+        # are not included in the `ImClient` output.
+        df = df.drop(["exchange_id", "currency_pair"], axis=1)
         return df
 
     def _get_root_dirs_symbol_filters(
