@@ -394,6 +394,7 @@ def regress(
         file_name
     )
     asset_ids = parquet_tile_metadata.index.levels[0].to_list()
+    asset_ids = list(map(str, asset_ids))
     _LOG.debug("Num assets=%d", len(asset_ids))
     if num_autoregression_lags > 0:
         lagged_cols = [
