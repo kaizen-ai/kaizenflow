@@ -3,7 +3,6 @@ from typing import List
 import pandas as pd
 import pytest
 
-import helpers.hsystem as hsystem
 import market_data as mdata
 import market_data.test.market_data_test_case as mdtmdtca
 
@@ -974,7 +973,8 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
 
 
 # TODO(Dan): Replace `TestImClientMarketData1` on this one when extended.
-@pytest.mark.slow
+# TODO(Dan): use local data instead of S3.
+@pytest.mark.slow("~8 seconds by GH actions.")
 class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
