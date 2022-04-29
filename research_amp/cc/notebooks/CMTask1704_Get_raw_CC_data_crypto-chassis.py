@@ -642,7 +642,6 @@ coexplor.display_df(resampler.sum())
 # %%
 
 # %%
-#cplpluti.get_multiple_plots(2, 2)
 resampler.mean()["close.ret_0"].plot()
 resampler.median()["close.ret_0"].plot()
 resampler.sum()["close.ret_0"].plot()
@@ -660,5 +659,3 @@ high_level_stats["volatility_for_period"] = final_df['close.ret_0'].std()*final_
 
 # %%
 high_level_stats
-
-# %%
