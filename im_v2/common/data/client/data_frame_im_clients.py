@@ -79,12 +79,13 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         return self._universe
 
+    # TODO(Dan): Implement usage of `columns` parameter.
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:

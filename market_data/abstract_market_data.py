@@ -268,6 +268,7 @@ class MarketData(abc.ABC):
             right_close,
             limit,
         )
+        _LOG.debug("get_data_for_interval() columns '%s'", df.columns)
         # If the assets were specified, check that the returned data doesn't contain
         # data that we didn't request.
         # TODO(Danya): How do we handle NaNs?
@@ -282,7 +283,12 @@ class MarketData(abc.ABC):
         df = self._normalize_data(df)
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
-        # Remap column names.
+        # If columns are specified, filter data by them.
+        if self._columns:
+            # TODO(Grisha): @Dan introduce `filter_data_mode`.
+            hdbg.dassert_is_subset(self._columns, df.columns)
+            df = df[self._columns]
+        # Remap result columns to the required names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -659,7 +665,6 @@ class MarketData(abc.ABC):
         hpandas.dassert_index_is_datetime(df)
         df.index = df.index.tz_convert(self._timezone)
         # Convert start timestamp column values.
-        hdbg.dassert_in(self._start_time_col_name, df.columns)
         df[self._start_time_col_name] = df[
             self._start_time_col_name
         ].dt.tz_convert(self._timezone)

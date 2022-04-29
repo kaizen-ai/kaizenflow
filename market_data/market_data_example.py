@@ -320,6 +320,40 @@ def get_CcxtPqImClientMarketData_example1(
     return market_data
 
 
+def get_CcxtPqImClientMarketData_example2(
+    asset_ids: Optional[List[int]],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+) -> mdimcmada.ImClientMarketData:
+    """
+    Build a `ImClientMarketData` backed with `CCXT` Parquet by tile unit test
+    data.
+    """
+    resample_1min = False
+    im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    last_timestamp = _get_last_timestamp(im_client, asset_ids)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return last_timestamp
+
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    market_data = mdimcmada.ImClientMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client=im_client,
+        column_remap=column_remap,
+    )
+    return market_data
+
+
 def get_DataFrameImClientMarketData_example1(
     asset_ids: Optional[List[int]],
     columns: List[str],

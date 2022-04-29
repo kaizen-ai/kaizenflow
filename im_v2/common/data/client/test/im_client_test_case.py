@@ -46,7 +46,8 @@ class ImClientTestCase(hunitest.TestCase):
         im_client.resample_1min = True
         start_ts = None
         end_ts = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data2(
@@ -64,7 +65,8 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         end_ts = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data3(
@@ -83,7 +85,8 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         end_ts = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data4(
@@ -102,7 +105,8 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         start_ts = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data5(
@@ -120,7 +124,8 @@ class ImClientTestCase(hunitest.TestCase):
         - specified start_ts and end_ts
         - resample_1min = True
         """
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data6(
@@ -135,10 +140,11 @@ class ImClientTestCase(hunitest.TestCase):
         full_symbols = [full_symbol]
         start_ts = None
         end_ts = None
+        columns = None
         # TODO(gp): We should raise a more specific assertion and / or
         #  check part of the exception as a string.
         with self.assertRaises(AssertionError):
-            im_client.read_data(full_symbols, start_ts, end_ts)
+            im_client.read_data(full_symbols, start_ts, end_ts, columns)
 
     def _test_read_data7(
         self,
@@ -156,8 +162,47 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         end_ts = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
         self.check_df_output(actual_df, *args, **kwargs)
+
+    def _test_read_data8(
+        self,
+        im_client: icdc.ImClient,
+        full_symbols: List[ivcu.FullSymbol],
+        columns: List[str],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Test:
+        - reading data for two or more full symbols
+        - start_ts = end_ts = None
+        - resample_1min = True
+        - keep only specified columns
+        """
+        start_ts = None
+        end_ts = None
+        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        self.check_df_output(actual_df, *args, **kwargs)
+
+    def _test_read_data9(
+        self,
+        im_client: icdc.ImClient,
+        full_symbol: ivcu.FullSymbol,
+        columns: List[str],
+    ) -> None:
+        """
+        Test:
+        - error is raised when unsupported columns are provided
+        - start_ts = end_ts = None
+        - resample_1min = True
+        """
+        full_symbols = [full_symbol]
+        start_ts = None
+        end_ts = None
+        with self.assertRaises(AssertionError):
+            im_client.read_data(full_symbols, start_ts, end_ts, columns)
 
     # ////////////////////////////////////////////////////////////////////////
 
