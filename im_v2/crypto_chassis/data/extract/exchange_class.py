@@ -74,6 +74,21 @@ class CryptoChassisExchange:
         core_url = f"{self._endpoint}/{data_type}/{exchange}/{currency_pair}"
         return core_url
 
+    def _build_query_url(self, base_url: str, **kwargs) -> str:
+        """
+        Combine base API URL and query parameters.
+
+        :param base_url: base URL of CryptoChassis API
+        :return: query URL with parameters
+        """
+        params = []
+        for pair in kwargs.items():
+            joined = "=".join(pair)
+            params.append(joined)
+        joined_params = "&".join(params)
+        query_url = f"{base_url}?{joined_params}"
+        return query_url
+
     def _fetch_market_depth(
         self,
         exchange: str,
@@ -89,7 +104,7 @@ class CryptoChassisExchange:
         :return: market depth data
         """
         # Build URL.
-        core_url = self.build_base_url(
+        core_url = self._build_base_url(
             data_type="market-depth",
             exchange=exchange,
             currency_pair=currency_pair,
@@ -99,21 +114,6 @@ class CryptoChassisExchange:
         r = requests.get(query_url)
         market_depth = self._get_data(query_url)
         return market_depth
-
-    def _build_query_url(self, base_url: str, **kwargs) -> str:
-        """
-        Combine base API URL and query parameters.
-
-        :param base_url: base URL of CryptoChassis API
-        :return: query URL with parameters
-        """
-        params = []
-        for pair in kwargs.items():
-            joined = "=".join(pair)
-            params.append(joined)
-        joined_params = "&".join(params)
-        query_url = f"{base_url}?{joined_params}"
-        return query_url
         
     def _get_data(self, url: str) -> pd.DataFrame:
         """ 
