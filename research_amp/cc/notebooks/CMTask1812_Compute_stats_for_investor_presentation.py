@@ -16,6 +16,7 @@
 # # Imports
 
 # %%
+import json
 import logging
 
 import pandas as pd
@@ -33,7 +34,10 @@ _LOG = logging.getLogger(__name__)
 hprint.config_notebook()
 
 # %% [markdown]
-# # Load data
+# # Exchanges
+
+# %% [markdown]
+# ## Load data
 
 # %%
 url = "https://coinmarketcap.com/rankings/exchanges/"
@@ -58,17 +62,14 @@ df.loc[df["Volume(24h)"].isna()] = ""
 df.loc[df["Volume(24h)"].isna()].shape
 
 # %% [markdown]
-# # Create data frame with columns `name`, `volume`.
+# ## Create data frame with columns `name`, `volume`.
 
 # %%
-columns = list(df.columns)
-columns.pop(1)
-columns.pop(2)
-name_volume_df = df.copy().drop(columns=columns)
+name_volume_df = df[["Name", "Volume(24h)"]]
 name_volume_df.head(3)
 
 # %% [markdown]
-# ## Convert types
+# ### Convert types
 
 # %%
 # Clear and convert volume to integer.
@@ -85,7 +86,7 @@ name_volume_df["Volume(24h)"] = pd.to_numeric(name_volume_df["Volume(24h)"])
 name_volume_df.head(3)
 
 # %% [markdown]
-# ## Sorting by `volume`
+# ### Sorting by `volume`
 
 # %%
 name_volume_df.sort_values(
@@ -103,3 +104,51 @@ cumsum.head()
 # %%
 # Cumulative sum of top-10 exchanges.
 sns.barplot(x=name_volume_df["Name"][:10], y=cumsum["Volume(24h)"][:10])
+
+# %% [markdown]
+# # Crypto currencies
+
+# %% [markdown]
+# ## Load data
+
+# %%
+url = "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/listing?start=1&limit=10081&sortBy=market_cap&sortType=desc&convert=USD&cryptoType=all&tagType=all&audited=false&aux=name,volume_24h"
+response = requests.get(url)
+
+# %% [markdown]
+# ## Convert json to data frame
+
+# %%
+crypto_data = json.loads(response.text)
+crypto_df = pd.json_normalize(
+    crypto_data["data"]["cryptoCurrencyList"],
+    "quotes",
+    ["name"],
+    record_prefix="_",
+)
+_LOG.info(crypto_df.shape)
+crypto_df.head(3)
+
+# %%
+name_volume_crypto_df = crypto_df[["name", "_volume24h"]]
+name_volume_crypto_df.head(3)
+
+# %% [markdown]
+# ## Sorting by `volume`
+
+# %%
+name_volume_crypto_df.sort_values(
+    ["_volume24h"], ascending=False, ignore_index=True, inplace=True
+)
+name_volume_crypto_df.head(3)
+
+# %% [markdown]
+# ##  Cumulative sum
+
+# %%
+cumsum = pd.DataFrame(name_volume_crypto_df["_volume24h"].cumsum())
+cumsum.head()
+
+# %%
+# Cumulative sum of top-10 crypto currencies.
+sns.barplot(x=name_volume_crypto_df["name"][:10], y=cumsum["_volume24h"][:10])
