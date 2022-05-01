@@ -102,9 +102,6 @@ name_volume_df.head(3)
 # ### Cumulative sum
 
 # %%
-14192244602+3993740449
-
-# %%
 cumsum = pd.DataFrame(name_volume_df["Volume(24h)"].cumsum())
 cumsum.head()
 
@@ -114,6 +111,9 @@ sns.barplot(x=name_volume_df["Name"][:10], y=cumsum["Volume(24h)"][:10])
 
 # %% [markdown]
 # # Max's version
+
+# %% [markdown]
+# ## Exchanges
 
 # %% [markdown]
 # Since the .html approach requires to load html file by yourseld, I will load data by myself and reuse some previous code.
@@ -184,7 +184,7 @@ display(top10_rating)
 cplpluti.plot_barplot(top10_rating.set_index("Name")["Volume(24h)"])
 
 # %% [markdown]
-# # Cryptocurrencies
+# ## Cryptocurrencies
 
 # %%
 # Read .html file.
