@@ -292,7 +292,7 @@ class ImClient(abc.ABC):
         # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates
         # from data".
         # 1) Drop duplicates.
-        use_index = False
+        use_index = True
         df = hpandas.drop_duplicates(df, use_index)
         # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
         # Trimming of the data is done because:

@@ -393,19 +393,24 @@ def drop_duplicates(
     - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
     - https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop_duplicates.html
 
+    :param use_index: to keep index as a column
+    :param subset:  a list of columns to consider certain columns for identifying duplicates
     :return: data without duplicates
     """
     _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     num_rows_before = data.shape[0]
+    # Save index name, to restore it after removing duplicates, and drop it.
+    if use_index:
+        index_column = [data.index.name or "index"]
+        data = data.reset_index(drop=False)
     # Drop duplicates.
     if subset:
-        if use_index:
-            data = data.reset_index(drop=False)
-        data_no_dups = data.drop_duplicates(subset=subset)
-        index_column = [data_no_dups.columns[0]]
-        data_no_dups = data_no_dups.set_index(index_column, drop=True)
+        data_no_dups = data.drop_duplicates(subset=subset, *args, **kwargs)
     else:
         data_no_dups = data.drop_duplicates(*args, **kwargs)
+    # Return index back.
+    if use_index:
+        data_no_dups = data_no_dups.set_index(index_column, drop=True)
     # Report change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:
