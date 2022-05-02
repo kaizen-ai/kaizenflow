@@ -105,6 +105,10 @@ class ImClientMarketData(mdabmada.MarketData):
         # Load the data using `im_client`.
         ivcu.dassert_valid_full_symbols(full_symbols)
         #
+        # TODO(gp): im_client should always return the name of the column storing
+        #  the asset_id as "full_symbol" instead we access the class to see what
+        #  is the name of that column.
+        full_symbol_col_name = self._im_client._get_full_symbol_col_name(None)
         if self._columns is not None:
             # Exlcude columns specific of `MarketData` when querying `ImClient`.
             columns_to_exclude_in_im = [
@@ -117,6 +121,8 @@ class ImClientMarketData(mdabmada.MarketData):
                 for col in self._columns
                 if col not in columns_to_exclude_in_im
             ]
+            if full_symbol_col_name not in query_columns:
+                query_columns.insert(0, full_symbol_col_name)
         else:
             query_columns = self._columns
         # Read data.
@@ -125,13 +131,10 @@ class ImClientMarketData(mdabmada.MarketData):
             start_ts,
             end_ts,
             query_columns,
+            self._filter_data_mode,
         )
         # Add `asset_id` column.
         _LOG.debug("asset_id_col=%s", self._asset_id_col)
-        # TODO(gp): im_client should always return the name of the column storing
-        #  the asset_id as "full_symbol" instead we access the class to see what
-        #  is the name of that column.
-        full_symbol_col_name = self._im_client._get_full_symbol_col_name(None)
         _LOG.debug("full_symbol_col_name=%s", full_symbol_col_name)
         _LOG.debug("market_data.columns=%s", sorted(list(market_data.columns)))
         hdbg.dassert_in(full_symbol_col_name, market_data.columns)
