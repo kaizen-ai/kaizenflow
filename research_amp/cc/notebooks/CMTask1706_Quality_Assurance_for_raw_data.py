@@ -558,3 +558,107 @@ print(
 # |2021-12-29, 2021-12-30| 1119 |379| 1500| 2|
 #
 #
+
+# %% [markdown]
+# # `gateio` case
+
+# %%
+# Initiate the client with resample_1min = False.
+historical_client_no_resampling = icdcl.CcxtHistoricalPqByTileClient(
+    universe_version,
+    False,
+    root_dir,
+    partition_mode,
+    data_snapshot=data_snapshot,
+    aws_profile=aws_profile,
+)
+
+# %% [markdown]
+# ## `full_symbol = "gateio::ADA_USDT"`
+
+# %%
+# Load historical data from CCXT.
+full_symbols = ["gateio::ADA_USDT"]
+start_date = None
+end_date = None
+ada_gateio_ccxt = historical_client_no_resampling.read_data(
+    full_symbols, start_date, end_date
+)
+
+# %%
+_LOG.info(ada_gateio_ccxt.shape)
+ada_gateio_ccxt.head(3)
+
+# %%
+ada_gateio_ccxt.loc[ada_gateio_ccxt["volume"].isna()]
+
+# %% [markdown]
+# NaNs for `full_symbol = "gateio::ADA_USDT"` and `resample_1min=False` data are absent.
+
+# %%
+ada_duplicated_rows = ada_gateio_ccxt.duplicated()
+ada_duplicated_rows.value_counts()
+
+# %%
+ada_duplicated_index = ada_gateio_ccxt.index.duplicated()
+value_counts = pd.Series(ada_duplicated_index).value_counts()
+value_counts
+
+# %%
+duplicated_indexes = round((value_counts[1] * 100 / len(ada_gateio_ccxt)), 6)
+print(f"% of duplicated index is {duplicated_indexes}")
+
+# %%
+ada_gateio_ccxt.loc[ada_duplicated_index == True]
+
+# %%
+ada_gateio_ccxt.loc[ada_gateio_ccxt.index == "2021-09-12 20:02:00+00:00"]
+
+# %%
+ada_gateio_ccxt.loc[ada_gateio_ccxt.index == "2021-09-18 16:22:00+00:00"]
+
+# %% [markdown]
+# ### Values for duplicated indexes are the same accordingly. It means data isn't corrupted. % of duplicated index is 0.000775 (2 vs 258226)
+
+# %% [markdown]
+# ## `BTC_USDT`
+
+# %%
+full_symbols = ["gateio::BTC_USDT"]
+start_date = None
+end_date = None
+btc_gateio_ccxt = historical_client_no_resampling.read_data(
+    full_symbols, start_date, end_date
+)
+
+# %%
+_LOG.info(btc_gateio_ccxt.shape)
+btc_gateio_ccxt.head(3)
+
+# %%
+btc_gateio_ccxt.loc[btc_gateio_ccxt["volume"].isna()]
+
+# %% [markdown]
+# Also there're no NaNs for `BTC_USDT`.
+
+# %% run_control={"marked": true}
+btc_duplicated_index = btc_gateio_ccxt.index.duplicated()
+value_counts = pd.Series(btc_duplicated_index).value_counts()
+value_counts
+
+# %%
+duplicated_indexes = round((value_counts[1] * 100 / len(btc_duplicated_index)), 6)
+print(f"% of duplicated index is {duplicated_indexes}")
+
+# %%
+btc_duplicated = btc_gateio_ccxt.loc[btc_duplicated_index == True]
+btc_duplicated
+
+# %% run_control={"marked": true}
+btc_gateio_ccxt.loc[btc_gateio_ccxt.index == "2021-09-08 08:14:00+00:0"]
+
+# %%
+btc_gateio_ccxt.loc[btc_gateio_ccxt.index == "2021-06-27 23:31:00+00:00"]
+
+# %% [markdown]
+# ### Values for duplicated indexes are identical. It means data isn't corrupted. % of duplicated index is 0.005801 (15 vs 258575)
