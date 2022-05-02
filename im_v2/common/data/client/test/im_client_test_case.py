@@ -196,10 +196,8 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - reading data for two or more full symbols
-        - start_ts = end_ts = None
-        - resample_1min = True
-        - keep only specified columns
+        - keep only specified columns 
+        - the output is correct
         """
         start_ts = None
         end_ts = None
@@ -217,9 +215,9 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - error is raised when unsupported columns are provided
-        - start_ts = end_ts = None
-        - resample_1min = True
+        - keep only specified columns 
+        - we receive less columns than we request
+        - filter_data_mode = "assert"
         """
         full_symbols = [full_symbol]
         start_ts = None
@@ -240,11 +238,9 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - extra columns are trimmed when filter_data_mode = "warn_and_trim"
-        - specified columns do not contain full symbol column
-        - reading data for one full symbol
-        - start_ts = end_ts = None
-        - resample_1min = True
+        - keep only specified columns 
+        - received columns do not match requested columns
+        - filter_data_mode = "warn_and_trim"
         """
         full_symbols = [full_symbol]
         start_ts = None
@@ -255,6 +251,7 @@ class ImClientTestCase(hunitest.TestCase):
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
+    # TODO(Grisha): @Dan `_test_read_data11` -> `_test_read_data10`.
     def _test_read_data11(
         self,
         im_client: icdc.ImClient,
@@ -263,10 +260,9 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - extra columns cause an error when filter_data_mode = "assert"
-        - specified columns do not contain full symbol column
-        - start_ts = end_ts = None
-        - resample_1min = True
+        - keep only specified columns 
+        - we receive more columns than we request
+        - filter_data_mode = "assert"
         """
         full_symbols = [full_symbol]
         start_ts = None

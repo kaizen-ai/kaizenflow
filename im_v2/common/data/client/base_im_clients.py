@@ -153,8 +153,9 @@ class ImClient(abc.ABC):
             - `None` means end at the end of the available data
         :param columns: columns to return, skipping reading columns that are not requested
             - `None` means return all available columns
-        :param filter_data_mode: switch to control method robustness towards
-            unexpected return. Can be "assert" or "warn_and_trim"
+        :param filter_data_mode: switch to control method robustness towards unexpected return
+            - "assert": assert if data does not match the filters
+            - "warn_and_trim": remove the data that was not requested and issue a warning
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
         :return: combined data for all the requested symbols
@@ -221,7 +222,6 @@ class ImClient(abc.ABC):
                 self._resample_1min,
                 start_ts,
                 end_ts,
-                columns,
             )
             dfs.append(df_tmp)
         hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
@@ -236,10 +236,11 @@ class ImClient(abc.ABC):
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
-        # Verify that loaded data is correct.
-        df = self._process_by_filter_data_mode(
-            df, start_ts, end_ts, columns, filter_data_mode
-        )
+        # 
+        if columns is not None:
+            df = self._process_by_filter_data_mode(
+                df, columns, filter_data_mode
+            )
         return df
 
     # /////////////////////////////////////////////////////////////////////////
@@ -332,7 +333,6 @@ class ImClient(abc.ABC):
         resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        columns: Optional[List[str]],
     ) -> None:
         """
         Verify that the normalized data is valid.
@@ -366,44 +366,42 @@ class ImClient(abc.ABC):
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
 
-    # TODO(Dan): Consider moving it to helpers.
-    # TODO(Dan): Extend checking by timestamps.
+    # TODO(Grisha): @Dan file a bug about extending it for timestamps and add a ref here.
     def _process_by_filter_data_mode(
          self,
          df: pd.DataFrame,
-         start_ts: Optional[pd.Timestamp],
-         end_ts: Optional[pd.Timestamp],
          columns: Optional[List[str]],
          filter_data_mode: str,
      ) -> pd.DataFrame:
          """
-         Process correctness of data index and columns via `filter_data_mode`.
+         Check that columns are the expected ones.
          """
-         # Ensure that all the data is in [start_ts, end_ts].
+         received_columns = df.columns.to_list()
+         #
          if filter_data_mode == "assert":
-             if columns is not None:
-                 # Throw an error if columns were not filtered correctly.
-                 hdbg.dassert_set_eq(columns, df.columns.to_list())
+            # Raise and assertion. 
+            only_warning = False
          elif filter_data_mode == "warn_and_trim":
-             if columns is not None:
-                 # Get columns that were not filtered at data reading stage.
-                 not_filtered_columns = set(df.columns.to_list()) - set(columns)
-                 if not_filtered_columns:
-                     # If not filtered columns were found, throw a warning and
-                     # remove them from data.
-                     _LOG.warning(
-                         "Extra columns=`%s` were found and removed.",
-                         not_filtered_columns,
-                     )
-                     df = df.drop(not_filtered_columns, axis=1)
+            # Just issue a warning. 
+            only_warning = True
+            # Get columns intersection while preserving the order of the columns.
+            columns_inersection = sorted(set(received_columns) & set(columns), key=received_columns.index)
+            df = df[columns_inersection]
          else:
              raise ValueError(
-                 f"`filter_data_mode`=`{filter_data_mode}` should be in"
-                 f" ['assert', 'warn_and_trim']"
+                 f"`filter_data_mode`=`{filter_data_mode}` should be in "
+                 "['assert', 'warn_and_trim']"
              )
+         hdbg.dassert_set_eq(
+             columns, 
+             received_columns, 
+             only_warning=only_warning, 
+             msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
+         )
          return df
 
     # //////////////////////////////////////////////////////////////////////////
+
 
     def _get_full_symbol_col_name(
         self, full_symbol_col_name: Optional[str]
