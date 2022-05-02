@@ -50,8 +50,7 @@ class CryptoChassisExchange:
         # Currency pairs in market data are stored in `cur1/cur2` format, 
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
-        currencies = currency_pair.split("/")
-        currency_pair = ("-").join(currencies)
+        currency_pair = currency_pair.replace("/", "-")
         # Build base URL.
         core_url = self._build_base_url(
             data_type="market-depth",

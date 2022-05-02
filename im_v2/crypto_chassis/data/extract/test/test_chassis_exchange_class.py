@@ -20,7 +20,7 @@ class TestCryptoChassisExchange1(hunitest.TestCase):
         """
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         exchange = "binance"
-        currency_pair = "btc-usdt"
+        currency_pair = "btc/usdt"
         client = imvccdeecl.CryptoChassisExchange()
         actual = client.download_market_depth(
             exchange, currency_pair, start_timestamp=start_timestamp
@@ -42,7 +42,7 @@ class TestCryptoChassisExchange1(hunitest.TestCase):
         Run with invalid start timestamp.
         """
         exchange = "binance"
-        currency_pair = "btc-usdt"
+        currency_pair = "btc/usdt"
         start_timestamp = "invalid"
         expected = """
 * Failed assertion *
@@ -62,7 +62,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         Run with invalid exchange name.
         """
         exchange = "bibance"
-        currency_pair = "btc-usdt"
+        currency_pair = "btc/usdt"
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         expected = """'urls'"""
         client = imvccdeecl.CryptoChassisExchange()
@@ -79,7 +79,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         Run with invalid currency pair.
         """
         exchange = "binance"
-        currency_pair = "btc-busdt"
+        currency_pair = "btc/busdt"
         # End is before start -> invalid.
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         expected = """'urls'"""
