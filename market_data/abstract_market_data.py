@@ -296,6 +296,10 @@ class MarketData(abc.ABC):
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
         # Verify that loaded data is correct.
+        # TODO(Grisha): @Dan add tests.
+        # TODO(Grisha): @Dan sync with `ImClient` version and later we can factor out?
+        # TODO(Grisha): @Dan e.g., we do not request `start_ts` it should be removed
+        # for both modes.
         df = self._process_by_filter_data_mode(
             df, start_ts, end_ts, self._columns, self._filter_data_mode
         )
