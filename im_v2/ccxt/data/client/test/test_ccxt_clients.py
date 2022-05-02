@@ -1051,7 +1051,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    @pytest.mark.slow
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data2(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1090,7 +1090,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    @pytest.mark.slow
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data3(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1131,7 +1131,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    @pytest.mark.slow
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data4(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1172,7 +1172,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    @pytest.mark.slow
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data5(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1223,7 +1223,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
-    @pytest.mark.slow
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data7(self) -> None:
         resample_1min = False
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1264,7 +1264,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     # TODO(Dan): Update test outcomes after implementing CmTask1588
     # "Consider possible flaws of dropping duplicates from data".
-    @pytest.mark.slow
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data8(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
