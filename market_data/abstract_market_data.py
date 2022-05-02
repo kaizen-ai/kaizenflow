@@ -297,12 +297,12 @@ class MarketData(abc.ABC):
         df = self._convert_timestamps_to_timezone(df)
         # Verify that loaded data is correct.
         # TODO(Grisha): @Dan add tests.
-        # TODO(Grisha): @Dan sync with `ImClient` version and later we can factor out?
         # TODO(Grisha): @Dan e.g., we do not request `start_ts` it should be removed
         # for both modes.
-        df = self._process_by_filter_data_mode(
-            df, start_ts, end_ts, self._columns, self._filter_data_mode
-        )
+        if self._columns is not None:
+            df = self._process_by_filter_data_mode(
+                df, self._columns, self._filter_data_mode
+            )
         # Remap result columns to the required names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
@@ -658,39 +658,40 @@ class MarketData(abc.ABC):
     # TODO(Dan): Consider moving it to helpers.
     # TODO(Dan): Extend checking by timestamps.
     def _process_by_filter_data_mode(
-         self,
-         df: pd.DataFrame,
-         start_ts: Optional[pd.Timestamp],
-         end_ts: Optional[pd.Timestamp],
-         columns: Optional[List[str]],
-         filter_data_mode: str,
-     ) -> pd.DataFrame:
-         """
-         Process correctness of data index and columns via `filter_data_mode`.
-         """
-         # Ensure that all the data is in [start_ts, end_ts].
-         if filter_data_mode == "assert":
-             if columns is not None:
-                 # Throw an error if columns were not filtered correctly.
-                 hdbg.dassert_set_eq(columns, df.columns.to_list())
-         elif filter_data_mode == "warn_and_trim":
-             if columns is not None:
-                 # Get columns that were not filtered at data reading stage.
-                 not_filtered_columns = set(df.columns.to_list()) - set(columns)
-                 if not_filtered_columns:
-                     # If not filtered columns were found, throw a warning and
-                     # remove them from data.
-                     _LOG.warning(
-                         "Extra columns=`%s` were found and removed.",
-                         not_filtered_columns,
-                     )
-                     df = df.drop(not_filtered_columns, axis=1)
-         else:
-             raise ValueError(
-                 f"`filter_data_mode`=`{filter_data_mode}` should be in"
-                 f" ['assert', 'warn_and_trim']"
-             )
-         return df
+        self,
+        df: pd.DataFrame,
+        columns: Optional[List[str]],
+        filter_data_mode: str,
+    ) -> pd.DataFrame:
+        """
+        Check that columns are the expected ones.
+        """
+        received_columns = df.columns.to_list()
+        #
+        if filter_data_mode == "assert":
+            # Raise and assertion. 
+            only_warning = False
+        elif filter_data_mode == "warn_and_trim":
+            # Just issue a warning. 
+            only_warning = True
+            # Get columns intersection while preserving the order of the columns.
+            columns_inersection = sorted(
+                set(received_columns) & set(columns),
+                key=received_columns.index,
+            )
+            df = df[columns_inersection]
+        else:
+            raise ValueError(
+                f"`filter_data_mode`=`{filter_data_mode}` should be in "
+                "['assert', 'warn_and_trim']"
+            )
+        hdbg.dassert_set_eq(
+            columns, 
+            received_columns, 
+            only_warning=only_warning, 
+            msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
+        )
+        return df
 
     def _remap_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -716,8 +717,9 @@ class MarketData(abc.ABC):
         # Convert end timestamp values that are used as dataframe index.
         hpandas.dassert_index_is_datetime(df)
         df.index = df.index.tz_convert(self._timezone)
-        # Convert start timestamp column values.
-        df[self._start_time_col_name] = df[
-            self._start_time_col_name
-        ].dt.tz_convert(self._timezone)
+        # Convert start timestamp column values if it is present in data.
+        if self._start_time_col_name in df.columns:
+            df[self._start_time_col_name] = df[
+                self._start_time_col_name
+            ].dt.tz_convert(self._timezone)
         return df

@@ -385,7 +385,10 @@ class ImClient(abc.ABC):
             # Just issue a warning. 
             only_warning = True
             # Get columns intersection while preserving the order of the columns.
-            columns_inersection = sorted(set(received_columns) & set(columns), key=received_columns.index)
+            columns_inersection = sorted(
+                set(received_columns) & set(columns),
+                key=received_columns.index,
+            )
             df = df[columns_inersection]
          else:
              raise ValueError(
