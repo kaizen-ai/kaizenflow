@@ -84,6 +84,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
                 f"--env-file {cls.db_env_file} "
                 f"up -d {cls._get_service_name()}"
             )
+            print(cmd)
             hsystem.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
             hsql.wait_db_connection(*connection_info)

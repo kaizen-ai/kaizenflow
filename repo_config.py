@@ -187,6 +187,7 @@ def has_dind_support() -> bool:
 
     This is need to use Docker-in-Docker.
     """
+    return True
     if not is_inside_docker():
         # Outside Docker there is no privileged mode.
         return False
