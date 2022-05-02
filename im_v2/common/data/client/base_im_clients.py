@@ -365,11 +365,6 @@ class ImClient(abc.ABC):
         # Ensure that all the data is in [start_ts, end_ts].
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
-        #
-        if columns is not None:
-            # TODO(Grisha): @Dan trim columns depending on `filter_data_mode`.
-            # Ensure all requested columns are received.
-            hdbg.dassert_is_subset(columns, df.columns.to_list())
 
     def _process_by_filter_data_mode(
          self,
@@ -384,13 +379,13 @@ class ImClient(abc.ABC):
          """
          # Ensure that all the data is in [start_ts, end_ts].
          if filter_data_mode == "assert":
-             if columns:
+             if columns is not None:
                  # Throw an error if columns were not filtered correctly.
-                 hdbg.dassert_is_subset(columns_to_check, columns)
+                 hdbg.dassert_set_eq(columns, df.columns.to_list())
          elif filter_data_mode == "warn_and_trim":
-             if columns:
+             if columns is not None:
                  # Get columns that were not filtered at data reading stage.
-                 not_filtered_columns = set(columns_to_check) - set(columns)
+                 not_filtered_columns = set(df.columns.to_list()) - set(columns)
                  if not_filtered_columns:
                      # If not filtered columns were found, throw a warning and
                      # remove them from data.
@@ -465,12 +460,13 @@ class ImClient(abc.ABC):
     ) -> pd.Timestamp:
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
-        start_timestamp = None
-        end_timestamp = None
+        start_ts = None
+        end_ts = None
         # Use only `self._full_symbol_col_name` after CmTask1588 is fixed.
         columns = None
+        filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol], start_timestamp, end_timestamp, columns
+            [full_symbol], start_ts, end_ts, columns, filter_data_mode
         )
         # Assume that the timestamp is always stored as index.
         if mode == "start":

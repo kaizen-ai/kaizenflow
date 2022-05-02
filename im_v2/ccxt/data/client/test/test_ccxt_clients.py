@@ -1400,6 +1400,8 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
+        columns = None
+        filter_data_mode = "assert"
         data = im_client.read_data(full_symbols, start_ts, end_ts)
         # Add missing columns.
         data["exchange_id"], data["currency_pair"] = ivcu.parse_full_symbol(
