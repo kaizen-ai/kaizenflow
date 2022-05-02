@@ -6,7 +6,6 @@ import pytest
 
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
-import helpers.hsystem as hsystem
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
@@ -1010,10 +1009,6 @@ class CcxtSqlRealTimeImClient1(
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1666.",
-)
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -1056,6 +1051,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data2(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1094,6 +1090,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data3(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1134,6 +1131,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data4(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1174,6 +1172,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data5(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1224,6 +1223,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data7(self) -> None:
         resample_1min = False
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1261,6 +1261,56 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
+
+    # TODO(Dan): Update test outcomes after implementing CmTask1588
+    # "Consider possible flaws of dropping duplicates from data".
+    @pytest.mark.slow("Slow via GH, but fast on the server")
+    def test_read_data8(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        #
+        expected_length = 5761
+        expected_column_names = ["full_symbol", "open", "close"]
+        expected_column_unique_values = {
+            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        }
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2018-08-19 00:00:00+00:00]
+        columns=full_symbol,open,close
+        shape=(5761, 3)
+                                        full_symbol         open        close
+        timestamp
+        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6311.640000
+        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6302.810000
+        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987
+        ...
+        2018-08-18 23:59:00+00:00   kucoin::ETH_USDT          NaN      NaN
+        2018-08-19 00:00:00+00:00  binance::BTC_USDT  6387.960000  6377.25
+        2018-08-19 00:00:00+00:00   kucoin::ETH_USDT   293.870469   294.00
+        """
+        columns = ["full_symbol", "open", "close"]
+        self._test_read_data8(
+            im_client,
+            full_symbols,
+            columns,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data9(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        columns = ["full_symbol", "whatever"]
+        self._test_read_data9(im_client, full_symbol, columns)
 
     # ////////////////////////////////////////////////////////////////////////
 
