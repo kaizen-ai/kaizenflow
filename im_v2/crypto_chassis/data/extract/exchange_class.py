@@ -47,8 +47,8 @@ class CryptoChassisExchange:
                 pd.Timestamp,
             )
             start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
-        # Currency pairs in market data are stored in `cur1/cur2` format, but
-        # Crypto Chassis API processes currencies in `cur1-cur2` format, so
+        # Currency pairs in market data are stored in `cur1/cur2` format, 
+        # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
         currencies = currency_pair.split("/")
         currency_pair = ("-").join(currencies)
