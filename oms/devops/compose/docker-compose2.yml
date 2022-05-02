@@ -14,7 +14,7 @@ services:
     volumes:
       - oms_postgres_data2:/var/lib/postgresql/data
     ports:
-      - 5432:${POSTGRES_PORT}
+      - ${POSTGRES_PORT}:5432
 
 volumes:
   oms_postgres_data2: {}
