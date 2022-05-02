@@ -64,8 +64,10 @@ def add_exchange_download_args(
 
 CCXT_EXCHANGE = "CcxtExchange"
 TALOS_EXCHANGE = "TalosExchange"
+TIMEOUT_SEC = 300
 
-@exit_after(300)
+
+@exit_after(TIMEOUT_SEC)
 def download_realtime_for_one_exchange(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
