@@ -162,7 +162,7 @@ sns.barplot(x=name_volume_crypto_df["name"][:10], y=cumsum["_volume24h"][:10])
 # # Max's version
 
 # %% [markdown]
-# ## Exchanges
+# ## Exchanges (Spot)
 
 # %% [markdown]
 # Since the .html approach requires to load html file by yourseld, I will load data by myself and reuse some previous code.
@@ -174,94 +174,186 @@ file_exch = pd.read_html(file_name_exch)
 # Select necessary columns with top-100.
 exch_df = file_exch[0][["Name", "Volume(24h)", "Exchange Score", "#"]].loc[:99]
 
+
+# %%
+def volume_transformer(vol_str):
+    vol_str_split = vol_str.split(",")
+    last_piece = vol_str_split[-1]
+    last_piece = last_piece[0:3]
+    #print(poo_split)
+    result = [p for p in vol_str_split[:-1]]
+    result.append(last_piece)
+    return ",".join(result)
+
+
 # %%
 # Clean up.
 exch_df['Name'] = exch_df['Name'].str.replace('\d+', '')
 
-exch_df["Volume(24h)"] = exch_df["Volume(24h)"].map(
-    lambda x: x[1:-6]
+exch_df["Volume(24h)"] = exch_df["Volume(24h)"].apply(lambda x: volume_transformer(x))
+exch_df["Volume(24h)"] = exch_df["Volume(24h)"].apply(
+    lambda x: x.replace("$", "")
+)
+exch_df["Volume(24h)"] = exch_df["Volume(24h)"].apply(
+    lambda x: x.replace(".", "")
 )
 exch_df["Volume(24h)"] = exch_df["Volume(24h)"].apply(
     lambda x: x.replace(",", "")
 )
 exch_df["Volume(24h)"] = pd.to_numeric(exch_df["Volume(24h)"])
-exch_df.sort_values(
-    ["Volume(24h)"], ascending=False, ignore_index=True, inplace=True
-)
 
 # %%
-# Cumulative sum of top-10 exchanges.
-display(exch_df.loc[:9])
-cplpluti.plot_barplot(exch_df.set_index("Name")["Volume(24h)"].iloc[:9])
-
-# %% [markdown]
-# If we sort exchanges by last 24h volume, we see that lots of 'inferior' exchanges in top-10 (see # column that ranks by coinmarketcap exchange score).
+# Select only `good` exchanges.
+top_exch = exch_df[exch_df["Exchange Score"]>6]
+top_exch
 
 # %%
-# Another approach: sort only top-20 exchanges by Exchange score.
-top20 = exch_df.sort_values(
-    ["#"], ascending=True, ignore_index=True).loc[:19]
-top20= top20.sort_values(
-    ["Volume(24h)"], ascending=False, ignore_index=True
-).loc[:9]
-# Add 'relative volume': Exchange volume divided by the total volume from top-20 exchanges.
-top10 = top20.loc[:9]#
-top10["Relative_Volume"] = top10["Volume(24h)"]/top20["Volume(24h)"].sum()
-
-# %%
-# Cumulative sum of top-10 exchanges (selected from top-20 by Exchange Score).
-display(top10)
-cplpluti.plot_barplot(top10.set_index("Name")["Volume(24h)"])
-
-# %%
-# Relative volume of top-10 exchanges (selected from top-20 by Exchange Score).
-display(top10)
-cplpluti.plot_barplot(top10.set_index("Name")["Relative_Volume"])
-
-# %%
-# Another approach: sort by Exchange Score.
-top10_rating = exch_df.sort_values(
-    ["#"], ascending=True, ignore_index=True).loc[:9]
-
-top10_rating = top10_rating.sort_values(
+# Sort by volume.
+top_exch = top_exch.sort_values(
     ["Volume(24h)"], ascending=False, ignore_index=True
 )
+# Plot top-10 exhanges by volume.
+display(top_exch.loc[:9])
+cplpluti.plot_barplot(top_exch.set_index("Name")["Volume(24h)"].iloc[:10])
 
 # %%
-# Exchange volume of top-10 exchanges (by Exchange Score).
-display(top10_rating)
-cplpluti.plot_barplot(top10_rating.set_index("Name")["Volume(24h)"])
+# Calculate the total trading volume of `good` exchanges.
+top_exch_volume = top_exch["Volume(24h)"].sum()
+# Calculate the total trading volume of top-10 exchanges.
+top10_exch_volume = top_exch.loc[:9]["Volume(24h)"].sum()
+# The first 10 exchanges trade 90% of volume on `good` exchanges.
+top10_exch_volume/top_exch_volume
+
+# %%
+# Plot the ratio.
+ratio_good = pd.DataFrame()
+ratio_good.loc["Top-10 exchanges", "Trading volume"] = top10_exch_volume
+ratio_good.loc["Other `good` exchanges", "Trading volume"] = (top_exch_volume-top10_exch_volume)
+cplpluti.plot_barplot(ratio_good["Trading volume"])
+
+# %%
+# Calculate the total trading volume of all exchanges (100 items).
+exch_volume = exch_df["Volume(24h)"].sum()
+# Calculate the total trading volume of all `good` exchanges.
+good_exch_volume = top_exch["Volume(24h)"].sum()
+# `Good` exchanges trade 40% of volume.
+good_exch_volume/exch_volume
+
+# %%
+# Plot the ratio.
+ratio_all = pd.DataFrame()
+ratio_all.loc["`Good` exchanges", "Trading volume"] = good_exch_volume
+ratio_all.loc["Other exchanges", "Trading volume"] = (exch_volume-good_exch_volume)
+cplpluti.plot_barplot(ratio_all["Trading volume"])
 
 # %% [markdown]
-# ## Cryptocurrencies
+# Here, the results are a little bit suprising. Maybe inferior exchanges provide incorrect statistics (and that's why their score is low).
+
+# %% [markdown]
+# ## Exchanges (Derivatives)
 
 # %%
 # Read .html file.
-file_name_cc = "Cryptocurrency Prices, Charts And Market Capitalizations _ CoinMarketCap.html"
-file_cc = pd.read_html(file_name_cc)
-cc_df = file_cc[0]
+file_name_der = "Top Cryptocurrency Derivatives Exchanges Ranked _ CoinMarketCap.html"
+file_der = pd.read_html(file_name_der)
+# Select necessary columns with top-100.
+exch_der_df = file_der[0][["#","Name", "Volume(24h)"]]
 
 # %%
 # Clean up.
-cc_df['Name'] = cc_df['Name'].str.findall('[^\d+]*').apply(lambda x: x[0])
+exch_der_df['Name'] = exch_der_df['Name'].str.replace('\d+', '')
 
-cc_df['Market Cap'] = cc_df['Market Cap'].str.findall('[^$]*').apply(lambda x: x[3])
-cc_df['Market Cap'] = cc_df['Market Cap'].str.replace(',', '')
-cc_df["Market Cap"] = pd.to_numeric(cc_df["Market Cap"])
-
-cc_df['Volume(24h)'] = cc_df['Volume(24h)'].astype('str').str.extractall('(\d+)').unstack().fillna('').sum(axis=1)
-cc_df["Volume(24h)"] = pd.to_numeric(cc_df["Volume(24h)"])
+exch_der_df["Volume(24h)"] = exch_der_df["Volume(24h)"].apply(lambda x: volume_transformer(x))
+exch_der_df["Volume(24h)"] = exch_der_df["Volume(24h)"].apply(
+    lambda x: x.replace(",", "")
+)
+exch_der_df["Volume(24h)"] = exch_der_df["Volume(24h)"].apply(
+    lambda x: x.replace("$", "")
+)
+exch_der_df["Volume(24h)"] = pd.to_numeric(exch_der_df["Volume(24h)"])
+# Sorting.
+exch_der_df = exch_der_df.sort_values("Volume(24h)",ascending=False)
 
 # %%
-# Select columns.
-cc_df = cc_df[["#","Name", "Market Cap", "Volume(24h)"]]
+# Plot top-10 exchanges by volume.
+display(exch_der_df.loc[:9])
+cplpluti.plot_barplot(exch_der_df.set_index("Name")["Volume(24h)"].iloc[:10])
+
+# %%
+# Calculate the total trading volume of derivatives exchanges.
+top_exch_der_volume = exch_der_df["Volume(24h)"].sum()
+# Calculate the total trading volume of top-10 derivatives exchanges.
+top10_exch_der_volume = exch_der_df.loc[:9]["Volume(24h)"].sum()
+# The first 10 exchanges trade 79% of volume on `good` exchanges.
+top10_exch_der_volume/top_exch_der_volume
+
+# %%
+# Plot the ratio.
+ratio_der = pd.DataFrame()
+ratio_der.loc["Top-10 exchanges", "Trading volume"] = top10_exch_der_volume
+ratio_der.loc["Other exchanges", "Trading volume"] = (top_exch_der_volume-top10_exch_der_volume)
+cplpluti.plot_barplot(ratio_der["Trading volume"])
+
+# %% [markdown]
+# ## Cryptocurrencies.
+
+# %%
+# Load and process the data.
+url = "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/listing?start=1&limit=10081&sortBy=market_cap&sortType=desc&convert=USD&cryptoType=all&tagType=all&audited=false&aux=name,volume_24h"
+response = requests.get(url)
+
+crypto_data = json.loads(response.text)
+crypto_df = pd.json_normalize(
+    crypto_data["data"]["cryptoCurrencyList"],
+    "quotes",
+    ["name"],
+    record_prefix="_",
+)
+_LOG.info(crypto_df.shape)
+crypto_df.head(3)
+
+# %%
+# Leave only necessary columns.
+crypto_df = crypto_df[["name", "_volume24h", "_marketCap"]]
 
 # %%
 # Cryptocurrencies by Market Cap.
-display(cc_df.loc[:9])
-cplpluti.plot_barplot(cc_df.set_index("Name")["Market Cap"].iloc[:9])
+display(crypto_df.loc[:9])
+cplpluti.plot_barplot(crypto_df.set_index("name")["_marketCap"].iloc[:10])
+
+# %%
+# Calculate the total Market Cap of top-10 cc.
+top10_cc_mc = crypto_df.iloc[:10]["_marketCap"].sum()
+# Calculate the total Market Cap of top-100 cc.
+top100_cc_mc = crypto_df.iloc[:100]["_marketCap"].sum()
+# The first 10 cc trade 83% of Market Cap of top-100 cc.
+top10_cc_mc/top100_cc_mc
+
+# %%
+# Plot the ratio.
+ratio_cc = pd.DataFrame()
+ratio_cc.loc["Top-10 cryptocurrencies", "Market Cap"] = top10_cc_mc
+ratio_cc.loc["Other cryptocurrencies from top-100", "Market Cap"] = (top100_cc_mc-top10_cc_mc)
+cplpluti.plot_barplot(ratio_cc["Market Cap"])
 
 # %%
 # Cryptocurrencies by last 24h volume.
-display(cc_df.sort_values("Volume(24h)",ascending=False).iloc[:9])
-cplpluti.plot_barplot(cc_df.set_index("Name").sort_values("Volume(24h)",ascending=False)["Volume(24h)"].iloc[:9])
+display(crypto_df.sort_values("_volume24h",ascending=False).iloc[:10])
+cplpluti.plot_barplot(crypto_df.set_index("name").sort_values("_volume24h",ascending=False)["_volume24h"].iloc[:10])
+
+# %%
+# Calculate the total trading volume of top-10 cc.
+top10_cc_volume = crypto_df.sort_values("_volume24h",ascending=False).iloc[:10]["_volume24h"].sum()
+# Calculate the total trading volume of top-100 cc.
+top100_cc_volume = crypto_df.sort_values("_volume24h",ascending=False).iloc[:100]["_volume24h"].sum()
+# The first 10 cc trade 81% of volume of top-100 cc.
+top10_cc_volume/top100_cc_volume
+
+# %%
+# Plot the ratio.
+ratio_volume = pd.DataFrame()
+ratio_volume.loc["Top-10 cryptocurrencies", "Trading volume"] = top10_cc_volume
+ratio_volume.loc["Other cryptocurrencies from top-100", "Trading volume"] = (top100_cc_volume-top10_cc_volume)
+cplpluti.plot_barplot(ratio_volume["Trading volume"])
+
+# %%
