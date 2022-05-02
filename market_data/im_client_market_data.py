@@ -187,14 +187,17 @@ class ImClientMarketData(mdabmada.MarketData):
         df = df.reset_index()
         hdbg.dassert_not_in(self._end_time_col_name, df.columns)
         df = df.rename(columns={"index": self._end_time_col_name})
+        # Do not create start timestamp column if it is not present in
+        # the specified columns.
         if self._columns is not None:
-            if self._start_time_col_name in self._columns:
-                # `IM` data is assumed to have 1 minute frequency.
-                hdbg.dassert_not_in(self._start_time_col_name, df.columns)
-                # hdbg.dassert_eq(df.index.freq, "1T")
-                df[self._start_time_col_name] = df[
-                    self._end_time_col_name
-                ] - pd.Timedelta(minutes=1)
+            if self._start_time_col_name not in self._columns:
+                return df
+        # `IM` data is assumed to have 1 minute frequency.
+        hdbg.dassert_not_in(self._start_time_col_name, df.columns)
+        # hdbg.dassert_eq(df.index.freq, "1T")
+        df[self._start_time_col_name] = df[
+            self._end_time_col_name
+        ] - pd.Timedelta(minutes=1)
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
