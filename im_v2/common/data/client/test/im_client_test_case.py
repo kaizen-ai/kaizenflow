@@ -230,6 +230,53 @@ class ImClientTestCase(hunitest.TestCase):
                 full_symbols, start_ts, end_ts, columns, filter_data_mode
             )
 
+    def _test_read_data10(
+        self,
+        im_client: icdc.ImClient,
+        full_symbol: ivcu.FullSymbol,
+        columns: List[str],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Test:
+        - extra columns are trimmed when filter_data_mode = "warn_and_trim"
+        - specified columns do not contain full symbol column
+        - reading data for one full symbol
+        - start_ts = end_ts = None
+        - resample_1min = True
+        """
+        full_symbols = [full_symbol]
+        start_ts = None
+        end_ts = None
+        filter_data_mode = "warn_and_trim"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
+        self.check_df_output(actual_df, *args, **kwargs)
+
+    def _test_read_data11(
+        self,
+        im_client: icdc.ImClient,
+        full_symbol: ivcu.FullSymbol,
+        columns: List[str],
+    ) -> None:
+        """
+        Test:
+        - extra columns cause an error when filter_data_mode = "assert"
+        - specified columns do not contain full symbol column
+        - start_ts = end_ts = None
+        - resample_1min = True
+        """
+        full_symbols = [full_symbol]
+        start_ts = None
+        end_ts = None
+        filter_data_mode = "assert"
+        with self.assertRaises(AssertionError):
+            im_client.read_data(
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
+            )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def _test_get_start_ts_for_symbol1(
