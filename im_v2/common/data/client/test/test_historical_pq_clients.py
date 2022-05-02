@@ -303,6 +303,51 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns = ["full_symbol", "whatever"]
         self._test_read_data9(im_client, full_symbol, columns)
 
+    def test_read_data10(self) -> None:
+        full_symbol = "binance::BTC_USDT"
+        resample_1min = True
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
+            self, [full_symbol], resample_1min
+        )
+        #
+        expected_length = 4320
+        expected_column_names = ["close"]
+        expected_column_unique_values = None
+        expected_signature = r"""
+        # df=
+        index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
+        columns=close
+        shape=(4320, 1)
+                                close
+        timestamp                       
+        2021-12-30 00:00:00+00:00      0
+        2021-12-30 00:01:00+00:00      1
+        2021-12-30 00:02:00+00:00      2
+        ...
+        2022-01-01 23:57:00+00:00   4317
+        2022-01-01 23:58:00+00:00   4318
+        2022-01-01 23:59:00+00:00   4319
+        """
+        columns = ["close"]
+        self._test_read_data10(
+            im_client,
+            full_symbol,
+            columns,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data11(self) -> None:
+        full_symbol = "binance::BTC_USDT"
+        resample_1min = True
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
+            self, [full_symbol], resample_1min
+        )
+        columns = ["close"]
+        self._test_read_data11(im_client, full_symbol, columns)
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
