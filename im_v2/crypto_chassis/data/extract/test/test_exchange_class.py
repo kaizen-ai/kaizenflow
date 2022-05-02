@@ -50,7 +50,6 @@ class TestCryptoChassisExchange1(hunitest.TestCase):
         """
         exchange = "binance"
         currency_pair = "btc-usdt"
-        # End is before start -> invalid.
         start_timestamp = "invalid"
         expected = """
 * Failed assertion *
@@ -62,4 +61,36 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Check output for error.
         actual = str(fail.value)
         self.assertIn(expected, actual)
+
+    def test_download_market_depth_invalid_input2(self) -> None:
+        """
+        Run with invalid exchange name.
+        """
+        exchange = "bibance"
+        currency_pair = "btc-usdt"
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        expected = """'urls'"""
+        client = imvccdeecl.CryptoChassisExchange()
+        with pytest.raises(KeyError) as fail:
+            client.download_market_depth(exchange, currency_pair, startTime=start_timestamp)
+        # Check output for error.
+        actual = str(fail.value)
+        self.assertEquals(expected, actual)
+
+    def test_download_market_depth_invalid_input3(self) -> None:
+        """
+        Run with invalid currency pair.
+        """
+        exchange = "binance"
+        currency_pair = "btc-busdt"
+        # End is before start -> invalid.
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        expected = """'urls'"""
+        client = imvccdeecl.CryptoChassisExchange()
+        with pytest.raises(KeyError) as fail:
+            client.download_market_depth(exchange, currency_pair, startTime=start_timestamp)
+        # Check output for error.
+        actual = str(fail.value)
+        self.assertEquals(expected, actual)
+
 
