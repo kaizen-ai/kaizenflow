@@ -385,6 +385,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow
     def test_read_data2(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -423,6 +424,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow
     def test_read_data3(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -463,6 +465,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow
     def test_read_data4(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -503,6 +506,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow
     def test_read_data5(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -558,6 +562,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     # TODO(Nina): Choose timestamp intervals that will be demonstrative for this
     #  test case, i.e. the ones with gaps.
+    @pytest.mark.slow
     def test_read_data7(self) -> None:
         resample_1min = False
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
