@@ -105,12 +105,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     symbols = ivcu.get_vendor_universe(vendor, as_full_symbol=True)
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
+        start_ts = timespan[date_index]
+        end_ts = imespan[date_index + 1]
+        columns = None
         # TODO(Nikola): Refactor to use one db call.
-        df = ccxt_db_client.read_data(
-            symbols,
-            start_ts=timespan[date_index],
-            end_ts=timespan[date_index + 1],
-        )
+        df = ccxt_db_client.read_data(symbols, start_ts, end_ts, columns)
         try:
             # Check if directory already exists in specified path.
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
