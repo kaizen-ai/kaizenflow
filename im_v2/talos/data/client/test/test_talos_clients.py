@@ -1,10 +1,8 @@
 from typing import Dict, List, Optional
 
 import pandas as pd
-import pytest
 
 import helpers.hsql as hsql
-import helpers.hsystem as hsystem
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
@@ -343,10 +341,6 @@ class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1666.",
-)
 class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
