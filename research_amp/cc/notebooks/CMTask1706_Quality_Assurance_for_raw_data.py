@@ -662,3 +662,5 @@ btc_gateio_ccxt.loc[btc_gateio_ccxt.index == "2021-06-27 23:31:00+00:00"]
 
 # %% [markdown]
 # ### Values for duplicated indexes are identical. It means data isn't corrupted. % of duplicated index is 0.005801 (15 vs 258575)
+
+# %%
