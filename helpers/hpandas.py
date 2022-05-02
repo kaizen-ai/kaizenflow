@@ -381,6 +381,8 @@ def compare_dataframe_rows(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame
 
 def drop_duplicates(
     data: Union[pd.Series, pd.DataFrame],
+    use_index: bool,
+    subset: Optional[List[str]] = None,
     *args: Any,
     **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
@@ -396,7 +398,14 @@ def drop_duplicates(
     _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
     num_rows_before = data.shape[0]
     # Drop duplicates.
-    data_no_dups = data.drop_duplicates(*args, **kwargs)
+    if subset:
+        if use_index:
+            data = data.reset_index(drop=False)
+        data_no_dups = data.drop_duplicates(subset=subset)
+        index_column = [data_no_dups.columns[0]]
+        data_no_dups = data_no_dups.set_index(index_column, drop=True)
+    else:
+        data_no_dups = data.drop_duplicates(*args, **kwargs)
     # Report change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:

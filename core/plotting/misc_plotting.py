@@ -333,7 +333,8 @@ def plot_timeseries_per_category(
     """
     if not figsize:
         figsize = FIG_SIZE
-    unique_rows = coexplor.drop_duplicates(df=df, subset=[column])
+    use_index = True
+    unique_rows = hpandas.drop_duplicates(df, use_index, [column])
     if top_n:
         categories = (
             df[category_column].value_counts().iloc[:top_n].index.to_list()
