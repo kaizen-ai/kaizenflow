@@ -21,7 +21,6 @@ import statsmodels as statsm
 import statsmodels.api as sm
 import statsmodels.regression.rolling as srroll
 
-import core.explore as coexplor
 import core.plotting.plotting_utils as cplpluti
 import core.signal_processing as csigproc
 import core.statistics as costatis
