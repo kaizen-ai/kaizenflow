@@ -312,8 +312,10 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         **kwargs: Any,
     ) -> None:
         """
-        Test that error is raised when unsupported columns are provided to
-        `get_data_for_interval()`.
+        Raise an error while calling `get_data_for_interval()`:
+
+        - unsupported columns are passed to the client
+        - filter_data_mode = "assert"
         """
         # TODO(Dan): Consider usage of `skip_test_since_not_online()`.
         # Prepare inputs.
@@ -345,26 +347,30 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         **kwargs: Any,
     ) -> None:
         """
-        Call `get_data_for_interval()` with:
+        Raise an error while calling `get_data_for_interval()`:
 
-        - `asset_ids` is a list
-        - interval type is [a, b]
-        - columns for data filtering are passed to the client
+        - unsupported columns are passed to the client
+        - filter_data_mode = "warn_and_trim"
         """
+        # TODO(Dan): Consider usage of `skip_test_since_not_online()`.
         # Prepare inputs.
-        left_close = True
-        right_close = True
-        # Run.
-        self._get_data_for_interval_helper(
-            market_data,
-            start_ts,
-            end_ts,
-            asset_ids,
-            left_close,
-            right_close,
-            *args,
-            **kwargs,
+        start_ts = None
+        end_ts = None
+        ts_col_name = "end_ts"
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_interval:"
+            + hprint.to_str("start_ts end_ts ts_col_name asset_ids"),
         )
+        # TODO(gp): We should raise a more specific assertion and / or
+        #  check part of the exception as a string.
+        with self.assertRaises(AssertionError):
+            market_data.get_data_for_interval(
+                start_ts,
+                end_ts,
+                ts_col_name,
+                asset_ids,
+            )
 
     # //////////////////////////////////////////////////////////////////////////////
 

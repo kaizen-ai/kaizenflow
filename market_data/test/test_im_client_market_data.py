@@ -1121,38 +1121,5 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
             asset_ids, columns, column_remap, filter_data_mode
         )
-        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
-        #
-        expected_length = 10
-        expected_column_names = ["asset_id", "full_symbol", "close"]
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
-        }
-        # pylint: disable=line-too-long
-        exp_df_as_str = r"""
-        # df=
-        index=[2018-08-16 20:01:00-04:00, 2018-08-16 20:05:00-04:00]
-        columns=asset_id,full_symbol,close
-        shape=(10, 3)
-                                    asset_id        full_symbol        close
-        end_ts
-        2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6302.810000
-        2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.712987
-        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6297.260000
-        ...
-        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.884638
-        2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6294.990000
-        2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.884637
-        """
         # Run.
-        self._test_get_data_for_interval8(
-            market_data,
-            start_ts,
-            end_ts,
-            asset_ids,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            exp_df_as_str,
-        )
+        self._test_get_data_for_interval7(market_data, asset_ids)
