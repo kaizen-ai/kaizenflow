@@ -38,7 +38,10 @@ hprint.config_notebook()
 # # Functiuons
 
 # %%
-def volume_transformer(vol_str):
+def _volume_transformer(vol_str):
+    """
+    Take the value of `Volume` and cut the end to the point where the first 000's start.
+    """
     vol_str_split = vol_str.split(",")
     last_piece = vol_str_split[-1]
     last_piece = last_piece[0:3]
@@ -47,11 +50,15 @@ def volume_transformer(vol_str):
     return ",".join(result)
 
 def clean_up_exchanges(df):
+    """
+    - `Name` values contains integers at the end that we want to omit.
+    - `Volume` values are presented not in a standard way.
+    """
     # Names.
     df["Name"] = df["Name"].str.replace("\d+", "")
     # Volumes.
     df["Volume(24h)"] = df["Volume(24h)"].apply(
-        lambda x: volume_transformer(x)
+        lambda x: _volume_transformer(x)
     )
     df["Volume(24h)"] = df["Volume(24h)"].apply(
         lambda x: x.replace("$", "")
@@ -65,13 +72,37 @@ def clean_up_exchanges(df):
     df["Volume(24h)"] = pd.to_numeric(df["Volume(24h)"])
     return df
 
-def get_cumulative_volume_ratios(df, value_col, plot_results):
+def get_cumulative_volume_ratios(df: pd.DataFrame, value_col: str, plot_results: bool) -> pd.Series:
+    """
+    :param df: Data with volume or market cap
+    :param value_col: Specify volume or market cap column
+    :param plot_results: plot barplot if True
+    :return: cumulative value ratios with respect to total sum of values
+    """
     cumul_volume = df[value_col].cumsum() / df[value_col].sum()
+    num_of_entities = len(cumul_volume[cumul_volume<=0.9])
+    print(f"Number of entities that needs to consitute 90% of total sum: {num_of_entities}")
     if plot_results:
         cumul_volume.plot()
     return cumul_volume
 
-def get_general_volume_ratio_df(df1, df2, value_col, col1, col2, plot_results):
+def get_general_volume_ratio_df(df1: pd.DataFrame, 
+                                df2: pd.DataFrame, 
+                                value_col: str, 
+                                col1: str, 
+                                col2: str, 
+                                plot_results: bool) -> pd.DataFrame:
+    """
+    Computes the portions of volume or market cap from two differen subsets with respect to full data.
+    
+    :param df1: Full data
+    :param df2: Subset of full data that is ised for comparison
+    :param value_col: Specify volume or market cap column
+    :param col1: Name of the subset of full data
+    :param col2: Name of the remaining subset of full data
+    :param plot_results: Plot barplot if True
+    :return: Ratio stats
+    """
     value1 = df1[value_col].sum()
     value2 = df2[value_col].sum()
     ratio_df = pd.DataFrame()
@@ -210,31 +241,39 @@ crypto_df.head(3)
 
 # %%
 # Leave only necessary columns.
-crypto_df = crypto_df[["name", "_volume24h", "_marketCap"]]
+crypto_df = crypto_df[["name", "_volume24h", "_marketCap"]].sort_values("_marketCap", ascending=False, ignore_index=True)
+# `Good` crypto = first 100 coins by market cap
+good_crypto = crypto_df.iloc[:100]
+
+# %% [markdown]
+# ## Market Cap
 
 # %%
 # Cryptocurrencies by Market Cap.
-display(crypto_df.loc[:9])
-cplpluti.plot_barplot(crypto_df.set_index("name")["_marketCap"].iloc[:10])
+display(good_crypto.loc[:9])
+cplpluti.plot_barplot(good_crypto.set_index("name")["_marketCap"].iloc[:10])
 
 # %%
-ratio_cc = get_general_volume_ratio_df(crypto_df.iloc[:100], 
-                                       crypto_df.iloc[:10],
+ratio_cc = get_general_volume_ratio_df(good_crypto, 
+                                       good_crypto.iloc[:10],
                                         "_marketCap",
                                          "Top-10 cryptocurrencies", 
-                                         "Other cryptocurrencies from top-100", 
+                                         "Other `good` cryptocurrencies", 
                                          plot_results=True)
 display(ratio_cc)
 
 # %%
-cc_mc_sorted = crypto_df.sort_values("_marketCap", ascending=False, ignore_index=True)
 # Plot the cumulative volume against exchanges.
-all_cumul_cc_mc = get_cumulative_volume_ratios(cc_mc_sorted, "_marketCap", plot_results=True)
-display(all_cumul_cc_mc.head(5))
+good_cumul_mcap = get_cumulative_volume_ratios(good_crypto, "_marketCap", plot_results=True)
+display(good_cumul_mcap.head(5))
+
+# %% [markdown]
+# ## Volume
 
 # %%
 # Cryptocurrencies by last 24h volume.
-display(crypto_df.sort_values("_volume24h", ascending=False).iloc[:10])
+good_crypto_volume_sorted = good_crypto.sort_values("_volume24h", ascending=False, ignore_index=True)
+display(good_crypto_volume_sorted.iloc[:10])
 cplpluti.plot_barplot(
     crypto_df.set_index("name")
     .sort_values("_volume24h", ascending=False)["_volume24h"]
@@ -242,16 +281,56 @@ cplpluti.plot_barplot(
 )
 
 # %%
-ratio_cc_volume = get_general_volume_ratio_df(crypto_df.sort_values("_volume24h", ascending=False).iloc[:100],
-                                              crypto_df.sort_values("_volume24h", ascending=False).iloc[:10],
+ratio_good_volume = get_general_volume_ratio_df(good_crypto_volume_sorted,
+                                              good_crypto_volume_sorted.iloc[:10],
                                         "_volume24h",
                                          "Top-10 cryptocurrencies", 
-                                         "Other cryptocurrencies from top-100", 
+                                         "Other `good` cryptocurrencies", 
                                          plot_results=True)
-display(ratio_cc_volume)
+display(ratio_good_volume)
 
 # %%
-cc_volume_sorted = crypto_df.sort_values("_volume24h", ascending=False, ignore_index=True)
 # Plot the cumulative volume against exchanges.
-all_cumul_cc_volume = get_cumulative_volume_ratios(cc_volume_sorted, "_volume24h", plot_results=True)
+all_cumul_cc_volume = get_cumulative_volume_ratios(good_crypto_volume_sorted, "_volume24h", plot_results=True)
 display(all_cumul_der_volume.head(5))
+
+# %% [markdown]
+# ## `Good` vs. `Others` Crypto
+
+# %% [markdown]
+# - `good` crypto = first 100 coins by market cap
+# - `other` crypto = coins outside `good` crypto (±10.000 entities)
+
+# %% [markdown]
+# ### Market Cap
+
+# %%
+ratio_good_vs_others_mcap = get_general_volume_ratio_df(crypto_df,
+                                              good_crypto,
+                                        "_marketCap",
+                                         "`Good` cryptocurrencies", 
+                                         "Other cryptocurrencies", 
+                                         plot_results=True)
+display(ratio_good_vs_others_mcap)
+
+# %%
+# Plot the cumulative volume against exchanges.
+good_others_mcap = get_cumulative_volume_ratios(crypto_df, "_marketCap", plot_results=True)
+display(good_others_mcap.head(5))
+
+# %% [markdown]
+# ### Volume
+
+# %%
+ratio_good_vs_others_mcap = get_general_volume_ratio_df(crypto_df,
+                                              good_crypto,
+                                        "_volume24h",
+                                         "`Good` cryptocurrencies", 
+                                         "Other cryptocurrencies", 
+                                         plot_results=True)
+display(ratio_good_vs_others_mcap)
+
+# %%
+# Plot the cumulative volume against exchanges.
+good_others_volume = get_cumulative_volume_ratios(crypto_df.sort_values("_volume24h", ascending=False, ignore_index=True), "_volume24h", plot_results=True)
+display(good_others_volume.head(5))
