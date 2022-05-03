@@ -404,6 +404,7 @@ def drop_duplicates(
         str(*args),
         str(**kwargs),
     )
+    hdbg.dassert_not_in("index", data.columns.tolist())
     num_rows_before = data.shape[0]
     # Get all columns list for subset if no subset is passed.
     if subset is None:
