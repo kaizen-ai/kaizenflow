@@ -38,6 +38,18 @@ class CcxtExchange:
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
 
+    def download_data(self, data_type, **kwargs) -> pd.DataFrame:
+        """
+        """
+        self.assertEquals(data_type, "ohlcv")
+        return self.download_ohlcv_data(
+            currency_pair=kwargs.currency_pair,
+            start_timestamp=kwargs.start_timestamp,
+            end_timestamp=kwargs.end_timestamp,
+            bar_per_iteration=kwargs.bar_per_iteration,
+            sleep_time_in_secs=kwargs.sleep_time_in_secs,
+        )
+
     def log_into_exchange(self) -> ccxt.Exchange:
         """
         Log into an exchange via CCXT and return the corresponding

@@ -82,6 +82,17 @@ class TalosExchange:
         url = f"https://{self._endpoint}{data_path}"
         return url
 
+    def download_data(self, data_type, **kwargs) -> pd.DataFrame:
+        """
+        """
+        self.assertEquals(data_type, "ohlcv")
+        return self.download_ohlcv_data(
+            currency_pair=kwargs.currency_pair,
+            exchange=kwargs.exchange_id,
+            start_timestamp=kwargs.start_timestamp,
+            end_timestamp=kwargs.end_timestamp,
+        )
+
     def download_ohlcv_data(
         self,
         currency_pair: str,
