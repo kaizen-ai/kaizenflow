@@ -397,20 +397,33 @@ def drop_duplicates(
     :param subset:  a list of columns to consider certain columns for identifying duplicates
     :return: data without duplicates
     """
-    _LOG.debug("args=%s, kwargs=%s", str(args), str(kwargs))
+    _LOG.debug(
+        "use_index = % s, subset = % s args = % s, kwargs = % s",
+        str(use_index),
+        str(subset),
+        str(*args),
+        str(**kwargs),
+    )
     num_rows_before = data.shape[0]
-    # Save index name, to restore it after removing duplicates, and drop it.
-    if use_index:
-        index_column = [data.index.name or "index"]
-        data = data.reset_index(drop=False)
-    # Drop duplicates.
-    if subset:
-        data_no_dups = data.drop_duplicates(subset=subset, *args, **kwargs)
+    # Get all columns list for subset if no subset is passed.
+    if subset is None:
+        subset = data.columns.tolist()
     else:
-        data_no_dups = data.drop_duplicates(*args, **kwargs)
+        hdbg.dassert_lte(1, len(subset), "Column subset cannot be empty")
+    # Save index name, to restore it after removing duplicates, and drop it.
+    original_index_col_name = data.index.name
+    if use_index:
+        # Convert index column to a regular one with its original name
+        # or "index" if it had no name originally.
+        index_col_name = original_index_col_name or "index"
+        # Add index column to subset columns in order to drop duplicates by it as well.
+        subset.insert(0, index_col_name)
+        data = data.reset_index()
+    # Drop duplicates.
+    data_no_dups = data.drop_duplicates(subset=subset, *args, **kwargs)
     # Return index back.
     if use_index:
-        data_no_dups = data_no_dups.set_index(index_column, drop=True)
+        data_no_dups = data_no_dups.set_index(original_index_col_name, drop=True)
     # Report change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:
