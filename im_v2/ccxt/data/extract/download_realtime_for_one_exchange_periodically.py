@@ -30,7 +30,7 @@ import im_v2.common.db.db_utils as imvcddbut
 from helpers.htimeout_decorator import exit_after
 
 _LOG = logging.getLogger(__name__)
-TIMEOUT_SEC = 300
+TIMEOUT_SEC = 60
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -78,12 +78,13 @@ def _parse() -> argparse.ArgumentParser:
 
 
 @exit_after(TIMEOUT_SEC)
-def download_realtime_for_last_minutes(
+def download_realtime_for_one_exchange_wrapper(
     args: argparse.Namespace,
     start_timestamp: datetime,
     end_timestamp: datetime,
 ) -> None:
     """
+    Wrapper for download_realtime_for_one_exchange.
     Download data for given time range, raise Interrupt in case if timeout
     occured.
 
@@ -145,7 +146,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         )
         end_timestamp = datetime.now()
         try:
-            download_realtime_for_last_minutes(
+            download_realtime_for_one_exchange_wrapper(
                 args, start_timestamp, end_timestamp
             )
             # Reset failures counter.
