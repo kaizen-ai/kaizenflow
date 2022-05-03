@@ -937,3 +937,100 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
         expected = pd.DataFrame(data=expected)
         # Check.
         hunitest.compare_df(actual, expected)
+
+
+class TestDropDuplicates(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> pd.DataFrame:
+        test_data = [(1, "A", 3.2),
+                     (4, "B", 3.2),
+                     (1, "A", 3.2),
+                     (4, "B", 3.2)]
+        index = ["dummy_value1", "dummy_value2", "dummy_value1", "dummy_value4"]
+        columns = ["int", "letter", "float"]
+        df = pd.DataFrame(data=test_data, index=index, columns=columns)
+        return df
+
+    def test_drop_duplicates1(self) -> None:
+        """
+        Remove identical rows by subset, i.e. if identical values in subset columns, it drops.
+
+        use_index = True
+        subset = ["float"]
+        df.index.name = "index"
+        """
+        # Prepare test data.
+        df = self.get_test_data()
+        use_index = True
+        subset = ["float"]
+        no_dublicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
+        # Prepare expected result.
+        expected = pd.DataFrame(data=[(1, "A", 3.2)],
+                                index=["dummy_value1"],
+                                columns=df.columns)
+        # If index name isn't specified in data frame then we expect "index" as index name.
+        expected.index.name = "index"
+        # Check.
+        hunitest.compare_df(no_dublicates_df, expected)
+
+    def test_drop_duplicates2(self) -> None:
+        """
+        Remove completely identical rows.
+
+        use_index = True
+        subset = None
+        df.index.name = "index"
+        """
+        # Prepare test data.
+        df = self.get_test_data()
+        use_index = True
+        no_dublicates_df = hpandas.drop_duplicates(df, use_index)
+        # Prepare expected result.
+        expected = pd.DataFrame(data=[(1, "A", 3.2),
+                                      (4, "B", 3.2),
+                                      (4, "B", 3.2)],
+                                index=["dummy_value1", "dummy_value2", "dummy_value4"],
+                                columns=df.columns)
+        # If index name isn't specified in data frame then we expect "index" as index name.
+        expected.index.name = "index"
+        # Check.
+        hunitest.compare_df(no_dublicates_df, expected)
+
+    def test_drop_duplicates3(self) -> None:
+        """
+        Remove completely identical rows, even if indexes are different.
+
+        use_index = False
+        subset = None
+        """
+        # Prepare test data.
+        df = self.get_test_data()
+        use_index = False
+        no_dublicates_df = hpandas.drop_duplicates(df, use_index)
+        # Prepare expected result.
+        expected = pd.DataFrame(data=[(1, "A", 3.2),
+                                      (4, "B", 3.2)],
+                                index=["dummy_value1", "dummy_value2"],
+                                columns=df.columns)
+        # Check.
+        hunitest.compare_df(no_dublicates_df, expected)
+
+    def test_drop_duplicates4(self) -> None:
+        """
+        Remove identical rows by subset, i.e. if identical values in subset columns, it drops.
+        Should be the same values for all subset columns.
+
+        use_index = False
+        subset = ["letter", "float"]
+        """
+        # Prepare test data.
+        df = self.get_test_data()
+        use_index = False
+        no_dublicates_df = hpandas.drop_duplicates(df, use_index)
+        # Prepare expected result.
+        expected = pd.DataFrame(data=[(1, "A", 3.2),
+                                      (4, "B", 3.2)],
+                                index=["dummy_value1", "dummy_value2"],
+                                columns=df.columns)
+        # Check.
+        hunitest.compare_df(no_dublicates_df, expected)
