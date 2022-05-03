@@ -942,8 +942,8 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
 class TestDropDuplicates(hunitest.TestCase):
     @staticmethod
     def get_test_data() -> pd.DataFrame:
-        test_data = [(1, "A", 3.2), (4, "B", 3.2), (1, "A", 3.2), (4, "B", 3.2)]
-        index = ["dummy_value1", "dummy_value2", "dummy_value1", "dummy_value4"]
+        test_data = [(1, "A", 3.2), (1, "A", 3.2), (10, "B", 3.2), (8, "A", 3.2), (4, "B", 8.2), (10, "B", 3.2)]
+        index = ["dummy_value1", "dummy_value3", "dummy_value2", "dummy_value1", "dummy_value1", "dummy_value2"]
         columns = ["int", "letter", "float"]
         df = pd.DataFrame(data=test_data, index=index, columns=columns)
         return df
@@ -955,7 +955,6 @@ class TestDropDuplicates(hunitest.TestCase):
 
         use_index = True
         subset = ["float"]
-        df.index.name = "index"
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -964,10 +963,8 @@ class TestDropDuplicates(hunitest.TestCase):
         no_dublicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
         # Prepare expected result.
         expected = pd.DataFrame(
-            data=[(1, "A", 3.2)], index=["dummy_value1"], columns=df.columns
+            data=[(1, "A", 3.2), (1, "A", 3.2), (10, "B", 3.2), (4, "B", 8.2)], index=["dummy_value1",  "dummy_value3", "dummy_value2", "dummy_value1"], columns=df.columns
         )
-        # If index name isn't specified in data frame then we expect "index" as index name.
-        expected.index.name = "index"
         # Check.
         hunitest.compare_df(no_dublicates_df, expected)
 
@@ -977,7 +974,6 @@ class TestDropDuplicates(hunitest.TestCase):
 
         use_index = True
         subset = None
-        df.index.name = "index"
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -985,12 +981,10 @@ class TestDropDuplicates(hunitest.TestCase):
         no_dublicates_df = hpandas.drop_duplicates(df, use_index)
         # Prepare expected result.
         expected = pd.DataFrame(
-            data=[(1, "A", 3.2), (4, "B", 3.2), (4, "B", 3.2)],
-            index=["dummy_value1", "dummy_value2", "dummy_value4"],
+            data=[(1, "A", 3.2), (1, "A", 3.2), (10, "B", 3.2), (8, "A", 3.2), (4, "B", 8.2)],
+            index=["dummy_value1", "dummy_value3", "dummy_value2", "dummy_value1", "dummy_value1"],
             columns=df.columns,
         )
-        # If index name isn't specified in data frame then we expect "index" as index name.
-        expected.index.name = "index"
         # Check.
         hunitest.compare_df(no_dublicates_df, expected)
 
@@ -1007,8 +1001,8 @@ class TestDropDuplicates(hunitest.TestCase):
         no_dublicates_df = hpandas.drop_duplicates(df, use_index)
         # Prepare expected result.
         expected = pd.DataFrame(
-            data=[(1, "A", 3.2), (4, "B", 3.2)],
-            index=["dummy_value1", "dummy_value2"],
+            data=[(1, "A", 3.2), (10, "B", 3.2), (8, "A", 3.2), (4, "B", 8.2)],
+            index=["dummy_value1", "dummy_value2", "dummy_value1", "dummy_value1"],
             columns=df.columns,
         )
         # Check.
@@ -1025,11 +1019,12 @@ class TestDropDuplicates(hunitest.TestCase):
         # Prepare test data.
         df = self.get_test_data()
         use_index = False
-        no_dublicates_df = hpandas.drop_duplicates(df, use_index)
+        subset = ["letter", "float"]
+        no_dublicates_df = hpandas.drop_duplicates(df, use_index, subset)
         # Prepare expected result.
         expected = pd.DataFrame(
-            data=[(1, "A", 3.2), (4, "B", 3.2)],
-            index=["dummy_value1", "dummy_value2"],
+            data=[(1, "A", 3.2), (10, "B", 3.2), (4, "B", 8.2)],
+            index=["dummy_value1", "dummy_value2", "dummy_value1"],
             columns=df.columns,
         )
         # Check.
