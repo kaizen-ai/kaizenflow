@@ -4061,6 +4061,10 @@ def _build_run_command_line(
     pytest_opts_tmp.append(
         f'--reruns {num_reruns} --only-rerun "Failed: Timeout"'
     )
+    if hgit.execute_repo_config_code("skip_submodules_test()"):
+        # For some repos (e.g. `dev_tools`) submodules should be skipped
+        # regardless of the passed value.
+        skip_submodules = True
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(
