@@ -410,19 +410,24 @@ def drop_duplicates(
         subset = data.columns.tolist()
     else:
         hdbg.dassert_lte(1, len(subset), "Column subset cannot be empty")
+    # Save index name, to restore it after removing duplicates, and drop it.
+    original_index_col_name = data.index.name
     if use_index:
-        # Save index name, to restore it after removing duplicates, and drop it.
-        original_index_col_name = data.index.name or "index"
+        if original_index_col_name:
+            index_col_name = "copied_df_index"
+        else:
+            index_col_name = "index"
         # Add index column to subset columns in order to drop duplicates by it as well.
-        subset.insert(0, original_index_col_name)
+        subset.insert(0, index_col_name)
         data = data.reset_index()
     # Drop duplicates.
     data_no_dups = data.drop_duplicates(subset=subset, *args, **kwargs)
     # Return index back.
     if use_index:
+        if original_index_col_name is None:
+            original_index_col_name = "index"
         data_no_dups = data_no_dups.set_index(original_index_col_name, drop=True)
-        if original_index_col_name == "index":
-            data_no_dups.index.name = None
+        data_no_dups.index.name = None
     # Report change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:
