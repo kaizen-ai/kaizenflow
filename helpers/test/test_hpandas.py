@@ -942,8 +942,22 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
 class TestDropDuplicates(hunitest.TestCase):
     @staticmethod
     def get_test_data() -> pd.DataFrame:
-        test_data = [(1, "A", 3.2), (1, "A", 3.2), (10, "B", 3.2), (8, "A", 3.2), (4, "B", 8.2), (10, "B", 3.2)]
-        index = ["dummy_value1", "dummy_value3", "dummy_value2", "dummy_value1", "dummy_value1", "dummy_value2"]
+        test_data = [
+            (1, "A", 3.2),
+            (1, "A", 3.2),
+            (10, "B", 3.2),
+            (8, "A", 3.2),
+            (4, "B", 8.2),
+            (10, "B", 3.2),
+        ]
+        index = [
+            "dummy_value1",
+            "dummy_value3",
+            "dummy_value2",
+            "dummy_value1",
+            "dummy_value1",
+            "dummy_value2",
+        ]
         columns = ["int", "letter", "float"]
         df = pd.DataFrame(data=test_data, index=index, columns=columns)
         return df
@@ -963,7 +977,14 @@ class TestDropDuplicates(hunitest.TestCase):
         no_dublicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
         # Prepare expected result.
         expected = pd.DataFrame(
-            data=[(1, "A", 3.2), (1, "A", 3.2), (10, "B", 3.2), (4, "B", 8.2)], index=["dummy_value1",  "dummy_value3", "dummy_value2", "dummy_value1"], columns=df.columns
+            data=[(1, "A", 3.2), (1, "A", 3.2), (10, "B", 3.2), (4, "B", 8.2)],
+            index=[
+                "dummy_value1",
+                "dummy_value3",
+                "dummy_value2",
+                "dummy_value1",
+            ],
+            columns=df.columns,
         )
         # Check.
         hunitest.compare_df(no_dublicates_df, expected)
@@ -981,8 +1002,20 @@ class TestDropDuplicates(hunitest.TestCase):
         no_dublicates_df = hpandas.drop_duplicates(df, use_index)
         # Prepare expected result.
         expected = pd.DataFrame(
-            data=[(1, "A", 3.2), (1, "A", 3.2), (10, "B", 3.2), (8, "A", 3.2), (4, "B", 8.2)],
-            index=["dummy_value1", "dummy_value3", "dummy_value2", "dummy_value1", "dummy_value1"],
+            data=[
+                (1, "A", 3.2),
+                (1, "A", 3.2),
+                (10, "B", 3.2),
+                (8, "A", 3.2),
+                (4, "B", 8.2),
+            ],
+            index=[
+                "dummy_value1",
+                "dummy_value3",
+                "dummy_value2",
+                "dummy_value1",
+                "dummy_value1",
+            ],
             columns=df.columns,
         )
         # Check.
@@ -1002,7 +1035,12 @@ class TestDropDuplicates(hunitest.TestCase):
         # Prepare expected result.
         expected = pd.DataFrame(
             data=[(1, "A", 3.2), (10, "B", 3.2), (8, "A", 3.2), (4, "B", 8.2)],
-            index=["dummy_value1", "dummy_value2", "dummy_value1", "dummy_value1"],
+            index=[
+                "dummy_value1",
+                "dummy_value2",
+                "dummy_value1",
+                "dummy_value1",
+            ],
             columns=df.columns,
         )
         # Check.
