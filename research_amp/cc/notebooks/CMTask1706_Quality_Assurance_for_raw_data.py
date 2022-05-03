@@ -293,7 +293,7 @@ df.set_index(pd.to_datetime(indexes), inplace=True)
 df
 
 # %%
-df.loc[df['volume'].isna()]
+df.loc[df["volume"].isna()]
 
 # %%
 # 2020
@@ -313,7 +313,7 @@ df.set_index(pd.to_datetime(indexes), inplace=True)
 df
 
 # %%
-df.loc[df['volume'].isna()]
+df.loc[df["volume"].isna()]
 
 # %%
 # 2021
@@ -333,7 +333,7 @@ df.set_index(pd.to_datetime(indexes), inplace=True)
 df
 
 # %%
-df.loc[df['volume'].isna()]
+df.loc[df["volume"].isna()]
 
 # %%
 _LOG.info(ccxt_kucoin_ada_data.shape)
@@ -437,10 +437,10 @@ df_2019.set_index(pd.to_datetime(indexes), inplace=True)
 df_2019.head(2)
 
 # %%
-df_2019.loc[df_2019['volume'].isna()]
+df_2019.loc[df_2019["volume"].isna()]
 
 # %%
-df_2019.loc[df_2019['volume'] == "0"]
+df_2019.loc[df_2019["volume"] == "0"]
 
 # %%
 # Data of 2020-01-30 ~ 2020-01-31
@@ -452,10 +452,10 @@ df_2020.set_index(pd.to_datetime(indexes), inplace=True)
 df_2020.head(2)
 
 # %%
-df_2020.loc[df_2020['volume'].isna()]
+df_2020.loc[df_2020["volume"].isna()]
 
 # %%
-df_2020.loc[df_2020['volume'] == "0"]
+df_2020.loc[df_2020["volume"] == "0"]
 
 # %%
 # Data of 2021-12-29 ~ 2021-12-30
@@ -467,13 +467,13 @@ df_2021.set_index(pd.to_datetime(indexes), inplace=True)
 df_2021.head(2)
 
 # %%
-df_2021.loc[df_2021['volume'].isna()]
+df_2021.loc[df_2021["volume"].isna()]
 
 # %%
-df_2021.loc[df_2021['volume'] == "0"]
+df_2021.loc[df_2021["volume"] == "0"]
 
 # %%
-df_2021.loc[df_2021.duplicated(subset=['open', "high", "low", "close", "volume"])]
+df_2021.loc[df_2021.duplicated(subset=["open", "high", "low", "close", "volume"])]
 
 # %% [markdown]
 # ## Take a specific period of time - ["2019-02-18 00:00:00+00:00"]
@@ -612,7 +612,7 @@ print(
 #
 # ## Data of 2019 and 2020 have following common pattern: `volume = 0`, columns `open`, `close`, `high`, `low` have the same value in the row. Apparently this type of data becomes NaNs. However, data of 2021 doesn't have that pattern and still has NaNs in loaded via `CCXT` client.
 #
-# ## Comparison of NaNs for `CCXT`, `Extractor`, `Client` shows that NaNs appear in the client. Apparently `volume=0` with | 
+# ## Comparison of NaNs for `CCXT`, `Extractor`, `Client` shows that NaNs appear in the client.
 #
 #
 # |      |       CCXT           |             ||              Extractor  |       |           Client      |  |
