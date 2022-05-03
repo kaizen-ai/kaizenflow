@@ -1318,6 +1318,15 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             resample_1min
         )
         full_symbol = "binance::BTC_USDT"
+        columns = ["open", "close"]
+        self._test_read_data10(im_client, full_symbol, columns)
+
+    def test_read_data11(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
         #
         expected_length = 2881
         expected_column_names = ["open", "close"]
@@ -1338,7 +1347,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         2018-08-19 00:00:00+00:00  6387.96  6377.25
         """
         columns = ["open", "close"]
-        self._test_read_data10(
+        self._test_read_data11(
             im_client,
             full_symbol,
             columns,
@@ -1347,15 +1356,6 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
-
-    def test_read_data11(self) -> None:
-        resample_1min = True
-        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
-        )
-        full_symbol = "binance::BTC_USDT"
-        columns = ["open", "close"]
-        self._test_read_data11(im_client, full_symbol, columns)
 
     # ////////////////////////////////////////////////////////////////////////
 

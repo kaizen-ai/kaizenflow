@@ -233,6 +233,27 @@ class ImClientTestCase(hunitest.TestCase):
         im_client: icdc.ImClient,
         full_symbol: ivcu.FullSymbol,
         columns: List[str],
+    ) -> None:
+        """
+        Test:
+        - keep only specified columns 
+        - we receive more columns than we request
+        - filter_data_mode = "assert"
+        """
+        full_symbols = [full_symbol]
+        start_ts = None
+        end_ts = None
+        filter_data_mode = "assert"
+        with self.assertRaises(AssertionError):
+            im_client.read_data(
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
+            )
+
+    def _test_read_data11(
+        self,
+        im_client: icdc.ImClient,
+        full_symbol: ivcu.FullSymbol,
+        columns: List[str],
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -250,28 +271,6 @@ class ImClientTestCase(hunitest.TestCase):
             full_symbols, start_ts, end_ts, columns, filter_data_mode
         )
         self.check_df_output(actual_df, *args, **kwargs)
-
-    # TODO(Grisha): @Dan `_test_read_data11` -> `_test_read_data10`.
-    def _test_read_data11(
-        self,
-        im_client: icdc.ImClient,
-        full_symbol: ivcu.FullSymbol,
-        columns: List[str],
-    ) -> None:
-        """
-        Test:
-        - keep only specified columns 
-        - we receive more columns than we request
-        - filter_data_mode = "assert"
-        """
-        full_symbols = [full_symbol]
-        start_ts = None
-        end_ts = None
-        filter_data_mode = "assert"
-        with self.assertRaises(AssertionError):
-            im_client.read_data(
-                full_symbols, start_ts, end_ts, columns, filter_data_mode
-            )
 
     # ////////////////////////////////////////////////////////////////////////
 

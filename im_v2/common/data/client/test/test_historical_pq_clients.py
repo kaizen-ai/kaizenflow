@@ -309,6 +309,15 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, [full_symbol], resample_1min
         )
+        columns = ["close"]
+        self._test_read_data10(im_client, full_symbol, columns)
+
+    def test_read_data11(self) -> None:
+        full_symbol = "binance::BTC_USDT"
+        resample_1min = True
+        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
+            self, [full_symbol], resample_1min
+        )
         #
         expected_length = 4320
         expected_column_names = ["close"]
@@ -329,7 +338,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         2022-01-01 23:59:00+00:00   4319
         """
         columns = ["close"]
-        self._test_read_data10(
+        self._test_read_data11(
             im_client,
             full_symbol,
             columns,
@@ -338,15 +347,6 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
-
-    def test_read_data11(self) -> None:
-        full_symbol = "binance::BTC_USDT"
-        resample_1min = True
-        im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
-            self, [full_symbol], resample_1min
-        )
-        columns = ["close"]
-        self._test_read_data11(im_client, full_symbol, columns)
 
     # ////////////////////////////////////////////////////////////////////////
 
