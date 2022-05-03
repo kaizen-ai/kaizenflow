@@ -122,6 +122,8 @@ class ImClientMarketData(mdabmada.MarketData):
                 if col not in columns_to_exclude_in_im
             ]
             if full_symbol_col_name not in query_columns:
+                # Add full symbol column to the query if its name wasn't passed
+                # since it is necessary for asset id column generation.
                 query_columns.insert(0, full_symbol_col_name)
         else:
             query_columns = self._columns
@@ -152,6 +154,10 @@ class ImClientMarketData(mdabmada.MarketData):
                 self._asset_id_col,
                 transformed_asset_ids,
             )
+        if self._columns is not None:
+            # Drop full symbol column if it was not in the sepcified columns.
+            if full_symbol_col_name not in self._columns:
+                market_data = market_data.drop(full_symbol_col_name, axis=1)
         hdbg.dassert_in(self._asset_id_col, market_data.columns)
         if limit:
             # Keep only top N records.

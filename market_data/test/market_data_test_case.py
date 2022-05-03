@@ -335,6 +335,37 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
                 asset_ids,
             )
 
+    def _test_get_data_for_interval8(
+        self,
+        market_data: mdata.MarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: List[int],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Call `get_data_for_interval()` with:
+
+        - `asset_ids` is a list
+        - interval type is [a, b]
+        - columns for data filtering are passed to the client
+        """
+        # Prepare inputs.
+        left_close = True
+        right_close = True
+        # Run.
+        self._get_data_for_interval_helper(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            left_close,
+            right_close,
+            *args,
+            **kwargs,
+        )
+
     # //////////////////////////////////////////////////////////////////////////////
 
     def _test_get_twap_price1(

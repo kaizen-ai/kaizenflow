@@ -653,6 +653,11 @@ class MarketData(abc.ABC):
         #     _LOG.debug(hprint.to_str("wall_clock_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), wall_clock_time)
         # _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="after process_data"))
+        #
+        if self._columns is not None:
+            # Drop asset id column if it was not in the sepcified columns.
+            if self._asset_id_col not in self._columns:
+                df = df.drop(self._asset_id_col, axis=1)
         return df
 
     # TODO(Dan): Consider moving it to helpers.
