@@ -22,7 +22,6 @@ import helpers.hsql as hsql
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-from helpers.htimeout_decorator import exit_after
 
 
 def add_exchange_download_args(
@@ -64,10 +63,8 @@ def add_exchange_download_args(
 
 CCXT_EXCHANGE = "CcxtExchange"
 TALOS_EXCHANGE = "TalosExchange"
-TIMEOUT_SEC = 300
 
 
-@exit_after(TIMEOUT_SEC)
 def download_realtime_for_one_exchange(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
