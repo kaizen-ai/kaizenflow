@@ -261,11 +261,12 @@ def timestamp_to_datetime(timestamps):
 # %% [markdown]
 # ## Load data
 
-# %%
-ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
-ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data("ADA/USDT")
+# %% [markdown]
+# ## Extractor
 
 # %%
+ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
+# ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data("ADA/USDT")
 
 # %%
 ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
@@ -273,8 +274,8 @@ ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
 # %%
 # Nina: data is hard to load for the whole month using CcxtExchange. Duration of downloading more than 5 hours.
 currency_pair = "ADA/USDT"
-start_timestamp = pd.Timestamp("2020-01-01")
-end_timestamp = pd.Timestamp("2020-01-02")
+start_timestamp = pd.Timestamp("2019-08-30")
+end_timestamp = pd.Timestamp("2019-08-31")
 sleep_time_in_secs = 20
 ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data(
     currency_pair,
@@ -292,6 +293,47 @@ df.set_index(pd.to_datetime(indexes), inplace=True)
 df
 
 # %%
+df.loc[df['volume'].isna()]
+
+# %%
+# 2020
+start_timestamp = pd.Timestamp("2020-01-30")
+end_timestamp = pd.Timestamp("2020-01-31")
+ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data(
+    currency_pair,
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+df = ccxt_kucoin_ada_data.copy()
+indexes = timestamp_to_datetime(df["timestamp"])
+df.set_index(pd.to_datetime(indexes), inplace=True)
+df
+
+# %%
+df.loc[df['volume'].isna()]
+
+# %%
+# 2021
+start_timestamp = pd.Timestamp("2021-12-29")
+end_timestamp = pd.Timestamp("2021-12-30")
+ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data(
+    currency_pair,
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+df = ccxt_kucoin_ada_data.copy()
+indexes = timestamp_to_datetime(df["timestamp"])
+df.set_index(pd.to_datetime(indexes), inplace=True)
+df
+
+# %%
+df.loc[df['volume'].isna()]
 
 # %%
 _LOG.info(ccxt_kucoin_ada_data.shape)
@@ -350,9 +392,9 @@ df_2020.head(3)
 
 # %%
 symbol = "ADA-USDT"
-# 2020-12-29 23:00:00 GMT+0000
+# 2021-12-29 23:00:00 GMT+0000
 start = 1640818800
-# 2020-12-30 23:59:59 GMT+0000
+# 2021-12-30 23:59:59 GMT+0000
 end = 1640908799
 url = get_url(symbol, start, end)
 response = requests.get(url)
@@ -395,6 +437,12 @@ df_2019.set_index(pd.to_datetime(indexes), inplace=True)
 df_2019.head(2)
 
 # %%
+df_2019.loc[df_2019['volume'].isna()]
+
+# %%
+df_2019.loc[df_2019['volume'] == "0"]
+
+# %%
 # Data of 2020-01-30 ~ 2020-01-31
 df_2020 = change_timestamp(df_2020)
 df_2020 = df_2020.convert_dtypes()
@@ -404,6 +452,12 @@ df_2020.set_index(pd.to_datetime(indexes), inplace=True)
 df_2020.head(2)
 
 # %%
+df_2020.loc[df_2020['volume'].isna()]
+
+# %%
+df_2020.loc[df_2020['volume'] == "0"]
+
+# %%
 # Data of 2021-12-29 ~ 2021-12-30
 df_2021 = change_timestamp(df_2021)
 df_2021 = df_2021.convert_dtypes()
@@ -411,6 +465,15 @@ df_2021["timestamp"] = pd.to_numeric(df_2021["timestamp"])
 indexes = timestamp_to_datetime(df_2021["timestamp"])
 df_2021.set_index(pd.to_datetime(indexes), inplace=True)
 df_2021.head(2)
+
+# %%
+df_2021.loc[df_2021['volume'].isna()]
+
+# %%
+df_2021.loc[df_2021['volume'] == "0"]
+
+# %%
+df_2021.loc[df_2021.duplicated(subset=['open', "high", "low", "close", "volume"])]
 
 # %% [markdown]
 # ## Take a specific period of time - ["2019-02-18 00:00:00+00:00"]
@@ -549,15 +612,15 @@ print(
 #
 # ## Data of 2019 and 2020 have following common pattern: `volume = 0`, columns `open`, `close`, `high`, `low` have the same value in the row. Apparently this type of data becomes NaNs. However, data of 2021 doesn't have that pattern and still has NaNs in loaded via `CCXT` client.
 #
-# ## Data shapes of all 3 datasets are different from CCXT data. Lost data < 1%.
-#
-# | date | rows of NaN data | rows of full data| rows of loaded data| rows lost |
-# |------|------------------|------------------|-|-----------|
-# |2019-08-30, 2019-08-31 | 1456 |43 | 1500 | 1 |
-# |2020-01-30, 2020-01-31| 865 | 633 | 1500 | 2|
-# |2021-12-29, 2021-12-30| 1119 |379| 1500| 2|
+# ## Comparison of NaNs for `CCXT`, `Extractor`, `Client` shows that NaNs appear in the client. Apparently `volume=0` with | 
 #
 #
+# |      |       CCXT           |             ||              Extractor  |       |           Client      |  |
+# |------|--------------|---------------------|-|---------------------|-----------|----------------------|-----------|
+# |date  | Number of NaN rows % | Total number of rows| Number of `volume=0` %| Number of NaN rows % | Total number of rows| Number of NaN rows % | Total number of rows|
+# |2019-08-30, 2019-08-31 |0|1500 | 97.53% | 0 | 1500 |97.07% | 1500 |
+# |2020-01-30, 2020-01-31| 0 |1500 | 66.93%| 0| 1500 |56.67% | 1500 |
+# |2021-12-29, 2021-12-30| 0 |1500|0 | 0 | 1500| 74.6% | 1500|
 
 # %% [markdown]
 # # `gateio` case
