@@ -63,6 +63,7 @@ def add_exchange_download_args(
 
 CCXT_EXCHANGE = "CcxtExchange"
 TALOS_EXCHANGE = "TalosExchange"
+CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExchange"
 
 
 def download_realtime_for_one_exchange(
@@ -175,6 +176,9 @@ def download_historical_data(
         exchange = exchange_class(args.api_stage)
         vendor = "talos"
         additional_args.append(args.exchange_id)
+    elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
+        exchange = exchange_class()
+        vendor = "crypto_chassis"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
@@ -187,17 +191,25 @@ def download_historical_data(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        if exchange_class.__name__ == CCXT_EXCHANGE:
+        if exchange_class.__name__ in [CCXT_EXCHANGE, CRYPTO_CHASSIS_EXCHANGE]:
             currency_pair_for_download = currency_pair.replace("_", "/")
         elif exchange_class.__name__ == TALOS_EXCHANGE:
             currency_pair_for_download = currency_pair.replace("_", "-")
-        # Download OHLCV data.
-        data = exchange.download_ohlcv_data(
-            currency_pair_for_download,
-            *additional_args,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-        )
+        # Download data.
+        if exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
+            data = exchange.download_market_depth(
+                exchange=args.exchange_id,
+                currency_pair=currency_pair_for_download,
+                depth=args.depth,
+                start_timestamp=start_timestamp,
+            )
+        else:
+            data = exchange.download_ohlcv_data(
+                currency_pair_for_download,
+                *additional_args,
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+            )
         # Assign pair and exchange columns.
         # TODO(Nikola): Exchange id was missing and it is added additionally to
         #  match signature of other scripts.
