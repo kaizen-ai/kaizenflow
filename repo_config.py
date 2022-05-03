@@ -236,7 +236,7 @@ def use_docker_sibling_containers() -> bool:
 
 def use_docker_shared_cache() -> bool:
     """
-    Return whether to use Docker shared cache .
+    Return whether to use Docker shared cache.
     """
     val = bool(is_dev4())
     return val
