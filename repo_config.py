@@ -99,6 +99,7 @@ def is_inside_docker() -> bool:
 # vars (e.g., `AM_HOST_NAME`, `AM_HOST_OS_NAME`).
 
 
+# pylint: disable=line-too-long
 def is_dev_ck() -> bool:
     # sysname='Darwin'
     # nodename='gpmac.lan'
@@ -121,7 +122,7 @@ def is_dev4() -> bool:
     dev4 = "cf-spm-dev4"
     am_host_name = os.environ.get("AM_HOST_NAME")
     _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
-    is_dev4_ = host_name == dev4 or am_host_name == dev4
+    is_dev4_ = dev4 in (host_name, am_host_name)
     return is_dev4_
 
 
@@ -138,8 +139,10 @@ def is_mac() -> bool:
 def _raise_invalid_host() -> None:
     host_os_name = os.uname()[0]
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME")
-    raise ValueError(f"Don't recognize host: host_os_name={host_os_name}, "
-        f"am_host_os_name={am_host_os_name}")
+    raise ValueError(
+        f"Don't recognize host: host_os_name={host_os_name}, "
+        f"am_host_os_name={am_host_os_name}"
+    )
 
 
 def enable_privileged_mode() -> bool:
@@ -223,7 +226,9 @@ def has_dind_support() -> bool:
 
 
 def use_docker_sibling_containers() -> bool:
-    """ """
+    """
+    Return whether to use Docker sibling containers.
+    """
     # TODO(gp): We should enable it for dev4.
     val = False
     return val
@@ -237,17 +242,17 @@ def get_shared_data_dir() -> bool:
         shared_data_dir = "/local/home/share/cache"
     elif is_dev_ck():
         shared_data_dir = "/data/shared"
+    elif is_mac():
+        pass
+    elif is_inside_ci():
+        pass
     else:
-        # TODO(Grisha): add shared dir for more servers.
-        shared_data_dir = ""
+        _raise_invalid_host()
     return shared_data_dir
 
 
 def use_docker_network_mode_host() -> bool:
-    if is_mac() or is_dev_ck():
-        ret = True
-    else:
-        ret = False
+    ret = bool(is_mac() or is_dev_ck())
     return ret
 
 
@@ -312,6 +317,18 @@ def get_docker_shared_group() -> str:
     return val
 
 
+def skip_submodules_test() -> bool:
+    """
+    Return whether the tests in the submodules should be skipped.
+
+    E.g. while running `i run_fast_tests`.
+    """
+    if get_name() == "//dev_tools":
+        # Skip running `amp` tests from `dev_tools`.
+        return True
+    return False
+
+
 # #############################################################################
 # S3 buckets.
 # #############################################################################
@@ -347,32 +364,39 @@ def config_func_to_str() -> str:
     Print the value of all the config functions.
     """
     ret: List[str] = []
-    for func_name in sorted([
-        "get_docker_base_image_name",
-        "get_docker_user",
-        "get_host_name",
-        "get_invalid_words",
-        "get_name",
-        "get_repo_map",
-        "has_dind_support",
-        "is_AM_S3_available",
-        "is_CK_S3_available",
-        "is_dev_ck",
-        "is_dev4",
-        "is_inside_ci",
-        "is_inside_docker",
-        "is_mac",
-        "run_docker_as_root",
-        "use_docker_shared_cache",
-        "use_docker_sibling_containers",
-        "use_docker_network_mode_host",
-    ]):
+    for func_name in sorted(
+        [
+            "enable_privileged_mode",
+            "get_docker_base_image_name",
+            "get_docker_user",
+            "get_docker_shared_group",
+            # "get_extra_amp_repo_sym_name",
+            "get_host_name",
+            "get_invalid_words",
+            "get_name",
+            "get_repo_map",
+            "has_dind_support",
+            "has_docker_sudo",
+            "is_AM_S3_available",
+            "is_CK_S3_available",
+            "is_dev_ck",
+            "is_dev4",
+            "is_inside_ci",
+            "is_inside_docker",
+            "is_mac",
+            "run_docker_as_root",
+            "skip_submodules_test",
+            "use_docker_shared_cache",
+            "use_docker_sibling_containers",
+            "use_docker_network_mode_host",
+        ]
+    ):
         try:
             _LOG.debug("func_name=%s", func_name)
-            func_value = eval("%s()" % func_name)
+            func_value = eval(f"{func_name}()")
         except NameError:
             func_value = "*undef*"
-        msg = "%s='%s'" % (func_name, func_value)
+        msg = f"{func_name}='{func_value}'"
         ret.append(msg)
         # _print(msg)
     ret = "\n".join(ret)
