@@ -1,3 +1,4 @@
+import abc
 import logging
 import random
 from typing import Any, Callable
@@ -10,25 +11,30 @@ import oms.oms_lib_tasks as oomlitas
 _LOG = logging.getLogger(__name__)
 
 
-class TestOmsDbHelper(hsqltest.TestDbHelper):
+# TODO(gp): IMO it should be abstract and derive from abc.ABC.
+class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
     """
     Configure the helper to build an OMS test DB.
     """
-
+    # TODO(gp): For some reason without having this function
+    #  defined, the derived classes can't be instantiated because
+    #  of get_id()
     @staticmethod
-    def _get_compose_file() -> str:
+    @abc.abstractmethod
+    def get_id():
+        pass
+
+    def _get_compose_file(self) -> str:
         return "oms/devops/compose/docker-compose.yml"
 
-    @staticmethod
-    def _get_service_name() -> str:
+    def _get_service_name(self) -> str:
         #max_lim = 2048
         #idx = random.randint(0, max_lim)
-        idx = TestOmsDbHelper.get_id()
+        idx = self.get_id()
         return "oms_postgres" + str(idx)
 
     # TODO(gp): Use file or path consistently.
-    @staticmethod
-    def _get_db_env_path() -> str:
+    def _get_db_env_path(self) -> str:
         """
         See `_get_db_env_path()` in the parent class.
         """
@@ -36,13 +42,12 @@ class TestOmsDbHelper(hsqltest.TestDbHelper):
         env_file_path = oomlitas.get_db_env_path("local")
         return env_file_path  # type: ignore[no-any-return]
 
-    @staticmethod
-    def _create_docker_files():
-        service_name = TestOmsDbHelper._get_service_name()
+    def _create_docker_files(self):
+        service_name = self._get_service_name()
         # Max number of ports on a Linux system is 64k.
         #max_lim = 2048
         #idx = random.randint(0, max_lim)
-        idx = TestOmsDbHelper.get_id()
+        idx = self.get_id()
         host_port = 5432 + idx
         txt = f"""version: '3.5'
 
@@ -79,7 +84,7 @@ POSTGRES_DB=oms_postgres_db_local
 POSTGRES_PORT=5432
 POSTGRES_USER=aljsdalsd
 POSTGRES_PASSWORD=alsdkqoen"""
-        env_file_name = TestOmsDbHelper._get_db_env_path()
+        env_file_name = self._get_db_env_path()
         hio.to_file(env_file_name, txt)
 
     def _test_create_table_helper(

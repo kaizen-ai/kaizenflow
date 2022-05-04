@@ -64,7 +64,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         _LOG.info("\n%s", hprint.frame("setUpClass"))
         # Read the connection parameters from the env file.
-        cls.db_env_file = cls._get_db_env_path()
+        cls.db_env_file = cls._get_db_env_path(cls)
         connection_info = hsql.get_connection_info_from_env_file(cls.db_env_file)
         conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
@@ -74,9 +74,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             cls.bring_down_db = False
         else:
             # Start the service.
-            cls._create_docker_files()
+            cls._create_docker_files(cls)
             cls.docker_compose_file_path = os.path.join(
-                hgit.get_amp_abs_path(), cls._get_compose_file()
+                hgit.get_amp_abs_path(), cls._get_compose_file(cls)
             )
             # TODO(Grisha): use invoke task CMTask #547.
             cmd = (
@@ -133,13 +133,13 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
 
     @staticmethod
+    @abc.abstractmethod
     def _create_docker_files() -> str:
         """
         Create the compose and env file for the DB run.
         """
 
-    @abstractmethod
     @staticmethod
+    @abc.abstractmethod
     def get_id():
-        # TODO(Sonya): Use a hash
-        return 152
+        pass
