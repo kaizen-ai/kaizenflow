@@ -816,6 +816,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         coverage = False
         collect_only = False
         tee_to_file = False
+        # TODO(Sonya): use a string that is the value of pytest -n
         in_parallel = False
         #
         act = hlibtask._build_run_command_line(
