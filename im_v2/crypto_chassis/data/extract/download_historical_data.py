@@ -6,11 +6,11 @@ daily for reconciliation with realtime data.
 Use as:
 
 # Download data for Crypto-Chassis for binance from 2022-02-08:
-> im_v2/crypto_chassis/data/extract/download_historical_data.py \
+> python im_v2/crypto_chassis/data/extract/download_historical_data.py \
      --start_timestamp '2022-02-08' \
      --exchange_id 'binance' \
-     --universe 'v01' \
-     --depth '1'
+     --universe 'v1' \
+     --depth '1' \
      --aws_profile 'ck' \
      --s3_path 's3://cryptokaizen-data/daily_staged/'
 """

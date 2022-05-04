@@ -31,11 +31,11 @@ def add_exchange_download_args(
     Add the command line options exchange download.
     """
     parser.add_argument(
-        "--end_timestamp",
+        "--start_timestamp",
         action="store",
         required=True,
         type=str,
-        help="End of the downloaded period",
+        help="Beginning of the downloaded period",
     )
     parser.add_argument(
         "--exchange_id",
@@ -52,11 +52,11 @@ def add_exchange_download_args(
         help="Trade universe to download data for",
     )
     parser.add_argument(
-        "--start_timestamp",
+        "--end_timestamp",
         action="store",
         required=False,
         type=str,
-        help="Beginning of the downloaded period",
+        help="End of the downloaded period",
     )
     parser.add_argument(
         "--depth",
