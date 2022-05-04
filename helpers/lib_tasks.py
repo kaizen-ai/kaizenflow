@@ -2082,16 +2082,16 @@ def docker_login(ctx):  # type: ignore
 def _generate_compose_file(
     use_privileged_mode: bool,
     use_sibling_container: bool,
-    shared_data_dir: str,
     mount_as_submodule: bool,
     use_network_mode_host: bool,
     file_name: Optional[str],
+    shared_data_dir: Optional[str],
 ) -> str:
     _LOG.debug(
         hprint.to_str(
             "use_privileged_mode use_sibling_container "
-            "shared_data_dir mount_as_submodule use_network_mode_host "
-            "file_name"
+            "mount_as_submodule use_network_mode_host "
+            "file_name shared_data_dir"
         )
     )
     txt = []
@@ -2371,10 +2371,10 @@ def _get_docker_compose_paths(
     _generate_compose_file(
         hgit.execute_repo_config_code("enable_privileged_mode()"),
         hgit.execute_repo_config_code("use_docker_sibling_containers()"),
-        hgit.execute_repo_config_code("get_shared_data_dir()"),
         mount_as_submodule,
         hgit.execute_repo_config_code("use_docker_network_mode_host()"),
         file_name,
+        hgit.execute_repo_config_code("get_shared_data_dir()"),
     )
     docker_compose_files.append(file_name)
     # if False:
