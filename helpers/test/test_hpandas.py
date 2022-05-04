@@ -975,19 +975,18 @@ class TestDropDuplicates(hunitest.TestCase):
         use_index = True
         subset = ["float"]
         no_dublicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
+        no_dublicates_df = hpandas.df_to_str(no_dublicates_df)
         # Prepare expected result.
-        expected = pd.DataFrame(
-            data=[(1, "A", 3.2), (1, "A", 3.2), (10, "B", 3.2), (4, "B", 8.2)],
-            index=[
-                "dummy_value1",
-                "dummy_value3",
-                "dummy_value2",
-                "dummy_value1",
-            ],
-            columns=df.columns,
-        )
+        expected_signature = r""" 
+                      int letter  float
+        dummy_value1    1      A    3.2
+        dummy_value3    1      A    3.2
+        dummy_value2   10      B    3.2
+        dummy_value1    4      B    8.2
+        """
+
         # Check.
-        hunitest.compare_df(no_dublicates_df, expected)
+        self.assert_equal(no_dublicates_df, expected_signature, fuzzy_match=True)
 
     def test_drop_duplicates2(self) -> None:
         """
@@ -1000,26 +999,17 @@ class TestDropDuplicates(hunitest.TestCase):
         df = self.get_test_data()
         use_index = True
         no_dublicates_df = hpandas.drop_duplicates(df, use_index)
+        no_dublicates_df = hpandas.df_to_str(no_dublicates_df)
         # Prepare expected result.
-        expected = pd.DataFrame(
-            data=[
-                (1, "A", 3.2),
-                (1, "A", 3.2),
-                (10, "B", 3.2),
-                (8, "A", 3.2),
-                (4, "B", 8.2),
-            ],
-            index=[
-                "dummy_value1",
-                "dummy_value3",
-                "dummy_value2",
-                "dummy_value1",
-                "dummy_value1",
-            ],
-            columns=df.columns,
-        )
+        expected_signature = r"""              
+                      int letter  float
+        dummy_value1    1      A    3.2
+        dummy_value3    1      A    3.2
+        dummy_value2   10      B    3.2
+        dummy_value1    8      A    3.2
+        dummy_value1    4      B    8.2"""
         # Check.
-        hunitest.compare_df(no_dublicates_df, expected)
+        self.assert_equal(no_dublicates_df, expected_signature, fuzzy_match=True)
 
     def test_drop_duplicates3(self) -> None:
         """
@@ -1032,19 +1022,16 @@ class TestDropDuplicates(hunitest.TestCase):
         df = self.get_test_data()
         use_index = False
         no_dublicates_df = hpandas.drop_duplicates(df, use_index)
+        no_dublicates_df = hpandas.df_to_str(no_dublicates_df)
         # Prepare expected result.
-        expected = pd.DataFrame(
-            data=[(1, "A", 3.2), (10, "B", 3.2), (8, "A", 3.2), (4, "B", 8.2)],
-            index=[
-                "dummy_value1",
-                "dummy_value2",
-                "dummy_value1",
-                "dummy_value1",
-            ],
-            columns=df.columns,
-        )
+        expected_signature = r"""             
+                      int letter  float
+        dummy_value1    1      A    3.2
+        dummy_value2   10      B    3.2
+        dummy_value1    8      A    3.2
+        dummy_value1    4      B    8.2"""
         # Check.
-        hunitest.compare_df(no_dublicates_df, expected)
+        self.assert_equal(no_dublicates_df, expected_signature, fuzzy_match=True)
 
     def test_drop_duplicates4(self) -> None:
         """
@@ -1059,11 +1046,12 @@ class TestDropDuplicates(hunitest.TestCase):
         use_index = False
         subset = ["letter", "float"]
         no_dublicates_df = hpandas.drop_duplicates(df, use_index, subset)
+        no_dublicates_df = hpandas.df_to_str(no_dublicates_df)
         # Prepare expected result.
-        expected = pd.DataFrame(
-            data=[(1, "A", 3.2), (10, "B", 3.2), (4, "B", 8.2)],
-            index=["dummy_value1", "dummy_value2", "dummy_value1"],
-            columns=df.columns,
-        )
+        expected_signature = r"""
+                      int letter  float
+        dummy_value1    1      A    3.2
+        dummy_value2   10      B    3.2
+        dummy_value1    4      B    8.2"""
         # Check.
-        hunitest.compare_df(no_dublicates_df, expected)
+        self.assert_equal(no_dublicates_df, expected_signature, fuzzy_match=True)
