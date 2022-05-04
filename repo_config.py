@@ -358,13 +358,17 @@ def config_func_to_str() -> str:
     ret: List[str] = []
     for func_name in sorted(
         [
+            "enable_privileged_mode",
             "get_docker_base_image_name",
             "get_docker_user",
+            "get_docker_shared_group",
+            # "get_extra_amp_repo_sym_name",
             "get_host_name",
             "get_invalid_words",
             "get_name",
             "get_repo_map",
             "has_dind_support",
+            "has_docker_sudo",
             "is_AM_S3_available",
             "is_CK_S3_available",
             "is_dev_ck",
@@ -373,6 +377,7 @@ def config_func_to_str() -> str:
             "is_inside_docker",
             "is_mac",
             "run_docker_as_root",
+            "skip_submodules_test",
             "use_docker_shared_cache",
             "use_docker_sibling_containers",
             "use_docker_network_mode_host",
