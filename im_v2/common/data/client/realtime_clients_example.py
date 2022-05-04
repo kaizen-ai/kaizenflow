@@ -106,7 +106,9 @@ def get_example1_realtime_client() -> ExampleSqlRealTimeImClient:
     """
     Set up a real time SQL client.
 
-    The 
+    - Creates a local DB (in test environment)
+    - Uploads test data
+    - Creates a client connected to the local DB
     """
     # Initiate the temporary database.
     #  Note: using a test class to avoid duplicating code,
