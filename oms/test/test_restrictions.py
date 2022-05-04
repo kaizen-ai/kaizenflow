@@ -42,17 +42,15 @@ class TestRestrictions1(omtodh.TestOmsDbHelper):
     0       SAU1   paper   0  2000-01-01 2000-01-01 21:38:39.419536       101           True               True                     True                      True                     True"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-
-
-class TestRestrictions2(omtodh.TestOmsDbHelper2):
-    def test1(self) -> None:
+    def test2(self) -> None:
         table_name = oomsdb.RESTRICTIONS_TABLE_NAME
         oomsdb.create_restrictions_table(
             self.connection, incremental=False, table_name=table_name
         )
         # Populate the Restrictions table with an example row.
-        row = _get_row1()
-        hsql.execute_insert_query(self.connection, row, table_name)
+        rows = [_get_row1(), _get_row2(), _get_row3()]
+        for row in rows:
+            hsql.execute_insert_query(self.connection, row, table_name)
         if False:
             # Print the DB status.
             query = """SELECT * FROM restrictions"""
@@ -68,8 +66,9 @@ class TestRestrictions2(omtodh.TestOmsDbHelper2):
         # Check.
         actual = hpandas.df_to_str(trading_restrictions)
         expected = r"""
-            strategyid account  id   tradedate               timestamp_db  asset_id  is_restricted  is_buy_restricted  is_buy_cover_restricted  is_sell_short_restricted  is_sell_long_restricted
-    0       SAU1   paper   0  2000-01-01 2000-01-01 21:38:39.419536       101           True               True                     True                      True                     True"""
+        strategyid account  id   tradedate               timestamp_db  asset_id  is_restricted  is_buy_restricted  is_buy_cover_restricted  is_sell_short_restricted  is_sell_long_restricted
+0       SAU1   paper   0  2000-01-01 2000-01-01 21:38:39.419536       101           True               True                     True                      True                     True
+1       SAU1   paper   0  2000-01-01 2000-01-01 21:38:38.419536       201           True              False                    False                     False                    False"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
