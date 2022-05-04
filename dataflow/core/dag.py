@@ -325,10 +325,23 @@ class DAG:
 
     def insert_at_head(
         self, node_id: dtfcornode.NodeId, node: dtfcornode.Node
-    ) -> None:
-        source_nid = self.get_unique_source()
-        self.add_node(node)
-        self.connect(node_id, source_nid)
+    ) -> dtfcornode.NodeId:
+        """
+        Connect a node to the root of the DAG.
+        
+        :return: node that is connected to the new head node, i.e., the previous
+            root of the DAG
+        """
+        if not self.get_sources():
+            # The DAG is empty.
+            self.add_node(node)
+            tail_nid = node_id
+        else:
+            source_nid = self.get_unique_source()
+            self.add_node(node)
+            self.connect(node_id, source_nid)
+            tail_nid = source_nid
+        return tail_nid
 
     def get_sources(self) -> List[dtfcornode.NodeId]:
         """
@@ -585,7 +598,9 @@ class DAG:
         _LOG.debug("kwargs are %s", kwargs)
         # Execute `node.method()`.
         with htimer.TimedScope(logging.DEBUG, "node_execution") as ts:
+            print("nid", nid)
             node = self.get_node(nid)
+            print("node", node)
             try:
                 output = getattr(node, method)(**kwargs)
             except AttributeError as e:
