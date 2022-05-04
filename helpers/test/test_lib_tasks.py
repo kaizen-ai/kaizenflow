@@ -4,7 +4,7 @@
 import logging
 import os
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import invoke
 import pytest
@@ -16,7 +16,6 @@ import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks as hlibtask
-import repo_config as rconf
 
 
 _LOG = logging.getLogger(__name__)
@@ -480,18 +479,18 @@ class Test_generate_compose_file1(hunitest.TestCase):
         self,
         use_privileged_mode: bool = False,
         use_sibling_container: bool = False,
-        use_shared_cache: bool = False,
         mount_as_submodule: bool = False,
         use_network_mode_host: bool = True,
+        shared_data_dir: Optional[str] = None,
     ) -> None:
         txt = []
         #
         params = [
             "use_privileged_mode",
             "use_sibling_container",
-            "use_shared_cache",
             "mount_as_submodule",
             "use_network_mode_host",
+            "shared_data_dir",
         ]
         txt_tmp = hprint.to_str(" ".join(params))
         txt.append(txt_tmp)
@@ -500,10 +499,11 @@ class Test_generate_compose_file1(hunitest.TestCase):
         txt_tmp = hlibtask._generate_compose_file(
             use_privileged_mode,
             use_sibling_container,
-            use_shared_cache,
             mount_as_submodule,
             use_network_mode_host,
             file_name,
+            shared_data_dir,
+
         )
         txt_tmp = hunitest.filter_text("AM_HOST_NAME|AM_HOST_OS_NAME", txt_tmp)
         txt.append(txt_tmp)
@@ -515,7 +515,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
         self.helper(use_privileged_mode=True)
 
     def test2(self) -> None:
-        self.helper(use_shared_cache=True)
+        self.helper(shared_data_dir="/data/shared")
 
 
 # #############################################################################
