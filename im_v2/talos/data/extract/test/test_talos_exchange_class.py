@@ -13,7 +13,6 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
 class TestTalosExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
@@ -34,7 +33,7 @@ class TestTalosExchange1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00", tz="UTC")
         actual = self.download_ohlcv_data(start_timestamp, end_timestamp)
         # Verify dataframe length.
-        self.assertEqual(1440, actual.shape[0])
+        self.assertEqual(1441, actual.shape[0])
         # Check number of calls and args for current time.
         self.assertEqual(mock_get_current_time.call_count, 2)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
@@ -42,8 +41,7 @@ class TestTalosExchange1(hunitest.TestCase):
         first_date = int(actual["timestamp"].iloc[0])
         last_date = int(actual["timestamp"].iloc[-1])
         self.assertEqual(1631145600000, first_date)
-        # Talos considers [a, b) time interval so last minute is missing.
-        self.assertEqual(1631231940000, last_date)
+        self.assertEqual(1631232000000, last_date)
         # Check the output values.
         actual = actual.reset_index(drop=True)
         actual = hpandas.convert_df_to_json_string(actual)
@@ -104,7 +102,9 @@ class TestTalosExchange1(hunitest.TestCase):
         # End is before start -> invalid.
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        expected = "2021-09-10 00:00:00 <= 2021-09-09 00:00:00"
+        # One second is added in download_ohlcv_method 
+        # of the exchange class.
+        expected = "2021-09-10 00:00:00 <= 2021-09-09 00:00:01"
         self.download_ohlcv_data_invalid_input_param_helper(
             cur_pair,
             exchange,
