@@ -38,7 +38,14 @@ class CcxtExchange:
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
 
-    def download_data(self, data_type, **kwargs) -> pd.DataFrame:
+    @staticmethod
+    def convert_currency_pair(currency_pair: str) -> str:
+        """
+        Convert currency pair used for getting data from exchange.
+        """
+        return currency_pair.replace("_", "/")
+
+    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
         """
         """
         self.assertEquals(data_type, "ohlcv")

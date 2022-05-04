@@ -122,10 +122,8 @@ def download_realtime_for_one_exchange(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        if exchange_class.__name__ == CCXT_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "/")
-        elif exchange_class.__name__ == TALOS_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "-")
+        currency_pair_for_download = exchange_class.convert_currency_pair(currency_pair)
+        # Download data.
         data = exchange.download_ohlcv_data(
             currency_pair_for_download,
             *additional_args,
@@ -198,10 +196,7 @@ def download_historical_data(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        if exchange_class.__name__ in [CCXT_EXCHANGE, CRYPTO_CHASSIS_EXCHANGE]:
-            currency_pair_for_download = currency_pair.replace("_", "/")
-        elif exchange_class.__name__ == TALOS_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "-")
+        currency_pair_for_download = exchange_class.convert_currency_pair(currency_pair)
         # Download data.
         if exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
             data = exchange.download_market_depth(

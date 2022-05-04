@@ -9,7 +9,7 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 
 
 import logging
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 import pandas as pd
 import requests
@@ -35,7 +35,7 @@ class TalosExchange:
         """
         self._account = account
         self._api = imv2tauti.TalosApiBuilder(self._account)
-        self._endpoint = self._api.get_endpoint()
+        self._endpoint = self._api.get_endpoint() 
 
     @staticmethod
     def build_talos_query_params(
@@ -69,6 +69,13 @@ class TalosExchange:
         params["limit"] = limit
         return params
 
+    @staticmethod
+    def convert_currency_pair(currency_pair: str) -> str:
+        """
+        Convert currency pair used for getting data from exchange.
+        """
+        return currency_pair.replace("_", "-")
+
     def build_url(
         self, currency_pair: str, exchange: str, *, resolution: str = "1m"
     ) -> str:
@@ -82,7 +89,7 @@ class TalosExchange:
         url = f"https://{self._endpoint}{data_path}"
         return url
 
-    def download_data(self, data_type, **kwargs) -> pd.DataFrame:
+    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
         """
         """
         self.assertEquals(data_type, "ohlcv")

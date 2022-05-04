@@ -21,15 +21,19 @@ class CryptoChassisExchange:
     def __init__(self) -> None:
         self._endpoint = "https://api.cryptochassis.com/v1"
 
-    def download_data(self, data_type, **kwargs) -> pd.DataFrame:
+    @staticmethod
+    def convert_currency_pair(currency_pair: str) -> str:
+        """
+        Convert currency pair used for getting data from exchange.
+        """
+        return currency_pair.replace("_", "/")
+
+    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
         """
         """
         self.assertEquals(data_type, "market_depth")
         return self.download_market_depth(
-            currency_pair=kwargs.currency_pair,
-            exchange=kwargs.exchange_id,
-            start_timestamp=kwargs.start_timestamp,
-            depth=kwargs.depth,
+            **kwargs,
         )
 
     def download_market_depth(
