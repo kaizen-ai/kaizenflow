@@ -229,13 +229,18 @@ def use_docker_sibling_containers() -> bool:
     return val
 
 
-def use_docker_shared_cache() -> bool:
-    """ """
+def get_shared_data_dir() -> bool:
+    """
+    Get a shared data to dir to exchange data between users.
+    """
     if is_dev4():
-        val = True
+        shared_data_dir = "/local/home/share/cache"
+    elif is_dev_ck():
+        shared_data_dir = "/data/shared"
     else:
-        val = False
-    return val
+        # TODO(Grisha): add shared dir for more servers.
+        shared_data_dir = ""
+    return shared_data_dir
 
 
 def use_docker_network_mode_host() -> bool:

@@ -2082,7 +2082,7 @@ def docker_login(ctx):  # type: ignore
 def _generate_compose_file(
     use_privileged_mode: bool,
     use_sibling_container: bool,
-    use_shared_cache: bool,
+    shared_data_dir: str,
     mount_as_submodule: bool,
     use_network_mode_host: bool,
     file_name: Optional[str],
@@ -2090,7 +2090,7 @@ def _generate_compose_file(
     _LOG.debug(
         hprint.to_str(
             "use_privileged_mode use_sibling_container "
-            "use_shared_cache mount_as_submodule use_network_mode_host "
+            "shared_data_dir mount_as_submodule use_network_mode_host "
             "file_name"
         )
     )
@@ -2191,15 +2191,14 @@ def _generate_compose_file(
         indent_level = 2
         append(txt_tmp, indent_level)
     #
-    if use_shared_cache:
-        # TODO(gp): Generalize by passing a dictionary.
-        txt_tmp = """
-        # Shared cache. This is specific of lime.
-        - /local/home/share/cache:/cache
-        """
-        # This is at the level of `services.app.volumes`.
-        indent_level = 3
-        append(txt_tmp, indent_level)
+    # TODO(gp): Generalize by passing a dictionary.
+    txt_tmp = f"""
+    # Shared cache. This is specific of lime.
+    - {shared_data_dir}:/shared_data
+    """
+    # This is at the level of `services.app.volumes`.
+    indent_level = 3
+    append(txt_tmp, indent_level)
     #
     if False:
         txt_tmp = """
@@ -2372,7 +2371,7 @@ def _get_docker_compose_paths(
     _generate_compose_file(
         hgit.execute_repo_config_code("enable_privileged_mode()"),
         hgit.execute_repo_config_code("use_docker_sibling_containers()"),
-        hgit.execute_repo_config_code("use_docker_shared_cache()"),
+        hgit.execute_repo_config_code("get_shared_data_dir()"),
         mount_as_submodule,
         hgit.execute_repo_config_code("use_docker_network_mode_host()"),
         file_name,
