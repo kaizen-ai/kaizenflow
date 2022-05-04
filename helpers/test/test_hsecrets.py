@@ -28,22 +28,15 @@ if _HAS_MOTO:
     # The `mock_secretsmanager` decorator ensures the calls to the AWS API are
     # mocked.
 
-    _REASON_TO_SKIP_TEST = (
-        "Need to add `ck` profile to GH actions CmTask961, test has passed "
-        "on dev stage."
-    )
-
     class TestCreateClient(hunitest.TestCase):
-        @pytest.mark.skip(reason=_REASON_TO_SKIP_TEST)
         def test_create_client1(self) -> None:
             """
             Simple smoke test to verify connection to AWS.
             """
-            client = hsecret.get_secrets_client()
+            client = hsecret.get_secrets_client(aws_profile='ck')
             self.assertIsInstance(client, botocore.client.BaseClient)
 
     class TestGetSecret(hunitest.TestCase):
-        @pytest.mark.skip(reason=_REASON_TO_SKIP_TEST)
         @moto.mock_secretsmanager
         def test_get_secret(self) -> None:
             """
@@ -59,7 +52,6 @@ if _HAS_MOTO:
             self.assertDictEqual(hsecret.get_secret(secret_name), secret)
 
     class TestStoreSecret(hunitest.TestCase):
-        @pytest.mark.skip(reason=_REASON_TO_SKIP_TEST)
         @moto.mock_secretsmanager
         def test_store_secret1(self) -> None:
             """

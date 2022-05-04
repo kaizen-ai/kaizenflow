@@ -113,6 +113,15 @@ class TalosExchange:
         :param bar_per_iteration: number of bars per iteration
         :return: dataframe with OHLCV data
         """
+        # Verify that date parameters are of correct format.
+        hdbg.dassert_isinstance(
+            end_timestamp,
+            pd.Timestamp,
+        )
+        hdbg.dassert_isinstance(
+            start_timestamp,
+            pd.Timestamp,
+        )
         # TODO(Juraj): we can implement this check later if needed.
         # hdbg.dassert_in(
         #     currency_pair,
