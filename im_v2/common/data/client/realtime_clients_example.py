@@ -19,12 +19,12 @@ def get_example1_create_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS example1_marketdata(
-            id SERIAL PRIMARY KEY,
-            timestamp BIGINT NOT NULL,
+            timestamp BIGINT,
             close NUMERIC,
-            asset_id BIGINT,
             volume NUMERIC,
             feature1 NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL,
             timestamp_db TIMESTAMP
             )
             """
@@ -73,10 +73,13 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
          table_name: str, 
-         db_helper: imvcddbut.TestImDbHelper):
+         db_helper: imvcddbut.TestImDbHelper,
+         *,
+         mode: Optional[str] = "market_data"):
         vendor = "mock"
         super().__init__(resample_1min, db_connection, table_name=table_name, vendor=vendor)
         self._db_helper = db_helper
+        self._mode = mode
 
     def _apply_normalization(
         self,
@@ -102,7 +105,7 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         #TODO(Danya): use a non-test DB environment.
         self._db_helper.tearDownClass()
 
-def get_example1_realtime_client() -> ExampleSqlRealTimeImClient:
+def get_example1_realtime_client(resample_1min: bool) -> ExampleSqlRealTimeImClient:
     """
     Set up a real time SQL client.
 
@@ -125,5 +128,5 @@ def get_example1_realtime_client() -> ExampleSqlRealTimeImClient:
     data = create_example1_sql_data()
     hsql.copy_rows_with_copy_from(db_helper.connection, data, "example1_marketdata")
     # Initialize a client connected to the local DB.
-    im_client = ExampleSqlRealTimeImClient(True, connection, "example1_marketdata", db_helper)
+    im_client = ExampleSqlRealTimeImClient(resample_1min, connection, "example1_marketdata", db_helper)
     return im_client
