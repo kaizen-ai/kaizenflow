@@ -2191,13 +2191,14 @@ def _generate_compose_file(
         indent_level = 2
         append(txt_tmp, indent_level)
     #
-    txt_tmp = f"""
-    # Shared data directory.
-    - {shared_data_dir}:/shared_data
-    """
-    # This is at the level of `services.app.volumes`.
-    indent_level = 3
-    append(txt_tmp, indent_level)
+    if shared_data_dir is not None:
+        txt_tmp = f"""
+        # Shared data directory.
+        - {shared_data_dir}:/shared_data
+        """
+        # This is at the level of `services.app.volumes`.
+        indent_level = 3
+        append(txt_tmp, indent_level)
     #
     if False:
         txt_tmp = """

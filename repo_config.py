@@ -5,7 +5,7 @@ Contain info specific of `//cmamp` repo.
 import functools
 import logging
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 _LOG = logging.getLogger(__name__)
 
@@ -234,18 +234,16 @@ def use_docker_sibling_containers() -> bool:
     return val
 
 
-def get_shared_data_dir() -> str:
+def get_shared_data_dir() -> Optional[str]:
     """
-    Get a shared data to dir to exchange data between users.
+    Get a shared data dir to exchange data between users.
     """
     if is_dev4():
         shared_data_dir = "/local/home/share/cache"
     elif is_dev_ck():
         shared_data_dir = "/data/shared"
-    elif is_mac():
-        pass
-    elif is_inside_ci():
-        pass
+    elif is_mac() or is_inside_ci():
+        shared_data_dir = None
     else:
         _raise_invalid_host()
     return shared_data_dir
