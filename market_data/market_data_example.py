@@ -433,8 +433,8 @@ def get_RealTimeImClientMarketData_example1(
    resample_1min = False
    im_client = icdc.get_example1_realtime_client(resample_1min)
    asset_id_col = "asset_id"
-   start_time_col_name = "start_ts"
-   end_time_col_name = "end_ts"
+   start_time_col_name = "start_timestamp"
+   end_time_col_name = "end_timestamp"
    columns = None
    # Build a `ReplayedMarketData`.
    tz = "ET"

@@ -1,14 +1,17 @@
 """
 Generate example data and initiate client for access to it.
 """
+from typing import Optional
 
 import pandas as pd
 import core.finance as cofinanc
 import helpers.hdatetime as hdateti
 import im_v2.common.data.client as icdc
-from typing import Optional
+import im_v2.common.universe as ivcu
 import im_v2.common.db.db_utils as imvcddbut
 import helpers.hsql as hsql
+import helpers.hdbg as hdbg
+
 
 
 def get_example1_create_table_query() -> str:
@@ -90,7 +93,31 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         """
         Apply vendor-specific normalization.
         """
-        pass
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
+        if self._mode == "market_data":
+            data["asset_id"] = data[full_symbol_col_name].apply(
+                    ivcu.string_to_numerical_id
+                )
+            # Convert to int64 to keep NaNs alongside with int values.
+            data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
+            # Generate `start_timestamp` from `end_timestamp` by substracting delta.
+            delta = pd.Timedelta("1M")
+            data["start_timestamp"] = data["timestamp"].apply(
+                lambda pd_timestamp: (pd_timestamp - delta))
+            data = data.set_index("timestamp")
+        else:
+            # TODO(Danya): Put a `data_client` mode for uses in testing.
+            hdbg.dfatal(
+                "Invalid mode='%s'. Correct modes: 'market_data'"
+                % self._mode
+            )
+        return data
 
     def should_be_online():
         return True
