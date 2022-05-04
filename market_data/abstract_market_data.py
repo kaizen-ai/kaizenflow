@@ -290,15 +290,11 @@ class MarketData(abc.ABC):
         )
         # TODO(gp): If asset_ids was specified but the backend has a universe
         #  specified already, we might need to apply a filter by asset_ids.
-        # TODO(gp): Check data with respect to start_ts, end_ts.
         # Normalize data.
         df = self._normalize_data(df)
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
         # Verify that loaded data is correct.
-        # TODO(Grisha): @Dan add tests.
-        # TODO(Grisha): @Dan e.g., we do not request `start_ts` it should be removed
-        # for both modes.
         if self._columns is not None:
             df = self._process_by_filter_data_mode(
                 df, self._columns, self._filter_data_mode
@@ -662,8 +658,7 @@ class MarketData(abc.ABC):
                 df = df.drop(self._start_time_col_name, axis=1)
         return df
 
-    # TODO(Dan): Consider moving it to helpers.
-    # TODO(Dan): Extend checking by timestamps.
+    # TODO(Dan): CmTask1834 "Extend functionality of `_process_by_filter_data_mode()`".
     def _process_by_filter_data_mode(
         self,
         df: pd.DataFrame,

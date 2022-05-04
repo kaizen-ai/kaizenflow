@@ -366,7 +366,7 @@ class ImClient(abc.ABC):
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
 
-    # TODO(Grisha): @Dan file a bug about extending it for timestamps and add a ref here.
+    # TODO(Dan): CmTask1834 "Extend functionality of `_process_by_filter_data_mode()`".
     def _process_by_filter_data_mode(
          self,
          df: pd.DataFrame,
