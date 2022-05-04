@@ -76,7 +76,7 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
          db_helper: imvcddbut.TestImDbHelper):
         vendor = "mock"
         super().__init__(resample_1min, db_connection, table_name=table_name, vendor=vendor)
-        self.db_helper = db_helper
+        self._db_helper = db_helper
 
     def _apply_normalization(
         self,
@@ -91,17 +91,37 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
 
     def should_be_online():
         return True
-
-def get_example1_realtime_client():
-    """
     
+    def tear_down(self) -> None:
+        """
+        Remove the local database.
+
+        Needs to be called after each session to avoid
+        tests that also use the local DB to crash.
+        """
+        #TODO(Danya): use a non-test DB environment.
+        self._db_helper.tearDownClass()
+
+def get_example1_realtime_client() -> ExampleSqlRealTimeImClient:
     """
+    Set up a real time SQL client.
+
+    The 
+    """
+    # Initiate the temporary database.
+    #  Note: using a test class to avoid duplicating code,
+    #  since "local" stage DB will have the same credentials.
+    # TODO(Danya): create a container separate from the test environment.
     db_helper = imvcddbut.TestImDbHelper()
     db_helper.setUpClass()
+    # Get database connection.
     connection = db_helper.connection
+    # Create example table.
     query = get_example1_create_table_query()
     connection.cursor().execute(query)
+    # Create a data example and upload to local DB.
     data = create_example1_sql_data()
     hsql.copy_rows_with_copy_from(db_helper.connection, data, "example1_marketdata")
+    # Initialize a client connected to the local DB.
     im_client = ExampleSqlRealTimeImClient(True, connection, "example1_marketdata", db_helper)
     return im_client
