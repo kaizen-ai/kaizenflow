@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 
 import helpers.hsql as hsql
-import helpers.hsystem as hsystem
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
@@ -343,10 +342,6 @@ class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
-@pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1666.",
-)
 class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
@@ -391,6 +386,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow
     def test_read_data2(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -429,6 +425,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data3(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -469,6 +466,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data4(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -509,6 +507,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data5(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -564,6 +563,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     # TODO(Nina): Choose timestamp intervals that will be demonstrative for this
     #  test case, i.e. the ones with gaps.
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data7(self) -> None:
         resample_1min = False
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
