@@ -2191,9 +2191,8 @@ def _generate_compose_file(
         indent_level = 2
         append(txt_tmp, indent_level)
     #
-    # TODO(gp): Generalize by passing a dictionary.
     txt_tmp = f"""
-    # Shared cache. This is specific of lime.
+    # Shared data directory.
     - {shared_data_dir}:/shared_data
     """
     # This is at the level of `services.app.volumes`.

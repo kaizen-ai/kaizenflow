@@ -234,7 +234,7 @@ def use_docker_sibling_containers() -> bool:
     return val
 
 
-def get_shared_data_dir() -> bool:
+def get_shared_data_dir() -> str:
     """
     Get a shared data to dir to exchange data between users.
     """
@@ -375,6 +375,7 @@ def config_func_to_str() -> str:
             "get_invalid_words",
             "get_name",
             "get_repo_map",
+            "get_shared_data_dir",
             "has_dind_support",
             "has_docker_sudo",
             "is_AM_S3_available",
@@ -386,7 +387,6 @@ def config_func_to_str() -> str:
             "is_mac",
             "run_docker_as_root",
             "skip_submodules_test",
-            "use_docker_shared_cache",
             "use_docker_sibling_containers",
             "use_docker_network_mode_host",
         ]

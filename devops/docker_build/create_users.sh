@@ -19,7 +19,10 @@ do
   usermod -aG docker user_$current_linux_id
 done
 
+# Change the permissions otherwise the mounted folders cannot
+# be accessed by a non-root user.
 sudo chmod -R 777 /home
+sudo chmod -R 777 /shared_data
 
 # Allow users to access /mnt/tmpfs.
 # TODO(gp): We could change the permissions in fstab.
