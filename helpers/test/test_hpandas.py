@@ -984,7 +984,6 @@ class TestDropDuplicates(hunitest.TestCase):
         dummy_value2   10      B    3.2
         dummy_value1    4      B    8.2
         """
-
         # Check.
         self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
 
