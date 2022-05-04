@@ -385,11 +385,12 @@ class ImClient(abc.ABC):
             # Just issue a warning. 
             only_warning = True
             # Get columns intersection while preserving the order of the columns.
-            columns_inersection = sorted(
+            columns_intersection = sorted(
                 set(received_columns) & set(columns),
                 key=received_columns.index,
             )
-            df = df[columns_inersection]
+            hdbg.dassert_lte(1, len(columns_intersection))
+            df = df[columns_intersection]
          else:
              raise ValueError(
                  f"`filter_data_mode`=`{filter_data_mode}` should be in "
