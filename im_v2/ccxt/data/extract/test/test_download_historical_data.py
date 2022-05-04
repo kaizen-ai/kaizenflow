@@ -1,5 +1,4 @@
 import argparse
-import os.path
 import unittest.mock as umock
 
 import pytest
@@ -20,13 +19,15 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             self.binance_secret = hsecret.get_secret("binance")
         super().setUp()
 
-    @pytest.mark.superslow("Around 40s")
+    @pytest.mark.slow("Around 15s")
+    @umock.patch.object(imvcdedhda.hparque, "list_and_merge_pq_files")
     @umock.patch.object(imvcdedhda.imvcdeexcl.hsecret, "get_secret")
     @umock.patch.object(imvcdedhda.hdateti, "get_current_time")
     def test_function_call1(
         self,
         mock_get_current_time: umock.MagicMock,
         mock_get_secret: umock.MagicMock,
+        mock_list_and_merge: umock.MagicMock,
     ) -> None:
         """
         Test function call with specific arguments that are mimicking command
@@ -35,16 +36,10 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         """
         mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
         mock_get_secret.return_value = self.binance_secret
-        mock_list_and_merge_patch = umock.patch.object(
-            imvcdedhda.hparque, "list_and_merge_pq_files"
-        )
         # TODO(Nikola): Remove comments below and use it in docs, CMTask #1349.
-        mock_list_and_merge = mock_list_and_merge_patch.start()
         self._test_function_call()
-        # Stop mock so real function can be called for before/after comparison.
-        mock_list_and_merge_patch.stop()
         # Check number of calls and args for current time.
-        self.assertEqual(mock_get_current_time.call_count, 36)
+        self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
         # Check calls to mocked `list_and_merge_pq_files`.
         self.assertEqual(mock_list_and_merge.call_count, 1)
@@ -56,69 +51,36 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         self.assertEqual(expected_args[0], "s3://mock_bucket/binance")
         # Check keyword arguments. In this case only `aws_profile`.
         self.assertDictEqual(expected_kwargs, {"aws_profile": "ck"})
-        # TODO(Nikola): Move section below to `helpers/test/test_hparquet.py`, CMTask #1426.
-        # Check bucket content before merge.
-        parquet_meta_list_before = self.moto_client.list_objects(
+        parquet_meta_list = self.moto_client.list_objects(
             Bucket=self.bucket_name
         )["Contents"]
-        parquet_path_list_before = [
-            meta["Key"] for meta in parquet_meta_list_before
+        parquet_path_list = [
+            # Remove uuid names.
+            "/".join(meta["Key"].split("/")[:-1])
+            for meta in parquet_meta_list
         ]
-        self.assertEqual(len(parquet_path_list_before), 9)
-        # Add extra parquet files.
-        for path in parquet_path_list_before[::2]:
-            copy_source = {"Bucket": self.bucket_name, "Key": path}
-            self.moto_client.copy_object(
-                CopySource=copy_source,
-                Bucket=self.bucket_name,
-                Key=path.replace(".parquet", "_new.parquet"),
-            )
-        # Create single `data.parquet` file.
-        for path in parquet_path_list_before[1:4:2]:
-            copy_source = {"Bucket": self.bucket_name, "Key": path}
-            self.moto_client.copy_object(
-                CopySource=copy_source,
-                Bucket=self.bucket_name,
-                Key=os.path.join(*path.split("/")[:-1], "data.parquet"),
-            )
-            self.moto_client.delete_object(Bucket=self.bucket_name, Key=path)
-        # Check if edits are in place.
-        updated_parquet_meta_list = self.moto_client.list_objects(
-            Bucket=self.bucket_name
-        )["Contents"]
-        updated_parquet_path_list = [
-            meta["Key"] for meta in updated_parquet_meta_list
-        ]
-        data_parquet_path_list = [
-            path
-            for path in updated_parquet_path_list
-            if path.endswith("/data.parquet")
-        ]
-        self.assertEqual(len(updated_parquet_path_list), 14)
-        self.assertEqual(len(data_parquet_path_list), 2)
-        # Check bucket content after merge.
-        imvcdedhda.hparque.list_and_merge_pq_files(
-            *expected_args, **expected_kwargs
-        )
-        parquet_meta_list_after = self.moto_client.list_objects(
-            Bucket=self.bucket_name
-        )["Contents"]
-        parquet_path_list_after = [
-            meta["Key"] for meta in parquet_meta_list_after
-        ]
-        parquet_path_list_after.sort()
+        parquet_path_list.sort()
         expected_list = [
-            "binance/currency_pair=ADA_USDT/year=2022/month=2/data.parquet",
-            "binance/currency_pair=AVAX_USDT/year=2022/month=2/data.parquet",
-            "binance/currency_pair=BNB_USDT/year=2022/month=2/data.parquet",
-            "binance/currency_pair=BTC_USDT/year=2022/month=2/data.parquet",
-            "binance/currency_pair=DOGE_USDT/year=2022/month=2/data.parquet",
-            "binance/currency_pair=EOS_USDT/year=2022/month=2/data.parquet",
-            "binance/currency_pair=ETH_USDT/year=2022/month=2/data.parquet",
-            "binance/currency_pair=LINK_USDT/year=2022/month=2/data.parquet",
-            "binance/currency_pair=SOL_USDT/year=2022/month=2/data.parquet",
+            "binance/currency_pair=ADA_USDT/year=2021/month=12",
+            "binance/currency_pair=ADA_USDT/year=2022/month=1",
+            "binance/currency_pair=AVAX_USDT/year=2021/month=12",
+            "binance/currency_pair=AVAX_USDT/year=2022/month=1",
+            "binance/currency_pair=BNB_USDT/year=2021/month=12",
+            "binance/currency_pair=BNB_USDT/year=2022/month=1",
+            "binance/currency_pair=BTC_USDT/year=2021/month=12",
+            "binance/currency_pair=BTC_USDT/year=2022/month=1",
+            "binance/currency_pair=DOGE_USDT/year=2021/month=12",
+            "binance/currency_pair=DOGE_USDT/year=2022/month=1",
+            "binance/currency_pair=EOS_USDT/year=2021/month=12",
+            "binance/currency_pair=EOS_USDT/year=2022/month=1",
+            "binance/currency_pair=ETH_USDT/year=2021/month=12",
+            "binance/currency_pair=ETH_USDT/year=2022/month=1",
+            "binance/currency_pair=LINK_USDT/year=2021/month=12",
+            "binance/currency_pair=LINK_USDT/year=2022/month=1",
+            "binance/currency_pair=SOL_USDT/year=2021/month=12",
+            "binance/currency_pair=SOL_USDT/year=2022/month=1",
         ]
-        self.assertListEqual(parquet_path_list_after, expected_list)
+        self.assertListEqual(parquet_path_list, expected_list)
 
     def test_parser(self) -> None:
         """
@@ -156,8 +118,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         """
         # Prepare inputs.
         kwargs = {
-            "start_timestamp": "2022-02-08",
-            "end_timestamp": "2022-02-09",
+            "start_timestamp": "2021-12-31 23:00:00",
+            "end_timestamp": "2022-01-01 01:00:00",
             "exchange_id": "binance",
             "universe": "v3",
             "sleep_time": 1,
