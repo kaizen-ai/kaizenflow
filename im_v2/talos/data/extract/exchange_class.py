@@ -89,13 +89,19 @@ class TalosExchange:
         url = f"https://{self._endpoint}{data_path}"
         return url
 
-    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
+    def download_data(self, data_type: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
+        Download Talos data.
+
+        :param data_type: the type of data, e.g. `ohlcv`
+        :return: Talos data
         """
-        self.assertEquals(data_type, "ohlcv")
+        # Check data type.
+        hdbg.dassert_eq(data_type, "ohlcv")
+        # Get data.
         return self.download_ohlcv_data(
             currency_pair=kwargs.currency_pair,
-            exchange=kwargs.exchange_id,
+            exchange=args[0],
             start_timestamp=kwargs.start_timestamp,
             end_timestamp=kwargs.end_timestamp,
         )
@@ -112,7 +118,7 @@ class TalosExchange:
         """
         Download minute OHLCV bars for given currency pair for given crypto
         exchange.
-
+        
         :param currency_pair: a currency pair, e.g. "BTC_USDT"
         :param exchange: crypto exchange, e.g. "binance"
         :param start_timestamp: starting point for data

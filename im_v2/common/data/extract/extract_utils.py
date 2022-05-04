@@ -190,27 +190,17 @@ def download_historical_data(
     universe = ivcu.get_vendor_universe(vendor, version=args.universe)
     currency_pairs = universe[args.exchange_id]
     # Convert timestamps.
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    start_timestamp = pd.Timestamp(args.start_timestamp)
+    args["end_timestamp"] = pd.Timestamp(args.end_timestamp)
+    args["start_timestamp"] = pd.Timestamp(args.start_timestamp)
     path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        currency_pair_for_download = exchange_class.convert_currency_pair(currency_pair)
+        args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
         # Download data.
-        if exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
-            data = exchange.download_market_depth(
-                exchange=args.exchange_id,
-                currency_pair=currency_pair_for_download,
-                depth=args.depth,
-                start_timestamp=start_timestamp,
-            )
-        else:
-            data = exchange.download_ohlcv_data(
-                currency_pair_for_download,
-                *additional_args,
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
+        data = exchange.download_data(
+            *additional_args,
+            **args
             )
         # Assign pair and exchange columns.
         # TODO(Nikola): Exchange id was missing and it is added additionally to

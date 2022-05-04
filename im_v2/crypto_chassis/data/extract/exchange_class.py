@@ -28,12 +28,21 @@ class CryptoChassisExchange:
         """
         return currency_pair.replace("_", "/")
 
-    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
+    def download_data(self, data_type: str, *args, **kwargs: Any) -> pd.DataFrame:
         """
+        Download Crypto Chassis data.
+
+        :param data_type: the type of data, e.g. `market_depth`
+        :return: Crypto Chassis data
         """
-        self.assertEquals(data_type, "market_depth")
+        # Check data type.
+        hdbg.dassert_eq(data_type, "market_depth")
+        # Get data.
         return self.download_market_depth(
-            **kwargs,
+            exchange=kwargs.exchange_id,
+            currency_pair=kwargs.currency_pair,
+            depth=kwargs.depth,
+            start_timestamp=kwargs.start_timestamp,
         )
 
     def download_market_depth(
@@ -49,7 +58,6 @@ class CryptoChassisExchange:
         Additional parameters that can be passed as **kwargs:
           - startTime: pd.Timestamp
           - depth: int - allowed values: 1 to 10. Defaults to 1.
-
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :param kwargs: additional parameters of processing
@@ -74,7 +82,7 @@ class CryptoChassisExchange:
         )
         # Build URL with specified parameters.
         query_url = self._build_query_url(
-            core_url, startTime=start_timestamp, depth=depth
+            core_url, startTime=start_timestamp, depth=str(depth)
         )
         # Request the data.
         r = requests.get(query_url)
