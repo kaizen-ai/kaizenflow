@@ -974,8 +974,8 @@ class TestDropDuplicates(hunitest.TestCase):
         df = self.get_test_data()
         use_index = True
         subset = ["float"]
-        no_dublicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
-        no_dublicates_df = hpandas.df_to_str(no_dublicates_df)
+        no_duplicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
+        no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
         expected_signature = r""" 
                       int letter  float
@@ -986,7 +986,7 @@ class TestDropDuplicates(hunitest.TestCase):
         """
 
         # Check.
-        self.assert_equal(no_dublicates_df, expected_signature, fuzzy_match=True)
+        self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
 
     def test_drop_duplicates2(self) -> None:
         """
@@ -998,8 +998,8 @@ class TestDropDuplicates(hunitest.TestCase):
         # Prepare test data.
         df = self.get_test_data()
         use_index = True
-        no_dublicates_df = hpandas.drop_duplicates(df, use_index)
-        no_dublicates_df = hpandas.df_to_str(no_dublicates_df)
+        no_duplicates_df = hpandas.drop_duplicates(df, use_index)
+        no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
         expected_signature = r"""              
                       int letter  float
@@ -1009,7 +1009,7 @@ class TestDropDuplicates(hunitest.TestCase):
         dummy_value1    8      A    3.2
         dummy_value1    4      B    8.2"""
         # Check.
-        self.assert_equal(no_dublicates_df, expected_signature, fuzzy_match=True)
+        self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
 
     def test_drop_duplicates3(self) -> None:
         """
@@ -1021,8 +1021,8 @@ class TestDropDuplicates(hunitest.TestCase):
         # Prepare test data.
         df = self.get_test_data()
         use_index = False
-        no_dublicates_df = hpandas.drop_duplicates(df, use_index)
-        no_dublicates_df = hpandas.df_to_str(no_dublicates_df)
+        no_duplicates_df = hpandas.drop_duplicates(df, use_index)
+        no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
         expected_signature = r"""             
                       int letter  float
@@ -1031,7 +1031,7 @@ class TestDropDuplicates(hunitest.TestCase):
         dummy_value1    8      A    3.2
         dummy_value1    4      B    8.2"""
         # Check.
-        self.assert_equal(no_dublicates_df, expected_signature, fuzzy_match=True)
+        self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
 
     def test_drop_duplicates4(self) -> None:
         """
@@ -1045,8 +1045,8 @@ class TestDropDuplicates(hunitest.TestCase):
         df = self.get_test_data()
         use_index = False
         subset = ["letter", "float"]
-        no_dublicates_df = hpandas.drop_duplicates(df, use_index, subset)
-        no_dublicates_df = hpandas.df_to_str(no_dublicates_df)
+        no_duplicates_df = hpandas.drop_duplicates(df, use_index, subset)
+        no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
         expected_signature = r"""
                       int letter  float
@@ -1054,4 +1054,4 @@ class TestDropDuplicates(hunitest.TestCase):
         dummy_value2   10      B    3.2
         dummy_value1    4      B    8.2"""
         # Check.
-        self.assert_equal(no_dublicates_df, expected_signature, fuzzy_match=True)
+        self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
