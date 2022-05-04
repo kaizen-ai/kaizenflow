@@ -69,7 +69,11 @@ def create_example1_sql_data() -> pd.DataFrame:
     return data
 
 class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
-    def __init__(resample_1min: bool, db_connection: hsql.DbConnection, table_name: str, db_helper: imvcddbut.TestImDbHelper):
+    def __init__(self,
+        resample_1min: bool,
+        db_connection: hsql.DbConnection,
+         table_name: str, 
+         db_helper: imvcddbut.TestImDbHelper):
         vendor = "mock"
         super().__init__(resample_1min, db_connection, table_name=table_name, vendor=vendor)
         self.db_helper = db_helper
@@ -99,4 +103,5 @@ def get_example1_realtime_client():
     connection.cursor().execute(query)
     data = create_example1_sql_data()
     hsql.copy_rows_with_copy_from(db_helper.connection, data, "example1_marketdata")
+    im_client = ExampleSqlRealTimeImClient(True, connection, "example1_marketdata", db_helper)
     return im_client
