@@ -503,7 +503,6 @@ class Test_generate_compose_file1(hunitest.TestCase):
             use_network_mode_host,
             file_name,
             shared_data_dir,
-
         )
         txt_tmp = hunitest.filter_text("AM_HOST_NAME|AM_HOST_OS_NAME", txt_tmp)
         txt.append(txt_tmp)
