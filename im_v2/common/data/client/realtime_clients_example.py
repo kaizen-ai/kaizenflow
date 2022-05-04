@@ -66,14 +66,28 @@ def create_example1_sql_data() -> pd.DataFrame:
     price = price_pattern * 4
     # TODO(Danya): all OHLCV columns are required for RealTimeMarketData.
     #  Remove and make MarketData vendor-agnostic.
-    data[["open", "high", "low", "close"]] = price
+    data["open"] = price
+    data["high"] = price
+    data["low"] = price
+    data["close"] = price
     data["volume"] = 100
+    # Add an extra feature1..
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
     data["feature1"] = feature
+    # Add values necessary for `full_symbol`.
     data["currency_pair"] = "BTC_USDT"
     data["exchange_id"] = "binance"
-    data = data[["timestamp","close", "volume", "feature1", "currency_pair", "exchange_id", "timestamp_db"]]
+    data = data[["timestamp",
+                    "open",
+                    "high", 
+                    "low",
+                    "close", 
+                    "volume", 
+                    "feature1", 
+                    "currency_pair",
+                    "exchange_id", 
+                    "timestamp_db"]]
     return data
 
 class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
