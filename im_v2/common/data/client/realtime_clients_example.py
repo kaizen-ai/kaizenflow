@@ -18,11 +18,14 @@ def get_example1_create_table_query() -> str:
     """
     Get SQL query to create an Example1 table.
 
-    The table schema corresponds to the 
+    The table schema corresponds to the OHLCV data.
     """
     query = """
     CREATE TABLE IF NOT EXISTS example1_marketdata(
             timestamp BIGINT,
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
             close NUMERIC,
             volume NUMERIC,
             feature1 NUMERIC,
@@ -61,7 +64,9 @@ def create_example1_sql_data() -> pd.DataFrame:
     data["timestamp"] = data["timestamp"].apply(hdateti.convert_timestamp_to_unix_epoch)
     price_pattern = [101.0] * 5 + [100.0] * 5
     price = price_pattern * 4
-    data["close"] = price
+    # TODO(Danya): all OHLCV columns are required for RealTimeMarketData.
+    #  Remove and make MarketData vendor-agnostic.
+    data[["open", "high", "low", "close"]] = price
     data["volume"] = 100
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
@@ -75,10 +80,13 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(self,
         resample_1min: bool,
         db_connection: hsql.DbConnection,
-         table_name: str, 
-         db_helper: imvcddbut.TestImDbHelper,
-         *,
-         mode: Optional[str] = "market_data"):
+        table_name: str, 
+        db_helper: imvcddbut.TestImDbHelper,
+        *,
+        mode: Optional[str] = "market_data"):
+        """
+        Constructor.
+        """
         vendor = "mock"
         super().__init__(resample_1min, db_connection, table_name=table_name, vendor=vendor)
         self._db_helper = db_helper
@@ -92,6 +100,17 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     ) -> pd.DataFrame:
         """
         Apply vendor-specific normalization.
+
+        `market_data` mode:
+            - Add `start_timestamp` column in UTC timestamp format.
+            - Set `timestamp` as index
+            - Add `asset_id` column which is result of mapping full_symbol to integer.
+            - The output looks like:
+        ```
+        timestamp                 open ... volume  start_timestamp           asset_id
+        2000-01-01 09:30:00-05:00 101.5    100     2000-01-01 09:29:00-05:00 3303714233
+        2000-01-01 09:31:00-05:00 101.5    100     2000-01-01 09:30:00-05:00 3303714233
+        ```
         """
         # Convert timestamp column with Unix epoch to timestamp format.
         data["timestamp"] = data["timestamp"].apply(
