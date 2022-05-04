@@ -1361,7 +1361,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
-    @pytest.mark.skip("Enable when unit test data needs to be generated.")
+    # @pytest.mark.skip("Enable when unit test data needs to be generated.")
     def test_write_test_data_to_s3(self) -> None:
         """
         Write unit test data to S3.
@@ -1409,7 +1409,10 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         data["year"] = data.index.year
         data["month"] = data.index.month
-        data["timestamp"] = 1569888000000
+        # Add "timestamp" column to make test data with same columns as historical.
+        # It's dropped when reading with client.
+        timestamp_col = [1569888000000] * len(data)
+        data.insert(0, "timestamp", timestamp_col)
         # Remove unnecessary column.
         data = data.drop(columns="full_symbol")
         # Artificially create gaps in data in order test resampling.
