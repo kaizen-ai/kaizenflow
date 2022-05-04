@@ -92,7 +92,6 @@ def download_realtime_for_one_exchange_wrapper(
     :param start_timestamp: beginning of the downloaded period
     :param end_timestamp: end of the downloaded period
     """
-    # TODO(timurg): investigate why end_timestamp ignored, and returned data up to now.
     args.start_timestamp, args.end_timestamp = start_timestamp, end_timestamp
     _LOG.info(
         "Starting data download from: %s, till: %s",
@@ -140,7 +139,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # Wait until next download.
         _LOG.info("Delay %s sec until next iteration", iteration_delay_sec)
         time.sleep(iteration_delay_sec)
-        # TODO(timurg): investigate why end_timestamp ignored, and returned data up to now.
         start_timestamp = iteration_start_time - timedelta(
             minutes=time_window_min
         )
