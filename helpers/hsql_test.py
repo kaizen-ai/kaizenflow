@@ -74,6 +74,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             cls.bring_down_db = False
         else:
             # Start the service.
+            cls._create_docker_files()
             cls.docker_compose_file_path = os.path.join(
                 hgit.get_amp_abs_path(), cls._get_compose_file()
             )
@@ -84,7 +85,6 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
                 f"--env-file {cls.db_env_file} "
                 f"up -d {cls._get_service_name()}"
             )
-            print(cmd)
             hsystem.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
             hsql.wait_db_connection(*connection_info)
@@ -131,3 +131,15 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         Get path to db env file that contains db connection parameters.
         """
+
+    @staticmethod
+    def _create_docker_files() -> str:
+        """
+        Create the compose and env file for the DB run.
+        """
+
+    @abstractmethod
+    @staticmethod
+    def get_id():
+        # TODO(Sonya): Use a hash
+        return 152

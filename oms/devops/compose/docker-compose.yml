@@ -2,23 +2,25 @@ version: '3.5'
 
 services:
   # Docker container running Postgres DB.
-  oms_postgres:
+  oms_postgres152:
     image: postgres:13
     restart: "no"
     environment:
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_PORT=${POSTGRES_PORT}
+      #- POSTGRES_PORT={POSTGRES_PORT}
+      - POSTGRES_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
-      - oms_postgres_data:/var/lib/postgresql/data
+      - oms_postgres152_data:/var/lib/postgresql/data
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      #- 5584:{POSTGRES_PORT}
+      - 5584:5432
 
 volumes:
-  oms_postgres_data: {}
+  oms_postgres152_data: {}
 
 networks:
   default:
-    name: main_network
+    name: oms_postgres152_network
