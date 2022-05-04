@@ -5233,6 +5233,18 @@ def lint(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
+    file_name = get_base_docker_compose_path()
+    ########mount_as_submodule = False
+    mount_as_submodule = True
+    _generate_compose_file(
+        hgit.execute_repo_config_code("enable_privileged_mode()"),
+        hgit.execute_repo_config_code("use_docker_sibling_containers()"),
+        hgit.execute_repo_config_code("use_docker_shared_cache()"),
+        mount_as_submodule,
+        hgit.execute_repo_config_code("use_docker_network_mode_host()"),
+        file_name,
+    )
+
     # The available phases are:
     # ```
     # > i lint -f "foobar.py"
