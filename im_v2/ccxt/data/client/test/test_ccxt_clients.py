@@ -1361,7 +1361,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
-    # @pytest.mark.skip("Enable when unit test data needs to be generated.")
+    @pytest.mark.skip("Enable when unit test data needs to be generated.")
     def test_write_test_data_to_s3(self) -> None:
         """
         Write unit test data to S3.
