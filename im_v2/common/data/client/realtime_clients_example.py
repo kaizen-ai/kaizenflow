@@ -41,7 +41,7 @@ def create_example1_sql_data() -> pd.DataFrame:
     """
     Generate a dataframe with price features and fixed currency_pair and exchange_id.
 
-    Simulates contents of DBs with crypto data, e.g. from Talos and CCXT.
+    This imulates contents of DBs with crypto data, e.g. from Talos and CCXT.
 
     Output example:
 
@@ -64,14 +64,14 @@ def create_example1_sql_data() -> pd.DataFrame:
     data["timestamp"] = data["timestamp"].apply(hdateti.convert_timestamp_to_unix_epoch)
     price_pattern = [101.0] * 5 + [100.0] * 5
     price = price_pattern * 4
-    # TODO(Danya): all OHLCV columns are required for RealTimeMarketData.
-    #  Remove and make MarketData vendor-agnostic.
+    # All OHLCV columns are required for RealTimeMarketData.
+    # TODO(Danya): Remove these columns and make MarketData vendor-agnostic.
     data["open"] = price
     data["high"] = price
     data["low"] = price
     data["close"] = price
     data["volume"] = 100
-    # Add an extra feature1..
+    # Add an extra feature1.
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
     data["feature1"] = feature
@@ -90,12 +90,11 @@ def create_example1_sql_data() -> pd.DataFrame:
                     "timestamp_db"]]
     return data
 
-class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
+class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(self,
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str, 
-        db_helper: imvcddbut.TestImDbHelper,
         *,
         mode: Optional[str] = "market_data"):
         """
@@ -103,7 +102,6 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         """
         vendor = "mock"
         super().__init__(resample_1min, db_connection, table_name=table_name, vendor=vendor)
-        self._db_helper = db_helper
         self._mode = mode
 
     def _apply_normalization(
@@ -155,17 +153,8 @@ class ExampleSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def should_be_online():
         return True
     
-    def tear_down(self) -> None:
-        """
-        Remove the local database.
 
-        Needs to be called after each session to avoid
-        tests that also use the local DB to crash.
-        """
-        #TODO(Danya): use a non-test DB environment.
-        self._db_helper.tearDownClass()
-
-def get_example1_realtime_client(resample_1min: bool) -> ExampleSqlRealTimeImClient:
+def get_example1_realtime_client(connection: hsql.DbConnection, resample_1min: bool) -> Example1SqlRealTimeImClient:
     """
     Set up a real time SQL client.
 
@@ -173,20 +162,13 @@ def get_example1_realtime_client(resample_1min: bool) -> ExampleSqlRealTimeImCli
     - Uploads test data
     - Creates a client connected to the local DB
     """
-    # Initiate the temporary database.
-    #  Note: using a test class to avoid duplicating code,
-    #  since "local" stage DB will have the same credentials.
-    # TODO(Danya): create a container separate from the test environment.
-    db_helper = imvcddbut.TestImDbHelper()
-    db_helper.setUpClass()
-    # Get database connection.
-    connection = db_helper.connection
     # Create example table.
+    table_name = "example1_marketdata"
     query = get_example1_create_table_query()
     connection.cursor().execute(query)
     # Create a data example and upload to local DB.
     data = create_example1_sql_data()
-    hsql.copy_rows_with_copy_from(db_helper.connection, data, "example1_marketdata")
+    hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
-    im_client = ExampleSqlRealTimeImClient(resample_1min, connection, "example1_marketdata", db_helper)
+    im_client = Example1SqlRealTimeImClient(resample_1min, connection, table_name)
     return im_client
