@@ -499,7 +499,7 @@ df_bnb.head(3)
 
 # %%
 # Calculate (|returns| - spread) and display descriptive stats.
-df_bnb["ret_spr_diff"] = abs(df_bnb["close.ret_0"]) - df_bnb["quoted_spread"]
+df_bnb["ret_spr_diff"] = abs(df_bnb["close.ret_0"]) - (df_bnb["quoted_spread"]/df_bnb["close"])
 display(df_bnb["ret_spr_diff"].describe())
 
 # %%
