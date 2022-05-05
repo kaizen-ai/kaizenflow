@@ -79,6 +79,8 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
+        if universe_version is not None:
+            hdbg.dassert_isinstance(universe_version, str)
         self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
