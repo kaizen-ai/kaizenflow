@@ -38,7 +38,7 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     # Get file path.
     amp_path = hgit.get_amp_abs_path()
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)
-        # We use idx when we want to generate a Docker env file on the fly. So we
+    # We use idx when we want to generate a Docker env file on the fly. So we
     # can't enforce that the file already exists.
     if idx is None:
         hdbg.dassert_file_exists(env_file_path)
