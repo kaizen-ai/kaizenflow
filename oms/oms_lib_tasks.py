@@ -28,7 +28,8 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     Get path to db env file that contains db connection parameters.
 
     :param stage: development stage, i.e. `local`, `dev` and `prod`
-    :param idx: index used to make unique the generated file
+    :param idx: index used to make the generated file unique
+    :return: path to db env file
     """
     hdbg.dassert_in(stage, "local dev prod".split())
     # Get `env` files dir.
