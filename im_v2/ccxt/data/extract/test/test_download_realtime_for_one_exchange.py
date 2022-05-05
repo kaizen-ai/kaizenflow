@@ -14,6 +14,11 @@ import im_v2.common.db.db_utils as imvcddbut
 class TestDownloadRealtimeForOneExchange1(
     hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper
 ):
+    
+    @classmethod
+    def get_id(cls):
+        return hash(cls.__name__) % 1000
+    
     # Secret needed for getting realtime data.
     binance_secret = None
 

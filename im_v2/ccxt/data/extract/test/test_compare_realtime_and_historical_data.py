@@ -18,6 +18,10 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         [("year", "==", 2022), ("month", "<=", 1)],
     ]
     _ohlcv_dataframe_sample = None
+    
+    @classmethod
+    def get_id(cls):
+        return hash(cls.__name__) % 1000
 
     def setUp(self) -> None:
         super().setUp()

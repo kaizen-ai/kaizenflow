@@ -16,6 +16,11 @@ _LOG = logging.getLogger(__name__)
 class TestRealTimeMarketData2(
     imvcddbut.TestImDbHelper,
 ):
+    
+    @classmethod
+    def get_id(cls):
+        return hash(cls.__name__) % 1000
+    
     def setup_talos_market_data(
         self,
         resample_1min: Optional[bool] = True,
