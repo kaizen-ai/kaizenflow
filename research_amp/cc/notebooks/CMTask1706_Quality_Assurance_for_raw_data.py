@@ -23,7 +23,6 @@ from datetime import timedelta
 
 import pandas as pd
 import requests
-
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -31,6 +30,7 @@ import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.common.universe.full_symbol as imvcufusy
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -655,6 +655,42 @@ print(
 # |2019-08-30, 2019-08-31 |0|1500 | 97.53% | 0 | 1500 |97.07% | 1500 |
 # |2020-01-30, 2020-01-31| 0 |1500 | 66.93%| 0| 1500 |56.67% | 1500 |
 # |2021-12-29, 2021-12-30| 0 |1500|0 | 0 | 1500| 74.6% | 1500|
+
+# %%
+# Data loaded with `from_parquet()`.
+df1 = data_loc.copy()
+df1_no_nan = df1.loc[df1['open'].isna() == False]
+_LOG.info(f"df1_no_nan {df1_no_nan.shape}")
+# Data loaded with `CcxtHistoricalPqByTileClient`.
+df2 = ada_kucoin_ccxt.copy()
+df2_nan = df2.loc[
+    (ada_kucoin_ccxt.index >= "2021-12-29 23:00:00+00:00")
+    & (ada_kucoin_ccxt.index <= "2021-12-30 23:59:00+00:00")
+    & (ada_kucoin_ccxt["open"].isna() == True)
+]
+_LOG.info(f"df2_nan{df2_nan.shape}")
+
+# %%
+print(f"% of NaNs in data loaded with `from_parquet()`: {len(df1.loc[df1['open'].isna()]) * 100 / len(df1)}")
+print(f"% of NaNs in data loaded with `CcxtHistoricalPqByTileClient`: {len(df2_nan) * 100 / len(df2)}")
+
+# %%
+df1_no_nan = df1_no_nan.drop(columns=['currency_pair', 'year', 'month', 'timestamp'], axis=1)
+df1_no_nan = df1_no_nan.reset_index()
+full_symbol = full_symbols * len(df1_no_nan)
+df1_no_nan.insert(0, "full_symbol",full_symbol)
+df1_no_nan.index.name = None
+df2_nan = df2_nan.reset_index()
+df2_nan.index.name = None
+df3 = pd.merge(df1_no_nan, df2_nan, how="right", on=["full_symbol", "timestamp"])
+_LOG.info(df3.shape)
+df3.head()
+
+# %%
+df1.loc[(df1.index >= "2021-12-29 23:00:00+00:00") & (df1.index <= "2021-12-30 17:39:00+00:00")]
+
+# %% [markdown]
+# S3 has no data in between `2021-12-29 23:00:00+00:00` and `2021-12-30 17:39:00+00:00`. Data loaded with client (`resample_1min = True`) has NaNs in between `2021-12-29 23:00:00+00:00` and `2021-12-30 17:39:00+00:00`, so it's a resampling.
 
 # %% [markdown]
 # # `gateio` case
