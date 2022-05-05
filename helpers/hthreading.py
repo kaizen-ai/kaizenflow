@@ -2,7 +2,7 @@
 """
 `timeout` decorator which is used to limit function execution time.
 
-Import as: import helpers.htimeout_decorator as htimdeco
+Import as: from helpers.hthreading import timeout
 """
 
 import _thread

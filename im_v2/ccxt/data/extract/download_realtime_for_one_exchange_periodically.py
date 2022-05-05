@@ -27,7 +27,7 @@ import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
-from helpers.htimeout_decorator import timeout
+from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
 TIMEOUT_SEC = 60
@@ -113,23 +113,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         1, interval_min, "interval_min: %s should be greater than 0", interval_min
     )
     hdbg.dassert_lt(datetime.now(), start_time, "start_time is in the past")
-    hdbg.dassert_lt(
-        start_time,
-        stop_time,
-        "stop_time: %s should be greater than start_time: %s",
-        stop_time,
-        start_time,
-    )
+    hdbg.dassert_lt(start_time, stop_time, "stop_time is less than start_time")
     # Error will be raised if we miss full 5 minute window of data,
     # even if the next download succeeds, we don't recover all of the previous data.
+    num_failures = 0
     max_num_failures = (
         time_window_min // interval_min + time_window_min % interval_min
     )
-    consecutive_failures_left = max_num_failures
     # Delay start.
     iteration_start_time = start_time
     iteration_delay_sec = (iteration_start_time - datetime.now()).total_seconds()
-    while datetime.now() < stop_time and consecutive_failures_left:
+    while datetime.now() < stop_time and num_failures < max_num_failures:
         # Wait until next download.
         _LOG.info("Delay %s sec until next iteration", iteration_delay_sec)
         time.sleep(iteration_delay_sec)
@@ -142,16 +136,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 args, start_timestamp, end_timestamp
             )
             # Reset failures counter.
-            consecutive_failures_left = max_num_failures
+            num_failures = 0
         except (KeyboardInterrupt, Exception) as e:
-            consecutive_failures_left -= 1
-            _LOG.error(
-                "Download failed: %s, %s failures left",
-                str(e),
-                consecutive_failures_left,
-            )
+            num_failures += 1
+            _LOG.error("Download failed %s", str(e))
             # Download failed.
-            if not consecutive_failures_left:
+            if num_failures >= max_num_failures:
                 raise RuntimeError(
                     f"{max_num_failures} consecutive downloads were failed"
                 ) from e
@@ -171,7 +161,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     minutes=interval_min
                 )
         # If download failed, but there is time before next download.
-        elif consecutive_failures_left < max_num_failures:
+        elif num_failures < max_num_failures:
             _LOG.info("Start repeat download immediately.")
             iteration_delay_sec = 0
         else:
