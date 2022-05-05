@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 """
-`exit_after` decorator which is used to limit function execution time.
+`timeout` decorator which is used to limit function execution time.
 
-KeyboardInterrupt will be raised if time limit is exceed. Import as:
-
-Import as:
-
-import helpers.htimeout_decorator as htimdeco
+Import as: import helpers.htimeout_decorator as htimdeco
 """
 
 import _thread
@@ -15,22 +11,24 @@ import threading
 from typing import Any
 
 
-def timeout_handler() -> None:
+def _timeout_handler() -> None:
     sys.stderr.flush()
     # Raise KeyboardInterrupt.
     _thread.interrupt_main()
 
 
-def exit_after(timeout_sec: int) -> Any:
+def timeout(timeout_sec: int) -> Any:
     """
-    Exit process if function execution takes longer than s seconds.
+    Exit process if its execution takes longer than timeout_sec seconds.
+    This is a decorator that issue a KeyboardInterrup,
+    that will be raised if time limit is exceed.
 
     :param timeout_sec: time limit
     """
 
     def outer(fn: Any) -> Any:
         def inner(*args: Any, **kwargs: Any) -> Any:
-            timer = threading.Timer(timeout_sec, timeout_handler)
+            timer = threading.Timer(timeout_sec, _timeout_handler)
             timer.start()
             try:
                 result = fn(*args, **kwargs)

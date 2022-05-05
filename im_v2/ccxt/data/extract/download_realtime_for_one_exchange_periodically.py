@@ -27,7 +27,7 @@ import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
-from helpers.htimeout_decorator import exit_after
+from helpers.htimeout_decorator import timeout
 
 _LOG = logging.getLogger(__name__)
 TIMEOUT_SEC = 60
@@ -43,14 +43,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="When downloads should start",
+        help="Timestamp when the download should start (e.g., '2022-05-03 00:40:00')",
     )
     parser.add_argument(
         "--stop_time",
         action="store",
         required=True,
         type=str,
-        help="When script should stop",
+        help="Timestamp when the script should stop (e.g., '2022-05-03 00:30:00')",
     )
     parser.add_argument(
         "--interval_min",
@@ -62,14 +62,14 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Name of exchange to download data from",
+        help="Name of exchange to download data from (e.g., 'binance')",
     )
     parser.add_argument(
         "--universe",
         action="store",
         required=True,
         type=str,
-        help="Trade universe to download data for",
+        help="Trading universe to download data for",
     )
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcddbut.add_db_args(parser)
@@ -77,8 +77,8 @@ def _parse() -> argparse.ArgumentParser:
     return parser  # type: ignore[no-any-return]
 
 
-@exit_after(TIMEOUT_SEC)
-def download_realtime_for_one_exchange_wrapper(
+@timeout(TIMEOUT_SEC)
+def _download_realtime_for_one_exchange_with_timeout(
     args: argparse.Namespace,
     start_timestamp: datetime,
     end_timestamp: datetime,
@@ -103,22 +103,16 @@ def download_realtime_for_one_exchange_wrapper(
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    # Time range for each download
+    # Time range for each download.
     time_window_min = 5
-    # Checking values.
+    # Check values.
     stop_time = datetime.strptime(args.stop_time, "%Y-%m-%d %H:%M:%S")
     start_time = datetime.strptime(args.start_time, "%Y-%m-%d %H:%M:%S")
     interval_min = args.interval_min
     hdbg.dassert_lte(
         1, interval_min, "interval_min: %s should be greater than 0", interval_min
     )
-    hdbg.dassert_lt(
-        datetime.now(),
-        start_time,
-        "start_time: %s should be greater than current time: %s",
-        start_time,
-        datetime.now(),
-    )
+    hdbg.dassert_lt(datetime.now(), start_time, "start_time is in the past")
     hdbg.dassert_lt(
         start_time,
         stop_time,
@@ -128,11 +122,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Error will be raised if we miss full 5 minute window of data,
     # even if the next download succeeds, we don't recover all of the previous data.
-    failures_limit = (
+    max_num_failures = (
         time_window_min // interval_min + time_window_min % interval_min
     )
-    consecutive_failures_left = failures_limit
-    # Delay start
+    consecutive_failures_left = max_num_failures
+    # Delay start.
     iteration_start_time = start_time
     iteration_delay_sec = (iteration_start_time - datetime.now()).total_seconds()
     while datetime.now() < stop_time and consecutive_failures_left:
@@ -144,11 +138,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         )
         end_timestamp = datetime.now()
         try:
-            download_realtime_for_one_exchange_wrapper(
+            _download_realtime_for_one_exchange_with_timeout(
                 args, start_timestamp, end_timestamp
             )
             # Reset failures counter.
-            consecutive_failures_left = failures_limit
+            consecutive_failures_left = max_num_failures
         except (KeyboardInterrupt, Exception) as e:
             consecutive_failures_left -= 1
             _LOG.error(
@@ -159,9 +153,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # Download failed.
             if not consecutive_failures_left:
                 raise RuntimeError(
-                    f"{failures_limit} consecutive downloads were failed"
+                    f"{max_num_failures} consecutive downloads were failed"
                 ) from e
-        # if Download took more than expected.
+        # if the download took more than expected, we need to align on the grid.
         if datetime.now() > iteration_start_time + timedelta(
             minutes=interval_min
         ):
@@ -177,7 +171,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     minutes=interval_min
                 )
         # If download failed, but there is time before next download.
-        elif consecutive_failures_left < failures_limit:
+        elif consecutive_failures_left < max_num_failures:
             _LOG.info("Start repeat download immediately.")
             iteration_delay_sec = 0
         else:
