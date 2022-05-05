@@ -22,9 +22,6 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
     def get_id(cls) -> int:
         raise NotImplementedError
 
-    # TODO(Sonya): Add the same methods for TestImDbHelper. Maybe there is some
-    #  way to factor code into TestDbHelper since it's very similar but probably
-    #  it's better to leave a bit of repetition for now.
     @classmethod
     def _get_compose_file(cls) -> str:
         idx = cls.get_id()

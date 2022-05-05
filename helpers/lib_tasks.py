@@ -4265,7 +4265,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="auto",
     git_clean_=False,
     **kwargs,
 ):

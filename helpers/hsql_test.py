@@ -110,10 +110,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             hsystem.system(cmd, suppress_output=False)
         else:
             _LOG.warning("Leaving DB up")
-        # TODO(Sonya): Delete the compose / env files.
-        # if not hunit_test.get_incremental_tests():
-        #    os.unlink(cls._get_compose_file)
-        #    os.unlink(cls._get_db_env_path)
+        if not hunitest.get_incremental_tests():
+            os.unlink(cls._get_compose_file())
+            os.unlink(cls._get_db_env_path())
 
     @classmethod
     @abc.abstractmethod
