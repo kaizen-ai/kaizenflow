@@ -26,6 +26,8 @@ import requests
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
@@ -266,10 +268,7 @@ def timestamp_to_datetime(timestamps):
 
 # %%
 ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
-# ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data("ADA/USDT")
-
-# %%
-ccxt_kucoin_ada_exchange = imvcdeexcl.CcxtExchange("kucoin")
+ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data("ADA/USDT")
 
 # %%
 # Nina: data is hard to load for the whole month using CcxtExchange. Duration of downloading more than 5 hours.
@@ -317,8 +316,8 @@ df.loc[df["volume"].isna()]
 
 # %%
 # 2021
-start_timestamp = pd.Timestamp("2021-12-29")
-end_timestamp = pd.Timestamp("2021-12-30")
+start_timestamp = pd.Timestamp("2021-12-29 23:00:00+00:00")
+end_timestamp = pd.Timestamp("2021-12-30 23:59:00+00:00")
 ccxt_kucoin_ada_data = ccxt_kucoin_ada_exchange.download_ohlcv_data(
     currency_pair,
     start_timestamp=start_timestamp,
@@ -467,6 +466,24 @@ df_2021.set_index(pd.to_datetime(indexes), inplace=True)
 df_2021.head(2)
 
 # %%
+use_index = True
+# Refactored hpandas.drop_duplicates from CMTask1588 (not in master yet).
+df_2021_no_dup = hpandas.drop_duplicates(df_2021, use_index)
+df_2021_no_dup.head(3)
+
+# %%
+df_2021_no_dup.shape
+
+# %%
+# Non-refactored hpandas.drop_duplicates.
+df_2021_no_dup = hpandas.drop_duplicates(df_2021)
+_LOG.info(df_2021_no_dup.shape)
+df_2021_no_dup.head(3)
+
+# %% [markdown]
+# Just checked it and compared with two versions of `hpandas.drop_duplicates` in case there were any duplicates.
+
+# %%
 df_2021.loc[df_2021["volume"].isna()]
 
 # %%
@@ -588,14 +605,31 @@ df_2021.index.min(), df_2021.index.max()
 
 # %%
 ccxt_ada_nans_2021 = ada_kucoin_ccxt.loc[
-    (ada_kucoin_ccxt.index > "2021-12-29 23:00:00+00:00")
-    & (ada_kucoin_ccxt.index < "2021-12-30 23:59:00+00:00")
+    (ada_kucoin_ccxt.index >= "2021-12-29 23:00:00+00:00")
+    & (ada_kucoin_ccxt.index <= "2021-12-30 23:59:00+00:00")
     & (ada_kucoin_ccxt["open"].isna() == True)
 ]
 _LOG.info(ccxt_ada_nans_2021.shape)
 display(ccxt_ada_nans_2021.head(3))
 _LOG.info(df_2021.shape)
-display(df_2021.head(3))
+display(df_2021.tail(3))
+
+# %%
+# Take a look at data from s3 using hparque.from_parquet.
+file_path = "s3://cryptokaizen-data/historical/ccxt/latest/kucoin"
+data = hparque.from_parquet(file_path, aws_profile="ck")
+data_loc = data.loc[
+    (data.index >= "2021-12-29 23:00:00+00:00")
+    & (data.index <= "2021-12-30 23:59:00+00:00")
+    & (data["currency_pair"] == "ADA_USDT")
+]
+data_loc.head(3)
+
+# %%
+data_loc.loc[data_loc['open'].isna()]
+
+# %% [markdown]
+# Data from S3 is full. Apparently data loss is related to `_read_data_for_multiple_symbols` (`CcxtHistoricalPqByTileClient` uses in `read_data` see parent class.)
 
 # %%
 df_2021_nans = df_2021.loc[(df_2021["volume"] == "0")]
