@@ -63,7 +63,7 @@ class ImClient(abc.ABC):
     def __init__(
         self,
         vendor: str,
-        universe_version: str,
+        universe_version: Optional[str],
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
@@ -79,7 +79,8 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
-        hdbg.dassert_isinstance(universe_version, str)
+        if universe_version is not None:
+            hdbg.dassert_isinstance(universe_version, str)
         self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
@@ -595,7 +596,7 @@ class SqlRealTimeImClient(ImClient):
     ) -> None:
         # Real-time implementation has a different mechanism for getting universe.
         # Passing to make the parent class happy.
-        universe_version = "not_supported"
+        universe_version = None
         # These parameters are needed to get the universe which is needed to init
         # the parent class so they go before the parent's init.
         self._table_name = table_name
