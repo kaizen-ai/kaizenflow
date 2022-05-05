@@ -292,7 +292,7 @@ def clear_global_cache(
     try:
         info_before = _get_cache_size(cache_path, description)
     except ValueError:
-        _LOG.info("Cache has already been deleted by another process.")
+        _LOG.warning("Cache has already been deleted by another process.")
         return
     _LOG.info("Before clear_global_cache: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
@@ -314,7 +314,7 @@ def clear_global_cache(
     try:
         info_after = _get_cache_size(cache_path, description)
     except ValueError:
-        _LOG.info("Cache has already been deleted by another process.")
+        _LOG.warning("Cache has already been deleted by another process.")
         return
     _LOG.info("After clear_global_cache: %s", info_after)
 

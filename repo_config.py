@@ -190,10 +190,14 @@ def has_dind_support() -> bool:
 
     This is need to use Docker-in-Docker.
     """
-    return True
     if not is_inside_docker():
         # Outside Docker there is no privileged mode.
         return False
+    # TODO(Sonya): This part is not multi-process friendly. When multiple
+    # processes try to run this code they interfere. A solution is to run `ip
+    # link` in the entrypoint and create a has_docker_privileged_mode file
+    # which contains the value.
+    #return True
     # Thus we rely on the approach from https://stackoverflow.com/questions/32144575
     # checking if we can execute.
     # Sometimes there is some state left, so we need to clean it up.

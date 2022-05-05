@@ -28,6 +28,7 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     Get path to db env file that contains db connection parameters.
 
     :param stage: development stage, i.e. `local`, `dev` and `prod`
+    :param idx: index used to make unique the generated file
     """
     hdbg.dassert_in(stage, "local dev prod".split())
     # Get `env` files dir.
@@ -40,7 +41,10 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     # Get file path.
     amp_path = hgit.get_amp_abs_path()
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)
-    #hdbg.dassert_file_exists(env_file_path)
+    # We use idx when we want to generate a Docker env file on the fly. So we
+    # can't enforce that the file already exists.
+    if idx is None:
+        hdbg.dassert_file_exists(env_file_path)
     return env_file_path
 
 
