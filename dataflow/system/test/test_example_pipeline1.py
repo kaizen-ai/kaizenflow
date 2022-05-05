@@ -13,7 +13,7 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Danya): Inherit from `hsqltest.TestDbHelper`
+# TODO(Danya): Inherit from `hsqltest.TestDbHelper`.
 class Test_Example1_ForecastSystem(hunitest.TestCase):
     """
     Test a System composed of:
