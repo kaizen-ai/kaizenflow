@@ -8,10 +8,8 @@ import core.finance as cofinanc
 import helpers.hdatetime as hdateti
 import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
-import im_v2.common.db.db_utils as imvcddbut
 import helpers.hsql as hsql
 import helpers.hdbg as hdbg
-
 
 
 def get_example1_create_table_query() -> str:
