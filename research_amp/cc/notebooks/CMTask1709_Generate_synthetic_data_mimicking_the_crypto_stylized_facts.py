@@ -20,6 +20,11 @@
 
 # %%
 import core.finance.market_data_example as cfmadaex
+from typing import List
+import im_v2.common.universe as ivcu
+import requests
+import helpers.hdatetime as hdateti
+import statsmodels
 
 import pandas as pd
 import numpy as np
@@ -235,4 +240,171 @@ rets_df = rets_df.iloc[1:]
 rets_df
 
 # %%
-print(f"Hit Rate: {round(rets_df.prediction_is_right.sum()/rets_df.shape[0], 4)*100}%")
+print(f"Hit Rate: {round(rets_df.is_prediction_right.sum()/rets_df.shape[0], 4)*100}%")
+
+
+# %% [markdown]
+# # Extract returns from the real data
+
+# %% [markdown]
+# ## Load BTC data from CC
+
+# %%
+def get_exchange_currency_for_api_request(full_symbol: str) -> str:
+    """
+    Returns `exchange_id` and `currency_pair` in a format for requests to cc
+    API.
+    """
+    cc_exchange_id, cc_currency_pair = ivcu.parse_full_symbol(full_symbol)
+    cc_currency_pair = cc_currency_pair.lower().replace("_", "-")
+    return cc_exchange_id, cc_currency_pair
+
+
+def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol: str) -> pd.DataFrame:
+    """
+    - Transform CK `full_symbol` to the `crypto-chassis` request format.
+    - Construct OHLCV data request for `crypto-chassis` API.
+    - Save the data as a DataFrame.
+    """
+    # Deconstruct `full_symbol`.
+    cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(
+        full_symbol
+    )
+    # Build a request.
+    r = requests.get(
+        f"https://api.cryptochassis.com/v1/ohlc/{cc_exchange_id}/{cc_currency_pair}?startTime=0"
+    )
+    # Get url with data.
+    url = r.json()["historical"]["urls"][0]["url"]
+    # Read the data.
+    df = pd.read_csv(url, compression="gzip")
+    return df
+
+
+def apply_ohlcv_transformation(
+    df: pd.DataFrame,
+    full_symbol: str,
+    start_date: pd.Timestamp,
+    end_date: pd.Timestamp,
+) -> pd.DataFrame:
+    """
+    The following transformations are applied:
+
+    - Convert `timestamps` to the usual format.
+    - Convert data columns to `float`.
+    - Add `full_symbol` column.
+    """
+    # Convert `timestamps` to the usual format.
+    df = df.rename(columns={"time_seconds": "timestamp"})
+    df["timestamp"] = df["timestamp"].apply(
+        lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
+    )
+    df = df.set_index("timestamp")
+    # Convert to `float`.
+    for cols in df.columns:
+        df[cols] = df[cols].astype(float)
+    # Add `full_symbol`.
+    df["full_symbol"] = full_symbol
+    # Note: I failed to put [start_time, end_time] to historical request.
+    # Now it loads all the available data.
+    # For that reason the time interval is hardcoded on this stage.
+    df = df.loc[(df.index >= start_date) & (df.index <= end_date)]
+    return df
+
+
+def read_crypto_chassis_ohlcv(
+    full_symbols: List[str], start_date: pd.Timestamp, end_date: pd.Timestamp
+) -> pd.DataFrame:
+    """
+    - Load the raw data for one symbol.
+    - Convert it to CK format.
+    - Repeat the first two steps for all `full_symbols`.
+    - Concentrate them into unique DataFrame.
+    """
+    result = []
+    for full_symbol in full_symbols:
+        # Load raw data.
+        df_raw = load_crypto_chassis_ohlcv_for_one_symbol(full_symbol)
+        # Process it to CK format.
+        df = apply_ohlcv_transformation(df_raw, full_symbol, start_date, end_date)
+        result.append(df)
+    final_df = pd.concat(result)
+    return final_df
+
+
+# %%
+btc_df = read_crypto_chassis_ohlcv(["binance::BTC_USDT"], pd.Timestamp("2021-01-01", tz="UTC"), pd.Timestamp("2022-01-01", tz="UTC"))
+
+# %% [markdown]
+# ## Process returns
+
+# %%
+btc = btc_df.copy()
+
+# %% run_control={"marked": false}
+# Calculate returns.
+btc["rets"] = btc["close"].pct_change()
+# Rolling SMA for returns (with 100 periods loockback period).
+btc["rets_sma"] = btc["rets"].transform(lambda x: x.rolling(window=100).mean())
+# Substract SMA from returns to remove the upward trend.
+btc["rets_cleaned"] = btc["rets"] - btc["rets_sma"]
+#btc["rets"].plot()
+btc["rets_cleaned"].plot()
+
+# %%
+rets = btc[["rets_cleaned"]]
+rets = rets[rets.rets_cleaned.notna()]
+
+# %% run_control={"marked": false}
+fig = plt.figure(figsize=(15, 7))
+ax1 = fig.add_subplot(1, 1, 1)
+rets.hist(bins=300, ax=ax1)
+ax1.set_xlabel('Return')
+ax1.set_ylabel('Sample')
+ax1.set_title('Returns distribution')
+plt.show()
+
+# %%
+rets_df = rets.copy()
+rets_df.columns = ["rets"]
+
+# (-1) -> price goes down
+# 1 -> price goes up
+rets_df["prediction"] = 2*np.random.randint(0, 2, rets_df.shape[0])-1
+# Get the difference to estimate the validity of prediciton.
+rets_df["diff"] = rets_df.rets.diff()
+# Estimate the prediciton.
+rets_df["hit"] = ((rets_df["diff"]>0)&(rets_df["prediction"]==1))|((rets_df["diff"]<0)&(rets_df["prediction"]==-1))
+# Get rid of unnecessary columns
+rets_df = rets_df.drop(columns=["diff"])
+rets_df = rets_df.iloc[1:]
+
+# %%
+rets_df
+
+
+# %%
+def calculate_confidence_interval(hit_series, alpha, method):
+    """
+    :param alpha: Significance level
+    :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
+    """
+    point_estimate = hit.mean()
+    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
+        count=hit.sum(), nobs=hit.count(), alpha=alpha, method=method
+    )
+    result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
+    conf_alpha = (1 - alpha / 2) * 100
+    print(f"hit_rate: {result_values_pct[0]}")
+    print(f"hit_rate_lower_CI_({conf_alpha}%): {result_values_pct[1]}")
+    print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
+
+
+# %%
+# Calculate confidence intervals.
+hit = rets_df["hit"]
+alpha = 0.05
+method = "normal"
+calculate_confidence_interval(hit, alpha, method)
+
+# %%
