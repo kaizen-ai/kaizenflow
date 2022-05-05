@@ -476,7 +476,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(1602, 6)
                                   full_symbol   open   high    low  close  volume
-        timestamp                                                                
+        timestamp
         2009-09-28 19:25:00+00:00   kibot::ZI  16.23  16.23  16.23  16.23     1.0
         2009-09-28 19:26:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
         2009-09-28 19:27:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
@@ -553,7 +553,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(2477, 6)
                                   full_symbol   open   high    low  close  volume
-        timestamp                                                                
+        timestamp
         2009-09-27 19:00:00+00:00    kibot::W  462.0  462.1  452.0  457.0   762.0
         2009-09-27 19:01:00+00:00    kibot::W    NaN    NaN    NaN    NaN     NaN
         2009-09-27 19:02:00+00:00    kibot::W    NaN    NaN    NaN    NaN     NaN
@@ -594,7 +594,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(26, 6)
                                   full_symbol     open    high     low   close  volume
-        timestamp                                                                     
+        timestamp
         2009-09-29 03:38:00+00:00    kibot::W  459.250  459.25  459.25  459.25     1.0
         2009-09-29 03:38:00+00:00   kibot::ZI   16.224  16.224  16.204  16.204     4.0
         2009-09-29 03:39:00+00:00    kibot::W      NaN     NaN     NaN     NaN     NaN
@@ -765,7 +765,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(203, 6)
                                   full_symbol     open     high      low    close  volume
-        timestamp                                                                        
+        timestamp
         2009-09-27 19:00:00+00:00    kibot::W  462.000    462.1    452.0    457.0     762
         2009-09-28 19:25:00+00:00   kibot::ZI   16.230  16.23.1  16.23.2  16.23.3       1
         2009-09-28 20:22:00+00:00   kibot::ZI   16.255   16.255   16.255   16.255       1
@@ -804,7 +804,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(200, 6)
                                   full_symbol    open    high     low   close  volume
-        timestamp                                                                    
+        timestamp
         2009-09-28 19:25:00+00:00   kibot::ZI  16.230  16.230  16.230  16.230       1
         2009-09-28 20:22:00+00:00   kibot::ZI  16.255  16.255  16.255  16.255       1
         2009-09-28 21:29:00+00:00   kibot::ZI  16.195  16.195  16.195  16.195       1

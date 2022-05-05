@@ -976,7 +976,7 @@ class TestDropDuplicates(hunitest.TestCase):
         no_duplicates_df = hpandas.drop_duplicates(df, use_index, subset=subset)
         no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
-        expected_signature = r""" 
+        expected_signature = r"""
                       int letter  float
         dummy_value1    1      A    3.2
         dummy_value3    1      A    3.2
@@ -999,7 +999,7 @@ class TestDropDuplicates(hunitest.TestCase):
         no_duplicates_df = hpandas.drop_duplicates(df, use_index)
         no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
-        expected_signature = r"""              
+        expected_signature = r"""
                       int letter  float
         dummy_value1    1      A    3.2
         dummy_value3    1      A    3.2
@@ -1022,7 +1022,7 @@ class TestDropDuplicates(hunitest.TestCase):
         no_duplicates_df = hpandas.drop_duplicates(df, use_index)
         no_duplicates_df = hpandas.df_to_str(no_duplicates_df)
         # Prepare expected result.
-        expected_signature = r"""             
+        expected_signature = r"""
                       int letter  float
         dummy_value1    1      A    3.2
         dummy_value2   10      B    3.2
