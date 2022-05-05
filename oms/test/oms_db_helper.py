@@ -42,7 +42,8 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
         See `_get_db_env_path()` in the parent class.
         """
         # Use the `local` stage for testing.
-        env_file_path = oomlitas.get_db_env_path("local")
+        idx = cls.get_id()
+        env_file_path = oomlitas.get_db_env_path("local", idx=idx)
         return env_file_path  # type: ignore[no-any-return]
 
     @classmethod

@@ -8,6 +8,7 @@ import oms.oms_lib_tasks as oomlitas
 
 import logging
 import os
+from typing import Optional
 
 from invoke import task
 
@@ -22,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 #  common part CMTask #496.
 
 
-def get_db_env_path(stage: str) -> str:
+def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     """
     Get path to db env file that contains db connection parameters.
 
@@ -32,11 +33,14 @@ def get_db_env_path(stage: str) -> str:
     # Get `env` files dir.
     env_dir = "oms/devops/env"
     # Get the file name depending on the stage.
-    env_file_name = f"{stage}.oms_db_config.env"
+    env_file_name = f"{stage}.oms_db_config"
+    if idx is not None:
+        env_file_name += f"_{idx}"
+    env_file_name += ".env"
     # Get file path.
     amp_path = hgit.get_amp_abs_path()
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)
-    hdbg.dassert_file_exists(env_file_path)
+    #hdbg.dassert_file_exists(env_file_path)
     return env_file_path
 
 
