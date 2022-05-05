@@ -64,14 +64,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         exchange = "bibance"
         currency_pair = "btc/usdt"
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
-        expected = """'urls'"""
+        # Empty Dataframe is expected.
+        expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdeecl.CryptoChassisExchange()
-        with self.assertRaises(KeyError) as cm:
-            client.download_market_depth(
+        df = client.download_market_depth(
                 exchange, currency_pair, start_timestamp=start_timestamp
             )
-        # Check output for error.
-        actual = str(cm.exception)
+        actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
     def test_download_market_depth_invalid_input3(self) -> None:
@@ -82,12 +81,11 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         currency_pair = "btc/busdt"
         # End is before start -> invalid.
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
-        expected = """'urls'"""
+        # Empty Dataframe is expected.
+        expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdeecl.CryptoChassisExchange()
-        with self.assertRaises(KeyError) as cm:
-            client.download_market_depth(
+        df = client.download_market_depth(
                 exchange, currency_pair, start_timestamp=start_timestamp
             )
-        # Check output for error.
-        actual = str(cm.exception)
+        actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
