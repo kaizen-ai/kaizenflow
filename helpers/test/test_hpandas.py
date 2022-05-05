@@ -964,8 +964,7 @@ class TestDropDuplicates(hunitest.TestCase):
 
     def test_drop_duplicates1(self) -> None:
         """
-        Remove identical rows by subset, i.e. if identical values in subset
-        columns, it drops.
+        Test that duplicates are dropped correctly.
 
         use_index = True
         subset = ["float"]
@@ -989,7 +988,7 @@ class TestDropDuplicates(hunitest.TestCase):
 
     def test_drop_duplicates2(self) -> None:
         """
-        Remove completely identical rows.
+        Test that duplicates are dropped correctly.
 
         use_index = True
         subset = None
@@ -1012,7 +1011,7 @@ class TestDropDuplicates(hunitest.TestCase):
 
     def test_drop_duplicates3(self) -> None:
         """
-        Remove completely identical rows, even if indexes are different.
+        Test that duplicates are dropped correctly.
 
         use_index = False
         subset = None
@@ -1034,8 +1033,7 @@ class TestDropDuplicates(hunitest.TestCase):
 
     def test_drop_duplicates4(self) -> None:
         """
-        Remove identical rows by subset, i.e. if identical values in subset
-        columns, it drops. Should be the same values for all subset columns.
+        Test that duplicates are dropped correctly.
 
         use_index = False
         subset = ["letter", "float"]
