@@ -28,8 +28,8 @@ class TestCryptoChassisExchange1(hunitest.TestCase):
         # Verify dataframe length.
         self.assertEqual(86007, actual.shape[0])
         # Verify corner datetime if output is not empty.
-        first_date = int(actual["time_seconds"].iloc[0])
-        last_date = int(actual["time_seconds"].iloc[-1])
+        first_date = int(actual["timestamp"].iloc[0])
+        last_date = int(actual["timestamp"].iloc[-1])
         self.assertEqual(1641686400, first_date)
         self.assertEqual(1641772799, last_date)
         # Check the output values.

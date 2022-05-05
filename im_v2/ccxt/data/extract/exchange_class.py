@@ -56,7 +56,7 @@ class CcxtExchange:
         hdbg.dassert_eq(data_type, "ohlcv")
         # Get data.
         return self.download_ohlcv_data(
-            currency_pair=kwargs.currency_pair,
+            currency_pair=kwargs["currency_pair"],
             *args,
             start_timestamp=kwargs["start_timestamp"],
             end_timestamp=kwargs["end_timestamp"],
