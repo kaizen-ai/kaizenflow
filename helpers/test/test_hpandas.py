@@ -940,6 +940,10 @@ class TestDropAxisWithAllNans(hunitest.TestCase):
 
 
 class TestDropDuplicates(hunitest.TestCase):
+    """
+    Test that duplicates are dropped correctly.
+    """
+
     @staticmethod
     def get_test_data() -> pd.DataFrame:
         test_data = [
@@ -964,10 +968,8 @@ class TestDropDuplicates(hunitest.TestCase):
 
     def test_drop_duplicates1(self) -> None:
         """
-        Test that duplicates are dropped correctly.
-
-        use_index = True
-        subset = ["float"]
+        - use_index = True
+        - subset is not None
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -988,10 +990,8 @@ class TestDropDuplicates(hunitest.TestCase):
 
     def test_drop_duplicates2(self) -> None:
         """
-        Test that duplicates are dropped correctly.
-
-        use_index = True
-        subset = None
+        - use_index = True
+        - subset = None
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -1005,16 +1005,15 @@ class TestDropDuplicates(hunitest.TestCase):
         dummy_value3    1      A    3.2
         dummy_value2   10      B    3.2
         dummy_value1    8      A    3.2
-        dummy_value1    4      B    8.2"""
+        dummy_value1    4      B    8.2
+        """
         # Check.
         self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
 
     def test_drop_duplicates3(self) -> None:
         """
-        Test that duplicates are dropped correctly.
-
-        use_index = False
-        subset = None
+        - use_index = False
+        - subset = None
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -1027,16 +1026,15 @@ class TestDropDuplicates(hunitest.TestCase):
         dummy_value1    1      A    3.2
         dummy_value2   10      B    3.2
         dummy_value1    8      A    3.2
-        dummy_value1    4      B    8.2"""
+        dummy_value1    4      B    8.2
+        """
         # Check.
         self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
 
     def test_drop_duplicates4(self) -> None:
         """
-        Test that duplicates are dropped correctly.
-
-        use_index = False
-        subset = ["letter", "float"]
+        - use_index = False
+        - subset is not None
         """
         # Prepare test data.
         df = self.get_test_data()
@@ -1049,6 +1047,7 @@ class TestDropDuplicates(hunitest.TestCase):
                       int letter  float
         dummy_value1    1      A    3.2
         dummy_value2   10      B    3.2
-        dummy_value1    4      B    8.2"""
+        dummy_value1    4      B    8.2
+        """
         # Check.
         self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)

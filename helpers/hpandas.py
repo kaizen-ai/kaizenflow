@@ -387,14 +387,14 @@ def drop_duplicates(
     **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
     """
-    Create a wrapper around `pandas.drop_duplicates()`.
+    Wrapper around `pandas.drop_duplicates()`.
 
     See the official docs:
     - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
     - https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.drop_duplicates.html
 
     :param use_index: use index values for identifying duplicates
-    :param subset:  a list of columns to consider for identifying duplicates
+    :param subset: a list of columns to consider for identifying duplicates
     :return: data without duplicates
     """
     _LOG.debug(
@@ -411,22 +411,23 @@ def drop_duplicates(
     if subset is None:
         subset = data.columns.tolist()
     else:
-        hdbg.dassert_lte(1, len(subset), "Column subset cannot be empty")
+        hdbg.dassert_lte(1, len(subset), "Columns subset cannot be empty")
     if use_index:
         # Save index column name in order to set it back after removing duplicates.
         index_col_name = data.index.name or "index"
         # Add index column to subset columns in order to drop duplicates by it as well.
         subset.insert(0, index_col_name)
         data = data.reset_index()
-    # Drop duplicates.
+    #
     data_no_dups = data.drop_duplicates(subset=subset, *args, **kwargs)
-    # Return index column name back if it was used for identifying duplicates.
+    #
     if use_index:
+        # Set the index back.
         data_no_dups = data_no_dups.set_index(index_col_name, drop=True)
-        # Set index name to None if it wasn't originally.
+        # Remove the index's name if the original index does not have one.
         if index_col_name == "index":
             data_no_dups.index.name = None
-    # Report change.
+    # Report the change.
     num_rows_after = data_no_dups.shape[0]
     if num_rows_before != num_rows_after:
         _LOG.debug(
