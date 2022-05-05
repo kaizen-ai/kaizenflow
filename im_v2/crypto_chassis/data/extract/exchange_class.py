@@ -39,10 +39,10 @@ class CryptoChassisExchange:
         hdbg.dassert_eq(data_type, "market_depth")
         # Get data.
         return self.download_market_depth(
-            exchange=kwargs.exchange_id,
-            currency_pair=kwargs.currency_pair,
-            depth=kwargs.depth,
-            start_timestamp=kwargs.start_timestamp,
+            exchange=kwargs["exchange_id"],
+            currency_pair=kwargs["currency_pair"],
+            depth=kwargs["depth"],
+            start_timestamp=kwargs["start_timestamp"],
         )
 
     def download_market_depth(
@@ -102,6 +102,8 @@ class CryptoChassisExchange:
         market_depth = market_depth.drop(
             columns=["bid_price_bid_size", "ask_price_ask_size"]
         )
+        # Rename time column.
+        market_depth = market_depth.rename(columns={"time_seconds": "timestamp"})
         return market_depth
 
     def _build_base_url(

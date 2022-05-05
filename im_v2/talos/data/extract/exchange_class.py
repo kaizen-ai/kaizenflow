@@ -100,10 +100,10 @@ class TalosExchange:
         hdbg.dassert_eq(data_type, "ohlcv")
         # Get data.
         return self.download_ohlcv_data(
-            currency_pair=kwargs.currency_pair,
+            currency_pair=kwargs["currency_pair"],
             exchange=args[0],
-            start_timestamp=kwargs.start_timestamp,
-            end_timestamp=kwargs.end_timestamp,
+            start_timestamp=kwargs["start_timestamp"],
+            end_timestamp=kwargs["end_timestamp"],
         )
 
     def download_ohlcv_data(

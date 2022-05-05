@@ -58,10 +58,10 @@ class CcxtExchange:
         return self.download_ohlcv_data(
             currency_pair=kwargs.currency_pair,
             *args,
-            start_timestamp=kwargs.start_timestamp,
-            end_timestamp=kwargs.end_timestamp,
-            bar_per_iteration=kwargs.bar_per_iteration,
-            sleep_time_in_secs=kwargs.sleep_time_in_secs,
+            start_timestamp=kwargs["start_timestamp"],
+            end_timestamp=kwargs["end_timestamp"],
+            bar_per_iteration=kwargs["bar_per_iteration"],
+            sleep_time_in_secs=kwargs["sleep_time_in_secs"],
         )
 
     def log_into_exchange(self) -> ccxt.Exchange:

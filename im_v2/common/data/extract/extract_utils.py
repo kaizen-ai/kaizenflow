@@ -176,29 +176,35 @@ def download_historical_data(
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
         vendor = "CCXT"
+        data_type = "ohlcv"
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
         vendor = "talos"
+        data_type = "ohlcv"
         additional_args.append(args.exchange_id)
     elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
         exchange = exchange_class()
         vendor = "crypto_chassis"
+        data_type = "market_depth"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
     universe = ivcu.get_vendor_universe(vendor, version=args.universe)
     currency_pairs = universe[args.exchange_id]
+    # Convert Namespace object with processing arguments to dict format.
+    args = vars(args)
     # Convert timestamps.
-    args["end_timestamp"] = pd.Timestamp(args.end_timestamp)
-    args["start_timestamp"] = pd.Timestamp(args.start_timestamp)
-    path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
+    args["end_timestamp"] = pd.Timestamp(args["end_timestamp"])
+    args["start_timestamp"] = pd.Timestamp(args["start_timestamp"])
+    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
         args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
         # Download data.
         data = exchange.download_data(
+            data_type,
             *additional_args,
             **args
             )
@@ -206,7 +212,7 @@ def download_historical_data(
         # TODO(Nikola): Exchange id was missing and it is added additionally to
         #  match signature of other scripts.
         data["currency_pair"] = currency_pair
-        data["exchange_id"] = args.exchange_id
+        data["exchange_id"] = args["exchange_id"]
         # Change index to allow calling add_date_partition_cols function on the dataframe.
         data = imvcdttrut.reindex_on_datetime(data, "timestamp")
         data, partition_cols = hparque.add_date_partition_columns(
@@ -222,12 +228,12 @@ def download_historical_data(
             ["currency_pair"] + partition_cols,
             path_to_exchange,
             partition_filename=None,
-            aws_profile=args.aws_profile,
+            aws_profile=args["aws_profile"],
         )
         # Sleep between iterations is needed for CCXT.
         if exchange_class == CCXT_EXCHANGE:
-            time.sleep(args.sleep_time)
+            time.sleep(args["sleep_time"])
     # Merge all new parquet into a single `data.parquet`.
     hparque.list_and_merge_pq_files(
-        path_to_exchange, aws_profile=args.aws_profile
+        path_to_exchange, aws_profile=args["aws_profile"]
     )
