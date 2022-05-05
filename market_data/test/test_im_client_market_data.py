@@ -1072,7 +1072,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = ["asset_id", "full_symbol", "close", "start_ts"]
+        columns = ["asset_id", "full_symbol", "close", "start_ts"]
         column_remap = None
         filter_data_mode = "assert"
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
@@ -1101,7 +1101,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = ["asset_id", "close", "start_ts"]
+        columns = ["asset_id", "close", "start_ts"]
         column_remap = None
         filter_data_mode = "assert"
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
@@ -1130,7 +1130,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = ["full_symbol", "close"]
+        columns = ["full_symbol", "close"]
         column_remap = None
         filter_data_mode = "assert"
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
@@ -1149,7 +1149,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = ["asset_id", "close", "start_ts"]
+        columns = ["asset_id", "close", "start_ts"]
         column_remap = None
         filter_data_mode = "warn_and_trim"
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
@@ -1178,7 +1178,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         """
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = ["full_symbol", "close"]
+        columns = ["full_symbol", "close"]
         column_remap = None
         filter_data_mode = "warn_and_trim"
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
