@@ -1,11 +1,10 @@
 import abc
 import logging
-import random
 from typing import Any, Callable
 
+import helpers.hio as hio
 import helpers.hsql as hsql
 import helpers.hsql_test as hsqltest
-import helpers.hio as hio
 import oms.oms_lib_tasks as oomlitas
 
 _LOG = logging.getLogger(__name__)
@@ -20,7 +19,7 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
     # derived classes can't be instantiated because of get_id().
     @classmethod
     @abc.abstractmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         raise NotImplementedError
 
     # TODO(Sonya): Add the same methods for TestImDbHelper. Maybe there is some
@@ -28,10 +27,12 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
     #  it's better to leave a bit of repetition for now.
     @classmethod
     def _get_compose_file(cls) -> str:
-        # TODO(Sonya): Create a method in hio that adds an idx to a file path
-        #  and use it in all these places.
         idx = cls.get_id()
-        return f"oms/devops/compose/docker-compose_{idx}.yml"
+        docker_compose_path = "oms/devops/compose/docker-compose.yml"
+        docker_compose_path_idx: str = hio.add_idx_to_filename(
+            docker_compose_path, idx
+        )
+        return docker_compose_path_idx
 
     @classmethod
     def _get_service_name(cls) -> str:
@@ -50,7 +51,7 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
         return env_file_path  # type: ignore[no-any-return]
 
     @classmethod
-    def _create_docker_files(cls):
+    def _create_docker_files(cls) -> None:
         service_name = cls._get_service_name()
         idx = cls.get_id()
         host_port = 5432 + idx

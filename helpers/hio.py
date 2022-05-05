@@ -514,6 +514,33 @@ def create_executable_script(
         print(f"# {msg}:\n> {file_name}")
 
 
+def add_idx_to_filename(
+    file_name: str,
+    idx: int,
+    *,
+    before_extension: bool = True,
+    with_underscore: bool = True,
+) -> str:
+    """
+    Add an index to a file name.
+
+    :param file_name: file name to modify
+    :param idx: index to add to the file name
+    :param before_extension: whether to insert the index before the file extension
+    :param with_underscore: whether to separate the index with an underscore
+    :return: modified file name with an index
+    """
+    idx = str(idx)
+    if with_underscore:
+        idx = "_" + idx
+    if before_extension:
+        # Add the index to the file name before the extension, e.g.
+        # `dir/file.txt` -> `dir/file_1.txt`.
+        file_name_no_ext, ext = file_name.rsplit(".", 1)
+        return file_name_no_ext + idx + "." + ext
+    return file_name + idx
+
+
 # #############################################################################
 # JSON
 # #############################################################################
@@ -587,7 +614,7 @@ def from_json(file_name: str) -> dict:
     # Remove comments.
     txt_tmp = []
     for line in txt.split("\n"):
-        if re.match("^\s*#", line):
+        if re.match(r"^\s*#", line):
             continue
         txt_tmp.append(line)
     txt_tmp = "\n".join(txt_tmp)
