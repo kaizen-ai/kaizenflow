@@ -15,9 +15,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestRestrictions1(omtodh.TestOmsDbHelper):
-    @staticmethod
-    def get_id(self):
-        pass
+
+    @classmethod
+    def get_id(cls):
+        return hash(cls.__name__) % 1000
 
     def test1(self) -> None:
         table_name = oomsdb.RESTRICTIONS_TABLE_NAME

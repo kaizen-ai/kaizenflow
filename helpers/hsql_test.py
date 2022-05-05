@@ -63,8 +63,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Initialize the test database inside test container.
         """
         _LOG.info("\n%s", hprint.frame("setUpClass"))
+        cls._create_docker_files()
         # Read the connection parameters from the env file.
-        cls.db_env_file = cls._get_db_env_path(cls)
+        cls.db_env_file = cls._get_db_env_path()
         connection_info = hsql.get_connection_info_from_env_file(cls.db_env_file)
         conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
@@ -74,9 +75,8 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             cls.bring_down_db = False
         else:
             # Start the service.
-            cls._create_docker_files(cls)
             cls.docker_compose_file_path = os.path.join(
-                hgit.get_amp_abs_path(), cls._get_compose_file(cls)
+                hgit.get_amp_abs_path(), cls._get_compose_file()
             )
             # TODO(Grisha): use invoke task CMTask #547.
             cmd = (
@@ -111,35 +111,45 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         else:
             _LOG.warning("Leaving DB up")
 
-    @staticmethod
+    #@staticmethod
+    @classmethod
     @abc.abstractmethod
-    def _get_compose_file() -> str:
+    def get_id(cls) -> int:
+        """
+        Return a unique ID.
+
+        """
+        assert 0
+        pass
+
+    #@staticmethod
+    @classmethod
+    @abc.abstractmethod
+    def _get_compose_file(cls) -> str:
         """
         Get path to Docker compose file.
         """
 
-    @staticmethod
+    #@staticmethod
+    @classmethod
     @abc.abstractmethod
-    def _get_service_name() -> str:
+    def _get_service_name(cls) -> str:
         """
         Get service name.
         """
 
-    @staticmethod
+    #@staticmethod
+    @classmethod
     @abc.abstractmethod
-    def _get_db_env_path() -> str:
+    def _get_db_env_path(cls) -> str:
         """
         Get path to db env file that contains db connection parameters.
         """
 
-    @staticmethod
+    #@staticmethod
+    @classmethod
     @abc.abstractmethod
-    def _create_docker_files() -> str:
+    def _create_docker_files(cls) -> str:
         """
         Create the compose and env file for the DB run.
         """
-
-    @staticmethod
-    @abc.abstractmethod
-    def get_id():
-        pass

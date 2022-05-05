@@ -19,22 +19,25 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
     # TODO(gp): For some reason without having this function
     #  defined, the derived classes can't be instantiated because
     #  of get_id()
-    @staticmethod
+    @classmethod
     @abc.abstractmethod
-    def get_id():
+    def get_id(cls):
+        assert 0
         pass
 
-    def _get_compose_file(self) -> str:
-        return "oms/devops/compose/docker-compose.yml"
+    @classmethod
+    def _get_compose_file(cls) -> str:
+        idx = cls.get_id()
+        return f"oms/devops/compose/docker-compose_{idx}.yml"
 
-    def _get_service_name(self) -> str:
-        #max_lim = 2048
-        #idx = random.randint(0, max_lim)
-        idx = self.get_id()
+    @classmethod
+    def _get_service_name(cls) -> str:
+        idx = cls.get_id()
         return "oms_postgres" + str(idx)
 
     # TODO(gp): Use file or path consistently.
-    def _get_db_env_path(self) -> str:
+    @classmethod
+    def _get_db_env_path(cls) -> str:
         """
         See `_get_db_env_path()` in the parent class.
         """
@@ -42,12 +45,10 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
         env_file_path = oomlitas.get_db_env_path("local")
         return env_file_path  # type: ignore[no-any-return]
 
-    def _create_docker_files(self):
-        service_name = self._get_service_name()
-        # Max number of ports on a Linux system is 64k.
-        #max_lim = 2048
-        #idx = random.randint(0, max_lim)
-        idx = self.get_id()
+    @classmethod
+    def _create_docker_files(cls):
+        service_name = cls._get_service_name()
+        idx = cls.get_id()
         host_port = 5432 + idx
         txt = f"""version: '3.5'
 
@@ -59,8 +60,8 @@ services:
     environment:
       - POSTGRES_HOST=${{POSTGRES_HOST}}
       - POSTGRES_DB=${{POSTGRES_DB}}
-      #- POSTGRES_PORT={{POSTGRES_PORT}}
-      - POSTGRES_PORT=5432
+      - POSTGRES_PORT={{POSTGRES_PORT}}
+      #- POSTGRES_PORT=5432
       - POSTGRES_USER=${{POSTGRES_USER}}
       - POSTGRES_PASSWORD=${{POSTGRES_PASSWORD}}
     volumes:
@@ -76,15 +77,15 @@ networks:
   default:
     name: {service_name}_network
 """
-        compose_file_name = TestOmsDbHelper._get_compose_file()
+        compose_file_name = cls._get_compose_file()
         hio.to_file(compose_file_name, txt)
         #
         txt = f"""POSTGRES_HOST=localhost
 POSTGRES_DB=oms_postgres_db_local
-POSTGRES_PORT=5432
+POSTGRES_PORT={host_port}
 POSTGRES_USER=aljsdalsd
 POSTGRES_PASSWORD=alsdkqoen"""
-        env_file_name = self._get_db_env_path()
+        env_file_name = cls._get_db_env_path()
         hio.to_file(env_file_name, txt)
 
     def _test_create_table_helper(
