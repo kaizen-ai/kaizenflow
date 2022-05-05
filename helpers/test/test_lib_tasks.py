@@ -816,8 +816,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         coverage = False
         collect_only = False
         tee_to_file = False
-        # TODO(Sonya): use a string that is the value of pytest -n
-        in_parallel = False
+        n_threads = "1"
         #
         act = hlibtask._build_run_command_line(
             "fast_tests",
@@ -827,12 +826,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
             coverage,
             collect_only,
             tee_to_file,
-            in_parallel,
+            n_threads,
         )
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
-            '--only-rerun "Failed: Timeout"'
+            '--only-rerun "Failed: Timeout" -n 1'
         )
         self.assert_equal(act, exp)
 
@@ -846,7 +845,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         coverage = True
         collect_only = True
         tee_to_file = False
-        in_parallel = False
+        n_threads = "1"
         #
         act = hlibtask._build_run_command_line(
             "fast_tests",
@@ -856,14 +855,14 @@ class Test_build_run_command_line1(hunitest.TestCase):
             coverage,
             collect_only,
             tee_to_file,
-            in_parallel,
+            n_threads,
         )
         exp = (
             r'pytest -m "not slow and not superslow" . '
             r"-o timeout_func_only=true --timeout 5 --reruns 2 "
             r'--only-rerun "Failed: Timeout" --cov=.'
             r" --cov-branch --cov-report term-missing --cov-report html "
-            r"--collect-only"
+            r"--collect-only -n 1"
         )
         self.assert_equal(act, exp)
 
@@ -905,7 +904,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         coverage = False
         collect_only = False
         tee_to_file = False
-        in_parallel = False
+        n_threads = "1"
         #
         act = hlibtask._build_run_command_line(
             test_list_name,
@@ -915,7 +914,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
             coverage,
             collect_only,
             tee_to_file,
-            in_parallel,
+            n_threads,
         )
         exp = (
             "pytest Test_build_run_command_line1.test_run_fast_tests4/tmp.scratch/"
@@ -934,7 +933,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         coverage = False
         collect_only = False
         tee_to_file = True
-        in_parallel = False
+        n_threads = "1"
         #
         act = hlibtask._build_run_command_line(
             test_list_name,
@@ -944,12 +943,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
             coverage,
             collect_only,
             tee_to_file,
-            in_parallel,
+            n_threads,
         )
         exp = (
             'pytest -m "not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
-            '--only-rerun "Failed: Timeout" 2>&1'
+            '--only-rerun "Failed: Timeout" -n 1 2>&1'
             " | tee tmp.pytest.fast_tests.log"
         )
         self.assert_equal(act, exp)
@@ -964,7 +963,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         coverage = False
         collect_only = False
         tee_to_file = False
-        in_parallel = False
+        n_threads = "1"
         #
         act = hlibtask._build_run_command_line(
             "fast_tests",
@@ -974,12 +973,12 @@ class Test_build_run_command_line1(hunitest.TestCase):
             coverage,
             collect_only,
             tee_to_file,
-            in_parallel,
+            n_threads,
         )
         exp = (
             'pytest -m "optimizer and not slow and not superslow" . '
             "-o timeout_func_only=true --timeout 5 --reruns 2 "
-            '--only-rerun "Failed: Timeout"'
+            '--only-rerun "Failed: Timeout" -n 1'
         )
         self.assert_equal(act, exp)
 
@@ -993,7 +992,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
         coverage = False
         collect_only = False
         tee_to_file = False
-        in_parallel = True
+        n_threads = "auto"
         #
         act = hlibtask._build_run_command_line(
             "fast_tests",
@@ -1003,7 +1002,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
             coverage,
             collect_only,
             tee_to_file,
-            in_parallel,
+            n_threads,
         )
         exp = (
             'pytest -m "not slow and not superslow" . '

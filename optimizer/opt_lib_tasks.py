@@ -228,7 +228,7 @@ def opt_run_fast_tests(
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    in_parallel=False,
+    n_threads="1",
     **kwargs,
 ):
     """
@@ -263,7 +263,7 @@ def opt_run_fast_tests(
         coverage,
         collect_only,
         tee_to_file,
-        in_parallel,
+        n_threads,
         git_clean,
         **kwargs,
     )
@@ -280,7 +280,7 @@ def opt_run_slow_tests(
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    in_parallel=False,
+    n_threads="1",
     **kwargs,
 ):
     """
@@ -316,7 +316,7 @@ def opt_run_slow_tests(
         coverage,
         collect_only,
         tee_to_file,
-        in_parallel,
+        n_threads,
         git_clean,
         **kwargs,
     )
