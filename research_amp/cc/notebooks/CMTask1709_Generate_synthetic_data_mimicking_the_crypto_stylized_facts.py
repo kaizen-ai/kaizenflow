@@ -352,8 +352,8 @@ btc["rets_cleaned"] = btc["rets"] - btc["rets_sma"]
 btc["rets_cleaned"].plot()
 
 # %%
-rets = btc[["rets"]]
-rets = rets[rets.rets.notna()]
+rets = btc[["rets_cleaned"]]
+rets = rets[rets.notna()]
 
 # %% run_control={"marked": false}
 fig = plt.figure(figsize=(15, 7))
