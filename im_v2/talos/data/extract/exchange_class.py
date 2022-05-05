@@ -101,7 +101,7 @@ class TalosExchange:
         # Get data.
         return self.download_ohlcv_data(
             currency_pair=kwargs["currency_pair"],
-            exchange=args[0],
+            exchange=kwargs["exchange_id"],
             start_timestamp=kwargs["start_timestamp"],
             end_timestamp=kwargs["end_timestamp"],
         )

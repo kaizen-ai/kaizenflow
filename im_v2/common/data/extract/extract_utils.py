@@ -169,9 +169,8 @@ def download_historical_data(
     :param exchange_class: which exchange class is used in script run
      e.g. "CcxtExchange" or "TalosExchange"
     """
-    # Initialize exchange class and prepare additional args, if any.
+    # Initialize exchange class.
     # Every exchange can potentially have a specific set of init args.
-    additional_args = []
     if exchange_class.__name__ == CCXT_EXCHANGE:
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
@@ -188,7 +187,6 @@ def download_historical_data(
         data_type = "market_depth"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
-    additional_args.append(args.exchange_id)
     # Load currency pairs.
     universe = ivcu.get_vendor_universe(vendor, version=args.universe)
     currency_pairs = universe[args.exchange_id]
@@ -205,7 +203,6 @@ def download_historical_data(
         # Download data.
         data = exchange.download_data(
             data_type,
-            *additional_args,
             **args
             )
         # Assign pair and exchange columns.

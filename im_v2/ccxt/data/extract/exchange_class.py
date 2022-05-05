@@ -45,7 +45,7 @@ class CcxtExchange:
         """
         return currency_pair.replace("_", "/")
 
-    def download_data(self, data_type: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
         """
         Download CCXT data.
 
@@ -57,7 +57,7 @@ class CcxtExchange:
         # Get data.
         return self.download_ohlcv_data(
             currency_pair=kwargs["currency_pair"],
-            *args,
+            *[],
             start_timestamp=kwargs["start_timestamp"],
             end_timestamp=kwargs["end_timestamp"],
             bar_per_iteration=kwargs["bar_per_iteration"],

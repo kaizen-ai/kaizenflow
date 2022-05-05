@@ -39,7 +39,7 @@ class CryptoChassisExchange:
         hdbg.dassert_eq(data_type, "market_depth")
         # Get data.
         return self.download_market_depth(
-            exchange=args[0],
+            exchange=kwargs["exchange_id"],
             currency_pair=kwargs["currency_pair"],
             depth=kwargs["depth"],
             start_timestamp=kwargs["start_timestamp"],
