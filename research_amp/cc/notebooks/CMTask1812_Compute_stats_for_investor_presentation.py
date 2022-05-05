@@ -82,7 +82,8 @@ def get_cumulative_volume_ratios(
         f"Number of entities that is needed to consitute 90% of total sum: {num_of_entities}"
     )
     if plot_results:
-        cumul_volume.plot()
+        # TODO(max): plot as bars with the names of the exchanges at the bottom (vertically).
+        cumul_volume.plot(ylim=(0, 1))
     return cumul_volume
 
 
@@ -120,10 +121,19 @@ def get_general_volume_ratio_df(
 # # Exchanges (Spot)
 
 # %%
+# !ls ../../../CMTask1812_Compute_stats_for_investor_presentation
+
+# %%
+# Original data in /data/shared/CMTask1812_Compute_stats_for_investor_presentation
+# # cp -r /data/shared/CMTask1812_Compute_stats_for_investor_presentation .
+
+dir_name = "../../../CMTask1812_Compute_stats_for_investor_presentation"
+
 # Read .html file.
 # It was downloaded 2022-05-03 from https://coinmarketcap.com/rankings/exchanges/.
 # Contains the snapshot of a table with the descriptive statistics of cryptocurrency exhanges.
 file_name_exch = (
+    dir_name + "/" +
     "Top Cryptocurrency Exchanges Ranked By Volume _ CoinMarketCap.html"
 )
 file_exch = pd.read_html(file_name_exch)
@@ -212,6 +222,7 @@ display(all_cumul_volume.head(5))
 # It was downloaded 2022-05-03 from https://coinmarketcap.com/rankings/exchanges/derivatives/.
 # Contains the snapshot of a table with the descriptive statistics of cryptocurrency derivatives exhanges.
 file_name_der = (
+    dir_name + "/" +
     "Top Cryptocurrency Derivatives Exchanges Ranked _ CoinMarketCap.html"
 )
 file_der = pd.read_html(file_name_der)
