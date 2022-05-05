@@ -21,6 +21,8 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
+import helpers.hdatetime as hdateti
+import helpers.hparquet as hparque
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.crypto_chassis.data.extract.exchange_class as imvccdeecl
 
@@ -33,13 +35,11 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--api_stage",
+        "--depth",
         action="store",
-        required=False,
-        default="sandbox",
-        choices=["sandbox", "prod"],
-        type=str,
-        help="(Optional) API 'stage' to use ('sandbox' or 'prod'), default: 'sandbox'",
+        type=int,
+        default=1,
+        help="The depth of market data.",
     )
     parser.add_argument("--incremental", action="store_true")
     parser = imvcdeexut.add_exchange_download_args(parser)

@@ -58,13 +58,6 @@ def add_exchange_download_args(
         type=str,
         help="End of the downloaded period",
     )
-    parser.add_argument(
-        "--depth",
-        action="store",
-        required=False,
-        type=int,
-        help="Depth of market depth data",
-    )
     return parser
 
 

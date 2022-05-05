@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 
 import helpers.hdbg as hdbg
+import helpers.hsecrets as hsecret
 
 
 class CryptoChassisExchange:
