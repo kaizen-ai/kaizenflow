@@ -39,7 +39,7 @@ class CryptoChassisExchange:
         hdbg.dassert_eq(data_type, "market_depth")
         # Get data.
         return self.download_market_depth(
-            exchange=kwargs["exchange_id"],
+            exchange=args[0],
             currency_pair=kwargs["currency_pair"],
             depth=kwargs["depth"],
             start_timestamp=kwargs["start_timestamp"],
@@ -70,6 +70,9 @@ class CryptoChassisExchange:
                 pd.Timestamp,
             )
             start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
+        if depth:
+            hdbg.dassert_lgt(1, depth, 10, True, True)
+            depth = str(depth)
         # Currency pairs in market data are stored in `cur1/cur2` format, 
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
@@ -82,7 +85,7 @@ class CryptoChassisExchange:
         )
         # Build URL with specified parameters.
         query_url = self._build_query_url(
-            core_url, startTime=start_timestamp, depth=str(depth)
+            core_url, startTime=start_timestamp, depth=depth
         )
         # Request the data.
         r = requests.get(query_url)

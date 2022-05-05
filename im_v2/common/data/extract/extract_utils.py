@@ -182,13 +182,13 @@ def download_historical_data(
         exchange = exchange_class(args.api_stage)
         vendor = "talos"
         data_type = "ohlcv"
-        additional_args.append(args.exchange_id)
     elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
         exchange = exchange_class()
         vendor = "crypto_chassis"
         data_type = "market_depth"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
+    additional_args.append(args.exchange_id)
     # Load currency pairs.
     universe = ivcu.get_vendor_universe(vendor, version=args.universe)
     currency_pairs = universe[args.exchange_id]
