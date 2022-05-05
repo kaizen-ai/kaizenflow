@@ -136,6 +136,12 @@ def is_mac() -> bool:
     return is_mac_
 
 
+def is_cmamp_prod() -> bool:
+    """
+    Detect if running on a production container.
+    """
+    return os.environ.get("CMAMP_PROD_CONTAINER")
+
 def _raise_invalid_host() -> None:
     host_os_name = os.uname()[0]
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME")
@@ -154,6 +160,8 @@ def enable_privileged_mode() -> bool:
     else:
         if is_mac():
             val = True
+        elif is_cmamp_prod():
+            val = False
         elif is_dev_ck():
             val = True
         elif is_dev4():
@@ -177,6 +185,8 @@ def has_docker_sudo() -> bool:
         val = False
     elif is_mac():
         val = True
+    elif is_cmamp_prod():
+        val = False
     else:
         _raise_invalid_host()
     return val
@@ -213,7 +223,9 @@ def has_dind_support() -> bool:
     rc = os.system(cmd)
     # dind is supported on both Mac and GH Actions.
     if True:
-        if get_name() == "//dev_tools":
+        if is_cmamp_prod():
+            assert not has_dind, "Not expected privileged mode"
+        elif get_name() == "//dev_tools":
             assert not has_dind, "Not expected privileged mode"
         else:
             if is_mac() or is_dev_ck() or is_inside_ci():
@@ -270,6 +282,8 @@ def run_docker_as_root() -> bool:
         # outside.
         res = False
     elif is_mac():
+        res = False
+    elif is_cmamp_prod():
         res = False
     else:
         _raise_invalid_host()
