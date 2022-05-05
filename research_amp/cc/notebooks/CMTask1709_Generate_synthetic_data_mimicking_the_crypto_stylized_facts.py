@@ -335,11 +335,26 @@ def read_crypto_chassis_ohlcv(
 # %%
 btc_df = read_crypto_chassis_ohlcv(["binance::BTC_USDT"], pd.Timestamp("2021-01-01", tz="UTC"), pd.Timestamp("2022-01-01", tz="UTC"))
 
+# %%
+# TODO(Max):
+
+# Save data locally.
+# Copy the data to /local/share/CMTask1709_...
+# Copy from central location to the client
+# Load data
+
+# Once Grisha is done, you can just save / load directly there but for now you can just load / save locally.
+
 # %% [markdown]
 # ## Process returns
 
 # %%
 btc = btc_df.copy()
+
+# %%
+btc["rets"] = btc["close"].pct_change()
+
+btc.describe()
 
 # %% run_control={"marked": false}
 # Calculate returns.
@@ -353,6 +368,8 @@ btc["rets_cleaned"].plot()
 
 # %%
 rets = btc[["rets"]]
+
+# TODO(gp): Always use the dropna function that reports the number of nans removed
 rets = rets[rets.rets.notna()]
 
 # %% run_control={"marked": false}
@@ -365,22 +382,95 @@ ax1.set_title('Returns distribution')
 plt.show()
 
 # %%
-rets_df = rets.copy()
-rets_df.columns = ["rets"]
-
-# (-1) -> price goes down
-# 1 -> price goes up
-rets_df["prediction"] = 2*np.random.randint(0, 2, rets_df.shape[0])-1
-# Get the difference to estimate the validity of prediciton.
-rets_df["diff"] = rets_df.rets.diff()
-# Estimate the prediciton.
-rets_df["hit"] = ((rets_df["diff"]>0)&(rets_df["prediction"]==1))|((rets_df["diff"]<0)&(rets_df["prediction"]==-1))
-# Get rid of unnecessary columns
-rets_df = rets_df.drop(columns=["diff"])
-rets_df = rets_df.iloc[1:]
+rets_df["rets"]
 
 # %%
-rets_df
+import helpers.hdbg as hdbg
+
+# TODO(Max): Pass hit rate and 
+def add_hit_rate(rets_df, hit_rate, seed):
+    hdbg.dassert_isinstance(rets_df, pd.DataFrame)
+    rets_df = rets_df.copy()
+    #rets_df.columns = ["rets"]
+
+    np.random.seed(seed)
+
+    # (-1) -> price goes down
+    # 1 -> price goes up
+    uniform = np.random.randint(0, 2, rets_df.shape[0])
+    #uniform = uniform - (2 * hit_rate - 1 - 0.5)
+    rets_df["prediction"] = 2 * uniform - 1
+    # Get the difference to estimate the validity of prediciton.
+    #rets_df["diff"] = rets_df.rets.diff()
+    # Estimate the prediciton.
+    #rets_df["hit"] = ((rets_df["diff"]>0)&(rets_df["prediction"]==1))|((rets_df["diff"]<0)&(rets_df["prediction"]==-1))
+    rets_df["hit"] = (rets_df["rets"] * rets_df["prediction"] >= 0)
+    # Get rid of unnecessary columns
+    #rets_df = rets_df.drop(columns=["diff"])
+    #rets_df = rets_df.iloc[1:]
+
+    #rets_df.head(3)
+    return rets_df
+
+
+# %%
+add_hit_rate(rets_df, 0.5, 1)
+#print(rets_df["rets"])
+
+# %%
+# X ~ U[-1, 1], E[X] = 0
+# hit_rate = 0
+
+#n = rets_df.shape[0]
+def get_predictions(rets_df, hit_rate, seed):
+    n = rets_df.shape[0]
+    #hit_rate = 0.0
+
+    rets = rets_df["rets"].values
+    #rets = rets[:n]
+    #print("rets=", rets)
+
+    # mask contains 1 for a desired hit and -1 for a miss.
+    num_hits = int((1 - hit_rate) * n)
+    mask = pd.Series(([-1] * num_hits) + ([1] * (n - num_hits)))
+
+    import random
+    random.shuffle(mask)
+    #print("mask=", mask)
+    #print(mask.mean())
+
+    #print("sign(rets)=", np.sign(rets))
+    #pred = pd.Series(np.sign(rets) * mask, index=rets_df.index)
+    pred = pd.Series(np.sign(rets) * mask)
+    #print("pred=", pred)
+
+    #hit_rate = (np.sign(pred * rets) >= 0).mean()
+    #print(hit_rate)
+
+    #print((pred * rets).mean())
+    return pred
+
+
+# %%
+rets
+
+# %%
+pd.Series(preds, index=rets_df.index)
+
+# %%
+preds = get_predictions(rets_df.head(1000), 0.5, 1)
+#print((preds * rets_df["rets"]) >= 0).mean()
+#preds.head()
+
+#rets
+
+# %%
+hit_rate = 1.0n
+seed = 10
+print(add_hit_rate(rets_df, hit_rate, seed)["hit"].mean())
+
+# %%
+rets_df["hit"].mean()
 
 
 # %%
@@ -408,3 +498,53 @@ method = "normal"
 calculate_confidence_interval(hit, alpha, method)
 
 # %%
+# A model makes a prediction on the rets and then it's realized.
+pnl = (rets_df["prediction"] * rets_df["rets"]).cumsum()
+
+pnl.plot()
+
+
+# %%
+# Relationship between hit rate and pnl
+
+# %%
+def compute_pnl(rets_df):
+    return (rets_df["prediction"] * rets_df["rets"]).sum()
+
+
+# %%
+compute_pnl(rets_df)
+
+# %%
+print(rets_df)
+
+# %%
+# Number of experiments per value of hit rate.
+#n_experiment = 100
+n_experiment = 1
+# Every seed corresponds to a different "model".
+seed = 10
+results = {}
+for hit_rate in np.linspace(0.4, 0.6, num=3):
+    for i in range(n_experiment):
+        df_tmp = add_hit_rate(rets_df, hit_rate, seed)
+        hit_rate = df_tmp["hit"].mean()
+        pnl = compute_pnl(df_tmp)
+        results[hit_rate].append(pnl)
+        print(hit_rate, pnl)
+        seed += 1
+        
+        
+# hit_rate -> pnls
+# 0.4 -> [0.1, 0.2, 0.3]
+# 0.5 -> []
+
+
+# %%
+# Step 1: split the notebooks in gallery and not
+# - gallery notebook with the first 2-3 sessions showing the functions
+# - 1709 contains only the good stuff
+# Step 2: 
+# - clean up get_predictions() and add 1 unit test that checks the schema of df, freeze the output
+# Step 3:
+# - bootstrapping (montecarlo simulation) to compute pnl = f(hit_rate)
