@@ -273,84 +273,43 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             **kwargs,
         )
 
-    def _test_get_data_for_interval6(
+# //////////////////////////////////////////////////////////////////////////////
+
+    def _filter_columns_helper1(
         self,
         market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
-        asset_ids: List[int],
-        *args: Any,
-        **kwargs: Any,
+        asset_ids: Optional[List[int]],
+        expected_columns: List[str],
     ) -> None:
         """
-        Call `get_data_for_interval()` with:
-
-        - `asset_ids` is a list
-        - interval type is [a, b]
-        - columns for data filtering are passed to the client
-        """
-        # Prepare inputs.
-        left_close = True
-        right_close = True
-        # Run.
-        self._get_data_for_interval_helper(
-            market_data,
-            start_ts,
-            end_ts,
-            asset_ids,
-            left_close,
-            right_close,
-            *args,
-            **kwargs,
-        )
-
-    def _test_get_data_for_interval7(
-        self,
-        market_data: mdata.MarketData,
-        asset_ids: List[int],
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        """
-        Raise an error while calling `get_data_for_interval()`:
-
-        - unsupported columns are passed to the client
-        - filter_data_mode = "assert"
+        Test that column names have been filtered correctly.
         """
         # TODO(Dan): Consider usage of `skip_test_since_not_online()`.
         # Prepare inputs.
-        start_ts = None
-        end_ts = None
         ts_col_name = "end_ts"
         hprint.log_frame(
             _LOG,
             "get_data_for_interval:"
             + hprint.to_str("start_ts end_ts ts_col_name asset_ids"),
         )
-        # TODO(gp): We should raise a more specific assertion and / or
-        #  check part of the exception as a string.
-        with self.assertRaises(AssertionError):
-            market_data.get_data_for_interval(
-                start_ts,
-                end_ts,
-                ts_col_name,
-                asset_ids,
-            )
+        # Run.
+        df = market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        actual_columns = sorted(df.columns)
+        # Check output.
+        self.assert_equal(str(actual_columns), str(sorted(expected_columns)))
 
-    def _test_get_data_for_interval8(
+
+    def _filter_columns_helper2(
         self,
         market_data: mdata.MarketData,
-        start_ts: pd.Timestamp,
-        end_ts: pd.Timestamp,
         asset_ids: List[int],
-        *args: Any,
-        **kwargs: Any,
     ) -> None:
         """
-        Raise an error while calling `get_data_for_interval()`:
-
-        - unsupported columns are passed to the client
-        - filter_data_mode = "warn_and_trim"
+        Test that error is raised when incorrect columns are passed.
         """
         # TODO(Dan): Consider usage of `skip_test_since_not_online()`.
         # Prepare inputs.

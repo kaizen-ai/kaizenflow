@@ -1060,10 +1060,19 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
             exp_df_as_str,
         )
 
-    def test_get_data_for_interval6(self) -> None:
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_filter_columns1(self) -> None:
+        """
+        Test that column names have been filtered correctly when:
+
+        - all the passed columns are present in data
+        - all the necessary columns are passed
+        - filter_data_mode = "assert"
+        """
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = ["close"]
+        columns: List[str] = ["asset_id", "full_symbol", "close", "start_ts"]
         column_remap = None
         filter_data_mode = "assert"
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
@@ -1072,54 +1081,118 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         #
-        expected_length = 5
-        expected_column_names = ["close"]
-        expected_column_unique_values = None
-        exp_df_as_str = r"""
-        # df=
-        index=[2018-08-16 20:01:00-04:00, 2018-08-16 20:05:00-04:00]
-        columns=close
-        shape=(5, 1)
-                                    close
-        end_ts                            
-        2018-08-16 20:01:00-04:00  6302.81
-        2018-08-16 20:02:00-04:00  6297.26
-        2018-08-16 20:03:00-04:00  6294.52
-        2018-08-16 20:04:00-04:00  6296.10
-        2018-08-16 20:05:00-04:00  6294.99
-        """
+        expected_column_names = ["asset_id", "full_symbol", "close", "start_ts"]
         # Run.
-        self._test_get_data_for_interval6(
+        self._filter_columns_helper1(
             market_data,
             start_ts,
             end_ts,
             asset_ids,
-            expected_length,
             expected_column_names,
-            expected_column_unique_values,
-            exp_df_as_str,
         )
 
-    def test_get_data_for_interval7(self) -> None:
+    def test_filter_columns2(self) -> None:
+        """
+        Test that column names have been filtered correctly when:
+
+        - all the passed columns are present in data
+        - "full_symbol" column is not passed
+        - filter_data_mode = "assert"
+        """
         # Prepare inputs.
-        asset_ids = [3187272957, 1467591036]
-        columns: List[str] = ["asset_id", "full_symbol", "close", "whatever"]
+        asset_ids = [1467591036]
+        columns: List[str] = ["asset_id", "close", "start_ts"]
+        column_remap = None
+        filter_data_mode = "assert"
+        market_data = mdata.get_CcxtPqImClientMarketData_example2(
+            asset_ids, columns, column_remap, filter_data_mode
+        )
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_column_names = ["asset_id", "close", "start_ts"]
+        # Run.
+        self._filter_columns_helper1(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_column_names,
+        )
+    
+    def test_filter_columns3(self) -> None:
+        """
+        Test that error is raised when:
+
+        - all the passed columns are present in data
+        - "assed_id" and "start_ts" columns are not passed
+        - filter_data_mode = "assert"
+        """
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = ["full_symbol", "close"]
         column_remap = None
         filter_data_mode = "assert"
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
             asset_ids, columns, column_remap, filter_data_mode
         )
         # Run.
-        self._test_get_data_for_interval7(market_data, asset_ids)
+        self._filter_columns_helper2(market_data, asset_ids)
 
-    def test_get_data_for_interval8(self) -> None:
+    def test_filter_columns4(self) -> None:
+        """
+        Test that column names have been filtered correctly when:
+
+        - all the passed columns are present in data
+        - "full_symbol" column is not passed
+        - filter_data_mode = "warn_and_trim"
+        """
         # Prepare inputs.
-        asset_ids = [3187272957, 1467591036]
-        columns: List[str] = ["asset_id", "full_symbol", "close", "whatever"]
+        asset_ids = [1467591036]
+        columns: List[str] = ["asset_id", "close", "start_ts"]
         column_remap = None
         filter_data_mode = "warn_and_trim"
         market_data = mdata.get_CcxtPqImClientMarketData_example2(
             asset_ids, columns, column_remap, filter_data_mode
         )
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_column_names = ["asset_id", "close", "start_ts"]
         # Run.
-        self._test_get_data_for_interval7(market_data, asset_ids)
+        self._filter_columns_helper1(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_column_names,
+        )
+
+    def test_filter_columns5(self) -> None:
+        """
+        Test that error is raised when:
+
+        - all the passed columns are present in data
+        - "assed_id" and "start_ts" columns are not passed
+        - filter_data_mode = "warn_and_trim"
+        """
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns: List[str] = ["full_symbol", "close"]
+        column_remap = None
+        filter_data_mode = "warn_and_trim"
+        market_data = mdata.get_CcxtPqImClientMarketData_example2(
+            asset_ids, columns, column_remap, filter_data_mode
+        )
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_column_names = ["full_symbol", "close"]
+        # Run.
+        self._filter_columns_helper1(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_column_names,
+        )

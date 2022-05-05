@@ -292,13 +292,13 @@ class MarketData(abc.ABC):
         #  specified already, we might need to apply a filter by asset_ids.
         # Normalize data.
         df = self._normalize_data(df)
-        # Convert start and end timestamps to the timezone specified in the ctor.
-        df = self._convert_timestamps_to_timezone(df)
         # Verify that loaded data is correct.
         if self._columns is not None:
             df = self._process_by_filter_data_mode(
                 df, self._columns, self._filter_data_mode
             )
+        # Convert start and end timestamps to the timezone specified in the ctor.
+        df = self._convert_timestamps_to_timezone(df)
         # Remap result columns to the required names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
@@ -649,13 +649,6 @@ class MarketData(abc.ABC):
         #     _LOG.debug(hprint.to_str("wall_clock_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), wall_clock_time)
         # _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="after process_data"))
-        #
-        # Drop asset id and start time columns if they were not sepcified.
-        if self._columns is not None:
-            if self._asset_id_col not in self._columns:
-                df = df.drop(self._asset_id_col, axis=1)
-            if self._start_time_col_name not in self._columns:
-                df = df.drop(self._start_time_col_name, axis=1)
         return df
 
     # TODO(Dan): CmTask1834 "Extend functionality of `_process_by_filter_data_mode()`".
