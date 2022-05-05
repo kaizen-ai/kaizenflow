@@ -37,8 +37,9 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--depth",
         action="store",
+        required=False,
         type=int,
-        default=1,
+        default=None,
         help="The depth of market data.",
     )
     parser.add_argument("--incremental", action="store_true")
@@ -48,10 +49,14 @@ def _parse() -> argparse.ArgumentParser:
     return parser  # type: ignore[no-any-return]
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
+def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     imvcdeexut.download_historical_data(args, imvccdeecl.CryptoChassisExchange)
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    _run(args)
 
 
 if __name__ == "__main__":

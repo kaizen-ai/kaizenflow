@@ -198,6 +198,8 @@ def download_historical_data(
             data_type,
             **args
             )
+        if data.empty:
+            continue
         # Assign pair and exchange columns.
         # TODO(Nikola): Exchange id was missing and it is added additionally to
         #  match signature of other scripts.

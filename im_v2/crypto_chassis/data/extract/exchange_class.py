@@ -27,7 +27,7 @@ class CryptoChassisExchange:
         """
         Convert currency pair used for getting data from exchange.
         """
-        return currency_pair.replace("_", "/")
+        return currency_pair.replace("_", "/").lower()
 
     def download_data(self, data_type: str, *args, **kwargs: Any) -> pd.DataFrame:
         """
@@ -91,7 +91,11 @@ class CryptoChassisExchange:
         # Request the data.
         r = requests.get(query_url)
         # Retrieve raw data.
-        df_csv = r.json()["urls"][0]["url"]
+        data_json = r.json() 
+        if data_json.get("urls") is None:
+            # Return empty dataframe if there is no results.
+            return pd.DataFrame()
+        df_csv = data_json["urls"][0]["url"]
         # Convert CSV into dataframe.
         market_depth = pd.read_csv(df_csv, compression="gzip")
         # Separate `bid_price_bid_size` column to `bid_price` and `bid_size`.
