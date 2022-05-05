@@ -63,7 +63,7 @@ class ImClient(abc.ABC):
     def __init__(
         self,
         vendor: str,
-        universe_version: Union[str, None],
+        universe_version: Optional[str],
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
