@@ -53,7 +53,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         # For this specific client we pass the universe to the ctor, so
         # the version is not needed, i.e. could be any. Passing here just
         # to make the parent class happy.
-        universe_version = "not_implemented"
+        universe_version = None
         super().__init__(
             vendor,
             universe_version,
@@ -79,12 +79,13 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         return self._universe
 
+    # TODO(Dan): Implement usage of `columns` parameter.
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
