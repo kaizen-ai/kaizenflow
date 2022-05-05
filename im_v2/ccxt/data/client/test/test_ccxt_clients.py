@@ -1410,7 +1410,6 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         data["year"] = data.index.year
         data["month"] = data.index.month
         # Add "timestamp" column to make test data with same columns as historical.
-        # It's dropped when reading with client.
         timestamp_col = [1569888000000] * len(data)
         data.insert(0, "timestamp", timestamp_col)
         # Remove unnecessary column.
