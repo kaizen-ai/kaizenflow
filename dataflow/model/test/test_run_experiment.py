@@ -76,6 +76,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 'serial'",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = True
@@ -91,6 +92,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 2",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = True
@@ -135,6 +137,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--num_threads serial",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = False
@@ -153,6 +156,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--skip_on_error",
             "--num_threads serial",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = True
@@ -171,6 +175,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--num_threads 2",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = False
@@ -191,6 +196,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--skip_on_error",
             "--num_threads 2",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = True
