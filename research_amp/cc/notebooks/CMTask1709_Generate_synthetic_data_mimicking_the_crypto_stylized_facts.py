@@ -29,6 +29,7 @@ import pandas as pd
 import requests
 import statsmodels
 
+import core.finance.market_data_example as cfmadaex
 import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
 import im_v2.common.universe as ivcu
@@ -123,21 +124,16 @@ def read_crypto_chassis_ohlcv(
 
 
 # %%
-btc_df = read_crypto_chassis_ohlcv(
-    ["binance::BTC_USDT"],
-    pd.Timestamp("2021-01-01", tz="UTC"),
-    pd.Timestamp("2022-01-01", tz="UTC"),
-)
+# Commented in order to lad the fast locally.
+#btc_df = read_crypto_chassis_ohlcv(
+#    ["binance::BTC_USDT"],
+#    pd.Timestamp("2021-01-01", tz="UTC"),
+#    pd.Timestamp("2022-01-01", tz="UTC"),
+#)
 
 # %%
-# TODO(Max):
-
-# Save data locally.
-# Copy the data to /local/share/CMTask1709_...
-# Copy from central location to the client
-# Load data
-
-# Once Grisha is done, you can just save / load directly there but for now you can just load / save locally.
+btc_df = pd.read_csv("BTC_one_year.csv", index_col="timestamp")
+btc_df.head(3)
 
 # %% [markdown]
 # ## Process returns
@@ -170,9 +166,12 @@ ax1.set_ylabel("Sample")
 ax1.set_title("Returns distribution")
 plt.show()
 
-
 # %% [markdown]
 # # Pre-defined Predictions, Hit Rates and Confidence Interval
+
+# %%
+import statsmodels.stats as sts
+
 
 # %% run_control={"marked": false}
 def get_predictions(df, hit_rate, seed):
@@ -216,6 +215,8 @@ def calculate_confidence_interval(hit_series, alpha, method):
 
 def get_predictions_hits_and_stats(df, hit_rate, seed, alpha, method):
     """
+    Calculate hits from the predictions and shows confidence intervals.
+    
     :param df: Desired sample with OHLCV data and calculated returns
     :param hit_rate: Desired percantage of successful predictions
     :param seed: Experiment stance
@@ -235,7 +236,7 @@ def get_predictions_hits_and_stats(df, hit_rate, seed, alpha, method):
 
 # %%
 sample = btc.head(1000)
-hit_rate = 0.7
+hit_rate = 0.55
 seed = 20
 alpha = 0.05
 method = "normal"
