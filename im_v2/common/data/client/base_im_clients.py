@@ -368,22 +368,22 @@ class ImClient(abc.ABC):
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
 
-    # TODO(Dan): CmTask1834 "Extend functionality of `_process_by_filter_data_mode()`".
+    # TODO(Dan): CmTask1834 "Refactor `_process_by_filter_data_mode()`".
     def _process_by_filter_data_mode(
-         self,
-         df: pd.DataFrame,
-         columns: Optional[List[str]],
-         filter_data_mode: str,
-     ) -> pd.DataFrame:
-         """
-         Check that columns are the expected ones.
-         """
-         received_columns = df.columns.to_list()
-         #
-         if filter_data_mode == "assert":
+        self,
+        df: pd.DataFrame,
+        columns: Optional[List[str]],
+        filter_data_mode: str,
+    ) -> pd.DataFrame:
+        """
+        Check that columns are the expected ones.
+        """
+        received_columns = df.columns.to_list()
+        #
+        if filter_data_mode == "assert":
             # Raise and assertion. 
             only_warning = False
-         elif filter_data_mode == "warn_and_trim":
+        elif filter_data_mode == "warn_and_trim":
             # Just issue a warning. 
             only_warning = True
             # Get columns intersection while preserving the order of the columns.
@@ -393,18 +393,21 @@ class ImClient(abc.ABC):
             )
             hdbg.dassert_lte(1, len(columns_intersection))
             df = df[columns_intersection]
-         else:
-             raise ValueError(
-                 f"`filter_data_mode`=`{filter_data_mode}` should be in "
-                 "['assert', 'warn_and_trim']"
-             )
-         hdbg.dassert_set_eq(
+        else:
+           raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
+        hdbg.dassert_set_eq(
+            columns, 
              columns, 
+            columns, 
+            received_columns, 
              received_columns, 
+            received_columns, 
+            only_warning=only_warning, 
              only_warning=only_warning, 
-             msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
-         )
-         return df
+            only_warning=only_warning, 
+            msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
+        )
+        return df
 
     # //////////////////////////////////////////////////////////////////////////
 

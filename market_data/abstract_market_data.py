@@ -110,12 +110,6 @@ class MarketData(abc.ABC):
         All the column names in the interface (e.g., `start_time_col_name`) are
         before the remapping.
 
-        `filter_data_mode` adds an additional level of robustness when return's
-        columns or/and datetime intervals differ from the expected.
-        If its value is "assert", an error is raised, if its value is
-        "warn_and_trim", the data is transformed to the expected format with a
-        warning that additional transformations were required.
-
         :param asset_id_col: the name of the column used to select the asset ids
         :param asset_ids: as described in the class docstring
         :param start_time_col_name: the name of the column storing the `start_time`
@@ -127,8 +121,8 @@ class MarketData(abc.ABC):
             seconds waiting up to `time_out_in_secs` seconds
         :param column_remap: dict of columns to remap the output data or `None` for
             no remapping
-        :param filter_data_mode: switch to control class robustness towards
-            unexpected return. Can be "assert" or "warn_and_trim"
+        :param filter_data_mode: control class behavior with respect to extra
+            or missing columns, like in `_process_by_filter_data_mode()`
         """
         _LOG.debug("")
         self._asset_id_col = asset_id_col
@@ -147,7 +141,6 @@ class MarketData(abc.ABC):
         self._timezone = timezone
         self._column_remap = column_remap
         #
-        hdbg.dassert_in(filter_data_mode, ["assert", "warn_and_trim"])
         self._filter_data_mode = filter_data_mode
         # Compute the max number of iterations.
         hdbg.dassert_lt(0, time_out_in_secs)
@@ -292,13 +285,13 @@ class MarketData(abc.ABC):
         #  specified already, we might need to apply a filter by asset_ids.
         # Normalize data.
         df = self._normalize_data(df)
+        # Convert start and end timestamps to the timezone specified in the ctor.
+        df = self._convert_timestamps_to_timezone(df)
         # Verify that loaded data is correct.
         if self._columns is not None:
             df = self._process_by_filter_data_mode(
                 df, self._columns, self._filter_data_mode
             )
-        # Convert start and end timestamps to the timezone specified in the ctor.
-        df = self._convert_timestamps_to_timezone(df)
         # Remap result columns to the required names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
@@ -651,7 +644,7 @@ class MarketData(abc.ABC):
         # _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="after process_data"))
         return df
 
-    # TODO(Dan): CmTask1834 "Extend functionality of `_process_by_filter_data_mode()`".
+    # TODO(Dan): CmTask1834 "Refactor `_process_by_filter_data_mode()`".
     def _process_by_filter_data_mode(
         self,
         df: pd.DataFrame,
@@ -677,10 +670,7 @@ class MarketData(abc.ABC):
             hdbg.dassert_lte(1, len(columns_intersection))
             df = df[columns_intersection]
         else:
-            raise ValueError(
-                f"`filter_data_mode`=`{filter_data_mode}` should be in "
-                "['assert', 'warn_and_trim']"
-            )
+            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
         hdbg.dassert_set_eq(
             columns, 
             received_columns, 
@@ -713,9 +703,8 @@ class MarketData(abc.ABC):
         # Convert end timestamp values that are used as dataframe index.
         hpandas.dassert_index_is_datetime(df)
         df.index = df.index.tz_convert(self._timezone)
-        # Convert start timestamp column values if it is present in data.
-        if self._start_time_col_name in df.columns:
-            df[self._start_time_col_name] = df[
-                self._start_time_col_name
-            ].dt.tz_convert(self._timezone)
+        # Convert start timestamp column values.
+        df[self._start_time_col_name] = df[
+            self._start_time_col_name
+        ].dt.tz_convert(self._timezone)
         return df
