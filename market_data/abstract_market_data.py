@@ -122,7 +122,7 @@ class MarketData(abc.ABC):
         :param column_remap: dict of columns to remap the output data or `None` for
             no remapping
         :param filter_data_mode: control class behavior with respect to extra
-            or missing columns, like in `_process_by_filter_data_mode()`
+            or missing columns, like in `_check_and_filter_matching_columns()`
         """
         _LOG.debug("")
         self._asset_id_col = asset_id_col
@@ -289,7 +289,7 @@ class MarketData(abc.ABC):
         df = self._convert_timestamps_to_timezone(df)
         # Verify that loaded data is correct.
         if self._columns is not None:
-            df = self._process_by_filter_data_mode(
+            df = self._check_and_filter_matching_columns(
                 df, self._columns, self._filter_data_mode
             )
         # Remap result columns to the required names.
@@ -564,9 +564,9 @@ class MarketData(abc.ABC):
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time
 
-    # TODO(Dan): CmTask1834 "Refactor `_process_by_filter_data_mode()`".
+    # TODO(Dan): CmTask1834 "Refactor `_check_and_filter_matching_columns()`".
     @staticmethod
-    def _process_by_filter_data_mode(
+    def _check_and_filter_matching_columns(
         df: pd.DataFrame, columns: List[str], filter_data_mode: str
     ) -> pd.DataFrame:
         """
