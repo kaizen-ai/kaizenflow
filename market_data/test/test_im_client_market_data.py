@@ -1109,7 +1109,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
             asset_ids,
             expected_column_names,
         )
-    
+
     def test_filter_columns2(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]

@@ -657,10 +657,10 @@ class MarketData(abc.ABC):
         received_columns = df.columns.to_list()
         #
         if filter_data_mode == "assert":
-            # Raise and assertion. 
+            # Raise and assertion.
             only_warning = False
         elif filter_data_mode == "warn_and_trim":
-            # Just issue a warning. 
+            # Just issue a warning.
             only_warning = True
             # Get columns intersection while preserving the order of the columns.
             columns_intersection = sorted(
@@ -672,9 +672,9 @@ class MarketData(abc.ABC):
         else:
             raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
         hdbg.dassert_set_eq(
-            columns, 
-            received_columns, 
-            only_warning=only_warning, 
+            columns,
+            received_columns,
+            only_warning=only_warning,
             msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
         )
         return df

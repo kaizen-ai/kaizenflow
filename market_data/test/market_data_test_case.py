@@ -273,7 +273,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             **kwargs,
         )
 
-# //////////////////////////////////////////////////////////////////////////////
+    # //////////////////////////////////////////////////////////////////////////////
 
     def _test_filter_columns1(
         self,
@@ -304,7 +304,6 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         # Check output.
         actual_columns = df.columns.tolist()
         self.assert_equal(str(actual_columns), str(expected_columns))
-
 
     def _test_filter_columns2(
         self,

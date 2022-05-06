@@ -1337,7 +1337,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=open,close
         shape=(2881, 2)
                                     open    close
-        timestamp                                  
+        timestamp
         2018-08-17 00:00:00+00:00  6316.00  6311.64
         2018-08-17 00:01:00+00:00  6311.64  6302.81
         2018-08-17 00:02:00+00:00  6302.81  6297.26

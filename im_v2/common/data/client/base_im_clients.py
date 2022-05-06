@@ -236,11 +236,9 @@ class ImClient(abc.ABC):
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
-        # 
+        #
         if columns is not None:
-            df = self._process_by_filter_data_mode(
-                df, columns, filter_data_mode
-            )
+            df = self._process_by_filter_data_mode(df, columns, filter_data_mode)
         return df
 
     # /////////////////////////////////////////////////////////////////////////
@@ -380,10 +378,10 @@ class ImClient(abc.ABC):
         received_columns = df.columns.to_list()
         #
         if filter_data_mode == "assert":
-            # Raise and assertion. 
+            # Raise and assertion.
             only_warning = False
         elif filter_data_mode == "warn_and_trim":
-            # Just issue a warning. 
+            # Just issue a warning.
             only_warning = True
             # Get columns intersection while preserving the order of the columns.
             columns_intersection = sorted(
@@ -393,7 +391,7 @@ class ImClient(abc.ABC):
             hdbg.dassert_lte(1, len(columns_intersection))
             df = df[columns_intersection]
         else:
-           raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
+            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
         hdbg.dassert_set_eq(
             columns,
             received_columns,
@@ -403,7 +401,6 @@ class ImClient(abc.ABC):
         return df
 
     # //////////////////////////////////////////////////////////////////////////
-
 
     def _get_full_symbol_col_name(
         self, full_symbol_col_name: Optional[str]

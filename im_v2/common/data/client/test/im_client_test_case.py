@@ -197,7 +197,7 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - keep only specified columns 
+        - keep only specified columns
         - the output is correct
         """
         start_ts = None
@@ -216,7 +216,7 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - keep only specified columns 
+        - keep only specified columns
         - we receive less columns than we request
         - filter_data_mode = "assert"
         """
@@ -237,7 +237,7 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - keep only specified columns 
+        - keep only specified columns
         - we receive more columns than we request
         - filter_data_mode = "assert"
         """
@@ -260,7 +260,7 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - keep only specified columns 
+        - keep only specified columns
         - received columns do not match requested columns
         - filter_data_mode = "warn_and_trim"
         """

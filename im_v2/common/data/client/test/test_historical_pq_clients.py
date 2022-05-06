@@ -328,7 +328,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=close
         shape=(4320, 1)
                                 close
-        timestamp                       
+        timestamp
         2021-12-30 00:00:00+00:00      0
         2021-12-30 00:01:00+00:00      1
         2021-12-30 00:02:00+00:00      2
@@ -852,7 +852,10 @@ class TestHistoricalPqByTileClient3(icdctictc.ImClientTestCase):
                 left_boundary, right_boundary, seed_
             )
             columns = None
-            data = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+            filter_data_mode = "assert"
+            data = im_client.read_data(
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
+            )
             # Compare the expected values.
             self._check_output(data, full_symbols, start_ts, end_ts)
 
