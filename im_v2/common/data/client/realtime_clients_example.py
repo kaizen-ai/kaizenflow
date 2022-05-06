@@ -1,15 +1,20 @@
 """
 Generate example data and initiate client for access to it.
+
+Import as:
+
+import im_v2.common.data.client.realtime_clients_example as imvcdcrcex
 """
 from typing import Optional
 
 import pandas as pd
+
 import core.finance as cofinanc
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
-import helpers.hsql as hsql
-import helpers.hdbg as hdbg
 
 
 def get_example1_create_table_query() -> str:
@@ -37,7 +42,8 @@ def get_example1_create_table_query() -> str:
 
 def create_example1_sql_data() -> pd.DataFrame:
     """
-    Generate a dataframe with price features and fixed currency_pair and exchange_id.
+    Generate a dataframe with price features and fixed currency_pair and
+    exchange_id.
 
     This imulates contents of DBs with crypto data, e.g. from Talos and CCXT.
 
@@ -59,7 +65,9 @@ def create_example1_sql_data() -> pd.DataFrame:
     bar_delay = "0T"
     data = cofinanc.build_timestamp_df(idx, bar_duration, bar_delay)
     data = data.reset_index().rename({"index": "timestamp"}, axis=1)
-    data["timestamp"] = data["timestamp"].apply(hdateti.convert_timestamp_to_unix_epoch)
+    data["timestamp"] = data["timestamp"].apply(
+        hdateti.convert_timestamp_to_unix_epoch
+    )
     price_pattern = [101.0] * 5 + [100.0] * 5
     price = price_pattern * 4
     # All OHLCV columns are required for RealTimeMarketData.
@@ -76,31 +84,43 @@ def create_example1_sql_data() -> pd.DataFrame:
     # Add values necessary for `full_symbol`.
     data["currency_pair"] = "BTC_USDT"
     data["exchange_id"] = "binance"
-    data = data[["timestamp",
-                    "open",
-                    "high", 
-                    "low",
-                    "close", 
-                    "volume", 
-                    "feature1", 
-                    "currency_pair",
-                    "exchange_id", 
-                    "timestamp_db"]]
+    data = data[
+        [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "feature1",
+            "currency_pair",
+            "exchange_id",
+            "timestamp_db",
+        ]
+    ]
     return data
 
+
 class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
-    def __init__(self,
+    def __init__(
+        self,
         resample_1min: bool,
         db_connection: hsql.DbConnection,
-        table_name: str, 
+        table_name: str,
         *,
-        mode: Optional[str] = "market_data"):
+        mode: Optional[str] = "market_data",
+    ):
         """
         Constructor.
         """
         vendor = "mock"
-        super().__init__(resample_1min, db_connection, table_name=table_name, vendor=vendor)
+        super().__init__(
+            resample_1min, db_connection, table_name=table_name, vendor=vendor
+        )
         self._mode = mode
+
+    def should_be_online():
+        return True
 
     def _apply_normalization(
         self,
@@ -131,28 +151,27 @@ class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
         )
         if self._mode == "market_data":
             data["asset_id"] = data[full_symbol_col_name].apply(
-                    ivcu.string_to_numerical_id
-                )
+                ivcu.string_to_numerical_id
+            )
             # Convert to int64 to keep NaNs alongside with int values.
             data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
             # Generate `start_timestamp` from `end_timestamp` by substracting delta.
             delta = pd.Timedelta("1M")
             data["start_timestamp"] = data["timestamp"].apply(
-                lambda pd_timestamp: (pd_timestamp - delta))
+                lambda pd_timestamp: (pd_timestamp - delta)
+            )
             data = data.set_index("timestamp")
         else:
             # TODO(Danya): Put a `data_client` mode for uses in testing.
             hdbg.dfatal(
-                "Invalid mode='%s'. Correct modes: 'market_data'"
-                % self._mode
+                "Invalid mode='%s'. Correct modes: 'market_data'" % self._mode
             )
         return data
 
-    def should_be_online():
-        return True
-    
 
-def get_example1_realtime_client(connection: hsql.DbConnection, resample_1min: bool) -> Example1SqlRealTimeImClient:
+def get_example1_realtime_client(
+    connection: hsql.DbConnection, resample_1min: bool
+) -> Example1SqlRealTimeImClient:
     """
     Set up a real time SQL client.
 
