@@ -1448,13 +1448,18 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
         columns = None
         filter_data_mode = "assert"
-        data = im_client.read_data(full_symbols, start_ts, end_ts)
+        data = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         # Add missing columns.
         data["exchange_id"], data["currency_pair"] = ivcu.parse_full_symbol(
             data["full_symbol"]
         )
         data["year"] = data.index.year
         data["month"] = data.index.month
+        # Add "timestamp" column to make test data with same columns as historical.
+        timestamp_col = [1569888000000] * len(data)
+        data.insert(0, "timestamp", timestamp_col)
         # Remove unnecessary column.
         data = data.drop(columns="full_symbol")
         # Artificially create gaps in data in order test resampling.

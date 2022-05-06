@@ -264,7 +264,7 @@ class HistoricalPqByDateClient(
         *,
         full_symbol_col_name: Optional[str] = None,
     ):
-        universe_version = "not_implemented"
+        universe_version = None
         super().__init__(
             vendor,
             universe_version,
