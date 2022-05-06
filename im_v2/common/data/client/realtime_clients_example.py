@@ -110,16 +110,14 @@ class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
         *,
         mode: Optional[str] = "market_data",
     ):
-        """
-        Constructor.
-        """
         vendor = "mock"
         super().__init__(
             resample_1min, db_connection, table_name=table_name, vendor=vendor
         )
         self._mode = mode
 
-    def should_be_online():
+    @staticmethod
+    def should_be_online() -> bool:
         return True
 
     def _apply_normalization(
