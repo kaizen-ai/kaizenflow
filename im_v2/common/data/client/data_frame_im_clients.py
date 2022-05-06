@@ -53,7 +53,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         # For this specific client we pass the universe to the ctor, so
         # the version is not needed, i.e. could be any. Passing here just
         # to make the parent class happy.
-        universe_version = "not_implemented"
+        universe_version = None
         super().__init__(
             vendor,
             universe_version,
