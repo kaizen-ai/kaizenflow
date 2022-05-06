@@ -84,23 +84,29 @@ def get_cumulative_volume_ratios(
     )
     if plot_results:
         # TODO(max): plot as bars with the names of the exchanges at the bottom (vertically).
-        #cumul_volume.plot(ylim=(0, 1))
+        # cumul_volume.plot(ylim=(0, 1))
         if entity == "exchange":
-            plot_df = pd.concat([cumul_volume, df["Name"]],axis=1).set_index("Name")
-            xlabel="Exchanges"
+            plot_df = pd.concat([cumul_volume, df["Name"]], axis=1).set_index(
+                "Name"
+            )
+            xlabel = "Exchanges"
         else:
-            plot_df = pd.concat([cumul_volume, df["name"]],axis=1).set_index("name")
-            xlabel="Cryptocurrencies"
+            plot_df = pd.concat([cumul_volume, df["name"]], axis=1).set_index(
+                "name"
+            )
+            xlabel = "Cryptocurrencies"
         if value_col == "_marketCap":
             title = "Cumulative Market Cap"
         else:
             title = "Cumulative trading volume"
-        cplpluti.plot_barplot(plot_df.squeeze(), 
-                              title = title,
-                              xlabel=xlabel, 
-                              unicolor=True, 
-                              annotation_mode="value", 
-                              rotation=45)
+        cplpluti.plot_barplot(
+            plot_df.squeeze(),
+            title=title,
+            xlabel=xlabel,
+            unicolor=True,
+            annotation_mode="value",
+            rotation=45,
+        )
     return cumul_volume
 
 
@@ -147,8 +153,9 @@ dir_name = "../../../CMTask1812_Compute_stats_for_investor_presentation"
 # It was downloaded 2022-05-03 from https://coinmarketcap.com/rankings/exchanges/.
 # Contains the snapshot of a table with the descriptive statistics of cryptocurrency exhanges.
 file_name_exch = (
-    dir_name + "/" +
-    "Top Cryptocurrency Exchanges Ranked By Volume _ CoinMarketCap.html"
+    dir_name
+    + "/"
+    + "Top Cryptocurrency Exchanges Ranked By Volume _ CoinMarketCap.html"
 )
 file_exch = pd.read_html(file_name_exch)
 # Select necessary columns with top-100.
@@ -175,11 +182,13 @@ good_exch = good_exch.sort_values(
 )
 # Plot .
 display(good_exch.loc[:9])
-cplpluti.plot_barplot(good_exch.set_index("Name")["Volume(24h)"].iloc[:10].squeeze(), 
-                                  title = "Trading volume per exchange",
-                                  xlabel="Exchanges", 
-                                  unicolor=True, 
-                                  rotation=45)
+cplpluti.plot_barplot(
+    good_exch.set_index("Name")["Volume(24h)"].iloc[:10].squeeze(),
+    title="Trading volume per exchange",
+    xlabel="Exchanges",
+    unicolor=True,
+    rotation=45,
+)
 
 # %% [markdown]
 # ## Total volume of top-10 `good` exchanges vs. other `good` exchanges
@@ -240,8 +249,9 @@ display(all_cumul_volume.head(5))
 # It was downloaded 2022-05-03 from https://coinmarketcap.com/rankings/exchanges/derivatives/.
 # Contains the snapshot of a table with the descriptive statistics of cryptocurrency derivatives exhanges.
 file_name_der = (
-    dir_name + "/" +
-    "Top Cryptocurrency Derivatives Exchanges Ranked _ CoinMarketCap.html"
+    dir_name
+    + "/"
+    + "Top Cryptocurrency Derivatives Exchanges Ranked _ CoinMarketCap.html"
 )
 file_der = pd.read_html(file_name_der)
 # Select necessary columns with top-100.
@@ -258,11 +268,13 @@ exch_der_df = exch_der_df.sort_values("Volume(24h)", ascending=False)
 
 # %%
 display(exch_der_df.loc[:9])
-cplpluti.plot_barplot(exch_der_df.set_index("Name")["Volume(24h)"].iloc[:10].squeeze(), 
-                                  title = "Trading volume per exchange",
-                                  xlabel="Exchanges", 
-                                  unicolor=True, 
-                                  rotation=45)
+cplpluti.plot_barplot(
+    exch_der_df.set_index("Name")["Volume(24h)"].iloc[:10].squeeze(),
+    title="Trading volume per exchange",
+    xlabel="Exchanges",
+    unicolor=True,
+    rotation=45,
+)
 
 # %% [markdown]
 # ## Total volume of top-10 derivative exchanges vs. all other derivative exchanges
@@ -323,11 +335,13 @@ good_crypto = crypto_df.iloc[:100]
 
 # %%
 display(good_crypto.loc[:9])
-cplpluti.plot_barplot(good_crypto.set_index("name")["_marketCap"].iloc[:10].squeeze(), 
-                                  title = "Market cap per coin",
-                                  xlabel="Cryptocurrencies", 
-                                  unicolor=True, 
-                                  rotation=45)
+cplpluti.plot_barplot(
+    good_crypto.set_index("name")["_marketCap"].iloc[:10].squeeze(),
+    title="Market cap per coin",
+    xlabel="Cryptocurrencies",
+    unicolor=True,
+    rotation=45,
+)
 
 # %% [markdown]
 # ### Total market cap of top-10 `good` cryptocurrencies vs. other `good` cryptocurrencies
@@ -363,13 +377,16 @@ good_crypto_volume_sorted = good_crypto.sort_values(
     "_volume24h", ascending=False, ignore_index=True
 )
 display(good_crypto_volume_sorted.iloc[:10])
-cplpluti.plot_barplot(crypto_df.set_index("name")
+cplpluti.plot_barplot(
+    crypto_df.set_index("name")
     .sort_values("_volume24h", ascending=False)["_volume24h"]
-    .iloc[:10].squeeze(), 
-                                  title = "Trading volume per coin",
-                                  xlabel="Cryptocurrencies", 
-                                  unicolor=True, 
-                                  rotation=45)
+    .iloc[:10]
+    .squeeze(),
+    title="Trading volume per coin",
+    xlabel="Cryptocurrencies",
+    unicolor=True,
+    rotation=45,
+)
 
 # %% [markdown]
 # ### Total volume of top-10 `good` cryptocurrencies vs. other `good` cryptocurrencies
@@ -455,6 +472,6 @@ good_others_volume = get_cumulative_volume_ratios(
     crypto_df.sort_values("_volume24h", ascending=False, ignore_index=True)[:40],
     "_volume24h",
     plot_results=True,
-    entity="coin"
+    entity="coin",
 )
 display(good_others_volume.head(5))
