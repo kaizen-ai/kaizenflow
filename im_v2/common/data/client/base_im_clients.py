@@ -154,9 +154,8 @@ class ImClient(abc.ABC):
             - `None` means end at the end of the available data
         :param columns: columns to return, skipping reading columns that are not requested
             - `None` means return all available columns
-        :param filter_data_mode: switch to control method robustness towards unexpected return
-            - "assert": assert if data does not match the filters
-            - "warn_and_trim": remove the data that was not requested and issue a warning
+        :param filter_data_mode: control class behavior with respect to extra
+            or missing columns, like in `_process_by_filter_data_mode()`
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
         :return: combined data for all the requested symbols
