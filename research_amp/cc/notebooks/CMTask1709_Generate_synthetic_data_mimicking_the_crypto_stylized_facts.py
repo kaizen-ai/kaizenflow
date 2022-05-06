@@ -367,15 +367,10 @@ btc["rets_cleaned"] = btc["rets"] - btc["rets_sma"]
 btc["rets_cleaned"].plot()
 
 # %%
-<<<<<<< HEAD
-rets = btc[["rets_cleaned"]]
-rets = rets[rets.notna()]
-=======
 rets = btc[["rets"]]
 
 # TODO(gp): Always use the dropna function that reports the number of nans removed
 rets = rets[rets.rets.notna()]
->>>>>>> 1e425dddecb081e1bfe4f5a9250817cdde120845
 
 # %% run_control={"marked": false}
 fig = plt.figure(figsize=(15, 7))
@@ -419,19 +414,26 @@ def add_hit_rate(rets_df, hit_rate, seed):
 
 
 # %%
-add_hit_rate(rets_df, 0.5, 1)
-#print(rets_df["rets"])
+dd = add_hit_rate(rets_df, 0.7, 1)
+dd#print(rets_df["rets"])
 
 # %%
+dd["hit"].mean()
+
+# %%
+import random
+
+
+# %% run_control={"marked": false}
 # X ~ U[-1, 1], E[X] = 0
 # hit_rate = 0
 
-#n = rets_df.shape[0]
-def get_predictions(rets_df, hit_rate, seed):
-    n = rets_df.shape[0]
+#n = df.shape[0]
+def get_predictions(df, hit_rate, seed):
+    n = df.shape[0]
     #hit_rate = 0.0
 
-    rets = rets_df["rets"].values
+    rets = df["rets"].values
     #rets = rets[:n]
     #print("rets=", rets)
 
@@ -439,13 +441,13 @@ def get_predictions(rets_df, hit_rate, seed):
     num_hits = int((1 - hit_rate) * n)
     mask = pd.Series(([-1] * num_hits) + ([1] * (n - num_hits)))
 
-    import random
+    
     random.shuffle(mask)
     #print("mask=", mask)
     #print(mask.mean())
 
     #print("sign(rets)=", np.sign(rets))
-    #pred = pd.Series(np.sign(rets) * mask, index=rets_df.index)
+    #pred = pd.Series(np.sign(rets) * mask, index=df.index)
     pred = pd.Series(np.sign(rets) * mask)
     #print("pred=", pred)
 
@@ -453,30 +455,26 @@ def get_predictions(rets_df, hit_rate, seed):
     #print(hit_rate)
 
     #print((pred * rets).mean())
+    pred.index = df.index
     return pred
 
+# %%
+hit_rate = 0.8
+dd = btc.head(1000)
 
 # %%
-rets
+dd["predictions"] = get_predictions(dd, hit_rate, 10)
+dd = dd[["rets", "predictions"]]
+dd["hit"] = (dd["rets"] * dd["predictions"] >= 0)
+dd
 
 # %%
-pd.Series(preds, index=rets_df.index)
+dd["hit"].mean()
+
 
 # %%
-preds = get_predictions(rets_df.head(1000), 0.5, 1)
-#print((preds * rets_df["rets"]) >= 0).mean()
-#preds.head()
-
-#rets
 
 # %%
-hit_rate = 1.0n
-seed = 10
-print(add_hit_rate(rets_df, hit_rate, seed)["hit"].mean())
-
-# %%
-rets_df["hit"].mean()
-
 
 # %%
 def calculate_confidence_interval(hit_series, alpha, method):
