@@ -20,23 +20,18 @@
 # # Imports
 
 # %%
-import core.finance.market_data_example as cfmadaex
-from typing import List
-import im_v2.common.universe as ivcu
-import requests
-import helpers.hdatetime as hdateti
-import statsmodels
 import random
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import core.finance as cofinanc
-import dataflow.core as dtfcore
-import dataflow.system.source_nodes as dtfsysonod
-import helpers.hdbg as hdbg
-import core.artificial_signal_generators as carsigen
-import helpers.hpandas as hpandas
+from typing import List
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import requests
+import statsmodels
+
+import helpers.hdatetime as hdateti
+import helpers.hpandas as hpandas
+import im_v2.common.universe as ivcu
 
 # %% [markdown]
 # # Extract returns from the real data
@@ -128,7 +123,11 @@ def read_crypto_chassis_ohlcv(
 
 
 # %%
-btc_df = read_crypto_chassis_ohlcv(["binance::BTC_USDT"], pd.Timestamp("2021-01-01", tz="UTC"), pd.Timestamp("2022-01-01", tz="UTC"))
+btc_df = read_crypto_chassis_ohlcv(
+    ["binance::BTC_USDT"],
+    pd.Timestamp("2021-01-01", tz="UTC"),
+    pd.Timestamp("2022-01-01", tz="UTC"),
+)
 
 # %%
 # TODO(Max):
@@ -153,7 +152,7 @@ btc["rets"] = btc["close"].pct_change()
 btc["rets_sma"] = btc["rets"].transform(lambda x: x.rolling(window=100).mean())
 # Substract SMA from returns to remove the upward trend.
 btc["rets_cleaned"] = btc["rets"] - btc["rets_sma"]
-#btc["rets"].plot()
+# btc["rets"].plot()
 btc["rets_cleaned"].plot()
 
 # %%
@@ -166,9 +165,9 @@ rets = hpandas.dropna(rets, report_stats=True)
 fig = plt.figure(figsize=(15, 7))
 ax1 = fig.add_subplot(1, 1, 1)
 rets.hist(bins=300, ax=ax1)
-ax1.set_xlabel('Return')
-ax1.set_ylabel('Sample')
-ax1.set_title('Returns distribution')
+ax1.set_xlabel("Return")
+ax1.set_ylabel("Sample")
+ax1.set_title("Returns distribution")
 plt.show()
 
 
@@ -195,6 +194,7 @@ def get_predictions(df, hit_rate, seed):
     pred.index = df.index
     return pred
 
+
 def calculate_confidence_interval(hit_series, alpha, method):
     """
     :param alpha: Significance level
@@ -202,14 +202,18 @@ def calculate_confidence_interval(hit_series, alpha, method):
     """
     point_estimate = hit_series.mean()
     hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=hit_series.sum(), nobs=hit_series.count(), alpha=alpha, method=method
+        count=hit_series.sum(),
+        nobs=hit_series.count(),
+        alpha=alpha,
+        method=method,
     )
     result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
     conf_alpha = (1 - alpha / 2) * 100
     print(f"hit_rate: {result_values_pct[0]}")
     print(f"hit_rate_lower_CI_({conf_alpha}%): {result_values_pct[1]}")
     print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
-    
+
+
 def get_predictions_hits_and_stats(df, hit_rate, seed, alpha, method):
     """
     :param df: Desired sample with OHLCV data and calculated returns
@@ -218,11 +222,11 @@ def get_predictions_hits_and_stats(df, hit_rate, seed, alpha, method):
     :param alpha: Significance level for CI
     :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
     """
-    df= df.copy()
+    df = df.copy()
     df["predictions"] = get_predictions(df, hit_rate, seed)
     df = df[["rets", "predictions"]]
-    df= df.copy()
-    df["hit"] = (df["rets"] * df["predictions"] >= 0)
+    df = df.copy()
+    df["hit"] = df["rets"] * df["predictions"] >= 0
     # D
     df = df[1:]
     calculate_confidence_interval(df["hit"], alpha, method)
