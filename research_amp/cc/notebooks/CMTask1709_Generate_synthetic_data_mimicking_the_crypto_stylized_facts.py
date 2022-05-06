@@ -166,12 +166,9 @@ ax1.set_ylabel("Sample")
 ax1.set_title("Returns distribution")
 plt.show()
 
+
 # %% [markdown]
 # # Pre-defined Predictions, Hit Rates and Confidence Interval
-
-# %%
-import statsmodels.stats as sts
-
 
 # %% run_control={"marked": false}
 def get_predictions(df, hit_rate, seed):
@@ -225,11 +222,13 @@ def get_predictions_hits_and_stats(df, hit_rate, seed, alpha, method):
     """
     df = df.copy()
     df["predictions"] = get_predictions(df, hit_rate, seed)
+    # Specify necessary columns.
     df = df[["rets", "predictions"]]
+    # Attach `hit` column (boolean).
     df = df.copy()
     df["hit"] = df["rets"] * df["predictions"] >= 0
-    # D
-    df = df[1:]
+    # Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
+    df = hpandas.dropna(df, report_stats=True)
     calculate_confidence_interval(df["hit"], alpha, method)
     return df
 
@@ -243,3 +242,5 @@ method = "normal"
 
 hit_df = get_predictions_hits_and_stats(sample, hit_rate, seed, alpha, method)
 display(hit_df)
+
+# %%
