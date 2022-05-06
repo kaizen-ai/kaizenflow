@@ -19,6 +19,7 @@ Use as:
 import argparse
 import logging
 import time
+import pandas as pd
 from datetime import datetime, timedelta
 
 import helpers.hdbg as hdbg
@@ -106,8 +107,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Time range for each download.
     time_window_min = 5
     # Check values.
-    stop_time = datetime.strptime(args.stop_time, "%Y-%m-%d %H:%M:%S")
-    start_time = datetime.strptime(args.start_time, "%Y-%m-%d %H:%M:%S")
+    start_time = pd.Timestamp(args.start_time).to_pydatetime().replace(tzinfo=None)
+    stop_time = pd.Timestamp(args.stop_time).to_pydatetime().replace(tzinfo=None)
     interval_min = args.interval_min
     hdbg.dassert_lte(
         1, interval_min, "interval_min: %s should be greater than 0", interval_min
@@ -161,7 +162,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                     minutes=interval_min
                 )
         # If download failed, but there is time before next download.
-        elif num_failures < max_num_failures:
+        elif num_failures > 0:
             _LOG.info("Start repeat download immediately.")
             iteration_delay_sec = 0
         else:
