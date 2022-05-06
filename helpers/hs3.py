@@ -357,13 +357,14 @@ def get_local_or_s3_stream(
 # #############################################################################
 
 
-# TODO(Nikola): Add small unit test.
+# TODO(Nikola): CmTask #1810 "Increase test coverage in helpers/hs3.py"
 def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     """
     Return the S3 bucket from environment variable corresponding to a given
     `aws_profile`. E.g., `aws_profile="am"` uses the value in `AM_AWS_S3_BUCKET`
     which is usually set to `s3://alphamatic-data`.
     """
+    hdbg.dassert_type_is(aws_profile, str)
     prefix = aws_profile.upper()
     env_var = f"{prefix}_AWS_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
@@ -391,6 +392,7 @@ def add_s3_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
         "--aws_profile",
         action="store",
+        required=True,
         type=str,
         help="The AWS profile to use for `.aws/credentials` or for env vars",
     )
@@ -413,6 +415,7 @@ def get_aws_profile(aws_profile: str) -> str:
     - command line option (i.e., `args.aws_profile`)
     - env vars (i.e., `AM_AWS_PROFILE`)
     """
+    hdbg.dassert_type_is(aws_profile, str)
     prefix = aws_profile.upper()
     env_var = f"{prefix}_AWS_PROFILE"
     hdbg.dassert_in(env_var, os.environ)
@@ -547,44 +550,6 @@ def get_aws_credentials(
     #
     hdbg.dassert_is_subset(key_to_env_var.keys(), result.keys())
     return result
-
-
-# TODO(Nikola): Not used anymore. Remove/refactor?
-@functools.lru_cache()
-def get_key_value(
-    aws_profile: str,
-    key: str,
-) -> Optional[str]:
-    """
-    Retrieve the value corresponding to `key` for the given `aws_profile`.
-
-    This function accesses the `~/.aws` files or the env vars.
-    """
-    _LOG.debug("Getting key-value for aws_profile='%s'", aws_profile)
-    hdbg.dassert_ne(aws_profile, "")
-    env_var = key.capitalize()
-    env_var_override = env_var in os.environ and os.environ[env_var] != ""
-    value: Optional[str] = None
-    if env_var_override:
-        _LOG.debug("Using '%s' from env vars '%s'", key, env_var)
-        value = os.environ[env_var]
-    else:
-        # > more ~/.aws/credentials
-        # [am]
-        # aws_s3_bucket=AKI...
-        file_name = "credentials"
-        config = _get_aws_config(file_name)
-        if config.has_option(aws_profile, key):
-            value = config.get(aws_profile, key)
-        else:
-            _LOG.warning(
-                "AWS file '%s' doesn't have key '%s' for aws_profile '%s'",
-                file_name,
-                key,
-                aws_profile,
-            )
-    _LOG.debug("key='%s' -> value='%s'", key, value)
-    return value
 
 
 # ///////////////////////////////////////////////////////////////////////////////
