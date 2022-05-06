@@ -366,11 +366,9 @@ class ImClient(abc.ABC):
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
 
     # TODO(Dan): CmTask1834 "Refactor `_process_by_filter_data_mode()`".
+    @staticmethod
     def _process_by_filter_data_mode(
-        self,
-        df: pd.DataFrame,
-        columns: Optional[List[str]],
-        filter_data_mode: str,
+        df: pd.DataFrame, columns: List[str], filter_data_mode: str
     ) -> pd.DataFrame:
         """
         Check that columns are the expected ones.

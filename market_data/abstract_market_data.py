@@ -564,6 +564,39 @@ class MarketData(abc.ABC):
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time
 
+    # TODO(Dan): CmTask1834 "Refactor `_process_by_filter_data_mode()`".
+    @staticmethod
+    def _process_by_filter_data_mode(
+        df: pd.DataFrame, columns: List[str], filter_data_mode: str
+    ) -> pd.DataFrame:
+        """
+        Check that columns are the expected ones.
+        """
+        received_columns = df.columns.to_list()
+        #
+        if filter_data_mode == "assert":
+            # Raise and assertion.
+            only_warning = False
+        elif filter_data_mode == "warn_and_trim":
+            # Just issue a warning.
+            only_warning = True
+            # Get columns intersection while preserving the order of the columns.
+            columns_intersection = sorted(
+                set(received_columns) & set(columns),
+                key=received_columns.index,
+            )
+            hdbg.dassert_lte(1, len(columns_intersection))
+            df = df[columns_intersection]
+        else:
+            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
+        hdbg.dassert_set_eq(
+            columns,
+            received_columns,
+            only_warning=only_warning,
+            msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
+        )
+        return df
+
     # /////////////////////////////////////////////////////////////////////////////
     # Derived class interface.
     # /////////////////////////////////////////////////////////////////////////////
@@ -642,41 +675,6 @@ class MarketData(abc.ABC):
         #     _LOG.debug(hprint.to_str("wall_clock_time df.index.max()"))
         #     hdbg.dassert_lte(df.index.max(), wall_clock_time)
         # _LOG.debug(hpandas.df_to_str(df, print_shape_info=True, tag="after process_data"))
-        return df
-
-    # TODO(Dan): CmTask1834 "Refactor `_process_by_filter_data_mode()`".
-    def _process_by_filter_data_mode(
-        self,
-        df: pd.DataFrame,
-        columns: Optional[List[str]],
-        filter_data_mode: str,
-    ) -> pd.DataFrame:
-        """
-        Check that columns are the expected ones.
-        """
-        received_columns = df.columns.to_list()
-        #
-        if filter_data_mode == "assert":
-            # Raise and assertion.
-            only_warning = False
-        elif filter_data_mode == "warn_and_trim":
-            # Just issue a warning.
-            only_warning = True
-            # Get columns intersection while preserving the order of the columns.
-            columns_intersection = sorted(
-                set(received_columns) & set(columns),
-                key=received_columns.index,
-            )
-            hdbg.dassert_lte(1, len(columns_intersection))
-            df = df[columns_intersection]
-        else:
-            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
-        hdbg.dassert_set_eq(
-            columns,
-            received_columns,
-            only_warning=only_warning,
-            msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
-        )
         return df
 
     def _remap_columns(self, df: pd.DataFrame) -> pd.DataFrame:
