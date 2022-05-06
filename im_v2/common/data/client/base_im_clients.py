@@ -396,15 +396,9 @@ class ImClient(abc.ABC):
         else:
            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
         hdbg.dassert_set_eq(
-            columns, 
-             columns, 
-            columns, 
-            received_columns, 
-             received_columns, 
-            received_columns, 
-            only_warning=only_warning, 
-             only_warning=only_warning, 
-            only_warning=only_warning, 
+            columns,
+            received_columns,
+            only_warning=only_warning,
             msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
         )
         return df

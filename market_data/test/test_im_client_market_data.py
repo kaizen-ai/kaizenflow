@@ -1063,13 +1063,6 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     # //////////////////////////////////////////////////////////////////////////////
 
     def test_filter_columns1(self) -> None:
-        """
-        Test that column names have been filtered correctly when:
-
-        - all the passed columns are present in data
-        - all the necessary columns are passed
-        - filter_data_mode = "assert"
-        """
         # Prepare inputs.
         asset_ids = [1467591036]
         columns = ["asset_id", "full_symbol", "close", "start_ts"]
@@ -1083,7 +1076,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         #
         expected_column_names = ["asset_id", "full_symbol", "close", "start_ts"]
         # Run.
-        self._filter_columns_helper1(
+        self._test_filter_columns1(
             market_data,
             start_ts,
             end_ts,
@@ -1091,13 +1084,10 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
             expected_column_names,
         )
 
-    def test_filter_columns2(self) -> None:
+    def test_filter_columns1_2(self) -> None:
         """
-        Test that column names have been filtered correctly when:
-
-        - all the passed columns are present in data
-        - "full_symbol" column is not passed
-        - filter_data_mode = "assert"
+        Test that columns are filtered correctly when full symbol column is not
+        requested.
         """
         # Prepare inputs.
         asset_ids = [1467591036]
@@ -1112,7 +1102,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         #
         expected_column_names = ["asset_id", "close", "start_ts"]
         # Run.
-        self._filter_columns_helper1(
+        self._test_filter_columns1(
             market_data,
             start_ts,
             end_ts,
@@ -1120,14 +1110,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
             expected_column_names,
         )
     
-    def test_filter_columns3(self) -> None:
-        """
-        Test that error is raised when:
-
-        - all the passed columns are present in data
-        - "assed_id" and "start_ts" columns are not passed
-        - filter_data_mode = "assert"
-        """
+    def test_filter_columns2(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
         columns = ["full_symbol", "close"]
@@ -1137,45 +1120,9 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
             asset_ids, columns, column_remap, filter_data_mode
         )
         # Run.
-        self._filter_columns_helper2(market_data, asset_ids)
+        self._test_filter_columns2(market_data, asset_ids)
 
-    def test_filter_columns4(self) -> None:
-        """
-        Test that column names have been filtered correctly when:
-
-        - all the passed columns are present in data
-        - "full_symbol" column is not passed
-        - filter_data_mode = "warn_and_trim"
-        """
-        # Prepare inputs.
-        asset_ids = [1467591036]
-        columns = ["asset_id", "close", "start_ts"]
-        column_remap = None
-        filter_data_mode = "warn_and_trim"
-        market_data = mdata.get_CcxtPqImClientMarketData_example2(
-            asset_ids, columns, column_remap, filter_data_mode
-        )
-        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
-        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
-        #
-        expected_column_names = ["asset_id", "close", "start_ts"]
-        # Run.
-        self._filter_columns_helper1(
-            market_data,
-            start_ts,
-            end_ts,
-            asset_ids,
-            expected_column_names,
-        )
-
-    def test_filter_columns5(self) -> None:
-        """
-        Test that error is raised when:
-
-        - all the passed columns are present in data
-        - "assed_id" and "start_ts" columns are not passed
-        - filter_data_mode = "warn_and_trim"
-        """
+    def test_filter_columns3(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
         columns = ["full_symbol", "close"]
@@ -1189,7 +1136,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         #
         expected_column_names = ["full_symbol", "close"]
         # Run.
-        self._filter_columns_helper1(
+        self._test_filter_columns3(
             market_data,
             start_ts,
             end_ts,
