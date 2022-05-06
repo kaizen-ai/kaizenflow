@@ -17,7 +17,7 @@
 
 # %%
 import logging
-import os
+from typing import List
 
 import pandas as pd
 import requests
@@ -32,10 +32,7 @@ import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hsql as hsql
-import im_v2.ccxt.data.client as icdcl
-import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.client.talos_clients as imvtdctacl
+import im_v2.common.universe as ivcu
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -49,31 +46,19 @@ hprint.config_notebook()
 # # Config
 
 # %%
-def get_cmtask1704_config_ccxt() -> cconconf.Config:
+def get_cmtask1704_config_crypto_chassis() -> cconconf.Config:
     """
-    Get config, that specifies params for getting raw data.
+    Get config, that specifies params for getting raw data from `crypto
+    chassis`.
     """
     config = cconconf.Config()
     # Load parameters.
-    config.add_subconfig("load")
-    env_file = imvimlita.get_db_env_path("dev")
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    config["load"]["connection"] = hsql.get_connection(*connection_params)
-    config["load"]["aws_profile"] = "ck"
-    config["load"]["data_dir_hist"] = os.path.join(
-        "s3://cryptokaizen-data", "historical"
-    )
-    config["load"]["data_snapshot"] = "latest"
-    config["load"]["partition_mode"] = "by_year_month"
+    # config.add_subconfig("load")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["vendor"] = "CCXT"
-    # Data range for real-time data.
-    config["data"]["start_date_rt"] = pd.Timestamp("2022-04-01", tz="UTC")
-    config["data"]["end_date_rt"] = pd.Timestamp("2022-04-15", tz="UTC")
-    # Data range for historical data.
-    config["data"]["start_date_hist"] = pd.Timestamp("2022-01-01", tz="UTC")
-    config["data"]["end_date_hist"] = pd.Timestamp("2022-01-15", tz="UTC")
+    config["data"]["full_symbols"] = ["binance::BNB_USDT", "binance::BTC_USDT"]
+    config["data"]["start_date"] = pd.Timestamp("2022-01-01", tz="UTC")
+    config["data"]["end_date"] = pd.Timestamp("2022-01-15", tz="UTC")
     # Transformation parameters.
     config.add_subconfig("transform")
     config["transform"]["resampling_rule"] = "5T"
@@ -82,7 +67,7 @@ def get_cmtask1704_config_ccxt() -> cconconf.Config:
 
 
 # %%
-config = get_cmtask1704_config_ccxt()
+config = get_cmtask1704_config_crypto_chassis()
 print(config)
 
 
@@ -147,7 +132,6 @@ def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     return vwap_twap_df
 
 
-# %%
 def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
     """
     Compute returns on the resampled data DataFlow-style.
@@ -188,201 +172,117 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 
 
 # %% [markdown]
-# # Load the data
-
-# %% [markdown]
-# ## CCXT
-
-# %% [markdown]
-# ### Real-time
+# # Load OHLCV data from `crypto-chassis`
 
 # %%
-# Specify params.
-vendor = config["data"]["vendor"]
-universe_version = "v3"
-resample_1min = True
-table_name = "ccxt_ohlcv"
-connection = config["load"]["connection"]
-# Initiate the client.
-ccxt_rt_client = icdcl.CcxtSqlRealTimeImClient(
-    resample_1min, connection, table_name
-)
+# TODO(Max): Refactor the loading part once #1766 is implemented.
 
 # %% [markdown]
-# #### Universe
+# ## Functions to extract and process data
 
 # %%
-# Specify the universe.
-rt_universe_ccxt = ccxt_rt_client.get_universe()
-len(rt_universe_ccxt)
+def get_exchange_currency_for_api_request(full_symbol: str) -> str:
+    """
+    Returns `exchange_id` and `currency_pair` in a format for requests to cc
+    API.
+    """
+    cc_exchange_id, cc_currency_pair = ivcu.parse_full_symbol(full_symbol)
+    cc_currency_pair = cc_currency_pair.lower().replace("_", "-")
+    return cc_exchange_id, cc_currency_pair
 
-# %%
-# Choose cc for analysis.
-full_symbols = rt_universe_ccxt[2:4]
-full_symbols
+
+def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol: str) -> pd.DataFrame:
+    """
+    - Transform CK `full_symbol` to the `crypto-chassis` request format.
+    - Construct OHLCV data request for `crypto-chassis` API.
+    - Save the data as a DataFrame.
+    """
+    # Deconstruct `full_symbol`.
+    cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(
+        full_symbol
+    )
+    # Build a request.
+    r = requests.get(
+        f"https://api.cryptochassis.com/v1/ohlc/{cc_exchange_id}/{cc_currency_pair}?startTime=0"
+    )
+    # Get url with data.
+    url = r.json()["historical"]["urls"][0]["url"]
+    # Read the data.
+    df = pd.read_csv(url, compression="gzip")
+    return df
+
+
+def apply_ohlcv_transformation(
+    df: pd.DataFrame,
+    full_symbol: str,
+    start_date: pd.Timestamp,
+    end_date: pd.Timestamp,
+) -> pd.DataFrame:
+    """
+    The following transformations are applied:
+
+    - Convert `timestamps` to the usual format.
+    - Convert data columns to `float`.
+    - Add `full_symbol` column.
+    """
+    # Convert `timestamps` to the usual format.
+    df = df.rename(columns={"time_seconds": "timestamp"})
+    df["timestamp"] = df["timestamp"].apply(
+        lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
+    )
+    df = df.set_index("timestamp")
+    # Convert to `float`.
+    for cols in df.columns:
+        df[cols] = df[cols].astype(float)
+    # Add `full_symbol`.
+    df["full_symbol"] = full_symbol
+    # Note: I failed to put [start_time, end_time] to historical request.
+    # Now it loads all the available data.
+    # For that reason the time interval is hardcoded on this stage.
+    df = df.loc[(df.index >= start_date) & (df.index <= end_date)]
+    return df
+
+
+def read_crypto_chassis_ohlcv(
+    full_symbols: List[str], start_date: pd.Timestamp, end_date: pd.Timestamp
+) -> pd.DataFrame:
+    """
+    - Load the raw data for one symbol.
+    - Convert it to CK format.
+    - Repeat the first two steps for all `full_symbols`.
+    - Concentrate them into unique DataFrame.
+    """
+    result = []
+    for full_symbol in full_symbols:
+        # Load raw data.
+        df_raw = load_crypto_chassis_ohlcv_for_one_symbol(full_symbol)
+        # Process it to CK format.
+        df = apply_ohlcv_transformation(df_raw, full_symbol, start_date, end_date)
+        result.append(df)
+    final_df = pd.concat(result)
+    return final_df
+
 
 # %% [markdown]
-# #### Data Loader
+# ## Data demonstration
 
 # %%
-# Specify time period.
-start_date = config["data"]["start_date_rt"]
-end_date = config["data"]["end_date_rt"]
+full_symbols = config["data"]["full_symbols"]
+start_date = config["data"]["start_date"]
+end_date = config["data"]["end_date"]
 
-# Load the data.
-data_rt_ccxt = ccxt_rt_client.read_data(full_symbols, start_date, end_date)
-display(data_rt_ccxt.shape)
-display(data_rt_ccxt.head(3))
-
-# %% [markdown]
-# ### Historical
+ohlcv_cc = read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
 
 # %%
-# Specify params.
-universe_version = "v3"
-resample_1min = True
-root_dir = config["load"]["data_dir_hist"]
-partition_mode = config["load"]["partition_mode"]
-data_snapshot = config["load"]["data_snapshot"]
-aws_profile = config["load"]["aws_profile"]
-
-# Initiate the client.
-historical_client_ccxt = icdcl.CcxtHistoricalPqByTileClient(
-    universe_version,
-    resample_1min,
-    root_dir,
-    partition_mode,
-    data_snapshot=data_snapshot,
-    aws_profile=aws_profile,
-)
-
-# %% [markdown]
-# #### Universe
-
-# %%
-# Specify the universe.
-historical_universe = historical_client_ccxt.get_universe()
-# Choose cc for analysis.
-full_symbols = historical_universe[2:4]
-full_symbols
-
-# %% [markdown]
-# #### Data Loader
-
-# %%
-# Specify time period.
-start_date = config["data"]["start_date_hist"]
-end_date = config["data"]["end_date_hist"]
-
-# Load the data.
-data_hist_ccxt = historical_client_ccxt.read_data(
-    full_symbols, start_date, end_date
-)
-display(data_hist_ccxt.shape)
-display(data_hist_ccxt.head(3))
-
-# %% [markdown]
-# ## Talos
-
-# %% [markdown]
-# ### Real-time
-
-# %%
-# Specify params.
-resample_1min = True
-db_connection = config["load"]["connection"]
-table_name = "talos_ohlcv"
-
-talos_rt_client = imvtdctacl.TalosSqlRealTimeImClient(
-    resample_1min, db_connection, table_name
-)
-
-# %% [markdown]
-# #### Universe
-
-# %%
-# Specify the universe.
-rt_universe_talos = sorted(talos_rt_client.get_universe())
-len(rt_universe_talos)
-
-# %%
-# Choose cc for analysis.
-full_symbols = rt_universe_talos[2:4]
-full_symbols
-
-# %% [markdown]
-# #### Data Loader
-
-# %%
-# Specify the period.
-start_date = config["data"]["start_date_rt"]
-end_date = config["data"]["end_date_rt"]
-
-# Load the data.
-data_rt_talos = talos_rt_client.read_data(full_symbols, start_date, end_date)
-display(data_rt_talos.shape)
-display(data_rt_talos.head(3))
-
-# %% [markdown]
-# ### Historical
-
-# %%
-# Specify params.
-universe_version = "v1"
-resample_1min = True
-root_dir = config["load"]["data_dir_hist"]
-partition_mode = config["load"]["partition_mode"]
-data_snapshot = config["load"]["data_snapshot"]
-aws_profile = config["load"]["aws_profile"]
-
-talos_hist_client = imvtdctacl.TalosHistoricalPqByTileClient(
-    universe_version,
-    resample_1min,
-    root_dir,
-    partition_mode,
-    data_snapshot=data_snapshot,
-    aws_profile=aws_profile,
-)
-
-# %% [markdown]
-# #### Universe
-
-# %%
-# Specify the universe.
-hist_universe_talos = talos_hist_client.get_universe()
-# Choose cc for analysis.
-full_symbols_hist_talos = hist_universe_talos[0:2]
-full_symbols_hist_talos
-
-# %% [markdown]
-# #### Data Loader
-
-# %% run_control={"marked": false}
-# Specify the period.
-start_date = config["data"]["start_date_hist"]
-end_date = config["data"]["end_date_hist"]
-
-# Load the data.
-data_hist_talos = talos_hist_client.read_data(
-    full_symbols_hist_talos, start_date, end_date
-)
-# Hardcoded solution to convert OHLCV to the 'float' type for the further use.
-for cols in data_hist_talos.columns[1:]:
-    data_hist_talos[cols] = data_hist_talos[cols].astype(float)
-# Show the data.
-display(data_hist_talos.shape)
-display(data_hist_talos.head(3))
+ohlcv_cc.head(3)
 
 # %% [markdown]
 # # Calculate VWAP, TWAP and returns in `Dataflow` style
 
-# %% [markdown]
-# ## CCXT
-
 # %%
 # VWAP, TWAP transformation.
 resampling_rule = config["transform"]["resampling_rule"]
-vwap_twap_df = calculate_vwap_twap(data_hist_ccxt, resampling_rule)
+vwap_twap_df = calculate_vwap_twap(ohlcv_cc, resampling_rule)
 
 # Returns calculation.
 rets_type = config["transform"]["rets_type"]
@@ -399,29 +299,6 @@ bnb_ex = bnb_ex["binance::BNB_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]
 display(bnb_ex.corr())
 bnb_ex.plot()
 
-# %% [markdown]
-# ## Talos
-
-# %%
-# VWAP, TWAP transformation.
-resampling_rule = config["transform"]["resampling_rule"]
-vwap_twap_df_talos = calculate_vwap_twap(data_hist_talos, resampling_rule)
-
-# Returns calculation.
-rets_type = config["transform"]["rets_type"]
-vwap_twap_rets_df_talos = calculate_returns(vwap_twap_df_talos, rets_type)
-
-# %%
-# Show the snippet.
-vwap_twap_rets_df_talos.head(3)
-
-# %%
-# Stats and vizualisation to check the outcomes.
-ada_ex = vwap_twap_rets_df_talos.swaplevel(axis=1)
-ada_ex = ada_ex["binance::ADA_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
-display(ada_ex.corr())
-ada_ex.plot()
-
 
 # %% [markdown]
 # # Bid-ask data
@@ -430,14 +307,37 @@ ada_ex.plot()
 # TODO(Max): Refactor the loading part once #1766 is implemented.
 
 # %%
-# Functions to deal with `crypto-chassis` data.
-def load_bid_ask_data(exchange_id, currency_pair, list_of_dates):
+def get_list_of_dates_for_period(
+    start_date: pd.Timestamp, end_date: pd.Timestamp
+) -> str:
+    """
+    Since cc API only loads the data for one day, on need to get all the
+    timestamps for days in the interval.
+    """
+    # Get the list of all dates in the range.
+    num_of_periods = (end_date - start_date).days
+    datelist = pd.date_range(start_date, periods=num_of_periods).tolist()
+    datelist = [str(x.strftime("%Y-%m-%d")) for x in datelist]
+    return datelist
+
+
+def load_bid_ask_data_for_one_symbol(
+    full_symbol: str, start_date: pd.Timestamp, end_date: pd.Timestamp
+) -> pd.DataFrame:
+    """
+    For each date inside the period load the bid-ask data.
+    """
     # Using the variables from `datelist` the multiple requests can be sent to the API.
+    list_of_dates = get_list_of_dates_for_period(start_date, end_date)
     result = []
     for date in list_of_dates:
+        # Deconstruct `full_symbol` for API request.
+        cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(
+            full_symbol
+        )
         # Interaction with the API.
         r = requests.get(
-            f"https://api.cryptochassis.com/v1/market-depth/{exchange_id}/{currency_pair}?startTime={date}"
+            f"https://api.cryptochassis.com/v1/market-depth/{cc_exchange_id}/{cc_currency_pair}?startTime={date}"
         )
         data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")
         # Attaching it day-by-day to the final DataFrame.
@@ -446,7 +346,15 @@ def load_bid_ask_data(exchange_id, currency_pair, list_of_dates):
     return bid_ask_df
 
 
-def clean_up_raw_bid_ask_data(df, full_symbol):
+def apply_bid_ask_transformation(
+    df: pd.DataFrame, full_symbol: str
+) -> pd.DataFrame:
+    """
+    - Divide (price, size) columns.
+    - Convert timestamps and set them as index.
+    - Convert data columns to `float`.
+    - Add `full_symbol` column.
+    """
     # Split the columns to differentiate between `price` and `size`.
     df[["bid_price", "bid_size"]] = df["bid_price_bid_size"].str.split(
         "_", expand=True
@@ -464,12 +372,12 @@ def clean_up_raw_bid_ask_data(df, full_symbol):
     # Convert to `float`.
     for cols in df.columns:
         df[cols] = df[cols].astype(float)
-    # Add `full_symbol` (hardcoded solution).
+    # Add `full_symbol` column.
     df["full_symbol"] = full_symbol
     return df
 
 
-def resample_bid_ask(df, resampling_rule):
+def resample_bid_ask(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     """
     In the current format the data is presented in the `seconds` frequency. In
     order to convert it to the minutely (or other) frequencies the following
@@ -490,19 +398,35 @@ def resample_bid_ask(df, resampling_rule):
     return new_df
 
 
-def process_bid_ask_data(df, full_symbol, resampling_rule):
-    # Convert the data to the right format.
-    converted_df = clean_up_raw_bid_ask_data(df, full_symbol)
-    # Resample.
-    converted_resampled_df = resample_bid_ask(converted_df, resampling_rule)
+def read_and_resample_bid_ask_data(
+    full_symbols: List[str],
+    start_date: pd.Timestamp,
+    end_date: pd.Timestamp,
+    resampling_rule: str,
+) -> pd.DataFrame:
+    """
+    General method that does:
+
+    - Data loading
+    - Transformation to CK format
+    - Resampling
+    """
+    result = []
+    for full_symbol in full_symbols:
+        # Load raw bid ask data.
+        df = load_bid_ask_data_for_one_symbol(full_symbol, start_date, end_date)
+        # Apply transformation.
+        df = apply_bid_ask_transformation(df, full_symbol)
+        # Resample the data.
+        df = resample_bid_ask(df, resampling_rule)
+        result.append(df)
+    bid_ask_df = pd.concat(result)
+    return bid_ask_df
+
+
+def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     # Convert to multiindex.
-    converted_resampled_df = dtfsysonod._convert_to_multiindex(
-        converted_resampled_df, "full_symbol"
-    )
-    return converted_resampled_df
-
-
-def calculate_bid_ask_statistics(df):
+    converted_df = dtfsysonod._convert_to_multiindex(df, "full_symbol")
     # Configure the node to calculate the returns.
     node_bid_ask_config = {
         "in_col_groups": [
@@ -527,43 +451,24 @@ def calculate_bid_ask_statistics(df):
         **node_bid_ask_config,
     )
     # Compute the node on the data.
-    bid_ask_metrics = node.fit(df)
+    bid_ask_metrics = node.fit(converted_df)
     # Save the result.
     bid_ask_metrics = bid_ask_metrics["df_out"]
     return bid_ask_metrics
 
 
-# %% [markdown]
-# ## Load, process and calculate metrics for raw bid ask data from crypto-chassis
-
 # %%
-# Get the list of all dates in the range.
-datelist = pd.date_range("2022-01-01", periods=14).tolist()
-datelist = [str(x.strftime("%Y-%m-%d")) for x in datelist]
-
-# %%
-# These `full_symbols` need to be loaded (to attach it to historical CCXT data).
-full_symbols
-
-# %%
-# Load `binance::BNB_USDT`.
-bid_ask_bnb = load_bid_ask_data("binance", "bnb-usdt", datelist)
-# Transforming the data. Data is resampled during its transformation.
-processed_bid_ask_bnb = process_bid_ask_data(
-    bid_ask_bnb, "binance::BNB_USDT", "5T"
+# Specify the params.
+full_symbols = config["data"]["full_symbols"]
+start_date = config["data"]["start_date"]
+end_date = config["data"]["end_date"]
+# Get the data.
+bid_ask_df = read_and_resample_bid_ask_data(
+    full_symbols, start_date, end_date, "5T"
 )
+bid_ask_df.head(3)
 
 # %%
-# Load `binance::BTC_USDT`.
-bid_ask_btc = load_bid_ask_data("binance", "btc-usdt", datelist)
-# Transforming the data. Data is resampled during its transformation.
-processed_bid_ask_btc = process_bid_ask_data(
-    bid_ask_btc, "binance::BTC_USDT", "5T"
-)
-
-# %%
-# Unite two `full_symbols`.
-bid_ask_df = pd.concat([processed_bid_ask_bnb, processed_bid_ask_btc], axis=1)
 # Calculate bid-ask metrics.
 bid_ask_df = calculate_bid_ask_statistics(bid_ask_df)
 bid_ask_df.tail(3)
