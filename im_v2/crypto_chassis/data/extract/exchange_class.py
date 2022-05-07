@@ -178,7 +178,7 @@ class CryptoChassisExchange:
         r = requests.get(query_url)
         # Retrieve raw data.
         data_json = r.json() 
-        if data_json.get("historical").get("urls") is None:
+        if data_json.get("historical") is None:
             # Return empty dataframe if there is no results.
             return pd.DataFrame()
         df_csv = data_json["historical"]["urls"][0]["url"]
