@@ -227,6 +227,7 @@ def _run(
     *args: Any,
     dry_run: bool = False,
     use_system: bool = False,
+    print_cmd: bool = False,
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     _LOG.debug(hprint.to_str("cmd dry_run"))
@@ -238,6 +239,8 @@ def _run(
         _LOG.warning("Skipping execution")
         res = None
     else:
+        if print_cmd:
+            print(f"> {cmd}")
         if use_system:
             # TODO(gp): Consider using only `hsystem.system()` since it's more
             # reliable.
@@ -391,7 +394,7 @@ def print_setup(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    var_names = "AM_ECR_BASE_PATH BASE_IMAGE".split()
+    var_names = "ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
         print(f"{v}={get_default_param(v)}")
 
@@ -1376,6 +1379,7 @@ def integrate_diff_dirs(  # type: ignore
     use_linux_diff=False,
     check_branches=True,
     clean_branches=True,
+    remove_usual=False,
     dry_run=False,
 ):
     """
@@ -1397,6 +1401,7 @@ def integrate_diff_dirs(  # type: ignore
         `src_dir_basename/subdir` and `dst_dir_basename/subdir`)
     :param copy: copy the files instead of diffing
     :param use_linux_diff: use Linux `diff` instead of `diff_to_vimdiff.py`
+    :param remove_usual: remove the usual mismatching files (e.g., `.github`)
     """
     _report_task()
     if reverse:
@@ -1422,6 +1427,10 @@ def integrate_diff_dirs(  # type: ignore
             _clean_both_integration_dirs(abs_src_dir, abs_dst_dir)
     else:
         _LOG.warning("Skipping integration branch cleaning")
+    # Copy or diff dirs.
+    _LOG.info("abs_src_dir=%s", abs_src_dir)
+    _LOG.info("abs_dst_dir=%s", abs_dst_dir)
+    hdbg.dassert_ne(abs_src_dir, abs_dst_dir)
     if copy:
         # Copy the files.
         if dry_run:
@@ -1435,7 +1444,12 @@ def integrate_diff_dirs(  # type: ignore
             cmd = f"diff -r --brief {abs_src_dir} {abs_dst_dir}"
         else:
             cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
-    _run(ctx, cmd, dry_run=dry_run)
+            if remove_usual:
+                vals = ["\/\.github\/",
+                        ]
+                regex = "|".join(vals)
+                cmd += f" --ignore_files=\'{regex}\'"
+    _run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -1816,7 +1830,7 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     _report_task()
     docker_login(ctx)
-    ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
+    ecr_base_path = get_default_param("ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
     _run(ctx, f"{docker_exec} image ls {ecr_base_path}")
 
@@ -2011,7 +2025,7 @@ def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
     """
     _report_task()
     #
-    base_image = get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
+    base_image = get_default_param("ECR_BASE_PATH") + "/dev_tools"
     _docker_pull(ctx, base_image, stage, version)
 
 
@@ -2053,7 +2067,7 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
     else:
-        ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
+        ecr_base_path = get_default_param("ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
@@ -2135,25 +2149,13 @@ def _generate_compose_file(
           - AM_ENABLE_DIND=%s
           - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
           - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
+          - AM_S3_BUCKET=$AM_S3_BUCKET
           - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
           - AM_HOST_NAME=%s
           - AM_HOST_OS_NAME=%s
-          - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
-          - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
-          - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
-          - CK_AWS_PROFILE=$CK_AWS_PROFILE
-          # - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
-          # - CK_ENABLE_DIND=
-          # - CK_FORCE_TEST_FAIL=$CK_FORCE_TEST_FAIL
-          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
-          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
-          # - CK_HOST_NAME=
-          # - CK_HOST_OS_NAME=
-          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
-          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
-          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
+          - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+          - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+          - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
           - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
           # This env var is used by GH Action to signal that we are inside the CI.
           - CI=$CI
@@ -2536,7 +2538,7 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            get_default_param("AM_ECR_BASE_PATH")
+            get_default_param("ECR_BASE_PATH")
             + "/"
             + get_default_param("BASE_IMAGE")
         )
