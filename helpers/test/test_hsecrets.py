@@ -1,3 +1,4 @@
+# TODO(gp): Use pytest.import_skip instead of all this machinery.
 _HAS_MOTO = True
 try:
     import moto
@@ -20,6 +21,7 @@ if _HAS_MOTO:
     import botocore
     import pytest
 
+    import helpers.hgit as hgit
     import helpers.hsecrets as hsecret
     import helpers.hunit_test as hunitest
 
@@ -28,6 +30,9 @@ if _HAS_MOTO:
     # The `mock_secretsmanager` decorator ensures the calls to the AWS API are
     # mocked.
 
+    @pytest.mark.skipif(
+        not hgit.execute_repo_config_code("is_CK_S3_available()"),
+        reason="Run only if CK S3 is available")
     class TestCreateClient(hunitest.TestCase):
         def test_create_client1(self) -> None:
             """
