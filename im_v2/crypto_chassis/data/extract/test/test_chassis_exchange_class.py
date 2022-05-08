@@ -90,6 +90,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
+    @pytest.mark.slow("10 seconds.")
     def test_download_ohlcv_data1(
         self,
     ) -> None:
