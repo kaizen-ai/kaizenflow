@@ -94,11 +94,6 @@ def opt_docker_release_dev_image(  # type: ignore
     (ONLY CI/CD) Build, test, and release to ECR the latest `opt:dev` image.
 
     See corresponding invoke target for the main container.
-
-    Phases:
-    1) Build local image
-    2) Mark local as dev image
-    3) Push dev image to the repo
     """
     hlibtask.docker_release_dev_image(
         ctx,
@@ -125,7 +120,7 @@ def opt_docker_release_dev_image(  # type: ignore
 @task
 def opt_docker_pull(ctx, stage="dev", version=None):  # type: ignore
     """
-    Pull latest dev image corresponding to the current repo from the registry.
+    Pull the latest dev `opt` image from the Docker registry.
     """
     hlibtask._report_task()
     #
@@ -169,7 +164,7 @@ def opt_docker_jupyter(  # type: ignore
     self_test=False,
 ):
     """
-    Run jupyter notebook server in the `opt` container.
+    Run Jupyter notebook server in the `opt` container.
 
     See corresponding invoke target for the main container.
     """
@@ -217,7 +212,8 @@ def opt_docker_cmd(  # type: ignore
 # #############################################################################
 
 
-# TODO(Grisha): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
+# TODO(Grisha): Pass a test_list in fast, slow, ... instead of duplicating all
+#  the code CmTask #1571.
 @task
 def opt_run_fast_tests(
     ctx,
@@ -328,10 +324,9 @@ def _get_opt_docker_up_cmd(
     detach: bool, base_image: str, stage: str, version: Optional[str]
 ) -> str:
     """
-    Get `docker-compose up` command for the optimizer.
+    Get `docker-compose up` command for the optimizer service.
 
     E.g.,
-
     ```
     IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
         docker-compose \
@@ -341,6 +336,7 @@ def _get_opt_docker_up_cmd(
         -d \
         app
     ```
+
     :param detach: whether to run in detached mode or not
     """
     extra_env_vars = None
@@ -375,7 +371,8 @@ def _get_opt_docker_up_cmd(
 
 
 @task
-def opt_docker_up(ctx, detach=True, base_image="", stage="dev", version=""):  # type: ignore
+def opt_docker_up(  # type: ignore
+        ctx, detach=True, base_image="", stage="dev", version=""):
     """
     Start the optimizer as a service.
     """
@@ -385,6 +382,7 @@ def opt_docker_up(ctx, detach=True, base_image="", stage="dev", version=""):  # 
     hlibtask._run(ctx, docker_up_cmd, pty=True)
 
 
+# TODO(gp): @all merge this command with the up command passing a `mode` switch.
 def _get_opt_docker_down_cmd(
     base_image: str, stage: str, version: Optional[str]
 ) -> str:
@@ -392,7 +390,6 @@ def _get_opt_docker_down_cmd(
     Get `docker-compose down` command for the optimizer.
 
     E.g.,
-
     ```
     IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
         docker-compose \
@@ -420,7 +417,8 @@ def _get_opt_docker_down_cmd(
 
 
 @task
-def opt_docker_down(ctx, base_image="", stage="dev", version=""):  # type: ignore
+def opt_docker_down(  # type: ignore
+        ctx, base_image="", stage="dev", version=""):
     """
     Bring down the optimizer service.
     """

@@ -193,9 +193,10 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
                     "order_duration": 1,
                 },
                 "optimizer_config": {
-                    "backend": "compute_target_positions_in_cash",
+                    "backend": "pomo",
+                    "bulk_frac_to_remove": 0.0,
+                    "bulk_fill_method": "zero",
                     "target_gmv": 1e5,
-                    "dollar_neutrality": "no_constraint",
                 },
                 "execution_mode": "real_time",
                 "ath_start_time": datetime.time(9, 30),
