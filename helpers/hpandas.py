@@ -262,6 +262,44 @@ def dassert_series_type_in(
     hdbg.dassert_in(srs.dtype.type, types, msg, *args)
 
 
+def dassert_indices_equal(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+) -> None:
+    """
+    Ensure that `df1` and `df2` share a common index.
+
+    Print the symmetric difference of indices if equality does not hold.
+    """
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert(
+        df1.index.equals(df2.index),
+        "df1.index.difference(df2.index)=\n%s\ndf2.index.difference(df1.index)=\n%s",
+        df1.index.difference(df2.index),
+        df2.index.difference(df1.index),
+    )
+
+
+def dassert_columns_equal(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+) -> None:
+    """
+    Ensure that `df1` and `df2` have the same columns.
+
+    Print the symmetric difference of columns if equality does not hold.
+    """
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert(
+        df1.columns.equals(df2.columns),
+        "df1.columns.difference(df2.columns)=\n%s\ndf2.columns.difference(df1.columns)=\n%s",
+        df1.columns.difference(df2.columns),
+        df2.columns.difference(df1.columns),
+    )
+
+
 # #############################################################################
 
 
@@ -286,24 +324,26 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
         end=max_date,
         freq=frequency,
     )
-    if len(resampled_index) > len(index):
-        # Downsample.
-        _LOG.debug(
-            "Index length increased by %s = %s - %s",
-            len(resampled_index) - len(index),
-            len(resampled_index),
-            len(index),
-        )
-    elif len(resampled_index) < len(index):
-        # Upsample.
-        _LOG.debug(
-            "Index length decreased by %s = %s - %s",
-            len(index) - len(resampled_index),
-            len(index),
-            len(resampled_index),
-        )
-    else:
-        _LOG.debug("Index length=%s has not changed", len(index))
+    # Enable detailed debugging.
+    if False:
+        if len(resampled_index) > len(index):
+            # Downsample.
+            _LOG.debug(
+                "Index length increased by %s = %s - %s",
+                len(resampled_index) - len(index),
+                len(resampled_index),
+                len(index),
+            )
+        elif len(resampled_index) < len(index):
+            # Upsample.
+            _LOG.debug(
+                "Index length decreased by %s = %s - %s",
+                len(index) - len(resampled_index),
+                len(index),
+                len(resampled_index),
+            )
+        else:
+            _LOG.debug("Index length=%s has not changed", len(index))
     # resampled_index.name = index_name
     return resampled_index
 
