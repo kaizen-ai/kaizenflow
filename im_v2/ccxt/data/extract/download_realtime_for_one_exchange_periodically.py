@@ -19,8 +19,9 @@ Use as:
 import argparse
 import logging
 import time
-import pandas as pd
 from datetime import datetime, timedelta
+
+import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
@@ -85,9 +86,8 @@ def _download_realtime_for_one_exchange_with_timeout(
     end_timestamp: datetime,
 ) -> None:
     """
-    Wrapper for download_realtime_for_one_exchange.
-    Download data for given time range, raise Interrupt in case if timeout
-    occured.
+    Wrapper for download_realtime_for_one_exchange. Download data for given
+    time range, raise Interrupt in case if timeout occured.
 
     :param args: arguments passed on script run
     :param start_timestamp: beginning of the downloaded period
@@ -107,7 +107,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Time range for each download.
     time_window_min = 5
     # Check values.
-    start_time = pd.Timestamp(args.start_time).to_pydatetime().replace(tzinfo=None)
+    start_time = (
+        pd.Timestamp(args.start_time).to_pydatetime().replace(tzinfo=None)
+    )
     stop_time = pd.Timestamp(args.stop_time).to_pydatetime().replace(tzinfo=None)
     interval_min = args.interval_min
     hdbg.dassert_lte(

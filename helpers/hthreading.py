@@ -2,7 +2,9 @@
 """
 `timeout` decorator which is used to limit function execution time.
 
-Import as: from helpers.hthreading import timeout
+Import as:
+
+import helpers.hthreading as hthread
 """
 
 import _thread
@@ -19,9 +21,9 @@ def _timeout_handler() -> None:
 
 def timeout(timeout_sec: int) -> Any:
     """
-    Exit process if its execution takes longer than timeout_sec seconds.
-    This is a decorator that issue a KeyboardInterrup,
-    that will be raised if time limit is exceed.
+    Exit process if its execution takes longer than timeout_sec seconds. This
+    is a decorator that issue a KeyboardInterrupt, that will be raised if time
+    limit is exceed.
 
     :param timeout_sec: time limit
     """
