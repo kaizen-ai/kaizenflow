@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 
 import helpers.hdbg as hdbg
+import helpers.hsecrets as hsecret
 
 
 class CryptoChassisExchange:
@@ -20,6 +21,30 @@ class CryptoChassisExchange:
 
     def __init__(self) -> None:
         self._endpoint = "https://api.cryptochassis.com/v1"
+
+    @staticmethod
+    def convert_currency_pair(currency_pair: str) -> str:
+        """
+        Convert currency pair used for getting data from exchange.
+        """
+        return currency_pair.replace("_", "/").lower()
+
+    def download_data(self, data_type: str, *args, **kwargs: Any) -> pd.DataFrame:
+        """
+        Download Crypto Chassis data.
+
+        :param data_type: the type of data, e.g. `market_depth`
+        :return: Crypto Chassis data
+        """
+        # Check data type.
+        hdbg.dassert_eq(data_type, "market_depth")
+        # Get data.
+        return self.download_market_depth(
+            exchange=kwargs["exchange_id"],
+            currency_pair=kwargs["currency_pair"],
+            depth=kwargs["depth"],
+            start_timestamp=kwargs["start_timestamp"],
+        )
 
     def download_market_depth(
         self,
@@ -34,7 +59,6 @@ class CryptoChassisExchange:
         Additional parameters that can be passed as **kwargs:
           - startTime: pd.Timestamp
           - depth: int - allowed values: 1 to 10. Defaults to 1.
-
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :param kwargs: additional parameters of processing
@@ -47,6 +71,9 @@ class CryptoChassisExchange:
                 pd.Timestamp,
             )
             start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
+        if depth:
+            hdbg.dassert_lgt(1, depth, 10, True, True)
+            depth = str(depth)
         # Currency pairs in market data are stored in `cur1/cur2` format, 
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
@@ -64,7 +91,11 @@ class CryptoChassisExchange:
         # Request the data.
         r = requests.get(query_url)
         # Retrieve raw data.
-        df_csv = r.json()["urls"][0]["url"]
+        data_json = r.json() 
+        if data_json.get("urls") is None:
+            # Return empty dataframe if there is no results.
+            return pd.DataFrame()
+        df_csv = data_json["urls"][0]["url"]
         # Convert CSV into dataframe.
         market_depth = pd.read_csv(df_csv, compression="gzip")
         # Separate `bid_price_bid_size` column to `bid_price` and `bid_size`.
@@ -79,6 +110,8 @@ class CryptoChassisExchange:
         market_depth = market_depth.drop(
             columns=["bid_price_bid_size", "ask_price_ask_size"]
         )
+        # Rename time column.
+        market_depth = market_depth.rename(columns={"time_seconds": "timestamp"})
         return market_depth
 
     def _build_base_url(
