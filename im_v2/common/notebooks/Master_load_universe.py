@@ -18,21 +18,16 @@
 # %%
 import logging
 import os
-import seaborn as sns
 
-import pandas as pd
-import matplotlib as mpl
 import matplotlib.pyplot as plt
+import pandas as pd
 
 import core.config.config_ as cconconf
-import core.statistics as cstats
+import core.statistics as costatis
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.ccxt.data.client as icdcl
-import research_amp.cc.statistics as ramccsta
-import core.statistics as costatis
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -88,27 +83,29 @@ print(config)
 # # Functions
 
 # %%
-def _get_qa_stats(
-    data: pd.DataFrame, config: cconconf.Config
-) -> pd.DataFrame:
+def _get_qa_stats(data: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
     """
     Get quality assurance stats per full symbol in data.
     """
     res_stats = []
-    for full_symbol, symbol_data in data.groupby(config["column_names"]["full_symbol"]):
+    for full_symbol, symbol_data in data.groupby(
+        config["column_names"]["full_symbol"]
+    ):
         # Get series with close price.
-        srs = symbol_data[config["column_names"]["close_price"]]
+        symbol_data[config["column_names"]["close_price"]]
         # Compute stats for a full symbol.
         symbol_stats = pd.Series(dtype="object", name=full_symbol)
         symbol_stats["min_timestamp"] = symbol_data.first_valid_index()
         symbol_stats["max_timestamp"] = symbol_data.last_valid_index()
         symbol_stats["coverage %"] = 100 * (
-            1 - costatis.compute_frac_nan(
+            1
+            - costatis.compute_frac_nan(
                 symbol_data[config["column_names"]["close_price"]]
             )
         )
         symbol_stats["volume=0 %"] = 100 * (
-            symbol_data[symbol_data["volume"]==0].shape[0] / symbol_data.shape[0]
+            symbol_data[symbol_data["volume"] == 0].shape[0]
+            / symbol_data.shape[0]
         )
         res_stats.append(symbol_stats)
     # Combine all full symbol stats.
@@ -119,14 +116,16 @@ def _get_qa_stats(
 def _plot_nan_values(data: pd.DataFrame, full_symbol: str) -> None:
     """
     Plot NaN values per full symbol in data.
-    
+
     "1" for "True" and "0" for "False".
     """
-    for full_symbol, symbol_data in data.groupby(config["column_names"]["full_symbol"]):
+    for full_symbol, symbol_data in data.groupby(
+        config["column_names"]["full_symbol"]
+    ):
         # Get series with close price.
-        nan_values = symbol_data[
-            config["column_names"]["close_price"]
-        ].isna().astype(int)
+        nan_values = (
+            symbol_data[config["column_names"]["close_price"]].isna().astype(int)
+        )
         #
         plt.figure()
         plt.title(full_symbol)
