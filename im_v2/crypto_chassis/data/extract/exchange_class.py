@@ -145,8 +145,8 @@ class CryptoChassisExchange:
         :param mode: `recent` for real-time data, `historical` for historical data
         :param interval: interval of processing, used when end_time is absent
           e.g. `1m`, `3m`, `5m` etc.
-        :param start_time: timestamp of start
-        :param end_time: timestamp of end
+        :param start_time: start of downloaded period
+        :param end_time: end of downloaded period
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this 
             endpoint is 1 request per second per public IP.
         :return: ohlcv depth datas
