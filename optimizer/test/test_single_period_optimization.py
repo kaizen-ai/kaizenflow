@@ -16,22 +16,32 @@ _LOG = logging.getLogger(__name__)
 pytestmark = pytest.mark.optimizer
 
 
-class Test_SinglePeriodOptimizer1(hunitest.TestCase):
-    @staticmethod
-    def only_gmv_constraint_helper(solver: Optional[str] = None) -> str:
-        dict_ = {
-            "volatility_penalty": 0.0,
-            "dollar_neutrality_penalty": 0.0,
-            "turnover_penalty": 0.0,
-            "target_gmv": 3000,
-            "target_gmv_upper_bound_multiple": 1.00,
-        }
-        if solver is not None:
-            dict_["solver"] = solver
-        config = cconfig.get_config_from_nested_dict(dict_)
-        df = Test_SinglePeriodOptimizer1.get_prediction_df()
-        actual = Test_SinglePeriodOptimizer1.helper(config, df, restrictions=None)
-        return actual
+def _run_optimizer(
+    config: cconfig.Config,
+    df: pd.DataFrame,
+    restrictions: Optional[pd.DataFrame],
+) -> str:
+    """
+    Run the optimizer on the given df with the passed restrictions.
+    """
+    spo = osipeopt.SinglePeriodOptimizer(
+        config, df, restrictions=restrictions
+    )
+    optimized = spo.optimize()
+    # stats = spo.compute_stats(optimized)
+    precision = 2
+    actual_str = hpandas.df_to_str(
+        optimized.round(precision), precision=precision
+    )
+    return actual_str
+
+
+# ##############################################################################
+# TestSinglePeriodOptimizer1
+# ##############################################################################
+
+
+class TestSinglePeriodOptimizer1(hunitest.TestCase):
 
     @staticmethod
     def get_prediction_df() -> pd.DataFrame:
@@ -42,26 +52,26 @@ class Test_SinglePeriodOptimizer1(hunitest.TestCase):
         )
         return df
 
-    @staticmethod
-    def helper(
-        config: cconfig.Config,
-        df: pd.DataFrame,
-        restrictions: Optional[pd.DataFrame],
-    ) -> str:
-        spo = osipeopt.SinglePeriodOptimizer(
-            config, df, restrictions=restrictions
-        )
-        optimized = spo.optimize()
-        #  stats = spo.compute_stats(optimized)
-        precision = 2
-        actual_str = hpandas.df_to_str(
-            optimized.round(precision), precision=precision
-        )
-        return actual_str
+    def run_opt_with_only_gmv_constraint(self, solver: Optional[str] = None) -> str:
+        dict_ = {
+            "volatility_penalty": 0.0,
+            "dollar_neutrality_penalty": 0.0,
+            "turnover_penalty": 0.0,
+            "target_gmv": 3000,
+            "target_gmv_upper_bound_multiple": 1.00,
+        }
+        if solver is not None:
+            dict_["solver"] = solver
+        config = cconfig.get_config_from_nested_dict(dict_)
+        df = self.get_prediction_df()
+        actual = _run_optimizer(config, df, restrictions=None)
+        return actual
+
+    # ///////////////////////////////////////////////////////////////////////////////
 
     @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_only_gmv_constraint(self) -> None:
-        actual = self.only_gmv_constraint_helper()
+        actual = self.run_opt_with_only_gmv_constraint()
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
@@ -72,7 +82,7 @@ asset_id
 
     @pytest.mark.skip("CmTask #1607 Flaky opt tests fail.")
     def test_only_gmv_constraint_osqp(self) -> None:
-        actual = self.only_gmv_constraint_helper("OSQP")
+        actual = self.run_opt_with_only_gmv_constraint("OSQP")
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
@@ -82,7 +92,7 @@ asset_id
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_only_gmv_constraint_ecos(self) -> None:
-        actual = self.only_gmv_constraint_helper("ECOS")
+        actual = self.run_opt_with_only_gmv_constraint("ECOS")
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
@@ -92,7 +102,7 @@ asset_id
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_only_gmv_constraint_scs(self) -> None:
-        actual = self.only_gmv_constraint_helper("SCS")
+        actual = self.run_opt_with_only_gmv_constraint("SCS")
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
@@ -100,6 +110,8 @@ asset_id
 2                  3000.0                 1500.0            3.0                 1.5
 3                     0.0                  500.0            0.0                 0.5"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+    # ///////////////////////////////////////////////////////////////////////////////
 
     def test_restrictions(self) -> None:
         dict_ = {
@@ -110,7 +122,7 @@ asset_id
             "target_gmv_upper_bound_multiple": 1.00,
         }
         config = cconfig.get_config_from_nested_dict(dict_)
-        df = Test_SinglePeriodOptimizer1.get_prediction_df()
+        df = self.get_prediction_df()
         restrictions = pd.DataFrame(
             [[2, True, True, True, True]],
             range(0, 1),
@@ -122,7 +134,7 @@ asset_id
                 "is_sell_long_restricted",
             ],
         )
-        actual = Test_SinglePeriodOptimizer1.helper(
+        actual = _run_optimizer(
             config, df, restrictions=restrictions
         )
         expected = r"""
@@ -142,8 +154,8 @@ asset_id
             "target_gmv_upper_bound_multiple": 1.01,
         }
         config = cconfig.get_config_from_nested_dict(dict_)
-        df = Test_SinglePeriodOptimizer1.get_prediction_df()
-        actual = Test_SinglePeriodOptimizer1.helper(config, df, restrictions=None)
+        df = self.get_prediction_df()
+        actual = _run_optimizer(config, df, restrictions=None)
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id
@@ -161,7 +173,7 @@ asset_id
             "target_gmv_upper_bound_multiple": 1.01,
         }
         config = cconfig.get_config_from_nested_dict(dict_)
-        df = Test_SinglePeriodOptimizer1.get_prediction_df()
+        df = self.get_prediction_df()
         restrictions = pd.DataFrame(
             [[3, False, False, True, False]],
             range(0, 1),
@@ -173,7 +185,7 @@ asset_id
                 "is_sell_long_restricted",
             ],
         )
-        actual = Test_SinglePeriodOptimizer1.helper(
+        actual = _run_optimizer(
             config, df, restrictions=restrictions
         )
         expected = r"""
@@ -185,7 +197,13 @@ asset_id
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-class Test_SinglePeriodOptimizer2(hunitest.TestCase):
+# ##############################################################################
+# TestSinglePeriodOptimizer2
+# ##############################################################################
+
+
+class TestSinglePeriodOptimizer2(hunitest.TestCase):
+
     @staticmethod
     def get_prediction_df() -> pd.DataFrame:
         df = pd.DataFrame(
@@ -200,19 +218,6 @@ class Test_SinglePeriodOptimizer2(hunitest.TestCase):
         )
         return df
 
-    @staticmethod
-    def helper(
-        config: cconfig.Config,
-        df: pd.DataFrame,
-    ) -> str:
-        spo = osipeopt.SinglePeriodOptimizer(config, df)
-        optimized = spo.optimize()
-        precision = 2
-        actual_str = hpandas.df_to_str(
-            optimized.round(precision), precision=precision
-        )
-        return actual_str
-
     def test1(self) -> None:
         dict_ = {
             "volatility_penalty": 0.75,
@@ -222,8 +227,8 @@ class Test_SinglePeriodOptimizer2(hunitest.TestCase):
             "target_gmv_upper_bound_multiple": 1.01,
         }
         config = cconfig.get_config_from_nested_dict(dict_)
-        df = Test_SinglePeriodOptimizer2.get_prediction_df()
-        actual = Test_SinglePeriodOptimizer2.helper(config, df)
+        df = self.get_prediction_df()
+        actual = _run_optimizer(config, df)
         expected = r"""
           target_position  target_notional_trade  target_weight  target_weight_diff
 asset_id

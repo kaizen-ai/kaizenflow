@@ -4,6 +4,7 @@ import unittest.mock as umock
 import pytest
 
 import helpers.hmoto as hmoto
+import helpers.hgit as hgit
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
@@ -12,6 +13,9 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestDownloadRealtimeForOneExchange1(
     hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper
 ):
@@ -158,6 +162,9 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertListEqual(csv_files, expected)
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
     # Secret needed for getting historical data.
     binance_secret = None
