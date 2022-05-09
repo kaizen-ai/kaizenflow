@@ -109,8 +109,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
         start_ts = timespan[date_index]
         end_ts = imespan[date_index + 1]
         columns = None
+        filter_data_mode = "assert"
         # TODO(Nikola): Refactor to use one db call.
-        df = ccxt_db_client.read_data(symbols, start_ts, end_ts, columns)
+        df = ccxt_db_client.read_data(
+            symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         try:
             # Check if directory already exists in specified path.
             date_directory = f"date={timespan[date_index].strftime('%Y%m%d')}"
