@@ -20,6 +20,7 @@
 # # Imports
 
 # %%
+import logging
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -29,8 +30,18 @@ import statsmodels
 
 import core.finance.tradability as cfintrad
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import im_v2.common.universe as ivcu
+
+# %%
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+hprint.config_notebook()
+
 
 # %% [markdown]
 # # Extract returns from the real data
