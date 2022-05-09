@@ -17,10 +17,10 @@ import pwd
 import re
 import stat
 import sys
-import yaml
 from typing import Any, Dict, Iterator, List, Match, Optional, Set, Tuple, Union
 
 import tqdm
+import yaml
 from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
@@ -227,6 +227,7 @@ def _run(
     *args: Any,
     dry_run: bool = False,
     use_system: bool = False,
+    print_cmd: bool = False,
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     _LOG.debug(hprint.to_str("cmd dry_run"))
@@ -238,6 +239,8 @@ def _run(
         _LOG.warning("Skipping execution")
         res = None
     else:
+        if print_cmd:
+            print(f"> {cmd}")
         if use_system:
             # TODO(gp): Consider using only `hsystem.system()` since it's more
             # reliable.
@@ -1376,6 +1379,7 @@ def integrate_diff_dirs(  # type: ignore
     use_linux_diff=False,
     check_branches=True,
     clean_branches=True,
+    remove_usual=False,
     dry_run=False,
 ):
     """
@@ -1397,6 +1401,7 @@ def integrate_diff_dirs(  # type: ignore
         `src_dir_basename/subdir` and `dst_dir_basename/subdir`)
     :param copy: copy the files instead of diffing
     :param use_linux_diff: use Linux `diff` instead of `diff_to_vimdiff.py`
+    :param remove_usual: remove the usual mismatching files (e.g., `.github`)
     """
     _report_task()
     if reverse:
@@ -1406,7 +1411,7 @@ def integrate_diff_dirs(  # type: ignore
             hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
-    _dassert_current_dir_matches(src_dir_basename)
+    #_dassert_current_dir_matches(src_dir_basename)
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
         src_dir_basename, dst_dir_basename, subdir
     )
@@ -1422,6 +1427,10 @@ def integrate_diff_dirs(  # type: ignore
             _clean_both_integration_dirs(abs_src_dir, abs_dst_dir)
     else:
         _LOG.warning("Skipping integration branch cleaning")
+    # Copy or diff dirs.
+    _LOG.info("abs_src_dir=%s", abs_src_dir)
+    _LOG.info("abs_dst_dir=%s", abs_dst_dir)
+    hdbg.dassert_ne(abs_src_dir, abs_dst_dir)
     if copy:
         # Copy the files.
         if dry_run:
@@ -1435,7 +1444,12 @@ def integrate_diff_dirs(  # type: ignore
             cmd = f"diff -r --brief {abs_src_dir} {abs_dst_dir}"
         else:
             cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
-    _run(ctx, cmd, dry_run=dry_run)
+            if remove_usual:
+                vals = ["\/\.github\/",
+                        ]
+                regex = "|".join(vals)
+                cmd += f" --ignore_files=\'{regex}\'"
+    _run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -4060,6 +4074,10 @@ def _build_run_command_line(
     pytest_opts_tmp.append(
         f'--reruns {num_reruns} --only-rerun "Failed: Timeout"'
     )
+    if hgit.execute_repo_config_code("skip_submodules_test()"):
+        # For some repos (e.g. `dev_tools`) submodules should be skipped
+        # regardless of the passed value.
+        skip_submodules = True
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(
