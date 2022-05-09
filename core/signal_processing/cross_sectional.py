@@ -34,6 +34,7 @@ def gaussian_rank(
     Perform row-wise Gaussian ranking.
     """
     hdbg.dassert_lte(0.0, bulk_frac_to_remove)
+    hdbg.dassert_lt(bulk_frac_to_remove, 1.0)
     hdbg.dassert_isinstance(bulk_fill_method, str)
     hdbg.dassert_isinstance(df, pd.DataFrame)
     quantile_transformer = skp.QuantileTransformer(
