@@ -30,6 +30,13 @@ def infer_active_bars(df: pd.DataFrame) -> pd.DatetimeIndex:
 
 
 def infer_active_times(df: pd.DataFrame) -> pd.Index:
+    """
+    Return each time of day corresponding to an "active bar".
+
+    :param df: datetime-indexed dataframe with int asset ids as cols
+    :return: index of `datetime.time`, each corresponding to at least one
+        active bar
+    """
     _is_valid_df(df)
     active_time_counts = df.dropna(how="all").groupby(lambda x: x.time()).count()
     active_times = active_time_counts.index
@@ -64,6 +71,18 @@ def infer_splits(df: pd.DataFrame) -> pd.DataFrame:
     eod = retrieve_end_of_day_values(df)
     overnight_pct_change = (bod - eod.shift(1)) / eod.shift(1)
     inferred_splits = (1 / (1 + overnight_pct_change)).round()
+    #
+    num_splits_by_date = (
+        inferred_splits[inferred_splits != 1].count(axis=1).rename("num_splits")
+    )
+    split_dates = num_splits_by_date[num_splits_by_date > 0]
+    _LOG.info("num dates with splits=%d", split_dates.size)
+    _LOG.debug("split_dates=\n%s", hpandas.df_to_str(split_dates))
+    #
+    split_grid = inferred_splits.loc[split_dates.index]
+    split_grid = split_grid[split_grid != 1].dropna(how="all", axis=1)
+    _LOG.info("num assets with splits=%d", split_grid.columns.size)
+    _LOG.debug("split_grid=\n%s", hpandas.df_to_str(split_grid))
     return inferred_splits
 
 

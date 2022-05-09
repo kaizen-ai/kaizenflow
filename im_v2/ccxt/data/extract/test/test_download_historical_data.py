@@ -4,9 +4,13 @@ import unittest.mock as umock
 import pytest
 
 import helpers.hmoto as hmoto
+import helpers.hgit as hgit
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
     # Secret needed for getting historical data.
     binance_secret = None

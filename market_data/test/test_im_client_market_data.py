@@ -3,6 +3,7 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hgit as hgit
 import market_data as mdata
 import market_data.test.market_data_test_case as mdtmdtca
 
@@ -974,6 +975,9 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
 
 # TODO(Dan): Replace `TestImClientMarketData1` on this one when extended.
 # TODO(Dan): use local data instead of S3.
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 @pytest.mark.slow("~8 seconds by GH actions.")
 class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     """
