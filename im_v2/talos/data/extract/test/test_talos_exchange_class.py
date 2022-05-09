@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.hgit as hgit
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.talos.data.extract.exchange_class as imvtdeexcl
@@ -13,6 +14,9 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestTalosExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
