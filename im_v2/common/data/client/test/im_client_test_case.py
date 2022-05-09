@@ -43,11 +43,13 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         full_symbols = [full_symbol]
-        im_client.resample_1min = True
         start_ts = None
         end_ts = None
         columns = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        filter_data_mode = "assert"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data2(
@@ -66,7 +68,10 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        filter_data_mode = "assert"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data3(
@@ -86,7 +91,10 @@ class ImClientTestCase(hunitest.TestCase):
         """
         end_ts = None
         columns = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        filter_data_mode = "assert"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data4(
@@ -106,7 +114,10 @@ class ImClientTestCase(hunitest.TestCase):
         """
         start_ts = None
         columns = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        filter_data_mode = "assert"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data5(
@@ -125,7 +136,10 @@ class ImClientTestCase(hunitest.TestCase):
         - resample_1min = True
         """
         columns = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        filter_data_mode = "assert"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data6(
@@ -141,10 +155,13 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
+        filter_data_mode = "assert"
         # TODO(gp): We should raise a more specific assertion and / or
         #  check part of the exception as a string.
         with self.assertRaises(AssertionError):
-            im_client.read_data(full_symbols, start_ts, end_ts, columns)
+            im_client.read_data(
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
+            )
 
     def _test_read_data7(
         self,
@@ -163,9 +180,13 @@ class ImClientTestCase(hunitest.TestCase):
         start_ts = None
         end_ts = None
         columns = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        filter_data_mode = "assert"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
+    # TODO(Dan): CmTask1834 "Make `test_filter_columns()` in `ImClientTaseCase`".
     def _test_read_data8(
         self,
         im_client: icdc.ImClient,
@@ -176,14 +197,15 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - reading data for two or more full symbols
-        - start_ts = end_ts = None
-        - resample_1min = True
         - keep only specified columns
+        - the output is correct
         """
         start_ts = None
         end_ts = None
-        actual_df = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        filter_data_mode = "assert"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         self.check_df_output(actual_df, *args, **kwargs)
 
     def _test_read_data9(
@@ -194,15 +216,62 @@ class ImClientTestCase(hunitest.TestCase):
     ) -> None:
         """
         Test:
-        - error is raised when unsupported columns are provided
-        - start_ts = end_ts = None
-        - resample_1min = True
+        - keep only specified columns
+        - we receive less columns than we request
+        - filter_data_mode = "assert"
         """
         full_symbols = [full_symbol]
         start_ts = None
         end_ts = None
+        filter_data_mode = "assert"
         with self.assertRaises(AssertionError):
-            im_client.read_data(full_symbols, start_ts, end_ts, columns)
+            im_client.read_data(
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
+            )
+
+    def _test_read_data10(
+        self,
+        im_client: icdc.ImClient,
+        full_symbol: ivcu.FullSymbol,
+        columns: List[str],
+    ) -> None:
+        """
+        Test:
+        - keep only specified columns
+        - we receive more columns than we request
+        - filter_data_mode = "assert"
+        """
+        full_symbols = [full_symbol]
+        start_ts = None
+        end_ts = None
+        filter_data_mode = "assert"
+        with self.assertRaises(AssertionError):
+            im_client.read_data(
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
+            )
+
+    def _test_read_data11(
+        self,
+        im_client: icdc.ImClient,
+        full_symbol: ivcu.FullSymbol,
+        columns: List[str],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Test:
+        - keep only specified columns
+        - received columns do not match requested columns
+        - filter_data_mode = "warn_and_trim"
+        """
+        full_symbols = [full_symbol]
+        start_ts = None
+        end_ts = None
+        filter_data_mode = "warn_and_trim"
+        actual_df = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
+        self.check_df_output(actual_df, *args, **kwargs)
 
     # ////////////////////////////////////////////////////////////////////////
 

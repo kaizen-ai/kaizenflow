@@ -12,9 +12,11 @@ import invoke
 import pandas as pd
 
 import core.config as cconfig
+import core.finance as cofinanc
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
 
@@ -24,8 +26,9 @@ _LOG = logging.getLogger(__name__)
 def compute_target_positions_in_cash(
     df: pd.DataFrame,
     *,
+    bulk_frac_to_remove: float,
+    bulk_fill_method: str,
     target_gmv: float = 100000,
-    dollar_neutrality: str = "no_constraint",
     volatility_lower_bound: float = 1e-5,
 ) -> pd.DataFrame:
     """
@@ -54,72 +57,45 @@ def compute_target_positions_in_cash(
     #
     df = df.set_index("asset_id")
     hdbg.dassert(not df.index.has_duplicates)
-    # In this placeholder, we maintain two invariants (approximately):
-    #   1. Net wealth is conserved from one step to the next.
-    #   2. GMV is conserved from one step to the next.
-    # The second invariant may be restated as conserving gross exposure.
-    predictions = df["prediction"]
-    _LOG.debug("predictions=\n%s", predictions)
-    volatility = df["volatility"]
-    _LOG.debug("volatility=\n%s", volatility)
-    # Set a lower bound on the volatility forecast.
-    volatility = volatility.clip(lower=volatility_lower_bound)
-    # Calculate volatility-weighted target positions. This is not yet scaled
-    #  to target GMV.
-    unscaled_target_positions = predictions.divide(volatility)
-    if dollar_neutrality == "no_constraint":
-        pass
-    elif dollar_neutrality == "demean":
-        hdbg.dassert_lt(
-            1,
-            unscaled_target_positions.count(),
-            "More than one asset required to enforce dollar neutrality.",
-        )
-        net_target_position = unscaled_target_positions.mean()
-        _LOG.debug(
-            "Target net asset value prior to dollar neutrality constaint=%f"
-            % net_target_position
-        )
-        unscaled_target_positions -= net_target_position
-    elif dollar_neutrality == "side_preserving":
-        hdbg.dassert_lt(
-            1,
-            unscaled_target_positions.count(),
-            "More than one asset required to enforce dollar neutrality.",
-        )
-        positive_asset_value = unscaled_target_positions.clip(lower=0).sum()
-        hdbg.dassert_lt(0, positive_asset_value, "No long predictions provided.")
-        negative_asset_value = -1 * unscaled_target_positions.clip(upper=0).sum()
-        hdbg.dassert_lt(0, negative_asset_value, "No short predictions provided.")
-        min_sided_asset_value = min(positive_asset_value, negative_asset_value)
-        positive_scale_factor = min_sided_asset_value / positive_asset_value
-        negative_scale_factor = min_sided_asset_value / negative_asset_value
-        positive_positions = (
-            positive_scale_factor * unscaled_target_positions.clip(lower=0)
-        )
-        negative_positions = (
-            negative_scale_factor * unscaled_target_positions.clip(upper=0)
-        )
-        unscaled_target_positions = positive_positions.add(negative_positions)
+    #
+    predictions = df["prediction"].rename(0).to_frame().T
+    volatility = df["volatility"].rename(0).to_frame().T
+    target_positions_config = cconfig.get_config_from_flattened_dict(
+        {
+            "bulk_frac_to_remove": bulk_frac_to_remove,
+            "bulk_fill_method": bulk_fill_method,
+            "target_gmv": target_gmv,
+            "volatility_lower_bound": volatility_lower_bound,
+        }
+    )
+    target_positions = cofinanc.compute_target_positions_cross_sectionally(
+        predictions, volatility, target_positions_config
+    )
+    hdbg.dassert_eq(target_positions.shape[0], 1)
+    target_positions = pd.Series(
+        target_positions.values[0],
+        index=target_positions.columns,
+        name="target_position",
+        dtype="float",
+    )
+    if bulk_fill_method == "zero":
+        target_positions = target_positions.fillna(0)
     else:
-        raise ValueError(
-            "Unrecognized option `dollar_neutrality`=%s" % dollar_neutrality
-        )
-    unscaled_target_positions_l1 = unscaled_target_positions.abs().sum()
-    _LOG.debug("unscaled_target_positions_l1 =%s", unscaled_target_positions_l1)
-    hdbg.dassert_lte(0, unscaled_target_positions_l1)
-    if unscaled_target_positions_l1 == 0:
-        _LOG.debug("All target positions are zero.")
-        scale_factor = 0
-    else:
-        scale_factor = target_gmv / unscaled_target_positions_l1
-    _LOG.debug("scale_factor=%s", scale_factor)
+        raise ValueError("`bulk_fill_method`=%s not supported", bulk_fill_method)
+    _LOG.debug(
+        "`target_positions`=\n%s",
+        hpandas.df_to_str(
+            target_positions, print_dtypes=True, print_shape_info=True
+        ),
+    )
     # These positions are expressed in dollars.
     current_positions = df["position"]
-    net_wealth = current_positions.sum()
-    _LOG.debug("net_wealth=%s", net_wealth)
-    # Drop cash.
-    target_positions = scale_factor * unscaled_target_positions
+    _LOG.debug(
+        "`current_positions`=\n%s",
+        hpandas.df_to_str(
+            current_positions, print_dtypes=True, print_shape_info=True
+        ),
+    )
     target_trades = target_positions - current_positions
     df["target_position"] = target_positions
     df["target_notional_trade"] = target_trades
