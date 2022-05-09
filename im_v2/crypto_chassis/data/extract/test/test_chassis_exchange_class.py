@@ -106,6 +106,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = client.download_ohlcv(
             exchange, 
             currency_pair, 
+            "historical",
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
 
@@ -137,7 +138,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 """
         with self.assertRaises(AssertionError) as cm:
             client.download_ohlcv(
-                exchange, currency_pair, start_timestamp=start_timestamp
+                exchange, currency_pair, "historical", start_timestamp=start_timestamp
             )
         # Check output for error.
         actual = str(cm.exception)
@@ -154,7 +155,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdeecl.CryptoChassisExchange()
         df = client.download_ohlcv(
-                exchange, currency_pair, start_timestamp=start_timestamp
+                exchange, currency_pair, "historical", start_timestamp=start_timestamp
             )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -171,7 +172,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdeecl.CryptoChassisExchange()
         df = client.download_ohlcv(
-                exchange, currency_pair, start_timestamp=start_timestamp
+                exchange, currency_pair, "historical", start_timestamp=start_timestamp
             )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)

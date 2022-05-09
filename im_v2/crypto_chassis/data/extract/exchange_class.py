@@ -5,7 +5,6 @@ Import as:
 
 import im_v2.crypto_chassis.data.extract.exchange_class as imvccdeecl
 """
-from tkinter import E
 from typing import Any, Optional
 
 import logging
@@ -45,6 +44,7 @@ class CryptoChassisExchange:
             data = self.download_ohlcv(
             exchange=kwargs["exchange_id"],
             currency_pair=kwargs["currency_pair"],
+            mode=kwargs["mode"],
             start_timestamp=kwargs["start_timestamp"],
             end_timestamp=kwargs["end_timestamp"],
             interval=kwargs["interval"],
@@ -131,6 +131,7 @@ class CryptoChassisExchange:
         self,
         exchange: str,
         currency_pair: str,
+        mode: str, 
         interval: Optional[str] = None,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
@@ -141,11 +142,12 @@ class CryptoChassisExchange:
 
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
+        :param mode: `recent` for real-time data, `historical` for historical data
         :param interval: interval of processing, used when end_time is absent
           e.g. `1m`, `3m`, `5m` etc.
         :param start_time: timestamp of start
         :param end_time: timestamp of end
-        :param include_realtime: 0, 1. If set to 1, request rate limit on this 
+        :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this 
             endpoint is 1 request per second per public IP.
         :return: ohlcv depth datas
         """
@@ -183,17 +185,27 @@ class CryptoChassisExchange:
         # Request the data.
         r = requests.get(query_url)
         # Retrieve raw data.
-        data_json = r.json() 
-        if data_json.get("historical") is None:
+        data_json = r.json()
+        if data_json.get(mode) is None:
             # Return empty dataframe if there is no results.
             ohlcv_data = pd.DataFrame()
             _LOG.warning("No data found at `{query_url}`. Returning empty DataFrame.")
         else:
-            df_csv = data_json["historical"]["urls"][0]["url"]
-            # Convert CSV into dataframe.
-            ohlcv_data = pd.read_csv(df_csv, compression="gzip")
-            # Rename time column.
-            ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
+            if mode == "recent":
+                # Process real-time.
+                # Get columns.
+                columns = data_json[mode]["fields"].split(", ")
+                # Build Dataframe.
+                ohlcv_data = pd.DataFrame(columns=columns, data=data_json[mode]["data"])
+            elif mode == "historical":
+                # Process historical data.
+                df_csv = data_json[mode]["urls"][0]["url"]
+                # Convert CSV into dataframe.
+                ohlcv_data = pd.read_csv(df_csv, compression="gzip")
+            else:
+                hdbg.dfatal(f"Unknown data mode: `{mode}`. Use `recent` for real-time and `historical` for historical data.")
+        # Rename time column.
+        ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
 
     def _build_base_url(
