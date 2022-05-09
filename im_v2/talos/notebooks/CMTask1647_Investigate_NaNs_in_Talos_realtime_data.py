@@ -82,7 +82,11 @@ start_date = end_date = None
 # %% run_control={"marked": false}
 # Initiate the client.
 vendor = "CCXT"
-ccxt_client = imvcdccccl.CcxtCddDbClient(vendor, resample_1min, connection)
+universe_version = "v3"
+table_name = "ccxt_ohlcv"
+ccxt_client = imvcdccccl.CcxtSqlRealTimeImClient(
+    resample_1min, connection, table_name
+)
 
 # %%
 # Load the data.
@@ -95,10 +99,11 @@ display(ada_ccxt.head(3))
 
 # %% run_control={"marked": false}
 # Initialize the client.
+universe_version = "v1"
 table_name = "talos_ohlcv"
 mode = "market_data"
-talos_client = imvtdctacl.RealTimeSqlTalosClient(
-    resample_1min, connection, table_name, mode
+talos_client = imvtdctacl.TalosSqlRealTimeImClient(
+    universe_version, resample_1min, connection, table_name, mode
 )
 
 # %%

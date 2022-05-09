@@ -16,28 +16,33 @@ class TestStatsComputer1(hunitest.TestCase):
         portfolio_df = self._get_portfolio()
         df, _ = sc.compute_portfolio_stats(portfolio_df, "1T")
         actual = hpandas.df_to_str(df, num_rows=None, precision=2)
-        expected = """0
-ratios      sharpe_ratio                         5.68
-            sharpe_ratio_standard_error          7.09
-            sr.tval                              0.80
-            sr.pval                              0.42
-            kratio                              -0.47
-dollar      gmv_mean                       1000000.00
-            gmv_stdev                            0.00
-            annualized_mean_return          229413.34
-            annualized_volatility            40401.37
-            max_drawdown                      7107.29
-            turnover_mean                    99997.96
-            turnover_stdev                     310.89
-            market_bias_mean                    -0.02
-            market_bias_stdev                  142.12
-percentage  annualized_mean_return              22.94
-            annualized_volatility                4.04
-            max_drawdown                         0.71
-            turnover_mean                       10.00
-            turnover_stdev                       0.03
-            market_bias_mean                    -0.00
-            market_bias_stdev                    0.01"""
+        expected = r"""
+                                              0
+ratios     sharpe_ratio                       5.68
+           sharpe_ratio_standard_error        7.09
+           sr.tval                            0.80
+           sr.pval                            0.42
+           kratio                            -0.47
+dollar     gmv_mean                     1000000.00
+           gmv_stdev                          0.00
+           annualized_mean_return        229413.34
+           annualized_volatility          40401.37
+           max_drawdown                    7107.29
+           pnl_mean                           1.46
+           pnl_std                          102.07
+           turnover_mean                  99997.96
+           turnover_stdev                   310.89
+           market_bias_mean                  -0.02
+           market_bias_stdev                142.12
+percentage annualized_mean_return            22.94
+           annualized_volatility              4.04
+           max_drawdown                       0.71
+           pnl_mean                           0.00
+           pnl_std                            0.01
+           turnover_mean                     10.00
+           turnover_stdev                     0.03
+           market_bias_mean                  -0.00
+           market_bias_stdev                  0.01"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @staticmethod

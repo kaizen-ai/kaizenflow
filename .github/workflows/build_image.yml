@@ -11,9 +11,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          aws-access-key-id: ${{ secrets.AM_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AM_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AM_AWS_DEFAULT_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -40,18 +40,25 @@ jobs:
       - name: Pull image
         env:
           AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
+          # For now, we always get Docker images from AM account, so we don't need `CK_ECR_BASE_PATH`.
+          # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
         run: invoke docker_pull
 
       - name: Run 'docker_release_dev_image' workflow
         env:
           PYTHONPATH: ".:amp"
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
           GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
+          AM_AWS_ACCESS_KEY_ID: ${{ secrets.AM_AWS_ACCESS_KEY_ID }}
+          AM_AWS_SECRET_ACCESS_KEY: ${{ secrets.AM_AWS_SECRET_ACCESS_KEY }}
+          AM_AWS_DEFAULT_REGION: ${{ secrets.AM_AWS_DEFAULT_REGION }}
           AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
-          AM_S3_BUCKET: ${{ secrets.AM_S3_BUCKET }}
+          AM_AWS_S3_BUCKET: ${{ secrets.AM_AWS_S3_BUCKET }}
           AM_TELEGRAM_TOKEN: ${{ secrets.AM_TELEGRAM_TOKEN }}
+          CK_AWS_ACCESS_KEY_ID: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
+          CK_AWS_SECRET_ACCESS_KEY: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
+          CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
+          CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
+          CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
         run: invoke docker_release_dev_image --version=FROM_CHANGELOG
 
       - name: Send Telegram notification for success

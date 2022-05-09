@@ -191,23 +191,23 @@ class Example1_Dataframe_ForecastSystem(
         return portfolio
 
 
-class Example1_Database_SystemRunner(
+class Example1_Database_ForecastSystem(
     dtfsysyrun.SystemWithSimulatedOmsRunner,
     Example1_SystemRunner
     # Example1_ForecastSystem
 ):
 
     def get_dag(
-            self,
-            portfolio: oms.AbstractPortfolio,
-            *,
-            prediction_col: str = "feature1",
-            volatility_col: str = "vwap.ret_0.vol",
-            returns_col: str = "vwap.ret_0",
-            spread_col: Optional[str] = None,
-            timedelta: pd.Timedelta = pd.Timedelta("7D"),
-            asset_id_col: str = "asset_id",
-            log_dir: Optional[str] = None,
+        self,
+        portfolio: oms.AbstractPortfolio,
+        *,
+        prediction_col: str = "feature1",
+        volatility_col: str = "vwap.ret_0.vol",
+        returns_col: str = "vwap.ret_0",
+        spread_col: Optional[str] = None,
+        timedelta: pd.Timedelta = pd.Timedelta("7D"),
+        asset_id_col: str = "asset_id",
+        log_dir: Optional[str] = None,
     ) -> Tuple[cconfig.Config, dtfcore.DagBuilder]:
         base_dag_builder = dtfpexexpi.Example1_DagBuilder()
         dag_builder = dtfsrtdaad.RealTimeDagAdapter(

@@ -1,5 +1,6 @@
 import logging
 import os
+import unittest.mock as umock
 from typing import Any, List
 
 import pytest
@@ -75,6 +76,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 'serial'",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = True
@@ -90,6 +92,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
             "--num_threads 2",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = True
@@ -134,6 +137,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--num_threads serial",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = False
@@ -152,6 +156,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--skip_on_error",
             "--num_threads serial",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = True
@@ -170,6 +175,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
         cmd_opts = [
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--num_threads 2",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = False
@@ -190,6 +196,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
             "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
             "--skip_on_error",
             "--num_threads 2",
+            "--aws_profile 'am'",
         ]
         #
         exp_pass = True
@@ -219,6 +226,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
     #  gave access to the entire bucket. It would be better to give only access to
     #  `tmp`.
     @pytest.mark.slow
+    @umock.patch.dict(hs3.os.environ, {"AM_AWS_PROFILE": "am"})
     def test_serial1(self) -> None:
         """
         Execute:

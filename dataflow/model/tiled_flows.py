@@ -199,11 +199,7 @@ def evaluate_weighted_forecasts(
         ["price", "volatility"], market_data_and_volatility.index
     )
     # Set forecast annotation defaults.
-    if annotate_forecasts_kwargs is None:
-        annotate_forecasts_kwargs = {}
-        annotate_forecasts_kwargs["target_gmv"] = 1e6
-        annotate_forecasts_kwargs["dollar_neutrality"] = "gaussian_rank"
-        annotate_forecasts_kwargs["quantization"] = "nearest_share"
+    annotate_forecasts_kwargs = annotate_forecasts_kwargs or {}
     #
     if target_freq_str is not None:
         hdbg.dassert_isinstance(target_freq_str, str)
