@@ -95,7 +95,9 @@ def load_crypto_chassis_ohlcv(exhange_id, currency_pair):
 full_symbols = ["kucoin::ADA_USDT"]
 start_date = None
 end_date = None
-ada_kucoin_ccxt = historical_client.read_data(full_symbols, start_date, end_date)
+ada_kucoin_ccxt = historical_client.read_data(
+    full_symbols, start_date, end_date, columns=None
+)
 # Load historical data from crypto-chassis.
 ada_kucoin_ch = load_crypto_chassis_ohlcv("kucoin", "ada-usdt")
 
@@ -770,7 +772,7 @@ full_symbols = ["gateio::BTC_USDT"]
 start_date = None
 end_date = None
 btc_gateio_ccxt = historical_client_no_resampling.read_data(
-    full_symbols, start_date, end_date
+    full_symbols, start_date, end_date, columns=None
 )
 
 # %%
@@ -804,5 +806,3 @@ btc_gateio_ccxt.loc[btc_gateio_ccxt.index == "2021-06-27 23:31:00+00:00"]
 
 # %% [markdown]
 # ### Values for duplicated indexes are identical. It means data isn't corrupted. % of duplicated index is 0.005801 (15 vs 258575)
-
-# %%
