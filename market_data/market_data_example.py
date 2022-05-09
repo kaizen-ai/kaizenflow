@@ -329,6 +329,7 @@ def get_CcxtPqImClientMarketData_example2(
     asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
+    filter_data_mode: str,
 ) -> mdimcmada.ImClientMarketData:
     """
     Build a `ImClientMarketData` backed with `CCXT` Parquet by tile unit test
@@ -355,6 +356,7 @@ def get_CcxtPqImClientMarketData_example2(
         get_wall_clock_time,
         im_client=im_client,
         column_remap=column_remap,
+        filter_data_mode=filter_data_mode,
     )
     return market_data
 
