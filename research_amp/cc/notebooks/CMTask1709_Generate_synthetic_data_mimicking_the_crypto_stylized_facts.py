@@ -20,16 +20,14 @@
 # # Imports
 
 # %%
-import random
 from typing import List
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import requests
 import statsmodels
 
-import core.finance.market_data_example as cfmadaex
+import core.finance.tradability as cfintrad
 import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
 import im_v2.common.universe as ivcu
@@ -43,7 +41,7 @@ import im_v2.common.universe as ivcu
 # %%
 def get_exchange_currency_for_api_request(full_symbol: str) -> str:
     """
-    Returns `exchange_id` and `currency_pair` in a format for requests to cc
+    Return `exchange_id` and `currency_pair` in a format for requests to cc
     API.
     """
     cc_exchange_id, cc_currency_pair = ivcu.parse_full_symbol(full_symbol)
@@ -79,7 +77,7 @@ def apply_ohlcv_transformation(
     end_date: pd.Timestamp,
 ) -> pd.DataFrame:
     """
-    The following transformations are applied:
+    Following transformations are applied:
 
     - Convert `timestamps` to the usual format.
     - Convert data columns to `float`.
@@ -125,11 +123,11 @@ def read_crypto_chassis_ohlcv(
 
 # %%
 # Commented in order to lad the fast locally.
-#btc_df = read_crypto_chassis_ohlcv(
+# btc_df = read_crypto_chassis_ohlcv(
 #    ["binance::BTC_USDT"],
 #    pd.Timestamp("2021-01-01", tz="UTC"),
 #    pd.Timestamp("2022-01-01", tz="UTC"),
-#)
+# )
 
 # %%
 btc_df = pd.read_csv("BTC_one_year.csv", index_col="timestamp")
@@ -171,26 +169,6 @@ plt.show()
 # # Pre-defined Predictions, Hit Rates and Confidence Interval
 
 # %% run_control={"marked": false}
-def get_predictions(df, hit_rate, seed):
-    """
-    :param df: Desired sample with OHLCV data and calculated returns
-    :param hit_rate: Desired percantage of successful predictions
-    :param seed: Experiment stance
-    """
-    n = df.shape[0]
-    rets = df["rets"].values
-    # Mask contains 1 for a desired hit and -1 for a miss.
-    num_hits = int((1 - hit_rate) * n)
-    mask = pd.Series(([-1] * num_hits) + ([1] * (n - num_hits)))
-    # Randomize the location of the outcomes.
-    random.shuffle(mask)
-    # Construct predictions using the sign of the actual returns.
-    pred = pd.Series(np.sign(rets) * mask)
-    # Change the index for easy attachment to initial DataFrame.
-    pred.index = df.index
-    return pred
-
-
 def calculate_confidence_interval(hit_series, alpha, method):
     """
     :param alpha: Significance level
@@ -210,10 +188,10 @@ def calculate_confidence_interval(hit_series, alpha, method):
     print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
 
 
-def get_predictions_hits_and_stats(df, hit_rate, seed, alpha, method):
+def get_predictions_hits_and_stats(df, ret_col, hit_rate, seed, alpha, method):
     """
-    Calculate hits from the predictions and shows confidence intervals.
-    
+    Calculate hits from the predictions and show confidence intervals.
+
     :param df: Desired sample with OHLCV data and calculated returns
     :param hit_rate: Desired percantage of successful predictions
     :param seed: Experiment stance
@@ -221,7 +199,8 @@ def get_predictions_hits_and_stats(df, hit_rate, seed, alpha, method):
     :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
     """
     df = df.copy()
-    df["predictions"] = get_predictions(df, hit_rate, seed)
+    # df["predictions"] = get_predictions(df, hit_rate, seed)
+    df["predictions"] = cfintrad.get_predictions(df, ret_col, hit_rate, seed)
     # Specify necessary columns.
     df = df[["rets", "predictions"]]
     # Attach `hit` column (boolean).
@@ -235,12 +214,13 @@ def get_predictions_hits_and_stats(df, hit_rate, seed, alpha, method):
 
 # %%
 sample = btc.head(1000)
+ret_col = "rets"
 hit_rate = 0.55
 seed = 20
 alpha = 0.05
 method = "normal"
 
-hit_df = get_predictions_hits_and_stats(sample, hit_rate, seed, alpha, method)
+hit_df = get_predictions_hits_and_stats(
+    sample, ret_col, hit_rate, seed, alpha, method
+)
 display(hit_df)
-
-# %%
