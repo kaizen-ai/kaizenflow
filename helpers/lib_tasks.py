@@ -394,7 +394,7 @@ def print_setup(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    var_names = "ECR_BASE_PATH BASE_IMAGE".split()
+    var_names = "AM_ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
         print(f"{v}={get_default_param(v)}")
 

@@ -4,6 +4,7 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
@@ -1009,6 +1010,9 @@ class CcxtSqlRealTimeImClient1(
 # #############################################################################
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
