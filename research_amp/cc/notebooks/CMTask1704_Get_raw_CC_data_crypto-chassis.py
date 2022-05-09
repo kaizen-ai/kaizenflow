@@ -580,8 +580,28 @@ liquidity_stats = (final_df["ask_size"] * final_df["ask_price"]).median()
 display(liquidity_stats)
 cplpluti.plot_barplot(liquidity_stats)
 
+
 # %% [markdown]
 # ## Is the quoted spread constant over the day?
+
+# %%
+def plot_overtime_spread(coin_df, resampling_rule):
+    df = cfinresa.resample(coin_df, rule=resampling_rule)["quoted_spread"].mean().to_frame()
+    df["time"] = df.index.time
+    df.groupby("time")["quoted_spread"].std().plot()
+    return df
+
+
+# %%
+bnb = final_df.swaplevel(axis=1)["binance::BNB_USDT"]
+
+# %%
+dd = plot_overtime_spread(bnb, "10T")
+display(dd.head())
+
+# %%
+
+# %%
 
 # %%
 # Initiate the class.
