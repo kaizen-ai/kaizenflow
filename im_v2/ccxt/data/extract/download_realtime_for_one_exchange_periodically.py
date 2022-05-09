@@ -126,7 +126,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Delay start.
     iteration_start_time = start_time
     iteration_delay_sec = (iteration_start_time - datetime.now()).total_seconds()
-    while datetime.now() < stop_time and num_failures < max_num_failures:
+    while (
+        datetime.now() + timedelta(seconds=iteration_delay_sec) < stop_time
+        and num_failures < max_num_failures
+    ):
         # Wait until next download.
         _LOG.info("Delay %s sec until next iteration", iteration_delay_sec)
         time.sleep(iteration_delay_sec)
