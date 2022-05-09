@@ -6,11 +6,15 @@ import pytest
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
+import helpers.hgit as hgit
 import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestDownloadRealtimeForOneExchange1(
     hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper
 ):
