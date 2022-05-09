@@ -218,6 +218,7 @@ def get_predictions_hits_and_stats(df, ret_col, hit_rate, seed, alpha, method):
     df["hit"] = df["rets"] * df["predictions"] >= 0
     # Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
     df = hpandas.dropna(df, report_stats=True)
+    # Show CI stats.
     calculate_confidence_interval(df["hit"], alpha, method)
     return df
 
