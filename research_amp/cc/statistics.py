@@ -49,11 +49,9 @@ def compute_stats_for_universe(
         start_ts = None
         end_ts = None
         columns = None
+        filter_data_mode = "assert"
         data = loader.read_data(
-            [full_symbol],
-            start_ts,
-            end_ts,
-            columns,
+            [full_symbol], start_ts, end_ts, columns, filter_data_mode
         )
         # Compute stats on the exchange-currency level.
         cur_stats_data = stats_func(data)
@@ -273,11 +271,14 @@ def get_universe_price_data(
     start_ts = None
     end_ts = None
     columns = None
+    filter_data_mode = "assert"
     # Iterate exchange ids and currency pairs.
     for full_symbol in vendor_universe:
         colnames.append(full_symbol)
         # Read data for current exchange and currency pair.
-        data = loader.read_data(full_symbol, start_ts, end_ts, columns)
+        data = loader.read_data(
+            full_symbol, start_ts, end_ts, columns, filter_data_mode
+        )
         # Get series of required prices and append to the list.
         price_srs = data[config["data"]["price_column"]]
         price_srs_list.append(price_srs)

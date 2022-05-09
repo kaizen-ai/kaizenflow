@@ -305,6 +305,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
             start_ts,
             end_ts,
             columns,
+            self._filter_data_mode,
             ts_col_name=ts_col_name,
             left_close=left_close,
             right_close=right_close,
