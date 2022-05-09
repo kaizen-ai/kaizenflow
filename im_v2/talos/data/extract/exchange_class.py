@@ -35,7 +35,7 @@ class TalosExchange:
         """
         self._account = account
         self._api = imv2tauti.TalosApiBuilder(self._account)
-        self._endpoint = self._api.get_endpoint() 
+        self._endpoint = self._api.get_endpoint()
 
     @staticmethod
     def build_talos_query_params(
@@ -118,7 +118,7 @@ class TalosExchange:
         """
         Download minute OHLCV bars for given currency pair for given crypto
         exchange.
-        
+
         :param currency_pair: a currency pair, e.g. "BTC_USDT"
         :param exchange: crypto exchange, e.g. "binance"
         :param start_timestamp: starting point for data
