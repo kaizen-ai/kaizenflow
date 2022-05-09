@@ -13,6 +13,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hsystem as hsystem
 
 # Avoid the following dependency from other `helpers` modules to prevent import cycles.
 # import helpers.hs3 as hs3
@@ -729,6 +730,8 @@ def _df_to_str(
     display_width: int = 10000,
     use_tabulate: bool = False,
 ) -> str:
+    is_in_ipynb = hsystem.is_running_in_ipynb()
+    from IPython.display import display
     out = []
     # Set dataframe print options.
     with pd.option_context(
@@ -750,19 +753,37 @@ def _df_to_str(
             out.append(tabulate.tabulate(df, headers="keys", tablefmt="psql"))
         if num_rows is None or df.shape[0] <= num_rows:
             # Print the entire data frame.
-            out.append(str(df))
+            if not is_in_ipynb:
+                out.append(str(df))
+            else:
+                display(df)
         else:
-            # Print top and bottom of df.
-            out.append(str(df.head(num_rows // 2)))
-            out.append("...")
-            tail_str = str(df.tail(num_rows // 2))
-            # Remove index and columns.
-            skipped_rows = 1
-            if df.index.name:
-                skipped_rows += 1
-            tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
-            out.append(tail_str)
-    txt = "\n".join(out)
+            nr = num_rows // 2
+            if not is_in_ipynb:
+                # Print top and bottom of df.
+                out.append(str(df.head(nr)))
+                out.append("...")
+                tail_str = str(df.tail(nr))
+                # Remove index and columns from tail_df.
+                skipped_rows = 1
+                if df.index.name:
+                    skipped_rows += 1
+                tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
+                out.append(tail_str)
+            else:
+                # TODO(gp): @all use this approach also above and update all the
+                #  unit tests.
+                df = [df.head(nr),
+                      pd.DataFrame([["..."] * df.shape[1]],
+                                   index=[" "],
+                                   columns=df.columns),
+                      df.tail(nr)]
+                df = pd.concat(df)
+                display(df)
+    if not is_in_ipynb:
+        txt = "\n".join(out)
+    else:
+        txt = ''
     return txt
 
 
@@ -913,6 +934,10 @@ def df_to_str(
             num_nan_cols = df.dropna(axis=1).shape[1]
             txt = f"num_nan_cols={hprint.perc(num_nan_cols, num_elems)}"
             out.append(txt)
+    if hsystem.is_running_in_ipynb():
+        if len(out) > 0:
+            print("\n".join(out))
+        txt = None
     # Print the df.
     df_as_str = _df_to_str(
         df,
@@ -924,8 +949,9 @@ def df_to_str(
         display_width=display_width,
         use_tabulate=use_tabulate,
     )
-    out.append(df_as_str)
-    txt = "\n".join(out)
+    if not hsystem.is_running_in_ipynb():
+        out.append(df_as_str)
+        txt = "\n".join(out)
     return txt
 
 
