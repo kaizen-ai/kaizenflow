@@ -1,6 +1,8 @@
 import argparse
 import unittest.mock as umock
 
+import pytest
+
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
