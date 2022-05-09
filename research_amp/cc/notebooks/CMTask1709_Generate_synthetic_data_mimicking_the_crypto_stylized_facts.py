@@ -199,7 +199,6 @@ def get_predictions_hits_and_stats(df, ret_col, hit_rate, seed, alpha, method):
     :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
     """
     df = df.copy()
-    # df["predictions"] = get_predictions(df, hit_rate, seed)
     df["predictions"] = cfintrad.get_predictions(df, ret_col, hit_rate, seed)
     # Specify necessary columns.
     df = df[["rets", "predictions"]]
