@@ -5,13 +5,17 @@ Import as:
 
 import im_v2.crypto_chassis.data.extract.exchange_class as imvccdeecl
 """
+from tkinter import E
 from typing import Any, Optional
 
+import logging
 import pandas as pd
 import requests
 
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
+
+_LOG = logging.getLogger(__name__)
 
 
 class CryptoChassisExchange:
@@ -36,17 +40,9 @@ class CryptoChassisExchange:
         :param data_type: the type of data, e.g. `market_depth`
         :return: Crypto Chassis data
         """
-        # Check data type.
-        hdbg.dassert_in(data_type, ["market_depth", "ohlcv"], f"Unknown data type: {data_type}.")
         # Get data.
-        if data_type == "market_depth":
-            return self.download_market_depth(
-                exchange=kwargs["exchange_id"],
-                currency_pair=kwargs["currency_pair"],
-                depth=kwargs["depth"],
-                start_timestamp=kwargs["start_timestamp"],
-            )
-        return self.download_ohlcv(
+        if data_type == "ohlcv":
+            data = self.download_ohlcv(
             exchange=kwargs["exchange_id"],
             currency_pair=kwargs["currency_pair"],
             start_timestamp=kwargs["start_timestamp"],
@@ -54,6 +50,16 @@ class CryptoChassisExchange:
             interval=kwargs["interval"],
             include_realtime=kwargs["include_realtime"],
         )
+        elif data_type == "market_depth":
+            data = self.download_market_depth(
+                exchange=kwargs["exchange_id"],
+                currency_pair=kwargs["currency_pair"],
+                depth=kwargs["depth"],
+                start_timestamp=kwargs["start_timestamp"],
+        )
+        else:
+            hdbg.dfatal(f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth")
+        return data
 
     def download_market_depth(
         self,
@@ -180,12 +186,14 @@ class CryptoChassisExchange:
         data_json = r.json() 
         if data_json.get("historical") is None:
             # Return empty dataframe if there is no results.
-            return pd.DataFrame()
-        df_csv = data_json["historical"]["urls"][0]["url"]
-        # Convert CSV into dataframe.
-        ohlcv_data = pd.read_csv(df_csv, compression="gzip")
-        # Rename time column.
-        ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
+            ohlcv_data = pd.DataFrame()
+            _LOG.warning("No data found at `{query_url}`. Returning empty DataFrame.")
+        else:
+            df_csv = data_json["historical"]["urls"][0]["url"]
+            # Convert CSV into dataframe.
+            ohlcv_data = pd.read_csv(df_csv, compression="gzip")
+            # Rename time column.
+            ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
 
     def _build_base_url(
