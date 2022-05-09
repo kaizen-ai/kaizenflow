@@ -138,6 +138,7 @@ class ImClient(abc.ABC):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         columns: Optional[List[str]],
+        filter_data_mode: str,
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -153,6 +154,8 @@ class ImClient(abc.ABC):
             - `None` means end at the end of the available data
         :param columns: columns to return, skipping reading columns that are not requested
             - `None` means return all available columns
+        :param filter_data_mode: control class behavior with respect to extra
+            or missing columns, like in `_check_and_filter_matching_columns()`
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
         :return: combined data for all the requested symbols
@@ -219,7 +222,6 @@ class ImClient(abc.ABC):
                 self._resample_1min,
                 start_ts,
                 end_ts,
-                columns,
             )
             dfs.append(df_tmp)
         hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
@@ -234,6 +236,11 @@ class ImClient(abc.ABC):
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
+        #
+        if columns is not None:
+            df = self._check_and_filter_matching_columns(
+                df, columns, filter_data_mode
+            )
         return df
 
     # /////////////////////////////////////////////////////////////////////////
@@ -327,7 +334,6 @@ class ImClient(abc.ABC):
         resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        columns: Optional[List[str]],
     ) -> None:
         """
         Verify that the normalized data is valid.
@@ -360,11 +366,39 @@ class ImClient(abc.ABC):
         # Ensure that all the data is in [start_ts, end_ts].
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
+
+    # TODO(Dan): CmTask1834 "Refactor `_check_and_filter_matching_columns()`".
+    @staticmethod
+    def _check_and_filter_matching_columns(
+        df: pd.DataFrame, columns: List[str], filter_data_mode: str
+    ) -> pd.DataFrame:
+        """
+        Check that columns are the expected ones.
+        """
+        received_columns = df.columns.to_list()
         #
-        if columns is not None:
-            # TODO(Grisha): @Dan trim columns depending on `filter_data_mode`.
-            # Ensure all requested columns are received.
-            hdbg.dassert_is_subset(columns, df.columns.to_list())
+        if filter_data_mode == "assert":
+            # Raise and assertion.
+            only_warning = False
+        elif filter_data_mode == "warn_and_trim":
+            # Just issue a warning.
+            only_warning = True
+            # Get columns intersection while preserving the order of the columns.
+            columns_intersection = sorted(
+                set(received_columns) & set(columns),
+                key=received_columns.index,
+            )
+            hdbg.dassert_lte(1, len(columns_intersection))
+            df = df[columns_intersection]
+        else:
+            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
+        hdbg.dassert_set_eq(
+            columns,
+            received_columns,
+            only_warning=only_warning,
+            msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
+        )
+        return df
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -425,12 +459,13 @@ class ImClient(abc.ABC):
     ) -> pd.Timestamp:
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
-        start_timestamp = None
-        end_timestamp = None
+        start_ts = None
+        end_ts = None
         # Use only `self._full_symbol_col_name` after CmTask1588 is fixed.
         columns = None
+        filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol], start_timestamp, end_timestamp, columns
+            [full_symbol], start_ts, end_ts, columns, filter_data_mode
         )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
