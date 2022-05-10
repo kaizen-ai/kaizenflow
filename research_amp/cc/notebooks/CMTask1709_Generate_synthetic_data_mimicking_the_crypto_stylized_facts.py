@@ -248,17 +248,9 @@ calculate_confidence_interval(hit_df["hit"], alpha, method)
 pnl = (hit_df["predictions"] * hit_df["rets"]).cumsum()
 pnl.plot()
 
-# %%
 
-# %%
-type(np.linspace(0.4, 0.6, num=10))
-
-# %%
-import random
-
-# %%
-np.linspace(0.4, 0.6, num=3)
-
+# %% [markdown]
+# ## Bootstrapping to compute pnl = f(hit_rate)
 
 # %%
 # Relationship between hit rate and pnl
