@@ -2092,6 +2092,30 @@ def docker_login(ctx):  # type: ignore
 # TODO(gp): use_privileged_mode -> use_docker_privileged_mode
 #  use_sibling_container -> use_docker_containers_containers
 
+def _get_linter_service() -> str:
+    """
+    Get a linter service specification for a docker-compose.yaml file.
+    """
+    superproject_path, submodule_path = hgit.get_path_from_supermodule()
+    if superproject_path:
+        # We are running in a Git submodule.
+        work_dir = f"/src/{submodule_path}"
+        repo_root = superproject_path
+    else:
+        work_dir = "/src"
+        repo_root = os.getcwd()
+    txt_tmp = f"""
+    linter:
+      extends:
+        base_app
+      volumes:
+        - {repo_root}:/src
+      working_dir: {work_dir}
+      environment: 
+        - MYPYPATH
+    """
+    return txt_tmp
+
 
 def _generate_compose_file(
     use_privileged_mode: bool,
@@ -2281,7 +2305,10 @@ def _generate_compose_file(
         # This is at the level of `services/app`.
         indent_level = 2
         append(txt_tmp, indent_level)
-    #
+    # Specify the linter service.
+    txt_tmp = _get_linter_service()
+    indent_level = 1
+    append(txt_tmp, indent_level)
     if True:
         txt_tmp = """
         jupyter_server:
@@ -5342,8 +5369,14 @@ def lint(  # type: ignore
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             if fast:
                 docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
+            # Get an image to run the linter on.
+            ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+            linter_image = f"{ecr_base_path}/dev_tools"
+            # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
+            # and run linter on the specific version, e.g., `1.1.5`.
+            version = None
             # Execute command line.
-            cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+            cmd = _get_docker_cmd(linter_image, stage, version, docker_cmd_, service_name="linter")
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
