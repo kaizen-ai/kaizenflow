@@ -136,12 +136,6 @@ def is_mac() -> bool:
     return is_mac_
 
 
-def is_cmamp_prod() -> bool:
-    """
-    Detect if running on a production container.
-    """
-    return os.environ.get("CMAMP_PROD_CONTAINER")
-
 def _raise_invalid_host() -> None:
     host_os_name = os.uname()[0]
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME")
@@ -359,6 +353,14 @@ def is_CK_S3_available() -> bool:
             val = False
     _LOG.debug("val=%s", val)
     return val
+
+
+def is_cmamp_prod() -> bool:
+    """
+    Detect whether this is a production container.
+    This env var is set inside devops/docker_build/prod.Dockerfile.
+    """
+    return os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False)
 
 
 # #############################################################################
