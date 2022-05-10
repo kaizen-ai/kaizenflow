@@ -591,7 +591,6 @@ def from_json(file_name: str) -> dict:
             continue
         txt_tmp.append(line)
     txt_tmp = "\n".join(txt_tmp)
-    _LOG.info("txt_tmp=\n%s", txt_tmp)
     data = json.loads(txt_tmp)
     return data
 

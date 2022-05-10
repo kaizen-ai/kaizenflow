@@ -3,12 +3,8 @@
 """
 Run the optimizer using an input file and save the results to an output file.
 
-E.g., to run optimizer using `input.pkl` as an input file and to save the output
-to `output.pkl` do:
+# E.g., run the optimizer:
 > optimizer_stub.py --input_file input.pkl --output_file output.pkl
-
-Import as:
-import dev_scripts.script_skeleton as dscscske
 """
 
 import argparse
@@ -32,13 +28,13 @@ def _parse() -> argparse.ArgumentParser:
         "--input_file",
         action="store",
         required=True,
-        help="file with the input data for optimizer.",
+        help="File with the input data for optimizer",
     )
     parser.add_argument(
         "--output_file",
         action="store",
         required=True,
-        help="file with the optimizer output data.",
+        help="File with the output data from the optimizer",
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -57,7 +53,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     df = input_obj["df"]
     # Run the optimizer.
     output_df = osipeopt.optimize(config, df)
-    # Save the output.
+    # Save the output data.
     hpickle.to_pickle(output_df, args.output_file)
 
 

@@ -21,7 +21,7 @@ The json file looks like:
     "CK_AWS_ACCESS_KEY_ID": "***",
     "CK_AWS_SECRET_ACCESS_KEY": "***",
     "CK_AWS_DEFAULT_REGION": "eu-north-1",
-    "CK_AWS_S3_BUCKET": "cryptokaizen-data",
+    "CK_AWS_S3_BUCKET": "ck-data",
     "CK_TELEGRAM_TOKEN": "***",
 }
 ```

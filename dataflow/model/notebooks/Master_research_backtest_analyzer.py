@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.3
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -103,9 +103,10 @@ fep_dict = {
     "price_col": "vwap",
     "volatility_col": "vwap.ret_0.vol",
     "prediction_col": "prediction",
+    "bulk_frac_to_remove": 0.0,
+    "bulk_fill_method": "zero",
     "target_gmv": 1e6,
-    "dollar_neutrality": "gaussian_rank",
-    "quantization": "nearest_lot",
+    "quantization": "nearest_share",
     "burn_in_bars": 3,
 }
 fep_config = cconfig.get_config_from_nested_dict(fep_dict)
@@ -118,6 +119,7 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 )
 
 # %%
+# Create backtest dataframe tile iterator.
 backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     tile_config["dir_name"],
     datetime.date(2011, 1, 1),
@@ -127,13 +129,14 @@ backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     asset_ids=None,
 )
 
-# %%
+# Process the dataframes in the interator.
 bar_metrics = []
 for df in backtest_df_iter:
     _, bar_metrics_slice = fep.annotate_forecasts(
         df,
+        bulk_frac_to_remove=fep_config["bulk_frac_to_remove"],
+        bulk_fill_method=fep_config["bulk_fill_method"],
         target_gmv=fep_config["target_gmv"],
-        dollar_neutrality=fep_config["dollar_neutrality"],
         quantization=fep_config["quantization"],
         burn_in_bars=fep_config["burn_in_bars"],
     )
