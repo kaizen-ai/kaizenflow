@@ -1,33 +1,20 @@
-import datetime
-from typing import List, Optional
-
-import pandas as pd
-import s3fs
-import pyarrow.parquet as parquet
-from tqdm.autonotebook import tqdm
-import helpers.hpandas as hpandas
-import helpers.hdbg as hdbg
-import random
-import numpy as np
-import logging
-from typing import List, Dict
-
-import matplotlib.pyplot as plt
-import pandas as pd
-import requests
-import statsmodels
+"""
+Import as:
 
 import core.finance.tradability as cfintrad
-import helpers.hdatetime as hdateti
+"""
+
+
+import random
+from typing import Dict
+
+import numpy as np
+import pandas as pd
+import statsmodels
+from numpy.typing import ArrayLike
+
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
-import im_v2.common.universe as ivcu
-
-import seaborn as sns
-import numpy as np
-from numpy.typing import ArrayLike
-import random
 
 
 def process_df(df: pd.DataFrame, freq_mins: int) -> pd.DataFrame:
@@ -50,7 +37,7 @@ def process_df(df: pd.DataFrame, freq_mins: int) -> pd.DataFrame:
     out_df = out_df.dropna()
     # #
     out_df["ret_0"] = out_df["close"].pct_change()
-    out_df["spread_usd"] = (out_df["ask"] - out_df["bid"])
+    out_df["spread_usd"] = out_df["ask"] - out_df["bid"]
     out_df["spread_bps"] = (out_df["ask"] - out_df["bid"]) / out_df["close"]
     out_df["trad"] = out_df["ret_0"].abs() / out_df["spread_bps"]
     out_df = out_df.dropna()
@@ -73,10 +60,12 @@ def compute_stats(df: pd.DataFrame) -> pd.Series:
     return srs
 
 
-# #################################################################################
+# #############################################################################
 
 
-def get_predictions(df: pd.DataFrame, ret_col: str, hit_rate: float, seed: int) -> pd.Series:
+def get_predictions(
+    df: pd.DataFrame, ret_col: str, hit_rate: float, seed: int
+) -> pd.Series:
     """
     :param df: Desired sample with OHLCV data and calculated returns
     :param hit_rate: Desired percantage of successful predictions
@@ -101,7 +90,9 @@ def get_predictions(df: pd.DataFrame, ret_col: str, hit_rate: float, seed: int) 
     return pred
 
 
-def calculate_confidence_interval(hit_series: pd.Series, alpha: float, method: str) -> None:
+def calculate_confidence_interval(
+    hit_series: pd.Series, alpha: float, method: str
+) -> None:
     """
     :param hit_series: boolean series with hit values
     :param alpha: Significance level
@@ -127,7 +118,7 @@ def get_predictions_and_hits(df, ret_col, hit_rate, seed):
 
     :param df: Desired sample with OHLCV data and calculated returns
     :param ret_col: Name of the column with returns
-    :param hit_rate: Desired percantage of successful predictions
+    :param hit_rate: Desired percentage of successful predictions
     :param seed: Experiment stance
     """
     df = df.copy()
@@ -146,10 +137,12 @@ def compute_pnl(df: pd.DataFrame, rets_col: str) -> float:
     return (df["predictions"] * df[rets_col]).sum()
 
 
-def simulate_pnls_for_set_of_hit_rates(df: pd.DataFrame, rets_col: str, hit_rates: ArrayLike, n_experiment: int) -> \
-Dict[float, float]:
+def simulate_pnls_for_set_of_hit_rates(
+    df: pd.DataFrame, rets_col: str, hit_rates: ArrayLike, n_experiment: int
+) -> Dict[float, float]:
     """
-    For the set of various pre-defined `hit_rates` values iterate several generations for the actual PnL.
+    For the set of various pre-defined `hit_rates` values iterate several
+    generations for the actual PnL.
 
     :param df: Desired sample with calculated returns
     :param rets_col: Name of the column with returns
@@ -180,7 +173,7 @@ Dict[float, float]:
 
 # TODO(gp): Move to hpandas.
 def plot_without_gaps(df):
-    #df.plot(x=df.index.astype(str))
+    # df.plot(x=df.index.astype(str))
     df = df.copy()
-    df.index = df.index.to_series().dt.strftime('%Y-%m-%d')
+    df.index = df.index.to_series().dt.strftime("%Y-%m-%d")
     df.plot()

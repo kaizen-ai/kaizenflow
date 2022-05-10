@@ -21,12 +21,13 @@
 
 # %%
 import logging
-from typing import List, Dict
+from typing import List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import requests
-import statsmodels
+import seaborn as sns
 
 import core.finance.tradability as cfintrad
 import helpers.hdatetime as hdateti
@@ -34,11 +35,6 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.universe as ivcu
-
-import seaborn as sns
-import numpy as np
-from numpy.typing import ArrayLike
-import random
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -180,66 +176,8 @@ ax1.set_ylabel("Sample")
 ax1.set_title("Returns distribution")
 plt.show()
 
-
 # %% [markdown]
 # # Pre-defined Predictions, Hit Rates and Confidence Interval
-
-# %% run_control={"marked": false}
-def calculate_confidence_interval(hit_series, alpha, method):
-    """
-    :param alpha: Significance level
-    :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
-    """
-    point_estimate = hit_series.mean()
-    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=hit_series.sum(),
-        nobs=hit_series.count(),
-        alpha=alpha,
-        method=method,
-    )
-    result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
-    conf_alpha = (1 - alpha / 2) * 100
-    print(f"hit_rate: {result_values_pct[0]}")
-    print(f"hit_rate_lower_CI_({conf_alpha}%): {result_values_pct[1]}")
-    print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
-
-def get_predictions_and_hits(df, ret_col, hit_rate, seed):
-    """
-    Calculate hits from the predictions and show confidence intervals.
-
-    :param df: Desired sample with OHLCV data and calculated returns
-    :param ret_col: Name of the column with returns
-    :param hit_rate: Desired percantage of successful predictions
-    :param seed: Experiment stance
-    """
-    df = df.copy()
-    df["predictions"] = cfintrad.get_predictions(df, ret_col, hit_rate, seed)
-    # Specify necessary columns.
-    df = df[[ret_col, "predictions"]]
-    # Attach `hit` column (boolean).
-    df = df.copy()
-    df["hit"] = df[ret_col] * df["predictions"] >= 0
-    # Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
-    df = hpandas.dropna(df, report_stats=True)
-    return df
-
-
-# %%
-type(alpha)
-
-# %%
-sample = btc#.head(1000)
-ret_col = "rets"
-hit_rate = 0.51
-seed = 2
-alpha = 0.05
-method = "normal"
-
-hit_df = get_predictions_and_hits(
-    sample, ret_col, hit_rate, seed
-)
-display(hit_df.head(3))
-calculate_confidence_interval(hit_df["hit"], alpha, method)
 
 # %%
 sample = btc.head(1000)
@@ -249,10 +187,9 @@ seed = 2
 alpha = 0.05
 method = "normal"
 
-hit_df = cfintrad.get_predictions_and_hits(
-    sample, ret_col, hit_rate, seed
-)
+hit_df = cfintrad.get_predictions_and_hits(sample, ret_col, hit_rate, seed)
 display(hit_df.head(3))
+cfintrad.calculate_confidence_interval(hit_df["hit"], alpha, method)
 
 # %% [markdown]
 # # PnL as a function of `hit_rate`
@@ -274,10 +211,10 @@ rets_col = "rets"
 hit_rates = np.linspace(0.4, 0.6, num=10)
 n_experiment = 10
 
-pnls = cfintrad.simulate_pnls_for_set_of_hit_rates(hit_df, "rets", hit_rates, n_experiment)
+pnls = cfintrad.simulate_pnls_for_set_of_hit_rates(
+    hit_df, "rets", hit_rates, n_experiment
+)
 
 # %%
-hit_pnl_df = pd.DataFrame(pnls.items(), columns=['hit_rate', 'PnL'])
+hit_pnl_df = pd.DataFrame(pnls.items(), columns=["hit_rate", "PnL"])
 sns.scatterplot(data=hit_pnl_df, x="hit_rate", y="PnL")
-
-# %%
