@@ -385,6 +385,42 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
+def check_and_filter_matching_columns(
+    df: pd.DataFrame, columns: List[str], filter_data_mode: str
+) -> pd.DataFrame:
+    """
+    Check that columns are the expected ones.
+
+    - Mode "assert": raise Assertion Error if passed columns != received columns
+    - Mode "warn_and_trim": intersect passed columns and retrieved columns, return
+      the intersection, issue a warning
+    """
+    received_columns = df.columns.to_list()
+    #
+    if filter_data_mode == "assert":
+        # Raise and assertion.
+        only_warning = False
+    elif filter_data_mode == "warn_and_trim":
+        # Just issue a warning.
+        only_warning = True
+        # Get columns intersection while preserving the order of the columns.
+        columns_intersection = sorted(
+            set(received_columns) & set(columns),
+            key=received_columns.index,
+        )
+        hdbg.dassert_lte(1, len(columns_intersection))
+        df = df[columns_intersection]
+    else:
+        raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
+    hdbg.dassert_set_eq(
+        columns,
+        received_columns,
+        only_warning=only_warning,
+        msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
+    )
+    return df
+
+
 def compare_dataframe_rows(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
     """
     Compare contents of rows with same indices.

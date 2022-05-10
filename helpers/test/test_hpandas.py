@@ -1051,3 +1051,61 @@ class TestDropDuplicates(hunitest.TestCase):
         """
         # Check.
         self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
+
+
+class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
+    """
+    Test that `check_and_filter_matching_columns()` works correctly.
+    """
+
+    @staticmethod
+    def get_test_data() -> pd.DataFrame:
+        df = pd.DataFrame(data=np.full((3, 3), np.arange(3, 6)),
+                          columns=["col1", "col2", "col3"])
+        return df
+
+    def test_check_and_filter_matching_columns1(self) -> None:
+        """
+        - received columns contain some columns apart from requested
+        - `filter_data_mode` = "warn_and_trim"
+        """
+        df = self.get_test_data()
+        columns = ['col1', 'col3']
+        filter_data_mode = "warn_and_trim"
+        df = hpandas.check_and_filter_matching_columns(df, columns, filter_data_mode)
+        actual_columns = df.columns.to_list()
+        self.assert_equal(str(actual_columns), str(columns))
+
+    def test_check_and_filter_matching_columns2(self) -> None:
+        """
+        - recieved columns contain some columns apart from requested
+        - `filter_data_mode` = "assert"
+        """
+        df = self.get_test_data()
+        columns = ['col1', 'whatever']
+        filter_data_mode = "assert"
+        with self.assertRaises(AssertionError):
+            hpandas.check_and_filter_matching_columns(df, columns, filter_data_mode)
+
+    def test_check_and_filter_matching_columns3(self) -> None:
+        """
+        - requested columns = recieved columns
+        - `filter_data_mode` = "assert"
+        """
+        df = self.get_test_data()
+        columns = ['col1', "col2", 'col3']
+        filter_data_mode = "assert"
+        df = hpandas.check_and_filter_matching_columns(df, columns, filter_data_mode)
+        actual_columns = df.columns.to_list()
+        self.assert_equal(str(actual_columns), str(columns))
+
+    def test_check_and_filter_matching_columns4(self) -> None:
+        """
+        - requested columns = recieved columns
+        - `filter_data_mode` = "assert"
+        """
+        df = self.get_test_data()
+        columns = ['col1', "col2", 'col3', 'col4']
+        filter_data_mode = "assert"
+        with self.assertRaises(AssertionError):
+            hpandas.check_and_filter_matching_columns(df, columns, filter_data_mode)
