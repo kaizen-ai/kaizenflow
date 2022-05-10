@@ -18,6 +18,11 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): helpers can't depend from im.
 class TestSql1(imvcddbut.TestImDbHelper):
+    
+    @classmethod
+    def get_id(cls):
+        return hash(cls.__name__) % 1000
+    
     @pytest.mark.slow("10 seconds.")
     def test_db_connection_to_tuple(self) -> None:
         """

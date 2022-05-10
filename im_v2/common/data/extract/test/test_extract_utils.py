@@ -21,6 +21,10 @@ class TestDownloadRealtimeForOneExchange1(
 ):
     # Secret needed for getting realtime data.
     binance_secret = None
+    
+    @classmethod
+    def get_id(cls):
+        return hash(cls.__name__) % 1000
 
     def setUp(self) -> None:
         # Getting necessary secret before boto3 is mocked.
