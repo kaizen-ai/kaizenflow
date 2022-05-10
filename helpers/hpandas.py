@@ -768,6 +768,7 @@ def _df_to_str(
 ) -> str:
     is_in_ipynb = hsystem.is_running_in_ipynb()
     from IPython.display import display
+
     out = []
     # Set dataframe print options.
     with pd.option_context(
@@ -809,17 +810,19 @@ def _df_to_str(
             else:
                 # TODO(gp): @all use this approach also above and update all the
                 #  unit tests.
-                df = [df.head(nr),
-                      pd.DataFrame([["..."] * df.shape[1]],
-                                   index=[" "],
-                                   columns=df.columns),
-                      df.tail(nr)]
+                df = [
+                    df.head(nr),
+                    pd.DataFrame(
+                        [["..."] * df.shape[1]], index=[" "], columns=df.columns
+                    ),
+                    df.tail(nr),
+                ]
                 df = pd.concat(df)
                 display(df)
     if not is_in_ipynb:
         txt = "\n".join(out)
     else:
-        txt = ''
+        txt = ""
     return txt
 
 
