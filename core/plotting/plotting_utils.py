@@ -24,8 +24,27 @@ COLORMAP = Union[str, mpl.colors.Colormap]
 
 FIG_SIZE = (20, 5)
 
-mpl.rcParams["figure.dpi"] = 300
 
+def configure_notebook_for_presentation() -> None:
+    """
+    Update settings for plotting functions:
+    - Higher quality for the plots.
+    - Larger fonts on the plots.
+    """
+    # Set the higher quality of the graph.
+    mpl.rcParams["figure.dpi"] = 300
+    # Set the size of the font in the plot.
+    small_size = 15
+    medium_size = 15
+    bigger_size = 15
+    # Update the fonts for graph's constituents.
+    plt.rc("font", size=small_size)  # controls default text sizes
+    plt.rc("axes", titlesize=small_size)  # fontsize of the axes title
+    plt.rc("axes", labelsize=medium_size)  # fontsize of the x and y labels
+    plt.rc("xtick", labelsize=small_size)  # fontsize of the tick labels
+    plt.rc("ytick", labelsize=small_size)  # fontsize of the tick labels
+    plt.rc("legend", fontsize=small_size)  # legend fontsize
+    plt.rc("figure", titlesize=bigger_size)  # fontsize of the figure title
 
 def get_multiple_plots(
     num_plots: int,
@@ -151,16 +170,6 @@ def plot_barplot(
         if orientation == "horizontal":
             return x_ + max(width_, 0), y_
         raise ValueError("Invalid orientation='%s'" % orientation)
-
-    # Set the size of the font in the plot.
-    size = 15
-    plt.rc("font", size=size)  # controls default text sizes
-    plt.rc("axes", titlesize=size)  # fontsize of the axes title
-    plt.rc("axes", labelsize=size)  # fontsize of the x and y labels
-    plt.rc("xtick", labelsize=size)  # fontsize of the tick labels
-    plt.rc("ytick", labelsize=size)  # fontsize of the tick labels
-    plt.rc("legend", fontsize=size)  # legend fontsize
-    plt.rc("figure", titlesize=size)  # fontsize of the figure title
 
     # Get default figure size.
     if figsize is None:
