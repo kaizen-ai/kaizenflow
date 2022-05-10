@@ -32,11 +32,14 @@ class TestSql1(imvcddbut.TestImDbHelper):
         expected = {
             "host": "localhost",
             "dbname": "im_postgres_db_local",
-            "port": 5432,
             "user": "aljsdalsd",
             "password": "alsdkqoen",
         }
-        self.assertEqual(actual_details._asdict(), expected)
+        # Drop the `port` key since it is assigned a dynamic value.
+        actual_details_dict = actual_details._asdict()
+        del actual_details_dict["port"]
+        #
+        self.assertEqual(actual_details_dict, expected)
 
     @pytest.mark.slow("17 seconds.")
     def test_create_database(self) -> None:

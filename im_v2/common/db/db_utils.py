@@ -217,7 +217,7 @@ networks:
         hio.to_file(compose_file_name, txt)
         #
         txt = f"""POSTGRES_HOST=localhost
-POSTGRES_DB=oms_postgres_db_local
+POSTGRES_DB=im_postgres_db_local
 POSTGRES_PORT={host_port}
 POSTGRES_USER=aljsdalsd
 POSTGRES_PASSWORD=alsdkqoen"""
