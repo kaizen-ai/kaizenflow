@@ -38,13 +38,6 @@ def add_exchange_download_args(
         help="Beginning of the downloaded period",
     )
     parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
         "--exchange_id",
         action="store",
         required=True,
@@ -58,11 +51,19 @@ def add_exchange_download_args(
         type=str,
         help="Trade universe to download data for",
     )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=False,
+        type=str,
+        help="End of the downloaded period",
+    )
     return parser
 
 
 CCXT_EXCHANGE = "CcxtExchange"
 TALOS_EXCHANGE = "TalosExchange"
+CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExchange"
 
 
 def download_realtime_for_one_exchange(
@@ -78,6 +79,7 @@ def download_realtime_for_one_exchange(
     # Initialize exchange class and prepare additional args, if any.
     # Every exchange can potentially have a specific set of init args.
     additional_args = []
+    # TODO(Nikola): Unify exchange initialization as separate function CMTask #1776.
     if exchange_class.__name__ == CCXT_EXCHANGE:
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
@@ -114,10 +116,8 @@ def download_realtime_for_one_exchange(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        if exchange_class.__name__ == CCXT_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "/")
-        elif exchange_class.__name__ == TALOS_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "-")
+        currency_pair_for_download = exchange_class.convert_currency_pair(currency_pair)
+        # Download data.
         data = exchange.download_ohlcv_data(
             currency_pair_for_download,
             *additional_args,
@@ -163,46 +163,49 @@ def download_historical_data(
     :param exchange_class: which exchange class is used in script run
      e.g. "CcxtExchange" or "TalosExchange"
     """
-    # Initialize exchange class and prepare additional args, if any.
+    # Initialize exchange class.
     # Every exchange can potentially have a specific set of init args.
-    additional_args = []
     if exchange_class.__name__ == CCXT_EXCHANGE:
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
         vendor = "CCXT"
+        data_type = "ohlcv"
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
         vendor = "talos"
-        additional_args.append(args.exchange_id)
+        data_type = "ohlcv"
+    elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
+        exchange = exchange_class()
+        vendor = "crypto_chassis"
+        data_type = "market_depth"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
     universe = ivcu.get_vendor_universe(vendor, version=args.universe)
     currency_pairs = universe[args.exchange_id]
+    # Convert Namespace object with processing arguments to dict format.
+    args = vars(args)
     # Convert timestamps.
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
+    args["end_timestamp"] = pd.Timestamp(args["end_timestamp"])
+    args["start_timestamp"] = pd.Timestamp(args["start_timestamp"])
+    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        if exchange_class.__name__ == CCXT_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "/")
-        elif exchange_class.__name__ == TALOS_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "-")
-        # Download OHLCV data.
-        data = exchange.download_ohlcv_data(
-            currency_pair_for_download,
-            *additional_args,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-        )
+        args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
+        # Download data.
+        data = exchange.download_data(
+            data_type,
+            **args
+            )
+        if data.empty:
+            continue
         # Assign pair and exchange columns.
         # TODO(Nikola): Exchange id was missing and it is added additionally to
         #  match signature of other scripts.
         data["currency_pair"] = currency_pair
-        data["exchange_id"] = args.exchange_id
+        data["exchange_id"] = args["exchange_id"]
         # Change index to allow calling add_date_partition_cols function on the dataframe.
         data = imvcdttrut.reindex_on_datetime(data, "timestamp")
         data, partition_cols = hparque.add_date_partition_columns(
@@ -218,12 +221,12 @@ def download_historical_data(
             ["currency_pair"] + partition_cols,
             path_to_exchange,
             partition_filename=None,
-            aws_profile=args.aws_profile,
+            aws_profile=args["aws_profile"],
         )
         # Sleep between iterations is needed for CCXT.
         if exchange_class == CCXT_EXCHANGE:
-            time.sleep(args.sleep_time)
+            time.sleep(args["sleep_time"])
     # Merge all new parquet into a single `data.parquet`.
     hparque.list_and_merge_pq_files(
-        path_to_exchange, aws_profile=args.aws_profile
+        path_to_exchange, aws_profile=args["aws_profile"]
     )

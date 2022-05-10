@@ -60,6 +60,8 @@ class ForecastSystem(System):
     ) -> mdata.MarketData:
         ...
 
+    # TODO(gp): Paul suggested to add a price column. Probably the interface
+    #  will be like *args, **kargs.
     @abc.abstractmethod
     def get_dag_config(
         self,
@@ -68,7 +70,8 @@ class ForecastSystem(System):
         returns_col: str,
         timedelta: pd.Timedelta,
         asset_id_col: str,
-        *spread_col: Optional[str],
+        *,
+        spread_col: Optional[str],
         log_dir: Optional[str],
     ) -> cconfig.Config:
         """
