@@ -479,18 +479,18 @@ class Test_generate_compose_file1(hunitest.TestCase):
         self,
         use_privileged_mode: bool = False,
         use_sibling_container: bool = False,
+        shared_data_dirs: Optional[Dict[str, str]] = None,
         mount_as_submodule: bool = False,
         use_network_mode_host: bool = True,
-        shared_data_dir: Optional[str] = None,
     ) -> None:
         txt = []
         #
         params = [
             "use_privileged_mode",
             "use_sibling_container",
+            "shared_data_dirs",
             "mount_as_submodule",
             "use_network_mode_host",
-            "shared_data_dir",
         ]
         txt_tmp = hprint.to_str(" ".join(params))
         txt.append(txt_tmp)
@@ -499,10 +499,10 @@ class Test_generate_compose_file1(hunitest.TestCase):
         txt_tmp = hlibtask._generate_compose_file(
             use_privileged_mode,
             use_sibling_container,
+            shared_data_dirs,
             mount_as_submodule,
             use_network_mode_host,
             file_name,
-            shared_data_dir,
         )
         txt_tmp = hunitest.filter_text("AM_HOST_NAME|AM_HOST_OS_NAME", txt_tmp)
         txt.append(txt_tmp)
@@ -514,7 +514,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
         self.helper(use_privileged_mode=True)
 
     def test2(self) -> None:
-        self.helper(shared_data_dir="/data/shared")
+        self.helper(shared_data_dirs={"/data/shared": "/shared_data"})
 
 
 # #############################################################################
