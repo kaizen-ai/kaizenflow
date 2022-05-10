@@ -158,7 +158,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
         shape=(2, 8)
                                      asset_id        full_symbol       open       high        low      close   volume                  start_ts
-        end_ts                                                                                                                                 
+        end_ts
         2018-08-16 20:05:00-04:00  1467591036  binance::BTC_USDT  6291.9700  6299.3200  6285.4000  6294.9900  18.9862 2018-08-16 20:04:00-04:00
         2018-08-16 20:05:00-04:00  3187272957   kucoin::ETH_USDT   285.4002   285.8846   285.4002   285.8846   0.0061 2018-08-16 20:04:00-04:00
         """
@@ -244,7 +244,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
         shape=(8, 8)
                                      asset_id        full_symbol      open      high       low     close   volume                  start_ts
-        end_ts                                                                                                                             
+        end_ts
         2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812 2018-08-16 20:00:00-04:00
         2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175 2018-08-16 20:00:00-04:00
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810  6306.000  6292.790  6297.260  55.3732 2018-08-16 20:01:00-04:00
@@ -289,7 +289,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
         shape=(10, 8)
                                      asset_id        full_symbol      open      high       low     close   volume                  start_ts
-        end_ts                                                                                                                             
+        end_ts
         2018-08-16 20:01:00-04:00  1467591036  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812 2018-08-16 20:00:00-04:00
         2018-08-16 20:01:00-04:00  3187272957   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175 2018-08-16 20:00:00-04:00
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810  6306.000  6292.790  6297.260  55.3732 2018-08-16 20:01:00-04:00
@@ -334,7 +334,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
         shape=(8, 8)
                                      asset_id        full_symbol      open      high        low      close   volume                  start_ts
-        end_ts                                                                                                                               
+        end_ts
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810  6306.000  6292.7900  6297.2600  55.3732 2018-08-16 20:01:00-04:00
         2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.406   286.406   285.4002   285.4002   0.1623 2018-08-16 20:01:00-04:00
         2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970  6299.970  6286.9300  6294.5200  34.6118 2018-08-16 20:02:00-04:00
@@ -379,7 +379,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
         shape=(6, 8)
                                      asset_id        full_symbol       open       high        low      close   volume                  start_ts
-        end_ts                                                                                                                                 
+        end_ts
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.8100  6306.0000  6292.7900  6297.2600  55.3732 2018-08-16 20:01:00-04:00
         2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.4060   286.4060   285.4002   285.4002   0.1623 2018-08-16 20:01:00-04:00
         2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.9700  6299.9700  6286.9300  6294.5200  34.6118 2018-08-16 20:02:00-04:00
@@ -977,7 +977,8 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
 # TODO(Dan): use local data instead of S3.
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 @pytest.mark.slow("~8 seconds by GH actions.")
 class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
     """
@@ -1043,7 +1044,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
         shape=(6, 8)
                                      asset_id        full_symbol       open       high        low      close   volume                  start_ts
-        end_ts                                                                                                                                 
+        end_ts
         2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.8100  6306.0000  6292.7900  6297.2600  55.3732 2018-08-16 20:01:00-04:00
         2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.4060   286.4060   285.4002   285.4002   0.1623 2018-08-16 20:01:00-04:00
         2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.9700  6299.9700  6286.9300  6294.5200  34.6118 2018-08-16 20:02:00-04:00

@@ -55,7 +55,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(100, 6)
                                          full_symbol     open     high      low    close   volume
-        timestamp                                                                                
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.7812
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.3732
@@ -91,7 +91,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(199, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -128,7 +128,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(196, 6)
                                          full_symbol      open      high        low      close   volume
-        timestamp                                                                                      
+        timestamp
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810  6306.000  6292.7900  6297.2600  55.3732
         2018-08-17 00:02:00+00:00   kucoin::ETH_USDT   286.406   286.406   285.4002   285.4002   0.1623
         2018-08-17 00:03:00+00:00  binance::BTC_USDT  6299.970  6299.970  6286.9300  6294.5200  34.6118
@@ -166,7 +166,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(9, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -205,7 +205,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(8, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810  6306.000  6292.790  6297.260  55.3732
@@ -249,7 +249,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(174, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -335,7 +335,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(100, 6)
                                          full_symbol     open     high      low    close   volume
-        timestamp                                                                                
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.7812
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.3732
@@ -373,7 +373,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(199, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -412,7 +412,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(196, 6)
                                          full_symbol      open      high        low      close   volume
-        timestamp                                                                                      
+        timestamp
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810  6306.000  6292.7900  6297.2600  55.3732
         2018-08-17 00:02:00+00:00   kucoin::ETH_USDT   286.406   286.406   285.4002   285.4002   0.1623
         2018-08-17 00:03:00+00:00  binance::BTC_USDT  6299.970  6299.970  6286.9300  6294.5200  34.6118
@@ -452,7 +452,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(9, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -493,7 +493,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(8, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810  6306.000  6292.790  6297.260  55.3732
@@ -541,7 +541,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(174, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -1012,7 +1012,8 @@ class CcxtSqlRealTimeImClient1(
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -1036,7 +1037,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(2881, 6)
                                          full_symbol     open     high      low    close   volume
-        timestamp                                                                                
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.7812
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.3732
@@ -1075,7 +1076,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(5761, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -1115,7 +1116,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(2836, 6)
                                          full_symbol       open       high        low      close   volume
-        timestamp                                                                                        
+        timestamp
         2018-08-18 00:23:00+00:00  binance::BTC_USDT  6570.8300  6573.8000  6567.9800  6573.8000  43.4932
         2018-08-18 00:23:00+00:00   kucoin::ETH_USDT   316.1389   316.1389   316.0217   316.0217   0.8010
         2018-08-18 00:24:00+00:00  binance::BTC_USDT  6573.5600  6575.0000  6564.4700  6567.0100  58.9723
@@ -1156,7 +1157,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(9, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -1198,7 +1199,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(8, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
         2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810  6306.000  6292.790  6297.260  55.3732
@@ -1247,7 +1248,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,high,low,close,volume
         shape=(4791, 6)
                                          full_symbol      open      high       low     close   volume
-        timestamp                                                                                    
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6319.040  6310.320  6311.640   9.9674
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6311.770  6302.810  6302.810  16.7812
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713   286.713   286.713   0.0175
@@ -1287,7 +1288,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns=full_symbol,open,close
         shape=(5761, 3)
                                          full_symbol      open     close
-        timestamp                                                       
+        timestamp
         2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000  6311.640
         2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640  6302.810
         2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.713   286.713
