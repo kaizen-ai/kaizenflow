@@ -35,6 +35,9 @@ import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.universe as ivcu
 
+import seaborn as sns
+import numpy as np
+
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
@@ -198,8 +201,7 @@ def calculate_confidence_interval(hit_series, alpha, method):
     print(f"hit_rate_lower_CI_({conf_alpha}%): {result_values_pct[1]}")
     print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
 
-
-def get_predictions_hits_and_stats(df, ret_col, hit_rate, seed, alpha, method):
+def get_predictions_hits_and_stats(df, ret_col, hit_rate, seed):
     """
     Calculate hits from the predictions and show confidence intervals.
 
@@ -212,26 +214,80 @@ def get_predictions_hits_and_stats(df, ret_col, hit_rate, seed, alpha, method):
     df = df.copy()
     df["predictions"] = cfintrad.get_predictions(df, ret_col, hit_rate, seed)
     # Specify necessary columns.
-    df = df[["rets", "predictions"]]
+    df = df[[ret_col, "predictions"]]
     # Attach `hit` column (boolean).
     df = df.copy()
-    df["hit"] = df["rets"] * df["predictions"] >= 0
+    df["hit"] = df[ret_col] * df["predictions"] >= 0
     # Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
     df = hpandas.dropna(df, report_stats=True)
-    # Show CI stats.
-    calculate_confidence_interval(df["hit"], alpha, method)
     return df
 
 
 # %%
-sample = btc.head(1000)
+sample = btc#.head(1000)
 ret_col = "rets"
-hit_rate = 0.55
-seed = 20
+hit_rate = 0.51
+seed = 2
 alpha = 0.05
 method = "normal"
 
 hit_df = get_predictions_hits_and_stats(
-    sample, ret_col, hit_rate, seed, alpha, method
+    sample, ret_col, hit_rate, seed
 )
-display(hit_df)
+display(hit_df.head(3))
+calculate_confidence_interval(hit_df["hit"], alpha, method)
+
+# %% [markdown]
+# # PnL as a function of `hit_rate`
+
+# %% [markdown]
+# ## Show PnL for the current `hit_rate`
+
+# %%
+# A model makes a prediction on the rets and then it's realized.
+pnl = (hit_df["predictions"] * hit_df["rets"]).cumsum()
+pnl.plot()
+
+# %%
+
+# %%
+type(np.linspace(0.4, 0.6, num=10))
+
+# %%
+import random
+
+# %%
+np.linspace(0.4, 0.6, num=3)
+
+
+# %%
+# Relationship between hit rate and pnl
+def compute_pnl(df) -> float:
+    return (df["predictions"] * df["rets"]).sum()
+
+def simulate_pnls_for_set_of_hit_rates(df, hit_rates, n_experiment):
+    # Every seed corresponds to a different "model".
+    seed = random.randint(0, 100)
+    results = {}
+    for hit_rate in hit_rates:
+        for i in range(n_experiment):
+            df_tmp = get_predictions_hits_and_stats(df, "rets", hit_rate, seed)
+            hit_rate = df_tmp["hit"].mean()
+            pnl = compute_pnl(df_tmp)
+            results[hit_rate] = pnl
+            #print(hit_rate, pnl)
+            seed += 1
+    return results
+
+
+# %%
+hit_rates = np.linspace(0.4, 0.6, num=3)
+n_experiment = 3
+pnls = simulate_pnls_for_set_of_hit_rates(hit_df, hit_rates, n_experiment)
+
+# %%
+pd.DataFrame(pnls.items(), columns=['hit_rate', 'PnL']).set_index("hit_rate").plot()
+
+# %%
+dd = pd.DataFrame(pnls.items(), columns=['hit_rate', 'PnL'])
+sns.scatterplot(data=dd, x="hit_rate", y="PnL")

@@ -72,7 +72,7 @@ def get_predictions(df: pd.DataFrame, ret_col: str, hit_rate: float, seed: int) 
     # Mask contains 1 for a desired hit and -1 for a miss.
     num_hits = int((1 - hit_rate) * n)
     mask = ([-1] * num_hits) + ([1] * (n - num_hits))
-    print(len(mask))
+    # print(len(mask))
     mask = np.asarray(mask)
     # Randomize the location of the outcomes.
     random.shuffle(mask)
