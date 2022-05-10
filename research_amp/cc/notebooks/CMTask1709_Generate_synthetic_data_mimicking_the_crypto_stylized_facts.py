@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import requests
+import scipy.stats as stats
 import seaborn as sns
 
 import core.finance.tradability as cfintrad
@@ -206,15 +207,26 @@ pnl.plot()
 # ## Relationship between hit rate and pnl (bootstrapping to compute pnl = f(hit_rate))
 
 # %%
-sample = btc.head(1000)
+sample = btc.head(50000)
 rets_col = "rets"
 hit_rates = np.linspace(0.4, 0.6, num=10)
 n_experiment = 10
 
 pnls = cfintrad.simulate_pnls_for_set_of_hit_rates(
-    hit_df, "rets", hit_rates, n_experiment
+    sample, "rets", hit_rates, n_experiment
 )
 
 # %%
 hit_pnl_df = pd.DataFrame(pnls.items(), columns=["hit_rate", "PnL"])
 sns.scatterplot(data=hit_pnl_df, x="hit_rate", y="PnL")
+
+# %%
+x = hit_pnl_df["hit_rate"]
+y = hit_pnl_df["PnL"]
+
+ols_results = stats.linregress(x, y)
+print(f"R-squared = {ols_results.rvalue**2:.4f}")
+plt.plot(x, y, 'o', label='original data')
+plt.plot(x, ols_results.intercept + ols_results.slope*x, 'r', label='fitted line')
+plt.legend()
+plt.show()
