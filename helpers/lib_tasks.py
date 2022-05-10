@@ -2096,16 +2096,21 @@ def docker_login(ctx):  # type: ignore
 def _generate_compose_file(
     use_privileged_mode: bool,
     use_sibling_container: bool,
+    shared_data_dirs: Optional[str],
     mount_as_submodule: bool,
     use_network_mode_host: bool,
     file_name: Optional[str],
-    shared_data_dir: Optional[str],
 ) -> str:
+    """
+    Generate `docker-compose.yaml` file and save it.
+
+    :param shared_data_dir: data directory in the host filesystem to mount to mount inside the container. None means no dir sharing
+    """
     _LOG.debug(
         hprint.to_str(
             "use_privileged_mode use_sibling_container "
-            "mount_as_submodule use_network_mode_host "
-            "file_name shared_data_dir"
+            "shared_data_dirs mount_as_submodule "
+            "use_network_mode_host file_name"
         )
     )
     txt = []
@@ -2204,15 +2209,22 @@ def _generate_compose_file(
         # This is at the level of `services.app`.
         indent_level = 2
         append(txt_tmp, indent_level)
-    #
-    if shared_data_dir is not None:
-        txt_tmp = f"""
+    # Mount a shared dir.
+    if shared_data_dirs is not None:
+        hdbg.dassert_lt(0, len(shared_data_dirs))
+        #
+        txt_tmp = """
         # Shared data directory.
-        - {shared_data_dir}:/shared_data
         """
         # This is at the level of `services.app.volumes`.
         indent_level = 3
         append(txt_tmp, indent_level)
+        # Mount all dirs that are specified.
+        for key, value in shared_data_dirs.items():
+            txt_tmp = f"""
+            - {key}:{value}
+            """
+            append(txt_tmp, indent_level)
     #
     if False:
         txt_tmp = """
@@ -2385,10 +2397,10 @@ def _get_docker_compose_paths(
     _generate_compose_file(
         hgit.execute_repo_config_code("enable_privileged_mode()"),
         hgit.execute_repo_config_code("use_docker_sibling_containers()"),
+        hgit.execute_repo_config_code("get_shared_data_dirs()"),
         mount_as_submodule,
         hgit.execute_repo_config_code("use_docker_network_mode_host()"),
         file_name,
-        hgit.execute_repo_config_code("get_shared_data_dir()"),
     )
     docker_compose_files.append(file_name)
     # if False:
