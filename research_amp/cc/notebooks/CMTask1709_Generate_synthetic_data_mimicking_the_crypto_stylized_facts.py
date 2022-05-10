@@ -225,6 +225,9 @@ def get_predictions_and_hits(df, ret_col, hit_rate, seed):
 
 
 # %%
+type(alpha)
+
+# %%
 sample = btc#.head(1000)
 ret_col = "rets"
 hit_rate = 0.51
@@ -238,6 +241,19 @@ hit_df = get_predictions_and_hits(
 display(hit_df.head(3))
 calculate_confidence_interval(hit_df["hit"], alpha, method)
 
+# %%
+sample = btc.head(1000)
+ret_col = "rets"
+hit_rate = 0.51
+seed = 2
+alpha = 0.05
+method = "normal"
+
+hit_df = cfintrad.get_predictions_and_hits(
+    sample, ret_col, hit_rate, seed
+)
+display(hit_df.head(3))
+
 # %% [markdown]
 # # PnL as a function of `hit_rate`
 
@@ -249,44 +265,8 @@ calculate_confidence_interval(hit_df["hit"], alpha, method)
 pnl = (hit_df["predictions"] * hit_df["rets"]).cumsum()
 pnl.plot()
 
-
 # %% [markdown]
 # ## Relationship between hit rate and pnl (bootstrapping to compute pnl = f(hit_rate))
-
-# %% run_control={"marked": false}
-def compute_pnl(df) -> float:
-    return (df["predictions"] * df["rets"]).sum()
-
-def simulate_pnls_for_set_of_hit_rates(df: pd.DataFrame, rets_col: str, hit_rates: ArrayLike, n_experiment: int) -> Dict[float, float]:
-    """
-    For the set of various pre-defined `hit_rates` values iterate several generations for the actual PnL.
-    
-    :param df: Desired sample with calculated returns
-    :param ret_col: Name of the column with returns 
-    :param hit_rates: Set of hit rates for the experiment
-    :param n_experiment: Number of iterations for each `hit_rate`
-    :return: Corresponding `PnL` for each `hit_rate`
-    """
-    # Every seed corresponds to a different "model".
-    seed = random.randint(0, 100)
-    # Placeholder for the results.
-    results = {}
-    # Each value of hit rate is making its own PnL value.
-    for hit_rate in hit_rates:
-        # For each value of hit rate produce `n_experiment` iterations.
-        for i in range(n_experiment):
-            # Generate predictions and hits for a given `hit_rate`.
-            df_tmp = get_predictions_and_hits(df, rets_col, hit_rate, seed)
-            # The actual `hit_rate`.
-            hit_rate = df_tmp["hit"].mean()
-            # The actual `PnL`.
-            pnl = compute_pnl(df_tmp)
-            # Attach corresponding `hit_rate` and `PnL` to the dictionary.
-            results[hit_rate] = pnl
-            # Reassign seed value.
-            seed += 1
-    return results
-
 
 # %%
 sample = btc.head(1000)
@@ -294,8 +274,10 @@ rets_col = "rets"
 hit_rates = np.linspace(0.4, 0.6, num=10)
 n_experiment = 10
 
-pnls = simulate_pnls_for_set_of_hit_rates(hit_df, "rets", hit_rates, n_experiment)
+pnls = cfintrad.simulate_pnls_for_set_of_hit_rates(hit_df, "rets", hit_rates, n_experiment)
 
 # %%
 hit_pnl_df = pd.DataFrame(pnls.items(), columns=['hit_rate', 'PnL'])
 sns.scatterplot(data=hit_pnl_df, x="hit_rate", y="PnL")
+
+# %%

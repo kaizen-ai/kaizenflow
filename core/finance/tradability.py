@@ -5,8 +5,29 @@ import pandas as pd
 import s3fs
 import pyarrow.parquet as parquet
 from tqdm.autonotebook import tqdm
-
+import helpers.hpandas as hpandas
 import helpers.hdbg as hdbg
+import random
+import numpy as np
+import logging
+from typing import List, Dict
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import requests
+import statsmodels
+
+import core.finance.tradability as cfintrad
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
+import helpers.hprint as hprint
+import im_v2.common.universe as ivcu
+
+import seaborn as sns
+import numpy as np
+from numpy.typing import ArrayLike
+import random
 
 
 def process_df(df: pd.DataFrame, freq_mins: int) -> pd.DataFrame:
@@ -55,9 +76,6 @@ def compute_stats(df: pd.DataFrame) -> pd.Series:
 # #################################################################################
 
 
-import random
-import numpy as np
-
 def get_predictions(df: pd.DataFrame, ret_col: str, hit_rate: float, seed: int) -> pd.Series:
     """
     :param df: Desired sample with OHLCV data and calculated returns
@@ -81,6 +99,83 @@ def get_predictions(df: pd.DataFrame, ret_col: str, hit_rate: float, seed: int) 
     # Change the index for easy attachment to initial DataFrame.
     pred.index = df.index
     return pred
+
+
+def calculate_confidence_interval(hit_series: pd.Series, alpha: float, method: str) -> None:
+    """
+    :param hit_series: boolean series with hit values
+    :param alpha: Significance level
+    :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
+    """
+    point_estimate = hit_series.mean()
+    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
+        count=hit_series.sum(),
+        nobs=hit_series.count(),
+        alpha=alpha,
+        method=method,
+    )
+    result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
+    conf_alpha = (1 - alpha / 2) * 100
+    print(f"hit_rate: {result_values_pct[0]}")
+    print(f"hit_rate_lower_CI_({conf_alpha}%): {result_values_pct[1]}")
+    print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
+
+
+def get_predictions_and_hits(df, ret_col, hit_rate, seed):
+    """
+    Calculate hits from the predictions and show confidence intervals.
+
+    :param df: Desired sample with OHLCV data and calculated returns
+    :param ret_col: Name of the column with returns
+    :param hit_rate: Desired percantage of successful predictions
+    :param seed: Experiment stance
+    """
+    df = df.copy()
+    df["predictions"] = get_predictions(df, ret_col, hit_rate, seed)
+    # Specify necessary columns.
+    df = df[[ret_col, "predictions"]]
+    # Attach `hit` column (boolean).
+    df = df.copy()
+    df["hit"] = df[ret_col] * df["predictions"] >= 0
+    # Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
+    df = hpandas.dropna(df, report_stats=True)
+    return df
+
+
+def compute_pnl(df: pd.DataFrame, rets_col: str) -> float:
+    return (df["predictions"] * df[rets_col]).sum()
+
+
+def simulate_pnls_for_set_of_hit_rates(df: pd.DataFrame, rets_col: str, hit_rates: ArrayLike, n_experiment: int) -> \
+Dict[float, float]:
+    """
+    For the set of various pre-defined `hit_rates` values iterate several generations for the actual PnL.
+
+    :param df: Desired sample with calculated returns
+    :param rets_col: Name of the column with returns
+    :param hit_rates: Set of hit rates for the experiment
+    :param n_experiment: Number of iterations for each `hit_rate`
+    :return: Corresponding `PnL` for each `hit_rate`
+    """
+    # Every seed corresponds to a different "model".
+    seed = random.randint(0, 100)
+    # Placeholder for the results.
+    results = {}
+    # Each value of hit rate is making its own PnL value.
+    for hit_rate in hit_rates:
+        # For each value of hit rate produce `n_experiment` iterations.
+        for i in range(n_experiment):
+            # Generate predictions and hits for a given `hit_rate`.
+            df_tmp = get_predictions_and_hits(df, rets_col, hit_rate, seed)
+            # The actual `hit_rate`.
+            hit_rate = df_tmp["hit"].mean()
+            # The actual `PnL`.
+            pnl = compute_pnl(df_tmp, rets_col)
+            # Attach corresponding `hit_rate` and `PnL` to the dictionary.
+            results[hit_rate] = pnl
+            # Reassign seed value.
+            seed += 1
+    return results
 
 
 # TODO(gp): Move to hpandas.
