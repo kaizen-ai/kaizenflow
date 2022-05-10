@@ -65,15 +65,16 @@ class CryptoChassisExchange:
         self,
         exchange: str,
         currency_pair: str,
-        depth: Optional[int] = None,
+        *,
         start_timestamp: Optional[pd.Timestamp] = None,
+        depth: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Download snapshot data on market depth.
 
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
-        :param startTime: start of processing
+        :param start_timestamp: start of processing
         :param depth: allowed values: 1 to 10. Defaults to 1. 
         :return: market depth data
         """
@@ -132,6 +133,7 @@ class CryptoChassisExchange:
         exchange: str,
         currency_pair: str,
         mode: str, 
+        *,
         interval: Optional[str] = None,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
@@ -141,10 +143,9 @@ class CryptoChassisExchange:
         Download snapshot of ohlcv.
 
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
-        :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
+        :param currency_pair: the pair of currency to download, e.g. `btc-usd`
         :param mode: `recent` for real-time data, `historical` for historical data
-        :param interval: interval of processing, used when end_time is absent
-          e.g. `1m`, `3m`, `5m` etc.
+        :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
         :param start_time: timestamp of start
         :param end_time: timestamp of end
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this 
