@@ -286,7 +286,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         """
         Test that columns have been filtered correctly:
 
-        - requested columns = recieved columns
+        - requested columns = received columns
         - `filter_data_mode` = "assert"
         """
         # TODO(Dan): Consider usage of `skip_test_since_not_online()`.

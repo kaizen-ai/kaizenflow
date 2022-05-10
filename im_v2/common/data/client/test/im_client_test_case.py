@@ -186,39 +186,40 @@ class ImClientTestCase(hunitest.TestCase):
         )
         self.check_df_output(actual_df, *args, **kwargs)
 
-    # TODO(Dan): CmTask1834 "Make `test_filter_columns()` in `ImClientTaseCase`".
-    def _test_read_data8(
+    # ////////////////////////////////////////////////////////////////////////
+
+    def _test_filter_columns1(
         self,
         im_client: icdc.ImClient,
         full_symbols: List[ivcu.FullSymbol],
-        columns: List[str],
-        *args: Any,
-        **kwargs: Any,
+        expected_columns: List[str],
     ) -> None:
         """
-        Test:
-        - keep only specified columns
-        - the output is correct
+        Test that columns have been filtered correctly:
+
+        - requested columns = received columns
+        - `filter_data_mode` = "assert"
         """
         start_ts = None
         end_ts = None
         filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, expected_columns, filter_data_mode
         )
-        self.check_df_output(actual_df, *args, **kwargs)
+        actual_columns = actual_df.columns.tolist()
+        self.assert_equal(str(actual_columns), str(expected_columns))
 
-    def _test_read_data9(
+    def _test_filter_columns2(
         self,
         im_client: icdc.ImClient,
         full_symbol: ivcu.FullSymbol,
-        columns: List[str],
+        expected_columns: List[str],
     ) -> None:
         """
-        Test:
-        - keep only specified columns
-        - we receive less columns than we request
-        - filter_data_mode = "assert"
+        Test that error is raised when columns are incorrectly filtered:
+
+        - recieved columns contain some columns apart from requested
+        - `filter_data_mode` = "assert"
         """
         full_symbols = [full_symbol]
         start_ts = None
@@ -226,14 +227,14 @@ class ImClientTestCase(hunitest.TestCase):
         filter_data_mode = "assert"
         with self.assertRaises(AssertionError):
             im_client.read_data(
-                full_symbols, start_ts, end_ts, columns, filter_data_mode
+                full_symbols, start_ts, end_ts, expected_columns, filter_data_mode
             )
 
-    def _test_read_data10(
+    def _test_filter_columns3(
         self,
         im_client: icdc.ImClient,
         full_symbol: ivcu.FullSymbol,
-        columns: List[str],
+        expected_columns: List[str],
     ) -> None:
         """
         Test:
@@ -247,31 +248,31 @@ class ImClientTestCase(hunitest.TestCase):
         filter_data_mode = "assert"
         with self.assertRaises(AssertionError):
             im_client.read_data(
-                full_symbols, start_ts, end_ts, columns, filter_data_mode
+                full_symbols, start_ts, end_ts, expected_columns, filter_data_mode
             )
 
-    def _test_read_data11(
+    def _test_filter_columns4(
         self,
         im_client: icdc.ImClient,
         full_symbol: ivcu.FullSymbol,
-        columns: List[str],
-        *args: Any,
-        **kwargs: Any,
+        expected_columns: List[str],
     ) -> None:
         """
-        Test:
-        - keep only specified columns
-        - received columns do not match requested columns
-        - filter_data_mode = "warn_and_trim"
+        Test that columns have been filtered correctly:
+
+        - recieved columns contain some columns apart from requested
+        - `filter_data_mode` = "warn_and_trim"
         """
         full_symbols = [full_symbol]
         start_ts = None
         end_ts = None
         filter_data_mode = "warn_and_trim"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+            full_symbols, start_ts, end_ts, expected_columns, filter_data_mode
         )
-        self.check_df_output(actual_df, *args, **kwargs)
+        # Check output.
+        actual_columns = actual_df.columns.tolist()
+        self.assert_equal(str(actual_columns), str(expected_columns))
 
     # ////////////////////////////////////////////////////////////////////////
 
