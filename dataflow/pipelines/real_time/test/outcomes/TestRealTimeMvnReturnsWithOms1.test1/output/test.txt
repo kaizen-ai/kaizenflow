@@ -67,9 +67,10 @@ result_bundles=
         order_type: price@twap
         order_duration: 5
       optimizer_config:
-        backend: compute_target_positions_in_cash
+        backend: pomo
+        bulk_frac_to_remove: 0.0
+        bulk_fill_method: zero
         target_gmv: 100000.0
-        dollar_neutrality: no_constraint
       ath_start_time: 09:30:00
       trading_start_time: 09:30:00
       ath_end_time: 16:40:00
@@ -238,9 +239,10 @@ class: ResultBundle, config:
         order_type: price@twap
         order_duration: 5
       optimizer_config:
-        backend: compute_target_positions_in_cash
+        backend: pomo
+        bulk_frac_to_remove: 0.0
+        bulk_fill_method: zero
         target_gmv: 100000.0
-        dollar_neutrality: no_constraint
       ath_start_time: 09:30:00
       trading_start_time: 09:30:00
       ath_end_time: 16:40:00
@@ -409,9 +411,10 @@ class: ResultBundle, config:
         order_type: price@twap
         order_duration: 5
       optimizer_config:
-        backend: compute_target_positions_in_cash
+        backend: pomo
+        bulk_frac_to_remove: 0.0
+        bulk_fill_method: zero
         target_gmv: 100000.0
-        dollar_neutrality: no_constraint
       ath_start_time: 09:30:00
       trading_start_time: 09:30:00
       ath_end_time: 16:40:00

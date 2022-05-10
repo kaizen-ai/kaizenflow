@@ -7,12 +7,16 @@ import pytest
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
 
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestCcxtExchange1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
