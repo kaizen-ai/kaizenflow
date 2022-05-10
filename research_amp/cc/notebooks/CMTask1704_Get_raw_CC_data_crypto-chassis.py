@@ -16,6 +16,9 @@
 # # Imports
 
 # %%
+# %load_ext autoreload
+# %autoreload 2
+
 import logging
 from typing import List
 
@@ -585,86 +588,27 @@ cplpluti.plot_barplot(liquidity_stats)
 # ## Is the quoted spread constant over the day?
 
 # %%
-def plot_overtime_spread(coin_df, resampling_rule):
+def plot_overtime_spread(coin_df, resampling_rule, num_stds=1):
     df = cfinresa.resample(coin_df, rule=resampling_rule)["quoted_spread"].mean().to_frame()
     df["time"] = df.index.time
-    df.groupby("time")["quoted_spread"].std().plot()
+    mean = df.groupby("time")["quoted_spread"].mean()
+    std = df.groupby("time")["quoted_spread"].std()
+    (mean + num_stds * std).plot(color="blue")
+    mean.plot(lw=2, color="black")
+    #(mean - num_stds * std).plot(color="blue")
     return df
 
 
 # %%
-bnb = final_df.swaplevel(axis=1)["binance::BNB_USDT"]
-
-# %%
-dd = plot_overtime_spread(bnb, "10T")
+#full_symbol = "binance::BNB_USDT"
+full_symbol = "binance::BTC_USDT"
+data = final_df.swaplevel(axis=1)[full_symbol]
+dd = plot_overtime_spread(data, "10T")
 display(dd.head())
 
 # %%
 
 # %%
-
-# %%
-# Initiate the class.
-stats = dtfmostcom.StatsComputer()
-
-
-# %%
-def perform_daily_adf_tests_for_spread_stationarity(df, full_symbols):
-    """
-    For each `full_symbol` and for each day inside the interval perform ADF test to check
-    the stationarity of `quoted_spread`.
-    """
-    result = []
-    for full_symb in full_symbols:
-        # For each coin highlight the column with `quoted spread`.
-        coin_df = df["quoted_spread"][[full_symb]]
-        # Transform datetime column into daily format.
-        coin_df["date"] = coin_df.index.date
-        daily_stats = pd.DataFrame()
-        # For each date calculate ADF stats.
-        for date in coin_df["date"].unique():
-            coin_df_daily = coin_df[coin_df['date']==date][full_symb]
-            adf_stats = stats.compute_stationarity_stats(coin_df_daily)
-            daily_stats.loc[f"{date}", "adf.stat"] = adf_stats["adf.stat"]
-            daily_stats.loc[f"{date}", "adf.pval"] = adf_stats["adf.pval"]
-            daily_stats.loc[f"{date}", "is_stationary (5% sign. level)"] = (adf_stats["adf.pval"]<0.05)
-            daily_stats["full_symbol"] = full_symb
-        result_days = dtfsysonod._convert_to_multiindex(daily_stats, "full_symbol").swaplevel(axis=1)
-        result.append(result_days)
-    result_days = pd.concat(result,axis=1)
-    return result_days.iloc[:-1]
-
-
-# %%
-daily_adf_tests_results = perform_daily_adf_tests_for_spread_stationarity(final_df, full_symbols)
-
-# %%
-daily_adf_tests_results
-
-# %% [markdown]
-# ## Have a function to average / median / sum quantities over different time scales (minutes, hours, etc)
-# - Like generalizing plot_time_distributions from explore.py
-
-# %%
-final_df.swaplevel(axis=1)["binance::BNB_USDT"][["close.ret_0"]].index
-
-# %%
-coexplor.plot_time_distributions(final_df.swaplevel(axis=1)["binance::BNB_USDT"][["close.ret_0"]].index, "time_of_the_day")
-
-# %%
-
-# %%
-resampler = cfinresa.resample(final_df, rule="1D")
-coexplor.display_df(resampler.mean())
-coexplor.display_df(resampler.median())
-coexplor.display_df(resampler.sum())
-
-# %%
-
-# %%
-resampler.mean()["close.ret_0"].plot()
-resampler.median()["close.ret_0"].plot()
-resampler.sum()["close.ret_0"].plot()
 
 # %% [markdown]
 # ## - Compute some high-level stats (e.g., median relative spread, median bid / ask notional, volatility, volume) by coins
@@ -677,5 +621,4 @@ high_level_stats["median_notional_ask"] = final_df["ask_value"].median()
 high_level_stats["median_notional_volume"] = (final_df["volume"]*final_df["close"]).median()
 high_level_stats["volatility_for_period"] = final_df['close.ret_0'].std()*final_df.shape[0]**0.5
 
-# %%
-high_level_stats
+high_level_stats.head(3)
