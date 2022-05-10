@@ -13,6 +13,7 @@ import time
 from typing import Any
 
 import pandas as pd
+import psycopg2
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -70,8 +71,7 @@ def download_realtime_for_one_exchange(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
     """
-    Helper function for encapsulating common logic for downloading exchange
-    data.
+    Encapsulate common logic for downloading exchange data.
 
     :param args: arguments passed on script run
     :param exchange_class: which exchange is used in script run
@@ -96,8 +96,21 @@ def download_realtime_for_one_exchange(
     currency_pairs = universe[args.exchange_id]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
+    try:
+        # Connect with the parameters from the env file.
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        connection = hsql.get_connection(*connection_params)
+    except psycopg2.OperationalError:
+        # Connect with the dynamic parameters (usually during tests).
+        actual_details = hsql.db_connection_to_tuple(args.connection)._asdict()
+        connection_params = hsql.DbConnectionInfo(
+            host=actual_details["host"],
+            dbname=actual_details["dbname"],
+            port=int(actual_details["port"]),
+            user=actual_details["user"],
+            password=actual_details["password"],
+        )
+        connection = hsql.get_connection(*connection_params)
     # Connect to S3 filesystem, if provided.
     if args.aws_profile:
         fs = hs3.get_s3fs(args.aws_profile)
@@ -116,7 +129,9 @@ def download_realtime_for_one_exchange(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        currency_pair_for_download = exchange_class.convert_currency_pair(currency_pair)
+        currency_pair_for_download = exchange_class.convert_currency_pair(
+            currency_pair
+        )
         # Download data.
         data = exchange.download_ohlcv_data(
             currency_pair_for_download,
@@ -156,8 +171,7 @@ def download_historical_data(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
     """
-    Helper function for encapsulating common logic for downloading historical
-    exchange data.
+    Encapsulate common logic for downloading historical exchange data.
 
     :param args: arguments passed on script run
     :param exchange_class: which exchange class is used in script run
@@ -195,10 +209,7 @@ def download_historical_data(
         # as column value as it can slightly differ.
         args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
         # Download data.
-        data = exchange.download_data(
-            data_type,
-            **args
-            )
+        data = exchange.download_data(data_type, **args)
         if data.empty:
             continue
         # Assign pair and exchange columns.
