@@ -106,8 +106,6 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
             # complicate the interface. To get rid of this dependency the column's index is used.
             data.columns.values[7] = "volume"
             data = data.rename({"unix": "timestamp"}, axis=1)
-        # Round up float values.
-        data = data.round(10)
         # Verify that the timestamp data is provided in ms.
         hdbg.dassert_container_type(
             data["timestamp"], container_type=None, elem_type=int
@@ -116,6 +114,8 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
+        # Round up float values.
+        data = data.round(4)
         return data
 
 
@@ -461,11 +461,11 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
             df["exchange_id"], df["currency_pair"]
         )
         df.insert(0, full_symbol_col_name, full_symbol_col)
-        # Round up float values.
-        df = df.round(10)
         # The columns are used just to partition the data but these columns
         # are not included in the `ImClient` output.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
+        # Round up float values.
+        df = df.round(4)
         return df
 
     def _get_root_dirs_symbol_filters(
