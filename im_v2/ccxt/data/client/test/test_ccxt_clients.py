@@ -1012,7 +1012,8 @@ class CcxtSqlRealTimeImClient1(
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -1278,11 +1279,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         expected_columns = ["full_symbol", "open", "close"]
-        self._test_filter_columns1(
-            im_client,
-            full_symbols,
-            expected_columns
-        )
+        self._test_filter_columns1(im_client, full_symbols, expected_columns)
 
     def test_filter_columns2(self) -> None:
         resample_1min = True

@@ -261,11 +261,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             self, full_symbols, resample_1min
         )
         expected_columns = ["full_symbol", "close"]
-        self._test_filter_columns1(
-            im_client,
-            full_symbols,
-            expected_columns
-        )
+        self._test_filter_columns1(im_client, full_symbols, expected_columns)
 
     def test_filter_columns2(self) -> None:
         # Generate Parquet test data and initialize client.
@@ -295,11 +291,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             self, [full_symbol], resample_1min
         )
         expected_columns = ["close"]
-        self._test_filter_columns4(
-            im_client,
-            full_symbol,
-            expected_columns
-        )
+        self._test_filter_columns4(im_client, full_symbol, expected_columns)
 
     # ////////////////////////////////////////////////////////////////////////
 
