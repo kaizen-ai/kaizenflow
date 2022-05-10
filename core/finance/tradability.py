@@ -129,7 +129,7 @@ def get_predictions_and_hits(df, ret_col, hit_rate, seed):
     df = df.copy()
     df["hit"] = df[ret_col] * df["predictions"] >= 0
     # Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
-    df = hpandas.dropna(df, report_stats=True)
+    df = hpandas.dropna(df, report_stats=False)
     return df
 
 

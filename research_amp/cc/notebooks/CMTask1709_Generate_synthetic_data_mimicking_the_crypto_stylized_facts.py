@@ -20,6 +20,9 @@
 # # Imports
 
 # %%
+# %load_ext autoreload
+# %autoreload 2
+        
 import logging
 from typing import List
 
@@ -146,11 +149,18 @@ def read_crypto_chassis_ohlcv(
 btc_df = pd.read_csv("BTC_one_year.csv", index_col="timestamp")
 btc_df.head(3)
 
+# %%
+btc_df.index = pd.to_datetime(btc_df.index)
+
 # %% [markdown]
 # ## Process returns
 
 # %%
 btc = btc_df.copy()
+
+# %%
+# TODO(max): In general all notebooks use ImClient to read data and then compute VWAP / TWAP / Ask / Bid from
+# the data.
 
 # %% run_control={"marked": false}
 # Calculate returns.
@@ -167,6 +177,11 @@ btc["rets_cleaned"].plot()
 rets = btc[["rets"]]
 rets = hpandas.dropna(rets, report_stats=True)
 
+# %%
+btc["rets_cleaned"] /= btc["rets_cleaned"].rolling(100).std()
+
+btc["rets_cleaned"].plot()
+
 # %% run_control={"marked": false}
 # Show the distribution.
 fig = plt.figure(figsize=(15, 7))
@@ -181,16 +196,21 @@ plt.show()
 # # Pre-defined Predictions, Hit Rates and Confidence Interval
 
 # %%
-sample = btc.head(1000)
-ret_col = "rets"
-hit_rate = 0.51
+#sample = btc.head(1000)
+sample = btc
+ret_col = "rets_cleaned"
+hit_rate = 0.52
 seed = 2
 alpha = 0.05
 method = "normal"
 
+# TODO(max): return a series of preds and then concat to the df (keep all the stuff in one DB)
 hit_df = cfintrad.get_predictions_and_hits(sample, ret_col, hit_rate, seed)
 display(hit_df.head(3))
 cfintrad.calculate_confidence_interval(hit_df["hit"], alpha, method)
+
+# %%
+sample[ret_col] 
 
 # %% [markdown]
 # # PnL as a function of `hit_rate`
@@ -200,15 +220,23 @@ cfintrad.calculate_confidence_interval(hit_df["hit"], alpha, method)
 
 # %%
 # A model makes a prediction on the rets and then it's realized.
-pnl = (hit_df["predictions"] * hit_df["rets"]).cumsum()
-pnl.plot()
+pnl = (hit_df["predictions"] * hit_df[ret_col]).cumsum()
+#pnl.plot()
+
+daily_pnl = pnl.resample("1B").sum()
+
+print((daily_pnl.mean() / daily_pnl.std()) * np.sqrt(252))
+
+# %%
+hit_df
 
 # %% [markdown]
 # ## Relationship between hit rate and pnl (bootstrapping to compute pnl = f(hit_rate))
 
 # %%
-sample = btc.head(50000)
-rets_col = "rets"
+sample = btc.head(1000)
+#rets_col = "rets"
+rets_col = "rets_cleaned"
 hit_rates = np.linspace(0.4, 0.6, num=10)
 n_experiment = 10
 
