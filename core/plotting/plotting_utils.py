@@ -28,6 +28,7 @@ FIG_SIZE = (20, 5)
 def configure_notebook_for_presentation() -> None:
     """
     Update settings for plotting functions:
+
     - Higher quality for the plots.
     - Larger fonts on the plots.
     """
@@ -45,6 +46,7 @@ def configure_notebook_for_presentation() -> None:
     plt.rc("ytick", labelsize=small_size)  # fontsize of the tick labels
     plt.rc("legend", fontsize=small_size)  # legend fontsize
     plt.rc("figure", titlesize=bigger_size)  # fontsize of the figure title
+
 
 def get_multiple_plots(
     num_plots: int,
