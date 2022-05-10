@@ -55,6 +55,7 @@ def dfatal(message: str, assertion_type: Optional[Any] = None) -> None:
     """
     Print an error message and exits.
     """
+    ret = ""
     message = str(message)
     ret = "\n" + _frame(message, "#", 80)
     if assertion_type is None:

@@ -338,6 +338,8 @@ def is_AM_S3_available() -> bool:
 
 
 def is_CK_S3_available() -> bool:
+    # CK bucket is not available for `//lemonade` and `//amp` unless it's on
+    # `dev_ck`.
     val = True
     if is_mac():
         val = False

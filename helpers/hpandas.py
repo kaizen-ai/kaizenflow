@@ -13,6 +13,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hsystem as hsystem
 
 # Avoid the following dependency from other `helpers` modules to prevent import cycles.
 # import helpers.hs3 as hs3
@@ -262,6 +263,44 @@ def dassert_series_type_in(
     hdbg.dassert_in(srs.dtype.type, types, msg, *args)
 
 
+def dassert_indices_equal(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+) -> None:
+    """
+    Ensure that `df1` and `df2` share a common index.
+
+    Print the symmetric difference of indices if equality does not hold.
+    """
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert(
+        df1.index.equals(df2.index),
+        "df1.index.difference(df2.index)=\n%s\ndf2.index.difference(df1.index)=\n%s",
+        df1.index.difference(df2.index),
+        df2.index.difference(df1.index),
+    )
+
+
+def dassert_columns_equal(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+) -> None:
+    """
+    Ensure that `df1` and `df2` have the same columns.
+
+    Print the symmetric difference of columns if equality does not hold.
+    """
+    hdbg.dassert_isinstance(df1, pd.DataFrame)
+    hdbg.dassert_isinstance(df2, pd.DataFrame)
+    hdbg.dassert(
+        df1.columns.equals(df2.columns),
+        "df1.columns.difference(df2.columns)=\n%s\ndf2.columns.difference(df1.columns)=\n%s",
+        df1.columns.difference(df2.columns),
+        df2.columns.difference(df1.columns),
+    )
+
+
 # #############################################################################
 
 
@@ -286,24 +325,26 @@ def resample_index(index: pd.DatetimeIndex, frequency: str) -> pd.DatetimeIndex:
         end=max_date,
         freq=frequency,
     )
-    if len(resampled_index) > len(index):
-        # Downsample.
-        _LOG.debug(
-            "Index length increased by %s = %s - %s",
-            len(resampled_index) - len(index),
-            len(resampled_index),
-            len(index),
-        )
-    elif len(resampled_index) < len(index):
-        # Upsample.
-        _LOG.debug(
-            "Index length decreased by %s = %s - %s",
-            len(index) - len(resampled_index),
-            len(index),
-            len(resampled_index),
-        )
-    else:
-        _LOG.debug("Index length=%s has not changed", len(index))
+    # Enable detailed debugging.
+    if False:
+        if len(resampled_index) > len(index):
+            # Downsample.
+            _LOG.debug(
+                "Index length increased by %s = %s - %s",
+                len(resampled_index) - len(index),
+                len(resampled_index),
+                len(index),
+            )
+        elif len(resampled_index) < len(index):
+            # Upsample.
+            _LOG.debug(
+                "Index length decreased by %s = %s - %s",
+                len(index) - len(resampled_index),
+                len(index),
+                len(resampled_index),
+            )
+        else:
+            _LOG.debug("Index length=%s has not changed", len(index))
     # resampled_index.name = index_name
     return resampled_index
 
@@ -689,6 +730,8 @@ def _df_to_str(
     display_width: int = 10000,
     use_tabulate: bool = False,
 ) -> str:
+    is_in_ipynb = hsystem.is_running_in_ipynb()
+    from IPython.display import display
     out = []
     # Set dataframe print options.
     with pd.option_context(
@@ -710,19 +753,37 @@ def _df_to_str(
             out.append(tabulate.tabulate(df, headers="keys", tablefmt="psql"))
         if num_rows is None or df.shape[0] <= num_rows:
             # Print the entire data frame.
-            out.append(str(df))
+            if not is_in_ipynb:
+                out.append(str(df))
+            else:
+                display(df)
         else:
-            # Print top and bottom of df.
-            out.append(str(df.head(num_rows // 2)))
-            out.append("...")
-            tail_str = str(df.tail(num_rows // 2))
-            # Remove index and columns.
-            skipped_rows = 1
-            if df.index.name:
-                skipped_rows += 1
-            tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
-            out.append(tail_str)
-    txt = "\n".join(out)
+            nr = num_rows // 2
+            if not is_in_ipynb:
+                # Print top and bottom of df.
+                out.append(str(df.head(nr)))
+                out.append("...")
+                tail_str = str(df.tail(nr))
+                # Remove index and columns from tail_df.
+                skipped_rows = 1
+                if df.index.name:
+                    skipped_rows += 1
+                tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
+                out.append(tail_str)
+            else:
+                # TODO(gp): @all use this approach also above and update all the
+                #  unit tests.
+                df = [df.head(nr),
+                      pd.DataFrame([["..."] * df.shape[1]],
+                                   index=[" "],
+                                   columns=df.columns),
+                      df.tail(nr)]
+                df = pd.concat(df)
+                display(df)
+    if not is_in_ipynb:
+        txt = "\n".join(out)
+    else:
+        txt = ''
     return txt
 
 
@@ -873,6 +934,10 @@ def df_to_str(
             num_nan_cols = df.dropna(axis=1).shape[1]
             txt = f"num_nan_cols={hprint.perc(num_nan_cols, num_elems)}"
             out.append(txt)
+    if hsystem.is_running_in_ipynb():
+        if len(out) > 0:
+            print("\n".join(out))
+        txt = None
     # Print the df.
     df_as_str = _df_to_str(
         df,
@@ -884,8 +949,9 @@ def df_to_str(
         display_width=display_width,
         use_tabulate=use_tabulate,
     )
-    out.append(df_as_str)
-    txt = "\n".join(out)
+    if not hsystem.is_running_in_ipynb():
+        out.append(df_as_str)
+        txt = "\n".join(out)
     return txt
 
 

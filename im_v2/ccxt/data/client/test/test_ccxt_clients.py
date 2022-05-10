@@ -4,6 +4,7 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
@@ -1013,6 +1014,9 @@ class CcxtSqlRealTimeImClient1(
 # #############################################################################
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -1316,6 +1320,51 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         columns = ["full_symbol", "whatever"]
         self._test_read_data9(im_client, full_symbol, columns)
 
+    def test_read_data10(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        columns = ["open", "close"]
+        self._test_read_data10(im_client, full_symbol, columns)
+
+    def test_read_data11(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        #
+        expected_length = 2881
+        expected_column_names = ["open", "close"]
+        expected_column_unique_values = None
+        expected_signature = r"""
+        # df=
+        index=[2018-08-17 00:00:00+00:00, 2018-08-19 00:00:00+00:00]
+        columns=open,close
+        shape=(2881, 2)
+                                    open    close
+        timestamp
+        2018-08-17 00:00:00+00:00  6316.00  6311.64
+        2018-08-17 00:01:00+00:00  6311.64  6302.81
+        2018-08-17 00:02:00+00:00  6302.81  6297.26
+        ...
+        2018-08-18 23:58:00+00:00  6385.48  6387.01
+        2018-08-18 23:59:00+00:00  6390.00  6387.96
+        2018-08-19 00:00:00+00:00  6387.96  6377.25
+        """
+        columns = ["open", "close"]
+        self._test_read_data11(
+            im_client,
+            full_symbol,
+            columns,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # ////////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
@@ -1406,7 +1455,10 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
         columns = None
-        data = im_client.read_data(full_symbols, start_ts, end_ts, columns)
+        filter_data_mode = "assert"
+        data = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         # Add missing columns.
         data["exchange_id"], data["currency_pair"] = ivcu.parse_full_symbol(
             data["full_symbol"]
