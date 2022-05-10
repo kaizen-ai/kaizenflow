@@ -669,7 +669,7 @@ class TestTalosSqlRealTimeImClient1(
 ):
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
     
     def test_build_select_query1(self) -> None:

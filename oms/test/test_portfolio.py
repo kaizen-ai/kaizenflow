@@ -303,7 +303,7 @@ def _get_row3() -> pd.Series:
 class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
     
     def test1(self) -> None:
@@ -431,7 +431,7 @@ asset_id                        101
 class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
     
     def test1(self) -> None:
@@ -505,7 +505,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
 class TestMockedPortfolio3(omtodh.TestOmsDbHelper):
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
     
     def test1(self) -> None:

@@ -623,7 +623,7 @@ class CcxtSqlRealTimeImClient1(
     """
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     def test_read_data1(self) -> None:

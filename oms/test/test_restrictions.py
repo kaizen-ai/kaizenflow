@@ -17,7 +17,7 @@ _LOG = logging.getLogger(__name__)
 class TestRestrictions1(omtodh.TestOmsDbHelper):
 
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     def test1(self) -> None:

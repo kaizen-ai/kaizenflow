@@ -78,7 +78,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     """
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     def run_coroutines(

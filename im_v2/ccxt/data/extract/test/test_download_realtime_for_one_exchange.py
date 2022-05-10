@@ -16,7 +16,7 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
   
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
       
     def test_parser(self) -> None:

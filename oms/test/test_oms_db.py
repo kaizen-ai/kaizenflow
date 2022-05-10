@@ -44,7 +44,7 @@ class TestOmsDbSubmittedOrdersTable1(omtodh.TestOmsDbHelper):
     """
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     @pytest.mark.slow("9 seconds.")
@@ -129,7 +129,7 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
     """
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     @pytest.mark.slow("8 seconds.")
@@ -183,7 +183,7 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
     """
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     def wait_for_table_helper(self, coroutines: List[Any]) -> Any:
@@ -302,7 +302,7 @@ class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
     """
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     @pytest.mark.slow("9 seconds.")
@@ -324,7 +324,7 @@ class TestOmsDbRestrictionsTable1(omtodh.TestOmsDbHelper):
     """
     
     @classmethod
-    def get_id(cls):
+    def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     @pytest.mark.slow("20 seconds.")
