@@ -395,7 +395,7 @@ def check_and_filter_matching_columns(
     - Mode "warn_and_trim": intersect passed columns and retrieved columns, return
       the intersection, issue a warning if data was trimmed
 
-    :param df: data frame to check columns in
+    :param df: data to check columns in
     :param columns: columns to return, skipping reading columns that are not requested
     :param filter_data_mode: control class behavior with respect to extra or missing columns
     """

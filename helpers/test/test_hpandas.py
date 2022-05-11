@@ -1099,7 +1099,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
         - `filter_data_mode` = "assert"
         """
         df = self.get_test_data()
-        columns = ["col1", "whatever"]
+        columns = ["col1", "col4"]
         filter_data_mode = "assert"
         with self.assertRaises(AssertionError):
             hpandas.check_and_filter_matching_columns(
@@ -1128,4 +1128,9 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
         df = self.get_test_data()
         columns = ["col1", "col2", "col4"]
         filter_data_mode = "warn_and_trim"
-        hpandas.check_and_filter_matching_columns(df, columns, filter_data_mode)
+        df = hpandas.check_and_filter_matching_columns(
+            df, columns, filter_data_mode
+        )
+        actual_columns = df.columns.to_list()
+        expected_columns = ["col1", "col2"]
+        self.assert_equal(str(actual_columns), str(expected_columns))
