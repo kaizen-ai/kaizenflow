@@ -198,7 +198,6 @@ class ImClientTestCase(hunitest.TestCase):
         Test that columns have been filtered correctly:
 
         - requested columns = received columns
-        - `filter_data_mode` = "assert"
         """
         start_ts = None
         end_ts = None
@@ -216,9 +215,8 @@ class ImClientTestCase(hunitest.TestCase):
         columns: List[str],
     ) -> None:
         """
-        Test that error is raised when columns are incorrectly filtered:
+        Test that error is raised when requested columns != received columns:
 
-        - requested columns contain some columns apart from received
         - `filter_data_mode` = "assert"
         """
         full_symbols = [full_symbol]
@@ -237,9 +235,9 @@ class ImClientTestCase(hunitest.TestCase):
         columns: List[str],
     ) -> None:
         """
-        Test that error is raised when columns are incorrectly filtered:
+        Test that error is raised when requested columns != received columns:
 
-        - received columns contain some columns apart from requested
+        - full symbol column is not requested but is still returned
         - `filter_data_mode` = "assert"
         """
         full_symbols = [full_symbol]
@@ -260,7 +258,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         Test that columns have been filtered correctly:
 
-        - received columns contain some columns apart from requested
+        - full symbol column is not requested and trimmed under the hood
         - `filter_data_mode` = "warn_and_trim"
         """
         full_symbols = [full_symbol]
