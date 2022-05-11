@@ -33,8 +33,8 @@ def add_exchange_download_args(
     """
     parser.add_argument(
         "--start_timestamp",
-        action="store",
         required=True,
+        action="store",
         type=str,
         help="Beginning of the downloaded period",
     )
