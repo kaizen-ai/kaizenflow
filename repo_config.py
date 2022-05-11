@@ -236,9 +236,11 @@ def use_docker_sibling_containers() -> bool:
 
 def get_shared_data_dirs() -> Optional[Dict[str, str]]:
     """
-    Get path of dir storing data shared between different users on the host and Docker. 
-    
-    E.g., one can mount a central dir `/data/shared`, shared by multiple users, on a dir `/shared_data` in Docker.
+    Get path of dir storing data shared between different users on the host and
+    Docker.
+
+    E.g., one can mount a central dir `/data/shared`, shared by multiple
+    users, on a dir `/shared_data` in Docker.
     """
     if is_dev4():
         shared_data_dirs = {"/local/home/share/cache": "/cache"}

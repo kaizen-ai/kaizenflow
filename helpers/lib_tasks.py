@@ -1411,7 +1411,7 @@ def integrate_diff_dirs(  # type: ignore
             hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
-    #_dassert_current_dir_matches(src_dir_basename)
+    # _dassert_current_dir_matches(src_dir_basename)
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
         src_dir_basename, dst_dir_basename, subdir
     )
@@ -1445,10 +1445,11 @@ def integrate_diff_dirs(  # type: ignore
         else:
             cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
             if remove_usual:
-                vals = ["\/\.github\/",
-                        ]
+                vals = [
+                    "\/\.github\/",
+                ]
                 regex = "|".join(vals)
-                cmd += f" --ignore_files=\'{regex}\'"
+                cmd += f" --ignore_files='{regex}'"
     _run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
