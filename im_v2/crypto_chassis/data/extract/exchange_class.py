@@ -260,10 +260,12 @@ class CryptoChassisExchange:
             return pd.DataFrame()
         df_csv = data_json["urls"][0]["url"]
         # Convert CSV into dataframe.
-        market_depth = pd.read_csv(df_csv, compression="gzip")
+        trade = pd.read_csv(df_csv, compression="gzip")
         # Rename time column.
-        ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
-        return market_depth
+        trade = trade.rename(columns={"time_seconds": "timestamp"})
+        # Convert float timestamp to int.
+        trade["timestamp"] = trade["timestamp"].apply(lambda x: int(x))
+        return trade
 
     def _build_base_url(
         self,
