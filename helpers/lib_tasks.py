@@ -1411,7 +1411,7 @@ def integrate_diff_dirs(  # type: ignore
             hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
-    #_dassert_current_dir_matches(src_dir_basename)
+    # _dassert_current_dir_matches(src_dir_basename)
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
         src_dir_basename, dst_dir_basename, subdir
     )
@@ -1445,10 +1445,11 @@ def integrate_diff_dirs(  # type: ignore
         else:
             cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
             if remove_usual:
-                vals = ["\/\.github\/",
-                        ]
+                vals = [
+                    r"\/\.github\/",
+                ]
                 regex = "|".join(vals)
-                cmd += f" --ignore_files=\'{regex}\'"
+                cmd += f" --ignore_files='{regex}'"
     _run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
@@ -2092,9 +2093,12 @@ def docker_login(ctx):  # type: ignore
 # TODO(gp): use_privileged_mode -> use_docker_privileged_mode
 #  use_sibling_container -> use_docker_containers_containers
 
+
 def _get_linter_service() -> str:
     """
-    Get a linter service specification for a docker-compose.yaml file.
+    Get the linter service specification for the `docker-compose.yml` file.
+
+    :return: the text of the linter service specification
     """
     superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
@@ -2104,17 +2108,17 @@ def _get_linter_service() -> str:
     else:
         work_dir = "/src"
         repo_root = os.getcwd()
-    txt_tmp = f"""
+    linter_spec_txt = f"""
     linter:
       extends:
         base_app
       volumes:
         - {repo_root}:/src
       working_dir: {work_dir}
-      environment: 
+      environment:
         - MYPYPATH
     """
-    return txt_tmp
+    return linter_spec_txt
 
 
 def _generate_compose_file(
@@ -2160,7 +2164,7 @@ def _generate_compose_file(
     # We could do the same also with IMAGE for symmetry.
     # Use % instead of f-string since `${IMAGE}` confuses f-string as a variable.
     # Keep the env vars in sync with what we print in entrypoint.sh.
-    txt_tmp = """
+    txt_tmp = f"""
     version: '3'
 
     services:
@@ -2170,13 +2174,13 @@ def _generate_compose_file(
         environment:
           - AM_AWS_PROFILE=$AM_AWS_PROFILE
           - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
-          - AM_ENABLE_DIND=%s
+          - AM_ENABLE_DIND={am_enable_dind}
           - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
           - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
           - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
           - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
-          - AM_HOST_NAME=%s
-          - AM_HOST_OS_NAME=%s
+          - AM_HOST_NAME={am_host_name}
+          - AM_HOST_OS_NAME={am_host_os_name}
           - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
           - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
           - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
@@ -2195,12 +2199,8 @@ def _generate_compose_file(
           - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
           # This env var is used by GH Action to signal that we are inside the CI.
           - CI=$CI
-        image: ${IMAGE}
-    """ % (
-        am_enable_dind,
-        am_host_name,
-        am_host_os_name,
-    )
+        image: ${{IMAGE}}
+    """
     indent_level = 0
     append(txt_tmp, indent_level)
     #
@@ -2305,10 +2305,12 @@ def _generate_compose_file(
         # This is at the level of `services/app`.
         indent_level = 2
         append(txt_tmp, indent_level)
-    # Specify the linter service.
-    txt_tmp = _get_linter_service()
-    indent_level = 1
-    append(txt_tmp, indent_level)
+    if True:
+        # Specify the linter service.
+        txt_tmp = _get_linter_service()
+        # Append at the level of `services`.
+        indent_level = 1
+        append(txt_tmp, indent_level)
     if True:
         txt_tmp = """
         jupyter_server:
@@ -2341,13 +2343,13 @@ def _generate_compose_file(
         indent_level = 1
         append(txt_tmp, indent_level)
     # Save file.
-    txt: str = "\n".join(txt)
+    txt_str: str = "\n".join(txt)
     if file_name:
-        hio.to_file(file_name, txt)
+        hio.to_file(file_name, txt_str)
     # Sanity check of the YAML file.
-    stream = io.StringIO(txt)
+    stream = io.StringIO(txt_str)
     _ = yaml.safe_load(stream)
-    return txt
+    return txt_str
 
 
 def get_base_docker_compose_path() -> str:
@@ -2389,7 +2391,7 @@ def _get_amp_docker_compose_path() -> Optional[str]:
 
 
 def _get_docker_compose_paths(
-    extra_docker_compose_files: List[str],
+    extra_docker_compose_files: Optional[List[str]],
 ) -> List[str]:
     """
     Return the list of the needed docker compose path.
@@ -2404,7 +2406,6 @@ def _get_docker_compose_paths(
     if repo_short_name in ("amp", "cm"):
         # Check if `amp` is a submodule.
         path, _ = hgit.get_path_from_supermodule()
-        docker_compose_path: Optional[str]
         if path != "":
             _LOG.warning("amp is a submodule")
             mount_as_submodule = True
@@ -5230,7 +5231,6 @@ def lint(  # type: ignore
     only_check=False,
     fast=False,
     # stage="prod",
-    run_bash=False,
     run_linter_step=True,
     parse_linter_output=True,
     stage="prod",
@@ -5262,7 +5262,6 @@ def lint(  # type: ignore
         don't change the code
     :param fast: run everything but skip `pylint`, since it is often very picky
         and slow
-    :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
     :param stage: the image stage to use
@@ -5373,10 +5372,12 @@ def lint(  # type: ignore
             ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
             linter_image = f"{ecr_base_path}/dev_tools"
             # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
-            # and run linter on the specific version, e.g., `1.1.5`.
-            version = None
+            # and run Linter on the specific version, e.g., `1.1.5`.
+            version = ""
             # Execute command line.
-            cmd = _get_docker_cmd(linter_image, stage, version, docker_cmd_, service_name="linter")
+            cmd = _get_docker_cmd(
+                linter_image, stage, version, docker_cmd_, service_name="linter"
+            )
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
