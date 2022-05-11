@@ -4036,6 +4036,7 @@ def _build_run_command_line(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    n_threads: str,
 ) -> str:
     """
     Build the pytest run command.
@@ -4104,6 +4105,8 @@ def _build_run_command_line(
     if collect_only:
         _LOG.warning("Only collecting tests as per user request")
         pytest_opts_tmp.append("--collect-only")
+    # Indicate the number of threads for parallelization.
+    pytest_opts_tmp.append(f"-n {str(n_threads)}")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
@@ -4184,6 +4187,7 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    n_threads: str,
     git_clean_: bool,
     *,
     start_coverage_script: bool = False,
@@ -4204,6 +4208,7 @@ def _run_tests(
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
     )
     # Execute the command line.
     rc = _run_test_cmd(
@@ -4233,6 +4238,7 @@ def run_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4253,6 +4259,7 @@ def run_tests(  # type: ignore
             coverage,
             collect_only,
             tee_to_file,
+            n_threads,
             git_clean_,
             warn=True,
             **kwargs,
@@ -4285,6 +4292,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4297,6 +4305,8 @@ def run_fast_tests(  # type: ignore
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
+    :param n_threads: the number of threads to run the tests with
+        - "auto": distribute the tests across all the available CPUs
     :param git_clean_: run `invoke git_clean --fix-perms` before running the tests
     :param kwargs: kwargs for `ctx.run`
     """
@@ -4314,6 +4324,7 @@ def run_fast_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -4330,6 +4341,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4352,6 +4364,7 @@ def run_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -4368,6 +4381,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4390,6 +4404,7 @@ def run_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -4407,6 +4422,7 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
 ):
     """
@@ -4430,6 +4446,7 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
     )
     return rc
@@ -4446,6 +4463,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
 ):
     """
@@ -4469,6 +4487,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
     )
     return rc
