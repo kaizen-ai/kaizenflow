@@ -85,15 +85,16 @@ def compute_and_clean_returns(
     price_col: str,
     rets_mode: str,
     lookback: int,
+    rets_col: str,
     plot_rets: bool,
 ) -> pd.DataFrame:
     # Compute returns.
     df["rets"] = cofinanc.compute_ret_0(df[price_col], rets_mode)
-    # Clean them with # Rolling SMA for returns.
+    # Clean them with Rolling std dev for returns.
     df["rets_cleaned"] = df["rets"]
     df["rets_cleaned"] /= df["rets_cleaned"].rolling(lookback).std()
     if plot_rets:
-        df["rets_cleaned"].plot()
+        df[rets_col].plot()
     return df
 
 
@@ -119,21 +120,24 @@ btc_df.head(3)
 # %% [markdown]
 # ## Process returns
 
-# %%
+# %% run_control={"marked": false}
 btc = btc_df.copy()
 # Specify params.
 price_col = config["data"]["reference_price"]
 rets_mode = config["data"]["rets_mode"]
+rets_col = config["data"]["rets_col"]
 lookback = 100
 resampling_rule = config["data"]["resampling_rule"]
 # Resample.
 btc = cfinresa.resample_ohlcv_bars(btc, resampling_rule)
 # Add returns.
 btc = compute_and_clean_returns(
-    btc, price_col, rets_mode, lookback, plot_rets=True
+    btc, price_col, rets_mode, lookback, rets_col, plot_rets=True
 )
 # Show snippet.
 display(btc.head())
+
+# %%
 
 # %%
 # Show the distribution of returns.
@@ -144,8 +148,9 @@ sns.displot(btc, x=rets_col)
 # # Pre-defined Predictions, Hit Rates and Confidence Interval
 
 # %%
+# Specify params.
 sample = btc
-ret_col = "rets_cleaned"
+ret_col = config["data"]["rets_col"]
 hit_rate = 0.502
 seed = 2
 alpha = 0.05
