@@ -1055,7 +1055,7 @@ class TestDropDuplicates(hunitest.TestCase):
 
 class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
     """
-    Test that matching columns are checked and filtered correctly.
+    Test that matching columns are filtered correctly.
     """
 
     @staticmethod
@@ -1082,7 +1082,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
     def test_check_and_filter_matching_columns2(self) -> None:
         """
-        -  requested columns are a subset of received columns
+        -  received columns contain some columns apart from requested ones
         - `filter_data_mode` = "assert"
         """
         df = self.get_test_data()
@@ -1108,7 +1108,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
     def test_check_and_filter_matching_columns4(self) -> None:
         """
-        - received columns contain some columns apart from requested
+        - received columns contain some columns apart from requested ones
         - `filter_data_mode` = "warn_and_trim"
         """
         df = self.get_test_data()

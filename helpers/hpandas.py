@@ -386,18 +386,18 @@ def find_gaps_in_dataframes(
 
 
 def check_and_filter_matching_columns(
-    df: pd.DataFrame, columns: List[str], filter_data_mode: str
+    df: pd.DataFrame, requested_columns: List[str], filter_data_mode: str
 ) -> pd.DataFrame:
     """
-    Check that columns are the expected ones.
+    Check that columns are the expected ones and if not filter data depending on
+    `filter_data_mode`.
 
-    - Mode "assert": raise Assertion Error if passed columns != received columns
-    - Mode "warn_and_trim": intersect passed columns and retrieved columns, return
-      the intersection, issue a warning if data was trimmed
-
-    :param df: data to check columns in
-    :param columns: columns to return, skipping reading columns that are not requested
-    :param filter_data_mode: control class behavior with respect to extra or missing columns
+    :param df: data to check columns for
+    :param requested_columns: columns to return, skipping reading columns that are not requested
+    :param filter_data_mode: control behaviour with respect to extra or missing columns
+        - "assert": raise an error if requested columns do not match received columns
+        - "warn_and_trim": return the intersection of requested and received columns and
+           issue a warning
     """
     received_columns = df.columns.to_list()
     #
@@ -409,7 +409,7 @@ def check_and_filter_matching_columns(
         only_warning = True
         # Get columns intersection while preserving the order of the columns.
         columns_intersection = sorted(
-            set(received_columns) & set(columns),
+            set(received_columns) & set(requested_columns),
             key=received_columns.index,
         )
         hdbg.dassert_lte(1, len(columns_intersection))
@@ -417,10 +417,10 @@ def check_and_filter_matching_columns(
     else:
         raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
     hdbg.dassert_set_eq(
-        columns,
+        requested_columns,
         received_columns,
         only_warning=only_warning,
-        msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
+        msg=f"Received columns=`{received_columns}` do not match requested columns=`{requested_columns}`.",
     )
     return df
 
