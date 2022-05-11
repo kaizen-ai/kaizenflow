@@ -19,7 +19,6 @@
 import logging
 import os
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
@@ -93,8 +92,8 @@ def _get_qa_stats(data: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
     ):
         # Compute stats for a full symbol.
         symbol_stats = pd.Series(dtype="object", name=full_symbol)
-        symbol_stats["min_timestamp"] = symbol_data.first_valid_index()
-        symbol_stats["max_timestamp"] = symbol_data.last_valid_index()
+        symbol_stats["min_timestamp"] = symbol_data.index.min()
+        symbol_stats["max_timestamp"] = symbol_data.index.max()
         symbol_stats["NaNs %"] = 100 * (
             costatis.compute_frac_nan(
                 symbol_data[config["column_names"]["close_price"]]
