@@ -22,27 +22,22 @@
 # %%
 # %load_ext autoreload
 # %autoreload 2
-        
+
 import logging
-from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import requests
 import scipy.stats as stats
 import seaborn as sns
 
-import core.finance.tradability as cfintrad
-import helpers.hdatetime as hdateti
-import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
-import helpers.hprint as hprint
-import im_v2.common.universe as ivcu
-import core.finance as cofinanc
 import core.config.config_ as cconconf
+import core.finance as cofinanc
 import core.finance.resampling as cfinresa
+import core.finance.tradability as cfintrad
 import core.statistics.sharpe_ratio as cstshrat
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -83,7 +78,13 @@ print(config)
 # # Functions
 
 # %%
-def compute_and_clean_returns(df, price_col, rets_mode, lookback, plot_rets: bool):
+def compute_and_clean_returns(
+    df: pd.DataFrame,
+    price_col: str,
+    rets_mode: str,
+    lookback: int,
+    plot_rets: bool,
+) -> pd.DataFrame:
     # Compute returns.
     df["rets"] = cofinanc.compute_ret_0(df[price_col], rets_mode)
     # Clean them with # Rolling SMA for returns.
@@ -126,11 +127,9 @@ resampling_rule = config["data"]["resampling_rule"]
 # Resample.
 btc = cfinresa.resample_ohlcv_bars(btc, resampling_rule)
 # Add returns.
-btc = compute_and_clean_returns(btc, 
-                          price_col, 
-                          rets_mode, 
-                          lookback, 
-                          plot_rets=True)
+btc = compute_and_clean_returns(
+    btc, price_col, rets_mode, lookback, plot_rets=True
+)
 # Show snippet.
 display(btc.head())
 
@@ -149,8 +148,10 @@ hit_rate = 0.502
 seed = 2
 alpha = 0.05
 method = "normal"
-# Calculate and attach `predictions` and `hit` to the OHLCV data.  
-btc[["rets_cleaned", "predictions", "hit"]] = cfintrad.get_predictions_and_hits(sample, ret_col, hit_rate, seed)
+# Calculate and attach `predictions` and `hit` to the OHLCV data.
+btc[["rets_cleaned", "predictions", "hit"]] = cfintrad.get_predictions_and_hits(
+    sample, ret_col, hit_rate, seed
+)
 display(btc.tail(3))
 # Shpw CI stats.
 cfintrad.calculate_confidence_interval(btc["hit"], alpha, method)
@@ -187,7 +188,9 @@ y = hit_pnl_df["PnL"]
 
 ols_results = stats.linregress(x, y)
 print(f"R-squared = {ols_results.rvalue**2:.4f}")
-plt.plot(x, y, 'o', label='original data')
-plt.plot(x, ols_results.intercept + ols_results.slope*x, 'r', label='fitted line')
+plt.plot(x, y, "o", label="original data")
+plt.plot(
+    x, ols_results.intercept + ols_results.slope * x, "r", label="fitted line"
+)
 plt.legend()
 plt.show()
