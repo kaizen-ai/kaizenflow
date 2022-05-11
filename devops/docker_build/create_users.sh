@@ -19,8 +19,6 @@ do
   usermod -aG docker user_$current_linux_id
 done
 
-# Change the permissions otherwise the mounted folders cannot
-# be accessed by a non-root user.
 sudo chmod -R 777 /home
 
 # Allow users to access /mnt/tmpfs.
