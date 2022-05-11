@@ -389,8 +389,8 @@ def check_and_filter_matching_columns(
     df: pd.DataFrame, requested_columns: List[str], filter_data_mode: str
 ) -> pd.DataFrame:
     """
-    Check that columns are the expected ones and if not filter data depending on
-    `filter_data_mode`.
+    Check that columns are the expected ones and if not filter data depending
+    on `filter_data_mode`.
 
     :param df: data to check columns for
     :param requested_columns: columns to return, skipping reading columns that are not requested
