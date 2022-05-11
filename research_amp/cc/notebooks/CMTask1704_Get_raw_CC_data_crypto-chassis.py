@@ -279,7 +279,7 @@ bid_ask_df.tail(3)
 
 # %%
 final_df = pd.concat([vwap_twap_rets_df, bid_ask_df], axis=1)
-final_df.tail()
+final_df.tail(3)
 
 # %%
 # Metrics visualizations.
@@ -306,68 +306,6 @@ cplonorm.plot_qq(df_bnb["ret_spr_diff"])
 
 # %% [markdown]
 # # Deep dive into quantitative statistics #1805
-
-# %% [markdown]
-# ## Check that our VWAP and TWAP match the version reported by Chassis
-
-# %% run_control={"marked": false}
-# Load minutely OHLCV data from crypto-chassis (so we don't corrupt initial vwap, twap).
-# Time interval = 2 years
-full_symbol = ["binance::BTC_USDT"]
-start_date = pd.Timestamp("2020-01-01", tz="UTC")
-end_date = pd.Timestamp("2022-01-01", tz="UTC")
-df = read_crypto_chassis_ohlcv(full_symbol, start_date, end_date)
-
-# %%
-# VWAP, TWAP transformation.
-resampling_rule = "1T"
-vwap_twap_df = calculate_vwap_twap(df, resampling_rule)
-
-# %%
-# Construct DataFrame with VWAP, TWAP from different sources.
-# _chassis - vwap,twap from raw data.
-cc_vwap = df[["vwap", "twap"]]
-cc_vwap = cc_vwap.add_suffix("_chassis")
-# _ck - vwap,twap calculated with the nodes.
-ck_vwap = vwap_twap_df.swaplevel(axis=1)["binance::BTC_USDT"][["vwap", "twap"]]
-ck_vwap = ck_vwap.add_suffix("_ck")
-# Unique DataFrame.
-ols_df = pd.concat([cc_vwap, ck_vwap], axis=1)
-
-# %%
-# OLS VWAP.
-predicted_var = "vwap_chassis"
-predictor_vars = "vwap_ck"
-intercept = False
-# Run OLS.
-coexplor.ols_regress(
-    ols_df,
-    predicted_var,
-    predictor_vars,
-    intercept,
-)
-
-# %%
-# OLS TWAP.
-predicted_var = "twap_chassis"
-predictor_vars = "twap_ck"
-intercept = False
-# Run OLS.
-coexplor.ols_regress(
-    ols_df,
-    predicted_var,
-    predictor_vars,
-    intercept,
-)
-
-# %%
-display(ols_df.corr())
-
-# %% [markdown]
-# ### Summary
-
-# %% [markdown]
-# Judging by the numbers above, I think it's fair to say that the vwap,twap from raw data is almost a perfect match with the ones computed with internal methods.
 
 # %% [markdown]
 # ## How much liquidity is available at the top of the book?
