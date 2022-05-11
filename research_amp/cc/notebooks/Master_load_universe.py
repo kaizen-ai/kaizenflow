@@ -63,8 +63,8 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
     config["data"]["version"] = "v3"
     config["data"]["resample_1min"] = True
     config["data"]["partition_mode"] = "by_year_month"
-    config["data"]["start_ts"] = pd.Timestamp("2021-10-01T00:00:00+00:00")
-    config["data"]["end_ts"] = pd.Timestamp("2022-02-10T00:00:00+00:00")
+    config["data"]["start_ts"] = None
+    config["data"]["end_ts"] = None
     config["data"]["columns"] = None
     config["data"]["filter_data_mode"] = "assert"
     # Column names.
@@ -91,15 +91,12 @@ def _get_qa_stats(data: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
     for full_symbol, symbol_data in data.groupby(
         config["column_names"]["full_symbol"]
     ):
-        # Get series with close price.
-        symbol_data[config["column_names"]["close_price"]]
         # Compute stats for a full symbol.
         symbol_stats = pd.Series(dtype="object", name=full_symbol)
         symbol_stats["min_timestamp"] = symbol_data.first_valid_index()
         symbol_stats["max_timestamp"] = symbol_data.last_valid_index()
-        symbol_stats["coverage %"] = 100 * (
-            1
-            - costatis.compute_frac_nan(
+        symbol_stats["NaNs %"] = 100 * (
+            costatis.compute_frac_nan(
                 symbol_data[config["column_names"]["close_price"]]
             )
         )
@@ -113,25 +110,42 @@ def _get_qa_stats(data: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
     return res_stats_df
 
 
-def _plot_nan_values(data: pd.DataFrame, config: cconconf.Config) -> None:
+def _get_qa_stats_by_year_month(
+    data: pd.DataFrame, config: cconconf.Config
+) -> pd.DataFrame:
     """
-    Plot NaN values per full symbol in data.
-
-    "1" for "True" and "0" for "False".
+    Get quality assurance stats per full symbol, year, and month.
     """
-    for full_symbol, symbol_data in data.groupby(
-        config["column_names"]["full_symbol"]
-    ):
-        # Get series with close price.
-        nan_values = (
-            symbol_data[config["column_names"]["close_price"]].isna().astype(int)
-        )
+    #
+    data["year"] = data.index.year
+    data["month"] = data.index.month
+    #
+    res_stats = []
+    columns_to_groupby = [config["column_names"]["full_symbol"], "year", "month"]
+    for index, symbol_data in data.groupby(columns_to_groupby):
         #
-        plt.figure()
-        plt.title(full_symbol)
-        plt.scatter(nan_values.index, nan_values)
-        plt.ylabel("is NaN", rotation=0)
-        plt.show()
+        full_symbol, year, month = index
+        # Get stats for a full symbol and add them to overall stats.
+        symbol_stats = pd.Series(dtype="object", name=full_symbol)
+        symbol_stats["year"] = year
+        symbol_stats["month"] = month
+        symbol_stats["NaNs %"] = 100 * (
+            costatis.compute_frac_nan(
+                symbol_data[config["column_names"]["close_price"]]
+            )
+        )
+        symbol_stats["volume=0 %"] = 100 * (
+            symbol_data[symbol_data["volume"] == 0].shape[0]
+            / symbol_data.shape[0]
+        )
+        res_stats.append(symbol_stats)
+    res_stats_df = pd.concat(res_stats, axis=1).T
+    #
+    res_stats_df["year"] = res_stats_df["year"].astype(int)
+    res_stats_df["month"] = res_stats_df["month"].astype(int)
+    # Set index by full symbol, year, and month.
+    res_stats_df = res_stats_df.set_index([res_stats_df.index, "year", "month"])
+    return res_stats_df
 
 
 # %% [markdown]
@@ -179,7 +193,8 @@ binance_stats = _get_qa_stats(binance_data, config)
 binance_stats
 
 # %%
-_ = _plot_nan_values(binance_data, config)
+binance_stats_by_year_month = _get_qa_stats_by_year_month(binance_data, config)
+binance_stats_by_year_month
 
 # %% [markdown]
 # ## ftx stats
@@ -207,7 +222,8 @@ ftx_stats = _get_qa_stats(ftx_data, config)
 ftx_stats
 
 # %%
-_ = _plot_nan_values(ftx_data, config)
+ftx_stats_by_year_month = _get_qa_stats_by_year_month(ftx_data, config)
+ftx_stats_by_year_month
 
 # %% [markdown]
 # ## Gateio stats
@@ -235,7 +251,8 @@ gateio_stats = _get_qa_stats(gateio_data, config)
 gateio_stats
 
 # %%
-_ = _plot_nan_values(gateio_data, config)
+gateio_stats_by_year_month = _get_qa_stats_by_year_month(gateio_data, config)
+gateio_stats_by_year_month
 
 # %% [markdown]
 # ## Kucoin stats
@@ -263,6 +280,7 @@ kucoin_stats = _get_qa_stats(kucoin_data, config)
 kucoin_stats
 
 # %%
-_ = _plot_nan_values(kucoin_data, config)
+kucoin_stats_by_year_month = _get_qa_stats_by_year_month(kucoin_data, config)
+kucoin_stats_by_year_month
 
 # %%
