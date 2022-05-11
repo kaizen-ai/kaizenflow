@@ -20,26 +20,20 @@
 # %autoreload 2
 
 import logging
-from typing import List
 
 import pandas as pd
-import requests
 
 import core.config.config_ as cconconf
+import core.explore as coexplor
 import core.finance as cofinanc
 import core.finance.bid_ask as cfibiask
 import core.finance.resampling as cfinresa
 import core.plotting.normality as cplonorm
+import core.plotting.plotting_utils as cplpluti
 import dataflow.core as dtfcore
-import dataflow.model.stats_computer as dtfmostcom
 import dataflow.system.source_nodes as dtfsysonod
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import im_v2.common.universe as ivcu
-import core.explore as coexplor
-import core.plotting.plotting_utils as cplpluti
-
 import research_amp.cc.crypto_chassis_api as raccchap
 
 # %%
@@ -178,6 +172,7 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
     rets_df = rets["df_out"]
     return rets_df
 
+
 def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     # Convert to multiindex.
     converted_df = dtfsysonod._convert_to_multiindex(df, "full_symbol")
@@ -209,7 +204,9 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     # Save the result.
     bid_ask_metrics = bid_ask_metrics["df_out"]
     # Convert relative spread to bps.
-    bid_ask_metrics["relative_spread"] = bid_ask_metrics["relative_spread"]*10000
+    bid_ask_metrics["relative_spread"] = (
+        bid_ask_metrics["relative_spread"] * 10000
+    )
     return bid_ask_metrics
 
 
@@ -298,7 +295,9 @@ df_bnb.head(3)
 
 # %%
 # Calculate (|returns| - spread) and display descriptive stats.
-df_bnb["ret_spr_diff"] = abs(df_bnb["close.ret_0"]) - (df_bnb["quoted_spread"]/df_bnb["close"])
+df_bnb["ret_spr_diff"] = abs(df_bnb["close.ret_0"]) - (
+    df_bnb["quoted_spread"] / df_bnb["close"]
+)
 display(df_bnb["ret_spr_diff"].describe())
 
 # %%
@@ -328,13 +327,12 @@ vwap_twap_df = calculate_vwap_twap(df, resampling_rule)
 # Construct DataFrame with VWAP, TWAP from different sources.
 # _chassis - vwap,twap from raw data.
 cc_vwap = df[["vwap", "twap"]]
-cc_vwap = cc_vwap.add_suffix('_chassis')
+cc_vwap = cc_vwap.add_suffix("_chassis")
 # _ck - vwap,twap calculated with the nodes.
 ck_vwap = vwap_twap_df.swaplevel(axis=1)["binance::BTC_USDT"][["vwap", "twap"]]
-ck_vwap = ck_vwap.add_suffix('_ck')
+ck_vwap = ck_vwap.add_suffix("_ck")
 # Unique DataFrame.
-ols_df = pd.concat([cc_vwap, 
-                    ck_vwap],axis=1)
+ols_df = pd.concat([cc_vwap, ck_vwap], axis=1)
 
 # %%
 # OLS VWAP.
@@ -385,18 +383,22 @@ cplpluti.plot_barplot(liquidity_stats)
 
 # %%
 def plot_overtime_spread(coin_df, resampling_rule, num_stds=1):
-    df = cfinresa.resample(coin_df, rule=resampling_rule)["quoted_spread"].mean().to_frame()
+    df = (
+        cfinresa.resample(coin_df, rule=resampling_rule)["quoted_spread"]
+        .mean()
+        .to_frame()
+    )
     df["time"] = df.index.time
     mean = df.groupby("time")["quoted_spread"].mean()
     std = df.groupby("time")["quoted_spread"].std()
     (mean + num_stds * std).plot(color="blue")
     mean.plot(lw=2, color="black")
-    #(mean - num_stds * std).plot(color="blue")
+    # (mean - num_stds * std).plot(color="blue")
     return df
 
 
 # %%
-#full_symbol = "binance::BNB_USDT"
+# full_symbol = "binance::BNB_USDT"
 full_symbol = "binance::BTC_USDT"
 data = final_df.swaplevel(axis=1)[full_symbol]
 dd = plot_overtime_spread(data, "10T")
@@ -414,7 +416,11 @@ high_level_stats = pd.DataFrame()
 high_level_stats["median_relative_spread"] = final_df["relative_spread"].median()
 high_level_stats["median_notional_bid"] = final_df["bid_value"].median()
 high_level_stats["median_notional_ask"] = final_df["ask_value"].median()
-high_level_stats["median_notional_volume"] = (final_df["volume"]*final_df["close"]).median()
-high_level_stats["volatility_for_period"] = final_df['close.ret_0'].std()*final_df.shape[0]**0.5
+high_level_stats["median_notional_volume"] = (
+    final_df["volume"] * final_df["close"]
+).median()
+high_level_stats["volatility_for_period"] = (
+    final_df["close.ret_0"].std() * final_df.shape[0] ** 0.5
+)
 
 high_level_stats.head(3)
