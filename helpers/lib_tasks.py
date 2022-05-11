@@ -2209,22 +2209,22 @@ def _generate_compose_file(
         # This is at the level of `services.app`.
         indent_level = 2
         append(txt_tmp, indent_level)
-    # Mount a shared dir.
-    if shared_data_dirs is not None:
-        hdbg.dassert_lt(0, len(shared_data_dirs))
-        #
-        txt_tmp = """
-        # Shared data directory.
-        """
-        # This is at the level of `services.app.volumes`.
-        indent_level = 3
-        append(txt_tmp, indent_level)
-        # Mount all dirs that are specified.
-        for key, value in shared_data_dirs.items():
-            txt_tmp = f"""
-            - {key}:{value}
+        # Mount shared dirs.
+        if shared_data_dirs is not None:
+            hdbg.dassert_lt(0, len(shared_data_dirs))
+            #
+            txt_tmp = """
+            # Shared data directories.
             """
+            # This is at the level of `services.app.volumes`.
+            indent_level = 3
             append(txt_tmp, indent_level)
+            # Mount all dirs that are specified.
+            for key, value in shared_data_dirs.items():
+                txt_tmp = f"""
+                - {key}:{value}
+                """
+                append(txt_tmp, indent_level)
     #
     if False:
         txt_tmp = """

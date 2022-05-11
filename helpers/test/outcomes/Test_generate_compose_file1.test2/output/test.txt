@@ -1,4 +1,4 @@
-use_privileged_mode=False, use_sibling_container=False, mount_as_submodule=False, use_network_mode_host=True, shared_data_dir='/data/shared'
+use_privileged_mode=False, use_sibling_container=False, shared_data_dirs={'/data/shared': '/shared_data'}, mount_as_submodule=False, use_network_mode_host=True
 version: '3'
 
 services:
@@ -41,7 +41,8 @@ services:
       - ~/.config/gspread_pandas/:/home/.config/gspread_pandas/
       - ~/.config/gh:/home/.config/gh
 
-      # Shared data directory.
+      # Shared data directories.
+
       - /data/shared:/shared_data
 
   # Mount `amp` when it is used as supermodule.
