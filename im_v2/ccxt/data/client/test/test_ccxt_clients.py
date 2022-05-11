@@ -621,7 +621,7 @@ class CcxtSqlRealTimeImClient1(
     For all the test methods see description of corresponding private method in
     the parent class.
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
