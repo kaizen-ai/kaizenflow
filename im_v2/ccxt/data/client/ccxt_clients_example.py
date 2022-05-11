@@ -113,7 +113,7 @@ def get_CcxtHistoricalPqByTileClient_example2(
     universe_version = "small"
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    root_dir = os.path.join(s3_bucket_path, "historical")
+    root_dir = os.path.join(s3_bucket_path, "unit_test/historical")
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
