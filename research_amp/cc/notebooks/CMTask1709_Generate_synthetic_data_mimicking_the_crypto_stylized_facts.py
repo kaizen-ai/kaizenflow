@@ -42,6 +42,7 @@ import im_v2.common.universe as ivcu
 import core.finance as cofinanc
 import core.config.config_ as cconconf
 import core.finance.resampling as cfinresa
+import core.statistics.sharpe_ratio as cstshrat
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -144,40 +145,34 @@ sns.displot(btc, x=rets_col)
 # %%
 sample = btc
 ret_col = "rets_cleaned"
-hit_rate = 0.55
+hit_rate = 0.502
 seed = 2
 alpha = 0.05
 method = "normal"
+# Calculate and attach `predictions` and `hit` to the OHLCV data.  
+btc[["rets_cleaned", "predictions", "hit"]] = cfintrad.get_predictions_and_hits(sample, ret_col, hit_rate, seed)
+display(btc.tail(3))
+# Shpw CI stats.
+cfintrad.calculate_confidence_interval(btc["hit"], alpha, method)
 
-# TODO(max): return a series of preds and then concat to the df (keep all the stuff in one DB)
-hit_df = cfintrad.get_predictions_and_hits(sample, ret_col, hit_rate, seed)
-display(hit_df.head(3))
-cfintrad.calculate_confidence_interval(hit_df["hit"], alpha, method)
+# %%
+## Show PnL for the current `hit_rate`
+pnl = (btc["predictions"] * btc[ret_col]).cumsum()
+pnl = pnl[pnl.notna()]
+pnl.plot()
+# Sharpe ratio.
+cstshrat.summarize_sharpe_ratio(pnl)
 
 # %% [markdown]
 # # PnL as a function of `hit_rate`
 
-# %% [markdown]
-# ## Show PnL for the current `hit_rate`
-
 # %%
-# A model makes a prediction on the rets and then it's realized.
-pnl = (hit_df["predictions"] * hit_df[ret_col]).cumsum()
-pnl.plot()
-
-#daily_pnl = pnl.resample("1B").sum()
-
-print((daily_pnl.mean() / daily_pnl.std()) * np.sqrt(252))
-
-# %% [markdown]
-# ## Relationship between hit rate and pnl (bootstrapping to compute pnl = f(hit_rate))
-
-# %%
+# Specify params.
 sample = btc
 rets_col = config["data"]["rets_col"]
 hit_rates = np.linspace(0.4, 0.6, num=10)
 n_experiment = 10
-
+# Perform the simulattion.
 pnls = cfintrad.simulate_pnls_for_set_of_hit_rates(
     sample, rets_col, hit_rates, n_experiment
 )
