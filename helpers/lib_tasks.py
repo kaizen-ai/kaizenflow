@@ -2215,9 +2215,7 @@ def _generate_compose_file(
         if shared_data_dirs is not None:
             hdbg.dassert_lt(0, len(shared_data_dirs))
             #
-            txt_tmp = """
-            # Shared data directories.
-            """
+            txt_tmp = "# Shared data directories."
             # This is at the level of `services.app.volumes`.
             indent_level = 3
             append(txt_tmp, indent_level)

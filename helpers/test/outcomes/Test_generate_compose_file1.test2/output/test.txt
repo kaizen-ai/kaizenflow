@@ -42,7 +42,6 @@ services:
       - ~/.config/gh:/home/.config/gh
 
       # Shared data directories.
-
       - /data/shared:/shared_data
 
   # Mount `amp` when it is used as supermodule.
