@@ -14,6 +14,11 @@ _LOG = logging.getLogger(__name__)
 class TestRealTimeMarketData2(
     imvcddbut.TestImDbHelper,
 ):
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+    
     def setup_test_market_data(
         self, im_client: icdc.SqlRealTimeImClient
     ) -> mdrtmada.RealTimeMarketData2:
