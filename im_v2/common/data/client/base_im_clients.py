@@ -620,14 +620,14 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # SqlRealTimeImClient
 # #############################################################################
 
-# TODO(gp): We might want to have a placeholder for all RealTimeImClient, from
-#  which SQL version descend. Although in practice all the real-time clients
-#  will use an SQL backend.
+# TODO(Danya): We might want to have a placeholder for all RealTimeImClient,
+# for typing annotation from which SQL version descend. Although in practice
+# all the real-time clients will use an SQL backend.
 class RealTimeImClient(ImClient):
     pass
 
 
-# TODO(gp): Descend ImClient.
+# TODO(Danya): Descend ImClient.
 class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,

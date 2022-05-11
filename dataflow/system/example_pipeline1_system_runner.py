@@ -154,9 +154,9 @@ class Example1_SimulatedRealTimeForecastSystem(dtfsysyrun.ForecastSystem):
         return config
 
     def get_market_data(
-            self,
-            data: pd.DataFrame,
-            initial_replayed_delay: int = 5,
+        self,
+        data: pd.DataFrame,
+        initial_replayed_delay: int = 5,
     ) -> mdremada.ReplayedMarketData:
         market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
             self._event_loop,
@@ -166,11 +166,11 @@ class Example1_SimulatedRealTimeForecastSystem(dtfsysyrun.ForecastSystem):
         return market_data
 
     def get_dag_runner(
-            self,
-            config: cconfig.Config,
-            market_data: mdremada.ReplayedMarketData,
-            *,
-            real_time_loop_time_out_in_secs: Optional[int] = None,
+        self,
+        config: cconfig.Config,
+        market_data: mdremada.ReplayedMarketData,
+        *,
+        real_time_loop_time_out_in_secs: Optional[int] = None,
     ) -> dtfsrtdaru.RealTimeDagRunner:
         """
         Build a DAG runner from a config.

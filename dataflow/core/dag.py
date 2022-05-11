@@ -324,7 +324,7 @@ class DAG:
     # /////////////////////////////////////////////////////////////////////////////
 
     def insert_at_head(
-            self, node_id: dtfcornode.NodeId, node: dtfcornode.Node
+        self, node_id: dtfcornode.NodeId, node: dtfcornode.Node
     ) -> dtfcornode.NodeId:
         """
         Connect a node to the root of the DAG.
