@@ -1128,6 +1128,4 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
         df = self.get_test_data()
         columns = ["col1", "col2", "col4"]
         filter_data_mode = "warn_and_trim"
-        hpandas.check_and_filter_matching_columns(
-            df, columns, filter_data_mode
-        )
+        hpandas.check_and_filter_matching_columns(df, columns, filter_data_mode)
