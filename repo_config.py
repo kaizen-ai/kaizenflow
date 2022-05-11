@@ -99,6 +99,7 @@ def is_inside_docker() -> bool:
 # vars (e.g., `AM_HOST_NAME`, `AM_HOST_OS_NAME`).
 
 
+# pylint: disable=line-too-long
 def is_dev_ck() -> bool:
     # sysname='Darwin'
     # nodename='gpmac.lan'
@@ -121,7 +122,7 @@ def is_dev4() -> bool:
     dev4 = "cf-spm-dev4"
     am_host_name = os.environ.get("AM_HOST_NAME")
     _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
-    is_dev4_ = host_name == dev4 or am_host_name == dev4
+    is_dev4_ = dev4 in (host_name, am_host_name)
     return is_dev4_
 
 
@@ -138,8 +139,10 @@ def is_mac() -> bool:
 def _raise_invalid_host() -> None:
     host_os_name = os.uname()[0]
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME")
-    raise ValueError(f"Don't recognize host: host_os_name={host_os_name}, "
-        f"am_host_os_name={am_host_os_name}")
+    raise ValueError(
+        f"Don't recognize host: host_os_name={host_os_name}, "
+        f"am_host_os_name={am_host_os_name}"
+    )
 
 
 def enable_privileged_mode() -> bool:
@@ -151,6 +154,8 @@ def enable_privileged_mode() -> bool:
     else:
         if is_mac():
             val = True
+        elif is_cmamp_prod():
+            val = False
         elif is_dev_ck():
             val = True
         elif is_dev4():
@@ -174,6 +179,8 @@ def has_docker_sudo() -> bool:
         val = False
     elif is_mac():
         val = True
+    elif is_cmamp_prod():
+        val = False
     else:
         _raise_invalid_host()
     return val
@@ -190,6 +197,11 @@ def has_dind_support() -> bool:
     if not is_inside_docker():
         # Outside Docker there is no privileged mode.
         return False
+    # TODO(gp): This part is not multi-process friendly. When multiple
+    # processes try to run this code they interfere. A solution is to run `ip
+    # link` in the entrypoint and create a has_docker_privileged_mode file
+    # which contains the value.
+    # return True
     # Thus we rely on the approach from https://stackoverflow.com/questions/32144575
     # checking if we can execute.
     # Sometimes there is some state left, so we need to clean it up.
@@ -210,7 +222,9 @@ def has_dind_support() -> bool:
     rc = os.system(cmd)
     # dind is supported on both Mac and GH Actions.
     if True:
-        if get_name() == "//dev_tools":
+        if is_cmamp_prod():
+            assert not has_dind, "Not expected privileged mode"
+        elif get_name() == "//dev_tools":
             assert not has_dind, "Not expected privileged mode"
         else:
             if is_mac() or is_dev_ck() or is_inside_ci():
@@ -223,26 +237,24 @@ def has_dind_support() -> bool:
 
 
 def use_docker_sibling_containers() -> bool:
-    """ """
+    """
+    Return whether to use Docker sibling containers.
+    """
     # TODO(gp): We should enable it for dev4.
     val = False
     return val
 
 
 def use_docker_shared_cache() -> bool:
-    """ """
-    if is_dev4():
-        val = True
-    else:
-        val = False
+    """
+    Return whether to use Docker shared cache.
+    """
+    val = bool(is_dev4())
     return val
 
 
 def use_docker_network_mode_host() -> bool:
-    if is_mac() or is_dev_ck():
-        ret = True
-    else:
-        ret = False
+    ret = bool(is_mac() or is_dev_ck())
     return ret
 
 
@@ -269,6 +281,8 @@ def run_docker_as_root() -> bool:
         # outside.
         res = False
     elif is_mac():
+        res = False
+    elif is_cmamp_prod():
         res = False
     else:
         _raise_invalid_host()
@@ -307,6 +321,18 @@ def get_docker_shared_group() -> str:
     return val
 
 
+def skip_submodules_test() -> bool:
+    """
+    Return whether the tests in the submodules should be skipped.
+
+    E.g. while running `i run_fast_tests`.
+    """
+    if get_name() == "//dev_tools":
+        # Skip running `amp` tests from `dev_tools`.
+        return True
+    return False
+
+
 # #############################################################################
 # S3 buckets.
 # #############################################################################
@@ -320,6 +346,8 @@ def is_AM_S3_available() -> bool:
 
 
 def is_CK_S3_available() -> bool:
+    # CK bucket is not available for `//lemonade` and `//amp` unless it's on
+    # `dev_ck`.
     val = True
     if is_mac():
         val = False
@@ -334,6 +362,14 @@ def is_CK_S3_available() -> bool:
     return val
 
 
+def is_cmamp_prod() -> bool:
+    """
+    Detect whether this is a production container.
+    This env var is set inside devops/docker_build/prod.Dockerfile.
+    """
+    return os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False)
+
+
 # #############################################################################
 
 
@@ -342,32 +378,39 @@ def config_func_to_str() -> str:
     Print the value of all the config functions.
     """
     ret: List[str] = []
-    for func_name in sorted([
-        "get_docker_base_image_name",
-        "get_docker_user",
-        "get_host_name",
-        "get_invalid_words",
-        "get_name",
-        "get_repo_map",
-        "has_dind_support",
-        "is_AM_S3_available",
-        "is_CK_S3_available",
-        "is_dev_ck",
-        "is_dev4",
-        "is_inside_ci",
-        "is_inside_docker",
-        "is_mac",
-        "run_docker_as_root",
-        "use_docker_shared_cache",
-        "use_docker_sibling_containers",
-        "use_docker_network_mode_host",
-    ]):
+    for func_name in sorted(
+        [
+            "enable_privileged_mode",
+            "get_docker_base_image_name",
+            "get_docker_user",
+            "get_docker_shared_group",
+            # "get_extra_amp_repo_sym_name",
+            "get_host_name",
+            "get_invalid_words",
+            "get_name",
+            "get_repo_map",
+            "has_dind_support",
+            "has_docker_sudo",
+            "is_AM_S3_available",
+            "is_CK_S3_available",
+            "is_dev_ck",
+            "is_dev4",
+            "is_inside_ci",
+            "is_inside_docker",
+            "is_mac",
+            "run_docker_as_root",
+            "skip_submodules_test",
+            "use_docker_shared_cache",
+            "use_docker_sibling_containers",
+            "use_docker_network_mode_host",
+        ]
+    ):
         try:
             _LOG.debug("func_name=%s", func_name)
-            func_value = eval("%s()" % func_name)
+            func_value = eval(f"{func_name}()")
         except NameError:
             func_value = "*undef*"
-        msg = "%s='%s'" % (func_name, func_value)
+        msg = f"{func_name}='{func_value}'"
         ret.append(msg)
         # _print(msg)
     ret = "\n".join(ret)

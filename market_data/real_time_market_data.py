@@ -13,7 +13,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
-import im_v2.talos.data.client.talos_clients as imvtdctacl
+import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
@@ -26,8 +26,7 @@ _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 # RealTimeMarketData
 # #############################################################################
 
-# TODO(gp): This should be deprecated since it has the SQL connection bolted in.
-#  Instead we want to have a RealTime
+# TODO(gp): This should be pushed to the IM
 class RealTimeMarketData(mdabmada.MarketData):
     """
     Implement an interface to a real-time SQL database with 1-minute bar data.
@@ -39,7 +38,7 @@ class RealTimeMarketData(mdabmada.MarketData):
         table_name: str,
         where_clause: Optional[str],
         valid_id: Any,
-        # Params from `MarketData`.
+        # Params from abstract `MarketData`.
         *args: Any,
         **kwargs: Any,
     ):
@@ -251,34 +250,19 @@ class RealTimeMarketData(mdabmada.MarketData):
         return query
 
 
-# #############################################################################
-# RealTimeMarketData2
-# #############################################################################
-
-
-# TODO(gp): This should be Talos independent.
 class RealTimeMarketData2(mdabmada.MarketData):
     """
-    Interface for real-time market data accessed through SQL client.
-
-    The SQL client reads data from a DB which is continously updated by Airflow
-    DAG downloading data from Talos API.
-
-    Note: RealTimeSqlTalosClient is passed at the initialization.
+    Interface for real-time market data accessed through a realtime SQL client.
     """
-
-    def __init__(
-        self, client: imvtdctacl.TalosSqlRealTimeImClient, *args, **kwargs
-    ):
+    def __init__(self, client: icdc.SqlRealTimeImClient, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         hdbg.dassert_eq(
             client._mode,
             "market_data",
-            msg="Requires a RealTimeSqlTalosClient in 'market_data' mode.",
+            msg="Requires a SqlRealTimeImClient in 'market_data' mode.",
         )
         self._client = client
 
-    # TODO(Danya): A copy of the Talos client method.
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return self._client.should_be_online()
 
@@ -315,6 +299,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
             start_ts,
             end_ts,
             columns,
+            self._filter_data_mode,
             ts_col_name=ts_col_name,
             left_close=left_close,
             right_close=right_close,

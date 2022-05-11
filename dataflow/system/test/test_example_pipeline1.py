@@ -135,6 +135,10 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     - with a `MarketData`
     - with a `Portfolio` backed by DB or dataframe
     """
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
 
     def run_coroutines(
         self,
@@ -161,6 +165,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             #
             portfolio = system_runner.get_portfolio(market_data)
             #
+            price_col = "vwap"
             returns_col = "vwap.ret_0"
             volatility_col = "vwap.ret_0.vol"
             prediction_col = "feature1"
@@ -194,11 +199,13 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             )
             system_tester = dtfsysytes.SystemTester()
             result_bundles = result_bundles[0]
+            result_bundle = result_bundles[-1]
+            _LOG.debug("result_bundle=\n%s", result_bundle)
             actual = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
-                result_bundles[-1],
-                returns_col=returns_col,
+                result_bundle,
+                price_col=price_col,
                 volatility_col=volatility_col,
                 prediction_col=prediction_col,
             )

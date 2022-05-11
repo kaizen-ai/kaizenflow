@@ -197,7 +197,7 @@ class HistoricalPqByTileClient(
             year_column = "year"
             if year_column in current_columns:
                 root_dir_df = root_dir_df.drop(year_column, axis=1)
-            # Column with name "timestamp" that stores epochs remain in most,
+            # Column with name "timestamp" that stores epochs remains in most
             # vendors data if no column filtering was done. Drop it since it
             # replicates data from index and has the same name as index column
             # which causes a break when we try to reset it.
@@ -264,7 +264,7 @@ class HistoricalPqByDateClient(
         *,
         full_symbol_col_name: Optional[str] = None,
     ):
-        universe_version = "not_implemented"
+        universe_version = None
         super().__init__(
             vendor,
             universe_version,

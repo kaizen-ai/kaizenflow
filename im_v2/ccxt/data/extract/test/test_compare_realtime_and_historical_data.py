@@ -4,6 +4,7 @@ import unittest.mock as umock
 import pandas as pd
 import pytest
 
+import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
@@ -11,6 +12,10 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
 
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
     S3_PATH = "s3://cryptokaizen-data/unit_test/parquet/historical"
     FILTERS = [
@@ -18,6 +23,10 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         [("year", "==", 2022), ("month", "<=", 1)],
     ]
     _ohlcv_dataframe_sample = None
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
 
     def setUp(self) -> None:
         super().setUp()
@@ -273,6 +282,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "log_level": "INFO",
             "aws_profile": "ck",
             "s3_path": f"{self.S3_PATH}/",
+            "connection": self.connection,
         }
         # Run.
         args = argparse.Namespace(**kwargs)

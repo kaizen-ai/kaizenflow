@@ -693,8 +693,7 @@ def to_partitioned_parquet(
         )
 
 
-# TODO(Nikola): Currently indirectly tested in
-#  `im_v2/ccxt/data/extract/test/test_download_historical_data.py`.
+# TODO(Nikola): Add unit test in CMTask #1426.
 def list_and_merge_pq_files(
     root_dir: str,
     *,
