@@ -3,8 +3,8 @@ import unittest.mock as umock
 
 import pytest
 
-import helpers.hmoto as hmoto
 import helpers.hgit as hgit
+import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
@@ -15,12 +15,17 @@ import im_v2.common.db.db_utils as imvcddbut
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 class TestDownloadRealtimeForOneExchange1(
     hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper
 ):
     # Secret needed for getting realtime data.
     binance_secret = None
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
 
     def setUp(self) -> None:
         # Getting necessary secret before boto3 is mocked.
@@ -55,6 +60,7 @@ class TestDownloadRealtimeForOneExchange1(
             "log_level": "INFO",
             "aws_profile": None,
             "s3_path": None,
+            "connection": self.connection,
         }
         if use_s3:
             # Update kwargs.
@@ -73,17 +79,17 @@ class TestDownloadRealtimeForOneExchange1(
         actual = hpandas.df_to_str(actual_df, num_rows=5000)
         # pylint: disable=line-too-long
         expected = r"""        id      timestamp     open     high      low    close    volume currency_pair exchange_id end_download_timestamp knowledge_timestamp
-        0        1  1636539060000    2.227    2.228    2.225    2.225  71884.50      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        1        2  1636539120000    2.226    2.228    2.225    2.227  64687.00      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        2        3  1636539180000    2.228    2.232    2.227    2.230  59076.30      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        3        4  1636539240000    2.230    2.233    2.230    2.231  58236.20      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4        5  1636539300000    2.232    2.232    2.228    2.232  62120.70      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
+        0        1  1636539060000    2.227    2.228    2.225    2.225  71884.50      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        1        2  1636539120000    2.226    2.228    2.225    2.227  64687.00      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        2        3  1636539180000    2.228    2.232    2.227    2.230  59076.30      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        3        4  1636539240000    2.230    2.233    2.230    2.231  58236.20      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4        5  1636539300000    2.232    2.232    2.228    2.232  62120.70      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
         ...    ...            ...      ...      ...      ...      ...       ...           ...         ...                    ...                 ...
-        4495  4496  1636568760000  240.930  241.090  240.850  240.990    507.21      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4496  4497  1636568820000  240.990  241.010  240.800  241.010    623.65      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4497  4498  1636568880000  241.010  241.420  241.010  241.300    705.84      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4498  4499  1636568940000  241.300  241.680  241.240  241.660    864.55      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4499  4500  1636569000000  241.660  241.670  241.410  241.430    762.90      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
+        4495  4496  1636568760000  240.930  241.090  240.850  240.990    507.21      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4496  4497  1636568820000  240.990  241.010  240.800  241.010    623.65      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4497  4498  1636568880000  241.010  241.420  241.010  241.300    705.84      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4498  4499  1636568940000  241.300  241.680  241.240  241.660    864.55      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4499  4500  1636569000000  241.660  241.670  241.410  241.430    762.90      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
 
         [4500 rows x 11 columns]"""
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -164,7 +170,8 @@ class TestDownloadRealtimeForOneExchange1(
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
     # Secret needed for getting historical data.
     binance_secret = None

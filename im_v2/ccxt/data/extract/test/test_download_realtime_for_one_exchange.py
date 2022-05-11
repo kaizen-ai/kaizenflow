@@ -14,6 +14,11 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available")
 class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
+  
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+      
     def test_parser(self) -> None:
         """
         Test arg parser for predefined args in the script.

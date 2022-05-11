@@ -140,10 +140,10 @@ def get_general_volume_ratio_df(
     return ratio_df
 
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Exchanges (Spot)
 
-# %%
+# %% hidden=true
 # Original data in /data/shared/CMTask1812_Compute_stats_for_investor_presentation
 # # cp -r /data/shared/CMTask1812_Compute_stats_for_investor_presentation .
 
@@ -161,21 +161,21 @@ file_exch = pd.read_html(file_name_exch)
 # Select necessary columns with top-100.
 exch_df = file_exch[0][["Name", "Volume(24h)", "Exchange Score", "#"]].loc[:99]
 
-# %%
+# %% hidden=true
 # Clean up the data.
 all_exch = clean_up_exchanges(exch_df)
 
-# %%
+# %% hidden=true
 # Select only `good` exchanges.
 # Note: `good` exchanges - the ones with the Score > 6.
 # `All` exchanges - `good` exchanges + the remaining ones.
 good_exch = all_exch[all_exch["Exchange Score"] > 6]
 _LOG.info(good_exch.shape)
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Top-10 `good` exchanges by volume
 
-# %%
+# %% hidden=true
 # Sort by volume.
 good_exch = good_exch.sort_values(
     ["Volume(24h)"], ascending=False, ignore_index=True
@@ -190,10 +190,10 @@ cplpluti.plot_barplot(
     rotation=45,
 )
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Total volume of top-10 `good` exchanges vs. other `good` exchanges
 
-# %%
+# %% hidden=true
 ratio_good = get_general_volume_ratio_df(
     good_exch,
     good_exch.loc[:9],
@@ -204,19 +204,19 @@ ratio_good = get_general_volume_ratio_df(
 )
 display(ratio_good)
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Cumulative volume for all `good` exchanges
 
-# %%
+# %% hidden=true
 good_cumul_volume = get_cumulative_volume_ratios(
     good_exch, "Volume(24h)", plot_results=True, entity="exchange"
 )
 display(good_cumul_volume.head(5))
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Total volume of `good` exchanges vs. all other exchanges
 
-# %%
+# %% hidden=true
 ratio_all = get_general_volume_ratio_df(
     all_exch,
     good_exch,
@@ -227,10 +227,10 @@ ratio_all = get_general_volume_ratio_df(
 )
 display(ratio_all)
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Cumulative volume of all exchanges
 
-# %%
+# %% hidden=true
 # Sort all exchanges by volume.
 all_exch_sorted = all_exch.sort_values(
     ["Volume(24h)"], ascending=False, ignore_index=True
@@ -241,10 +241,10 @@ all_cumul_volume = get_cumulative_volume_ratios(
 )
 display(all_cumul_volume.head(5))
 
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Exchanges (Derivatives)
 
-# %%
+# %% hidden=true
 # Read .html file.
 # It was downloaded 2022-05-03 from https://coinmarketcap.com/rankings/exchanges/derivatives/.
 # Contains the snapshot of a table with the descriptive statistics of cryptocurrency derivatives exhanges.
@@ -257,16 +257,16 @@ file_der = pd.read_html(file_name_der)
 # Select necessary columns with top-100.
 exch_der_df = file_der[0][["#", "Name", "Volume(24h)"]]
 
-# %%
+# %% hidden=true
 # Clean up.
 exch_der_df = clean_up_exchanges(exch_der_df)
 # Sorting.
 exch_der_df = exch_der_df.sort_values("Volume(24h)", ascending=False)
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Top-10 derivative exchanges by volume
 
-# %%
+# %% hidden=true
 display(exch_der_df.loc[:9])
 cplpluti.plot_barplot(
     exch_der_df.set_index("Name")["Volume(24h)"].iloc[:10].squeeze(),
@@ -276,10 +276,10 @@ cplpluti.plot_barplot(
     rotation=45,
 )
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Total volume of top-10 derivative exchanges vs. all other derivative exchanges
 
-# %%
+# %% hidden=true
 ratio_der = get_general_volume_ratio_df(
     exch_der_df,
     exch_der_df.loc[:9],
@@ -290,10 +290,10 @@ ratio_der = get_general_volume_ratio_df(
 )
 display(ratio_der)
 
-# %% [markdown]
+# %% [markdown] hidden=true
 # ## Cumulative volume of all derivative exchanges
 
-# %% run_control={"marked": false}
+# %% run_control={"marked": false} hidden=true
 all_cumul_der_volume = get_cumulative_volume_ratios(
     exch_der_df[:30], "Volume(24h)", plot_results=True, entity="exchange"
 )
@@ -332,6 +332,9 @@ good_crypto = crypto_df.iloc[:100]
 
 # %% [markdown]
 # ### Top-10 `good` cryptocurrencies by Market Cap
+
+# %%
+cplpluti.configure_notebook_for_presentation()
 
 # %%
 display(good_crypto.loc[:9])
@@ -410,7 +413,7 @@ display(ratio_good_volume)
 all_cumul_cc_volume = get_cumulative_volume_ratios(
     good_crypto_volume_sorted[:40], "_volume24h", plot_results=True, entity="coin"
 )
-display(all_cumul_der_volume.head(5))
+display(all_cumul_cc_volume.head(5))
 
 # %% [markdown]
 # ## `Good` vs. `Others` Crypto

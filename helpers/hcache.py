@@ -289,7 +289,11 @@ def clear_global_cache(
     if not _IS_CLEAR_CACHE_ENABLED:
         hdbg.dfatal(f"Trying to delete cache '{cache_path}'")
     description = f"global {cache_type}"
-    info_before = _get_cache_size(cache_path, description)
+    try:
+        info_before = _get_cache_size(cache_path, description)
+    except ValueError:
+        _LOG.warning("Cache has already been deleted by another process.")
+        return
     _LOG.info("Before clear_global_cache: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
     if hs3.is_s3_path(cache_path):
@@ -307,7 +311,11 @@ def clear_global_cache(
         cache_backend = get_global_cache(cache_type, tag)
         cache_backend.clear(warn=True)
     # Report stats before and after.
-    info_after = _get_cache_size(cache_path, description)
+    try:
+        info_after = _get_cache_size(cache_path, description)
+    except ValueError:
+        _LOG.warning("Cache has already been deleted by another process.")
+        return
     _LOG.info("After clear_global_cache: %s", info_after)
 
 
