@@ -11,14 +11,13 @@ import market_data.real_time_market_data as mdrtmada
 _LOG = logging.getLogger(__name__)
 
 
-class TestRealTimeMarketData2(
-    imvcddbut.TestImDbHelper,
-):
+class TestRealTimeMarketData2(imvcddbut.TestImDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
-    
+
+    # TODO(Danya): IMO this should be a SetUpClass
     def setup_test_market_data(
         self, im_client: icdc.SqlRealTimeImClient
     ) -> mdrtmada.RealTimeMarketData2:
@@ -43,6 +42,11 @@ class TestRealTimeMarketData2(
             get_wall_clock_time,
         )
         return market_data
+
+    # def TearDown
+    #     # Delete the table.
+    #     hsql.remove_table(self.connection, "example2_marketdata")
+
 
     def test_get_data_for_last_period1(self) -> None:
         """

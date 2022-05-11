@@ -128,15 +128,20 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
 # #############################################################################
 
 
-class Example1_SimulatedRealTimeForecastSystem(dtfsysyrun.ForecastSystem):
+# TODO(gp): Consider passing all params to the ctor and not to the method.
+class Example1_RealTimeForecastSystem(dtfsysyrun.ForecastSystem):
     """
     Create a system with:
 
-    - a RealTimeMarketData with fake data from SQL
+    - a RealTimeMarketData with fake data from SQL DB
     - an Example1 DAG
-    - use simulated time
+    - use simulated or true real-time time
     """
-    def __init__(self, asset_ids: List[int], event_loop=None):
+    def __init__(self,
+                 # TODO(gp): Keep the params in a consistent order.
+                 connection: hsql.DbConnection,
+                 asset_ids: List[int], event_loop=None):
+        self._connection = connection
         self._asset_ids = asset_ids
         self._event_loop = event_loop
 
@@ -155,13 +160,15 @@ class Example1_SimulatedRealTimeForecastSystem(dtfsysyrun.ForecastSystem):
 
     def get_market_data(
         self,
-        data: pd.DataFrame,
         initial_replayed_delay: int = 5,
     ) -> mdremada.ReplayedMarketData:
-        market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
-            self._event_loop,
-            initial_replayed_delay,
-            data,
+        # market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
+        #     self._event_loop,
+        #     initial_replayed_delay,
+        #     data,
+        #)
+        market_data, _ = mdata.get_RealTimeImClientMarketData_example1(
+            self._connection, self._event_loop, self._asset_ids
         )
         return market_data
 

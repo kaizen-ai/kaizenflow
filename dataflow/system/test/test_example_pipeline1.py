@@ -9,6 +9,7 @@ import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
 import helpers.hunit_test as hunitest
+import im_v2.common.db.db_utils as imvcddbut
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): @Danya -> Test_Example1_ReplayedForecastSystem
-class Test_Example1_ForecastSystem(unittest.TestCase):
+class Test_Example1_ForecastSystem(hunitest.TestCase):
     """
     Test a System composed of:
 
@@ -80,17 +81,58 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
     The system is simulated in real-time in the past.
     """
 
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+
+    @staticmethod
+    def setup_test_market_data(
+            im_client: icdc.SqlRealTimeImClient
+    ) -> mdrtmada.RealTimeMarketData2:
+        """
+        Setup RealTimeMarketData2 interface.
+        """
+        asset_id_col = "asset_id"
+        asset_ids = [1464553467]
+        start_time_col_name = "start_timestamp"
+        end_time_col_name = "end_timestamp"
+        columns = None
+        get_wall_clock_time = lambda: pd.Timestamp(
+            "2022-04-22", tz="America/New_York"
+        )
+        market_data = mdrtmada.RealTimeMarketData2(
+            im_client,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
+        )
+        return market_data
+
+    def set_up_class(self):
+        # Create test table.
+        im_client = icdc.get_example1_realtime_client(
+            cls.connection, resample_1min=True
+        )
+        # Set up market data client.
+        market_data = self.setup_test_market_data(im_client)
+        self.market_data = market_data
+
     def run_coroutines(
-            self,
-            data: pd.DataFrame,
+        self,
+        data: pd.DataFrame,
     ) -> str:
         """
         # TO
         """
+        self.set_up_class()
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [101]
             # Get the system to simulate.
-            system = dtfsepsyru.Example1_ForecastSystem(
+            system = dtfsepsyru.Example1_RealTimeForecastSystem(
+                self.connection,
                 asset_ids,
                 event_loop,
             )

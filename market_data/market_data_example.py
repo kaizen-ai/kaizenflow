@@ -437,16 +437,19 @@ def get_TalosPqImClientMarketData_example1(
 # #############################################################################
 
 
+# TODO(Danya): Look through the code to see what's the right / most common order
+#  to pass these params.
 def get_RealTimeImClientMarketData_example1(
-    # TODO(Danya): Initialize im_client from outside the method.
     connection: hsql.DbConnection,
     event_loop: asyncio.AbstractEventLoop,
     asset_ids: List[int],
+    *,
+    resample_1min: bool = False,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `RealTimeMarketData` with data coming from an `RealTimeImClient`.
     """
-    resample_1min = False
+    # TODO(Danya): Initialize im_client from outside the method.
     im_client = icdc.get_example1_realtime_client(connection, resample_1min)
     asset_id_col = "asset_id"
     start_time_col_name = "start_timestamp"
