@@ -15,6 +15,8 @@
 # %% [markdown]
 # - Compute returns from the real data.
 # - Pre-define the hit rate and calculate predictions, hits and confidence intervals.
+# - Show PnL and Sharpe Ratio for the corresponding parameters.
+# - Bootstrapping to compute pnl = f(hit_rate).
 
 # %% [markdown]
 # # Imports
