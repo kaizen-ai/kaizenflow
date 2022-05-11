@@ -1370,9 +1370,9 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         """
         data = self._get_unit_test_data()
         partition_columns = ["currency_pair", "year", "month"]
-        # TODO(Grisha): Do not hard-wire the path, use `helpers/hs3.py`.
-        dst_dir = "s3://cryptokaizen-data/unit_test/historical/ccxt/latest"
         aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        dst_dir = os.path.join(s3_bucket_path, "historical/ccxt/latest")
         exchange_id_col_name = "exchange_id"
         for exchange_id, df_exchange_id in data.groupby(exchange_id_col_name):
             exchange_dir = os.path.join(dst_dir, exchange_id)

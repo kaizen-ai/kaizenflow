@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.7
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -57,8 +57,10 @@ def get_gallery_dataflow_example_config() -> cconconf.Config:
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(config["load"]["aws_profile"])
+    s3_path = os.path.join(s3_bucket_path, "historical")
     config["load"]["data_dir"] = os.path.join(
-        "s3://cryptokaizen-data", "historical"
+        s3_path, "historical"
     )
     config["load"]["data_snapshot"] = "latest"
     config["load"]["partition_mode"] = "by_year_month"

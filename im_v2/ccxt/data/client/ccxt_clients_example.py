@@ -88,8 +88,9 @@ def get_CcxtHistoricalPqByTileClient_example1(
     historical data, which is stored on S3.
     """
     universe_version = "v4"
-    # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
-    root_dir = "s3://cryptokaizen-data/historical"
+    aws_profile = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    root_dir = os.path.join(s3_bucket_path, "historical")
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
@@ -109,8 +110,9 @@ def get_CcxtHistoricalPqByTileClient_example2(
     snippets created for unit tests.
     """
     universe_version = "small"
-    # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
-    root_dir = "s3://cryptokaizen-data/unit_test/historical"
+    aws_profile = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    root_dir = os.path.join(s3_bucket_path, "historical")
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
