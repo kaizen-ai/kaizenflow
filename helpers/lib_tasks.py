@@ -2105,7 +2105,8 @@ def _generate_compose_file(
     """
     Generate `docker-compose.yaml` file and save it.
 
-    :param shared_data_dir: data directory in the host filesystem to mount to mount inside the container. None means no dir sharing
+    :param shared_data_dir: data directory in the host filesystem to mount to mount 
+        inside the container. None means no dir sharing
     """
     _LOG.debug(
         hprint.to_str(
