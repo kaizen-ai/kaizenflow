@@ -1,4 +1,4 @@
-use_privileged_mode=False, use_sibling_container=False, use_shared_cache=True, mount_as_submodule=False, use_network_mode_host=True
+use_privileged_mode=False, use_sibling_container=False, shared_data_dirs={'/data/shared': '/shared_data'}, mount_as_submodule=False, use_network_mode_host=True
 version: '3'
 
 services:
@@ -41,8 +41,8 @@ services:
       - ~/.config/gspread_pandas/:/home/.config/gspread_pandas/
       - ~/.config/gh:/home/.config/gh
 
-      # Shared cache. This is specific of lime.
-      - /local/home/share/cache:/cache
+      # Shared data directories.
+      - /data/shared:/shared_data
 
   # Mount `amp` when it is used as supermodule.
   app:
