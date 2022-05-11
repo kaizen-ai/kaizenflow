@@ -32,6 +32,7 @@ import im_v2.common.db.db_utils as imvcddbut
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
+# Time limit for each download execution.
 TIMEOUT_SEC = 60
 
 
