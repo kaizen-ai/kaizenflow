@@ -1449,7 +1449,7 @@ def integrate_diff_dirs(  # type: ignore
                     r"\/\.github\/",
                 ]
                 regex = "|".join(vals)
-                cmd += f" --ignore_files='{regex}'"
+                cmd += rf" --ignore_files=\'{regex}\'"
     _run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
@@ -2096,9 +2096,9 @@ def docker_login(ctx):  # type: ignore
 
 def _get_linter_service() -> str:
     """
-    Get the linter service specification for the `docker-compose.yml` file.
+    Get the Linter service specification for the `docker-compose.yml` file.
 
-    :return: the text of the linter service specification
+    :return: the text of the Linter service specification
     """
     superproject_path, submodule_path = hgit.get_path_from_supermodule()
     if superproject_path:
@@ -2306,7 +2306,7 @@ def _generate_compose_file(
         indent_level = 2
         append(txt_tmp, indent_level)
     if True:
-        # Specify the linter service.
+        # Specify the Linter service.
         txt_tmp = _get_linter_service()
         # Append at the level of `services`.
         indent_level = 1
