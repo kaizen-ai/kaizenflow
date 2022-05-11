@@ -63,6 +63,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Initialize the test database inside test container.
         """
         _LOG.info("\n%s", hprint.frame("setUpClass"))
+        cls._create_docker_files()
         # Read the connection parameters from the env file.
         cls.db_env_file = cls._get_db_env_path()
         connection_info = hsql.get_connection_info_from_env_file(cls.db_env_file)
@@ -109,24 +110,52 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
             hsystem.system(cmd, suppress_output=False)
         else:
             _LOG.warning("Leaving DB up")
+        if not hunitest.get_incremental_tests():
+            os.unlink(cls._get_compose_file())
+            os.unlink(cls._get_db_env_path())
 
-    @staticmethod
+    @classmethod
     @abc.abstractmethod
-    def _get_compose_file() -> str:
+    def get_id(cls) -> int:
+        """
+        Return a unique ID to create an OMS instance.
+
+        This ID is used to generate Docker compose / env files and services, so
+        that we can avoid collisions in case of parallel execution.
+
+        This function is specified by the unit test in a way that is
+        unique to each test.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def _get_compose_file(cls) -> str:
         """
         Get path to Docker compose file.
         """
+        raise NotImplementedError
 
-    @staticmethod
+    @classmethod
     @abc.abstractmethod
-    def _get_service_name() -> str:
+    def _get_service_name(cls) -> str:
         """
         Get service name.
         """
+        raise NotImplementedError
 
-    @staticmethod
+    @classmethod
     @abc.abstractmethod
-    def _get_db_env_path() -> str:
+    def _get_db_env_path(cls) -> str:
         """
-        Get path to db env file that contains db connection parameters.
+        Get path to env file that contains DB connection parameters.
         """
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def _create_docker_files(cls) -> str:
+        """
+        Create the compose and env file for the DB run.
+        """
+        raise NotImplementedError
