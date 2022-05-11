@@ -76,6 +76,10 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     - with a `MarketData`
     - with a `Portfolio` backed by DB or dataframe
     """
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
 
     def run_coroutines(
         self,

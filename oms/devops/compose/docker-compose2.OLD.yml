@@ -1,0 +1,24 @@
+version: '3.5'
+
+services:
+  # Docker container running Postgres DB.
+  oms_postgres2:
+    image: postgres:13
+    restart: "no"
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - oms_postgres_data2:/var/lib/postgresql/data
+    ports:
+      - ${POSTGRES_PORT}:5432
+
+volumes:
+  oms_postgres_data2: {}
+
+networks:
+  default:
+    name: main_network2
