@@ -4930,9 +4930,7 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
 def pytest_find_unused_goldens(  # type: ignore
     ctx,
     dir_name=".",
-    run_bash=False,
     stage="prod",
-    as_user=True,
     out_file_name="pytest_find_unused_goldens.output.txt",
 ):
     """
@@ -4950,7 +4948,6 @@ def pytest_find_unused_goldens(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     amp_abs_path = hgit.get_amp_abs_path()
     amp_path = amp_abs_path.replace(
@@ -4962,7 +4959,7 @@ def pytest_find_unused_goldens(  # type: ignore
     docker_cmd_opts = [f"--dir_name {dir_name}"]
     docker_cmd_ = f"{script_path} " + _to_single_line_cmd(docker_cmd_opts)
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = _get_lint_docker_cmd(docker_cmd_, stage)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     _run(ctx, cmd)
@@ -5078,67 +5075,26 @@ def lint_check_python_files(  # type: ignore
 
 def _get_lint_docker_cmd(
     docker_cmd_: str,
-    run_bash: bool,
     stage: str,
-    as_user: bool,
 ) -> str:
     """
-    Create a command to run in Docker.
+    Create a command to run in the Linter service.
 
-    For parameter descriptions, see `lint()`.
-
-    :param docker_cmd_: command to run inside the container
-    :return: the full command to run in Docker
+    :param docker_cmd_: command to run
+    :param stage: the image stage to use
+    :return: the full command to run
     """
-    superproject_path, submodule_path = hgit.get_path_from_supermodule()
-    if superproject_path:
-        # We are running in a Git submodule.
-        work_dir = f"/src/{submodule_path}"
-        repo_root = superproject_path
-    else:
-        work_dir = "/src"
-        repo_root = os.getcwd()
-    _LOG.debug("work_dir=%s repo_root=%s", work_dir, repo_root)
-    # TODO(gp): Do not hardwire the repo_short_name.
-    # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
-    # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
+    # Get an image to run the linter on.
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-    image = f"{ecr_base_path}/dev_tools:{stage}"
-    docker_wrapper_cmd = ["docker run", "--rm"]
-    if stage in ("local", "dev"):
-        # Map repository root to /app in the container, so that we can
-        # reuse the current code being developed inside Docker before
-        # releasing the prod image.
-        docker_wrapper_cmd.append(f"-v '{repo_root}':/app")
-    if run_bash:
-        docker_wrapper_cmd.append("-it")
-    else:
-        docker_wrapper_cmd.append("-t")
-    if as_user:
-        docker_wrapper_cmd.append(r"--user $(id -u):$(id -g)")
-    docker_wrapper_cmd.extend(
-        [
-            # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
-            "-e MYPYPATH",
-            f"-v '{repo_root}':/src",
-            f"--workdir={work_dir}",
-            f"{image}",
-        ]
+    linter_image = f"{ecr_base_path}/dev_tools"
+    # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
+    # and run Linter on the specific version, e.g., `1.1.5`.
+    version = ""
+    # Execute command line.
+    cmd = _get_docker_cmd(
+        linter_image, stage, version, docker_cmd_, service_name="linter"
     )
-    # Build the command inside Docker.
-    cmd = f"'{docker_cmd_}'"
-    if run_bash:
-        _LOG.warning("Run bash instead of:\n  > %s", cmd)
-        cmd = "bash"
-    docker_wrapper_cmd.append(cmd)
-    docker_wrapper_cmd = _to_single_line_cmd(docker_wrapper_cmd)
-    if run_bash:
-        # We don't execute this command since pty=True corrupts the terminal
-        # session.
-        print("# To get a bash session inside Docker run:")
-        print(docker_wrapper_cmd)
-        sys.exit(0)
-    return docker_wrapper_cmd
+    return cmd
 
 
 def _parse_linter_output(txt: str) -> str:
@@ -5183,10 +5139,7 @@ def _parse_linter_output(txt: str) -> str:
 def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
-    run_bash=False,
-    # TODO(gp): This is the backdoor.
     stage="prod",
-    as_user=True,
     out_file_name="lint_detect_cycles.output.txt",
 ):
     """
@@ -5203,7 +5156,6 @@ def lint_detect_cycles(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
     docker_cmd_ = (
@@ -5211,7 +5163,7 @@ def lint_detect_cycles(  # type: ignore
         + _to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = _get_lint_docker_cmd(docker_cmd_, stage)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     _run(ctx, cmd)
@@ -5368,16 +5320,7 @@ def lint(  # type: ignore
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             if fast:
                 docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
-            # Get an image to run the linter on.
-            ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-            linter_image = f"{ecr_base_path}/dev_tools"
-            # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
-            # and run Linter on the specific version, e.g., `1.1.5`.
-            version = ""
-            # Execute command line.
-            cmd = _get_docker_cmd(
-                linter_image, stage, version, docker_cmd_, service_name="linter"
-            )
+            cmd = _get_lint_docker_cmd(docker_cmd_, stage)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
