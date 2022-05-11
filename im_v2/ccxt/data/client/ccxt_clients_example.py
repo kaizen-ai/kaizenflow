@@ -8,6 +8,7 @@ import os
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import helpers.hs3 as hs3
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 
 
@@ -97,7 +98,7 @@ def get_CcxtHistoricalPqByTileClient_example1(
         resample_1min,
         root_dir,
         partition_mode,
-        aws_profile="ck",
+        aws_profile=aws_profile,
     )
     return ccxt_parquet_client
 
@@ -119,6 +120,6 @@ def get_CcxtHistoricalPqByTileClient_example2(
         resample_1min,
         root_dir,
         partition_mode,
-        aws_profile="ck",
+        aws_profile=aws_profile,
     )
     return ccxt_parquet_client

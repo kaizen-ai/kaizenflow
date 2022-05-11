@@ -1,9 +1,11 @@
 import argparse
 import unittest.mock as umock
 
+import os
 import pytest
 
 import helpers.hgit as hgit
+import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl

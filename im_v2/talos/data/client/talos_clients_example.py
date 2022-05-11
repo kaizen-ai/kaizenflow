@@ -8,6 +8,7 @@ import os
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import helpers.hs3 as hs3
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 
 

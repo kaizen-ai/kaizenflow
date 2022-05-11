@@ -1,12 +1,14 @@
 import argparse
 import unittest.mock as umock
 
+import os
 import pandas as pd
 import pytest
 
 import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
+import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
