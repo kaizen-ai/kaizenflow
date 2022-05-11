@@ -863,7 +863,10 @@ def init_logger(
             os.mkdir(log_dirname)
         # Delete the file since we don't want to append.
         if os.path.exists(log_filename):
-            os.unlink(log_filename)
+            try:
+                os.unlink(log_filename)
+            except FileNotFoundError as e:
+                print(e)
         # Tee to file.
         file_handler = logging.FileHandler(log_filename)
         root_logger.addHandler(file_handler)
