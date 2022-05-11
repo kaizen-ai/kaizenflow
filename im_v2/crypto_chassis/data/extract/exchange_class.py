@@ -57,6 +57,12 @@ class CryptoChassisExchange:
                 depth=kwargs["depth"],
                 start_timestamp=kwargs["start_timestamp"],
         )
+        elif data_type == "trade":
+            data = self.download_trade(
+                exchange=kwargs["exchange_id"],
+                currency_pair=kwargs["currency_pair"],
+                start_timestamp=kwargs["start_timestamp"],
+        )
         else:
             hdbg.dfatal(f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth")
         return data
@@ -150,7 +156,7 @@ class CryptoChassisExchange:
         :param end_time: timestamp of end
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this 
             endpoint is 1 request per second per public IP.
-        :return: ohlcv depth datas
+        :return: ohlcv data
         """
         # Verify that date parameters are of correct format.
         if start_timestamp:
@@ -208,6 +214,56 @@ class CryptoChassisExchange:
         # Rename time column.
         ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
+
+    def download_trade(
+        self,
+        exchange: str,
+        currency_pair: str,
+        *,
+        start_timestamp: Optional[pd.Timestamp] = None,
+    ) -> pd.DataFrame:
+        """
+        Download snapshot of trade data.
+
+        :param exchange: the name of exchange, e.g. `binance`, `coinbase`
+        :param currency_pair: the pair of currency to download, e.g. `btc-usd`
+        :param start_time: timestamp of start
+        :return: trade data
+        """
+        # Verify that date parameters are of correct format.
+        if start_timestamp:
+            hdbg.dassert_isinstance(
+                start_timestamp,
+                pd.Timestamp,
+            )
+            start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
+        # Currency pairs in market data are stored in `cur1/cur2` format, 
+        # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
+        # convert the specified pair to this view.
+        currency_pair = currency_pair.replace("/", "-")
+        # Build base URL.
+        core_url = self._build_base_url(
+            data_type="trade",
+            exchange=exchange,
+            currency_pair=currency_pair,
+        )
+        # Build URL with specified parameters.
+        query_url = self._build_query_url(
+            core_url, startTime=start_timestamp
+        )
+        # Request the data.
+        r = requests.get(query_url)
+        # Retrieve raw data.
+        data_json = r.json() 
+        if data_json.get("urls") is None:
+            # Return empty dataframe if there is no results.
+            return pd.DataFrame()
+        df_csv = data_json["urls"][0]["url"]
+        # Convert CSV into dataframe.
+        market_depth = pd.read_csv(df_csv, compression="gzip")
+        # Rename time column.
+        ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
+        return market_depth
 
     def _build_base_url(
         self,
