@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.pandas_helpers as cpanh
 import helpers.hprint as hprint
@@ -72,6 +73,7 @@ class TestDfRollingApply(hunitest.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
+    @pytest.mark.slow
     def test2(self) -> None:
         """
         Test with function returning a pd.Series.
@@ -87,6 +89,7 @@ class TestDfRollingApply(hunitest.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
+    @pytest.mark.slow
     def test3(self) -> None:
         """
         Test with function returning a pd.DataFrame.
@@ -105,6 +108,7 @@ class TestDfRollingApply(hunitest.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
+    @pytest.mark.slow
     def test4(self) -> None:
         """
         Test with function returning a pd.DataFrame with multiple lines.

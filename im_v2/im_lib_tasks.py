@@ -8,31 +8,40 @@ import im_v2.im_lib_tasks as imvimlita
 
 import logging
 import os
+from typing import Optional
 
 from invoke import task
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.lib_tasks as hlibtask
 
 _LOG = logging.getLogger(__name__)
 
 
-def get_db_env_path(stage: str) -> str:
+def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     """
     Get path to db env file that contains db connection parameters.
 
     :param stage: development stage, i.e. `local`, `dev` and `prod`
+    :param idx: index used to make the generated file unique
+    :return: path to db env file
     """
     hdbg.dassert_in(stage, "local dev prod".split())
     # Get `env` files dir.
     env_dir = "im_v2/devops/env"
     # Get the file name depending on the stage.
     env_file_name = f"{stage}.im_db_config.env"
+    if idx is not None:
+        env_file_name = hio.add_idx_to_filename(env_file_name, idx)
     # Get file path.
     amp_path = hgit.get_amp_abs_path()
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)
-    hdbg.dassert_file_exists(env_file_path)
+    # We use idx when we want to generate a Docker env file on the fly. So we
+    # can't enforce that the file already exists.
+    if idx is None:
+        hdbg.dassert_file_exists(env_file_path)
     return env_file_path
 
 
