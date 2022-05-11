@@ -34,9 +34,6 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
         args = parser.parse_args(cmd)
         actual = vars(args)
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        s3_path = os.path.join(s3_bucket_path, "realtime")
         expected = {
             "start_timestamp": "2022-02-08",
             "end_timestamp": "2022-02-09",
@@ -44,8 +41,8 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "universe": "v3",
             "sleep_time": 5,
             "incremental": False,
-            "aws_profile": aws_profile,
-            "s3_path": s3_path,
+            "aws_profile": "ck",
+            "s3_path": "s3://cryptokaizen-data/realtime/",
             "log_level": "INFO",
         }
         self.assertDictEqual(actual, expected)
