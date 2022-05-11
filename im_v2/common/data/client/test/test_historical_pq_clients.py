@@ -250,48 +250,18 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    # TODO(Dan): Update test outcomes after implementing CmTask1588
-    # "Consider possible flaws of dropping duplicates from data".
     # TODO(Dan): Update test data generator with adding one more column to it.
-    def test_read_data8(self) -> None:
+    def test_filter_columns1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         resample_1min = True
         im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, full_symbols, resample_1min
         )
-        # Compare the expected values.
-        expected_length = 8640
-        expected_column_names = ["full_symbol", "close"]
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::FIL_USDT"]
-        }
-        expected_signature = r"""# df=
-        index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
-        columns=full_symbol,close
-        shape=(8640, 2)
-                                        full_symbol  close
-        timestamp
-        2021-12-30 00:00:00+00:00  binance::BTC_USDT      0
-        2021-12-30 00:00:00+00:00   kucoin::FIL_USDT      0
-        2021-12-30 00:01:00+00:00  binance::BTC_USDT      1
-        ...
-        2022-01-01 23:58:00+00:00   kucoin::FIL_USDT   4318
-        2022-01-01 23:59:00+00:00  binance::BTC_USDT   4319
-        2022-01-01 23:59:00+00:00   kucoin::FIL_USDT   4319
-        """
-        columns = ["full_symbol", "close"]
-        self._test_read_data8(
-            im_client,
-            full_symbols,
-            columns,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            expected_signature,
-        )
+        expected_columns = ["full_symbol", "close"]
+        self._test_filter_columns1(im_client, full_symbols, expected_columns)
 
-    def test_read_data9(self) -> None:
+    def test_filter_columns2(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         resample_1min = True
@@ -300,53 +270,26 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         # Run test.
         full_symbol = "binance::BTC_USDT"
-        columns = ["full_symbol", "whatever"]
-        self._test_read_data9(im_client, full_symbol, columns)
+        expected_columns = ["full_symbol", "whatever"]
+        self._test_filter_columns2(im_client, full_symbol, expected_columns)
 
-    def test_read_data10(self) -> None:
+    def test_filter_columns3(self) -> None:
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
         im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, [full_symbol], resample_1min
         )
-        columns = ["close"]
-        self._test_read_data10(im_client, full_symbol, columns)
+        expected_columns = ["close"]
+        self._test_filter_columns3(im_client, full_symbol, expected_columns)
 
-    def test_read_data11(self) -> None:
+    def test_filter_columns4(self) -> None:
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
         im_client = imvcdchpce.get_MockHistoricalByTileClient_example1(
             self, [full_symbol], resample_1min
         )
-        #
-        expected_length = 4320
-        expected_column_names = ["close"]
-        expected_column_unique_values = None
-        expected_signature = r"""
-        # df=
-        index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
-        columns=close
-        shape=(4320, 1)
-                                close
-        timestamp
-        2021-12-30 00:00:00+00:00      0
-        2021-12-30 00:01:00+00:00      1
-        2021-12-30 00:02:00+00:00      2
-        ...
-        2022-01-01 23:57:00+00:00   4317
-        2022-01-01 23:58:00+00:00   4318
-        2022-01-01 23:59:00+00:00   4319
-        """
-        columns = ["close"]
-        self._test_read_data11(
-            im_client,
-            full_symbol,
-            columns,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            expected_signature,
-        )
+        expected_columns = ["close"]
+        self._test_filter_columns4(im_client, full_symbol, expected_columns)
 
     # ////////////////////////////////////////////////////////////////////////
 

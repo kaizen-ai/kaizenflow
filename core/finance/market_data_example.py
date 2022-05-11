@@ -558,7 +558,6 @@ def get_im_client_market_data_df1(full_symbols: List[str]) -> pd.DataFrame:
     price = price_pattern * 4
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
-    # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates from data".
     # Generate unique volume values to avoid dropping rows as duplicates.
     volume = list(range(40))
     # Generate data for each symbol.
