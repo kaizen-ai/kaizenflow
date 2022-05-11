@@ -25,6 +25,29 @@ COLORMAP = Union[str, mpl.colors.Colormap]
 FIG_SIZE = (20, 5)
 
 
+def configure_notebook_for_presentation() -> None:
+    """
+    Update settings for plotting functions:
+
+    - Higher quality for the plots.
+    - Larger fonts on the plots.
+    """
+    # Set the higher quality of the graph.
+    mpl.rcParams["figure.dpi"] = 300
+    # Set the size of the font in the plot.
+    small_size = 15
+    medium_size = 15
+    bigger_size = 15
+    # Update the fonts for graph's constituents.
+    plt.rc("font", size=small_size)  # controls default text sizes
+    plt.rc("axes", titlesize=small_size)  # fontsize of the axes title
+    plt.rc("axes", labelsize=medium_size)  # fontsize of the x and y labels
+    plt.rc("xtick", labelsize=small_size)  # fontsize of the tick labels
+    plt.rc("ytick", labelsize=small_size)  # fontsize of the tick labels
+    plt.rc("legend", fontsize=small_size)  # legend fontsize
+    plt.rc("figure", titlesize=bigger_size)  # fontsize of the figure title
+
+
 def get_multiple_plots(
     num_plots: int,
     num_cols: int,
