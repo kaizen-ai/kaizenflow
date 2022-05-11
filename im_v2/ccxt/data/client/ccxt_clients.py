@@ -114,7 +114,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
-        # Round up float values in case numbers in the raw data is rounded up incorrectly.
+        # Round up float values in case values in raw data are rounded up incorrectly.
         data = data.round(8)
         return data
 
