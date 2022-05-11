@@ -42,10 +42,14 @@ _LOG = logging.getLogger(__name__)
 # %% [markdown]
 # ## Use ImClient
 
+# %%
+# TODO(max): Add ImClient (ok to use CCXT)
+
 # %% [markdown]
 # ## Read from file
 
 # %%
+# TODO(max): read cryptochassis
 df = pd.read_csv("/app/vendors_lime/taq_bars/notebooks/data.csv", index_col=0)
 df.head()
 
@@ -65,6 +69,8 @@ hpandas.df_to_str(df, print_shape_info=True)
 # %%
 import vendors_lime.taq_bars.futures_utils as tu
 import core.finance.tradability as trad
+
+# TODO(max): Use the right functions (calculate_twap)
 
 df2 = tu.normalize_data(df)
 hpandas.df_to_str(df2, print_shape_info=True)
@@ -159,23 +165,3 @@ gb = df3.reset_index(drop=True).groupby("ric").apply(trad.compute_stats)
 
 #gb.first()
 gb.sort_values("trad")
-
-# %% [markdown]
-# # Trivial model
-
-# %%
-ret_col = "ret_0"
-hit_rate = 0.55
-seed = 5
-df_tmp2["pred"] = tu.get_predictions(df_tmp, ret_col, hit_rate, seed)
-
-df_tmp2.head()
-
-# %%
-(df_tmp2["ret_0"] * df_tmp2["pred"] >= 0).mean()
-
-# %%
-tu.plot_without_gaps((df_tmp2["ret_0"] * df_tmp2["pred"]).dropna().cumsum())
-
-# %%
-get_predictions(df[""])
