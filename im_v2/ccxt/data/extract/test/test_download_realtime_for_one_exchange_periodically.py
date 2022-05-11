@@ -1,10 +1,10 @@
-import subprocess
 from datetime import datetime, timedelta
 
 import pytest
 
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
+import helpers.hsystem as hsystem
 
 
 @pytest.mark.skipif(
@@ -15,7 +15,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
     @pytest.mark.superslow("~40 seconds.")
     def test_amount_of_downloads(self) -> None:
         """
-        Test python script call, check return value and amount of downloads.
+        Test Python script call, check return value and amount of downloads.
         """
         cmd = "im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py \
         --exchange_id 'binance' \
@@ -34,18 +34,15 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         expected_downloads_amount = stop_delay - start_delay
         start_time = datetime.now() + timedelta(minutes=start_delay, seconds=5)
         stop_time = datetime.now() + timedelta(minutes=stop_delay, seconds=5)
-        # Call python script in order to get output.
+        # Call Python script in order to get output.
         cmd = cmd.format(
             start_time=start_time.strftime("%Y-%m-%d %H:%M:%S"),
             stop_time=stop_time.strftime("%Y-%m-%d %H:%M:%S"),
         )
-        process = subprocess.Popen(
-            args=cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
-        )
-        stdout, _ = process.communicate()
+        return_code, output = hsystem.system_to_string(cmd)
         # Check return value.
-        self.assertEqual(process.returncode, 0)
+        self.assertEqual(return_code, 0)
         # Check amount of downloads by parsing output.
         self.assertEqual(
-            str(stdout).count(download_started_marker), expected_downloads_amount
+            output.count(download_started_marker), expected_downloads_amount
         )
