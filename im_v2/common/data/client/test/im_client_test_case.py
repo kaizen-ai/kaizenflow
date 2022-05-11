@@ -192,7 +192,7 @@ class ImClientTestCase(hunitest.TestCase):
         self,
         im_client: icdc.ImClient,
         full_symbols: List[ivcu.FullSymbol],
-        expected_columns: List[str],
+        columns: List[str],
     ) -> None:
         """
         Test that columns have been filtered correctly:
@@ -204,16 +204,16 @@ class ImClientTestCase(hunitest.TestCase):
         end_ts = None
         filter_data_mode = "assert"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, expected_columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
         )
         actual_columns = actual_df.columns.tolist()
-        self.assert_equal(str(actual_columns), str(expected_columns))
+        self.assert_equal(str(actual_columns), str(columns))
 
     def _test_filter_columns2(
         self,
         im_client: icdc.ImClient,
         full_symbol: ivcu.FullSymbol,
-        expected_columns: List[str],
+        columns: List[str],
     ) -> None:
         """
         Test that error is raised when columns are incorrectly filtered:
@@ -227,14 +227,14 @@ class ImClientTestCase(hunitest.TestCase):
         filter_data_mode = "assert"
         with self.assertRaises(AssertionError):
             im_client.read_data(
-                full_symbols, start_ts, end_ts, expected_columns, filter_data_mode
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
             )
 
     def _test_filter_columns3(
         self,
         im_client: icdc.ImClient,
         full_symbol: ivcu.FullSymbol,
-        expected_columns: List[str],
+        columns: List[str],
     ) -> None:
         """
          Test that error is raised when columns are incorrectly filtered:
@@ -248,14 +248,14 @@ class ImClientTestCase(hunitest.TestCase):
         filter_data_mode = "assert"
         with self.assertRaises(AssertionError):
             im_client.read_data(
-                full_symbols, start_ts, end_ts, expected_columns, filter_data_mode
+                full_symbols, start_ts, end_ts, columns, filter_data_mode
             )
 
     def _test_filter_columns4(
         self,
         im_client: icdc.ImClient,
         full_symbol: ivcu.FullSymbol,
-        expected_columns: List[str],
+        columns: List[str],
     ) -> None:
         """
         Test that columns have been filtered correctly:
@@ -268,11 +268,11 @@ class ImClientTestCase(hunitest.TestCase):
         end_ts = None
         filter_data_mode = "warn_and_trim"
         actual_df = im_client.read_data(
-            full_symbols, start_ts, end_ts, expected_columns, filter_data_mode
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
         )
         # Check output.
         actual_columns = actual_df.columns.tolist()
-        self.assert_equal(str(actual_columns), str(expected_columns))
+        self.assert_equal(str(actual_columns), str(columns))
 
     # ////////////////////////////////////////////////////////////////////////
 
