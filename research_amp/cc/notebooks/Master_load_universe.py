@@ -19,6 +19,7 @@
 import logging
 import os
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
@@ -103,6 +104,7 @@ def _get_qa_stats(data: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
             symbol_data[symbol_data["volume"] == 0].shape[0]
             / symbol_data.shape[0]
         )
+        symbol_stats["bad data %"] = symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
         res_stats.append(symbol_stats)
     # Combine all full symbol stats.
     res_stats_df = pd.concat(res_stats, axis=1).T
@@ -137,6 +139,7 @@ def _get_qa_stats_by_year_month(
             symbol_data[symbol_data["volume"] == 0].shape[0]
             / symbol_data.shape[0]
         )
+        symbol_stats["bad data %"] = symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
         res_stats.append(symbol_stats)
     res_stats_df = pd.concat(res_stats, axis=1).T
     #
@@ -145,6 +148,18 @@ def _get_qa_stats_by_year_month(
     # Set index by full symbol, year, and month.
     res_stats_df = res_stats_df.set_index([res_stats_df.index, "year", "month"])
     return res_stats_df
+
+
+def _plot_bad_data_stats(bad_data_stats: pd.DataFrame) -> None:
+    """
+    Plot bad data stats per unique full symbol in data.
+    """
+    full_symbols = bad_data_stats.index.get_level_values(0).unique()
+    for full_symbol in full_symbols:
+        bad_data_col_name = "bad data %"
+        _ = bad_data_stats.loc[full_symbol].plot.bar(
+            y=bad_data_col_name, rot=0, title=full_symbol
+        )
 
 
 # %% [markdown]
@@ -195,8 +210,11 @@ binance_stats
 binance_stats_by_year_month = _get_qa_stats_by_year_month(binance_data, config)
 binance_stats_by_year_month
 
+# %%
+_ = _plot_bad_data_stats(binance_stats_by_year_month)
+
 # %% [markdown]
-# ## ftx stats
+# ## FTX stats
 
 # %%
 ftx_symbols = [
@@ -223,6 +241,9 @@ ftx_stats
 # %%
 ftx_stats_by_year_month = _get_qa_stats_by_year_month(ftx_data, config)
 ftx_stats_by_year_month
+
+# %%
+_ = _plot_bad_data_stats(ftx_stats_by_year_month)
 
 # %% [markdown]
 # ## Gateio stats
@@ -253,6 +274,9 @@ gateio_stats
 gateio_stats_by_year_month = _get_qa_stats_by_year_month(gateio_data, config)
 gateio_stats_by_year_month
 
+# %%
+_ = _plot_bad_data_stats(gateio_stats_by_year_month)
+
 # %% [markdown]
 # ## Kucoin stats
 
@@ -281,5 +305,8 @@ kucoin_stats
 # %%
 kucoin_stats_by_year_month = _get_qa_stats_by_year_month(kucoin_data, config)
 kucoin_stats_by_year_month
+
+# %%
+_ = _plot_bad_data_stats(kucoin_stats_by_year_month)
 
 # %%
