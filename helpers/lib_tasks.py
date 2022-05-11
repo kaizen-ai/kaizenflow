@@ -1449,7 +1449,7 @@ def integrate_diff_dirs(  # type: ignore
                     r"\/\.github\/",
                 ]
                 regex = "|".join(vals)
-                cmd += rf" --ignore_files=\'{regex}\'"
+                cmd += f" --ignore_files='{regex}'"
     _run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
@@ -2124,16 +2124,22 @@ def _get_linter_service() -> str:
 def _generate_compose_file(
     use_privileged_mode: bool,
     use_sibling_container: bool,
-    use_shared_cache: bool,
+    shared_data_dirs: Optional[str],
     mount_as_submodule: bool,
     use_network_mode_host: bool,
     file_name: Optional[str],
 ) -> str:
+    """
+    Generate `docker-compose.yaml` file and save it.
+
+    :param shared_data_dir: data directory in the host filesystem to mount to mount 
+        inside the container. None means no dir sharing
+    """
     _LOG.debug(
         hprint.to_str(
             "use_privileged_mode use_sibling_container "
-            "use_shared_cache mount_as_submodule use_network_mode_host "
-            "file_name"
+            "shared_data_dirs mount_as_submodule "
+            "use_network_mode_host file_name"
         )
     )
     txt = []
@@ -2228,16 +2234,20 @@ def _generate_compose_file(
         # This is at the level of `services.app`.
         indent_level = 2
         append(txt_tmp, indent_level)
-    #
-    if use_shared_cache:
-        # TODO(gp): Generalize by passing a dictionary.
-        txt_tmp = """
-        # Shared cache. This is specific of lime.
-        - /local/home/share/cache:/cache
-        """
-        # This is at the level of `services.app.volumes`.
-        indent_level = 3
-        append(txt_tmp, indent_level)
+        # Mount shared dirs.
+        if shared_data_dirs is not None:
+            hdbg.dassert_lt(0, len(shared_data_dirs))
+            #
+            txt_tmp = "# Shared data directories."
+            # This is at the level of `services.app.volumes`.
+            indent_level = 3
+            append(txt_tmp, indent_level)
+            # Mount all dirs that are specified.
+            for key, value in shared_data_dirs.items():
+                txt_tmp = f"""
+                - {key}:{value}
+                """
+                append(txt_tmp, indent_level)
     #
     if False:
         txt_tmp = """
@@ -2414,7 +2424,7 @@ def _get_docker_compose_paths(
     _generate_compose_file(
         hgit.execute_repo_config_code("enable_privileged_mode()"),
         hgit.execute_repo_config_code("use_docker_sibling_containers()"),
-        hgit.execute_repo_config_code("use_docker_shared_cache()"),
+        hgit.execute_repo_config_code("get_shared_data_dirs()"),
         mount_as_submodule,
         hgit.execute_repo_config_code("use_docker_network_mode_host()"),
         file_name,
@@ -4051,6 +4061,7 @@ def _build_run_command_line(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    n_threads: str,
 ) -> str:
     """
     Build the pytest run command.
@@ -4119,6 +4130,8 @@ def _build_run_command_line(
     if collect_only:
         _LOG.warning("Only collecting tests as per user request")
         pytest_opts_tmp.append("--collect-only")
+    # Indicate the number of threads for parallelization.
+    pytest_opts_tmp.append(f"-n {str(n_threads)}")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
@@ -4199,6 +4212,7 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    n_threads: str,
     git_clean_: bool,
     *,
     start_coverage_script: bool = False,
@@ -4219,6 +4233,7 @@ def _run_tests(
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
     )
     # Execute the command line.
     rc = _run_test_cmd(
@@ -4248,6 +4263,7 @@ def run_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4268,6 +4284,7 @@ def run_tests(  # type: ignore
             coverage,
             collect_only,
             tee_to_file,
+            n_threads,
             git_clean_,
             warn=True,
             **kwargs,
@@ -4300,6 +4317,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4312,6 +4330,8 @@ def run_fast_tests(  # type: ignore
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
+    :param n_threads: the number of threads to run the tests with
+        - "auto": distribute the tests across all the available CPUs
     :param git_clean_: run `invoke git_clean --fix-perms` before running the tests
     :param kwargs: kwargs for `ctx.run`
     """
@@ -4329,6 +4349,7 @@ def run_fast_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -4345,6 +4366,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4367,6 +4389,7 @@ def run_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -4383,6 +4406,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4405,6 +4429,7 @@ def run_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -4422,6 +4447,7 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
 ):
     """
@@ -4445,6 +4471,7 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
     )
     return rc
@@ -4461,6 +4488,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
 ):
     """
@@ -4484,6 +4512,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
     )
     return rc

@@ -21,6 +21,7 @@ import argparse
 import os
 
 import pandas as pd
+import psycopg2
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -85,8 +86,21 @@ def _run(args: argparse.Namespace) -> None:
     end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
+    try:
+        # Connect with the parameters from the env file.
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        connection = hsql.get_connection(*connection_params)
+    except psycopg2.OperationalError:
+        # Connect with the dynamic parameters (usually during tests).
+        actual_details = hsql.db_connection_to_tuple(args.connection)._asdict()
+        connection_params = hsql.DbConnectionInfo(
+            host=actual_details["host"],
+            dbname=actual_details["dbname"],
+            port=int(actual_details["port"]),
+            user=actual_details["user"],
+            password=actual_details["password"],
+        )
+        connection = hsql.get_connection(*connection_params)
     # Convert timestamps to unix ms format used in OHLCV data.
     unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
         start_timestamp

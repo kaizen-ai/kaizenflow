@@ -297,8 +297,6 @@ class ImClient(abc.ABC):
         Apply normalizations to IM data.
         """
         _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
-        # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates
-        # from data".
         # 1) Drop duplicates.
         use_index = True
         df = hpandas.drop_duplicates(df, use_index)
