@@ -9,6 +9,11 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestCreateDb1(imvcddbut.TestImDbHelper):
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+    
     @pytest.mark.slow("11 seconds.")
     def test_up1(self) -> None:
         """
