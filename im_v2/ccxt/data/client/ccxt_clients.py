@@ -458,7 +458,12 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         full_symbol_col = ivcu.build_full_symbol(
             df["exchange_id"], df["currency_pair"]
         )
-        df.insert(0, full_symbol_col_name, full_symbol_col)
+        if df.columns[0] != full_symbol_col_name:
+            # Insert if it doesn't already exist.
+            df.insert(0, full_symbol_col_name, full_symbol_col)
+        else:
+            # Replace the values to ensure the correct data.
+            df[full_symbol_col_name] = full_symbol_col.values
         # The columns are used just to partition the data but these columns
         # are not included in the `ImClient` output.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
