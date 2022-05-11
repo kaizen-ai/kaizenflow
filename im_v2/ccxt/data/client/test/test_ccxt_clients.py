@@ -1276,8 +1276,8 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             resample_1min
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        expected_columns = ["full_symbol", "open", "close"]
-        self._test_filter_columns1(im_client, full_symbols, expected_columns)
+        columns = ["full_symbol", "open", "close"]
+        self._test_filter_columns1(im_client, full_symbols, columns)
 
     def test_filter_columns2(self) -> None:
         resample_1min = True
@@ -1303,11 +1303,11 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             resample_1min
         )
         full_symbol = "binance::BTC_USDT"
-        expected_columns = ["open", "close"]
+        columns = ["open", "close"]
         self._test_filter_columns4(
             im_client,
             full_symbol,
-            expected_columns,
+            columns,
         )
 
     # ////////////////////////////////////////////////////////////////////////

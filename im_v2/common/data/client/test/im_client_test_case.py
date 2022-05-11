@@ -239,7 +239,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         Test that error is raised when columns are incorrectly filtered:
 
-        - requested columns contain some columns apart from received
+        - received columns contain some columns apart from requested
         - `filter_data_mode` = "assert"
         """
         full_symbols = [full_symbol]
@@ -260,7 +260,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         Test that columns have been filtered correctly:
 
-        - recieved columns contain some columns apart from requested
+        - received columns contain some columns apart from requested
         - `filter_data_mode` = "warn_and_trim"
         """
         full_symbols = [full_symbol]
