@@ -79,6 +79,7 @@ def download_realtime_for_one_exchange(
     # Initialize exchange class and prepare additional args, if any.
     # Every exchange can potentially have a specific set of init args.
     additional_args = []
+    # TODO(Nikola): Unify exchange initialization as separate function CMTask #1776.
     if exchange_class.__name__ == CCXT_EXCHANGE:
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
