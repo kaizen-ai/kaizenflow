@@ -470,7 +470,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # The columns are used just to partition the data but these columns
         # are not included in the `ImClient` output.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
-        # Round up float values in case numbers in the raw data is rounded up incorrectly.
+        # Round up float values in case values in raw data are rounded up incorrectly when
+        # being read from a file.
         df = df.round(8)
         return df
 
