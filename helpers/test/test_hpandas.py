@@ -1055,7 +1055,7 @@ class TestDropDuplicates(hunitest.TestCase):
 
 class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
     """
-    Test that `check_and_filter_matching_columns()` works correctly.
+    Test that matching columns are checked and filtered correctly.
     """
 
     @staticmethod
