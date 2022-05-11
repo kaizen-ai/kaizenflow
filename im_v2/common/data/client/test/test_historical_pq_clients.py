@@ -250,8 +250,6 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    # TODO(Dan): Update test outcomes after implementing CmTask1588
-    # "Consider possible flaws of dropping duplicates from data".
     # TODO(Dan): Update test data generator with adding one more column to it.
     def test_filter_columns1(self) -> None:
         # Generate Parquet test data and initialize client.

@@ -1269,8 +1269,6 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
-    # TODO(Dan): Update test outcomes after implementing CmTask1588
-    # "Consider possible flaws of dropping duplicates from data".
     @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_filter_columns1(self) -> None:
         resample_1min = True
