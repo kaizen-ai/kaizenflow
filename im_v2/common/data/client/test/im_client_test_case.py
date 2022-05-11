@@ -237,7 +237,7 @@ class ImClientTestCase(hunitest.TestCase):
         columns: List[str],
     ) -> None:
         """
-         Test that error is raised when columns are incorrectly filtered:
+        Test that error is raised when columns are incorrectly filtered:
 
         - requested columns contain some columns apart from received
         - `filter_data_mode` = "assert"
