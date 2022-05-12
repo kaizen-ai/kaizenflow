@@ -31,7 +31,7 @@ class CryptoChassisExchange:
         """
         return currency_pair.replace("_", "/").lower()
 
-    def download_data(self, data_type: str, *args, **kwargs: Any) -> pd.DataFrame:
+    def download_data(self, data_type: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
         """
         Download Crypto Chassis data.
 
