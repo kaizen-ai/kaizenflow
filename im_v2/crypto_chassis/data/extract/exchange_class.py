@@ -41,7 +41,7 @@ class CryptoChassisExchange:
         """
         # Get data.
         if data_type == "ohlcv":
-            data = self.download_ohlcv(
+            data = self._download_ohlcv(
             exchange=kwargs["exchange_id"],
             currency_pair=kwargs["currency_pair"],
             mode=kwargs["mode"],
@@ -51,14 +51,14 @@ class CryptoChassisExchange:
             include_realtime=kwargs["include_realtime"],
         )
         elif data_type == "market_depth":
-            data = self.download_market_depth(
+            data = self._download_market_depth(
                 exchange=kwargs["exchange_id"],
                 currency_pair=kwargs["currency_pair"],
                 depth=kwargs["depth"],
                 start_timestamp=kwargs["start_timestamp"],
         )
-        elif data_type == "trade":
-            data = self.download_trade(
+        elif data_type == "trades":
+            data = self._download_trade(
                 exchange=kwargs["exchange_id"],
                 currency_pair=kwargs["currency_pair"],
                 start_timestamp=kwargs["start_timestamp"],
@@ -67,7 +67,7 @@ class CryptoChassisExchange:
             hdbg.dfatal(f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth")
         return data
 
-    def download_market_depth(
+    def _download_market_depth(
         self,
         exchange: str,
         currency_pair: str,
@@ -134,7 +134,7 @@ class CryptoChassisExchange:
         market_depth = market_depth.rename(columns={"time_seconds": "timestamp"})
         return market_depth
 
-    def download_ohlcv(
+    def _download_ohlcv(
         self,
         exchange: str,
         currency_pair: str,
@@ -215,7 +215,7 @@ class CryptoChassisExchange:
         ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
 
-    def download_trade(
+    def _download_trade(
         self,
         exchange: str,
         currency_pair: str,
