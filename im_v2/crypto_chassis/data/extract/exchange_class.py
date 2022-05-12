@@ -5,14 +5,13 @@ Import as:
 
 import im_v2.crypto_chassis.data.extract.exchange_class as imvccdeecl
 """
+import logging
 from typing import Any, Optional
 
-import logging
 import pandas as pd
 import requests
 
 import helpers.hdbg as hdbg
-import helpers.hsecrets as hsecret
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,23 +41,25 @@ class CryptoChassisExchange:
         # Get data.
         if data_type == "ohlcv":
             data = self.download_ohlcv(
-            exchange=kwargs["exchange_id"],
-            currency_pair=kwargs["currency_pair"],
-            mode=kwargs["mode"],
-            start_timestamp=kwargs["start_timestamp"],
-            end_timestamp=kwargs["end_timestamp"],
-            interval=kwargs["interval"],
-            include_realtime=kwargs["include_realtime"],
-        )
+                exchange=kwargs["exchange_id"],
+                currency_pair=kwargs["currency_pair"],
+                mode=kwargs["mode"],
+                start_timestamp=kwargs["start_timestamp"],
+                end_timestamp=kwargs["end_timestamp"],
+                interval=kwargs["interval"],
+                include_realtime=kwargs["include_realtime"],
+            )
         elif data_type == "market_depth":
             data = self.download_market_depth(
                 exchange=kwargs["exchange_id"],
                 currency_pair=kwargs["currency_pair"],
                 depth=kwargs["depth"],
                 start_timestamp=kwargs["start_timestamp"],
-        )
+            )
         else:
-            hdbg.dfatal(f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth")
+            hdbg.dfatal(
+                f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth"
+            )
         return data
 
     def download_market_depth(
@@ -75,7 +76,7 @@ class CryptoChassisExchange:
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :param start_timestamp: start of processing
-        :param depth: allowed values: 1 to 10. Defaults to 1. 
+        :param depth: allowed values: 1 to 10. Defaults to 1.
         :return: market depth data
         """
         # Verify that date parameters are of correct format.
@@ -88,7 +89,7 @@ class CryptoChassisExchange:
         if depth:
             hdbg.dassert_lgt(1, depth, 10, True, True)
             depth = str(depth)
-        # Currency pairs in market data are stored in `cur1/cur2` format, 
+        # Currency pairs in market data are stored in `cur1/cur2` format,
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
         currency_pair = currency_pair.replace("/", "-")
@@ -105,7 +106,7 @@ class CryptoChassisExchange:
         # Request the data.
         r = requests.get(query_url)
         # Retrieve raw data.
-        data_json = r.json() 
+        data_json = r.json()
         if data_json.get("urls") is None:
             # Return empty dataframe if there is no results.
             return pd.DataFrame()
@@ -132,7 +133,7 @@ class CryptoChassisExchange:
         self,
         exchange: str,
         currency_pair: str,
-        mode: str, 
+        mode: str,
         *,
         interval: Optional[str] = None,
         start_timestamp: Optional[pd.Timestamp] = None,
@@ -148,7 +149,7 @@ class CryptoChassisExchange:
         :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
         :param start_time: timestamp of start
         :param end_time: timestamp of end
-        :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this 
+        :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this
             endpoint is 1 request per second per public IP.
         :return: ohlcv depth datas
         """
@@ -158,14 +159,15 @@ class CryptoChassisExchange:
                 start_timestamp,
                 pd.Timestamp,
             )
-            start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
+            # Convert datetime to unix time, e.g. `2022-01-09T00:00:00` -> `1641686400`.
+            start_timestamp = str(int(start_timestamp.timestamp()))
         if end_timestamp:
             hdbg.dassert_isinstance(
                 end_timestamp,
                 pd.Timestamp,
             )
-            end_timestamp = end_timestamp.strftime("%Y-%m-%dT%XZ")
-        # Currency pairs in market data are stored in `cur1/cur2` format, 
+            end_timestamp = str(int(end_timestamp.timestamp()))
+        # Currency pairs in market data are stored in `cur1/cur2` format,
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
         currency_pair = currency_pair.replace("/", "-")
@@ -190,30 +192,37 @@ class CryptoChassisExchange:
         if data_json.get(mode) is None:
             # Return empty dataframe if there is no results.
             ohlcv_data = pd.DataFrame()
-            _LOG.warning("No data found at `{query_url}`. Returning empty DataFrame.")
+            _LOG.warning(
+                "No data found at `{query_url}`. Returning empty DataFrame."
+            )
         else:
             if mode == "recent":
                 # Process real-time.
                 # Get columns.
                 columns = data_json[mode]["fields"].split(", ")
                 # Build Dataframe.
-                ohlcv_data = pd.DataFrame(columns=columns, data=data_json[mode]["data"])
+                ohlcv_data = pd.DataFrame(
+                    columns=columns, data=data_json[mode]["data"]
+                )
             elif mode == "historical":
                 # Process historical data.
                 df_csv = data_json[mode]["urls"][0]["url"]
                 # Convert CSV into dataframe.
                 ohlcv_data = pd.read_csv(df_csv, compression="gzip")
-                # Filter the time period since Crypto Chassis doesn't provide this functionality. 
+                # Filter the time period since Crypto Chassis doesn't provide this functionality.
                 # (CmTask #1887).
                 if start_timestamp:
-                    # Convert datetime to unix time, e.g. `2022-01-09T00:00:00` -> `1641686400`.
-                    start_unix = int(start_timestamp.timestamp())
-                    ohlcv_data = ohlcv_data[(ohlcv_data['timestamp'] >= start_unix)]
+                    ohlcv_data = ohlcv_data[
+                        (ohlcv_data["time_seconds"] >= int(start_timestamp))
+                    ]
                 if end_timestamp:
-                    end_unix = int(end_timestamp.timestamp())
-                    ohlcv_data = ohlcv_data[(ohlcv_data['timestamp'] <= end_unix)]
+                    ohlcv_data = ohlcv_data[
+                        (ohlcv_data["time_seconds"] <= int(end_timestamp))
+                    ]
             else:
-                hdbg.dfatal(f"Unknown data mode: `{mode}`. Use `recent` for real-time and `historical` for historical data.")
+                hdbg.dfatal(
+                    f"Unknown data mode: `{mode}`. Use `recent` for real-time and `historical` for historical data."
+                )
         # Rename time column.
         ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
@@ -246,7 +255,7 @@ class CryptoChassisExchange:
           - interval: str, e.g. `1m`, `3m`, `5m` etc.
           - startTime: pd.Timestamp
           - endTime: pd.Timestamp
-          - includeRealTime: 0, 1. If set to 1, request rate limit on this 
+          - includeRealTime: 0, 1. If set to 1, request rate limit on this
             endpoint is 1 request per second per public IP.
         :return: query URL with parameters
         """

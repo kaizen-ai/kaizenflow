@@ -112,12 +112,12 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 
         )
         # Verify dataframe length.
-        self.assertEqual(2440347, actual.shape[0])
+        self.assertEqual(84961, actual.shape[0])
         # Verify corner datetime if output is not empty.
         first_date = int(actual["timestamp"].iloc[0])
         last_date = int(actual["timestamp"].iloc[-1])
-        self.assertEqual(1502942400, first_date)
-        self.assertEqual(1651363140, last_date)
+        self.assertEqual(1641686400, first_date)
+        self.assertEqual(1646784000, last_date)
         # Check the output values.
         actual = actual.reset_index(drop=True)
         actual = hpandas.convert_df_to_json_string(actual)
