@@ -34,6 +34,7 @@ import dataflow.core as dtfcore
 import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import core.finance.tradability as cfintrad
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -239,11 +240,11 @@ ohlcv_cc.head(3)
 # %%
 # VWAP, TWAP transformation.
 resampling_rule = config["transform"]["resampling_rule"]
-vwap_twap_df = calculate_vwap_twap(ohlcv_cc, resampling_rule)
+vwap_twap_df = cfintrad.calculate_vwap_twap(ohlcv_cc, resampling_rule)
 
 # Returns calculation.
 rets_type = config["transform"]["rets_type"]
-vwap_twap_rets_df = calculate_returns(vwap_twap_df, rets_type)
+vwap_twap_rets_df = cfintrad.calculate_returns(vwap_twap_df, rets_type)
 
 # %% run_control={"marked": false}
 # Show the snippet.
@@ -281,7 +282,7 @@ bid_ask_df.head(3)
 
 # %%
 # Calculate bid-ask metrics.
-bid_ask_df = calculate_bid_ask_statistics(bid_ask_df)
+bid_ask_df = cfintrad.calculate_bid_ask_statistics(bid_ask_df)
 bid_ask_df.tail(3)
 
 # %% [markdown]
