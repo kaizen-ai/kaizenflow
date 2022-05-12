@@ -60,7 +60,7 @@ def get_cmtask1704_config_crypto_chassis() -> cconconf.Config:
     config.add_subconfig("data")
     config["data"]["full_symbols"] = ["binance::BNB_USDT", "binance::BTC_USDT"]
     config["data"]["start_date"] = pd.Timestamp("2022-01-01", tz="UTC")
-    config["data"]["end_date"] = pd.Timestamp("2022-01-15", tz="UTC")
+    config["data"]["end_date"] = pd.Timestamp("2022-02-01", tz="UTC")
     # Transformation parameters.
     config.add_subconfig("transform")
     config["transform"]["resampling_rule"] = "5T"
@@ -232,6 +232,9 @@ ohlcv_cc = raccchap.read_crypto_chassis_ohlcv(full_symbols, start_date, end_date
 # %%
 ohlcv_cc.head(3)
 
+# %%
+pd.read_csv("cc_ohlcv.csv", index_col="timestamp")
+
 # %% [markdown]
 # # Calculate VWAP, TWAP and returns in `Dataflow` style
 
@@ -363,6 +366,7 @@ def calculate_overtime_quantities(df_sample, full_symbol, resampling_rule, num_s
     df["time"] = df.index.time
     # Construct value curves over time.
     if plot_results:
+        # Get rid of `time`.
         for cols in df.columns[:-1]:
             # Calculate man and std over the daytime.
             time_grouper = df.groupby("time")
@@ -404,13 +408,14 @@ def calculate_overtime_quantities_multiple_symbols(df_sample, full_symbols, resa
     mult_stats_df_conv = mult_stats_df_conv.groupby("time_inside_days").agg("median")
     # Plot the results.
     if plot_results:
+        # Get rid of `time` and `full_symbol`.
         for cols in mult_stats_df.columns[:-2]:
             mult_stats_df_conv[cols].plot(title = f"{cols} median over time", fontsize=12)
     return mult_stats_df_conv
 
 
 # %%
-stats_df_mult_symbols = calculate_overtime_quantities_multiple_symbols(final_df, full_symbols, "10T", plot_results=True)
+stats_df_mult_symbols = calculate_overtime_quantities_multiple_symbols(final_df, full_symbols, "10T")
 display(stats_df_mult_symbols.head(3))
 
 # %% [markdown]
@@ -418,7 +423,7 @@ display(stats_df_mult_symbols.head(3))
 
 # %%
 high_level_stats = pd.DataFrame()
-high_level_stats["median_relative_spread"] = final_df["relative_spread"].median()
+high_level_stats["median_relative_spread"] = final_df["relative_spread_bps"].median()
 high_level_stats["median_notional_bid"] = final_df["bid_value"].median()
 high_level_stats["median_notional_ask"] = final_df["ask_value"].median()
 high_level_stats["median_notional_volume"] = (
@@ -428,4 +433,12 @@ high_level_stats["volatility_for_period"] = (
     final_df["close.ret_0"].std() * final_df.shape[0] ** 0.5
 )
 
-high_level_stats.head(3)
+display(high_level_stats.head(3))
+# Plot the results.
+for cols in high_level_stats.columns:
+    fig = plt.figure()
+    fig.suptitle(f"{cols}", fontsize=15)
+    plt.ylabel(cols, fontsize=12)
+    cplpluti.plot_barplot(high_level_stats[cols])
+
+# %%
