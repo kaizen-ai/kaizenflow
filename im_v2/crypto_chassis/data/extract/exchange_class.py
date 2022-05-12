@@ -83,7 +83,7 @@ class CryptoChassisExchange:
         :param start_timestamp: start of processing
         :param depth: allowed values: 1 to 10. Defaults to 1. 
         :return: market depth data, e.g.
-             timestamp 	bid_price 	bid_size 	ask_price 	ask_size
+                timestamp 	bid_price 	bid_size 	ask_price 	ask_size
           0 	1641686400 	41678.35 	0.017939 	41686.97 	1.69712319
           1 	1641686401 	41678.35 	0.017939 	41690.58 	0.04
         """
@@ -235,7 +235,7 @@ class CryptoChassisExchange:
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
         :param start_time: timestamp of start
         :return: trade data, e.g.
-                timestamp 	price 	size 	is_buyer_maker
+                timestamp 	price 	    size 	   is_buyer_maker
           0 	1641686404 	41692.50 	0.012473 	0
           1 	1641686441 	41670.00 	0.001194 	0
         """
