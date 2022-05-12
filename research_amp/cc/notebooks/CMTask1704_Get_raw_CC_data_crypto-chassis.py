@@ -223,17 +223,16 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
 # ## Data demonstration
 
 # %%
-full_symbols = config["data"]["full_symbols"]
-start_date = config["data"]["start_date"]
-end_date = config["data"]["end_date"]
+# Read from crypto_chassis directly.
+#full_symbols = config["data"]["full_symbols"]
+#start_date = config["data"]["start_date"]
+#end_date = config["data"]["end_date"]
+#ohlcv_cc = raccchap.read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
 
-ohlcv_cc = raccchap.read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
-
-# %%
+# Read saved 1 month of data.
+ohlcv_cc = pd.read_csv("/shared_data/cc_ohlcv.csv", index_col="timestamp")
+ohlcv_cc.index = pd.to_datetime(ohlcv_cc.index)
 ohlcv_cc.head(3)
-
-# %%
-pd.read_csv("cc_ohlcv.csv", index_col="timestamp")
 
 # %% [markdown]
 # # Calculate VWAP, TWAP and returns in `Dataflow` style
@@ -266,13 +265,18 @@ bnb_ex.plot()
 
 # %%
 # Specify the params.
-full_symbols = config["data"]["full_symbols"]
-start_date = config["data"]["start_date"]
-end_date = config["data"]["end_date"]
+#full_symbols = config["data"]["full_symbols"]
+#start_date = config["data"]["start_date"]
+#end_date = config["data"]["end_date"]
 # Get the data.
-bid_ask_df = raccchap.read_and_resample_bid_ask_data(
-    full_symbols, start_date, end_date, "5T"
-)
+#bid_ask_df = raccchap.read_and_resample_bid_ask_data(
+#    full_symbols, start_date, end_date, "5T"
+#)
+#bid_ask_df.head(3)
+
+# Read saved 1 month of data.
+bid_ask_df = pd.read_csv("/shared_data/bid_ask_data.csv", index_col="timestamp")
+bid_ask_df.index = pd.to_datetime(bid_ask_df.index)
 bid_ask_df.head(3)
 
 # %%
