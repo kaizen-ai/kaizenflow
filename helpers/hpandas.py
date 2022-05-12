@@ -402,7 +402,7 @@ def check_and_filter_matching_columns(
     processed data, see `filter_data_mode`
     """
     received_columns = df.columns.to_list()
-    dassert_lte(1, len(received_columns))
+    hdbg.dassert_lte(1, len(received_columns))
     #
     if filter_data_mode == "assert":
         # Raise an assertion.
@@ -411,7 +411,11 @@ def check_and_filter_matching_columns(
         # Just issue a warning.
         only_warning = True
         # Get columns intersection while preserving the order of the columns.
-        columns_intersection = [col_name for col_name in required_columns if col_name in received_columns]
+        columns_intersection = [
+            col_name
+            for col_name in required_columns
+            if col_name in received_columns
+        ]
         hdbg.dassert_lte(1, len(columns_intersection))
         df = df[columns_intersection]
     else:
@@ -420,7 +424,7 @@ def check_and_filter_matching_columns(
         required_columns,
         received_columns,
         only_warning=only_warning,
-        msg=f"Received columns do not match required columns.",
+        msg="Received columns do not match required columns.",
     )
     return df
 
