@@ -20,13 +20,18 @@
 # # Imports
 
 # %%
+# %load_ext autoreload
+# %autoreload 2
+        
 import logging
 from typing import List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import requests
-import statsmodels
+import scipy.stats as stats
+import seaborn as sns
 
 import core.finance.tradability as cfintrad
 import helpers.hdatetime as hdateti
@@ -144,11 +149,18 @@ def read_crypto_chassis_ohlcv(
 btc_df = pd.read_csv("BTC_one_year.csv", index_col="timestamp")
 btc_df.head(3)
 
+# %%
+btc_df.index = pd.to_datetime(btc_df.index)
+
 # %% [markdown]
 # ## Process returns
 
 # %%
 btc = btc_df.copy()
+
+# %%
+# TODO(max): In general all notebooks use ImClient to read data and then compute VWAP / TWAP / Ask / Bid from
+# the data.
 
 # %% run_control={"marked": false}
 # Calculate returns.
@@ -165,6 +177,11 @@ btc["rets_cleaned"].plot()
 rets = btc[["rets"]]
 rets = hpandas.dropna(rets, report_stats=True)
 
+# %%
+btc["rets_cleaned"] /= btc["rets_cleaned"].rolling(100).std()
+
+btc["rets_cleaned"].plot()
+
 # %% run_control={"marked": false}
 # Show the distribution.
 fig = plt.figure(figsize=(15, 7))
@@ -175,63 +192,69 @@ ax1.set_ylabel("Sample")
 ax1.set_title("Returns distribution")
 plt.show()
 
-
 # %% [markdown]
 # # Pre-defined Predictions, Hit Rates and Confidence Interval
 
-# %% run_control={"marked": false}
-def calculate_confidence_interval(hit_series, alpha, method):
-    """
-    :param alpha: Significance level
-    :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
-    """
-    point_estimate = hit_series.mean()
-    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=hit_series.sum(),
-        nobs=hit_series.count(),
-        alpha=alpha,
-        method=method,
-    )
-    result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
-    conf_alpha = (1 - alpha / 2) * 100
-    print(f"hit_rate: {result_values_pct[0]}")
-    print(f"hit_rate_lower_CI_({conf_alpha}%): {result_values_pct[1]}")
-    print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
-
-
-def get_predictions_hits_and_stats(df, ret_col, hit_rate, seed, alpha, method):
-    """
-    Calculate hits from the predictions and show confidence intervals.
-
-    :param df: Desired sample with OHLCV data and calculated returns
-    :param hit_rate: Desired percantage of successful predictions
-    :param seed: Experiment stance
-    :param alpha: Significance level for CI
-    :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
-    """
-    df = df.copy()
-    df["predictions"] = cfintrad.get_predictions(df, ret_col, hit_rate, seed)
-    # Specify necessary columns.
-    df = df[["rets", "predictions"]]
-    # Attach `hit` column (boolean).
-    df = df.copy()
-    df["hit"] = df["rets"] * df["predictions"] >= 0
-    # Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
-    df = hpandas.dropna(df, report_stats=True)
-    # Show CI stats.
-    calculate_confidence_interval(df["hit"], alpha, method)
-    return df
-
-
 # %%
-sample = btc.head(1000)
-ret_col = "rets"
-hit_rate = 0.55
-seed = 20
+#sample = btc.head(1000)
+sample = btc
+ret_col = "rets_cleaned"
+hit_rate = 0.52
+seed = 2
 alpha = 0.05
 method = "normal"
 
-hit_df = get_predictions_hits_and_stats(
-    sample, ret_col, hit_rate, seed, alpha, method
+# TODO(max): return a series of preds and then concat to the df (keep all the stuff in one DB)
+hit_df = cfintrad.get_predictions_and_hits(sample, ret_col, hit_rate, seed)
+display(hit_df.head(3))
+cfintrad.calculate_confidence_interval(hit_df["hit"], alpha, method)
+
+# %%
+sample[ret_col] 
+
+# %% [markdown]
+# # PnL as a function of `hit_rate`
+
+# %% [markdown]
+# ## Show PnL for the current `hit_rate`
+
+# %%
+# A model makes a prediction on the rets and then it's realized.
+pnl = (hit_df["predictions"] * hit_df[ret_col]).cumsum()
+#pnl.plot()
+
+daily_pnl = pnl.resample("1B").sum()
+
+print((daily_pnl.mean() / daily_pnl.std()) * np.sqrt(252))
+
+# %%
+hit_df
+
+# %% [markdown]
+# ## Relationship between hit rate and pnl (bootstrapping to compute pnl = f(hit_rate))
+
+# %%
+sample = btc.head(1000)
+#rets_col = "rets"
+rets_col = "rets_cleaned"
+hit_rates = np.linspace(0.4, 0.6, num=10)
+n_experiment = 10
+
+pnls = cfintrad.simulate_pnls_for_set_of_hit_rates(
+    sample, "rets", hit_rates, n_experiment
 )
-display(hit_df)
+
+# %%
+hit_pnl_df = pd.DataFrame(pnls.items(), columns=["hit_rate", "PnL"])
+sns.scatterplot(data=hit_pnl_df, x="hit_rate", y="PnL")
+
+# %%
+x = hit_pnl_df["hit_rate"]
+y = hit_pnl_df["PnL"]
+
+ols_results = stats.linregress(x, y)
+print(f"R-squared = {ols_results.rvalue**2:.4f}")
+plt.plot(x, y, 'o', label='original data')
+plt.plot(x, ols_results.intercept + ols_results.slope*x, 'r', label='fitted line')
+plt.legend()
+plt.show()

@@ -1,13 +1,11 @@
 import logging
-from typing import Optional
 
 import pandas as pd
 
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
+import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
-import im_v2.talos.data.client.talos_clients as imvtdctacl
-import im_v2.talos.db.utils as imvtadbut
 import market_data.real_time_market_data as mdrtmada
 
 _LOG = logging.getLogger(__name__)
@@ -16,26 +14,27 @@ _LOG = logging.getLogger(__name__)
 class TestRealTimeMarketData2(
     imvcddbut.TestImDbHelper,
 ):
-    def setup_talos_market_data(
-        self,
-        resample_1min: Optional[bool] = True,
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+    
+    def setup_test_market_data(
+        self, im_client: icdc.SqlRealTimeImClient
     ) -> mdrtmada.RealTimeMarketData2:
         """
         Setup RealTimeMarketData2 interface.
         """
-        table_name = "talos_ohlcv"
-        mode = "market_data"
-        sql_talos_client = imvtdctacl.TalosSqlRealTimeImClient(
-            resample_1min, self.connection, table_name, mode
-        )
         asset_id_col = "asset_id"
         asset_ids = [1464553467]
         start_time_col_name = "start_timestamp"
         end_time_col_name = "end_timestamp"
         columns = None
-        get_wall_clock_time = lambda: pd.Timestamp("2022-04-22", tz="America/New_York")
+        get_wall_clock_time = lambda: pd.Timestamp(
+            "2022-04-22", tz="America/New_York"
+        )
         market_data = mdrtmada.RealTimeMarketData2(
-            sql_talos_client,
+            im_client,
             asset_id_col,
             asset_ids,
             start_time_col_name,
@@ -50,11 +49,11 @@ class TestRealTimeMarketData2(
         Test get_data_for_last_period() all conditional periods.
         """
         # Create test table.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = icdc.get_example2_realtime_client(
+            self.connection, resample_1min=True
+        )
         # Set up market data client.
-        market_data = self.setup_talos_market_data()
+        market_data = self.setup_test_market_data(im_client)
         # Set up processing parameters.
         timedelta = pd.Timedelta("1D")
         ts_column_name = "timestamp"
@@ -79,18 +78,18 @@ class TestRealTimeMarketData2(
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
         # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
+        hsql.remove_table(self.connection, "example2_marketdata")
 
     def test_get_data_for_interval1(self) -> None:
         """
         - Ask data for [9:30, 9:45]
         """
         # Create test table.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = icdc.get_example2_realtime_client(
+            self.connection, resample_1min=True
+        )
         # Set up market data client.
-        market_data = self.setup_talos_market_data()
+        market_data = self.setup_test_market_data(im_client)
         # Specify processing parameters.
         start_ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
         end_ts = pd.Timestamp("2022-04-22 09:45:00-05:00")
@@ -110,18 +109,18 @@ class TestRealTimeMarketData2(
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
         # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
+        hsql.remove_table(self.connection, "example2_marketdata")
 
     def test_get_data_for_interval2(self) -> None:
         """
         - Ask data for [10:30, 12:00]
         """
         # Create test table.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = icdc.get_example2_realtime_client(
+            self.connection, resample_1min=True
+        )
         # Set up market data client.
-        market_data = self.setup_talos_market_data()
+        market_data = self.setup_test_market_data(im_client)
         # Set up processing parameters.
         start_ts = pd.Timestamp("2022-04-22 10:30:00-05:00")
         end_ts = pd.Timestamp("2022-04-22 12:00:00-05:00")
@@ -141,7 +140,7 @@ class TestRealTimeMarketData2(
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
         # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
+        hsql.remove_table(self.connection, "example2_marketdata")
 
     def test_get_data_at_timestamp1(self) -> None:
         """
@@ -149,18 +148,16 @@ class TestRealTimeMarketData2(
         - The returned data is for 9:35
         """
         # Create test table.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = icdc.get_example2_realtime_client(
+            self.connection, resample_1min=True
+        )
         # Set up market data client.
-        market_data = self.setup_talos_market_data()
+        market_data = self.setup_test_market_data(im_client)
         # Set up processing parameters.
         ts = pd.Timestamp("2022-04-22 09:30:00-05:00")
         ts_col_name = "timestamp"
         asset_ids = None
-        actual = market_data.get_data_at_timestamp(
-            ts, ts_col_name, asset_ids
-        )
+        actual = market_data.get_data_at_timestamp(ts, ts_col_name, asset_ids)
         # pylint: disable=line-too-long
         expected_df_as_str = r"""# df=
         index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
@@ -172,25 +169,25 @@ class TestRealTimeMarketData2(
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
         # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
+        hsql.remove_table(self.connection, "example2_marketdata")
 
     def test_get_twap_price1(self) -> None:
         """
         Test `get_twap_price()` for specified parameters.
         """
         # Create test table.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = icdc.get_example2_realtime_client(
+            self.connection, resample_1min=True
+        )
         # Set up market data client.
-        market_data = self.setup_talos_market_data()
+        market_data = self.setup_test_market_data(im_client)
         # Set up processing parameters.
         start_ts = pd.Timestamp("2022-04-22 10:30:00-05:00")
         end_ts = pd.Timestamp("2022-04-22 15:00:00-05:00")
         ts_col_name = "timestamp"
         asset_ids = None
         column = "close"
-        # Get 
+        # Get
         actual = market_data.get_twap_price(
             start_ts, end_ts, ts_col_name, asset_ids, column
         )
@@ -205,55 +202,7 @@ class TestRealTimeMarketData2(
             actual, expected_length, expected_unique_values, expected_df_as_str
         )
         # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
-
-    @staticmethod
-    def _get_test_data() -> pd.DataFrame:
-        """
-        Create a test Talos OHLCV dataframe.
-        """
-        test_data = pd.DataFrame(
-            columns=[
-                "id",
-                "timestamp",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "ticks",
-                "currency_pair",
-                "exchange_id",
-                "end_download_timestamp",
-                "knowledge_timestamp",
-            ],
-            # fmt: off
-            # pylint: disable=line-too-long
-            data=[
-                [0, 1650637800000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
-                 pd.Timestamp("2022-04-22")],
-                [1, 1650638400000, 31, 41, 51, 61, 71, 72, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
-                 pd.Timestamp("2022-04-22")],
-                [2, 1650639600000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
-                 pd.Timestamp("2022-04-22")],
-                [3, 1650641400000, 34, 44, 54, 64, 74, 74, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
-                 pd.Timestamp("2022-04-22")],
-                [4, 1650645000000, 35, 45, 55, 65, 75, 75, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
-                 pd.Timestamp("2022-04-22")],
-                [5, 1650647400000, 36, 46, 56, 66, 76, 76, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
-                 pd.Timestamp("2022-04-22")]
-            ]
-            # pylint: enable=line-too-long
-            # fmt: on
-        )
-        return test_data
-
-    def _create_test_table(self) -> None:
-        """
-        Create a test Talos OHLCV table in DB.
-        """
-        query = imvtadbut.get_talos_ohlcv_create_table_query()
-        self.connection.cursor().execute(query)
+        hsql.remove_table(self.connection, "example2_marketdata")
 
     def _check_dataframe(
         self,

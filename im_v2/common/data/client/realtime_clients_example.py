@@ -171,11 +171,11 @@ def get_example1_realtime_client(
     connection: hsql.DbConnection, resample_1min: bool
 ) -> Example1SqlRealTimeImClient:
     """
-    Set up a real time SQL client.
+    Set up a real time Example1 SQL client.
 
-    - Creates a local DB (in test environment)
-    - Uploads test data
-    - Creates a client connected to the local DB
+    - Creates an Example1 table
+    - Uploads example1 data
+    - Creates a client connected to the given DB
     """
     # Create example table.
     table_name = "example1_marketdata"
@@ -186,4 +186,168 @@ def get_example1_realtime_client(
     hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
     im_client = Example1SqlRealTimeImClient(resample_1min, connection, table_name)
+    return im_client
+
+
+# #############################################################################
+# TestSqlRealTimeImClient
+# #############################################################################
+
+
+def get_example2_create_table_query() -> str:
+    """
+    Get SQL query to create a test table.
+
+    The table schema corresponds to the OHLCV data and is used for
+    testing.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS example2_marketdata(
+            id SERIAL PRIMARY KEY,
+            timestamp BIGINT NOT NULL,
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            volume NUMERIC,
+            ticks NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL,
+            end_download_timestamp TIMESTAMP,
+            knowledge_timestamp TIMESTAMP
+            )
+            """
+    return query
+
+
+def create_example2_sql_data():
+    """
+    Create an Example2 OHLCV dataframe.
+
+    It recreates OHLCV data found in Talos and CCXT providers
+    """
+    test_data = pd.DataFrame(
+        columns=[
+            "id",
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "ticks",
+            "currency_pair",
+            "exchange_id",
+            "end_download_timestamp",
+            "knowledge_timestamp",
+        ],
+        # fmt: off
+        # pylint: disable=line-too-long
+        data=[
+            [0, 1650637800000, 30, 40, 50, 60, 70, 80, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
+                pd.Timestamp("2022-04-22")],
+            [1, 1650638400000, 31, 41, 51, 61, 71, 72, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
+                pd.Timestamp("2022-04-22")],
+            [2, 1650639600000, 32, 42, 52, 62, 72, 73, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
+                pd.Timestamp("2022-04-22")],
+            [3, 1650641400000, 34, 44, 54, 64, 74, 74, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
+                pd.Timestamp("2022-04-22")],
+            [4, 1650645000000, 35, 45, 55, 65, 75, 75, "ETH_USDT", "binance", pd.Timestamp("2022-04-22"),
+                pd.Timestamp("2022-04-22")],
+            [5, 1650647400000, 36, 46, 56, 66, 76, 76, "BTC_USDT", "binance", pd.Timestamp("2022-04-22"),
+                pd.Timestamp("2022-04-22")]
+        ]
+        # pylint: enable=line-too-long
+        # fmt: on
+    )
+    return test_data
+
+
+class Example2SqlRealTimeImClient(icdc.SqlRealTimeImClient):
+    def __init__(
+        self,
+        resample_1min: bool,
+        db_connection: hsql.DbConnection,
+        table_name: str,
+    ):
+        vendor = "mock"
+        super().__init__(
+            resample_1min, db_connection, table_name=table_name, vendor=vendor
+        )
+        self._mode = "market_data"
+
+    @staticmethod
+    def should_be_online() -> bool:
+        """
+        The real-time system for Talos should always be online.
+        """
+        return True
+
+    def _apply_normalization(
+        self, data: pd.DataFrame, *, full_symbol_col_name: Optional[str] = None
+    ) -> pd.DataFrame:
+        """
+        Apply OHLCV normalization.
+
+        - Add `start_timestamp` column in UTC timestamp format.
+        - Add `end_timestamp` column in UTC timestamp format.
+        - Add `asset_id` column which is result of mapping full_symbol to integer.
+        - Drop extra columns.
+        - The output looks like:
+        ```
+        open  high  low   close volume  start_timestamp          end_timestamp            asset_id
+        0.825 0.826 0.825 0.825 18427.9 2022-03-16 2:46:00+00:00 2022-03-16 2:47:00+00:00 3303714233
+        0.825 0.826 0.825 0.825 52798.5 2022-03-16 2:47:00+00:00 2022-03-16 2:48:00+00:00 3303714233
+        ```
+        """
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        ohlcv_columns = [
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            full_symbol_col_name,
+            "start_timestamp",
+            "asset_id",
+        ]
+        # Add `asset_id` column using mapping on `full_symbol` column.
+        data["asset_id"] = data[full_symbol_col_name].apply(
+            ivcu.string_to_numerical_id
+        )
+        # Convert to int64 to keep NaNs alongside with int values.
+        data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
+        # Generate `start_timestamp` from `end_timestamp` by substracting delta.
+        delta = pd.Timedelta("1M")
+        data["start_timestamp"] = data["timestamp"].apply(
+            lambda pd_timestamp: (pd_timestamp - delta)
+        )
+        data = data.set_index("timestamp")
+        # Rearrange the columns.
+        data = data.loc[:, ohlcv_columns]
+        return data
+
+
+def get_example2_realtime_client(
+    connection: hsql.DbConnection, resample_1min: bool
+) -> Example1SqlRealTimeImClient:
+    """
+    Set up a real time Example2 SQL client.
+
+    - Creates an Example2 table
+    - Uploads example2 data
+    - Creates a client connected to the given DB
+    """
+    # Create example table.
+    table_name = "example2_marketdata"
+    query = get_example2_create_table_query()
+    connection.cursor().execute(query)
+    # Create a data example and upload to local DB.
+    data = create_example2_sql_data()
+    hsql.copy_rows_with_copy_from(connection, data, table_name)
+    # Initialize a client connected to the local DB.
+    im_client = Example2SqlRealTimeImClient(resample_1min, connection, table_name)
     return im_client
