@@ -203,6 +203,15 @@ class CryptoChassisExchange:
                 df_csv = data_json[mode]["urls"][0]["url"]
                 # Convert CSV into dataframe.
                 ohlcv_data = pd.read_csv(df_csv, compression="gzip")
+                # Filter the time period since Crypto Chassis doesn't provide this functionality. 
+                # (CmTask #1887).
+                if start_timestamp:
+                    # Convert datetime to unix time, e.g. `2022-01-09T00:00:00` -> `1641686400`.
+                    start_unix = int(start_timestamp.timestamp())
+                    ohlcv_data = ohlcv_data[(ohlcv_data['timestamp'] >= start_unix)]
+                if end_timestamp:
+                    end_unix = int(end_timestamp.timestamp())
+                    ohlcv_data = ohlcv_data[(ohlcv_data['timestamp'] <= end_unix)]
             else:
                 hdbg.dfatal(f"Unknown data mode: `{mode}`. Use `recent` for real-time and `historical` for historical data.")
         # Rename time column.
