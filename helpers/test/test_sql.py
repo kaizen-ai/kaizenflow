@@ -18,6 +18,11 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): helpers can't depend from im.
 class TestSql1(imvcddbut.TestImDbHelper):
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+    
     @pytest.mark.slow("10 seconds.")
     def test_db_connection_to_tuple(self) -> None:
         """
@@ -27,11 +32,14 @@ class TestSql1(imvcddbut.TestImDbHelper):
         expected = {
             "host": "localhost",
             "dbname": "im_postgres_db_local",
-            "port": 5432,
             "user": "aljsdalsd",
             "password": "alsdkqoen",
         }
-        self.assertEqual(actual_details._asdict(), expected)
+        # Drop the `port` key since it is assigned a dynamic value.
+        actual_details_dict = actual_details._asdict()
+        del actual_details_dict["port"]
+        #
+        self.assertEqual(actual_details_dict, expected)
 
     @pytest.mark.slow("17 seconds.")
     def test_create_database(self) -> None:

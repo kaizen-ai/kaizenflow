@@ -5,7 +5,7 @@ Contain info specific of `//cmamp` repo.
 import functools
 import logging
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 _LOG = logging.getLogger(__name__)
 
@@ -154,6 +154,8 @@ def enable_privileged_mode() -> bool:
     else:
         if is_mac():
             val = True
+        elif is_cmamp_prod():
+            val = False
         elif is_dev_ck():
             val = True
         elif is_dev4():
@@ -177,6 +179,8 @@ def has_docker_sudo() -> bool:
         val = False
     elif is_mac():
         val = True
+    elif is_cmamp_prod():
+        val = False
     else:
         _raise_invalid_host()
     return val
@@ -193,6 +197,11 @@ def has_dind_support() -> bool:
     if not is_inside_docker():
         # Outside Docker there is no privileged mode.
         return False
+    # TODO(gp): This part is not multi-process friendly. When multiple
+    # processes try to run this code they interfere. A solution is to run `ip
+    # link` in the entrypoint and create a has_docker_privileged_mode file
+    # which contains the value.
+    # return True
     # Thus we rely on the approach from https://stackoverflow.com/questions/32144575
     # checking if we can execute.
     # Sometimes there is some state left, so we need to clean it up.
@@ -213,7 +222,9 @@ def has_dind_support() -> bool:
     rc = os.system(cmd)
     # dind is supported on both Mac and GH Actions.
     if True:
-        if get_name() == "//dev_tools":
+        if is_cmamp_prod():
+            assert not has_dind, "Not expected privileged mode"
+        elif get_name() == "//dev_tools":
             assert not has_dind, "Not expected privileged mode"
         else:
             if is_mac() or is_dev_ck() or is_inside_ci():
@@ -234,12 +245,23 @@ def use_docker_sibling_containers() -> bool:
     return val
 
 
-def use_docker_shared_cache() -> bool:
+def get_shared_data_dirs() -> Optional[Dict[str, str]]:
     """
-    Return whether to use Docker shared cache.
+    Get path of dir storing data shared between different users on the host and
+    Docker.
+
+    E.g., one can mount a central dir `/data/shared`, shared by multiple
+    users, on a dir `/shared_data` in Docker.
     """
-    val = bool(is_dev4())
-    return val
+    if is_dev4():
+        shared_data_dirs = {"/local/home/share/cache": "/cache"}
+    elif is_dev_ck():
+        shared_data_dirs = {"/data/shared": "/shared_data"}
+    elif is_mac() or is_inside_ci():
+        shared_data_dirs = None
+    else:
+        _raise_invalid_host()
+    return shared_data_dirs
 
 
 def use_docker_network_mode_host() -> bool:
@@ -270,6 +292,8 @@ def run_docker_as_root() -> bool:
         # outside.
         res = False
     elif is_mac():
+        res = False
+    elif is_cmamp_prod():
         res = False
     else:
         _raise_invalid_host()
@@ -349,6 +373,14 @@ def is_CK_S3_available() -> bool:
     return val
 
 
+def is_cmamp_prod() -> bool:
+    """
+    Detect whether this is a production container.
+    This env var is set inside devops/docker_build/prod.Dockerfile.
+    """
+    return os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False)
+
+
 # #############################################################################
 
 
@@ -368,6 +400,7 @@ def config_func_to_str() -> str:
             "get_invalid_words",
             "get_name",
             "get_repo_map",
+            "get_shared_data_dirs",
             "has_dind_support",
             "has_docker_sudo",
             "is_AM_S3_available",
@@ -379,7 +412,6 @@ def config_func_to_str() -> str:
             "is_mac",
             "run_docker_as_root",
             "skip_submodules_test",
-            "use_docker_shared_cache",
             "use_docker_sibling_containers",
             "use_docker_network_mode_host",
         ]
