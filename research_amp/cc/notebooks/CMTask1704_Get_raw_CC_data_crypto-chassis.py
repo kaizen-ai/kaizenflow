@@ -323,8 +323,11 @@ cplpluti.plot_barplot(liquidity_stats)
 # %% [markdown]
 # ## Is the quoted spread constant over the day?
 
+# %% [markdown]
+# ### One symbol
+
 # %%
-def plot_overtime_quantities(df_sample, full_symbol, resampling_rule, num_stds=1):
+def calculate_overtime_quantities(df_sample, full_symbol, resampling_rule, num_stds=1, plot_results=True):
     # Choose specific `full_symbol`.
     data = df_sample.swaplevel(axis=1)[full_symbol]
     # Resample the data.
@@ -359,25 +362,56 @@ def plot_overtime_quantities(df_sample, full_symbol, resampling_rule, num_stds=1
     # Integrate time.
     df["time"] = df.index.time
     # Construct value curves over time.
-    for cols in df.columns[:-1]:
-        # Calculate man and std over the daytime.
-        time_grouper = df.groupby("time")
-        mean = time_grouper[cols].mean()
-        std = time_grouper[cols].std()
-        # Plot the results.
-        fig = plt.figure()
-        fig.suptitle(f"{cols} over time", fontsize=20)
-        plt.ylabel(cols, fontsize=16)
-        (mean + num_stds * std).plot(color="blue")
-        mean.plot(lw=2, color="black")
+    if plot_results:
+        for cols in df.columns[:-1]:
+            # Calculate man and std over the daytime.
+            time_grouper = df.groupby("time")
+            mean = time_grouper[cols].mean()
+            std = time_grouper[cols].std()
+            # Plot the results.
+            fig = plt.figure()
+            fig.suptitle(f"{cols} over time", fontsize=20)
+            plt.ylabel(cols, fontsize=16)
+            (mean + num_stds * std).plot(color="blue")
+            mean.plot(lw=2, color="black")
     return df
 
 
 # %%
 full_symbol = "binance::BNB_USDT"
 # full_symbol = "binance::BTC_USDT"
-stats_df = plot_overtime_quantities(final_df, full_symbol, "10T")
+stats_df = calculate_overtime_quantities(final_df, full_symbol, "10T")
 display(stats_df.head(3))
+
+
+# %% [markdown]
+# ### Multiple Symbols
+
+# %%
+def calculate_overtime_quantities_multiple_symbols(df_sample, full_symbols, resampling_rule, plot_results=True):
+    result = []
+    # Calculate overtime stats for each `full_symbol`.
+    for symb in full_symbols:
+        df = calculate_overtime_quantities(df_sample, symb, resampling_rule, plot_results=False)
+        df["full_symbol"] = symb
+        result.append(df)
+    mult_stats_df = pd.concat(result)
+    # Convert to multiindex.
+    mult_stats_df_conv = dtfsysonod._convert_to_multiindex(mult_stats_df, "full_symbol")
+    # Integrate time inside the day.
+    mult_stats_df_conv["time_inside_days"] = mult_stats_df_conv.index.time
+    # Compute the median value for all quantities.
+    mult_stats_df_conv = mult_stats_df_conv.groupby("time_inside_days").agg("median")
+    # Plot the results.
+    if plot_results:
+        for cols in mult_stats_df.columns[:-2]:
+            mult_stats_df_conv[cols].plot(title = f"{cols} median over time", fontsize=12)
+    return mult_stats_df_conv
+
+
+# %%
+stats_df_mult_symbols = calculate_overtime_quantities_multiple_symbols(final_df, full_symbols, "10T", plot_results=True)
+display(stats_df_mult_symbols.head(3))
 
 # %% [markdown]
 # ## - Compute some high-level stats (e.g., median relative spread, median bid / ask notional, volatility, volume) by coins
