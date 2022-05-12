@@ -78,14 +78,15 @@ class CryptoChassisExchange:
         """
         Download snapshot data on market depth.
 
+            timestamp 	bid_price 	bid_size 	ask_price 	ask_size
+        0 	1641686400 	41678.35 	0.017939 	41686.97 	1.69712319
+        1 	1641686401 	41678.35 	0.017939 	41690.58 	0.04
+
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :param start_timestamp: start of processing
         :param depth: allowed values: 1 to 10. Defaults to 1. 
-        :return: market depth data, e.g.
-                timestamp 	bid_price 	bid_size 	ask_price 	ask_size
-          0 	1641686400 	41678.35 	0.017939 	41686.97 	1.69712319
-          1 	1641686401 	41678.35 	0.017939 	41690.58 	0.04
+        :return: market depth data
         """
         # Verify that date parameters are of correct format.
         if start_timestamp:
@@ -151,6 +152,10 @@ class CryptoChassisExchange:
         """
         Download snapshot of ohlcv.
 
+            timestamp 	open 	    high 	    low 	    close 	   volume  vwap  number_of_trades 	twap
+        0 	1634011620 	56775.59 	56799.51 	56775.59 	56799.51 	0.184718 	56781.6130 	9 	56783.3033
+        1 	1634011680 	56822.35 	56832.25 	56815.59 	56815.59 	0.363495 	56828.9840 	16 	56828.9512
+
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
         :param mode: `recent` for real-time data, `historical` for historical data
@@ -159,10 +164,7 @@ class CryptoChassisExchange:
         :param end_time: timestamp of end
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this 
             endpoint is 1 request per second per public IP.
-        :return: ohlcv data, e.g.
-                timestamp 	open 	high 	low 	close 	volume 	vwap 	number_of_trades 	twap
-          0 	1634011620 	56775.59 	56799.51 	56775.59 	56799.51 	0.184718 	56781.6130 	9 	56783.3033
-          1 	1634011680 	56822.35 	56832.25 	56815.59 	56815.59 	0.363495 	56828.9840 	16 	56828.9512
+        :return: ohlcv data
         """
         # Verify that date parameters are of correct format.
         if start_timestamp:
@@ -231,13 +233,14 @@ class CryptoChassisExchange:
         """
         Download snapshot of trade data.
 
+            timestamp 	price 	    size 	   is_buyer_maker
+        0 	1641686404 	41692.50 	0.012473 	0
+        1 	1641686441 	41670.00 	0.001194 	0
+
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
         :param start_time: timestamp of start
-        :return: trade data, e.g.
-                timestamp 	price 	    size 	   is_buyer_maker
-          0 	1641686404 	41692.50 	0.012473 	0
-          1 	1641686441 	41670.00 	0.001194 	0
+        :return: trade data
         """
         # Verify that date parameters are of correct format.
         if start_timestamp:
