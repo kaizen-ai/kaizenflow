@@ -1,7 +1,9 @@
 import abc
 import logging
+import os
 from typing import Any, Callable
 
+import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
 import helpers.hsql_test as hsqltest
@@ -25,7 +27,10 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
     @classmethod
     def _get_compose_file(cls) -> str:
         idx = cls.get_id()
-        docker_compose_path = "oms/devops/compose/docker-compose.yml"
+        dir_name = hgit.get_amp_abs_path()
+        docker_compose_path = os.path.join(
+            dir_name, "oms/devops/compose/docker-compose.yml"
+        )
         docker_compose_path_idx: str = hio.add_idx_to_filename(
             docker_compose_path, idx
         )
