@@ -51,11 +51,10 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "ck"
-    # TODO(Nina): @all replace `s3://cryptokaizen-data` with `get_s3_bucket()` after #1667 is implemented.
-    config["load"]["data_dir"] = os.path.join(
-        "s3://cryptokaizen-data",
-        "historical",
-    )
+    #
+    s3_bucket_path = hs3.get_s3_bucket_path(config["load"]["aws_profile"])
+    s3_path = os.path.join(s3_bucket_path, "historical")
+    config["load"]["data_dir"] = s3_path
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["vendor"] = "CCXT"
@@ -169,7 +168,7 @@ def _plot_bad_data_stats(bad_data_stats: pd.DataFrame) -> None:
 # ## Initialize client
 
 # %%
-client = icdcl.ccxt_clients.CcxtHistoricalPqByTileClient(
+client = icdcl.CcxtHistoricalPqByTileClient(
     config["data"]["version"],
     config["data"]["resample_1min"],
     config["load"]["data_dir"],
