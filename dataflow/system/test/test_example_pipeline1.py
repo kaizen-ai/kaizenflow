@@ -11,6 +11,8 @@ import helpers.hasyncio as hasynci
 import helpers.hunit_test as hunitest
 import im_v2.common.db.db_utils as imvcddbut
 import oms.test.oms_db_helper as otodh
+import im_v2.common.data.client as icdc
+import market_data.real_time_market_data as mdrtmada
 
 _LOG = logging.getLogger(__name__)
 
@@ -85,9 +87,10 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
+    # TODO(gp): @Danya this should be setup method.
     @staticmethod
     def setup_test_market_data(
-            im_client: icdc.SqlRealTimeImClient
+        im_client: icdc.SqlRealTimeImClient
     ) -> mdrtmada.RealTimeMarketData2:
         """
         Setup RealTimeMarketData2 interface.

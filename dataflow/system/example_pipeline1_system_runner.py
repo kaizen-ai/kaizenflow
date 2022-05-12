@@ -10,6 +10,7 @@ from typing import List, Optional, Tuple
 import pandas as pd
 
 import asyncio
+import helpers.hsql as hsql
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi

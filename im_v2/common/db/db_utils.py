@@ -8,10 +8,12 @@ import im_v2.common.db.db_utils as imvcddbut
 import abc
 import argparse
 import logging
+import os
 from typing import Optional
 
 import psycopg2 as psycop
 
+import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
 import helpers.hsql_test as hsqltest
@@ -161,7 +163,9 @@ class TestImDbHelper(hsqltest.TestDbHelper, abc.ABC):
     @classmethod
     def _get_compose_file(cls) -> str:
         idx = cls.get_id()
-        docker_compose_path = "im_v2/devops/compose/docker-compose.yml"
+        dir_name = hgit.get_amp_abs_path()
+        docker_compose_path = os.path.join(dir_name,
+                                           "im_v2/devops/compose/docker-compose.yml")
         docker_compose_path_idx: str = hio.add_idx_to_filename(
             docker_compose_path, idx
         )
