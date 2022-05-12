@@ -21,10 +21,10 @@
 
 import logging
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
-import core.explore as coexplor
 import core.finance as cofinanc
 import core.finance.bid_ask as cfibiask
 import core.finance.resampling as cfinresa
@@ -207,7 +207,9 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     bid_ask_metrics["relative_spread"] = (
         bid_ask_metrics["relative_spread"] * 10000
     )
-    bid_ask_metrics = bid_ask_metrics.rename(columns={"relative_spread": "relative_spread_bps"})
+    bid_ask_metrics = bid_ask_metrics.rename(
+        columns={"relative_spread": "relative_spread_bps"}
+    )
     return bid_ask_metrics
 
 
@@ -322,7 +324,7 @@ cplpluti.plot_barplot(liquidity_stats)
 # ## Is the quoted spread constant over the day?
 
 # %%
-def plot_overtime_spread(df_sample, full_symbol, resampling_rule, num_stds=1):
+def plot_overtime_quantities(df_sample, full_symbol, resampling_rule, num_stds=1):
     # Choose specific `full_symbol`.
     data = df_sample.swaplevel(axis=1)[full_symbol]
     # Resample the data.
@@ -342,28 +344,40 @@ def plot_overtime_spread(df_sample, full_symbol, resampling_rule, num_stds=1):
     tradability = resampler["close.ret_0"].mean().abs() / rel_spread_bps
     tradability = tradability.rename("tradability")
     # Collect all the results.
-    df = pd.concat([quoted_spread, rets_vix, volume, rel_spread_bps, bid_value, ask_value, tradability], axis=1)
+    df = pd.concat(
+        [
+            quoted_spread,
+            rets_vix,
+            volume,
+            rel_spread_bps,
+            bid_value,
+            ask_value,
+            tradability,
+        ],
+        axis=1,
+    )
     # Integrate time.
     df["time"] = df.index.time
     # Construct value curves over time.
     for cols in df.columns[:-1]:
-        mean = df.groupby("time")[cols].mean()
-        std = df.groupby("time")[cols].std()
+        # Calculate man and std over the daytime.
+        time_grouper = df.groupby("time")
+        mean = time_grouper[cols].mean()
+        std = time_grouper[cols].std()
         # Plot the results.
+        fig = plt.figure()
+        fig.suptitle(f"{cols} over time", fontsize=20)
+        plt.ylabel(cols, fontsize=16)
         (mean + num_stds * std).plot(color="blue")
         mean.plot(lw=2, color="black")
     return df
 
 
 # %%
-# full_symbol = "binance::BNB_USDT"
-full_symbol = "binance::BTC_USDT"
-stats_df = plot_overtime_spread(final_df, full_symbol, "10T")
+full_symbol = "binance::BNB_USDT"
+# full_symbol = "binance::BTC_USDT"
+stats_df = plot_overtime_quantities(final_df, full_symbol, "10T")
 display(stats_df.head(3))
-
-# %%
-
-# %%
 
 # %% [markdown]
 # ## - Compute some high-level stats (e.g., median relative spread, median bid / ask notional, volatility, volume) by coins
