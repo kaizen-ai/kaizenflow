@@ -37,8 +37,10 @@ import core.config.config_ as cconconf
 import core.finance as cofinanc
 import core.finance.resampling as cfinresa
 import core.finance.tradability as cfintrad
+import core.plotting.misc_plotting as cplmiplo
 import core.statistics.sharpe_ratio as cstshrat
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 # %%
@@ -68,6 +70,8 @@ def get_synthetic_data_config() -> cconconf.Config:
     config["data"]["rets_col"] = "rets_cleaned"
     # Choose the timeframe for resampling.
     config["data"]["resampling_rule"] = "5T"
+    # Number of periods for returns normalization.
+    config["data"]["lookback_in_samples"] = 100
     return config
 
 
@@ -80,7 +84,7 @@ print(config)
 # # Functions
 
 # %%
-def compute_and_clean_returns(
+def compute_normalize_returns(
     df: pd.DataFrame,
     price_col: str,
     rets_mode: str,
@@ -88,11 +92,27 @@ def compute_and_clean_returns(
     rets_col: str,
     plot_rets: bool,
 ) -> pd.DataFrame:
+    """
+    Calculate simple returns as well as normalized ones and plot the results.
+
+    :param df: OHLCV data
+    :param price_col: Price column that will be used to calculate returns
+    :param rets_mode: "pct_change", "log_rets" or "diff"
+    :param lookback: Number of periods for returns normalization
+    :param rets_col: Column to plot ("rets" or "rets_cleaned")
+    :param plot_rets: Whether or not plot returns
+    :return: OHLCV data with returns and normalized returns
+    """
     # Compute returns.
     df["rets"] = cofinanc.compute_ret_0(df[price_col], rets_mode)
-    # Clean them with Rolling std dev for returns.
+    # Normalize returns.
     df["rets_cleaned"] = df["rets"]
+    # Demean step.
+    df["rets_cleaned"] -= df["rets_cleaned"].rolling(lookback).mean()
+    # Risk adjustment.
     df["rets_cleaned"] /= df["rets_cleaned"].rolling(lookback).std()
+    # Remove NaNs.
+    df = hpandas.dropna(df, report_stats=True)
     if plot_rets:
         df[rets_col].plot()
     return df
@@ -102,10 +122,10 @@ def compute_and_clean_returns(
 # # Extract returns from the real data
 
 # %% [markdown]
-# ## Load BTC data from `crypto-chassis`
+# ## Load BTC data from `crypto-chassis` (shared_data folder)
 
 # %%
-btc_df = pd.read_csv("BTC_one_year.csv", index_col="timestamp")
+btc_df = pd.read_csv("/shared_data/BTC_one_year.csv", index_col="timestamp")
 ohlcv_cols = [
     "open",
     "high",
@@ -126,18 +146,16 @@ btc = btc_df.copy()
 price_col = config["data"]["reference_price"]
 rets_mode = config["data"]["rets_mode"]
 rets_col = config["data"]["rets_col"]
-lookback = 100
+lookback_in_samples = config["data"]["lookback_in_samples"]
 resampling_rule = config["data"]["resampling_rule"]
 # Resample.
 btc = cfinresa.resample_ohlcv_bars(btc, resampling_rule)
 # Add returns.
-btc = compute_and_clean_returns(
-    btc, price_col, rets_mode, lookback, rets_col, plot_rets=True
+btc = compute_normalize_returns(
+    btc, price_col, rets_mode, lookback_in_samples, rets_col, plot_rets=True
 )
 # Show snippet.
 display(btc.head())
-
-# %%
 
 # %%
 # Show the distribution of returns.
@@ -151,7 +169,7 @@ sns.displot(btc, x=rets_col)
 # Specify params.
 sample = btc
 ret_col = config["data"]["rets_col"]
-hit_rate = 0.502
+hit_rate = 0.505
 seed = 2
 alpha = 0.05
 method = "normal"
@@ -167,7 +185,7 @@ cfintrad.calculate_confidence_interval(btc["hit"], alpha, method)
 ## Show PnL for the current `hit_rate`
 pnl = (btc["predictions"] * btc[ret_col]).cumsum()
 pnl = pnl[pnl.notna()]
-pnl.plot()
+cplmiplo.plot_cumulative_returns(pnl, mode="pct")
 # Sharpe ratio.
 cstshrat.summarize_sharpe_ratio(pnl)
 
