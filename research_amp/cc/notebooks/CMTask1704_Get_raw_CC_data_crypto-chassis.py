@@ -34,7 +34,6 @@ import dataflow.core as dtfcore
 import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import research_amp.cc.crypto_chassis_api as raccchap
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -224,10 +223,10 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
 
 # %%
 # Read from crypto_chassis directly.
-#full_symbols = config["data"]["full_symbols"]
-#start_date = config["data"]["start_date"]
-#end_date = config["data"]["end_date"]
-#ohlcv_cc = raccchap.read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
+# full_symbols = config["data"]["full_symbols"]
+# start_date = config["data"]["start_date"]
+# end_date = config["data"]["end_date"]
+# ohlcv_cc = raccchap.read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
 
 # Read saved 1 month of data.
 ohlcv_cc = pd.read_csv("/shared_data/cc_ohlcv.csv", index_col="timestamp")
@@ -264,15 +263,16 @@ bnb_ex.plot()
 # TODO(Max): Refactor the loading part once #1766 is implemented.
 
 # %%
+# Read from crypto_chassis directly.
 # Specify the params.
-#full_symbols = config["data"]["full_symbols"]
-#start_date = config["data"]["start_date"]
-#end_date = config["data"]["end_date"]
+# full_symbols = config["data"]["full_symbols"]
+# start_date = config["data"]["start_date"]
+# end_date = config["data"]["end_date"]
 # Get the data.
-#bid_ask_df = raccchap.read_and_resample_bid_ask_data(
+# bid_ask_df = raccchap.read_and_resample_bid_ask_data(
 #    full_symbols, start_date, end_date, "5T"
-#)
-#bid_ask_df.head(3)
+# )
+# bid_ask_df.head(3)
 
 # Read saved 1 month of data.
 bid_ask_df = pd.read_csv("/shared_data/bid_ask_data.csv", index_col="timestamp")
@@ -334,7 +334,9 @@ cplpluti.plot_barplot(liquidity_stats)
 # ### One symbol
 
 # %%
-def calculate_overtime_quantities(df_sample, full_symbol, resampling_rule, num_stds=1, plot_results=True):
+def calculate_overtime_quantities(
+    df_sample, full_symbol, resampling_rule, num_stds=1, plot_results=True
+):
     # Choose specific `full_symbol`.
     data = df_sample.swaplevel(axis=1)[full_symbol]
     # Resample the data.
@@ -386,9 +388,12 @@ def calculate_overtime_quantities(df_sample, full_symbol, resampling_rule, num_s
 
 
 # %%
-full_symbol = "binance::BNB_USDT"
-# full_symbol = "binance::BTC_USDT"
-stats_df = calculate_overtime_quantities(final_df, full_symbol, "10T")
+full_symbol = "binance::BNB_USDT"  # "binance::BTC_USDT"
+resample_rule_stats = "10T"
+
+stats_df = calculate_overtime_quantities(
+    final_df, full_symbol, resample_rule_stats
+)
 display(stats_df.head(3))
 
 
@@ -396,30 +401,45 @@ display(stats_df.head(3))
 # ### Multiple Symbols
 
 # %%
-def calculate_overtime_quantities_multiple_symbols(df_sample, full_symbols, resampling_rule, plot_results=True):
+def calculate_overtime_quantities_multiple_symbols(
+    df_sample, full_symbols, resampling_rule, plot_results=True
+):
     result = []
     # Calculate overtime stats for each `full_symbol`.
     for symb in full_symbols:
-        df = calculate_overtime_quantities(df_sample, symb, resampling_rule, plot_results=False)
+        df = calculate_overtime_quantities(
+            df_sample, symb, resampling_rule, plot_results=False
+        )
         df["full_symbol"] = symb
         result.append(df)
     mult_stats_df = pd.concat(result)
     # Convert to multiindex.
-    mult_stats_df_conv = dtfsysonod._convert_to_multiindex(mult_stats_df, "full_symbol")
+    mult_stats_df_conv = dtfsysonod._convert_to_multiindex(
+        mult_stats_df, "full_symbol"
+    )
     # Integrate time inside the day.
     mult_stats_df_conv["time_inside_days"] = mult_stats_df_conv.index.time
     # Compute the median value for all quantities.
-    mult_stats_df_conv = mult_stats_df_conv.groupby("time_inside_days").agg("median")
+    mult_stats_df_conv = mult_stats_df_conv.groupby("time_inside_days").agg(
+        "median"
+    )
     # Plot the results.
     if plot_results:
         # Get rid of `time` and `full_symbol`.
         for cols in mult_stats_df.columns[:-2]:
-            mult_stats_df_conv[cols].plot(title = f"{cols} median over time", fontsize=12)
+            mult_stats_df_conv[cols].plot(
+                title=f"{cols} median over time", fontsize=12
+            )
     return mult_stats_df_conv
 
 
-# %%
-stats_df_mult_symbols = calculate_overtime_quantities_multiple_symbols(final_df, full_symbols, "10T")
+# %% run_control={"marked": false}
+full_symbols = config["data"]["full_symbols"]
+resample_rule_stats = "10T"
+
+stats_df_mult_symbols = calculate_overtime_quantities_multiple_symbols(
+    final_df, full_symbols, resample_rule_stats
+)
 display(stats_df_mult_symbols.head(3))
 
 # %% [markdown]
@@ -427,7 +447,9 @@ display(stats_df_mult_symbols.head(3))
 
 # %%
 high_level_stats = pd.DataFrame()
-high_level_stats["median_relative_spread"] = final_df["relative_spread_bps"].median()
+high_level_stats["median_relative_spread"] = final_df[
+    "relative_spread_bps"
+].median()
 high_level_stats["median_notional_bid"] = final_df["bid_value"].median()
 high_level_stats["median_notional_ask"] = final_df["ask_value"].median()
 high_level_stats["median_notional_volume"] = (
@@ -444,5 +466,3 @@ for cols in high_level_stats.columns:
     fig.suptitle(f"{cols}", fontsize=15)
     plt.ylabel(cols, fontsize=12)
     cplpluti.plot_barplot(high_level_stats[cols])
-
-# %%
