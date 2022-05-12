@@ -598,9 +598,7 @@ class DAG:
         _LOG.debug("kwargs are %s", kwargs)
         # Execute `node.method()`.
         with htimer.TimedScope(logging.DEBUG, "node_execution") as ts:
-            print("nid", nid)
             node = self.get_node(nid)
-            print("node", node)
             try:
                 output = getattr(node, method)(**kwargs)
             except AttributeError as e:
