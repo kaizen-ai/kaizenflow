@@ -1411,7 +1411,7 @@ def integrate_diff_dirs(  # type: ignore
             hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
-    #_dassert_current_dir_matches(src_dir_basename)
+    # _dassert_current_dir_matches(src_dir_basename)
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
         src_dir_basename, dst_dir_basename, subdir
     )
@@ -1445,10 +1445,11 @@ def integrate_diff_dirs(  # type: ignore
         else:
             cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
             if remove_usual:
-                vals = ["\/\.github\/",
-                        ]
+                vals = [
+                    "\/\.github\/",
+                ]
                 regex = "|".join(vals)
-                cmd += f" --ignore_files=\'{regex}\'"
+                cmd += f" --ignore_files='{regex}'"
     _run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
@@ -2096,16 +2097,22 @@ def docker_login(ctx):  # type: ignore
 def _generate_compose_file(
     use_privileged_mode: bool,
     use_sibling_container: bool,
-    use_shared_cache: bool,
+    shared_data_dirs: Optional[str],
     mount_as_submodule: bool,
     use_network_mode_host: bool,
     file_name: Optional[str],
 ) -> str:
+    """
+    Generate `docker-compose.yaml` file and save it.
+
+    :param shared_data_dir: data directory in the host filesystem to mount to mount 
+        inside the container. None means no dir sharing
+    """
     _LOG.debug(
         hprint.to_str(
             "use_privileged_mode use_sibling_container "
-            "use_shared_cache mount_as_submodule use_network_mode_host "
-            "file_name"
+            "shared_data_dirs mount_as_submodule "
+            "use_network_mode_host file_name"
         )
     )
     txt = []
@@ -2204,16 +2211,20 @@ def _generate_compose_file(
         # This is at the level of `services.app`.
         indent_level = 2
         append(txt_tmp, indent_level)
-    #
-    if use_shared_cache:
-        # TODO(gp): Generalize by passing a dictionary.
-        txt_tmp = """
-        # Shared cache. This is specific of lime.
-        - /local/home/share/cache:/cache
-        """
-        # This is at the level of `services.app.volumes`.
-        indent_level = 3
-        append(txt_tmp, indent_level)
+        # Mount shared dirs.
+        if shared_data_dirs is not None:
+            hdbg.dassert_lt(0, len(shared_data_dirs))
+            #
+            txt_tmp = "# Shared data directories."
+            # This is at the level of `services.app.volumes`.
+            indent_level = 3
+            append(txt_tmp, indent_level)
+            # Mount all dirs that are specified.
+            for key, value in shared_data_dirs.items():
+                txt_tmp = f"""
+                - {key}:{value}
+                """
+                append(txt_tmp, indent_level)
     #
     if False:
         txt_tmp = """
@@ -2386,7 +2397,7 @@ def _get_docker_compose_paths(
     _generate_compose_file(
         hgit.execute_repo_config_code("enable_privileged_mode()"),
         hgit.execute_repo_config_code("use_docker_sibling_containers()"),
-        hgit.execute_repo_config_code("use_docker_shared_cache()"),
+        hgit.execute_repo_config_code("get_shared_data_dirs()"),
         mount_as_submodule,
         hgit.execute_repo_config_code("use_docker_network_mode_host()"),
         file_name,
