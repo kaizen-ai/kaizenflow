@@ -156,7 +156,10 @@ class CryptoChassisExchange:
         :param end_time: timestamp of end
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this 
             endpoint is 1 request per second per public IP.
-        :return: ohlcv data
+        :return: ohlcv data, e.g.
+                timestamp 	open 	high 	low 	close 	volume 	vwap 	number_of_trades 	twap
+            0 	1634011620 	56775.59 	56799.51 	56775.59 	56799.51 	0.184718 	56781.6130 	9 	56783.3033
+            1 	1634011680 	56822.35 	56832.25 	56815.59 	56815.59 	0.363495 	56828.9840 	16 	56828.9512
         """
         # Verify that date parameters are of correct format.
         if start_timestamp:
