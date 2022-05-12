@@ -386,41 +386,41 @@ def find_gaps_in_dataframes(
 
 
 def check_and_filter_matching_columns(
-    df: pd.DataFrame, requested_columns: List[str], filter_data_mode: str
+    df: pd.DataFrame, required_columns: List[str], filter_data_mode: str
 ) -> pd.DataFrame:
     """
-    Check that columns are the expected ones and if not filter data depending
+    Check that columns are the required ones and if not filter data depending
     on `filter_data_mode`.
 
     :param df: data to check columns for
-    :param requested_columns: columns to return, skipping reading columns that are not requested
+    :param required_columns: columns to return, skipping columns that are not required
     :param filter_data_mode: control behaviour with respect to extra or missing columns
-        - "assert": raise an error if requested columns do not match received columns
-        - "warn_and_trim": return the intersection of requested and received columns and
+        - "assert": raise an error if required columns do not match received columns
+        - "warn_and_trim": return the intersection of required and received columns and
            issue a warning
+    :return: input data as it is if required columns match received columns otherwise
+    processed data, see `filter_data_mode`
     """
     received_columns = df.columns.to_list()
+    dassert_lte(1, len(received_columns))
     #
     if filter_data_mode == "assert":
-        # Raise and assertion.
+        # Raise an assertion.
         only_warning = False
     elif filter_data_mode == "warn_and_trim":
         # Just issue a warning.
         only_warning = True
         # Get columns intersection while preserving the order of the columns.
-        columns_intersection = sorted(
-            set(received_columns) & set(requested_columns),
-            key=received_columns.index,
-        )
+        columns_intersection = [col_name for col_name in required_columns if col_name in received_columns]
         hdbg.dassert_lte(1, len(columns_intersection))
         df = df[columns_intersection]
     else:
         raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
     hdbg.dassert_set_eq(
-        requested_columns,
+        required_columns,
         received_columns,
         only_warning=only_warning,
-        msg=f"Received columns=`{received_columns}` do not match requested columns=`{requested_columns}`.",
+        msg=f"Received columns do not match required columns.",
     )
     return df
 

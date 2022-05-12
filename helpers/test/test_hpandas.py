@@ -1068,7 +1068,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
     def test_check_and_filter_matching_columns1(self) -> None:
         """
-        - requested columns = received columns
+        - required columns = received columns
         - `filter_data_mode` = "assert"
         """
         df = self.get_test_data()
@@ -1082,7 +1082,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
     def test_check_and_filter_matching_columns2(self) -> None:
         """
-        -  received columns contain some columns apart from requested ones
+        -  received columns contain some columns apart from required ones
         - `filter_data_mode` = "assert"
         """
         df = self.get_test_data()
@@ -1095,7 +1095,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
     def test_check_and_filter_matching_columns3(self) -> None:
         """
-        - received columns do not contain some of requested columns
+        - received columns do not contain some of required columns
         - `filter_data_mode` = "assert"
         """
         df = self.get_test_data()
@@ -1108,7 +1108,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
     def test_check_and_filter_matching_columns4(self) -> None:
         """
-        - received columns contain some columns apart from requested ones
+        - received columns contain some columns apart from required ones
         - `filter_data_mode` = "warn_and_trim"
         """
         df = self.get_test_data()
@@ -1122,7 +1122,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
     def test_check_and_filter_matching_columns5(self) -> None:
         """
-        - received columns do not contain some of requested columns
+        - received columns do not contain some of required columns
         - `filter_data_mode` = "warn_and_trim"
         """
         df = self.get_test_data()
