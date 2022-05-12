@@ -207,6 +207,7 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     bid_ask_metrics["relative_spread"] = (
         bid_ask_metrics["relative_spread"] * 10000
     )
+    bid_ask_metrics = bid_ask_metrics.rename(columns={"relative_spread": "relative_spread_bps"})
     return bid_ask_metrics
 
 
@@ -283,7 +284,7 @@ final_df.tail(3)
 
 # %%
 # Metrics visualizations.
-final_df[["relative_spread"]].plot()
+final_df[["relative_spread_bps"]].plot()
 
 # %% [markdown]
 # ## Compute the distribution of (return - spread)
@@ -311,7 +312,8 @@ cplonorm.plot_qq(df_bnb["ret_spr_diff"])
 # ## How much liquidity is available at the top of the book?
 
 # %%
-liquidity_stats = (final_df["ask_size"] * final_df["ask_price"]).median()
+# liquidity_stats = (final_df["ask_size"] * final_df["ask_price"]).median()
+liquidity_stats = final_df["ask_value"].median()
 display(liquidity_stats)
 cplpluti.plot_barplot(liquidity_stats)
 
@@ -320,27 +322,44 @@ cplpluti.plot_barplot(liquidity_stats)
 # ## Is the quoted spread constant over the day?
 
 # %%
-def plot_overtime_spread(coin_df, resampling_rule, num_stds=1):
-    df = (
-        cfinresa.resample(coin_df, rule=resampling_rule)["quoted_spread"]
-        .mean()
-        .to_frame()
-    )
+def plot_overtime_spread(df_sample, full_symbol, resampling_rule, num_stds=1):
+    # Choose specific `full_symbol`.
+    data = df_sample.swaplevel(axis=1)[full_symbol]
+    # Resample the data.
+    resampler = cfinresa.resample(data, rule=resampling_rule)
+    # Quoted spread.
+    quoted_spread = resampler["quoted_spread"].mean()
+    # Volatility of returns inside `buckets`.
+    rets_vix = resampler["close.ret_0"].std().rename("rets_volatility")
+    # Volume over time.
+    volume = resampler["volume"].sum().rename("trading_volume")
+    # Relative spread (in bps).
+    rel_spread_bps = resampler["relative_spread_bps"].mean()
+    # Bid / Ask value.
+    bid_value = resampler["bid_value"].sum()
+    ask_value = resampler["ask_value"].sum()
+    # Tradability = abs(ret) / spread_bps.
+    tradability = resampler["close.ret_0"].mean().abs() / rel_spread_bps
+    tradability = tradability.rename("tradability")
+    # Collect all the results.
+    df = pd.concat([quoted_spread, rets_vix, volume, rel_spread_bps, bid_value, ask_value, tradability], axis=1)
+    # Integrate time.
     df["time"] = df.index.time
-    mean = df.groupby("time")["quoted_spread"].mean()
-    std = df.groupby("time")["quoted_spread"].std()
-    (mean + num_stds * std).plot(color="blue")
-    mean.plot(lw=2, color="black")
-    # (mean - num_stds * std).plot(color="blue")
+    # Construct value curves over time.
+    for cols in df.columns[:-1]:
+        mean = df.groupby("time")[cols].mean()
+        std = df.groupby("time")[cols].std()
+        # Plot the results.
+        (mean + num_stds * std).plot(color="blue")
+        mean.plot(lw=2, color="black")
     return df
 
 
 # %%
 # full_symbol = "binance::BNB_USDT"
 full_symbol = "binance::BTC_USDT"
-data = final_df.swaplevel(axis=1)[full_symbol]
-dd = plot_overtime_spread(data, "10T")
-display(dd.head())
+stats_df = plot_overtime_spread(final_df, full_symbol, "10T")
+display(stats_df.head(3))
 
 # %%
 
