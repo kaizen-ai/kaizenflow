@@ -168,7 +168,7 @@ def to_parquet(
     else:
         filesystem = None
         hdbg.dassert_path_not_exists(file_name)
-    #hdbg.dassert_file_extension(file_name, "parquet")
+    hdbg.dassert_file_extension(file_name, ["parquet", "pq"])
     # There is no concept of directory on S3.
     # Only applicable to local filesystem.
     if aws_profile is None:

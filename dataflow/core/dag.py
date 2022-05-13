@@ -328,7 +328,7 @@ class DAG:
     ) -> dtfcornode.NodeId:
         """
         Connect a node to the root of the DAG.
-
+        
         :return: node that is connected to the new head node, i.e., the previous
             root of the DAG
         """
