@@ -390,6 +390,8 @@ def regress(
         file_name
     )
     asset_ids = parquet_tile_metadata.index.levels[0].to_list()
+    # TODO(Grisha): "Save asset_ids from the tiled backtest as integers" CmTask #1817.
+    asset_ids = list(map(str, asset_ids))
     _LOG.debug("Num assets=%d", len(asset_ids))
     if num_autoregression_lags > 0:
         lagged_cols = [
