@@ -52,7 +52,20 @@ def get_cmtask1704_config_crypto_chassis() -> cconconf.Config:
     # config.add_subconfig("load")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["full_symbols"] = ["binance::BNB_USDT", "binance::BTC_USDT"]
+    config["data"]["full_symbols"] = [
+        "binance::ADA_USDT",
+        "binance::BNB_USDT",
+        "binance::BTC_USDT",
+        "binance::DOGE_USDT",
+        "binance::EOS_USDT",
+        "binance::ETH_USDT",
+        "binance::SOL_USDT",
+        "binance::XRP_USDT",
+        "binance::LUNA_USDT",
+        "binance::DOT_USDT",
+        "binance::LTC_USDT",
+        "binance::UNI_USDT",
+    ]
     config["data"]["start_date"] = pd.Timestamp("2022-01-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2022-02-01", tz="UTC")
     # Transformation parameters.
@@ -67,15 +80,28 @@ config = get_cmtask1704_config_crypto_chassis()
 print(config)
 
 # %% [markdown]
-# # Load OHLCV data from `crypto-chassis`
+# Note: `exchange_id = binance` was chosen for coins v5 analysis.
+# The missing coins in crypto-chassis in `binance`:
+# - v4:
+#    - Avalanche (AVAX)
+#    - Chainlink (LINK)
+# - v5:
+#    - HEX
+#    - SHIB (Shiba Inu)
+#    - MATIC (Polygon)
+#    - TRX (TRON)
+#    - WAVES (Waves)
+#    - XLM (Stellar)
 
-# %%
-# TODO(Max): Refactor the loading part once #1766 is implemented.
+# %% [markdown]
+# # Load OHLCV data from `crypto-chassis`
 
 # %% [markdown]
 # ## Data demonstration
 
 # %%
+# TODO(Max): Refactor the loading part once #1766 is implemented.
+
 # Read from crypto_chassis directly.
 # full_symbols = config["data"]["full_symbols"]
 # start_date = config["data"]["start_date"]
@@ -83,7 +109,7 @@ print(config)
 # ohlcv_cc = raccchap.read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
 
 # Read saved 1 month of data.
-ohlcv_cc = pd.read_csv("/shared_data/cc_ohlcv.csv", index_col="timestamp")
+ohlcv_cc = pd.read_csv("/shared_data/ohlcv_cc_v5.csv", index_col="timestamp")
 ohlcv_cc.index = pd.to_datetime(ohlcv_cc.index)
 ohlcv_cc.head(3)
 
@@ -106,7 +132,7 @@ vwap_twap_rets_df.head(3)
 # %% run_control={"marked": false}
 # Stats and vizualisation to check the outcomes.
 bnb_ex = vwap_twap_rets_df.swaplevel(axis=1)
-bnb_ex = bnb_ex["binance::BNB_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
+bnb_ex = bnb_ex["binance::DOGE_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
 display(bnb_ex.corr())
 bnb_ex.plot()
 
@@ -116,7 +142,6 @@ bnb_ex.plot()
 # %%
 # TODO(Max): Refactor the loading part once #1766 is implemented.
 
-# %%
 # Read from crypto_chassis directly.
 # Specify the params.
 # full_symbols = config["data"]["full_symbols"]
@@ -129,7 +154,9 @@ bnb_ex.plot()
 # bid_ask_df.head(3)
 
 # Read saved 1 month of data.
-bid_ask_df = pd.read_csv("/shared_data/bid_ask_data.csv", index_col="timestamp")
+bid_ask_df = pd.read_csv(
+    "/shared_data/bid_ask_data_v5.csv", index_col="timestamp"
+)
 bid_ask_df.index = pd.to_datetime(bid_ask_df.index)
 bid_ask_df.head(3)
 
@@ -186,7 +213,7 @@ cplpluti.plot_barplot(liquidity_stats)
 # ### One symbol
 
 # %%
-full_symbol = "binance::BNB_USDT"  # "binance::BTC_USDT"
+full_symbol = "binance::EOS_USDT"
 resample_rule_stats = "10T"
 
 stats_df = ramptran.calculate_overtime_quantities(
@@ -223,4 +250,4 @@ high_level_stats["volatility_per_period"] = (
     final_df["close.ret_0"].std() * final_df.shape[0] ** 0.5
 )
 
-display(high_level_stats.head(3))
+display(high_level_stats)
