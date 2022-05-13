@@ -31,7 +31,6 @@ import os
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hio as hio
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
@@ -44,13 +43,18 @@ def _run(args: argparse.Namespace) -> None:
     if args.aws_profile is not None:
         hs3.get_s3fs(args.aws_profile)
     else:
-        # TODO(gp): @danya use hparser.create_incremental_dir(args.dst_dir, args).
-        hio.create_dir(args.dst_dir, args.incremental)
+        hparser.create_incremental_dir(args.dst_dir, args)
     files = hs3.listdir(
-        args.dst_dir, "*.csv*", only_files=True, use_relative_paths=False
+        args.src_dir,
+        "*.csv*",
+        only_files=True,
+        use_relative_paths=True,
+        aws_profile=args.aws_profile,
     )
+    _LOG.info("Files found at %s:\n%s", args.src_dir, "\n".join(files))
     for file in files:
-        full_path = os.path.join(args.dst_dir, file)
+        full_path = os.path.join(args.src_dir, file)
+        _LOG.debug("Converting %s...", full_path)
         df = pd.read_csv(full_path)
         # Set datetime index.
         reindexed_df = imvcdttrut.reindex_on_datetime(df, args.datetime_col)
@@ -64,7 +68,7 @@ def _run(args: argparse.Namespace) -> None:
             args.dst_dir,
             aws_profile=args.aws_profile,
         )
-        hparque.list_and_merge_pq_files(args.dst_dir)
+    hparque.list_and_merge_pq_files(args.dst_dir, aws_profile="ck")
 
 
 def _parse() -> argparse.ArgumentParser:
