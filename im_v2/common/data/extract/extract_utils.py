@@ -253,6 +253,8 @@ def download_historical_data(
             #  "BTC_USDT.csv.gz".
             full_path = os.path.join(path_to_exchange, f"{currency_pair}.csv.gz")
             data.to_csv(full_path, index=False, compression="gzip")
+        else:
+            hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
         # Sleep between iterations is needed for CCXT.
         if exchange_class == CCXT_EXCHANGE:
             time.sleep(args["sleep_time"])

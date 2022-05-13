@@ -199,6 +199,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "aws_profile": "ck",
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
+            "file_format": "parquet"
         }
         # Run.
         args = argparse.Namespace(**kwargs)
