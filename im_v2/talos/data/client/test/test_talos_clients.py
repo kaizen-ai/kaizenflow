@@ -3,8 +3,8 @@ from typing import Dict, List, Optional
 import pandas as pd
 import pytest
 
+import helpers.hgit as hgit
 import helpers.hsql as hsql
-import helpers.hsystem as hsystem
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
@@ -322,18 +322,13 @@ class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             resample_1min
         )
         # Set expected values.
-        expected_length = 4
+        expected_length = 2
         expected_first_elements = [
             "binance::ADA_USDT",
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
+            "ftx::BNB_USDT",
         ]
         #
-        expected_last_elements = [
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
-            "coinbase::BTC_USDT",
-        ]
+        expected_last_elements = expected_first_elements
         # Run test.
         self._test_get_universe1(
             talos_client,
@@ -349,9 +344,8 @@ class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
 
 @pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1666.",
-)
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
@@ -396,6 +390,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow
     def test_read_data2(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -434,6 +429,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data3(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -474,6 +470,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data4(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -514,6 +511,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data5(self) -> None:
         resample_1min = True
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -569,6 +567,7 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
     # TODO(Nina): Choose timestamp intervals that will be demonstrative for this
     #  test case, i.e. the ones with gaps.
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data7(self) -> None:
         resample_1min = False
         talos_client = imvtdctcex.get_TalosHistoricalPqByTileClient_example2(
@@ -644,18 +643,13 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             resample_1min
         )
         # Set expected values.
-        expected_length = 4
+        expected_length = 2
         expected_first_elements = [
             "binance::ADA_USDT",
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
+            "ftx::BNB_USDT",
         ]
         #
-        expected_last_elements = [
-            "binance::BTC_USDT",
-            "coinbase::ADA_USDT",
-            "coinbase::BTC_USDT",
-        ]
+        expected_last_elements = expected_first_elements
         # Run test.
         self._test_get_universe1(
             talos_client,
@@ -666,13 +660,18 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 
 
 # #############################################################################
-# TestRealTimeSqlTalosClient1
+# TestTalosSqlRealTimeImClient1
 # #############################################################################
 
 
-class TestRealTimeSqlTalosClient1(
+class TestTalosSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+    
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
@@ -895,12 +894,12 @@ class TestRealTimeSqlTalosClient1(
     def setup_talos_sql_client(
         self,
         resample_1min: Optional[bool] = True,
-    ) -> imvtdctacl.RealTimeSqlTalosClient:
+    ) -> imvtdctacl.TalosSqlRealTimeImClient:
         """
         Initialize Talos SQL Client.
         """
         table_name = "talos_ohlcv"
-        sql_talos_client = imvtdctacl.RealTimeSqlTalosClient(
+        sql_talos_client = imvtdctacl.TalosSqlRealTimeImClient(
             resample_1min, self.connection, table_name
         )
         return sql_talos_client
@@ -1239,7 +1238,8 @@ class TestRealTimeSqlTalosClient1(
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00", tz="UTC")
         end_ts = None
-        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.min()
         # Create the expected outcomes. Extracted timestamp should be equal to `start_ts` param.
@@ -1263,7 +1263,8 @@ class TestRealTimeSqlTalosClient1(
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
         end_ts = pd.Timestamp("2022-03-24T16:23:00-00:00", tz="UTC")
-        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
         # Create the expected outcomes. Extracted timestamp should be equal to `end_ts` param.
@@ -1287,7 +1288,8 @@ class TestRealTimeSqlTalosClient1(
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:37-00:00", tz="UTC")
         end_ts = None
-        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.min()
         # Create the expected outcomes. Extracted timestamp should be equal to the rounded `start_ts` param.
@@ -1311,7 +1313,8 @@ class TestRealTimeSqlTalosClient1(
         full_symbols = ["binance::BTC_USDT"]
         start_ts = None
         end_ts = pd.Timestamp("2022-03-24T16:23:28-00:00", tz="UTC")
-        data = im_client._read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
         # Create the expected outcomes. Extracted timestamp should be equal to the rounded `end_ts` param.

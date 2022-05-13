@@ -9,7 +9,7 @@ import im_v2.talos.data.extract.exchange_class as imvtdeexcl
 
 
 import logging
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 import pandas as pd
 import requests
@@ -69,6 +69,13 @@ class TalosExchange:
         params["limit"] = limit
         return params
 
+    @staticmethod
+    def convert_currency_pair(currency_pair: str) -> str:
+        """
+        Convert currency pair used for getting data from exchange.
+        """
+        return currency_pair.replace("_", "-")
+
     def build_url(
         self, currency_pair: str, exchange: str, *, resolution: str = "1m"
     ) -> str:
@@ -81,6 +88,23 @@ class TalosExchange:
         )
         url = f"https://{self._endpoint}{data_path}"
         return url
+
+    def download_data(self, data_type: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
+        """
+        Download Talos data.
+
+        :param data_type: the type of data, e.g. `ohlcv`
+        :return: Talos data
+        """
+        # Check data type.
+        hdbg.dassert_eq(data_type, "ohlcv")
+        # Get data.
+        return self.download_ohlcv_data(
+            currency_pair=kwargs["currency_pair"],
+            exchange=kwargs["exchange_id"],
+            start_timestamp=kwargs["start_timestamp"],
+            end_timestamp=kwargs["end_timestamp"],
+        )
 
     def download_ohlcv_data(
         self,
@@ -102,6 +126,15 @@ class TalosExchange:
         :param bar_per_iteration: number of bars per iteration
         :return: dataframe with OHLCV data
         """
+        # Verify that date parameters are of correct format.
+        hdbg.dassert_isinstance(
+            end_timestamp,
+            pd.Timestamp,
+        )
+        hdbg.dassert_isinstance(
+            start_timestamp,
+            pd.Timestamp,
+        )
         # TODO(Juraj): we can implement this check later if needed.
         # hdbg.dassert_in(
         #     currency_pair,

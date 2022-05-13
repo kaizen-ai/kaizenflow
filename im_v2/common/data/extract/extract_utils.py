@@ -13,6 +13,7 @@ import time
 from typing import Any
 
 import pandas as pd
+import psycopg2
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -32,17 +33,10 @@ def add_exchange_download_args(
     """
     parser.add_argument(
         "--start_timestamp",
-        action="store",
         required=True,
+        action="store",
         type=str,
         help="Beginning of the downloaded period",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the downloaded period",
     )
     parser.add_argument(
         "--exchange_id",
@@ -58,19 +52,34 @@ def add_exchange_download_args(
         type=str,
         help="Trade universe to download data for",
     )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=False,
+        type=str,
+        help="End of the downloaded period",
+    )
+    parser.add_argument(
+        "--file_format",
+        action="store",
+        required=False,
+        default="parquet",
+        type=str,
+        help="File format to save files on disc",
+    )
     return parser
 
 
 CCXT_EXCHANGE = "CcxtExchange"
 TALOS_EXCHANGE = "TalosExchange"
+CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExchange"
 
 
 def download_realtime_for_one_exchange(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
     """
-    Helper function for encapsulating common logic for downloading exchange
-    data.
+    Encapsulate common logic for downloading exchange data.
 
     :param args: arguments passed on script run
     :param exchange_class: which exchange is used in script run
@@ -78,6 +87,7 @@ def download_realtime_for_one_exchange(
     # Initialize exchange class and prepare additional args, if any.
     # Every exchange can potentially have a specific set of init args.
     additional_args = []
+    # TODO(Nikola): Unify exchange initialization as separate function CMTask #1776.
     if exchange_class.__name__ == CCXT_EXCHANGE:
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
@@ -85,7 +95,7 @@ def download_realtime_for_one_exchange(
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
-        vendor = "Talos"
+        vendor = "talos"
         additional_args.append(args.exchange_id)
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
@@ -94,8 +104,21 @@ def download_realtime_for_one_exchange(
     currency_pairs = universe[args.exchange_id]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
+    try:
+        # Connect with the parameters from the env file.
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        connection = hsql.get_connection(*connection_params)
+    except psycopg2.OperationalError:
+        # Connect with the dynamic parameters (usually during tests).
+        actual_details = hsql.db_connection_to_tuple(args.connection)._asdict()
+        connection_params = hsql.DbConnectionInfo(
+            host=actual_details["host"],
+            dbname=actual_details["dbname"],
+            port=int(actual_details["port"]),
+            user=actual_details["user"],
+            password=actual_details["password"],
+        )
+        connection = hsql.get_connection(*connection_params)
     # Connect to S3 filesystem, if provided.
     if args.aws_profile:
         fs = hs3.get_s3fs(args.aws_profile)
@@ -114,10 +137,10 @@ def download_realtime_for_one_exchange(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        if exchange_class.__name__ == CCXT_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "/")
-        elif exchange_class.__name__ == TALOS_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "-")
+        currency_pair_for_download = exchange_class.convert_currency_pair(
+            currency_pair
+        )
+        # Download data.
         data = exchange.download_ohlcv_data(
             currency_pair_for_download,
             *additional_args,
@@ -156,53 +179,52 @@ def download_historical_data(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
     """
-    Helper function for encapsulating common logic for downloading historical
-    exchange data.
+    Encapsulate common logic for downloading historical exchange data.
 
     :param args: arguments passed on script run
     :param exchange_class: which exchange class is used in script run
      e.g. "CcxtExchange" or "TalosExchange"
     """
-    # Initialize exchange class and prepare additional args, if any.
+    # Initialize exchange class.
     # Every exchange can potentially have a specific set of init args.
-    additional_args = []
     if exchange_class.__name__ == CCXT_EXCHANGE:
         # Initialize CCXT with `exchange_id`.
         exchange = exchange_class(args.exchange_id)
         vendor = "CCXT"
+        data_type = "ohlcv"
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args.api_stage)
-        vendor = "Talos"
-        additional_args.append(args.exchange_id)
+        vendor = "talos"
+        data_type = "ohlcv"
+    elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
+        exchange = exchange_class()
+        vendor = "crypto_chassis"
+        data_type = "market_depth"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
     universe = ivcu.get_vendor_universe(vendor, version=args.universe)
     currency_pairs = universe[args.exchange_id]
+    # Convert Namespace object with processing arguments to dict format.
+    args = vars(args)
     # Convert timestamps.
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    path_to_exchange = os.path.join(args.s3_path, args.exchange_id)
+    args["end_timestamp"] = pd.Timestamp(args["end_timestamp"])
+    args["start_timestamp"] = pd.Timestamp(args["start_timestamp"])
+    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        if exchange_class.__name__ == CCXT_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "/")
-        elif exchange_class.__name__ == TALOS_EXCHANGE:
-            currency_pair_for_download = currency_pair.replace("_", "-")
-        # Download OHLCV data.
-        data = exchange.download_ohlcv_data(
-            currency_pair_for_download,
-            *additional_args,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-        )
+        args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
+        # Download data.
+        data = exchange.download_data(data_type, **args)
+        if data.empty:
+            continue
         # Assign pair and exchange columns.
         # TODO(Nikola): Exchange id was missing and it is added additionally to
         #  match signature of other scripts.
         data["currency_pair"] = currency_pair
-        data["exchange_id"] = args.exchange_id
+        data["exchange_id"] = args["exchange_id"]
         # Change index to allow calling add_date_partition_cols function on the dataframe.
         data = imvcdttrut.reindex_on_datetime(data, "timestamp")
         data, partition_cols = hparque.add_date_partition_columns(
@@ -212,18 +234,27 @@ def download_historical_data(
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
-        # Saves filename as `uuid`.
-        hparque.to_partitioned_parquet(
-            data,
-            ["currency_pair"] + partition_cols,
-            path_to_exchange,
-            partition_filename=None,
-            aws_profile=args.aws_profile,
-        )
+        if args["file_format"] == "parquet":
+            # Saves filename as `uuid`, e.g.
+            #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
+            hparque.to_partitioned_parquet(
+                data,
+                ["currency_pair"] + partition_cols,
+                path_to_exchange,
+                partition_filename=None,
+                aws_profile=args["aws_profile"],
+            )
+            # Merge all new parquet into a single `data.parquet`.
+            hparque.list_and_merge_pq_files(
+                path_to_exchange, aws_profile=args["aws_profile"]
+            )
+        elif args["file_format"] == "csv":
+            # Files are named after corresponding currency pair, e.g 
+            #  "BTC_USDT.csv.gz".
+            full_path = os.path.join(path_to_exchange, f"{currency_pair}.csv.gz")
+            data.to_csv(full_path, index=False, compression="gzip")
+        else:
+            hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
         # Sleep between iterations is needed for CCXT.
         if exchange_class == CCXT_EXCHANGE:
-            time.sleep(args.sleep_time)
-    # Merge all new parquet into a single `data.parquet`.
-    hparque.list_and_merge_pq_files(
-        path_to_exchange, aws_profile=args.aws_profile
-    )
+            time.sleep(args["sleep_time"])

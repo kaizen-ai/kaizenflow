@@ -199,11 +199,7 @@ def evaluate_weighted_forecasts(
         ["price", "volatility"], market_data_and_volatility.index
     )
     # Set forecast annotation defaults.
-    if annotate_forecasts_kwargs is None:
-        annotate_forecasts_kwargs = {}
-        annotate_forecasts_kwargs["target_gmv"] = 1e6
-        annotate_forecasts_kwargs["dollar_neutrality"] = "gaussian_rank"
-        annotate_forecasts_kwargs["quantization"] = "nearest_share"
+    annotate_forecasts_kwargs = annotate_forecasts_kwargs or {}
     #
     if target_freq_str is not None:
         hdbg.dassert_isinstance(target_freq_str, str)
@@ -394,6 +390,8 @@ def regress(
         file_name
     )
     asset_ids = parquet_tile_metadata.index.levels[0].to_list()
+    # TODO(Grisha): "Save asset_ids from the tiled backtest as integers" CmTask #1817.
+    asset_ids = list(map(str, asset_ids))
     _LOG.debug("Num assets=%d", len(asset_ids))
     if num_autoregression_lags > 0:
         lagged_cols = [

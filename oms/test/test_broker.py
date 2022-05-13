@@ -122,13 +122,18 @@ class TestSimulatedBroker2(hunitest.TestCase):
         await broker.submit_orders(orders)
         # Wait until order fulfillment.
         fulfillment_deadline = order.end_timestamp
-        await hasynci.wait_until(fulfillment_deadline, get_wall_clock_time)
+        await hasynci.async_wait_until(fulfillment_deadline, get_wall_clock_time)
         # Check fills.
         fills = broker.get_fills()
         return fills
 
 
 class TestMockedBroker1(omtodh.TestOmsDbHelper):
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+    
     def setUp(self) -> None:
         super().setUp()
         # Create OMS tables.
@@ -186,7 +191,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
         await broker.submit_orders(orders)
         # Wait until order fulfillment.
         fulfillment_deadline = order.end_timestamp
-        await hasynci.wait_until(fulfillment_deadline, get_wall_clock_time)
+        await hasynci.async_wait_until(fulfillment_deadline, get_wall_clock_time)
         # Check fills.
         fills = broker.get_fills()
         return fills

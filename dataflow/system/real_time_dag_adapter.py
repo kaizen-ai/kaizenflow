@@ -14,6 +14,7 @@ import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import oms.portfolio as omportfo
 
+
 # TODO(gp): Replace DagAdapter and build the Dag in a single place.
 #  We want to create the config below in one place with a _example().
 class RealTimeDagAdapter(dtfcore.DagAdapter):
@@ -28,13 +29,13 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
         portfolio: omportfo.AbstractPortfolio,
         prediction_col: str,
         volatility_col: str,
-        returns_col: str,
+        price_col: str,
         spread_col: Optional[str],
         timedelta: pd.Timedelta,
         asset_id_col: str,
         *,
+        bulk_frac_to_remove: float = 0.0,
         target_gmv: float = 1e5,
-        dollar_neutrality: str = "no_constraint",
         log_dir: Optional[str] = None,
     ):
         market_data = portfolio.market_data
@@ -57,9 +58,9 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
             evaluate_forecasts_config = cconfig.get_config_from_nested_dict(
                 {
                     "log_dir": os.path.join(log_dir, "evaluate_forecasts"),
+                    "bulk_frac_to_remove": bulk_frac_to_remove,
                     "target_gmv": target_gmv,
-                    "dollar_neutrality": dollar_neutrality,
-                    "returns_col": returns_col,
+                    "price_col": price_col,
                 }
             )
         else:
@@ -80,9 +81,10 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
                 "order_duration": 5,
             },
             "optimizer_config": {
-                "backend": "compute_target_positions_in_cash",
+                "backend": "pomo",
+                "bulk_frac_to_remove": bulk_frac_to_remove,
+                "bulk_fill_method": "zero",
                 "target_gmv": target_gmv,
-                "dollar_neutrality": dollar_neutrality,
             },
             "ath_start_time": pd.Timestamp(
                 "2000-01-01 09:30:00-05:00", tz="America/New_York"

@@ -6,7 +6,7 @@ import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -14,6 +14,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hsql as hsql
 import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
@@ -62,6 +63,7 @@ class ImClient(abc.ABC):
     def __init__(
         self,
         vendor: str,
+        universe_version: Optional[str],
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
@@ -70,12 +72,16 @@ class ImClient(abc.ABC):
         Constructor.
 
         :param vendor: price data provider
+        :param universe_version: version of universe file
         :param resample_1min: whether to resample data to 1 minute or not
         :param full_symbol_col_name: the name of the column storing the symbol
             name. It can be overridden by other methods
         """
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
+        if universe_version is not None:
+            hdbg.dassert_isinstance(universe_version, str)
+        self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
         # TODO(gp): This is the name of the column of the asset_id in the data
@@ -89,14 +95,6 @@ class ImClient(abc.ABC):
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
-
-    # TODO(gp): Why static?
-    @staticmethod
-    @abc.abstractmethod
-    def get_universe() -> List[ivcu.FullSymbol]:
-        """
-        Return the entire universe of valid full symbols.
-        """
 
     # TODO(gp): Why static?
     @staticmethod
@@ -123,11 +121,24 @@ class ImClient(abc.ABC):
         ]
         return numerical_asset_id
 
+    def get_universe(self) -> List[ivcu.FullSymbol]:
+        """
+        Return the entire universe of valid full symbols.
+        """
+        universe = ivcu.get_vendor_universe(
+            self._vendor,
+            version=self._universe_version,
+            as_full_symbol=True,
+        )
+        return universe  # type: ignore[no-any-return]
+
     def read_data(
         self,
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
+        filter_data_mode: str,
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -141,13 +152,17 @@ class ImClient(abc.ABC):
             - `None` means start from the beginning of the available data
         :param end_ts: the latest date timestamp to load data for
             - `None` means end at the end of the available data
+        :param columns: columns to return, skipping reading columns that are not requested
+            - `None` means return all available columns
+        :param filter_data_mode: control class behavior with respect to extra
+            or missing columns, like in `_check_and_filter_matching_columns()`
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
         :return: combined data for all the requested symbols
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         # Verify the requested parameters.
@@ -162,10 +177,15 @@ class ImClient(abc.ABC):
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
+        if columns is not None:
+            # Check before reading the data.
+            hdbg.dassert_container_type(columns, list, str)
+            hdbg.dassert_lte(1, len(columns))
         df = self._read_data(
             full_symbols,
             start_ts,
             end_ts,
+            columns,
             full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
@@ -182,9 +202,6 @@ class ImClient(abc.ABC):
             msg="Not all the requested symbols were retrieved",
             only_warning=True,
         )
-        #
-        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
-        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
         # Rename index.
         df.index.name = "timestamp"
         # Normalize data for each symbol.
@@ -207,7 +224,7 @@ class ImClient(abc.ABC):
                 end_ts,
             )
             dfs.append(df_tmp)
-        # TODO(Nikola): raise error on empty df?
+        hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
         df = pd.concat(dfs, axis=0)
         _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
         # Sort by index and `full_symbol_col_name`.
@@ -217,9 +234,13 @@ class ImClient(abc.ABC):
         df = df.sort_values(by=["timestamp", full_symbol_col_name])
         df = df.set_index("timestamp", drop=True)
         # The full_symbol should be a string.
-        if not df.empty:
-            hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
+        hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
+        #
+        if columns is not None:
+            df = self._check_and_filter_matching_columns(
+                df, columns, filter_data_mode
+            )
         return df
 
     # /////////////////////////////////////////////////////////////////////////
@@ -276,11 +297,9 @@ class ImClient(abc.ABC):
         Apply normalizations to IM data.
         """
         _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
-        hdbg.dassert(not df.empty, "Empty df=\n%s", df)
-        # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates
-        # from data".
         # 1) Drop duplicates.
-        df = hpandas.drop_duplicates(df)
+        use_index = True
+        df = hpandas.drop_duplicates(df, use_index)
         # 2) Trim the data keeping only the data with index in [start_ts, end_ts].
         # Trimming of the data is done because:
         # - some data sources can be only queried at day resolution so we get
@@ -343,10 +362,41 @@ class ImClient(abc.ABC):
             n_duplicated_rows, 0, msg="There are duplicated rows in the data"
         )
         # Ensure that all the data is in [start_ts, end_ts].
-        if start_ts:
-            hdbg.dassert_lte(start_ts, df.index.min())
-        if end_ts:
-            hdbg.dassert_lte(df.index.max(), end_ts)
+        hdateti.dassert_timestamp_lte(start_ts, df.index.min())
+        hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
+
+    # TODO(Dan): CmTask1834 "Refactor `_check_and_filter_matching_columns()`".
+    @staticmethod
+    def _check_and_filter_matching_columns(
+        df: pd.DataFrame, columns: List[str], filter_data_mode: str
+    ) -> pd.DataFrame:
+        """
+        Check that columns are the expected ones.
+        """
+        received_columns = df.columns.to_list()
+        #
+        if filter_data_mode == "assert":
+            # Raise and assertion.
+            only_warning = False
+        elif filter_data_mode == "warn_and_trim":
+            # Just issue a warning.
+            only_warning = True
+            # Get columns intersection while preserving the order of the columns.
+            columns_intersection = sorted(
+                set(received_columns) & set(columns),
+                key=received_columns.index,
+            )
+            hdbg.dassert_lte(1, len(columns_intersection))
+            df = df[columns_intersection]
+        else:
+            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
+        hdbg.dassert_set_eq(
+            columns,
+            received_columns,
+            only_warning=only_warning,
+            msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
+        )
+        return df
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -383,6 +433,7 @@ class ImClient(abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -406,9 +457,14 @@ class ImClient(abc.ABC):
     ) -> pd.Timestamp:
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
-        start_timestamp = None
-        end_timestamp = None
-        data = self.read_data([full_symbol], start_timestamp, end_timestamp)
+        start_ts = None
+        end_ts = None
+        # Use only `self._full_symbol_col_name` after CmTask1588 is fixed.
+        columns = None
+        filter_data_mode = "assert"
+        data = self.read_data(
+            [full_symbol], start_ts, end_ts, columns, filter_data_mode
+        )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
             timestamp = data.index.min()
@@ -427,6 +483,7 @@ class ImClient(abc.ABC):
 # #############################################################################
 
 
+# TODO(Dan): Implement usage of `columns` parameter in descendant classes.
 class ImClientReadingOneSymbol(ImClient, abc.ABC):
     """
     IM client for a backend that can only read one symbol at a time.
@@ -439,6 +496,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -448,7 +506,7 @@ class ImClientReadingOneSymbol(ImClient, abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         hdbg.dassert_container_type(full_symbols, list, str)
@@ -517,6 +575,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         *,
         full_symbol_col_name: Optional[str] = None,
         **kwargs: Any,
@@ -526,7 +585,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "full_symbols start_ts end_ts full_symbol_col_name kwargs"
+                "full_symbols start_ts end_ts columns full_symbol_col_name kwargs"
             )
         )
         full_symbol_col_name = self._get_full_symbol_col_name(
@@ -536,7 +595,8 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
             full_symbols,
             start_ts,
             end_ts,
-            full_symbol_col_name=full_symbol_col_name,
+            columns,
+            full_symbol_col_name,
             **kwargs,
         )
         return df
@@ -547,8 +607,283 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
         ...
+
+
+# #############################################################################
+# SqlRealTimeImClient
+# #############################################################################
+
+
+class SqlRealTimeImClient(ImClient):
+    def __init__(
+        self,
+        resample_1min: bool,
+        db_connection: hsql.DbConnection,
+        table_name: str,
+        vendor: str,
+    ) -> None:
+        # Real-time implementation has a different mechanism for getting universe.
+        # Passing to make the parent class happy.
+        universe_version = None
+        # These parameters are needed to get the universe which is needed to init
+        # the parent class so they go before the parent's init.
+        self._table_name = table_name
+        self._db_connection = db_connection
+        super().__init__(vendor, universe_version, resample_1min)
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        Return metadata.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        pass
+
+    def get_universe(self) -> List[ivcu.FullSymbol]:
+        """
+        See description in the parent class.
+        """
+        # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
+        query = (
+            f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
+        )
+        currency_exchange_df = hsql.execute_query_to_df(
+            self._db_connection, query
+        )
+        # Merge these columns to the general `full_symbol` format.
+        full_symbols = ivcu.build_full_symbol(
+            currency_exchange_df["exchange_id"],
+            currency_exchange_df["currency_pair"],
+        )
+        # Convert to list.
+        full_symbols = full_symbols.to_list()
+        return full_symbols
+
+    @abc.abstractmethod
+    def _apply_normalization(
+        self,
+        data: pd.DataFrame,
+        *,
+        full_symbol_col_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """
+        Apply vendor-specific normalization.
+        """
+
+    # TODO(Danya): Propagate usage of `columns` parameter here and in descendant classes.
+    def _read_data(
+        self,
+        full_symbols: List[ivcu.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
+        *,
+        full_symbol_col_name: Optional[str] = None,
+        # Extra arguments for building a query.
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Create a select query and load data from database.
+
+        Extra parameters for building a query can also be passed,
+        see keyword args for `_build_select_query`
+
+        :param full_symbols: a list of full symbols, e.g. ["ftx::BTC_USDT"]
+        :param start_ts: beginning of the time interval
+        :param end_ts: end of the time interval
+        :param full_symbol_col_name: name of column containg full symbols
+        :return:
+        """
+        # Parse symbols into exchange and currency pair.
+        parsed_symbols = [ivcu.parse_full_symbol(s) for s in full_symbols]
+        # Convert timestamps to epochs.
+        if start_ts:
+            start_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+        else:
+            start_unix_epoch = start_ts
+        if end_ts:
+            end_unix_epoch = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+        else:
+            end_unix_epoch = end_ts
+        # Read data from DB.
+        select_query = self._build_select_query(
+            parsed_symbols, start_unix_epoch, end_unix_epoch, **kwargs
+        )
+        data = hsql.execute_query_to_df(self._db_connection, select_query)
+        # Add a full symbol column.
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
+        data[full_symbol_col_name] = ivcu.build_full_symbol(
+            data["exchange_id"], data["currency_pair"]
+        )
+        # Remove extra columns and create a timestamp index.
+        data = self._apply_normalization(
+            data, full_symbol_col_name=full_symbol_col_name
+        )
+        return data
+
+    def _build_select_query(
+        self,
+        parsed_symbols: List[Tuple],
+        start_unix_epoch: Optional[int],
+        end_unix_epoch: Optional[int],
+        *,
+        columns: Optional[List[str]] = None,
+        ts_col_name: Optional[str] = "timestamp",
+        left_close: bool = True,
+        right_close: bool = True,
+        limit: Optional[int] = None,
+    ) -> str:
+        """
+        Build a SELECT query for SQL DB.
+
+        Time is provided as unix epochs in ms, the time range
+        is considered closed on both sides, i.e. [1647470940000, 1647471180000]
+
+        Example of a full query:
+        ```
+        "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000
+        AND timestamp <= 1647471180000
+        AND ((exchange_id='binance' AND currency_pair='AVAX_USDT')
+        OR (exchange_id='ftx' AND currency_pair='BTC_USDT'))
+        ```
+
+        :param parsed_symbols: List of tuples, e.g. [(`exchange_id`, `currency_pair`),..]
+        :param start_unix_epoch: start of time period in ms, e.g. 1647470940000
+        :param end_unix_epoch: end of the time period in ms, e.g. 1647471180000
+        :param columns: columns to select from `table_name`
+        - `None` means all columns.
+        :param ts_col_name: name of timestamp column
+        :param left_close: if operator for `start_unix_epoch` is either > or >=
+        :param right_close: if operator for `end_unix_epoch` is either < or <=
+        :param limit: number of rows to return
+        :return: SELECT query for SQL data
+        """
+        hdbg.dassert_container_type(
+            obj=parsed_symbols,
+            container_type=List,
+            elem_type=tuple,
+            msg="`parsed_symbols` should be a list of tuple",
+        )
+        # Add columns to the SELECT query
+        columns_as_str = "*" if columns is None else ",".join(columns)
+        # Build a SELECT query.
+        select_query = f"SELECT {columns_as_str} FROM {self._table_name} WHERE "
+        # Build a WHERE query.
+        # TODO(Danya): Generalize to hsql with dictionary input.
+        where_clause = []
+        if start_unix_epoch:
+            hdbg.dassert_isinstance(
+                start_unix_epoch,
+                int,
+            )
+            operator = ">=" if left_close else ">"
+            where_clause.append(f"{ts_col_name} {operator} {start_unix_epoch}")
+        if end_unix_epoch:
+            hdbg.dassert_isinstance(
+                end_unix_epoch,
+                int,
+            )
+            operator = "<=" if right_close else "<"
+            where_clause.append(f"{ts_col_name} {operator} {end_unix_epoch}")
+        if start_unix_epoch and end_unix_epoch:
+            hdbg.dassert_lte(
+                start_unix_epoch,
+                end_unix_epoch,
+                msg="Start unix epoch should be smaller than end.",
+            )
+        # Create conditions for getting values by exchange_id and currency_pair
+        # In the end there should be something like:
+        # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT') # pylint: disable=line-too-long
+        exchange_currency_conditions = [
+            f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
+            for exchange_id, currency_pair in parsed_symbols
+            if exchange_id and currency_pair
+        ]
+        if exchange_currency_conditions:
+            # Add OR conditions between each pair of `exchange_id` and `currency_pair`
+            where_clause.append(
+                "(" + " OR ".join(exchange_currency_conditions) + ")"
+            )
+        # Build whole query.
+        query = select_query + " AND ".join(where_clause)
+        if limit:
+            query += f" LIMIT {limit}"
+        return query
+
+    def _read_data_for_multiple_symbols(
+        self,
+        full_symbols: List[ivcu.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],  # Converts to unix epoch
+        columns: Optional[List[str]],
+        full_symbol_col_name: Optional[str] = None,
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Read data for the given time range and full symbols.
+
+        The method builds a SELECT query like:
+
+        SELECT * FROM {self._table_name} WHERE exchange_id="binance" AND currency_pair="ADA_USDT"
+
+        The WHERE clause with AND/OR operators is built using a built-in method.
+
+        :param full_symbols: a list of symbols, e.g. ["binance::ADA_USDT"]
+        :param start_ts: beginning of the period, is converted to unix epoch
+        :param end_ts: end of the period, is converted to unix epoch
+        :param full_symbol_col_name: the name of the full_symbol column
+        """
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
+        # TODO(Danya): Convert timestamps to int when reading.
+        # TODO(Danya): add a full symbol column to the output
+        raise NotImplementedError
+
+    def _get_start_end_ts_for_symbol(
+        self, full_symbol: ivcu.FullSymbol, mode: str
+    ) -> pd.Timestamp:
+        """
+        Select a maximum/minimum timestamp for the given symbol.
+
+        Overrides the method in parent class to utilize
+        the MIN/MAX SQL operators.
+
+        :param full_symbol: unparsed full_symbol value
+        :param mode: 'start' or 'end'
+        :return: min or max value of 'timestamp' column.
+        """
+        _LOG.debug(hprint.to_str("full_symbol"))
+        exchange, currency_pair = ivcu.parse_full_symbol(full_symbol)
+        # Build a MIN/MAX query.
+        if mode == "start":
+            query = (
+                f"SELECT MIN(timestamp) from {self._table_name}"
+                f" WHERE currency_pair='{currency_pair}'"
+                f" AND exchange_id='{exchange}'"
+            )
+        elif mode == "end":
+            query = (
+                f"SELECT MAX(timestamp) from {self._table_name}"
+                f" WHERE currency_pair='{currency_pair}'"
+                f" AND exchange_id='{exchange}'"
+            )
+        else:
+            raise ValueError("Invalid mode='%s'" % mode)
+        # TODO(Danya): factor out min/max as helper function.
+        # Load the target timestamp as unix epoch.
+        timestamp = hsql.execute_query_to_df(self._db_connection, query).loc[0][0]
+        # Convert to `pd.Timestamp` type.
+        timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
+        hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
+        return timestamp

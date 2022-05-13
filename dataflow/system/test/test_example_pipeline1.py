@@ -76,6 +76,10 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     - with a `MarketData`
     - with a `Portfolio` backed by DB or dataframe
     """
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
 
     def run_coroutines(
         self,
@@ -90,11 +94,11 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsepsyru.Example1_Database_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Database_ForecastSystem(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = dtfsepsyru.Example1_Dataframe_SystemRunner(
+                system_runner = dtfsepsyru.Example1_Dataframe_ForecastSystem(
                     asset_ids, event_loop
                 )
             #
@@ -102,6 +106,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             #
             portfolio = system_runner.get_portfolio(market_data)
             #
+            price_col = "vwap"
             returns_col = "vwap.ret_0"
             volatility_col = "vwap.ret_0.vol"
             prediction_col = "feature1"
@@ -135,11 +140,13 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             )
             system_tester = dtfsysytes.SystemTester()
             result_bundles = result_bundles[0]
+            result_bundle = result_bundles[-1]
+            _LOG.debug("result_bundle=\n%s", result_bundle)
             actual = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
-                result_bundles[-1],
-                returns_col=returns_col,
+                result_bundle,
+                price_col=price_col,
                 volatility_col=volatility_col,
                 prediction_col=prediction_col,
             )
@@ -172,7 +179,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.check_string(actual)
 
     @pytest.mark.slow
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data1_database_vs_dataframe_portfolio(self) -> None:
         """
         Compare the output between using a DB and dataframe portfolio.
@@ -187,7 +193,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.slow
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data2_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         expected = self.run_coroutines(
@@ -199,7 +204,6 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
         self.assert_equal(actual, expected)
 
     @pytest.mark.superslow("Times out in GH Actions.")
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         expected = self.run_coroutines(

@@ -43,6 +43,7 @@ def get_pyarrow_s3fs(*args: Any, **kwargs: Any) -> pafs.S3FileSystem:
     return s3fs_
 
 
+# TODO(Dan): Add mode to allow querying even when some non-existing columns are passed.
 def from_parquet(
     file_name: str,
     *,
@@ -57,6 +58,15 @@ def from_parquet(
 
     The difference with `pd.read_pq` is that here we use Parquet
     Dataset.
+
+    :param file_name: path to a Parquet dataset
+    :param columns: columns to return, skipping reading columns that are not requested
+       - `None` means return all available columns
+    :param filters: Parquet query filters
+    :param log_level: logging level to execute at
+    :param report_stats: whether to report Parquet file size or not
+    :param aws_rofile: AWS profile, e.g., `ck`
+    :return: data from Parquet dataset
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
@@ -81,6 +91,9 @@ def from_parquet(
             filters=filters,
             use_legacy_dataset=False,
         )
+        if columns:
+            # Note: `schema.names` also includes and index.
+            hdbg.dassert_is_subset(columns, dataset.schema.names)
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.
         # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
@@ -155,7 +168,7 @@ def to_parquet(
     else:
         filesystem = None
         hdbg.dassert_path_not_exists(file_name)
-    hdbg.dassert_file_extension(file_name, "parquet")
+    hdbg.dassert_file_extension(file_name, ["parquet", "pq"])
     # There is no concept of directory on S3.
     # Only applicable to local filesystem.
     if aws_profile is None:
@@ -664,6 +677,9 @@ def to_partitioned_parquet(
     filesystem = None
     if aws_profile is not None:
         filesystem = hs3.get_s3fs(aws_profile)
+        # ParquetDataset appends an extra "/", creating an empty-named folder
+        #  when saving on S3.
+        dst_dir = dst_dir.rstrip("/")
     with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
         # Read.
         table = pa.Table.from_pandas(df)
@@ -680,8 +696,7 @@ def to_partitioned_parquet(
         )
 
 
-# TODO(Nikola): Currently indirectly tested in
-#  `im_v2/ccxt/data/extract/test/test_download_historical_data.py`.
+# TODO(Nikola): Add unit test in CMTask #1426.
 def list_and_merge_pq_files(
     root_dir: str,
     *,

@@ -275,6 +275,99 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
 
     # //////////////////////////////////////////////////////////////////////////////
 
+    def _test_filter_columns1(
+        self,
+        market_data: mdata.MarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: Optional[List[int]],
+        expected_columns: List[str],
+    ) -> None:
+        """
+        Test that columns have been filtered correctly:
+
+        - requested columns = received columns
+        - `filter_data_mode` = "assert"
+        """
+        # TODO(Dan): Consider usage of `skip_test_since_not_online()`.
+        # Prepare inputs.
+        ts_col_name = "end_ts"
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_interval:"
+            + hprint.to_str("start_ts end_ts ts_col_name asset_ids"),
+        )
+        # Run.
+        df = market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        # Check output.
+        actual_columns = df.columns.tolist()
+        self.assert_equal(str(actual_columns), str(expected_columns))
+
+    def _test_filter_columns2(
+        self,
+        market_data: mdata.MarketData,
+        asset_ids: List[int],
+    ) -> None:
+        """
+        Test that error is raised when columns are incorrectly filtered:
+
+        - recieved columns contain some columns apart from requested
+        - `filter_data_mode` = "assert"
+        """
+        # TODO(Dan): Consider usage of `skip_test_since_not_online()`.
+        # Prepare inputs.
+        start_ts = None
+        end_ts = None
+        ts_col_name = "end_ts"
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_interval:"
+            + hprint.to_str("start_ts end_ts ts_col_name asset_ids"),
+        )
+        # TODO(gp): We should raise a more specific assertion and / or
+        #  check part of the exception as a string.
+        with self.assertRaises(AssertionError):
+            market_data.get_data_for_interval(
+                start_ts,
+                end_ts,
+                ts_col_name,
+                asset_ids,
+            )
+
+    def _test_filter_columns3(
+        self,
+        market_data: mdata.MarketData,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+        asset_ids: Optional[List[int]],
+        expected_columns: List[str],
+    ) -> None:
+        """
+        Test that columns have been filtered correctly:
+
+        - recieved columns contain some columns apart from requested
+        - `filter_data_mode` = "warn_and_trim"
+        """
+        # TODO(Dan): Consider usage of `skip_test_since_not_online()`.
+        # Prepare inputs.
+        ts_col_name = "end_ts"
+        hprint.log_frame(
+            _LOG,
+            "get_data_for_interval:"
+            + hprint.to_str("start_ts end_ts ts_col_name asset_ids"),
+        )
+        # Run.
+        df = market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        # Check output.
+        actual_columns = df.columns.tolist()
+        self.assert_equal(str(actual_columns), str(expected_columns))
+
+    # //////////////////////////////////////////////////////////////////////////////
+
     def _test_get_twap_price1(
         self,
         market_data: mdata.MarketData,

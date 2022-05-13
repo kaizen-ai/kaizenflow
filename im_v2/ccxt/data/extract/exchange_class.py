@@ -38,6 +38,30 @@ class CcxtExchange:
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
 
+    @staticmethod
+    def convert_currency_pair(currency_pair: str) -> str:
+        """
+        Convert currency pair used for getting data from exchange.
+        """
+        return currency_pair.replace("_", "/")
+
+    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
+        """
+        Download CCXT data.
+
+        :param data_type: the type of data, e.g. `ohlcv`
+        :return: CCXT data
+        """
+        # Check data type.
+        hdbg.dassert_eq(data_type, "ohlcv")
+        # Get data.
+        return self.download_ohlcv_data(
+            currency_pair=kwargs["currency_pair"],
+            *[],
+            start_timestamp=kwargs["start_timestamp"],
+            end_timestamp=kwargs["end_timestamp"],
+        )
+
     def log_into_exchange(self) -> ccxt.Exchange:
         """
         Log into an exchange via CCXT and return the corresponding

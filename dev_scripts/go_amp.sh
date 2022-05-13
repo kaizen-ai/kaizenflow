@@ -4,7 +4,7 @@
 
 DIR_PREFIX=$1
 if [[ -z $DIR_PREFIX ]]; then
-  echo "ERROR: You need to specify the prefix of the dir, e.g. 'amp' of 'cmamp'"
+  echo "ERROR: You need to specify the prefix of the dir, e.g. 'amp' or 'cmamp'"
   exit -1
 fi;
 

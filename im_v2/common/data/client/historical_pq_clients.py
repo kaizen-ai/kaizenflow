@@ -32,6 +32,9 @@ class HistoricalPqByTileClient(
         # TODO(gp): We could use *args, **kwargs as params for ImClient,
         # same for the child classes.
         vendor: str,
+        # The version is not strictly needed for this class, but it is used by
+        # the child classes, e.g., by `CcxtHistoricalPqByTileClient`.
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
@@ -55,20 +58,16 @@ class HistoricalPqByTileClient(
         :param aws_profile: AWS profile name (e.g., "ck")
         """
         super().__init__(
-            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor,
+            universe_version,
+            resample_1min,
+            full_symbol_col_name=full_symbol_col_name,
         )
         hdbg.dassert_isinstance(root_dir, str)
         self._root_dir = root_dir
         self._infer_exchange_id = infer_exchange_id
         self._partition_mode = partition_mode
         self._aws_profile = aws_profile
-
-    @staticmethod
-    def get_universe() -> List[ivcu.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        return []
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
@@ -79,13 +78,23 @@ class HistoricalPqByTileClient(
 
     # TODO(Grisha): factor out the column names in the child classes, see `CCXT`, `Talos`.
     @staticmethod
-    def _get_columns_for_query() -> Optional[List[str]]:
+    def _get_columns_for_query(
+        full_symbol_col_name: str, columns: Optional[List[str]]
+    ) -> Optional[List[str]]:
         """
         Get columns for Parquet data query.
 
-        For base implementation the columns are `None`
+        For base implementation the queries columns are equal to the
+        passed ones.
         """
-        return None
+        if (columns is not None) and (full_symbol_col_name not in columns):
+            # In order not to modify the input.
+            query_columns = columns.copy()
+            # Data is partitioned by full symbols so the column is mandatory.
+            query_columns.append(full_symbol_col_name)
+        else:
+            query_columns = columns
+        return query_columns
 
     # TODO(Grisha): factor out the common code in the child classes, see CmTask #1696
     # "Refactor HistoricalPqByTileClient and its child classes".
@@ -112,6 +121,7 @@ class HistoricalPqByTileClient(
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -121,13 +131,15 @@ class HistoricalPqByTileClient(
         hdbg.dassert_container_type(full_symbols, list, str)
         # Implement logging and add it to kwargs.
         _LOG.debug(
-            hprint.to_str("full_symbols start_ts end_ts full_symbol_col_name")
+            hprint.to_str(
+                "full_symbols start_ts end_ts columns full_symbol_col_name"
+            )
         )
         kwargs["log_level"] = logging.INFO
-        # Get columns and add them to kwargs if they were not specified.
-        if "columns" not in kwargs:
-            columns = self._get_columns_for_query()
-            kwargs["columns"] = columns
+        # Get columns for query and add them to kwargs.
+        kwargs["columns"] = self._get_columns_for_query(
+            full_symbol_col_name, columns
+        )
         # Add AWS profile to kwargs.
         kwargs["aws_profile"] = self._aws_profile
         # Build root dirs to the data and Parquet filtering condition.
@@ -147,7 +159,14 @@ class HistoricalPqByTileClient(
             kwargs["filters"] = filters
             # Read Parquet data from a root dir.
             root_dir_df = hparque.from_parquet(root_dir, **kwargs)
-            hdbg.dassert_lte(1, root_dir_df.shape[0])
+            # TODO(Grisha): "Handle missing tiles" CmTask #1775.
+            # hdbg.dassert_lte(
+            #     1,
+            #     root_dir_df.shape[0],
+            #     "Can't find data for root_dir='%s' and symbol_filter='%s'",
+            #     root_dir,
+            #     symbol_filter,
+            # )
             # Convert index to datetime.
             root_dir_df.index = pd.to_datetime(root_dir_df.index)
             # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
@@ -169,19 +188,26 @@ class HistoricalPqByTileClient(
             root_dir_df = self._apply_transformations(
                 root_dir_df, full_symbol_col_name, **transformation_kwargs
             )
+            # The columns are used just to partition the data but these columns
+            # are not included in the `ImClient` output.
+            current_columns = root_dir_df.columns.to_list()
+            month_column = "month"
+            if month_column in current_columns:
+                root_dir_df = root_dir_df.drop(month_column, axis=1)
+            year_column = "year"
+            if year_column in current_columns:
+                root_dir_df = root_dir_df.drop(year_column, axis=1)
+            # Column with name "timestamp" that stores epochs remains in most
+            # vendors data if no column filtering was done. Drop it since it
+            # replicates data from index and has the same name as index column
+            # which causes a break when we try to reset it.
+            timestamp_column = "timestamp"
+            if timestamp_column in current_columns:
+                root_dir_df = root_dir_df.drop(timestamp_column, axis=1)
             #
             res_df_list.append(root_dir_df)
         # Combine data from all root dirs into a single DataFrame.
         res_df = pd.concat(res_df_list, axis=0)
-        # Since we have normalized the data, the index is a timestamp, and we can
-        # trim the data with index in [start_ts, end_ts] to remove the excess
-        # from filtering in terms of days.
-        ts_col_name = None
-        left_close = True
-        right_close = True
-        res_df = hpandas.trim_df(
-            res_df, ts_col_name, start_ts, end_ts, left_close, right_close
-        )
         return res_df
 
     # TODO(Grisha): try to unify child classes with the base class, see CmTask #1696
@@ -238,8 +264,12 @@ class HistoricalPqByDateClient(
         *,
         full_symbol_col_name: Optional[str] = None,
     ):
+        universe_version = None
         super().__init__(
-            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor,
+            universe_version,
+            resample_1min,
+            full_symbol_col_name=full_symbol_col_name,
         )
         self._read_func = read_func
 

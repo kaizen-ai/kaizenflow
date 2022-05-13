@@ -79,6 +79,7 @@ print(config)
 
 # %%
 # Specify params.
+universe_version = "v3"
 resample_1min = True
 root_dir = config["load"]["data_dir"]
 partition_mode = config["load"]["partition_mode"]
@@ -87,6 +88,7 @@ aws_profile = config["load"]["aws_profile"]
 
 # Initiate the client.
 historical_client = icdcl.CcxtHistoricalPqByTileClient(
+    universe_version,
     resample_1min,
     root_dir,
     partition_mode,
@@ -173,7 +175,9 @@ def resample_calculate_twap_vwap_and_returns(df, resampling_freq):
 
 
 # %% run_control={"marked": false}
-df_approach_1 = resample_calculate_twap_vwap_and_returns(data_hist, resampling_freq)
+df_approach_1 = resample_calculate_twap_vwap_and_returns(
+    data_hist, resampling_freq
+)
 df_approach_1.head(3)
 
 # %% [markdown]

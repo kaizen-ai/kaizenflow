@@ -374,6 +374,8 @@ def get_first_line(output: str) -> str:
     """
     output = hprint.remove_empty_lines(output)
     output_as_arr: List[str] = output.split("\n")
+    # Remove the annoying spurious matches under `tmp.base`.
+    output_as_arr = [line for line in output_as_arr if "/tmp.base/" not in line]
     hdbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
     output = output_as_arr[0]
     output = output.rstrip().lstrip()

@@ -11,6 +11,20 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_compute_tangency_portfolio(hunitest.TestCase):
+
+    @staticmethod
+    def get_covariance() -> pd.DataFrame:
+        mat = np.array(
+            [
+                [1, 0.9, 0.9],
+                [0.9, 1, 0.9],
+                [0.9, 0.9, 1],
+            ]
+        )
+        names = ["T1", "T2", "T3"]
+        covariance = pd.DataFrame(mat, index=names, columns=names)
+        return covariance
+
     def test_toy_case(self) -> None:
         mu_txt = """
 datetime,T1,T2,T3
@@ -20,7 +34,7 @@ datetime,T1,T2,T3
 2016-01-04 12:03:00,0.5,-0.5,0.0
 """
         mu = pd.read_csv(io.StringIO(mu_txt), index_col=0, parse_dates=True)
-        covariance = self._get_covariance()
+        covariance = self.get_covariance()
         actual = oputils.compute_tangency_portfolio(mu, covariance=covariance)
         txt = """
 datetime,T1,T2,T3
@@ -41,7 +55,7 @@ datetime,T1,T2,T3
 2016-01-04 12:03:00,0.5,-0.5,0.0
 """
         mu = pd.read_csv(io.StringIO(mu_txt), index_col=0, parse_dates=True)
-        covariance = self._get_covariance()
+        covariance = self.get_covariance()
         actual_covariance = oputils.compute_tangency_portfolio(
             mu, covariance=covariance
         )
@@ -57,15 +71,3 @@ datetime,T1,T2,T3
             actual_precision, actual_covariance, rtol=1e-5, atol=1e-5
         )
 
-    @staticmethod
-    def _get_covariance() -> pd.DataFrame:
-        mat = np.array(
-            [
-                [1, 0.9, 0.9],
-                [0.9, 1, 0.9],
-                [0.9, 0.9, 1],
-            ]
-        )
-        names = ["T1", "T2", "T3"]
-        covariance = pd.DataFrame(mat, index=names, columns=names)
-        return covariance

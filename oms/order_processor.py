@@ -194,7 +194,7 @@ class OrderProcessor:
         fulfillment_deadline = max([order.end_timestamp for order in orders])
         _LOG.debug("Order fulfillment deadline=%s", fulfillment_deadline)
         # Wait until the order fulfillment deadline to return fill.
-        await hasynci.wait_until(fulfillment_deadline, get_wall_clock_time)
+        await hasynci.async_wait_until(fulfillment_deadline, get_wall_clock_time)
         # Get the fills.
         _LOG.debug("Getting fills.")
         fills = self._broker.get_fills()

@@ -13,6 +13,17 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
+def remove_suffix(string: str, suffix: str, assert_on_error: bool = True) -> str:
+    if string.endswith(suffix):
+        res = string[:-len(suffix)]
+    else:
+        if assert_on_error:
+            raise RuntimeError(f"string='{string}' doesn't end with suffix='{suffix}'")
+        else:
+            res = string
+    return
+
+
 def diff_strings(
     txt1: str,
     txt2: str,

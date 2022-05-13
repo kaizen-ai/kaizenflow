@@ -162,10 +162,14 @@ def get_initial_df_with_volumes(coins, exchange, is_notional_volume):
     """
     result = []
     vendor = config["data"]["vendor"]
+    universe_version = "v3"
+    resample_1min = True
     root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
     ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
         vendor,
+        universe_version,
+        resample_1min,
         root_dir,
         extension,
         aws_profile=config["load"]["aws_profile"],

@@ -7,6 +7,9 @@
 PWD=$(pwd)
 AMP=$PWD
 
+# Give permissions to read / write to user and group.
+umask 002
+
 # #############################################################################
 # Virtual env
 # #############################################################################
@@ -56,6 +59,7 @@ export PATH=$AMP/dev_scripts/testing:$PATH
 export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
 # Print.
+echo "PATH="
 echo $PATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 # #############################################################################
@@ -68,7 +72,8 @@ export PYTHONPATH=$PWD:$PYTHONPATH
 # Remove duplicates.
 export PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
-# Print.
+# Print on different lines.
+echo "PYTHONPATH="
 echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 # #############################################################################

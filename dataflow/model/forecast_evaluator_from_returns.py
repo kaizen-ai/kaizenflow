@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.model.forecast_evaluator as dtfmofoeva
+import dataflow.model.forecast_evaluator_from_returns as dtfmfefrre
 """
 
 import datetime
@@ -20,7 +20,7 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
-class ForecastEvaluator:
+class ForecastEvaluatorFromReturns:
     """
     Evaluate returns/volatility forecasts.
     """
@@ -85,26 +85,30 @@ class ForecastEvaluator:
             files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
             files.sort()
             file_name = files[-1]
-        returns = ForecastEvaluator._read_df(log_dir, "returns", file_name, tz)
-        volatility = ForecastEvaluator._read_df(
+        returns = ForecastEvaluatorFromReturns._read_df(
+            log_dir, "returns", file_name, tz
+        )
+        volatility = ForecastEvaluatorFromReturns._read_df(
             log_dir, "volatility", file_name, tz
         )
-        prediction = ForecastEvaluator._read_df(
+        prediction = ForecastEvaluatorFromReturns._read_df(
             log_dir, "prediction", file_name, tz
         )
-        positions = ForecastEvaluator._read_df(log_dir, "position", file_name, tz)
-        pnl = ForecastEvaluator._read_df(log_dir, "pnl", file_name, tz)
+        positions = ForecastEvaluatorFromReturns._read_df(
+            log_dir, "position", file_name, tz
+        )
+        pnl = ForecastEvaluatorFromReturns._read_df(log_dir, "pnl", file_name, tz)
         if cast_asset_ids_to_int:
             for df in [returns, volatility, prediction, positions, pnl]:
-                ForecastEvaluator._cast_cols_to_int(df)
-        portfolio_df = ForecastEvaluator._build_multiindex_df(
+                ForecastEvaluatorFromReturns._cast_cols_to_int(df)
+        portfolio_df = ForecastEvaluatorFromReturns._build_multiindex_df(
             returns,
             volatility,
             prediction,
             positions,
             pnl,
         )
-        statistics_df = ForecastEvaluator._read_df(
+        statistics_df = ForecastEvaluatorFromReturns._read_df(
             log_dir, "statistics", file_name, tz
         )
         return portfolio_df, statistics_df
@@ -177,18 +181,22 @@ class ForecastEvaluator:
         last_time_str = last_timestamp.strftime("%Y%m%d_%H%M%S")
         file_name = f"{last_time_str}.csv"
         #
-        ForecastEvaluator._write_df(
+        ForecastEvaluatorFromReturns._write_df(
             df[self._returns_col], log_dir, "returns", file_name
         )
-        ForecastEvaluator._write_df(
+        ForecastEvaluatorFromReturns._write_df(
             df[self._volatility_col], log_dir, "volatility", file_name
         )
-        ForecastEvaluator._write_df(
+        ForecastEvaluatorFromReturns._write_df(
             df[self._prediction_col], log_dir, "prediction", file_name
         )
-        ForecastEvaluator._write_df(positions, log_dir, "position", file_name)
-        ForecastEvaluator._write_df(pnl, log_dir, "pnl", file_name)
-        ForecastEvaluator._write_df(statistics, log_dir, "statistics", file_name)
+        ForecastEvaluatorFromReturns._write_df(
+            positions, log_dir, "position", file_name
+        )
+        ForecastEvaluatorFromReturns._write_df(pnl, log_dir, "pnl", file_name)
+        ForecastEvaluatorFromReturns._write_df(
+            statistics, log_dir, "statistics", file_name
+        )
         return file_name
 
     def compute_portfolio(
@@ -225,21 +233,25 @@ class ForecastEvaluator:
         )
         df = df.between_time(self._start_time, self._end_time)
         # Compute naive dollar value risk-adjusted positions.
-        returns_predictions = ForecastEvaluator._get_df(df, self._prediction_col)
-        volatility = ForecastEvaluator._get_df(df, self._volatility_col)
+        returns_predictions = ForecastEvaluatorFromReturns._get_df(
+            df, self._prediction_col
+        )
+        volatility = ForecastEvaluatorFromReturns._get_df(
+            df, self._volatility_col
+        )
         # The values of`target_positions` represent cash values.
         target_positions = returns_predictions.divide(volatility)
         _LOG.debug(
             "target_positions=\n%s",
             hpandas.df_to_str(target_positions, num_rows=None),
         )
-        target_positions = ForecastEvaluator._apply_dollar_neutrality(
+        target_positions = ForecastEvaluatorFromReturns._apply_dollar_neutrality(
             target_positions, dollar_neutrality
         )
-        target_positions = ForecastEvaluator._apply_gmv_scaling(
+        target_positions = ForecastEvaluatorFromReturns._apply_gmv_scaling(
             target_positions, target_gmv
         )
-        returns = ForecastEvaluator._get_df(df, self._returns_col)
+        returns = ForecastEvaluatorFromReturns._get_df(df, self._returns_col)
         pnl = target_positions.shift(2).multiply(returns)
         # Compute statistics.
         stats = self._compute_statistics(target_positions, pnl)
@@ -276,7 +288,7 @@ class ForecastEvaluator:
             dollar_neutrality=dollar_neutrality,
             reindex_like_input=reindex_like_input,
         )
-        portfolio_df = ForecastEvaluator._build_multiindex_df(
+        portfolio_df = ForecastEvaluatorFromReturns._build_multiindex_df(
             df[self._returns_col],
             df[self._volatility_col],
             df[self._prediction_col],
@@ -293,7 +305,9 @@ class ForecastEvaluator:
         target_gmv: Optional[float] = None,
         dollar_neutrality: str = "no_constraint",
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """ """
+        """
+        
+        """
         positions, _, _ = self.compute_portfolio(
             df, target_gmv=target_gmv, dollar_neutrality=dollar_neutrality
         )

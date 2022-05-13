@@ -511,6 +511,7 @@ class GroupedColDfToDfColProcessor:
         # Sanity check each column group tuple.
         for col_group in col_groups:
             hdbg.dassert_isinstance(col_group, tuple)
+            hdbg.dassert_in(col_group, df.columns)
             hdbg.dassert_eq(
                 len(col_group),
                 df.columns.nlevels - 1,
@@ -528,7 +529,7 @@ class GroupedColDfToDfColProcessor:
         # Ensure all groups have the same keys.
         for col_group in col_groups:
             # TODO(gp): Consider adding the assertion below.
-            # hdbg.dassert_in(col_group, df_out.columns)
+            hdbg.dassert_in(col_group, df_out.columns)
             col_group_keys = df_out[col_group].columns.to_list()
             hdbg.dassert_set_eq(keys, col_group_keys)
         # Swap levels in `df` so that keys are top level.

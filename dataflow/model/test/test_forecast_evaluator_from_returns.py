@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 import core.finance_data_example as cfidaexa
-import dataflow.model.forecast_evaluator as dtfmofoeva
+import dataflow.model.forecast_evaluator_from_returns as dtfmfefrre
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
@@ -35,7 +35,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101],
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",
@@ -74,7 +74,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101],
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",
@@ -113,7 +113,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101, 201, 301],
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",
@@ -152,7 +152,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101, 201, 301],
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",
@@ -192,7 +192,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             asset_ids=[101],
             bar_duration="1H",
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",
@@ -249,7 +249,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101, 201, 301],
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",
@@ -299,7 +299,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101, 201, 301, 401],
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",
@@ -342,7 +342,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
             asset_ids=[101, 201, 301, 401],
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",
@@ -391,7 +391,7 @@ class TestForecastEvaluator1(hunitest.TestCase):
             ],
             [101],
         )
-        forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",

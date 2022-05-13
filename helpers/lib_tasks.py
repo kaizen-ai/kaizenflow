@@ -8,6 +8,7 @@ import datetime
 import functools
 import glob
 import grp
+import io
 import json
 import logging
 import os
@@ -19,6 +20,7 @@ import sys
 from typing import Any, Dict, Iterator, List, Match, Optional, Set, Tuple, Union
 
 import tqdm
+import yaml
 from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
@@ -225,6 +227,7 @@ def _run(
     *args: Any,
     dry_run: bool = False,
     use_system: bool = False,
+    print_cmd: bool = False,
     **ctx_run_kwargs: Any,
 ) -> Optional[int]:
     _LOG.debug(hprint.to_str("cmd dry_run"))
@@ -236,6 +239,8 @@ def _run(
         _LOG.warning("Skipping execution")
         res = None
     else:
+        if print_cmd:
+            print(f"> {cmd}")
         if use_system:
             # TODO(gp): Consider using only `hsystem.system()` since it's more
             # reliable.
@@ -389,7 +394,7 @@ def print_setup(ctx):  # type: ignore
     """
     _report_task()
     _ = ctx
-    var_names = "ECR_BASE_PATH BASE_IMAGE".split()
+    var_names = "AM_ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
         print(f"{v}={get_default_param(v)}")
 
@@ -429,6 +434,15 @@ def print_tasks(ctx, as_code=False):  # type: ignore
         print("\n".join([f"{fn}," for fn in func_names]))
     else:
         print("\n".join(func_names))
+
+
+@task
+def print_env(ctx):  # type: ignore
+    """
+    Print the repo configuration.
+    """
+    _ = ctx
+    print(hversio.env_to_str())
 
 
 # #############################################################################
@@ -1187,7 +1201,7 @@ def git_branch_diff_with_master(  # type: ignore
 #
 # - Add end-of-file:
 #   ```
-#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" -o -name "*.sh" -o -name "*.sh" | xargs sed -i '' -e '$a\'
+#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs sed -i '' -e '$a\'
 #
 #   # Remove end-of-file.
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
@@ -1383,6 +1397,7 @@ def integrate_diff_dirs(  # type: ignore
     use_linux_diff=False,
     check_branches=True,
     clean_branches=True,
+    remove_usual=False,
     dry_run=False,
 ):
     """
@@ -1404,6 +1419,7 @@ def integrate_diff_dirs(  # type: ignore
         `src_dir_basename/subdir` and `dst_dir_basename/subdir`)
     :param copy: copy the files instead of diffing
     :param use_linux_diff: use Linux `diff` instead of `diff_to_vimdiff.py`
+    :param remove_usual: remove the usual mismatching files (e.g., `.github`)
     """
     _report_task()
     if reverse:
@@ -1413,7 +1429,7 @@ def integrate_diff_dirs(  # type: ignore
             hprint.to_str2(src_dir_basename, dst_dir_basename),
         )
     # Check that the integration branches are in the expected state.
-    _dassert_current_dir_matches(src_dir_basename)
+    # _dassert_current_dir_matches(src_dir_basename)
     abs_src_dir, abs_dst_dir = _resolve_src_dst_names(
         src_dir_basename, dst_dir_basename, subdir
     )
@@ -1429,6 +1445,10 @@ def integrate_diff_dirs(  # type: ignore
             _clean_both_integration_dirs(abs_src_dir, abs_dst_dir)
     else:
         _LOG.warning("Skipping integration branch cleaning")
+    # Copy or diff dirs.
+    _LOG.info("abs_src_dir=%s", abs_src_dir)
+    _LOG.info("abs_dst_dir=%s", abs_dst_dir)
+    hdbg.dassert_ne(abs_src_dir, abs_dst_dir)
     if copy:
         # Copy the files.
         if dry_run:
@@ -1442,7 +1462,13 @@ def integrate_diff_dirs(  # type: ignore
             cmd = f"diff -r --brief {abs_src_dir} {abs_dst_dir}"
         else:
             cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
-    _run(ctx, cmd, dry_run=dry_run)
+            if remove_usual:
+                vals = [
+                    "\/\.github\/",
+                ]
+                regex = "|".join(vals)
+                cmd += f" --ignore_files='{regex}'"
+    _run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -1823,7 +1849,7 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     _report_task()
     docker_login(ctx)
-    ecr_base_path = get_default_param("ECR_BASE_PATH")
+    ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
     _run(ctx, f"{docker_exec} image ls {ecr_base_path}")
 
@@ -2018,7 +2044,7 @@ def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
     """
     _report_task()
     #
-    base_image = get_default_param("ECR_BASE_PATH") + "/dev_tools"
+    base_image = get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
     _docker_pull(ctx, base_image, stage, version)
 
 
@@ -2060,7 +2086,7 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
     else:
-        ecr_base_path = get_default_param("ECR_BASE_PATH")
+        ecr_base_path = get_default_param("AM_ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
@@ -2073,9 +2099,264 @@ def docker_login(ctx):  # type: ignore
     _run(ctx, cmd, use_system=True)
 
 
+# ////////////////////////////////////////////////////////////////////////////////
+# Compose files.
+# ////////////////////////////////////////////////////////////////////////////////
+
+# There are several combinations to consider:
+# - whether the Docker host can run with / without privileged mode
+# - amp as submodule / as supermodule
+# - different supermodules for amp
+
+# TODO(gp): use_privileged_mode -> use_docker_privileged_mode
+#  use_sibling_container -> use_docker_containers_containers
+
+
+def _generate_compose_file(
+    use_privileged_mode: bool,
+    use_sibling_container: bool,
+    shared_data_dirs: Optional[str],
+    mount_as_submodule: bool,
+    use_network_mode_host: bool,
+    file_name: Optional[str],
+) -> str:
+    """
+    Generate `docker-compose.yaml` file and save it.
+
+    :param shared_data_dir: data directory in the host filesystem to mount to mount 
+        inside the container. None means no dir sharing
+    """
+    _LOG.debug(
+        hprint.to_str(
+            "use_privileged_mode use_sibling_container "
+            "shared_data_dirs mount_as_submodule "
+            "use_network_mode_host file_name"
+        )
+    )
+    txt = []
+
+    def append(txt_tmp: str, indent_level: int) -> None:
+        # txt_tmp = txt_tmp.rstrip("\n").lstrip("\n")
+        txt_tmp = hprint.dedent(txt_tmp, remove_empty_leading_trailing_lines=True)
+        num_spaces = 2 * indent_level
+        txt_tmp = hprint.indent(txt_tmp, num_spaces=num_spaces)
+        txt.append(txt_tmp)
+
+    # We could pass the env var directly, like:
+    # ```
+    # - AM_ENABLE_DIND=$AM_ENABLE_DIND
+    # ```
+    # but we prefer to inline it.
+    if use_privileged_mode:
+        am_enable_dind = 1
+    else:
+        am_enable_dind = 0
+    # sysname='Linux'
+    # nodename='cf-spm-dev4'
+    # release='3.10.0-1160.53.1.el7.x86_64'
+    # version='#1 SMP Fri Jan 14 13:59:45 UTC 2022'
+    # machine='x86_64'
+    am_host_os_name = os.uname()[0]
+    am_host_name = os.uname()[1]
+    # We could do the same also with IMAGE for symmetry.
+    # Use % instead of f-string since `${IMAGE}` confuses f-string as a variable.
+    # Keep the env vars in sync with what we print in entrypoint.sh.
+    txt_tmp = """
+    version: '3'
+
+    services:
+      base_app:
+        cap_add:
+          - SYS_ADMIN
+        environment:
+          - AM_AWS_PROFILE=$AM_AWS_PROFILE
+          - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
+          - AM_ENABLE_DIND=%s
+          - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
+          - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
+          - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
+          - AM_HOST_NAME=%s
+          - AM_HOST_OS_NAME=%s
+          - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
+          - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
+          - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
+          - CK_AWS_PROFILE=$CK_AWS_PROFILE
+          # - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
+          # - CK_ENABLE_DIND=
+          # - CK_FORCE_TEST_FAIL=$CK_FORCE_TEST_FAIL
+          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
+          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
+          # - CK_HOST_NAME=
+          # - CK_HOST_OS_NAME=
+          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
+          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
+          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
+          - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
+          # This env var is used by GH Action to signal that we are inside the CI.
+          - CI=$CI
+        image: ${IMAGE}
+    """ % (
+        am_enable_dind,
+        am_host_name,
+        am_host_os_name,
+    )
+    indent_level = 0
+    append(txt_tmp, indent_level)
+    #
+    if use_privileged_mode:
+        txt_tmp = """
+        # This is needed:
+        # - for Docker-in-docker (dind)
+        # - to mount fstabs
+        privileged: true
+        """
+        # This is at the level of `services.app`.
+        indent_level = 2
+        append(txt_tmp, indent_level)
+    #
+    if True:
+        txt_tmp = """
+        restart: "no"
+        volumes:
+          # TODO(gp): We should pass the value of $HOME from dev.Dockerfile to here.
+          # E.g., we might define $HOME in the env file.
+          - ~/.aws:/home/.aws
+          - ~/.config/gspread_pandas/:/home/.config/gspread_pandas/
+          - ~/.config/gh:/home/.config/gh
+        """
+        # This is at the level of `services.app`.
+        indent_level = 2
+        append(txt_tmp, indent_level)
+        # Mount shared dirs.
+        if shared_data_dirs is not None:
+            hdbg.dassert_lt(0, len(shared_data_dirs))
+            #
+            txt_tmp = "# Shared data directories."
+            # This is at the level of `services.app.volumes`.
+            indent_level = 3
+            append(txt_tmp, indent_level)
+            # Mount all dirs that are specified.
+            for key, value in shared_data_dirs.items():
+                txt_tmp = f"""
+                - {key}:{value}
+                """
+                append(txt_tmp, indent_level)
+    #
+    if False:
+        txt_tmp = """
+        # No need to mount file systems.
+        - ../docker_build/fstab:/etc/fstab
+        """
+        # This is at the level of `services.app.volumes`.
+        indent_level = 3
+        append(txt_tmp, indent_level)
+    #
+    if use_sibling_container:
+        txt_tmp = """
+        # Use sibling-container approach.
+        - /var/run/docker.sock:/var/run/docker.sock
+        """
+        # This is at the level of `services.app.volumes`.
+        indent_level = 3
+        append(txt_tmp, indent_level)
+    #
+    if False:
+        txt_tmp = """
+        deploy:
+          resources:
+            limits:
+              # This should be passed from command line depending on how much
+              # memory is available.
+              memory: 60G
+        """
+    #
+    if mount_as_submodule:
+        txt_tmp = """
+        # Mount `amp` when it is used as submodule. In this case we need to
+        # mount the super project in the container (to make git work with the
+        # supermodule) and then change dir to `amp`.
+        app:
+          extends:
+            base_app
+          volumes:
+            # Move one dir up to include the entire git repo (see AmpTask1017).
+            - ../../../:/app
+          # Move one dir down to include the entire git repo (see AmpTask1017).
+          working_dir: /app/amp
+        """
+    else:
+        txt_tmp = """
+        # Mount `amp` when it is used as supermodule.
+        app:
+          extends:
+            base_app
+          volumes:
+            - ../../:/app
+        """
+    # This is at the level of `services`.
+    indent_level = 1
+    append(txt_tmp, indent_level)
+    #
+    if use_network_mode_host:
+        txt_tmp = """
+        # Default network mode set to host so we can reach e.g.
+        # a database container pointing to localhost:5432.
+        # In tests we use dind so we need set back to the default "bridge".
+        # See CmTask988 and https://stackoverflow.com/questions/24319662
+        network_mode: ${NETWORK_MODE:-host}
+        """
+        # This is at the level of `services/app`.
+        indent_level = 2
+        append(txt_tmp, indent_level)
+    #
+    if True:
+        txt_tmp = """
+        jupyter_server:
+          command: devops/docker_run/run_jupyter_server.sh
+          environment:
+            - PORT=${PORT}
+          extends:
+            app
+          network_mode: ${NETWORK_MODE:-bridge}
+          ports:
+            # TODO(gp): Rename `AM_PORT`.
+            - "${PORT}:${PORT}"
+
+        # TODO(gp): For some reason the following doesn't work.
+        #  jupyter_server_test:
+        #    command: jupyter notebook -h 2>&1 >/dev/null
+        #    extends:
+        #      jupyter_server
+
+        jupyter_server_test:
+          command: jupyter notebook -h 2>&1 >/dev/null
+          environment:
+            - PORT=${PORT}
+          extends:
+            app
+          ports:
+            - "${PORT}:${PORT}"
+        """
+        # This is at the level of `services`.
+        indent_level = 1
+        append(txt_tmp, indent_level)
+    # Save file.
+    txt: str = "\n".join(txt)
+    if file_name:
+        hio.to_file(file_name, txt)
+    # Sanity check of the YAML file.
+    stream = io.StringIO(txt)
+    _ = yaml.safe_load(stream)
+    return txt
+
+
 def get_base_docker_compose_path() -> str:
     """
-    Return the base docker compose `devops/compose/docker-compose.yml`.
+    Return the absolute path to base docker compose.
+
+    E.g., `devops/compose/docker-compose.yml`.
     """
     # Add the default path.
     dir_name = "devops/compose"
@@ -2088,10 +2369,12 @@ def get_base_docker_compose_path() -> str:
 
 def _get_amp_docker_compose_path() -> Optional[str]:
     """
-    Return the docker compose for `amp` as supermodule or as submodule.
+    Return the docker compose to use for `amp`, depending whether it is a
+    supermodule or as submodule.
 
-    E.g., `devops/compose/docker-compose_as_submodule.yml` and
-    `devops/compose/docker-compose_as_supermodule.yml`
+    E.g.,
+    - for submodule -> `devops/compose/docker-compose_as_submodule.yml`
+    - for supermodule -> None
     """
     path, _ = hgit.get_path_from_supermodule()
     docker_compose_path: Optional[str]
@@ -2105,6 +2388,77 @@ def _get_amp_docker_compose_path() -> Optional[str]:
     else:
         docker_compose_path = None
     return docker_compose_path
+
+
+def _get_docker_compose_paths(
+    extra_docker_compose_files: List[str],
+) -> List[str]:
+    """
+    Return the list of the needed docker compose path.
+    """
+    docker_compose_files = []
+    # Get the repo short name (e.g., amp).
+    dir_name = hgit.get_repo_full_name_from_dirname(".", include_host_name=False)
+    repo_short_name = hgit.get_repo_name(dir_name, in_mode="full_name")
+    _LOG.debug("repo_short_name=%s", repo_short_name)
+    # Check submodule status, if needed.
+    mount_as_submodule = False
+    if repo_short_name in ("amp", "cm"):
+        # Check if `amp` is a submodule.
+        path, _ = hgit.get_path_from_supermodule()
+        docker_compose_path: Optional[str]
+        if path != "":
+            _LOG.warning("amp is a submodule")
+            mount_as_submodule = True
+    # Write Docker compose file.
+    file_name = get_base_docker_compose_path()
+    _generate_compose_file(
+        hgit.execute_repo_config_code("enable_privileged_mode()"),
+        hgit.execute_repo_config_code("use_docker_sibling_containers()"),
+        hgit.execute_repo_config_code("get_shared_data_dirs()"),
+        mount_as_submodule,
+        hgit.execute_repo_config_code("use_docker_network_mode_host()"),
+        file_name,
+    )
+    docker_compose_files.append(file_name)
+    # if False:
+    # docker_compose_files = []
+    # if has_default_param("USE_ONLY_ONE_DOCKER_COMPOSE"):
+    #     # Use only one docker compose file, instead of two.
+    #     # TODO(gp): Hacky fix for CmampTask386 "Clean up docker compose".
+    #     if repo_short_name == "amp":
+    #         # For amp use only
+    #         docker_compose_file_tmp = _get_amp_docker_compose_path()
+    #     else:
+    #         docker_compose_file_tmp = get_base_docker_compose_path()
+    #     docker_compose_files.append(docker_compose_file_tmp)
+    # else:
+    #     # Typically we use one or two docker compose files, depending if we need
+    #     # submodule behavior or not.
+    #     docker_compose_files.append(get_base_docker_compose_path())
+    #     if repo_short_name == "amp":
+    #         docker_compose_file_tmp = _get_amp_docker_compose_path()
+    #         if docker_compose_file_tmp:
+    #             docker_compose_files.append(docker_compose_file_tmp)
+
+    # Add the compose files from command line.
+    if extra_docker_compose_files:
+        hdbg.dassert_isinstance(extra_docker_compose_files, list)
+        docker_compose_files.extend(extra_docker_compose_files)
+    # Add the compose files from the global params.
+    key = "DOCKER_COMPOSE_FILES"
+    if has_default_param(key):
+        docker_compose_files.append(get_default_param(key))
+    #
+    _LOG.debug(hprint.to_str("docker_compose_files"))
+    for docker_compose in docker_compose_files:
+        hdbg.dassert_path_exists(docker_compose)
+    return docker_compose_files
+
+
+# ////////////////////////////////////////////////////////////////////////////////
+# Version.
+# ////////////////////////////////////////////////////////////////////////////////
 
 
 _IMAGE_VERSION_RE = r"\d+\.\d+\.\d+"
@@ -2153,6 +2507,11 @@ def _dassert_is_subsequent_version(
     if version != _IMAGE_VERSION_FROM_CHANGELOG:
         current_version = hversio.get_changelog_version(container_dir_name)
         hdbg.dassert_lt(current_version, version)
+
+
+# ////////////////////////////////////////////////////////////////////////////////
+# Image.
+# ////////////////////////////////////////////////////////////////////////////////
 
 
 _INTERNET_ADDRESS_RE = r"([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}"
@@ -2220,7 +2579,7 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            get_default_param("ECR_BASE_PATH")
+            get_default_param("AM_ECR_BASE_PATH")
             + "/"
             + get_default_param("BASE_IMAGE")
         )
@@ -2285,6 +2644,11 @@ def get_image(
     image = "".join(image)
     _dassert_is_image_name_valid(image)
     return image
+
+
+# ////////////////////////////////////////////////////////////////////////////////
+# Misc.
+# ////////////////////////////////////////////////////////////////////////////////
 
 
 def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
@@ -2378,39 +2742,7 @@ def _get_docker_base_cmd(
         r"""
         docker-compose"""
     )
-    # - Handle the docker compose files.
-    dir_name = hgit.get_repo_full_name_from_dirname(".", include_host_name=False)
-    repo_short_name = hgit.get_repo_name(dir_name, in_mode="full_name")
-    _LOG.debug("repo_short_name=%s", repo_short_name)
-    #
-    docker_compose_files = []
-    if has_default_param("USE_ONLY_ONE_DOCKER_COMPOSE"):
-        # Use only one docker compose file.
-        # TODO(gp): Hacky fix for CmampTask386.
-        if repo_short_name == "amp":
-            docker_compose_file_tmp = _get_amp_docker_compose_path()
-        else:
-            docker_compose_file_tmp = get_base_docker_compose_path()
-        docker_compose_files.append(docker_compose_file_tmp)
-    else:
-        # Use one or two docker compose files.
-        docker_compose_files.append(get_base_docker_compose_path())
-        if repo_short_name == "amp":
-            docker_compose_file_tmp = _get_amp_docker_compose_path()
-            if docker_compose_file_tmp:
-                docker_compose_files.append(docker_compose_file_tmp)
-    # Add the compose files from command line.
-    if extra_docker_compose_files:
-        hdbg.dassert_isinstance(extra_docker_compose_files, list)
-        docker_compose_files.extend(extra_docker_compose_files)
-    # Add the compose files from the global params.
-    key = "DOCKER_COMPOSE_FILES"
-    if has_default_param(key):
-        docker_compose_files.append(get_default_param(key))
-    #
-    _LOG.debug(hprint.to_str("docker_compose_files"))
-    for docker_compose in docker_compose_files:
-        hdbg.dassert_path_exists(docker_compose)
+    docker_compose_files = _get_docker_compose_paths(extra_docker_compose_files)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
@@ -2546,6 +2878,11 @@ def _get_docker_cmd(
     return docker_cmd_
 
 
+# ////////////////////////////////////////////////////////////////////////////////
+# bash and cmd.
+# ////////////////////////////////////////////////////////////////////////////////
+
+
 def _docker_cmd(
     ctx: Any,
     docker_cmd_: str,
@@ -2575,6 +2912,8 @@ def docker_bash(  # type: ignore
 ):
     """
     Start a bash shell inside the container corresponding to a stage.
+
+    TODO(gp): Add description of non-obvious interface params.
     """
     _report_task(container_dir_name=container_dir_name)
     cmd = "bash"
@@ -2597,6 +2936,8 @@ def docker_cmd(  # type: ignore
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
+
+    TODO(gp): Add description of non-obvious interface params.
     """
     _report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
@@ -2610,6 +2951,11 @@ def docker_cmd(  # type: ignore
         use_bash=use_bash,
     )
     _docker_cmd(ctx, docker_cmd_)
+
+
+# ////////////////////////////////////////////////////////////////////////////////
+# Jupyter.
+# ////////////////////////////////////////////////////////////////////////////////
 
 
 def _get_docker_jupyter_cmd(
@@ -3706,6 +4052,7 @@ def _build_run_command_line(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    n_threads: str,
 ) -> str:
     """
     Build the pytest run command.
@@ -3757,6 +4104,10 @@ def _build_run_command_line(
     pytest_opts_tmp.append(
         f'--reruns {num_reruns} --only-rerun "Failed: Timeout"'
     )
+    if hgit.execute_repo_config_code("skip_submodules_test()"):
+        # For some repos (e.g. `dev_tools`) submodules should be skipped
+        # regardless of the passed value.
+        skip_submodules = True
     if skip_submodules:
         submodule_paths = hgit.get_submodule_paths()
         _LOG.warning(
@@ -3770,6 +4121,8 @@ def _build_run_command_line(
     if collect_only:
         _LOG.warning("Only collecting tests as per user request")
         pytest_opts_tmp.append("--collect-only")
+    # Indicate the number of threads for parallelization.
+    pytest_opts_tmp.append(f"-n {str(n_threads)}")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
@@ -3850,6 +4203,7 @@ def _run_tests(
     coverage: bool,
     collect_only: bool,
     tee_to_file: bool,
+    n_threads: str,
     git_clean_: bool,
     *,
     start_coverage_script: bool = False,
@@ -3870,6 +4224,7 @@ def _run_tests(
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
     )
     # Execute the command line.
     rc = _run_test_cmd(
@@ -3899,6 +4254,7 @@ def run_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -3919,6 +4275,7 @@ def run_tests(  # type: ignore
             coverage,
             collect_only,
             tee_to_file,
+            n_threads,
             git_clean_,
             warn=True,
             **kwargs,
@@ -3951,6 +4308,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -3963,6 +4321,8 @@ def run_fast_tests(  # type: ignore
     :param coverage: enable coverage computation
     :param collect_only: do not run tests but show what will be executed
     :param tee_to_file: save output of pytest in `tmp.pytest.log`
+    :param n_threads: the number of threads to run the tests with
+        - "auto": distribute the tests across all the available CPUs
     :param git_clean_: run `invoke git_clean --fix-perms` before running the tests
     :param kwargs: kwargs for `ctx.run`
     """
@@ -3980,6 +4340,7 @@ def run_fast_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -3996,6 +4357,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4018,6 +4380,7 @@ def run_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -4034,6 +4397,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
     **kwargs,
 ):
@@ -4056,6 +4420,7 @@ def run_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
         **kwargs,
     )
@@ -4073,6 +4438,7 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
 ):
     """
@@ -4096,6 +4462,7 @@ def run_fast_slow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
     )
     return rc
@@ -4112,6 +4479,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     git_clean_=False,
 ):
     """
@@ -4135,6 +4503,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean_,
     )
     return rc
@@ -4926,8 +5295,6 @@ def lint(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
-    _LOG.info("Pulling the latest dev_tools image")
-    docker_pull_dev_tools(ctx)
     # The available phases are:
     # ```
     # > i lint -f "foobar.py"
@@ -5337,6 +5704,9 @@ def _get_gh_issue_title(issue_id: int, repo_short_name: str) -> Tuple[str, str]:
     #
     title = title.replace(" ", "_")
     title = title.replace("-", "_")
+    title = title.replace("'", "_")
+    title = title.replace("`", "_")
+    title = title.replace('"', "_")
     # Add the prefix `AmpTaskXYZ_...`
     task_prefix = hgit.get_task_prefix_from_repo_short_name(repo_short_name)
     _LOG.debug("task_prefix=%s", task_prefix)
@@ -5594,9 +5964,9 @@ def _print_problems(dir_name: str = ".") -> None:
     """
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     user = hsystem.get_user_name()
-    docker_user = get_default_param("DOCKER_USER")
+    docker_user = hgit.execute_repo_config_code("get_docker_user()")
     # user_group = f"{user}_g"
-    # shared_group = get_default_param("SHARED_GROUP")
+    # shared_group = hgit.execute_repo_config_code("get_docker_shared_group()")
     files_with_problems = []
     for file, (curr_user, curr_group) in file_to_user_group.items():
         _ = curr_user, curr_group
@@ -5655,7 +6025,7 @@ def _fix_invalid_owner(dir_name: str, fix: bool, abort_on_error: bool) -> None:
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     #
     user = hsystem.get_user_name()
-    docker_user = get_default_param("DOCKER_USER")
+    docker_user = hgit.execute_repo_config_code("get_docker_user()")
     for file, (curr_user, _) in tqdm.tqdm(file_to_user_group.items()):
         if curr_user not in (user, docker_user):
             _LOG.info("Fixing file '%s'", file)
@@ -5682,7 +6052,7 @@ def _fix_group(dir_name: str, fix: bool, abort_on_error: bool) -> None:
         # Get the user and the group.
         user = hsystem.get_user_name()
         user_group = f"{user}_g"
-        shared_group = get_default_param("SHARED_GROUP")
+        shared_group = hgit.execute_repo_config_code("get_docker_shared_group()")
         #
         for file, (curr_user, curr_group) in file_to_user_group.items():
             # If the group is the shared group there is nothing to do.
@@ -5756,30 +6126,40 @@ def fix_perms(  # type: ignore
     _ = ctx
     _report_task()
     #
-    if action == "all":
-        action = ["fix_invalid_owner", "fix_group", "fix_group_permissions"]
+    if hgit.execute_repo_config_code("is_dev4()"):
+        if action == "all":
+            action = ["fix_invalid_owner", "fix_group", "fix_group_permissions"]
+        else:
+            action = [action]
+        #
+        file_name1 = "./tmp.fix_perms.before.txt"
+        _save_dir_status(dir_name, file_name1)
+        #
+        if "print_stats" in action:
+            _compute_stats_by_user_and_group(dir_name)
+        if "print_problems" in action:
+            _print_problems(dir_name)
+        if "fix_invalid_owner" in action:
+            _fix_invalid_owner(dir_name, fix, abort_on_error)
+        if "fix_group" in action:
+            _fix_group(dir_name, fix, abort_on_error)
+        if "fix_group_permissions" in action:
+            _fix_group_permissions(dir_name, abort_on_error)
+        #
+        file_name2 = "./tmp.fix_perms.after.txt"
+        _save_dir_status(dir_name, file_name2)
+        #
+        cmd = f"To compare run:\n> vimdiff {file_name1} {file_name2}"
+        print(cmd)
+    elif hgit.execute_repo_config_code("is_dev_ck()"):
+        user = hsystem.get_user_name()
+        group = user
+        cmd = f"sudo chown -R {user}:{group} *"
+        hsystem.system(cmd)
+        cmd = f"sudo chown -R {user}:{group} .pytest_cache"
+        hsystem.system(cmd, abort_on_error=False)
     else:
-        action = [action]
-    #
-    file_name1 = "./tmp.fix_perms.before.txt"
-    _save_dir_status(dir_name, file_name1)
-    #
-    if "print_stats" in action:
-        _compute_stats_by_user_and_group(dir_name)
-    if "print_problems" in action:
-        _print_problems(dir_name)
-    if "fix_invalid_owner" in action:
-        _fix_invalid_owner(dir_name, fix, abort_on_error)
-    if "fix_group" in action:
-        _fix_group(dir_name, fix, abort_on_error)
-    if "fix_group_permissions" in action:
-        _fix_group_permissions(dir_name, abort_on_error)
-    #
-    file_name2 = "./tmp.fix_perms.after.txt"
-    _save_dir_status(dir_name, file_name2)
-    #
-    cmd = f"To compare run:\n> vimdiff {file_name1} {file_name2}"
-    print(cmd)
+        raise ValueError(f"Invalid machine {os.uname()[1]}")
 
 
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.

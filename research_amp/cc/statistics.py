@@ -48,10 +48,10 @@ def compute_stats_for_universe(
         # Read data for current exchange and currency pair.
         start_ts = None
         end_ts = None
+        columns = None
+        filter_data_mode = "assert"
         data = loader.read_data(
-            [full_symbol],
-            start_ts,
-            end_ts,
+            [full_symbol], start_ts, end_ts, columns, filter_data_mode
         )
         # Compute stats on the exchange-currency level.
         cur_stats_data = stats_func(data)
@@ -208,11 +208,14 @@ def get_loader_for_vendor(
     :return: loader instance
     """
     vendor = config["data"]["vendor"]
+    # TODO(Grisha): pass universe version via config.
+    universe_version = "v3"
     resample_1min = True
     root_dir = config["load"]["data_dir"]
     extension = "csv.gz"
     loader = icdcl.CcxtCddCsvParquetByAssetClient(
         vendor,
+        universe_version,
         resample_1min,
         root_dir,
         extension,
@@ -264,13 +267,18 @@ def get_universe_price_data(
     # Initialize lists of column names and price data series.
     colnames = []
     price_srs_list = []
+    # Set parameters for data reading.
     start_ts = None
     end_ts = None
+    columns = None
+    filter_data_mode = "assert"
     # Iterate exchange ids and currency pairs.
     for full_symbol in vendor_universe:
         colnames.append(full_symbol)
         # Read data for current exchange and currency pair.
-        data = loader.read_data(full_symbol, start_ts, end_ts)
+        data = loader.read_data(
+            full_symbol, start_ts, end_ts, columns, filter_data_mode
+        )
         # Get series of required prices and append to the list.
         price_srs = data[config["data"]["price_column"]]
         price_srs_list.append(price_srs)

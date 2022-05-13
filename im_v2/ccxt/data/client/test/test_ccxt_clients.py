@@ -4,9 +4,9 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hgit as hgit
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
-import helpers.hsystem as hsystem
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
@@ -288,16 +288,16 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
 
     def test_get_universe1(self) -> None:
         im_client = imvcdcccex.get_CcxtCsvClient_example2()
-        expected_length = 38
+        expected_length = 3
         expected_first_elements = [
-            "binance::ADA_USDT",
-            "binance::AVAX_USDT",
-            "binance::BNB_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         expected_last_elements = [
-            "kucoin::LINK_USDT",
-            "kucoin::SOL_USDT",
-            "kucoin::XRP_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -589,16 +589,16 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        expected_length = 38
+        expected_length = 3
         expected_first_elements = [
-            "binance::ADA_USDT",
-            "binance::AVAX_USDT",
-            "binance::BNB_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         expected_last_elements = [
-            "kucoin::LINK_USDT",
-            "kucoin::SOL_USDT",
-            "kucoin::XRP_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -609,15 +609,22 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 
 
 # #############################################################################
-# TestCcxtDbClient1
+# CcxtSqlRealTimeImClient1
 # #############################################################################
 
 
-class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
+# TODO(Danya): add example client for `CcxtSqlRealTimeImClient`.
+class CcxtSqlRealTimeImClient1(
+    icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
+):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
     """
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
 
     def test_read_data1(self) -> None:
         # Load test data.
@@ -626,11 +633,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         #
@@ -670,11 +674,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -718,11 +719,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
@@ -765,11 +763,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
@@ -811,11 +806,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
@@ -852,15 +844,17 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data6(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data7(self) -> None:
         # Load test data.
@@ -869,11 +863,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = False
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -917,11 +908,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         expected_start_ts = pd.to_datetime("2021-09-09 00:00:00", utc=True)
@@ -938,11 +926,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
         hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         #
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2021-09-09 00:04:00", utc=True)
@@ -953,23 +938,24 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_universe1(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         resample_1min = True
-        vendor = "CCXT"
-        im_client = (
-            icdcl.CcxtCddDbClient(  # pylint: disable=no-value-for-parameter
-                vendor, resample_1min, self.connection
-            )
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
         )
-        expected_length = 38
+        expected_length = 3
         expected_first_elements = [
-            "binance::ADA_USDT",
-            "binance::AVAX_USDT",
-            "binance::BNB_USDT",
+            "kucoin::ETH_USDT",
+            "binance::BTC_USDT",
+            "binance::ETH_USDT",
         ]
         expected_last_elements = [
-            "kucoin::LINK_USDT",
-            "kucoin::SOL_USDT",
-            "kucoin::XRP_USDT",
+            "kucoin::ETH_USDT",
+            "binance::BTC_USDT",
+            "binance::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -977,6 +963,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
             expected_first_elements,
             expected_last_elements,
         )
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1007,6 +994,7 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
                 [3, 1631145720000, 32, 42, 52, 62, 72, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
                 [4, 1631145840000, 34, 44, 54, 64, 74, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
                 [5, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [6, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "kucoin", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
             ]
             # pylint: enable=line-too-long
             # fmt: on
@@ -1027,8 +1015,8 @@ class TestCcxtCddDbClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper)
 
 
 @pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1666.",
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
 )
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
@@ -1072,6 +1060,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data2(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1110,6 +1099,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data3(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1150,6 +1140,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data4(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1190,6 +1181,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data5(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1240,6 +1232,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
     def test_read_data7(self) -> None:
         resample_1min = False
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1280,6 +1273,49 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
     # ////////////////////////////////////////////////////////////////////////
 
+    @pytest.mark.slow("Slow via GH, but fast on the server")
+    def test_filter_columns1(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        columns = ["full_symbol", "open", "close"]
+        self._test_filter_columns1(im_client, full_symbols, columns)
+
+    def test_filter_columns2(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        columns = ["full_symbol", "whatever"]
+        self._test_filter_columns2(im_client, full_symbol, columns)
+
+    def test_filter_columns3(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        columns = ["open", "close"]
+        self._test_filter_columns3(im_client, full_symbol, columns)
+
+    def test_filter_columns4(self) -> None:
+        resample_1min = True
+        im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+        full_symbol = "binance::BTC_USDT"
+        columns = ["open", "close"]
+        self._test_filter_columns4(
+            im_client,
+            full_symbol,
+            columns,
+        )
+
+    # ////////////////////////////////////////////////////////////////////////
+
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
@@ -1307,16 +1343,16 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        expected_length = 38
+        expected_length = 3
         expected_first_elements = [
-            "binance::ADA_USDT",
-            "binance::AVAX_USDT",
-            "binance::BNB_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         expected_last_elements = [
-            "kucoin::LINK_USDT",
-            "kucoin::SOL_USDT",
-            "kucoin::XRP_USDT",
+            "binance::BTC_USDT",
+            "gateio::XRP_USDT",
+            "kucoin::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -1367,13 +1403,20 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
-        data = im_client.read_data(full_symbols, start_ts, end_ts)
+        columns = None
+        filter_data_mode = "assert"
+        data = im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
         # Add missing columns.
         data["exchange_id"], data["currency_pair"] = ivcu.parse_full_symbol(
             data["full_symbol"]
         )
         data["year"] = data.index.year
         data["month"] = data.index.month
+        # Add "timestamp" column to make test data with same columns as historical.
+        timestamp_col = [1569888000000] * len(data)
+        data.insert(0, "timestamp", timestamp_col)
         # Remove unnecessary column.
         data = data.drop(columns="full_symbol")
         # Artificially create gaps in data in order test resampling.

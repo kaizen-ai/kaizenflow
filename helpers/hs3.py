@@ -357,16 +357,16 @@ def get_local_or_s3_stream(
 # #############################################################################
 
 
-# TODO(Nikola): Add small unit test.
+# TODO(Nikola): CmTask #1810 "Increase test coverage in helpers/hs3.py"
 def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     """
     Return the S3 bucket from environment variable corresponding to a given
     `aws_profile`. E.g., `aws_profile="am"` uses the value in `AM_AWS_S3_BUCKET`
     which is usually set to `s3://alphamatic-data`.
     """
+    hdbg.dassert_type_is(aws_profile, str)
     prefix = aws_profile.upper()
-    # TODO(Nikola): Rename after #1292 is merged.
-    env_var = f"{prefix}_S3_BUCKET"
+    env_var = f"{prefix}_AWS_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
     hdbg.dassert(
@@ -414,6 +414,7 @@ def get_aws_profile(aws_profile: str) -> str:
     - command line option (i.e., `args.aws_profile`)
     - env vars (i.e., `AM_AWS_PROFILE`)
     """
+    hdbg.dassert_type_is(aws_profile, str)
     prefix = aws_profile.upper()
     env_var = f"{prefix}_AWS_PROFILE"
     hdbg.dassert_in(env_var, os.environ)
@@ -476,16 +477,18 @@ def get_aws_credentials(
         `aws_region` and optionally `aws_session_token`
     """
     _LOG.debug("Getting credentials for aws_profile='%s'", aws_profile)
-    hdbg.dassert_ne(aws_profile, "")
-    #
+    hdbg.dassert_in(aws_profile, ("am", "ck", "__mock__"))
+    if aws_profile == "__mock__":
+        # `mock` profile is artificial construct used only in tests.
+        aws_profile = aws_profile.strip("__")
+    profile_prefix = aws_profile.upper()
     result: Dict[str, Optional[str]] = {}
-    # TODO(gp): @all make this function of `aws_profile`.
     key_to_env_var: Dict[str, str] = {
-        "aws_access_key_id": "AWS_ACCESS_KEY_ID",
-        "aws_secret_access_key": "AWS_SECRET_ACCESS_KEY",
+        "aws_access_key_id": f"{profile_prefix}_AWS_ACCESS_KEY_ID",
+        "aws_secret_access_key": f"{profile_prefix}_AWS_SECRET_ACCESS_KEY",
         # TODO(gp): AWS_DEFAULT_REGION -> AWS_REGION so we can use the invariant
         #  that the var is simply the capitalized version of the key.
-        "aws_region": "AWS_DEFAULT_REGION",
+        "aws_region": f"{profile_prefix}_AWS_DEFAULT_REGION",
     }
     # If all the AWS credentials are passed through env vars, they override the
     # config file.
@@ -496,7 +499,6 @@ def get_aws_credentials(
     ]
     if any(set_env_vars):
         if not all(set_env_vars):
-            # TODO(Nikola): raise an error instead?
             _LOG.warning(
                 "Some but not all AWS env vars are set (%s): ignoring",
                 str(set_env_vars),
@@ -515,9 +517,6 @@ def get_aws_credentials(
             result[key] = os.environ[env_var]
         # TODO(gp): We don't pass this through env var for now.
         result["aws_session_token"] = None
-        # TODO(gp): @all support also other S3 profiles. We can derive the names
-        #  of the env vars from aws_profile. E.g., "am" -> AM_AWS_ACCESS_KEY.
-        hdbg.dassert_in(aws_profile, ("am", "ck"))
     else:
         _LOG.debug("Using AWS credentials from files")
         # > more ~/.aws/credentials
@@ -552,50 +551,12 @@ def get_aws_credentials(
     return result
 
 
-# TODO(Nikola): Not used anymore. Remove/refactor?
-@functools.lru_cache()
-def get_key_value(
-    aws_profile: str,
-    key: str,
-) -> Optional[str]:
-    """
-    Retrieve the value corresponding to `key` for the given `aws_profile`.
-
-    This function accesses the `~/.aws` files or the env vars.
-    """
-    _LOG.debug("Getting key-value for aws_profile='%s'", aws_profile)
-    hdbg.dassert_ne(aws_profile, "")
-    env_var = key.capitalize()
-    env_var_override = env_var in os.environ and os.environ[env_var] != ""
-    value: Optional[str] = None
-    if env_var_override:
-        _LOG.debug("Using '%s' from env vars '%s'", key, env_var)
-        value = os.environ[env_var]
-    else:
-        # > more ~/.aws/credentials
-        # [am]
-        # aws_s3_bucket=AKI...
-        file_name = "credentials"
-        config = _get_aws_config(file_name)
-        if config.has_option(aws_profile, key):
-            value = config.get(aws_profile, key)
-        else:
-            _LOG.warning(
-                "AWS file '%s' doesn't have key '%s' for aws_profile '%s'",
-                file_name,
-                key,
-                aws_profile,
-            )
-    _LOG.debug("key='%s' -> value='%s'", key, value)
-    return value
-
-
 # ///////////////////////////////////////////////////////////////////////////////
 
 
 def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
     """
-    Return a s3fs object from a given AWS profile.
+    Return a `s3fs` object from a given AWS profile.
 
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """

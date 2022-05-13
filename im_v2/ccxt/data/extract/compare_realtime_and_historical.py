@@ -9,9 +9,9 @@ Use as:
    --start_timestamp 20220216-000000 \
    --end_timestamp 20220217-000000 \
    --exchange_id 'binance' \
-   --db_table 'ccxt_ohlcv' \
+   --db_table 'ccxt_ohlcv_test' \
    --aws_profile 'ck' \
-   --s3_path 's3://cryptokaizen-data/historical/'
+   --s3_path 's3://cryptokaizen-data-test/daily_staged/'
 
 Import as:
 
@@ -21,6 +21,7 @@ import argparse
 import os
 
 import pandas as pd
+import psycopg2
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -76,7 +77,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser = hparser.add_verbosity_arg(parser)
     parser = hs3.add_s3_args(parser)
-    return parser
+    return parser  # type: ignore[no-any-return]
 
 
 def _run(args: argparse.Namespace) -> None:
@@ -85,8 +86,21 @@ def _run(args: argparse.Namespace) -> None:
     end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
+    try:
+        # Connect with the parameters from the env file.
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        connection = hsql.get_connection(*connection_params)
+    except psycopg2.OperationalError:
+        # Connect with the dynamic parameters (usually during tests).
+        actual_details = hsql.db_connection_to_tuple(args.connection)._asdict()
+        connection_params = hsql.DbConnectionInfo(
+            host=actual_details["host"],
+            dbname=actual_details["dbname"],
+            port=int(actual_details["port"]),
+            user=actual_details["user"],
+            password=actual_details["password"],
+        )
+        connection = hsql.get_connection(*connection_params)
     # Convert timestamps to unix ms format used in OHLCV data.
     unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
         start_timestamp
@@ -94,7 +108,7 @@ def _run(args: argparse.Namespace) -> None:
     unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
     # Read data from DB.
     query = (
-        f"SELECT * FROM ccxt_ohlcv WHERE timestamp >='{unix_start_timestamp}'"
+        f"SELECT * FROM {args.db_table} WHERE timestamp >='{unix_start_timestamp}'"
         f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
     )
     rt_data = hsql.execute_query_to_df(connection, query)
@@ -107,6 +121,7 @@ def _run(args: argparse.Namespace) -> None:
         "close",
         "volume",
     ]
+
     rt_data_reindex = imvcdttrut.reindex_on_custom_columns(
         rt_data, expected_columns[:2], expected_columns
     )
@@ -119,11 +134,20 @@ def _run(args: argparse.Namespace) -> None:
     daily_data = hparque.from_parquet(
         exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile
     )
+
     daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
     daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
     daily_data_reindex = imvcdttrut.reindex_on_custom_columns(
         daily_data, expected_columns[:2], expected_columns
     )
+    # Inform if both dataframes are empty,
+    # most likely there is a wrong arg value given.
+    if rt_data_reindex.empty and daily_data_reindex.empty:
+        message = (
+            "Both realtime and staged data are missing, \n"
+            + "Did you provide correct arguments?"
+        )
+        hdbg.dfatal(message=message)
     # Get missing data.
     rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
         rt_data_reindex, daily_data_reindex

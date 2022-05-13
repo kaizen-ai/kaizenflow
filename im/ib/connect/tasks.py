@@ -23,7 +23,7 @@ ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 
 
 default_params = {
-    "ECR_BASE_PATH": ECR_BASE_PATH,
+    "AM_ECR_BASE_PATH": ECR_BASE_PATH,
     # When testing a change to the build system in a branch you can use a different
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "..._tmp",

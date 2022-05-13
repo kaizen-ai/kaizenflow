@@ -10,7 +10,8 @@ This script performs several actions on a Jupyter notebook, such as:
   ```
   > publish_notebook.py \
       --file s3://.../notebooks/PTask768_event_filtering.html \
-      --action open
+      --action open \
+      --aws_profile 'am'
   ```
 
 # Publish a notebook
@@ -18,7 +19,8 @@ This script performs several actions on a Jupyter notebook, such as:
   ```
   > publish_notebook.py \
       --file nlp/notebooks/PTask768_event_filtering.ipynb \
-      --action publish_on_s3
+      --action publish_on_s3 \
+      --aws_profile 'am'
   ```
 
 Import as:
@@ -325,7 +327,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # TODO(gp): Remove the file or save it directly in a temp dir.
         cmd = f"""
         # To open the notebook from S3 run:
-        > publish_notebook.py --file {s3_file_name} --action open
+        > publish_notebook.py --file {s3_file_name} --action open --aws_profile {aws_profile}
         """
         print(hprint.dedent(cmd))
     elif args.action == "publish_on_webserver":
