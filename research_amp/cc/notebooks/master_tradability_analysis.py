@@ -131,10 +131,10 @@ vwap_twap_rets_df.head(3)
 
 # %% run_control={"marked": false}
 # Stats and vizualisation to check the outcomes.
-bnb_ex = vwap_twap_rets_df.swaplevel(axis=1)
-bnb_ex = bnb_ex["binance::DOGE_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
-display(bnb_ex.corr())
-bnb_ex.plot()
+coin_ex = vwap_twap_rets_df.swaplevel(axis=1)
+coin_ex = coin_ex["binance::DOGE_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
+display(coin_ex.corr())
+coin_ex.plot()
 
 # %% [markdown]
 # # Bid-ask data
