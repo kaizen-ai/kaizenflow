@@ -677,6 +677,9 @@ def to_partitioned_parquet(
     filesystem = None
     if aws_profile is not None:
         filesystem = hs3.get_s3fs(aws_profile)
+        # ParquetDataset appends an extra "/", creating an empty-named folder
+        #  when saving on S3.
+        dst_dir = dst_dir.rstrip("/")
     with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
         # Read.
         table = pa.Table.from_pandas(df)
