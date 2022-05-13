@@ -218,7 +218,6 @@ def get_all_data(exchange, currency_pair, start_timestamp, end_timestamp):
             end_timestamp + duration,
             duration * 500,
         ):
-        print(t, duration)
         bars = load_ccxt_data(currency_pair, t, ccxt_exchange)
         all_bars.append(bars)
         time.sleep(1)
