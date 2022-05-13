@@ -160,13 +160,13 @@ class CryptoChassisExchange:
                 pd.Timestamp,
             )
             # Convert datetime to unix time, e.g. `2022-01-09T00:00:00` -> `1641686400`.
-            start_timestamp = str(int(start_timestamp.timestamp()))
+            start_timestamp = int(start_timestamp.timestamp())
         if end_timestamp:
             hdbg.dassert_isinstance(
                 end_timestamp,
                 pd.Timestamp,
             )
-            end_timestamp = str(int(end_timestamp.timestamp()))
+            end_timestamp = int(end_timestamp.timestamp())
         # Currency pairs in market data are stored in `cur1/cur2` format,
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
@@ -192,9 +192,7 @@ class CryptoChassisExchange:
         if data_json.get(mode) is None:
             # Return empty dataframe if there is no results.
             ohlcv_data = pd.DataFrame()
-            _LOG.warning(
-                "No data found at `{query_url}`. Returning empty DataFrame."
-            )
+            _LOG.warning("No data found at `%s`. Returning empty DataFrame.", query_url)
         else:
             if mode == "recent":
                 # Process real-time.
@@ -213,16 +211,14 @@ class CryptoChassisExchange:
                 # (CmTask #1887).
                 if start_timestamp:
                     ohlcv_data = ohlcv_data[
-                        (ohlcv_data["time_seconds"] >= int(start_timestamp))
+                        (ohlcv_data["time_seconds"] >= start_timestamp)
                     ]
                 if end_timestamp:
                     ohlcv_data = ohlcv_data[
-                        (ohlcv_data["time_seconds"] <= int(end_timestamp))
+                        (ohlcv_data["time_seconds"] <= end_timestamp)
                     ]
             else:
-                hdbg.dfatal(
-                    f"Unknown data mode: `{mode}`. Use `recent` for real-time and `historical` for historical data."
-                )
+                raise ValueError(f"Invalid mode=`{mode}`")
         # Rename time column.
         ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
@@ -262,6 +258,8 @@ class CryptoChassisExchange:
         params = []
         for pair in kwargs.items():
             if pair[1] is not None:
+                # Transform parameter to string.
+                pair[1] = str(pair[1])
                 # Check whether the parameter is not empty.
                 joined = "=".join(pair)
                 params.append(joined)
