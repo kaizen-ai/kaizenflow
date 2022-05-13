@@ -19,7 +19,6 @@
 import logging
 import os
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
@@ -51,10 +50,11 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "ck"
-    #
-    s3_bucket_path = hs3.get_s3_bucket_path(config["load"]["aws_profile"])
-    s3_path = os.path.join(s3_bucket_path, "historical")
-    config["load"]["data_dir"] = s3_path
+    # TODO(Dan): @all replace `s3://cryptokaizen-data` with `get_s3_bucket()` after it is fixed.
+    config["load"]["data_dir"] = os.path.join(
+        "s3://cryptokaizen-data",
+        "historical",
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["vendor"] = "CCXT"
@@ -103,7 +103,9 @@ def _get_qa_stats(data: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
             symbol_data[symbol_data["volume"] == 0].shape[0]
             / symbol_data.shape[0]
         )
-        symbol_stats["bad data %"] = symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
+        symbol_stats["bad data %"] = (
+            symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
+        )
         res_stats.append(symbol_stats)
     # Combine all full symbol stats.
     res_stats_df = pd.concat(res_stats, axis=1).T
@@ -138,7 +140,9 @@ def _get_qa_stats_by_year_month(
             symbol_data[symbol_data["volume"] == 0].shape[0]
             / symbol_data.shape[0]
         )
-        symbol_stats["bad data %"] = symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
+        symbol_stats["bad data %"] = (
+            symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
+        )
         res_stats.append(symbol_stats)
     res_stats_df = pd.concat(res_stats, axis=1).T
     #
@@ -156,9 +160,16 @@ def _plot_bad_data_stats(bad_data_stats: pd.DataFrame) -> None:
     full_symbols = bad_data_stats.index.get_level_values(0).unique()
     for full_symbol in full_symbols:
         bad_data_col_name = "bad data %"
-        _ = bad_data_stats.loc[full_symbol].plot.bar(
+        ax = bad_data_stats.loc[full_symbol].plot.bar(
             y=bad_data_col_name, rot=0, title=full_symbol
         )
+        # Set ticks and labels for time axis.
+        ticks = ax.xaxis.get_ticklocs()
+        ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+        coef = len(ticks) // 10 + 1
+        ax.xaxis.set_ticks(ticks[::coef])
+        ax.xaxis.set_ticklabels(ticklabels[::coef])
+        ax.figure.show()
 
 
 # %% [markdown]
@@ -197,8 +208,6 @@ binance_data = client.read_data(
     config["data"]["columns"],
     config["data"]["filter_data_mode"],
 )
-
-# %%
 binance_data.head(3)
 
 # %%
@@ -229,8 +238,6 @@ ftx_data = client.read_data(
     config["data"]["columns"],
     config["data"]["filter_data_mode"],
 )
-
-# %%
 ftx_data.head(3)
 
 # %%
@@ -261,8 +268,6 @@ gateio_data = client.read_data(
     config["data"]["columns"],
     config["data"]["filter_data_mode"],
 )
-
-# %%
 gateio_data.head(3)
 
 # %%
@@ -293,8 +298,6 @@ kucoin_data = client.read_data(
     config["data"]["columns"],
     config["data"]["filter_data_mode"],
 )
-
-# %%
 kucoin_data.head(3)
 
 # %%

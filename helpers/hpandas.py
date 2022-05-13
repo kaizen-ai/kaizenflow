@@ -756,7 +756,10 @@ def _df_to_str(
             if not is_in_ipynb:
                 out.append(str(df))
             else:
-                display(df)
+                # TODO(Dan): Consider to pass verbosity as a param to avoid
+                #  hard-coding `logging.DEBUG`.
+                if hdbg.get_logger_verbosity() <= logging.DEBUG:
+                    display(df)
         else:
             nr = num_rows // 2
             if not is_in_ipynb:
@@ -771,15 +774,18 @@ def _df_to_str(
                 tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
                 out.append(tail_str)
             else:
-                # TODO(gp): @all use this approach also above and update all the
-                #  unit tests.
-                df = [df.head(nr),
-                      pd.DataFrame([["..."] * df.shape[1]],
-                                   index=[" "],
-                                   columns=df.columns),
-                      df.tail(nr)]
-                df = pd.concat(df)
-                display(df)
+                # TODO(Dan): Consider to pass verbosity as a param to avoid
+                #  hard-coding `logging.DEBUG`.
+                if hdbg.get_logger_verbosity() <= logging.DEBUG:
+                    # TODO(gp): @all use this approach also above and update
+                    #  all the unit tests.
+                    df = [df.head(nr),
+                        pd.DataFrame([["..."] * df.shape[1]],
+                                    index=[" "],
+                                    columns=df.columns),
+                        df.tail(nr)]
+                    df = pd.concat(df)
+                    display(df)
     if not is_in_ipynb:
         txt = "\n".join(out)
     else:
@@ -935,7 +941,9 @@ def df_to_str(
             txt = f"num_nan_cols={hprint.perc(num_nan_cols, num_elems)}"
             out.append(txt)
     if hsystem.is_running_in_ipynb():
-        if len(out) > 0:
+        # TODO(Dan): Consider to pass verbosity as a param to avoid
+        #  hard-coding `logging.DEBUG`.
+        if (hdbg.get_logger_verbosity() <= logging.DEBUG) & (len(out) > 0):
             print("\n".join(out))
         txt = None
     # Print the df.
