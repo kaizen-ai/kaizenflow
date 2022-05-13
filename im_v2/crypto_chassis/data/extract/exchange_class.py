@@ -328,10 +328,9 @@ class CryptoChassisExchange:
         params = []
         for pair in kwargs.items():
             if pair[1] is not None:
-                # Transform parameter to string.
-                pair[1] = str(pair[1])
                 # Check whether the parameter is not empty.
-                joined = "=".join(pair)
+                # Convert value to string and join query parameters.
+                joined = "=".join(pair[0], str(pair[1]))
                 params.append(joined)
         joined_params = "&".join(params)
         query_url = f"{base_url}?{joined_params}"
