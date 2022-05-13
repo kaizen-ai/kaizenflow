@@ -4,7 +4,7 @@ Import as:
 import research_amp.transform as ramptran
 """
 
-
+from typing import List
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -112,6 +112,12 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
 
 
 def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute the set of various relevant bid-ask stats from prices and sizes.
+
+    :param df: bid-ask size and price data
+    :return: bid-ask data with additional stats
+    """
     # Convert to multiindex.
     converted_df = dtfsysonod._convert_to_multiindex(df, "full_symbol")
     # Configure the node to calculate the returns.
@@ -152,8 +158,25 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def calculate_overtime_quantities(
-    df_sample, full_symbol, resampling_rule, num_stds=1, plot_results=True
-):
+    df_sample: pd.DataFrame, full_symbol: str, resampling_rule: str, num_stds=1, plot_results=True
+) -> pd.DataFrame:
+    """
+    Calculate the following statistics over time:
+
+    - quoted spread
+    - volatility of returns (for resampling buckets)
+    - volume profile (when there is more activity)
+    - the relative spread in bps (when the cost of trading is lower / higher during the day)
+    - the bid / ask value (when there is more intention to trade)
+    - tradability = abs(ret) / spread_bps
+
+    :param df_sample: combined OHLCV and bid-ask data
+    :param full_symbol: desired `full_symbol` for an analysis
+    :param resampling_rule: desired resampling frequency
+    :param num_stds: number of standard deviations to multiply mean value
+    :param plot_results: whether to plot results or not
+    :return: data with calculated statistics
+    """
     # Choose specific `full_symbol`.
     data = df_sample.swaplevel(axis=1)[full_symbol]
     # Resample the data.
@@ -161,7 +184,7 @@ def calculate_overtime_quantities(
     # Quoted spread.
     quoted_spread = resampler["quoted_spread"].mean()
     # Volatility of returns inside `buckets`.
-    rets_vix = resampler["close.ret_0"].std().rename("rets_volatility")
+    rets_std = resampler["close.ret_0"].std().rename("rets_volatility")
     # Volume over time.
     volume = resampler["volume"].sum().rename("trading_volume")
     # Relative spread (in bps).
@@ -176,7 +199,7 @@ def calculate_overtime_quantities(
     df = pd.concat(
         [
             quoted_spread,
-            rets_vix,
+            rets_std,
             volume,
             rel_spread_bps,
             bid_value,
@@ -205,8 +228,18 @@ def calculate_overtime_quantities(
 
 
 def calculate_overtime_quantities_multiple_symbols(
-    df_sample, full_symbols, resampling_rule, plot_results=True
-):
+    df_sample: pd.DataFrame, full_symbols: List[str], resampling_rule: str, plot_results=True
+) -> pd.DataFrame:
+    """
+    For each `full_symbol` calculate the statistics described in `calculate_overtime_quantities()`
+    and compute its median values for cross comparison over time.
+
+    :param df_sample: combined OHLCV and bid-ask data
+    :param full_symbol: set of `full_symbols` for an analysis
+    :param resampling_rule: desired resampling frequency
+    :param plot_results: whether to plot results or not
+    :return: data with calculated statistics
+    """
     result = []
     # Calculate overtime stats for each `full_symbol`.
     for symb in full_symbols:

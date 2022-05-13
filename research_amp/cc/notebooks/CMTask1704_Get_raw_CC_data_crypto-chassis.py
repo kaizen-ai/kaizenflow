@@ -199,6 +199,9 @@ display(stats_df.head(3))
 # %% [markdown]
 # ### Multiple Symbols
 
+# %%
+type(full_symbols)
+
 # %% run_control={"marked": false}
 full_symbols = config["data"]["full_symbols"]
 resample_rule_stats = "10T"
