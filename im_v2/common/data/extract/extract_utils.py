@@ -59,6 +59,14 @@ def add_exchange_download_args(
         type=str,
         help="End of the downloaded period",
     )
+    parser.add_argument(
+        "--file_format",
+        action="store",
+        required=False,
+        default="parquet",
+        type=str,
+        help="File format to save files on disc",
+    )
     return parser
 
 
@@ -226,18 +234,25 @@ def download_historical_data(
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
-        # Saves filename as `uuid`.
-        hparque.to_partitioned_parquet(
-            data,
-            ["currency_pair"] + partition_cols,
-            path_to_exchange,
-            partition_filename=None,
-            aws_profile=args["aws_profile"],
-        )
+        if args["file_format"] == "parquet":
+            # Saves filename as `uuid`, e.g.
+            #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
+            hparque.to_partitioned_parquet(
+                data,
+                ["currency_pair"] + partition_cols,
+                path_to_exchange,
+                partition_filename=None,
+                aws_profile=args["aws_profile"],
+            )
+            # Merge all new parquet into a single `data.parquet`.
+            hparque.list_and_merge_pq_files(
+                path_to_exchange, aws_profile=args["aws_profile"]
+            )
+        elif args["file_format"] == "csv":
+            # Files are named after corresponding currency pair, e.g 
+            #  "BTC_USDT.csv.gz".
+            full_path = os.path.join(path_to_exchange, f"{currency_pair}.csv.gz")
+            data.to_csv(full_path, index=False, compression="gzip")
         # Sleep between iterations is needed for CCXT.
         if exchange_class == CCXT_EXCHANGE:
             time.sleep(args["sleep_time"])
-    # Merge all new parquet into a single `data.parquet`.
-    hparque.list_and_merge_pq_files(
-        path_to_exchange, aws_profile=args["aws_profile"]
-    )
