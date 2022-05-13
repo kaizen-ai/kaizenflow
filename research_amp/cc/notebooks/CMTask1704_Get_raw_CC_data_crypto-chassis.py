@@ -21,7 +21,6 @@
 
 import logging
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
@@ -176,7 +175,6 @@ cplonorm.plot_qq(df_bnb["ret_spr_diff"])
 # ## How much liquidity is available at the top of the book?
 
 # %%
-# liquidity_stats = (final_df["ask_size"] * final_df["ask_price"]).median()
 liquidity_stats = final_df["ask_value"].median()
 display(liquidity_stats)
 cplpluti.plot_barplot(liquidity_stats)
@@ -198,9 +196,6 @@ display(stats_df.head(3))
 
 # %% [markdown]
 # ### Multiple Symbols
-
-# %%
-type(full_symbols)
 
 # %% run_control={"marked": false}
 full_symbols = config["data"]["full_symbols"]
@@ -224,14 +219,8 @@ high_level_stats["median_notional_ask"] = final_df["ask_value"].median()
 high_level_stats["median_notional_volume"] = (
     final_df["volume"] * final_df["close"]
 ).median()
-high_level_stats["volatility_for_period"] = (
+high_level_stats["volatility_per_period"] = (
     final_df["close.ret_0"].std() * final_df.shape[0] ** 0.5
 )
 
 display(high_level_stats.head(3))
-# Plot the results.
-for cols in high_level_stats.columns:
-    fig = plt.figure()
-    fig.suptitle(f"{cols}", fontsize=15)
-    plt.ylabel(cols, fontsize=12)
-    cplpluti.plot_barplot(high_level_stats[cols])

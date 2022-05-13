@@ -5,6 +5,7 @@ import research_amp.transform as ramptran
 """
 
 from typing import List
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -158,7 +159,11 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def calculate_overtime_quantities(
-    df_sample: pd.DataFrame, full_symbol: str, resampling_rule: str, num_stds=1, plot_results=True
+    df_sample: pd.DataFrame,
+    full_symbol: str,
+    resampling_rule: str,
+    num_stds=1,
+    plot_results=True,
 ) -> pd.DataFrame:
     """
     Calculate the following statistics over time:
@@ -192,6 +197,8 @@ def calculate_overtime_quantities(
     # Bid / Ask value.
     bid_value = resampler["bid_value"].sum()
     ask_value = resampler["ask_value"].sum()
+    bid_ask_value = bid_value + ask_value
+    bid_ask_value = bid_ask_value.rename("bid_ask_value")
     # Tradability = abs(ret) / spread_bps.
     tradability = resampler["close.ret_0"].mean().abs() / rel_spread_bps
     tradability = tradability.rename("tradability")
@@ -202,8 +209,7 @@ def calculate_overtime_quantities(
             rets_std,
             volume,
             rel_spread_bps,
-            bid_value,
-            ask_value,
+            bid_ask_value,
             tradability,
         ],
         axis=1,
@@ -222,20 +228,27 @@ def calculate_overtime_quantities(
             fig = plt.figure()
             fig.suptitle(f"{cols} over time", fontsize=20)
             plt.ylabel(cols, fontsize=16)
-            (mean + num_stds * std).plot(color="blue")
+            (mean + num_stds * std).plot(
+                color="blue", label=f"{num_stds} * std {mean.name}"
+            )
             mean.plot(lw=2, color="black")
+            fig.legend()
     return df
 
 
 def calculate_overtime_quantities_multiple_symbols(
-    df_sample: pd.DataFrame, full_symbols: List[str], resampling_rule: str, plot_results=True
+    df_sample: pd.DataFrame,
+    full_symbols: List[str],
+    resampling_rule: str,
+    plot_results=True,
 ) -> pd.DataFrame:
     """
-    For each `full_symbol` calculate the statistics described in `calculate_overtime_quantities()`
-    and compute its median values for cross comparison over time.
+    For each `full_symbol` calculate the statistics described in
+    `calculate_overtime_quantities()` and compute its median values for cross
+    comparison over time.
 
     :param df_sample: combined OHLCV and bid-ask data
-    :param full_symbol: set of `full_symbols` for an analysis
+    :param full_symbols: set of `full_symbols` for an analysis
     :param resampling_rule: desired resampling frequency
     :param plot_results: whether to plot results or not
     :return: data with calculated statistics
