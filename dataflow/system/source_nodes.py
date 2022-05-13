@@ -449,7 +449,8 @@ class RealTimeDataSource(dtfcore.DataSource):
     def _get_data(self) -> None:
         # TODO(gp): This approach of communicating params through the state
         #  makes the code difficult to understand.
-        self.df = self._market_data.get_data_for_last_period(self._timedelta)
+        self.df = self._market_data.get_data_for_last_period(self._timedelta,
+                                                             ts_col_name = "timestamp")
         if self._multiindex_output:
             self.df = _convert_to_multiindex(self.df, self._asset_id_col)
 

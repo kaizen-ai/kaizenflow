@@ -96,7 +96,7 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
         Setup RealTimeMarketData2 interface.
         """
         asset_id_col = "asset_id"
-        asset_ids = [1464553467]
+        asset_ids = [1467591036]
         start_time_col_name = "start_timestamp"
         end_time_col_name = "end_timestamp"
         columns = None
@@ -117,7 +117,7 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
     def set_up_class(self):
         # Create test table.
         im_client = icdc.get_example1_realtime_client(
-            cls.connection, resample_1min=True
+            self.connection, resample_1min=True
         )
         # Set up market data client.
         market_data = self.setup_test_market_data(im_client)
@@ -132,7 +132,7 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
         """
         self.set_up_class()
         with hasynci.solipsism_context() as event_loop:
-            asset_ids = [101]
+            asset_ids = [1467591036]
             # Get the system to simulate.
             system = dtfsepsyru.Example1_RealTimeForecastSystem(
                 self.connection,

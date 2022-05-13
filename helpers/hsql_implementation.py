@@ -538,6 +538,7 @@ def execute_query_to_df(
     # Compute.
     if use_timer:
         idx = htimer.dtimer_start(0, "Sql time")
+    _LOG.debug("query=%s", query)
     cursor = connection.cursor()
     try:
         df = pd.read_sql_query(query, connection)

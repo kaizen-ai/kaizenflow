@@ -108,10 +108,10 @@ class RealTimeMarketData(mdabmada.MarketData):
             sort_time,
             limit,
         )
-        _LOG.info("query=%s", query)
         df = hsql.execute_query_to_df(self.connection, query)
         # Prepare data for normalization by the parent class.
         df = self._convert_data_for_normalization(df)
+        #print("df=", df.head())
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -312,15 +312,15 @@ class RealTimeMarketData2(mdabmada.MarketData):
         #  the client and AbstractMarketData.
         data.index.name = "end_timestamp"
         data = data.reset_index()
-        market_data_columns = [
-            "end_timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "start_timestamp",
-            "asset_id",
-        ]
-        data = data[market_data_columns]
+        # market_data_columns = [
+        #     "end_timestamp",
+        #     "open",
+        #     "high",
+        #     "low",
+        #     "close",
+        #     "volume",
+        #     "start_timestamp",
+        #     "asset_id",
+        # ]
+        # data = data[market_data_columns]
         return data
