@@ -17,6 +17,9 @@
 # %autoreload 2
 # %matplotlib inline
 
+# %% [markdown]
+# # Imports
+
 # %%
 import logging
 import os
@@ -83,6 +86,12 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
 config = get_cmtask1866_config_ccxt()
 print(config)
 
+ # %%
+ pd.set_option("display.float_format", "{:.8f}".format)
+
+
+# %% [markdown]
+# # Functions
 
 # %%
 def _get_qa_stats(data: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
@@ -218,7 +227,7 @@ def get_all_data(exchange, currency_pair, start_timestamp, end_timestamp):
             end_timestamp + duration,
             duration * 500,
         ):
-        bars = load_ccxt_data(currency_pair, t, ccxt_exchange)
+        bars = load_ccxt_data(currency_pair, t, exchange)
         all_bars.append(bars)
         time.sleep(1)
     return pd.concat(all_bars)
@@ -271,8 +280,8 @@ ccxt_binance_DOGE_exchange = imvcdeexcl.CcxtExchange("binance")
 
 # %%
 sleep_time_in_secs = 1
-start_timestamp = pd.Timestamp("2019-09-01")
-end_timestamp = pd.Timestamp("2019-09-30")
+start_timestamp = pd.Timestamp("2019-09-01 00:00:00+00:00")
+end_timestamp = pd.Timestamp("2019-09-30 23:59:59+00:00")
 ccxt_binance_DOGE = ccxt_binance_DOGE_exchange.download_ohlcv_data(
     "DOGE/USDT",
     start_timestamp=start_timestamp,
@@ -282,6 +291,11 @@ ccxt_binance_DOGE = ccxt_binance_DOGE_exchange.download_ohlcv_data(
 
 # %%
 ccxt_binance_DOGE = set_index_ts(ccxt_binance_DOGE)
+
+# %%
+ccxt_binance_DOGE = ccxt_binance_DOGE.loc[ccxt_binance_DOGE.index.month == 9]
+
+# %%
 ccxt_binance_DOGE.loc[ccxt_binance_DOGE['volume'] == 0]
 
 # %%
@@ -292,15 +306,6 @@ ccxt_binance_DOGE
 
 # %%
 print(percentage(ccxt_binance_DOGE, ccxt_binance_DOGE.loc[ccxt_binance_DOGE['volume'] == 0]))
-
-# %%
-df = (binance_2019_09 - ccxt_binance_DOGE)
-nan = df.loc[df.close.isna()]
-_LOG.info(f"{nan.index.min()}, {nan.index.max()}")
-nan
-
- # %%
- pd.set_option("display.float_format", "{:.8f}".format)
 
 # %% [markdown]
 # # CCXT w/o Extractor
@@ -332,13 +337,114 @@ ccxt_df.loc[ccxt_df['volume'] != 0]
 # |CCXT | | ||			Extractor	| | | |Client | | |
 # |------|--|-||-------------|-|-|-|------|-|-|
 # |date|Number of NaN rows %|	Total number of rows| `volume=0` %	|Number of NaN rows %|	Total number of rows| `volume=0` %| Number of NaN rows %|	Total number of rows| `volume=0` %|
-# |2019-09|	0          |	                   429750|	      73.22%   	|	0          |	                   42000|	      73.92%   |      0|	             43200| 73.3%|
+# |2019-09|	0          |	                   429750|	      73.22%   	|	0          |	                   43200|	      73.3%   |      0|	            43200| 73.3%|
 #
 
 # %% [markdown]
 # - The huge amount of data from CCXT is duplicates. Unique values are 43200.
-# - Data between `2019-09-30 04:00:00+00:00` and `2019-09-30 23:59:00+00:00` is absent (`Extractor`).
-# -`NaNs` in client data is a resampling.
 # - Where volume = 0, data from columns open, high, low, close is exactly the same from previous row where volume != 0. It could mean that volume = 0 rows are NaNs at the source, so it could be the way exchange handles missing data.
+
+# %% [markdown]
+# # ftx::BTC_USDT
+
+# %% [markdown]
+# ## Client
+
+# %%
+ftx_data = client.read_data(
+    ["ftx::BTC_USDT"],
+    config["data"]["start_ts"],
+    config["data"]["end_ts"],
+    config["data"]["columns"],
+    config["data"]["filter_data_mode"],
+)
+
+# %%
+ftx_2020_04 = ftx_data.loc[(ftx_data.index.year == 2020) & (ftx_data.index.month == 4)]
+ftx_2020_04_volume_0 = ftx_2020_04.loc[ftx_2020_04["volume"] == 0]
+ftx_2020_04_volume_0
+
+# %%
+ftx_2020_04
+
+# %%
+ftx_2020_04.loc[ftx_2020_04['open'].isna()]
+
+# %%
+print(percentage(ftx_2020_04, ftx_2020_04_volume_0))
+
+# %% [markdown]
+# ## Extractor
+
+# %%
+ccxt_ftx_BTC_exchange = imvcdeexcl.CcxtExchange("ftx")
+sleep_time_in_secs = 1
+start_timestamp = pd.Timestamp("2020-04-01 00:00:00+00:00")
+end_timestamp = pd.Timestamp("2020-04-30 23:59:59+00:00")
+ccxt_ftx_BTC = ccxt_ftx_BTC_exchange.download_ohlcv_data(
+    "BTC/USDT",
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+ccxt_ftx_BTC = set_index_ts(ccxt_ftx_BTC)
+
+
+# %%
+ccxt_ftx_BTC = ccxt_ftx_BTC.loc[ccxt_ftx_BTC.index.month == 4]
+
+# %%
+ccxt_ftx_BTC.loc[ccxt_ftx_BTC['volume'] == 0]
+
+# %%
+ccxt_ftx_BTC
+
+# %%
+ccxt_ftx_BTC.loc[(ccxt_ftx_BTC['high'] == 7493.50000000)
+                 & (ccxt_ftx_BTC['volume'] == 0)]
+
+# %%
+ccxt_ftx_BTC.loc[(ccxt_ftx_BTC.index.day == 25)
+                 & (ccxt_ftx_BTC.index.hour == 3)]
+
+# %% [markdown]
+# So far `ftx` doesn't have same pattern as `binance` where `volume=0` rows have values from the last non-`volume=0` row.
+
+# %%
+print(percentage(ccxt_ftx_BTC, ccxt_ftx_BTC.loc[ccxt_ftx_BTC['volume'] == 0]))
+
+# %% [markdown]
+# ## CCXT w/o Extractor
+
+# %%
+ccxt_exchange_ftx = log_into_exchange('ftx')
+ccxt_df_ftx = get_all_data(ccxt_exchange_ftx, "BTC/USDT", 1585699200000, 1588291199000)
+ccxt_df_ftx = set_index_ts(ccxt_df_ftx)
+ccxt_df_ftx.index.min(), ccxt_df_ftx.index.max(), ccxt_df_ftx.shape
+
+# %%
+ccxt_df_ftx = ccxt_df_ftx.loc[ccxt_df_ftx.index.month == 4]
+
+# %%
+ccxt_df_ftx.isna().value_counts()
+
+# %%
+len(ccxt_df_ftx.index.unique())
+
+# %%
+ccxt_df_ftx
+
+# %%
+print(percentage(ccxt_df_ftx, ccxt_df_ftx.loc[ccxt_df_ftx['volume'] == 0]))
+
+# %% [markdown]
+#
+# |CCXT | | ||			Extractor	| | | |Client | | |
+# |------|--|-||-------------|-|-|-|------|-|-|
+# |date|Number of NaN rows %|	Total number of rows| `volume=0` %	|Number of NaN rows %|	Total number of rows| `volume=0` %| Number of NaN rows %|	Total number of rows| `volume=0` %|
+# |2019-09|	0          |	                   429750|	      86.09%   	|	0          |	                   43200|	      85.97%   |      0|	            43200| 85.97%|
+#
 
 # %%
