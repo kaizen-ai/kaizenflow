@@ -12,6 +12,7 @@ import pandas as pd
 import requests
 
 import helpers.hdbg as hdbg
+import helpers.hdatetime as hdateti
 
 _LOG = logging.getLogger(__name__)
 
@@ -174,13 +175,13 @@ class CryptoChassisExchange:
                 pd.Timestamp,
             )
             # Convert datetime to unix time, e.g. `2022-01-09T00:00:00` -> `1641686400`.
-            start_timestamp = int(start_timestamp.timestamp())
+            start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp, unit="s")
         if end_timestamp:
             hdbg.dassert_isinstance(
                 end_timestamp,
                 pd.Timestamp,
             )
-            end_timestamp = int(end_timestamp.timestamp())
+            end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp, unit="s")
         # Currency pairs in market data are stored in `cur1/cur2` format,
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
