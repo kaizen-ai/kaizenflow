@@ -25,13 +25,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
-import core.finance.resampling as cfinresa
-import core.finance.tradability as cfintrad
 import core.plotting.normality as cplonorm
 import core.plotting.plotting_utils as cplpluti
-import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import research_amp.transform as ramptran
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -96,11 +94,11 @@ ohlcv_cc.head(3)
 # %%
 # VWAP, TWAP transformation.
 resampling_rule = config["transform"]["resampling_rule"]
-vwap_twap_df = cfintrad.calculate_vwap_twap(ohlcv_cc, resampling_rule)
+vwap_twap_df = ramptran.calculate_vwap_twap(ohlcv_cc, resampling_rule)
 
 # Returns calculation.
 rets_type = config["transform"]["rets_type"]
-vwap_twap_rets_df = cfintrad.calculate_returns(vwap_twap_df, rets_type)
+vwap_twap_rets_df = ramptran.calculate_returns(vwap_twap_df, rets_type)
 
 # %% run_control={"marked": false}
 # Show the snippet.
@@ -138,7 +136,7 @@ bid_ask_df.head(3)
 
 # %%
 # Calculate bid-ask metrics.
-bid_ask_df = cfintrad.calculate_bid_ask_statistics(bid_ask_df)
+bid_ask_df = ramptran.calculate_bid_ask_statistics(bid_ask_df)
 bid_ask_df.tail(3)
 
 # %% [markdown]
@@ -150,7 +148,7 @@ final_df.tail(3)
 
 # %%
 # Metrics visualizations.
-final_df[["relative_spread_bps"]].plot()
+final_df["relative_spread_bps"].plot()
 
 # %% [markdown]
 # ## Compute the distribution of (return - spread)
@@ -183,7 +181,6 @@ liquidity_stats = final_df["ask_value"].median()
 display(liquidity_stats)
 cplpluti.plot_barplot(liquidity_stats)
 
-
 # %% [markdown]
 # ## Is the quoted spread constant over the day?
 
@@ -191,110 +188,22 @@ cplpluti.plot_barplot(liquidity_stats)
 # ### One symbol
 
 # %%
-def calculate_overtime_quantities(
-    df_sample, full_symbol, resampling_rule, num_stds=1, plot_results=True
-):
-    # Choose specific `full_symbol`.
-    data = df_sample.swaplevel(axis=1)[full_symbol]
-    # Resample the data.
-    resampler = cfinresa.resample(data, rule=resampling_rule)
-    # Quoted spread.
-    quoted_spread = resampler["quoted_spread"].mean()
-    # Volatility of returns inside `buckets`.
-    rets_vix = resampler["close.ret_0"].std().rename("rets_volatility")
-    # Volume over time.
-    volume = resampler["volume"].sum().rename("trading_volume")
-    # Relative spread (in bps).
-    rel_spread_bps = resampler["relative_spread_bps"].mean()
-    # Bid / Ask value.
-    bid_value = resampler["bid_value"].sum()
-    ask_value = resampler["ask_value"].sum()
-    # Tradability = abs(ret) / spread_bps.
-    tradability = resampler["close.ret_0"].mean().abs() / rel_spread_bps
-    tradability = tradability.rename("tradability")
-    # Collect all the results.
-    df = pd.concat(
-        [
-            quoted_spread,
-            rets_vix,
-            volume,
-            rel_spread_bps,
-            bid_value,
-            ask_value,
-            tradability,
-        ],
-        axis=1,
-    )
-    # Integrate time.
-    df["time"] = df.index.time
-    # Construct value curves over time.
-    if plot_results:
-        # Get rid of `time`.
-        for cols in df.columns[:-1]:
-            # Calculate man and std over the daytime.
-            time_grouper = df.groupby("time")
-            mean = time_grouper[cols].mean()
-            std = time_grouper[cols].std()
-            # Plot the results.
-            fig = plt.figure()
-            fig.suptitle(f"{cols} over time", fontsize=20)
-            plt.ylabel(cols, fontsize=16)
-            (mean + num_stds * std).plot(color="blue")
-            mean.plot(lw=2, color="black")
-    return df
-
-
-# %%
 full_symbol = "binance::BNB_USDT"  # "binance::BTC_USDT"
 resample_rule_stats = "10T"
 
-stats_df = calculate_overtime_quantities(
+stats_df = ramptran.calculate_overtime_quantities(
     final_df, full_symbol, resample_rule_stats
 )
 display(stats_df.head(3))
 
-
 # %% [markdown]
 # ### Multiple Symbols
-
-# %%
-def calculate_overtime_quantities_multiple_symbols(
-    df_sample, full_symbols, resampling_rule, plot_results=True
-):
-    result = []
-    # Calculate overtime stats for each `full_symbol`.
-    for symb in full_symbols:
-        df = calculate_overtime_quantities(
-            df_sample, symb, resampling_rule, plot_results=False
-        )
-        df["full_symbol"] = symb
-        result.append(df)
-    mult_stats_df = pd.concat(result)
-    # Convert to multiindex.
-    mult_stats_df_conv = dtfsysonod._convert_to_multiindex(
-        mult_stats_df, "full_symbol"
-    )
-    # Integrate time inside the day.
-    mult_stats_df_conv["time_inside_days"] = mult_stats_df_conv.index.time
-    # Compute the median value for all quantities.
-    mult_stats_df_conv = mult_stats_df_conv.groupby("time_inside_days").agg(
-        "median"
-    )
-    # Plot the results.
-    if plot_results:
-        # Get rid of `time` and `full_symbol`.
-        for cols in mult_stats_df.columns[:-2]:
-            mult_stats_df_conv[cols].plot(
-                title=f"{cols} median over time", fontsize=12
-            )
-    return mult_stats_df_conv
-
 
 # %% run_control={"marked": false}
 full_symbols = config["data"]["full_symbols"]
 resample_rule_stats = "10T"
 
-stats_df_mult_symbols = calculate_overtime_quantities_multiple_symbols(
+stats_df_mult_symbols = ramptran.calculate_overtime_quantities_multiple_symbols(
     final_df, full_symbols, resample_rule_stats
 )
 display(stats_df_mult_symbols.head(3))
