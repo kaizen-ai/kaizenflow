@@ -296,6 +296,8 @@ class ImClient(abc.ABC):
         """
         Apply normalizations to IM data.
         """
+        # TODO(Grisha): remove temporary hack.
+        df = df[~df.index.duplicated(keep='first')]
         _LOG.debug(hprint.to_str("full_symbol_col_name start_ts end_ts"))
         # 1) Drop duplicates.
         use_index = True
