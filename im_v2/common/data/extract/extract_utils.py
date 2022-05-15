@@ -10,7 +10,7 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 import argparse
 import os
 import time
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 import psycopg2
@@ -175,6 +175,43 @@ def download_realtime_for_one_exchange(
         connection.cursor().execute(dup_query)
 
 
+def save_csv(
+    data: pd.DataFrame,
+    exchange_folder_path: str,
+    currency_pair: str,
+    update: bool,
+    *,
+    original_folder_path: Optional[str] = None,
+) -> None:
+    """
+    Save extracted data to .csv.gz.
+
+    :param data: newly extracted data to save as .csv.gz file
+    :param exchange_folder_path: path where to save the data
+    :param currency_pair: currency pair, e.g. "BTC_USDT"
+    :param update: update existing file instead of overwriting
+    :param original_folder_path: path to original data if differs from given target path
+    """
+    if original_folder_path is None:
+        original_folder_path = exchange_folder_path
+    full_target_path = os.path.join(
+        exchange_folder_path, f"{currency_pair}.csv.gz"
+    )
+    if update:
+        # Read original file.
+        full_original_path = os.path.join(
+            original_folder_path, f"{currency_pair}.csv.gz"
+        )
+        hdbg.dassert_file_exists(full_original_path)
+        original_data = pd.read_csv(full_original_path)
+        # Append new data and drop duplicates.
+        hdbg.dassert_is_subset(data.columns, original_data.columns)
+        data = data[list(original_data.columns)]
+        data = pd.concat([original_data, data])
+        data = data.drop_duplicates()
+    data.to_csv(full_target_path, index=False, compression="gzip")
+
+
 def download_historical_data(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
@@ -249,7 +286,7 @@ def download_historical_data(
                 path_to_exchange, aws_profile=args["aws_profile"]
             )
         elif args["file_format"] == "csv":
-            # Files are named after corresponding currency pair, e.g 
+            # Files are named after corresponding currency pair, e.g
             #  "BTC_USDT.csv.gz".
             full_path = os.path.join(path_to_exchange, f"{currency_pair}.csv.gz")
             data.to_csv(full_path, index=False, compression="gzip")
