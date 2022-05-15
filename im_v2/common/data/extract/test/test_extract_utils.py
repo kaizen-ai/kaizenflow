@@ -199,6 +199,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "aws_profile": "ck",
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
+            "file_format": "parquet"
         }
         # Run.
         args = argparse.Namespace(**kwargs)
@@ -226,8 +227,6 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         # Check number of calls and args for current time.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
-        # Check calls to mocked `list_and_merge_pq_files`.
-        self.assertEqual(mock_list_and_merge.call_count, 1)
         # Check args/kwargs that were used for function call.
         expected_args = mock_list_and_merge.call_args.args
         expected_kwargs = mock_list_and_merge.call_args.kwargs
