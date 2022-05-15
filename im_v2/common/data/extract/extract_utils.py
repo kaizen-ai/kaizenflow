@@ -212,6 +212,10 @@ def save_csv(
     data.to_csv(full_target_path, index=False, compression="gzip")
 
 
+def save_parquet() -> None:
+    pass
+
+
 def download_historical_data(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
@@ -263,6 +267,7 @@ def download_historical_data(
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args["exchange_id"]
         # Change index to allow calling add_date_partition_cols function on the dataframe.
+        # TODO(Danya): Move to parquet!
         data = imvcdttrut.reindex_on_datetime(data, "timestamp")
         data, partition_cols = hparque.add_date_partition_columns(
             data, "by_year_month"
