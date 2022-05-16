@@ -247,6 +247,11 @@ def download_historical_data(
     :param exchange_class: which exchange class is used in script run
      e.g. "CcxtExchange" or "TalosExchange"
     """
+    # Verify that data exists for incremental mode to work.
+    if args["incremental"]:
+        hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
+    elif not args["incremental"]:
+        hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
     # Convert Namespace object with processing arguments to dict format.
     args = vars(args)
     path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
