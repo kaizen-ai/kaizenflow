@@ -13,6 +13,7 @@ import time
 from typing import Any
 
 import pandas as pd
+import psycopg2
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -58,6 +59,14 @@ def add_exchange_download_args(
         type=str,
         help="End of the downloaded period",
     )
+    parser.add_argument(
+        "--file_format",
+        action="store",
+        required=False,
+        default="parquet",
+        type=str,
+        help="File format to save files on disc",
+    )
     return parser
 
 
@@ -70,8 +79,7 @@ def download_realtime_for_one_exchange(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
     """
-    Helper function for encapsulating common logic for downloading exchange
-    data.
+    Encapsulate common logic for downloading exchange data.
 
     :param args: arguments passed on script run
     :param exchange_class: which exchange is used in script run
@@ -96,8 +104,21 @@ def download_realtime_for_one_exchange(
     currency_pairs = universe[args.exchange_id]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args.db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
+    try:
+        # Connect with the parameters from the env file.
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        connection = hsql.get_connection(*connection_params)
+    except psycopg2.OperationalError:
+        # Connect with the dynamic parameters (usually during tests).
+        actual_details = hsql.db_connection_to_tuple(args.connection)._asdict()
+        connection_params = hsql.DbConnectionInfo(
+            host=actual_details["host"],
+            dbname=actual_details["dbname"],
+            port=int(actual_details["port"]),
+            user=actual_details["user"],
+            password=actual_details["password"],
+        )
+        connection = hsql.get_connection(*connection_params)
     # Connect to S3 filesystem, if provided.
     if args.aws_profile:
         fs = hs3.get_s3fs(args.aws_profile)
@@ -116,7 +137,9 @@ def download_realtime_for_one_exchange(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        currency_pair_for_download = exchange_class.convert_currency_pair(currency_pair)
+        currency_pair_for_download = exchange_class.convert_currency_pair(
+            currency_pair
+        )
         # Download data.
         data = exchange.download_ohlcv_data(
             currency_pair_for_download,
@@ -156,8 +179,7 @@ def download_historical_data(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
     """
-    Helper function for encapsulating common logic for downloading historical
-    exchange data.
+    Encapsulate common logic for downloading historical exchange data.
 
     :param args: arguments passed on script run
     :param exchange_class: which exchange class is used in script run
@@ -195,10 +217,7 @@ def download_historical_data(
         # as column value as it can slightly differ.
         args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
         # Download data.
-        data = exchange.download_data(
-            data_type,
-            **args
-            )
+        data = exchange.download_data(data_type, **args)
         if data.empty:
             continue
         # Assign pair and exchange columns.
@@ -215,18 +234,27 @@ def download_historical_data(
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
-        # Saves filename as `uuid`.
-        hparque.to_partitioned_parquet(
-            data,
-            ["currency_pair"] + partition_cols,
-            path_to_exchange,
-            partition_filename=None,
-            aws_profile=args["aws_profile"],
-        )
+        if args["file_format"] == "parquet":
+            # Saves filename as `uuid`, e.g.
+            #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
+            hparque.to_partitioned_parquet(
+                data,
+                ["currency_pair"] + partition_cols,
+                path_to_exchange,
+                partition_filename=None,
+                aws_profile=args["aws_profile"],
+            )
+            # Merge all new parquet into a single `data.parquet`.
+            hparque.list_and_merge_pq_files(
+                path_to_exchange, aws_profile=args["aws_profile"]
+            )
+        elif args["file_format"] == "csv":
+            # Files are named after corresponding currency pair, e.g 
+            #  "BTC_USDT.csv.gz".
+            full_path = os.path.join(path_to_exchange, f"{currency_pair}.csv.gz")
+            data.to_csv(full_path, index=False, compression="gzip")
+        else:
+            hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
         # Sleep between iterations is needed for CCXT.
         if exchange_class == CCXT_EXCHANGE:
             time.sleep(args["sleep_time"])
-    # Merge all new parquet into a single `data.parquet`.
-    hparque.list_and_merge_pq_files(
-        path_to_exchange, aws_profile=args["aws_profile"]
-    )

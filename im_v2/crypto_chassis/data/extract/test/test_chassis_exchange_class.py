@@ -23,7 +23,7 @@ class TestCryptoChassisExchange1(hunitest.TestCase):
         exchange = "binance"
         currency_pair = "btc/usdt"
         client = imvccdeecl.CryptoChassisExchange()
-        actual = client.download_market_depth(
+        actual = client._download_market_depth(
             exchange, currency_pair, start_timestamp=start_timestamp
         )
         # Verify dataframe length.
@@ -51,7 +51,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 """
         client = imvccdeecl.CryptoChassisExchange()
         with self.assertRaises(AssertionError) as cm:
-            client.download_market_depth(
+            client._download_market_depth(
                 exchange, currency_pair, start_timestamp=start_timestamp
             )
         # Check output for error.
@@ -68,7 +68,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdeecl.CryptoChassisExchange()
-        df = client.download_market_depth(
+        df = client._download_market_depth(
                 exchange, currency_pair, start_timestamp=start_timestamp
             )
         actual = hpandas.convert_df_to_json_string(df)
@@ -85,7 +85,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdeecl.CryptoChassisExchange()
-        df = client.download_market_depth(
+        df = client._download_market_depth(
                 exchange, currency_pair, start_timestamp=start_timestamp
             )
         actual = hpandas.convert_df_to_json_string(df)
@@ -103,7 +103,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         exchange = "binance"
         currency_pair = "btc/usdt"
         client = imvccdeecl.CryptoChassisExchange()
-        actual = client.download_ohlcv(
+        actual = client._download_ohlcv(
             exchange, 
             currency_pair, 
             "historical",
@@ -112,12 +112,12 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 
         )
         # Verify dataframe length.
-        self.assertEqual(2440347, actual.shape[0])
+        self.assertEqual(84961, actual.shape[0])
         # Verify corner datetime if output is not empty.
         first_date = int(actual["timestamp"].iloc[0])
         last_date = int(actual["timestamp"].iloc[-1])
-        self.assertEqual(1502942400, first_date)
-        self.assertEqual(1651363140, last_date)
+        self.assertEqual(1641686400, first_date)
+        self.assertEqual(1646784000, last_date)
         # Check the output values.
         actual = actual.reset_index(drop=True)
         actual = hpandas.convert_df_to_json_string(actual)
@@ -137,7 +137,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
 """
         with self.assertRaises(AssertionError) as cm:
-            client.download_ohlcv(
+            client._download_ohlcv(
                 exchange, currency_pair, "historical", start_timestamp=start_timestamp
             )
         # Check output for error.
@@ -154,7 +154,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdeecl.CryptoChassisExchange()
-        df = client.download_ohlcv(
+        df = client._download_ohlcv(
                 exchange, currency_pair, "historical", start_timestamp=start_timestamp
             )
         actual = hpandas.convert_df_to_json_string(df)
@@ -171,8 +171,87 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdeecl.CryptoChassisExchange()
-        df = client.download_ohlcv(
+        df = client._download_ohlcv(
                 exchange, currency_pair, "historical", start_timestamp=start_timestamp
+            )
+        actual = hpandas.convert_df_to_json_string(df)
+        self.assert_equal(expected, actual, fuzzy_match=True)
+
+    def test_download_trade1(
+        self,
+    ) -> None:
+        """
+        Test download for historical data.
+        """
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        exchange = "coinbase"
+        currency_pair = "btc/usdt"
+        client = imvccdeecl.CryptoChassisExchange()
+        actual = client._download_trade(
+            exchange, currency_pair, start_timestamp=start_timestamp
+        )
+        # Verify dataframe length.
+        self.assertEqual(12396, actual.shape[0])
+        # Verify corner datetime if output is not empty.
+        first_date = int(actual["timestamp"].iloc[0])
+        last_date = int(actual["timestamp"].iloc[-1])
+        self.assertEqual(1641686404, first_date)
+        self.assertEqual(1641772751, last_date)
+        # Check the output values.
+        actual = actual.reset_index(drop=True)
+        actual = hpandas.convert_df_to_json_string(actual)
+        self.check_string(actual)
+
+    def test_download_trade_invalid_input1(self) -> None:
+        """
+        Run with invalid start timestamp.
+        """
+        exchange = "binance"
+        currency_pair = "btc/usdt"
+        start_timestamp = "invalid"
+        expected = hpandas.convert_df_to_json_string(pd.DataFrame())
+        client = imvccdeecl.CryptoChassisExchange()
+        expected = """
+* Failed assertion *
+Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
+"""
+        with self.assertRaises(AssertionError) as cm:
+            client._download_trade(
+                exchange, currency_pair, start_timestamp=start_timestamp
+            )
+        # Check output for error.
+        actual = str(cm.exception)
+        self.assertIn(expected, actual)
+
+    def test_download_trade_invalid_input2(self) -> None:
+        """
+        Run with invalid exchange name.
+        """
+        exchange = "bibance"
+        currency_pair = "btc/usdt"
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        # Empty Dataframe is expected.
+        expected = hpandas.convert_df_to_json_string(pd.DataFrame())
+        client = imvccdeecl.CryptoChassisExchange()
+        df = client._download_trade(
+                exchange, currency_pair, start_timestamp=start_timestamp
+            )
+        actual = hpandas.convert_df_to_json_string(df)
+        self.assert_equal(expected, actual, fuzzy_match=True)
+
+    def test_download_trade_invalid_input3(self) -> None:
+        """
+        Run with invalid currency pair.
+        """
+        exchange = "binance"
+        currency_pair = "btc/busdt"
+        # End is before start -> invalid.
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        # Empty Dataframe is expected.
+        expected = hpandas.convert_df_to_json_string(pd.DataFrame())
+        client = imvccdeecl.CryptoChassisExchange()
+        df = client._download_trade(
+                exchange, currency_pair, start_timestamp=start_timestamp
             )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)

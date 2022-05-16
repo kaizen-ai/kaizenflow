@@ -667,6 +667,11 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 class TestTalosSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+    
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.

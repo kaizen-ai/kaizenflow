@@ -15,25 +15,33 @@
 # %% [markdown]
 # - Compute returns from the real data.
 # - Pre-define the hit rate and calculate predictions, hits and confidence intervals.
+# - Show PnL and Sharpe Ratio for the corresponding parameters.
+# - Bootstrapping to compute pnl = f(hit_rate).
 
 # %% [markdown]
 # # Imports
 
 # %%
+# %load_ext autoreload
+# %autoreload 2
+
 import logging
-from typing import List
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-import requests
-import statsmodels
+import scipy.stats as stats
+import seaborn as sns
 
+import core.config.config_ as cconconf
+import core.finance as cofinanc
+import core.finance.resampling as cfinresa
 import core.finance.tradability as cfintrad
-import helpers.hdatetime as hdateti
+import core.plotting.misc_plotting as cplmiplo
+import core.statistics.sharpe_ratio as cstshrat
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import im_v2.common.universe as ivcu
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -44,194 +52,170 @@ hprint.config_notebook()
 
 
 # %% [markdown]
+# # Config
+
+# %%
+def get_synthetic_data_config() -> cconconf.Config:
+    """
+    Get config that specifies params for analysis.
+    """
+    config = cconconf.Config()
+    # Data parameters.
+    config.add_subconfig("data")
+    # Reference price to calculate returns.
+    config["data"]["reference_price"] = "close"
+    # Returns mode: 'pct_change','log_rets' or 'diff'.
+    config["data"]["rets_mode"] = "pct_change"
+    # Check returns for an analysis: raw ('rets') or cleaned ('rets_cleaned').
+    config["data"]["rets_col"] = "rets_cleaned"
+    # Choose the timeframe for resampling.
+    config["data"]["resampling_rule"] = "5T"
+    # Number of periods for returns normalization.
+    config["data"]["lookback_in_samples"] = 100
+    return config
+
+
+# %%
+config = get_synthetic_data_config()
+print(config)
+
+
+# %% [markdown]
+# # Functions
+
+# %%
+def compute_normalize_returns(
+    df: pd.DataFrame,
+    price_col: str,
+    rets_mode: str,
+    lookback: int,
+    rets_col: str,
+    plot_rets: bool,
+) -> pd.DataFrame:
+    """
+    Calculate simple returns as well as normalized ones and plot the results.
+
+    :param df: OHLCV data
+    :param price_col: Price column that will be used to calculate returns
+    :param rets_mode: "pct_change", "log_rets" or "diff"
+    :param lookback: Number of periods for returns normalization
+    :param rets_col: Column to plot ("rets" or "rets_cleaned")
+    :param plot_rets: Whether or not plot returns
+    :return: OHLCV data with returns and normalized returns
+    """
+    # Compute returns.
+    df["rets"] = cofinanc.compute_ret_0(df[price_col], rets_mode)
+    # Normalize returns.
+    df["rets_cleaned"] = df["rets"]
+    # Demean step.
+    df["rets_cleaned"] -= df["rets_cleaned"].rolling(lookback).mean()
+    # Risk adjustment.
+    df["rets_cleaned"] /= df["rets_cleaned"].rolling(lookback).std()
+    # Remove NaNs.
+    df = hpandas.dropna(df, report_stats=True)
+    if plot_rets:
+        df[rets_col].plot()
+    return df
+
+
+# %% [markdown]
 # # Extract returns from the real data
 
 # %% [markdown]
-# ## Load BTC data from CC
+# ## Load BTC data from `crypto-chassis` (shared_data folder)
 
 # %%
-def get_exchange_currency_for_api_request(full_symbol: str) -> str:
-    """
-    Return `exchange_id` and `currency_pair` in a format for requests to cc
-    API.
-    """
-    cc_exchange_id, cc_currency_pair = ivcu.parse_full_symbol(full_symbol)
-    cc_currency_pair = cc_currency_pair.lower().replace("_", "-")
-    return cc_exchange_id, cc_currency_pair
-
-
-def load_crypto_chassis_ohlcv_for_one_symbol(full_symbol: str) -> pd.DataFrame:
-    """
-    - Transform CK `full_symbol` to the `crypto-chassis` request format.
-    - Construct OHLCV data request for `crypto-chassis` API.
-    - Save the data as a DataFrame.
-    """
-    # Deconstruct `full_symbol`.
-    cc_exchange_id, cc_currency_pair = get_exchange_currency_for_api_request(
-        full_symbol
-    )
-    # Build a request.
-    r = requests.get(
-        f"https://api.cryptochassis.com/v1/ohlc/{cc_exchange_id}/{cc_currency_pair}?startTime=0"
-    )
-    # Get url with data.
-    url = r.json()["historical"]["urls"][0]["url"]
-    # Read the data.
-    df = pd.read_csv(url, compression="gzip")
-    return df
-
-
-def apply_ohlcv_transformation(
-    df: pd.DataFrame,
-    full_symbol: str,
-    start_date: pd.Timestamp,
-    end_date: pd.Timestamp,
-) -> pd.DataFrame:
-    """
-    Following transformations are applied:
-
-    - Convert `timestamps` to the usual format.
-    - Convert data columns to `float`.
-    - Add `full_symbol` column.
-    """
-    # Convert `timestamps` to the usual format.
-    df = df.rename(columns={"time_seconds": "timestamp"})
-    df["timestamp"] = df["timestamp"].apply(
-        lambda x: hdateti.convert_unix_epoch_to_timestamp(x, unit="s")
-    )
-    df = df.set_index("timestamp")
-    # Convert to `float`.
-    for cols in df.columns:
-        df[cols] = df[cols].astype(float)
-    # Add `full_symbol`.
-    df["full_symbol"] = full_symbol
-    # Note: I failed to put [start_time, end_time] to historical request.
-    # Now it loads all the available data.
-    # For that reason the time interval is hardcoded on this stage.
-    df = df.loc[(df.index >= start_date) & (df.index <= end_date)]
-    return df
-
-
-def read_crypto_chassis_ohlcv(
-    full_symbols: List[str], start_date: pd.Timestamp, end_date: pd.Timestamp
-) -> pd.DataFrame:
-    """
-    - Load the raw data for one symbol.
-    - Convert it to CK format.
-    - Repeat the first two steps for all `full_symbols`.
-    - Concentrate them into unique DataFrame.
-    """
-    result = []
-    for full_symbol in full_symbols:
-        # Load raw data.
-        df_raw = load_crypto_chassis_ohlcv_for_one_symbol(full_symbol)
-        # Process it to CK format.
-        df = apply_ohlcv_transformation(df_raw, full_symbol, start_date, end_date)
-        result.append(df)
-    final_df = pd.concat(result)
-    return final_df
-
-
-# %%
-# Commented in order to lad the fast locally.
-# btc_df = read_crypto_chassis_ohlcv(
-#    ["binance::BTC_USDT"],
-#    pd.Timestamp("2021-01-01", tz="UTC"),
-#    pd.Timestamp("2022-01-01", tz="UTC"),
-# )
-
-# %%
-btc_df = pd.read_csv("BTC_one_year.csv", index_col="timestamp")
+btc_df = pd.read_csv("/shared_data/BTC_one_year.csv", index_col="timestamp")
+ohlcv_cols = [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+]
+btc_df.index = pd.to_datetime(btc_df.index)
+btc_df = btc_df[ohlcv_cols]
 btc_df.head(3)
 
 # %% [markdown]
 # ## Process returns
 
-# %%
+# %% run_control={"marked": false}
 btc = btc_df.copy()
-
-# %% run_control={"marked": false}
-# Calculate returns.
-btc["rets"] = btc["close"].pct_change()
-# Rolling SMA for returns (with 100 periods loockback period).
-btc["rets_sma"] = btc["rets"].transform(lambda x: x.rolling(window=100).mean())
-# Substract SMA from returns to remove the upward trend.
-btc["rets_cleaned"] = btc["rets"] - btc["rets_sma"]
-# btc["rets"].plot()
-btc["rets_cleaned"].plot()
+# Specify params.
+price_col = config["data"]["reference_price"]
+rets_mode = config["data"]["rets_mode"]
+rets_col = config["data"]["rets_col"]
+lookback_in_samples = config["data"]["lookback_in_samples"]
+resampling_rule = config["data"]["resampling_rule"]
+# Resample.
+btc = cfinresa.resample_ohlcv_bars(btc, resampling_rule)
+# Add returns.
+btc = compute_normalize_returns(
+    btc, price_col, rets_mode, lookback_in_samples, rets_col, plot_rets=True
+)
+# Show snippet.
+display(btc.head())
 
 # %%
-# Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
-rets = btc[["rets"]]
-rets = hpandas.dropna(rets, report_stats=True)
-
-# %% run_control={"marked": false}
-# Show the distribution.
-fig = plt.figure(figsize=(15, 7))
-ax1 = fig.add_subplot(1, 1, 1)
-rets.hist(bins=300, ax=ax1)
-ax1.set_xlabel("Return")
-ax1.set_ylabel("Sample")
-ax1.set_title("Returns distribution")
-plt.show()
-
+# Show the distribution of returns.
+rets_col = config["data"]["rets_col"]
+sns.displot(btc, x=rets_col)
 
 # %% [markdown]
 # # Pre-defined Predictions, Hit Rates and Confidence Interval
 
-# %% run_control={"marked": false}
-def calculate_confidence_interval(hit_series, alpha, method):
-    """
-    :param alpha: Significance level
-    :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
-    """
-    point_estimate = hit_series.mean()
-    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=hit_series.sum(),
-        nobs=hit_series.count(),
-        alpha=alpha,
-        method=method,
-    )
-    result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
-    conf_alpha = (1 - alpha / 2) * 100
-    print(f"hit_rate: {result_values_pct[0]}")
-    print(f"hit_rate_lower_CI_({conf_alpha}%): {result_values_pct[1]}")
-    print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
-
-
-def get_predictions_hits_and_stats(df, ret_col, hit_rate, seed, alpha, method):
-    """
-    Calculate hits from the predictions and show confidence intervals.
-
-    :param df: Desired sample with OHLCV data and calculated returns
-    :param hit_rate: Desired percantage of successful predictions
-    :param seed: Experiment stance
-    :param alpha: Significance level for CI
-    :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
-    """
-    df = df.copy()
-    df["predictions"] = cfintrad.get_predictions(df, ret_col, hit_rate, seed)
-    # Specify necessary columns.
-    df = df[["rets", "predictions"]]
-    # Attach `hit` column (boolean).
-    df = df.copy()
-    df["hit"] = df["rets"] * df["predictions"] >= 0
-    # Exclude NaNs for the better analysis (at least one in the beginning because of `pct_change()`)
-    df = hpandas.dropna(df, report_stats=True)
-    # Show CI stats.
-    calculate_confidence_interval(df["hit"], alpha, method)
-    return df
-
-
 # %%
-sample = btc.head(1000)
-ret_col = "rets"
-hit_rate = 0.55
-seed = 20
+# Specify params.
+sample = btc
+ret_col = config["data"]["rets_col"]
+hit_rate = 0.505
+seed = 2
 alpha = 0.05
 method = "normal"
-
-hit_df = get_predictions_hits_and_stats(
-    sample, ret_col, hit_rate, seed, alpha, method
+# Calculate and attach `predictions` and `hit` to the OHLCV data.
+btc[["rets_cleaned", "predictions", "hit"]] = cfintrad.get_predictions_and_hits(
+    sample, ret_col, hit_rate, seed
 )
-display(hit_df)
+display(btc.tail(3))
+# Shpw CI stats.
+cfintrad.calculate_confidence_interval(btc["hit"], alpha, method)
+
+# %%
+## Show PnL for the current `hit_rate`
+pnl = (btc["predictions"] * btc[ret_col]).cumsum()
+pnl = pnl[pnl.notna()]
+cplmiplo.plot_cumulative_returns(pnl, mode="pct")
+# Sharpe ratio.
+cstshrat.summarize_sharpe_ratio(pnl)
+
+# %% [markdown]
+# # PnL as a function of `hit_rate`
+
+# %%
+# Specify params.
+sample = btc
+rets_col = config["data"]["rets_col"]
+hit_rates = np.linspace(0.4, 0.6, num=10)
+n_experiment = 10
+# Perform the simulattion.
+pnls = cfintrad.simulate_pnls_for_set_of_hit_rates(
+    sample, rets_col, hit_rates, n_experiment
+)
+
+# %% run_control={"marked": false}
+hit_pnl_df = pd.DataFrame(pnls.items(), columns=["hit_rate", "PnL"])
+sns.scatterplot(data=hit_pnl_df, x="hit_rate", y="PnL")
+
+# %%
+x = hit_pnl_df["hit_rate"]
+y = hit_pnl_df["PnL"]
+
+ols_results = stats.linregress(x, y)
+print(f"R-squared = {ols_results.rvalue**2:.4f}")
+plt.plot(x, y, "o", label="original data")
+plt.plot(
+    x, ols_results.intercept + ols_results.slope * x, "r", label="fitted line"
+)
+plt.legend()
+plt.show()
