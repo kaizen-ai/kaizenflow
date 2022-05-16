@@ -621,7 +621,7 @@ gateio_ADA_data_2021_07 = gateio_ADA_data.loc[(gateio_ADA_data.index.year == 202
 gateio_ADA_data_2021_07
 
 # %%
-gateio_ADA_data_2021_07.loc[gateio_ADA_data_2021_07['volume'] == 0]
+gateio_ADA_data_2021_07.loc[gateio_ADA_data_2021_07['volume'] == 0][:10]
 
 # %%
 gateio_ADA_data_2021_07.loc[gateio_ADA_data_2021_07.index >= "2021-07-03 09:20:00+00:00"].head(15)
