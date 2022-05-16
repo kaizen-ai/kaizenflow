@@ -186,7 +186,7 @@ def save_csv(
     exchange_folder_path: str,
     currency_pair: str,
     incremental: bool,
-    aws_profile: Optional[str]
+    aws_profile: Optional[str],
 ) -> None:
     """
     Save extracted data to .csv.gz.
@@ -208,7 +208,9 @@ def save_csv(
         data = pd.concat([original_data, data])
         # Drop duplicates on non-metadata columns.
         metadata_columns = ["end_download_timestamp", "knowledge_timestamp"]
-        non_metadata_columns = data.drop(metadata_columns, axis=1, errors="ignore").columns.to_list()
+        non_metadata_columns = data.drop(
+            metadata_columns, axis=1, errors="ignore"
+        ).columns.to_list()
         data = data.drop_duplicates(subset=non_metadata_columns)
     data.to_csv(full_target_path, index=False, compression="gzip")
 
@@ -247,14 +249,14 @@ def download_historical_data(
     :param exchange_class: which exchange class is used in script run
      e.g. "CcxtExchange" or "TalosExchange"
     """
+    # Convert Namespace object with processing arguments to dict format.
+    args = vars(args)
+    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
     elif not args["incremental"]:
         hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
-    # Convert Namespace object with processing arguments to dict format.
-    args = vars(args)
-    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     # Initialize exchange class.
     # Every exchange can potentially have a specific set of init args.
     if exchange_class.__name__ == CCXT_EXCHANGE:
@@ -301,7 +303,13 @@ def download_historical_data(
         if args["file_format"] == "parquet":
             save_parquet(data, path_to_exchange, args["aws_profile"])
         elif args["file_format"] == "csv":
-            save_csv(data, path_to_exchange, currency_pair, args["incremental"])
+            save_csv(
+                data,
+                path_to_exchange,
+                currency_pair,
+                args["incremental"],
+                args["aws_profile"],
+            )
         else:
             hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
         # Sleep between iterations is needed for CCXT.
