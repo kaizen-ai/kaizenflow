@@ -701,6 +701,9 @@ def trim_df(
     if df.empty:
         # If the df is empty, there is nothing to trim.
         return df
+    if start_ts is None and end_ts is None:
+        # If no boundaries are specified, there are no points of reference to trim to.
+        return df
     num_rows_before = df.shape[0]
     if start_ts is not None and end_ts is not None:
         # Confirm that the interval boundaries are valid.
@@ -714,17 +717,30 @@ def trim_df(
         values_to_filter_by = df[ts_col_name]
     # Make the value type compatible with the interval boundaries.
     try:
-        hdateti.dassert_tz_compatible(values_to_filter_by.iloc[0], start_ts)
+        boundary_to_compare = start_ts if start_ts is not None else end_ts
+        hdateti.dassert_tz_compatible(
+            values_to_filter_by.iloc[0], boundary_to_compare
+        )
     except AssertionError:
         values_to_filter_by = pd.to_datetime(values_to_filter_by)
-        hdateti.dassert_tz_compatible(values_to_filter_by.iloc[0], start_ts)
+        hdateti.dassert_tz_compatible(
+            values_to_filter_by.iloc[0], boundary_to_compare
+        )
     if values_to_filter_by.is_monotonic:
         # The values are sorted; using the `pd.Series.searchsorted` method.
-        i = values_to_filter_by.searchsorted(
-            start_ts, side="left" if left_close else "right"
+        i = (
+            values_to_filter_by.searchsorted(
+                start_ts, side="left" if left_close else "right"
+            )
+            if start_ts is not None
+            else 0
         )
-        j = values_to_filter_by.searchsorted(
-            end_ts, side="right" if right_close else "left"
+        j = (
+            values_to_filter_by.searchsorted(
+                end_ts, side="right" if right_close else "left"
+            )
+            if end_ts is not None
+            else None
         )
         df = df.iloc[i:j]
     else:
@@ -737,6 +753,10 @@ def trim_df(
             inclusive = "right"
         else:
             inclusive = "neither"
+        if start_ts is None:
+            start_ts = values_to_filter_by.iloc[0] - pd.DateOffset(years=100)
+        if end_ts is None:
+            end_ts = values_to_filter_by.iloc[0] + pd.DateOffset(years=100)
         df = df[
             values_to_filter_by.between(start_ts, end_ts, inclusive=inclusive)
         ]

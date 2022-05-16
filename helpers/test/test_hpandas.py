@@ -658,6 +658,84 @@ class Test_trim_df1(hunitest.TestCase):
         2022-01-04 21:37:00.000000 17085 179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    def test_trim_df11(self) -> None:
+        """
+        Test filtering on a non-sorted column, with `start_ts` being None.
+        """
+        df = self.get_df()
+        # Run.
+        ts_col_name = "start_time"
+        start_ts = None
+        end_ts = pd.Timestamp("2022-01-04 21:37:00")
+        left_close = True
+        right_close = True
+        df_trim = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        # Check.
+        act = hpandas.df_to_str(
+            df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
+        )
+        exp = r"""# df_trim=
+        index=[14, 44]
+        columns=start_time,egid,close
+        shape=(8, 3)
+        * type=
+        col_name dtype num_unique num_nans first_elem type(first_elem)
+        0 index int64 8 / 8 = 100.00% 0 / 8 = 0.00% 14 <class 'numpy.int64'>
+        1 start_time object 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04 21:37:00.000000 <class 'str'>
+        2 egid int64 2 / 8 = 25.00% 0 / 8 = 0.00% 13684 <class 'numpy.int64'>
+        3 close float64 4 / 8 = 50.00% 0 / 8 = 0.00% 1146.26 <class 'numpy.float64'>
+        start_time egid close
+        14 2022-01-04 21:37:00.000000 13684 1146.26
+        18 2022-01-04 21:37:00.000000 17085 179.42
+        24 2022-01-04 21:36:00.000000 13684 1146.00
+        ...
+        38 2022-01-04 21:35:00.000000 17085 179.42
+        40 2022-01-04 21:34:00.000000 17085 179.42
+        44 2022-01-04 21:34:00.000000 13684 1146.00"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_trim_df12(self) -> None:
+        """
+        Test filtering on a sorted index, with `end_ts` being None.
+        """
+        df = self.get_df()
+        df = df.set_index("start_time")
+        # Run.
+        ts_col_name = None
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = None
+        left_close = True
+        right_close = True
+        df = df.sort_index()
+        df_trim = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        # Check.
+        act = hpandas.df_to_str(
+            df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
+        )
+        exp = r"""# df_trim=
+        index=[2022-01-04 21:35:00.000000, 2022-01-04 21:38:00.000000]
+        columns=egid,close
+        shape=(8, 2)
+        * type=
+        col_name dtype num_unique num_nans first_elem type(first_elem)
+        0 index object 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04 21:35:00.000000 <class 'str'>
+        1 egid int64 2 / 8 = 25.00% 0 / 8 = 0.00% 13684 <class 'numpy.int64'>
+        2 close float64 6 / 8 = 75.00% 0 / 8 = 0.00% 1146.0 <class 'numpy.float64'>
+        egid close
+        start_time
+        2022-01-04 21:35:00.000000 13684 1146.00
+        2022-01-04 21:35:00.000000 17085 179.42
+        2022-01-04 21:36:00.000000 13684 1146.00
+        ...
+        2022-01-04 21:37:00.000000 17085 179.42
+        2022-01-04 21:38:00.000000 13684 1146.48
+        2022-01-04 21:38:00.000000 17085 179.45"""
+        self.assert_equal(act, exp, fuzzy_match=True)
+
     @pytest.mark.skip(
         "Used for comparing speed of different trimming methods (CmTask1404)."
     )
