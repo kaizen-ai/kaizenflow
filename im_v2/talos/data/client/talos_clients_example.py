@@ -8,6 +8,7 @@ import os
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import helpers.hs3 as hs3
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 
 
@@ -52,8 +53,9 @@ def get_TalosHistoricalPqByTileClient_example2(
     Get `TalosHistoricalPqByTileClient` object for the tests from S3.
     """
     universe_version = "small"
-    # TODO(Grisha): do not hard-wire the path, use `helpers/hs3.py`.
-    root_dir = "s3://cryptokaizen-data/historical"
+    aws_profile = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    root_dir = os.path.join(s3_bucket_path, "historical")
     partition_mode = "by_year_month"
     talos_parquet_client = imvtdctacl.TalosHistoricalPqByTileClient(
         universe_version,
