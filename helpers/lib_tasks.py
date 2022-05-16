@@ -710,11 +710,12 @@ def git_roll_amp_forward(ctx):
     Rolls amp forward.
     """
     _report_task()
-    if os.path.exists("amp"):
+    AMP_DIR = "amp"
+    if os.path.exists(AMP_DIR):
         cmds = [
-            "cd amp && git checkout master",
-            "cd amp git pull --recurse-submoduler",
-            "git commit -m 'Roll amp pointer forward'",
+            f"cd {AMP_DIR} && git checkout master",
+            f"cd {AMP_DIR} git pull --recurse-submoduler",
+            f"git commit -m 'Roll {AMP_DIR} pointer forward'",
             "git push"
         ]
         for cmd in cmds:
