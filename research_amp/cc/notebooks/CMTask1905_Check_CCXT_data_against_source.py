@@ -23,12 +23,12 @@
 # %%
 import logging
 import os
+import requests
 import time
 
 import ccxt
 import matplotlib.pyplot as plt
 import pandas as pd
-import requests
 
 import core.config.config_ as cconconf
 import core.statistics as costatis
@@ -189,8 +189,8 @@ def percentage(df, df_loc):
 
 def log_into_exchange(exchange) -> ccxt.Exchange:
     """
-    Log into an exchange via CCXT and return the corresponding `ccxt.Exchange`
-    object.
+    Log into an exchange via CCXT and return the corresponding
+    `ccxt.Exchange` object.
     """
     # Select credentials for provided exchange.
     credentials = hsecret.get_secret(exchange)
@@ -334,10 +334,10 @@ ccxt_df.loc[ccxt_df['volume'] != 0]
 
 # %% [markdown]
 #
-# |CCXT | | ||            Extractor    | | | |Client | | |
+# |CCXT | | ||			Extractor	| | | |Client | | |
 # |------|--|-||-------------|-|-|-|------|-|-|
-# |date|Number of NaN rows %|    Total number of rows| `volume=0` %    |Number of NaN rows %|    Total number of rows| `volume=0` %| Number of NaN rows %|    Total number of rows| `volume=0` %|
-# |2019-09|    0          |                       429750|          73.22%       |    0          |                       43200|          73.3%   |      0|                43200| 73.3%|
+# |date|Number of NaN rows %|	Total number of rows| `volume=0` %	|Number of NaN rows %|	Total number of rows| `volume=0` %| Number of NaN rows %|	Total number of rows| `volume=0` %|
+# |2019-09|	0          |	                   429750|	      73.22%   	|	0          |	                   43200|	      73.3%   |      0|	            43200| 73.3%|
 #
 
 # %% [markdown]
@@ -441,10 +441,10 @@ print(percentage(ccxt_df_ftx, ccxt_df_ftx.loc[ccxt_df_ftx['volume'] == 0]))
 
 # %% [markdown]
 #
-# |CCXT | | ||            Extractor    | | | |Client | | |
+# |CCXT | | ||			Extractor	| | | |Client | | |
 # |------|--|-||-------------|-|-|-|------|-|-|
-# |date|Number of NaN rows %|    Total number of rows| `volume=0` %    |Number of NaN rows %|    Total number of rows| `volume=0` %| Number of NaN rows %|    Total number of rows| `volume=0` %|
-# |2019-09|    0          |                       429750|          86.09%       |    0          |                       43200|          85.97%   |      0|                43200| 85.97%|
+# |date|Number of NaN rows %|	Total number of rows| `volume=0` %	|Number of NaN rows %|	Total number of rows| `volume=0` %| Number of NaN rows %|	Total number of rows| `volume=0` %|
+# |2019-09|	0          |	                   429750|	      86.09%   	|	0          |	                   43200|	      85.97%   |      0|	            43200| 85.97%|
 #
 
 # %% [markdown]
@@ -658,5 +658,3 @@ ccxt_gateio_ADA
 # - Data has a pattern where `volume = 0` rows store value for all columns from column `close` of the last non-`volume = 0` row.
 # - Data has an expiration date because data we have no longer exist at the source. Here could be useful `end_download_timestamp` column for data we store on S3, just to confirm the statement or vice versa.
 # - October data has 100% of NaNs for all currency pairs of gateio. Based on that, it could be a technical issue at the exchange.
-
-# %%
