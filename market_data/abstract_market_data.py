@@ -287,7 +287,7 @@ class MarketData(abc.ABC):
         df = self._normalize_data(df)
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
-        # Verify that loaded data is correct.
+        # Check that columns are required ones.
         if self._columns is not None:
             df = hpandas.check_and_filter_matching_columns(
                 df, self._columns, self._filter_data_mode

@@ -399,7 +399,7 @@ def check_and_filter_matching_columns(
         - "warn_and_trim": return the intersection of required and received columns and
            issue a warning
     :return: input data as it is if required columns match received columns otherwise
-    processed data, see `filter_data_mode`
+        processed data, see `filter_data_mode`
     """
     received_columns = df.columns.to_list()
     hdbg.dassert_lte(1, len(received_columns))
