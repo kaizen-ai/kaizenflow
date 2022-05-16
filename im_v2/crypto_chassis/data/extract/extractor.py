@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 
 class CryptoChassisExtractor:
     """
-    Access extractor data from Crypto-Chassis through REST API.
+    Access exchange data from Crypto-Chassis through REST API.
     """
 
     def __init__(self) -> None:
