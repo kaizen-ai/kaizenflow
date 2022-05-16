@@ -714,7 +714,8 @@ def git_roll_amp_forward(ctx):
     if os.path.exists(AMP_DIR):
         cmds = [
             f"cd {AMP_DIR} && git checkout master",
-            f"cd {AMP_DIR} git pull --recurse-submoduler",
+            "git pull"
+            "cd ..",
             f"git commit -m 'Roll {AMP_DIR} pointer forward'",
             "git push",
         ]
