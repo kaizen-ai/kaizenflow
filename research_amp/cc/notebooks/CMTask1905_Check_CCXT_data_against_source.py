@@ -23,12 +23,12 @@
 # %%
 import logging
 import os
-import requests
 import time
 
 import ccxt
 import matplotlib.pyplot as plt
 import pandas as pd
+import requests
 
 import core.config.config_ as cconconf
 import core.statistics as costatis
@@ -189,8 +189,8 @@ def percentage(df, df_loc):
 
 def log_into_exchange(exchange) -> ccxt.Exchange:
     """
-    Log into an exchange via CCXT and return the corresponding
-    `ccxt.Exchange` object.
+    Log into an exchange via CCXT and return the corresponding `ccxt.Exchange`
+    object.
     """
     # Select credentials for provided exchange.
     credentials = hsecret.get_secret(exchange)
@@ -334,10 +334,10 @@ ccxt_df.loc[ccxt_df['volume'] != 0]
 
 # %% [markdown]
 #
-# |CCXT | | ||			Extractor	| | | |Client | | |
+# |CCXT | | ||            Extractor    | | | |Client | | |
 # |------|--|-||-------------|-|-|-|------|-|-|
-# |date|Number of NaN rows %|	Total number of rows| `volume=0` %	|Number of NaN rows %|	Total number of rows| `volume=0` %| Number of NaN rows %|	Total number of rows| `volume=0` %|
-# |2019-09|	0          |	                   429750|	      73.22%   	|	0          |	                   43200|	      73.3%   |      0|	            43200| 73.3%|
+# |date|Number of NaN rows %|    Total number of rows| `volume=0` %    |Number of NaN rows %|    Total number of rows| `volume=0` %| Number of NaN rows %|    Total number of rows| `volume=0` %|
+# |2019-09|    0          |                       429750|          73.22%       |    0          |                       43200|          73.3%   |      0|                43200| 73.3%|
 #
 
 # %% [markdown]
@@ -441,10 +441,222 @@ print(percentage(ccxt_df_ftx, ccxt_df_ftx.loc[ccxt_df_ftx['volume'] == 0]))
 
 # %% [markdown]
 #
-# |CCXT | | ||			Extractor	| | | |Client | | |
+# |CCXT | | ||            Extractor    | | | |Client | | |
 # |------|--|-||-------------|-|-|-|------|-|-|
-# |date|Number of NaN rows %|	Total number of rows| `volume=0` %	|Number of NaN rows %|	Total number of rows| `volume=0` %| Number of NaN rows %|	Total number of rows| `volume=0` %|
-# |2019-09|	0          |	                   429750|	      86.09%   	|	0          |	                   43200|	      85.97%   |      0|	            43200| 85.97%|
+# |date|Number of NaN rows %|    Total number of rows| `volume=0` %    |Number of NaN rows %|    Total number of rows| `volume=0` %| Number of NaN rows %|    Total number of rows| `volume=0` %|
+# |2019-09|    0          |                       429750|          86.09%       |    0          |                       43200|          85.97%   |      0|                43200| 85.97%|
 #
+
+# %% [markdown]
+# # gateio::ETH_USDT w/o `volume = 0` in data
+
+# %% [markdown]
+# `gateio` data has weird statistics: no `volume = 0` and still tons of `NaNs`; has `volume = 0` and different amount of `NaNs`, i.e not like the others exchange pattern above. So decided to take a look at two currency pairs with different patterns.
+
+# %% [markdown]
+# ## Client
+
+# %%
+gateio_data = client.read_data(
+    ["gateio::ETH_USDT"],
+    config["data"]["start_ts"],
+    config["data"]["end_ts"],
+    config["data"]["columns"],
+    config["data"]["filter_data_mode"],
+)
+
+# %% [markdown]
+# ### 100% of `NaNs`
+
+# %%
+gateio_data_2021_10 = gateio_data.loc[(gateio_data.index.year == 2021)
+                                     & (gateio_data.index.month == 10)]
+gateio_data_2021_10
+
+# %%
+gateio_data_2021_10.isna().value_counts()
+
+# %% [markdown]
+# ### 34.46% of `NaNs`
+
+# %%
+gateio_data_2021_09 = gateio_data.loc[(gateio_data.index.year == 2021)
+                                    & (gateio_data.index.month == 9)]
+gateio_data_2021_09
+
+# %%
+gateio_data_2021_09.isna().value_counts()
+
+# %% [markdown]
+# ### No `NaNs`
+
+# %%
+gateio_data.loc[(gateio_data.index.year == 2021)
+                                    & (gateio_data.index.month == 12)]
+
+# %% [markdown]
+# At first look, `NaNs` appear because of some kind of problem at the source. According to Dan's tables all currency pairs have ~34-39% of `NaNs` for the period from September to November. October data has 100% of `NaNs` for all currency pairs of `gateio` so that definitely could be a technical issue at the exchange.
+
+# %% [markdown]
+# ## Extractor
+
+# %%
+ccxt_gateio_ETH_exchange = imvcdeexcl.CcxtExchange("gateio")
+
+# %%
+sleep_time_in_secs = 1
+start_timestamp = pd.Timestamp("2021-09-01 00:00:00+00:00")
+end_timestamp = pd.Timestamp("2021-09-30 23:59:59+00:00")
+ccxt_gateio_ETH = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+    "ETH/USDT",
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+ccxt_gateio_ETH = set_index_ts(ccxt_gateio_ETH)
+
+# %%
+ccxt_gateio_ETH
+
+# %%
+sleep_time_in_secs = 1
+start_timestamp = pd.Timestamp("2021-10-01 00:00:00+00:00")
+end_timestamp = pd.Timestamp("2021-10-31 23:59:59+00:00")
+ccxt_gateio_ETH_10 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+    "ETH/USDT",
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+ccxt_gateio_ETH_10
+
+# %%
+sleep_time_in_secs = 1
+start_timestamp = pd.Timestamp("2021-12-01 00:00:00+00:00")
+end_timestamp = pd.Timestamp("2021-12-31 23:59:59+00:00")
+ccxt_gateio_ETH_12 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+    "ETH/USDT",
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+ccxt_gateio_ETH_12
+
+# %% [markdown]
+# There is no data coming from `Extractor` but somehow we have it on S3. I could say exchange has an expiration date for data.
+
+# %%
+# Load recent data to make sure API and Exctractor are working.
+sleep_time_in_secs = 1
+start_timestamp = pd.Timestamp("2022-04-25 00:00:00+00:00")
+end_timestamp = pd.Timestamp("2022-05-14 23:59:59+00:00")
+ccxt_gateio_ETH_2022 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+    "ETH/USDT",
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+ccxt_gateio_ETH_2022
+
+# %% [markdown]
+# ## CCXT w/o Extractor
+
+# %% [markdown]
+# Take a look at one month of 2021, if it's empty, it have so called an expiration date.
+
+# %%
+ccxt_exchange = log_into_exchange('gateio')
+ccxt_df = get_all_data(ccxt_exchange, "ETH/USDT", 1638316800000, 1640995199000)
+
+# %%
+ccxt_df
+
+# %% [markdown]
+# ### Summary for `gateio` `volume != 0` data.
+
+# %% [markdown]
+# - Exchange has an expiration date for data because data we have no longer exist at the source. Here could be useful `end_download_timestamp` column for data we store on S3, just to confirm the statement or vice versa.
+# - October data has 100% of NaNs for all currency pairs of gateio. Based on that, it could be a technical issue at the exchange.
+
+# %% [markdown]
+# # gateio::ADA_USDT with `volume = 0` in data
+
+# %% [markdown]
+# ## Client
+
+# %%
+gateio_ADA_data = client.read_data(
+    ["gateio::ADA_USDT"],
+    config["data"]["start_ts"],
+    config["data"]["end_ts"],
+    config["data"]["columns"],
+    config["data"]["filter_data_mode"],
+)
+
+# %%
+# `volume = 0` != NaNs amount
+gateio_ADA_data_2021_09 = gateio_ADA_data.loc[(gateio_ADA_data.index.year == 2021)
+                & (gateio_ADA_data.index.month == 9)]
+gateio_ADA_data_2021_09
+
+# %%
+gateio_ADA_data_2021_09.loc[gateio_ADA_data_2021_09['volume0'] == 0]
+
+# %%
+gateio_ADA_data_2021_09.loc[(gateio_ADA_data_2021_09.index.day == 5)
+                           & (gateio_ADA_data_2021_09.index.hour == 3)].tail()
+
+# %%
+# `volume = 0` has the same amount as NaNs
+gateio_ADA_data_2021_07 = gateio_ADA_data.loc[(gateio_ADA_data.index.year == 2021)
+                & (gateio_ADA_data.index.month == 7)]
+gateio_ADA_data_2021_07
+
+# %%
+gateio_ADA_data_2021_07.loc[gateio_ADA_data_2021_07['volume'] == 0]
+
+# %%
+gateio_ADA_data_2021_07.loc[gateio_ADA_data_2021_07.index >= "2021-07-03 09:20:00+00:00"].head(15)
+
+# %% [markdown]
+# A pattern where `volume = 0` rows have value for all columns from column `close` of the last non-`volume = 0` row.
+
+# %% [markdown]
+# ## Extractor
+
+# %%
+# TODO(Nina): Change name of var `ccxt_gateio_ETH_exchange`.
+sleep_time_in_secs = 1
+start_timestamp = pd.Timestamp("2021-07-01 00:00:00+00:00")
+end_timestamp = pd.Timestamp("2021-07-31 23:59:59+00:00")
+ccxt_gateio_ADA = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+    "ADA/USDT",
+    start_timestamp=start_timestamp,
+    end_timestamp=end_timestamp,
+    sleep_time_in_secs=sleep_time_in_secs,
+)
+
+# %%
+ccxt_gateio_ADA
+
+# %% [markdown]
+# I think there's no sense to continue with `gateio` analysis, or we can check up the data for 2022.
+
+# %% [markdown]
+# ## Summary for `gateio`
+
+# %% [markdown]
+# - Small amount of useful data according to Dan's tables for the gateio.
+# - Data has a pattern where `volume = 0` rows store value for all columns from column `close` of the last non-`volume = 0` row.
+# - Data has an expiration date because data we have no longer exist at the source. Here could be useful `end_download_timestamp` column for data we store on S3, just to confirm the statement or vice versa.
+# - October data has 100% of NaNs for all currency pairs of gateio. Based on that, it could be a technical issue at the exchange.
 
 # %%
