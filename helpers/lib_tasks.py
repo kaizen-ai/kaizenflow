@@ -707,7 +707,7 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
 @task
 def git_roll_amp_forward(ctx):
     """
-    Rolls amp forward.
+    Roll amp forward.
     """
     _report_task()
     AMP_DIR = "amp"
@@ -716,10 +716,11 @@ def git_roll_amp_forward(ctx):
             f"cd {AMP_DIR} && git checkout master",
             f"cd {AMP_DIR} git pull --recurse-submoduler",
             f"git commit -m 'Roll {AMP_DIR} pointer forward'",
-            "git push"
+            "git push",
         ]
         for cmd in cmds:
             _run(ctx, cmd)
+
 
 # TODO(gp): Add git_co(ctx)
 # Reuse hgit.git_stash_push() and hgit.stash_apply()
@@ -2122,7 +2123,7 @@ def _generate_compose_file(
     """
     Generate `docker-compose.yaml` file and save it.
 
-    :param shared_data_dir: data directory in the host filesystem to mount to mount 
+    :param shared_data_dir: data directory in the host filesystem to mount to mount
         inside the container. None means no dir sharing
     """
     _LOG.debug(
