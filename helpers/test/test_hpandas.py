@@ -429,7 +429,9 @@ class Test_trim_df1(hunitest.TestCase):
         datetime1='2022-01-04 16:38:00-05:00' and datetime2='2022-01-04 21:35:00' are not compatible"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip
+    @pytest.mark.skip(
+        "Used for comparing speed of different trimming methods (CmTask1404)."
+    )
     def test_trim_df_speed(self) -> None:
         """
         Test the speed of different approaches to df trimming.
@@ -497,12 +499,13 @@ class Test_trim_df1(hunitest.TestCase):
         )
         assert df_between_trim.equals(df_mask_trim)
         # Trim using `pd.Series.between`: filtering on an index.
-        df_between_trim = df.set_index(ts_col_name, append=True)
+        df_between_trim = df.set_index(ts_col_name, append=True, drop=False)
         start_time = time.time()
-        df_between_trim = df_between_trim.reset_index(ts_col_name)
-        df_between_trim = df_between_trim[
-            df[ts_col_name].between(start_ts, end_ts, inclusive="both")
-        ]
+        filter_values = pd.Series(
+            df_between_trim.index.get_level_values(ts_col_name)
+        ).between(start_ts, end_ts, inclusive="both")
+        df_between_trim = df_between_trim.droplevel(ts_col_name)
+        df_between_trim = df_between_trim[filter_values]
         end_time = time.time()
         _LOG.info(
             "`pd.Series.between` trim (index): %.2f seconds",
