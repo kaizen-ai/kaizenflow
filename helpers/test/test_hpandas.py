@@ -2,11 +2,13 @@ import datetime
 import io
 import logging
 import os
+import time
 import uuid
 from typing import Any
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -138,7 +140,6 @@ class Test_trim_df1(hunitest.TestCase):
 
         The `start_time` column is thus a str.
         """
-
         txt = """
         ,start_time,egid,close
         4,2022-01-04 21:38:00.000000,13684,1146.48
@@ -427,6 +428,242 @@ class Test_trim_df1(hunitest.TestCase):
         'False'
         datetime1='2022-01-04 16:38:00-05:00' and datetime2='2022-01-04 21:35:00' are not compatible"""
         self.assert_equal(act, exp, fuzzy_match=True)
+
+    @pytest.mark.skip
+    def test_trim_df_speed(self) -> None:
+        """
+        Test the speed of different approaches to df trimming.
+
+        - Simple mask: filtering by
+          - column
+          - index
+        - `pd.Series.between`: filtering by
+          - column
+          - index
+        - `pd.DataFrame.truncate`: filtering by
+          - non-sorted column
+          - non-sorted index
+          - sorted column
+          - sorted index
+        -  `pd.Series.searchsorted`: filtering by
+          - non-sorted column
+          - non-sorted index
+          - sorted column
+          - sorted index
+        """
+        # Get a large df.
+        df = self.get_df()
+        df = df.loc[df.index.repeat(100000)].reset_index(drop=True)
+        _LOG.info(len(df))
+        #
+        ts_col_name = "start_time"
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = pd.Timestamp("2022-01-04 21:38:00")
+        df[ts_col_name] = pd.to_datetime(df[ts_col_name])
+        # Trim with the simple mask method: filtering on a column.
+        start_time = time.time()
+        mask = df[ts_col_name] >= start_ts
+        df_mask_trim = df[mask]
+        if not df_mask_trim.empty:
+            mask = df_mask_trim[ts_col_name] <= end_ts
+            df_mask_trim = df_mask_trim[mask]
+        end_time = time.time()
+        _LOG.info(
+            "Simple mask trim (column): %.2f seconds", (end_time - start_time)
+        )
+        # Trim with the simple mask method: filtering on an index.
+        df_mask_idx_trim = df.set_index(ts_col_name, append=True, drop=False)
+        start_time = time.time()
+        mask = df_mask_idx_trim.index.get_level_values(ts_col_name) >= start_ts
+        df_mask_idx_trim = df_mask_idx_trim[mask]
+        if not df_mask_idx_trim.empty:
+            mask = df_mask_idx_trim.index.get_level_values(ts_col_name) <= end_ts
+            df_mask_idx_trim = df_mask_idx_trim[mask]
+        end_time = time.time()
+        _LOG.info(
+            "Simple mask trim (index): %.2f seconds", (end_time - start_time)
+        )
+        df_mask_idx_trim = df_mask_idx_trim.droplevel(ts_col_name)
+        assert df_mask_idx_trim.equals(df_mask_trim)
+        # Trim using `pd.Series.between`: filtering on a column.
+        start_time = time.time()
+        df_between_trim = df[
+            df[ts_col_name].between(start_ts, end_ts, inclusive="both")
+        ]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.between` trim (column): %.2f seconds",
+            (end_time - start_time),
+        )
+        assert df_between_trim.equals(df_mask_trim)
+        # Trim using `pd.Series.between`: filtering on an index.
+        df_between_trim = df.set_index(ts_col_name, append=True)
+        start_time = time.time()
+        df_between_trim = df_between_trim.reset_index(ts_col_name)
+        df_between_trim = df_between_trim[
+            df[ts_col_name].between(start_ts, end_ts, inclusive="both")
+        ]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.between` trim (index): %.2f seconds",
+            (end_time - start_time),
+        )
+        assert df_between_trim.equals(df_mask_trim)
+        # Trim using `pd.DataFrame.truncate`: filtering on values in a non-sorted column.
+        # `truncate` can only be used on a sorted index.
+        start_time = time.time()
+        df_truncate_trim = df.set_index(df[ts_col_name], append=True).sort_index(
+            level=ts_col_name
+        )
+        df_truncate_trim = df_truncate_trim.swaplevel()
+        df_truncate_trim = df_truncate_trim.truncate(
+            before=start_ts, after=end_ts
+        )
+        end_time = time.time()
+        _LOG.info(
+            "`pd.DataFrame.truncate` trim (non-sorted column): %.2f seconds",
+            (end_time - start_time),
+        )
+        # The output is different from the other approaches in terms of value sorting,
+        # index, etc. Adapt the output format to match the other ones.
+        df_truncate_trim = df_truncate_trim.droplevel(ts_col_name)
+        df_truncate_trim_ = df_truncate_trim.sort_values(
+            by=[ts_col_name, "egid"], ascending=[False, True]
+        )
+        df_truncate_trim_ = df_truncate_trim_.reset_index(drop=True)
+        assert df_truncate_trim_.equals(df_mask_trim)
+        # Trim using `pd.DataFrame.truncate`: filtering on values in a non-sorted index.
+        df_truncate_trim = df.set_index(ts_col_name, append=True, drop=False)
+        df_truncate_trim = df_truncate_trim.swaplevel()
+        start_time = time.time()
+        df_truncate_trim = df_truncate_trim.sort_index(level=ts_col_name)
+        df_truncate_trim = df_truncate_trim.truncate(
+            before=start_ts, after=end_ts
+        )
+        end_time = time.time()
+        _LOG.info(
+            "`pd.DataFrame.truncate` trim (non-sorted index): %.2f seconds",
+            (end_time - start_time),
+        )
+        df_truncate_trim = df_truncate_trim.droplevel(ts_col_name)
+        df_truncate_trim_ = df_truncate_trim.sort_values(
+            by=[ts_col_name, "egid"], ascending=[False, True]
+        )
+        df_truncate_trim_ = df_truncate_trim_.reset_index(drop=True)
+        assert df_truncate_trim_.equals(df_mask_trim)
+        # Trim using `pd.DataFrame.truncate`: filtering on values in a sorted column.
+        df_truncate_trim = df.sort_values(
+            by=[ts_col_name, "egid"], ascending=[False, True]
+        )
+        start_time = time.time()
+        df_truncate_trim = df_truncate_trim.set_index(ts_col_name, drop=False)
+        df_truncate_trim = df_truncate_trim.truncate(
+            before=start_ts, after=end_ts
+        )
+        end_time = time.time()
+        _LOG.info(
+            "`pd.DataFrame.truncate` trim (sorted column): %.2f seconds",
+            (end_time - start_time),
+        )
+        df_truncate_trim = df_truncate_trim.reset_index(drop=True)
+        assert df_truncate_trim.equals(df_mask_trim)
+        # Trim using `pd.DataFrame.truncate`: filtering on values in a sorted index.
+        df_truncate_trim = df.set_index(
+            ts_col_name, append=True, drop=False
+        ).sort_index(level=ts_col_name)
+        df_truncate_trim = df_truncate_trim.swaplevel()
+        start_time = time.time()
+        df_truncate_trim = df_truncate_trim.truncate(
+            before=start_ts, after=end_ts
+        )
+        end_time = time.time()
+        _LOG.info(
+            "`pd.DataFrame.truncate` trim (sorted index): %.2f seconds",
+            (end_time - start_time),
+        )
+        df_truncate_trim = df_truncate_trim.droplevel(ts_col_name)
+        df_truncate_trim_ = df_truncate_trim.sort_values(
+            by=[ts_col_name, "egid"], ascending=[False, True]
+        )
+        df_truncate_trim_ = df_truncate_trim_.reset_index(drop=True)
+        assert df_truncate_trim_.equals(df_mask_trim)
+        # Trim using `pd.Series.searchsorted`: filtering on values in a non-sorted column.
+        start_time = time.time()
+        df_searchsorted_trim = df.sort_values(ts_col_name, ascending=True)
+        i = df_searchsorted_trim[ts_col_name].searchsorted(start_ts, side="left")
+        j = df_searchsorted_trim[ts_col_name].searchsorted(end_ts, side="right")
+        df_searchsorted_trim = df_searchsorted_trim.iloc[i:j]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.searchsorted` trim (non-sorted column): %.2f seconds",
+            (end_time - start_time),
+        )
+        df_searchsorted_trim_ = df_searchsorted_trim.sort_values(
+            by=[ts_col_name, "egid"], ascending=[False, True]
+        )
+        df_searchsorted_trim_ = df_searchsorted_trim_.reset_index(drop=True)
+        assert df_searchsorted_trim_.equals(df_mask_trim)
+        # Trim using `pd.Series.searchsorted`: filtering on values in a non-sorted index.
+        df_searchsorted_trim = df.set_index(ts_col_name, append=True, drop=False)
+        start_time = time.time()
+        df_searchsorted_trim = df_searchsorted_trim.sort_index(level=ts_col_name)
+        i = df_searchsorted_trim.index.get_level_values(ts_col_name).searchsorted(
+            start_ts, side="left"
+        )
+        j = df_searchsorted_trim.index.get_level_values(ts_col_name).searchsorted(
+            end_ts, side="right"
+        )
+        df_searchsorted_trim = df_searchsorted_trim.iloc[i:j]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.searchsorted` trim (non-sorted index): %.2f seconds",
+            (end_time - start_time),
+        )
+        df_searchsorted_trim = df_searchsorted_trim.droplevel(ts_col_name)
+        df_searchsorted_trim_ = df_searchsorted_trim.sort_values(
+            by=[ts_col_name, "egid"], ascending=[False, True]
+        )
+        df_searchsorted_trim_ = df_searchsorted_trim_.reset_index(drop=True)
+        assert df_searchsorted_trim_.equals(df_mask_trim)
+        # Trim using `pd.Series.searchsorted`: filtering on values in a sorted column.
+        df_searchsorted_trim = df.sort_values(ts_col_name, ascending=True)
+        start_time = time.time()
+        i = df_searchsorted_trim[ts_col_name].searchsorted(start_ts, side="left")
+        j = df_searchsorted_trim[ts_col_name].searchsorted(end_ts, side="right")
+        df_searchsorted_trim = df_searchsorted_trim.iloc[i:j]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.searchsorted` trim (sorted column): %.2f seconds",
+            (end_time - start_time),
+        )
+        df_searchsorted_trim_ = df_searchsorted_trim.sort_values(
+            by=[ts_col_name, "egid"], ascending=[False, True]
+        )
+        df_searchsorted_trim_ = df_searchsorted_trim_.reset_index(drop=True)
+        assert df_searchsorted_trim_.equals(df_mask_trim)
+        # Trim using `pd.Series.searchsorted`: filtering on values in a sorted index.
+        df_searchsorted_trim = df.set_index(
+            ts_col_name, append=True, drop=False
+        ).sort_index(level=ts_col_name)
+        start_time = time.time()
+        i = df_searchsorted_trim.index.get_level_values(ts_col_name).searchsorted(
+            start_ts, side="left"
+        )
+        j = df_searchsorted_trim.index.get_level_values(ts_col_name).searchsorted(
+            end_ts, side="right"
+        )
+        df_searchsorted_trim = df_searchsorted_trim.iloc[i:j]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.searchsorted` trim (sorted index): %.2f seconds",
+            (end_time - start_time),
+        )
+        df_searchsorted_trim = df_searchsorted_trim.droplevel(ts_col_name)
+        df_searchsorted_trim_ = df_searchsorted_trim.sort_values(
+            by=[ts_col_name, "egid"], ascending=[False, True]
+        )
+        df_searchsorted_trim_ = df_searchsorted_trim_.reset_index(drop=True)
+        assert df_searchsorted_trim_.equals(df_mask_trim)
 
 
 # #############################################################################
