@@ -392,7 +392,6 @@ def add_s3_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
         "--aws_profile",
         action="store",
-        required=True,
         type=str,
         help="The AWS profile to use for `.aws/credentials` or for env vars",
     )

@@ -8,10 +8,12 @@ import im_v2.common.db.db_utils as imvcddbut
 import abc
 import argparse
 import logging
+import os
 from typing import Optional
 
 import psycopg2 as psycop
 
+import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
 import helpers.hsql_test as hsqltest
@@ -150,18 +152,21 @@ def create_im_database(
 
 
 class TestImDbHelper(hsqltest.TestDbHelper, abc.ABC):
-    
+
     # TODO(gp): For some reason without having this function defined, the
     # derived classes can't be instantiated because of get_id().
     @classmethod
     @abc.abstractmethod
     def get_id(cls) -> int:
         raise NotImplementedError
-        
+
     @classmethod
     def _get_compose_file(cls) -> str:
         idx = cls.get_id()
-        docker_compose_path = "im_v2/devops/compose/docker-compose.yml"
+        dir_name = hgit.get_amp_abs_path()
+        docker_compose_path = os.path.join(
+            dir_name, "im_v2/devops/compose/docker-compose.yml"
+        )
         docker_compose_path_idx: str = hio.add_idx_to_filename(
             docker_compose_path, idx
         )
@@ -182,7 +187,7 @@ class TestImDbHelper(hsqltest.TestDbHelper, abc.ABC):
         idx = cls.get_id()
         env_file_path = imvimlita.get_db_env_path("local", idx=idx)
         return env_file_path  # type: ignore[no-any-return]
-    
+
     @classmethod
     def _create_docker_files(cls) -> None:
         service_name = cls._get_service_name()

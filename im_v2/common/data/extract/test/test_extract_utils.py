@@ -79,17 +79,17 @@ class TestDownloadRealtimeForOneExchange1(
         actual = hpandas.df_to_str(actual_df, num_rows=5000)
         # pylint: disable=line-too-long
         expected = r"""        id      timestamp     open     high      low    close    volume currency_pair exchange_id end_download_timestamp knowledge_timestamp
-        0        1  1636539060000    2.227    2.228    2.225    2.225  71884.50      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        1        2  1636539120000    2.226    2.228    2.225    2.227  64687.00      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        2        3  1636539180000    2.228    2.232    2.227    2.230  59076.30      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        3        4  1636539240000    2.230    2.233    2.230    2.231  58236.20      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4        5  1636539300000    2.232    2.232    2.228    2.232  62120.70      ADA_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
+        0        1  1636539060000    2.227    2.228    2.225    2.225  71884.50      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        1        2  1636539120000    2.226    2.228    2.225    2.227  64687.00      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        2        3  1636539180000    2.228    2.232    2.227    2.230  59076.30      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        3        4  1636539240000    2.230    2.233    2.230    2.231  58236.20      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4        5  1636539300000    2.232    2.232    2.228    2.232  62120.70      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
         ...    ...            ...      ...      ...      ...      ...       ...           ...         ...                    ...                 ...
-        4495  4496  1636568760000  240.930  241.090  240.850  240.990    507.21      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4496  4497  1636568820000  240.990  241.010  240.800  241.010    623.65      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4497  4498  1636568880000  241.010  241.420  241.010  241.300    705.84      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4498  4499  1636568940000  241.300  241.680  241.240  241.660    864.55      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
-        4499  4500  1636569000000  241.660  241.670  241.410  241.430    762.90      SOL_USDT     binance    2021-11-10 00:00:01 2021-11-10 00:00:01
+        4495  4496  1636568760000  240.930  241.090  240.850  240.990    507.21      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4496  4497  1636568820000  240.990  241.010  240.800  241.010    623.65      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4497  4498  1636568880000  241.010  241.420  241.010  241.300    705.84      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4498  4499  1636568940000  241.300  241.680  241.240  241.660    864.55      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+        4499  4500  1636569000000  241.660  241.670  241.410  241.430    762.90      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
 
         [4500 rows x 11 columns]"""
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -199,6 +199,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "aws_profile": "ck",
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
+            "file_format": "parquet"
         }
         # Run.
         args = argparse.Namespace(**kwargs)
@@ -226,8 +227,6 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         # Check number of calls and args for current time.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
-        # Check calls to mocked `list_and_merge_pq_files`.
-        self.assertEqual(mock_list_and_merge.call_count, 1)
         # Check args/kwargs that were used for function call.
         expected_args = mock_list_and_merge.call_args.args
         expected_kwargs = mock_list_and_merge.call_args.kwargs
