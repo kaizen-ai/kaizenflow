@@ -31,8 +31,6 @@ import logging
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
-# Time limit for each download execution.
-TIMEOUT_SEC = 60
 
 
 def add_exchange_download_args(
@@ -75,6 +73,8 @@ def add_exchange_download_args(
 CCXT_EXCHANGE = "CcxtExchange"
 TALOS_EXCHANGE = "TalosExchange"
 CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExchange"
+# Time limit for each download execution.
+TIMEOUT_SEC = 60
 
 
 def download_realtime_for_one_exchange(
@@ -204,6 +204,12 @@ def _download_realtime_for_one_exchange_with_timeout(
 def download_realtime_for_one_exchange_periodically(
     args: argparse.Namespace, exchange_class: Any
 ) -> None:
+    """
+    Encapsulate common logic for periodical exchange data download.
+
+    :param args: arguments passed on script run
+    :param exchange_class: which exchange is used in script run
+    """
     # Time range for each download.
     time_window_min = 5
     # Check values.

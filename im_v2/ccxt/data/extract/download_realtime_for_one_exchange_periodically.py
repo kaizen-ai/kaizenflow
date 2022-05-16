@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """
 Script to download OHLCV data for a single exchange from CCXT periodically.
-TODO(timurg): Move this to im_v2/common
 
 Use as:
 > im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py \
