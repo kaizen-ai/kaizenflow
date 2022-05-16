@@ -26,7 +26,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 from helpers.hthreading import timeout
@@ -100,7 +100,7 @@ def _download_realtime_for_one_exchange_with_timeout(
         start_timestamp,
         end_timestamp,
     )
-    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeexcl.CcxtExchange)
+    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeex.CcxtExchange)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

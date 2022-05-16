@@ -33,7 +33,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsql as hsql
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
 
@@ -56,7 +56,7 @@ def instantiate_exchange(
         ["id", "instance", "currency_pairs"],
     )
     exchange_to_currency.id = exchange_id
-    exchange_to_currency.instance = imvcdeexcl.CcxtExchange(exchange_id)
+    exchange_to_currency.instance = imvcdeex.CcxtExchange(exchange_id)
     exchange_to_currency.currency_pairs = ccxt_universe[exchange_id]
     return exchange_to_currency
 

@@ -21,7 +21,7 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 _LOG = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_historical_data(args, imvcdeexcl.CcxtExchange)
+    imvcdeexut.download_historical_data(args, imvcdeex.CcxtExchange)
 
 
 if __name__ == "__main__":

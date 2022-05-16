@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeexcl
 """
 
 import logging
@@ -19,7 +19,7 @@ import helpers.hsecrets as hsecret
 _LOG = logging.getLogger(__name__)
 
 
-class CcxtExchange:
+class CcxtExtractor:
     """
     A class for accessing CCXT exchange data.
 
