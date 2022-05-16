@@ -3,7 +3,7 @@ Download data from Crypto-Chassis: https://github.com/crypto-chassis.
 
 Import as:
 
-import im_v2.crypto_chassis.data.extract.extractor as imvccde
+import im_v2.crypto_chassis.data.extract.extractor as imvccdee
 """
 import logging
 from typing import Any, Optional
