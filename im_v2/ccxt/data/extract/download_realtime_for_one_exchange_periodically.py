@@ -100,7 +100,7 @@ def _download_realtime_for_one_exchange_with_timeout(
         start_timestamp,
         end_timestamp,
     )
-    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeex.CcxtExchange)
+    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeex.CcxtExtractor)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

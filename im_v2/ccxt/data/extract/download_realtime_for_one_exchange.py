@@ -45,7 +45,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeex.CcxtExchange)
+    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeex.CcxtExtractor)
 
 
 if __name__ == "__main__":

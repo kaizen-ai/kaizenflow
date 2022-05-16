@@ -70,7 +70,7 @@ class TestDownloadRealtimeForOneExchange1(
         # Run.
         args = argparse.Namespace(**kwargs)
         imvcdeexut.download_realtime_for_one_exchange(
-            args, imvcdeex.CcxtExchange
+            args, imvcdeex.CcxtExtractor
         )
         # Get saved data in db.
         select_all_query = "SELECT * FROM ccxt_ohlcv;"
@@ -203,7 +203,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         }
         # Run.
         args = argparse.Namespace(**kwargs)
-        imvcdeexut.download_historical_data(args, imvcdeex.CcxtExchange)
+        imvcdeexut.download_historical_data(args, imvcdeex.CcxtExtractor)
 
     @pytest.mark.slow("Around 15s")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")

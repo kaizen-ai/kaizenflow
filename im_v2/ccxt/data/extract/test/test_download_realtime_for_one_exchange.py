@@ -81,5 +81,5 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         self.assertEqual(len(mock_download_realtime.call_args), 2)
         self.assertEqual(mock_download_realtime.call_args.args[0], namespace)
         self.assertEqual(
-            mock_download_realtime.call_args.args[1], imvcdeex.CcxtExchange
+            mock_download_realtime.call_args.args[1], imvcdeex.CcxtExtractor
         )
