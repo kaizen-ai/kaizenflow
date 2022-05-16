@@ -710,17 +710,15 @@ def git_roll_amp_forward(ctx):
     Rolls amp forward.
     """
     _report_task()
-    cmd = """
-    cd amp &&
-    git checkout master &&
-    git pull --recurse-submodules &&
-    cd .. &&
-    git add amp &&
-    git commit -m "Roll amp fwd" &&
-    git push
-    """
-    _run(ctx, cmd)
-
+    if os.path.exists("amp"):
+        cmds = [
+            "cd amp && git checkout master",
+            "cd amp git pull --recurse-submoduler",
+            "git commit -m 'Roll amp pointer forward'",
+            "git push"
+        ]
+        for cmd in cmds:
+            _run(ctx, cmd)
 
 # TODO(gp): Add git_co(ctx)
 # Reuse hgit.git_stash_push() and hgit.stash_apply()
