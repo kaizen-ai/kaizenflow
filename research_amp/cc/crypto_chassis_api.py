@@ -180,9 +180,9 @@ def resample_bid_ask(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     """
     new_df = cfinresa.resample(df, rule=resampling_rule).agg(
         {
-            "bid_price": "mean",
+            "bid_price": "min",
             "bid_size": "sum",
-            "ask_price": "mean",
+            "ask_price": "max",
             "ask_size": "sum",
             "full_symbol": "last",
         }
