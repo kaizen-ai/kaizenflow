@@ -131,7 +131,6 @@ class MarketData(abc.ABC):
                 "timezone sleep_in_secs time_out_in_secs column_remap filter_data_mode"
             )
         )
-        assert 0
         self._asset_id_col = asset_id_col
         dassert_valid_asset_ids(asset_ids)
         self._asset_ids = asset_ids
