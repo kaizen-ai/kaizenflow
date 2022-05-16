@@ -65,13 +65,13 @@ def add_exchange_download_args(
         required=False,
         default="parquet",
         type=str,
-        help="File format to save files on disc",
+        help="File format to save files on disk",
     )
     parser.add_argument(
         "--incremental",
         action="store_true",
         required=False,
-        help="Append data instead of overwriting it.",
+        help="Append data instead of overwriting it",
     )
     return parser
 
@@ -186,6 +186,7 @@ def save_csv(
     exchange_folder_path: str,
     currency_pair: str,
     incremental: bool,
+    aws_profile: Optional[str]
 ) -> None:
     """
     Save extracted data to .csv.gz.
@@ -194,32 +195,21 @@ def save_csv(
     :param exchange_folder_path: path where to save the data
     :param currency_pair: currency pair, e.g. "BTC_USDT"
     :param incremental: update existing file instead of overwriting
-    :param original_folder_path: path to original data if differs from given target path
     """
     full_target_path = os.path.join(
         exchange_folder_path, f"{currency_pair}.csv.gz"
     )
     if incremental:
-        # Read original file.§
-        full_original_path = os.path.join(
-            exchange_folder_path, f"{currency_pair}.csv.gz"
-        )
-        hs3.dassert_path_exists(full_original_path, "ck")
-        original_data = pd.read_csv(full_original_path)
+        hs3.dassert_path_exists(full_target_path, aws_profile)
+        original_data = pd.read_csv(full_target_path)
         # Append new data and drop duplicates.
         hdbg.dassert_is_subset(data.columns, original_data.columns)
-        data = data[list(original_data.columns)]
+        data = data[original_data.columns.to_list()]
         data = pd.concat([original_data, data])
         # Drop duplicates on non-metadata columns.
-        data = data.drop_duplicates(
-            list(
-                data.drop(
-                    ["end_download_timestamp", "knowledge_timestamp"],
-                    axis=1,
-                    errors="ignore",
-                ).columns
-            )
-        )
+        metadata_columns = ["end_download_timestamp", "knowledge_timestamp"]
+        non_metadata_columns = data.drop(metadata_columns, axis=1, errors="ignore").columns.to_list()
+        data = data.drop_duplicates(subset=non_metadata_columns)
     data.to_csv(full_target_path, index=False, compression="gzip")
 
 
@@ -227,15 +217,14 @@ def save_parquet(
     data: pd.DataFrame, path_to_exchange: str, aws_profile: Optional[str]
 ) -> None:
     """
-    Save parquet dataset.
+    Save Parquet dataset.
     """
-    # Saves filename as `uuid`, e.g.
-    #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
+    # Update indexing and add partition columns.
     data = imvcdttrut.reindex_on_datetime(data, "timestamp")
     data, partition_cols = hparque.add_date_partition_columns(
         data, "by_year_month"
     )
-    # Saves filename as `uuid`, e.g.
+    # Save filename as `uuid`, e.g.
     #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
     hparque.to_partitioned_parquet(
         data,
@@ -261,10 +250,6 @@ def download_historical_data(
     # Convert Namespace object with processing arguments to dict format.
     args = vars(args)
     path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
-    if args["incremental"]:
-        hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
-    else:
-        hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
     # Initialize exchange class.
     # Every exchange can potentially have a specific set of init args.
     if exchange_class.__name__ == CCXT_EXCHANGE:
