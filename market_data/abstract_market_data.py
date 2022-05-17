@@ -124,7 +124,13 @@ class MarketData(abc.ABC):
         :param filter_data_mode: control class behavior with respect to extra
             or missing columns, like in `hpandas.check_and_filter_matching_columns()`
         """
-        _LOG.debug("")
+        _LOG.debug(            
+            hprint.to_str(
+                "asset_id_col asset_ids start_time_col_name "
+                "end_time_col_name columns get_wall_clock_time "
+                "timezone sleep_in_secs time_out_in_secs column_remap filter_data_mode"
+            )
+        )
         self._asset_id_col = asset_id_col
         dassert_valid_asset_ids(asset_ids)
         self._asset_ids = asset_ids
