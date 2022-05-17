@@ -1051,3 +1051,86 @@ class TestDropDuplicates(hunitest.TestCase):
         """
         # Check.
         self.assert_equal(no_duplicates_df, expected_signature, fuzzy_match=True)
+
+
+class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
+    """
+    Test that matching columns are filtered correctly.
+    """
+
+    @staticmethod
+    def get_test_data() -> pd.DataFrame:
+        df = pd.DataFrame(
+            data=[[3, 4, 5]] * 3,
+            columns=["col1", "col2", "col3"],
+        )
+        return df
+
+    def test_check_and_filter_matching_columns1(self) -> None:
+        """
+        - required columns = received columns
+        - `filter_data_mode` = "assert"
+        """
+        df = self.get_test_data()
+        columns = ["col1", "col2", "col3"]
+        filter_data_mode = "assert"
+        df = hpandas.check_and_filter_matching_columns(
+            df, columns, filter_data_mode
+        )
+        actual_columns = df.columns.to_list()
+        self.assert_equal(str(actual_columns), str(columns))
+
+    def test_check_and_filter_matching_columns2(self) -> None:
+        """
+        -  received columns contain some columns apart from required ones
+        - `filter_data_mode` = "assert"
+        """
+        df = self.get_test_data()
+        columns = ["col1", "col3"]
+        filter_data_mode = "assert"
+        with self.assertRaises(AssertionError):
+            hpandas.check_and_filter_matching_columns(
+                df, columns, filter_data_mode
+            )
+
+    def test_check_and_filter_matching_columns3(self) -> None:
+        """
+        - received columns do not contain some of required columns
+        - `filter_data_mode` = "assert"
+        """
+        df = self.get_test_data()
+        columns = ["col1", "col4"]
+        filter_data_mode = "assert"
+        with self.assertRaises(AssertionError):
+            hpandas.check_and_filter_matching_columns(
+                df, columns, filter_data_mode
+            )
+
+    def test_check_and_filter_matching_columns4(self) -> None:
+        """
+        - received columns contain some columns apart from required ones
+        - `filter_data_mode` = "warn_and_trim"
+        """
+        df = self.get_test_data()
+        columns = ["col1", "col3"]
+        filter_data_mode = "warn_and_trim"
+        df = hpandas.check_and_filter_matching_columns(
+            df, columns, filter_data_mode
+        )
+        actual_columns = df.columns.to_list()
+        self.assert_equal(str(actual_columns), str(columns))
+
+    def test_check_and_filter_matching_columns5(self) -> None:
+        """
+        - received columns do not contain some of required columns
+        - `filter_data_mode` = "warn_and_trim"
+        """
+        df = self.get_test_data()
+        columns = ["col1", "col2", "col4"]
+        filter_data_mode = "warn_and_trim"
+        df = hpandas.check_and_filter_matching_columns(
+            df, columns, filter_data_mode
+        )
+        actual_columns = df.columns.to_list()
+        expected_columns = ["col1", "col2"]
+        self.assert_equal(str(actual_columns), str(expected_columns))

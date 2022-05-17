@@ -13,6 +13,10 @@ import pandas as pd
 import statsmodels
 from numpy.typing import ArrayLike
 
+import core.finance as cofinanc
+import core.finance.bid_ask as cfibiask
+import dataflow.core as dtfcore
+import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -67,9 +71,9 @@ def get_predictions(
     df: pd.DataFrame, ret_col: str, hit_rate: float, seed: int
 ) -> pd.Series:
     """
-    :param df: Desired sample with OHLCV data and calculated returns
-    :param hit_rate: Desired percantage of successful predictions
-    :param seed: Experiment stance
+    :param df: desired sample with OHLCV data and calculated returns
+    :param hit_rate: desired percantage of successful predictions
+    :param seed: experiment stance
     """
     hdbg.dassert_lte(0, hit_rate)
     hdbg.dassert_lte(hit_rate, 1)
@@ -95,7 +99,7 @@ def calculate_confidence_interval(
 ) -> None:
     """
     :param hit_series: boolean series with hit values
-    :param alpha: Significance level
+    :param alpha: significance level
     :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
     """
     point_estimate = hit_series.mean()
@@ -116,10 +120,10 @@ def get_predictions_and_hits(df, ret_col, hit_rate, seed):
     """
     Calculate hits from the predictions and show confidence intervals.
 
-    :param df: Desired sample with OHLCV data and calculated returns
-    :param ret_col: Name of the column with returns
-    :param hit_rate: Desired percentage of successful predictions
-    :param seed: Experiment stance
+    :param df: desired sample with OHLCV data and calculated returns
+    :param ret_col: name of the column with returns
+    :param hit_rate: desired percentage of successful predictions
+    :param seed: experiment stance
     """
     df = df.copy()
     df["predictions"] = get_predictions(df, ret_col, hit_rate, seed)
@@ -144,11 +148,11 @@ def simulate_pnls_for_set_of_hit_rates(
     For the set of various pre-defined `hit_rates` values iterate several
     generations for the actual PnL.
 
-    :param df: Desired sample with calculated returns
-    :param rets_col: Name of the column with returns
-    :param hit_rates: Set of hit rates for the experiment
-    :param n_experiment: Number of iterations for each `hit_rate`
-    :return: Corresponding `PnL` for each `hit_rate`
+    :param df: desired sample with calculated returns
+    :param rets_col: name of the column with returns
+    :param hit_rates: set of hit rates for the experiment
+    :param n_experiment: number of iterations for each `hit_rate`
+    :return: corresponding `PnL` for each `hit_rate`
     """
     # Every seed corresponds to a different "model".
     seed = random.randint(0, 100)
