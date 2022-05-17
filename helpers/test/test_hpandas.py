@@ -4,7 +4,7 @@ import logging
 import os
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -634,244 +634,347 @@ class Test_trim_df1(hunitest.TestCase):
             df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
         )
 
-    @pytest.mark.skip(
-        "Used for comparing speed of different trimming methods (CmTask1404)."
-    )
-    def test_trim_df_speed(self) -> None:
-        """
-        Test the speed of different approaches to df trimming.
 
-        - Simple mask: filtering by
-          - column
-          - index
-        - `pd.Series.between`: filtering by
-          - column
-          - index
-        - `pd.DataFrame.truncate`: filtering by
-          - non-sorted column
-          - non-sorted index
-          - sorted column
-          - sorted index
-        -  `pd.Series.searchsorted`: filtering by
-          - non-sorted column
-          - non-sorted index
-          - sorted column
-          - sorted index
+@pytest.mark.skip(
+    "Used for comparing speed of different trimming methods (CmTask1404)."
+)
+class Test_trim_df2(Test_trim_df1):
+    """
+    Test the speed of different approaches to df trimming.
+    """
+
+    def get_data(
+        self, set_as_index: bool, sort: bool
+    ) -> Tuple[pd.DataFrame, str, pd.Timestamp, pd.Timestamp]:
+        """
+        Get the data for experiments.
+
+        :param set_as_index: whether to set the filtering values as index
+        :param sort: whether to sort the filtering values
+        :return: the df to trim, the parameters for trimming
         """
         # Get a large df.
         df = self.get_df()
         df = df.loc[df.index.repeat(100000)].reset_index(drop=True)
-        _LOG.info(len(df))
-        #
+        # Define the params.
         ts_col_name = "start_time"
         start_ts = pd.Timestamp("2022-01-04 21:35:00")
         end_ts = pd.Timestamp("2022-01-04 21:38:00")
-        df[ts_col_name] = pd.to_datetime(df[ts_col_name])
-        # Trim with the simple mask method: filtering on a column.
+        # Prepare the data.
+        if set_as_index:
+            df = df.set_index(ts_col_name, append=True, drop=False)
+            if sort:
+                df = df.sort_index(level=ts_col_name)
+        elif sort:
+            df = df.sort_values(ts_col_name)
+        return df, ts_col_name, start_ts, end_ts
+
+    def check_trimmed_df(
+        self,
+        df: pd.DataFrame,
+        ts_col_name: str,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+    ) -> None:
+        """
+        Confirm that the trimmed df matches what is expected.
+
+        The trimmed df is compared to the one produced by `hpandas.trim_df()`
+        with lower and upper boundaries included. Thus, it is ensured that all the
+        trimming methods produce the same output.
+
+        See param descriptions in `hpandas.trim_df()`.
+
+        :param df: the df trimmed in a test, to compare with the `hpandas.trim_df()` one
+        """
+        # Clean up the df from the test.
+        if df.index.nlevels > 1:
+            df = df.droplevel(ts_col_name)
+        df = df.reset_index(drop=True)
+        df = df.sort_values(by=[ts_col_name, "egid"], ascending=[False, True])
+        # Get the reference trimmed df.
+        left_close = True
+        right_close = True
+        df_trim_for_comparison = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        assert df.equals(df_trim_for_comparison)
+
+    def test_simple_mask_col(self) -> None:
+        """
+        Trim with a simple mask; filtering on a column.
+        """
+        set_as_index = False
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
         start_time = time.time()
         mask = df[ts_col_name] >= start_ts
-        df_mask_trim = df[mask]
-        if not df_mask_trim.empty:
-            mask = df_mask_trim[ts_col_name] <= end_ts
-            df_mask_trim = df_mask_trim[mask]
+        df = df[mask]
+        if not df.empty:
+            mask = df[ts_col_name] <= end_ts
+            df = df[mask]
         end_time = time.time()
         _LOG.info(
             "Simple mask trim (column): %.2f seconds", (end_time - start_time)
         )
-        # Trim with the simple mask method: filtering on an index.
-        df_mask_idx_trim = df.set_index(ts_col_name, append=True, drop=False)
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_simple_mask_idx(self) -> None:
+        """
+        Trim with a simple mask; filtering on an index.
+        """
+        set_as_index = True
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
         start_time = time.time()
-        mask = df_mask_idx_trim.index.get_level_values(ts_col_name) >= start_ts
-        df_mask_idx_trim = df_mask_idx_trim[mask]
-        if not df_mask_idx_trim.empty:
-            mask = df_mask_idx_trim.index.get_level_values(ts_col_name) <= end_ts
-            df_mask_idx_trim = df_mask_idx_trim[mask]
+        mask = df.index.get_level_values(ts_col_name) >= start_ts
+        df = df[mask]
+        if not df.empty:
+            mask = df.index.get_level_values(ts_col_name) <= end_ts
+            df = df[mask]
         end_time = time.time()
         _LOG.info(
             "Simple mask trim (index): %.2f seconds", (end_time - start_time)
         )
-        df_mask_idx_trim = df_mask_idx_trim.droplevel(ts_col_name)
-        assert df_mask_idx_trim.equals(df_mask_trim)
-        # Trim using `pd.Series.between`: filtering on a column.
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_between_col(self) -> None:
+        """
+        Trim using `pd.Series.between`; filtering on a column.
+        """
+        set_as_index = False
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
         start_time = time.time()
-        df_between_trim = df[
-            df[ts_col_name].between(start_ts, end_ts, inclusive="both")
-        ]
+        df = df[df[ts_col_name].between(start_ts, end_ts, inclusive="both")]
         end_time = time.time()
         _LOG.info(
             "`pd.Series.between` trim (column): %.2f seconds",
             (end_time - start_time),
         )
-        assert df_between_trim.equals(df_mask_trim)
-        # Trim using `pd.Series.between`: filtering on an index.
-        df_between_trim = df.set_index(ts_col_name, append=True, drop=False)
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_between_idx(self) -> None:
+        """
+        Trim using `pd.Series.between`; filtering on an index.
+        """
+        set_as_index = True
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
         start_time = time.time()
-        filter_values = pd.Series(
-            df_between_trim.index.get_level_values(ts_col_name)
-        ).between(start_ts, end_ts, inclusive="both")
-        df_between_trim = df_between_trim.droplevel(ts_col_name)
-        df_between_trim = df_between_trim[filter_values]
+        filter_values = pd.Series(df.index.get_level_values(ts_col_name)).between(
+            start_ts, end_ts, inclusive="both"
+        )
+        df = df.droplevel(ts_col_name)
+        df = df[filter_values]
         end_time = time.time()
         _LOG.info(
             "`pd.Series.between` trim (index): %.2f seconds",
             (end_time - start_time),
         )
-        assert df_between_trim.equals(df_mask_trim)
-        # Trim using `pd.DataFrame.truncate`: filtering on values in a non-sorted column.
-        # `truncate` can only be used on a sorted index.
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_truncate_non_sorted_col(self) -> None:
+        """
+        Trim using `pd.DataFrame.truncate`; filtering on a non-sorted column.
+        """
+        set_as_index = False
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
         start_time = time.time()
-        df_truncate_trim = df.set_index(df[ts_col_name], append=True).sort_index(
+        df = df.set_index(df[ts_col_name], append=True).sort_index(
             level=ts_col_name
         )
-        df_truncate_trim = df_truncate_trim.swaplevel()
-        df_truncate_trim = df_truncate_trim.truncate(
-            before=start_ts, after=end_ts
-        )
+        df = df.swaplevel()
+        df = df.truncate(before=start_ts, after=end_ts)
         end_time = time.time()
         _LOG.info(
             "`pd.DataFrame.truncate` trim (non-sorted column): %.2f seconds",
             (end_time - start_time),
         )
-        # The output is different from the other approaches in terms of value sorting,
-        # index, etc. Adapt the output format to match the other ones.
-        df_truncate_trim = df_truncate_trim.droplevel(ts_col_name)
-        df_truncate_trim_ = df_truncate_trim.sort_values(
-            by=[ts_col_name, "egid"], ascending=[False, True]
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_truncate_non_sorted_idx(self) -> None:
+        """
+        Trim using `pd.DataFrame.truncate`; filtering on a non-sorted index.
+        """
+        set_as_index = True
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
         )
-        df_truncate_trim_ = df_truncate_trim_.reset_index(drop=True)
-        assert df_truncate_trim_.equals(df_mask_trim)
-        # Trim using `pd.DataFrame.truncate`: filtering on values in a non-sorted index.
-        df_truncate_trim = df.set_index(ts_col_name, append=True, drop=False)
-        df_truncate_trim = df_truncate_trim.swaplevel()
+        df = df.swaplevel()
+        # Run.
         start_time = time.time()
-        df_truncate_trim = df_truncate_trim.sort_index(level=ts_col_name)
-        df_truncate_trim = df_truncate_trim.truncate(
-            before=start_ts, after=end_ts
-        )
+        df = df.sort_index(level=ts_col_name)
+        df = df.truncate(before=start_ts, after=end_ts)
         end_time = time.time()
         _LOG.info(
             "`pd.DataFrame.truncate` trim (non-sorted index): %.2f seconds",
             (end_time - start_time),
         )
-        df_truncate_trim = df_truncate_trim.droplevel(ts_col_name)
-        df_truncate_trim_ = df_truncate_trim.sort_values(
-            by=[ts_col_name, "egid"], ascending=[False, True]
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_truncate_sorted_col(self) -> None:
+        """
+        Trim using `pd.DataFrame.truncate`; filtering on a sorted column.
+        """
+        set_as_index = False
+        sort = True
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
         )
-        df_truncate_trim_ = df_truncate_trim_.reset_index(drop=True)
-        assert df_truncate_trim_.equals(df_mask_trim)
-        # Trim using `pd.DataFrame.truncate`: filtering on values in a sorted column.
-        df_truncate_trim = df.sort_values(
-            by=[ts_col_name, "egid"], ascending=[False, True]
-        )
+        # Run.
         start_time = time.time()
-        df_truncate_trim = df_truncate_trim.set_index(ts_col_name, drop=False)
-        df_truncate_trim = df_truncate_trim.truncate(
-            before=start_ts, after=end_ts
-        )
+        df = df.set_index(ts_col_name, drop=False)
+        df = df.truncate(before=start_ts, after=end_ts)
         end_time = time.time()
         _LOG.info(
             "`pd.DataFrame.truncate` trim (sorted column): %.2f seconds",
             (end_time - start_time),
         )
-        df_truncate_trim = df_truncate_trim.reset_index(drop=True)
-        assert df_truncate_trim.equals(df_mask_trim)
-        # Trim using `pd.DataFrame.truncate`: filtering on values in a sorted index.
-        df_truncate_trim = df.set_index(
-            ts_col_name, append=True, drop=False
-        ).sort_index(level=ts_col_name)
-        df_truncate_trim = df_truncate_trim.swaplevel()
-        start_time = time.time()
-        df_truncate_trim = df_truncate_trim.truncate(
-            before=start_ts, after=end_ts
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_truncate_sorted_idx(self) -> None:
+        """
+        Trim using `pd.DataFrame.truncate`; filtering on a sorted index.
+        """
+        set_as_index = True
+        sort = True
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
         )
+        df = df.swaplevel()
+        # Run.
+        start_time = time.time()
+        df = df.truncate(before=start_ts, after=end_ts)
         end_time = time.time()
         _LOG.info(
             "`pd.DataFrame.truncate` trim (sorted index): %.2f seconds",
             (end_time - start_time),
         )
-        df_truncate_trim = df_truncate_trim.droplevel(ts_col_name)
-        df_truncate_trim_ = df_truncate_trim.sort_values(
-            by=[ts_col_name, "egid"], ascending=[False, True]
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_searchsorted_non_sorted_col(self) -> None:
+        """
+        Trim using `pd.Series.searchsorted`; filtering on a non-sorted column.
+        """
+        set_as_index = False
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
         )
-        df_truncate_trim_ = df_truncate_trim_.reset_index(drop=True)
-        assert df_truncate_trim_.equals(df_mask_trim)
-        # Trim using `pd.Series.searchsorted`: filtering on values in a non-sorted column.
+        # Run.
         start_time = time.time()
-        df_searchsorted_trim = df.sort_values(ts_col_name, ascending=True)
-        i = df_searchsorted_trim[ts_col_name].searchsorted(start_ts, side="left")
-        j = df_searchsorted_trim[ts_col_name].searchsorted(end_ts, side="right")
-        df_searchsorted_trim = df_searchsorted_trim.iloc[i:j]
+        df = df.sort_values(ts_col_name, ascending=True)
+        left_idx = df[ts_col_name].searchsorted(start_ts, side="left")
+        right_idx = df[ts_col_name].searchsorted(end_ts, side="right")
+        df = df.iloc[left_idx:right_idx]
         end_time = time.time()
         _LOG.info(
             "`pd.Series.searchsorted` trim (non-sorted column): %.2f seconds",
             (end_time - start_time),
         )
-        df_searchsorted_trim_ = df_searchsorted_trim.sort_values(
-            by=[ts_col_name, "egid"], ascending=[False, True]
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_searchsorted_non_sorted_idx(self) -> None:
+        """
+        Trim using `pd.Series.searchsorted`; filtering on a non-sorted index.
+        """
+        set_as_index = True
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
         )
-        df_searchsorted_trim_ = df_searchsorted_trim_.reset_index(drop=True)
-        assert df_searchsorted_trim_.equals(df_mask_trim)
-        # Trim using `pd.Series.searchsorted`: filtering on values in a non-sorted index.
-        df_searchsorted_trim = df.set_index(ts_col_name, append=True, drop=False)
+        # Run.
         start_time = time.time()
-        df_searchsorted_trim = df_searchsorted_trim.sort_index(level=ts_col_name)
-        i = df_searchsorted_trim.index.get_level_values(ts_col_name).searchsorted(
+        df = df.sort_index(level=ts_col_name)
+        left_idx = df.index.get_level_values(ts_col_name).searchsorted(
             start_ts, side="left"
         )
-        j = df_searchsorted_trim.index.get_level_values(ts_col_name).searchsorted(
+        right_idx = df.index.get_level_values(ts_col_name).searchsorted(
             end_ts, side="right"
         )
-        df_searchsorted_trim = df_searchsorted_trim.iloc[i:j]
+        df = df.iloc[left_idx:right_idx]
         end_time = time.time()
         _LOG.info(
             "`pd.Series.searchsorted` trim (non-sorted index): %.2f seconds",
             (end_time - start_time),
         )
-        df_searchsorted_trim = df_searchsorted_trim.droplevel(ts_col_name)
-        df_searchsorted_trim_ = df_searchsorted_trim.sort_values(
-            by=[ts_col_name, "egid"], ascending=[False, True]
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_searchsorted_sorted_col(self) -> None:
+        """
+        Trim using `pd.Series.searchsorted`; filtering on a sorted column.
+        """
+        set_as_index = False
+        sort = True
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
         )
-        df_searchsorted_trim_ = df_searchsorted_trim_.reset_index(drop=True)
-        assert df_searchsorted_trim_.equals(df_mask_trim)
-        # Trim using `pd.Series.searchsorted`: filtering on values in a sorted column.
-        df_searchsorted_trim = df.sort_values(ts_col_name, ascending=True)
+        # Run.
         start_time = time.time()
-        i = df_searchsorted_trim[ts_col_name].searchsorted(start_ts, side="left")
-        j = df_searchsorted_trim[ts_col_name].searchsorted(end_ts, side="right")
-        df_searchsorted_trim = df_searchsorted_trim.iloc[i:j]
+        left_idx = df[ts_col_name].searchsorted(start_ts, side="left")
+        right_idx = df[ts_col_name].searchsorted(end_ts, side="right")
+        df = df.iloc[left_idx:right_idx]
         end_time = time.time()
         _LOG.info(
             "`pd.Series.searchsorted` trim (sorted column): %.2f seconds",
             (end_time - start_time),
         )
-        df_searchsorted_trim_ = df_searchsorted_trim.sort_values(
-            by=[ts_col_name, "egid"], ascending=[False, True]
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_searchsorted_sorted_idx(self) -> None:
+        """
+        Trim using `pd.Series.searchsorted`; filtering on a sorted index.
+        """
+        set_as_index = True
+        sort = True
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
         )
-        df_searchsorted_trim_ = df_searchsorted_trim_.reset_index(drop=True)
-        assert df_searchsorted_trim_.equals(df_mask_trim)
-        # Trim using `pd.Series.searchsorted`: filtering on values in a sorted index.
-        df_searchsorted_trim = df.set_index(
-            ts_col_name, append=True, drop=False
-        ).sort_index(level=ts_col_name)
+        # Run.
         start_time = time.time()
-        i = df_searchsorted_trim.index.get_level_values(ts_col_name).searchsorted(
+        left_idx = df.index.get_level_values(ts_col_name).searchsorted(
             start_ts, side="left"
         )
-        j = df_searchsorted_trim.index.get_level_values(ts_col_name).searchsorted(
+        right_idx = df.index.get_level_values(ts_col_name).searchsorted(
             end_ts, side="right"
         )
-        df_searchsorted_trim = df_searchsorted_trim.iloc[i:j]
+        df = df.iloc[left_idx:right_idx]
         end_time = time.time()
         _LOG.info(
             "`pd.Series.searchsorted` trim (sorted index): %.2f seconds",
             (end_time - start_time),
         )
-        df_searchsorted_trim = df_searchsorted_trim.droplevel(ts_col_name)
-        df_searchsorted_trim_ = df_searchsorted_trim.sort_values(
-            by=[ts_col_name, "egid"], ascending=[False, True]
-        )
-        df_searchsorted_trim_ = df_searchsorted_trim_.reset_index(drop=True)
-        assert df_searchsorted_trim_.equals(df_mask_trim)
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
 
 
 # #############################################################################
