@@ -2,11 +2,13 @@ import datetime
 import io
 import logging
 import os
+import time
 import uuid
-from typing import Any
+from typing import Any, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -138,7 +140,6 @@ class Test_trim_df1(hunitest.TestCase):
 
         The `start_time` column is thus a str.
         """
-
         txt = """
         ,start_time,egid,close
         4,2022-01-04 21:38:00.000000,13684,1146.48
@@ -154,6 +155,7 @@ class Test_trim_df1(hunitest.TestCase):
         """
         txt = hprint.dedent(txt)
         df = pd.read_csv(io.StringIO(txt), *args, index_col=0, **kwargs)
+        df["start_time"] = pd.to_datetime(df["start_time"])
         return df
 
     def test_types1(self) -> None:
@@ -172,19 +174,19 @@ class Test_trim_df1(hunitest.TestCase):
         columns=start_time,egid,close
         shape=(10, 3)
         * type=
-             col_name    dtype         num_unique        num_nans                  first_elem         type(first_elem)
-        0       index    int64  10 / 10 = 100.00%  0 / 10 = 0.00%                           4    <class 'numpy.int64'>
-        1  start_time   object    5 / 10 = 50.00%  0 / 10 = 0.00%  2022-01-04 21:38:00.000000            <class 'str'>
-        2        egid    int64    2 / 10 = 20.00%  0 / 10 = 0.00%                       13684    <class 'numpy.int64'>
-        3       close  float64    6 / 10 = 60.00%  0 / 10 = 0.00%                     1146.48  <class 'numpy.float64'>
-                            start_time   egid    close
-        4   2022-01-04 21:38:00.000000  13684  1146.48
-        8   2022-01-04 21:38:00.000000  17085   179.45
-        14  2022-01-04 21:37:00.000000  13684  1146.26
+        col_name dtype num_unique num_nans first_elem type(first_elem)
+        0 index int64 10 / 10 = 100.00% 0 / 10 = 0.00% 4 <class 'numpy.int64'>
+        1 start_time datetime64[ns] 5 / 10 = 50.00% 0 / 10 = 0.00% 2022-01-04T21:38:00.000000000 <class 'numpy.datetime64'>
+        2 egid int64 2 / 10 = 20.00% 0 / 10 = 0.00% 13684 <class 'numpy.int64'>
+        3 close float64 6 / 10 = 60.00% 0 / 10 = 0.00% 1146.48 <class 'numpy.float64'>
+        start_time egid close
+        4 2022-01-04 21:38:00 13684 1146.48
+        8 2022-01-04 21:38:00 17085 179.45
+        14 2022-01-04 21:37:00 13684 1146.26
         ...
-        38  2022-01-04 21:35:00.000000  17085   179.42
-        40  2022-01-04 21:34:00.000000  17085   179.42
-        44  2022-01-04 21:34:00.000000  13684  1146.00"""
+        38 2022-01-04 21:35:00 17085 179.42
+        40 2022-01-04 21:34:00 17085 179.42
+        44 2022-01-04 21:34:00 13684 1146.00"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def get_df_with_parse_dates(self) -> pd.DataFrame:
@@ -274,14 +276,32 @@ class Test_trim_df1(hunitest.TestCase):
 
     # //////////////////////////////////////////////////////////////////////////////
 
+    def helper(
+        self,
+        df: pd.DataFrame,
+        ts_col_name: Optional[str],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        left_close: bool,
+        right_close: bool,
+        expected: str,
+    ) -> None:
+        """
+        Run trimming and check the outcome.
+
+        See param description in `hpandas.trim_df`.
+
+        :param expected: the expected oucome of the trimming
+        """
+        df_trim = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        actual = hpandas.df_to_str(df_trim, print_shape_info=True, tag="df_trim")
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
     def test_trim_df1(self) -> None:
         """
-        In general one can't filter a df with columns represented as `str`
-        using `pd.Timestamp` (either tz-aware or tz-naive).
-
-        Pandas helps us when filtering the index doing some conversion
-        for us. When it's a column, we have to handle it ourselves:
-        `trim_df` does that by converting the columns in `pd.Timestamp`.
+        Test trimming: baseline case.
         """
         df = self.get_df()
         # Run.
@@ -290,32 +310,21 @@ class Test_trim_df1(hunitest.TestCase):
         end_ts = pd.Timestamp("2022-01-04 21:38:00")
         left_close = True
         right_close = True
-        df_trim = hpandas.trim_df(
-            df, ts_col_name, start_ts, end_ts, left_close, right_close
-        )
-        # Check.
-        act = hpandas.df_to_str(
-            df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
-        )
         exp = r"""# df_trim=
         index=[4, 38]
         columns=start_time,egid,close
         shape=(8, 3)
-        * type=
-             col_name    dtype       num_unique       num_nans                  first_elem         type(first_elem)
-        0       index    int64  8 / 8 = 100.00%  0 / 8 = 0.00%                           4    <class 'numpy.int64'>
-        1  start_time   object   4 / 8 = 50.00%  0 / 8 = 0.00%  2022-01-04 21:38:00.000000            <class 'str'>
-        2        egid    int64   2 / 8 = 25.00%  0 / 8 = 0.00%                       13684    <class 'numpy.int64'>
-        3       close  float64   6 / 8 = 75.00%  0 / 8 = 0.00%                     1146.48  <class 'numpy.float64'>
-                            start_time   egid    close
-        4   2022-01-04 21:38:00.000000  13684  1146.48
-        8   2022-01-04 21:38:00.000000  17085   179.45
-        14  2022-01-04 21:37:00.000000  13684  1146.26
+        start_time egid close
+        4 2022-01-04 21:38:00 13684 1146.48
+        8 2022-01-04 21:38:00 17085 179.45
+        14 2022-01-04 21:37:00 13684 1146.26
         ...
-        27  2022-01-04 21:36:00.000000  17085   179.46
-        34  2022-01-04 21:35:00.000000  13684  1146.00
-        38  2022-01-04 21:35:00.000000  17085   179.42"""
-        self.assert_equal(act, exp, fuzzy_match=True)
+        27 2022-01-04 21:36:00 17085 179.46
+        34 2022-01-04 21:35:00 13684 1146.00
+        38 2022-01-04 21:35:00 17085 179.42"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
 
     def test_trim_df2(self) -> None:
         """
@@ -331,23 +340,10 @@ class Test_trim_df1(hunitest.TestCase):
         end_ts = pd.Timestamp("2022-01-04 21:38:00")
         left_close = True
         right_close = True
-        df_trim = hpandas.trim_df(
-            df, ts_col_name, start_ts, end_ts, left_close, right_close
-        )
-        # Check.
-        act = hpandas.df_to_str(
-            df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
-        )
         exp = r"""# df_trim=
         index=[4, 38]
         columns=start_time,egid,close
         shape=(8, 3)
-        * type=
-             col_name           dtype       num_unique       num_nans                     first_elem            type(first_elem)
-        0       index           int64  8 / 8 = 100.00%  0 / 8 = 0.00%                              4       <class 'numpy.int64'>
-        1  start_time  datetime64[ns]   4 / 8 = 50.00%  0 / 8 = 0.00%  2022-01-04T21:38:00.000000000  <class 'numpy.datetime64'>
-        2        egid           int64   2 / 8 = 25.00%  0 / 8 = 0.00%                          13684       <class 'numpy.int64'>
-        3       close         float64   6 / 8 = 75.00%  0 / 8 = 0.00%                        1146.48     <class 'numpy.float64'>
                     start_time   egid    close
         4  2022-01-04 21:38:00  13684  1146.48
         8  2022-01-04 21:38:00  17085   179.45
@@ -356,7 +352,9 @@ class Test_trim_df1(hunitest.TestCase):
         27 2022-01-04 21:36:00  17085   179.46
         34 2022-01-04 21:35:00  13684  1146.00
         38 2022-01-04 21:35:00  17085   179.42"""
-        self.assert_equal(act, exp, fuzzy_match=True)
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
 
     def test_trim_df3(self) -> None:
         """
@@ -372,23 +370,10 @@ class Test_trim_df1(hunitest.TestCase):
         end_ts = pd.Timestamp("2022-01-04 21:38:00", tz="UTC")
         left_close = True
         right_close = True
-        df_trim = hpandas.trim_df(
-            df, ts_col_name, start_ts, end_ts, left_close, right_close
-        )
-        # Check.
-        act = hpandas.df_to_str(
-            df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
-        )
         exp = r"""# df_trim=
         index=[4, 38]
         columns=start_time,egid,close
         shape=(8, 3)
-        * type=
-             col_name                             dtype       num_unique       num_nans                     first_elem            type(first_elem)
-        0       index                             int64  8 / 8 = 100.00%  0 / 8 = 0.00%                              4       <class 'numpy.int64'>
-        1  start_time  datetime64[ns, America/New_York]   4 / 8 = 50.00%  0 / 8 = 0.00%  2022-01-04T21:38:00.000000000  <class 'numpy.datetime64'>
-        2        egid                             int64   2 / 8 = 25.00%  0 / 8 = 0.00%                          13684       <class 'numpy.int64'>
-        3       close                           float64   6 / 8 = 75.00%  0 / 8 = 0.00%                        1146.48     <class 'numpy.float64'>
                           start_time   egid    close
         4  2022-01-04 16:38:00-05:00  13684  1146.48
         8  2022-01-04 16:38:00-05:00  17085   179.45
@@ -397,13 +382,15 @@ class Test_trim_df1(hunitest.TestCase):
         27 2022-01-04 16:36:00-05:00  17085   179.46
         34 2022-01-04 16:35:00-05:00  13684  1146.00
         38 2022-01-04 16:35:00-05:00  17085   179.42"""
-        self.assert_equal(act, exp, fuzzy_match=True)
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
 
     # pylint: disable=line-too-long
     def test_trim_df4(self) -> None:
         """
-        Trim a df with a column that is `datetime64` with tz vs a `pd.Timestamp
-        without tz.
+        Trim a df with a column that is `datetime64` with tz vs a
+        `pd.Timestamp` without tz.
 
         This operation is invalid and we expect an assertion.
         """
@@ -414,19 +401,580 @@ class Test_trim_df1(hunitest.TestCase):
         end_ts = pd.Timestamp("2022-01-04 21:38:00")
         left_close = True
         right_close = True
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(TypeError) as cm:
             hpandas.trim_df(
                 df, ts_col_name, start_ts, end_ts, left_close, right_close
             )
         # Check.
         act = str(cm.exception)
         exp = r"""
-        * Failed assertion *
-        'True'
-        ==
-        'False'
-        datetime1='2022-01-04 16:38:00-05:00' and datetime2='2022-01-04 21:35:00' are not compatible"""
+        Invalid comparison between dtype=datetime64[ns, America/New_York] and Timestamp"""
         self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_trim_df5(self) -> None:
+        """
+        Test filtering on the index.
+        """
+        df = self.get_df()
+        df = df.set_index("start_time")
+        # Run.
+        ts_col_name = None
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = pd.Timestamp("2022-01-04 21:38:00")
+        left_close = True
+        right_close = True
+        exp = r"""# df_trim=
+        index=[2022-01-04 21:35:00, 2022-01-04 21:38:00]
+        columns=egid,close
+        shape=(8, 2)
+        egid close
+        start_time
+        2022-01-04 21:38:00 13684 1146.48
+        2022-01-04 21:38:00 17085 179.45
+        2022-01-04 21:37:00 13684 1146.26
+        ...
+        2022-01-04 21:36:00 17085 179.46
+        2022-01-04 21:35:00 13684 1146.00
+        2022-01-04 21:35:00 17085 179.42"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
+
+    def test_trim_df6(self) -> None:
+        """
+        Test excluding the lower boundary.
+        """
+        df = self.get_df()
+        # Run.
+        ts_col_name = "start_time"
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = pd.Timestamp("2022-01-04 21:38:00")
+        left_close = False
+        right_close = True
+        exp = r"""# df_trim=
+        index=[4, 27]
+        columns=start_time,egid,close
+        shape=(6, 3)
+        start_time egid close
+        4 2022-01-04 21:38:00 13684 1146.48
+        8 2022-01-04 21:38:00 17085 179.45
+        14 2022-01-04 21:37:00 13684 1146.26
+        18 2022-01-04 21:37:00 17085 179.42
+        24 2022-01-04 21:36:00 13684 1146.00
+        27 2022-01-04 21:36:00 17085 179.46"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
+
+    def test_trim_df7(self) -> None:
+        """
+        Test excluding the upper boundary.
+        """
+        df = self.get_df()
+        # Run.
+        ts_col_name = "start_time"
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = pd.Timestamp("2022-01-04 21:38:00")
+        left_close = True
+        right_close = False
+        exp = r"""# df_trim=
+        index=[14, 38]
+        columns=start_time,egid,close
+        shape=(6, 3)
+        start_time egid close
+        14 2022-01-04 21:37:00 13684 1146.26
+        18 2022-01-04 21:37:00 17085 179.42
+        24 2022-01-04 21:36:00 13684 1146.00
+        27 2022-01-04 21:36:00 17085 179.46
+        34 2022-01-04 21:35:00 13684 1146.00
+        38 2022-01-04 21:35:00 17085 179.42"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
+
+    def test_trim_df8(self) -> None:
+        """
+        Test filtering on a sorted column.
+        """
+        df = self.get_df()
+        # Run.
+        ts_col_name = "start_time"
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = pd.Timestamp("2022-01-04 21:38:00")
+        left_close = True
+        right_close = True
+        df = df.sort_values(ts_col_name)
+        exp = r"""# df_trim=
+        index=[4, 38]
+        columns=start_time,egid,close
+        shape=(8, 3)
+        start_time egid close
+        34 2022-01-04 21:35:00 13684 1146.00
+        38 2022-01-04 21:35:00 17085 179.42
+        24 2022-01-04 21:36:00 13684 1146.00
+        ...
+        18 2022-01-04 21:37:00 17085 179.42
+        4 2022-01-04 21:38:00 13684 1146.48
+        8 2022-01-04 21:38:00 17085 179.45"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
+
+    def test_trim_df9(self) -> None:
+        """
+        Test filtering on a sorted index.
+        """
+        df = self.get_df()
+        df = df.set_index("start_time")
+        # Run.
+        ts_col_name = None
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = pd.Timestamp("2022-01-04 21:38:00")
+        left_close = True
+        right_close = True
+        df = df.sort_index()
+        exp = r"""# df_trim=
+        index=[2022-01-04 21:35:00, 2022-01-04 21:38:00]
+        columns=egid,close
+        shape=(8, 2)
+        egid close
+        start_time
+        2022-01-04 21:35:00 13684 1146.00
+        2022-01-04 21:35:00 17085 179.42
+        2022-01-04 21:36:00 13684 1146.00
+        ...
+        2022-01-04 21:37:00 17085 179.42
+        2022-01-04 21:38:00 13684 1146.48
+        2022-01-04 21:38:00 17085 179.45"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
+
+    def test_trim_df10(self) -> None:
+        """
+        Test filtering on a sorted index, excluding lower and upper boundaries.
+        """
+        df = self.get_df()
+        df = df.set_index("start_time")
+        # Run.
+        ts_col_name = None
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = pd.Timestamp("2022-01-04 21:38:00")
+        left_close = False
+        right_close = False
+        df = df.sort_index()
+        exp = r"""# df_trim=
+        index=[2022-01-04 21:36:00, 2022-01-04 21:37:00]
+        columns=egid,close
+        shape=(4, 2)
+        egid close
+        start_time
+        2022-01-04 21:36:00 13684 1146.00
+        2022-01-04 21:36:00 17085 179.46
+        2022-01-04 21:37:00 13684 1146.26
+        2022-01-04 21:37:00 17085 179.42"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
+
+    def test_trim_df11(self) -> None:
+        """
+        Test filtering on a non-sorted column, with `start_ts` being None.
+        """
+        df = self.get_df()
+        # Run.
+        ts_col_name = "start_time"
+        start_ts = None
+        end_ts = pd.Timestamp("2022-01-04 21:37:00")
+        left_close = True
+        right_close = True
+        exp = r"""# df_trim=
+        index=[14, 44]
+        columns=start_time,egid,close
+        shape=(8, 3)
+        start_time egid close
+        14 2022-01-04 21:37:00 13684 1146.26
+        18 2022-01-04 21:37:00 17085 179.42
+        24 2022-01-04 21:36:00 13684 1146.00
+        ...
+        38 2022-01-04 21:35:00 17085 179.42
+        40 2022-01-04 21:34:00 17085 179.42
+        44 2022-01-04 21:34:00 13684 1146.00"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
+
+    def test_trim_df12(self) -> None:
+        """
+        Test filtering on a sorted index, with `end_ts` being None.
+        """
+        df = self.get_df()
+        df = df.set_index("start_time")
+        # Run.
+        ts_col_name = None
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = None
+        left_close = True
+        right_close = True
+        df = df.sort_index()
+        exp = r"""# df_trim=
+        index=[2022-01-04 21:35:00, 2022-01-04 21:38:00]
+        columns=egid,close
+        shape=(8, 2)
+        egid close
+        start_time
+        2022-01-04 21:35:00 13684 1146.00
+        2022-01-04 21:35:00 17085 179.42
+        2022-01-04 21:36:00 13684 1146.00
+        ...
+        2022-01-04 21:37:00 17085 179.42
+        2022-01-04 21:38:00 13684 1146.48
+        2022-01-04 21:38:00 17085 179.45"""
+        self.helper(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close, exp
+        )
+
+
+@pytest.mark.skip(
+    "Used for comparing speed of different trimming methods (CmTask1404)."
+)
+class Test_trim_df2(Test_trim_df1):
+    """
+    Test the speed of different approaches to df trimming.
+    """
+
+    def get_data(
+        self, set_as_index: bool, sort: bool
+    ) -> Tuple[pd.DataFrame, str, pd.Timestamp, pd.Timestamp]:
+        """
+        Get the data for experiments.
+
+        :param set_as_index: whether to set the filtering values as index
+        :param sort: whether to sort the filtering values
+        :return: the df to trim, the parameters for trimming
+        """
+        # Get a large df.
+        df = self.get_df()
+        df = df.loc[df.index.repeat(100000)].reset_index(drop=True)
+        # Define the params.
+        ts_col_name = "start_time"
+        start_ts = pd.Timestamp("2022-01-04 21:35:00")
+        end_ts = pd.Timestamp("2022-01-04 21:38:00")
+        # Prepare the data.
+        if set_as_index:
+            df = df.set_index(ts_col_name, append=True, drop=False)
+            if sort:
+                df = df.sort_index(level=ts_col_name)
+        elif sort:
+            df = df.sort_values(ts_col_name)
+        return df, ts_col_name, start_ts, end_ts
+
+    def check_trimmed_df(
+        self,
+        df: pd.DataFrame,
+        ts_col_name: str,
+        start_ts: pd.Timestamp,
+        end_ts: pd.Timestamp,
+    ) -> None:
+        """
+        Confirm that the trimmed df matches what is expected.
+
+        The trimmed df is compared to the one produced by `hpandas.trim_df()`
+        with lower and upper boundaries included. Thus, it is ensured that all the
+        trimming methods produce the same output.
+
+        See param descriptions in `hpandas.trim_df()`.
+
+        :param df: the df trimmed in a test, to compare with the `hpandas.trim_df()` one
+        """
+        # Clean up the df from the test.
+        if df.index.nlevels > 1:
+            df = df.droplevel(ts_col_name)
+        df = df.reset_index(drop=True)
+        df = df.sort_values(by=[ts_col_name, "egid"], ascending=[False, True])
+        # Get the reference trimmed df.
+        left_close = True
+        right_close = True
+        df_trim_for_comparison = hpandas.trim_df(
+            df, ts_col_name, start_ts, end_ts, left_close, right_close
+        )
+        assert df.equals(df_trim_for_comparison)
+
+    def test_simple_mask_col(self) -> None:
+        """
+        Trim with a simple mask; filtering on a column.
+        """
+        set_as_index = False
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        mask = df[ts_col_name] >= start_ts
+        df = df[mask]
+        if not df.empty:
+            mask = df[ts_col_name] <= end_ts
+            df = df[mask]
+        end_time = time.time()
+        _LOG.info(
+            "Simple mask trim (column): %.2f seconds", (end_time - start_time)
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_simple_mask_idx(self) -> None:
+        """
+        Trim with a simple mask; filtering on an index.
+        """
+        set_as_index = True
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        mask = df.index.get_level_values(ts_col_name) >= start_ts
+        df = df[mask]
+        if not df.empty:
+            mask = df.index.get_level_values(ts_col_name) <= end_ts
+            df = df[mask]
+        end_time = time.time()
+        _LOG.info(
+            "Simple mask trim (index): %.2f seconds", (end_time - start_time)
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_between_col(self) -> None:
+        """
+        Trim using `pd.Series.between`; filtering on a column.
+        """
+        set_as_index = False
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        df = df[df[ts_col_name].between(start_ts, end_ts, inclusive="both")]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.between` trim (column): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_between_idx(self) -> None:
+        """
+        Trim using `pd.Series.between`; filtering on an index.
+        """
+        set_as_index = True
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        filter_values = pd.Series(df.index.get_level_values(ts_col_name)).between(
+            start_ts, end_ts, inclusive="both"
+        )
+        df = df.droplevel(ts_col_name)
+        df = df[filter_values]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.between` trim (index): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_truncate_non_sorted_col(self) -> None:
+        """
+        Trim using `pd.DataFrame.truncate`; filtering on a non-sorted column.
+        """
+        set_as_index = False
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        df = df.set_index(df[ts_col_name], append=True).sort_index(
+            level=ts_col_name
+        )
+        df = df.swaplevel()
+        df = df.truncate(before=start_ts, after=end_ts)
+        end_time = time.time()
+        _LOG.info(
+            "`pd.DataFrame.truncate` trim (non-sorted column): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_truncate_non_sorted_idx(self) -> None:
+        """
+        Trim using `pd.DataFrame.truncate`; filtering on a non-sorted index.
+        """
+        set_as_index = True
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        df = df.swaplevel()
+        # Run.
+        start_time = time.time()
+        df = df.sort_index(level=ts_col_name)
+        df = df.truncate(before=start_ts, after=end_ts)
+        end_time = time.time()
+        _LOG.info(
+            "`pd.DataFrame.truncate` trim (non-sorted index): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_truncate_sorted_col(self) -> None:
+        """
+        Trim using `pd.DataFrame.truncate`; filtering on a sorted column.
+        """
+        set_as_index = False
+        sort = True
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        df = df.set_index(ts_col_name, drop=False)
+        df = df.truncate(before=start_ts, after=end_ts)
+        end_time = time.time()
+        _LOG.info(
+            "`pd.DataFrame.truncate` trim (sorted column): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_truncate_sorted_idx(self) -> None:
+        """
+        Trim using `pd.DataFrame.truncate`; filtering on a sorted index.
+        """
+        set_as_index = True
+        sort = True
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        df = df.swaplevel()
+        # Run.
+        start_time = time.time()
+        df = df.truncate(before=start_ts, after=end_ts)
+        end_time = time.time()
+        _LOG.info(
+            "`pd.DataFrame.truncate` trim (sorted index): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_searchsorted_non_sorted_col(self) -> None:
+        """
+        Trim using `pd.Series.searchsorted`; filtering on a non-sorted column.
+        """
+        set_as_index = False
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        df = df.sort_values(ts_col_name, ascending=True)
+        left_idx = df[ts_col_name].searchsorted(start_ts, side="left")
+        right_idx = df[ts_col_name].searchsorted(end_ts, side="right")
+        df = df.iloc[left_idx:right_idx]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.searchsorted` trim (non-sorted column): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_searchsorted_non_sorted_idx(self) -> None:
+        """
+        Trim using `pd.Series.searchsorted`; filtering on a non-sorted index.
+        """
+        set_as_index = True
+        sort = False
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        df = df.sort_index(level=ts_col_name)
+        left_idx = df.index.get_level_values(ts_col_name).searchsorted(
+            start_ts, side="left"
+        )
+        right_idx = df.index.get_level_values(ts_col_name).searchsorted(
+            end_ts, side="right"
+        )
+        df = df.iloc[left_idx:right_idx]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.searchsorted` trim (non-sorted index): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_searchsorted_sorted_col(self) -> None:
+        """
+        Trim using `pd.Series.searchsorted`; filtering on a sorted column.
+        """
+        set_as_index = False
+        sort = True
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        left_idx = df[ts_col_name].searchsorted(start_ts, side="left")
+        right_idx = df[ts_col_name].searchsorted(end_ts, side="right")
+        df = df.iloc[left_idx:right_idx]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.searchsorted` trim (sorted column): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
+
+    def test_searchsorted_sorted_idx(self) -> None:
+        """
+        Trim using `pd.Series.searchsorted`; filtering on a sorted index.
+        """
+        set_as_index = True
+        sort = True
+        df, ts_col_name, start_ts, end_ts = self.get_data(
+            set_as_index=set_as_index, sort=sort
+        )
+        # Run.
+        start_time = time.time()
+        left_idx = df.index.get_level_values(ts_col_name).searchsorted(
+            start_ts, side="left"
+        )
+        right_idx = df.index.get_level_values(ts_col_name).searchsorted(
+            end_ts, side="right"
+        )
+        df = df.iloc[left_idx:right_idx]
+        end_time = time.time()
+        _LOG.info(
+            "`pd.Series.searchsorted` trim (sorted index): %.2f seconds",
+            (end_time - start_time),
+        )
+        # Check.
+        self.check_trimmed_df(df, ts_col_name, start_ts, end_ts)
 
 
 # #############################################################################
