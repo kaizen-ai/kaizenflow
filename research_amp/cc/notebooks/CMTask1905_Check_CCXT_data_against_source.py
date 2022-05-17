@@ -12,31 +12,21 @@
 #     name: python3
 # ---
 
-# %%
-# %load_ext autoreload
-# %autoreload 2
-# %matplotlib inline
-
 # %% [markdown]
 # # Imports
 
-# %%
+# %% run_control={"marked": true}
 import logging
-import os
-import requests
 import time
 
 import ccxt
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
-import core.statistics as costatis
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hsecrets as hsecret
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
@@ -52,18 +42,16 @@ hprint.config_notebook()
 
 
 # %%
-def get_cmtask1866_config_ccxt() -> cconconf.Config:
+def get_cmtask1905_config_ccxt() -> cconconf.Config:
     """
-    Get task1866-specific config.
+    Get task1905-specific config.
     """
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "ck"
     #
-    s3_bucket_path = hs3.get_s3_bucket_path(config["load"]["aws_profile"])
-    s3_path = "s3://cryptokaizen-data/historical"
-    config["load"]["data_dir"] = s3_path
+    config["load"]["data_dir"] = "s3://cryptokaizen-data/historical"
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["vendor"] = "CCXT"
@@ -75,122 +63,72 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
     config["data"]["end_ts"] = None
     config["data"]["columns"] = None
     config["data"]["filter_data_mode"] = "assert"
-    # Column names.
-    config.add_subconfig("column_names")
-    config["column_names"]["full_symbol"] = "full_symbol"
-    config["column_names"]["close_price"] = "close"
     return config
 
 
 # %%
-config = get_cmtask1866_config_ccxt()
+config = get_cmtask1905_config_ccxt()
 print(config)
-
- # %%
- pd.set_option("display.float_format", "{:.8f}".format)
 
 
 # %% [markdown]
 # # Functions
 
 # %%
-def _get_qa_stats(data: pd.DataFrame, config: cconconf.Config) -> pd.DataFrame:
-    """
-    Get quality assurance stats per full symbol in data.
-    """
-    res_stats = []
-    for full_symbol, symbol_data in data.groupby(
-        config["column_names"]["full_symbol"]
-    ):
-        # Compute stats for a full symbol.
-        symbol_stats = pd.Series(dtype="object", name=full_symbol)
-        symbol_stats["min_timestamp"] = symbol_data.index.min()
-        symbol_stats["max_timestamp"] = symbol_data.index.max()
-        symbol_stats["NaNs %"] = 100 * (
-            costatis.compute_frac_nan(
-                symbol_data[config["column_names"]["close_price"]]
-            )
-        )
-        symbol_stats["volume=0 %"] = 100 * (
-            symbol_data[symbol_data["volume"] == 0].shape[0]
-            / symbol_data.shape[0]
-        )
-        symbol_stats["bad data %"] = symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
-        res_stats.append(symbol_stats)
-    # Combine all full symbol stats.
-    res_stats_df = pd.concat(res_stats, axis=1).T
-    return res_stats_df
-
-
-def _get_qa_stats_by_year_month(
-    data: pd.DataFrame, config: cconconf.Config
+def _compute_frac_volume_0(
+    df: pd.DataFrame, year: int, month: int
 ) -> pd.DataFrame:
     """
-    Get quality assurance stats per full symbol, year, and month.
+    Compute data with volume = 0.
+
+    returns data for specific year and month and data with volume = 0.
     """
-    #
-    data["year"] = data.index.year
-    data["month"] = data.index.month
-    #
-    res_stats = []
-    columns_to_groupby = [config["column_names"]["full_symbol"], "year", "month"]
-    for index, symbol_data in data.groupby(columns_to_groupby):
-        #
-        full_symbol, year, month = index
-        # Get stats for a full symbol and add them to overall stats.
-        symbol_stats = pd.Series(dtype="object", name=full_symbol)
-        symbol_stats["year"] = year
-        symbol_stats["month"] = month
-        symbol_stats["NaNs %"] = 100 * (
-            costatis.compute_frac_nan(
-                symbol_data[config["column_names"]["close_price"]]
-            )
-        )
-        symbol_stats["volume=0 %"] = 100 * (
-            symbol_data[symbol_data["volume"] == 0].shape[0]
-            / symbol_data.shape[0]
-        )
-        symbol_stats["bad data %"] = symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
-        res_stats.append(symbol_stats)
-    res_stats_df = pd.concat(res_stats, axis=1).T
-    #
-    res_stats_df["year"] = res_stats_df["year"].astype(int)
-    res_stats_df["month"] = res_stats_df["month"].astype(int)
-    # Set index by full symbol, year, and month.
-    res_stats_df = res_stats_df.set_index([res_stats_df.index, "year", "month"])
-    return res_stats_df
+    df = df.loc[(df.index.year == year) & (df.index.month == month)]
+    df_volume_0 = df.loc[df["volume"] == 0]
+    return df, df_volume_0
 
 
-def _plot_bad_data_stats(bad_data_stats: pd.DataFrame) -> None:
+def _get_all_data(
+    exchange: ccxt.Exchange,
+    currency_pair: str,
+    start_timestamp: "epoch timestamp",
+    end_timestamp: "epoch timestamp",
+) -> pd.DataFrame:
     """
-    Plot bad data stats per unique full symbol in data.
+    Get all data for exchange.
     """
-    full_symbols = bad_data_stats.index.get_level_values(0).unique()
-    for full_symbol in full_symbols:
-        bad_data_col_name = "bad data %"
-        _ = bad_data_stats.loc[full_symbol].plot.bar(
-            y=bad_data_col_name, rot=0, title=full_symbol
-        )
+    all_bars = []
+    duration = exchange.parse_timeframe("1m") * 100
+    for t in range(
+        start_timestamp,
+        end_timestamp + duration,
+        duration * 500,
+    ):
+        bars = _load_ccxt_data(currency_pair, t, exchange)
+        all_bars.append(bars)
+        time.sleep(1)
+    all_data = pd.concat(all_bars)
+    return all_data
 
 
-# %%
-def set_index_ts(df):
-    df["timestamp"] = df["timestamp"].apply(
-        lambda x: hdateti.convert_unix_epoch_to_timestamp(x)
+def _load_ccxt_data(
+    currency_pair: str, since: "start timestamp", exchange: ccxt.Exchange
+):
+    """
+    Load data from CCXT.
+    """
+    ccxt_data = exchange.fetch_ohlcv(
+        currency_pair, timeframe="1m", since=since, limit=500
     )
-    df = df.set_index("timestamp")
-    return df
+    columns = ["timestamp", "open", "high", "low", "close", "volume"]
+    bars = pd.DataFrame(ccxt_data, columns=columns)
+    return bars
 
 
-# %%
-def percentage(df, df_loc):
-    result = 100*len(df_loc)/len(df)
-    return round(result, 2)
-
-def log_into_exchange(exchange) -> ccxt.Exchange:
+def _log_into_exchange(exchange: str) -> ccxt.Exchange:
     """
-    Log into an exchange via CCXT and return the corresponding
-    `ccxt.Exchange` object.
+    Log into an exchange via CCXT and return the corresponding `ccxt.Exchange`
+    object.
     """
     # Select credentials for provided exchange.
     credentials = hsecret.get_secret(exchange)
@@ -206,31 +144,15 @@ def log_into_exchange(exchange) -> ccxt.Exchange:
     return exchange
 
 
-# %%
-def load_ccxt_data(currency_pair, since, exchange):
-    ccxt_data = exchange.fetch_ohlcv(
-            currency_pair,
-            timeframe="1m",
-            since=since,
-            limit=500)
-    columns = ["timestamp", "open", "high", "low", "close", "volume"]
-    bars = pd.DataFrame(ccxt_data, columns=columns)
-    return bars
-
-
-# %%
-def get_all_data(exchange, currency_pair, start_timestamp, end_timestamp):
-    all_bars = []
-    duration = exchange.parse_timeframe("1m") * 100
-    for t in range(
-            start_timestamp,
-            end_timestamp + duration,
-            duration * 500,
-        ):
-        bars = load_ccxt_data(currency_pair, t, exchange)
-        all_bars.append(bars)
-        time.sleep(1)
-    return pd.concat(all_bars)
+def _set_index_ts(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert epoch column to timestamp index.
+    """
+    df["timestamp"] = df["timestamp"].apply(
+        lambda x: hdateti.convert_unix_epoch_to_timestamp(x)
+    )
+    df = df.set_index("timestamp")
+    return df
 
 
 # %% [markdown]
@@ -253,8 +175,9 @@ universe
 # # Binance::DOGE_USDT
 
 # %%
+full_symbol_binance = ["binance::DOGE_USDT"]
 binance_data = client.read_data(
-    ["binance::DOGE_USDT"],
+    full_symbol_binance,
     config["data"]["start_ts"],
     config["data"]["end_ts"],
     config["data"]["columns"],
@@ -262,15 +185,13 @@ binance_data = client.read_data(
 )
 
 # %%
-binance_2019_09 = binance_data.loc[(binance_data.index.year == 2019) & (binance_data.index.month == 9)]
-binance_2019_09_volume_0 = binance_2019_09.loc[binance_2019_09["volume"] == 0]
+binance_2019_09, binance_2019_09_volume_0 = _compute_frac_volume_0(
+    binance_data, 2019, 9
+)
+binance_2019_09.head(3)
 
 # %%
-binance_2019_09
-
-# %%
-_LOG.info(binance_2019_09_volume_0.shape)
-binance_2019_09_volume_0
+binance_2019_09_volume_0.head(3)
 
 # %% [markdown]
 # # Extractor
@@ -279,65 +200,54 @@ binance_2019_09_volume_0
 ccxt_binance_DOGE_exchange = imvcdeexcl.CcxtExchange("binance")
 
 # %%
-sleep_time_in_secs = 1
+currency_pair_binance = "DOGE/USDT"
 start_timestamp = pd.Timestamp("2019-09-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2019-09-30 23:59:59+00:00")
+sleep_time_in_secs = 1
 ccxt_binance_DOGE = ccxt_binance_DOGE_exchange.download_ohlcv_data(
-    "DOGE/USDT",
+    currency_pair_binance,
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
     sleep_time_in_secs=sleep_time_in_secs,
 )
 
 # %%
-ccxt_binance_DOGE = set_index_ts(ccxt_binance_DOGE)
+ccxt_binance_DOGE = _set_index_ts(ccxt_binance_DOGE)
+ccxt_binance_DOGE, ccxt_binance_DOGE_volume_0 = _compute_frac_volume_0(
+    ccxt_binance_DOGE, 2019, 9
+)
+ccxt_binance_DOGE.head(3)
 
 # %%
-ccxt_binance_DOGE = ccxt_binance_DOGE.loc[ccxt_binance_DOGE.index.month == 9]
-
-# %%
-ccxt_binance_DOGE.loc[ccxt_binance_DOGE['volume'] == 0]
-
-# %%
-ccxt_binance_DOGE
+ccxt_binance_DOGE_volume_0.head(3)
 
 # %% [markdown]
 # Where`volume = 0`, data from columns `open`, `high`, `low`, `close` is exactly the same from previous row where `volume != 0`. It could mean that `volume = 0` rows are `NaNs` at the source, so it could be the way exchange handles missing data.
-
-# %%
-print(percentage(ccxt_binance_DOGE, ccxt_binance_DOGE.loc[ccxt_binance_DOGE['volume'] == 0]))
 
 # %% [markdown]
 # # CCXT w/o Extractor
 
 # %%
-ccxt_exchange = log_into_exchange('binance')
+ccxt_exchange = _log_into_exchange("binance")
+ccxt_df = _get_all_data(
+    ccxt_exchange, currency_pair_binance, 1567296000000, 1569887999000
+)
+ccxt_df = _set_index_ts(ccxt_df)
+ccxt_df, ccxt_df_volume_0 = _compute_frac_volume_0(ccxt_df, 2019, 9)
+ccxt_df
 
 # %%
-ccxt_df = get_all_data(ccxt_exchange, "DOGE/USDT", 1567296000000, 1569887999000)
-
-# %%
-ccxt_df = set_index_ts(ccxt_df)
-ccxt_df.index.min(), ccxt_df.index.max(), ccxt_df.shape
-
-# %%
-ccxt_df = ccxt_df.loc[ccxt_df.index.month == 9]
-
-# %%
-ccxt_df.isna().value_counts()
-
-# %%
-ccxt_df.loc[ccxt_df['volume'] != 0]
+ccxt_df_volume_0.head(3)
 
 # %% [markdown]
 # # Summary
 
 # %% [markdown]
 #
-# |CCXT | | ||			Extractor	| | | |Client | | |
+# |CCXT | | ||            Extractor    | | | |Client | | |
 # |------|--|-||-------------|-|-|-|------|-|-|
-# |date|Number of NaN rows %|	Total number of rows| `volume=0` %	|Number of NaN rows %|	Total number of rows| `volume=0` %| Number of NaN rows %|	Total number of rows| `volume=0` %|
-# |2019-09|	0          |	                   429750|	      73.22%   	|	0          |	                   43200|	      73.3%   |      0|	            43200| 73.3%|
+# |date|Number of NaN rows %|    Total number of rows| `volume=0` %    |Number of NaN rows %|    Total number of rows| `volume=0` %| Number of NaN rows %|    Total number of rows| `volume=0` %|
+# |2019-09|    0          |                       429750|          73.22%       |    0          |                       43200|          73.3%   |      0|                43200| 73.3%|
 #
 
 # %% [markdown]
@@ -351,8 +261,9 @@ ccxt_df.loc[ccxt_df['volume'] != 0]
 # ## Client
 
 # %%
+full_symbol_ftx = ["ftx::BTC_USDT"]
 ftx_data = client.read_data(
-    ["ftx::BTC_USDT"],
+    full_symbol_ftx,
     config["data"]["start_ts"],
     config["data"]["end_ts"],
     config["data"]["columns"],
@@ -360,91 +271,72 @@ ftx_data = client.read_data(
 )
 
 # %%
-ftx_2020_04 = ftx_data.loc[(ftx_data.index.year == 2020) & (ftx_data.index.month == 4)]
-ftx_2020_04_volume_0 = ftx_2020_04.loc[ftx_2020_04["volume"] == 0]
-ftx_2020_04_volume_0
+ftx_2020_04, ftx_2020_04_volume_0 = _compute_frac_volume_0(ftx_data, 2020, 4)
+ftx_2020_04.head(3)
 
 # %%
-ftx_2020_04
+ftx_2020_04_volume_0.head(3)
 
 # %%
-ftx_2020_04.loc[ftx_2020_04['open'].isna()]
-
-# %%
-print(percentage(ftx_2020_04, ftx_2020_04_volume_0))
+ftx_2020_04.loc[ftx_2020_04["open"].isna()]
 
 # %% [markdown]
 # ## Extractor
 
 # %%
 ccxt_ftx_BTC_exchange = imvcdeexcl.CcxtExchange("ftx")
-sleep_time_in_secs = 1
+currency_pair_ftx = "BTC/USDT"
 start_timestamp = pd.Timestamp("2020-04-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2020-04-30 23:59:59+00:00")
+sleep_time_in_secs = 1
 ccxt_ftx_BTC = ccxt_ftx_BTC_exchange.download_ohlcv_data(
-    "BTC/USDT",
+    currency_pair_ftx,
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
     sleep_time_in_secs=sleep_time_in_secs,
 )
 
 # %%
-ccxt_ftx_BTC = set_index_ts(ccxt_ftx_BTC)
+ccxt_ftx_BTC = _set_index_ts(ccxt_ftx_BTC)
+ccxt_ftx_BTC, ccxt_ftx_BTC_volume_0 = _compute_frac_volume_0(
+    ccxt_ftx_BTC, 2020, 4
+)
+ccxt_ftx_BTC.head(3)
 
 
 # %%
-ccxt_ftx_BTC = ccxt_ftx_BTC.loc[ccxt_ftx_BTC.index.month == 4]
+ccxt_ftx_BTC_volume_0.loc[ccxt_ftx_BTC["high"] == 7493.50000000].head(3)
 
 # %%
-ccxt_ftx_BTC.loc[ccxt_ftx_BTC['volume'] == 0]
-
-# %%
-ccxt_ftx_BTC
-
-# %%
-ccxt_ftx_BTC.loc[(ccxt_ftx_BTC['high'] == 7493.50000000)
-                 & (ccxt_ftx_BTC['volume'] == 0)]
-
-# %%
-ccxt_ftx_BTC.loc[(ccxt_ftx_BTC.index.day == 25)
-                 & (ccxt_ftx_BTC.index.hour == 3)]
+ccxt_ftx_BTC.loc[(ccxt_ftx_BTC.index.day == 25) & (ccxt_ftx_BTC.index.hour == 3)][
+    30:43
+]
 
 # %% [markdown]
 # So far `ftx` doesn't have same pattern as `binance` where `volume=0` rows have values from the last non-`volume=0` row.
-
-# %%
-print(percentage(ccxt_ftx_BTC, ccxt_ftx_BTC.loc[ccxt_ftx_BTC['volume'] == 0]))
 
 # %% [markdown]
 # ## CCXT w/o Extractor
 
 # %%
-ccxt_exchange_ftx = log_into_exchange('ftx')
-ccxt_df_ftx = get_all_data(ccxt_exchange_ftx, "BTC/USDT", 1585699200000, 1588291199000)
-ccxt_df_ftx = set_index_ts(ccxt_df_ftx)
-ccxt_df_ftx.index.min(), ccxt_df_ftx.index.max(), ccxt_df_ftx.shape
+ccxt_exchange_ftx = _log_into_exchange("ftx")
+ccxt_df_ftx = _get_all_data(
+    ccxt_exchange_ftx, currency_pair_ftx, 1585699200000, 1588291199000
+)
+ccxt_df_ftx = _set_index_ts(ccxt_df_ftx)
+ccxt_df_ftx, ccxt_df_ftx_volume_0 = _compute_frac_volume_0(ccxt_df_ftx, 2020, 4)
+print(len(ccxt_df_ftx.index.unique()))
+display(ccxt_df_ftx.head(3))
 
 # %%
-ccxt_df_ftx = ccxt_df_ftx.loc[ccxt_df_ftx.index.month == 4]
-
-# %%
-ccxt_df_ftx.isna().value_counts()
-
-# %%
-len(ccxt_df_ftx.index.unique())
-
-# %%
-ccxt_df_ftx
-
-# %%
-print(percentage(ccxt_df_ftx, ccxt_df_ftx.loc[ccxt_df_ftx['volume'] == 0]))
+ccxt_df_ftx_volume_0.head(3)
 
 # %% [markdown]
 #
-# |CCXT | | ||			Extractor	| | | |Client | | |
+# |CCXT | | ||            Extractor    | | | |Client | | |
 # |------|--|-||-------------|-|-|-|------|-|-|
-# |date|Number of NaN rows %|	Total number of rows| `volume=0` %	|Number of NaN rows %|	Total number of rows| `volume=0` %| Number of NaN rows %|	Total number of rows| `volume=0` %|
-# |2019-09|	0          |	                   429750|	      86.09%   	|	0          |	                   43200|	      85.97%   |      0|	            43200| 85.97%|
+# |date|Number of NaN rows %|    Total number of rows| `volume=0` %    |Number of NaN rows %|    Total number of rows| `volume=0` %| Number of NaN rows %|    Total number of rows| `volume=0` %|
+# |2020-04|    0          |                       429750|          86.09%       |    0          |                       43200|          85.97%   |      0|                43200| 85.97%|
 #
 
 # %% [markdown]
@@ -457,8 +349,9 @@ print(percentage(ccxt_df_ftx, ccxt_df_ftx.loc[ccxt_df_ftx['volume'] == 0]))
 # ## Client
 
 # %%
+full_symbols_gateio = ["gateio::ETH_USDT", "gateio::ADA_USDT"]
 gateio_data = client.read_data(
-    ["gateio::ETH_USDT"],
+    [full_symbols_gateio[0]],
     config["data"]["start_ts"],
     config["data"]["end_ts"],
     config["data"]["columns"],
@@ -469,9 +362,8 @@ gateio_data = client.read_data(
 # ### 100% of `NaNs`
 
 # %%
-gateio_data_2021_10 = gateio_data.loc[(gateio_data.index.year == 2021)
-                                     & (gateio_data.index.month == 10)]
-gateio_data_2021_10
+gateio_data_2021_10, _ = _compute_frac_volume_0(gateio_data, 2021, 10)
+gateio_data_2021_10.head(3)
 
 # %%
 gateio_data_2021_10.isna().value_counts()
@@ -480,9 +372,8 @@ gateio_data_2021_10.isna().value_counts()
 # ### 34.46% of `NaNs`
 
 # %%
-gateio_data_2021_09 = gateio_data.loc[(gateio_data.index.year == 2021)
-                                    & (gateio_data.index.month == 9)]
-gateio_data_2021_09
+gateio_data_2021_09, _ = _compute_frac_volume_0(gateio_data, 2021, 9)
+gateio_data_2021_09.head(3)
 
 # %%
 gateio_data_2021_09.isna().value_counts()
@@ -491,8 +382,9 @@ gateio_data_2021_09.isna().value_counts()
 # ### No `NaNs`
 
 # %%
-gateio_data.loc[(gateio_data.index.year == 2021)
-                                    & (gateio_data.index.month == 12)]
+gateio_data.loc[
+    (gateio_data.index.year == 2021) & (gateio_data.index.month == 12)
+].head(3)
 
 # %% [markdown]
 # At first look, `NaNs` appear because of some kind of problem at the source. According to Dan's tables all currency pairs have ~34-39% of `NaNs` for the period from September to November. October data has 100% of `NaNs` for all currency pairs of `gateio` so that definitely could be a technical issue at the exchange.
@@ -502,30 +394,26 @@ gateio_data.loc[(gateio_data.index.year == 2021)
 
 # %%
 ccxt_gateio_ETH_exchange = imvcdeexcl.CcxtExchange("gateio")
-
-# %%
-sleep_time_in_secs = 1
+currency_pair_gateio = ["ETH/USDT", "ADA/USDT"]
 start_timestamp = pd.Timestamp("2021-09-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2021-09-30 23:59:59+00:00")
+sleep_time_in_secs = 1
 ccxt_gateio_ETH = ccxt_gateio_ETH_exchange.download_ohlcv_data(
-    "ETH/USDT",
+    currency_pair_gateio[0],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
     sleep_time_in_secs=sleep_time_in_secs,
 )
 
 # %%
-ccxt_gateio_ETH = set_index_ts(ccxt_gateio_ETH)
-
-# %%
 ccxt_gateio_ETH
 
 # %%
-sleep_time_in_secs = 1
 start_timestamp = pd.Timestamp("2021-10-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2021-10-31 23:59:59+00:00")
+sleep_time_in_secs = 1
 ccxt_gateio_ETH_10 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
-    "ETH/USDT",
+    currency_pair_gateio[0],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
     sleep_time_in_secs=sleep_time_in_secs,
@@ -535,11 +423,11 @@ ccxt_gateio_ETH_10 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
 ccxt_gateio_ETH_10
 
 # %%
-sleep_time_in_secs = 1
 start_timestamp = pd.Timestamp("2021-12-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2021-12-31 23:59:59+00:00")
+sleep_time_in_secs = 1
 ccxt_gateio_ETH_12 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
-    "ETH/USDT",
+    currency_pair_gateio[0],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
     sleep_time_in_secs=sleep_time_in_secs,
@@ -553,30 +441,30 @@ ccxt_gateio_ETH_12
 
 # %%
 # Load recent data to make sure API and Exctractor are working.
-sleep_time_in_secs = 1
 start_timestamp = pd.Timestamp("2022-04-25 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2022-05-14 23:59:59+00:00")
+sleep_time_in_secs = 1
 ccxt_gateio_ETH_2022 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
-    "ETH/USDT",
+    currency_pair_gateio[0],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
     sleep_time_in_secs=sleep_time_in_secs,
 )
 
 # %%
-ccxt_gateio_ETH_2022
+ccxt_gateio_ETH_2022.head(3)
 
 # %% [markdown]
 # ## CCXT w/o Extractor
 
 # %% [markdown]
-# Take a look at one month of 2021, if it's empty, it have so called an expiration date.
+# Take a look at one month of 2021, if it's empty, it has so called an expiration date.
 
 # %%
-ccxt_exchange = log_into_exchange('gateio')
-ccxt_df = get_all_data(ccxt_exchange, "ETH/USDT", 1638316800000, 1640995199000)
-
-# %%
+ccxt_exchange = _log_into_exchange("gateio")
+ccxt_df = _get_all_data(
+    ccxt_exchange, currency_pair_gateio[0], 1638316800000, 1640995199000
+)
 ccxt_df
 
 # %% [markdown]
@@ -594,7 +482,7 @@ ccxt_df
 
 # %%
 gateio_ADA_data = client.read_data(
-    ["gateio::ADA_USDT"],
+    [full_symbols_gateio[1]],
     config["data"]["start_ts"],
     config["data"]["end_ts"],
     config["data"]["columns"],
@@ -602,29 +490,37 @@ gateio_ADA_data = client.read_data(
 )
 
 # %%
-# `volume = 0` != NaNs amount
-gateio_ADA_data_2021_09 = gateio_ADA_data.loc[(gateio_ADA_data.index.year == 2021)
-                & (gateio_ADA_data.index.month == 9)]
-gateio_ADA_data_2021_09
+# `volume = 0` != % of bad data (at Dan's tables)
+(
+    gateio_ADA_data_2021_09,
+    gateio_ADA_data_2021_09_volume_0,
+) = _compute_frac_volume_0(gateio_ADA_data, 2021, 9)
+gateio_ADA_data_2021_09.head(3)
 
 # %%
-gateio_ADA_data_2021_09.loc[gateio_ADA_data_2021_09['volume0'] == 0]
+gateio_ADA_data_2021_09_volume_0
 
 # %%
-gateio_ADA_data_2021_09.loc[(gateio_ADA_data_2021_09.index.day == 5)
-                           & (gateio_ADA_data_2021_09.index.hour == 3)].tail()
+gateio_ADA_data_2021_09.loc[
+    (gateio_ADA_data_2021_09.index.day == 5)
+    & (gateio_ADA_data_2021_09.index.hour == 3)
+].tail(3)
 
 # %%
-# `volume = 0` has the same amount as NaNs
-gateio_ADA_data_2021_07 = gateio_ADA_data.loc[(gateio_ADA_data.index.year == 2021)
-                & (gateio_ADA_data.index.month == 7)]
-gateio_ADA_data_2021_07
+# `volume = 0` has the same % as bad data
+(
+    gateio_ADA_data_2021_07,
+    gateio_ADA_data_2021_07_volume_0,
+) = _compute_frac_volume_0(gateio_ADA_data, 2021, 7)
+gateio_ADA_data_2021_07.head(3)
 
 # %%
-gateio_ADA_data_2021_07.loc[gateio_ADA_data_2021_07['volume'] == 0][:10]
+gateio_ADA_data_2021_07_volume_0[:10]
 
 # %%
-gateio_ADA_data_2021_07.loc[gateio_ADA_data_2021_07.index >= "2021-07-03 09:20:00+00:00"].head(15)
+gateio_ADA_data_2021_07.loc[
+    gateio_ADA_data_2021_07.index >= "2021-07-03 09:20:00+00:00"
+].head(10)
 
 # %% [markdown]
 # A pattern where `volume = 0` rows have value for all columns from column `close` of the last non-`volume = 0` row.
@@ -634,11 +530,11 @@ gateio_ADA_data_2021_07.loc[gateio_ADA_data_2021_07.index >= "2021-07-03 09:20:0
 
 # %%
 # TODO(Nina): Change name of var `ccxt_gateio_ETH_exchange`.
-sleep_time_in_secs = 1
 start_timestamp = pd.Timestamp("2021-07-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2021-07-31 23:59:59+00:00")
+sleep_time_in_secs = 1
 ccxt_gateio_ADA = ccxt_gateio_ETH_exchange.download_ohlcv_data(
-    "ADA/USDT",
+    currency_pair_gateio[1],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
     sleep_time_in_secs=sleep_time_in_secs,
