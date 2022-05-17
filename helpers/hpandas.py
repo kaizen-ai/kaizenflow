@@ -717,21 +717,25 @@ def trim_df(
         values_to_filter_by = df[ts_col_name]
     if values_to_filter_by.is_monotonic:
         # The values are sorted; using the `pd.Series.searchsorted` method.
-        i = (
-            values_to_filter_by.searchsorted(
-                start_ts, side="left" if left_close else "right"
-            )
-            if start_ts is not None
-            else 0
-        )
-        j = (
-            values_to_filter_by.searchsorted(
-                end_ts, side="right" if right_close else "left"
-            )
-            if end_ts is not None
-            else None
-        )
-        df = df.iloc[i:j]
+        # Find the index corresponding to the left boundary of the interval.
+        if start_ts is not None:
+            side = "left" if left_close else "right"
+            left_idx = values_to_filter_by.searchsorted(start_ts, side)
+        else:
+            # There is nothing to filter, so the left index is the first one.
+            left_idx = 0
+        # Find the index corresponding to the right boundary of the interval.
+        if end_ts is not None:
+            side = "right" if right_close else "left"
+            right_idx = values_to_filter_by.searchsorted(end_ts, side)
+        else:
+            # There is nothing to filter, so the right index is None.
+            right_idx = None
+        hdbg.dassert_lte(0, left_idx)
+        if right_idx is not None:
+            hdbg.dassert_lte(left_idx, right_idx)
+            hdbg.dassert_lte(right_idx, df.shape[0])
+        df = df.iloc[left_idx:right_idx]
     else:
         # The values are not sorted; using the `pd.Series.between` method.
         if left_close and right_close:
