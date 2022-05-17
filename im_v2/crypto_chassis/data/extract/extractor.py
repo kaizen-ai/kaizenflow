@@ -42,6 +42,10 @@ class CryptoChassisExtractor:
         # Get data.
         if data_type == "ohlcv":
             data = self._download_ohlcv(
+            # TODO(Danya): The thing is, we don't pass all of these values
+            #  all the time. For example, `mode` is very vague concept, and
+            #  `interval` has a very definite default value ("1m").
+            # Ideally, we should have defaults for each parameter except for `exchange_id` and `currency_pair`.
             **kwargs,
         )
         elif data_type == "market_depth":
@@ -139,8 +143,10 @@ class CryptoChassisExtractor:
         exchange_id: str,
         currency_pair: str,
         *,
+        # TODO(Danya): This is an example of how to do it.
         mode: Optional[str] = "recent",
         interval: Optional[str] = "1m",
+        # TODO(Danya): It seems like the API doesn't recognize None, at least for OHLCV.
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
         include_realtime: Optional[int] = None,

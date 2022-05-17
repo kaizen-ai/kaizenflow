@@ -222,6 +222,7 @@ def save_parquet(
     Save Parquet dataset.
     """
     # Update indexing and add partition columns.
+    # TODO(Danya): Add `unit` as a parameter in the function.
     data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit="s")
     data, partition_cols = hparque.add_date_partition_columns(
         data, "by_year_month"
@@ -271,6 +272,7 @@ def download_historical_data(
         data_type = "ohlcv"
     elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
         exchange = exchange_class()
+        # TODO(Danya): Most importantly: we want this to be a parameter passed into all scripts.
         vendor = "crypto_chassis"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
@@ -284,9 +286,15 @@ def download_historical_data(
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
         args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
+        # TODO(Danya): Ultimately, we want to have these download_kwargs created at the initialization 
+        # of the class and vendor, i.e. if we are downloading OHLCV, the download_kwargs are such and such
+        # Don't forget to utilize default values, e.g. in CryptoChassis we have a lot of arguments
+        # that are vague in definition and silly to pass inside the script. 
         download_kwargs = {"exchange_id": args["exchange_id"], "currency_pair": args["currency_pair"],
                             "start_timestamp": args["start_timestamp"], "end_timestamp": args["end_timestamp"]}
         # Download data.
+        # TODO(Danya): since kwargs are different for each data type and script run, we should
+        #  set them before.
         data = exchange.download_data(data_type=args["data_type"],
                                     **download_kwargs)
         if data.empty:
