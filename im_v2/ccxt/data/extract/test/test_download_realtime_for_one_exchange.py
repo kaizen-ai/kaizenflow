@@ -48,6 +48,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "log_level": "INFO",
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/realtime/",
+            "file_format": "parquet"
         }
         self.assertDictEqual(actual, expected)
 

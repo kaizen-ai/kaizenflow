@@ -21,17 +21,14 @@
 
 import logging
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
-import core.finance.resampling as cfinresa
-import core.finance.tradability as cfintrad
 import core.plotting.normality as cplonorm
 import core.plotting.plotting_utils as cplpluti
-import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import research_amp.transform as ramptran
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -55,7 +52,20 @@ def get_cmtask1704_config_crypto_chassis() -> cconconf.Config:
     # config.add_subconfig("load")
     # Data parameters.
     config.add_subconfig("data")
-    config["data"]["full_symbols"] = ["binance::BNB_USDT", "binance::BTC_USDT"]
+    config["data"]["full_symbols"] = [
+        "binance::ADA_USDT",
+        "binance::BNB_USDT",
+        "binance::BTC_USDT",
+        "binance::DOGE_USDT",
+        "binance::EOS_USDT",
+        "binance::ETH_USDT",
+        "binance::SOL_USDT",
+        "binance::XRP_USDT",
+        "binance::LUNA_USDT",
+        "binance::DOT_USDT",
+        "binance::LTC_USDT",
+        "binance::UNI_USDT",
+    ]
     config["data"]["start_date"] = pd.Timestamp("2022-01-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2022-02-01", tz="UTC")
     # Transformation parameters.
@@ -70,15 +80,28 @@ config = get_cmtask1704_config_crypto_chassis()
 print(config)
 
 # %% [markdown]
-# # Load OHLCV data from `crypto-chassis`
+# Note: `exchange_id = binance` was chosen for coins v5 analysis.
+# The missing coins in crypto-chassis in `binance`:
+# - v4:
+#    - Avalanche (AVAX)
+#    - Chainlink (LINK)
+# - v5:
+#    - HEX
+#    - SHIB (Shiba Inu)
+#    - MATIC (Polygon)
+#    - TRX (TRON)
+#    - WAVES (Waves)
+#    - XLM (Stellar)
 
-# %%
-# TODO(Max): Refactor the loading part once #1766 is implemented.
+# %% [markdown]
+# # Load OHLCV data from `crypto-chassis`
 
 # %% [markdown]
 # ## Data demonstration
 
 # %%
+# TODO(Max): Refactor the loading part once #1766 is implemented.
+
 # Read from crypto_chassis directly.
 # full_symbols = config["data"]["full_symbols"]
 # start_date = config["data"]["start_date"]
@@ -86,7 +109,7 @@ print(config)
 # ohlcv_cc = raccchap.read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
 
 # Read saved 1 month of data.
-ohlcv_cc = pd.read_csv("/shared_data/cc_ohlcv.csv", index_col="timestamp")
+ohlcv_cc = pd.read_csv("/shared_data/ohlcv_cc_v5.csv", index_col="timestamp")
 ohlcv_cc.index = pd.to_datetime(ohlcv_cc.index)
 ohlcv_cc.head(3)
 
@@ -96,11 +119,11 @@ ohlcv_cc.head(3)
 # %%
 # VWAP, TWAP transformation.
 resampling_rule = config["transform"]["resampling_rule"]
-vwap_twap_df = cfintrad.calculate_vwap_twap(ohlcv_cc, resampling_rule)
+vwap_twap_df = ramptran.calculate_vwap_twap(ohlcv_cc, resampling_rule)
 
 # Returns calculation.
 rets_type = config["transform"]["rets_type"]
-vwap_twap_rets_df = cfintrad.calculate_returns(vwap_twap_df, rets_type)
+vwap_twap_rets_df = ramptran.calculate_returns(vwap_twap_df, rets_type)
 
 # %% run_control={"marked": false}
 # Show the snippet.
@@ -108,10 +131,10 @@ vwap_twap_rets_df.head(3)
 
 # %% run_control={"marked": false}
 # Stats and vizualisation to check the outcomes.
-bnb_ex = vwap_twap_rets_df.swaplevel(axis=1)
-bnb_ex = bnb_ex["binance::BNB_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
-display(bnb_ex.corr())
-bnb_ex.plot()
+coin_ex = vwap_twap_rets_df.swaplevel(axis=1)
+coin_ex = coin_ex["binance::DOGE_USDT"][["close.ret_0", "twap.ret_0", "vwap.ret_0"]]
+display(coin_ex.corr())
+coin_ex.plot()
 
 # %% [markdown]
 # # Bid-ask data
@@ -119,7 +142,6 @@ bnb_ex.plot()
 # %%
 # TODO(Max): Refactor the loading part once #1766 is implemented.
 
-# %%
 # Read from crypto_chassis directly.
 # Specify the params.
 # full_symbols = config["data"]["full_symbols"]
@@ -132,13 +154,15 @@ bnb_ex.plot()
 # bid_ask_df.head(3)
 
 # Read saved 1 month of data.
-bid_ask_df = pd.read_csv("/shared_data/bid_ask_data.csv", index_col="timestamp")
+bid_ask_df = pd.read_csv(
+    "/shared_data/bid_ask_data_v5.csv", index_col="timestamp"
+)
 bid_ask_df.index = pd.to_datetime(bid_ask_df.index)
 bid_ask_df.head(3)
 
 # %%
 # Calculate bid-ask metrics.
-bid_ask_df = cfintrad.calculate_bid_ask_statistics(bid_ask_df)
+bid_ask_df = ramptran.calculate_bid_ask_statistics(bid_ask_df)
 bid_ask_df.tail(3)
 
 # %% [markdown]
@@ -150,7 +174,7 @@ final_df.tail(3)
 
 # %%
 # Metrics visualizations.
-final_df[["relative_spread_bps"]].plot()
+final_df["relative_spread_bps"].plot()
 
 # %% [markdown]
 # ## Compute the distribution of (return - spread)
@@ -178,11 +202,9 @@ cplonorm.plot_qq(df_bnb["ret_spr_diff"])
 # ## How much liquidity is available at the top of the book?
 
 # %%
-# liquidity_stats = (final_df["ask_size"] * final_df["ask_price"]).median()
 liquidity_stats = final_df["ask_value"].median()
 display(liquidity_stats)
 cplpluti.plot_barplot(liquidity_stats)
-
 
 # %% [markdown]
 # ## Is the quoted spread constant over the day?
@@ -191,110 +213,22 @@ cplpluti.plot_barplot(liquidity_stats)
 # ### One symbol
 
 # %%
-def calculate_overtime_quantities(
-    df_sample, full_symbol, resampling_rule, num_stds=1, plot_results=True
-):
-    # Choose specific `full_symbol`.
-    data = df_sample.swaplevel(axis=1)[full_symbol]
-    # Resample the data.
-    resampler = cfinresa.resample(data, rule=resampling_rule)
-    # Quoted spread.
-    quoted_spread = resampler["quoted_spread"].mean()
-    # Volatility of returns inside `buckets`.
-    rets_vix = resampler["close.ret_0"].std().rename("rets_volatility")
-    # Volume over time.
-    volume = resampler["volume"].sum().rename("trading_volume")
-    # Relative spread (in bps).
-    rel_spread_bps = resampler["relative_spread_bps"].mean()
-    # Bid / Ask value.
-    bid_value = resampler["bid_value"].sum()
-    ask_value = resampler["ask_value"].sum()
-    # Tradability = abs(ret) / spread_bps.
-    tradability = resampler["close.ret_0"].mean().abs() / rel_spread_bps
-    tradability = tradability.rename("tradability")
-    # Collect all the results.
-    df = pd.concat(
-        [
-            quoted_spread,
-            rets_vix,
-            volume,
-            rel_spread_bps,
-            bid_value,
-            ask_value,
-            tradability,
-        ],
-        axis=1,
-    )
-    # Integrate time.
-    df["time"] = df.index.time
-    # Construct value curves over time.
-    if plot_results:
-        # Get rid of `time`.
-        for cols in df.columns[:-1]:
-            # Calculate man and std over the daytime.
-            time_grouper = df.groupby("time")
-            mean = time_grouper[cols].mean()
-            std = time_grouper[cols].std()
-            # Plot the results.
-            fig = plt.figure()
-            fig.suptitle(f"{cols} over time", fontsize=20)
-            plt.ylabel(cols, fontsize=16)
-            (mean + num_stds * std).plot(color="blue")
-            mean.plot(lw=2, color="black")
-    return df
-
-
-# %%
-full_symbol = "binance::BNB_USDT"  # "binance::BTC_USDT"
+full_symbol = "binance::EOS_USDT"
 resample_rule_stats = "10T"
 
-stats_df = calculate_overtime_quantities(
+stats_df = ramptran.calculate_overtime_quantities(
     final_df, full_symbol, resample_rule_stats
 )
 display(stats_df.head(3))
 
-
 # %% [markdown]
 # ### Multiple Symbols
-
-# %%
-def calculate_overtime_quantities_multiple_symbols(
-    df_sample, full_symbols, resampling_rule, plot_results=True
-):
-    result = []
-    # Calculate overtime stats for each `full_symbol`.
-    for symb in full_symbols:
-        df = calculate_overtime_quantities(
-            df_sample, symb, resampling_rule, plot_results=False
-        )
-        df["full_symbol"] = symb
-        result.append(df)
-    mult_stats_df = pd.concat(result)
-    # Convert to multiindex.
-    mult_stats_df_conv = dtfsysonod._convert_to_multiindex(
-        mult_stats_df, "full_symbol"
-    )
-    # Integrate time inside the day.
-    mult_stats_df_conv["time_inside_days"] = mult_stats_df_conv.index.time
-    # Compute the median value for all quantities.
-    mult_stats_df_conv = mult_stats_df_conv.groupby("time_inside_days").agg(
-        "median"
-    )
-    # Plot the results.
-    if plot_results:
-        # Get rid of `time` and `full_symbol`.
-        for cols in mult_stats_df.columns[:-2]:
-            mult_stats_df_conv[cols].plot(
-                title=f"{cols} median over time", fontsize=12
-            )
-    return mult_stats_df_conv
-
 
 # %% run_control={"marked": false}
 full_symbols = config["data"]["full_symbols"]
 resample_rule_stats = "10T"
 
-stats_df_mult_symbols = calculate_overtime_quantities_multiple_symbols(
+stats_df_mult_symbols = ramptran.calculate_overtime_quantities_multiple_symbols(
     final_df, full_symbols, resample_rule_stats
 )
 display(stats_df_mult_symbols.head(3))
@@ -312,14 +246,8 @@ high_level_stats["median_notional_ask"] = final_df["ask_value"].median()
 high_level_stats["median_notional_volume"] = (
     final_df["volume"] * final_df["close"]
 ).median()
-high_level_stats["volatility_for_period"] = (
+high_level_stats["volatility_per_period"] = (
     final_df["close.ret_0"].std() * final_df.shape[0] ** 0.5
 )
 
-display(high_level_stats.head(3))
-# Plot the results.
-for cols in high_level_stats.columns:
-    fig = plt.figure()
-    fig.suptitle(f"{cols}", fontsize=15)
-    plt.ylabel(cols, fontsize=12)
-    cplpluti.plot_barplot(high_level_stats[cols])
+display(high_level_stats)
