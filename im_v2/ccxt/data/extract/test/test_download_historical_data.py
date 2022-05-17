@@ -12,7 +12,8 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 class TestDownloadHistoricalData1(hunitest.TestCase):
     def test_parser(self) -> None:
         """
@@ -41,6 +42,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/realtime/",
             "log_level": "INFO",
+            "file_format": "parquet"
         }
         self.assertDictEqual(actual, expected)
 
