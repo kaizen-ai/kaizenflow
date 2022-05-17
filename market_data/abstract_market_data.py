@@ -122,9 +122,15 @@ class MarketData(abc.ABC):
         :param column_remap: dict of columns to remap the output data or `None` for
             no remapping
         :param filter_data_mode: control class behavior with respect to extra
-            or missing columns, like in `_check_and_filter_matching_columns()`
+            or missing columns, like in `hpandas.check_and_filter_matching_columns()`
         """
-        _LOG.debug("")
+        _LOG.debug(            
+            hprint.to_str(
+                "asset_id_col asset_ids start_time_col_name "
+                "end_time_col_name columns get_wall_clock_time "
+                "timezone sleep_in_secs time_out_in_secs column_remap filter_data_mode"
+            )
+        )
         self._asset_id_col = asset_id_col
         dassert_valid_asset_ids(asset_ids)
         self._asset_ids = asset_ids
@@ -287,9 +293,9 @@ class MarketData(abc.ABC):
         df = self._normalize_data(df)
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
-        # Verify that loaded data is correct.
+        # Check that columns are required ones.
         if self._columns is not None:
-            df = self._check_and_filter_matching_columns(
+            df = hpandas.check_and_filter_matching_columns(
                 df, self._columns, self._filter_data_mode
             )
         # Remap result columns to the required names.
@@ -563,39 +569,6 @@ class MarketData(abc.ABC):
         last_start_time = wall_clock_time - timedelta
         _LOG.verb_debug("last_start_time=%s", last_start_time)
         return last_start_time
-
-    # TODO(Dan): CmTask1834 "Refactor `_check_and_filter_matching_columns()`".
-    @staticmethod
-    def _check_and_filter_matching_columns(
-        df: pd.DataFrame, columns: List[str], filter_data_mode: str
-    ) -> pd.DataFrame:
-        """
-        Check that columns are the expected ones.
-        """
-        received_columns = df.columns.to_list()
-        #
-        if filter_data_mode == "assert":
-            # Raise and assertion.
-            only_warning = False
-        elif filter_data_mode == "warn_and_trim":
-            # Just issue a warning.
-            only_warning = True
-            # Get columns intersection while preserving the order of the columns.
-            columns_intersection = sorted(
-                set(received_columns) & set(columns),
-                key=received_columns.index,
-            )
-            hdbg.dassert_lte(1, len(columns_intersection))
-            df = df[columns_intersection]
-        else:
-            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
-        hdbg.dassert_set_eq(
-            columns,
-            received_columns,
-            only_warning=only_warning,
-            msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
-        )
-        return df
 
     # /////////////////////////////////////////////////////////////////////////////
     # Derived class interface.
