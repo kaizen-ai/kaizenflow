@@ -91,12 +91,14 @@ def _compute_frac_volume_0(
 def _get_all_data(
     exchange: ccxt.Exchange,
     currency_pair: str,
-    start_timestamp: "epoch timestamp",
-    end_timestamp: "epoch timestamp",
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
 ) -> pd.DataFrame:
     """
     Get all data for exchange.
     """
+    start_timestamp = start_timestamp.asm8.astype(int) // 1000000
+    end_timestamp = end_timestamp.asm8.astype(int) // 1000000
     all_bars = []
     duration = exchange.parse_timeframe("1m") * 100
     for t in range(
@@ -229,8 +231,10 @@ ccxt_binance_DOGE_volume_0.head(3)
 
 # %%
 ccxt_exchange = _log_into_exchange("binance")
+start_ts = pd.Timestamp("2019-09-01 00:00:00+00:00")
+end_ts = pd.Timestamp("2019-09-30 23:59:59+00:00")
 ccxt_df = _get_all_data(
-    ccxt_exchange, currency_pair_binance, 1567296000000, 1569887999000
+    ccxt_exchange, currency_pair_binance, start_ts, end_ts
 )
 ccxt_df = _set_index_ts(ccxt_df)
 ccxt_df, ccxt_df_volume_0 = _compute_frac_volume_0(ccxt_df, 2019, 9)
@@ -320,8 +324,10 @@ ccxt_ftx_BTC.loc[(ccxt_ftx_BTC.index.day == 25) & (ccxt_ftx_BTC.index.hour == 3)
 
 # %%
 ccxt_exchange_ftx = _log_into_exchange("ftx")
+start_ts = pd.Timestamp("2019-04-01 00:00:00+00:00")
+end_ts = pd.Timestamp("2019-04-30 23:59:59+00:00")
 ccxt_df_ftx = _get_all_data(
-    ccxt_exchange_ftx, currency_pair_ftx, 1585699200000, 1588291199000
+    ccxt_exchange_ftx, currency_pair_ftx, start_ts, end_ts
 )
 ccxt_df_ftx = _set_index_ts(ccxt_df_ftx)
 ccxt_df_ftx, ccxt_df_ftx_volume_0 = _compute_frac_volume_0(ccxt_df_ftx, 2020, 4)
@@ -462,8 +468,10 @@ ccxt_gateio_ETH_2022.head(3)
 
 # %%
 ccxt_exchange = _log_into_exchange("gateio")
+start_ts = pd.Timestamp("2021-09-01 00:00:00+00:00")
+end_ts = pd.Timestamp("20121-09-30 23:59:59+00:00")
 ccxt_df = _get_all_data(
-    ccxt_exchange, currency_pair_gateio[0], 1638316800000, 1640995199000
+    ccxt_exchange, currency_pair_gateio[0], start_ts, end_ts
 )
 ccxt_df
 
