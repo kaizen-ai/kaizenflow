@@ -13,6 +13,14 @@
 # ---
 
 # %% [markdown]
+# # Description
+
+# %% [markdown]
+# This notebooks performs QA checks for a single vendor:
+#    - Number of NaN data points as % of total
+#    - Number of data points where `volume=0` as % of total
+
+# %% [markdown]
 # # Imports
 
 # %%
@@ -79,6 +87,12 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
             "close_price": "close",
         }
     )
+    # Stats parameters.
+    config["stats"] = ccocouti.get_config_from_nested_dict(
+        {
+            "threshold": 30,
+        }
+    )
     return config
 
 
@@ -129,17 +143,17 @@ def _get_qa_stats(config: cconconf.Config, data: pd.DataFrame) -> pd.DataFrame:
         symbol_stats = pd.Series(dtype="object", name=full_symbol)
         symbol_stats["min_timestamp"] = symbol_data.index.min()
         symbol_stats["max_timestamp"] = symbol_data.index.max()
-        symbol_stats["NaNs %"] = 100 * (
+        symbol_stats["NaNs, %"] = 100 * (
             costatis.compute_frac_nan(
                 symbol_data[config["column_names"]["close_price"]]
             )
         )
-        symbol_stats["volume=0 %"] = 100 * (
+        symbol_stats["volume=0, %"] = 100 * (
             symbol_data[symbol_data["volume"] == 0].shape[0]
             / symbol_data.shape[0]
         )
-        symbol_stats["bad data %"] = (
-            symbol_stats["NaNs %"] + symbol_stats["volume=0 %"]
+        symbol_stats["bad data, %"] = (
+            symbol_stats["NaNs, %"] + symbol_stats["volume=0, %"]
         )
         res_stats.append(symbol_stats)
     # Combine all full symbol stats.
@@ -178,30 +192,39 @@ def _get_qa_stats_by_year_month(
     return res_stats_df
 
 
-def _plot_bad_data_stats(bad_data_stats: pd.DataFrame) -> None:
+def _plot_bad_data_stats(
+    config: cconconf.Config, bad_data_stats: pd.DataFrame
+) -> None:
     """
     Plot bad data stats per unique full symbol in data.
     """
     full_symbols = bad_data_stats.index.get_level_values(0).unique()
     for full_symbol in full_symbols:
-        bad_data_col_name = "bad data %"
+        bad_data_col_name = "bad data, %"
         ax = bad_data_stats.loc[full_symbol].plot.bar(
             y=bad_data_col_name, rot=0, title=full_symbol
         )
-        # Set ticks and labels for time axis.
+        #
+        ax.hlines(
+            y=config["stats"]["threshold"],
+            xmin=0,
+            xmax=len(bad_data_stats),
+            color='r',
+        )
+        # Get ticks and labels for x-axis.
         ticks = ax.xaxis.get_ticklocs()
         ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
-        coef = len(ticks) // 10 + 1
-        ax.xaxis.set_ticks(ticks[::coef])
-        ax.xaxis.set_ticklabels(ticklabels[::coef])
+        # Adjust x-axis labels so they do not overlap on plot by
+        # picking ticks and labels by specified stride that limits
+        # the number of final ticks to 10.
+        stride = len(ticks) // 10 + 1
+        ax.xaxis.set_ticks(ticks[::stride])
+        ax.xaxis.set_ticklabels(ticklabels[::stride])
         ax.figure.show()
 
 
 # %% [markdown]
-# # Load CCXT data from the historical bucket
-
-# %% [markdown]
-# ## Initialize client
+# # QA checks
 
 # %%
 client = icdcl.CcxtHistoricalPqByTileClient(**config["data"]["im_client"])
@@ -211,7 +234,7 @@ universe = client.get_universe()
 universe
 
 # %% [markdown]
-# ## Binance stats
+# ## Binance
 
 # %%
 binance_stats = perform_qa_per_exchange(config, "binance", client)
@@ -224,10 +247,10 @@ binance_stats_by_year_month = perform_qa_per_exchange(
 binance_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_stats(binance_stats_by_year_month)
+_ = _plot_bad_data_stats(config, binance_stats_by_year_month)
 
 # %% [markdown]
-# ## FTX stats
+# ## FTX
 
 # %%
 ftx_stats = perform_qa_per_exchange(config, "ftx", client)
@@ -240,10 +263,10 @@ ftx_stats_by_year_month = perform_qa_per_exchange(
 ftx_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_stats(ftx_stats_by_year_month)
+_ = _plot_bad_data_stats(config, ftx_stats_by_year_month)
 
 # %% [markdown]
-# ## Gateio stats
+# ## Gateio
 
 # %%
 gateio_stats = perform_qa_per_exchange(config, "gateio", client)
@@ -256,10 +279,10 @@ gateio_stats_by_year_month = perform_qa_per_exchange(
 gateio_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_stats(gateio_stats_by_year_month)
+_ = _plot_bad_data_stats(config, gateio_stats_by_year_month)
 
 # %% [markdown]
-# ## Kucoin stats
+# ## Kucoin
 
 # %%
 kucoin_stats = perform_qa_per_exchange(config, "kucoin", client)
@@ -272,6 +295,6 @@ kucoin_stats_by_year_month = perform_qa_per_exchange(
 kucoin_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_stats(kucoin_stats_by_year_month)
+_ = _plot_bad_data_stats(config, kucoin_stats_by_year_month)
 
 # %%
