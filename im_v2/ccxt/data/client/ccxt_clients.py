@@ -398,6 +398,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         partition_mode: str,
         *,
         data_snapshot: str = "latest",
+        data_set: str = "ohlcv",
+        vendor: str = "CCXT",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -407,7 +409,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
         :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
-        vendor = "CCXT"
         infer_exchange_id = True
         super().__init__(
             vendor,
@@ -419,6 +420,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
             aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot
+        self._data_set = data_set
+        self._vendor = vendor
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -497,7 +500,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # Build a root dir to the list of exchange ids subdirs, e.g.,
         # "s3://cryptokaizen-data/historical/ccxt/latest/binance".
         root_dir = os.path.join(
-            self._root_dir, self._vendor.lower(), self._data_snapshot
+            self._root_dir, self._data_snapshot, self._data_set, self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),
