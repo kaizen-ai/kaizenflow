@@ -24,7 +24,7 @@ import helpers.hs3 as hs3
 import helpers.hdatetime as hdateti
 import helpers.hparquet as hparque
 import im_v2.common.data.extract.extract_utils as imvcdeexut
-import im_v2.crypto_chassis.data.extract.exchange_class as imvccdeecl
+import im_v2.crypto_chassis.data.extract.extractor as imvccdee
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_historical_data(args, imvccdeecl.CryptoChassisExchange)
+    imvcdeexut.download_historical_data(args, imvccdee.CryptoChassisExtractor)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

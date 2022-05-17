@@ -76,9 +76,9 @@ def add_exchange_download_args(
     return parser
 
 
-CCXT_EXCHANGE = "CcxtExchange"
-TALOS_EXCHANGE = "TalosExchange"
-CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExchange"
+CCXT_EXCHANGE = "CcxtExtractor"
+TALOS_EXCHANGE = "TalosExtractor"
+CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExtractor"
 
 
 def download_realtime_for_one_exchange(
@@ -247,7 +247,7 @@ def download_historical_data(
 
     :param args: arguments passed on script run
     :param exchange_class: which exchange class is used in script run
-     e.g. "CcxtExchange" or "TalosExchange"
+     e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
     args = vars(args)
