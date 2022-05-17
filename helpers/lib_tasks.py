@@ -715,12 +715,13 @@ def git_roll_amp_forward(ctx):
         cmds = [
             f"cd {AMP_DIR} && git checkout master",
             "git pull"
-            "cd ..",
             f"git commit -m 'Roll {AMP_DIR} pointer forward'",
             "git push",
         ]
         for cmd in cmds:
             _run(ctx, cmd)
+    else:
+        _LOG.warning("%s does not exist, aborting", AMP_DIR)
 
 
 # TODO(gp): Add git_co(ctx)
