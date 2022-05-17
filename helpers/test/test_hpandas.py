@@ -155,6 +155,7 @@ class Test_trim_df1(hunitest.TestCase):
         """
         txt = hprint.dedent(txt)
         df = pd.read_csv(io.StringIO(txt), *args, index_col=0, **kwargs)
+        df["start_time"] = pd.to_datetime(df["start_time"])
         return df
 
     def test_types1(self) -> None:
@@ -173,19 +174,19 @@ class Test_trim_df1(hunitest.TestCase):
         columns=start_time,egid,close
         shape=(10, 3)
         * type=
-             col_name    dtype         num_unique        num_nans                  first_elem         type(first_elem)
-        0       index    int64  10 / 10 = 100.00%  0 / 10 = 0.00%                           4    <class 'numpy.int64'>
-        1  start_time   object    5 / 10 = 50.00%  0 / 10 = 0.00%  2022-01-04 21:38:00.000000            <class 'str'>
-        2        egid    int64    2 / 10 = 20.00%  0 / 10 = 0.00%                       13684    <class 'numpy.int64'>
-        3       close  float64    6 / 10 = 60.00%  0 / 10 = 0.00%                     1146.48  <class 'numpy.float64'>
-                            start_time   egid    close
-        4   2022-01-04 21:38:00.000000  13684  1146.48
-        8   2022-01-04 21:38:00.000000  17085   179.45
-        14  2022-01-04 21:37:00.000000  13684  1146.26
+        col_name dtype num_unique num_nans first_elem type(first_elem)
+        0 index int64 10 / 10 = 100.00% 0 / 10 = 0.00% 4 <class 'numpy.int64'>
+        1 start_time datetime64[ns] 5 / 10 = 50.00% 0 / 10 = 0.00% 2022-01-04T21:38:00.000000000 <class 'numpy.datetime64'>
+        2 egid int64 2 / 10 = 20.00% 0 / 10 = 0.00% 13684 <class 'numpy.int64'>
+        3 close float64 6 / 10 = 60.00% 0 / 10 = 0.00% 1146.48 <class 'numpy.float64'>
+        start_time egid close
+        4 2022-01-04 21:38:00 13684 1146.48
+        8 2022-01-04 21:38:00 17085 179.45
+        14 2022-01-04 21:37:00 13684 1146.26
         ...
-        38  2022-01-04 21:35:00.000000  17085   179.42
-        40  2022-01-04 21:34:00.000000  17085   179.42
-        44  2022-01-04 21:34:00.000000  13684  1146.00"""
+        38 2022-01-04 21:35:00 17085 179.42
+        40 2022-01-04 21:34:00 17085 179.42
+        44 2022-01-04 21:34:00 13684 1146.00"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def get_df_with_parse_dates(self) -> pd.DataFrame:
@@ -277,12 +278,7 @@ class Test_trim_df1(hunitest.TestCase):
 
     def test_trim_df1(self) -> None:
         """
-        In general one can't filter a df with columns represented as `str`
-        using `pd.Timestamp` (either tz-aware or tz-naive).
-
-        Pandas helps us when filtering the index doing some conversion
-        for us. When it's a column, we have to handle it ourselves:
-        `trim_df` does that by converting the columns in `pd.Timestamp`.
+        Test trimming: baseline case.
         """
         df = self.get_df()
         # Run.
@@ -303,19 +299,19 @@ class Test_trim_df1(hunitest.TestCase):
         columns=start_time,egid,close
         shape=(8, 3)
         * type=
-             col_name    dtype       num_unique       num_nans                  first_elem         type(first_elem)
-        0       index    int64  8 / 8 = 100.00%  0 / 8 = 0.00%                           4    <class 'numpy.int64'>
-        1  start_time   object   4 / 8 = 50.00%  0 / 8 = 0.00%  2022-01-04 21:38:00.000000            <class 'str'>
-        2        egid    int64   2 / 8 = 25.00%  0 / 8 = 0.00%                       13684    <class 'numpy.int64'>
-        3       close  float64   6 / 8 = 75.00%  0 / 8 = 0.00%                     1146.48  <class 'numpy.float64'>
-                            start_time   egid    close
-        4   2022-01-04 21:38:00.000000  13684  1146.48
-        8   2022-01-04 21:38:00.000000  17085   179.45
-        14  2022-01-04 21:37:00.000000  13684  1146.26
+        col_name dtype num_unique num_nans first_elem type(first_elem)
+        0 index int64 8 / 8 = 100.00% 0 / 8 = 0.00% 4 <class 'numpy.int64'>
+        1 start_time datetime64[ns] 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04T21:38:00.000000000 <class 'numpy.datetime64'>
+        2 egid int64 2 / 8 = 25.00% 0 / 8 = 0.00% 13684 <class 'numpy.int64'>
+        3 close float64 6 / 8 = 75.00% 0 / 8 = 0.00% 1146.48 <class 'numpy.float64'>
+        start_time egid close
+        4 2022-01-04 21:38:00 13684 1146.48
+        8 2022-01-04 21:38:00 17085 179.45
+        14 2022-01-04 21:37:00 13684 1146.26
         ...
-        27  2022-01-04 21:36:00.000000  17085   179.46
-        34  2022-01-04 21:35:00.000000  13684  1146.00
-        38  2022-01-04 21:35:00.000000  17085   179.42"""
+        27 2022-01-04 21:36:00 17085 179.46
+        34 2022-01-04 21:35:00 13684 1146.00
+        38 2022-01-04 21:35:00 17085 179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df2(self) -> None:
@@ -403,8 +399,8 @@ class Test_trim_df1(hunitest.TestCase):
     # pylint: disable=line-too-long
     def test_trim_df4(self) -> None:
         """
-        Trim a df with a column that is `datetime64` with tz vs a `pd.Timestamp
-        without tz.
+        Trim a df with a column that is `datetime64` with tz vs a
+        `pd.Timestamp` without tz.
 
         This operation is invalid and we expect an assertion.
         """
@@ -415,18 +411,14 @@ class Test_trim_df1(hunitest.TestCase):
         end_ts = pd.Timestamp("2022-01-04 21:38:00")
         left_close = True
         right_close = True
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(TypeError) as cm:
             hpandas.trim_df(
                 df, ts_col_name, start_ts, end_ts, left_close, right_close
             )
         # Check.
         act = str(cm.exception)
         exp = r"""
-        * Failed assertion *
-        'True'
-        ==
-        'False'
-        datetime1='2022-01-04 16:38:00-05:00' and datetime2='2022-01-04 21:35:00' are not compatible"""
+        Invalid comparison between dtype=datetime64[ns, America/New_York] and Timestamp"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df5(self) -> None:
@@ -449,23 +441,23 @@ class Test_trim_df1(hunitest.TestCase):
             df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
         )
         exp = r"""# df_trim=
-        index=[2022-01-04 21:35:00.000000, 2022-01-04 21:38:00.000000]
+        index=[2022-01-04 21:35:00, 2022-01-04 21:38:00]
         columns=egid,close
         shape=(8, 2)
         * type=
         col_name dtype num_unique num_nans first_elem type(first_elem)
-        0 index object 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04 21:38:00.000000 <class 'str'>
+        0 index datetime64[ns] 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04T21:38:00.000000000 <class 'numpy.datetime64'>
         1 egid int64 2 / 8 = 25.00% 0 / 8 = 0.00% 13684 <class 'numpy.int64'>
         2 close float64 6 / 8 = 75.00% 0 / 8 = 0.00% 1146.48 <class 'numpy.float64'>
         egid close
         start_time
-        2022-01-04 21:38:00.000000 13684 1146.48
-        2022-01-04 21:38:00.000000 17085 179.45
-        2022-01-04 21:37:00.000000 13684 1146.26
+        2022-01-04 21:38:00 13684 1146.48
+        2022-01-04 21:38:00 17085 179.45
+        2022-01-04 21:37:00 13684 1146.26
         ...
-        2022-01-04 21:36:00.000000 17085 179.46
-        2022-01-04 21:35:00.000000 13684 1146.00
-        2022-01-04 21:35:00.000000 17085 179.42"""
+        2022-01-04 21:36:00 17085 179.46
+        2022-01-04 21:35:00 13684 1146.00
+        2022-01-04 21:35:00 17085 179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df6(self) -> None:
@@ -493,16 +485,16 @@ class Test_trim_df1(hunitest.TestCase):
         * type=
         col_name dtype num_unique num_nans first_elem type(first_elem)
         0 index int64 6 / 6 = 100.00% 0 / 6 = 0.00% 4 <class 'numpy.int64'>
-        1 start_time object 3 / 6 = 50.00% 0 / 6 = 0.00% 2022-01-04 21:38:00.000000 <class 'str'>
+        1 start_time datetime64[ns] 3 / 6 = 50.00% 0 / 6 = 0.00% 2022-01-04T21:38:00.000000000 <class 'numpy.datetime64'>
         2 egid int64 2 / 6 = 33.33% 0 / 6 = 0.00% 13684 <class 'numpy.int64'>
         3 close float64 6 / 6 = 100.00% 0 / 6 = 0.00% 1146.48 <class 'numpy.float64'>
         start_time egid close
-        4 2022-01-04 21:38:00.000000 13684 1146.48
-        8 2022-01-04 21:38:00.000000 17085 179.45
-        14 2022-01-04 21:37:00.000000 13684 1146.26
-        18 2022-01-04 21:37:00.000000 17085 179.42
-        24 2022-01-04 21:36:00.000000 13684 1146.00
-        27 2022-01-04 21:36:00.000000 17085 179.46"""
+        4 2022-01-04 21:38:00 13684 1146.48
+        8 2022-01-04 21:38:00 17085 179.45
+        14 2022-01-04 21:37:00 13684 1146.26
+        18 2022-01-04 21:37:00 17085 179.42
+        24 2022-01-04 21:36:00 13684 1146.00
+        27 2022-01-04 21:36:00 17085 179.46"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df7(self) -> None:
@@ -530,16 +522,16 @@ class Test_trim_df1(hunitest.TestCase):
         * type=
         col_name dtype num_unique num_nans first_elem type(first_elem)
         0 index int64 6 / 6 = 100.00% 0 / 6 = 0.00% 14 <class 'numpy.int64'>
-        1 start_time object 3 / 6 = 50.00% 0 / 6 = 0.00% 2022-01-04 21:37:00.000000 <class 'str'>
+        1 start_time datetime64[ns] 3 / 6 = 50.00% 0 / 6 = 0.00% 2022-01-04T21:37:00.000000000 <class 'numpy.datetime64'>
         2 egid int64 2 / 6 = 33.33% 0 / 6 = 0.00% 13684 <class 'numpy.int64'>
         3 close float64 4 / 6 = 66.67% 0 / 6 = 0.00% 1146.26 <class 'numpy.float64'>
         start_time egid close
-        14 2022-01-04 21:37:00.000000 13684 1146.26
-        18 2022-01-04 21:37:00.000000 17085 179.42
-        24 2022-01-04 21:36:00.000000 13684 1146.00
-        27 2022-01-04 21:36:00.000000 17085 179.46
-        34 2022-01-04 21:35:00.000000 13684 1146.00
-        38 2022-01-04 21:35:00.000000 17085 179.42"""
+        14 2022-01-04 21:37:00 13684 1146.26
+        18 2022-01-04 21:37:00 17085 179.42
+        24 2022-01-04 21:36:00 13684 1146.00
+        27 2022-01-04 21:36:00 17085 179.46
+        34 2022-01-04 21:35:00 13684 1146.00
+        38 2022-01-04 21:35:00 17085 179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df8(self) -> None:
@@ -568,17 +560,17 @@ class Test_trim_df1(hunitest.TestCase):
         * type=
         col_name dtype num_unique num_nans first_elem type(first_elem)
         0 index int64 8 / 8 = 100.00% 0 / 8 = 0.00% 34 <class 'numpy.int64'>
-        1 start_time object 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04 21:35:00.000000 <class 'str'>
+        1 start_time datetime64[ns] 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04T21:35:00.000000000 <class 'numpy.datetime64'>
         2 egid int64 2 / 8 = 25.00% 0 / 8 = 0.00% 13684 <class 'numpy.int64'>
         3 close float64 6 / 8 = 75.00% 0 / 8 = 0.00% 1146.0 <class 'numpy.float64'>
         start_time egid close
-        34 2022-01-04 21:35:00.000000 13684 1146.00
-        38 2022-01-04 21:35:00.000000 17085 179.42
-        24 2022-01-04 21:36:00.000000 13684 1146.00
+        34 2022-01-04 21:35:00 13684 1146.00
+        38 2022-01-04 21:35:00 17085 179.42
+        24 2022-01-04 21:36:00 13684 1146.00
         ...
-        18 2022-01-04 21:37:00.000000 17085 179.42
-        4 2022-01-04 21:38:00.000000 13684 1146.48
-        8 2022-01-04 21:38:00.000000 17085 179.45"""
+        18 2022-01-04 21:37:00 17085 179.42
+        4 2022-01-04 21:38:00 13684 1146.48
+        8 2022-01-04 21:38:00 17085 179.45"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df9(self) -> None:
@@ -602,23 +594,23 @@ class Test_trim_df1(hunitest.TestCase):
             df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
         )
         exp = r"""# df_trim=
-        index=[2022-01-04 21:35:00.000000, 2022-01-04 21:38:00.000000]
+        index=[2022-01-04 21:35:00, 2022-01-04 21:38:00]
         columns=egid,close
         shape=(8, 2)
         * type=
         col_name dtype num_unique num_nans first_elem type(first_elem)
-        0 index object 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04 21:35:00.000000 <class 'str'>
+        0 index datetime64[ns] 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04T21:35:00.000000000 <class 'numpy.datetime64'>
         1 egid int64 2 / 8 = 25.00% 0 / 8 = 0.00% 13684 <class 'numpy.int64'>
         2 close float64 6 / 8 = 75.00% 0 / 8 = 0.00% 1146.0 <class 'numpy.float64'>
         egid close
         start_time
-        2022-01-04 21:35:00.000000 13684 1146.00
-        2022-01-04 21:35:00.000000 17085 179.42
-        2022-01-04 21:36:00.000000 13684 1146.00
+        2022-01-04 21:35:00 13684 1146.00
+        2022-01-04 21:35:00 17085 179.42
+        2022-01-04 21:36:00 13684 1146.00
         ...
-        2022-01-04 21:37:00.000000 17085 179.42
-        2022-01-04 21:38:00.000000 13684 1146.48
-        2022-01-04 21:38:00.000000 17085 179.45"""
+        2022-01-04 21:37:00 17085 179.42
+        2022-01-04 21:38:00 13684 1146.48
+        2022-01-04 21:38:00 17085 179.45"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df10(self) -> None:
@@ -642,20 +634,20 @@ class Test_trim_df1(hunitest.TestCase):
             df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
         )
         exp = r"""# df_trim=
-        index=[2022-01-04 21:36:00.000000, 2022-01-04 21:37:00.000000]
+        index=[2022-01-04 21:36:00, 2022-01-04 21:37:00]
         columns=egid,close
         shape=(4, 2)
         * type=
         col_name dtype num_unique num_nans first_elem type(first_elem)
-        0 index object 2 / 4 = 50.00% 0 / 4 = 0.00% 2022-01-04 21:36:00.000000 <class 'str'>
+        0 index datetime64[ns] 2 / 4 = 50.00% 0 / 4 = 0.00% 2022-01-04T21:36:00.000000000 <class 'numpy.datetime64'>
         1 egid int64 2 / 4 = 50.00% 0 / 4 = 0.00% 13684 <class 'numpy.int64'>
         2 close float64 4 / 4 = 100.00% 0 / 4 = 0.00% 1146.0 <class 'numpy.float64'>
         egid close
         start_time
-        2022-01-04 21:36:00.000000 13684 1146.00
-        2022-01-04 21:36:00.000000 17085 179.46
-        2022-01-04 21:37:00.000000 13684 1146.26
-        2022-01-04 21:37:00.000000 17085 179.42"""
+        2022-01-04 21:36:00 13684 1146.00
+        2022-01-04 21:36:00 17085 179.46
+        2022-01-04 21:37:00 13684 1146.26
+        2022-01-04 21:37:00 17085 179.42"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df11(self) -> None:
@@ -683,17 +675,17 @@ class Test_trim_df1(hunitest.TestCase):
         * type=
         col_name dtype num_unique num_nans first_elem type(first_elem)
         0 index int64 8 / 8 = 100.00% 0 / 8 = 0.00% 14 <class 'numpy.int64'>
-        1 start_time object 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04 21:37:00.000000 <class 'str'>
+        1 start_time datetime64[ns] 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04T21:37:00.000000000 <class 'numpy.datetime64'>
         2 egid int64 2 / 8 = 25.00% 0 / 8 = 0.00% 13684 <class 'numpy.int64'>
         3 close float64 4 / 8 = 50.00% 0 / 8 = 0.00% 1146.26 <class 'numpy.float64'>
         start_time egid close
-        14 2022-01-04 21:37:00.000000 13684 1146.26
-        18 2022-01-04 21:37:00.000000 17085 179.42
-        24 2022-01-04 21:36:00.000000 13684 1146.00
+        14 2022-01-04 21:37:00 13684 1146.26
+        18 2022-01-04 21:37:00 17085 179.42
+        24 2022-01-04 21:36:00 13684 1146.00
         ...
-        38 2022-01-04 21:35:00.000000 17085 179.42
-        40 2022-01-04 21:34:00.000000 17085 179.42
-        44 2022-01-04 21:34:00.000000 13684 1146.00"""
+        38 2022-01-04 21:35:00 17085 179.42
+        40 2022-01-04 21:34:00 17085 179.42
+        44 2022-01-04 21:34:00 13684 1146.00"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_trim_df12(self) -> None:
@@ -717,23 +709,23 @@ class Test_trim_df1(hunitest.TestCase):
             df_trim, print_dtypes=True, print_shape_info=True, tag="df_trim"
         )
         exp = r"""# df_trim=
-        index=[2022-01-04 21:35:00.000000, 2022-01-04 21:38:00.000000]
+        index=[2022-01-04 21:35:00, 2022-01-04 21:38:00]
         columns=egid,close
         shape=(8, 2)
         * type=
         col_name dtype num_unique num_nans first_elem type(first_elem)
-        0 index object 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04 21:35:00.000000 <class 'str'>
+        0 index datetime64[ns] 4 / 8 = 50.00% 0 / 8 = 0.00% 2022-01-04T21:35:00.000000000 <class 'numpy.datetime64'>
         1 egid int64 2 / 8 = 25.00% 0 / 8 = 0.00% 13684 <class 'numpy.int64'>
         2 close float64 6 / 8 = 75.00% 0 / 8 = 0.00% 1146.0 <class 'numpy.float64'>
         egid close
         start_time
-        2022-01-04 21:35:00.000000 13684 1146.00
-        2022-01-04 21:35:00.000000 17085 179.42
-        2022-01-04 21:36:00.000000 13684 1146.00
+        2022-01-04 21:35:00 13684 1146.00
+        2022-01-04 21:35:00 17085 179.42
+        2022-01-04 21:36:00 13684 1146.00
         ...
-        2022-01-04 21:37:00.000000 17085 179.42
-        2022-01-04 21:38:00.000000 13684 1146.48
-        2022-01-04 21:38:00.000000 17085 179.45"""
+        2022-01-04 21:37:00 17085 179.42
+        2022-01-04 21:38:00 13684 1146.48
+        2022-01-04 21:38:00 17085 179.45"""
         self.assert_equal(act, exp, fuzzy_match=True)
 
     @pytest.mark.skip(

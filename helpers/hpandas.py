@@ -715,17 +715,6 @@ def trim_df(
     else:
         hdbg.dassert_in(ts_col_name, df.columns)
         values_to_filter_by = df[ts_col_name]
-    # Make the value type compatible with the interval boundaries.
-    try:
-        boundary_to_compare = start_ts if start_ts is not None else end_ts
-        hdateti.dassert_tz_compatible(
-            values_to_filter_by.iloc[0], boundary_to_compare
-        )
-    except AssertionError:
-        values_to_filter_by = pd.to_datetime(values_to_filter_by)
-        hdateti.dassert_tz_compatible(
-            values_to_filter_by.iloc[0], boundary_to_compare
-        )
     if values_to_filter_by.is_monotonic:
         # The values are sorted; using the `pd.Series.searchsorted` method.
         i = (
