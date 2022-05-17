@@ -64,7 +64,7 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     Build a DAG runner from a config.
     """
     asset_ids = config["meta", "asset_ids"]
-    columns: List[str] = []
+    columns = None
     columns_remap = None
     market_data = mdata.get_DataFrameImClientMarketData_example1(
         asset_ids, columns, columns_remap

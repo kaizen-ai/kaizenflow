@@ -42,7 +42,6 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="The depth of market data.",
     )
-    parser.add_argument("--incremental", action="store_true")
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
