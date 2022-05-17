@@ -819,32 +819,22 @@ def _df_to_str(
                 tail_str = "\n".join(tail_str.split("\n")[skipped_rows:])
                 out.append(tail_str)
             else:
-<<<<<<< HEAD
                 # TODO(Dan): Consider to pass verbosity as a param to avoid
                 #  hard-coding `logging.DEBUG`.
                 if hdbg.get_logger_verbosity() <= logging.DEBUG:
                     # TODO(gp): @all use this approach also above and update
                     #  all the unit tests.
-                    df = [df.head(nr),
-                        pd.DataFrame([["..."] * df.shape[1]],
-                                    index=[" "],
-                                    columns=df.columns),
-                        df.tail(nr)]
+                    df = [
+                        df.head(nr),
+                        pd.DataFrame(
+                            [["..."] * df.shape[1]],
+                            index=[" "],
+                            columns=df.columns,
+                        ),
+                        df.tail(nr),
+                    ]
                     df = pd.concat(df)
                     display(df)
-=======
-                # TODO(gp): @all use this approach also above and update all the
-                #  unit tests.
-                df = [
-                    df.head(nr),
-                    pd.DataFrame(
-                        [["..."] * df.shape[1]], index=[" "], columns=df.columns
-                    ),
-                    df.tail(nr),
-                ]
-                df = pd.concat(df)
-                display(df)
->>>>>>> master
     if not is_in_ipynb:
         txt = "\n".join(out)
     else:
