@@ -746,10 +746,11 @@ def trim_df(
             inclusive = "right"
         else:
             inclusive = "neither"
+        epsilon = pd.DateOffset(minutes=1)
         if start_ts is None:
-            start_ts = values_to_filter_by.iloc[0] - pd.DateOffset(years=100)
+            start_ts = values_to_filter_by.min() - epsilon
         if end_ts is None:
-            end_ts = values_to_filter_by.iloc[0] + pd.DateOffset(years=100)
+            end_ts = values_to_filter_by.max() + epsilon
         df = df[
             values_to_filter_by.between(start_ts, end_ts, inclusive=inclusive)
         ]
