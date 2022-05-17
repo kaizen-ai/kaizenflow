@@ -222,7 +222,7 @@ def save_parquet(
     Save Parquet dataset.
     """
     # Update indexing and add partition columns.
-    data = imvcdttrut.reindex_on_datetime(data, "timestamp")
+    data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit="s")
     data, partition_cols = hparque.add_date_partition_columns(
         data, "by_year_month"
     )
@@ -272,7 +272,6 @@ def download_historical_data(
     elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
         exchange = exchange_class()
         vendor = "crypto_chassis"
-        data_type = "market_depth"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
@@ -285,8 +284,11 @@ def download_historical_data(
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
         args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
+        download_kwargs = {"exchange_id": args["exchange_id"], "currency_pair": args["currency_pair"],
+                            "start_timestamp": args["start_timestamp"], "end_timestamp": args["end_timestamp"]}
         # Download data.
-        data = exchange.download_data(data_type, **args)
+        data = exchange.download_data(data_type=args["data_type"],
+                                    **download_kwargs)
         if data.empty:
             continue
         # Assign pair and exchange columns.
