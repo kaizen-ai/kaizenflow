@@ -17,7 +17,8 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
-    # TODO(Danya): IMO this should be a SetUpClass
+    # TODO(Danya): try to use setUp instead of having each test
+    # call this function.
     def setup_test_market_data(
         self, im_client: icdc.SqlRealTimeImClient
     ) -> mdrtmada.RealTimeMarketData2:
@@ -81,6 +82,7 @@ class TestRealTimeMarketData2(imvcddbut.TestImDbHelper):
         2022-04-22 12:30:00-04:00  1464553467   65.0  45.0  55.0  35.0 2022-04-22 12:29:00-04:00    75.0"""
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
+        # TODO(gp): @danya -> teardown
         # Delete the table.
         hsql.remove_table(self.connection, "example2_marketdata")
 

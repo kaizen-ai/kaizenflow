@@ -28,11 +28,11 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): -> system_runner_example.py for symmetry with the other _example?
 
 
-# TODO(gp): @Danya -> Example1_ReplayedForecastSystem
-# TODO(gp): @Danya: Ideally we want to create an Example1_ForecastSystem (it has the
-#  Example1 DAG inside) with everything that is shared by
-#  Example1_ReplayedForecastSystem and Example1_HistoricalForecastSystem
-#  (the difference should be only in the get_market_data()).
+# TODO(gp): Example1_ReplayedForecastSystem
+# TODO(gp): Ideally we want to create an Example1_ForecastSystem (it has the
+# Example1 DAG inside) with everything that is shared by
+# Example1_ReplayedForecastSystem and Example1_HistoricalForecastSystem (the
+# difference should be only in the get_market_data()).
 class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
     """
     Create a system with:

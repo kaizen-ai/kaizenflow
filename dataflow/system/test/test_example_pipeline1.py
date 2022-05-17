@@ -16,7 +16,7 @@ import market_data.real_time_market_data as mdrtmada
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): @Danya -> test_example1_pipeline.py (to confirm)
+# TODO(gp): @Danya -> test_example1_pipeline.py
 
 
 # TODO(gp): @Danya -> Test_Example1_ReplayedForecastSystem
@@ -114,6 +114,7 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
         )
         return market_data
 
+    # TOOD(gp): Use setup / teardown instead of calling the method.
     def set_up_class(self):
         # Create test table.
         im_client = icdc.get_example1_realtime_client(

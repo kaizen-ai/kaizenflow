@@ -207,7 +207,7 @@ def get_example1_realtime_client(
 # Example2SqlRealTimeImClient
 # #############################################################################
 
-# TODO(Danya): MockSqlRealTime? VendorAgnosticSqlRealTime?
+# TODO(gp): MockSqlRealTime? VendorAgnosticSqlRealTime?
 
 
 # TODO(Danya) -> _get_

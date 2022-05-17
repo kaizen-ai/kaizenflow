@@ -861,6 +861,3 @@ class SqlRealTimeImClient(RealTimeImClient):
         timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
-
-
-# TODO(gp): Implement an Example1SqlRealTimeImClient
