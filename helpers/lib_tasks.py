@@ -715,6 +715,7 @@ def git_roll_amp_forward(ctx):
         cmds = [
             f"cd {AMP_DIR} && git checkout master",
             f"cd {AMP_DIR} && git pull",
+            f"git add {AMP_DIR}",
             f"git commit -m 'Roll {AMP_DIR} pointer forward'",
             "git push",
         ]
