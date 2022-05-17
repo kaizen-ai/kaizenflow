@@ -13,11 +13,10 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
-
-# #############################################################################
-# Resampling.
-# #############################################################################
-
+# TODO(gp): @max Reorg the tests in the same order of the functions,
+#  after the functions are reorg.
+# TODO(gp): @max Add the class banner to separate chunks of code
+#  testing the same functions.
 
 class Test_resample_time_bars1(hunitest.TestCase):
     def test1(self) -> None:

@@ -1087,6 +1087,7 @@ def convert_col_to_int(
 
 
 def read_csv_to_df(
+    # TODO(gp): Why not importing s3fs? I don't think there is any import loop.
     stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
     *args: Any,
     **kwargs: Any,
