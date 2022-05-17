@@ -66,6 +66,8 @@ class Example1_ForecastSystem(dtfsysyrun.ForecastSystem):
             self._event_loop,
             initial_replayed_delay,
             data,
+            #knowledge_datetime_col_name
+
         )
         return market_data
 

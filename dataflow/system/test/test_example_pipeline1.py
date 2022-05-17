@@ -19,6 +19,9 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): @Danya -> test_example1_pipeline.py
 
 
+# TODO(gp): Add another test with ReplayedMarketData that requires longer to update
+#  so that we can test the interaction between DAG and waiting for bar.
+
 # TODO(gp): @Danya -> Test_Example1_ReplayedForecastSystem
 class Test_Example1_ForecastSystem(hunitest.TestCase):
     """
@@ -45,18 +48,23 @@ class Test_Example1_ForecastSystem(hunitest.TestCase):
             # Instantiate the system.
             config = system.get_dag_config()
             market_data = system.get_market_data(data)
+            # Run for 5 bars.
+            real_time_loop_time_out_in_secs = 5 * (60 * 5)
             dag_runner = system.get_dag_runner(
                 config,
                 market_data,
-                real_time_loop_time_out_in_secs=60 * 5,
+                real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
             )
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            result_bundles = result_bundles[0][0]
-        return result_bundles
+            #print(result_bundles)
+            #assert 0
+            #result_bundles = result_bundles[0]
+        act = dag_runner.compute_run_signature(result_bundles[0])
+        return act
 
     def test1(self) -> None:
         """
@@ -67,6 +75,7 @@ class Test_Example1_ForecastSystem(hunitest.TestCase):
             data,
         )
         # TODO(gp): PP to make sure the output is correct.
+        #assert 0, str(actual)
         self.check_string(str(actual))
 
 
@@ -81,6 +90,9 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
     - an `Example1` DAG
 
     The system is simulated in real-time in the past.
+
+    The simulated real-time is more accurate in reproducing the interactions between
+    DB and reading nodes than the replayed market data updates data instantaneous.
     """
 
     @classmethod
@@ -132,6 +144,7 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
         # TO
         """
         self.set_up_class()
+        # Use simulated real-time.
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [1467591036]
             # Get the system to simulate.
@@ -149,10 +162,13 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
                 real_time_loop_time_out_in_secs=60 * 5,
             )
             # Run.
+            # TODO(gp): Add a coroutine that given a df writes in the
+            #  DB the data according to the knowledge ts.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
+            # TODO(gp): Fix this.
             result_bundles = result_bundles[0][0]
         return result_bundles
 
