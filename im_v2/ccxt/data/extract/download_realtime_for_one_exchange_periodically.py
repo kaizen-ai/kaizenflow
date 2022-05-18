@@ -19,7 +19,7 @@ import argparse
 
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -39,7 +39,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     imvcdeexut.download_realtime_for_one_exchange_periodically(
-        args, imvcdeexcl.CcxtExchange
+        args, imvcdeex.CcxtExtractor
     )
 
 

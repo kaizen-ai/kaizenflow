@@ -704,6 +704,27 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     _to_pbcopy(res, pbcopy)
 
 
+@task
+def git_roll_amp_forward(ctx):
+    """
+    Roll amp forward.
+    """
+    _report_task()
+    AMP_DIR = "amp"
+    if os.path.exists(AMP_DIR):
+        cmds = [
+            f"cd {AMP_DIR} && git checkout master",
+            f"cd {AMP_DIR} && git pull",
+            f"git add {AMP_DIR}",
+            f"git commit -m 'Roll {AMP_DIR} pointer forward'",
+            "git push",
+        ]
+        for cmd in cmds:
+            _run(ctx, cmd)
+    else:
+        _LOG.warning("%s does not exist, aborting", AMP_DIR)
+
+
 # TODO(gp): Add git_co(ctx)
 # Reuse hgit.git_stash_push() and hgit.stash_apply()
 # git stash save your-file-name
@@ -2105,7 +2126,7 @@ def _generate_compose_file(
     """
     Generate `docker-compose.yaml` file and save it.
 
-    :param shared_data_dir: data directory in the host filesystem to mount to mount 
+    :param shared_data_dir: data directory in the host filesystem to mount to mount
         inside the container. None means no dir sharing
     """
     _LOG.debug(

@@ -3,7 +3,7 @@ Download data from Crypto-Chassis: https://github.com/crypto-chassis.
 
 Import as:
 
-import im_v2.crypto_chassis.data.extract.exchange_class as imvccdeecl
+import im_v2.crypto_chassis.data.extract.extractor as imvccdee
 """
 import logging
 from typing import Any, Optional
@@ -17,7 +17,7 @@ import helpers.hdatetime as hdateti
 _LOG = logging.getLogger(__name__)
 
 
-class CryptoChassisExchange:
+class CryptoChassisExtractor:
     """
     Access exchange data from Crypto-Chassis through REST API.
     """
