@@ -254,7 +254,7 @@ class CcxtCddCsvParquetByAssetClient(
 
         :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://alphamatic-data/data") to `CCXT` data
+            an S3 root path (e.g., "s3://cryptokaizen-data/historical.manual.pq") to `CCXT` data
         :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
         :param aws_profile: AWS profile name (e.g., "am")
         :param data_snapshot: snapshot of datetime when data was loaded,
@@ -357,7 +357,7 @@ class CcxtCddCsvParquetByAssetClient(
         Get the absolute path to a file with `CCXT` or `CDD` price data.
 
         The file path is constructed in the following way:
-        `<root_dir>/<vendor>/<snapshot>/<exchange_id>/<currency_pair>.<self._extension>`
+        `<root_dir>/<snapshot>/<self._dataset>/<vendor>/<exchange_id>/<currency_pair>.<self._extension>`
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -370,8 +370,9 @@ class CcxtCddCsvParquetByAssetClient(
         file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
             self._root_dir,
-            self._vendor.lower(),
             data_snapshot,
+            self._dataset,
+            self._vendor.lower(),
             exchange_id,
             file_name,
         )
@@ -398,8 +399,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         partition_mode: str,
         *,
         data_snapshot: str = "latest",
-        data_set: str = "ohlcv",
-        vendor: str = "CCXT",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -409,6 +408,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
         :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
+        vendor = "CCXT"
         infer_exchange_id = True
         super().__init__(
             vendor,
@@ -420,8 +420,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
             aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot
-        self._data_set = data_set
-        self._vendor = vendor
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -488,19 +486,19 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         E.g.,
         ```
         {
-            "s3://cryptokaizen-data/historical/ccxt/latest/binance": (
+            "s3://cryptokaizen-data/historical.manual.pq/latest/ohlcv/ccxt/latest/binance": (
                 "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
             ),
-            "s3://cryptokaizen-data/historical/ccxt/latest/coinbase": (
+            "s3://cryptokaizen-data/historical.manual.pq/latest/ohlcv/ccxt/latest/coinbase": (
                 "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
             ),
         }
         ```
         """
         # Build a root dir to the list of exchange ids subdirs, e.g.,
-        # "s3://cryptokaizen-data/historical/ccxt/latest/binance".
+        # "s3://cryptokaizen-data/historical.manual.pq/latest/ohlcv/ccxt/latest/binance".
         root_dir = os.path.join(
-            self._root_dir, self._data_snapshot, self._data_set, self._vendor.lower(),
+            self._root_dir, self._data_snapshot, self._dataset, self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),
