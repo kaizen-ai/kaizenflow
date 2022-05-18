@@ -17,12 +17,14 @@ import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
 _LOG.verb_debug = hprint.install_log_verb_debug(  # type: ignore[attr-defined]
-        _LOG, verbose=False)
+    _LOG, verbose=False
+)
 
 # There are different ways of reproducing real-time behaviors:
 # 1) True real-time
@@ -74,7 +76,7 @@ class ReplayedTime:
         speed_up_factor: float = 1.0,
     ):
         """
-        Constructor.
+        Construct the class instance.
 
         If param `initial_replayed_dt` has timezone info then this class works in
         the same timezone.
@@ -195,7 +197,9 @@ def get_data_as_of_datetime(
     _LOG.debug(
         hprint.to_str("knowledge_datetime_col_name datetime_ delay_in_secs")
     )
-    # _LOG.verb_debug(hpandas.df_to_str(df, print_shape_info=True, tag="Before get_data_as_of_datetime"))
+    # _LOG.verb_debug(
+    # hpandas.df_to_str(df, print_shape_info=True, tag="Before get_data_as_of_datetime")
+    # )
     hdbg.dassert_lte(0, delay_in_secs)
     datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     # TODO(gp): We could / should use binary search.
@@ -203,20 +207,27 @@ def get_data_as_of_datetime(
         datetime_, df, knowledge_datetime_col_name
     )
     if not allow_future_peeking:
-        if knowledge_datetime_col_name is None:
-            # Filter based on the index.
-            mask = df.index <= datetime_eff
-        else:
-            # Filter based on a column.
-            hdbg.dassert_in(knowledge_datetime_col_name, df.columns)
-            mask = df[knowledge_datetime_col_name] <= datetime_eff
-        df = df[mask]
+        # Filter the df to the values before and including `datetime_eff`.
+        start_ts = None
+        end_ts = datetime_eff
+        left_close = True
+        right_close = True
+        df = hpandas.trim_df(
+            df,
+            knowledge_datetime_col_name,
+            start_ts,
+            end_ts,
+            left_close,
+            right_close,
+        )
     else:
         # Sometimes we need to allow the future peeking. E.g., to know what's the
         # execution price of an order that will terminate in the future.
         raise ValueError("Future peeking")
         # pass
-    # _LOG.verb_debug(hpandas.df_to_str(df, print_shape_info=True, tag="After get_data_as_of_datetime"))
+    # _LOG.verb_debug(
+    # hpandas.df_to_str(df, print_shape_info=True, tag="After get_data_as_of_datetime")
+    # )
     return df
 
 
@@ -312,15 +323,15 @@ class Event(
         self, include_tenths_of_secs: bool, include_wall_clock_time: bool
     ) -> str:
         vals = []
-        vals.append("num_it=%s" % self.num_it)
+        vals.append(f"num_it={self.num_it}")
         #
         current_time = self.current_time
         if not include_tenths_of_secs:
             current_time = current_time.replace(microsecond=0, nanosecond=0)
-        vals.append("current_time='%s'" % current_time)
+        vals.append(f"current_time='{current_time}'")
         #
         if include_wall_clock_time:
-            vals.append("wall_clock_time='%s'" % self.wall_clock_time)
+            vals.append(f"wall_clock_time='{self.wall_clock_time}'")
         return " ".join(vals)
 
 
@@ -407,7 +418,7 @@ async def execute_with_real_time_loop(
                 _LOG.debug(hprint.to_str("num_it num_iterations"))
                 if num_it >= num_iterations:
                     _LOG.debug(
-                        "Exiting loop: " + hprint.to_str("num_it num_iterations")
+                        "Exiting loop: %s", hprint.to_str("num_it num_iterations")
                     )
                     break
             elif isinstance(time_out_in_secs, datetime.time):
@@ -415,8 +426,8 @@ async def execute_with_real_time_loop(
                 _LOG.debug(hprint.to_str("curr_time time_out_in_secs"))
                 if curr_time >= time_out_in_secs:
                     _LOG.debug(
-                        "Exiting loop: "
-                        + hprint.to_str("curr_time time_out_in_secs")
+                        "Exiting loop: %s",
+                        hprint.to_str("curr_time time_out_in_secs"),
                     )
                     break
             else:
@@ -436,14 +447,7 @@ async def execute_all_with_real_time_loop(
     This is a way to bridge the async to sync semantic. It is
     conceptually equivalent to adding a list around a Python generator.
     """
-    vals = zip(
-        *[
-            v
-            async for v in execute_with_real_time_loop(
-                *args, **kwargs
-            )
-        ]
-    )
+    vals = zip(*[v async for v in execute_with_real_time_loop(*args, **kwargs)])
     events, results = list(vals)
     events = Events(events)
     results = list(results)
