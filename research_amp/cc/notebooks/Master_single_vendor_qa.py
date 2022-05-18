@@ -36,8 +36,8 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.common.data.client as icdc
 import im_v2.ccxt.data.client as icdcl
+import im_v2.common.data.client as icdc
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -86,9 +86,7 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
             "threshold": 30,
         },
     }
-    config = ccocouti.get_config_from_nested_dict(
-        param_dict
-    )
+    config = ccocouti.get_config_from_nested_dict(param_dict)
     return config
 
 
@@ -112,7 +110,7 @@ def perform_qa_per_exchange(
 ) -> pd.DataFrame:
     """
     Get quality assurance stats for specified exchange.
-    
+
     QA stats include:
        - % of NaNs
        - % of rows with "volume=0"
@@ -135,7 +133,9 @@ def perform_qa_per_exchange(
     # Get exchange data for related full symbols.
     universe = client.get_universe()
     exchange_universe = [
-        full_symbol for full_symbol in universe if full_symbol.startswith(exchange_id)
+        full_symbol
+        for full_symbol in universe
+        if full_symbol.startswith(exchange_id)
     ]
     exchange_data = client.read_data(
         exchange_universe, **config["data"]["read_data"]
@@ -216,7 +216,7 @@ def _plot_bad_data_stats(
 ) -> None:
     """
     Plot bad data stats per unique full symbol in data.
-    
+
     Bad data is the sum of NaNs and "volume=0" stats.
     """
     full_symbols = bad_data_stats.index.get_level_values(0).unique()
@@ -230,13 +230,14 @@ def _plot_bad_data_stats(
             y=config["stats"]["threshold"],
             xmin=0,
             xmax=len(bad_data_stats),
-            color='r',
+            color="r",
         )
         # TODO(Dan): Make ticklabels more readable.
         # Get ticks and labels for x-axis.
         ticks = ax.xaxis.get_ticklocs()
         ticklabels = [
-            l.get_text().strip("()").split(", ") for l in ax.xaxis.get_ticklabels()
+            l.get_text().strip("()").split(", ")
+            for l in ax.xaxis.get_ticklabels()
         ]
         ticklabels = [".".join([l[0], l[1]]) for l in ticklabels]
         # Adjust x-axis labels so they do not overlap on plot by
