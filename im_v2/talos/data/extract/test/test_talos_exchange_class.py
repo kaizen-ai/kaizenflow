@@ -9,7 +9,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
-import im_v2.talos.data.extract.exchange_class as imvtdeexcl
+import im_v2.talos.data.extract.extractor as imvtdeex
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,15 +17,15 @@ _LOG = logging.getLogger(__name__)
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available")
-class TestTalosExchange1(hunitest.TestCase):
+class TestTalosExtractor1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
         """
-        _ = imvtdeexcl.TalosExchange("sandbox")
+        _ = imvtdeex.TalosExtractor("sandbox")
 
     @pytest.mark.slow()
-    @umock.patch.object(imvtdeexcl.hdateti, "get_current_time")
+    @umock.patch.object(imvtdeex.hdateti, "get_current_time")
     def test_download_ohlcv_data1(
         self, mock_get_current_time: umock.MagicMock
     ) -> None:
@@ -169,7 +169,7 @@ class TestTalosExchange1(hunitest.TestCase):
         Make creation of tests with invalid input easier.
         """
         # Initialize class.
-        exchange_class = imvtdeexcl.TalosExchange("sandbox")
+        exchange_class = imvtdeex.TalosExtractor("sandbox")
         # Run with invalid input.
         with pytest.raises(raises) as fail:
             exchange_class.download_ohlcv_data(
@@ -193,7 +193,7 @@ class TestTalosExchange1(hunitest.TestCase):
         Data is returned for further checking in different tests.
         """
         # Initiate class and set date parameters.
-        exchange_class = imvtdeexcl.TalosExchange("sandbox")
+        exchange_class = imvtdeex.TalosExtractor("sandbox")
         # Extract data.
         actual = exchange_class.download_ohlcv_data(
             currency_pair="BTC_USDT",
