@@ -84,6 +84,48 @@ def add_exchange_download_args(
     return parser
 
 
+def add_periodical_download_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """
+    Add the command line options exchange download.
+    """
+    parser.add_argument(
+        "--start_time",
+        action="store",
+        required=True,
+        type=str,
+        help="Timestamp when the download should start (e.g., '2022-05-03 00:40:00')",
+    )
+    parser.add_argument(
+        "--stop_time",
+        action="store",
+        required=True,
+        type=str,
+        help="Timestamp when the script should stop (e.g., '2022-05-03 00:30:00')",
+    )
+    parser.add_argument(
+        "--interval_min",
+        type=int,
+        help="Interval between download attempts, in minutes",
+    )
+    parser.add_argument(
+        "--exchange_id",
+        action="store",
+        required=True,
+        type=str,
+        help="Name of exchange to download data from (e.g., 'binance')",
+    )
+    parser.add_argument(
+        "--universe",
+        action="store",
+        required=True,
+        type=str,
+        help="Trading universe to download data for",
+    )
+    return parser
+
+
 CCXT_EXCHANGE = "CcxtExchange"
 TALOS_EXCHANGE = "TalosExchange"
 CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExchange"

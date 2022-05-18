@@ -29,39 +29,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser.add_argument(
-        "--start_time",
-        action="store",
-        required=True,
-        type=str,
-        help="Timestamp when the download should start (e.g., '2022-05-03 00:40:00')",
-    )
-    parser.add_argument(
-        "--stop_time",
-        action="store",
-        required=True,
-        type=str,
-        help="Timestamp when the script should stop (e.g., '2022-05-03 00:30:00')",
-    )
-    parser.add_argument(
-        "--interval_min",
-        type=int,
-        help="Interval between download attempts, in minutes",
-    )
-    parser.add_argument(
-        "--exchange_id",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of exchange to download data from (e.g., 'binance')",
-    )
-    parser.add_argument(
-        "--universe",
-        action="store",
-        required=True,
-        type=str,
-        help="Trading universe to download data for",
-    )
+    parser = imvcdeexut.add_periodical_download_args(parser)
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcddbut.add_db_args(parser)
     parser = hs3.add_s3_args(parser)
