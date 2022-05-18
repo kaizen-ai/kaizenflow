@@ -358,6 +358,7 @@ class CcxtCddCsvParquetByAssetClient(
 
         The file path is constructed in the following way:
         `<root_dir>/<snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`
+        `s3://<ck-data>/20210924/ohlcv/...`
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
