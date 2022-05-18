@@ -13,6 +13,7 @@ import requests
 
 import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
+import time
 
 _LOG = logging.getLogger(__name__)
 
@@ -65,6 +66,7 @@ class CryptoChassisExtractor:
             hdbg.dfatal(
                 f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth"
             )
+        time.sleep(1)
         return data
 
     def _download_market_depth(
@@ -149,7 +151,7 @@ class CryptoChassisExtractor:
         # TODO(Danya): It seems like the API doesn't recognize None, at least for OHLCV.
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
-        include_realtime: Optional[int] = None,
+        include_realtime: Optional[int] = "1",
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
@@ -212,6 +214,8 @@ class CryptoChassisExtractor:
             if mode == "recent":
                 # Process real-time.
                 # Get columns.
+                # TODO(Danya): if mode is recent, it only gives you data for the current month.
+                # This makes downloading historical data up to present moment actually more difficult.
                 columns = data_json[mode]["fields"].split(", ")
                 # Build Dataframe.
                 ohlcv_data = pd.DataFrame(
