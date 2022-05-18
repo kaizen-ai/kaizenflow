@@ -22,7 +22,7 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -34,7 +34,6 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = imvcddbut.add_db_args(parser)
@@ -45,7 +44,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeexcl.CcxtExchange)
+    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeex.CcxtExtractor)
 
 
 if __name__ == "__main__":

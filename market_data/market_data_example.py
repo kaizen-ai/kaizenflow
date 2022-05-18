@@ -428,7 +428,7 @@ def get_TalosPqImClientMarketData_example1(
 
 def get_RealTimeImClientMarketData_example1(
     # TODO(Danya): Initialize im_client from outside the method.
-    connection: hsql.DbConnection,
+    im_client: hsql.DbConnection,
     event_loop: asyncio.AbstractEventLoop,
     asset_ids: List[int],
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:

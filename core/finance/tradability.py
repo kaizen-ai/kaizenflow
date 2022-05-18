@@ -71,9 +71,9 @@ def get_predictions(
     df: pd.DataFrame, ret_col: str, hit_rate: float, seed: int
 ) -> pd.Series:
     """
-    :param df: Desired sample with OHLCV data and calculated returns
-    :param hit_rate: Desired percantage of successful predictions
-    :param seed: Experiment stance
+    :param df: desired sample with OHLCV data and calculated returns
+    :param hit_rate: desired percantage of successful predictions
+    :param seed: experiment stance
     """
     hdbg.dassert_lte(0, hit_rate)
     hdbg.dassert_lte(hit_rate, 1)
@@ -99,7 +99,7 @@ def calculate_confidence_interval(
 ) -> None:
     """
     :param hit_series: boolean series with hit values
-    :param alpha: Significance level
+    :param alpha: significance level
     :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
     """
     point_estimate = hit_series.mean()
@@ -120,10 +120,10 @@ def get_predictions_and_hits(df, ret_col, hit_rate, seed):
     """
     Calculate hits from the predictions and show confidence intervals.
 
-    :param df: Desired sample with OHLCV data and calculated returns
-    :param ret_col: Name of the column with returns
-    :param hit_rate: Desired percentage of successful predictions
-    :param seed: Experiment stance
+    :param df: desired sample with OHLCV data and calculated returns
+    :param ret_col: name of the column with returns
+    :param hit_rate: desired percentage of successful predictions
+    :param seed: experiment stance
     """
     df = df.copy()
     df["predictions"] = get_predictions(df, ret_col, hit_rate, seed)
@@ -148,11 +148,11 @@ def simulate_pnls_for_set_of_hit_rates(
     For the set of various pre-defined `hit_rates` values iterate several
     generations for the actual PnL.
 
-    :param df: Desired sample with calculated returns
-    :param rets_col: Name of the column with returns
-    :param hit_rates: Set of hit rates for the experiment
-    :param n_experiment: Number of iterations for each `hit_rate`
-    :return: Corresponding `PnL` for each `hit_rate`
+    :param df: desired sample with calculated returns
+    :param rets_col: name of the column with returns
+    :param hit_rates: set of hit rates for the experiment
+    :param n_experiment: number of iterations for each `hit_rate`
+    :return: corresponding `PnL` for each `hit_rate`
     """
     # Every seed corresponds to a different "model".
     seed = random.randint(0, 100)
@@ -173,145 +173,6 @@ def simulate_pnls_for_set_of_hit_rates(
             # Reassign seed value.
             seed += 1
     return results
-
-
-# #############################################################################
-
-
-def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
-    """
-    Resample the data and calculate VWAP, TWAP using DataFlow methods.
-
-    :param df: Raw data
-    :param resampling_rule: Desired resampling frequency
-    :return: Resampled multiindex DataFrame with computed metrics
-    """
-    # Configure the node to do the TWAP / VWAP resampling.
-    node_resampling_config = {
-        "in_col_groups": [
-            ("close",),
-            ("volume",),
-        ],
-        "out_col_group": (),
-        "transformer_kwargs": {
-            "rule": resampling_rule,
-            "resampling_groups": [
-                ({"close": "close"}, "last", {}),
-                (
-                    {
-                        "close": "twap",
-                    },
-                    "mean",
-                    {},
-                ),
-                (
-                    {
-                        "volume": "volume",
-                    },
-                    "sum",
-                    {"min_count": 1},
-                ),
-            ],
-            "vwap_groups": [
-                ("close", "volume", "vwap"),
-            ],
-        },
-        "reindex_like_input": False,
-        "join_output_with_input": False,
-    }
-    # Put the data in the DataFlow format (which is multi-index).
-    converted_data = dtfsysonod._convert_to_multiindex(df, "full_symbol")
-    # Create the node.
-    nid = "resample"
-    node = dtfcore.GroupedColDfToDfTransformer(
-        nid,
-        transformer_func=cofinanc.resample_bars,
-        **node_resampling_config,
-    )
-    # Compute the node on the data.
-    vwap_twap = node.fit(converted_data)
-    # Save the result.
-    vwap_twap_df = vwap_twap["df_out"]
-    return vwap_twap_df
-
-
-def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
-    """
-    Compute returns on the resampled data DataFlow-style.
-
-    :param df: Resampled multiindex DataFrame
-    :param rets_type: i.e., "log_rets" or "pct_change"
-    :return: The same DataFrame but with attached columns with returns
-    """
-    # Configure the node to calculate the returns.
-    node_returns_config = {
-        "in_col_groups": [
-            ("close",),
-            ("vwap",),
-            ("twap",),
-        ],
-        "out_col_group": (),
-        "transformer_kwargs": {
-            "mode": rets_type,
-        },
-        "col_mapping": {
-            "close": "close.ret_0",
-            "vwap": "vwap.ret_0",
-            "twap": "twap.ret_0",
-        },
-    }
-    # Create the node that computes ret_0.
-    nid = "ret0"
-    node = dtfcore.GroupedColDfToDfTransformer(
-        nid,
-        transformer_func=cofinanc.compute_ret_0,
-        **node_returns_config,
-    )
-    # Compute the node on the data.
-    rets = node.fit(df)
-    # Save the result.
-    rets_df = rets["df_out"]
-    return rets_df
-
-
-def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
-    # Convert to multiindex.
-    converted_df = dtfsysonod._convert_to_multiindex(df, "full_symbol")
-    # Configure the node to calculate the returns.
-    node_bid_ask_config = {
-        "in_col_groups": [
-            ("ask_price",),
-            ("ask_size",),
-            ("bid_price",),
-            ("bid_size",),
-        ],
-        "out_col_group": (),
-        "transformer_kwargs": {
-            "bid_col": "bid_price",
-            "ask_col": "ask_price",
-            "bid_volume_col": "bid_size",
-            "ask_volume_col": "ask_size",
-        },
-    }
-    # Create the node that computes bid ask metrics.
-    nid = "process_bid_ask"
-    node = dtfcore.GroupedColDfToDfTransformer(
-        nid,
-        transformer_func=cfibiask.process_bid_ask,
-        **node_bid_ask_config,
-    )
-    # Compute the node on the data.
-    bid_ask_metrics = node.fit(converted_df)
-    # Save the result.
-    bid_ask_metrics = bid_ask_metrics["df_out"]
-    # Convert relative spread to bps.
-    bid_ask_metrics["relative_spread"] = (
-        bid_ask_metrics["relative_spread"] * 10000
-    )
-    bid_ask_metrics = bid_ask_metrics.rename(
-        columns={"relative_spread": "relative_spread_bps"}
-    )
-    return bid_ask_metrics
 
 
 # TODO(gp): Move to hpandas.

@@ -7,7 +7,7 @@ import helpers.hgit as hgit
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
@@ -70,7 +70,7 @@ class TestDownloadRealtimeForOneExchange1(
         # Run.
         args = argparse.Namespace(**kwargs)
         imvcdeexut.download_realtime_for_one_exchange(
-            args, imvcdeexcl.CcxtExchange
+            args, imvcdeex.CcxtExtractor
         )
         # Get saved data in db.
         select_all_query = "SELECT * FROM ccxt_ohlcv;"
@@ -95,9 +95,9 @@ class TestDownloadRealtimeForOneExchange1(
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
-    @umock.patch.object(imvcdeexcl.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdeex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(imvcdeexcl.hsecret, "get_secret")
+    @umock.patch.object(imvcdeex.hsecret, "get_secret")
     def test_function_call1(
         self,
         mock_get_secret: umock.MagicMock,
@@ -122,9 +122,9 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
     @pytest.mark.slow
-    @umock.patch.object(imvcdeexcl.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdeex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(imvcdeexcl.hsecret, "get_secret")
+    @umock.patch.object(imvcdeex.hsecret, "get_secret")
     def test_function_call2(
         self,
         mock_get_secret: umock.MagicMock,
@@ -203,11 +203,11 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         }
         # Run.
         args = argparse.Namespace(**kwargs)
-        imvcdeexut.download_historical_data(args, imvcdeexcl.CcxtExchange)
+        imvcdeexut.download_historical_data(args, imvcdeex.CcxtExtractor)
 
     @pytest.mark.slow("Around 15s")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
-    @umock.patch.object(imvcdeexcl.hsecret, "get_secret")
+    @umock.patch.object(imvcdeex.hsecret, "get_secret")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call1(
         self,

@@ -385,6 +385,50 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
+def check_and_filter_matching_columns(
+    df: pd.DataFrame, required_columns: List[str], filter_data_mode: str
+) -> pd.DataFrame:
+    """
+    Check that columns are the required ones and if not filter data depending
+    on `filter_data_mode`.
+
+    :param df: data to check columns for
+    :param required_columns: columns to return, skipping columns that are not required
+    :param filter_data_mode: control behaviour with respect to extra or missing columns
+        - "assert": raise an error if required columns do not match received columns
+        - "warn_and_trim": return the intersection of required and received columns and
+           issue a warning
+    :return: input data as it is if required columns match received columns otherwise
+        processed data, see `filter_data_mode`
+    """
+    received_columns = df.columns.to_list()
+    hdbg.dassert_lte(1, len(received_columns))
+    #
+    if filter_data_mode == "assert":
+        # Raise an assertion.
+        only_warning = False
+    elif filter_data_mode == "warn_and_trim":
+        # Just issue a warning.
+        only_warning = True
+        # Get columns intersection while preserving the order of the columns.
+        columns_intersection = [
+            col_name
+            for col_name in required_columns
+            if col_name in received_columns
+        ]
+        hdbg.dassert_lte(1, len(columns_intersection))
+        df = df[columns_intersection]
+    else:
+        raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
+    hdbg.dassert_set_eq(
+        required_columns,
+        received_columns,
+        only_warning=only_warning,
+        msg="Received columns do not match required columns.",
+    )
+    return df
+
+
 def compare_dataframe_rows(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
     """
     Compare contents of rows with same indices.
@@ -632,14 +676,21 @@ def trim_df(
     right_close: bool,
 ) -> pd.DataFrame:
     """
-    Trim df using values in `ts_col_name` in interval bounded by `start_ts` and
-    `end_ts`.
+    Trim the dataframe using values in `ts_col_name`.
 
-    :param ts_col_name: the name of the column. `None` means index
-    :param start_ts, end_ts: boundaries of the desired interval
-    :param left_close, right_close: encode what to do with the boundaries of the
-        interval
-        - E.g., [start_ts, end_ts), or (start_ts, end_ts]
+    The dataframe is trimmed in the interval bounded by `start_ts` and `end_ts`.
+
+    :param df: the dataframe to trim
+    :param ts_col_name: the name of the column; `None` means index
+    :param start_ts: the start boundary for trimming
+    :param end_ts: the end boundary for trimming
+    :param left_close: whether to include the start boundary of the interval
+        - True: [start_ts, ...
+        - False: (start_ts, ...
+    :param right_close: whether to include the end boundary of the interval
+        - True: ..., end_ts]
+        - False: ..., end_ts)
+    :return: the trimmed dataframe
     """
     _LOG.verb_debug(
         df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
@@ -648,64 +699,61 @@ def trim_df(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
     if df.empty:
-        # If the df is empty there is nothing to trim.
+        # If the df is empty, there is nothing to trim.
+        return df
+    if start_ts is None and end_ts is None:
+        # If no boundaries are specified, there are no points of reference to trim to.
         return df
     num_rows_before = df.shape[0]
     if start_ts is not None and end_ts is not None:
+        # Confirm that the interval boundaries are valid.
         hdateti.dassert_tz_compatible(start_ts, end_ts)
         hdbg.dassert_lte(start_ts, end_ts)
-    # Handle the index.
-    use_index = False
+    # Get the values to filter by.
     if ts_col_name is None:
-        # Convert the index into a regular column.
-        # TODO(gp): Use binary search if there is an index.
-        if df.index.name is None:
-            _LOG.debug(
-                "The df has no index\n%s",
-                df_to_str(df.head()),
-            )
-            df.index.name = "index"
-        ts_col_name = df.index.name
-        df = df.reset_index()
-        use_index = True
-    # TODO(gp): This is inefficient. Make it faster by binary search, if ordered.
-    hdbg.dassert_in(ts_col_name, df.columns)
-    # Filter based on start_ts.
-    _LOG.debug("Filtering by start_ts=%s", start_ts)
-    if start_ts is not None:
-        _LOG.verb_debug("start_ts=%s", start_ts)
-        # Convert the column into `pd.Timestamp` to compare it to `start_ts`.
-        # This is needed to sidestep the comparison hell involving `numpy.datetime64`
-        # vs Pandas objects.
-        tss = pd.to_datetime(df[ts_col_name])
-        hdateti.dassert_tz_compatible(tss.iloc[0], start_ts)
-        _LOG.verb_debug("tss=\n%s", df_to_str(tss))
-        if left_close:
-            mask = tss >= start_ts
-        else:
-            mask = tss > start_ts
-        _LOG.verb_debug("mask=\n%s", df_to_str(mask))
-        df = df[mask]
-    # Filter based on end_ts.
-    _LOG.debug("Filtering by end_ts=%s", end_ts)
-    if not df.empty:
-        if end_ts is not None:
-            _LOG.debug("Filtering by start_ts=%s", start_ts)
-            _LOG.verb_debug("end_ts=%s", end_ts)
-            tss = pd.to_datetime(df[ts_col_name])
-            hdateti.dassert_tz_compatible(tss.iloc[0], end_ts)
-            _LOG.verb_debug("tss=\n%s", df_to_str(tss))
-            if right_close:
-                mask = tss <= end_ts
-            else:
-                mask = tss < end_ts
-            _LOG.verb_debug("mask=\n%s", df_to_str(mask))
-            df = df[mask]
+        values_to_filter_by = pd.Series(df.index, index=df.index)
     else:
-        # If the df is empty there is nothing to trim.
-        pass
-    if use_index:
-        df = df.set_index(ts_col_name, drop=True)
+        hdbg.dassert_in(ts_col_name, df.columns)
+        values_to_filter_by = df[ts_col_name]
+    if values_to_filter_by.is_monotonic:
+        # The values are sorted; using the `pd.Series.searchsorted` method.
+        # Find the index corresponding to the left boundary of the interval.
+        if start_ts is not None:
+            side = "left" if left_close else "right"
+            left_idx = values_to_filter_by.searchsorted(start_ts, side)
+        else:
+            # There is nothing to filter, so the left index is the first one.
+            left_idx = 0
+        # Find the index corresponding to the right boundary of the interval.
+        if end_ts is not None:
+            side = "right" if right_close else "left"
+            right_idx = values_to_filter_by.searchsorted(end_ts, side)
+        else:
+            # There is nothing to filter, so the right index is None.
+            right_idx = None
+        hdbg.dassert_lte(0, left_idx)
+        if right_idx is not None:
+            hdbg.dassert_lte(left_idx, right_idx)
+            hdbg.dassert_lte(right_idx, df.shape[0])
+        df = df.iloc[left_idx:right_idx]
+    else:
+        # The values are not sorted; using the `pd.Series.between` method.
+        if left_close and right_close:
+            inclusive = "both"
+        elif left_close:
+            inclusive = "left"
+        elif right_close:
+            inclusive = "right"
+        else:
+            inclusive = "neither"
+        epsilon = pd.DateOffset(minutes=1)
+        if start_ts is None:
+            start_ts = values_to_filter_by.min() - epsilon
+        if end_ts is None:
+            end_ts = values_to_filter_by.max() + epsilon
+        df = df[
+            values_to_filter_by.between(start_ts, end_ts, inclusive=inclusive)
+        ]
     # Report the changes.
     num_rows_after = df.shape[0]
     if num_rows_before != num_rows_after:
@@ -732,6 +780,7 @@ def _df_to_str(
 ) -> str:
     is_in_ipynb = hsystem.is_running_in_ipynb()
     from IPython.display import display
+
     out = []
     # Set dataframe print options.
     with pd.option_context(
@@ -773,17 +822,19 @@ def _df_to_str(
             else:
                 # TODO(gp): @all use this approach also above and update all the
                 #  unit tests.
-                df = [df.head(nr),
-                      pd.DataFrame([["..."] * df.shape[1]],
-                                   index=[" "],
-                                   columns=df.columns),
-                      df.tail(nr)]
+                df = [
+                    df.head(nr),
+                    pd.DataFrame(
+                        [["..."] * df.shape[1]], index=[" "], columns=df.columns
+                    ),
+                    df.tail(nr),
+                ]
                 df = pd.concat(df)
                 display(df)
     if not is_in_ipynb:
         txt = "\n".join(out)
     else:
-        txt = ''
+        txt = ""
     return txt
 
 

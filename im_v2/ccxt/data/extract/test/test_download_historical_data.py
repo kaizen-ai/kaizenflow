@@ -6,13 +6,14 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 class TestDownloadHistoricalData1(hunitest.TestCase):
     def test_parser(self) -> None:
         """
@@ -74,5 +75,5 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         self.assertEqual(len(mock_download_realtime.call_args), 2)
         self.assertEqual(mock_download_realtime.call_args.args[0], namespace)
         self.assertEqual(
-            mock_download_realtime.call_args.args[1], imvcdeexcl.CcxtExchange
+            mock_download_realtime.call_args.args[1], imvcdeex.CcxtExtractor
         )
