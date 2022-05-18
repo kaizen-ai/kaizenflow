@@ -1,33 +1,41 @@
 #!/usr/bin/env python
 """
-Script to download OHLCV data for a single exchange from CCXT periodically.
+Script to download OHLCV data for a single exchange from Talos periodically.
 
 Use as:
-> im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py \
+> im_v2/talos/data/extract/download_realtime_for_one_exchange_periodically.py \
     --exchange_id 'binance' \
-    --universe 'v3' \
+    --universe 'v1' \
     --db_stage 'dev' \
-    --db_table 'ccxt_ohlcv_test' \
+    --db_table 'talos_ohlcv_test' \
     --aws_profile 'ck' \
     --s3_path 's3://cryptokaizen-data-test/realtime/' \
     --interval_min '1' \
-    --start_time '2022-05-16 00:45:00' \
-    --stop_time '2022-05-16 00:55:00'
+    --start_time '2022-05-18T10:55:00.000000Z' \
+    --stop_time '2022-05-18T10:59:00.000000Z'
 """
 
 import argparse
 
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
+import im_v2.talos.data.extract.extractor as imvtdeexcl
 
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--api_stage",
+        action="store",
+        required=False,
+        default="sandbox",
+        type=str,
+        help="(Optional) API 'stage' to use ('sandbox' or 'prod'), default: 'sandbox'",
     )
     parser = imvcdeexut.add_periodical_download_args(parser)
     parser = hparser.add_verbosity_arg(parser)
@@ -39,7 +47,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     imvcdeexut.download_realtime_for_one_exchange_periodically(
-        args, imvcdeex.CcxtExtractor
+        args, imvtdeexcl.TalosExtractor
     )
 
 
