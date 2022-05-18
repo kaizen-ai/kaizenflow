@@ -498,7 +498,10 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         # Build a root dir to the list of exchange ids subdirs, e.g.,
         # "s3://cryptokaizen-data/historical.manual.pq/latest/ohlcv/ccxt/latest/binance".
         root_dir = os.path.join(
-            self._root_dir, self._data_snapshot, self._dataset, self._vendor.lower(),
+            self._root_dir,
+            self._data_snapshot,
+            self._dataset,
+            self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),

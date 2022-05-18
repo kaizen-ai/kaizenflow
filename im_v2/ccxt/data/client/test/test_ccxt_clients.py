@@ -6,8 +6,8 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hparquet as hparque
-import helpers.hsql as hsql
 import helpers.hs3 as hs3
+import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
@@ -1373,7 +1373,9 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         partition_columns = ["currency_pair", "year", "month"]
         aws_profile = "ck"
         s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        dst_dir = os.path.join(s3_bucket_path, "unit_test/historical/latest/ohlcv/ccxt")
+        dst_dir = os.path.join(
+            s3_bucket_path, "unit_test/historical/latest/ohlcv/ccxt"
+        )
         exchange_id_col_name = "exchange_id"
         for exchange_id, df_exchange_id in data.groupby(exchange_id_col_name):
             exchange_dir = os.path.join(dst_dir, exchange_id)
