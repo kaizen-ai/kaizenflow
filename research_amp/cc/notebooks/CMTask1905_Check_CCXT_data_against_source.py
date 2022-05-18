@@ -75,27 +75,14 @@ print(config)
 # # Functions
 
 # %%
-def _compute_frac_volume_0(
-    df: pd.DataFrame, year: int, month: int
-) -> pd.DataFrame:
-    """
-    Compute data with volume = 0.
-
-    returns data for specific year and month and data with volume = 0.
-    """
-    df = df.loc[(df.index.year == year) & (df.index.month == month)]
-    df_volume_0 = df.loc[df["volume"] == 0]
-    return df, df_volume_0
-
-
-def _get_all_data(
+def _get_ccxt_ohlcv_data(
     exchange: ccxt.Exchange,
     currency_pair: str,
     start_timestamp: pd.Timestamp,
     end_timestamp: pd.Timestamp,
 ) -> pd.DataFrame:
     """
-    Get all data for exchange.
+    Get OHLCV data for a given exchange, currency pair and time period.
     """
     start_timestamp = start_timestamp.asm8.astype(int) // 1000000
     end_timestamp = end_timestamp.asm8.astype(int) // 1000000
@@ -106,18 +93,18 @@ def _get_all_data(
         end_timestamp + duration,
         duration * 500,
     ):
-        bars = _load_ccxt_data(currency_pair, t, exchange)
+        bars = _get_ccxt_bar_data(currency_pair, t, exchange)
         all_bars.append(bars)
         time.sleep(1)
     all_data = pd.concat(all_bars)
     return all_data
 
 
-def _load_ccxt_data(
+def _get_ccxt_bar_data(
     currency_pair: str, since: "start timestamp", exchange: ccxt.Exchange
 ):
     """
-    Load data from CCXT.
+    Get data for a single bar from CCXT.
     """
     ccxt_data = exchange.fetch_ohlcv(
         currency_pair, timeframe="1m", since=since, limit=500
@@ -125,6 +112,26 @@ def _load_ccxt_data(
     columns = ["timestamp", "open", "high", "low", "close", "volume"]
     bars = pd.DataFrame(ccxt_data, columns=columns)
     return bars
+
+
+def _get_data_for_year_month(
+    df: pd.DataFrame, year: int, month: int
+) -> pd.DataFrame:
+    """
+    :return: data for a specific year and month
+    """
+    df = df.loc[(df.index.year == year) & (df.index.month == month)]
+    return df
+
+
+def _get_data_with_volume_0(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute % of data points where volume = 0.
+
+    :return: data with volume = 0.
+    """
+    df_volume_0 = df.loc[df["volume"] == 0]
+    return df_volume_0
 
 
 def _log_into_exchange(exchange: str) -> ccxt.Exchange:
@@ -187,9 +194,8 @@ binance_data = client.read_data(
 )
 
 # %%
-binance_2019_09, binance_2019_09_volume_0 = _compute_frac_volume_0(
-    binance_data, 2019, 9
-)
+binance_2019_09 = _get_data_for_year_month(binance_data, 2019, 9)
+binance_2019_09_volume_0 = _get_data_with_volume_0(binance_2019_09)
 binance_2019_09.head(3)
 
 # %%
@@ -215,16 +221,12 @@ ccxt_binance_DOGE = ccxt_binance_DOGE_exchange.download_ohlcv_data(
 
 # %%
 ccxt_binance_DOGE = _set_index_ts(ccxt_binance_DOGE)
-ccxt_binance_DOGE, ccxt_binance_DOGE_volume_0 = _compute_frac_volume_0(
-    ccxt_binance_DOGE, 2019, 9
-)
+ccxt_binance_DOGE = _get_data_for_year_month(ccxt_binance_DOGE, 2019, 9)
+ccxt_binance_DOGE_volume_0 = _get_data_with_volume_0(ccxt_binance_DOGE)
 ccxt_binance_DOGE.head(3)
 
 # %%
 ccxt_binance_DOGE_volume_0.head(3)
-
-# %% [markdown]
-# Where`volume = 0`, data from columns `open`, `high`, `low`, `close` is exactly the same from previous row where `volume != 0`. It could mean that `volume = 0` rows are `NaNs` at the source, so it could be the way exchange handles missing data.
 
 # %% [markdown]
 # # CCXT w/o Extractor
@@ -233,11 +235,12 @@ ccxt_binance_DOGE_volume_0.head(3)
 ccxt_exchange = _log_into_exchange("binance")
 start_ts = pd.Timestamp("2019-09-01 00:00:00+00:00")
 end_ts = pd.Timestamp("2019-09-30 23:59:59+00:00")
-ccxt_df = _get_all_data(
+ccxt_df = _get_ccxt_ohlcv_data(
     ccxt_exchange, currency_pair_binance, start_ts, end_ts
 )
 ccxt_df = _set_index_ts(ccxt_df)
-ccxt_df, ccxt_df_volume_0 = _compute_frac_volume_0(ccxt_df, 2019, 9)
+ccxt_df = _get_data_for_year_month(ccxt_df, 2019, 9)
+ccxt_df_volume_0 = _get_data_with_volume_0(ccxt_df)
 ccxt_df
 
 # %%
@@ -255,8 +258,8 @@ ccxt_df_volume_0.head(3)
 #
 
 # %% [markdown]
-# - The huge amount of data from CCXT is duplicates. Unique values are 43200.
-# - Where volume = 0, data from columns open, high, low, close is exactly the same from previous row where volume != 0. It could mean that volume = 0 rows are NaNs at the source, so it could be the way exchange handles missing data.
+# - The huge amount of data from CCXT is duplicated.
+# - Where volume = 0, data from columns open, high, low, close is exactly the same as in the last row with `volume != 0`. It could mean that volume = 0 rows are NaNs at the source, so it could be the way exchange handles missing data.
 
 # %% [markdown]
 # # ftx::BTC_USDT
@@ -275,7 +278,8 @@ ftx_data = client.read_data(
 )
 
 # %%
-ftx_2020_04, ftx_2020_04_volume_0 = _compute_frac_volume_0(ftx_data, 2020, 4)
+ftx_2020_04 = _get_data_for_year_month(ftx_data, 2020, 4)
+ftx_2020_04_volume_0 = _get_data_with_volume_0(ftx_2020_04)
 ftx_2020_04.head(3)
 
 # %%
@@ -302,9 +306,8 @@ ccxt_ftx_BTC = ccxt_ftx_BTC_exchange.download_ohlcv_data(
 
 # %%
 ccxt_ftx_BTC = _set_index_ts(ccxt_ftx_BTC)
-ccxt_ftx_BTC, ccxt_ftx_BTC_volume_0 = _compute_frac_volume_0(
-    ccxt_ftx_BTC, 2020, 4
-)
+ccxt_ftx_BTC = _get_data_for_year_month(ccxt_ftx_BTC, 2020, 4)
+ccxt_ftx_BTC_volume_0 = _get_data_with_volume_0(ccxt_ftx_BTC)
 ccxt_ftx_BTC.head(3)
 
 
@@ -317,25 +320,17 @@ ccxt_ftx_BTC.loc[(ccxt_ftx_BTC.index.day == 25) & (ccxt_ftx_BTC.index.hour == 3)
 ]
 
 # %% [markdown]
-# So far `ftx` doesn't have same pattern as `binance` where `volume=0` rows have values from the last non-`volume=0` row.
-
-# %% [markdown]
 # ## CCXT w/o Extractor
 
 # %%
 ccxt_exchange_ftx = _log_into_exchange("ftx")
 start_ts = pd.Timestamp("2019-04-01 00:00:00+00:00")
 end_ts = pd.Timestamp("2019-04-30 23:59:59+00:00")
-ccxt_df_ftx = _get_all_data(
+ccxt_df_ftx = _get_ccxt_ohlcv_data(
     ccxt_exchange_ftx, currency_pair_ftx, start_ts, end_ts
 )
-ccxt_df_ftx = _set_index_ts(ccxt_df_ftx)
-ccxt_df_ftx, ccxt_df_ftx_volume_0 = _compute_frac_volume_0(ccxt_df_ftx, 2020, 4)
-print(len(ccxt_df_ftx.index.unique()))
-display(ccxt_df_ftx.head(3))
-
-# %%
-ccxt_df_ftx_volume_0.head(3)
+# Data is absent after re-run.
+ccxt_df_ftx.head(3)
 
 # %% [markdown]
 #
@@ -346,10 +341,13 @@ ccxt_df_ftx_volume_0.head(3)
 #
 
 # %% [markdown]
+# Values in `volume = 0` rows change and don't have the same pattern as binance.
+
+# %% [markdown]
 # # gateio::ETH_USDT w/o `volume = 0` in data
 
 # %% [markdown]
-# `gateio` data has weird statistics: no `volume = 0` and still tons of `NaNs`; has `volume = 0` and different amount of `NaNs`, i.e not like the others exchange pattern above. So decided to take a look at two currency pairs with different patterns.
+# Data from `gateio` has NaN spikes in September, October and November in 2021.
 
 # %% [markdown]
 # ## Client
@@ -365,10 +363,10 @@ gateio_data = client.read_data(
 )
 
 # %% [markdown]
-# ### 100% of `NaNs`
+# ### October 2021 - 100% of `NaNs`
 
 # %%
-gateio_data_2021_10, _ = _compute_frac_volume_0(gateio_data, 2021, 10)
+gateio_data_2021_10 = _get_data_for_year_month(gateio_data, 2021, 10)
 gateio_data_2021_10.head(3)
 
 # %%
@@ -378,7 +376,7 @@ gateio_data_2021_10.isna().value_counts()
 # ### 34.46% of `NaNs`
 
 # %%
-gateio_data_2021_09, _ = _compute_frac_volume_0(gateio_data, 2021, 9)
+gateio_data_2021_09 = _get_data_for_year_month(gateio_data, 2021, 9)
 gateio_data_2021_09.head(3)
 
 # %%
@@ -393,18 +391,15 @@ gateio_data.loc[
 ].head(3)
 
 # %% [markdown]
-# At first look, `NaNs` appear because of some kind of problem at the source. According to Dan's tables all currency pairs have ~34-39% of `NaNs` for the period from September to November. October data has 100% of `NaNs` for all currency pairs of `gateio` so that definitely could be a technical issue at the exchange.
-
-# %% [markdown]
 # ## Extractor
 
 # %%
-ccxt_gateio_ETH_exchange = imvcdeexcl.CcxtExchange("gateio")
+ccxt_gateio_exchange = imvcdeexcl.CcxtExchange("gateio")
 currency_pair_gateio = ["ETH/USDT", "ADA/USDT"]
 start_timestamp = pd.Timestamp("2021-09-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2021-09-30 23:59:59+00:00")
 sleep_time_in_secs = 1
-ccxt_gateio_ETH = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+ccxt_gateio_ETH = ccxt_gateio_exchange.download_ohlcv_data(
     currency_pair_gateio[0],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
@@ -418,7 +413,7 @@ ccxt_gateio_ETH
 start_timestamp = pd.Timestamp("2021-10-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2021-10-31 23:59:59+00:00")
 sleep_time_in_secs = 1
-ccxt_gateio_ETH_10 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+ccxt_gateio_ETH_10 = ccxt_gateio_exchange.download_ohlcv_data(
     currency_pair_gateio[0],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
@@ -432,7 +427,7 @@ ccxt_gateio_ETH_10
 start_timestamp = pd.Timestamp("2021-12-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2021-12-31 23:59:59+00:00")
 sleep_time_in_secs = 1
-ccxt_gateio_ETH_12 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+ccxt_gateio_ETH_12 = ccxt_gateio_exchange.download_ohlcv_data(
     currency_pair_gateio[0],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
@@ -443,14 +438,14 @@ ccxt_gateio_ETH_12 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
 ccxt_gateio_ETH_12
 
 # %% [markdown]
-# There is no data coming from `Extractor` but somehow we have it on S3. I could say exchange has an expiration date for data.
+# Empty datasets are returned for the dates earlier than December 2021. Probably data is accessible only for a certain amount of time, e.g., 1 year.
 
 # %%
 # Load recent data to make sure API and Exctractor are working.
 start_timestamp = pd.Timestamp("2022-04-25 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2022-05-14 23:59:59+00:00")
 sleep_time_in_secs = 1
-ccxt_gateio_ETH_2022 = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+ccxt_gateio_ETH_2022 = ccxt_gateio_exchange.download_ohlcv_data(
     currency_pair_gateio[0],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
@@ -464,13 +459,13 @@ ccxt_gateio_ETH_2022.head(3)
 # ## CCXT w/o Extractor
 
 # %% [markdown]
-# Take a look at one month of 2021, if it's empty, it has so called an expiration date.
+# Empty data is also returned from CCXT directly which means that the problem is at source.
 
 # %%
 ccxt_exchange = _log_into_exchange("gateio")
 start_ts = pd.Timestamp("2021-09-01 00:00:00+00:00")
-end_ts = pd.Timestamp("20121-09-30 23:59:59+00:00")
-ccxt_df = _get_all_data(
+end_ts = pd.Timestamp("2021-09-30 23:59:59+00:00")
+ccxt_df = _get_ccxt_ohlcv_data(
     ccxt_exchange, currency_pair_gateio[0], start_ts, end_ts
 )
 ccxt_df
@@ -479,8 +474,8 @@ ccxt_df
 # ### Summary for `gateio` `volume != 0` data.
 
 # %% [markdown]
-# - Exchange has an expiration date for data because data we have no longer exist at the source. Here could be useful `end_download_timestamp` column for data we store on S3, just to confirm the statement or vice versa.
-# - October data has 100% of NaNs for all currency pairs of gateio. Based on that, it could be a technical issue at the exchange.
+# - Data before January 2022 is not accessible from `gateio` via CCXT
+# - There are spikes of NaNs in September, October, November 2021 that are common for all coins
 
 # %% [markdown]
 # # gateio::ADA_USDT with `volume = 0` in data
@@ -498,11 +493,10 @@ gateio_ADA_data = client.read_data(
 )
 
 # %%
-# `volume = 0` != % of bad data (at Dan's tables)
-(
-    gateio_ADA_data_2021_09,
-    gateio_ADA_data_2021_09_volume_0,
-) = _compute_frac_volume_0(gateio_ADA_data, 2021, 9)
+gateio_ADA_data_2021_09 = _get_data_for_year_month(gateio_ADA_data, 2021, 9)
+gateio_ADA_data_2021_09_volume_0 = _get_data_with_volume_0(
+    gateio_ADA_data_2021_09
+)
 gateio_ADA_data_2021_09.head(3)
 
 # %%
@@ -516,10 +510,10 @@ gateio_ADA_data_2021_09.loc[
 
 # %%
 # `volume = 0` has the same % as bad data
-(
-    gateio_ADA_data_2021_07,
-    gateio_ADA_data_2021_07_volume_0,
-) = _compute_frac_volume_0(gateio_ADA_data, 2021, 7)
+gateio_ADA_data_2021_07 = _get_data_for_year_month(gateio_ADA_data, 2021, 7)
+gateio_ADA_data_2021_07_volume_0 = _get_data_with_volume_0(
+    gateio_ADA_data_2021_07
+)
 gateio_ADA_data_2021_07.head(3)
 
 # %%
@@ -531,17 +525,16 @@ gateio_ADA_data_2021_07.loc[
 ].head(10)
 
 # %% [markdown]
-# A pattern where `volume = 0` rows have value for all columns from column `close` of the last non-`volume = 0` row.
+# The pattern is: all values in price-related columns with `volume = 0` are the same as the value of `close` of the last row where `volume != 0`.
 
 # %% [markdown]
 # ## Extractor
 
 # %%
-# TODO(Nina): Change name of var `ccxt_gateio_ETH_exchange`.
 start_timestamp = pd.Timestamp("2021-07-01 00:00:00+00:00")
 end_timestamp = pd.Timestamp("2021-07-31 23:59:59+00:00")
 sleep_time_in_secs = 1
-ccxt_gateio_ADA = ccxt_gateio_ETH_exchange.download_ohlcv_data(
+ccxt_gateio_ADA = ccxt_gateio_exchange.download_ohlcv_data(
     currency_pair_gateio[1],
     start_timestamp=start_timestamp,
     end_timestamp=end_timestamp,
@@ -552,13 +545,10 @@ ccxt_gateio_ADA = ccxt_gateio_ETH_exchange.download_ohlcv_data(
 ccxt_gateio_ADA
 
 # %% [markdown]
-# I think there's no sense to continue with `gateio` analysis, or we can check up the data for 2022.
-
-# %% [markdown]
 # ## Summary for `gateio`
 
 # %% [markdown]
-# - Small amount of useful data according to Dan's tables for the gateio.
-# - Data has a pattern where `volume = 0` rows store value for all columns from column `close` of the last non-`volume = 0` row.
-# - Data has an expiration date because data we have no longer exist at the source. Here could be useful `end_download_timestamp` column for data we store on S3, just to confirm the statement or vice versa.
-# - October data has 100% of NaNs for all currency pairs of gateio. Based on that, it could be a technical issue at the exchange.
+# - Empty data is returned from CCXT and Extractor directly which means that the problem is at source.
+# - The pattern is: all values in price-related columns with `volume = 0` are the same as the value of `close` of the last row where `volume != 0`.
+# - Data before January 2022 is not accessible from `gateio` via CCXT
+# - There are spikes of NaNs in September, October, November 2021 that are common for all coins
