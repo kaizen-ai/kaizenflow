@@ -35,6 +35,7 @@ import core.statistics as costatis
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import im_v2.common.data.client as icdc
 import im_v2.ccxt.data.client as icdcl
 
@@ -57,16 +58,14 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
     Get task1866-specific config.
     """
     config = cconconf.Config()
-    # Data parameters.
-    config["data"] = ccocouti.get_config_from_nested_dict(
-        # Parameters for IM client initialization.
-        {
+    param_dict = {
+        "data": {
+            # Parameters for client initialization.
             "im_client": {
                 "universe_version": "v3",
                 "resample_1min": True,
-                # TODO(Dan): @all replace `s3://cryptokaizen-data` with `get_s3_bucket()` after it is fixed.
                 "root_dir": os.path.join(
-                    "s3://cryptokaizen-data", "historical"
+                    hs3.get_s3_bucket_path("ck"), "historical"
                 ),
                 "partition_mode": "by_year_month",
                 "aws_profile": "ck",
@@ -78,20 +77,17 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
                 "columns": None,
                 "filter_data_mode": "assert",
             },
-        }
-    )
-    # Column names.
-    config["column_names"] = ccocouti.get_config_from_nested_dict(
-        {
+        },
+        "column_names": {
             "full_symbol": "full_symbol",
             "close_price": "close",
-        }
-    )
-    # Stats parameters.
-    config["stats"] = ccocouti.get_config_from_nested_dict(
-        {
+        },
+        "stats": {
             "threshold": 30,
-        }
+        },
+    }
+    config = ccocouti.get_config_from_nested_dict(
+        param_dict
     )
     return config
 
@@ -105,6 +101,8 @@ print(config)
 # # Functions
 
 # %%
+# TODO(Dan): Clean up and move to a lib.
+# TODO(Dan): Separate data reading and computing the stats.
 def perform_qa_per_exchange(
     config: cconconf.Config,
     exchange_id: str,
@@ -114,6 +112,25 @@ def perform_qa_per_exchange(
 ) -> pd.DataFrame:
     """
     Get quality assurance stats for specified exchange.
+    
+    QA stats include:
+       - % of NaNs
+       - % of rows with "volume=0"
+       - % of bad data which is the sum of NaNs and "volume=0" stats
+       - min and max timestamp if `by_year_month=False`
+
+    E.g.,
+    ```
+                                    NaNs [%]  volume=0 [%]  bad data [%]
+    full_symbol        year  month
+    binance::ADA_USDT  2022      1    0.2222        0.2222        0.4444
+                                 2       5.9           0.1           6.0
+    binance::BTC_USDT  2022      1       0.0           0.0           0.0
+    ```
+    :param config: parameters config
+    :param exchange_id: name of exchange to compute stats for
+    :param client: client to read data
+    :param by_year_month: compute QA stats by year and month
     """
     # Get exchange data for related full symbols.
     universe = client.get_universe()
@@ -131,6 +148,7 @@ def perform_qa_per_exchange(
     return qa_stats
 
 
+# TODO(Dan): Merge with `_get_qa_stats_by_year_month()` by passing `agg_level`.
 def _get_qa_stats(config: cconconf.Config, data: pd.DataFrame) -> pd.DataFrame:
     """
     Get quality assurance stats per full symbol.
@@ -143,17 +161,17 @@ def _get_qa_stats(config: cconconf.Config, data: pd.DataFrame) -> pd.DataFrame:
         symbol_stats = pd.Series(dtype="object", name=full_symbol)
         symbol_stats["min_timestamp"] = symbol_data.index.min()
         symbol_stats["max_timestamp"] = symbol_data.index.max()
-        symbol_stats["NaNs, %"] = 100 * (
+        symbol_stats["NaNs [%]"] = 100 * (
             costatis.compute_frac_nan(
                 symbol_data[config["column_names"]["close_price"]]
             )
         )
-        symbol_stats["volume=0, %"] = 100 * (
+        symbol_stats["volume=0 [%]"] = 100 * (
             symbol_data[symbol_data["volume"] == 0].shape[0]
             / symbol_data.shape[0]
         )
-        symbol_stats["bad data, %"] = (
-            symbol_stats["NaNs, %"] + symbol_stats["volume=0, %"]
+        symbol_stats["bad data [%]"] = (
+            symbol_stats["NaNs [%]"] + symbol_stats["volume=0 [%]"]
         )
         res_stats.append(symbol_stats)
     # Combine all full symbol stats.
@@ -192,15 +210,18 @@ def _get_qa_stats_by_year_month(
     return res_stats_df
 
 
+# TODO(Dan): Add filtering by dates.
 def _plot_bad_data_stats(
     config: cconconf.Config, bad_data_stats: pd.DataFrame
 ) -> None:
     """
     Plot bad data stats per unique full symbol in data.
+    
+    Bad data is the sum of NaNs and "volume=0" stats.
     """
     full_symbols = bad_data_stats.index.get_level_values(0).unique()
     for full_symbol in full_symbols:
-        bad_data_col_name = "bad data, %"
+        bad_data_col_name = "bad data [%]"
         ax = bad_data_stats.loc[full_symbol].plot.bar(
             y=bad_data_col_name, rot=0, title=full_symbol
         )
@@ -211,9 +232,13 @@ def _plot_bad_data_stats(
             xmax=len(bad_data_stats),
             color='r',
         )
+        # TODO(Dan): Make ticklabels more readable.
         # Get ticks and labels for x-axis.
         ticks = ax.xaxis.get_ticklocs()
-        ticklabels = [l.get_text() for l in ax.xaxis.get_ticklabels()]
+        ticklabels = [
+            l.get_text().strip("()").split(", ") for l in ax.xaxis.get_ticklabels()
+        ]
+        ticklabels = [".".join([l[0], l[1]]) for l in ticklabels]
         # Adjust x-axis labels so they do not overlap on plot by
         # picking ticks and labels by specified stride that limits
         # the number of final ticks to 10.
@@ -225,6 +250,9 @@ def _plot_bad_data_stats(
 
 # %% [markdown]
 # # QA checks
+
+# %% [markdown]
+# Major metric for a QA check is `"bad data [%]"` which is the sum of `"volume=0 [%]"` and `"NaNs [%]"`.
 
 # %%
 client = icdcl.CcxtHistoricalPqByTileClient(**config["data"]["im_client"])
