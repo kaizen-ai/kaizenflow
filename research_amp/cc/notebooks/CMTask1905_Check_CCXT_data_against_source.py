@@ -324,13 +324,16 @@ ccxt_ftx_BTC.loc[(ccxt_ftx_BTC.index.day == 25) & (ccxt_ftx_BTC.index.hour == 3)
 
 # %%
 ccxt_exchange_ftx = _log_into_exchange("ftx")
-start_ts = pd.Timestamp("2019-04-01 00:00:00+00:00")
-end_ts = pd.Timestamp("2019-04-30 23:59:59+00:00")
-ccxt_df_ftx = _get_ccxt_ohlcv_data(
+start_ts = pd.Timestamp("2020-04-01 00:00:00+00:00")
+end_ts = pd.Timestamp("2020-04-30 23:59:59+00:00")
+ccxt_df_ftx =  _get_ccxt_ohlcv_data(
     ccxt_exchange_ftx, currency_pair_ftx, start_ts, end_ts
 )
-# Data is absent after re-run.
-ccxt_df_ftx.head(3)
+ccxt_df_ftx = _set_index_ts(ccxt_df_ftx)
+ccxt_df_ftx = _get_data_for_year_month(ccxt_df_ftx, 2020, 4)
+ccxt_df_ftx_volume_0 = _get_data_with_volume_0(ccxt_df_ftx)
+print(len(ccxt_df_ftx.index.unique()))
+display(ccxt_df_ftx.head(3))
 
 # %% [markdown]
 #
