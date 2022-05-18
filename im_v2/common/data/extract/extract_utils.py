@@ -23,11 +23,11 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeexcl
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.extract.exchange_class as imvtdeexcl
+import im_v2.talos.data.extract.extractor as imvtdeexcl
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -126,9 +126,9 @@ def add_periodical_download_args(
     return parser
 
 
-CCXT_EXCHANGE = "CcxtExchange"
-TALOS_EXCHANGE = "TalosExchange"
-CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExchange"
+CCXT_EXCHANGE = "CcxtExtractor"
+TALOS_EXCHANGE = "TalosExtractor"
+CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExtractor"
 # Time limit for each download execution.
 TIMEOUT_SEC = 60
 
@@ -237,7 +237,7 @@ def download_realtime_for_one_exchange(
 def _download_realtime_for_one_exchange_with_timeout(
     args: argparse.Namespace,
     exchange_class: Type[
-        Union[imvcdeexcl.CcxtExchange, imvtdeexcl.TalosExchange]
+        Union[imvcdeexcl.CcxtExtractor, imvtdeexcl.TalosExtractor]
     ],
     start_timestamp: datetime,
     end_timestamp: datetime,
