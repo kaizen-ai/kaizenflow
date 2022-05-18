@@ -821,16 +821,16 @@ def _df_to_str(
                 out.append(tail_str)
             else:
                 # TODO(gp): @all use this approach also above and update all the
-                 #  unit tests.
-                 df = [
-                     df.head(nr),
-                     pd.DataFrame(
-                         [["..."] * df.shape[1]], index=[" "], columns=df.columns
-                     ),
-                     df.tail(nr),
-                 ]
-                 df = pd.concat(df)
-                 display(df)
+                #  unit tests.
+                df = [
+                    df.head(nr),
+                    pd.DataFrame(
+                        [["..."] * df.shape[1]], index=[" "], columns=df.columns
+                    ),
+                    df.tail(nr),
+                ]
+                df = pd.concat(df)
+                display(df)
     if not is_in_ipynb:
         txt = "\n".join(out)
     else:
