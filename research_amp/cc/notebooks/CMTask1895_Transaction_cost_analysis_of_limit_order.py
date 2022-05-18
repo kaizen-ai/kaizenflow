@@ -27,9 +27,22 @@ import seaborn as sns
 
 import core.plotting.normality as cplonorm
 import research_amp.transform as ramptran
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import logging
+
+# %%
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+hprint.config_notebook()
 
 # %% [markdown]
 # # Load the data
+
+# %% [markdown]
+# ## OHLCV
 
 # %% run_control={"marked": false}
 # Read saved 1 month of data.
@@ -45,6 +58,16 @@ ohlcv_cols = [
 ]
 btc_ohlcv = btc_ohlcv[ohlcv_cols]
 btc_ohlcv.head(3)
+
+# %% [markdown]
+# ## Bid-ask data
+
+# %% [markdown]
+# Specs for the current data snapshot:
+# - Originally, bid-ask data from crypto-chassis appears in `seconds` frequency
+# - In order to be consistent with the OHLCV data one needs to resample it to `1-minute` frequency
+# - While resampling the `last` parameter was set for both price and sizes
+# - Data range: January 2022
 
 # %% run_control={"marked": false}
 # Read saved 1 month of data.
@@ -76,12 +99,16 @@ bid_ask_btc = bid_ask_btc.swaplevel(axis=1)["binance::BTC_USDT"][
 bid_ask_btc.index = bid_ask_btc.index.shift(-1, freq="T")
 bid_ask_btc
 
+# %% [markdown]
+# ## Combined
+
 # %%
 # OHLCV + bid ask
 btc = pd.concat([btc_ohlcv, bid_ask_btc], axis=1)
 btc.head(3)
 
 # %% run_control={"marked": false}
+# Sanity check.
 close_outside_ba = len(
     btc.loc[(btc["close"] > btc["ask_price"]) | (btc["close"] < btc["bid_price"])]
 )
@@ -95,12 +122,23 @@ btc[["close", "bid_price", "ask_price"]].head(100).plot(figsize=(15, 7))
 # %% [markdown]
 # # Analysis
 
+# %% [markdown]
+# ## Functions
+
 # %% run_control={"marked": false}
-def compute_execution(df: pd.DataFrame) -> pd.DataFrame:
+def compute_execution(df: pd.DataFrame, is_buy: bool = True) -> pd.DataFrame:
     """
     Compute execution statistics in the trade interval for a given limit order.
+    Collected statistics for a given trading period:
+    - executed_volume: the volume that was available in the bars where there was execution.
+    - executed_notional: the amount of dollars we could have executed assuming to sweep 
+    the first level of the order book.
+    - executed_bars: in how many bars there was an execution.
+    - executed_avg_price: average price for which there was execution
 
-    :param df: data of time interval for trading period.
+    :param df: data of time interval for trading period
+    :param is_buy: transaction side (i.e., True for `buy`, False for `sell`)
+    :return: calculated stats for a given trade interval
     """
     result = {}
     # Execution is triggered if `limit_price` is inside [low,high] interval of close price.
@@ -111,34 +149,50 @@ def compute_execution(df: pd.DataFrame) -> pd.DataFrame:
     df["execution_is_triggered"] = (df["high"] >= df["limit_price"]) & (
         df["low"] <= df["limit_price"]
     )
-    # Execution volume is the volume that was available in the bars where there was execution.
-    # TODO(gp): more precisely we should use the ask / bid size (depending on the direction).
+    # Set the volume that will be triggered during transaction.
+    if is_buy:
+        size_col = "ask_size"
+    else:
+        size_col = "bid_size"
+    # Execution volume.
     result["executed_volume"] = (
-        df["ask_size"] * df["execution_is_triggered"]
+        df[size_col] * df["execution_is_triggered"]
     ).sum()
-    # The notional executed volume is the amount of dollars we could have executed assuming to sweep the first level of the order book.
-    result["executed_notional"] = (df["ask_size"] * df["limit_price"]).sum()
-    # In how many bars there was execution.
+    # The notional executed volume. 
+    result["executed_notional"] = (df[size_col] * df["limit_price"]).sum()
+    # Executed bars.
     result["executed_bars"] = df["execution_is_triggered"].sum()
-    # Average price for which there was execution.
+    # Executed average price.
     result["executed_avg_price"] = (
         df["limit_price"] * df["execution_is_triggered"]
     ).mean()
-    # Build a df with all the results and mark it at the end of the interval.
+    # Build a DataFrame with all the results and mark it at the end of the interval.
     result = pd.DataFrame(result, index=[df.index[-1]])
     return result
 
 
 def compute_transaction_cost(
-    df, start_time, interval_in_mins=10, trade_in_mins=5, is_buy=True
+    df, start_time, interval_in_mins: int = 10, trade_in_mins: int = 5, is_buy: bool = True
 ) -> pd.DataFrame:
     """
     Given prices and ask / bids in the bars (a, b] marked at the end of the
     interval, compute the cost to enter a buy / sell trade in the interval
     [start_time, start_time + interval_in_mins) and the pnl from holding
     between.
+    Collected statistics for a given trading period:
+    - Stats from `compute_execution()`
+    - close_price_holding_period: close price at the end of holding period
+    - trade_pnl_per_share: difference between start and close price (holding period)
+    - holding_notional: volume obtained from the trading period multiplied by close_price_holding_period
+    - notional_diff: difference between notional trading values from trading and holding periods.
+    
+    :param df: combined OHLCV and bid-ask data
+    :param interval_in_mins: number of minutes during holding period
+    :param trade_in_mins: number of minutes during trading period
+    :param is_buy: transaction side (i.e., True for `buy`, False for `sell`)
+    :return: transaction costs stats for the interval
     """
-    # hdbg.dassert_lt(trade_in_mins, intervals_in_mins)
+    hdbg.dassert_lt(trade_in_mins, interval_in_mins)
     # The position is entered in the interval:
     # [start_time, start_time + trade_in_mins)
     trade_in_mins = timedelta(minutes=trade_in_mins)
@@ -154,7 +208,7 @@ def compute_transaction_cost(
         trade_interval["limit_price"] = (
             trade_interval.loc[start_time]["bid_price"] + 0.01
         )
-    result = compute_execution(trade_interval)
+    result = compute_execution(trade_interval, is_buy)
     # The position is held during the interval:
     # [start_time + trade_in_mins, start_time + interval_in_mins)
     interval_in_mins = (
@@ -176,19 +230,32 @@ def compute_transaction_cost(
     )
     return result
 
+def calculate_number_of_total_intervals(df, total_interval) -> range:
+    trans_int_in_sec = total_interval*60
+    total_period = (df.index.max() - df.index.min()).total_seconds()
+    num_intervals =  total_period/trans_int_in_sec
+    num_intervals = range(int(num_intervals))
+    return num_intervals
+
 
 # %%
-num_intervals = (btc.index.max() - btc.index.min()).total_seconds() / (15 * 60)
-num_intervals = range(int(num_intervals))
-num_intervals
-
-# %%
+# Set the params.
 start_time = btc.index.min()
+interval_in_mins = 10
+trade_in_mins = 5
+total_interval = interval_in_mins+trade_in_mins
+is_buy = True
+# Set the number of total intervals.
+num_intervals = calculate_number_of_total_intervals(btc, total_interval)
+# 
 final_result = []
 for i in num_intervals:
-    result_tmp = compute_transaction_cost(btc, start_time)
+    # Calculate transaction cost for each interval.
+    result_tmp = compute_transaction_cost(btc, start_time, interval_in_mins, trade_in_mins, is_buy)
     final_result.append(result_tmp)
-    start_time = start_time + timedelta(minutes=15)
+    # Define new `start_time` for the next period.
+    start_time = start_time + timedelta(minutes=total_interval)
+# Combine the stats from all periods.
 final_result = pd.concat(final_result)
 final_result.head(3)
 
