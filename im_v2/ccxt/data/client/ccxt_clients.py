@@ -254,7 +254,7 @@ class CcxtCddCsvParquetByAssetClient(
 
         :param vendor: price data provider, i.e. `CCXT` or `CDD`
         :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://cryptokaizen-data/historical.manual.pq") to `CCXT` data
+            an S3 root path (e.g., "s3://<ck-data>/historical.manual.pq") to `CCXT` data
         :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
         :param aws_profile: AWS profile name (e.g., "am")
         :param data_snapshot: snapshot of datetime when data was loaded,
@@ -357,7 +357,7 @@ class CcxtCddCsvParquetByAssetClient(
         Get the absolute path to a file with `CCXT` or `CDD` price data.
 
         The file path is constructed in the following way:
-        `<root_dir>/<snapshot>/<self._dataset>/<vendor>/<exchange_id>/<currency_pair>.<self._extension>`
+        `<root_dir>/<snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -486,17 +486,17 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         E.g.,
         ```
         {
-            "s3://cryptokaizen-data/historical.manual.pq/latest/ohlcv/ccxt/latest/binance": (
+            "s3://<ck-data>/historical.manual.pq/latest/ohlcv/ccxt/latest/binance": (
                 "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
             ),
-            "s3://cryptokaizen-data/historical.manual.pq/latest/ohlcv/ccxt/latest/coinbase": (
+            "s3://<ck-data>/historical.manual.pq/latest/ohlcv/ccxt/latest/coinbase": (
                 "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
             ),
         }
         ```
         """
         # Build a root dir to the list of exchange ids subdirs, e.g.,
-        # "s3://cryptokaizen-data/historical.manual.pq/latest/ohlcv/ccxt/latest/binance".
+        # "s3://<ck-data>/historical.manual.pq/latest/ohlcv/ccxt/latest/binance".
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
