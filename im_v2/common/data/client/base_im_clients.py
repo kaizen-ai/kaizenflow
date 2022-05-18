@@ -189,7 +189,7 @@ class ImClient(abc.ABC):
             full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
-        _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
+        _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3, log_level=logging.DEBUG))
         # Check that we got what we asked for.
         # hpandas.dassert_increasing_index(df)
         #
@@ -226,7 +226,7 @@ class ImClient(abc.ABC):
             dfs.append(df_tmp)
         hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
         df = pd.concat(dfs, axis=0)
-        _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df))
+        _LOG.debug("After im_normalization: df=\n%s", hpandas.df_to_str(df, log_level=logging.DEBUG))
         # Sort by index and `full_symbol_col_name`.
         # There is not a simple way to sort by index and columns in Pandas,
         # so we convert the index into a column, sort, and convert back.
@@ -235,7 +235,7 @@ class ImClient(abc.ABC):
         df = df.set_index("timestamp", drop=True)
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
-        _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
+        _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df, log_level=logging.DEBUG))
         # Check that columns are required ones.
         if columns is not None:
             df = hpandas.check_and_filter_matching_columns(

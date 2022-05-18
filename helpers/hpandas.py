@@ -693,7 +693,7 @@ def trim_df(
     :return: the trimmed dataframe
     """
     _LOG.verb_debug(
-        df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
+        df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df", log_level=logging.DEBUG)
     )
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
@@ -767,6 +767,23 @@ def trim_df(
 # #############################################################################
 
 
+def _display(log_level: int, df: pd.DataFrame) -> None:
+    """
+    Display a df in a notebook at the given log level. 
+
+    The behavior is similar to a command like `_LOG.log(log_level, ...)` but
+    for a notebook `display` command.
+
+    :param log_level: log level at which to display a df. E.g., if `log_level = 
+        logging.DEBUG`, then we display the df only if we are running with 
+        `-v DEBUG`. If `log_level = logging.INFO` then we don't display it
+    """
+    from IPython.display import display
+
+    if hsystem.is_running_in_ipynb() and log_level >= hdbg.get_logger_verbosity():
+       display(df)
+
+
 def _df_to_str(
     df: pd.DataFrame,
     *,
@@ -777,10 +794,9 @@ def _df_to_str(
     precision: int = 6,
     display_width: int = 10000,
     use_tabulate: bool = False,
+    log_level: int = logging.INFO,
 ) -> str:
     is_in_ipynb = hsystem.is_running_in_ipynb()
-    from IPython.display import display
-
     out = []
     # Set dataframe print options.
     with pd.option_context(
@@ -804,8 +820,8 @@ def _df_to_str(
             # Print the entire data frame.
             if not is_in_ipynb:
                 out.append(str(df))
-            else:
-                display(df)
+            # Display dataframe.
+            _display(log_level, df)
         else:
             nr = num_rows // 2
             if not is_in_ipynb:
@@ -830,7 +846,8 @@ def _df_to_str(
                     df.tail(nr),
                 ]
                 df = pd.concat(df)
-                display(df)
+                # Display dataframe.
+                _display(log_level, df)
     if not is_in_ipynb:
         txt = "\n".join(out)
     else:
@@ -854,6 +871,7 @@ def df_to_str(
     precision: int = 6,
     display_width: int = 10000,
     use_tabulate: bool = False,
+    log_level: int = logging.INFO,
 ) -> str:
     """
     Print a dataframe to string reporting all the columns without trimming.
@@ -937,7 +955,7 @@ def df_to_str(
                 "type(first_elem)",
             ]
             df_stats = pd.DataFrame(table, columns=columns)
-            df_stats_as_str = _df_to_str(df_stats, num_rows=None)
+            df_stats_as_str = _df_to_str(df_stats, num_rows=None, log_level=log_level)
             out.append(df_stats_as_str)
         # Print info about memory usage.
         if print_memory_usage:
@@ -961,7 +979,7 @@ def df_to_str(
                 raise ValueError(
                     f"Invalid memory_usage_mode='{memory_usage_mode}'"
                 )
-            memory_usage_as_txt = _df_to_str(mem_use_df, num_rows=None)
+            memory_usage_as_txt = _df_to_str(mem_use_df, num_rows=None, log_level=log_level)
             out.append(memory_usage_as_txt)
         # Print info about nans.
         if print_nan_info:
@@ -986,7 +1004,7 @@ def df_to_str(
             txt = f"num_nan_cols={hprint.perc(num_nan_cols, num_elems)}"
             out.append(txt)
     if hsystem.is_running_in_ipynb():
-        if len(out) > 0:
+        if len(out) > 0 and log_level >= hdbg.get_logger_verbosity():
             print("\n".join(out))
         txt = None
     # Print the df.
@@ -999,6 +1017,7 @@ def df_to_str(
         precision=precision,
         display_width=display_width,
         use_tabulate=use_tabulate,
+        log_level=log_level,
     )
     if not hsystem.is_running_in_ipynb():
         out.append(df_as_str)
