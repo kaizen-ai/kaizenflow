@@ -242,7 +242,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         cmd.extend(["--db_stage", "dev"])
         cmd.extend(["--db_table", "ccxt_ohlcv"])
         cmd.extend(["--aws_profile", "ck"])
-        cmd.extend(["--s3_path", "s3://cryptokaizen-data/historical/"])
+        cmd.extend(["--s3_path", "s3://cryptokaizen-data/historical.manual.pq/"])
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
@@ -253,7 +253,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "db_table": "ccxt_ohlcv",
             "log_level": "INFO",
             "aws_profile": "ck",
-            "s3_path": "s3://cryptokaizen-data/historical/",
+            "s3_path": "s3://cryptokaizen-data/historical.manual.pq/",
         }
         self.assertDictEqual(actual, expected)
 

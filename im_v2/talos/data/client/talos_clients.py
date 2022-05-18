@@ -140,7 +140,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         """
         # Build a root dir to the list of exchange ids subdirs, e.g.,
         # `s3://cryptokaizen-data/historical.manual.pq/latest/ohlcv/talos/binance`.
-        root_dir = os.path.join(self._root_dir, self._data_snapshot, self_dataset, self._vendor)
+        root_dir = os.path.join(self._root_dir, self._data_snapshot, self._dataset, self._vendor)
         # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),
         # ('coinbase', 'BTC_USDT')].
