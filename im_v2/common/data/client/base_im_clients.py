@@ -585,8 +585,15 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # SqlRealTimeImClient
 # #############################################################################
 
+class RealTimeImClient(ImClient):
+    """
+    A realtime client for typing annotation.
 
-class SqlRealTimeImClient(ImClient):
+    In practice all realtime clients use SQL backend.
+    """
+    pass
+
+class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,
         resample_1min: bool,
