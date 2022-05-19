@@ -16,12 +16,13 @@ import requests
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import im_v2.common.data.extract.extractor as imvcdeext
 import im_v2.talos.utils as imv2tauti
 
 _LOG = logging.getLogger(__name__)
 
-
-class TalosExtractor:
+ 
+class TalosExtractor(imvcdeext.Extractor):
     """
     A class for accessing Talos exchange data.
 
@@ -89,24 +90,7 @@ class TalosExtractor:
         url = f"https://{self._endpoint}{data_path}"
         return url
 
-    def download_data(self, data_type: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
-        """
-        Download Talos data.
-
-        :param data_type: the type of data, e.g. `ohlcv`
-        :return: Talos data
-        """
-        # Check data type.
-        hdbg.dassert_eq(data_type, "ohlcv")
-        # Get data.
-        return self.download_ohlcv_data(
-            currency_pair=kwargs["currency_pair"],
-            exchange=kwargs["exchange_id"],
-            start_timestamp=kwargs["start_timestamp"],
-            end_timestamp=kwargs["end_timestamp"],
-        )
-
-    def download_ohlcv_data(
+    def download_ohlcv(
         self,
         currency_pair: str,
         exchange: str,

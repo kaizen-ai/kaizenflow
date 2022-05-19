@@ -13,16 +13,18 @@ import requests
 
 import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
+import im_v2.common.data.extract.extractor as imvcdeext
 
 _LOG = logging.getLogger(__name__)
 
 
-class CryptoChassisExtractor:
+class CryptoChassisExtractor(imvcdeext.Extractor):
     """
     Access exchange data from Crypto-Chassis through REST API.
     """
 
     def __init__(self) -> None:
+        super().__init__()
         self._endpoint = "https://api.cryptochassis.com/v1"
 
     @staticmethod
@@ -31,45 +33,8 @@ class CryptoChassisExtractor:
         Convert currency pair used for getting data from exchange.
         """
         return currency_pair.replace("_", "/").lower()
-
-    def download_data(self, data_type: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
-        """
-        Download Crypto Chassis data.
-
-        :param data_type: the type of data, e.g. `market_depth`
-        :return: Crypto Chassis data
-        """
-        # Get data.
-        if data_type == "ohlcv":
-            data = self._download_ohlcv(
-            exchange=kwargs["exchange_id"],
-            currency_pair=kwargs["currency_pair"],
-            mode=kwargs["mode"],
-            start_timestamp=kwargs["start_timestamp"],
-            end_timestamp=kwargs["end_timestamp"],
-            interval=kwargs["interval"],
-            include_realtime=kwargs["include_realtime"],
-        )
-        elif data_type == "market_depth":
-            data = self._download_market_depth(
-                exchange=kwargs["exchange_id"],
-                currency_pair=kwargs["currency_pair"],
-                depth=kwargs["depth"],
-                start_timestamp=kwargs["start_timestamp"],
-        )
-        elif data_type == "trades":
-            data = self._download_trade(
-                exchange=kwargs["exchange_id"],
-                currency_pair=kwargs["currency_pair"],
-                start_timestamp=kwargs["start_timestamp"],
-        )
-        else:
-            hdbg.dfatal(
-                f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth"
-            )
-        return data
-
-    def _download_market_depth(
+ 
+    def download_market_depth(
         self,
         exchange: str,
         currency_pair: str,
@@ -140,7 +105,7 @@ class CryptoChassisExtractor:
         market_depth = market_depth.rename(columns={"time_seconds": "timestamp"})
         return market_depth
 
-    def _download_ohlcv(
+    def download_ohlcv(
         self,
         exchange: str,
         currency_pair: str,
@@ -238,7 +203,7 @@ class CryptoChassisExtractor:
         ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
 
-    def _download_trade(
+    def download_trade(
         self,
         exchange: str,
         currency_pair: str,

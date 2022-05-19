@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.extractor as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 """
 
 import logging
@@ -15,11 +15,13 @@ import tqdm
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
+import im_v2.common.data.extract.extractor as imvcdeext
+
 
 _LOG = logging.getLogger(__name__)
 
 
-class CcxtExtractor:
+class CcxtExtractor(imvcdeext.Extractor):
     """
     A class for accessing CCXT exchange data.
 
@@ -45,23 +47,6 @@ class CcxtExtractor:
         """
         return currency_pair.replace("_", "/")
 
-    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
-        """
-        Download CCXT data.
-
-        :param data_type: the type of data, e.g. `ohlcv`
-        :return: CCXT data
-        """
-        # Check data type.
-        hdbg.dassert_eq(data_type, "ohlcv")
-        # Get data.
-        return self.download_ohlcv_data(
-            currency_pair=kwargs["currency_pair"],
-            *[],
-            start_timestamp=kwargs["start_timestamp"],
-            end_timestamp=kwargs["end_timestamp"],
-        )
-
     def log_into_exchange(self) -> ccxt.Exchange:
         """
         Log into an exchange via CCXT and return the corresponding
@@ -86,7 +71,7 @@ class CcxtExtractor:
         """
         return list(self._exchange.load_markets().keys())
 
-    def download_ohlcv_data(
+    def download_ohlcv(
         self,
         currency_pair: str,
         *,
