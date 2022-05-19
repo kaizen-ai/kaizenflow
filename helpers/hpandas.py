@@ -693,7 +693,7 @@ def trim_df(
     :return: the trimmed dataframe
     """
     _LOG.verb_debug(
-        df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df", log_level=logging.DEBUG)
+        df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
     )
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
@@ -786,15 +786,14 @@ def _display(log_level: int, df: pd.DataFrame) -> None:
 
 def _df_to_str(
     df: pd.DataFrame,
-    *,
-    num_rows: Optional[int] = 6,
-    max_columns: int = 10000,
-    max_colwidth: int = 2000,
-    max_rows: int = 500,
-    precision: int = 6,
-    display_width: int = 10000,
-    use_tabulate: bool = False,
-    log_level: int = logging.INFO,
+    num_rows: Optional[int],
+    max_columns: int,
+    max_colwidth: int,
+    max_rows: int,
+    precision: int,
+    display_width: int,
+    use_tabulate: bool,
+    log_level: int,
 ) -> str:
     is_in_ipynb = hsystem.is_running_in_ipynb()
     out = []
@@ -820,8 +819,9 @@ def _df_to_str(
             # Print the entire data frame.
             if not is_in_ipynb:
                 out.append(str(df))
-            # Display dataframe.
-            _display(log_level, df)
+            else:
+                # Display dataframe.
+                _display(log_level, df)
         else:
             nr = num_rows // 2
             if not is_in_ipynb:
@@ -871,7 +871,7 @@ def df_to_str(
     precision: int = 6,
     display_width: int = 10000,
     use_tabulate: bool = False,
-    log_level: int = logging.INFO,
+    log_level: int = logging.DEBUG,
 ) -> str:
     """
     Print a dataframe to string reporting all the columns without trimming.
@@ -955,7 +955,18 @@ def df_to_str(
                 "type(first_elem)",
             ]
             df_stats = pd.DataFrame(table, columns=columns)
-            df_stats_as_str = _df_to_str(df_stats, num_rows=None, log_level=log_level)
+            stats_num_rows = None
+            df_stats_as_str = _df_to_str(
+                df_stats, 
+                stats_num_rows, 
+                max_columns,
+                max_colwidth,
+                max_rows,
+                precision,
+                display_width,
+                use_tabulate,
+                log_level,
+            )
             out.append(df_stats_as_str)
         # Print info about memory usage.
         if print_memory_usage:
@@ -979,7 +990,18 @@ def df_to_str(
                 raise ValueError(
                     f"Invalid memory_usage_mode='{memory_usage_mode}'"
                 )
-            memory_usage_as_txt = _df_to_str(mem_use_df, num_rows=None, log_level=log_level)
+            memory_num_rows = None
+            memory_usage_as_txt = _df_to_str(
+                mem_use_df, 
+                memory_num_rows, 
+                max_columns,
+                max_colwidth,
+                max_rows,
+                precision,
+                display_width,
+                use_tabulate,
+                log_level,
+            )
             out.append(memory_usage_as_txt)
         # Print info about nans.
         if print_nan_info:
@@ -1010,14 +1032,14 @@ def df_to_str(
     # Print the df.
     df_as_str = _df_to_str(
         df,
-        num_rows=num_rows,
-        max_columns=max_columns,
-        max_colwidth=max_colwidth,
-        max_rows=max_rows,
-        precision=precision,
-        display_width=display_width,
-        use_tabulate=use_tabulate,
-        log_level=log_level,
+        num_rows,
+        max_columns,
+        max_colwidth,
+        max_rows,
+        precision,
+        display_width,
+        use_tabulate,
+        log_level,
     )
     if not hsystem.is_running_in_ipynb():
         out.append(df_as_str)
