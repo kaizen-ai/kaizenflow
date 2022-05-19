@@ -6,10 +6,10 @@ Use as:
 
 # Download OHLCV data for binance 'v03', saving dev_stage:
 > im_v2/talos/data/extract/download_realtime_for_one_exchange.py \
-    --start_timestamp '20211110-101100' \
-    --end_timestamp '20211110-101200' \
+    --start_timestamp '2021-11-10T10:11:00.000000Z' \
+    --end_timestamp '2021-11-10T10:12:00.000000Z' \
     --exchange_id 'binance' \
-    --universe 'v03' \
+    --universe 'v1' \
     --db_stage 'dev' \
     --db_table 'talos_ohlcv' \
     --api_stage 'sandbox' \
