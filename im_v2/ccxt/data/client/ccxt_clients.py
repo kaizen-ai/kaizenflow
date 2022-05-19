@@ -253,10 +253,10 @@ class CcxtCddCsvParquetByAssetClient(
         Load `CCXT` data from local or S3 filesystem.
 
         :param vendor: price data provider, i.e. `CCXT` or `CDD`
-        :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://<ck-data>/reorg/historical.manual.pq") to `CCXT` data
-        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
-        :param aws_profile: AWS profile name (e.g., "am")
+        :param root_dir: either a local root path (e.g., `/app/im`) or
+            an S3 root path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`) to `CCXT` data
+        :param extension: file extension, e.g., `csv.gz` or `parquet`
+        :param aws_profile: AWS profile, e.g., `am`
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
@@ -357,7 +357,8 @@ class CcxtCddCsvParquetByAssetClient(
         Get the absolute path to a file with `CCXT` or `CDD` price data.
 
         The file path is constructed in the following way:
-        `<root_dir>/<snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`
+        `<root_dir>/<data_snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`
+        
         E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`
 
         :param data_snapshot: snapshot of datetime when data was loaded,
