@@ -383,7 +383,7 @@ class CcxtCddCsvParquetByAssetClient(
 # #############################################################################
 
 
-class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
+class CcxtHistoricalPqByTileClient(icdc.VendorHistoricalPqByTileClient):
     """
     Read historical data for `CCXT` assets stored as Parquet dataset.
 
@@ -404,121 +404,14 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         Constructor.
 
         See the parent class for parameters description.
-
-        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         vendor = "CCXT"
-        infer_exchange_id = True
         super().__init__(
             vendor,
             universe_version,
             resample_1min,
             root_dir,
             partition_mode,
-            infer_exchange_id,
+            data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )
-        self._data_snapshot = data_snapshot
-
-    def get_metadata(self) -> pd.DataFrame:
-        """
-        See description in the parent class.
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    def _get_columns_for_query(
-        full_symbol_col_name: str, columns: Optional[List[str]]
-    ) -> Optional[List[str]]:
-        """
-        See description in the parent class.
-        """
-        if columns is not None:
-            # In order not to modify the input.
-            query_columns = columns.copy()
-            # Data is partitioned by currency pairs so the column is mandatory.
-            query_columns.append("currency_pair")
-            # Full symbol column is added after we read data, so skipping here.
-            if full_symbol_col_name in query_columns:
-                query_columns.remove(full_symbol_col_name)
-        else:
-            query_columns = columns
-        return query_columns
-
-    @staticmethod
-    def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str, **kwargs
-    ) -> pd.DataFrame:
-        """
-        See description in the parent class.
-        """
-        if "exchange_id" in kwargs:
-            df["exchange_id"] = kwargs["exchange_id"]
-        # Convert to string, see the parent class for details.
-        df["exchange_id"] = df["exchange_id"].astype(str)
-        df["currency_pair"] = df["currency_pair"].astype(str)
-        # Add full symbol column at first position in data.
-        full_symbol_col = ivcu.build_full_symbol(
-            df["exchange_id"], df["currency_pair"]
-        )
-        if df.columns[0] != full_symbol_col_name:
-            # Insert if it doesn't already exist.
-            df.insert(0, full_symbol_col_name, full_symbol_col)
-        else:
-            # Replace the values to ensure the correct data.
-            df[full_symbol_col_name] = full_symbol_col.values
-        # The columns are used just to partition the data but these columns
-        # are not included in the `ImClient` output.
-        df = df.drop(["exchange_id", "currency_pair"], axis=1)
-        # Round up float values in case values in raw data are rounded up incorrectly when
-        # being read from a file.
-        df = df.round(8)
-        return df
-
-    def _get_root_dirs_symbol_filters(
-        self, full_symbols: List[ivcu.FullSymbol], full_symbol_col_name: str
-    ) -> Dict[str, hparque.ParquetFilter]:
-        """
-        Build a dict with exchange root dirs of the `CCXT` data as keys and
-        filtering conditions on corresponding currency pairs as values.
-
-        E.g.,
-        ```
-        {
-            "s3://cryptokaizen-data/historical/ccxt/latest/binance": (
-                "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
-            ),
-            "s3://cryptokaizen-data/historical/ccxt/latest/coinbase": (
-                "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
-            ),
-        }
-        ```
-        """
-        # Build a root dir to the list of exchange ids subdirs, e.g.,
-        # "s3://cryptokaizen-data/historical/ccxt/latest/binance".
-        root_dir = os.path.join(
-            self._root_dir, self._vendor.lower(), self._data_snapshot
-        )
-        # Split full symbols into exchange id and currency pair tuples, e.g.,
-        # [('binance', 'ADA_USDT'),
-        # ('coinbase', 'BTC_USDT')].
-        full_symbol_tuples = [
-            ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
-        ]
-        # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
-        # `Defaultdict` provides a default value for the key that does not exists that prevents from
-        # getting `KeyError`.
-        symbol_dict = collections.defaultdict(list)
-        for exchange_id, *currency_pair in full_symbol_tuples:
-            symbol_dict[exchange_id].extend(currency_pair)
-        # Build a dict with exchange root dirs as keys and Parquet filters by
-        # the corresponding currency pairs as values.
-        root_dir_symbol_filter_dict = {
-            os.path.join(root_dir, exchange_id): (
-                "currency_pair",
-                "in",
-                currency_pairs,
-            )
-            for exchange_id, currency_pairs in symbol_dict.items()
-        }
-        return root_dir_symbol_filter_dict
