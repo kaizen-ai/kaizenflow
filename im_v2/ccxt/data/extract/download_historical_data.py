@@ -12,7 +12,7 @@ Use as:
      --exchange_id 'binance' \
      --universe 'v3' \
      --aws_profile 'ck' \
-     --s3_path 's3://cryptokaizen-data/historical/'
+     --s3_path 's3://<ck-data>/historical/'
 """
 
 import argparse
