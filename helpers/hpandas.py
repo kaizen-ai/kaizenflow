@@ -855,6 +855,9 @@ def _df_to_str(
     return txt
 
 
+# TODO(gp): Maybe we can have a `_LOG_df_to_str(log_level, *args, **kwargs)` that
+# calls `_LOG.log(log_level, "After read_data: df=\n%s", hpandas.df_to_str(*args,
+#  **kwargs, log_level=log_level))`
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
@@ -875,6 +878,18 @@ def df_to_str(
 ) -> str:
     """
     Print a dataframe to string reporting all the columns without trimming.
+
+    Note that code like: `_LOG.info(hpandas.df_to_str(df, num_rows=3))` works
+    properly when called from outside a notebook, i.e., the dataframe is printed
+    But it won't display the dataframe in a notebook, since the default level at
+    which the dataframe is displayed is `logging.DEBUG`.
+
+    In this case to get the correct behavior one should do:
+
+    ```
+    log_level = ...
+    _LOG.log(log_level, hpandas.df_to_str(df, num_rows=3, log_level=log_level))
+    ```
 
     :param: num_rows: max number of rows to print (half from the top and half from
         the bottom of the dataframe)
