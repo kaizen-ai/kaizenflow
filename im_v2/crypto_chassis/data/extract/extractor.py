@@ -111,7 +111,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         currency_pair: str,
         *,
         # TODO(Danya): This is an example of how to do it.
-        mode: Optional[str] = "recent",
+        mode: Optional[str] = "historical",
         interval: Optional[str] = "1m",
         # TODO(Danya): It seems like the API doesn't recognize None, at least for OHLCV.
         start_timestamp: Optional[pd.Timestamp] = None,
