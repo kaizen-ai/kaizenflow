@@ -25,6 +25,10 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
     - a `ReplayedMarketData` (providing fake data and features)
     - an `Example1` DAG
     """
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+
     def setUp(self):
         super().setUp()
         # Bring up local DB and its client.
