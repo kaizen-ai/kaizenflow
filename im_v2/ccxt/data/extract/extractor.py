@@ -36,6 +36,7 @@ class CcxtExtractor(imvcdeext.Extractor):
 
         :param: exchange_id: CCXT exchange id (e.g., `binance`)
         """
+        super().__init__()
         self.exchange_id = exchange_id
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
@@ -141,6 +142,12 @@ class CcxtExtractor(imvcdeext.Extractor):
             time.sleep(sleep_time_in_secs)
         # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
+
+    def download_market_depth(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Market depth data is not implementes in CCXT class")
+
+    def download_trades(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Trades data is not implementes in CCXT class")
 
     def download_order_book(self, currency_pair: str) -> Dict[str, Any]:
         """

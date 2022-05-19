@@ -34,6 +34,7 @@ class TalosExtractor(imvcdeext.Extractor):
         """
         Constructor.
         """
+        super().__init__()
         self._account = account
         self._api = imv2tauti.TalosApiBuilder(self._account)
         self._endpoint = self._api.get_endpoint()
@@ -141,6 +142,12 @@ class TalosExtractor(imvcdeext.Extractor):
             end_timestamp,
             bar_per_iteration=bar_per_iteration,
         )
+
+    def download_market_depth(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Market depth data is not implementes in Talos class")
+
+    def download_trades(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Trades data is not implementes in Talos class")
 
     def _fetch_ohlcv(
         self,

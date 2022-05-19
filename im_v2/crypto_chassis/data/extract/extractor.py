@@ -39,8 +39,8 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         exchange: str,
         currency_pair: str,
         *,
+        depth: int = 1,
         start_timestamp: Optional[pd.Timestamp] = None,
-        depth: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Download snapshot data on market depth.
@@ -109,9 +109,9 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         self,
         exchange: str,
         currency_pair: str,
-        mode: str,
         *,
-        interval: Optional[str] = None,
+        mode: str = "historical",
+        interval: str = "1m",
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
         include_realtime: Optional[int] = None,
@@ -203,7 +203,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
 
-    def download_trade(
+    def download_trades(
         self,
         exchange: str,
         currency_pair: str,

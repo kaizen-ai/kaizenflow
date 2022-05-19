@@ -29,32 +29,45 @@ class Extractor(abc.ABC):
         :return: Crypto Chassis data
         """
         if data_type == "ohlcv":
-            data = self.download_ohlcv(**kwargs)
+            data = self.download_ohlcv(
+            # TODO(Danya): The thing is, we don't pass all of these values
+            #  all the time. For example, `mode` is very vague concept, and
+            #  `interval` has a very definite default value ("1m").
+            # Ideally, we should have defaults for each parameter except for `exchange_id` and `currency_pair`.
+            **kwargs,
+        )
         elif data_type == "market_depth":
-            data = self.download_market_depth(**kwargs)
+            data = self.download_market_depth(
+                exchange=kwargs["exchange_id"],
+                currency_pair=kwargs["currency_pair"],
+                depth=kwargs["depth"],
+                start_timestamp=kwargs["start_timestamp"],
+        )
         elif data_type == "trades":
-            data = self.download_trades(**kwargs)
-        elif data_type =="bid_ask":
-            data = self.download_bid_ask(**kwargs)
+            data = self.download_trade(
+                exchange=kwargs["exchange_id"],
+                currency_pair=kwargs["currency_pair"],
+                start_timestamp=kwargs["start_timestamp"],
+        )
         else:            
             hdbg.dfatal(
-                f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth"
+                f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth, trades"
             )
         return data
 
     @abc.abstractmethod
-    def _download_ohlcv(self, **kwargs) -> pd.DataFrame:
+    def download_ohlcv(self, **kwargs) -> pd.DataFrame:
         ...
 
     @abc.abstractmethod
-    def _download_bid_ask(self, **kwargs) -> pd.DataFrame:
+    def download_bid_ask(self, **kwargs) -> pd.DataFrame:
         ...
 
     @abc.abstractmethod
-    def _download_market_depth(self, **kwargs) -> pd.DataFrame:
+    def download_market_depth(self, **kwargs) -> pd.DataFrame:
         ...
 
     @abc.abstractmethod
-    def _download_trades(self, **kwargs) -> pd.DataFrame:
+    def download_trades(self, **kwargs) -> pd.DataFrame:
         ...
 
