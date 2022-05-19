@@ -335,7 +335,7 @@ class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         return data
 
 
-def get_example2_realtime_client(
+def get_mock_realtime_client(
     connection: hsql.DbConnection, *, resample_1min: bool = False
 ) -> Example1SqlRealTimeImClient:
     """
