@@ -20,12 +20,28 @@
 # %autoreload 2
 
 
+import logging
 from datetime import timedelta
 
 import numpy as np
 import pandas as pd
 
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import research_amp.transform as ramptran
+
+# %%
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+hprint.config_notebook()
+
+# %% [markdown]
+# # Load the data
+
+# %% [markdown]
+# ## OHLCV
 
 # %%
 # Read saved 1 month of data.
@@ -42,6 +58,9 @@ ohlcv_cols = [
 ]
 btc_ohlcv = btc_ohlcv[ohlcv_cols]
 btc_ohlcv.head(3)
+
+# %% [markdown]
+# ## Bid ask data
 
 # %%
 # Read saved 1 month of data.
@@ -62,6 +81,9 @@ bid_ask_btc.index = bid_ask_btc.index.shift(-1, freq="T")
 
 bid_ask_btc.head(3)
 
+# %% [markdown]
+# ## Combined
+
 # %%
 # OHLCV + bid ask
 btc = pd.concat([btc_ohlcv, bid_ask_btc], axis=1)
@@ -69,7 +91,10 @@ btc.head(3)
 
 
 # %% [markdown]
-# # Estimate intraday spread, volume
+# # Create and test functions for each estimator
+
+# %% [markdown]
+# ## Estimate intraday spread, volume
 
 # %%
 def get_real_spread(df: pd.DataFrame, time_and_date: pd.Timestamp):
@@ -84,23 +109,25 @@ def get_real_volume(df: pd.DataFrame, time_and_date: pd.Timestamp):
 
 # %%
 date = pd.Timestamp("2022-01-01 00:01", tz="UTC")
-date
-
-# %%
-get_real_spread(btc, date)
-
-# %%
-get_real_volume(btc, date)
+display(get_real_spread(btc, date))
+display(get_real_volume(btc, date))
 
 
 # %% [markdown]
-# # Naive estimator
+# ## Naive estimator
 
 # %% [markdown]
 # Value(t+2) = Value(t)
 
 # %%
-def get_naive_spread(df: pd.DataFrame, time_and_date: pd.Timestamp):
+def get_naive_spread(df: pd.DataFrame, time_and_date: pd.Timestamp) -> float:
+    """
+    Estimator for a given time is a `t-2` of a real value.
+
+    :param df: data that contains spread
+    :param time_and_date: timestamp for prediciton
+    :return: value of predicted spread
+    """
     naive_value_date = time_and_date - timedelta(minutes=2)
     real_spread = get_real_spread(df, naive_value_date)
     return real_spread
@@ -114,26 +141,38 @@ def get_naive_volume(df: pd.DataFrame, time_and_date: pd.Timestamp):
 
 # %%
 date = pd.Timestamp("2022-01-01 00:03", tz="UTC")
-date
-
-# %%
-get_naive_spread(btc, date)
-
-# %%
-get_naive_volume(btc, date)
+display(get_naive_spread(btc, date))
+display(get_naive_volume(btc, date))
 
 # %% [markdown]
-# # Look back N days
+# ## Look back N days
+
+# %% [markdown]
+# spread_lookback(t) = E_date[spread(t, date)]
 
 # %%
+# Add column with intraday time.
 btc["time"] = btc.index.time
-btc.head(3)
 
 
 # %%
 def get_lookback_spread(
-    df, time_and_date: pd.Timestamp, lookback_days, mode: str = "mean"
-):
+    df: pd.DataFrame,
+    time_and_date: pd.Timestamp,
+    lookback_days: int,
+    mode: str = "mean",
+) -> float:
+    """
+    1) Set the period that is equal `timestamp for prediciton` - N days (lookback_days).
+    2) For that period, calculate mean (or median) value for spread in time during days.
+    3) Choose this mean value as an estimation for spread in the given timestamp.
+
+    :param df: data that contains spread
+    :param time_and_date: timestamp for prediciton
+    :param lookback_days: historical period for estimation, in days
+    :param mode: 'mean' or 'median'
+    :return: value of predicted spread
+    """
     # Choose sample data using lookback period.
     start_date = time_and_date - timedelta(days=lookback_days)
     sample = df.loc[start_date:time_and_date]
@@ -149,7 +188,10 @@ def get_lookback_spread(
 
 
 def get_lookback_volume(
-    df, time_and_date: pd.Timestamp, lookback_days, mode: str = "mean"
+    df: pd.DataFrame,
+    time_and_date: pd.Timestamp,
+    lookback_days: int,
+    mode: str = "mean",
 ):
     # Choose sample data using lookback period.
     start_date = time_and_date - timedelta(days=lookback_days)
@@ -167,16 +209,11 @@ def get_lookback_volume(
 
 # %%
 date = pd.Timestamp("2022-01-21 19:59", tz="UTC")
-date
-
-# %%
-get_lookback_spread(btc, date, 14)
-
-# %%
-get_lookback_volume(btc, date, 14)
+display(get_lookback_spread(btc, date, 14))
+display(get_lookback_volume(btc, date, 14))
 
 # %% [markdown]
-# # Collect estimators
+# # Collect all estimators for the whole period
 
 # %%
 # Generate the separate DataFrame for estimators.
@@ -186,52 +223,49 @@ estimators["real_spread"] = estimators.index
 estimators["real_spread"] = estimators["real_spread"].apply(
     lambda x: get_real_spread(btc, x)
 )
+
 # Add the values of naive estimator.
 estimators["naive_spread"] = estimators.index
-estimators = estimators.copy()
+# Starting from the second value since this estimator looks back for two periods.
 estimators["naive_spread"].iloc[2:] = (
     estimators["naive_spread"].iloc[2:].apply(lambda x: get_naive_spread(btc, x))
 )
 estimators["naive_spread"].iloc[:2] = np.nan
+
 # Add the values of lookback estimator.
 # Parameters.
 start_date = pd.Timestamp("2022-01-15 00:00", tz="UTC")
 lookback = 14
 # Calculate values.
 estimators["lookback_spread"] = estimators.index
-estimators = estimators.copy()
 estimators["lookback_spread"].loc[start_date:] = (
     estimators["lookback_spread"]
     .loc[start_date:]
     .apply(lambda x: get_lookback_spread(btc, x, lookback))
 )
 # Set NaNs.
-estimators = estimators.copy()
 estimators["lookback_spread"].loc[:start_date] = np.nan
 
 # %% run_control={"marked": false}
 estimators
 
-# %%
+# %% [markdown]
+# # Evaluate results (skeleton)
 
 # %%
-## Evaluate results
-dd = estimators[estimators["lookback_spread"].notna()]
-dd["naive_spread"] = dd["naive_spread"].astype(float)
-dd["lookback_spread"] = dd["lookback_spread"].astype(float)
+# Choose the period that is equally filled by both estimators.
+test = estimators[estimators["lookback_spread"].notna()]
+test["naive_spread"] = test["naive_spread"].astype(float)
+test["lookback_spread"] = test["lookback_spread"].astype(float)
 
 # %%
+test
 
 # %%
-dd
-
-# %%
-naive_err = abs(dd["real_spread"] - dd["naive_spread"]).sum()
-lookback_err = abs(dd["real_spread"] - dd["lookback_spread"]).sum()
+naive_err = abs(test["real_spread"] - test["naive_spread"]).sum()
+lookback_err = abs(test["real_spread"] - test["lookback_spread"]).sum()
 print(naive_err)
 print(lookback_err)
 
 # %%
-dd[["real_spread", "lookback_spread"]].plot(figsize=(15, 7))
-
-# %%
+test[["real_spread", "lookback_spread"]].plot(figsize=(15, 7))
