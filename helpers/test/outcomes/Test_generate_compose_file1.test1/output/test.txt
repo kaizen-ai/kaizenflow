@@ -59,6 +59,15 @@ services:
     # See CmTask988 and https://stackoverflow.com/questions/24319662
     network_mode: ${NETWORK_MODE:-host}
 
+  linter:
+    extends:
+      base_app
+    volumes:
+      - /app:/src
+    working_dir: /src
+    environment:
+      - MYPYPATH
+
   jupyter_server:
     command: devops/docker_run/run_jupyter_server.sh
     environment:
