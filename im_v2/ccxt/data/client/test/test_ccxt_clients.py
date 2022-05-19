@@ -1374,7 +1374,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         aws_profile = "ck"
         s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
         dst_dir = os.path.join(
-            s3_bucket_path, "unit_test/historical/latest/ohlcv/ccxt"
+            s3_bucket_path, "unit_test/historical.manual.pq/latest/ohlcv/ccxt"
         )
         exchange_id_col_name = "exchange_id"
         for exchange_id, df_exchange_id in data.groupby(exchange_id_col_name):
