@@ -358,7 +358,7 @@ class CcxtCddCsvParquetByAssetClient(
 
         The file path is constructed in the following way:
         `<root_dir>/<snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`
-        `s3://<ck-data>/20210924/ohlcv/...`
+        E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -487,17 +487,15 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         E.g.,
         ```
         {
-            "s3://<ck-data>/reorg/historical.manual.pq/latest/ohlcv/ccxt/latest/binance": (
+            "s3://.../20210924/ohlcv/ccxt/binance": (
                 "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
             ),
-            "s3://<ck-data>/reorg/historical.manual.pq/latest/ohlcv/ccxt/latest/coinbase": (
+            "s3://.../20210924/ohlcv/ccxt/coinbase": (
                 "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
             ),
         }
         ```
         """
-        # Build a root dir to the list of exchange ids subdirs, e.g.,
-        # "s3://<ck-data>/reorg/historical.manual.pq/latest/ohlcv/ccxt/latest/binance".
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,

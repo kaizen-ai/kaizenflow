@@ -49,7 +49,7 @@ class HistoricalPqByTileClient(
         See the parent class for parameters description.
 
         :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://cryptokaizen-data/reorg/historical.manual.pq")
+            an S3 root path (e.g., "s3://<ck-data>/reorg/historical.manual.pq")
             to the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
         :param infer_exchange_id: use the last part of a dir to indicate the exchange
@@ -182,7 +182,7 @@ class HistoricalPqByTileClient(
             transformation_kwargs: Dict = {}
             if self._infer_exchange_id:
                 # Infer `exchange_id` from a file path if it is not present in data.
-                # E.g., `s3://cryptokaizen-data/reorg/historical.manual.pq/latest/ohlcv/ccxt/binance`
+                # E.g., `s3://.../latest/ohlcv/ccxt/binance`
                 # -> `binance`.
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
@@ -230,7 +230,7 @@ class HistoricalPqByTileClient(
         E.g.,
         ```
         {
-            "s3://cryptokaizen-data/reorg/historical.manual.pq/latest/ohlcv/ccxt": (
+            "s3://.../latest/ohlcv/ccxt/binance": (
                 "full_symbol", "in", ["binance::ADA_USDT", "ftx::BTC_USDT"]
             )
         }

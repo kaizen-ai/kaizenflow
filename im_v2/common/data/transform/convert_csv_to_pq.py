@@ -17,8 +17,8 @@ dst_dir/
 Usage sample:
 
 > im_v2/common/data/transform/convert_csv_to_pq.py \
-     --src_dir 's3://cryptokaizen-data/historical/binance/' \
-     --dst_dir 's3://cryptokaizen-data/historical/binance_parquet/' \
+     --src_dir 's3://<ck-data>/historical/binance/' \
+     --dst_dir 's3://<ck-data>/historical/binance_parquet/' \
      --datetime_col 'timestamp' \
      --asset_col 'currency_pair' \
      --aws_profile 'ck'
