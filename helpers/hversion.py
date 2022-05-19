@@ -43,6 +43,7 @@ _VERSION_RE = r"\d+\.\d+\.\d+"
 
 
 def env_to_str() -> str:
+    assert 0
     msg = ""
     #
     msg += "# Repo config:\n"

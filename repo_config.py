@@ -221,7 +221,7 @@ def has_dind_support() -> bool:
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
     # dind is supported on both Mac and GH Actions.
-    if True:
+    if False:
         if is_cmamp_prod():
             assert not has_dind, "Not expected privileged mode"
         elif get_name() == "//dev_tools":

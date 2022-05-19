@@ -2154,7 +2154,7 @@ def _generate_compose_file(
     Generate `docker-compose.yaml` file and save it.
 
     :param shared_data_dir: data directory in the host filesystem to mount to mount
-        inside the container. None means no dir sharing
+        inside the container. `None` means no dir sharing
     """
     _LOG.debug(
         hprint.to_str(
@@ -2453,7 +2453,7 @@ def _get_docker_compose_paths(
         # launch the container corresponding to this repo.
         enable_privileged_mode = False
         use_docker_sibling_containers = False
-        get_shared_data_dirs = False
+        get_shared_data_dirs = None
         use_docker_network_mode_host = False
     else:
         # Use the settings from the `repo_config` corresponding to this container.
@@ -2471,26 +2471,6 @@ def _get_docker_compose_paths(
         file_name,
     )
     docker_compose_files.append(file_name)
-    # if False:
-    # docker_compose_files = []
-    # if has_default_param("USE_ONLY_ONE_DOCKER_COMPOSE"):
-    #     # Use only one docker compose file, instead of two.
-    #     # TODO(gp): Hacky fix for CmampTask386 "Clean up docker compose".
-    #     if repo_short_name == "amp":
-    #         # For amp use only
-    #         docker_compose_file_tmp = _get_amp_docker_compose_path()
-    #     else:
-    #         docker_compose_file_tmp = get_base_docker_compose_path()
-    #     docker_compose_files.append(docker_compose_file_tmp)
-    # else:
-    #     # Typically we use one or two docker compose files, depending if we need
-    #     # submodule behavior or not.
-    #     docker_compose_files.append(get_base_docker_compose_path())
-    #     if repo_short_name == "amp":
-    #         docker_compose_file_tmp = _get_amp_docker_compose_path()
-    #         if docker_compose_file_tmp:
-    #             docker_compose_files.append(docker_compose_file_tmp)
-
     # Add the compose files from command line.
     if extra_docker_compose_files:
         hdbg.dassert_isinstance(extra_docker_compose_files, list)
@@ -2752,6 +2732,7 @@ def _get_docker_base_cmd(
     base_image: str,
     stage: str,
     version: str,
+    service_name,
     extra_env_vars: Optional[List[str]],
     extra_docker_compose_files: Optional[List[str]],
 ) -> List[str]:
@@ -2792,7 +2773,7 @@ def _get_docker_base_cmd(
         r"""
         docker-compose"""
     )
-    docker_compose_files = _get_docker_compose_paths(extra_docker_compose_files)
+    docker_compose_files = _get_docker_compose_paths(service_name, extra_docker_compose_files)
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
@@ -2860,6 +2841,7 @@ def _get_docker_cmd(
         base_image,
         stage,
         version,
+        service_name,
         extra_env_vars,
         extra_docker_compose_files,
     )
@@ -2910,6 +2892,7 @@ def _get_docker_cmd(
         {cmd}"""
             )
     else:
+        # No entrypoint.
         docker_cmd_.append(
             rf"""
         --entrypoint bash \
@@ -5001,6 +4984,7 @@ def pytest_find_unused_goldens(  # type: ignore
     ctx,
     dir_name=".",
     stage="prod",
+    version="",
     out_file_name="pytest_find_unused_goldens.output.txt",
 ):
     """
@@ -5029,7 +5013,7 @@ def pytest_find_unused_goldens(  # type: ignore
     docker_cmd_opts = [f"--dir_name {dir_name}"]
     docker_cmd_ = f"{script_path} " + _to_single_line_cmd(docker_cmd_opts)
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, stage)
+    cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     _run(ctx, cmd)
@@ -5146,6 +5130,9 @@ def lint_check_python_files(  # type: ignore
 def _get_lint_docker_cmd(
     docker_cmd_: str,
     stage: str,
+    version: str,
+    *,
+    entrypoint: bool = True,
 ) -> str:
     """
     Create a command to run in the Linter service.
@@ -5159,10 +5146,9 @@ def _get_lint_docker_cmd(
     linter_image = f"{ecr_base_path}/dev_tools"
     # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
     # and run Linter on the specific version, e.g., `1.1.5`.
-    version = ""
     # Execute command line.
     cmd = _get_docker_cmd(
-        linter_image, stage, version, docker_cmd_, service_name="linter"
+        linter_image, stage, version, docker_cmd_, entrypoint=entrypoint, service_name="linter"
     )
     return cmd
 
@@ -5210,6 +5196,7 @@ def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
     stage="prod",
+    version="",
     out_file_name="lint_detect_cycles.output.txt",
 ):
     """
@@ -5233,7 +5220,7 @@ def lint_detect_cycles(  # type: ignore
         + _to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, stage)
+    cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     _run(ctx, cmd)
@@ -5252,11 +5239,13 @@ def lint(  # type: ignore
     only_format=False,
     only_check=False,
     fast=False,
-    # stage="prod",
     run_linter_step=True,
     parse_linter_output=True,
+    run_entrypoint_and_bash=False,
+    run_bash_without_entrypoint=False,
+    # TODO(gp): These params should go earlier, since are more important.
     stage="prod",
-    as_user=True,
+    version="",
     out_file_name="linter_output.txt",
 ):
     """
@@ -5286,8 +5275,12 @@ def lint(  # type: ignore
         and slow
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
+    :param run_entrypoint_and_bash: run the entrypoint of the container (which
+        configures the environment) and then `bash`, instead of running the
+        lint command
+    :param run_bash_without_entrypoint: run bash, skipping the entrypoint
+    TODO(gp): This seems to work but have some problems with tty
     :param stage: the image stage to use
-    :param as_user: pass the user / group id or not
     :param out_file_name: name of the file to save the log output in
     """
     _report_task()
@@ -5321,6 +5314,22 @@ def lint(  # type: ignore
     # amp_pylint.......................................(no files to check)Skipped
     # amp_mypy.........................................(no files to check)Skipped
     # ```
+    if run_bash_without_entrypoint:
+        # Run bash, without the Docker entrypoint.
+        docker_cmd_ = "bash"
+        cmd = _get_lint_docker_cmd(docker_cmd_, stage, version, entrypoint=False)
+        cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+        # Run.
+        _run(ctx, cmd)
+        return
+    if run_entrypoint_and_bash:
+        # Run the Docker entrypoint (which configures the environment) and then bash.
+        docker_cmd_ = "bash"
+        cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
+        cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+        # Run.
+        _run(ctx, cmd)
+        return
     if only_format:
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
@@ -5343,6 +5352,7 @@ def lint(  # type: ignore
                 "amp_mypy",
             ]
         )
+
     if run_linter_step:
         # We don't want to run this all the times.
         # docker_pull(ctx, stage=stage, images="dev_tools")
@@ -5376,7 +5386,6 @@ def lint(  # type: ignore
             return
         files_as_str = " ".join(files_as_list)
         phases = phases.split(" ")
-        as_user = _run_docker_as_user(as_user)
         for phase in phases:
             # Prepare the command line.
             precommit_opts = []
@@ -5390,7 +5399,7 @@ def lint(  # type: ignore
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             if fast:
                 docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
-            cmd = _get_lint_docker_cmd(docker_cmd_, stage)
+            cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
