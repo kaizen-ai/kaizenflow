@@ -182,7 +182,8 @@ class HistoricalPqByTileClient(
             transformation_kwargs: Dict = {}
             if self._infer_exchange_id:
                 # Infer `exchange_id` from a file path if it is not present in data.
-                # E.g., `s3://cryptokaizen-data/reorg/historical.manual.pq/latest/ohlcv/ccxt/binance` -> `binance`.
+                # E.g., `s3://cryptokaizen-data/reorg/historical.manual.pq/latest/ohlcv/ccxt/binance`
+                # -> `binance`.
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
             root_dir_df = self._apply_transformations(
