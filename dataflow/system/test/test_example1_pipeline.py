@@ -26,7 +26,7 @@ class Test_Example1_ReplayedForecastSystem(hunitest.TestCase):
     - an `Example1` DAG
     """
     def setUp(self):
-        super.setUp()
+        super().setUp()
         # Bring up local DB and its client.
         im_client = icdc.get_example1_realtime_client(
         self.connection, resample_1min=True
