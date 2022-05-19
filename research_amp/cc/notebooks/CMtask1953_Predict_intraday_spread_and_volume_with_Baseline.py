@@ -20,18 +20,12 @@
 # %autoreload 2
 
 
-import logging
 from datetime import timedelta
-import datetime
 
-import pandas as pd
-import seaborn as sns
-
-import core.plotting.normality as cplonorm
-import helpers.hdbg as hdbg
-import helpers.hprint as hprint
-import research_amp.transform as ramptran
 import numpy as np
+import pandas as pd
+
+import research_amp.transform as ramptran
 
 # %%
 # Read saved 1 month of data.
@@ -82,8 +76,9 @@ def get_real_spread(df: pd.DataFrame, time_and_date: pd.Timestamp):
     value = df["quoted_spread"].loc[time_and_date]
     return value
 
+
 def get_real_volume(df: pd.DataFrame, time_and_date: pd.Timestamp):
-    value = df["volume"].loc[date]
+    value = df["volume"].loc[time_and_date]
     return value
 
 
@@ -110,6 +105,7 @@ def get_naive_spread(df: pd.DataFrame, time_and_date: pd.Timestamp):
     real_spread = get_real_spread(df, naive_value_date)
     return real_spread
 
+
 def get_naive_volume(df: pd.DataFrame, time_and_date: pd.Timestamp):
     naive_value_date = time_and_date - timedelta(minutes=2)
     real_spread = get_real_volume(df, naive_value_date)
@@ -135,10 +131,12 @@ btc.head(3)
 
 
 # %%
-def get_lookback_spread(df, time_and_date: pd.Timestamp, lookback_days, mode: str = "mean"):
+def get_lookback_spread(
+    df, time_and_date: pd.Timestamp, lookback_days, mode: str = "mean"
+):
     # Choose sample data using lookback period.
     start_date = time_and_date - timedelta(days=lookback_days)
-    sample = df.loc[start_date : time_and_date]
+    sample = df.loc[start_date:time_and_date]
     # Look for the reference value for the period.
     time_grouper = sample.groupby("time")
     if mode == "mean":
@@ -149,10 +147,13 @@ def get_lookback_spread(df, time_and_date: pd.Timestamp, lookback_days, mode: st
     lookback_spread = grouped[time_and_date.time()]
     return lookback_spread
 
-def get_lookback_volume(df, time_and_date: pd.Timestamp, lookback_days, mode: str = "mean"):
+
+def get_lookback_volume(
+    df, time_and_date: pd.Timestamp, lookback_days, mode: str = "mean"
+):
     # Choose sample data using lookback period.
     start_date = time_and_date - timedelta(days=lookback_days)
-    sample = df.loc[start_date : time_and_date]
+    sample = df.loc[start_date:time_and_date]
     # Look for the reference value for the period.
     time_grouper = sample.groupby("time")
     if mode == "mean":
@@ -178,29 +179,40 @@ get_lookback_volume(btc, date, 14)
 # # Collect estimators
 
 # %%
+# Generate the separate DataFrame for estimators.
 estimators = pd.DataFrame(index=btc.index[1:])
-
-# %%
+# Add the values of a real spread.
 estimators["real_spread"] = estimators.index
-estimators["real_spread"] = estimators["real_spread"].apply(lambda x: get_real_spread(btc, x))
-
-# %%
+estimators["real_spread"] = estimators["real_spread"].apply(
+    lambda x: get_real_spread(btc, x)
+)
+# Add the values of naive estimator.
 estimators["naive_spread"] = estimators.index
-estimators["naive_spread"].iloc[2:] = estimators["naive_spread"].iloc[2:].apply(lambda x: get_naive_spread(btc, x))
+estimators = estimators.copy()
+estimators["naive_spread"].iloc[2:] = (
+    estimators["naive_spread"].iloc[2:].apply(lambda x: get_naive_spread(btc, x))
+)
 estimators["naive_spread"].iloc[:2] = np.nan
-
-# %%
+# Add the values of lookback estimator.
+# Parameters.
 start_date = pd.Timestamp("2022-01-15 00:00", tz="UTC")
 lookback = 14
+# Calculate values.
 estimators["lookback_spread"] = estimators.index
-estimators["lookback_spread"].loc[start_date:] = estimators["lookback_spread"].loc[start_date:].apply(lambda x: get_lookback_spread(btc, x, lookback))
-
-# %% run_control={"marked": false}
+estimators = estimators.copy()
+estimators["lookback_spread"].loc[start_date:] = (
+    estimators["lookback_spread"]
+    .loc[start_date:]
+    .apply(lambda x: get_lookback_spread(btc, x, lookback))
+)
+# Set NaNs.
 estimators = estimators.copy()
 estimators["lookback_spread"].loc[:start_date] = np.nan
 
 # %% run_control={"marked": false}
 estimators
+
+# %%
 
 # %%
 ## Evaluate results
@@ -211,20 +223,15 @@ dd["lookback_spread"] = dd["lookback_spread"].astype(float)
 # %%
 
 # %%
-Compare by asset (but also accumulate on all the coins):
-- err(naive, spread) = avg(|spread_read(t) - spread_naive(t)|)
-- err(lookback, spread) = avg(|spread_read(t) - spread_lookback(t)|)
-
-# %%
 dd
 
 # %%
-naive_err = abs(dd["real_spread"]-dd["naive_spread"]).sum()
-lookback_err = abs(dd["real_spread"]-dd["lookback_spread"]).sum()
+naive_err = abs(dd["real_spread"] - dd["naive_spread"]).sum()
+lookback_err = abs(dd["real_spread"] - dd["lookback_spread"]).sum()
 print(naive_err)
 print(lookback_err)
 
 # %%
-dd[["real_spread", "lookback_spread"]].plot(figsize=(15,7))
+dd[["real_spread", "lookback_spread"]].plot(figsize=(15, 7))
 
 # %%
