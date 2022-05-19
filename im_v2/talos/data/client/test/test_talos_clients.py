@@ -31,7 +31,7 @@ def get_expected_column_names() -> List[str]:
 # TestTalosHistoricalPqByTileClient1
 # #############################################################################
 
-# TODO(Grisha): CmTask1967 "Update Talos code".
+# TODO(Grisha): "Update Talos code CmTask #1967".
 class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.

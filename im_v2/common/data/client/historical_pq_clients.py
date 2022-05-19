@@ -26,12 +26,15 @@ _LOG = logging.getLogger(__name__)
 # HistoricalPqByTileClient
 # #############################################################################
 
-
+# TODO(Dan): "Consolidate HistoricalPqByTileClients CmTask #1961."
 class HistoricalPqByTileClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
-    Provide historical data stored as Parquet by-tile.
+    Read historical data stored as Parquet by-tile.
+
+    For base implementation Parquet dataset should be partitioned by
+    full symbol, year, and month.
     """
 
     def __init__(
@@ -252,15 +255,15 @@ class HistoricalPqByTileClient(
 
 
 # #############################################################################
-# VendorHistoricalPqByTileClient
+# HistoricalPqByCurrencyPairTileClient
 # #############################################################################
 
 
-class VendorHistoricalPqByTileClient(HistoricalPqByTileClient):
+class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
     """
     Read historical data for vendor specific assets stored as Parquet dataset.
 
-    It can read data from local or S3 filesystem as backend.
+    Parquet dataset should be partitioned by currency pair, year, and month.
     """
 
     def __init__(
