@@ -18,7 +18,7 @@ import market_data.real_time_market_data as mdrtmada
 _LOG = logging.getLogger(__name__)
 
 
-class Test_Example1_ReplayedForecastSystem(hunitest.TestCase):
+class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
     """
     Test a System composed of:
 
