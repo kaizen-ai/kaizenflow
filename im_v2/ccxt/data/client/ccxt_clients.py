@@ -357,9 +357,9 @@ class CcxtCddCsvParquetByAssetClient(
         Get the absolute path to a file with `CCXT` or `CDD` price data.
 
         The file path is constructed in the following way:
-        `<root_dir>/<data_snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`
+        `<root_dir>/<data_snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`.
         
-        E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`
+        E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`.
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
