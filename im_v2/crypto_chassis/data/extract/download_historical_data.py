@@ -34,13 +34,23 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
+    # TODO(Danya): This can be uncommented once we have specific 
+    # `download_kwargs` set inside `extract_utils`.
+    # parser.add_argument(
+    #     "--depth",
+    #     action="store",
+    #     required=False,
+    #     type=int,
+    #     default=None,
+    #     help="The depth of market data.",
+    # )
     parser.add_argument(
-        "--depth",
+        # TODO(Danya): This should be propagated to `add_exchange_download_args`.
+        "--data_type",
         action="store",
-        required=False,
-        type=int,
-        default=None,
-        help="The depth of market data.",
+        required=True,
+        type=str,
+        help="OHLCV, market_depth or trades data."
     )
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)

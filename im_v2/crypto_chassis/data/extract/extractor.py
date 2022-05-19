@@ -107,15 +107,17 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
 
     def download_ohlcv(
         self,
-        exchange: str,
+        exchange_id: str,
         currency_pair: str,
         *,
-        mode: str = "historical",
-        interval: str = "1m",
+        # TODO(Danya): This is an example of how to do it.
+        mode: Optional[str] = "recent",
+        interval: Optional[str] = "1m",
+        # TODO(Danya): It seems like the API doesn't recognize None, at least for OHLCV.
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
-        include_realtime: Optional[int] = None,
-    ) -> pd.DataFrame:
+        include_realtime: Optional[int] = "1",
+        ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
 
@@ -123,7 +125,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         0 	1634011620 	56775.59 	56799.51 	56775.59 	56799.51 	0.184718 	56781.6130 	9 	56783.3033
         1 	1634011680 	56822.35 	56832.25 	56815.59 	56815.59 	0.363495 	56828.9840 	16 	56828.9512
 
-        :param exchange: the name of exchange, e.g. `binance`, `coinbase`
+        :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
         :param mode: `recent` for real-time data, `historical` for historical data
         :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
@@ -154,7 +156,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         # Build base URL.
         core_url = self._build_base_url(
             data_type="ohlc",
-            exchange=exchange,
+            exchange=exchange_id,
             currency_pair=currency_pair,
         )
         # Build URL with specified parameters.
@@ -177,6 +179,8 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
             if mode == "recent":
                 # Process real-time.
                 # Get columns.
+                # TODO(Danya): if mode is recent, it only gives you data for the current month.
+                # This makes downloading historical data up to present moment actually more difficult.
                 columns = data_json[mode]["fields"].split(", ")
                 # Build Dataframe.
                 ohlcv_data = pd.DataFrame(
