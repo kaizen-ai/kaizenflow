@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.crypto_chassis.data.client.crypto_chassis_clients as ivccdcccc
+import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 """
 
 import logging
@@ -17,7 +17,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class CryptoChassisHistoricalPqByTileClient(icdc.VendorHistoricalPqByTileClient):
+class CryptoChassisHistoricalPqByTileClient(
+    icdc.HistoricalPqByCurrencyPairTileClient
+):
     """
     Read historical data for `CryptoChassis` assets stored as Parquet dataset.
 

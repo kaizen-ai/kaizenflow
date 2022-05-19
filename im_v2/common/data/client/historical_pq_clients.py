@@ -263,7 +263,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
     """
     Read historical data for vendor specific assets stored as Parquet dataset.
 
-    Parquet dataset should be partitioned by currency pair, year, and month.
+    Parquet dataset should be partitioned by currency pair, year, and
+    month.
     """
 
     def __init__(
@@ -296,7 +297,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         )
         self._data_snapshot = data_snapshot
 
-    def get_metadata(self) -> pd.DataFrame:
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
         """
         See description in the parent class.
         """
@@ -323,7 +325,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
 
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str, **kwargs
+        df: pd.DataFrame, full_symbol_col_name: str, **kwargs: Any
     ) -> pd.DataFrame:
         """
         See description in the parent class.
@@ -381,9 +383,10 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         full_symbol_tuples = [
             ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
         ]
-        # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
-        # `Defaultdict` provides a default value for the key that does not exists that prevents from
-        # getting `KeyError`.
+        # Store full symbols as a dictionary, e.g.,
+        # `{exchange_id1: [currency_pair1, currency_pair2]}`.
+        # `Defaultdict` provides a default value for the key that does not
+        # exists that prevents from getting `KeyError`.
         symbol_dict = collections.defaultdict(list)
         for exchange_id, *currency_pair in full_symbol_tuples:
             symbol_dict[exchange_id].extend(currency_pair)
@@ -398,7 +401,6 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             for exchange_id, currency_pairs in symbol_dict.items()
         }
         return root_dir_symbol_filter_dict
-
 
 
 # #############################################################################
