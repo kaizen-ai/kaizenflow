@@ -23,10 +23,10 @@ class Extractor(abc.ABC):
 
     def download_data(self, data_type: str, **kwargs) -> pd.DataFrame:
         """
-        Download Crypto Chassis data.
+        Download exchange data.
 
         :param data_type: the type of data, e.g. `market_depth`
-        :return: Crypto Chassis data
+        :return: exchange data
         """
         if data_type == "ohlcv":
             data = self.download_ohlcv(
@@ -57,10 +57,6 @@ class Extractor(abc.ABC):
 
     @abc.abstractmethod
     def download_ohlcv(self, **kwargs) -> pd.DataFrame:
-        ...
-
-    @abc.abstractmethod
-    def download_bid_ask(self, **kwargs) -> pd.DataFrame:
         ...
 
     @abc.abstractmethod
