@@ -769,19 +769,19 @@ def trim_df(
 
 def _display(log_level: int, df: pd.DataFrame) -> None:
     """
-    Display a df in a notebook at the given log level. 
+    Display a df in a notebook at the given log level.
 
     The behavior is similar to a command like `_LOG.log(log_level, ...)` but
     for a notebook `display` command.
 
-    :param log_level: log level at which to display a df. E.g., if `log_level = 
-        logging.DEBUG`, then we display the df only if we are running with 
+    :param log_level: log level at which to display a df. E.g., if `log_level =
+        logging.DEBUG`, then we display the df only if we are running with
         `-v DEBUG`. If `log_level = logging.INFO` then we don't display it
     """
     from IPython.display import display
 
     if hsystem.is_running_in_ipynb() and log_level >= hdbg.get_logger_verbosity():
-       display(df)
+        display(df)
 
 
 def _df_to_str(
@@ -957,8 +957,8 @@ def df_to_str(
             df_stats = pd.DataFrame(table, columns=columns)
             stats_num_rows = None
             df_stats_as_str = _df_to_str(
-                df_stats, 
-                stats_num_rows, 
+                df_stats,
+                stats_num_rows,
                 max_columns,
                 max_colwidth,
                 max_rows,
@@ -992,8 +992,8 @@ def df_to_str(
                 )
             memory_num_rows = None
             memory_usage_as_txt = _df_to_str(
-                mem_use_df, 
-                memory_num_rows, 
+                mem_use_df,
+                memory_num_rows,
                 max_columns,
                 max_colwidth,
                 max_rows,
