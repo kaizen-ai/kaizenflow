@@ -383,7 +383,7 @@ class CcxtCddCsvParquetByAssetClient(
 # #############################################################################
 
 
-class CcxtHistoricalPqByTileClient(icdc.VendorHistoricalPqByTileClient):
+class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
     """
     Read historical data for `CCXT` assets stored as Parquet dataset.
 
