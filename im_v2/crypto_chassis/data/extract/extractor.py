@@ -185,6 +185,9 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
             )
             data.append(recent_data)
         # Combine historical and recent Dataframes.
+        if not data:
+            # Return empty Dataframe if there is no data.
+            return pd.DataFrame()
         ohlcv = pd.concat(data, axis=1)
         # Filter the time period since Crypto Chassis doesn't provide this functionality.
         # (CmTask #1887).
