@@ -176,6 +176,7 @@ def get_lookback_value(
     timestamp: pd.Timestamp,
     lookback_days: int,
     column_name: str,
+    delay: int = 0,
     mode: str = "mean",
 ) -> float:
     """
@@ -187,11 +188,12 @@ def get_lookback_value(
     :param timestamp: timestamp for prediciton
     :param lookback_days: historical period for estimation, in days
     :param column_name: targeted estimation value (e.g., "quoted_spread", "volume")
+    :param delay: how many minutes to substract from the lookback starting period
     :param mode: 'mean' or 'median'
     :return: value of predicted spread
     """
     # Choose sample data using lookback period (with a delay).
-    start_date = timestamp - timedelta(days=lookback_days, minutes=1)
+    start_date = timestamp - timedelta(days=lookback_days, minutes=delay)
     if start_date >= df.index.min() and start_date <= df.index.max():
         sample = df.loc[start_date:timestamp]
         # Look for the reference value for the period.
@@ -260,8 +262,8 @@ def get_mean_error(
     """
     - Calculate the error of difference between real and estimated values.
     - Show the mean and ± num_std*standard_deviation levels.
-    
-    :param df: data with real values and estimators 
+
+    :param df: data with real values and estimators
     :param column_name: estimator (e.g., "naive_spread", "lookback_spread")
     :param num_std: number of standard deviations from mean
     :param print_results: whether or not print results
