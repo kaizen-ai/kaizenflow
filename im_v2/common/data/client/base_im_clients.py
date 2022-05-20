@@ -95,6 +95,8 @@ class ImClient(abc.ABC):
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
+        # TODO(Grisha): consider passing it as a parameter to also read bid/ask data.
+        self._dataset = "ohlcv"
 
     # TODO(gp): Why static?
     @staticmethod
