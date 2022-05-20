@@ -26,11 +26,11 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 
+import core.explore as coexplor
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import research_amp.transform as ramptran
-import core.explore as coexplor
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -201,7 +201,7 @@ def get_lookback_value(
         else:
             grouped = time_grouper[column_name].median().to_frame()
         # Choose the lookback spread for a given time.
-        #value = grouped[timestamp.time()]
+        # value = grouped[timestamp.time()]
         value = get_target_value(grouped, timestamp.time(), column_name)
     else:
         value = np.nan
@@ -248,17 +248,34 @@ estimators
 
 
 # %% [markdown]
-# # Evaluate results (skeleton)
+# # Evaluate results
 
 # %%
-def get_mean_error(df: pd.DataFrame, column_name: str, num_std: int = 1, print_results: bool = True):
-    err = (abs(test["real_spread"] - test[column_name]) / test["real_spread"])
+def get_mean_error(
+    df: pd.DataFrame,
+    column_name: str,
+    num_std: int = 1,
+    print_results: bool = True,
+) -> pd.Series:
+    """
+    - Calculate the error of difference between real and estimated values.
+    - Show the mean and ± num_std*standard_deviation levels.
+    
+    :param df: data with real values and estimators 
+    :param column_name: estimator (e.g., "naive_spread", "lookback_spread")
+    :param num_std: number of standard deviations from mean
+    :param print_results: whether or not print results
+    :return: errors for each data point
+    """
+    err = abs(df["real_spread"] - df[column_name]) / df["real_spread"]
     err_mean = err.mean()
     err_std = err.std()
     if print_results:
-        print(f"Mean error + {num_std} std = {err_mean+num_std*err_std} \
+        print(
+            f"Mean error + {num_std} std = {err_mean+num_std*err_std} \
               \nMean error = {err_mean}\
-              \nMean error - {num_std} std = {err_mean-num_std*err_std}")
+              \nMean error - {num_std} std = {err_mean-num_std*err_std}"
+        )
     return err
 
 
@@ -267,9 +284,14 @@ def get_mean_error(df: pd.DataFrame, column_name: str, num_std: int = 1, print_r
 test = estimators[estimators["lookback_spread"].notna()]
 test.head(3)
 
-# %%
-naive_err = get_mean_error(test, column_name = "naive_spread")
+# %% [markdown]
+# ## Naive estimator
 
+# %%
+# Mean error and upper/lower level of errors' standard deviation.
+naive_err = get_mean_error(test, column_name="naive_spread")
+
+# %% run_control={"marked": false}
 # Regress (OLS) between `real_spread` and `naive_spread`.
 predicted_var = "real_spread"
 predictor_vars = "naive_spread"
@@ -283,8 +305,16 @@ coexplor.ols_regress(
 )
 
 # %%
-lookback_err = get_mean_error(test, column_name = "lookback_spread")
+test[["real_spread", "naive_spread"]].plot(figsize=(15, 7))
 
+# %% [markdown]
+# ## Lookback estimator
+
+# %%
+# Mean error and upper/lower level of errors' standard deviation.
+lookback_err = get_mean_error(test, column_name="lookback_spread")
+
+# %%
 # Regress (OLS) between `real_spread` and `lookback_spread`.
 predicted_var = "real_spread"
 predictor_vars = "lookback_spread"
