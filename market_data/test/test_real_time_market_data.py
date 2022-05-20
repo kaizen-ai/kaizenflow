@@ -25,7 +25,7 @@ class TestRealTimeMarketData2(
             self.connection, resample_1min=True
         )
         # Set up market data client.
-        self.market_data = mdmadaex.get_mock_RealtimeMarketData(
+        self.market_data = mdmadaex.get_RealtimeMarketData_example1(
             im_client
         )
 
