@@ -73,7 +73,9 @@ def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     return vwap_twap_df
 
 
-def calculate_returns(df: pd.DataFrame, rets_type: str, convert_to_multiindex: bool = False) -> pd.DataFrame:
+def calculate_returns(
+    df: pd.DataFrame, rets_type: str, convert_to_multiindex: bool = False
+) -> pd.DataFrame:
     """
     Compute returns on the resampled data DataFlow-style.
 
