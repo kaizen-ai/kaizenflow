@@ -34,7 +34,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         """
         return currency_pair.replace("_", "/").lower()
  
-    def download_market_depth(
+    def _download_market_depth(
         self,
         exchange: str,
         currency_pair: str,
@@ -105,7 +105,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         market_depth = market_depth.rename(columns={"time_seconds": "timestamp"})
         return market_depth
 
-    def download_ohlcv(
+    def _download_ohlcv(
         self,
         exchange_id: str,
         currency_pair: str,
@@ -207,7 +207,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
         return ohlcv_data
 
-    def download_trades(
+    def _download_trades(
         self,
         exchange: str,
         currency_pair: str,

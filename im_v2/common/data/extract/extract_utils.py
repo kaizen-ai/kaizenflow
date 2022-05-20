@@ -391,14 +391,14 @@ def save_csv(
 
 
 def save_parquet(
-    data: pd.DataFrame, path_to_exchange: str, aws_profile: Optional[str]
+    data: pd.DataFrame, path_to_exchange: str, unit: str, aws_profile: Optional[str],
 ) -> None:
     """
     Save Parquet dataset.
     """
     # Update indexing and add partition columns.
     # TODO(Danya): Add `unit` as a parameter in the function.
-    data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit="s")
+    data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit=unit)
     data, partition_cols = hparque.add_date_partition_columns(
         data, "by_year_month"
     )

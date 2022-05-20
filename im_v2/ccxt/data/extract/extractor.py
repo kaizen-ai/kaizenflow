@@ -72,7 +72,7 @@ class CcxtExtractor(imvcdeext.Extractor):
         """
         return list(self._exchange.load_markets().keys())
 
-    def download_ohlcv(
+    def _download_ohlcv(
         self,
         currency_pair: str,
         *,
@@ -143,11 +143,11 @@ class CcxtExtractor(imvcdeext.Extractor):
         # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
-    def download_market_depth(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Market depth data is not implementes in CCXT class")
+    def _download_market_depth(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Market depth data is not implemented in CCXT class")
 
-    def download_trades(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Trades data is not implementes in CCXT class")
+    def _download_trades(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Trades data is not implemented in CCXT class")
 
     def download_order_book(self, currency_pair: str) -> Dict[str, Any]:
         """

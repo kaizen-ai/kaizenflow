@@ -91,7 +91,7 @@ class TalosExtractor(imvcdeext.Extractor):
         url = f"https://{self._endpoint}{data_path}"
         return url
 
-    def download_ohlcv(
+    def _download_ohlcv(
         self,
         currency_pair: str,
         exchange: str,
@@ -143,11 +143,11 @@ class TalosExtractor(imvcdeext.Extractor):
             bar_per_iteration=bar_per_iteration,
         )
 
-    def download_market_depth(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Market depth data is not implementes in Talos class")
+    def _download_market_depth(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Market depth data is not implemented in Talos class")
 
-    def download_trades(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Trades data is not implementes in Talos class")
+    def _download_trades(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Trades data is not implemented in Talos class")
 
     def _fetch_ohlcv(
         self,
