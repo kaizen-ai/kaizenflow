@@ -58,14 +58,14 @@ class HistoricalPqByTileClient(
 
         See the parent class for parameters description.
 
-        :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://cryptokaizen-data/historical")
+        :param root_dir: either a local root path (e.g., `/app/im`) or
+            an S3 root path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`)
             to the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
         :param infer_exchange_id: use the last part of a dir to indicate the exchange
             originating the data. This allows to merging multiple Parquet files on
             exchange. See CmTask #1533 "Add exchange to the ParquetDataset partition".
-        :param aws_profile: AWS profile name (e.g., "ck")
+        :param aws_profile: AWS profile, e.g., "ck"
         """
         super().__init__(
             vendor,
@@ -192,7 +192,7 @@ class HistoricalPqByTileClient(
             transformation_kwargs: Dict = {}
             if self._infer_exchange_id:
                 # Infer `exchange_id` from a file path if it is not present in data.
-                # E.g., `s3://cryptokaizen-data/historical/ccxt/latest/binance` -> `binance`.
+                # E.g., `s3://.../latest/ohlcv/ccxt/binance` -> `binance`.
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
             root_dir_df = self._apply_transformations(
@@ -239,7 +239,7 @@ class HistoricalPqByTileClient(
         E.g.,
         ```
         {
-            "s3://cryptokaizen-data/historical/ccxt/latest": (
+            "s3://.../20210924/ohlcv/ccxt/binance": (
                 "full_symbol", "in", ["binance::ADA_USDT", "ftx::BTC_USDT"]
             )
         }

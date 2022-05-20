@@ -65,7 +65,7 @@ def from_parquet(
     :param filters: Parquet query filters
     :param log_level: logging level to execute at
     :param report_stats: whether to report Parquet file size or not
-    :param aws_rofile: AWS profile, e.g., `ck`
+    :param aws_profile: AWS profile, e.g., `ck`
     :return: data from Parquet dataset
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
