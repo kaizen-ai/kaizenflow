@@ -26,6 +26,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Grisha): "Update Talos code CmTask #1967".
 class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     """
     Read historical data for `Talos` assets stored as Parquet dataset.
