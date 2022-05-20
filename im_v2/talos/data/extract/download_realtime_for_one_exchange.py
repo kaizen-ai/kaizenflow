@@ -14,7 +14,7 @@ Use as:
     --db_table 'talos_ohlcv' \
     --api_stage 'sandbox' \
     --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-data/real_time/talos'
+    --s3_path 's3://<ck-data>/real_time/talos'
 """
 
 import argparse

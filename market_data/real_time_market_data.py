@@ -281,6 +281,8 @@ class RealTimeMarketData2(mdabmada.MarketData):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        *,
+        columns: Optional[List[str]] = None
     ) -> pd.DataFrame:
         """
         Build a query and load SQL data in MarketData format.
@@ -293,7 +295,6 @@ class RealTimeMarketData2(mdabmada.MarketData):
             ]
         else:
             full_symbols = None
-        columns = None
         data = self._client.read_data(
             full_symbols,
             start_ts,
@@ -306,21 +307,6 @@ class RealTimeMarketData2(mdabmada.MarketData):
             limit=limit,
         )
         # Rename the index to fit the MarketData format.
-        # TODO(Danya): The client requires the data to have a `timestamp` index,
-        #  while AbstractMarketData requires to have integer index.
-        #  This conversion is redundant, but necessary to combine
-        #  the client and AbstractMarketData.
         data.index.name = "end_timestamp"
         data = data.reset_index()
-        market_data_columns = [
-            "end_timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "start_timestamp",
-            "asset_id",
-        ]
-        data = data[market_data_columns]
         return data
