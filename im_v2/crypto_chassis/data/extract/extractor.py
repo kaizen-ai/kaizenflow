@@ -38,9 +38,9 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         self,
         exchange: str,
         currency_pair: str,
+        start_timestamp: Optional[pd.Timestamp],
         *,
         depth: int = 1,
-        start_timestamp: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Download snapshot data on market depth.
@@ -109,14 +109,13 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         self,
         exchange_id: str,
         currency_pair: str,
+        start_timestamp: Optional[pd.Timestamp],
+        end_timestamp: Optional[pd.Timestamp],
         *,
         # TODO(Danya): This is an example of how to do it.
         mode: Optional[str] = "historical",
         interval: Optional[str] = "1m",
-        # TODO(Danya): It seems like the API doesn't recognize None, at least for OHLCV.
-        start_timestamp: Optional[pd.Timestamp] = None,
-        end_timestamp: Optional[pd.Timestamp] = None,
-        include_realtime: Optional[int] = "1",
+        include_realtime: str = "1",
         ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
@@ -127,10 +126,10 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
 
         :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
-        :param mode: `recent` for real-time data, `historical` for historical data
-        :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
         :param start_time: timestamp of start
         :param end_time: timestamp of end
+        :param mode: `recent` for real-time data, `historical` for historical data
+        :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this
             endpoint is 1 request per second per public IP.
         :return: ohlcv data
@@ -211,8 +210,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         self,
         exchange: str,
         currency_pair: str,
-        *,
-        start_timestamp: Optional[pd.Timestamp] = None,
+        start_timestamp: Optional[pd.Timestamp],
     ) -> pd.DataFrame:
         """
         Download snapshot of trade data.
