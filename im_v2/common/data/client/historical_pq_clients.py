@@ -34,7 +34,7 @@ class HistoricalPqByTileClient(
     Read historical data stored as Parquet by-tile.
 
     For base implementation Parquet dataset should be partitioned by
-    full symbol, year, and month.
+    full symbol.
     """
 
     def __init__(
@@ -263,8 +263,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
     """
     Read historical data for vendor specific assets stored as Parquet dataset.
 
-    Parquet dataset should be partitioned by currency pair, year, and
-    month.
+    Parquet dataset should be partitioned by currency pair.
     """
 
     def __init__(
