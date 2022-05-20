@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import research_amp.transform as ramptran
 
@@ -97,20 +98,25 @@ btc.head(3)
 # ## Estimate intraday spread, volume
 
 # %%
-def get_real_spread(df: pd.DataFrame, time_and_date: pd.Timestamp):
-    value = df["quoted_spread"].loc[time_and_date]
-    return value
-
-
-def get_real_volume(df: pd.DataFrame, time_and_date: pd.Timestamp):
-    value = df["volume"].loc[time_and_date]
+def get_target_value(df: pd.DataFrame, timestamp: pd.Timestamp, column_name: str):
+    """
+    :param df: data that contains spread and/or volume
+    :param timestamp: timestamp for prediciton
+    :param column_name: targeted estimation value - "quoted_spread" or "volume"
+    :return: value of targeted spread or volume
+    """
+    hpandas.dassert_monotonic_index(df.index)
+    if timestamp >= df.index.min() and timestamp <= df.index.max():
+        value = df[column_name].loc[timestamp]
+    else:
+        value = np.nan
     return value
 
 
 # %%
 date = pd.Timestamp("2022-01-01 00:01", tz="UTC")
-display(get_real_spread(btc, date))
-display(get_real_volume(btc, date))
+display(get_target_value(btc, date, "quoted_spread"))
+display(get_target_value(btc, date, "volume"))
 
 
 # %% [markdown]
@@ -120,29 +126,37 @@ display(get_real_volume(btc, date))
 # Value(t+2) = Value(t)
 
 # %%
-def get_naive_spread(df: pd.DataFrame, time_and_date: pd.Timestamp) -> float:
+def get_naive_value(
+    df: pd.DataFrame,
+    timestamp: pd.Timestamp,
+    column_name: str,
+    delay_in_mins: int = 2,
+) -> float:
     """
     Estimator for a given time is a `t-2` of a real value.
 
-    :param df: data that contains spread
-    :param time_and_date: timestamp for prediciton
-    :return: value of predicted spread
+    :param df: data that contains spread and/or volume
+    :param timestamp: timestamp for prediciton
+    :param column_name: targeted estimation value - "quoted_spread" or "volume"
+    :param delay_in_mins: desired gap for target estimator, in mins
+    :return: value of predicted spread or volume
     """
-    naive_value_date = time_and_date - timedelta(minutes=2)
-    real_spread = get_real_spread(df, naive_value_date)
-    return real_spread
-
-
-def get_naive_volume(df: pd.DataFrame, time_and_date: pd.Timestamp):
-    naive_value_date = time_and_date - timedelta(minutes=2)
-    real_spread = get_real_volume(df, naive_value_date)
-    return real_spread
+    # Check and define delay.
+    hdbg.dassert_lte(1, delay_in_mins)
+    delay_in_mins = timedelta(minutes=delay_in_mins)
+    # Get the value.
+    lookup_timestamp = timestamp - delay_in_mins
+    if lookup_timestamp >= df.index.min() and lookup_timestamp <= df.index.max():
+        value = get_target_value(df, lookup_timestamp, column_name)
+    else:
+        value = np.nan
+    return value
 
 
 # %%
 date = pd.Timestamp("2022-01-01 00:03", tz="UTC")
-display(get_naive_spread(btc, date))
-display(get_naive_volume(btc, date))
+display(get_naive_value(btc, date, "quoted_spread"))
+display(get_naive_value(btc, date, "volume"))
 
 # %% [markdown]
 # ## Look back N days
@@ -156,10 +170,11 @@ btc["time"] = btc.index.time
 
 
 # %%
-def get_lookback_spread(
+def get_lookback_value(
     df: pd.DataFrame,
-    time_and_date: pd.Timestamp,
+    timestamp: pd.Timestamp,
     lookback_days: int,
+    column_name: str,
     mode: str = "mean",
 ) -> float:
     """
@@ -168,83 +183,63 @@ def get_lookback_spread(
     3) Choose this mean value as an estimation for spread in the given timestamp.
 
     :param df: data that contains spread
-    :param time_and_date: timestamp for prediciton
+    :param timestamp: timestamp for prediciton
     :param lookback_days: historical period for estimation, in days
+    :param column_name: targeted estimation value - "quoted_spread" or "volume"
     :param mode: 'mean' or 'median'
     :return: value of predicted spread
     """
-    # Choose sample data using lookback period.
-    start_date = time_and_date - timedelta(days=lookback_days)
-    sample = df.loc[start_date:time_and_date]
-    # Look for the reference value for the period.
-    time_grouper = sample.groupby("time")
-    if mode == "mean":
-        grouped = time_grouper["quoted_spread"].mean()
+    # Choose sample data using lookback period (with a delay).
+    start_date = timestamp - timedelta(days=lookback_days, minutes=1)
+    if start_date >= df.index.min() and start_date <= df.index.max():
+        sample = df.loc[start_date:timestamp]
+        # Look for the reference value for the period.
+        time_grouper = sample.groupby("time")
+        if mode == "mean":
+            grouped = time_grouper[column_name].mean()
+        else:
+            grouped = time_grouper[column_name].median()
+        # Choose the lookback spread for a given time.
+        value = grouped[timestamp.time()]
     else:
-        grouped = time_grouper["quoted_spread"].median()
-    # Choose the value.
-    lookback_spread = grouped[time_and_date.time()]
-    return lookback_spread
-
-
-def get_lookback_volume(
-    df: pd.DataFrame,
-    time_and_date: pd.Timestamp,
-    lookback_days: int,
-    mode: str = "mean",
-):
-    # Choose sample data using lookback period.
-    start_date = time_and_date - timedelta(days=lookback_days)
-    sample = df.loc[start_date:time_and_date]
-    # Look for the reference value for the period.
-    time_grouper = sample.groupby("time")
-    if mode == "mean":
-        grouped = time_grouper["volume"].mean()
-    else:
-        grouped = time_grouper["volume"].median()
-    # Choose the value.
-    lookback_spread = grouped[time_and_date.time()]
-    return lookback_spread
+        value = np.nan
+    return value
 
 
 # %%
 date = pd.Timestamp("2022-01-21 19:59", tz="UTC")
-display(get_lookback_spread(btc, date, 14))
-display(get_lookback_volume(btc, date, 14))
+display(get_lookback_value(btc, date, 14, "quoted_spread"))
+display(get_lookback_value(btc, date, 14, "volume"))
 
 # %% [markdown]
 # # Collect all estimators for the whole period
 
 # %%
+estimation_target = "quoted_spread"
+
 # Generate the separate DataFrame for estimators.
 estimators = pd.DataFrame(index=btc.index[1:])
 # Add the values of a real spread.
 estimators["real_spread"] = estimators.index
 estimators["real_spread"] = estimators["real_spread"].apply(
-    lambda x: get_real_spread(btc, x)
+    lambda x: get_target_value(btc, x, estimation_target)
 )
 
 # Add the values of naive estimator.
 estimators["naive_spread"] = estimators.index
 # Starting from the second value since this estimator looks back for two periods.
-estimators["naive_spread"].iloc[2:] = (
-    estimators["naive_spread"].iloc[2:].apply(lambda x: get_naive_spread(btc, x))
+estimators["naive_spread"] = estimators["naive_spread"].apply(
+    lambda x: get_naive_value(btc, x, estimation_target)
 )
-estimators["naive_spread"].iloc[:2] = np.nan
 
 # Add the values of lookback estimator.
 # Parameters.
-start_date = pd.Timestamp("2022-01-15 00:00", tz="UTC")
 lookback = 14
 # Calculate values.
 estimators["lookback_spread"] = estimators.index
-estimators["lookback_spread"].loc[start_date:] = (
-    estimators["lookback_spread"]
-    .loc[start_date:]
-    .apply(lambda x: get_lookback_spread(btc, x, lookback))
+estimators["lookback_spread"] = estimators["lookback_spread"].apply(
+    lambda x: get_lookback_value(btc, x, lookback, estimation_target)
 )
-# Set NaNs.
-estimators["lookback_spread"].loc[:start_date] = np.nan
 
 # %% run_control={"marked": false}
 estimators
@@ -255,10 +250,6 @@ estimators
 # %%
 # Choose the period that is equally filled by both estimators.
 test = estimators[estimators["lookback_spread"].notna()]
-test["naive_spread"] = test["naive_spread"].astype(float)
-test["lookback_spread"] = test["lookback_spread"].astype(float)
-
-# %%
 test
 
 # %%
