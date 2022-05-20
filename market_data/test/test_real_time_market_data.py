@@ -6,7 +6,7 @@ import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
-import market_data.real_time_market_data as mdrtmada
+import market_data.market_data_example as mdmadaex
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,7 +25,9 @@ class TestRealTimeMarketData2(
             self.connection, resample_1min=True
         )
         # Set up market data client.
-        self.market_data = self._setup_test_market_data(im_client)
+        self.market_data = mdmadaex.get_mock_RealtimeMarketData_example1(
+            im_client
+        )
 
     def tearDown(self) -> None:
         # Delete the table.
@@ -153,31 +155,6 @@ class TestRealTimeMarketData2(
         self.check_srs_output(
             actual, expected_length, expected_unique_values, expected_df_as_str
         )
-
-    def _setup_test_market_data(
-        self, im_client: icdc.SqlRealTimeImClient
-    ) -> mdrtmada.RealTimeMarketData2:
-        """
-        Setup RealTimeMarketData2 interface.
-        """
-        asset_id_col = "asset_id"
-        asset_ids = [1464553467]
-        start_time_col_name = "start_timestamp"
-        end_time_col_name = "end_timestamp"
-        columns = None
-        get_wall_clock_time = lambda: pd.Timestamp(
-            "2022-04-22", tz="America/New_York"
-        )
-        market_data = mdrtmada.RealTimeMarketData2(
-            im_client,
-            asset_id_col,
-            asset_ids,
-            start_time_col_name,
-            end_time_col_name,
-            columns,
-            get_wall_clock_time,
-        )
-        return market_data
 
     def _check_dataframe(
         self,

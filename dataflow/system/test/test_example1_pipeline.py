@@ -5,15 +5,12 @@ import pandas as pd
 import pytest
 
 import core.finance as cofinanc
-import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
-import dataflow.system.system_tester as dtfsysytes
+import dataflow.system as dtfsys
 import helpers.hasyncio as hasynci
-import helpers.hunit_test as hunitest
-import oms.test.oms_db_helper as otodh
-import im_v2.common.db.db_utils as imvcddbut
-import oms.test.oms_db_helper as otodh
 import im_v2.common.data.client as icdc
-import market_data.real_time_market_data as mdrtmada
+import im_v2.common.db.db_utils as imvcddbut
+import market_data as mdata
+import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,6 +22,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
     - a `ReplayedMarketData` (providing fake data and features)
     - an `Example1` DAG
     """
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
@@ -33,7 +31,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         super().setUp()
         # Bring up local DB and its client.
         im_client = icdc.get_example1_realtime_client(
-        self.connection, resample_1min=True
+            self.connection, resample_1min=True
         )
         # Set up market data client.
         asset_id_col = "asset_id"
@@ -44,7 +42,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         get_wall_clock_time = lambda: pd.Timestamp(
             "2022-04-22", tz="America/New_York"
         )
-        market_data = mdrtmada.RealTimeMarketData2(
+        market_data = mdata.RealTimeMarketData2(
             im_client,
             asset_id_col,
             asset_ids,
@@ -64,7 +62,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         """
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [1467591036]
-            system = dtfsepsyru.Example1_ForecastSystem(
+            system = dtfsys.Example1_ForecastSystem(
                 asset_ids,
                 event_loop,
             )
@@ -109,7 +107,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     - with a `MarketData`
     - with a `Portfolio` backed by DB or dataframe
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
@@ -127,11 +125,11 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsepsyru.Example1_Database_ForecastSystem(
+                system_runner = dtfsys.Example1_Database_ForecastSystem(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = dtfsepsyru.Example1_Dataframe_ForecastSystem(
+                system_runner = dtfsys.Example1_Dataframe_ForecastSystem(
                     asset_ids, event_loop
                 )
             #
@@ -171,7 +169,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            system_tester = dtfsysytes.SystemTester()
+            system_tester = dtfsys.SystemTester()
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
             _LOG.debug("result_bundle=\n%s", result_bundle)
