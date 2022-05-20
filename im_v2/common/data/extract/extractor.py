@@ -7,8 +7,6 @@ import im_v2.common.data.extract.extractor as imvcdeext
 """
 
 import abc
-import logging
-import os
 
 import pandas as pd
 
@@ -35,14 +33,14 @@ class Extractor(abc.ABC):
         )
         elif data_type == "market_depth":
             data = self._download_market_depth(
-                exchange=kwargs["exchange_id"],
+                exchange_id=kwargs["exchange_id"],
                 currency_pair=kwargs["currency_pair"],
                 depth=kwargs["depth"],
                 start_timestamp=kwargs["start_timestamp"],
         )
         elif data_type == "trades":
-            data = self._download_trade(
-                exchange=kwargs["exchange_id"],
+            data = self._download_trades(
+                exchange_id=kwargs["exchange_id"],
                 currency_pair=kwargs["currency_pair"],
                 start_timestamp=kwargs["start_timestamp"],
         )
