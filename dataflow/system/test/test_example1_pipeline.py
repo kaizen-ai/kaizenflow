@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 
 import core.finance as cofinanc
-import dataflow.system as dtfsys
+import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
+import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
@@ -27,7 +28,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         # Bring up local DB and its client.
         im_client = icdc.get_example1_realtime_client(
@@ -62,7 +63,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         """
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [1467591036]
-            system = dtfsys.Example1_ForecastSystem(
+            system = dtfsepsyru.Example1_ForecastSystem(
                 asset_ids,
                 event_loop,
             )
@@ -125,11 +126,11 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsys.Example1_Database_ForecastSystem(
+                system_runner = dtfsepsyru.Example1_Database_ForecastSystem(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = dtfsys.Example1_Dataframe_ForecastSystem(
+                system_runner = dtfsepsyru.Example1_Dataframe_ForecastSystem(
                     asset_ids, event_loop
                 )
             #
@@ -169,7 +170,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            system_tester = dtfsys.SystemTester()
+            system_tester = dtfsysytes.SystemTester()
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
             _LOG.debug("result_bundle=\n%s", result_bundle)
