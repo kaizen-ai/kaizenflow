@@ -30,6 +30,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import research_amp.transform as ramptran
+import core.explore as coexplor
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -102,7 +103,7 @@ def get_target_value(df: pd.DataFrame, timestamp: pd.Timestamp, column_name: str
     """
     :param df: data that contains spread and/or volume
     :param timestamp: timestamp for prediciton
-    :param column_name: targeted estimation value - "quoted_spread" or "volume"
+    :param column_name: targeted estimation value (e.g., "quoted_spread", "volume")
     :return: value of targeted spread or volume
     """
     hpandas.dassert_monotonic_index(df.index)
@@ -133,11 +134,11 @@ def get_naive_value(
     delay_in_mins: int = 2,
 ) -> float:
     """
-    Estimator for a given time is a `t-2` of a real value.
+    Estimator for a given time is a `t - delay_in_mins` of a real value.
 
     :param df: data that contains spread and/or volume
     :param timestamp: timestamp for prediciton
-    :param column_name: targeted estimation value - "quoted_spread" or "volume"
+    :param column_name: targeted estimation value (e.g., "quoted_spread", "volume")
     :param delay_in_mins: desired gap for target estimator, in mins
     :return: value of predicted spread or volume
     """
@@ -185,7 +186,7 @@ def get_lookback_value(
     :param df: data that contains spread
     :param timestamp: timestamp for prediciton
     :param lookback_days: historical period for estimation, in days
-    :param column_name: targeted estimation value - "quoted_spread" or "volume"
+    :param column_name: targeted estimation value (e.g., "quoted_spread", "volume")
     :param mode: 'mean' or 'median'
     :return: value of predicted spread
     """
@@ -196,11 +197,12 @@ def get_lookback_value(
         # Look for the reference value for the period.
         time_grouper = sample.groupby("time")
         if mode == "mean":
-            grouped = time_grouper[column_name].mean()
+            grouped = time_grouper[column_name].mean().to_frame()
         else:
-            grouped = time_grouper[column_name].median()
+            grouped = time_grouper[column_name].median().to_frame()
         # Choose the lookback spread for a given time.
-        value = grouped[timestamp.time()]
+        #value = grouped[timestamp.time()]
+        value = get_target_value(grouped, timestamp.time(), column_name)
     else:
         value = np.nan
     return value
@@ -244,19 +246,56 @@ estimators["lookback_spread"] = estimators["lookback_spread"].apply(
 # %% run_control={"marked": false}
 estimators
 
+
 # %% [markdown]
 # # Evaluate results (skeleton)
 
 # %%
-# Choose the period that is equally filled by both estimators.
-test = estimators[estimators["lookback_spread"].notna()]
-test
+def get_mean_error(df: pd.DataFrame, column_name: str, num_std: int = 1, print_results: bool = True):
+    err = (abs(test["real_spread"] - test[column_name]) / test["real_spread"])
+    err_mean = err.mean()
+    err_std = err.std()
+    if print_results:
+        print(f"Mean error + {num_std} std = {err_mean+num_std*err_std} \
+              \nMean error = {err_mean}\
+              \nMean error - {num_std} std = {err_mean-num_std*err_std}")
+    return err
+
 
 # %%
-naive_err = abs(test["real_spread"] - test["naive_spread"]).sum()
-lookback_err = abs(test["real_spread"] - test["lookback_spread"]).sum()
-print(naive_err)
-print(lookback_err)
+# Choose the period that is equally filled by both estimators.
+test = estimators[estimators["lookback_spread"].notna()]
+test.head(3)
+
+# %%
+naive_err = get_mean_error(test, column_name = "naive_spread")
+
+# Regress (OLS) between `real_spread` and `naive_spread`.
+predicted_var = "real_spread"
+predictor_vars = "naive_spread"
+intercept = True
+# Run OLS.
+coexplor.ols_regress(
+    test,
+    predicted_var,
+    predictor_vars,
+    intercept,
+)
+
+# %%
+lookback_err = get_mean_error(test, column_name = "lookback_spread")
+
+# Regress (OLS) between `real_spread` and `lookback_spread`.
+predicted_var = "real_spread"
+predictor_vars = "lookback_spread"
+intercept = True
+# Run OLS.
+coexplor.ols_regress(
+    test,
+    predicted_var,
+    predictor_vars,
+    intercept,
+)
 
 # %%
 test[["real_spread", "lookback_spread"]].plot(figsize=(15, 7))
