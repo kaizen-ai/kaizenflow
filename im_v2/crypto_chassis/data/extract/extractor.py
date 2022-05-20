@@ -13,6 +13,7 @@ import requests
 
 import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
+import helpers.hsecrets as hsecret
 import im_v2.common.data.extract.extractor as imvcdeext
 
 _LOG = logging.getLogger(__name__)

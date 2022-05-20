@@ -440,15 +440,18 @@ def download_historical_data(
         exchange = exchange_class(args["exchange_id"])
         vendor = "CCXT"
         data_type = "ohlcv"
+        unit = "ms"
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args["api_stage"])
         vendor = "talos"
         data_type = "ohlcv"
+        unit = "ms"
     elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
         exchange = exchange_class()
         # TODO(Danya): Most importantly: we want this to be a parameter passed into all scripts.
         vendor = "crypto_chassis"
+        unit = "s"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
@@ -486,7 +489,7 @@ def download_historical_data(
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
         if args["file_format"] == "parquet":
-            save_parquet(data, path_to_exchange, args["aws_profile"])
+            save_parquet(data, path_to_exchange, unit, args["aws_profile"])
         elif args["file_format"] == "csv":
             save_csv(
                 data,
