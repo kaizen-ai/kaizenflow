@@ -363,19 +363,20 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         E.g.,
         ```
         {
-            "s3://cryptokaizen-data/historical/ccxt/latest/binance": (
+            "s3://.../20210924/ohlcv/ccxt/binance": (
                 "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
             ),
-            "s3://cryptokaizen-data/historical/ccxt/latest/coinbase": (
+            "s3://.../20210924/ohlcv/ccxt/coinbase": (
                 "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
             ),
         }
         ```
         """
-        # Build a root dir to the list of exchange ids subdirs, e.g.,
-        # "s3://cryptokaizen-data/historical/ccxt/latest/binance".
         root_dir = os.path.join(
-            self._root_dir, self._vendor.lower(), self._data_snapshot
+            self._root_dir,
+            self._data_snapshot,
+            self._dataset,
+            self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),
