@@ -470,7 +470,7 @@ def get_RealTimeImClientMarketData_example1(
     return market_data, get_wall_clock_time
 
 
-def get_mock_RealtimeMarketData_example1(
+def get_mock_RealtimeMarketData(
     im_client: icdc.RealTimeImClient,
 ) -> mdrtmada.RealTimeMarketData2:
     """
