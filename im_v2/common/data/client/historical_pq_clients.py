@@ -5,7 +5,9 @@ import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
 """
 
 import abc
+import collections
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -20,11 +22,19 @@ import im_v2.common.universe as ivcu
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# HistoricalPqByTileClient
+# #############################################################################
+
+# TODO(Dan): "Consolidate HistoricalPqByTileClients CmTask #1961."
 class HistoricalPqByTileClient(
     imvcdcbimcl.ImClientReadingMultipleSymbols, abc.ABC
 ):
     """
-    Provide historical data stored as Parquet by-tile.
+    Read historical data stored as Parquet by-tile.
+
+    For base implementation Parquet dataset should be partitioned by
+    full symbol.
     """
 
     def __init__(
@@ -48,14 +58,14 @@ class HistoricalPqByTileClient(
 
         See the parent class for parameters description.
 
-        :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://cryptokaizen-data/historical")
+        :param root_dir: either a local root path (e.g., `/app/im`) or
+            an S3 root path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`)
             to the tiled Parquet data
         :param partition_mode: how the data is partitioned, e.g., "by_year_month"
         :param infer_exchange_id: use the last part of a dir to indicate the exchange
             originating the data. This allows to merging multiple Parquet files on
             exchange. See CmTask #1533 "Add exchange to the ParquetDataset partition".
-        :param aws_profile: AWS profile name (e.g., "ck")
+        :param aws_profile: AWS profile, e.g., "ck"
         """
         super().__init__(
             vendor,
@@ -182,7 +192,7 @@ class HistoricalPqByTileClient(
             transformation_kwargs: Dict = {}
             if self._infer_exchange_id:
                 # Infer `exchange_id` from a file path if it is not present in data.
-                # E.g., `s3://cryptokaizen-data/historical/ccxt/latest/binance` -> `binance`.
+                # E.g., `s3://.../latest/ohlcv/ccxt/binance` -> `binance`.
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
             root_dir_df = self._apply_transformations(
@@ -229,7 +239,7 @@ class HistoricalPqByTileClient(
         E.g.,
         ```
         {
-            "s3://cryptokaizen-data/historical/ccxt/latest": (
+            "s3://.../20210924/ohlcv/ccxt/binance": (
                 "full_symbol", "in", ["binance::ADA_USDT", "ftx::BTC_USDT"]
             )
         }
@@ -244,6 +254,157 @@ class HistoricalPqByTileClient(
         return res_dict
 
 
+# #############################################################################
+# HistoricalPqByCurrencyPairTileClient
+# #############################################################################
+
+
+class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
+    """
+    Read historical data for vendor specific assets stored as Parquet dataset.
+
+    Parquet dataset should be partitioned by currency pair.
+    """
+
+    def __init__(
+        self,
+        vendor: str,
+        universe_version: str,
+        resample_1min: bool,
+        root_dir: str,
+        partition_mode: str,
+        *,
+        data_snapshot: str = "latest",
+        aws_profile: Optional[str] = None,
+    ) -> None:
+        """
+        Constructor.
+
+        See the parent class for parameters description.
+
+        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
+        """
+        infer_exchange_id = True
+        super().__init__(
+            vendor,
+            universe_version,
+            resample_1min,
+            root_dir,
+            partition_mode,
+            infer_exchange_id,
+            aws_profile=aws_profile,
+        )
+        self._data_snapshot = data_snapshot
+
+    @staticmethod
+    def get_metadata() -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def _get_columns_for_query(
+        full_symbol_col_name: str, columns: Optional[List[str]]
+    ) -> Optional[List[str]]:
+        """
+        See description in the parent class.
+        """
+        if columns is not None:
+            # In order not to modify the input.
+            query_columns = columns.copy()
+            # Data is partitioned by currency pairs so the column is mandatory.
+            query_columns.append("currency_pair")
+            # Full symbol column is added after we read data, so skipping here.
+            if full_symbol_col_name in query_columns:
+                query_columns.remove(full_symbol_col_name)
+        else:
+            query_columns = columns
+        return query_columns
+
+    @staticmethod
+    def _apply_transformations(
+        df: pd.DataFrame, full_symbol_col_name: str, **kwargs: Any
+    ) -> pd.DataFrame:
+        """
+        See description in the parent class.
+        """
+        if "exchange_id" in kwargs:
+            df["exchange_id"] = kwargs["exchange_id"]
+        # Convert to string, see the parent class for details.
+        df["exchange_id"] = df["exchange_id"].astype(str)
+        df["currency_pair"] = df["currency_pair"].astype(str)
+        # Add full symbol column at first position in data.
+        full_symbol_col = ivcu.build_full_symbol(
+            df["exchange_id"], df["currency_pair"]
+        )
+        if df.columns[0] != full_symbol_col_name:
+            # Insert if it doesn't already exist.
+            df.insert(0, full_symbol_col_name, full_symbol_col)
+        else:
+            # Replace the values to ensure the correct data.
+            df[full_symbol_col_name] = full_symbol_col.values
+        # The columns are used just to partition the data but these columns
+        # are not included in the `ImClient` output.
+        df = df.drop(["exchange_id", "currency_pair"], axis=1)
+        # Round up float values in case values in raw data are rounded up incorrectly when
+        # being read from a file.
+        df = df.round(8)
+        return df
+
+    def _get_root_dirs_symbol_filters(
+        self, full_symbols: List[ivcu.FullSymbol], full_symbol_col_name: str
+    ) -> Dict[str, hparque.ParquetFilter]:
+        """
+        Build a dict with exchange root dirs of the vendor data as keys and
+        filtering conditions on corresponding currency pairs as values.
+
+        E.g.,
+        ```
+        {
+            "s3://.../20210924/ohlcv/ccxt/binance": (
+                "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
+            ),
+            "s3://.../20210924/ohlcv/ccxt/coinbase": (
+                "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
+            ),
+        }
+        ```
+        """
+        root_dir = os.path.join(
+            self._root_dir,
+            self._data_snapshot,
+            self._dataset,
+            self._vendor.lower(),
+        )
+        # Split full symbols into exchange id and currency pair tuples, e.g.,
+        # [('binance', 'ADA_USDT'),
+        # ('coinbase', 'BTC_USDT')].
+        full_symbol_tuples = [
+            ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
+        ]
+        # Store full symbols as a dictionary, e.g.,
+        # `{exchange_id1: [currency_pair1, currency_pair2]}`.
+        # `Defaultdict` provides a default value for the key that does not
+        # exists that prevents from getting `KeyError`.
+        symbol_dict = collections.defaultdict(list)
+        for exchange_id, *currency_pair in full_symbol_tuples:
+            symbol_dict[exchange_id].extend(currency_pair)
+        # Build a dict with exchange root dirs as keys and Parquet filters by
+        # the corresponding currency pairs as values.
+        root_dir_symbol_filter_dict = {
+            os.path.join(root_dir, exchange_id): (
+                "currency_pair",
+                "in",
+                currency_pairs,
+            )
+            for exchange_id, currency_pairs in symbol_dict.items()
+        }
+        return root_dir_symbol_filter_dict
+
+
+# #############################################################################
+# HistoricalPqByDateClient
 # #############################################################################
 
 

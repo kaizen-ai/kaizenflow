@@ -26,6 +26,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Grisha): "Update Talos code CmTask #1967".
 class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     """
     Read historical data for `Talos` assets stored as Parquet dataset.
@@ -129,18 +130,18 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         E.g.,
         ```
         {
-            "s3://cryptokaizen-data/historical/talos/latest/binance": (
+            "s3://.../20210924/ohlcv/talos/binance": (
                 "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
             ),
-            "s3://cryptokaizen-data/historical/talos/latest/coinbase": (
+            "s3://.../20210924/ohlcv/talos/coinbase": (
                 "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
             ),
         }
         ```
         """
-        # Build a root dir to the list of exchange ids subdirs, e.g.,
-        # `s3://cryptokaizen-data/historical/talos/latest/binance`.
-        root_dir = os.path.join(self._root_dir, self._vendor, self._data_snapshot)
+        root_dir = os.path.join(
+            self._root_dir, self._data_snapshot, self._dataset, self._vendor
+        )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),
         # ('coinbase', 'BTC_USDT')].
