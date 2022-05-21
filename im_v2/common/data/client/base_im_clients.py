@@ -95,6 +95,8 @@ class ImClient(abc.ABC):
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
+        # TODO(Grisha): consider passing it as a parameter to also read bid/ask data.
+        self._dataset = "ohlcv"
 
     # TODO(gp): Why static?
     @staticmethod
@@ -155,7 +157,7 @@ class ImClient(abc.ABC):
         :param columns: columns to return, skipping reading columns that are not requested
             - `None` means return all available columns
         :param filter_data_mode: control class behavior with respect to extra
-            or missing columns, like in `_check_and_filter_matching_columns()`
+            or missing columns, like in `hpandas.check_and_filter_matching_columns()`
         :param full_symbol_col_name: name of the column storing the full
             symbols (e.g., `asset_id`)
         :return: combined data for all the requested symbols
@@ -236,9 +238,9 @@ class ImClient(abc.ABC):
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
-        #
+        # Check that columns are required ones.
         if columns is not None:
-            df = self._check_and_filter_matching_columns(
+            df = hpandas.check_and_filter_matching_columns(
                 df, columns, filter_data_mode
             )
         return df
@@ -364,39 +366,6 @@ class ImClient(abc.ABC):
         # Ensure that all the data is in [start_ts, end_ts].
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
-
-    # TODO(Dan): CmTask1834 "Refactor `_check_and_filter_matching_columns()`".
-    @staticmethod
-    def _check_and_filter_matching_columns(
-        df: pd.DataFrame, columns: List[str], filter_data_mode: str
-    ) -> pd.DataFrame:
-        """
-        Check that columns are the expected ones.
-        """
-        received_columns = df.columns.to_list()
-        #
-        if filter_data_mode == "assert":
-            # Raise and assertion.
-            only_warning = False
-        elif filter_data_mode == "warn_and_trim":
-            # Just issue a warning.
-            only_warning = True
-            # Get columns intersection while preserving the order of the columns.
-            columns_intersection = sorted(
-                set(received_columns) & set(columns),
-                key=received_columns.index,
-            )
-            hdbg.dassert_lte(1, len(columns_intersection))
-            df = df[columns_intersection]
-        else:
-            raise ValueError(f"Invalid filter_data_mode='{filter_data_mode}'")
-        hdbg.dassert_set_eq(
-            columns,
-            received_columns,
-            only_warning=only_warning,
-            msg=f"Received columns=`{received_columns}` do not match requested columns=`{columns}`.",
-        )
-        return df
 
     # //////////////////////////////////////////////////////////////////////////
 
@@ -618,8 +587,15 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # SqlRealTimeImClient
 # #############################################################################
 
+class RealTimeImClient(ImClient):
+    """
+    A realtime client for typing annotation.
 
-class SqlRealTimeImClient(ImClient):
+    In practice all realtime clients use SQL backend.
+    """
+    pass
+
+class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,
         resample_1min: bool,

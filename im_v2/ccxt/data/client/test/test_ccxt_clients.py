@@ -6,6 +6,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hparquet as hparque
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
@@ -621,7 +622,7 @@ class CcxtSqlRealTimeImClient1(
     For all the test methods see description of corresponding private method in
     the parent class.
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
@@ -1362,7 +1363,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
 
     # ////////////////////////////////////////////////////////////////////////
-
+    # TODO(gp): Do not commit this!
     @pytest.mark.skip("Enable when unit test data needs to be generated.")
     def test_write_test_data_to_s3(self) -> None:
         """
@@ -1370,9 +1371,16 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         """
         data = self._get_unit_test_data()
         partition_columns = ["currency_pair", "year", "month"]
-        # TODO(Grisha): Do not hard-wire the path, use `helpers/hs3.py`.
-        dst_dir = "s3://cryptokaizen-data/unit_test/historical/ccxt/latest"
         aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        dst_dir = os.path.join(
+            s3_bucket_path,
+            "unit_test",
+            "historical.manual.pq",
+            "latest",
+            "ohlcv",
+            "ccxt",
+        )
         exchange_id_col_name = "exchange_id"
         for exchange_id, df_exchange_id in data.groupby(exchange_id_col_name):
             exchange_dir = os.path.join(dst_dir, exchange_id)

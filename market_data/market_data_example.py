@@ -428,15 +428,13 @@ def get_TalosPqImClientMarketData_example1(
 
 def get_RealTimeImClientMarketData_example1(
     # TODO(Danya): Initialize im_client from outside the method.
-    connection: hsql.DbConnection,
+    im_client: hsql.DbConnection,
     event_loop: asyncio.AbstractEventLoop,
     asset_ids: List[int],
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `RealTimeMarketData` with data coming from an `RealTimeImClient`.
     """
-    resample_1min = False
-    im_client = icdc.get_example1_realtime_client(connection, resample_1min)
     asset_id_col = "asset_id"
     start_time_col_name = "start_timestamp"
     end_time_col_name = "end_timestamp"
@@ -470,3 +468,31 @@ def get_RealTimeImClientMarketData_example1(
         time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
+
+
+def get_RealtimeMarketData_example1(
+    im_client: icdc.RealTimeImClient,
+) -> mdrtmada.RealTimeMarketData2:
+    """
+    Create a RealTimeMarketData2 to use in tests.
+
+    This example is geared to work with `icdc.get_mock_realtime_client`.
+    """
+    asset_id_col = "asset_id"
+    asset_ids = [1464553467]
+    start_time_col_name = "start_timestamp"
+    end_time_col_name = "end_timestamp"
+    columns = None
+    get_wall_clock_time = lambda: pd.Timestamp(
+        "2022-04-22", tz="America/New_York"
+    )
+    market_data = mdrtmada.RealTimeMarketData2(
+        im_client,
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+    )
+    return market_data

@@ -4,7 +4,7 @@ broker.
 
 Import as:
 
-import im_v2.talos.data.extract.exchange_class as imvtdeexcl
+import im_v2.talos.data.extract.extractor as imvtdeex
 """
 
 
@@ -21,7 +21,7 @@ import im_v2.talos.utils as imv2tauti
 _LOG = logging.getLogger(__name__)
 
 
-class TalosExchange:
+class TalosExtractor:
     """
     A class for accessing Talos exchange data.
 
