@@ -2189,7 +2189,7 @@ def _generate_compose_file(
     am_host_os_name = os.uname()[0]
     am_host_name = os.uname()[1]
     # We could do the same also with IMAGE for symmetry.
-    # Keep the env vars in sync with what we print in entrypoint.sh.
+    # Keep the env vars in sync with what we print in `henv.get_env_vars()`.
     txt_tmp = f"""
     version: '3'
 
@@ -2198,30 +2198,32 @@ def _generate_compose_file(
         cap_add:
           - SYS_ADMIN
         environment:
+          - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
+          - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
           - AM_AWS_PROFILE=$AM_AWS_PROFILE
+          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
+          - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
           - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
           - AM_ENABLE_DIND={am_enable_dind}
           - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
-          - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
-          - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
           - AM_HOST_NAME={am_host_name}
           - AM_HOST_OS_NAME={am_host_os_name}
-          - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
-          - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
-          - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
+          - AM_REPO_CONFIG_CHECK=True
+          - AM_REPO_CONFIG_PATH=infer
+          - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
+          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
+          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
           - CK_AWS_PROFILE=$CK_AWS_PROFILE
+          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
+          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
           # - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
           # - CK_ENABLE_DIND=
           # - CK_FORCE_TEST_FAIL=$CK_FORCE_TEST_FAIL
-          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
-          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
           # - CK_HOST_NAME=
           # - CK_HOST_OS_NAME=
-          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
-          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
-          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
+          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
           - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
           # This env var is used by GH Action to signal that we are inside the CI.
           - CI=$CI

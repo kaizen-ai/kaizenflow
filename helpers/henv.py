@@ -48,18 +48,24 @@ def get_env_vars() -> List[str]:
     """
     # Keep in sync with `lib_tasks.py:_generate_compose_file()`.
     env_var_names = [
+        "AM_AWS_ACCESS_KEY_ID",
+        "AM_AWS_DEFAULT_REGION",
         "AM_AWS_PROFILE",
+        "AM_AWS_S3_BUCKET",
+        "AM_AWS_SECRET_ACCESS_KEY",
         "AM_ECR_BASE_PATH",
         "AM_ENABLE_DIND",
         "AM_FORCE_TEST_FAIL",
-        "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
-        "AM_AWS_S3_BUCKET",
-        "AM_TELEGRAM_TOKEN",
         "AM_HOST_NAME",
         "AM_HOST_OS_NAME",
-        "AM_AWS_ACCESS_KEY_ID",
-        "AM_AWS_DEFAULT_REGION",
-        "AM_AWS_SECRET_ACCESS_KEY",
+        "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
+        # Whether to check if certain property of the repo are as expected or not.
+        "AM_REPO_CONFIG_CHECK"
+        # Path to use for repo_config.py. E.g., used when running `dev_tools`
+        # container to avoid using the `repo_config.py` corresponding to the
+        # container launching the linter.
+        "AM_REPO_CONFIG_PATH"
+        "AM_TELEGRAM_TOKEN",
         "GH_ACTION_ACCESS_TOKEN",
         "CI",
     ]
@@ -99,7 +105,7 @@ def get_secret_env_vars() -> List[str]:
 
 def check_env_vars() -> None:
     """
-    Make sure all the env vars are defined.
+    Make sure all the expected env vars are defined.
     """
     env_vars = get_env_vars()
     for env_var in env_vars:
@@ -109,6 +115,10 @@ def check_env_vars() -> None:
 
 
 def env_vars_to_string() -> str:
+    """
+    Return a string with the signature of all the expected env vars (including the
+    secret ones).
+    """
     msg = []
     # Get the expected env vars and the secret ones.
     env_vars = get_env_vars()
@@ -121,6 +131,7 @@ def env_vars_to_string() -> str:
             msg.append(f"{env_name}=undef")
         else:
             if env_name in secret_env_vars:
+                # Secret env var: print if it's empty or not.
                 if is_empty:
                     msg.append(f"{env_name}=empty")
                 else:
