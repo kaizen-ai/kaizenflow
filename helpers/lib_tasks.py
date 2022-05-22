@@ -2138,6 +2138,9 @@ def _get_linter_service() -> str:
       working_dir: {work_dir}
       environment:
         - MYPYPATH
+        # Use the `repo_config.py` inside the dev_tools container instead of
+        # the one in the calling repo.
+        - AM_REPO_CONFIG_PATH="/app/repo_config.py"
     """
     return linter_spec_txt
 
@@ -2209,7 +2212,8 @@ def _generate_compose_file(
           - AM_HOST_NAME={am_host_name}
           - AM_HOST_OS_NAME={am_host_os_name}
           - AM_REPO_CONFIG_CHECK=True
-          - AM_REPO_CONFIG_PATH=infer
+          # Use inferred path for `repo_config.py`.
+          - AM_REPO_CONFIG_PATH=""
           - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
           - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
           - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID

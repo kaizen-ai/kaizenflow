@@ -6,7 +6,7 @@ import helpers.henv as henv
 
 import logging
 import os
-from typing import List, Tuple
+from typing import Any, List, Tuple, Union
 
 # This module should not depend on any other helper or 3rd party modules.
 
@@ -42,6 +42,33 @@ except ImportError as e:
 # #############################################################################
 
 
+def get_env_var(env_name: str, as_bool: bool=False, default_value: Any = None,
+                abort_on_missing: bool = True) -> Union[str, bool]:
+    """
+    Get an environment variable by name.
+
+    :param env_name: name of the env var
+    :param as_bool: convert the value into a Boolean
+    :param default_value: the default value to use in case it's not defined
+    :param abort_on_missing: if the env var is not defined aborts, otherwise use
+        the default value
+    :return: value of env var
+    """
+    if env_name not in os.environ:
+        if abort_on_missing:
+            assert 0, f"Can't find env var '{env_name}' in '{str(os.environ)}'"
+        else:
+            return default_value
+    value = os.environ["env_name"]
+    if as_bool:
+        # Convert the value into a boolean.
+        if value in ("0", "", "None", "False"):
+            value = False
+        else:
+            value = True
+    return value
+
+
 def get_env_vars() -> List[str]:
     """
     Return all the env vars that are expected to be set in Docker.
@@ -56,12 +83,14 @@ def get_env_vars() -> List[str]:
         "AM_ECR_BASE_PATH",
         "AM_ENABLE_DIND",
         "AM_FORCE_TEST_FAIL",
+        # The name of the host running Docker.
         "AM_HOST_NAME",
+        # The OS of the host running Docker.
         "AM_HOST_OS_NAME",
         "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
         # Whether to check if certain property of the repo are as expected or not.
         "AM_REPO_CONFIG_CHECK"
-        # Path to use for repo_config.py. E.g., used when running `dev_tools`
+        # Path to use for `repo_config.py`. E.g., used when running `dev_tools`
         # container to avoid using the `repo_config.py` corresponding to the
         # container launching the linter.
         "AM_REPO_CONFIG_PATH"
