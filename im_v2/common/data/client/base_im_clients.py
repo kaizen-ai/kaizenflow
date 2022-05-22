@@ -432,7 +432,8 @@ class ImClient(abc.ABC):
         columns = None
         filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol], start_timestamp, end_timestamp, columns
+            [full_symbol], start_timestamp, end_timestamp, columns,
+            filter_data_mode
         )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
