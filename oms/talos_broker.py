@@ -20,7 +20,7 @@ import oms.oms_talos_utils as oomtauti
 _LOG = logging.getLogger(__name__)
 
 
-class TalosBroker(ombroker.AbstractBroker):
+class TalosBroker(ombroker.Broker):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Path for order request.
