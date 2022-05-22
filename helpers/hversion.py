@@ -42,13 +42,13 @@ _ERROR = "\033[31mERROR\033[0m"
 _VERSION_RE = r"\d+\.\d+\.\d+"
 
 
-# TODO(gp): ->
+# TODO(gp): -> full_system_config_to_str()
 def env_to_str() -> str:
     """
     Return a string with the entire system configuration in terms of:
 
     - repo config
-    - system config
+    - system signature
     - environment variables
     """
     msg = ""

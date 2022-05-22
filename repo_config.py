@@ -10,6 +10,9 @@ from typing import Dict, List, Optional
 _LOG = logging.getLogger(__name__)
 
 
+_WARNING = "\033[33mWARNING\033[0m"
+
+
 def _print(msg: str) -> None:
     # _LOG.info(msg)
     print(msg)
@@ -197,13 +200,13 @@ def has_dind_support() -> bool:
     if not is_inside_docker():
         # Outside Docker there is no privileged mode.
         return False
+    # return True
     # TODO(gp): This part is not multi-process friendly. When multiple
     # processes try to run this code they interfere. A solution is to run `ip
-    # link` in the entrypoint and create a has_docker_privileged_mode file
+    # link` in the entrypoint and create a `has_docker_privileged_mode` file
     # which contains the value.
-    # return True
-    # Thus we rely on the approach from https://stackoverflow.com/questions/32144575
-    # checking if we can execute.
+    # We rely on the approach from https://stackoverflow.com/questions/32144575
+    # to check if there is support for privileged mode.
     # Sometimes there is some state left, so we need to clean it up.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
     if is_mac() or is_dev_ck():
@@ -221,18 +224,23 @@ def has_dind_support() -> bool:
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
     # dind is supported on both Mac and GH Actions.
-    if False:
+    am_repo_config = os.environ.get("AM_REPO_CONFIG_CHECK", False)
+    check = am_repo_config != ""
+    if check:
         if is_cmamp_prod():
             assert not has_dind, "Not expected privileged mode"
         elif get_name() == "//dev_tools":
             assert not has_dind, "Not expected privileged mode"
         else:
             if is_mac() or is_dev_ck() or is_inside_ci():
+                # dind is supported on both Mac and GH Actions.
                 assert has_dind, "Expected privileged mode"
             elif is_dev4():
                 assert not has_dind, "Not expected privileged mode"
             else:
                 _raise_invalid_host()
+    else:
+        print(_WARNING + f": Skipping checking since AM_REPO_CONFIG_CHECK='{am_repo_config'}")
     return has_dind
 
 

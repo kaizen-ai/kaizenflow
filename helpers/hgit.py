@@ -533,8 +533,6 @@ def _get_repo_config_code(super_module: bool = True) -> str:
     Return the text of the code stored in `repo_config.py`.
     """
     file_name = get_repo_config_file(super_module)
-    #assert 0, file_name
-    print("file_name=", file_name)
     hdbg.dassert_file_exists(file_name)
     code: str = hio.from_file(file_name)
     return code
