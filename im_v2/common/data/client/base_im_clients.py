@@ -426,13 +426,13 @@ class ImClient(abc.ABC):
     ) -> pd.Timestamp:
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
-        start_ts = None
-        end_ts = None
+        start_timestamp = None
+        end_timestamp = None
         # Use only `self._full_symbol_col_name` after CmTask1588 is fixed.
         columns = None
         filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol], start_ts, end_ts, columns, filter_data_mode
+            [full_symbol], start_timestamp, end_timestamp, columns
         )
         # Assume that the timestamp is always stored as index.
         if mode == "start":

@@ -325,7 +325,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 print(hpandas.df_to_str(df))
                 assert 0
             #
-            # Create MockedPortfolio with some initial cash.
+            # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_mocked_portfolio_example1(
                 event_loop,
                 self.connection,
@@ -354,7 +354,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 print(hpandas.df_to_str(df))
                 assert 0
             #
-            # Create MockedPortfolio with some initial cash.
+            # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_mocked_portfolio_example1(
                 event_loop,
                 self.connection,
@@ -453,7 +453,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
                 print(hpandas.df_to_str(df))
                 assert 0
             #
-            # Create MockedPortfolio with some initial cash.
+            # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_mocked_portfolio_example1(
                 event_loop,
                 self.connection,
@@ -527,8 +527,8 @@ class TestMockedPortfolio3(omtodh.TestOmsDbHelper):
                 print(hpandas.df_to_str(df))
                 assert 0
             #
-            # Create MockedPortfolio from the DB.
-            portfolio = oporexam.get_MockedPortfolio_example2(
+            # Create DatabasePortfolio from the DB.
+            portfolio = oporexam.get_DatabasePortfolio_example2(
                 event_loop,
                 self.connection,
                 table_name,

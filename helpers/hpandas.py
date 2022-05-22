@@ -1146,7 +1146,7 @@ def convert_col_to_int(
 
 
 def read_csv_to_df(
-    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    stream: Union[str, s3fs.core.S3File, s3fs.core.S3FileSystem],
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
@@ -1170,7 +1170,7 @@ def read_csv_to_df(
 
 
 def read_parquet_to_df(
-    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    stream: Union[str, s3fs.core.S3File, s3fs.core.S3FileSystem],
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
