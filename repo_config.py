@@ -172,7 +172,7 @@ def has_docker_sudo() -> bool:
     Return whether commands should be run with sudo or not.
     """
     if is_dev_ck():
-        val = False
+        val = True
     elif is_dev4():
         val = False
     elif is_inside_ci():
@@ -206,6 +206,7 @@ def has_dind_support() -> bool:
     # checking if we can execute.
     # Sometimes there is some state left, so we need to clean it up.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
+    # TODO(gp): use `has_docker_sudo`.
     if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
     os.system(cmd)
