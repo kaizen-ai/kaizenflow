@@ -59,7 +59,7 @@ def get_env_var(env_name: str, as_bool: bool=False, default_value: Any = None,
             assert 0, f"Can't find env var '{env_name}' in '{str(os.environ)}'"
         else:
             return default_value
-    value = os.environ["env_name"]
+    value = os.environ[env_name]
     if as_bool:
         # Convert the value into a boolean.
         if value in ("0", "", "None", "False"):
@@ -89,11 +89,11 @@ def get_env_vars() -> List[str]:
         "AM_HOST_OS_NAME",
         "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
         # Whether to check if certain property of the repo are as expected or not.
-        "AM_REPO_CONFIG_CHECK"
+        "AM_REPO_CONFIG_CHECK",
         # Path to use for `repo_config.py`. E.g., used when running `dev_tools`
         # container to avoid using the `repo_config.py` corresponding to the
         # container launching the linter.
-        "AM_REPO_CONFIG_PATH"
+        "AM_REPO_CONFIG_PATH",
         "AM_TELEGRAM_TOKEN",
         "GH_ACTION_ACCESS_TOKEN",
         "CI",
@@ -123,10 +123,10 @@ def get_secret_env_vars() -> List[str]:
     ), f"There are duplicates: {str(secret_env_var_names)}"
     # Secret env vars are a subset of the env vars.
     env_vars = get_env_vars()
-    assert set(secret_env_var_names).issubset(set(env_vars)), (
-        f"There are secret vars in `{str(secret_env_var_names)} that are not in "
-        + f"'{str(env_vars)}'"
-    )
+    if not set(secret_env_var_names).issubset(set(env_vars)):
+        diff = set(secret_env_var_names).difference(set(env_vars))
+        print(f"Secret vars in `{str(diff)} are not in '{str(env_vars)}'")
+        assert 0
     # Sort.
     secret_env_var_names = sorted(secret_env_var_names)
     return secret_env_var_names

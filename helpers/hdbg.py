@@ -660,7 +660,7 @@ def dassert_path_exists(
     only_warning: bool = False,
 ) -> None:
     dassert_isinstance(path, str)
-    path = os.path.abspath(path)
+    #path = os.path.abspath(path)
     if not os.path.exists(path):
         txt = f"Path '{path}' doesn't exist!"
         _dfatal(txt, msg, *args, only_warning=only_warning)
@@ -673,7 +673,7 @@ def dassert_path_not_exists(
     only_warning: bool = False,
 ) -> None:
     dassert_isinstance(path, str)
-    path = os.path.abspath(path)
+    #path = os.path.abspath(path)
     if os.path.exists(path):
         txt = f"Path '{path}' already exist!"
         _dfatal(txt, msg, *args, only_warning=only_warning)
@@ -689,8 +689,8 @@ def dassert_file_exists(
     Assert unless `file_name` exists and it's a file and not a directory.
     """
     dassert_isinstance(file_name, str)
-    file_name = os.path.abspath(file_name)
     # `file_name` exists.
+    #dir_name = os.path.abspath(dir_name)
     exists = os.path.exists(file_name)
     if not exists:
         txt = f"File '{file_name}' doesn't exist"
@@ -712,7 +712,7 @@ def dassert_dir_exists(
     Assert unless `dir_name` exists and it's a directory.
     """
     dassert_isinstance(dir_name, str)
-    dir_name = os.path.abspath(dir_name)
+    #dir_name = os.path.abspath(dir_name)
     # `dir_name` exists.
     exists = os.path.exists(dir_name)
     if not exists:
