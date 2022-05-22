@@ -29,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
+AM_ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 
 
 default_params = {
@@ -38,7 +38,7 @@ default_params = {
     # different image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "opt_tmp",
     "BASE_IMAGE": "opt",
-    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
+    "DEV_TOOLS_IMAGE_PROD": f"{AM_ECR_BASE_PATH}/dev_tools:prod",
 }
 
 

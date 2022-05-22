@@ -300,7 +300,7 @@ def _get_row3() -> pd.Series:
     return srs
 
 
-class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
+class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
@@ -428,7 +428,7 @@ asset_id                        101
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
+class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
@@ -502,7 +502,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)
 
 
-class TestMockedPortfolio3(omtodh.TestOmsDbHelper):
+class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:

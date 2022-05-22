@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import s3fs
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg

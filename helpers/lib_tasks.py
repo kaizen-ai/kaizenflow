@@ -1265,9 +1265,9 @@ def git_branch_diff_with_master(  # type: ignore
 #   since the last integration and compare them to the base in each branch
 #   ```
 #   > cd amp1
-#   > i integrate_diff_overlapping_files --src-dir "amp1" --dst-dir "cmamp1"
+#   > i integrate_diff_overlapping_files --src-dir-basename "amp1" --dst-dir-basename "cmamp1"
 #   > cd cmamp1
-#   > i integrate_diff_overlapping_files --src-dir "cmamp1" --dst-dir "amp1"
+#   > i integrate_diff_overlapping_files --src-dir-basename "cmamp1" --dst-dir-basename "amp1"
 #   ```
 #
 # - Quickly scan all the changes in the branch compared to the base
