@@ -17,7 +17,7 @@ import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
 
 
-def get_example1_create_table_query() -> str:
+def _get_example1_create_table_query() -> str:
     """
     Get SQL query to create an Example1 table.
 
@@ -40,7 +40,7 @@ def get_example1_create_table_query() -> str:
     return query
 
 
-def create_example1_sql_data() -> pd.DataFrame:
+def _create_example1_sql_data() -> pd.DataFrame:
     """
     Generate a dataframe with price features and fixed currency_pair and
     exchange_id.
@@ -168,7 +168,7 @@ class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
 
 
 def get_example1_realtime_client(
-    connection: hsql.DbConnection, resample_1min: bool
+    connection: hsql.DbConnection, *, resample_1min: bool = False
 ) -> Example1SqlRealTimeImClient:
     """
     Set up a real time Example1 SQL client.
@@ -179,10 +179,10 @@ def get_example1_realtime_client(
     """
     # Create example table.
     table_name = "example1_marketdata"
-    query = get_example1_create_table_query()
+    query = _get_example1_create_table_query()
     connection.cursor().execute(query)
     # Create a data example and upload to local DB.
-    data = create_example1_sql_data()
+    data = _create_example1_sql_data()
     hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
     im_client = Example1SqlRealTimeImClient(resample_1min, connection, table_name)
@@ -194,7 +194,7 @@ def get_example1_realtime_client(
 # #############################################################################
 
 
-def get_example2_create_table_query() -> str:
+def _get_example2_create_table_query() -> str:
     """
     Get SQL query to create a test table.
 
@@ -220,7 +220,7 @@ def get_example2_create_table_query() -> str:
     return query
 
 
-def create_example2_sql_data():
+def _create_example2_sql_data() -> pd.DataFrame:
     """
     Create an Example2 OHLCV dataframe.
 
@@ -263,7 +263,11 @@ def create_example2_sql_data():
     return test_data
 
 
-class Example2SqlRealTimeImClient(icdc.SqlRealTimeImClient):
+class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
+    """
+    Vendor-agnostic client to be used in tests.
+    """
+
     def __init__(
         self,
         resample_1min: bool,
@@ -331,8 +335,8 @@ class Example2SqlRealTimeImClient(icdc.SqlRealTimeImClient):
         return data
 
 
-def get_example2_realtime_client(
-    connection: hsql.DbConnection, resample_1min: bool
+def get_mock_realtime_client(
+    connection: hsql.DbConnection, *, resample_1min: bool = False
 ) -> Example1SqlRealTimeImClient:
     """
     Set up a real time Example2 SQL client.
@@ -343,11 +347,11 @@ def get_example2_realtime_client(
     """
     # Create example table.
     table_name = "example2_marketdata"
-    query = get_example2_create_table_query()
+    query = _get_example2_create_table_query()
     connection.cursor().execute(query)
     # Create a data example and upload to local DB.
-    data = create_example2_sql_data()
+    data = _create_example2_sql_data()
     hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
-    im_client = Example2SqlRealTimeImClient(resample_1min, connection, table_name)
+    im_client = MockSqlRealTimeImClient(resample_1min, connection, table_name)
     return im_client

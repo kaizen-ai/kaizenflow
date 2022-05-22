@@ -258,7 +258,7 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
         shared_data_dirs = {"/local/home/share/cache": "/cache"}
     elif is_dev_ck():
         shared_data_dirs = {"/data/shared": "/shared_data"}
-    elif is_mac() or is_inside_ci():
+    elif is_mac() or is_inside_ci() or is_cmamp_prod():
         shared_data_dirs = None
     else:
         _raise_invalid_host()

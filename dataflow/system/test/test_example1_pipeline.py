@@ -8,19 +8,51 @@ import core.finance as cofinanc
 import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
-import helpers.hunit_test as hunitest
+import im_v2.common.data.client as icdc
+import im_v2.common.db.db_utils as imvcddbut
+import market_data as mdata
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_Example1_ForecastSystem(hunitest.TestCase):
+class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
     """
     Test a System composed of:
 
     - a `ReplayedMarketData` (providing fake data and features)
     - an `Example1` DAG
     """
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Bring up local DB and its client.
+        im_client = icdc.get_example1_realtime_client(
+            self.connection, resample_1min=True
+        )
+        # Set up market data client.
+        asset_id_col = "asset_id"
+        asset_ids = [1467591036]
+        start_time_col_name = "start_timestamp"
+        end_time_col_name = "end_timestamp"
+        columns = None
+        get_wall_clock_time = lambda: pd.Timestamp(
+            "2022-04-22", tz="America/New_York"
+        )
+        market_data = mdata.RealTimeMarketData2(
+            im_client,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
+        )
+        self.market_data = market_data
 
     def run_coroutines(
         self,
@@ -30,7 +62,7 @@ class Test_Example1_ForecastSystem(hunitest.TestCase):
         Run a system using the desired portfolio based on DB or dataframe.
         """
         with hasynci.solipsism_context() as event_loop:
-            asset_ids = [101]
+            asset_ids = [1467591036]
             system = dtfsepsyru.Example1_ForecastSystem(
                 asset_ids,
                 event_loop,
@@ -76,7 +108,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     - with a `MarketData`
     - with a `Portfolio` backed by DB or dataframe
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000

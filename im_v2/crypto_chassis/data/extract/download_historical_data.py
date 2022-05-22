@@ -12,7 +12,7 @@ Use as:
      --universe 'v1' \
      --depth '1' \
      --aws_profile 'ck' \
-     --s3_path 's3://cryptokaizen-data/daily_staged/'
+     --s3_path 's3://<ck-data>/daily_staged/'
 """
     
 import argparse
@@ -24,7 +24,7 @@ import helpers.hs3 as hs3
 import helpers.hdatetime as hdateti
 import helpers.hparquet as hparque
 import im_v2.common.data.extract.extract_utils as imvcdeexut
-import im_v2.crypto_chassis.data.extract.exchange_class as imvccdeecl
+import im_v2.crypto_chassis.data.extract.extractor as imvccdee
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,7 +42,6 @@ def _parse() -> argparse.ArgumentParser:
         default=None,
         help="The depth of market data.",
     )
-    parser.add_argument("--incremental", action="store_true")
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
@@ -51,7 +50,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_historical_data(args, imvccdeecl.CryptoChassisExchange)
+    imvcdeexut.download_historical_data(args, imvccdee.CryptoChassisExtractor)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
