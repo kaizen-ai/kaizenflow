@@ -240,7 +240,7 @@ def has_dind_support() -> bool:
             else:
                 _raise_invalid_host()
     else:
-        print(_WARNING + f": Skipping checking since AM_REPO_CONFIG_CHECK='{am_repo_config'}")
+        print(_WARNING + f": Skipping checking since AM_REPO_CONFIG_CHECK='{am_repo_config}'")
     return has_dind
 
 
