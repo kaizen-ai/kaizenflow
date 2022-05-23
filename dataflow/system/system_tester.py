@@ -99,6 +99,8 @@ class SystemTester:
         target_gmv: float = 1e5,
         liquidate_at_end_of_day: bool = False,
     ) -> Tuple[str, pd.Series]:
+        # TODO(gp): @all use actual.append(hprint.frame("system_config"))
+        #  to separate the sections of the output.
         actual = ["\n# forecast_evaluator_from_prices signature=\n"]
         forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
             price_col=price_col,

@@ -68,6 +68,9 @@ def get_docker_base_image_name() -> str:
 # - Linux (dev server, GitHub CI)
 #   - Supports Docker privileged mode
 #   - The same user and group is used inside the container
+# - Linux (spm-dev4)
+#   - Doesn't support Docker privileged mode
+#   - A different user and group is used inside the container
 
 
 # Copied from `system_interaction.py` to avoid circular imports.

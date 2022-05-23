@@ -300,7 +300,7 @@ def _get_row3() -> pd.Series:
     return srs
 
 
-class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
+class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
@@ -325,7 +325,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 print(hpandas.df_to_str(df))
                 assert 0
             #
-            # Create MockedPortfolio with some initial cash.
+            # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_mocked_portfolio_example1(
                 event_loop,
                 self.connection,
@@ -354,7 +354,7 @@ class TestMockedPortfolio1(omtodh.TestOmsDbHelper):
                 print(hpandas.df_to_str(df))
                 assert 0
             #
-            # Create MockedPortfolio with some initial cash.
+            # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_mocked_portfolio_example1(
                 event_loop,
                 self.connection,
@@ -428,7 +428,7 @@ asset_id                        101
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
+class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
@@ -453,7 +453,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
                 print(hpandas.df_to_str(df))
                 assert 0
             #
-            # Create MockedPortfolio with some initial cash.
+            # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_mocked_portfolio_example1(
                 event_loop,
                 self.connection,
@@ -502,7 +502,7 @@ class TestMockedPortfolio2(omtodh.TestOmsDbHelper):
         self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)
 
 
-class TestMockedPortfolio3(omtodh.TestOmsDbHelper):
+class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
@@ -527,8 +527,8 @@ class TestMockedPortfolio3(omtodh.TestOmsDbHelper):
                 print(hpandas.df_to_str(df))
                 assert 0
             #
-            # Create MockedPortfolio from the DB.
-            portfolio = oporexam.get_MockedPortfolio_example2(
+            # Create DatabasePortfolio from the DB.
+            portfolio = oporexam.get_DatabasePortfolio_example2(
                 event_loop,
                 self.connection,
                 table_name,
