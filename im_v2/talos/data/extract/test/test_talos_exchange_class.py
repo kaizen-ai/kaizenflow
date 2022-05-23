@@ -35,7 +35,7 @@ class TestTalosExtractor1(hunitest.TestCase):
         mock_get_current_time.return_value = "2021-09-09 00:00:00.000000+00:00"
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00", tz="UTC")
-        actual = self.download_ohlcv_data(start_timestamp, end_timestamp)
+        actual = self._download_ohlcv_data(start_timestamp, end_timestamp)
         # Verify dataframe length.
         self.assertEqual(1441, actual.shape[0])
         # Check number of calls and args for current time.
@@ -172,7 +172,7 @@ class TestTalosExtractor1(hunitest.TestCase):
         exchange_class = imvtdeex.TalosExtractor("sandbox")
         # Run with invalid input.
         with pytest.raises(raises) as fail:
-            exchange_class.download_ohlcv_data(
+            exchange_class._download_ohlcv_data(
                 currency_pair=currency_pair,
                 exchange=exchange,
                 start_timestamp=start_timestamp,
@@ -195,7 +195,7 @@ class TestTalosExtractor1(hunitest.TestCase):
         # Initiate class and set date parameters.
         exchange_class = imvtdeex.TalosExtractor("sandbox")
         # Extract data.
-        actual = exchange_class.download_ohlcv_data(
+        actual = exchange_class._download_ohlcv_data(
             currency_pair="BTC_USDT",
             exchange="binance",
             start_timestamp=start_timestamp,
