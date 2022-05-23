@@ -54,7 +54,7 @@ config = cconfig.get_config_from_env()
 dag_config = config.pop("DAG")
 
 # %%
-dag_runner = cdataf.PredictionDagRunner(dag_config, config["meta"]["dag_builder"])
+dag_runner = cdataf.PredictionDagRunner(dag_config, config["dag_builder"])
 
 # %%
 cdataf.draw(dag_runner.dag)

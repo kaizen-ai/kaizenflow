@@ -98,12 +98,11 @@ class Fill:
 
 
 # #############################################################################
-# AbstractBroker
+# Broker
 # #############################################################################
 
 
-# TODO(gp): -> Broker?
-class AbstractBroker(abc.ABC):
+class Broker(abc.ABC):
     """
     Represent a broker to which we can place orders and receive fills back.
 
@@ -177,6 +176,7 @@ class AbstractBroker(abc.ABC):
 
         :param dry_run: do not submit orders to the OMS, but keep track of them
             internally
+        :return: path of the file created on S3 with the order info
         """
         wall_clock_timestamp = self._get_wall_clock_time()
         # Log the order for internal book keeping.
@@ -223,8 +223,8 @@ class AbstractBroker(abc.ABC):
 
     @staticmethod
     def _get_next_submitted_order_id() -> int:
-        submitted_order_id = AbstractBroker._submitted_order_id
-        AbstractBroker._submitted_order_id += 1
+        submitted_order_id = Broker._submitted_order_id
+        Broker._submitted_order_id += 1
         return submitted_order_id
 
     @abc.abstractmethod
@@ -343,7 +343,7 @@ class AbstractBroker(abc.ABC):
 # #############################################################################
 
 
-class SimulatedBroker(AbstractBroker):
+class SimulatedBroker(Broker):
     """
     Represent a broker to which we can place orders and receive fills back.
     """
@@ -388,12 +388,11 @@ class SimulatedBroker(AbstractBroker):
 
 
 # #############################################################################
-# MockedBroker
+# DatabaseBroker
 # #############################################################################
 
 
-# TODO(gp): -> DatabaseBroker?
-class MockedBroker(AbstractBroker):
+class DatabaseBroker(Broker):
     """
     An object that mocks a real broker backed by a DB with asynchronous updates
     to the state representing the placed orders.

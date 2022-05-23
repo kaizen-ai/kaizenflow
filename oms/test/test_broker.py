@@ -128,7 +128,7 @@ class TestSimulatedBroker2(hunitest.TestCase):
         return fills
 
 
-class TestMockedBroker1(omtodh.TestOmsDbHelper):
+class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
@@ -146,7 +146,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
 
     def test1(self) -> None:
         """
-        Test submitting orders to a MockedBroker.
+        Test submitting orders to a DatabaseBroker.
         """
         order = oordexam.get_order_example1()
         expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:40:00-05:00 num_shares=100.0 price=999.9161531095003
@@ -169,7 +169,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
             self.assert_equal(actual, expected, fuzzy_match=True)
 
     async def _order_processor_coroutine(
-        self, broker: ombroker.MockedBroker
+        self, broker: ombroker.DatabaseBroker
     ) -> None:
         delay_to_accept_in_secs = 2
         delay_to_fill_in_secs = 1
@@ -182,7 +182,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
         await order_processor.enqueue_orders()
 
     async def _broker_coroutine(
-        self, broker: ombroker.MockedBroker, order
+        self, broker: ombroker.DatabaseBroker, order
     ) -> List[ombroker.Fill]:
         orders = [order]
         get_wall_clock_time = broker.market_data.get_wall_clock_time

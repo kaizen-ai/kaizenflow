@@ -48,7 +48,7 @@ def get_mocked_broker_example1(
     accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
 ) -> ombroker.SimulatedBroker:
     """
-    Build an example of `MockedBroker` using an example `MarketData`, unless
+    Build an example of `DatabaseBroker` using an example `MarketData`, unless
     specified.
     """
     # Build MarketData.
@@ -57,10 +57,10 @@ def get_mocked_broker_example1(
             market_data,
             _,
         ) = mdata.get_ReplayedTimeMarketData_example3(event_loop)
-    # Build MockedBroker.
+    # Build DatabaseBroker.
     strategy_id = "SAU1"
     account = "candidate"
-    broker = ombroker.MockedBroker(
+    broker = ombroker.DatabaseBroker(
         strategy_id,
         market_data,
         account=account,

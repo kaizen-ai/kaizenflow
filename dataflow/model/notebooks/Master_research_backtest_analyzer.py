@@ -47,7 +47,7 @@ hprint.config_notebook()
 # %%
 tile_dict = {
     "dir_name": "/app/build_tile_configs.../tiled_results/",
-    "asset_id_col": "",
+    "asset_id_col": "asset_id",
 }
 tile_config = cconfig.get_config_from_nested_dict(tile_dict)
 
@@ -68,6 +68,8 @@ parquet_tile_analyzer.compute_universe_size_by_time(parquet_tile_metadata)
 
 # %%
 asset_ids = parquet_tile_metadata.index.levels[0].to_list()
+# TODO(Grisha): CmTask #1817 "Save asset_ids from the tiled backtest as integers". 
+asset_ids = list(map(str, asset_ids))
 display(asset_ids)
 
 # %% [markdown]
@@ -102,10 +104,11 @@ single_tile_df.head(3)
 fep_dict = {
     "price_col": "vwap",
     "volatility_col": "vwap.ret_0.vol",
-    "prediction_col": "prediction",
+    "prediction_col": "vwap.ret_0.vol_adj_2_hat",
     "bulk_frac_to_remove": 0.0,
     "bulk_fill_method": "zero",
     "target_gmv": 1e6,
+    "dollar_neutrality": "gaussian_rank",
     "quantization": "nearest_share",
     "burn_in_bars": 3,
 }
@@ -194,8 +197,9 @@ overnight_returns = cofinanc.compute_overnight_returns(
 
 # %%
 regression_dict = {
-    "target_col": "vwap.ret_0.vol_adj",
-    "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
+    "target_col": "vwap.ret_0.vol_adj_2_hat",
+    # "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],  
+    "feature_cols": ["vwap.ret_0.vol_adj"],
     "feature_lag": 2,
     "batch_size": 50,
 }

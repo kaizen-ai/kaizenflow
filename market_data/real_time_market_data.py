@@ -108,7 +108,7 @@ class RealTimeMarketData(mdabmada.MarketData):
             sort_time,
             limit,
         )
-        _LOG.info("query=%s", query)
+        _LOG.debug("query=%s", query)
         df = hsql.execute_query_to_df(self.connection, query)
         # Prepare data for normalization by the parent class.
         df = self._convert_data_for_normalization(df)
