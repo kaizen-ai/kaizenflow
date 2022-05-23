@@ -280,7 +280,7 @@ class TestRealTimePipelineWithOms1(hunitest.TestCase):
 # #############################################################################
 
 
-# TODO(gp): Use SystemRunner.
+# TODO(gp): Use TimeForecastSystemWithPortfolio.
 class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     """
     Run `MvnReturns` pipeline in real-time with mocked OMS objects.
@@ -343,7 +343,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         self,
         event_loop: asyncio.AbstractEventLoop,
         market_data: mdata.MarketData,
-    ) -> oms.MockedPortfolio:
+    ) -> oms.DatabasePortfolio:
         db_connection = self.connection
         table_name = oms.CURRENT_POSITIONS_TABLE_NAME
         portfolio = oms.get_mocked_portfolio_example1(
@@ -364,7 +364,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         return portfolio
 
     def get_order_processor(
-        self, portfolio: oms.MockedPortfolio
+        self, portfolio: oms.DatabasePortfolio
     ) -> oms.OrderProcessor:
         db_connection = self.connection
         get_wall_clock_time = portfolio._get_wall_clock_time
@@ -494,7 +494,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
         self,
         event_loop: asyncio.AbstractEventLoop,
         market_data: mdata.MarketData,
-    ) -> oms.MockedPortfolio:
+    ) -> oms.DatabasePortfolio:
         db_connection = self.connection
         table_name = oms.CURRENT_POSITIONS_TABLE_NAME
         initial_timestamp = pd.Timestamp(
@@ -519,7 +519,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
         return portfolio
 
     def get_order_processor(
-        self, portfolio: oms.MockedPortfolio
+        self, portfolio: oms.DatabasePortfolio
     ) -> oms.OrderProcessor:
         db_connection = self.connection
         get_wall_clock_time = portfolio._get_wall_clock_time

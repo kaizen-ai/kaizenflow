@@ -67,7 +67,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
                 asset_ids,
                 event_loop,
             )
-            config = system.get_dag_config()
+            config = system.get_system_config_template()
             market_data = system.get_market_data(data)
             dag_runner = system.get_dag_runner(
                 config,
@@ -126,11 +126,11 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsepsyru.Example1_Database_ForecastSystem(
+                system_runner = dtfsepsyru.Example1_TimeForecastSystemWithDatabasePortfolio(
                     asset_ids, event_loop, db_connection=self.connection
                 )
             else:
-                system_runner = dtfsepsyru.Example1_Dataframe_ForecastSystem(
+                system_runner = dtfsepsyru.Example1_TimeForecastSystemWithDataFramePortfolio(
                     asset_ids, event_loop
                 )
             #

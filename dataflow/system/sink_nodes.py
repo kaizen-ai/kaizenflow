@@ -33,8 +33,9 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         prediction_col: str,
         volatility_col: str,
         spread_col: Optional[str],
-        portfolio: omportfo.AbstractPortfolio,
+        portfolio: omportfo.Portfolio,
         process_forecasts_config: Dict[str, Any],
+        *,
         evaluate_forecasts_config: Optional[Dict[str, Any]] = None,
     ) -> None:
         """

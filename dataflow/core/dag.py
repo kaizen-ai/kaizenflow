@@ -30,6 +30,8 @@ _LOG = logging.getLogger(__name__)
 DagOutput = Dict[dtfcornode.NodeId, dtfcornode.NodeOutput]
 
 
+# TODO(gp): Consider calling it `Dag` given our convention of snake case
+#  abbreviations in the code (but not in comments).
 class DAG:
     """
     Class for creating and executing a DAG of `Node`s.
@@ -45,14 +47,6 @@ class DAG:
         self,
         name: Optional[str] = None,
         mode: Optional[str] = None,
-        *,
-        # TODO(gp): Remove "interface" from the name.
-        save_node_interface: str = "",
-        profile_execution: bool = False,
-        dst_dir: Optional[str] = None,
-        #
-        # TODO(gp): Rename `force_free_nodes`.
-        force_freeing_nodes: bool = False,
     ) -> None:
         """
         Create a DAG.
@@ -63,9 +57,6 @@ class DAG:
             - "strict": asserts
             - "loose": deletes old node (also removes edges) and adds new node. This
               is useful for interactive notebooks and debugging
-        :param save_node_interface, profile_execution, dst_dir: see `set_debug_mode()`
-        :param force_freeing_nodes: force freeing DAG nodes after they are not
-            needed any more
         """
         self._nx_dag = networ.DiGraph()
         # Store the DAG name.
@@ -76,10 +67,14 @@ class DAG:
         mode = mode or "strict"
         hdbg.dassert_in(mode, ["strict", "loose"], "Unsupported mode requested")
         self._mode = mode
-        #
-        self.set_debug_mode(save_node_interface, profile_execution, dst_dir)
-        hdbg.dassert_isinstance(force_freeing_nodes, bool)
-        self.force_freeing_nodes = force_freeing_nodes
+        # Set default debug/logging parameters.
+        self._save_node_io = ""
+        self._profile_execution = False
+        self._dst_dir = None
+        self.force_free_nodes = False
+        self.set_debug_mode(
+            self._save_node_io, self._profile_execution, self._dst_dir
+        )
 
     def __str__(self) -> str:
         """
@@ -131,7 +126,7 @@ class DAG:
 
     def set_debug_mode(
         self,
-        save_node_interface: str,
+        save_node_io: str,
         profile_execution: bool,
         dst_dir: Optional[str],
     ) -> None:
@@ -141,7 +136,7 @@ class DAG:
         Sometimes it's difficult to pass these parameters (e.g., through a
         `DagBuilder`) so we allow to set them after construction.
 
-        :param save_node_interface: store the values at the interface of the nodes
+        :param save_node_io: store the values at the interface of the nodes
             into a directory `dst_dir`. Disclaimer: the amount of data generate can
             be huge
             - ``: save no information
@@ -153,10 +148,8 @@ class DAG:
             execution of the nodes
         :param dst_dir: directory to save node interface and execution profiling info
         """
-        hdbg.dassert_in(
-            save_node_interface, ("", "stats", "df_as_csv", "df_as_parquet")
-        )
-        self._save_node_interface = save_node_interface
+        hdbg.dassert_in(save_node_io, ("", "stats", "df_as_csv", "df_as_parquet"))
+        self._save_node_io = save_node_io
         # To process the profiling info in a human consumable form:
         # ```
         # ls -tr -1 tmp.dag_profile/*after* | xargs -n 1 -i sh -c 'echo; echo; echo "# {}"; cat {}'
@@ -165,10 +158,10 @@ class DAG:
         self._dst_dir = dst_dir
         if self._dst_dir:
             hio.create_dir(self._dst_dir, incremental=False)
-        if self._save_node_interface or self._profile_execution:
+        if self._save_node_io or self._profile_execution:
             _LOG.warning(
                 "Setting up debug mode: %s",
-                hprint.to_str("save_node_interface profile_execution dst_dir"),
+                hprint.to_str("save_node_io profile_execution dst_dir"),
             )
             hdbg.dassert_is_not(
                 dst_dir, None, "Need to specify a directory to save the data"
@@ -323,26 +316,6 @@ class DAG:
 
     # /////////////////////////////////////////////////////////////////////////////
 
-    def insert_at_head(
-        self, node_id: dtfcornode.NodeId, node: dtfcornode.Node
-    ) -> dtfcornode.NodeId:
-        """
-        Connect a node to the root of the DAG.
-        
-        :return: node that is connected to the new head node, i.e., the previous
-            root of the DAG
-        """
-        if not self.get_sources():
-            # The DAG is empty.
-            self.add_node(node)
-            tail_nid = node_id
-        else:
-            source_nid = self.get_unique_source()
-            self.add_node(node)
-            self.connect(node_id, source_nid)
-            tail_nid = source_nid
-        return tail_nid
-
     def get_sources(self) -> List[dtfcornode.NodeId]:
         """
         :return: list of nid's of source nodes
@@ -352,6 +325,16 @@ class DAG:
             if not any(True for _ in self._nx_dag.predecessors(nid)):
                 sources.append(nid)
         return sources
+
+    def get_sinks(self) -> List[dtfcornode.NodeId]:
+        """
+        :return: list of nid's of sink nodes
+        """
+        sinks = []
+        for nid in networ.topological_sort(self._nx_dag):
+            if not any(True for _ in self._nx_dag.successors(nid)):
+                sinks.append(nid)
+        return sinks
 
     def get_unique_source(self) -> dtfcornode.NodeId:
         """
@@ -366,16 +349,6 @@ class DAG:
         )
         return sources[0]
 
-    def get_sinks(self) -> List[dtfcornode.NodeId]:
-        """
-        :return: list of nid's of sink nodes
-        """
-        sinks = []
-        for nid in networ.topological_sort(self._nx_dag):
-            if not any(True for _ in self._nx_dag.successors(nid)):
-                sinks.append(nid)
-        return sinks
-
     def get_unique_sink(self) -> dtfcornode.NodeId:
         """
         Return the only sink node, asserting if there is more than one.
@@ -388,6 +361,38 @@ class DAG:
             str(sinks),
         )
         return sinks[0]
+
+    def has_single_source(self) -> bool:
+        sources = self.get_sources()
+        if len(sources) == 1:
+            return True
+        return False
+
+    def insert_at_head(self, node: dtfcornode.Node) -> None:
+        """
+        Connect a node to the head (root) of the DAG.
+
+        Asserts if the DAG does not have a single source.
+        """
+        source_nid = self.get_unique_source()
+        self.add_node(node)
+        self.connect(node.nid, source_nid)
+
+    def has_single_sink(self) -> bool:
+        sinks = self.get_sinks()
+        if len(sinks) == 1:
+            return True
+        return False
+
+    def append_to_tail(self, node: dtfcornode.Node) -> None:
+        """
+        Connect a node to the tail (leaf) of the DAG.
+
+        Asserts if the DAG does not have a single sink.
+        """
+        sink_nid = self.get_unique_sink()
+        self.add_node(node)
+        self.connect(sink_nid, node.nid)
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -538,9 +543,9 @@ class DAG:
             )
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
-            if self._save_node_interface == "df_as_csv":
+            if self._save_node_io == "df_as_csv":
                 df.to_csv(file_name + ".csv")
-            elif self._save_node_interface == "df_as_parquet":
+            elif self._save_node_io == "df_as_parquet":
                 import helpers.hparquet as hparque
 
                 hparque.to_parquet(df, file_name + ".parquet")
@@ -586,7 +591,7 @@ class DAG:
             for input_name, value in kvs.items():
                 # Retrieve output from store.
                 kwargs[input_name] = pred_node.get_output(method, value)
-                if self.force_freeing_nodes:
+                if self.force_free_nodes:
                     _LOG.warning(
                         "Forcing deallocation of pred_node=%s", pred_node
                     )
@@ -611,7 +616,7 @@ class DAG:
             node._store_output(  # pylint: disable=protected-access
                 method, output_name, value
             )
-            if self._save_node_interface:
+            if self._save_node_io:
                 # Save info for the output of the node.
                 self._write_node_interface_to_dst_dir(
                     topological_id, nid, method, output_name, value

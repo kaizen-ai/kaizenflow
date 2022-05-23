@@ -6,7 +6,7 @@ import dataflow.core.dag_runner as dtfcodarun
 
 import abc
 import logging
-from typing import Generator, Optional, Tuple
+from typing import Generator, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -26,10 +26,16 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): -> DagRunner
-class AbstractDagRunner(abc.ABC):
+# TODO(gp): At hindsight a `DagRunner` just calls methods on a DAG so we could
+# merge the code into the DAG to simplify the class system. If we wanted to
+# keep the behaviors separated, we could use mixins like `FitPredictDag`.
+class DagRunner(abc.ABC):
     """
     Abstract class with the common code to all `DagRunner`s.
+
+    A `DagRunner` receives a `DAG` or a `DagBuilder` and allows to run `fit()`
+    and `predict()` on it. If a `DagBuilder` is passed, then it is used to
+    build a `DAG`.
 
     There is not a method common to all `DagRunner`s that is abstract,
     so we use `abc.ABC` to guarantee that this class is not instantiated
@@ -37,7 +43,9 @@ class AbstractDagRunner(abc.ABC):
     """
 
     def __init__(
-        self, config: cconfig.Config, dag_builder: dtfcodabui.DagBuilder
+        self,
+        config: cconfig.Config,
+        dag_builder: Union[dtfcordag.DAG, dtfcodabui.DagBuilder],
     ) -> None:
         """
         Constructor.
@@ -136,7 +144,7 @@ class AbstractDagRunner(abc.ABC):
 # #############################################################################
 
 
-class FitPredictDagRunner(AbstractDagRunner):
+class FitPredictDagRunner(DagRunner):
     """
     Run DAGs that have fit / predict methods.
     """
@@ -214,7 +222,7 @@ class PredictionDagRunner(FitPredictDagRunner):
 # #############################################################################
 
 
-class RollingFitPredictDagRunner(AbstractDagRunner):
+class RollingFitPredictDagRunner(DagRunner):
     """
     Run a DAG by periodic fitting on previous history and evaluating on new
     data.
@@ -381,7 +389,7 @@ class RollingFitPredictDagRunner(AbstractDagRunner):
 # #############################################################################
 
 
-class IncrementalDagRunner(AbstractDagRunner):
+class IncrementalDagRunner(DagRunner):
     """
     Run DAGs in incremental fashion, i.e., running one step at a time.
 

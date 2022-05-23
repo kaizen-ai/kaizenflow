@@ -101,6 +101,7 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         cmd.append(f"--config_builder '{config_builder}'")
         #
         cmd.append(f"--dst_dir {dst_dir}")
+        cmd.append(f"--aws_profile am")
         if _LOG.getEffectiveLevel() >= logging.DEBUG:
             cmd.append("-v DEBUG")
         cmd.append(opts)

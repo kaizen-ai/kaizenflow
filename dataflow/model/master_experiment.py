@@ -37,7 +37,7 @@ def run_experiment(config: cconfig.Config) -> None:
     # dag_runner = dtfcore.PredictionDagRunner(
     #    dag_config, config["meta"]["dag_builder"]
     # )
-    dag_runner = config["meta", "dag_runner"](config)
+    dag_runner = config["dag_runner"](config)
     # TODO(gp): Maybe save the drawing to file?
     # dtfcore.draw(dag_runner.dag)
     # TODO(gp): Why passing function instead of the values directly?
@@ -137,8 +137,8 @@ def run_tiled_backtest(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     # Create the DAG runner.
-    dag_runner = config["meta", "dag_runner"](config)
-    hdbg.dassert_isinstance(dag_runner, dtfcore.AbstractDagRunner)
+    dag_runner = config["dag_runner"](config)
+    hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
         [

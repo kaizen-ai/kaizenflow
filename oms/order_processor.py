@@ -38,7 +38,7 @@ class OrderProcessor:
         db_connection: hsql.DbConnection,
         delay_to_accept_in_secs: float,
         delay_to_fill_in_secs: float,
-        broker: ombroker.AbstractBroker,
+        broker: ombroker.Broker,
         *,
         submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
         accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
