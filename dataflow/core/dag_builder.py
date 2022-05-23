@@ -7,6 +7,8 @@ import abc
 import logging
 from typing import Any, Dict, List, Optional, cast
 
+import pandas as pd
+
 import core.config as cconfig
 import dataflow.core.dag as dtfcordag
 import dataflow.core.node as dtfcornode
@@ -20,6 +22,8 @@ class DagBuilder(abc.ABC):
     """
     Abstract class for creating DAGs.
 
+    Each DagBuilder is specific of a DAG.
+
     Concrete classes must specify:
     1) `get_config_template()`
        - It returns a `Config` object that represents the parameters used to build
@@ -28,11 +32,17 @@ class DagBuilder(abc.ABC):
        - A config can be incomplete, e.g., `cconfig.DUMMY` is used for required
          fields that must be defined before the config can be used to initialize
          a DAG
-    2) `get_dag()`
+    2) methods that allow changing a config in multiple places in self-consistent
+       way (e.g., setting weights, setting frequency)
+    3) methods that return properties of the DAG to be built (e.g., number of
+       needed days of history)
+    4) `get_dag()`
        - It builds a DAG
        - Defines the DAG nodes and how they are connected to each other. The
          passed-in config object tells this function how to configure / initialize
-         the various nodes.
+         the various nodes
+       - Once the DAG is built, we assume that the DagBuilder and the config that
+         generated can be safely discarded
     """
 
     def __init__(self, nid_prefix: Optional[str] = None) -> None:
@@ -56,6 +66,16 @@ class DagBuilder(abc.ABC):
             self._nid_prefix += "/"
 
     def __str__(self) -> str:
+        txt = []
+        txt.append(f"nid_prefix={self._nid_prefix}")
+        #
+        txt = "\n".join(txt)
+        return txt
+
+    def to_string(self) -> str:
+        """
+        Return a string with a (verbose) representation of the DagBuilder.
+        """
         txt = []
         txt.append(f"nid_prefix={self._nid_prefix}")
         #
@@ -136,6 +156,18 @@ class DagBuilder(abc.ABC):
         _ = self, config
         return None
 
+    def get_required_start_timestamp(
+        self, config: cconfig.Config, end_timestamp: pd.Timestamp
+    ) -> pd.Timestamp:
+        """
+        Return the start_timestamp needed to execute pipeline to get a result
+        on 'end_timestamp'.
+        """
+        effective_days = self._get_required_lookback_in_effective_days(config)
+        # TODO(gp): We should a trading calendar to handle holidays and half days.
+        #  For now we just consider business days as an approximation.
+        return end_timestamp - pd.tseries.offsets.BDay(effective_days)
+
     # ////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
@@ -180,6 +212,16 @@ class DagBuilder(abc.ABC):
         nid = node.nid
         nid = cast(str, nid)
         return nid
+
+    # TODO(gp): This should become abstract and public at some point.
+    def _get_required_lookback_in_effective_days(
+        self, config: cconfig.Config
+    ) -> int:
+        """
+        Return the number of days needed to execute pipeline at the frequency
+        given by config.
+        """
+        raise NotImplementedError
 
     def _get_nid(self, stage_name: str) -> str:
         hdbg.dassert_isinstance(stage_name, str)

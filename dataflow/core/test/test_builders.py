@@ -3,10 +3,11 @@ import logging
 import numpy as np
 
 import core.config as cconfig
-import dataflow.core.dag_adapter as dtfcodaada
+import dataflow.core.dag as dtfcordag
 import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.dag_runner as dtfcodarun
 import dataflow.core.nodes.sources as dtfconosou
+import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -61,16 +62,21 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         }
         node = dtfconosou.MultivariateNormalDataSource
         nodes_to_insert = [("load_prices", node)]
-        dag_builder = dtfcodaada.DagAdapter(
-            dag_builder,
-            overriding_config,
-            nodes_to_insert,
-            [],
-        )
         #
         config = dag_builder.get_config_template()
+        dag = dag_builder.get_dag(config)
+        # TODO(Paul): Clean up these calls.
+        hdbg.dassert_eq(len(nodes_to_insert), 1)
+        stage, node_ctor = nodes_to_insert[0]
+        _LOG.debug(hprint.to_str("stage node_ctor"))
+        head_nid = dag_builder._get_nid(stage)  # pylint: disable=protected-access
+        node = node_ctor(
+            head_nid,
+            **overriding_config[head_nid],
+        )
+        dtfcordag.DAG.insert_at_head(dag, node)
         #
-        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag)
         result_bundle = dag_runner.fit()
         #
         df_out = result_bundle.result_df

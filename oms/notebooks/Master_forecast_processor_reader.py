@@ -40,7 +40,7 @@ hprint.config_notebook()
 log_dir = ""
 
 # %%
-paper_df, paper_stats_df = oms.AbstractPortfolio.read_state(
+paper_df, paper_stats_df = oms.Portfolio.read_state(
     os.path.join(log_dir, "portfolio")
 )
 

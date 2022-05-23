@@ -29,7 +29,7 @@ def parse_universe_str(universe_str: str) -> Tuple[str, Optional[int]]:
     E.g., "kibot_v1_0-top100", "kibot_v2_0-all".
     """
     data = universe_str.split("-")
-    hdbg.dassert_eq(len(data), 2)
+    hdbg.dassert_eq(len(data), 2, "Invalid universe='%s'", universe_str)
     universe_version, top_n = data
     if top_n == "all":
         top_n = None
@@ -130,7 +130,7 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
 # TODO(gp): build_model_config -> build_experiment_config
 
 
-def parse_experiment_config(experiment_config: str) -> Tuple[str, str, str]:
+def parse_experiment_config(backtest_config: str) -> Tuple[str, str, str]:
     """
     Parse a string representing an experiment in the format:
     `<universe>.<trading_period>.<time_interval>`, e.g., "top100.15T.all".
@@ -140,9 +140,10 @@ def parse_experiment_config(experiment_config: str) -> Tuple[str, str, str]:
 
     :return: universe_str, trading_period_str, time_interval_str
     """
-    _LOG.info(hprint.to_str("experiment_config"))
+    _LOG.info(hprint.to_str("backtest_config"))
     #
-    data = experiment_config.split(".")
+    hdbg.dassert_isinstance(backtest_config, str)
+    data = backtest_config.split(".")
     hdbg.dassert_eq(len(data), 3)
     universe_str, trading_period_str, time_interval_str = data
     #

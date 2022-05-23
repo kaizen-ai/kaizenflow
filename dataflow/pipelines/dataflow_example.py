@@ -18,7 +18,7 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> ExamplePipeline2_DagBuilder(dtfcore.DagBuilder):
+# TODO(gp): -> Example2_DagBuilder(dtfcore.DagBuilder):
 class _NaivePipeline(dtfcore.DagBuilder):
     """
     Pipeline with:

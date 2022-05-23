@@ -246,6 +246,7 @@ class ForecastEvaluatorFromPrices:
         liquidate_at_end_of_day: bool = "True",
         reindex_like_input: bool = False,
         burn_in_bars: int = 3,
+        burn_in_days: int = 0,
         **kwargs,
     ) -> Tuple[
         pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
@@ -271,6 +272,8 @@ class ForecastEvaluatorFromPrices:
             by the inferred "active index" of datetimes
         :param burn_in_bars: number of leading bars to trim (to remove warm-up
             artifacts)
+        :param burn_in_days: number of leading days to trim (to remove warm-up
+            artifacts). Applied independently of `burn_in_bars`.
         :param kwargs: forwarded to either
             `compute_target_positions_cross_sectionally()` or
             `compute_target_positions_longitudinally()` depending upon the
@@ -346,6 +349,18 @@ class ForecastEvaluatorFromPrices:
             flows = flows.iloc[burn_in_bars:]
             pnl = pnl.iloc[burn_in_bars:]
             stats = stats.iloc[burn_in_bars:]
+        if burn_in_days > 0:
+            # TODO(Paul): Consider making this more efficient (and less
+            # awkward).
+            date_idx = df.gropuby(lambda x: x.date()).count().index
+            hdbg.dassert_lt(burn_in_days, date_idx.size)
+            first_date = date_idx.iloc[burn_in_days]
+            _LOG.info("Initial date after burn-in=%s", first_date)
+            holdings = holdings.loc[first_date:]
+            positions = positions.loc[first_date:]
+            flows = flows.loc[first_date:]
+            pnl = pnl.loc[first_date:]
+            stats = stats.loc[first_date:]
         # Convert one-step-ahead target positions to "point-in-time"
         # (hypothetically) realized positions.
         # Possibly reindex dataframes.
