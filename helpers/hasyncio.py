@@ -295,6 +295,25 @@ async def sleep(
 # //////////////////////////////////////////////////////////////////////////////////
 
 
+def get_seconds_to_align_to_grid(grid_time_in_secs: float, get_wall_clock_time: hdateti.GetWallClockTime) -> Tuple[pd.Timestamp, int]:
+    """
+    Given the current time return the amount of seconds to wait to align on a grid
+    with period `grid_time_in_secs`.
+
+    E.g., current_time=9:31:02am, grid_time_in_secs=120 -> return 58
+    """
+    current_time = get_wall_clock_time()
+    _LOG.debug("Aligning at wall_clock=%s ...", current_time)
+    # Align on the time grid.
+    hdbg.dassert_lt(0, grid_time_in_secs)
+    freq = f"{grid_time_in_secs}S"
+    target_time = current_time.ceil(freq)
+    hdbg.dassert_lte(current_time, target_time)
+    _LOG.debug("target_time=%s", target_time)
+    secs_to_wait = (target_time - current_time).total_seconds()
+    return target_time, secs_to_wait
+
+
 def _wait_until(
     wait_until_timestamp: pd.Timestamp,
     get_wall_clock_time: hdateti.GetWallClockTime,

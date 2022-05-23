@@ -1092,6 +1092,9 @@ def _git_diff_with_branch(
     msg = f"To diff against {tag} run"
     hio.create_executable_script(script_file_name, script_txt, msg=msg)
     _run(ctx, script_file_name, dry_run=dry_run, pty=True)
+    # Clean up file.
+    cmd = f"rm -rf {dst_dir}"
+    _run(ctx, cmd, dry_run=dry_run)
 
 
 @task
@@ -1262,9 +1265,9 @@ def git_branch_diff_with_master(  # type: ignore
 #   since the last integration and compare them to the base in each branch
 #   ```
 #   > cd amp1
-#   > i integrate_diff_overlapping_files --src-dir "amp1" --dst-dir "cmamp1"
+#   > i integrate_diff_overlapping_files --src-dir-basename "amp1" --dst-dir-basename "cmamp1"
 #   > cd cmamp1
-#   > i integrate_diff_overlapping_files --src-dir "cmamp1" --dst-dir "amp1"
+#   > i integrate_diff_overlapping_files --src-dir-basename "cmamp1" --dst-dir-basename "amp1"
 #   ```
 #
 # - Quickly scan all the changes in the branch compared to the base
@@ -2154,7 +2157,7 @@ def _generate_compose_file(
     file_name: Optional[str],
 ) -> str:
     """
-    Generate `docker-compose.yaml` file and save it.
+    Generate `docker-compose.yml` file and save it.
 
     :param shared_data_dir: data directory in the host filesystem to mount to mount
         inside the container. `None` means no dir sharing
@@ -4161,7 +4164,8 @@ def _build_run_command_line(
         _LOG.warning("Only collecting tests as per user request")
         pytest_opts_tmp.append("--collect-only")
     # Indicate the number of threads for parallelization.
-    pytest_opts_tmp.append(f"-n {str(n_threads)}")
+    if n_threads != "serial":
+        pytest_opts_tmp.append(f"-n {str(n_threads)}")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
@@ -4293,7 +4297,7 @@ def run_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
     **kwargs,
 ):
@@ -4347,7 +4351,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
     **kwargs,
 ):
@@ -4396,7 +4400,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
     **kwargs,
 ):
@@ -4436,7 +4440,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
     **kwargs,
 ):
@@ -4477,7 +4481,7 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
 ):
     """
@@ -4518,7 +4522,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
 ):
     """
@@ -4909,9 +4913,12 @@ def pytest_repro(  # type: ignore
     _LOG.info("%s", failed_test_output_str)
     if create_script:
         script_name = "./tmp.pytest_repro.sh"
-        cmd = "pytest " + " ".join(targets)
+        script_txt = ["pytest \\"]
+        script_txt.extend([f"  {t} \\" for t in targets])
+        script_txt.append("  $*")
+        script_txt = "\n".join(script_txt)
         msg = "To run the tests"
-        hio.create_executable_script(script_name, cmd, msg=msg)
+        hio.create_executable_script(script_name, script_txt, msg=msg)
     return res
 
 

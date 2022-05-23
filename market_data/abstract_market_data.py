@@ -124,7 +124,7 @@ class MarketData(abc.ABC):
         :param filter_data_mode: control class behavior with respect to extra
             or missing columns, like in `hpandas.check_and_filter_matching_columns()`
         """
-        _LOG.debug(            
+        _LOG.debug(
             hprint.to_str(
                 "asset_id_col asset_ids start_time_col_name "
                 "end_time_col_name columns get_wall_clock_time "
@@ -380,7 +380,7 @@ class MarketData(abc.ABC):
         """
         dassert_valid_asset_ids(asset_ids)
         last_end_time = self.get_last_end_time()
-        _LOG.info("last_end_time=%s", last_end_time)
+        _LOG.debug("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
         first_end_time = last_end_time - offset
         # We rely on the assumption that we are reading 1-minute bars.

@@ -71,6 +71,9 @@ def get_docker_base_image_name() -> str:
 # - Linux (dev server, GitHub CI)
 #   - Supports Docker privileged mode
 #   - The same user and group is used inside the container
+# - Linux (spm-dev4)
+#   - Doesn't support Docker privileged mode
+#   - A different user and group is used inside the container
 
 
 # Copied from `system_interaction.py` to avoid circular imports.
@@ -175,7 +178,7 @@ def has_docker_sudo() -> bool:
     Return whether commands should be run with sudo or not.
     """
     if is_dev_ck():
-        val = False
+        val = True
     elif is_dev4():
         val = False
     elif is_inside_ci():
@@ -209,6 +212,7 @@ def has_dind_support() -> bool:
     # to check if there is support for privileged mode.
     # Sometimes there is some state left, so we need to clean it up.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
+    # TODO(gp): use `has_docker_sudo`.
     if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
     os.system(cmd)

@@ -235,7 +235,7 @@ def get_ReplayedTimeMarketData_example5(
 
 
 # #############################################################################
-# ImClientMarketData examples
+# Historical ImClientMarketData examples
 # #############################################################################
 
 
@@ -256,6 +256,10 @@ def _get_last_timestamp(
     return last_timestamp
 
 
+# TODO(gp): @Grisha This should not be here. It should be somewhere else.
+# TODO(gp): the CCXT, Talos version of this class only differ by the ImClient.
+#  Consider passing the ImClient on the fly to build the class. All these functions
+#  are replaced by a single builder `get_HistoricalImClientMarketData_example1()`.
 def get_CcxtCsvImClientMarketData_example1(
     asset_ids: Optional[List[int]],
     columns: List[str],
@@ -289,6 +293,7 @@ def get_CcxtCsvImClientMarketData_example1(
     return market_data
 
 
+# TODO(gp): @Grisha This should not be here. It should be somewhere else.
 def get_CcxtPqImClientMarketData_example1(
     asset_ids: Optional[List[int]],
     columns: List[str],
@@ -393,6 +398,7 @@ def get_DataFrameImClientMarketData_example1(
     return market_data
 
 
+# TODO(gp): @Grisha This should not be here. It should be somewhere else.
 def get_TalosPqImClientMarketData_example1(
     asset_ids: Optional[List[int]],
     columns: List[str],

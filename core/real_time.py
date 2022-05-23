@@ -271,15 +271,9 @@ def align_on_time_grid(
             hasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
             _LOG.debug("wall_clock=%s", get_wall_clock_time())
 
-    _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
-    current_time = get_wall_clock_time()
-    # Align on the time grid.
-    hdbg.dassert_lt(0, grid_time_in_secs)
-    freq = f"{grid_time_in_secs}S"
-    target_time = current_time.ceil(freq)
-    hdbg.dassert_lte(current_time, target_time)
-    _LOG.debug("target_time=%s", target_time)
-    secs_to_wait = (target_time - current_time).total_seconds()
+    # _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
+    target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
+        grid_time_in_secs, get_wall_clock_time)
     #
     if use_high_resolution:
         # Wait for a bit and then busy wait.

@@ -13,8 +13,8 @@ FROM 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:dev-${VERSION}
 # credentials.
 COPY ./aws /home/.aws/
 
-# specifies that this is a production cmamp container, used inside
-# /app/repo_config.py to determine configuration.
+# Specify that this is a production cmamp container, used inside
+# `/app/repo_config.py` to determine configuration.
 ENV CK_IN_PROD_CMAMP_CONTAINER=1
 
 RUN ls .

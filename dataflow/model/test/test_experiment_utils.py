@@ -46,7 +46,7 @@ def build_configs_with_tiled_universe(
     """
     asset_ids = _get_universe_tiny()
     universe_tiles = (asset_ids,)
-    egid_key = ("meta", "asset_ids")
+    egid_key = ("market_data", "asset_ids")
     configs = dtfmoexcon.build_configs_varying_universe_tiles(
         config, egid_key, universe_tiles
     )
@@ -76,7 +76,7 @@ def build_tile_configs(
     #
     config = _build_base_config()
     #
-    config["meta", "dag_runner"] = get_dag_runner
+    config["dag_runner"] = get_dag_runner
     # Name of the asset_ids to save.
     config["meta", "asset_id_name"] = "asset_id"
     configs = [config]

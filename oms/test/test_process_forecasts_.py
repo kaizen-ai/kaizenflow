@@ -815,7 +815,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         self,
         predictions: pd.DataFrame,
         volatility: pd.DataFrame,
-        portfolio: omportfo.MockedPortfolio,
+        portfolio: omportfo.DatabasePortfolio,
     ) -> None:
         """
         Run process_forecasts() logic with a given prediction df to update a

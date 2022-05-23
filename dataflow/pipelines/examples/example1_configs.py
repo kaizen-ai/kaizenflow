@@ -51,7 +51,7 @@ def build_configs_with_tiled_universe(
         universe_tiles = (asset_ids_part1, asset_ids_part2)
     else:
         universe_tiles = (asset_ids,)
-    asset_id_key = ("meta", "asset_ids")
+    asset_id_key = ("market_data", "asset_ids")
     configs = dtfmoexcon.build_configs_varying_universe_tiles(
         config, asset_id_key, universe_tiles
     )
@@ -59,11 +59,12 @@ def build_configs_with_tiled_universe(
 
 
 # TODO(gp): This corresponds to `System.get_dag_runner()`.
-def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
+def get_dag_runner(config: cconfig.Config) -> dtfcore.DagRunner:
     """
     Build a DAG runner from a config.
     """
-    asset_ids = config["meta", "asset_ids"]
+    asset_ids = config["market_data", "asset_ids"]
+    # TODO(gp): Specify only the columns that are needed.
     columns = None
     columns_remap = None
     market_data = mdata.get_DataFrameImClientMarketData_example1(
@@ -92,9 +93,9 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.AbstractDagRunner:
     # This is for debugging. It saves the output of each node in a `csv` file.
     # dag.set_debug_mode("df_as_csv", False, "crypto_forever")
     if False:
-        dag.force_freeing_nodes = True
+        dag.force_free_nodes = True
     # Add the data source node.
-    dag.insert_at_head(stage, node)
+    dag.insert_at_head(node)
     # Build the DagRunner.
     dag_runner = dtfcore.FitPredictDagRunner(config, dag)
     return dag_runner
@@ -121,7 +122,7 @@ def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
     im_client = icdc.get_DataFrameImClient_example1()
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
     #
-    config["meta", "dag_runner"] = get_dag_runner
+    config["dag_runner"] = get_dag_runner
     # Name of the asset_ids to save.
     config["meta", "asset_id_col_name"] = "asset_id"
     # Create the list of configs.
