@@ -333,16 +333,16 @@ _ = _plot_bad_data_stats(config, kucoin_stats_by_year_month)
 # # Summary
 
 # %% [markdown]
-# - There is no `volume = 0` for all data.
-# - Data for `binance` is acceptable. The highest % of `NaNs` is ~11% for `EOS_USDT` for 2019-12.
-# - Total % of `NaNs` is less than 1% for each currency pair of `binance`.
-# - Data for `ftx` has different spread: 
-#     -`BTC_USDT`, `ETH_USDT` have <1% for each month mostly, total <1% of `NaNs`.
-#     - `DOGE_USDT`, `XRP_USDT` have total ~20% of `NaNs`.
-#     - `DOGE_USDT` data for 2022 has a large % of `NaNs`: 32-54%, for the half of 2022-05 is 20% already.
-#     - `XRP_USDT` data for 2022 also has a large amount of `NaNs`: 28-35%, for the half of 2022-05 is the same as `DOGE_USDT`.
-#     - Rest of currency pairs data is acceptable: <15%.
-# - Total % of `NaNs` for `gateio` is <1% mostly. Less than 5% (mostly ~1%) for each currency pairs monthly.
-# - CryptoChassis data for `gateio` in compare to CCXT doesn't have gaps in October 2021.
-# - `Kucoin` data has <1% of `NaNs` in total for each currency pair.
-#     
+# - There is no `volume = 0` rows at all
+# - Binance:
+#    - Data is acceptable
+#    - All coins have  <1% of NaNs
+# - FTX:
+#    - NaN spikes for `DOGE` and `XRP` in 2022 
+#    - Other coins are of decent quality
+# - Gateio:
+#    - Data is acceptable 
+#    - All coins have  <2% of NaNs
+# - Kucoin:
+#    - Data is acceptable 
+#    - All coins have  <2% of NaNs
