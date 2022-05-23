@@ -2,8 +2,8 @@
    * [Invariants and conventions](#invariants-and-conventions)
    * [Implementation](#implementation)
       * [process_forecasts()](#process_forecasts)
-      * [AbstractPortfolio](#abstractportfolio)
-      * [AbstractBroker](#abstractbroker)
+      * [Portfolio](#portfolio)
+      * [Broker](#broker)
    * [Simulation](#simulation)
       * [DataFramePortfolio](#dataframeportfolio)
       * [SimulatedBroker](#simulatedbroker)
@@ -11,8 +11,8 @@
       * [ImplementedPortfolio](#implementedportfolio)
       * [ImplementedBroker](#implementedbroker)
    * [Mocked system](#mocked-system)
-      * [MockedPortfolio](#mockedportfolio)
-      * [MockedBroker](#mockedbroker)
+      * [DatabasePortfolio](#databaseportfolio)
+      * [DatabaseBroker](#databasebroker)
       * [OmsDb](#omsdb)
       * [OrderProcessor](#orderprocessor)
 
@@ -65,17 +65,17 @@
 - `compute_target_positions()`
   - Aka `compute_trades()`
 - `submit_orders()`
-  - Call `AbstractBroker`
+  - Call `Broker`
 - `get_fills()`
-  - Call `AbstractBroker`
+  - Call `Broker`
   - For IS it is different
 - `update_portfolio()`
-  - Call `AbstractPortfolio`
+  - Call `Portfolio`
   - For IS it is different
 
 - It should not use any concrete implementation but only `Abstract*`
 
-## AbstractPortfolio
+## Portfolio
 
 - `get_holdings()`
   - Abstract because IS, Mocked, Simulated have a different implementations
@@ -88,9 +88,9 @@
     some other dynamic checks)
     - We are trying not to mix static typing and duck typing
 
-- CASH_ID, `_compute_statistics()` goes in `AbstractPortolio`
+- CASH_ID, `_compute_statistics()` goes in `Portolio`
 
-## AbstractBroker
+## Broker
 
 - `submit_orders()`
 - `get_fills()`
@@ -139,12 +139,12 @@
 - Our implementation of the implemented system where we replace DB with a mock
   - The mocked DB should be as similar as possible to the implemented DB
 
-## MockedPortfolio
+## DatabasePortfolio
 
 - `get_holdings()`
   - Same behavior of `ImplementedPortfolio` but using `OmsDb`
 
-## MockedBroker
+## DatabaseBroker
 
 - `submit_orders()`
   - Same behavior of `ImplementedBroker` but using `OmsDb`

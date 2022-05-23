@@ -18,7 +18,8 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
-class RealTimeDagRunner(dtfcore.AbstractDagRunner):
+# TODO(Paul): Consider renaming `EventLoopDagRunner`.
+class RealTimeDagRunner(dtfcore.DagRunner):
     """
     Run a DAG in true or simulated real-time.
 
