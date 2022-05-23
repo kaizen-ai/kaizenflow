@@ -4128,7 +4128,8 @@ def _build_run_command_line(
         _LOG.warning("Only collecting tests as per user request")
         pytest_opts_tmp.append("--collect-only")
     # Indicate the number of threads for parallelization.
-    pytest_opts_tmp.append(f"-n {str(n_threads)}")
+    if n_threads != "serial":
+        pytest_opts_tmp.append(f"-n {str(n_threads)}")
     # Concatenate the options.
     _LOG.debug("pytest_opts_tmp=\n%s", str(pytest_opts_tmp))
     pytest_opts_tmp = [po for po in pytest_opts_tmp if po != ""]
@@ -4260,7 +4261,7 @@ def run_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
     **kwargs,
 ):
@@ -4314,7 +4315,7 @@ def run_fast_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
     **kwargs,
 ):
@@ -4363,7 +4364,7 @@ def run_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
     **kwargs,
 ):
@@ -4403,7 +4404,7 @@ def run_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
     **kwargs,
 ):
@@ -4444,7 +4445,7 @@ def run_fast_slow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
 ):
     """
@@ -4485,7 +4486,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
     coverage=False,
     collect_only=False,
     tee_to_file=False,
-    n_threads="1",
+    n_threads="serial",
     git_clean_=False,
 ):
     """
