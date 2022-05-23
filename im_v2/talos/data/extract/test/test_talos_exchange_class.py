@@ -35,7 +35,7 @@ class TestTalosExtractor1(hunitest.TestCase):
         mock_get_current_time.return_value = "2021-09-09 00:00:00.000000+00:00"
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00", tz="UTC")
-        actual = self._download_ohlcv(start_timestamp, end_timestamp)
+        actual = self.download_ohlcv_data(start_timestamp, end_timestamp)
         # Verify dataframe length.
         self.assertEqual(1441, actual.shape[0])
         # Check number of calls and args for current time.

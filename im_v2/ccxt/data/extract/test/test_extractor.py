@@ -79,7 +79,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         start_timestamp = "invalid"
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
         with pytest.raises(AssertionError) as fail:
-            exchange_class.download_ohlcv_data(
+            exchange_class._download_ohlcv(
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,

@@ -199,7 +199,7 @@ def download_realtime_for_one_exchange(
             currency_pair
         )
         # Download data.
-        data = exchange.download_ohlcv_data(
+        data = exchange._download_ohlcv(
             currency_pair_for_download,
             *additional_args,
             start_timestamp=start_timestamp,
