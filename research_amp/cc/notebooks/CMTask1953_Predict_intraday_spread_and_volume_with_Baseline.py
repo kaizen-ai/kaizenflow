@@ -379,6 +379,10 @@ def regression_results(y_true, y_pred):
 
 
 def rmse(actual, predict):
+    """
+    Scoring metric constructor by Dr. Varshita Sher.
+    See https://towardsdatascience.com/time-series-modeling-using-scikit-pandas-and-numpy-682e3b8db8d1.
+    """
     predict = np.array(predict)
     actual = np.array(actual)
     distance = predict - actual
@@ -521,6 +525,11 @@ rf_test.columns = ["true", "predicted"]
 rf_test.index = y_test.index
 rf_test.plot(figsize=(15, 7))
 
+# %%
+# Plot the difference between true and predicted values.
+rf_test["diff"] = rf_test["true"] - rf_test["predicted"]
+rf_test["diff"].plot(figsize=(15, 7))
+
 # %% [markdown]
 # ### Grid Searching Hyperparameters (LinearRegression)
 
@@ -562,3 +571,8 @@ lr_test = pd.concat([pd.Series(y_true), pd.Series(y_pred_lin)], axis=1)
 lr_test.columns = ["true", "predicted"]
 lr_test.index = y_test.index
 lr_test.plot(figsize=(15, 7))
+
+# %%
+# Plot the difference between true and predicted values.
+lr_test["diff"] = lr_test["true"] - lr_test["predicted"]
+lr_test["diff"].plot(figsize=(15, 7))
