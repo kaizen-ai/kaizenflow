@@ -13,6 +13,9 @@
 # ---
 
 # %% [markdown]
+# # Description
+
+# %% [markdown]
 # This notebook performs a check that missing data is not present at source.
 
 # %% [markdown]
@@ -52,14 +55,14 @@ def _get_full_symbol_data_for_year_month(
     df: pd.DataFrame, full_symbol: str, year: int, month: int
 ) -> pd.DataFrame:
     """
-    :return: data for one full symbol for a specific year and month
+    Get data for one full symbol for a specific year and month.
     """
     df = df[
         (df.index.year == year)
         & (df.index.month == month)
         & (df["full_symbol"] == full_symbol)
     ]
-    df.round(8)
+    df = df.round(8)
     if "knowledge_timestamp" in df.columns.to_list():
         df = df.drop(columns=["knowledge_timestamp"])
         df.index.name = "time_seconds"
@@ -196,11 +199,13 @@ source_ftx_doge_2022_3_resampled = hpandas.resample_df(
     source_ftx_doge_2022_3, "T"
 )
 source_ftx_doge_2022_3_resampled["full_symbol"] = "ftx::DOGE_USDT"
+# Check how much NaNs in the resampled data.
 source_ftx_doge_2022_3_resampled.isna().value_counts()
 
 # %%
 s3_ftx_doge_2022_3_resampled = hpandas.resample_df(s3_ftx_doge_2022_3, "T")
 s3_ftx_doge_2022_3_resampled["full_symbol"] = "ftx::DOGE_USDT"
+# Check how much NaNs in the resampled data.
 s3_ftx_doge_2022_3_resampled.isna().value_counts()
 
 # %%
@@ -210,11 +215,10 @@ s3_resampled_stats = _get_qa_stats(s3_ftx_doge_2022_3_resampled, "s3_resampled")
 source_resampled_stats = _get_qa_stats(
     source_ftx_doge_2022_3_resampled, "CryptoChassis_resampled"
 )
-pd.concat([s3_stats, source_stats, s3_resampled_stats, source_resampled_stats])
+
+# %%
+stats = pd.concat([s3_stats, source_stats, s3_resampled_stats, source_resampled_stats])
+stats
 
 # %% [markdown]
 # Equal amount of NaNs after resampling. Data with NaNs on S3 is absent at the source.
-
-# %%
-
-# %%
