@@ -97,8 +97,8 @@ class TalosExtractor(imvcdeext.Extractor):
         exchange_id: str,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
-        *,
         bar_per_iteration: int = 10000,
+        **kwargs
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars for given currency pair for given crypto
