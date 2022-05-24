@@ -112,7 +112,8 @@ print(config)
 # TODO(Dan): Clean up and move to a lib.
 # TODO(Dan): Make functions independent from hard-coded vendor names.
 def _compare_vendor_universes(
-    crypto_chassis_universe: List[str], ccxt_universe: List[str],
+    crypto_chassis_universe: List[str],
+    ccxt_universe: List[str],
 ) -> Tuple[List[Optional[str]], List[Optional[str]], List[Optional[str]]]:
     """
     Get common and unique vendors universes.
@@ -133,9 +134,9 @@ def _compare_timestamp_stats(
 ) -> pd.DataFrame:
     """
     Compare timestamp stats for vendors data.
-    
+
     E.g,:
-    
+
     ```
                    min_timestamp           max_timestamp           days_available
                       vendor1     vendor2     vendor1     vendor2  vendor1  vendor2
@@ -160,9 +161,9 @@ def _compare_bad_data_stats(
 ) -> pd.DataFrame:
     """
     Compare bad data stats for vendors data.
-    
+
     E.g,:
-    
+
     ```
                    bad data [%]            NaNs[%]                 volume=0 [%]
                    vendor1  vendor2  diff  vendor1  vendor2  diff  vendor1  vendor2  diff
@@ -194,13 +195,13 @@ def _compare_bad_data_stats_by_year_month(
     Compare bad data stats for vendors data by year and month.
 
     Stats are compared only for intersecting time intervals.
-    
+
     E.g,:
-    
+
     ```
                                 bad data [%]      NaNs[%]           volume=0 [%]
                                 vendor1  vendor2  vendor1  vendor2  vendor1  vendor2
-      full_symbol  year  month          
+      full_symbol  year  month
     ftx::ADA_USDT  2021     11      3.5      6.5      3.5      0.5      0.0      6.0
                             12      2.4      4.8      2.7      1.5      0.0      5.1
     ftx::BTC_USDT  2022      1      1.5      0.5      1.5      0.5      0.0      0.0
@@ -351,11 +352,11 @@ def _swap_column_levels(
 ) -> pd.DataFrame:
     """
     Swap column levels with specified upper-level column order.
-    
+
     Applicable only for 2-level columned dataframes.
-    
+
     Input:
-    
+
     ```
         vendor1                       vendor2
         feature1  feature2  feature3  feature1  feature2  feature3
@@ -363,9 +364,9 @@ def _swap_column_levels(
     1         20       -20       0.6        21       -21       0.7
     2         30       -30       0.7        31       -31       0.8
     ```
-    
+
     Output:
-    
+
     ```
         feature1          feature2          feature3
         vendor1  vendor2  vendor1  vendor2  vendor1  vendor2
@@ -373,7 +374,6 @@ def _swap_column_levels(
     1        20       21      -20      -21      0.6      0.7
     2        30       31      -30      -31      0.7      0.8
     ```
-    
     """
     df.columns = df.columns.swaplevel(0, 1)
     new_cols = df.columns.reindex(upper_level_cols, level=0)
@@ -440,9 +440,7 @@ crypto_chassis_binance_data.head()
 crypto_chassis_timestamp_binance_stats = _get_timestamp_stats(
     config, crypto_chassis_binance_data
 )
-ccxt_timestamp_binance_stats = _get_timestamp_stats(
-    config, ccxt_binance_data
-)
+ccxt_timestamp_binance_stats = _get_timestamp_stats(config, ccxt_binance_data)
 #
 binance_timestamp_stats_qa = _compare_timestamp_stats(
     crypto_chassis_timestamp_binance_stats,
@@ -454,9 +452,7 @@ binance_timestamp_stats_qa
 crypto_chassis_bad_data_binance_stats = _get_bad_data_stats(
     config, crypto_chassis_binance_data
 )
-ccxt_bad_data_binance_stats = _get_bad_data_stats(
-    config, ccxt_binance_data
-)
+ccxt_bad_data_binance_stats = _get_bad_data_stats(config, ccxt_binance_data)
 #
 binance_bad_data_stats_qa = _compare_bad_data_stats(
     crypto_chassis_bad_data_binance_stats,
@@ -508,9 +504,7 @@ crypto_chassis_ftx_data.head()
 crypto_chassis_timestamp_ftx_stats = _get_timestamp_stats(
     config, crypto_chassis_ftx_data
 )
-ccxt_timestamp_ftx_stats = _get_timestamp_stats(
-    config, ccxt_ftx_data
-)
+ccxt_timestamp_ftx_stats = _get_timestamp_stats(config, ccxt_ftx_data)
 #
 ftx_timestamp_stats_qa = _compare_timestamp_stats(
     crypto_chassis_timestamp_ftx_stats,
@@ -522,9 +516,7 @@ ftx_timestamp_stats_qa
 crypto_chassis_bad_data_ftx_stats = _get_bad_data_stats(
     config, crypto_chassis_ftx_data
 )
-ccxt_bad_data_ftx_stats = _get_bad_data_stats(
-    config, ccxt_ftx_data
-)
+ccxt_bad_data_ftx_stats = _get_bad_data_stats(config, ccxt_ftx_data)
 #
 ftx_bad_data_stats_qa = _compare_bad_data_stats(
     crypto_chassis_bad_data_ftx_stats,
@@ -576,9 +568,7 @@ crypto_chassis_gateio_data.head()
 crypto_chassis_timestamp_gateio_stats = _get_timestamp_stats(
     config, crypto_chassis_gateio_data
 )
-ccxt_timestamp_gateio_stats = _get_timestamp_stats(
-    config, ccxt_gateio_data
-)
+ccxt_timestamp_gateio_stats = _get_timestamp_stats(config, ccxt_gateio_data)
 #
 gateio_timestamp_stats_qa = _compare_timestamp_stats(
     crypto_chassis_timestamp_gateio_stats,
@@ -590,9 +580,7 @@ gateio_timestamp_stats_qa
 crypto_chassis_bad_data_gateio_stats = _get_bad_data_stats(
     config, crypto_chassis_gateio_data
 )
-ccxt_bad_data_gateio_stats = _get_bad_data_stats(
-    config, ccxt_gateio_data
-)
+ccxt_bad_data_gateio_stats = _get_bad_data_stats(config, ccxt_gateio_data)
 #
 gateio_bad_data_stats_qa = _compare_bad_data_stats(
     crypto_chassis_bad_data_gateio_stats,
@@ -644,9 +632,7 @@ crypto_chassis_kucoin_data.head()
 crypto_chassis_timestamp_kucoin_stats = _get_timestamp_stats(
     config, crypto_chassis_kucoin_data
 )
-ccxt_timestamp_kucoin_stats = _get_timestamp_stats(
-    config, ccxt_kucoin_data
-)
+ccxt_timestamp_kucoin_stats = _get_timestamp_stats(config, ccxt_kucoin_data)
 #
 kucoin_timestamp_stats_qa = _compare_timestamp_stats(
     crypto_chassis_timestamp_kucoin_stats,
@@ -658,9 +644,7 @@ kucoin_timestamp_stats_qa
 crypto_chassis_bad_data_kucoin_stats = _get_bad_data_stats(
     config, crypto_chassis_kucoin_data
 )
-ccxt_bad_data_kucoin_stats = _get_bad_data_stats(
-    config, ccxt_kucoin_data
-)
+ccxt_bad_data_kucoin_stats = _get_bad_data_stats(config, ccxt_kucoin_data)
 #
 kucoin_bad_data_stats_qa = _compare_bad_data_stats(
     crypto_chassis_bad_data_kucoin_stats,
