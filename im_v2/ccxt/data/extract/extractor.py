@@ -85,7 +85,6 @@ class CcxtExtractor(imvcdeext.Extractor):
         Download minute OHLCV bars.
 
         :param currency_pair: a currency pair, e.g. "BTC_USDT"
-        :param: exchange_id: CCXT exchange id (e.g., `binance`)
         :param start_timestamp: starting point for data
         :param end_timestamp: end point for data (included)
         :param bar_per_iteration: number of bars per iteration
@@ -145,10 +144,10 @@ class CcxtExtractor(imvcdeext.Extractor):
         return pd.concat(all_bars)
 
     def _download_market_depth(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Market depth data is not implemented in CCXT class")
+        raise NotImplementedError("Market depth data is not available for CCXT vendor")
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Trades data is not implemented in CCXT class")
+        raise NotImplementedError("Trades data is not available for CCXT vendor")
 
     def download_order_book(self, currency_pair: str) -> Dict[str, Any]:
         """

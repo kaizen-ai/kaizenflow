@@ -144,10 +144,10 @@ class TalosExtractor(imvcdeext.Extractor):
         )
 
     def _download_market_depth(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Market depth data is not implemented in Talos class")
+        raise NotImplementedError("Market depth data is not available for Talos vendor")
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Trades data is not implemented in Talos class")
+        raise NotImplementedError("Trades data is not available for Talos vendor")
 
     def _fetch_ohlcv(
         self,
