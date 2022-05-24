@@ -136,6 +136,9 @@ df.head(3)
 # %% [markdown]
 # ## Estimate PCA
 
+# %% [markdown]
+# ### Rolling PCA
+
 # %%
 # Params.
 sample = df["close.ret_0"].head(1000)
@@ -149,6 +152,9 @@ eigval_df.columns = sample.columns
 eigvec_df.columns = sample.columns
 coexplor.plot_pca_over_time(eigval_df, eigvec_df)
 
+# %% [markdown]
+# ### Incremental PCA
+
 # %%
 # Incremental PCA calculations.
 num_pc = 2
@@ -158,6 +164,7 @@ unit_eigenvec_dfs[0]["binance::ADA_USDT"].plot()
 
 # %% run_control={"marked": false}
 lambda_show = lambda_df.reset_index(drop=True)
+# Clean outliers manually.
 lambda_show = lambda_show[lambda_show[0] < 0.000025]
 lambda_show = lambda_show[lambda_show[1] < 0.0000025]
 lambda_show.plot.scatter(0, 1)
