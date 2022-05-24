@@ -91,6 +91,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
+    @pytest.mark.skip(reason="CmTask1997")
     @pytest.mark.slow("10 seconds.")
     def test_download_ohlcv1(
         self,
@@ -100,7 +101,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         """
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
-        exchange = "binance"
+        exchange = "coinbase"
         currency_pair = "btc/usdt"
         client = imvccdee.CryptoChassisExtractor()
         actual = client._download_ohlcv(
@@ -143,6 +144,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
+    @pytest.mark.skip(reason="CmTask1997")
     def test_download_ohlcv_invalid_input2(self) -> None:
         """
         Run with invalid currency pair.
