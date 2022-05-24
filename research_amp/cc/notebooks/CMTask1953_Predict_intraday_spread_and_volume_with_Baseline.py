@@ -32,6 +32,26 @@ import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import research_amp.transform as ramptran
 
+from sklearn.linear_model import LinearRegression
+from sklearn.neural_network import MLPRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+
+from sklearn.model_selection import cross_val_score
+
+import sklearn.metrics as metrics
+from sklearn.model_selection import TimeSeriesSplit
+
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer
+
+# %%
+import warnings
+warnings.filterwarnings('ignore')
+
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
 
@@ -219,20 +239,20 @@ display(get_lookback_value(btc, date, 14, "volume"))
 # # Collect all estimators for the whole period
 
 # %%
-estimation_target = "quoted_spread"
+estimation_target = "volume"
 
 # Generate the separate DataFrame for estimators.
 estimators = pd.DataFrame(index=btc.index[1:])
-# Add the values of a real spread.
-estimators["real_spread"] = estimators.index
-estimators["real_spread"] = estimators["real_spread"].apply(
+# Add the values of a real volume.
+estimators["real_volume"] = estimators.index
+estimators["real_volume"] = estimators["real_volume"].apply(
     lambda x: get_target_value(btc, x, estimation_target)
 )
 
 # Add the values of naive estimator.
-estimators["naive_spread"] = estimators.index
+estimators["naive_volume"] = estimators.index
 # Starting from the second value since this estimator looks back for two periods.
-estimators["naive_spread"] = estimators["naive_spread"].apply(
+estimators["naive_volume"] = estimators["naive_volume"].apply(
     lambda x: get_naive_value(btc, x, estimation_target)
 )
 
@@ -240,8 +260,8 @@ estimators["naive_spread"] = estimators["naive_spread"].apply(
 # Parameters.
 lookback = 14
 # Calculate values.
-estimators["lookback_spread"] = estimators.index
-estimators["lookback_spread"] = estimators["lookback_spread"].apply(
+estimators["lookback_volume"] = estimators.index
+estimators["lookback_volume"] = estimators["lookback_volume"].apply(
     lambda x: get_lookback_value(btc, x, lookback, estimation_target)
 )
 
@@ -255,7 +275,8 @@ estimators
 # %%
 def get_mean_error(
     df: pd.DataFrame,
-    column_name: str,
+    column_name_actual: str,
+    column_name_estimator: str,
     num_std: int = 1,
     print_results: bool = True,
 ) -> pd.Series:
@@ -264,12 +285,13 @@ def get_mean_error(
     - Show the mean and ± num_std*standard_deviation levels.
 
     :param df: data with real values and estimators
-    :param column_name: estimator (e.g., "naive_spread", "lookback_spread")
+    :param column_name_actual: e.g., "spread", "volume")
+    :param column_name_estimator: estimator (e.g., "naive_spread", "lookback_spread")
     :param num_std: number of standard deviations from mean
     :param print_results: whether or not print results
     :return: errors for each data point
     """
-    err = abs(df["real_spread"] - df[column_name]) / df["real_spread"]
+    err = abs(df[column_name_actual] - df[column_name_estimator]) / df[column_name_actual]
     err_mean = err.mean()
     err_std = err.std()
     if print_results:
@@ -283,7 +305,7 @@ def get_mean_error(
 
 # %%
 # Choose the period that is equally filled by both estimators.
-test = estimators[estimators["lookback_spread"].notna()]
+test = estimators[estimators["lookback_volume"].notna()]
 test.head(3)
 
 # %% [markdown]
@@ -291,12 +313,14 @@ test.head(3)
 
 # %%
 # Mean error and upper/lower level of errors' standard deviation.
-naive_err = get_mean_error(test, column_name="naive_spread")
+column_name_actual = "real_volume"
+column_name_estimator = "naive_volume"
+naive_err = get_mean_error(test, column_name_actual, column_name_estimator)
 
 # %% run_control={"marked": false}
 # Regress (OLS) between `real_spread` and `naive_spread`.
-predicted_var = "real_spread"
-predictor_vars = "naive_spread"
+predicted_var = "real_volume"
+predictor_vars = "naive_volume"
 intercept = True
 # Run OLS.
 coexplor.ols_regress(
@@ -307,19 +331,21 @@ coexplor.ols_regress(
 )
 
 # %%
-test[["real_spread", "naive_spread"]].plot(figsize=(15, 7))
+test[["real_volume", "naive_volume"]].plot(figsize=(15, 7))
 
 # %% [markdown]
 # ## Lookback estimator
 
 # %%
 # Mean error and upper/lower level of errors' standard deviation.
-lookback_err = get_mean_error(test, column_name="lookback_spread")
+column_name_actual = "real_volume"
+column_name_estimator = "lookback_volume"
+lookback_err = get_mean_error(test, column_name_actual, column_name_estimator)
 
 # %%
 # Regress (OLS) between `real_spread` and `lookback_spread`.
-predicted_var = "real_spread"
-predictor_vars = "lookback_spread"
+predicted_var = "real_volume"
+predictor_vars = "lookback_volume"
 intercept = True
 # Run OLS.
 coexplor.ols_regress(
@@ -330,4 +356,203 @@ coexplor.ols_regress(
 )
 
 # %%
-test[["real_spread", "lookback_spread"]].plot(figsize=(15, 7))
+test[["real_volume", "lookback_volume"]].plot(figsize=(15, 7))
+
+
+# %% [markdown]
+# # Predict via sklearn
+
+# %% [markdown]
+# ## Functions
+
+# %%
+def regression_results(y_true, y_pred):
+    # Regression metrics
+    explained_variance=metrics.explained_variance_score(y_true, y_pred)
+    mean_absolute_error=metrics.mean_absolute_error(y_true, y_pred) 
+    mse=metrics.mean_squared_error(y_true, y_pred) 
+    mean_squared_log_error=metrics.mean_squared_log_error(y_true, y_pred)
+    median_absolute_error=metrics.median_absolute_error(y_true, y_pred)
+    r2=metrics.r2_score(y_true, y_pred)
+    print('explained_variance: ', round(explained_variance,4))    
+    print('mean_squared_log_error: ', round(mean_squared_log_error,4))
+    print('r2: ', round(r2,4))
+    print('MAE: ', round(mean_absolute_error,4))
+    print('MSE: ', round(mse,4))
+    print('RMSE: ', round(np.sqrt(mse),4))
+    
+def rmse(actual, predict):
+    predict = np.array(predict)
+    actual = np.array(actual)
+    distance = predict - actual
+    square_distance = distance ** 2
+    mean_square_distance = square_distance.mean()
+    score = np.sqrt(mean_square_distance)
+    return score
+
+
+# %% [markdown]
+# ## Defining training and test sets
+
+# %%
+# Drop NaNs.
+test_sk = hpandas.dropna(test)
+# Get rid of days with only one observations (first and last rows).
+test_sk = test_sk.iloc[1:-1]
+# Add 2 more features.
+test_sk["naive_real_diff"] = test_sk["naive_volume"] - test_sk["real_volume"]
+test_sk["naive_look_diff"] = test_sk["naive_volume"] - test_sk["lookback_volume"]
+# Display the results.
+display(test_sk.corr())
+display(test_sk.shape)
+display(test_sk.tail(3))
+print(f"Set of prediciton features = {list(test_sk.columns[1:])}")
+
+# %%
+# Training dataset: first 14 days.
+X_train = test_sk.loc["2022-01-15":"2022-01-28"].drop(['real_volume'], axis = 1)
+y_train = test_sk.loc["2022-01-15":"2022-01-28", 'real_volume']
+
+# Testing dataset: last 3 days.
+X_test = test_sk.loc["2022-01-29":"2022-01-31"].drop(['real_volume'], axis = 1)
+y_test = test_sk.loc["2022-01-29":"2022-01-31", 'real_volume']
+
+# %% [markdown]
+# The `TimeSerieSplit` function takes as input the number of splits. Since our training data has 14 unique days (2022-01-15 - 2022-01-28), we would be setting `n_splits = 14`.
+
+# %%
+n_splits = 14
+
+# %% [markdown]
+# ## Models Evaluation
+
+# %%
+# Create a set of various estimation modes.
+models = []
+models.append(('LR', LinearRegression()))
+models.append(('NN', MLPRegressor(solver = 'lbfgs')))  #neural network
+models.append(('KNN', KNeighborsRegressor())) 
+models.append(('RF', RandomForestRegressor(n_estimators = 10))) # Ensemble method - collection of many decision trees
+models.append(('SVR', SVR(gamma='auto'))) # kernel = linear
+models
+
+# %%
+# Evaluate each model in turn
+results = []
+names = []
+results_stats = pd.DataFrame()
+for name, model in models:    
+    # TimeSeries Cross validation
+    tscv = TimeSeriesSplit(n_splits=n_splits)
+
+    cv_results = cross_val_score(model, X_train, y_train, cv=tscv, scoring='r2')
+    results.append(cv_results)
+    names.append(name)
+    print('%s: %f (%f)' % (name, cv_results.mean(), cv_results.std()))
+
+    results_stats.loc[name, "mean_perf"] = cv_results.mean()
+    results_stats.loc[name, "std_dev_perf"] = cv_results.std()
+    
+display(results_stats.sort_values("mean_perf", ascending=False))
+
+# %%
+# Compare Algorithms
+plt.boxplot(results, labels=names)
+plt.title('Algorithm Comparison')
+plt.show()
+
+# %% [markdown]
+# LR is a winner here, but it produces perfect results:
+# - explained_variance = 1
+# - mean_squared_log_error = 0
+#
+# That's why will try to also use RF for comparison reasons
+
+# %% [markdown]
+# ### Grid Searching Hyperparameters (RandomForestRegressor)
+
+# %%
+# One-time RMSE definition.
+rmse_score = make_scorer(rmse, greater_is_better = False)
+
+# Run the model with different param variations.
+model = RandomForestRegressor() 
+param_search = { 
+    'n_estimators': [20, 50, 100],
+    'max_features': ['auto', 'sqrt', 'log2'],
+    'max_depth' : [i for i in range(5,15)]
+}
+tscv = TimeSeriesSplit(n_splits=n_splits)
+gsearch = GridSearchCV(estimator=model, cv=tscv, param_grid=param_search, scoring = rmse_score)
+gsearch.fit(X_train, y_train)
+
+# %%
+# Results of the best param fit.
+best_score = gsearch.best_score_
+best_model = gsearch.best_estimator_
+display(best_score)
+display(best_model)
+
+# %% [markdown]
+# #### Evaluate results using testing sample
+
+# %%
+# Estimate testing results.
+y_true = y_test.values
+y_pred = best_model.predict(X_test)
+regression_results(y_true, y_pred)
+
+# %%
+# Show the importance for each feature.
+imp = best_model.feature_importances_ 
+features = X_train.columns
+indices = np.argsort(imp)
+plt.title('Feature Importances')
+plt.barh(range(len(indices)), imp[indices], color='b', align='center')
+plt.yticks(range(len(indices)), [features[i] for i in indices])
+plt.xlabel('Relative Importance')
+plt.show()
+
+# %%
+# Plot the results of predicting on testing sample.
+rf_test = pd.concat([pd.Series(y_true), pd.Series(y_pred)],axis=1)
+rf_test.columns = ["true", "predicted"]
+rf_test.index = y_test.index
+rf_test.plot(figsize=(15,7))
+
+# %% [markdown]
+# ### Grid Searching Hyperparameters (LinearRegression)
+
+# %%
+# Run the model with different param variations.
+model_lin = LinearRegression() 
+param_search_lin = { 
+    "fit_intercept": [True, False],
+    "normalize": [True, False],
+}
+tscv_lin = TimeSeriesSplit(n_splits=n_splits)
+gsearch = GridSearchCV(estimator=model_lin, cv=tscv_lin, param_grid=param_search_lin, scoring = rmse_score)
+gsearch.fit(X_train, y_train)
+
+# %%
+# Results of the best param fit.
+best_score_lin = gsearch.best_score_
+best_model_lin = gsearch.best_estimator_
+display(best_score_lin)
+display(best_model_lin)
+
+# %% [markdown]
+# #### Evaluate results using testing sample
+
+# %%
+# Estimate testing results.
+y_true = y_test.values
+y_pred_lin = best_model_lin.predict(X_test)
+regression_results(y_true, y_pred_lin)
+
+# %%
+# Plot the results of predicting on testing sample.
+lr_test = pd.concat([pd.Series(y_true), pd.Series(y_pred_lin)],axis=1)
+lr_test.columns = ["true", "predicted"]
+lr_test.index = y_test.index
+lr_test.plot(figsize=(15,7))
