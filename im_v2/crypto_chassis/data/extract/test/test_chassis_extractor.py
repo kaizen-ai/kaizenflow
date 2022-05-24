@@ -124,31 +124,6 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 
     def test_download_ohlcv_invalid_input1(self) -> None:
         """
-        Run with invalid start timestamp.
-        """
-        exchange = "binance"
-        currency_pair = "btc/usdt"
-        start_timestamp = "invalid"
-        end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
-        expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdee.CryptoChassisExtractor()
-        expected = """
-* Failed assertion *
-Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
-"""
-        with self.assertRaises(AssertionError) as cm:
-            client._download_ohlcv(
-                exchange, 
-                currency_pair, 
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-            )
-        # Check output for error.
-        actual = str(cm.exception)
-        self.assertIn(expected, actual)
-
-    def test_download_ohlcv_invalid_input2(self) -> None:
-        """
         Run with invalid exchange name.
         """
         exchange = "bibance"
@@ -163,11 +138,12 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
                 currency_pair, 
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
+
             )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
-    def test_download_ohlcv_invalid_input3(self) -> None:
+    def test_download_ohlcv_invalid_input2(self) -> None:
         """
         Run with invalid currency pair.
         """
@@ -187,6 +163,31 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
             )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
+
+    def test_download_ohlcv_invalid_input3(self) -> None:
+        """
+        Run with invalid start timestamp.
+        """
+        exchange = "binance"
+        currency_pair = "btc/usdt"
+        start_timestamp = "invalid"
+        end_timestamp = "invalid"
+        expected = hpandas.convert_df_to_json_string(pd.DataFrame())
+        client = imvccdee.CryptoChassisExtractor()
+        expected = """
+* Failed assertion *
+Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
+"""
+        with self.assertRaises(AssertionError) as cm:
+            client._download_ohlcv(
+                exchange, 
+                currency_pair, 
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+            )
+        # Check output for error.
+        actual = str(cm.exception)
+        self.assertIn(expected, actual)
 
     def test_download_trade1(
         self,

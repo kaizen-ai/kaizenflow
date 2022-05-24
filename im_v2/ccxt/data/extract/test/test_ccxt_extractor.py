@@ -200,6 +200,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Extract data.
         actual = exchange_class._download_ohlcv(
             currency_pair="BTC/USDT",
+            exchange_id="binance",
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
         )

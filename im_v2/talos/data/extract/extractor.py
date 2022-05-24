@@ -105,7 +105,7 @@ class TalosExtractor(imvcdeext.Extractor):
         exchange.
 
         :param currency_pair: a currency pair, e.g. "BTC_USDT"
-        :param exchange: crypto exchange, e.g. "binance"
+        :param exchange_id: crypto exchange, e.g. "binance"
         :param start_timestamp: starting point for data
         :param end_timestamp: end point for data
         :param bar_per_iteration: number of bars per iteration
