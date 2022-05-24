@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(Paul): Move this or make it an example.
-def get_portfolio(market_data: mdata.MarketData) -> omportfo.AbstractPortfolio:
+def get_portfolio(market_data: mdata.MarketData) -> omportfo.Portfolio:
     strategy_id = "strategy"
     account = "account"
     timestamp_col = "end_time"

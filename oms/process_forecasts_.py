@@ -33,7 +33,7 @@ _LOG = logging.getLogger(__name__)
 async def process_forecasts(
     prediction_df: pd.DataFrame,
     volatility_df: pd.DataFrame,
-    portfolio: omportfo.AbstractPortfolio,
+    portfolio: omportfo.Portfolio,
     config: cconfig.Config,
     spread_df: Optional[pd.DataFrame],
     restrictions_df: Optional[pd.DataFrame],
@@ -75,7 +75,7 @@ async def process_forecasts(
     _validate_compatibility(prediction_df, volatility_df)
     _validate_compatibility(prediction_df, spread_df)
     # Check `portfolio`.
-    hdbg.dassert_isinstance(portfolio, omportfo.AbstractPortfolio)
+    hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     hdbg.dassert_isinstance(config, cconfig.Config)
     #
     if restrictions_df is None:
@@ -161,6 +161,7 @@ async def process_forecasts(
             # it's later, either assert or log it as a problem.
             hdbg.dassert_lte(get_wall_clock_time(), timestamp + offset_min)
         else:
+            _LOG.debug("async_wait_until")
             await hasynci.async_wait_until(timestamp, get_wall_clock_time)
         # Get the wall clock timestamp.
         wall_clock_timestamp = get_wall_clock_time()
@@ -214,7 +215,7 @@ async def process_forecasts(
 class ForecastProcessor:
     def __init__(
         self,
-        portfolio: omportfo.AbstractPortfolio,
+        portfolio: omportfo.Portfolio,
         order_config: cconfig.Config,
         optimizer_config: cconfig.Config,
         restrictions: Optional[pd.DataFrame],

@@ -90,10 +90,6 @@ class DagAdapter(dtfcodabui.DagBuilder):
         _LOG.debug("# dag=\n%s", str(dag))
         #
         if self._nodes_to_insert:
-            _LOG.debug("# Inserting nodes")
-            # To insert a node we need to to assume that there is a single source node.
-            source_nid = dag.get_unique_source()
-            # TODO(gp): Allow to insert more than one node, if needed.
             hdbg.dassert_eq(len(self._nodes_to_insert), 1)
             stage, node_ctor = self._nodes_to_insert[0]
             _LOG.debug(hprint.to_str("stage node_ctor"))
@@ -106,13 +102,8 @@ class DagAdapter(dtfcodabui.DagBuilder):
                 head_nid,
                 **config[head_nid].to_dict(),
             )
-            dag.add_node(node)
-            dag.connect(head_nid, source_nid)
+            dtfcordag.DAG.insert_at_head(dag, node)
         if self._nodes_to_append:
-            _LOG.debug("# Appending nodes")
-            # To append a node we need to to assume that there is a single sink node.
-            sink_nid = dag.get_unique_sink()
-            # TODO(gp): Allow to append more than one node, if needed.
             hdbg.dassert_eq(len(self._nodes_to_append), 1)
             stage, node_ctor = self._nodes_to_append[0]
             _LOG.debug(hprint.to_str("stage node_ctor"))
@@ -125,6 +116,5 @@ class DagAdapter(dtfcodabui.DagBuilder):
                 tail_nid,
                 **config[tail_nid].to_dict(),
             )
-            dag.add_node(node)
-            dag.connect(sink_nid, tail_nid)
+            dag.append_to_tail(node)
         return dag

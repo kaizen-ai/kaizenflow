@@ -26,7 +26,7 @@ class RealTimeDagAdapter(dtfcore.DagAdapter):
     def __init__(
         self,
         dag_builder: dtfcore.DagBuilder,
-        portfolio: omportfo.AbstractPortfolio,
+        portfolio: omportfo.Portfolio,
         prediction_col: str,
         volatility_col: str,
         price_col: str,

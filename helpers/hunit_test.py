@@ -1170,6 +1170,12 @@ class TestCase(unittest.TestCase):
         """
         self.assertEqual(actual.index.to_list(), expected.index.to_list())
         self.assertEqual(actual.columns.to_list(), expected.columns.to_list())
+        # Often the output of a failing assertion is difficult to parse
+        # so we resort to our special `assert_equal()`.
+        if not np.allclose(actual, expected, **kwargs):
+            import helpers.hpandas as hpandas
+
+            self.assert_equal(hpandas.df_to_str(actual), hpandas.df_to_str(expected))
         np.testing.assert_allclose(actual, expected, **kwargs)
 
     # TODO(gp): There is a lot of similarity between `check_string()` and

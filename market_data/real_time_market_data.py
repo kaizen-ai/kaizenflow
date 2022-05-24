@@ -108,6 +108,7 @@ class RealTimeMarketData(mdabmada.MarketData):
             sort_time,
             limit,
         )
+        _LOG.debug("query=%s", query)
         df = hsql.execute_query_to_df(self.connection, query)
         # Prepare data for normalization by the parent class.
         df = self._convert_data_for_normalization(df)
@@ -280,6 +281,8 @@ class RealTimeMarketData2(mdabmada.MarketData):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        *,
+        columns: Optional[List[str]] = None
     ) -> pd.DataFrame:
         """
         Build a query and load SQL data in MarketData format.
@@ -292,7 +295,6 @@ class RealTimeMarketData2(mdabmada.MarketData):
             ]
         else:
             full_symbols = None
-        columns = None
         data = self._client.read_data(
             full_symbols,
             start_ts,
@@ -305,22 +307,6 @@ class RealTimeMarketData2(mdabmada.MarketData):
             limit=limit,
         )
         # Rename the index to fit the MarketData format.
-        # TODO(Danya): The client requires the data to have a `timestamp` index,
-        #  while AbstractMarketData requires to have integer index.
-        #  This conversion is redundant, but necessary to combine
-        #  the client and AbstractMarketData.
         data.index.name = "end_timestamp"
         data = data.reset_index()
-        # TODO(gp): @danya we think we should not trim this but pass everything.
-        # market_data_columns = [
-        #     "end_timestamp",
-        #     "open",
-        #     "high",
-        #     "low",
-        #     "close",
-        #     "volume",
-        #     "start_timestamp",
-        #     "asset_id",
-        # ]
-        # data = data[market_data_columns]
         return data

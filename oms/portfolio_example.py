@@ -81,7 +81,7 @@ def get_DataFramePortfolio_example2(
     return portfolio
 
 
-# TODO(gp): -> get_MockedPortfolio_example
+# TODO(gp): -> get_DatabasePortfolio_example
 def get_mocked_portfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
@@ -94,17 +94,17 @@ def get_mocked_portfolio_example1(
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",
     asset_ids: Optional[List[int]] = None,
-) -> omportfo.MockedPortfolio:
-    # Build MockedBroker.
+) -> omportfo.DatabasePortfolio:
+    # Build DatabaseBroker.
     broker = obroexam.get_mocked_broker_example1(
         event_loop,
         db_connection,
         market_data=market_data,
         timestamp_col=timestamp_col,
     )
-    # Build MockedPortfolio.
+    # Build DatabasePortfolio.
     initial_cash = 1e6
-    portfolio = omportfo.MockedPortfolio.from_cash(
+    portfolio = omportfo.DatabasePortfolio.from_cash(
         broker,
         mark_to_market_col,
         pricing_method,
@@ -117,7 +117,7 @@ def get_mocked_portfolio_example1(
     return portfolio
 
 
-def get_MockedPortfolio_example2(
+def get_DatabasePortfolio_example2(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
     # TODO(gp): For symmetry with get_mocked_broker_example1 we should have a
@@ -129,20 +129,20 @@ def get_MockedPortfolio_example2(
     mark_to_market_col: str = "price",
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",
-) -> omportfo.MockedPortfolio:
+) -> omportfo.DatabasePortfolio:
     """
     Get a Portfolio initialized from the database.
     """
-    # Build MockedBroker.
+    # Build DatabaseBroker.
     broker = obroexam.get_mocked_broker_example1(
         event_loop,
         db_connection,
         market_data=market_data,
         timestamp_col=timestamp_col,
     )
-    # Build MockedPortfolio.
+    # Build DatabasePortfolio.
     initial_holdings = pd.Series(np.nan, universe)
-    portfolio = omportfo.MockedPortfolio(
+    portfolio = omportfo.DatabasePortfolio(
         broker,
         mark_to_market_col,
         pricing_method,

@@ -95,6 +95,8 @@ class ImClient(abc.ABC):
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
+        # TODO(Grisha): consider passing it as a parameter to also read bid/ask data.
+        self._dataset = "ohlcv"
 
     # TODO(gp): Why static?
     @staticmethod
@@ -424,13 +426,14 @@ class ImClient(abc.ABC):
     ) -> pd.Timestamp:
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
-        start_ts = None
-        end_ts = None
+        start_timestamp = None
+        end_timestamp = None
         # Use only `self._full_symbol_col_name` after CmTask1588 is fixed.
         columns = None
         filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol], start_ts, end_ts, columns, filter_data_mode
+            [full_symbol], start_timestamp, end_timestamp, columns,
+            filter_data_mode
         )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
@@ -585,14 +588,14 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # SqlRealTimeImClient
 # #############################################################################
 
-# TODO(Danya): We might want to have a placeholder for all RealTimeImClient,
-# for typing annotation from which SQL version descend. Although in practice
-# all the real-time clients will use an SQL backend.
 class RealTimeImClient(ImClient):
+    """
+    A realtime client for typing annotation.
+
+    In practice all realtime clients use SQL backend.
+    """
     pass
 
-
-# TODO(Danya): Descend ImClient.
 class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,

@@ -68,6 +68,9 @@ def get_docker_base_image_name() -> str:
 # - Linux (dev server, GitHub CI)
 #   - Supports Docker privileged mode
 #   - The same user and group is used inside the container
+# - Linux (spm-dev4)
+#   - Doesn't support Docker privileged mode
+#   - A different user and group is used inside the container
 
 
 # Copied from `system_interaction.py` to avoid circular imports.
@@ -206,7 +209,7 @@ def has_dind_support() -> bool:
     # checking if we can execute.
     # Sometimes there is some state left, so we need to clean it up.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
-    # TODO(gp): has_sudo_user
+    # TODO(gp): use `has_docker_sudo`.
     if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
     os.system(cmd)
@@ -258,7 +261,7 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
         shared_data_dirs = {"/local/home/share/cache": "/cache"}
     elif is_dev_ck():
         shared_data_dirs = {"/data/shared": "/shared_data"}
-    elif is_mac() or is_inside_ci():
+    elif is_mac() or is_inside_ci() or is_cmamp_prod():
         shared_data_dirs = None
     else:
         _raise_invalid_host()

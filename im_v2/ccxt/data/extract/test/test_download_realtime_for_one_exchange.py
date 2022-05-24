@@ -6,7 +6,7 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
-import im_v2.ccxt.data.extract.exchange_class as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
@@ -81,5 +81,5 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         self.assertEqual(len(mock_download_realtime.call_args), 2)
         self.assertEqual(mock_download_realtime.call_args.args[0], namespace)
         self.assertEqual(
-            mock_download_realtime.call_args.args[1], imvcdeexcl.CcxtExchange
+            mock_download_realtime.call_args.args[1], imvcdeex.CcxtExtractor
         )

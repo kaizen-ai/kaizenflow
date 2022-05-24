@@ -65,7 +65,7 @@ def from_parquet(
     :param filters: Parquet query filters
     :param log_level: logging level to execute at
     :param report_stats: whether to report Parquet file size or not
-    :param aws_rofile: AWS profile, e.g., `ck`
+    :param aws_profile: AWS profile, e.g., `ck`
     :return: data from Parquet dataset
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
@@ -547,6 +547,8 @@ def get_parquet_filters_from_timestamp_interval(
     elif partition_mode == "by_year_week":
         # TODO(gp): Consider using the same approach above for months also here.
         # Partition by year and week.
+        hdbg.dassert_is_not(end_timestamp, None,
+                "Parquet backend can't determine the boundaries of the data")
         # Include last week in the interval.
         end_timestamp += pd.DateOffset(weeks=1)
         # Get all weeks in the interval.

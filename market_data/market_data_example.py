@@ -259,7 +259,7 @@ def _get_last_timestamp(
 # TODO(gp): @Grisha This should not be here. It should be somewhere else.
 # TODO(gp): the CCXT, Talos version of this class only differ by the ImClient.
 #  Consider passing the ImClient on the fly to build the class. All these functions
-#  are replaced by a single builder get_HistoricalImClientMarketData_example1().
+#  are replaced by a single builder `get_HistoricalImClientMarketData_example1()`.
 def get_CcxtCsvImClientMarketData_example1(
     asset_ids: Optional[List[int]],
     columns: List[str],
@@ -484,3 +484,31 @@ def get_RealTimeImClientMarketData_example1(
         time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
+
+
+def get_RealtimeMarketData_example1(
+    im_client: icdc.RealTimeImClient,
+) -> mdrtmada.RealTimeMarketData2:
+    """
+    Create a RealTimeMarketData2 to use in tests.
+
+    This example is geared to work with `icdc.get_mock_realtime_client`.
+    """
+    asset_id_col = "asset_id"
+    asset_ids = [1464553467]
+    start_time_col_name = "start_timestamp"
+    end_time_col_name = "end_timestamp"
+    columns = None
+    get_wall_clock_time = lambda: pd.Timestamp(
+        "2022-04-22", tz="America/New_York"
+    )
+    market_data = mdrtmada.RealTimeMarketData2(
+        im_client,
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+    )
+    return market_data

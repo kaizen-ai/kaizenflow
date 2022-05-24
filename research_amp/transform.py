@@ -73,12 +73,15 @@ def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
     return vwap_twap_df
 
 
-def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
+def calculate_returns(
+    df: pd.DataFrame, rets_type: str, convert_to_multiindex: bool = False
+) -> pd.DataFrame:
     """
     Compute returns on the resampled data DataFlow-style.
 
     :param df: resampled multiindex DataFrame
     :param rets_type: i.e., "log_rets" or "pct_change"
+    :param convert_to_multiindex: multiindex transformation if data is not converted yet
     :return: the same DataFrame but with attached columns with returns
     """
     # Configure the node to calculate the returns.
@@ -98,6 +101,9 @@ def calculate_returns(df: pd.DataFrame, rets_type: str) -> pd.DataFrame:
             "twap": "twap.ret_0",
         },
     }
+    # Multiindex transformation.
+    if convert_to_multiindex:
+        df = dtfsysonod._convert_to_multiindex(df, "full_symbol")
     # Create the node that computes ret_0.
     nid = "ret0"
     node = dtfcore.GroupedColDfToDfTransformer(

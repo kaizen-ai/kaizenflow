@@ -12,7 +12,7 @@ Use as:
      --exchange_id 'binance' \
      --universe 'v1' \
      --aws_profile 'ck' \
-     --s3_path 's3://cryptokaizen-data/daily_staged/'
+     --s3_path 's3://<ck-data>/daily_staged/'
 """
 
 import argparse
@@ -22,7 +22,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.common.data.extract.extract_utils as imvcdeexut
-import im_v2.talos.data.extract.exchange_class as imvtdeexcl
+import im_v2.talos.data.extract.extractor as imvtdeex
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_historical_data(args, imvtdeexcl.TalosExchange)
+    imvcdeexut.download_historical_data(args, imvtdeex.TalosExtractor)
 
 
 if __name__ == "__main__":

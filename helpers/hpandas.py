@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import s3fs
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -676,14 +677,21 @@ def trim_df(
     right_close: bool,
 ) -> pd.DataFrame:
     """
-    Trim df using values in `ts_col_name` in interval bounded by `start_ts` and
-    `end_ts`.
+    Trim the dataframe using values in `ts_col_name`.
 
-    :param ts_col_name: the name of the column. `None` means index
-    :param start_ts, end_ts: boundaries of the desired interval
-    :param left_close, right_close: encode what to do with the boundaries of the
-        interval
-        - E.g., [start_ts, end_ts), or (start_ts, end_ts]
+    The dataframe is trimmed in the interval bounded by `start_ts` and `end_ts`.
+
+    :param df: the dataframe to trim
+    :param ts_col_name: the name of the column; `None` means index
+    :param start_ts: the start boundary for trimming
+    :param end_ts: the end boundary for trimming
+    :param left_close: whether to include the start boundary of the interval
+        - True: [start_ts, ...
+        - False: (start_ts, ...
+    :param right_close: whether to include the end boundary of the interval
+        - True: ..., end_ts]
+        - False: ..., end_ts)
+    :return: the trimmed dataframe
     """
     _LOG.verb_debug(
         df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
@@ -692,64 +700,61 @@ def trim_df(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
     if df.empty:
-        # If the df is empty there is nothing to trim.
+        # If the df is empty, there is nothing to trim.
+        return df
+    if start_ts is None and end_ts is None:
+        # If no boundaries are specified, there are no points of reference to trim to.
         return df
     num_rows_before = df.shape[0]
     if start_ts is not None and end_ts is not None:
+        # Confirm that the interval boundaries are valid.
         hdateti.dassert_tz_compatible(start_ts, end_ts)
         hdbg.dassert_lte(start_ts, end_ts)
-    # Handle the index.
-    use_index = False
+    # Get the values to filter by.
     if ts_col_name is None:
-        # Convert the index into a regular column.
-        # TODO(gp): Use binary search if there is an index.
-        if df.index.name is None:
-            _LOG.debug(
-                "The df has no index\n%s",
-                df_to_str(df.head()),
-            )
-            df.index.name = "index"
-        ts_col_name = df.index.name
-        df = df.reset_index()
-        use_index = True
-    # TODO(gp): This is inefficient. Make it faster by binary search, if ordered.
-    hdbg.dassert_in(ts_col_name, df.columns)
-    # Filter based on start_ts.
-    _LOG.debug("Filtering by start_ts=%s", start_ts)
-    if start_ts is not None:
-        _LOG.verb_debug("start_ts=%s", start_ts)
-        # Convert the column into `pd.Timestamp` to compare it to `start_ts`.
-        # This is needed to sidestep the comparison hell involving `numpy.datetime64`
-        # vs Pandas objects.
-        tss = pd.to_datetime(df[ts_col_name])
-        hdateti.dassert_tz_compatible(tss.iloc[0], start_ts)
-        _LOG.verb_debug("tss=\n%s", df_to_str(tss))
-        if left_close:
-            mask = tss >= start_ts
-        else:
-            mask = tss > start_ts
-        _LOG.verb_debug("mask=\n%s", df_to_str(mask))
-        df = df[mask]
-    # Filter based on end_ts.
-    _LOG.debug("Filtering by end_ts=%s", end_ts)
-    if not df.empty:
-        if end_ts is not None:
-            _LOG.debug("Filtering by start_ts=%s", start_ts)
-            _LOG.verb_debug("end_ts=%s", end_ts)
-            tss = pd.to_datetime(df[ts_col_name])
-            hdateti.dassert_tz_compatible(tss.iloc[0], end_ts)
-            _LOG.verb_debug("tss=\n%s", df_to_str(tss))
-            if right_close:
-                mask = tss <= end_ts
-            else:
-                mask = tss < end_ts
-            _LOG.verb_debug("mask=\n%s", df_to_str(mask))
-            df = df[mask]
+        values_to_filter_by = pd.Series(df.index, index=df.index)
     else:
-        # If the df is empty there is nothing to trim.
-        pass
-    if use_index:
-        df = df.set_index(ts_col_name, drop=True)
+        hdbg.dassert_in(ts_col_name, df.columns)
+        values_to_filter_by = df[ts_col_name]
+    if values_to_filter_by.is_monotonic:
+        # The values are sorted; using the `pd.Series.searchsorted` method.
+        # Find the index corresponding to the left boundary of the interval.
+        if start_ts is not None:
+            side = "left" if left_close else "right"
+            left_idx = values_to_filter_by.searchsorted(start_ts, side)
+        else:
+            # There is nothing to filter, so the left index is the first one.
+            left_idx = 0
+        # Find the index corresponding to the right boundary of the interval.
+        if end_ts is not None:
+            side = "right" if right_close else "left"
+            right_idx = values_to_filter_by.searchsorted(end_ts, side)
+        else:
+            # There is nothing to filter, so the right index is None.
+            right_idx = None
+        hdbg.dassert_lte(0, left_idx)
+        if right_idx is not None:
+            hdbg.dassert_lte(left_idx, right_idx)
+            hdbg.dassert_lte(right_idx, df.shape[0])
+        df = df.iloc[left_idx:right_idx]
+    else:
+        # The values are not sorted; using the `pd.Series.between` method.
+        if left_close and right_close:
+            inclusive = "both"
+        elif left_close:
+            inclusive = "left"
+        elif right_close:
+            inclusive = "right"
+        else:
+            inclusive = "neither"
+        epsilon = pd.DateOffset(minutes=1)
+        if start_ts is None:
+            start_ts = values_to_filter_by.min() - epsilon
+        if end_ts is None:
+            end_ts = values_to_filter_by.max() + epsilon
+        df = df[
+            values_to_filter_by.between(start_ts, end_ts, inclusive=inclusive)
+        ]
     # Report the changes.
     num_rows_after = df.shape[0]
     if num_rows_before != num_rows_after:
@@ -763,20 +768,35 @@ def trim_df(
 # #############################################################################
 
 
-def _df_to_str(
-    df: pd.DataFrame,
-    *,
-    num_rows: Optional[int] = 6,
-    max_columns: int = 10000,
-    max_colwidth: int = 2000,
-    max_rows: int = 500,
-    precision: int = 6,
-    display_width: int = 10000,
-    use_tabulate: bool = False,
-) -> str:
-    is_in_ipynb = hsystem.is_running_in_ipynb()
+def _display(log_level: int, df: pd.DataFrame) -> None:
+    """
+    Display a df in a notebook at the given log level.
+
+    The behavior is similar to a command like `_LOG.log(log_level, ...)` but
+    for a notebook `display` command.
+
+    :param log_level: log level at which to display a df. E.g., if `log_level =
+        logging.DEBUG`, then we display the df only if we are running with
+        `-v DEBUG`. If `log_level = logging.INFO` then we don't display it
+    """
     from IPython.display import display
 
+    if hsystem.is_running_in_ipynb() and log_level >= hdbg.get_logger_verbosity():
+        display(df)
+
+
+def _df_to_str(
+    df: pd.DataFrame,
+    num_rows: Optional[int],
+    max_columns: int,
+    max_colwidth: int,
+    max_rows: int,
+    precision: int,
+    display_width: int,
+    use_tabulate: bool,
+    log_level: int,
+) -> str:
+    is_in_ipynb = hsystem.is_running_in_ipynb()
     out = []
     # Set dataframe print options.
     with pd.option_context(
@@ -801,7 +821,8 @@ def _df_to_str(
             if not is_in_ipynb:
                 out.append(str(df))
             else:
-                display(df)
+                # Display dataframe.
+                _display(log_level, df)
         else:
             nr = num_rows // 2
             if not is_in_ipynb:
@@ -826,7 +847,8 @@ def _df_to_str(
                     df.tail(nr),
                 ]
                 df = pd.concat(df)
-                display(df)
+                # Display dataframe.
+                _display(log_level, df)
     if not is_in_ipynb:
         txt = "\n".join(out)
     else:
@@ -834,6 +856,8 @@ def _df_to_str(
     return txt
 
 
+# TODO(gp): Maybe we can have a `_LOG_df_to_str(log_level, *args, **kwargs)` that
+# calls `_LOG.log(log_level, hpandas.df_to_str(*args, **kwargs, log_level=log_level))`.
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
@@ -850,9 +874,22 @@ def df_to_str(
     precision: int = 6,
     display_width: int = 10000,
     use_tabulate: bool = False,
+    log_level: int = logging.DEBUG,
 ) -> str:
     """
     Print a dataframe to string reporting all the columns without trimming.
+
+    Note that code like: `_LOG.info(hpandas.df_to_str(df, num_rows=3))` works
+    properly when called from outside a notebook, i.e., the dataframe is printed
+    But it won't display the dataframe in a notebook, since the default level at
+    which the dataframe is displayed is `logging.DEBUG`.
+
+    In this case to get the correct behavior one should do:
+
+    ```
+    log_level = ...
+    _LOG.log(log_level, hpandas.df_to_str(df, num_rows=3, log_level=log_level))
+    ```
 
     :param: num_rows: max number of rows to print (half from the top and half from
         the bottom of the dataframe)
@@ -933,7 +970,18 @@ def df_to_str(
                 "type(first_elem)",
             ]
             df_stats = pd.DataFrame(table, columns=columns)
-            df_stats_as_str = _df_to_str(df_stats, num_rows=None)
+            stats_num_rows = None
+            df_stats_as_str = _df_to_str(
+                df_stats,
+                stats_num_rows,
+                max_columns,
+                max_colwidth,
+                max_rows,
+                precision,
+                display_width,
+                use_tabulate,
+                log_level,
+            )
             out.append(df_stats_as_str)
         # Print info about memory usage.
         if print_memory_usage:
@@ -957,7 +1005,18 @@ def df_to_str(
                 raise ValueError(
                     f"Invalid memory_usage_mode='{memory_usage_mode}'"
                 )
-            memory_usage_as_txt = _df_to_str(mem_use_df, num_rows=None)
+            memory_num_rows = None
+            memory_usage_as_txt = _df_to_str(
+                mem_use_df,
+                memory_num_rows,
+                max_columns,
+                max_colwidth,
+                max_rows,
+                precision,
+                display_width,
+                use_tabulate,
+                log_level,
+            )
             out.append(memory_usage_as_txt)
         # Print info about nans.
         if print_nan_info:
@@ -982,19 +1041,20 @@ def df_to_str(
             txt = f"num_nan_cols={hprint.perc(num_nan_cols, num_elems)}"
             out.append(txt)
     if hsystem.is_running_in_ipynb():
-        if len(out) > 0:
+        if len(out) > 0 and log_level >= hdbg.get_logger_verbosity():
             print("\n".join(out))
         txt = None
     # Print the df.
     df_as_str = _df_to_str(
         df,
-        num_rows=num_rows,
-        max_columns=max_columns,
-        max_colwidth=max_colwidth,
-        max_rows=max_rows,
-        precision=precision,
-        display_width=display_width,
-        use_tabulate=use_tabulate,
+        num_rows,
+        max_columns,
+        max_colwidth,
+        max_rows,
+        precision,
+        display_width,
+        use_tabulate,
+        log_level,
     )
     if not hsystem.is_running_in_ipynb():
         out.append(df_as_str)
@@ -1087,7 +1147,7 @@ def convert_col_to_int(
 
 
 def read_csv_to_df(
-    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    stream: Union[str, s3fs.core.S3File, s3fs.core.S3FileSystem],
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
@@ -1111,7 +1171,7 @@ def read_csv_to_df(
 
 
 def read_parquet_to_df(
-    stream: Union[str, "s3fs.core.S3File", "s3fs.core.S3FileSystem"],
+    stream: Union[str, s3fs.core.S3File, s3fs.core.S3FileSystem],
     *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
