@@ -20,9 +20,65 @@ import market_data.real_time_market_data as mdrtmada
 _LOG = logging.getLogger(__name__)
 
 
+# ################
+
+
+class Test_Example1_ReplayedForecastSystem(hunitest.TestCase):
+    """
+    Test a System composed of:
+
+    - a `ReplayedMarketData` (providing fake data and features)
+    - an `Example1` DAG
+    """
+
+    def run_coroutines(
+            self,
+            data: pd.DataFrame,
+    ) -> str:
+        """
+        Run a system using the desired portfolio based on DB or dataframe.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            asset_ids = [101]
+            system = dtfsepsyru.Example1_ForecastSystem(
+                asset_ids,
+                event_loop,
+            )
+            config = system.get_dag_config()
+            market_data = system.get_market_data(data)
+            dag_runner = system.get_dag_runner(
+                config,
+                market_data,
+                real_time_loop_time_out_in_secs=60 * 5,
+            )
+            coroutines = [dag_runner.predict()]
+            #
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            result_bundles = result_bundles[0][0]
+        return result_bundles
+
+    # ///////////////////////////////////////////////////////////////////////////
+
+    def test1(self) -> None:
+        """
+        Verify the contents of DAG prediction.
+        """
+        data, _ = cofinanc.get_market_data_df1()
+        actual = self.run_coroutines(
+            data,
+        )
+        self.check_string(str(actual))
+
+
+# ######################################################
+
+
 # TODO(gp): Add another test with ReplayedMarketData that requires longer to update
 #  so that we can test the interaction between DAG and waiting for bar.
 
+# TODO(gp): -> Test_Example1_SimulatedRealTimeWithFixedDatabase
 class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
     """
     Test a System composed of:
@@ -95,10 +151,6 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         act = dag_runner.compute_run_signature(result_bundles[0])
         return act
 
-            # Run.
-            # TODO(gp): Add a coroutine that given a df writes in the
-            #  DB the data according to the knowledge ts.
-            # TODO(gp): Fix this.
     def test1(self) -> None:
         """
         Verify the contents of DAG prediction.
@@ -109,12 +161,18 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         )
         # TODO(gp): PP to make sure the output is correct.
         self.check_string(str(actual))
-        # TODO(gp): PP to make sure the output is correct.
 
 
 # #############################################################################
 
 
+# TODO(gp): -> Test_Example1_SimulatedRealTimeWithUpdatingDatabase
+
+
+# Run.
+# TODO(gp): Add a coroutine that given a df writes in the
+#  DB the data according to the knowledge ts.
+# TODO(gp): Fix this.
 class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
     """
     Test a System composed of:
@@ -135,7 +193,7 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
     # TODO(gp): @Danya this should be setup method.
     @staticmethod
     def setup_test_market_data(
-            im_client: icdc.SqlRealTimeImClient
+        im_client: icdc.SqlRealTimeImClient
     ) -> mdrtmada.RealTimeMarketData2:
         """
         Setup RealTimeMarketData2 interface.
