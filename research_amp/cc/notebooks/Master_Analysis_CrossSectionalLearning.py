@@ -24,6 +24,8 @@ import logging
 import pandas as pd
 
 import core.config.config_ as cconconf
+import core.explore as coexplor
+import core.signal_processing.incremental_pca as csprinpc
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import research_amp.transform as ramptran
@@ -127,3 +129,35 @@ df = ramptran.calculate_returns(df, rets_type)
 # Choose reference returns to proceed to further analysis.
 df = df[[config["analysis"]["reference_rets"]]]
 df.head(3)
+
+# %% [markdown]
+# # Residualize returns
+
+# %% [markdown]
+# ## Estimate PCA
+
+# %%
+# Params.
+sample = df["close.ret_0"].head(1000)
+nan_mode = "drop"
+com = 1
+# Rolling PCA calculations.
+corr_df, eigval_df, eigvec_df = coexplor.rolling_pca_over_time(
+    sample, com, nan_mode
+)
+eigval_df.columns = sample.columns
+eigvec_df.columns = sample.columns
+coexplor.plot_pca_over_time(eigval_df, eigvec_df)
+
+# %%
+# Incremental PCA calculations.
+num_pc = 2
+tau = 1
+lambda_df, unit_eigenvec_dfs = csprinpc.compute_ipca(sample, num_pc, tau)
+unit_eigenvec_dfs[0]["binance::ADA_USDT"].plot()
+
+# %% run_control={"marked": false}
+lambda_show = lambda_df.reset_index(drop=True)
+lambda_show = lambda_show[lambda_show[0] < 0.000025]
+lambda_show = lambda_show[lambda_show[1] < 0.0000025]
+lambda_show.plot.scatter(0, 1)
