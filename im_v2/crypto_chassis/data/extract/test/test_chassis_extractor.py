@@ -123,6 +123,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
 
+    @pytest.mark.skip(reason="CmTask1997")
     def test_download_ohlcv_invalid_input1(self) -> None:
         """
         Run with invalid exchange name.
