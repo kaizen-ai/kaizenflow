@@ -46,7 +46,7 @@ hprint.config_notebook()
 
 # %%
 tile_dict = {
-    "dir_name": "/app/experiment.RH1E.ccxt_v3-top2.5T.JanFeb2020/tiled_results",
+    "dir_name": "/app/build_tile_configs.../tiled_results/",
     "asset_id_col": "asset_id",
 }
 tile_config = cconfig.get_config_from_nested_dict(tile_dict)
@@ -68,28 +68,12 @@ parquet_tile_analyzer.compute_universe_size_by_time(parquet_tile_metadata)
 
 # %%
 asset_ids = parquet_tile_metadata.index.levels[0].to_list()
-# TODO(gp): asset id are integer but in Parquet file are saved as str.
+# TODO(Grisha): CmTask #1817 "Save asset_ids from the tiled backtest as integers". 
 asset_ids = list(map(str, asset_ids))
 display(asset_ids)
 
 # %% [markdown]
 # ## Load a single-asset tile
-
-# %%
-import helpers.hparquet as hparquet
-#hparquet.
-
-file_name = "/app/experiment.RH1E.ccxt_v3-top2.5T.JanFeb2020/tiled_results"
-columns = None
-filter_ = None
-
-tile = hparquet.from_parquet(
-    file_name,
-    columns=columns,
-    filters=filter_,
-)
-
-print(tile)
 
 # %%
 single_asset_tile = next(
@@ -120,10 +104,12 @@ single_tile_df.head(3)
 fep_dict = {
     "price_col": "vwap",
     "volatility_col": "vwap.ret_0.vol",
-    "prediction_col": "prediction",
+    "prediction_col": "vwap.ret_0.vol_adj_2_hat",
+    "bulk_frac_to_remove": 0.0,
+    "bulk_fill_method": "zero",
     "target_gmv": 1e6,
     "dollar_neutrality": "gaussian_rank",
-    "quantization": "nearest_lot",
+    "quantization": "nearest_share",
     "burn_in_bars": 3,
 }
 fep_config = cconfig.get_config_from_nested_dict(fep_dict)
@@ -136,35 +122,24 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 )
 
 # %%
+# Create backtest dataframe tile iterator.
 backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     tile_config["dir_name"],
-    datetime.date(2020, 1, 1),
-    datetime.date(2020, 12, 31),
+    datetime.date(2011, 1, 1),
+    datetime.date(2018, 12, 31),
     tile_config["asset_id_col"],
     data_cols=fep.get_cols(),
     asset_ids=None,
 )
 
-# %%
-df = next(backtest_df_iter)
-print(df)
-    
-    
-    
-# _, bar_metrics_slice = fep.annotate_forecasts(
-#     df,
-#     target_gmv=fep_config["target_gmv"],
-#     dollar_neutrality=fep_config["dollar_neutrality"],
-#     quantization=fep_config["quantization"],
-# )
-
-# %%
+# Process the dataframes in the interator.
 bar_metrics = []
 for df in backtest_df_iter:
     _, bar_metrics_slice = fep.annotate_forecasts(
         df,
+        bulk_frac_to_remove=fep_config["bulk_frac_to_remove"],
+        bulk_fill_method=fep_config["bulk_fill_method"],
         target_gmv=fep_config["target_gmv"],
-        dollar_neutrality=fep_config["dollar_neutrality"],
         quantization=fep_config["quantization"],
         burn_in_bars=fep_config["burn_in_bars"],
     )
@@ -222,8 +197,9 @@ overnight_returns = cofinanc.compute_overnight_returns(
 
 # %%
 regression_dict = {
-    "target_col": "vwap.ret_0.vol_adj",
-    "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
+    "target_col": "vwap.ret_0.vol_adj_2_hat",
+    # "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],  
+    "feature_cols": ["vwap.ret_0.vol_adj"],
     "feature_lag": 2,
     "batch_size": 50,
 }

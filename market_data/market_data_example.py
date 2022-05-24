@@ -346,6 +346,7 @@ def get_CcxtPqImClientMarketData_example2(
     last_timestamp = _get_last_timestamp(im_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
+        # We need to set the wall clock time to after the maximum time of the data.
         return pd.Timestamp("2100-01-01T00:00:00+00:00")
 
     #
