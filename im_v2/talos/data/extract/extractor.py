@@ -94,7 +94,7 @@ class TalosExtractor(imvcdeext.Extractor):
     def _download_ohlcv(
         self,
         currency_pair: str,
-        exchange: str,
+        exchange_id: str,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         *,
@@ -137,7 +137,7 @@ class TalosExtractor(imvcdeext.Extractor):
         #
         return self._fetch_ohlcv(
             currency_pair,
-            exchange,
+            exchange_id,
             start_timestamp,
             end_timestamp,
             bar_per_iteration=bar_per_iteration,

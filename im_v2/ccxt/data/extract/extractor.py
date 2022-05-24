@@ -75,7 +75,7 @@ class CcxtExtractor(imvcdeext.Extractor):
     def _download_ohlcv(
         self,
         currency_pair: str,
-        *,
+        exchange_id: str,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
         bar_per_iteration: Optional[int] = 500,
@@ -85,12 +85,17 @@ class CcxtExtractor(imvcdeext.Extractor):
         Download minute OHLCV bars.
 
         :param currency_pair: a currency pair, e.g. "BTC_USDT"
+        :param: exchange_id: CCXT exchange id (e.g., `binance`)
         :param start_timestamp: starting point for data
         :param end_timestamp: end point for data (included)
         :param bar_per_iteration: number of bars per iteration
         :param sleep_time_in_secs: time in seconds between iterations
         :return: OHLCV data from CCXT
         """
+        hdbg.dassert_eq(
+            self.exchange_id,
+            exchange_id
+        )
         hdbg.dassert(
             self._exchange.has["fetchOHLCV"],
             "Exchange %s doesn't has fetch_ohlcv method",

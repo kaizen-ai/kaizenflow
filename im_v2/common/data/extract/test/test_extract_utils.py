@@ -193,6 +193,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "start_timestamp": "2021-12-31 23:00:00",
             "end_timestamp": "2022-01-01 01:00:00",
             "exchange_id": "binance",
+            "data_type": "ohlcv",
             "universe": "v3",
             "sleep_time": 1,
             "incremental": False,
