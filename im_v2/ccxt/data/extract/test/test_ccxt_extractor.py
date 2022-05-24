@@ -92,6 +92,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         )
         self.assertIn(expected, actual)
 
+    @pytest.mark.skip(reason="CmTask1997")
     def test_download_ohlcv_invalid_input2(self) -> None:
         """
         Run with invalid end timestamp.

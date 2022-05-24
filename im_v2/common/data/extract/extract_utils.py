@@ -200,7 +200,8 @@ def download_realtime_for_one_exchange(
         )
         # Download data.
         data = exchange.download_data(
-            currency_pair_for_download,
+            data_type=args.data_type,
+            currency_pair=currency_pair_for_download,
             exchange_id=args.exchange_id,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
