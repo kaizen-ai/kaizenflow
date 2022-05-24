@@ -178,17 +178,17 @@ source_ftx_doge_2022_3.shape[0] == s3_ftx_doge_2022_3.shape[0]
 
 # %%
 # There are no NaNs for ftx::DOGE_USDT for all period storing on S3.
-s3_ftx_doge_2022_3.isna().value_counts()
+s3_ftx_doge_2022_3[s3_ftx_doge_2022_3['close'].isna()].shape[0]
 
 # %%
 # There is no volume=0 in the S3 data.
-s3_ftx_doge_2022_3[s3_ftx_doge_2022_3["volume"] == 0]
+s3_ftx_doge_2022_3[s3_ftx_doge_2022_3["volume"] == 0].shape[0]
 
 # %% [markdown]
 # ### Compare non-resampled data from source and S3
 
 # %%
-
+# Check if data in both datasets are equal.
 s3_ftx_doge_2022_3.eq(source_ftx_doge_2022_3, axis=1).value_counts()
 
 # %% [markdown]
@@ -200,13 +200,13 @@ source_ftx_doge_2022_3_resampled = hpandas.resample_df(
 )
 source_ftx_doge_2022_3_resampled["full_symbol"] = "ftx::DOGE_USDT"
 # Check how much NaNs in the resampled data.
-source_ftx_doge_2022_3_resampled.isna().value_counts()
+source_ftx_doge_2022_3_resampled[source_ftx_doge_2022_3_resampled['close'].isna()].shape[0]
 
 # %%
 s3_ftx_doge_2022_3_resampled = hpandas.resample_df(s3_ftx_doge_2022_3, "T")
 s3_ftx_doge_2022_3_resampled["full_symbol"] = "ftx::DOGE_USDT"
 # Check how much NaNs in the resampled data.
-s3_ftx_doge_2022_3_resampled.isna().value_counts()
+s3_ftx_doge_2022_3_resampled[s3_ftx_doge_2022_3_resampled['close'].isna()].shape[0]
 
 # %%
 s3_stats = _get_qa_stats(s3_ftx_doge_2022_3, "s3")
