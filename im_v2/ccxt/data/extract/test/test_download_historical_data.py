@@ -60,7 +60,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "exchange_id": "binance",
             "universe": "v3",
             "db_stage": "local",
-            "db_table": "ccxt_ohlcv"
+            "db_table": "ccxt_ohlcv",
             "incremental": False,
             "log_level": "INFO",
             "aws_profile": "ck",
