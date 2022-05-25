@@ -293,7 +293,8 @@ def _get_bad_data_stats(
         symbol_stats["NaNs [%]"] = 100 * (
             symbol_data[
                 symbol_data[config["column_names"]["close_price"]] == np.inf
-            ].shape[0] / symbol_data.shape[0]
+            ].shape[0]
+            / symbol_data.shape[0]
         )
         # Compute missing bars stats by counting NaNs created by resampling.
         symbol_stats["missing bars [%]"] = 100 * (
@@ -466,14 +467,18 @@ binance_universe
 ccxt_binance_data = ccxt_client.read_data(
     binance_universe, **config["data"]["read_data"]
 )
-ccxt_binance_data = _preprocess_data_for_qa_stats_computation(config, ccxt_binance_data)
+ccxt_binance_data = _preprocess_data_for_qa_stats_computation(
+    config, ccxt_binance_data
+)
 ccxt_binance_data.head(3)
 
 # %%
 crypto_chassis_binance_data = crypto_chassis_client.read_data(
     binance_universe, **config["data"]["read_data"]
 )
-crypto_chassis_binance_data = _preprocess_data_for_qa_stats_computation(config, crypto_chassis_binance_data)
+crypto_chassis_binance_data = _preprocess_data_for_qa_stats_computation(
+    config, crypto_chassis_binance_data
+)
 crypto_chassis_binance_data.head(3)
 
 # %%
@@ -539,7 +544,9 @@ ccxt_ftx_data.head(3)
 crypto_chassis_ftx_data = crypto_chassis_client.read_data(
     ftx_universe, **config["data"]["read_data"]
 )
-crypto_chassis_ftx_data = _preprocess_data_for_qa_stats_computation(config, crypto_chassis_ftx_data)
+crypto_chassis_ftx_data = _preprocess_data_for_qa_stats_computation(
+    config, crypto_chassis_ftx_data
+)
 crypto_chassis_ftx_data.head(3)
 
 # %%
@@ -598,14 +605,18 @@ gateio_universe
 ccxt_gateio_data = ccxt_client.read_data(
     gateio_universe, **config["data"]["read_data"]
 )
-ccxt_gateio_data = _preprocess_data_for_qa_stats_computation(config, ccxt_gateio_data)
+ccxt_gateio_data = _preprocess_data_for_qa_stats_computation(
+    config, ccxt_gateio_data
+)
 ccxt_gateio_data.head(3)
 
 # %%
 crypto_chassis_gateio_data = crypto_chassis_client.read_data(
     gateio_universe, **config["data"]["read_data"]
 )
-crypto_chassis_gateio_data = _preprocess_data_for_qa_stats_computation(config, crypto_chassis_gateio_data)
+crypto_chassis_gateio_data = _preprocess_data_for_qa_stats_computation(
+    config, crypto_chassis_gateio_data
+)
 crypto_chassis_gateio_data.head(3)
 
 # %%
@@ -664,14 +675,18 @@ kucoin_universe
 ccxt_kucoin_data = ccxt_client.read_data(
     kucoin_universe, **config["data"]["read_data"]
 )
-ccxt_kucoin_data = _preprocess_data_for_qa_stats_computation(config, ccxt_kucoin_data)
+ccxt_kucoin_data = _preprocess_data_for_qa_stats_computation(
+    config, ccxt_kucoin_data
+)
 ccxt_kucoin_data.head(3)
 
 # %%
 crypto_chassis_kucoin_data = crypto_chassis_client.read_data(
     kucoin_universe, **config["data"]["read_data"]
 )
-crypto_chassis_kucoin_data = _preprocess_data_for_qa_stats_computation(config, crypto_chassis_kucoin_data)
+crypto_chassis_kucoin_data = _preprocess_data_for_qa_stats_computation(
+    config, crypto_chassis_kucoin_data
+)
 crypto_chassis_kucoin_data.head(3)
 
 # %%
