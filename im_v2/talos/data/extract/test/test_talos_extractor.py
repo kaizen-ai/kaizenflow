@@ -26,7 +26,7 @@ class TestTalosExtractor1(hunitest.TestCase):
 
     @pytest.mark.slow()
     @umock.patch.object(imvtdeex.hdateti, "get_current_time")
-    def test_download_ohlcv_data1(
+    def test_download_ohlcv1(
         self, mock_get_current_time: umock.MagicMock
     ) -> None:
         """
@@ -51,7 +51,7 @@ class TestTalosExtractor1(hunitest.TestCase):
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
 
-    def test_download_ohlcv_data_invalid_input1(self) -> None:
+    def test_download_ohlcv_invalid_input1(self) -> None:
         """
         Run with invalid start timestamp.
         """
@@ -73,7 +73,7 @@ class TestTalosExtractor1(hunitest.TestCase):
             AssertionError,
         )
 
-    def test_download_ohlcv_data_invalid_input2(self) -> None:
+    def test_download_ohlcv_invalid_input2(self) -> None:
         """
         Run with invalid end timestamp.
         """
@@ -95,7 +95,7 @@ class TestTalosExtractor1(hunitest.TestCase):
             AssertionError,
         )
 
-    def test_download_ohlcv_data_invalid_input3(self) -> None:
+    def test_download_ohlcv_invalid_input3(self) -> None:
         """
         Run with invalid range.
 
@@ -118,7 +118,7 @@ class TestTalosExtractor1(hunitest.TestCase):
             AssertionError,
         )
 
-    def test_download_ohlcv_data_invalid_input4(self) -> None:
+    def test_download_ohlcv_invalid_input4(self) -> None:
         """
         Run with invalid currency pair.
         """
@@ -136,7 +136,7 @@ class TestTalosExtractor1(hunitest.TestCase):
             ValueError,
         )
 
-    def test_download_ohlcv_data_invalid_input5(self) -> None:
+    def test_download_ohlcv_invalid_input5(self) -> None:
         """
         Run with invalid exchange.
         """
@@ -172,9 +172,9 @@ class TestTalosExtractor1(hunitest.TestCase):
         exchange_class = imvtdeex.TalosExtractor("sandbox")
         # Run with invalid input.
         with pytest.raises(raises) as fail:
-            exchange_class.download_ohlcv_data(
+            exchange_class._download_ohlcv( 
                 currency_pair=currency_pair,
-                exchange=exchange,
+                exchange_id=exchange,
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
             )
@@ -195,9 +195,9 @@ class TestTalosExtractor1(hunitest.TestCase):
         # Initiate class and set date parameters.
         exchange_class = imvtdeex.TalosExtractor("sandbox")
         # Extract data.
-        actual = exchange_class.download_ohlcv_data(
+        actual = exchange_class._download_ohlcv(
             currency_pair="BTC_USDT",
-            exchange="binance",
+            exchange_id="binance",
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
             bar_per_iteration=1000,

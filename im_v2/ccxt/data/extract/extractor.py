@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.extractor as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 """
 
 import logging
@@ -15,11 +15,13 @@ import tqdm
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
+import im_v2.common.data.extract.extractor as imvcdeext
+
 
 _LOG = logging.getLogger(__name__)
 
 
-class CcxtExtractor:
+class CcxtExtractor(imvcdeext.Extractor):
     """
     A class for accessing CCXT exchange data.
 
@@ -34,6 +36,7 @@ class CcxtExtractor:
 
         :param: exchange_id: CCXT exchange id (e.g., `binance`)
         """
+        super().__init__()
         self.exchange_id = exchange_id
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
@@ -44,23 +47,6 @@ class CcxtExtractor:
         Convert currency pair used for getting data from exchange.
         """
         return currency_pair.replace("_", "/")
-
-    def download_data(self, data_type: str, **kwargs: Any) -> pd.DataFrame:
-        """
-        Download CCXT data.
-
-        :param data_type: the type of data, e.g. `ohlcv`
-        :return: CCXT data
-        """
-        # Check data type.
-        hdbg.dassert_eq(data_type, "ohlcv")
-        # Get data.
-        return self.download_ohlcv_data(
-            currency_pair=kwargs["currency_pair"],
-            *[],
-            start_timestamp=kwargs["start_timestamp"],
-            end_timestamp=kwargs["end_timestamp"],
-        )
 
     def log_into_exchange(self) -> ccxt.Exchange:
         """
@@ -86,14 +72,14 @@ class CcxtExtractor:
         """
         return list(self._exchange.load_markets().keys())
 
-    def download_ohlcv_data(
+    def _download_ohlcv(
         self,
         currency_pair: str,
-        *,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
         bar_per_iteration: Optional[int] = 500,
         sleep_time_in_secs: int = 1,
+        **kwargs
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars.
@@ -156,6 +142,12 @@ class CcxtExtractor:
             time.sleep(sleep_time_in_secs)
         # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
+
+    def _download_market_depth(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Market depth data is not available for CCXT vendor")
+
+    def _download_trades(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Trades data is not available for CCXT vendor")
 
     def download_order_book(self, currency_pair: str) -> Dict[str, Any]:
         """
