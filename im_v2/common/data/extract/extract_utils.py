@@ -81,13 +81,6 @@ def add_exchange_download_args(
         required=False,
         help="Append data instead of overwriting it",
     )
-    parser.add_argument(
-        "--data_type",
-        action="store",
-        required=True,
-        type=str,
-        help="OHLCV, market_depth or trades data.",
-    )
     return parser
 
 
