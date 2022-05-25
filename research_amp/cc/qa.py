@@ -8,6 +8,7 @@ from typing import List
 import pandas as pd
 
 import core.statistics as costatis
+import helpers.hdbg as hdbg
 
 
 def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame:
@@ -16,8 +17,16 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
 
     :param agg_level: list of columns to group data by
     """
+    hdbg.dassert_lte(1, len(agg_level))
+    # Copy in order not to modify original data.
+    data_copy = data.copy()
+    # Get year and month to be able to use them in aggregation.
+    data_copy["year"] = data_copy.index.year
+    data_copy["month"] = data_copy.index.month
     res_stats = []
-    for full_symbol, symbol_data in data.groupby(agg_level):
+    # Check that columns to group by exist.
+    hdbg.dassert_is_subset(agg_level, data_copy.columns)
+    for full_symbol, symbol_data in data_copy.groupby(agg_level):
         # Compute stats for a full symbol.
         symbol_stats = pd.Series(dtype="object", name=full_symbol)
         symbol_stats["NaNs [%]"] = 100 * (
