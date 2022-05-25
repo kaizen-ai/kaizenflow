@@ -23,6 +23,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         """
         parser = imvcdedhda._parse()
         cmd = []
+        cmd.extend(["--data_type", "ohlcv"])
         cmd.extend(["--start_timestamp", "2022-02-08"])
         cmd.extend(["--end_timestamp", "2022-02-09"])
         cmd.extend(["--exchange_id", "binance"])
@@ -32,6 +33,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
+            "data_type": "ohlcv",
             "start_timestamp": "2022-02-08",
             "end_timestamp": "2022-02-09",
             "exchange_id": "binance",
