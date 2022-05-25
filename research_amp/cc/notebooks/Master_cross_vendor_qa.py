@@ -276,7 +276,9 @@ def _get_bad_data_stats(
                 symbol_data[config["column_names"]["close_price"]]
             )
         )
-        symbol_stats["missing bars [%]"] = symbol_stats["missing bars [%]"] - symbol_stats["NaNs [%]"]
+        symbol_stats["missing bars [%]"] = (
+            symbol_stats["missing bars [%]"] - symbol_stats["NaNs [%]"]
+        )
         #
         symbol_stats["volume=0 [%]"] = 100 * (
             symbol_data[symbol_data["volume"] == 0].shape[0]
@@ -284,7 +286,9 @@ def _get_bad_data_stats(
         )
         #
         symbol_stats["bad data [%]"] = (
-            symbol_stats["NaNs [%]"] + symbol_stats["missing bars [%]"] + symbol_stats["volume=0 [%]"]
+            symbol_stats["NaNs [%]"]
+            + symbol_stats["missing bars [%]"]
+            + symbol_stats["volume=0 [%]"]
         )
         res_stats.append(symbol_stats)
     # Combine all full symbol stats.
