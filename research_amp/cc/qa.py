@@ -58,3 +58,27 @@ def get_bad_data_stats(
         res_stats_df = res_stats_df.sort_values(index_columns)
         res_stats_df = res_stats_df.set_index(index_columns)
     return res_stats_df
+
+
+def get_timestamp_stats(
+    config: cconconf.Config, data: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Get min max timestamp stats per full symbol.
+    """
+    res_stats = []
+    for full_symbol, symbol_data in data.groupby(
+        config["column_names"]["full_symbol"]
+    ):
+        # Compute stats for a full symbol.
+        symbol_stats = pd.Series(dtype="object", name=full_symbol)
+        index = symbol_data.index
+        symbol_stats["min_timestamp"] = index.min()
+        symbol_stats["max_timestamp"] = index.max()
+        symbol_stats["days_available"] = (
+            symbol_stats["max_timestamp"] - symbol_stats["min_timestamp"]
+        ).days
+        res_stats.append(symbol_stats)
+    # Combine all full symbol stats.
+    res_stats_df = pd.concat(res_stats, axis=1).T
+    return res_stats_df
