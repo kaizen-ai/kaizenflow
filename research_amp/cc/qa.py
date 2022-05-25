@@ -35,18 +35,16 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
         )
         # Resample symbol data to count missing bars.
         symbol_data = hpandas.resample_df(symbol_data, "T")
-        symbol_data["full_symbol"] = symbol_data[
-            "full_symbol"
-        ].fillna(method="bfill")
+        symbol_data["full_symbol"] = symbol_data["full_symbol"].fillna(
+            method="bfill"
+        )
         # Compute missing bars stats by subtracting NaN stats in not-resampled
         # data from NaN stats in resampled data.
         symbol_stats["missing bars [%]"] = 100 * (
-            costatis.compute_frac_nan(
-                symbol_data["close"]
-            )
+            costatis.compute_frac_nan(symbol_data["close"])
         )
         symbol_stats["missing bars [%]"] = (
-                symbol_stats["missing bars [%]"] - symbol_stats["NaNs [%]"]
+            symbol_stats["missing bars [%]"] - symbol_stats["NaNs [%]"]
         )
         symbol_stats["volume=0 [%]"] = 100 * (
             symbol_data[symbol_data["volume"] == 0].shape[0]
