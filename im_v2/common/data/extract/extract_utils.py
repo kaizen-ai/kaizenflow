@@ -199,9 +199,10 @@ def download_realtime_for_one_exchange(
             currency_pair
         )
         # Download data.
-        data = exchange.download_ohlcv_data(
-            currency_pair_for_download,
-            *additional_args,
+        data = exchange.download_data(
+            data_type="ohlcv",
+            currency_pair=currency_pair_for_download,
+            exchange_id=args.exchange_id,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
         )
@@ -391,13 +392,14 @@ def save_csv(
 
 
 def save_parquet(
-    data: pd.DataFrame, path_to_exchange: str, aws_profile: Optional[str]
+    data: pd.DataFrame, path_to_exchange: str, unit: str, aws_profile: Optional[str],
 ) -> None:
     """
     Save Parquet dataset.
     """
     # Update indexing and add partition columns.
-    data = imvcdttrut.reindex_on_datetime(data, "timestamp")
+    # TODO(Danya): Add `unit` as a parameter in the function.
+    data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit=unit)
     data, partition_cols = hparque.add_date_partition_columns(
         data, "by_year_month"
     )
@@ -439,15 +441,18 @@ def download_historical_data(
         exchange = exchange_class(args["exchange_id"])
         vendor = "CCXT"
         data_type = "ohlcv"
+        unit = "ms"
     elif exchange_class.__name__ == TALOS_EXCHANGE:
         # Unlike CCXT, Talos is initialized with `api_stage`.
         exchange = exchange_class(args["api_stage"])
         vendor = "talos"
         data_type = "ohlcv"
+        unit = "ms"
     elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
         exchange = exchange_class()
+        # TODO(Danya): Most importantly: we want this to be a parameter passed into all scripts.
         vendor = "crypto_chassis"
-        data_type = "market_depth"
+        unit = "s"
     else:
         hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
@@ -460,8 +465,17 @@ def download_historical_data(
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
         args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
+        # TODO(Danya): Ultimately, we want to have these download_kwargs created at the initialization 
+        # of the class and vendor, i.e. if we are downloading OHLCV, the download_kwargs are such and such
+        # Don't forget to utilize default values, e.g. in CryptoChassis we have a lot of arguments
+        # that are vague in definition and silly to pass inside the script. 
+        download_kwargs = {"exchange_id": args["exchange_id"], "currency_pair": args["currency_pair"],
+                            "start_timestamp": args["start_timestamp"], "end_timestamp": args["end_timestamp"]}
         # Download data.
-        data = exchange.download_data(data_type, **args)
+        # TODO(Danya): since kwargs are different for each data type and script run, we should
+        #  set them before.
+        data = exchange.download_data(data_type=args["data_type"],
+                                    **download_kwargs)
         if data.empty:
             continue
         # Assign pair and exchange columns.
@@ -476,7 +490,7 @@ def download_historical_data(
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
         if args["file_format"] == "parquet":
-            save_parquet(data, path_to_exchange, args["aws_profile"])
+            save_parquet(data, path_to_exchange, unit, args["aws_profile"])
         elif args["file_format"] == "csv":
             save_csv(
                 data,
