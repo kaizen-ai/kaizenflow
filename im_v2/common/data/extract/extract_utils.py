@@ -81,6 +81,13 @@ def add_exchange_download_args(
         required=False,
         help="Append data instead of overwriting it",
     )
+    parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="OHLCV, market_depth or trades data.",
+    )
     return parser
 
 
@@ -122,6 +129,13 @@ def add_periodical_download_args(
         required=True,
         type=str,
         help="Trading universe to download data for",
+    )
+    parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="OHLCV, market_depth or trades data.",
     )
     return parser
 
@@ -443,27 +457,21 @@ def download_historical_data(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        currency_pair = exchange.convert_currency_pair(currency_pair)
+        converted_currency_pair = exchange.convert_currency_pair(currency_pair)
         # Download data.
-        # TODO(Danya): since kwargs are different for each data type and script run, we should
-        #  set them before.
         data = exchange.download_data(
             args["data_type"],
             args["exchange_id"],
-            currency_pair,
+            converted_currency_pair,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
         )
         if data.empty:
             continue
         # Assign pair and exchange columns.
-        # TODO(Nikola): Exchange id was missing and it is added additionally to
-        #  match signature of other scripts.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args["exchange_id"]
-        # Change index to allow calling add_date_partition_cols function on the dataframe.
-        # TODO(Danya): Move to parquet!
-        # Get current time of push to s3 in UTC.
+        # Get current time of download.
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.

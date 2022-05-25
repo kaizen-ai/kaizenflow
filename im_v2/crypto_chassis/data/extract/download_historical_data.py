@@ -32,13 +32,6 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser.add_argument(
-        "--data_type",
-        action="store",
-        required=True,
-        type=str,
-        help="OHLCV, market_depth or trades data.",
-    )
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
