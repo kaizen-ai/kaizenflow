@@ -130,13 +130,6 @@ def add_periodical_download_args(
         type=str,
         help="Trading universe to download data for",
     )
-    parser.add_argument(
-        "--data_type",
-        action="store",
-        required=True,
-        type=str,
-        help="OHLCV, market_depth or trades data.",
-    )
     return parser
 
 

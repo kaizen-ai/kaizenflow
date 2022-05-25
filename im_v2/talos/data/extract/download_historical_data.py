@@ -41,6 +41,13 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="(Optional) API 'stage' to use ('sandbox' or 'prod'), default: 'sandbox'",
     )
+    parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="OHLCV, market_depth or trades data.",
+    )
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
