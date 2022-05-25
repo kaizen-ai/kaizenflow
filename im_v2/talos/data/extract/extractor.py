@@ -38,6 +38,7 @@ class TalosExtractor(imvcdeext.Extractor):
         self._account = account
         self._api = imv2tauti.TalosApiBuilder(self._account)
         self._endpoint = self._api.get_endpoint()
+        self.vendor = "Talos"
 
     @staticmethod
     def build_talos_query_params(

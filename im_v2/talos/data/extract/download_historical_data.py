@@ -50,7 +50,12 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_historical_data(args, imvtdeex.TalosExtractor)
+        # Initialize the CCXT Extractor class.
+    exchange = imvtdeex.TalosExtractor(args.api_stage)
+    # Assign extractor-specific variables.
+    args = vars(args)
+    args["unit"] = "ms"
+    imvcdeexut.download_historical_data(args, exchange)
 
 
 if __name__ == "__main__":

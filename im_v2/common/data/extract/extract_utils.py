@@ -429,7 +429,6 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    args = vars(args)
     path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
@@ -438,12 +437,6 @@ def download_historical_data(
         hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
     # Initialize exchange class.
     # Every exchange can potentially have a specific set of init args.
-    # elif exchange_class.__name__ == TALOS_EXCHANGE:
-    #     # Unlike CCXT, Talos is initialized with `api_stage`.
-    #     exchange = exchange_class(args["api_stage"])
-    #     vendor = "talos"
-    #     data_type = "ohlcv"
-    #     unit = "ms"
     # elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
     #     exchange = exchange_class()
     #     # TODO(Danya): Most importantly: we want this to be a parameter passed into all scripts.
