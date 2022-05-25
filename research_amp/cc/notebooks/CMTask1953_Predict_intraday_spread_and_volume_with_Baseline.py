@@ -323,7 +323,7 @@ def get_mean_error(
 
 # %%
 # Choose the period that is equally filled by both estimators.
-test = estimators[estimators["lookback_volume"].notna()]
+test = estimators[estimators[f"lookback_{target}"].notna()]
 test.head(3)
 
 # %% [markdown]
@@ -331,14 +331,14 @@ test.head(3)
 
 # %%
 # Mean error and upper/lower level of errors' standard deviation.
-column_name_actual = "real_volume_0"
-column_name_estimator = "naive_volume"
+column_name_actual = f"real_{target}_0"
+column_name_estimator = f"naive_{target}"
 naive_err = get_mean_error(test, column_name_actual, column_name_estimator)
 
 # %% run_control={"marked": false}
 # Regress (OLS) between `real_spread` and `naive_spread`.
-predicted_var = "real_volume_0"
-predictor_vars = "naive_volume"
+predicted_var = f"real_{target}_0"
+predictor_vars = f"naive_{target}"
 intercept = True
 # Run OLS.
 coexplor.ols_regress(
@@ -349,21 +349,21 @@ coexplor.ols_regress(
 )
 
 # %%
-test[["real_volume_0", "naive_volume"]].plot(figsize=(15, 7))
+test[[f"real_{target}_0", f"naive_{target}"]].plot(figsize=(15, 7))
 
 # %% [markdown]
 # ## Lookback estimator
 
 # %%
 # Mean error and upper/lower level of errors' standard deviation.
-column_name_actual = "real_volume_0"
-column_name_estimator = "lookback_volume"
+column_name_actual = f"real_{target}_0"
+column_name_estimator = f"lookback_{target}"
 lookback_err = get_mean_error(test, column_name_actual, column_name_estimator)
 
 # %%
 # Regress (OLS) between `real_spread` and `lookback_spread`.
-predicted_var = "real_volume_0"
-predictor_vars = "lookback_volume"
+predicted_var = f"real_{target}_0"
+predictor_vars = f"lookback_{target}"
 intercept = True
 # Run OLS.
 coexplor.ols_regress(
@@ -374,7 +374,7 @@ coexplor.ols_regress(
 )
 
 # %%
-test[["real_volume_0", "lookback_volume"]].plot(figsize=(15, 7))
+test[[f"real_{target}_0", f"lookback_{target}"]].plot(figsize=(15, 7))
 
 
 # %% [markdown]
@@ -412,7 +412,7 @@ test_sk = hpandas.dropna(test)
 test_sk = test_sk.iloc[1:-1]
 # Add more lags as features
 test_sk, info = cofeatur.compute_lagged_features(
-    test_sk, "real_volume_0", delay_lag=1, num_lags=3
+    test_sk, f"real_{target}_0", delay_lag=1, num_lags=3
 )
 # Hardcoded solution: omit "naive" estimator in favor of new lag estimators.
 test_sk = test_sk.drop(columns=[f"real_{target}_2"])
