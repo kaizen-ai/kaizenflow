@@ -35,7 +35,6 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        # TODO(Danya): This should be propagated to `add_exchange_download_args`.
         "--data_type",
         action="store",
         required=True,
@@ -50,7 +49,10 @@ def _parse() -> argparse.ArgumentParser:
 
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_historical_data(args, imvccdee.CryptoChassisExtractor)
+    exchange = imvccdee.CryptoChassisExtractor()
+    args = vars(args)
+    args["unit"] = "s"
+    imvcdeexut.download_historical_data(args, exchange)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

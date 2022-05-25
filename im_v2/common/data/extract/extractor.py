@@ -17,7 +17,7 @@ class Extractor(abc.ABC):
     """
     Abstract class for downloading raw data from all vendors.
     """
-    def __init__(self, **kwargs) -> None:
+    def __init__(self) -> None:
         super().__init__()
 
     def download_data(self, data_type: str, **kwargs) -> pd.DataFrame:

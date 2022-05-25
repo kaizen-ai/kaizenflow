@@ -435,15 +435,6 @@ def download_historical_data(
         hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
     elif not args["incremental"]:
         hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
-    # Initialize exchange class.
-    # Every exchange can potentially have a specific set of init args.
-    # elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
-    #     exchange = exchange_class()
-    #     # TODO(Danya): Most importantly: we want this to be a parameter passed into all scripts.
-    #     vendor = "crypto_chassis"
-    #     unit = "s"
-    # else:
-    #     hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
     universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
     currency_pairs = universe[args["exchange_id"]]
@@ -490,6 +481,3 @@ def download_historical_data(
             )
         else:
             hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
-        # Sleep between iterations is needed for CCXT.
-        if exchange_class == CCXT_EXCHANGE:
-            time.sleep(args["sleep_time"])

@@ -27,6 +27,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
     def __init__(self) -> None:
         super().__init__()
         self._endpoint = "https://api.cryptochassis.com/v1"
+        self.vendor = "crypto_chassis"
 
     @staticmethod
     def convert_currency_pair(currency_pair: str) -> str:
