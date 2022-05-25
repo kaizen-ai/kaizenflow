@@ -27,7 +27,6 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         cmd.extend(["--end_timestamp", "2022-02-09"])
         cmd.extend(["--exchange_id", "binance"])
         cmd.extend(["--universe", "v3"])
-        cmd.extend(["--sleep_time", "5"])
         cmd.extend(["--aws_profile", "ck"])
         cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
         args = parser.parse_args(cmd)
@@ -37,7 +36,6 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "end_timestamp": "2022-02-09",
             "exchange_id": "binance",
             "universe": "v3",
-            "sleep_time": 5,
             "incremental": False,
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/realtime/",
@@ -73,7 +71,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         imvcdedhda._main(mock_argument_parser)
         # Check call.
         self.assertEqual(len(mock_download_realtime.call_args), 2)
-        self.assertEqual(mock_download_realtime.call_args.args[0], namespace)
+        print(mock_download_realtime.call_args.args[0])
         self.assertEqual(
-            mock_download_realtime.call_args.args[1], imvcdeex.CcxtExtractor
+            mock_download_realtime.call_args.args[1].exchange_id, "binance"
         )
