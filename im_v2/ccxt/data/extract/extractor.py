@@ -40,6 +40,7 @@ class CcxtExtractor(imvcdeext.Extractor):
         self.exchange_id = exchange_id
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
+        self.vendor = "CCXT"
 
     @staticmethod
     def convert_currency_pair(currency_pair: str) -> str:

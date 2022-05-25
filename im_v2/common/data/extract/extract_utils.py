@@ -13,7 +13,7 @@ import os
 import time
 
 from datetime import datetime, timedelta
-from typing import Any, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import pandas as pd
 import psycopg2
@@ -28,6 +28,8 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
 import im_v2.talos.data.extract.extractor as imvtdeexcl
+#
+import im_v2.common.data.extract.extractor as imvcdeext
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -417,7 +419,7 @@ def save_parquet(
 
 
 def download_historical_data(
-    args: argparse.Namespace, exchange_class: Any
+    args: Dict[str, Any], exchange: imvcdeext.Extractor
 ) -> None:
     """
     Encapsulate common logic for downloading historical exchange data.
@@ -436,27 +438,21 @@ def download_historical_data(
         hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
     # Initialize exchange class.
     # Every exchange can potentially have a specific set of init args.
-    if exchange_class.__name__ == CCXT_EXCHANGE:
-        # Initialize CCXT with `exchange_id`.
-        exchange = exchange_class(args["exchange_id"])
-        vendor = "CCXT"
-        data_type = "ohlcv"
-        unit = "ms"
-    elif exchange_class.__name__ == TALOS_EXCHANGE:
-        # Unlike CCXT, Talos is initialized with `api_stage`.
-        exchange = exchange_class(args["api_stage"])
-        vendor = "talos"
-        data_type = "ohlcv"
-        unit = "ms"
-    elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
-        exchange = exchange_class()
-        # TODO(Danya): Most importantly: we want this to be a parameter passed into all scripts.
-        vendor = "crypto_chassis"
-        unit = "s"
-    else:
-        hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
+    # elif exchange_class.__name__ == TALOS_EXCHANGE:
+    #     # Unlike CCXT, Talos is initialized with `api_stage`.
+    #     exchange = exchange_class(args["api_stage"])
+    #     vendor = "talos"
+    #     data_type = "ohlcv"
+    #     unit = "ms"
+    # elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
+    #     exchange = exchange_class()
+    #     # TODO(Danya): Most importantly: we want this to be a parameter passed into all scripts.
+    #     vendor = "crypto_chassis"
+    #     unit = "s"
+    # else:
+    #     hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
-    universe = ivcu.get_vendor_universe(vendor, version=args["universe"])
+    universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
     currency_pairs = universe[args["exchange_id"]]
     # Convert timestamps.
     args["end_timestamp"] = pd.Timestamp(args["end_timestamp"])
@@ -490,7 +486,7 @@ def download_historical_data(
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
         if args["file_format"] == "parquet":
-            save_parquet(data, path_to_exchange, unit, args["aws_profile"])
+            save_parquet(data, path_to_exchange, args["unit"], args["aws_profile"])
         elif args["file_format"] == "csv":
             save_csv(
                 data,
