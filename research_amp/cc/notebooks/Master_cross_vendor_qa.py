@@ -266,11 +266,13 @@ def _get_bad_data_stats(
                 symbol_data[config["column_names"]["close_price"]]
             )
         )
-        #
+        # Resample symbol data to count missing bars.
         symbol_data = hpandas.resample_df(symbol_data, "T")
         symbol_data[config["column_names"]["full_symbol"]] = symbol_data[
             config["column_names"]["full_symbol"]
         ].fillna(method="bfill")
+        # Compute missing bars stats by subtracting NaN stats in not-resampled
+        # data from NaN stats in resampled data.
         symbol_stats["missing bars [%]"] = 100 * (
             costatis.compute_frac_nan(
                 symbol_data[config["column_names"]["close_price"]]
