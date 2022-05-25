@@ -20,7 +20,11 @@ class Extractor(abc.ABC):
     def __init__(self) -> None:
         super().__init__()
 
-    def download_data(self, data_type: str, **kwargs) -> pd.DataFrame:
+    def download_data(self, data_type: str,
+                        exchange_id: str,
+                        currency_pair: str,
+                        *,
+                        **kwargs) -> pd.DataFrame:
         """
         Download exchange data.
 
@@ -29,20 +33,21 @@ class Extractor(abc.ABC):
         """
         if data_type == "ohlcv":
             data = self._download_ohlcv(
-            **kwargs,
+                exchange_id,
+                currency_pair,
+             **kwargs,
         )
         elif data_type == "market_depth":
             data = self._download_market_depth(
-                exchange_id=kwargs["exchange_id"],
-                currency_pair=kwargs["currency_pair"],
-                depth=kwargs["depth"],
-                start_timestamp=kwargs["start_timestamp"],
+                exchange_id,
+                currency_pair,
+                **kwargs
         )
         elif data_type == "trades":
             data = self._download_trades(
-                exchange_id=kwargs["exchange_id"],
-                currency_pair=kwargs["currency_pair"],
-                start_timestamp=kwargs["start_timestamp"],
+                exchange_id,
+                currency_pair,
+                **kwargs
         )
         else:            
             hdbg.dfatal(

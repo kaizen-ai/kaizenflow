@@ -4,6 +4,7 @@ Import as:
 import im_v2.ccxt.data.extract.extractor as imvcdeex
 """
 
+from asyncio import streams
 import logging
 import time
 from typing import Any, Dict, List, Optional
@@ -75,12 +76,13 @@ class CcxtExtractor(imvcdeext.Extractor):
 
     def _download_ohlcv(
         self,
+        exchange_id: str,
         currency_pair: str,
+        *,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
         bar_per_iteration: Optional[int] = 500,
         sleep_time_in_secs: int = 1,
-        **kwargs
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars.
@@ -92,6 +94,8 @@ class CcxtExtractor(imvcdeext.Extractor):
         :param sleep_time_in_secs: time in seconds between iterations
         :return: OHLCV data from CCXT
         """
+        # Assign exchange_id to make it symmetrical to other vendors.
+        _ = exchange_id
         hdbg.dassert(
             self._exchange.has["fetchOHLCV"],
             "Exchange %s doesn't has fetch_ohlcv method",

@@ -439,23 +439,20 @@ def download_historical_data(
     universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
     currency_pairs = universe[args["exchange_id"]]
     # Convert timestamps.
-    args["end_timestamp"] = pd.Timestamp(args["end_timestamp"])
-    args["start_timestamp"] = pd.Timestamp(args["start_timestamp"])
+    start_timestamp = pd.Timestamp(args["start_timestamp"])
+    end_timestamp = pd.Timestamp(args["end_timestamp"])
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
-        # TODO(Danya): Ultimately, we want to have these download_kwargs created at the initialization 
-        # of the class and vendor, i.e. if we are downloading OHLCV, the download_kwargs are such and such
-        # Don't forget to utilize default values, e.g. in CryptoChassis we have a lot of arguments
-        # that are vague in definition and silly to pass inside the script. 
-        download_kwargs = {"exchange_id": args["exchange_id"], "currency_pair": args["currency_pair"],
-                            "start_timestamp": args["start_timestamp"], "end_timestamp": args["end_timestamp"]}
+        currency_pair = exchange.convert_currency_pair(currency_pair)
         # Download data.
         # TODO(Danya): since kwargs are different for each data type and script run, we should
         #  set them before.
-        data = exchange.download_data(data_type=args["data_type"],
-                                    **download_kwargs)
+        data = exchange.download_data(args["data_type"],
+        args["exchange_id"],
+        currency_pair,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp,)
         if data.empty:
             continue
         # Assign pair and exchange columns.

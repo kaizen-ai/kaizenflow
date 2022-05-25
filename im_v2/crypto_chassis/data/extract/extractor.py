@@ -111,11 +111,11 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         self,
         exchange_id: str,
         currency_pair: str,
+        *,
         start_timestamp: Optional[pd.Timestamp],
         end_timestamp: Optional[pd.Timestamp],
         interval: Optional[str] = "1m",
         include_realtime: str = "1",
-        **kwargs
         ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
