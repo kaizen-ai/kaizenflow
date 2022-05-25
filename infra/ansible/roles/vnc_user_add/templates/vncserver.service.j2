@@ -1,7 +1,7 @@
 [Unit]
 Description=Systemd VNC server startup script for user {{ vnc_user }}
-Requires=network.target pcsd.service data.mount corosync.service
-After=syslog.target network.target pcsd.service data.mount corosync.service
+Requires=network.target
+After=syslog.target network.target
 StartLimitInterval=200
 StartLimitBurst=5
 
