@@ -51,9 +51,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize the CCXT Extractor class.
     exchange = imvcdeex.CcxtExtractor(args.exchange_id)
     # Assign extractor-specific variables.
-    extractor_kwargs = vars(args)
-    extractor_kwargs["unit"] = "ms"
-    imvcdeexut.download_historical_data(extractor_kwargs, exchange)
+    args = vars(args)
+    args["unit"] = "ms"
+    imvcdeexut.download_historical_data(args, exchange)
 
 
 if __name__ == "__main__":
