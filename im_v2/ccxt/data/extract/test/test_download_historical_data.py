@@ -54,12 +54,13 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             argparse.ArgumentParser, spec_set=True
         )
         kwargs = {
+            "data_type": "ohlcv",
             "start_timestamp": "2021-12-31 23:00:00",
             "end_timestamp": "2022-01-01 01:00:00",
             "exchange_id": "binance",
             "universe": "v3",
             "db_stage": "local",
-            "db_table": "ccxt_ohlcv",
+            "db_table": "ccxt_ohlcv"
             "incremental": False,
             "log_level": "INFO",
             "aws_profile": "ck",
