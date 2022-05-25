@@ -22,7 +22,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.common.data.extract.extract_utils as imvcdeexut
-import im_v2.talos.data.extract.extractor as imvtdeex
+import im_v2.talos.data.extract.extractor as imvtdexex
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,8 +50,8 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-        # Initialize the CCXT Extractor class.
-    exchange = imvtdeex.TalosExtractor(args.api_stage)
+    # Initialize the CCXT Extractor class.
+    exchange = imvtdexex.TalosExtractor(args.api_stage)
     # Assign extractor-specific variables.
     args = vars(args)
     args["unit"] = "ms"

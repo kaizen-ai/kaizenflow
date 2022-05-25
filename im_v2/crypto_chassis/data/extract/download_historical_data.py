@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Download historical data from Crypto-Chassis and save to S3. The script is meant to run
-daily for reconciliation with realtime data.
+Download historical data from Crypto-Chassis and save to S3. The script is
+meant to run daily for reconciliation with realtime data.
 
 Use as:
 
@@ -14,17 +14,15 @@ Use as:
      --aws_profile 'ck' \
      --s3_path 's3://<ck-data>/daily_staged/'
 """
-    
+
 import argparse
 import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import helpers.hdatetime as hdateti
-import helpers.hparquet as hparque
 import im_v2.common.data.extract.extract_utils as imvcdeexut
-import im_v2.crypto_chassis.data.extract.extractor as imvccdee
+import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="OHLCV, market_depth or trades data."
+        help="OHLCV, market_depth or trades data.",
     )
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
@@ -49,7 +47,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    exchange = imvccdee.CryptoChassisExtractor()
+    exchange = imvccdexex.CryptoChassisExtractor()
     args = vars(args)
     args["unit"] = "s"
     imvcdeexut.download_historical_data(args, exchange)

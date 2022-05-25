@@ -4,25 +4,25 @@ broker.
 
 Import as:
 
-import im_v2.talos.data.extract.extractor as imvtdeex
+import im_v2.talos.data.extract.extractor as imvtdexex
 """
 
 
 import logging
-from typing import Any, Dict, Union
+from typing import Dict, Union
 
 import pandas as pd
 import requests
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import im_v2.common.data.extract.extractor as imvcdeext
+import im_v2.common.data.extract.extractor as imvcdexex
 import im_v2.talos.utils as imv2tauti
 
 _LOG = logging.getLogger(__name__)
 
- 
-class TalosExtractor(imvcdeext.Extractor):
+
+class TalosExtractor(imvcdexex.Extractor):
     """
     A class for accessing Talos exchange data.
 
@@ -98,8 +98,8 @@ class TalosExtractor(imvcdeext.Extractor):
         exchange_id: str,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
+        *,
         bar_per_iteration: int = 10000,
-        **kwargs
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars for given currency pair for given crypto
@@ -145,7 +145,9 @@ class TalosExtractor(imvcdeext.Extractor):
         )
 
     def _download_market_depth(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Market depth data is not available for Talos vendor")
+        raise NotImplementedError(
+            "Market depth data is not available for Talos vendor"
+        )
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:
         raise NotImplementedError("Trades data is not available for Talos vendor")

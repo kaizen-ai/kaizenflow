@@ -11,7 +11,6 @@ import argparse
 import logging
 import os
 import time
-
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Type, Union
 
@@ -23,13 +22,12 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.data.extract.extractor as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.extract.extractor as imvtdeexcl
-#
-import im_v2.common.data.extract.extractor as imvcdeext
+import im_v2.talos.data.extract.extractor as imvtdexex
+import im_v2.common.data.extract.extractor as imvcdexex
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -239,9 +237,7 @@ def download_realtime_for_one_exchange(
 @timeout(TIMEOUT_SEC)
 def _download_realtime_for_one_exchange_with_timeout(
     args: argparse.Namespace,
-    exchange_class: Type[
-        Union[imvcdeexcl.CcxtExtractor, imvtdeexcl.TalosExtractor]
-    ],
+    exchange_class: Type[Union[ivcdexex.CcxtExtractor, imvtdexex.TalosExtractor]],
     start_timestamp: datetime,
     end_timestamp: datetime,
 ) -> None:
@@ -394,7 +390,10 @@ def save_csv(
 
 
 def save_parquet(
-    data: pd.DataFrame, path_to_exchange: str, unit: str, aws_profile: Optional[str],
+    data: pd.DataFrame,
+    path_to_exchange: str,
+    unit: str,
+    aws_profile: Optional[str],
 ) -> None:
     """
     Save Parquet dataset.
@@ -419,7 +418,7 @@ def save_parquet(
 
 
 def download_historical_data(
-    args: Dict[str, Any], exchange: imvcdeext.Extractor
+    args: Dict[str, Any], exchange: imvcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for downloading historical exchange data.
@@ -448,11 +447,13 @@ def download_historical_data(
         # Download data.
         # TODO(Danya): since kwargs are different for each data type and script run, we should
         #  set them before.
-        data = exchange.download_data(args["data_type"],
-        args["exchange_id"],
-        currency_pair,
-        start_timestamp=start_timestamp,
-        end_timestamp=end_timestamp,)
+        data = exchange.download_data(
+            args["data_type"],
+            args["exchange_id"],
+            currency_pair,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+        )
         if data.empty:
             continue
         # Assign pair and exchange columns.
@@ -467,7 +468,9 @@ def download_historical_data(
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
         if args["file_format"] == "parquet":
-            save_parquet(data, path_to_exchange, args["unit"], args["aws_profile"])
+            save_parquet(
+                data, path_to_exchange, args["unit"], args["aws_profile"]
+            )
         elif args["file_format"] == "csv":
             save_csv(
                 data,

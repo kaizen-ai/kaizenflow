@@ -21,7 +21,7 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.extractor as imvcdeex
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 _LOG = logging.getLogger(__name__)
@@ -31,13 +31,6 @@ def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser.add_argument(
-        "--sleep_time",
-        action="store",
-        type=int,
-        default=5,
-        help="Sleep time between currency pair downloads (in seconds).",
     )
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
@@ -49,7 +42,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
-    exchange = imvcdeex.CcxtExtractor(args.exchange_id)
+    exchange = ivcdexex.CcxtExtractor(args.exchange_id)
     # Assign extractor-specific variables.
     args = vars(args)
     args["unit"] = "ms"

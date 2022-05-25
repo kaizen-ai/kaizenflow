@@ -1,10 +1,9 @@
 """
 Import as:
 
-import im_v2.ccxt.data.extract.extractor as imvcdeex
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 """
 
-from asyncio import streams
 import logging
 import time
 from typing import Any, Dict, List, Optional
@@ -16,13 +15,12 @@ import tqdm
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
-import im_v2.common.data.extract.extractor as imvcdeext
-
+import im_v2.common.data.extract.extractor as imvcdexex
 
 _LOG = logging.getLogger(__name__)
 
 
-class CcxtExtractor(imvcdeext.Extractor):
+class CcxtExtractor(imvcdexex.Extractor):
     """
     A class for accessing CCXT exchange data.
 
@@ -33,9 +31,9 @@ class CcxtExtractor(imvcdeext.Extractor):
 
     def __init__(self, exchange_id: str) -> None:
         """
-        Constructor.
+        Construct CCXT extractor.
 
-        :param: exchange_id: CCXT exchange id (e.g., `binance`)
+        :param: exchange_id: CCXT exchange id to log into (e.g., `binance`)
         """
         super().__init__()
         self.exchange_id = exchange_id
@@ -73,6 +71,41 @@ class CcxtExtractor(imvcdeext.Extractor):
         Get all the currency pairs available for the exchange.
         """
         return list(self._exchange.load_markets().keys())
+
+    def download_order_book(self, currency_pair: str) -> Dict[str, Any]:
+        """
+        Download order book for a currency pair.
+
+        :param currency_pair: a currency pair, e.g. 'BTC_USDT'
+        :return: order book status. output is a nested dictionary with order book
+        at the moment of request. E.g.,
+            ```
+            {
+                'symbol': 'BTC/USDT',
+                'bids': [[62715.84, 0.002], [62714.0, 0.002], [62712.55, 0.0094]],
+                'asks': [[62715.85, 0.002], [62717.25, 0.1674]],
+                'timestamp': 1635248738159,
+                'datetime': '2021-10-26T11:45:38.159Z',
+                'nonce': None
+            }
+            ```
+        """
+        # Change currency pair to CCXT format.
+        currency_pair = currency_pair.replace("_", "/")
+        hdbg.dassert(
+            self._exchange.has["fetchOrderBook"],
+            "Exchange %s doesn't have fetchOrderBook",
+            self._exchange,
+        )
+        hdbg.dassert_in(
+            currency_pair,
+            self.currency_pairs,
+            "Currency pair is not present in exchange",
+        )
+        # Download current order book.
+        # TODO(Grisha): use `_` instead of `/` as currencies separator in `symbol`.
+        order_book = self._exchange.fetch_order_book(currency_pair)
+        return order_book
 
     def _download_ohlcv(
         self,
@@ -149,45 +182,12 @@ class CcxtExtractor(imvcdeext.Extractor):
         return pd.concat(all_bars)
 
     def _download_market_depth(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Market depth data is not available for CCXT vendor")
+        raise NotImplementedError(
+            "Market depth data is not available for CCXT vendor"
+        )
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:
         raise NotImplementedError("Trades data is not available for CCXT vendor")
-
-    def download_order_book(self, currency_pair: str) -> Dict[str, Any]:
-        """
-        Download order book for a currency pair.
-
-        :param currency_pair: a currency pair, e.g. 'BTC_USDT'
-        :return: order book status. output is a nested dictionary with order book
-        at the moment of request. E.g.,
-            ```
-            {
-                'symbol': 'BTC/USDT',
-                'bids': [[62715.84, 0.002], [62714.0, 0.002], [62712.55, 0.0094]],
-                'asks': [[62715.85, 0.002], [62717.25, 0.1674]],
-                'timestamp': 1635248738159,
-                'datetime': '2021-10-26T11:45:38.159Z',
-                'nonce': None
-            }
-            ```
-        """
-        # Change currency pair to CCXT format.
-        currency_pair = currency_pair.replace("_", "/")
-        hdbg.dassert(
-            self._exchange.has["fetchOrderBook"],
-            "Exchange %s doesn't have fetchOrderBook",
-            self._exchange,
-        )
-        hdbg.dassert_in(
-            currency_pair,
-            self.currency_pairs,
-            "Currency pair is not present in exchange",
-        )
-        # Download current order book.
-        # TODO(Grisha): use `_` instead of `/` as currencies separator in `symbol`.
-        order_book = self._exchange.fetch_order_book(currency_pair)
-        return order_book
 
     def _fetch_ohlcv(
         self,
