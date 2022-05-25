@@ -39,7 +39,6 @@ import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdcl
-import im_v2.common.data.client as icdc
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -102,7 +101,7 @@ print(config)
 
 # %%
 # TODO(Dan): Clean up and move to a lib.
-# TODO(Dan): @Nina add more detailed description of functions. 
+# TODO(Dan): @Nina add more detailed description of functions.
 def _preprocess_data_for_qa_stats_computation(
     config: cconconf.Config, data: pd.DataFrame
 ) -> pd.DataFrame:
@@ -170,7 +169,8 @@ def _get_bad_data_stats(
         symbol_stats["NaNs [%]"] = 100 * (
             symbol_data[
                 symbol_data[config["column_names"]["close_price"]] == np.inf
-            ].shape[0] / symbol_data.shape[0]
+            ].shape[0]
+            / symbol_data.shape[0]
         )
         # Compute missing bars stats by counting NaNs created by resampling.
         symbol_stats["missing bars [%]"] = 100 * (
@@ -279,16 +279,12 @@ universe
 
 # %%
 binance_universe = [
-    full_symbol
-    for full_symbol in universe
-    if full_symbol.startswith("binance")
+    full_symbol for full_symbol in universe if full_symbol.startswith("binance")
 ]
 binance_universe
 
 # %%
-binance_data = client.read_data(
-    binance_universe, **config["data"]["read_data"]
-)
+binance_data = client.read_data(binance_universe, **config["data"]["read_data"])
 binance_data = _preprocess_data_for_qa_stats_computation(config, binance_data)
 binance_data.head(3)
 
@@ -307,23 +303,21 @@ binance_bad_data_stats_by_year_month = _get_bad_data_stats_by_year_month(
 binance_bad_data_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_by_year_month_stats(config, binance_bad_data_stats_by_year_month)
+_ = _plot_bad_data_by_year_month_stats(
+    config, binance_bad_data_stats_by_year_month
+)
 
 # %% [markdown]
 # ## FTX
 
 # %%
 ftx_universe = [
-    full_symbol
-    for full_symbol in universe
-    if full_symbol.startswith("ftx")
+    full_symbol for full_symbol in universe if full_symbol.startswith("ftx")
 ]
 ftx_universe
 
 # %%
-ftx_data = client.read_data(
-    ftx_universe, **config["data"]["read_data"]
-)
+ftx_data = client.read_data(ftx_universe, **config["data"]["read_data"])
 ftx_data = _preprocess_data_for_qa_stats_computation(config, ftx_data)
 ftx_data.head(3)
 
@@ -349,16 +343,12 @@ _ = _plot_bad_data_by_year_month_stats(config, ftx_bad_data_stats_by_year_month)
 
 # %%
 gateio_universe = [
-    full_symbol
-    for full_symbol in universe
-    if full_symbol.startswith("gateio")
+    full_symbol for full_symbol in universe if full_symbol.startswith("gateio")
 ]
 gateio_universe
 
 # %%
-gateio_data = client.read_data(
-    gateio_universe, **config["data"]["read_data"]
-)
+gateio_data = client.read_data(gateio_universe, **config["data"]["read_data"])
 gateio_data = _preprocess_data_for_qa_stats_computation(config, gateio_data)
 gateio_data.head(3)
 
@@ -377,23 +367,21 @@ gateio_bad_data_stats_by_year_month = _get_bad_data_stats_by_year_month(
 gateio_bad_data_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_by_year_month_stats(config, gateio_bad_data_stats_by_year_month)
+_ = _plot_bad_data_by_year_month_stats(
+    config, gateio_bad_data_stats_by_year_month
+)
 
 # %% [markdown]
 # ## Kucoin
 
 # %%
 kucoin_universe = [
-    full_symbol
-    for full_symbol in universe
-    if full_symbol.startswith("kucoin")
+    full_symbol for full_symbol in universe if full_symbol.startswith("kucoin")
 ]
 kucoin_universe
 
 # %%
-kucoin_data = client.read_data(
-    kucoin_universe, **config["data"]["read_data"]
-)
+kucoin_data = client.read_data(kucoin_universe, **config["data"]["read_data"])
 kucoin_data = _preprocess_data_for_qa_stats_computation(config, kucoin_data)
 kucoin_data.head(3)
 
@@ -412,6 +400,8 @@ kucoin_bad_data_stats_by_year_month = _get_bad_data_stats_by_year_month(
 kucoin_bad_data_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_by_year_month_stats(config, kucoin_bad_data_stats_by_year_month)
+_ = _plot_bad_data_by_year_month_stats(
+    config, kucoin_bad_data_stats_by_year_month
+)
 
 # %%
