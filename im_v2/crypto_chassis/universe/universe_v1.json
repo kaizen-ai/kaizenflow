@@ -1,5 +1,5 @@
 {
-"crypto_chassis": {
+  "crypto_chassis": {
     "binance": [
       "ADA_USDT",
       "BNB_USDT",
@@ -34,6 +34,32 @@
       "DOGE_USDT",
       "EOS_USDT",
       "ETH_USDT",
+      "SOL_USDT",
+      "XRP_USDT"
+    ],
+    "gateio": [
+      "ADA_USDT",
+      "AVAX_USDT",
+      "BNB_USDT",
+      "BTC_USDT",
+      "DOGE_USDT",
+      "EOS_USDT",
+      "ETH_USDT",
+      "FIL_USDT",
+      "LINK_USDT",
+      "SOL_USDT",
+      "XRP_USDT"
+    ],
+    "kucoin": [
+      "ADA_USDT",
+      "AVAX_USDT",
+      "BNB_USDT",
+      "BTC_USDT",
+      "DOGE_USDT",
+      "EOS_USDT",
+      "ETH_USDT",
+      "FIL_USDT",
+      "LINK_USDT",
       "SOL_USDT",
       "XRP_USDT"
     ]

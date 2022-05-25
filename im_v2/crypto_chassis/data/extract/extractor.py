@@ -13,16 +13,19 @@ import requests
 
 import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
+import helpers.hsecrets as hsecret
+import im_v2.common.data.extract.extractor as imvcdeext
 
 _LOG = logging.getLogger(__name__)
 
 
-class CryptoChassisExtractor:
+class CryptoChassisExtractor(imvcdeext.Extractor):
     """
     Access exchange data from Crypto-Chassis through REST API.
     """
 
     def __init__(self) -> None:
+        super().__init__()
         self._endpoint = "https://api.cryptochassis.com/v1"
 
     @staticmethod
@@ -31,51 +34,14 @@ class CryptoChassisExtractor:
         Convert currency pair used for getting data from exchange.
         """
         return currency_pair.replace("_", "/").lower()
-
-    def download_data(self, data_type: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
-        """
-        Download Crypto Chassis data.
-
-        :param data_type: the type of data, e.g. `market_depth`
-        :return: Crypto Chassis data
-        """
-        # Get data.
-        if data_type == "ohlcv":
-            data = self._download_ohlcv(
-            exchange=kwargs["exchange_id"],
-            currency_pair=kwargs["currency_pair"],
-            mode=kwargs["mode"],
-            start_timestamp=kwargs["start_timestamp"],
-            end_timestamp=kwargs["end_timestamp"],
-            interval=kwargs["interval"],
-            include_realtime=kwargs["include_realtime"],
-        )
-        elif data_type == "market_depth":
-            data = self._download_market_depth(
-                exchange=kwargs["exchange_id"],
-                currency_pair=kwargs["currency_pair"],
-                depth=kwargs["depth"],
-                start_timestamp=kwargs["start_timestamp"],
-        )
-        elif data_type == "trades":
-            data = self._download_trade(
-                exchange=kwargs["exchange_id"],
-                currency_pair=kwargs["currency_pair"],
-                start_timestamp=kwargs["start_timestamp"],
-        )
-        else:
-            hdbg.dfatal(
-                f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth"
-            )
-        return data
-
+ 
     def _download_market_depth(
         self,
-        exchange: str,
+        exchange_id: str,
         currency_pair: str,
+        start_timestamp: Optional[pd.Timestamp],
         *,
-        start_timestamp: Optional[pd.Timestamp] = None,
-        depth: Optional[int] = None,
+        depth: int = 1,
     ) -> pd.DataFrame:
         """
         Download snapshot data on market depth.
@@ -107,7 +73,7 @@ class CryptoChassisExtractor:
         # Build base URL.
         core_url = self._build_base_url(
             data_type="market-depth",
-            exchange=exchange,
+            exchange=exchange_id,
             currency_pair=currency_pair,
         )
         # Build URL with specified parameters.
@@ -142,15 +108,14 @@ class CryptoChassisExtractor:
 
     def _download_ohlcv(
         self,
-        exchange: str,
+        exchange_id: str,
         currency_pair: str,
-        mode: str,
-        *,
-        interval: Optional[str] = None,
-        start_timestamp: Optional[pd.Timestamp] = None,
-        end_timestamp: Optional[pd.Timestamp] = None,
-        include_realtime: Optional[int] = None,
-    ) -> pd.DataFrame:
+        start_timestamp: Optional[pd.Timestamp],
+        end_timestamp: Optional[pd.Timestamp],
+        interval: Optional[str] = "1m",
+        include_realtime: str = "1",
+        **kwargs
+        ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
 
@@ -158,12 +123,12 @@ class CryptoChassisExtractor:
         0 	1634011620 	56775.59 	56799.51 	56775.59 	56799.51 	0.184718 	56781.6130 	9 	56783.3033
         1 	1634011680 	56822.35 	56832.25 	56815.59 	56815.59 	0.363495 	56828.9840 	16 	56828.9512
 
-        :param exchange: the name of exchange, e.g. `binance`, `coinbase`
+        :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
-        :param mode: `recent` for real-time data, `historical` for historical data
-        :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
         :param start_time: timestamp of start
         :param end_time: timestamp of end
+        :param mode: `recent` for real-time data, `historical` for historical data
+        :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this
             endpoint is 1 request per second per public IP.
         :return: ohlcv data
@@ -189,7 +154,7 @@ class CryptoChassisExtractor:
         # Build base URL.
         core_url = self._build_base_url(
             data_type="ohlc",
-            exchange=exchange,
+            exchange=exchange_id,
             currency_pair=currency_pair,
         )
         # Build URL with specified parameters.
@@ -204,46 +169,46 @@ class CryptoChassisExtractor:
         r = requests.get(query_url)
         # Retrieve raw data.
         data_json = r.json()
-        if data_json.get(mode) is None:
-            # Return empty dataframe if there is no results.
-            ohlcv_data = pd.DataFrame()
-            _LOG.warning("No data found at `%s`. Returning empty DataFrame.", query_url)
-        else:
-            if mode == "recent":
-                # Process real-time.
-                # Get columns.
-                columns = data_json[mode]["fields"].split(", ")
-                # Build Dataframe.
-                ohlcv_data = pd.DataFrame(
-                    columns=columns, data=data_json[mode]["data"]
-                )
-            elif mode == "historical":
-                # Process historical data.
-                df_csv = data_json[mode]["urls"][0]["url"]
-                # Convert CSV into dataframe.
-                ohlcv_data = pd.read_csv(df_csv, compression="gzip")
-                # Filter the time period since Crypto Chassis doesn't provide this functionality.
-                # (CmTask #1887).
-                if start_timestamp:
-                    ohlcv_data = ohlcv_data[
-                        (ohlcv_data["time_seconds"] >= start_timestamp)
-                    ]
-                if end_timestamp:
-                    ohlcv_data = ohlcv_data[
-                        (ohlcv_data["time_seconds"] <= end_timestamp)
-                    ]
-            else:
-                raise ValueError(f"Invalid mode=`{mode}`")
+        # Get OHLCV data.
+        data = []
+        if data_json.get("historical") is not None:
+            # Process historical data.
+            df_csv = data_json["historical"]["urls"][0]["url"]
+            # Convert CSV into dataframe.
+            historical_data = pd.read_csv(df_csv, compression="gzip") 
+            data.append(historical_data)
+        if data_json.get("recent") is not None:
+            # Process recent data.
+            columns = data_json["recent"]["fields"].split(", ")
+            # Build Dataframe.
+            recent_data = pd.DataFrame(
+                columns=columns, data=data_json["recent"]["data"]
+            )
+            data.append(recent_data)
+        # Combine historical and recent Dataframes.
+        if not data:
+            # Return empty Dataframe if there is no data.
+            return pd.DataFrame()
+        ohlcv = pd.concat(data, axis=1)
+        # Filter the time period since Crypto Chassis doesn't provide this functionality.
+        # (CmTask #1887).
+        if start_timestamp:
+            ohlcv = ohlcv[
+                (ohlcv["time_seconds"] >= start_timestamp)
+            ]
+        if end_timestamp:
+            ohlcv = ohlcv[
+                (ohlcv["time_seconds"] <= end_timestamp)
+            ]
         # Rename time column.
-        ohlcv_data = ohlcv_data.rename(columns={"time_seconds": "timestamp"})
-        return ohlcv_data
+        ohlcv = ohlcv.rename(columns={"time_seconds": "timestamp"})
+        return ohlcv
 
-    def _download_trade(
+    def _download_trades(
         self,
-        exchange: str,
+        exchange_id: str,
         currency_pair: str,
-        *,
-        start_timestamp: Optional[pd.Timestamp] = None,
+        start_timestamp: Optional[pd.Timestamp],
     ) -> pd.DataFrame:
         """
         Download snapshot of trade data.
@@ -271,7 +236,7 @@ class CryptoChassisExtractor:
         # Build base URL.
         core_url = self._build_base_url(
             data_type="trade",
-            exchange=exchange,
+            exchange=exchange_id,
             currency_pair=currency_pair,
         )
         # Build URL with specified parameters.

@@ -65,6 +65,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "start_timestamp": "20211110-101100",
             "end_timestamp": "20211110-101200",
             "exchange_id": "binance",
+            "data_type": "ohlcv",
             "universe": "v3",
             "db_stage": "local",
             "db_table": "ccxt_ohlcv",
