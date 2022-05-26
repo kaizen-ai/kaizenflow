@@ -27,6 +27,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
     def __init__(self) -> None:
         super().__init__()
         self._endpoint = "https://api.cryptochassis.com/v1"
+        self.vendor = "crypto_chassis"
 
     @staticmethod
     def convert_currency_pair(currency_pair: str) -> str:
@@ -62,13 +63,13 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         return query_url
 
     def _download_market_depth(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        start_timestamp: pd.Timestamp,
-        end_timestamp: pd.Timestamp,
-        *,
-        depth: int = 1,
+            self,
+            exchange_id: str,
+            currency_pair: str,
+            start_timestamp: pd.Timestamp,
+            end_timestamp: pd.Timestamp,
+            *,
+            depth: int = 1,
     ) -> pd.DataFrame:
         """
         Download snapshot data on market depth.
@@ -149,15 +150,14 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         return market_depth
 
     def _download_ohlcv(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        start_timestamp: Optional[pd.Timestamp],
-        end_timestamp: Optional[pd.Timestamp],
-        *,
-        interval: Optional[str] = "1m",
-        include_realtime: str = "1",
-        **kwargs: Any,
+            self,
+            exchange_id: str,
+            currency_pair: str,
+            start_timestamp: Optional[pd.Timestamp],
+            end_timestamp: Optional[pd.Timestamp],
+            *,
+            interval: Optional[str] = "1m",
+            include_realtime: str = "1",
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
@@ -168,9 +168,8 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
 
         :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
-        :param start_time: timestamp of start
-        :param end_time: timestamp of end
-        :param mode: `recent` for real-time data, `historical` for historical data
+        :param start_timestamp: timestamp of start
+        :param end_timestamp: timestamp of end
         :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this
             endpoint is 1 request per second per public IP.
@@ -251,7 +250,8 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         self,
         exchange_id: str,
         currency_pair: str,
-        start_timestamp: Optional[pd.Timestamp],
+        *,
+        start_timestamp: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
         """
         Download snapshot of trade data.
@@ -260,9 +260,9 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         0     1641686404     41692.50     0.012473     0
         1     1641686441     41670.00     0.001194     0
 
-        :param exchange: the name of exchange, e.g. `binance`, `coinbase`
+        :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
-        :param start_time: timestamp of start
+        :param start_timestamp: timestamp of start
         :return: trade data
         """
         # Verify that date parameters are of correct format.
