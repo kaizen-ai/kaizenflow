@@ -3,24 +3,23 @@ Download data from Crypto-Chassis: https://github.com/crypto-chassis.
 
 Import as:
 
-import im_v2.crypto_chassis.data.extract.extractor as imvccdee
+import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 """
 import logging
 from typing import Any, Optional
 
 import pandas as pd
 import requests
-
-import helpers.hdbg as hdbg
-import helpers.hdatetime as hdateti
 import tqdm
-import time
-import im_v2.common.data.extract.extractor as imvcdeext
+
+import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import im_v2.common.data.extract.extractor as imvcdexex
 
 _LOG = logging.getLogger(__name__)
 
 
-class CryptoChassisExtractor(imvcdeext.Extractor):
+class CryptoChassisExtractor(imvcdexex.Extractor):
     """
     Access exchange data from Crypto-Chassis through REST API.
     """
@@ -35,7 +34,33 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         Convert currency pair used for getting data from exchange.
         """
         return currency_pair.replace("_", "/").lower()
- 
+
+    @staticmethod
+    def _build_query_url(base_url: str, **kwargs: Any) -> str:
+        """
+        Combine base API URL and query parameters.
+
+        :param base_url: base URL of CryptoChassis API
+        Additional parameters that can be passed as **kwargs:
+          - depth: int - allowed values: 1 to 10. Defaults to 1.
+          - interval: str, e.g. `1m`, `3m`, `5m` etc.
+          - startTime: pd.Timestamp
+          - endTime: pd.Timestamp
+          - includeRealTime: 0, 1. If set to 1, request rate limit on this
+            endpoint is 1 request per second per public IP.
+        :return: query URL with parameters
+        """
+        params = []
+        for pair in kwargs.items():
+            if pair[1] is not None:
+                # Check whether the parameter is not empty.
+                # Convert value to string and join query parameters.
+                joined = "=".join([pair[0], str(pair[1])])
+                params.append(joined)
+        joined_params = "&".join(params)
+        query_url = f"{base_url}?{joined_params}"
+        return query_url
+
     def _download_market_depth(
         self,
         exchange_id: str,
@@ -48,9 +73,9 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         """
         Download snapshot data on market depth.
 
-            timestamp 	bid_price 	bid_size 	ask_price 	ask_size
-        0 	1641686400 	41678.35 	0.017939 	41686.97 	1.69712319
-        1 	1641686401 	41678.35 	0.017939 	41690.58 	0.04
+            timestamp     bid_price     bid_size     ask_price     ask_size
+        0     1641686400     41678.35     0.017939     41686.97     1.69712319
+        1     1641686401     41678.35     0.017939     41690.58     0.04
 
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
@@ -59,13 +84,13 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         :return: market depth data
         """
         hdbg.dassert_isinstance(
-                start_timestamp,
-                pd.Timestamp,
-            )
+            start_timestamp,
+            pd.Timestamp,
+        )
         hdbg.dassert_isinstance(
-                end_timestamp,
-                pd.Timestamp,
-            )
+            end_timestamp,
+            pd.Timestamp,
+        )
         hdbg.dassert_lte(start_timestamp, end_timestamp)
         # Verify that date parameters are of correct format.
         if depth:
@@ -129,16 +154,17 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         currency_pair: str,
         start_timestamp: Optional[pd.Timestamp],
         end_timestamp: Optional[pd.Timestamp],
+        *,
         interval: Optional[str] = "1m",
         include_realtime: str = "1",
-        **kwargs
-        ) -> pd.DataFrame:
+        **kwargs: Any,
+    ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
 
-            timestamp 	open 	    high 	    low 	    close 	   volume  vwap  number_of_trades 	twap
-        0 	1634011620 	56775.59 	56799.51 	56775.59 	56799.51 	0.184718 	56781.6130 	9 	56783.3033
-        1 	1634011680 	56822.35 	56832.25 	56815.59 	56815.59 	0.363495 	56828.9840 	16 	56828.9512
+            timestamp     open         high         low         close        volume  vwap  number_of_trades     twap
+        0     1634011620     56775.59     56799.51     56775.59     56799.51     0.184718     56781.6130     9     56783.3033
+        1     1634011680     56822.35     56832.25     56815.59     56815.59     0.363495     56828.9840     16     56828.9512
 
         :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
@@ -157,13 +183,17 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
                 pd.Timestamp,
             )
             # Convert datetime to unix time, e.g. `2022-01-09T00:00:00` -> `1641686400`.
-            start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp, unit="s")
+            start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
+                start_timestamp, unit="s"
+            )
         if end_timestamp:
             hdbg.dassert_isinstance(
                 end_timestamp,
                 pd.Timestamp,
             )
-            end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp, unit="s")
+            end_timestamp = hdateti.convert_timestamp_to_unix_epoch(
+                end_timestamp, unit="s"
+            )
         # Currency pairs in market data are stored in `cur1/cur2` format,
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
@@ -192,7 +222,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
             # Process historical data.
             df_csv = data_json["historical"]["urls"][0]["url"]
             # Convert CSV into dataframe.
-            historical_data = pd.read_csv(df_csv, compression="gzip") 
+            historical_data = pd.read_csv(df_csv, compression="gzip")
             data.append(historical_data)
         if data_json.get("recent") is not None:
             # Process recent data.
@@ -210,13 +240,9 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         # Filter the time period since Crypto Chassis doesn't provide this functionality.
         # (CmTask #1887).
         if start_timestamp:
-            ohlcv = ohlcv[
-                (ohlcv["time_seconds"] >= start_timestamp)
-            ]
+            ohlcv = ohlcv[(ohlcv["time_seconds"] >= start_timestamp)]
         if end_timestamp:
-            ohlcv = ohlcv[
-                (ohlcv["time_seconds"] <= end_timestamp)
-            ]
+            ohlcv = ohlcv[(ohlcv["time_seconds"] <= end_timestamp)]
         # Rename time column.
         ohlcv = ohlcv.rename(columns={"time_seconds": "timestamp"})
         return ohlcv
@@ -230,9 +256,9 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         """
         Download snapshot of trade data.
 
-            timestamp 	price 	    size 	   is_buyer_maker
-        0 	1641686404 	41692.50 	0.012473 	0
-        1 	1641686441 	41670.00 	0.001194 	0
+            timestamp     price         size        is_buyer_maker
+        0     1641686404     41692.50     0.012473     0
+        1     1641686441     41670.00     0.001194     0
 
         :param exchange: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
@@ -246,7 +272,7 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
                 pd.Timestamp,
             )
             start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
-        # Currency pairs in market data are stored in `cur1/cur2` format, 
+        # Currency pairs in market data are stored in `cur1/cur2` format,
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
         currency_pair = currency_pair.replace("/", "-")
@@ -257,13 +283,11 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
             currency_pair=currency_pair,
         )
         # Build URL with specified parameters.
-        query_url = self._build_query_url(
-            core_url, startTime=start_timestamp
-        )
+        query_url = self._build_query_url(core_url, startTime=start_timestamp)
         # Request the data.
         r = requests.get(query_url)
         # Retrieve raw data.
-        data_json = r.json() 
+        data_json = r.json()
         if data_json.get("urls") is None:
             # Return empty dataframe if there is no results.
             return pd.DataFrame()
@@ -293,28 +317,3 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         # Build main API URL.
         core_url = f"{self._endpoint}/{data_type}/{exchange}/{currency_pair}"
         return core_url
-
-    def _build_query_url(self, base_url: str, **kwargs: Any) -> str:
-        """
-        Combine base API URL and query parameters.
-
-        :param base_url: base URL of CryptoChassis API
-        Additional parameters that can be passed as **kwargs:
-          - depth: int - allowed values: 1 to 10. Defaults to 1.
-          - interval: str, e.g. `1m`, `3m`, `5m` etc.
-          - startTime: pd.Timestamp
-          - endTime: pd.Timestamp
-          - includeRealTime: 0, 1. If set to 1, request rate limit on this
-            endpoint is 1 request per second per public IP.
-        :return: query URL with parameters
-        """
-        params = []
-        for pair in kwargs.items():
-            if pair[1] is not None:
-                # Check whether the parameter is not empty.
-                # Convert value to string and join query parameters.
-                joined = "=".join([pair[0], str(pair[1])])
-                params.append(joined)
-        joined_params = "&".join(params)
-        query_url = f"{base_url}?{joined_params}"
-        return query_url
