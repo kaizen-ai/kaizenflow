@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
@@ -8,7 +7,6 @@ import research_amp.cc.qa as ramccqa
 
 
 class TestGetBadDataStats(hunitest.TestCase):
-    @pytest.mark.slow("Fast on server, slow on GH.")
     def test_get_bad_data_stats1(self) -> None:
         """
         Test that stats computed correctly by grouping by full symbol, year,
