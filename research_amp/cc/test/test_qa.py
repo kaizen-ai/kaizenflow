@@ -32,7 +32,7 @@ class TestGetBadDataStats(hunitest.TestCase):
         """
         Test that stats are computed correctly.
         """
-        crypto_chassis_data = self._get_test_data()
+        crypto_chassis_data = self.get_test_data()
         agg_level = ["full_symbol", "year", "month"]
         crypto_chassis_bad_data_stats = ramccqa.get_bad_data_stats(
             crypto_chassis_data, agg_level
