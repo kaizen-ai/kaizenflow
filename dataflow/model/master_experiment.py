@@ -137,7 +137,7 @@ def run_tiled_backtest(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     # Create the DAG runner.
-    dag_runner = config["dag_runner"](config)
+    dag_runner = config["meta"]["dag_runner"](config)
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
