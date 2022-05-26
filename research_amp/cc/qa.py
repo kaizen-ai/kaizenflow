@@ -17,10 +17,10 @@ def _preprocess_data_for_qa_stats_computation(data: pd.DataFrame) -> pd.DataFram
     """
     Preprocess vendor data for QA stats computations.
 
-    Preprocessing includes:
-   - Replace NaNs with `np.inf` to differentiate them with missing bars after resampling
-   - Resample data to count missing bars
-   - Add year and month as columns to group by them while computing QA stats
+     Preprocessing includes:
+    - Replace NaNs with `np.inf` to differentiate them with missing bars after resampling
+    - Resample data to count missing bars
+    - Add year and month as columns to group by them while computing QA stats
     """
     # Fill NaN values with `np.inf` in order to differentiate them
     # from missing bars.
