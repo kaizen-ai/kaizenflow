@@ -227,7 +227,7 @@ def _compare_bad_data_stats_by_year_month(
 
 
 def _preprocess_data_for_qa_stats_computation(
-    config: cconconf.Config, data: pd.DataFrame
+        config: cconconf.Config, data: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Preprocess vendor data for QA stats computations.
@@ -238,7 +238,7 @@ def _preprocess_data_for_qa_stats_computation(
     # Resample data for each full symbol to insert missing bars.
     resampled_symbol_data = []
     for full_symbol, symbol_data in preprocessed_data.groupby(
-        config["column_names"]["full_symbol"]
+            config["column_names"]["full_symbol"]
     ):
         symbol_data = hpandas.resample_df(symbol_data, "T")
         symbol_data[config["column_names"]["full_symbol"]] = symbol_data[
@@ -253,14 +253,14 @@ def _preprocess_data_for_qa_stats_computation(
 
 
 def _get_timestamp_stats(
-    config: cconconf.Config, data: pd.DataFrame
+        config: cconconf.Config, data: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Get min max timstamp stats per full symbol.
     """
     res_stats = []
     for full_symbol, symbol_data in data.groupby(
-        config["column_names"]["full_symbol"]
+            config["column_names"]["full_symbol"]
     ):
         # Compute stats for a full symbol.
         symbol_stats = pd.Series(dtype="object", name=full_symbol)
@@ -291,10 +291,10 @@ def _get_bad_data_stats(
         # Compute NaNs in initially loaded data by counting `np.inf` values
         # in preprocessed data.
         symbol_stats["NaNs [%]"] = 100 * (
-            symbol_data[
-                symbol_data[config["column_names"]["close_price"]] == np.inf
-            ].shape[0]
-            / symbol_data.shape[0]
+                symbol_data[
+                    symbol_data[config["column_names"]["close_price"]] == np.inf
+                    ].shape[0]
+                / symbol_data.shape[0]
         )
         # Compute missing bars stats by counting NaNs created by resampling.
         symbol_stats["missing bars [%]"] = 100 * (
@@ -304,14 +304,14 @@ def _get_bad_data_stats(
         )
         #
         symbol_stats["volume=0 [%]"] = 100 * (
-            symbol_data[symbol_data["volume"] == 0].shape[0]
-            / symbol_data.shape[0]
+                symbol_data[symbol_data["volume"] == 0].shape[0]
+                / symbol_data.shape[0]
         )
         #
         symbol_stats["bad data [%]"] = (
-            symbol_stats["NaNs [%]"]
-            + symbol_stats["missing bars [%]"]
-            + symbol_stats["volume=0 [%]"]
+                symbol_stats["NaNs [%]"]
+                + symbol_stats["missing bars [%]"]
+                + symbol_stats["volume=0 [%]"]
         )
         res_stats.append(symbol_stats)
     # Combine all full symbol stats and reorder columns.
