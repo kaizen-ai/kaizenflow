@@ -13,9 +13,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 
-def preprocess_data_for_qa_stats_computation(
-    data: pd.DataFrame
-) -> pd.DataFrame:
+def preprocess_data_for_qa_stats_computation(data: pd.DataFrame) -> pd.DataFrame:
     """
     Preprocess vendor data for QA stats computations.
     """
@@ -24,13 +22,11 @@ def preprocess_data_for_qa_stats_computation(
     preprocessed_data = data.fillna(np.inf)
     # Resample data for each full symbol to insert missing bars.
     resampled_symbol_data = []
-    for full_symbol, symbol_data in preprocessed_data.groupby(
-        "full_symbol"
-    ):
+    for full_symbol, symbol_data in preprocessed_data.groupby("full_symbol"):
         symbol_data = hpandas.resample_df(symbol_data, "T")
-        symbol_data["full_symbol"] = symbol_data[
-            "full_symbol"
-        ].fillna(method="bfill")
+        symbol_data["full_symbol"] = symbol_data["full_symbol"].fillna(
+            method="bfill"
+        )
         resampled_symbol_data.append(symbol_data)
     preprocessed_data = pd.concat(resampled_symbol_data)
     # Add year and month columns to allow grouping data by them.
