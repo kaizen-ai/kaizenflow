@@ -60,18 +60,19 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
         symbol_stats["missing bars [%]"] = 100 * (
             costatis.compute_frac_nan(symbol_data["close"])
         )
-        symbol_stats["missing bars [%]"] = (
-            symbol_stats["missing bars [%]"] - symbol_stats["NaNs [%]"]
-        )
         symbol_stats["volume=0 [%]"] = 100 * (
             symbol_data[symbol_data["volume"] == 0].shape[0]
             / symbol_data.shape[0]
         )
         symbol_stats["bad data [%]"] = (
-            symbol_stats["NaNs [%]"] + symbol_stats["volume=0 [%]"]
+                symbol_stats["NaNs [%]"]
+                + symbol_stats["missing bars [%]"]
+                + symbol_stats["volume=0 [%]"]
         )
         res_stats.append(symbol_stats)
     res_stats_df = pd.concat(res_stats, axis=1).T
+    cols = ["bad data [%]", "missing bars [%]", "volume=0 [%]", "NaNs [%]"]
+    res_stats_df = res_stats_df[cols]
     return res_stats_df
 
 
