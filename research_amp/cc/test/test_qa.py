@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
@@ -15,6 +16,7 @@ class TestGetBadDataStats(hunitest.TestCase):
     month columns.
     """
 
+    @pytest.mark.slow("Fast on server, slow on GH.")
     def test_get_bad_data_stats1(self) -> None:
         crypto_chassis_data = self._get_crypto_chassis_test_data()
         agg_level = ["full_symbol", "year", "month"]
@@ -34,6 +36,7 @@ class TestGetBadDataStats(hunitest.TestCase):
             crypto_chassis_bad_data_stats, expected_signature, fuzzy_match=True
         )
 
+    @pytest.mark.slow("Fast on server, slow on GH.")
     def test_get_bad_data_stats2(self) -> None:
         """
         agg_level = ["full_symbol"]
