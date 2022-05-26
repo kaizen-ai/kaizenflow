@@ -379,7 +379,7 @@ def get_CryptoChassisPqImClientMarketData_example1(
     timestamp we need to read all the data which is an expensive
     operation.
     """
-    resample_1min = False
+    resample_1min = True
     im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(resample_1min)
     # Build a function that returns a wall clock to initialise `MarketData`.
 
