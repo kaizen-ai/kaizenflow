@@ -84,17 +84,18 @@ def get_cmtask1953_config() -> cconconf.Config:
             "read_data": {
                 "full_symbols": ["binance::BTC_USDT"],
                 "start_ts": pd.Timestamp("2022-01-01 00:00", tz="UTC"),
-                "end_ts": pd.Timestamp("2022-01-31 23:59", tz="UTC"),
+                "end_ts": pd.Timestamp("2022-03-31 23:59", tz="UTC"),
                 "columns": None,
                 "filter_data_mode": "assert",
             },
         },
-        "column_names": {
-            "full_symbol": "full_symbol",
-            "close_price": "close",
+        "analysis": {
+            "resampling_rule": "5T",
+            "target_value": "volume",
         },
-        "stats": {
-            "threshold": 30,
+        "model": {
+            "delay_lag": 1,
+            "num_lags": 4,
         },
     }
     config = ccocouti.get_config_from_nested_dict(param_dict)
@@ -128,7 +129,9 @@ ohlcv_cols = [
 ]
 btc_ohlcv = btc_ohlcv[ohlcv_cols]
 # Resample.
-btc_ohlcv = cfinresa.resample_ohlcv_bars(btc_ohlcv, "5T")
+btc_ohlcv = cfinresa.resample_ohlcv_bars(
+    btc_ohlcv, config["analysis"]["resampling_rule"]
+)
 btc_ohlcv.head(3)
 
 # %% [markdown]
@@ -138,7 +141,7 @@ btc_ohlcv.head(3)
 start_date = config["data"]["read_data"]["start_ts"]
 end_date = config["data"]["read_data"]["end_ts"]
 
-# Note: works only for 2022 for now.
+# Load bid ask from s3. Note: works only for 2022 for now.
 result = []
 for i in range(start_date.month, end_date.month + 1):
     tmp_df = pd.read_parquet(
@@ -147,14 +150,18 @@ for i in range(start_date.month, end_date.month + 1):
     result.append(tmp_df)
 bid_ask_btc = pd.concat(result)
 bid_ask_btc = bid_ask_btc[:end_date]
+# Add `full_symbol` (necessary param for `calculate_bid_ask_statistics`).
 bid_ask_btc["full_symbol"] = str(config["data"]["read_data"]["full_symbols"])[
     2:-2
 ]
+# Choose only valid cols.
 bid_ask_btc = bid_ask_btc[
     ["bid_price", "bid_size", "ask_price", "ask_size", "full_symbol"]
 ]
 # Resample.
-bid_ask_btc = raccchap.resample_bid_ask(bid_ask_btc, "5T")
+bid_ask_btc = raccchap.resample_bid_ask(
+    bid_ask_btc, config["analysis"]["resampling_rule"]
+)
 # Convert.
 for cols in bid_ask_btc.columns[:-1]:
     bid_ask_btc[cols] = pd.to_numeric(bid_ask_btc[cols], downcast="float")
@@ -340,10 +347,13 @@ def collect_real_naive_lookback_est(
 # Generate the separate DataFrame for estimators.
 estimators = pd.DataFrame(index=btc.index[1:])
 # Choose the target value.
-target = "volume"
+target = config["analysis"]["target_value"]
+delay_in_mins = int(config["analysis"]["resampling_rule"][0]) * 2
 
 estimators = collect_real_naive_lookback_est(estimators, btc, target, "real")
-estimators = collect_real_naive_lookback_est(estimators, btc, target, "naive", 5)
+estimators = collect_real_naive_lookback_est(
+    estimators, btc, target, "naive", delay_in_mins
+)
 estimators = collect_real_naive_lookback_est(estimators, btc, target, "lookback")
 estimators
 
@@ -473,24 +483,16 @@ def regression_results(y_true, y_pred, mae_only: bool = True):
 # Drop NaNs.
 test_sk = hpandas.dropna(test)
 # Get rid of days with only one observations (first and last rows).
-test_sk = test_sk.iloc[1:-1]
+test_sk = test_sk.iloc[:-1]
 # Add more lags as features
+delay_lag = config["model"]["delay_lag"]
+num_lags = config["model"]["num_lags"]
 test_sk, info = cofeatur.compute_lagged_features(
-    test_sk, f"real_{target}_0", delay_lag=1, num_lags=3
+    test_sk, f"real_{target}_0", delay_lag=delay_lag, num_lags=num_lags
 )
 # Hardcoded solution: omit "naive" estimator in favor of new lag estimators.
-test_sk = test_sk.drop(columns=[f"real_{target}_2"])
+test_sk = test_sk.drop(columns=[f"naive_{target}"])
 print(info)
-# Add 2 more features with value difference.
-test_sk["naive_real_diff"] = (
-    test_sk[f"naive_{target}"] - test_sk[f"real_{target}_0"]
-)
-test_sk["naive_look_diff"] = (
-    test_sk[f"naive_{target}"] - test_sk[f"lookback_{target}"]
-)
-test_sk["real_look_diff"] = (
-    test_sk[f"lookback_{target}"] - test_sk[f"real_{target}_0"]
-)
 # Display the results.
 display(test_sk.corr())
 display(test_sk.shape)
@@ -498,21 +500,19 @@ display(test_sk.tail(3))
 print(f"Set of prediciton features = {list(test_sk.columns[1:])}")
 
 # %%
-# Training dataset: first 14 days.
-X_train = test_sk.loc["2022-01-15":"2022-01-28"].drop(
-    [f"real_{target}_0"], axis=1
-)
-y_train = test_sk.loc["2022-01-15":"2022-01-28", f"real_{target}_0"]
+start_test = test_sk.index[0].date()
+end_test = test_sk.index[-1].date()
 
-# Testing dataset: last 3 days.
-X_test = test_sk.loc["2022-01-29":"2022-01-31"].drop([f"real_{target}_0"], axis=1)
-y_test = test_sk.loc["2022-01-29":"2022-01-31", f"real_{target}_0"]
+# Training dataset.
+X_train = test_sk.loc[start_test:"2022-03-24"].drop([f"real_{target}_0"], axis=1)
+y_train = test_sk.loc[start_test:"2022-03-24", f"real_{target}_0"]
 
-# %% [markdown]
-# The `TimeSerieSplit` function takes as input the number of splits. Since our training data has 14 unique days (2022-01-15 - 2022-01-28), we would be setting `n_splits = 14`.
+# Testing dataset.
+X_test = test_sk.loc["2022-03-25":end_test].drop([f"real_{target}_0"], axis=1)
+y_test = test_sk.loc["2022-03-25":end_test, f"real_{target}_0"]
 
 # %%
-n_splits = 14
+n_splits = (X_train.index.max() - X_train.index.min()).days + 1
 
 # %% [markdown]
 # ## Models Evaluation
@@ -594,6 +594,14 @@ y_pred = best_model.predict(X_test)
 regression_results(y_true, y_pred)
 
 # %%
+# Check coefficients.
+coef = pd.DataFrame(
+    {"coef_value": best_model.coef_}, index=best_model.feature_names_in_
+)
+coef = coef.sort_values(by="coef_value", ascending=False)
+coef
+
+# %%
 # Plot the results of predicting on testing sample.
 lr_test = pd.concat([pd.Series(y_true), pd.Series(y_pred)], axis=1)
 lr_test.columns = ["true", "predicted"]
@@ -604,5 +612,3 @@ lr_test.plot(figsize=(15, 7))
 # Plot the difference between true and predicted values.
 lr_test["diff"] = lr_test["true"] - lr_test["predicted"]
 lr_test["diff"].plot(figsize=(15, 7))
-
-# %%
