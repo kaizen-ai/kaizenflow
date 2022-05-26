@@ -13,17 +13,24 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 
-def preprocess_data_for_qa_stats_computation(data: pd.DataFrame) -> pd.DataFrame:
+def _preprocess_data_for_qa_stats_computation(data: pd.DataFrame) -> pd.DataFrame:
     """
     Preprocess vendor data for QA stats computations.
+
+    Preprocessing includes:
+   - Replace NaNs with `np.inf` to differentiate them with missing bars after resampling
+   - Resample data to count missing bars
+   - Add year and month as columns to group by them while computing QA stats
     """
     # Fill NaN values with `np.inf` in order to differentiate them
     # from missing bars.
     preprocessed_data = data.fillna(np.inf)
     # Resample data for each full symbol to insert missing bars.
+    # Data is resampled for each full symbol because index must be unique to perform resampling.
     resampled_symbol_data = []
     for full_symbol, symbol_data in preprocessed_data.groupby("full_symbol"):
         symbol_data = hpandas.resample_df(symbol_data, "T")
+        hpandas.dassert_strictly_increasing_index(symbol_data)
         symbol_data["full_symbol"] = symbol_data["full_symbol"].fillna(
             method="bfill"
         )
@@ -45,7 +52,7 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
     # Copy in order not to modify original data.
     data_copy = data.copy()
     # Modify data for computing stats.
-    data_copy = preprocess_data_for_qa_stats_computation(data_copy)
+    data_copy = _preprocess_data_for_qa_stats_computation(data_copy)
     # Check that columns to group by exist.
     hdbg.dassert_is_subset(agg_level, data_copy.columns)
     res_stats = []
