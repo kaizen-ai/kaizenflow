@@ -11,9 +11,8 @@ import argparse
 import logging
 import os
 import time
-
 from datetime import datetime, timedelta
-from typing import Any, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import pandas as pd
 import psycopg2
@@ -23,11 +22,12 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.data.extract.extractor as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.extract.extractor as imvtdeexcl
+import im_v2.talos.data.extract.extractor as imvtdexex
+import im_v2.common.data.extract.extractor as imvcdexex
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -237,9 +237,7 @@ def download_realtime_for_one_exchange(
 @timeout(TIMEOUT_SEC)
 def _download_realtime_for_one_exchange_with_timeout(
     args: argparse.Namespace,
-    exchange_class: Type[
-        Union[imvcdeexcl.CcxtExtractor, imvtdeexcl.TalosExtractor]
-    ],
+    exchange_class: Type[Union[ivcdexex.CcxtExtractor, imvtdexex.TalosExtractor]],
     start_timestamp: datetime,
     end_timestamp: datetime,
 ) -> None:
@@ -392,7 +390,10 @@ def save_csv(
 
 
 def save_parquet(
-    data: pd.DataFrame, path_to_exchange: str, unit: str, aws_profile: Optional[str],
+    data: pd.DataFrame,
+    path_to_exchange: str,
+    unit: str,
+    aws_profile: Optional[str],
 ) -> None:
     """
     Save Parquet dataset.
@@ -417,7 +418,7 @@ def save_parquet(
 
 
 def download_historical_data(
-    args: argparse.Namespace, exchange_class: Any
+    args: Dict[str, Any], exchange: imvcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for downloading historical exchange data.
@@ -427,70 +428,43 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    args = vars(args)
     path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
     elif not args["incremental"]:
         hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
-    # Initialize exchange class.
-    # Every exchange can potentially have a specific set of init args.
-    if exchange_class.__name__ == CCXT_EXCHANGE:
-        # Initialize CCXT with `exchange_id`.
-        exchange = exchange_class(args["exchange_id"])
-        vendor = "CCXT"
-        data_type = "ohlcv"
-        unit = "ms"
-    elif exchange_class.__name__ == TALOS_EXCHANGE:
-        # Unlike CCXT, Talos is initialized with `api_stage`.
-        exchange = exchange_class(args["api_stage"])
-        vendor = "talos"
-        data_type = "ohlcv"
-        unit = "ms"
-    elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
-        exchange = exchange_class()
-        # TODO(Danya): Most importantly: we want this to be a parameter passed into all scripts.
-        vendor = "crypto_chassis"
-        unit = "s"
-    else:
-        hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
-    universe = ivcu.get_vendor_universe(vendor, version=args["universe"])
+    universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
     currency_pairs = universe[args["exchange_id"]]
     # Convert timestamps.
-    args["end_timestamp"] = pd.Timestamp(args["end_timestamp"])
-    args["start_timestamp"] = pd.Timestamp(args["start_timestamp"])
+    start_timestamp = pd.Timestamp(args["start_timestamp"])
+    end_timestamp = pd.Timestamp(args["end_timestamp"])
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
-        # TODO(Danya): Ultimately, we want to have these download_kwargs created at the initialization 
-        # of the class and vendor, i.e. if we are downloading OHLCV, the download_kwargs are such and such
-        # Don't forget to utilize default values, e.g. in CryptoChassis we have a lot of arguments
-        # that are vague in definition and silly to pass inside the script. 
-        download_kwargs = {"exchange_id": args["exchange_id"], "currency_pair": args["currency_pair"],
-                            "start_timestamp": args["start_timestamp"], "end_timestamp": args["end_timestamp"]}
+        converted_currency_pair = exchange.convert_currency_pair(currency_pair)
         # Download data.
-        # TODO(Danya): since kwargs are different for each data type and script run, we should
-        #  set them before.
-        data = exchange.download_data(data_type=args["data_type"],
-                                    **download_kwargs)
+        data = exchange.download_data(
+            args["data_type"],
+            args["exchange_id"],
+            converted_currency_pair,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+        )
         if data.empty:
             continue
         # Assign pair and exchange columns.
-        # TODO(Nikola): Exchange id was missing and it is added additionally to
-        #  match signature of other scripts.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args["exchange_id"]
-        # Change index to allow calling add_date_partition_cols function on the dataframe.
-        # TODO(Danya): Move to parquet!
-        # Get current time of push to s3 in UTC.
+        # Get current time of download.
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
         if args["file_format"] == "parquet":
-            save_parquet(data, path_to_exchange, unit, args["aws_profile"])
+            save_parquet(
+                data, path_to_exchange, args["unit"], args["aws_profile"]
+            )
         elif args["file_format"] == "csv":
             save_csv(
                 data,
@@ -501,6 +475,3 @@ def download_historical_data(
             )
         else:
             hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
-        # Sleep between iterations is needed for CCXT.
-        if exchange_class == CCXT_EXCHANGE:
-            time.sleep(args["sleep_time"])
