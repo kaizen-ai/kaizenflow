@@ -16,12 +16,13 @@ import requests
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import im_v2.common.data.extract.extractor as imvcdeext
 import im_v2.talos.utils as imv2tauti
 
 _LOG = logging.getLogger(__name__)
 
-
-class TalosExtractor:
+ 
+class TalosExtractor(imvcdeext.Extractor):
     """
     A class for accessing Talos exchange data.
 
@@ -33,6 +34,7 @@ class TalosExtractor:
         """
         Constructor.
         """
+        super().__init__()
         self._account = account
         self._api = imv2tauti.TalosApiBuilder(self._account)
         self._endpoint = self._api.get_endpoint()
@@ -89,38 +91,21 @@ class TalosExtractor:
         url = f"https://{self._endpoint}{data_path}"
         return url
 
-    def download_data(self, data_type: str, *args: Any, **kwargs: Any) -> pd.DataFrame:
-        """
-        Download Talos data.
-
-        :param data_type: the type of data, e.g. `ohlcv`
-        :return: Talos data
-        """
-        # Check data type.
-        hdbg.dassert_eq(data_type, "ohlcv")
-        # Get data.
-        return self.download_ohlcv_data(
-            currency_pair=kwargs["currency_pair"],
-            exchange=kwargs["exchange_id"],
-            start_timestamp=kwargs["start_timestamp"],
-            end_timestamp=kwargs["end_timestamp"],
-        )
-
-    def download_ohlcv_data(
+    def _download_ohlcv(
         self,
         currency_pair: str,
-        exchange: str,
+        exchange_id: str,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
-        *,
         bar_per_iteration: int = 10000,
+        **kwargs
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars for given currency pair for given crypto
         exchange.
 
         :param currency_pair: a currency pair, e.g. "BTC_USDT"
-        :param exchange: crypto exchange, e.g. "binance"
+        :param exchange_id: crypto exchange, e.g. "binance"
         :param start_timestamp: starting point for data
         :param end_timestamp: end point for data
         :param bar_per_iteration: number of bars per iteration
@@ -152,11 +137,17 @@ class TalosExtractor:
         #
         return self._fetch_ohlcv(
             currency_pair,
-            exchange,
+            exchange_id,
             start_timestamp,
             end_timestamp,
             bar_per_iteration=bar_per_iteration,
         )
+
+    def _download_market_depth(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Market depth data is not available for Talos vendor")
+
+    def _download_trades(self, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError("Trades data is not available for Talos vendor")
 
     def _fetch_ohlcv(
         self,
