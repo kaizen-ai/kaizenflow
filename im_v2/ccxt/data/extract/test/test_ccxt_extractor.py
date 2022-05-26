@@ -80,6 +80,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
+                exchange_id="binance",
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
@@ -103,6 +104,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         end_timestamp = "invalid"
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
+                exchange_id="binance",
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
@@ -128,6 +130,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
+                exchange_id="binance",
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
@@ -146,6 +149,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Run with invalid input.
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
+                exchange_id="binance",
                 currency_pair="invalid_currency_pair",
                 start_timestamp=None,
                 end_timestamp=None,

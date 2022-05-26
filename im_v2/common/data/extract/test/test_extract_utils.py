@@ -189,22 +189,21 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         Test directly function call for coverage increase.
         """
         # Prepare inputs.
-        kwargs = {
+        args = {
             "start_timestamp": "2021-12-31 23:00:00",
             "end_timestamp": "2022-01-01 01:00:00",
             "exchange_id": "binance",
             "data_type": "ohlcv",
             "universe": "v3",
-            "sleep_time": 1,
             "incremental": False,
             "aws_profile": "ck",
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
-            "file_format": "parquet"
+            "file_format": "parquet",
+            "unit": "ms"
         }
-        # Run.
-        args = argparse.Namespace(**kwargs)
-        imvcdeexut.download_historical_data(args, imvcdeex.CcxtExtractor)
+        exchange = imvcdeex.CcxtExtractor(args["exchange_id"])
+        imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.slow("Around 15s")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
