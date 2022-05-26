@@ -7,6 +7,27 @@ import research_amp.cc.qa as ramccqa
 
 
 class TestGetBadDataStats(hunitest.TestCase):
+    @staticmethod
+    def get_test_data() -> pd.DataFrame:
+        index = [
+            pd.Timestamp("2021-03-07 00:00:00+00:00"),
+            pd.Timestamp("2021-03-07 00:03:00+00:00"),
+            pd.Timestamp("2021-03-07 18:00:00+00:00"),
+        ]
+        data = {
+            "full_symbol": [
+                "binance::ADA_USDT",
+                "binance::ADA_USDT",
+                "ftx::BTC_USDT",
+            ],
+            "close": [1.409, 1.22, np.nan],
+            "volume": [0, 12512.44, np.nan],
+            "year": [2021, 2021, 2021],
+            "month": [3, 3, 3],
+        }
+        df = pd.DataFrame(data, index=index)
+        return df
+
     def test_get_bad_data_stats1(self) -> None:
         """
         Test that stats are computed correctly.
@@ -28,24 +49,3 @@ class TestGetBadDataStats(hunitest.TestCase):
         self.assert_equal(
             crypto_chassis_bad_data_stats, expected_signature, fuzzy_match=True
         )
-
-    @staticmethod
-    def _get_test_data() -> pd.DataFrame:
-        index = [
-            pd.Timestamp("2021-03-07 00:00:00+00:00"),
-            pd.Timestamp("2021-03-07 00:03:00+00:00"),
-            pd.Timestamp("2021-03-07 18:00:00+00:00"),
-        ]
-        data = {
-            "full_symbol": [
-                "binance::ADA_USDT",
-                "binance::ADA_USDT",
-                "ftx::BTC_USDT",
-            ],
-            "close": [1.409, 1.22, np.nan],
-            "volume": [0, 12512.44, np.nan],
-            "year": [2021, 2021, 2021],
-            "month": [3, 3, 3],
-        }
-        df = pd.DataFrame(data, index=index)
-        return df
