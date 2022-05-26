@@ -13,7 +13,8 @@ import requests
 
 import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
-import helpers.hsecrets as hsecret
+import tqdm
+import time
 import im_v2.common.data.extract.extractor as imvcdeext
 
 _LOG = logging.getLogger(__name__)
@@ -39,7 +40,8 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         self,
         exchange_id: str,
         currency_pair: str,
-        start_timestamp: Optional[pd.Timestamp],
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
         *,
         depth: int = 1,
     ) -> pd.DataFrame:
@@ -56,13 +58,16 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
         :param depth: allowed values: 1 to 10. Defaults to 1.
         :return: market depth data
         """
-        # Verify that date parameters are of correct format.
-        if start_timestamp:
-            hdbg.dassert_isinstance(
+        hdbg.dassert_isinstance(
                 start_timestamp,
                 pd.Timestamp,
             )
-            start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
+        hdbg.dassert_isinstance(
+                end_timestamp,
+                pd.Timestamp,
+            )
+        hdbg.dassert_lte(start_timestamp, end_timestamp)
+        # Verify that date parameters are of correct format.
         if depth:
             hdbg.dassert_lgt(1, depth, 10, True, True)
             depth = str(depth)
@@ -76,20 +81,32 @@ class CryptoChassisExtractor(imvcdeext.Extractor):
             exchange=exchange_id,
             currency_pair=currency_pair,
         )
-        # Build URL with specified parameters.
-        query_url = self._build_query_url(
-            core_url, startTime=start_timestamp, depth=depth
-        )
-        # Request the data.
-        r = requests.get(query_url)
-        # Retrieve raw data.
-        data_json = r.json()
-        if data_json.get("urls") is None:
-            # Return empty dataframe if there is no results.
+        date_range = pd.date_range(start_timestamp, end_timestamp, freq="d")
+        all_days_data = []
+        for timestamp in tqdm.tqdm(date_range):
+            timestamp = timestamp.strftime("%Y-%m-%dT%XZ")
+            # Build URL with specified parameters.
+            query_url = self._build_query_url(
+                core_url, startTime=timestamp, depth=depth
+            )
+            _LOG.info(query_url)
+            # Request the data.
+            r = requests.get(query_url)
+            # Retrieve raw data.
+            data_json = r.json()
+            if not data_json.get("urls"):
+                # Return empty dataframe if there are no results.
+                _LOG.warning("No data at %s", query_url)
+                df_csv = pd.DataFrame()
+            else:
+                df_csv = data_json["urls"][0]["url"]
+                # Convert CSV into dataframe.
+                df_csv = pd.read_csv(df_csv, compression="gzip")
+            all_days_data.append(df_csv)
+        market_depth = pd.concat(all_days_data)
+        if market_depth.empty:
+            _LOG.warning("No data found for given query parameters.")
             return pd.DataFrame()
-        df_csv = data_json["urls"][0]["url"]
-        # Convert CSV into dataframe.
-        market_depth = pd.read_csv(df_csv, compression="gzip")
         # Separate `bid_price_bid_size` column to `bid_price` and `bid_size`.
         market_depth["bid_price"], market_depth["bid_size"] = zip(
             *market_depth["bid_price_bid_size"].apply(lambda x: x.split("_"))
