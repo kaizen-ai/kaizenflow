@@ -27,9 +27,9 @@ class TestGetBadDataStats(hunitest.TestCase):
             crypto_chassis_bad_data_stats
         )
         expected_signature = """
-                                  NaNs [%]  missing bars [%]  volume=0 [%]  bad data [%]
-        binance::ADA_USDT 2021 9  0.000000               0.0           0.0      0.000000
-        ftx::BTC_USDT     2021 9  0.162037               0.0           0.0      0.162037
+                                   bad data [%]  missing bars [%]  volume=0 [%]  NaNs [%]
+        binance::ADA_USDT 2021 9      0.000000          0.000000           0.0       0.0
+        ftx::BTC_USDT     2021 9      0.162037          0.162037           0.0       0.0
         """
         # Check.
         self.assert_equal(
@@ -50,9 +50,9 @@ class TestGetBadDataStats(hunitest.TestCase):
             crypto_chassis_bad_data_stats
         )
         expected_signature = """
-                           NaNs [%]  missing bars [%]  volume=0 [%]  bad data [%]
-        binance::ADA_USDT  0.000000               0.0           0.0      0.000000
-        ftx::BTC_USDT      0.162037               0.0           0.0      0.162037
+                              bad data [%]  missing bars [%]  volume=0 [%]  NaNs [%]
+        binance::ADA_USDT      0.000000          0.000000           0.0       0.0
+        ftx::BTC_USDT          0.162037          0.162037           0.0       0.0
         """
         # Check.
         self.assert_equal(

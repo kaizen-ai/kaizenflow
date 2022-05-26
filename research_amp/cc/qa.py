@@ -52,8 +52,11 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
     for full_symbol, symbol_data in data_copy.groupby(agg_level):
         # Compute stats for a full symbol.
         symbol_stats = pd.Series(dtype="object", name=full_symbol)
+        # Compute NaNs in initially loaded data by counting `np.inf` values
+        # in preprocessed data.
         symbol_stats["NaNs [%]"] = 100 * (
-            costatis.compute_frac_nan(symbol_data["close"])
+            symbol_data[symbol_data["close"] == np.inf].shape[0]
+            / symbol_data.shape[0]
         )
         # Compute missing bars stats by subtracting NaN stats in not-resampled
         # data from NaN stats in resampled data.
@@ -65,9 +68,9 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
             / symbol_data.shape[0]
         )
         symbol_stats["bad data [%]"] = (
-                symbol_stats["NaNs [%]"]
-                + symbol_stats["missing bars [%]"]
-                + symbol_stats["volume=0 [%]"]
+            symbol_stats["NaNs [%]"]
+            + symbol_stats["missing bars [%]"]
+            + symbol_stats["volume=0 [%]"]
         )
         res_stats.append(symbol_stats)
     res_stats_df = pd.concat(res_stats, axis=1).T
