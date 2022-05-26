@@ -21,6 +21,7 @@
 
 
 import logging
+import os
 import warnings
 from datetime import timedelta
 
@@ -31,11 +32,17 @@ import sklearn.metrics as metrics
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit, cross_val_score
 
+import core.config.config_ as cconconf
+import core.config.config_utils as ccocouti
 import core.explore as coexplor
 import core.features as cofeatur
+import core.finance.resampling as cfinresa
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
+import research_amp.cc.crypto_chassis_api as raccchap
 import research_amp.transform as ramptran
 
 # %%
@@ -48,6 +55,56 @@ _LOG = logging.getLogger(__name__)
 
 hprint.config_notebook()
 
+
+# %% [markdown]
+# # Config
+
+# %%
+def get_cmtask1953_config() -> cconconf.Config:
+    """
+    Get task1866-specific config.
+    """
+    config = cconconf.Config()
+    param_dict = {
+        "data": {
+            # Parameters for client initialization.
+            "im_client": {
+                "universe_version": "v1",
+                "resample_1min": True,
+                "root_dir": os.path.join(
+                    hs3.get_s3_bucket_path("ck"),
+                    "reorg",
+                    "historical.manual.pq",
+                ),
+                "partition_mode": "by_year_month",
+                "data_snapshot": "latest",
+                "aws_profile": "ck",
+            },
+            # Parameters for data query.
+            "read_data": {
+                "full_symbols": ["binance::BTC_USDT"],
+                "start_ts": pd.Timestamp("2022-01-01 00:00", tz="UTC"),
+                "end_ts": pd.Timestamp("2022-01-31 23:59", tz="UTC"),
+                "columns": None,
+                "filter_data_mode": "assert",
+            },
+        },
+        "column_names": {
+            "full_symbol": "full_symbol",
+            "close_price": "close",
+        },
+        "stats": {
+            "threshold": 30,
+        },
+    }
+    config = ccocouti.get_config_from_nested_dict(param_dict)
+    return config
+
+
+# %%
+config = get_cmtask1953_config()
+print(config)
+
 # %% [markdown]
 # # Load the data
 
@@ -55,40 +112,59 @@ hprint.config_notebook()
 # ## OHLCV
 
 # %%
-# Read saved 1 month of data.
-ohlcv_cc = pd.read_csv("/shared_data/cc_ohlcv.csv", index_col="timestamp")
-btc_ohlcv = ohlcv_cc[ohlcv_cc["full_symbol"] == "binance::BTC_USDT"]
-btc_ohlcv.index = pd.to_datetime(btc_ohlcv.index)
+# Initiate the client.
+client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
+    **config["data"]["im_client"]
+)
+# Load OHLCV data.
+btc_ohlcv = client.read_data(**config["data"]["read_data"])
+# Post-processing.
 ohlcv_cols = [
     "open",
     "high",
     "low",
     "close",
     "volume",
-    "full_symbol",
 ]
 btc_ohlcv = btc_ohlcv[ohlcv_cols]
+# Resample.
+btc_ohlcv = cfinresa.resample_ohlcv_bars(btc_ohlcv, "5T")
 btc_ohlcv.head(3)
 
 # %% [markdown]
 # ## Bid ask data
 
 # %%
-# Read saved 1 month of data.
-bid_ask_btc = pd.read_csv(
-    "/shared_data/bid_ask_btc_jan22_1min_last.csv", index_col="timestamp"
-)
-bid_ask_btc.index = pd.to_datetime(bid_ask_btc.index)
+start_date = config["data"]["read_data"]["start_ts"]
+end_date = config["data"]["read_data"]["end_ts"]
 
-# Transform the data.
-bid_ask_btc.index = pd.to_datetime(bid_ask_btc.index)
+# Note: works only for 2022 for now.
+result = []
+for i in range(start_date.month, end_date.month + 1):
+    tmp_df = pd.read_parquet(
+        f"s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/month={i}/data.parquet"
+    )
+    result.append(tmp_df)
+bid_ask_btc = pd.concat(result)
+bid_ask_btc = bid_ask_btc[:end_date]
+bid_ask_btc["full_symbol"] = str(config["data"]["read_data"]["full_symbols"])[
+    2:-2
+]
+bid_ask_btc = bid_ask_btc[
+    ["bid_price", "bid_size", "ask_price", "ask_size", "full_symbol"]
+]
+# Resample.
+bid_ask_btc = raccchap.resample_bid_ask(bid_ask_btc, "5T")
+# Convert.
+for cols in bid_ask_btc.columns[:-1]:
+    bid_ask_btc[cols] = pd.to_numeric(bid_ask_btc[cols], downcast="float")
+
 # Compute bid ask stats.
 bid_ask_btc = ramptran.calculate_bid_ask_statistics(bid_ask_btc)
 # Choose only necessary values.
 bid_ask_btc = bid_ask_btc.swaplevel(axis=1)["binance::BTC_USDT"][
     ["bid_size", "ask_size", "bid_price", "ask_price", "mid", "quoted_spread"]
 ]
-bid_ask_btc.index = bid_ask_btc.index.shift(-1, freq="T")
 
 bid_ask_btc.head(3)
 
@@ -124,7 +200,7 @@ def get_target_value(df: pd.DataFrame, timestamp: pd.Timestamp, column_name: str
 
 
 # %%
-date = pd.Timestamp("2022-01-01 00:01", tz="UTC")
+date = pd.Timestamp("2022-01-01 00:00", tz="UTC")
 display(get_target_value(btc, date, "quoted_spread"))
 display(get_target_value(btc, date, "volume"))
 
@@ -164,9 +240,9 @@ def get_naive_value(
 
 
 # %%
-date = pd.Timestamp("2022-01-01 00:03", tz="UTC")
-display(get_naive_value(btc, date, "quoted_spread"))
-display(get_naive_value(btc, date, "volume"))
+date = pd.Timestamp("2022-01-01 10:00", tz="UTC")
+display(get_naive_value(btc, date, "quoted_spread", delay_in_mins=10))
+display(get_naive_value(btc, date, "volume", delay_in_mins=10))
 
 # %% [markdown]
 # ## Look back N days
@@ -219,19 +295,13 @@ def get_lookback_value(
 
 
 # %%
-date = pd.Timestamp("2022-01-21 19:59", tz="UTC")
+date = pd.Timestamp("2022-01-21 19:00", tz="UTC")
 display(get_lookback_value(btc, date, 14, "quoted_spread"))
 display(get_lookback_value(btc, date, 14, "volume"))
 
+
 # %% [markdown]
 # # Collect all estimators for the whole period
-
-# %%
-# Hardcoded resampling for `volume`.
-btc_volume = btc.resample("5T").volume.sum().rename("volume").to_frame()
-btc_volume["time"] = btc_volume.index.time
-btc_volume.head(3)
-
 
 # %%
 def collect_real_naive_lookback_est(
@@ -268,19 +338,13 @@ def collect_real_naive_lookback_est(
 
 # %%
 # Generate the separate DataFrame for estimators.
-estimators = pd.DataFrame(index=btc_volume.index[1:])
+estimators = pd.DataFrame(index=btc.index[1:])
 # Choose the target value.
 target = "volume"
 
-estimators = collect_real_naive_lookback_est(
-    estimators, btc_volume, target, "real"
-)
-estimators = collect_real_naive_lookback_est(
-    estimators, btc_volume, target, "naive", 5
-)
-estimators = collect_real_naive_lookback_est(
-    estimators, btc_volume, target, "lookback"
-)
+estimators = collect_real_naive_lookback_est(estimators, btc, target, "real")
+estimators = collect_real_naive_lookback_est(estimators, btc, target, "naive", 5)
+estimators = collect_real_naive_lookback_est(estimators, btc, target, "lookback")
 estimators
 
 
@@ -540,3 +604,5 @@ lr_test.plot(figsize=(15, 7))
 # Plot the difference between true and predicted values.
 lr_test["diff"] = lr_test["true"] - lr_test["predicted"]
 lr_test["diff"].plot(figsize=(15, 7))
+
+# %%
