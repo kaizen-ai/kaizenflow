@@ -10,6 +10,7 @@ from typing import Any, Optional
 
 import pandas as pd
 import requests
+import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -35,13 +36,40 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         """
         return currency_pair.replace("_", "/").lower()
 
+    @staticmethod
+    def _build_query_url(base_url: str, **kwargs: Any) -> str:
+        """
+        Combine base API URL and query parameters.
+
+        :param base_url: base URL of CryptoChassis API
+        Additional parameters that can be passed as **kwargs:
+          - depth: int - allowed values: 1 to 10. Defaults to 1.
+          - interval: str, e.g. `1m`, `3m`, `5m` etc.
+          - startTime: pd.Timestamp
+          - endTime: pd.Timestamp
+          - includeRealTime: 0, 1. If set to 1, request rate limit on this
+            endpoint is 1 request per second per public IP.
+        :return: query URL with parameters
+        """
+        params = []
+        for pair in kwargs.items():
+            if pair[1] is not None:
+                # Check whether the parameter is not empty.
+                # Convert value to string and join query parameters.
+                joined = "=".join([pair[0], str(pair[1])])
+                params.append(joined)
+        joined_params = "&".join(params)
+        query_url = f"{base_url}?{joined_params}"
+        return query_url
+
     def _download_market_depth(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        start_timestamp: Optional[pd.Timestamp],
-        *,
-        depth: int = 1,
+            self,
+            exchange_id: str,
+            currency_pair: str,
+            start_timestamp: pd.Timestamp,
+            end_timestamp: pd.Timestamp,
+            *,
+            depth: int = 1,
     ) -> pd.DataFrame:
         """
         Download snapshot data on market depth.
@@ -56,13 +84,16 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         :param depth: allowed values: 1 to 10. Defaults to 1.
         :return: market depth data
         """
+        hdbg.dassert_isinstance(
+            start_timestamp,
+            pd.Timestamp,
+        )
+        hdbg.dassert_isinstance(
+            end_timestamp,
+            pd.Timestamp,
+        )
+        hdbg.dassert_lte(start_timestamp, end_timestamp)
         # Verify that date parameters are of correct format.
-        if start_timestamp:
-            hdbg.dassert_isinstance(
-                start_timestamp,
-                pd.Timestamp,
-            )
-            start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
         if depth:
             hdbg.dassert_lgt(1, depth, 10, True, True)
             depth = str(depth)
@@ -76,20 +107,32 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             exchange=exchange_id,
             currency_pair=currency_pair,
         )
-        # Build URL with specified parameters.
-        query_url = self._build_query_url(
-            core_url, startTime=start_timestamp, depth=depth
-        )
-        # Request the data.
-        r = requests.get(query_url)
-        # Retrieve raw data.
-        data_json = r.json()
-        if data_json.get("urls") is None:
-            # Return empty dataframe if there is no results.
+        date_range = pd.date_range(start_timestamp, end_timestamp, freq="d")
+        all_days_data = []
+        for timestamp in tqdm.tqdm(date_range):
+            timestamp = timestamp.strftime("%Y-%m-%dT%XZ")
+            # Build URL with specified parameters.
+            query_url = self._build_query_url(
+                core_url, startTime=timestamp, depth=depth
+            )
+            _LOG.info(query_url)
+            # Request the data.
+            r = requests.get(query_url)
+            # Retrieve raw data.
+            data_json = r.json()
+            if not data_json.get("urls"):
+                # Return empty dataframe if there are no results.
+                _LOG.warning("No data at %s", query_url)
+                df_csv = pd.DataFrame()
+            else:
+                df_csv = data_json["urls"][0]["url"]
+                # Convert CSV into dataframe.
+                df_csv = pd.read_csv(df_csv, compression="gzip")
+            all_days_data.append(df_csv)
+        market_depth = pd.concat(all_days_data)
+        if market_depth.empty:
+            _LOG.warning("No data found for given query parameters.")
             return pd.DataFrame()
-        df_csv = data_json["urls"][0]["url"]
-        # Convert CSV into dataframe.
-        market_depth = pd.read_csv(df_csv, compression="gzip")
         # Separate `bid_price_bid_size` column to `bid_price` and `bid_size`.
         market_depth["bid_price"], market_depth["bid_size"] = zip(
             *market_depth["bid_price_bid_size"].apply(lambda x: x.split("_"))
@@ -107,14 +150,15 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         return market_depth
 
     def _download_ohlcv(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        *,
-        start_timestamp: Optional[pd.Timestamp],
-        end_timestamp: Optional[pd.Timestamp],
-        interval: Optional[str] = "1m",
-        include_realtime: str = "1",
+            self,
+            exchange_id: str,
+            currency_pair: str,
+            *,
+            start_timestamp: Optional[pd.Timestamp],
+            end_timestamp: Optional[pd.Timestamp],
+            *,
+            interval: Optional[str] = "1m",
+            include_realtime: str = "1",
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
@@ -275,28 +319,3 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         # Build main API URL.
         core_url = f"{self._endpoint}/{data_type}/{exchange}/{currency_pair}"
         return core_url
-
-    def _build_query_url(self, base_url: str, **kwargs: Any) -> str:
-        """
-        Combine base API URL and query parameters.
-
-        :param base_url: base URL of CryptoChassis API
-        Additional parameters that can be passed as **kwargs:
-          - depth: int - allowed values: 1 to 10. Defaults to 1.
-          - interval: str, e.g. `1m`, `3m`, `5m` etc.
-          - startTime: pd.Timestamp
-          - endTime: pd.Timestamp
-          - includeRealTime: 0, 1. If set to 1, request rate limit on this
-            endpoint is 1 request per second per public IP.
-        :return: query URL with parameters
-        """
-        params = []
-        for pair in kwargs.items():
-            if pair[1] is not None:
-                # Check whether the parameter is not empty.
-                # Convert value to string and join query parameters.
-                joined = "=".join([pair[0], str(pair[1])])
-                params.append(joined)
-        joined_params = "&".join(params)
-        query_url = f"{base_url}?{joined_params}"
-        return query_url
