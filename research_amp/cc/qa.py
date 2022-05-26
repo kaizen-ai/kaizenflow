@@ -13,22 +13,23 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 
-def _preprocess_data_for_qa_stats_computation(data: pd.DataFrame) -> pd.DataFrame:
+def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Preprocess vendor data for QA stats computations.
+    Preprocess OHLCV data for QA stats computations.
 
-     Preprocessing includes:
-    - Replace NaNs with `np.inf` to differentiate them with missing bars after resampling
-    - Resample data to count missing bars
-    - Add year and month as columns to group by them while computing QA stats
+    Preprocessing includes:
+       - Replace NaNs with `np.inf` to differentiate them with missing bars
+       after resampling
+       - Resample data to count missing bars
+       - Add year and month as columns to group by them while computing QA stats
     """
-    # Fill NaN values with `np.inf` in order to differentiate them
     # from missing bars.
     preprocessed_data = data.fillna(np.inf)
-    # Resample data for each full symbol to insert missing bars.
-    # Data is resampled for each full symbol because index must be unique to perform resampling.
+    # Resample data for each full symbol to insert missing bars. Data is
+    # resampled for each full symbol because index must be unique to
+    # perform resampling.
     resampled_symbol_data = []
-    for full_symbol, symbol_data in preprocessed_data.groupby("full_symbol"):
+    for _, symbol_data in preprocessed_data.groupby("full_symbol"):
         symbol_data = hpandas.resample_df(symbol_data, "T")
         hpandas.dassert_strictly_increasing_index(symbol_data)
         symbol_data["full_symbol"] = symbol_data["full_symbol"].fillna(
@@ -36,7 +37,7 @@ def _preprocess_data_for_qa_stats_computation(data: pd.DataFrame) -> pd.DataFram
         )
         resampled_symbol_data.append(symbol_data)
     preprocessed_data = pd.concat(resampled_symbol_data)
-    # Add year and month columns to allow grouping data by them.
+    #
     preprocessed_data["year"] = preprocessed_data.index.year
     preprocessed_data["month"] = preprocessed_data.index.month
     return preprocessed_data
@@ -44,15 +45,31 @@ def _preprocess_data_for_qa_stats_computation(data: pd.DataFrame) -> pd.DataFram
 
 def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame:
     """
-    Get quality assurance stats per required columns.
+    Get QA stats per specified groups.
 
-    :param agg_level: list of columns to group data by
+    QA stats include:
+       - `bad data [%]` - sum of the metrics below
+       - `missing bars [%]` - number of missing bars as %
+       - `volume=0 [%]` - number of rows with volume = 0 as %
+       - `NaNs [%]` - number of rows with `close` = NaN as %
+
+    E.g,:
+    ```
+                                bad data [%]      ...  NaNs [%]
+                                vendor1  vendor2       vendor1  vendor2
+      full_symbol  year  month
+    ftx::ADA_USDT  2021     11      3.5      6.5           0.0      6.0
+                            12      2.4      4.8           0.0      5.1
+    ftx::BTC_USDT  2022      1      1.5      0.5           0.0      0.0
+    ```
+
+    :param agg_level: columns to group data by
     """
     hdbg.dassert_lte(1, len(agg_level))
     # Copy in order not to modify original data.
     data_copy = data.copy()
     # Modify data for computing stats.
-    data_copy = _preprocess_data_for_qa_stats_computation(data_copy)
+    data_copy = _preprocess_data(data_copy)
     # Check that columns to group by exist.
     hdbg.dassert_is_subset(agg_level, data_copy.columns)
     res_stats = []
@@ -88,7 +105,20 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
 
 def get_timestamp_stats(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Get min max timestamp stats per full symbol.
+    Get timestamp stats per full symbol.
+
+    Timestamps stats include:
+       - Minimum timestamp
+       - Maximum timestamp
+       - Days available - difference between max and min timestamps in days
+
+    E.g,:
+        ```
+                       min_timestamp    max_timestamp   days_available
+                          vendor          vendor
+        ftx::ADA_USDT  2021-08-07          2022-05-18      284
+        ftx::BTC_USDT  2018-01-01       2022-05-18      1598
+        ```
     """
     res_stats = []
     for full_symbol, symbol_data in data.groupby("full_symbol"):

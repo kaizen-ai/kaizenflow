@@ -9,8 +9,7 @@ import research_amp.cc.qa as ramccqa
 class TestGetBadDataStats(hunitest.TestCase):
     def test_get_bad_data_stats1(self) -> None:
         """
-        Test that stats computed correctly by grouping by full symbol, year,
-        month.
+        Test that stats are computed correctly.
         """
         crypto_chassis_data = self._get_test_data()
         agg_level = ["full_symbol", "year", "month"]
@@ -35,7 +34,7 @@ class TestGetBadDataStats(hunitest.TestCase):
         index = [
             pd.Timestamp("2021-03-07 00:00:00+00:00"),
             pd.Timestamp("2021-03-07 00:03:00+00:00"),
-            pd.Timestamp("2021-03-07 18:0:00+00:00"),
+            pd.Timestamp("2021-03-07 18:00:00+00:00"),
         ]
         data = {
             "full_symbol": [
