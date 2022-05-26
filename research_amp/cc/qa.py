@@ -19,7 +19,7 @@ def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
 
     Preprocessing includes:
        - Replace NaNs with `np.inf` to differentiate them with missing bars
-       after resampling
+         after resampling
        - Resample data to count missing bars
        - Add year and month as columns to group by them while computing QA stats
     """
@@ -56,7 +56,6 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
     E.g,:
     ```
                                 bad data [%]  ...  NaNs [%]
-                                vendor1       vendor1
       full_symbol  year  month
     ftx::ADA_USDT  2021     11      3.5      0.0      6.0
                             12      2.4      0.0      5.1
@@ -115,8 +114,7 @@ def get_timestamp_stats(data: pd.DataFrame) -> pd.DataFrame:
     E.g,:
     ```
                    min_timestamp    max_timestamp   days_available
-                      vendor          vendor
-    ftx::ADA_USDT  2021-08-07          2022-05-18      284
+    ftx::ADA_USDT  2021-08-07       2022-05-18      284
     ftx::BTC_USDT  2018-01-01       2022-05-18      1598
     ```
     """
