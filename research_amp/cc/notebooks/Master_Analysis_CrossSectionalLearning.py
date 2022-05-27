@@ -22,21 +22,21 @@
 import logging
 import os
 
-import pandas as pd
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
 import core.explore as coexplor
-import core.signal_processing.incremental_pca as csprinpc
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 import research_amp.transform as ramptran
-from sklearn.preprocessing import StandardScaler
-import helpers.hpandas as hpandas
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -93,11 +93,7 @@ def get_CrossSectionalLearning_config() -> cconconf.Config:
         },
         "analysis": {
             "reference_rets": "close.ret_0",  # e.g.,"vwap.ret_0", "twap.ret_0"
-            "rets_type": "volume",
-        },
-        "model": {
-            "delay_lag": 1,
-            "num_lags": 4,
+            "BTC_is_included": True,
         },
     }
     config = ccocouti.get_config_from_nested_dict(param_dict)
@@ -118,6 +114,11 @@ client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
 )
 # Get universe of `full_symbols`.
 universe = client.get_universe()
+# Specify if BTC is included.
+if not config["analysis"]["BTC_is_included"]:
+    universe = [
+        element for element in universe if not element.endswith("BTC_USDT")
+    ]
 # Load OHLCV data.
 ohlcv_cc = client.read_data(universe, **config["data"]["read_data"])
 # Post-processing.
@@ -155,10 +156,11 @@ df.head(3)
 # Initiate scaler.
 sc = StandardScaler()
 # Normalize data.
-df_values = df.values
-data_normalized = sc.fit_transform(df_values)
+data_normalized = sc.fit_transform(df.values)
 # Get back to DataFrame representation.
-data_normalized = pd.DataFrame(data_normalized, columns=df.columns, index=df.index)
+data_normalized = pd.DataFrame(
+    data_normalized, columns=df.columns, index=df.index
+)
 # Get rid of NaNs.
 data_normalized = hpandas.dropna(data_normalized)
 data_normalized.head(3)
@@ -183,18 +185,32 @@ plt.ylabel("cumulative_explained_variance")
 
 # %%
 explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
-num_of_required_comp = len(explained_variance_ratio_cumsum[explained_variance_ratio_cumsum < 0.95])
+num_of_required_comp = len(
+    explained_variance_ratio_cumsum[explained_variance_ratio_cumsum < 0.95]
+)
 print(f"Number of required PCA components: {num_of_required_comp}")
 
 # %% [markdown]
 # ### PCA calculations
 
+# %%
+pca_components = PCA(n_components=num_of_required_comp).fit_transform(
+    data_normalized
+)
+
+# %%
+pca_df = pd.DataFrame(data=pca_components)
+pca_df
+
 # %% [markdown]
 # ### Rolling PCA (omit for now)
 
 # %%
+df
+
+# %%
 # Params.
-sample = df["close.ret_0"].head(1000)
+sample = df.head(1000)
 nan_mode = "drop"
 com = 1
 # Rolling PCA calculations.
