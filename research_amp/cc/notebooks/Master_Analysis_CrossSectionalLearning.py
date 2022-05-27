@@ -53,7 +53,7 @@ hprint.config_notebook()
 def get_CrossSectionalLearning_config() -> cconconf.Config:
     """
     Get config, that specifies params for getting raw data from `crypto
-    chassis`.
+    chassis` and perform PCA calculations later.
     """
     config = cconconf.Config()
     param_dict = {
@@ -88,7 +88,7 @@ def get_CrossSectionalLearning_config() -> cconconf.Config:
                     "full_symbol",
                 ],
                 "resampling_rule": "5T",
-                "rets_type": "pct_change",
+                "rets_type": "pct_change", # or "log_rets"
             },
         },
         "analysis": {
@@ -141,6 +141,8 @@ df = ramptran.calculate_vwap_twap(
 df = ramptran.calculate_returns(df, config["data"]["transform"]["rets_type"])
 # Choose reference returns to proceed to further analysis.
 df = df[config["analysis"]["reference_rets"]]
+# Get rid of NaNs.
+df = hpandas.dropna(df)
 df.head(3)
 
 # %% [markdown]
@@ -161,8 +163,6 @@ data_normalized = sc.fit_transform(df.values)
 data_normalized = pd.DataFrame(
     data_normalized, columns=df.columns, index=df.index
 )
-# Get rid of NaNs.
-data_normalized = hpandas.dropna(data_normalized)
 data_normalized.head(3)
 
 # %%
@@ -204,9 +204,6 @@ pca_df
 
 # %% [markdown]
 # ### Rolling PCA (omit for now)
-
-# %%
-df
 
 # %%
 # Params.
