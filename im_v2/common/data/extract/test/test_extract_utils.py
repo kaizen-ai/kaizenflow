@@ -54,6 +54,7 @@ class TestDownloadRealtimeForOneExchange1(
             "end_timestamp": "20211110-101200",
             "exchange_id": "binance",
             "universe": "v3",
+            "data_type": "ohlcv",
             "db_stage": "local",
             "db_table": "ccxt_ohlcv",
             "incremental": False,
@@ -62,16 +63,15 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
+        extractor = imvcdeex.CcxtExtractor(kwargs["exchange_id"])
         if use_s3:
             # Update kwargs.
             kwargs.update(
                 {"aws_profile": "ck", "s3_path": f"s3://{self.bucket_name}/"}
             )
         # Run.
-        args = argparse.Namespace(**kwargs)
         imvcdeexut.download_realtime_for_one_exchange(
-            args, imvcdeex.CcxtExtractor
-        )
+            kwargs, extractor)
         # Get saved data in db.
         select_all_query = "SELECT * FROM ccxt_ohlcv;"
         actual_df = hsql.execute_query_to_df(self.connection, select_all_query)

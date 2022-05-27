@@ -140,7 +140,7 @@ def download_realtime_for_one_exchange(
     :param exchange_class: which exchange is used in script run
     """
     # Load currency pairs.
-    universe = ivcu.get_vendor_universe(args["vendor"], version=args["universe"])
+    universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
     currency_pairs = universe[args["exchange_id"]]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args["db_stage"])
