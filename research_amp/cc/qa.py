@@ -13,6 +13,77 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 
+# TODO(Nina): Do not forget to move to hpandas.
+def swap_column_levels(
+    df: pd.DataFrame, upper_level_cols: List[str]
+) -> pd.DataFrame:
+    """
+    Swap column levels with specified upper-level column order.
+
+    Applicable only for 2-level columned dataframes.
+
+    Input:
+
+    ```
+        vendor1                       vendor2
+        feature1  feature2  feature3  feature1  feature2  feature3
+    0         10       -10       0.5        11       -11       0.6
+    1         20       -20       0.6        21       -21       0.7
+    2         30       -30       0.7        31       -31       0.8
+    ```
+
+    Output:
+
+    ```
+        feature1          feature2          feature3
+        vendor1  vendor2  vendor1  vendor2  vendor1  vendor2
+    0        10       11      -10      -11      0.5      0.6
+    1        20       21      -20      -21      0.6      0.7
+    2        30       31      -30      -31      0.7      0.8
+    ```
+    """
+    df.columns = df.columns.swaplevel(0, 1)
+    new_cols = df.columns.reindex(upper_level_cols, level=0)
+    df = df.reindex(columns=new_cols[0])
+    return df
+
+
+def compare_bad_data_stats(
+        vendor1_df: pd.DataFrame,
+        vendor2_df: pd.DataFrame,
+        vendors: List[str]
+) -> pd.DataFrame:
+    hdbg.dassert_lte(1, len(vendors))
+    agg_level = ["full_symbol"]
+    vendor1_bad_data_stats = get_bad_data_stats(vendor1_df, agg_level)
+    vendor2_bad_data_stats = get_bad_data_stats(vendor2_df, agg_level)
+    bad_data_stats = pd.concat(
+        [
+            vendor1_bad_data_stats,
+            vendor2_bad_data_stats,
+        ],
+        keys=vendors,
+        axis=1,
+    )
+    # Drop stats for not intersecting time periods.
+    bad_data_stats = bad_data_stats.dropna()
+    # Reorder columns.
+    cols = ["bad data [%]", "missing bars [%]", "volume=0 [%]", "NaNs [%]"]
+    bad_data_stats = swap_column_levels(bad_data_stats, cols)
+    vendor1_timestamp_stats = get_timestamp_stats(vendor1_df)
+    vendor2_timestamp_stats = get_timestamp_stats(vendor2_df)
+    timestamp_stats = pd.concat(
+        [vendor1_timestamp_stats, vendor2_timestamp_stats],
+        keys=vendors,
+        axis=1,
+    )
+    # Reorder columns.
+    cols = ["min_timestamp", "max_timestamp", "days_available"]
+    timestamp_stats = swap_column_levels(timestamp_stats, cols)
+    pd.concat([timestamp_stats, bad_data_stats], axis=1)
+    return stats
+
+
 def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
     """
     Preprocess OHLCV data for QA stats computations.
