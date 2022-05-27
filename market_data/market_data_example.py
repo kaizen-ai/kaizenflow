@@ -6,7 +6,7 @@ import market_data.market_data_example as mdmadaex
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -257,21 +257,22 @@ def _get_last_timestamp(
 
 
 # TODO(gp): @Grisha This should not be here. It should be somewhere else.
-# TODO(gp): the CCXT, Talos version of this class only differ by the ImClient.
-#  Consider passing the ImClient on the fly to build the class. All these functions
-#  are replaced by a single builder `get_HistoricalImClientMarketData_example1()`.
-def get_CcxtCsvImClientMarketData_example1(
+def get_HistoricalImClientMarketData_example1(
+    im_client: Any,
     asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
+    *,
+    last_timestamp: Optional[pd.Timestamp] = None,
 ) -> mdimcmada.ImClientMarketData:
     """
-    Build a `ImClientMarketData` backed with `CCXT` CSV data.
+    Build a `ImClientMarketData` backed with the data defined by `im_client`.
     """
-    resample_1min = True
-    im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
     # Build a function that returns a wall clock to initialise `MarketData`.
-    last_timestamp = _get_last_timestamp(im_client, asset_ids)
+    if last_timestamp is None:
+        # The maximum timestamp is set from the data except for the cases when
+        # it's too computationally expensive to read all of the data on the fly.
+        last_timestamp = _get_last_timestamp(im_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
         return last_timestamp
