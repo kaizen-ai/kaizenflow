@@ -20,14 +20,18 @@
 # %autoreload 2
 
 import logging
+import os
 
 import pandas as pd
 
 import core.config.config_ as cconconf
+import core.config.config_utils as ccocouti
 import core.explore as coexplor
 import core.signal_processing.incremental_pca as csprinpc
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 import research_amp.transform as ramptran
 
 # %%
@@ -48,35 +52,51 @@ def get_CrossSectionalLearning_config() -> cconconf.Config:
     chassis`.
     """
     config = cconconf.Config()
-    # Load parameters.
-    # config.add_subconfig("load")
-    # Data parameters.
-    config.add_subconfig("data")
-    config["data"]["full_symbols"] = [
-        "binance::ADA_USDT",
-        "binance::BNB_USDT",
-        "binance::BTC_USDT",
-        "binance::DOGE_USDT",
-        "binance::EOS_USDT",
-        "binance::ETH_USDT",
-        "binance::SOL_USDT",
-        "binance::XRP_USDT",
-        "binance::LUNA_USDT",
-        "binance::DOT_USDT",
-        "binance::LTC_USDT",
-        "binance::UNI_USDT",
-    ]
-    config["data"]["start_date"] = pd.Timestamp("2022-01-01", tz="UTC")
-    config["data"]["end_date"] = pd.Timestamp("2022-02-01", tz="UTC")
-    # Transformation parameters.
-    config.add_subconfig("transform")
-    config["transform"]["resampling_rule"] = "1T"
-    config["transform"]["rets_type"] = "pct_change"
-    # Analysis parameters.
-    config.add_subconfig("analysis")
-    config["analysis"][
-        "reference_rets"
-    ] = "close.ret_0"  # e.g., "vwap.ret_0", "twap.ret_0"
+    param_dict = {
+        "data": {
+            # Parameters for client initialization.
+            "im_client": {
+                "universe_version": "v1",
+                "resample_1min": True,
+                "root_dir": os.path.join(
+                    hs3.get_s3_bucket_path("ck"),
+                    "reorg",
+                    "historical.manual.pq",
+                ),
+                "partition_mode": "by_year_month",
+                "data_snapshot": "latest",
+                "aws_profile": "ck",
+            },
+            # Parameters for data query.
+            "read_data": {
+                "start_ts": pd.Timestamp("2022-01-01 00:00", tz="UTC"),
+                "end_ts": pd.Timestamp("2022-04-01 00:00", tz="UTC"),
+                "columns": None,
+                "filter_data_mode": "assert",
+            },
+            "transform": {
+                "ohlcv_cols": [
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume",
+                    "full_symbol",
+                ],
+                "resampling_rule": "5T",
+                "rets_type": "pct_change",
+            },
+        },
+        "analysis": {
+            "reference_rets": "close.ret_0",  # e.g.,"vwap.ret_0", "twap.ret_0"
+            "rets_type": "volume",
+        },
+        "model": {
+            "delay_lag": 1,
+            "num_lags": 4,
+        },
+    }
+    config = ccocouti.get_config_from_nested_dict(param_dict)
     return config
 
 
@@ -87,45 +107,33 @@ print(config)
 # %% [markdown]
 # # Load the data
 
-# %% [markdown]
-# Specs for the current data snapshot:
-# - Data type: `OHLCV`
-# - Universe: `v5` (excl. missing coins, see `research_amp/cc/notebooks/master_tradability_analysis.ipynb` for reference)
-# - Data range: January 2022
+# %%
+# Initiate the client.
+client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
+    **config["data"]["im_client"]
+)
+# Get universe of `full_symbols`.
+universe = client.get_universe()
+# Load OHLCV data.
+ohlcv_cc = client.read_data(universe, **config["data"]["read_data"])
+# Post-processing.
+ohlcv_cc = ohlcv_cc[config["data"]["transform"]["ohlcv_cols"]]
+ohlcv_cc.head(3)
 
 # %%
-# TODO(Max): Refactor the loading part once #1766 is implemented.
-
-# Read from crypto_chassis directly.
-# full_symbols = config["data"]["full_symbols"]
-# start_date = config["data"]["start_date"]
-# end_date = config["data"]["end_date"]
-# ohlcv_cc = raccchap.read_crypto_chassis_ohlcv(full_symbols, start_date, end_date)
-
-# Read saved 1 month of data.
-ohlcv_cc = pd.read_csv("/shared_data/ohlcv_cc_v5.csv", index_col="timestamp")
-ohlcv_cc.index = pd.to_datetime(ohlcv_cc.index)
-ohlcv_cols = [
-    "open",
-    "high",
-    "low",
-    "close",
-    "volume",
-    "full_symbol",
-]
-ohlcv_cc = ohlcv_cc[ohlcv_cols]
-ohlcv_cc.head(3)
+# Loaded universe.
+print(ohlcv_cc["full_symbol"].unique())
 
 # %% [markdown]
 # # Compute returns
 
 # %%
 # VWAP, TWAP transformation.
-resampling_rule = config["transform"]["resampling_rule"]
-df = ramptran.calculate_vwap_twap(ohlcv_cc, resampling_rule)
+df = ramptran.calculate_vwap_twap(
+    ohlcv_cc, config["data"]["transform"]["resampling_rule"]
+)
 # Returns calculation.
-rets_type = config["transform"]["rets_type"]
-df = ramptran.calculate_returns(df, rets_type)
+df = ramptran.calculate_returns(df, config["data"]["transform"]["rets_type"])
 # Choose reference returns to proceed to further analysis.
 df = df[[config["analysis"]["reference_rets"]]]
 df.head(3)
