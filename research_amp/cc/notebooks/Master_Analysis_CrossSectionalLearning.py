@@ -23,7 +23,7 @@ import logging
 import os
 
 import pandas as pd
-
+import numpy as np
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
 import core.explore as coexplor
@@ -33,6 +33,10 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 import research_amp.transform as ramptran
+from sklearn.preprocessing import StandardScaler
+import helpers.hpandas as hpandas
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -135,7 +139,7 @@ df = ramptran.calculate_vwap_twap(
 # Returns calculation.
 df = ramptran.calculate_returns(df, config["data"]["transform"]["rets_type"])
 # Choose reference returns to proceed to further analysis.
-df = df[[config["analysis"]["reference_rets"]]]
+df = df[config["analysis"]["reference_rets"]]
 df.head(3)
 
 # %% [markdown]
@@ -145,7 +149,48 @@ df.head(3)
 # ## Estimate PCA
 
 # %% [markdown]
-# ### Rolling PCA
+# ### Standartize data
+
+# %%
+# Initiate scaler.
+sc = StandardScaler()
+# Normalize data.
+df_values = df.values
+data_normalized = sc.fit_transform(df_values)
+# Get back to DataFrame representation.
+data_normalized = pd.DataFrame(data_normalized, columns=df.columns, index=df.index)
+# Get rid of NaNs.
+data_normalized = hpandas.dropna(data_normalized)
+data_normalized.head(3)
+
+# %%
+# Check the normalization (should be ~0 for mean, ~1 for standard deviation).
+mean_std_check = pd.DataFrame()
+for cols in data_normalized.columns:
+    mean_std_check.loc[cols, "mean"] = data_normalized[cols].mean()
+    mean_std_check.loc[cols, "std_dev"] = data_normalized[cols].std()
+
+mean_std_check.round(3)
+
+# %% [markdown]
+# ### Choose the number of principal components
+
+# %%
+pca = PCA().fit(data_normalized)
+plt.plot(np.cumsum(pca.explained_variance_ratio_))
+plt.xlabel("number_of_components")
+plt.ylabel("cumulative_explained_variance")
+
+# %%
+explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
+num_of_required_comp = len(explained_variance_ratio_cumsum[explained_variance_ratio_cumsum < 0.95])
+print(f"Number of required PCA components: {num_of_required_comp}")
+
+# %% [markdown]
+# ### PCA calculations
+
+# %% [markdown]
+# ### Rolling PCA (omit for now)
 
 # %%
 # Params.
@@ -159,20 +204,3 @@ corr_df, eigval_df, eigvec_df = coexplor.rolling_pca_over_time(
 eigval_df.columns = sample.columns
 eigvec_df.columns = sample.columns
 coexplor.plot_pca_over_time(eigval_df, eigvec_df)
-
-# %% [markdown]
-# ### Incremental PCA
-
-# %%
-# Incremental PCA calculations.
-num_pc = 2
-tau = 1
-lambda_df, unit_eigenvec_dfs = csprinpc.compute_ipca(sample, num_pc, tau)
-unit_eigenvec_dfs[0]["binance::ADA_USDT"].plot()
-
-# %% run_control={"marked": false}
-lambda_show = lambda_df.reset_index(drop=True)
-# Clean outliers manually.
-lambda_show = lambda_show[lambda_show[0] < 0.000025]
-lambda_show = lambda_show[lambda_show[1] < 0.0000025]
-lambda_show.plot.scatter(0, 1)
