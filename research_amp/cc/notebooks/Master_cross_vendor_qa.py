@@ -594,4 +594,4 @@ kucoin_bad_data_stats_by_year_month_qa = _compare_bad_data_stats_by_year_month(
 kucoin_bad_data_stats_by_year_month_qa
 
 # %%
-_plot_bad_data_by_year_month_stats(config, kucoin_bad_data_stats_by_year_month_qa)
+_plot_bad_data_by_year_month_stats(config, kucoin_bad_data_stats_by_year_month_qa) 
