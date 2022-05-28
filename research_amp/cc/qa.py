@@ -14,7 +14,7 @@ import helpers.hpandas as hpandas
 
 
 # TODO(Nina): Do not forget to move to hpandas.
-def swap_column_levels(
+def _swap_column_levels(
     df: pd.DataFrame, upper_level_cols: List[str]
 ) -> pd.DataFrame:
     """
@@ -51,37 +51,31 @@ def swap_column_levels(
 def compare_bad_data_stats(
         vendor1_df: pd.DataFrame,
         vendor2_df: pd.DataFrame,
-        vendors: List[str]
+        vendors: List[str],
+        columns: List[str]
 ) -> pd.DataFrame:
+    """
+    Compare bad data statistics from two different vendors.
+
+    :param vendor1_df: data statistics of some vendor, e.g. bad data of `CCXT`
+    :param vendor2_df: data statistics of another vendor
+    :param vendors: vendors' names
+    :param columns: columns of statistics that was compared
+    """
     hdbg.dassert_lte(1, len(vendors))
-    agg_level = ["full_symbol"]
-    vendor1_bad_data_stats = get_bad_data_stats(vendor1_df, agg_level)
-    vendor2_bad_data_stats = get_bad_data_stats(vendor2_df, agg_level)
-    bad_data_stats = pd.concat(
+    stats_comparison = pd.concat(
         [
-            vendor1_bad_data_stats,
-            vendor2_bad_data_stats,
+            vendor1_df,
+            vendor2_df,
         ],
         keys=vendors,
         axis=1,
     )
     # Drop stats for not intersecting time periods.
-    bad_data_stats = bad_data_stats.dropna()
+    stats_comparison = stats_comparison.dropna()
     # Reorder columns.
-    cols = ["bad data [%]", "missing bars [%]", "volume=0 [%]", "NaNs [%]"]
-    bad_data_stats = swap_column_levels(bad_data_stats, cols)
-    vendor1_timestamp_stats = get_timestamp_stats(vendor1_df)
-    vendor2_timestamp_stats = get_timestamp_stats(vendor2_df)
-    timestamp_stats = pd.concat(
-        [vendor1_timestamp_stats, vendor2_timestamp_stats],
-        keys=vendors,
-        axis=1,
-    )
-    # Reorder columns.
-    cols = ["min_timestamp", "max_timestamp", "days_available"]
-    timestamp_stats = swap_column_levels(timestamp_stats, cols)
-    pd.concat([timestamp_stats, bad_data_stats], axis=1)
-    return stats
+    stats_comparison = _swap_column_levels(stats_comparison, columns)
+    return stats_comparison
 
 
 def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
