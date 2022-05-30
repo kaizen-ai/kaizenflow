@@ -40,6 +40,14 @@ def compare_data_stats(
     )
     # Drop stats for not intersecting time periods.
     stats_comparison = stats_comparison.dropna()
+    # Compute difference between bad data stats.
+
+    if "min_timestamp" not in vendor1_columns:
+        for col in stats_comparison.columns.levels[1]:
+            stats_comparison["diff", col] = (
+                stats_comparison[vendor_names[0]][col]
+                - stats_comparison[vendor_names[1]][col]
+            )
     # Reorder columns.
     stats_comparison.columns = stats_comparison.columns.swaplevel(0, 1)
     new_cols = stats_comparison.columns.reindex(vendor1_columns, level=0)
