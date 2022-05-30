@@ -17,11 +17,6 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-<<<<<<< HEAD
-import im_v2.crypto_chassis.data.client as iccdc
-import im_v2.talos.data.client as itdcl
-=======
->>>>>>> master
 import market_data.im_client_market_data as mdimcmada
 import market_data.real_time_market_data as mdrtmada
 import market_data.replayed_market_data as mdremada
