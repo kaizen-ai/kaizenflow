@@ -41,7 +41,7 @@ def compare_data_stats(
     # Drop stats for not intersecting time periods.
     stats_comparison = stats_comparison.dropna()
     # Compute difference between bad data stats.
-    if "min_timestamp" not in vendor1_columns:
+    if "min_timestamp" not in vendor1_columns and len(vendor1_df.index[0]) != 3:
         for col in stats_comparison.columns.levels[1]:
             stats_comparison["diff", col] = (
                 stats_comparison[vendor_names[0]][col]
