@@ -5,7 +5,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
-import im_v2.crypro_chassis.data.extract.download_historical_data as imvcdedhda
+import im_v2.crypto_chassis.data.extract.download_historical_data as imvcdedhda
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
