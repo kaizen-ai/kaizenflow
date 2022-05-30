@@ -294,6 +294,11 @@ def get_HistoricalImClientMarketData_example1(
     return market_data
 
 
+# #############################################################################
+# Real-time ImClientMarketData examples
+# #############################################################################
+
+
 def get_RealTimeImClientMarketData_example1(
     # TODO(Danya): Initialize im_client from outside the method.
     im_client: hsql.DbConnection,
