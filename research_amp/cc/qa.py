@@ -13,68 +13,36 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 
-# TODO(Nina): Do not forget to move to hpandas.
-def _swap_column_levels(
-    df: pd.DataFrame, upper_level_cols: List[str]
-) -> pd.DataFrame:
-    """
-    Swap column levels with specified upper-level column order.
-
-    Applicable only for 2-level columned dataframes.
-
-    Input:
-
-    ```
-        vendor1                       vendor2
-        feature1  feature2  feature3  feature1  feature2  feature3
-    0         10       -10       0.5        11       -11       0.6
-    1         20       -20       0.6        21       -21       0.7
-    2         30       -30       0.7        31       -31       0.8
-    ```
-
-    Output:
-
-    ```
-        feature1          feature2          feature3
-        vendor1  vendor2  vendor1  vendor2  vendor1  vendor2
-    0        10       11      -10      -11      0.5      0.6
-    1        20       21      -20      -21      0.6      0.7
-    2        30       31      -30      -31      0.7      0.8
-    ```
-    """
-    df.columns = df.columns.swaplevel(0, 1)
-    new_cols = df.columns.reindex(upper_level_cols, level=0)
-    df = df.reindex(columns=new_cols[0])
-    return df
-
-
-def compare_bad_data_stats(
+def compare_data_stats(
         vendor1_df: pd.DataFrame,
         vendor2_df: pd.DataFrame,
-        vendors: List[str],
-        columns: List[str]
 ) -> pd.DataFrame:
     """
-    Compare bad data statistics from two different vendors.
+    Compare data statistics from two different vendors, i.e. bad data or timestamp statistics.
 
     :param vendor1_df: data statistics of some vendor, e.g. bad data of `CCXT`
     :param vendor2_df: data statistics of another vendor
-    :param vendors: vendors' names
-    :param columns: columns of statistics that was compared
+    return: comparison of statistics of two vendors
     """
-    hdbg.dassert_lte(1, len(vendors))
+    vendor1_columns = vendor1_df.columns.to_list().sort()
+    vendor2_columns = vendor2_df.columns.to_list().sort()
+    # Check if columns are equal in order for it is used in `MultiIndex`.
+    hdbg.dassert_eq(vendor1_columns, vendor2_columns)
+    vendor_names = [vendor1_df.name, vendor2_columns.name]
     stats_comparison = pd.concat(
         [
             vendor1_df,
             vendor2_df,
         ],
-        keys=vendors,
+        keys=vendor_names,
         axis=1,
     )
     # Drop stats for not intersecting time periods.
     stats_comparison = stats_comparison.dropna()
     # Reorder columns.
-    stats_comparison = _swap_column_levels(stats_comparison, columns)
+    stats_comparison.columns = stats_comparison.columns.swaplevel(0, 1)
+    new_cols = stats_comparison.columns.reindex(vendor1_columns, level=0)
+    stats_comparison = stats_comparison.reindex(columns=new_cols[0])
     return stats_comparison
 
 
@@ -108,7 +76,7 @@ def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
     return preprocessed_data
 
 
-def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame:
+def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str], vendor_name: str) -> pd.DataFrame:
     """
     Get QA stats per specified groups.
 
@@ -164,10 +132,11 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
     res_stats_df = pd.concat(res_stats, axis=1).T
     cols = ["bad data [%]", "missing bars [%]", "volume=0 [%]", "NaNs [%]"]
     res_stats_df = res_stats_df[cols]
+    res_stats_df.name = vendor_name
     return res_stats_df
 
 
-def get_timestamp_stats(data: pd.DataFrame) -> pd.DataFrame:
+def get_timestamp_stats(data: pd.DataFrame, vendor_name: str) -> pd.DataFrame:
     """
     Get timestamp stats per full symbol.
 
@@ -196,4 +165,5 @@ def get_timestamp_stats(data: pd.DataFrame) -> pd.DataFrame:
         res_stats.append(symbol_stats)
     # Combine all full symbol stats.
     res_stats_df = pd.concat(res_stats, axis=1).T
+    res_stats_df.name = vendor_name
     return res_stats_df
