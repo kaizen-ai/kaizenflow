@@ -302,11 +302,15 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "ccxt_v3":
         version = "v3"
         ret = _get_ccxt_universe(version, top_n)
+        # As the other data is of bad quality we keep `binance` data only.
+        ret = [
+            full_symbol
+            for full_symbol in ret
+            if full_symbol.startswith("binance")
+        ]
     elif universe_version == "ccxt_v4":
         version = "v4"
         ret = _get_ccxt_universe(version, top_n)
-        # TODO(Grisha): Remove this hack after finishing the QA, see "Make a notebook
-        # to analyse data for CCXT universe v4" CmTask #1866.
         # As the other data is of bad quality we keep `binance` data only.
         ret = [
             full_symbol
