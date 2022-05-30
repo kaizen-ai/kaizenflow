@@ -14,11 +14,12 @@ import helpers.hpandas as hpandas
 
 
 def compare_data_stats(
-        vendor1_df: pd.DataFrame,
-        vendor2_df: pd.DataFrame,
+    vendor1_df: pd.DataFrame,
+    vendor2_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Compare data statistics from two different vendors, i.e. bad data or timestamp statistics.
+    Compare data statistics from two different vendors, i.e. bad data or
+    timestamp statistics.
 
     :param vendor1_df: data statistics of some vendor, e.g. bad data of `CCXT`
     :param vendor2_df: data statistics of another vendor
@@ -76,7 +77,9 @@ def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
     return preprocessed_data
 
 
-def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str], vendor_name: str) -> pd.DataFrame:
+def get_bad_data_stats(
+    data: pd.DataFrame, agg_level: List[str], vendor_name: str
+) -> pd.DataFrame:
     """
     Get QA stats per specified groups.
 
