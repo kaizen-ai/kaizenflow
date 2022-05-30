@@ -36,8 +36,9 @@ class TestGetBadDataStats(hunitest.TestCase):
         """
         crypto_chassis_data = self.get_test_data()
         agg_level = ["full_symbol", "year", "month"]
+        vendor_name = "CCXT"
         crypto_chassis_bad_data_stats = ramccqa.get_bad_data_stats(
-            crypto_chassis_data, agg_level
+            crypto_chassis_data, agg_level, vendor_name
         )
         crypto_chassis_bad_data_stats = hpandas.df_to_str(
             crypto_chassis_bad_data_stats
