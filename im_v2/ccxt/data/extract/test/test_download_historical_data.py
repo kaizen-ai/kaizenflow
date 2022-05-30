@@ -47,7 +47,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         self.assertDictEqual(actual, expected)
 
     @umock.patch.object(imvcdeexut, "download_historical_data")
-    def test_main(self, mock_download_realtime: umock.MagicMock) -> None:
+    def test_main(self, mock_download_historical: umock.MagicMock) -> None:
         """
         Smoke test to directly run `_main` function for coverage increase.
         """
@@ -72,8 +72,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         # Run.
         imvcdedhda._main(mock_argument_parser)
         # Check call.
-        self.assertEqual(len(mock_download_realtime.call_args), 2)
-        print(mock_download_realtime.call_args.args[0])
+        self.assertEqual(len(mock_download_historical.call_args), 2)
         self.assertEqual(
-            mock_download_realtime.call_args.args[1].exchange_id, "binance"
+            mock_download_historical.call_args.args[1].exchange_id, "binance"
         )
