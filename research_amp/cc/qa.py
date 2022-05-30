@@ -25,11 +25,11 @@ def compare_data_stats(
     :param vendor2_df: data statistics of another vendor
     return: comparison of statistics of two vendors
     """
-    vendor1_columns = vendor1_df.columns.to_list().sort()
-    vendor2_columns = vendor2_df.columns.to_list().sort()
+    vendor1_columns = vendor1_df.columns.to_list()
+    vendor2_columns = vendor2_df.columns.to_list()
     # Check if columns are equal in order for it is used in `MultiIndex`.
     hdbg.dassert_eq(vendor1_columns, vendor2_columns)
-    vendor_names = [vendor1_df.name, vendor2_columns.name]
+    vendor_names = [vendor1_df.name, vendor2_df.name]
     stats_comparison = pd.concat(
         [
             vendor1_df,
