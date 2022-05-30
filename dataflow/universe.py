@@ -250,6 +250,23 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
 
 
 # #############################################################################
+# CryptoChassis
+# #############################################################################
+
+
+def _get_crypto_chassis_universe(version: str, n: Optional[int]) -> List[Amid]:
+    """
+    Create universe for `CryptoChassis`.
+    """
+    vendor = "crypto_chassis"
+    full_symbols = ivcu.get_vendor_universe(
+        vendor, version=version, as_full_symbol=True
+    )
+    full_symbols = _get_top_n(full_symbols, n)
+    return full_symbols
+
+
+# #############################################################################
 # CCXT
 # #############################################################################
 
@@ -285,9 +302,26 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "ccxt_v3":
         version = "v3"
         ret = _get_ccxt_universe(version, top_n)
+        # Remove Kucoin data due to its bad quality.
+        ret = [
+            full_symbol
+            for full_symbol in ret
+            if not full_symbol.startswith("kucoin")
+        ]
     elif universe_version == "ccxt_v4":
         version = "v4"
         ret = _get_ccxt_universe(version, top_n)
+        # As the other data is of bad quality we keep Binance data only.
+        ret = [
+            full_symbol
+            for full_symbol in ret
+            if full_symbol.startswith("binance")
+        ]
+    elif universe_version == "crypto_chassis_v1":
+        version = "v1"
+        ret = _get_crypto_chassis_universe(version, top_n)
+        # Remove failing full symbol.
+        ret.remove("binance::EOS_USDT")
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret
