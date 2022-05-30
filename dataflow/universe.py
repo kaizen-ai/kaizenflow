@@ -309,11 +309,11 @@ def get_universe(universe_str: str) -> List[Amid]:
         # to analyse data for CCXT universe v4" CmTask #1866.
         # As the other data is of bad quality we keep `binance` data only.
         ret = [
-            full_symbol 
-            for full_symbol in ret 
+            full_symbol
+            for full_symbol in ret
             if full_symbol.startswith("binance")
         ]
-    elif universe_version =="crypto_chassis_v1":
+    elif universe_version == "crypto_chassis_v1":
         version = "v1"
         ret = _get_crypto_chassis_universe(version, top_n)
         # Remove failing full symbol.
