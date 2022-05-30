@@ -43,6 +43,7 @@ import helpers.hs3 as hs3
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 import research_amp.cc.crypto_chassis_api as raccchap
 import research_amp.transform as ramptran
+import helpers.hparquet as hparquet
 
 # %%
 warnings.filterwarnings("ignore")
@@ -64,8 +65,7 @@ def get_cmtask1953_config() -> cconconf.Config:
     param_dict = {
         "data": {
             # Parameters for client initialization.
-            # TODO(max): ohlcv_im_client
-            "im_client": {
+            "ohlcv_im_client": {
                 "universe_version": "v1",
                 "resample_1min": True,
                 "root_dir": os.path.join(
@@ -78,14 +78,17 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "data_snapshot": "latest",
                 "aws_profile": "ck",
             },
-            # TODO(max): bid_ask_im_client
-            
+            "bid_ask_im_client": {
+                "begin_url": f"s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/",
+                "aws_profile": "ck",
+                "resample_bid_ask": "1T",
+            },
             # Parameters for data query.
             "read_data": {
                 "full_symbols": ["binance::BTC_USDT"],
                 "start_ts": pd.Timestamp("2022-01-01 00:00", tz="UTC"),
                 "end_ts": pd.Timestamp("2022-03-31 23:59", tz="UTC"),
-                "columns": None,
+                "columns": ['close', 'full_symbol', 'volume'],
                 "filter_data_mode": "assert",
             },
         },
@@ -113,82 +116,75 @@ print(config)
 # %%
 # Initiate the client.
 client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
-    **config["data"]["im_client"]
+    **config["data"]["ohlcv_im_client"]
 )
 # Load OHLCV data.
 # TODO(max): -> df_ohlcv
-btc_ohlcv = client.read_data(**config["data"]["read_data"])
-# Post-processing.
-# TODO(max): load only a subset of the data from the config
-ohlcv_cols = [
-    #"open",
-    #"high",
-    #"low",
-    "close",
-    "volume",
-]
-btc_ohlcv = btc_ohlcv[ohlcv_cols]
+df_ohlcv = client.read_data(**config["data"]["read_data"])
 # Resample.
-# TODO(max): compute features on 1 min grid and then resample later
-btc_ohlcv = cfinresa.resample_ohlcv_bars(
-    btc_ohlcv, config["analysis"]["resampling_rule"]
-)
-btc_ohlcv.head(3)
+df_ohlcv.head(3)
+
 
 # %% [markdown]
 # ## Bid ask data
 
 # %%
+def resample_and_process_bid_ask_data(df, resample_rule):
+    # Resample.
+    df = raccchap.resample_bid_ask(
+        df, resample_rule
+    )
+    # Convert.
+    for cols in df.columns[:-1]:
+        df[cols] = pd.to_numeric(df[cols], downcast="float")
+
+    # Compute bid ask stats.
+    df = ramptran.calculate_bid_ask_statistics(df)
+    # Choose only necessary values (`full_symbol`).
+    df = df.swaplevel(axis=1)[str(config["data"]["read_data"]["full_symbols"])[
+    2:-2
+]][
+        ["bid_size", "ask_size", "bid_price", "ask_price", "mid", "quoted_spread"]
+    ]
+    return df
+
+# %%
 start_date = config["data"]["read_data"]["start_ts"]
 end_date = config["data"]["read_data"]["end_ts"]
-
-# TODO(max): move also this part to sub-config ImClientBidAsk
 
 # Load bid ask from s3. Note: works only for 2022 for now.
 # TODO(Grisha, Dan): How to load the bid/ask data through ImClient?
 result = []
-import helpers.hparquet as hparquet
+
 for i in range(start_date.month, end_date.month + 1):
     print(i)
     tmp_df = hparquet.from_parquet(
-        f"s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/month={i}/data.parquet",
-        aws_profile="ck"
+        os.path.join(config["data"]["bid_ask_im_client"]["begin_url"], f"month={i}/data.parquet"), 
+        aws_profile=config["data"]["bid_ask_im_client"]["aws_profile"]
     )
     result.append(tmp_df)
-bid_ask_btc = pd.concat(result)
-bid_ask_btc = bid_ask_btc[:end_date]
+bid_ask_df = pd.concat(result)
+bid_ask_df = bid_ask_df[:end_date]
 # Add `full_symbol` (necessary param for `calculate_bid_ask_statistics`).
-bid_ask_btc["full_symbol"] = str(config["data"]["read_data"]["full_symbols"])[
+bid_ask_df["full_symbol"] = str(config["data"]["read_data"]["full_symbols"])[
     2:-2
 ]
 # Choose only valid cols.
-bid_ask_btc = bid_ask_btc[
+bid_ask_df = bid_ask_df[
     ["bid_price", "bid_size", "ask_price", "ask_size", "full_symbol"]
 ]
-# Resample.
-bid_ask_btc = raccchap.resample_bid_ask(
-    bid_ask_btc, config["analysis"]["resampling_rule"]
-)
-# Convert.
-for cols in bid_ask_btc.columns[:-1]:
-    bid_ask_btc[cols] = pd.to_numeric(bid_ask_btc[cols], downcast="float")
+# Resample to 1-min (to be consistent with OHLCV data).
+bid_ask_df_1min = resample_and_process_bid_ask_data(bid_ask_df, config["data"]["bid_ask_im_client"]["resample_bid_ask"])
 
-# Compute bid ask stats.
-bid_ask_btc = ramptran.calculate_bid_ask_statistics(bid_ask_btc)
-# Choose only necessary values.
-bid_ask_btc = bid_ask_btc.swaplevel(axis=1)["binance::BTC_USDT"][
-    ["bid_size", "ask_size", "bid_price", "ask_price", "mid", "quoted_spread"]
-]
-
-bid_ask_btc.head(3)
+bid_ask_df_1min.head(3)
 
 # %% [markdown]
 # ## Combined
 
 # %%
 # OHLCV + bid ask
-btc = pd.concat([btc_ohlcv, bid_ask_btc], axis=1)
-btc.head(3)
+data = pd.concat([df_ohlcv, bid_ask_df_1min], axis=1)
+data.head(3)
 
 
 # %% [markdown]
@@ -215,8 +211,8 @@ def get_target_value(df: pd.DataFrame, timestamp: pd.Timestamp, column_name: str
 
 # %%
 date = pd.Timestamp("2022-01-01 00:00", tz="UTC")
-display(get_target_value(btc, date, "quoted_spread"))
-display(get_target_value(btc, date, "volume"))
+display(get_target_value(data, date, "quoted_spread"))
+display(get_target_value(data, date, "volume"))
 
 
 # %% [markdown]
@@ -256,8 +252,8 @@ def get_naive_value(
 
 # %%
 date = pd.Timestamp("2022-01-01 10:00", tz="UTC")
-display(get_naive_value(btc, date, "quoted_spread", delay_in_mins=10))
-display(get_naive_value(btc, date, "volume", delay_in_mins=10))
+display(get_naive_value(data, date, "quoted_spread", delay_in_mins=10))
+display(get_naive_value(data, date, "volume", delay_in_mins=10))
 
 # %% [markdown]
 # ## Look back N days
@@ -267,7 +263,7 @@ display(get_naive_value(btc, date, "volume", delay_in_mins=10))
 
 # %%
 # Add column with intraday time.
-btc["time"] = btc.index.time
+data["time"] = data.index.time
 
 
 # %%
@@ -297,15 +293,11 @@ def get_lookback_value(
     # Choose sample data using lookback period (with a delay).
     start_date = timestamp - timedelta(days=lookback_days, minutes=delay)
     if start_date >= df.index.min() and start_date <= df.index.max():
-        sample = df.loc[start_date:timestamp]
-        # Look for the reference value for the period.
-        time_grouper = sample.groupby("time")
+        sample = df.loc[start_date:timestamp].loc[timestamp.time()]
         if mode == "mean":
-            grouped = time_grouper[column_name].mean().to_frame()
+            value = sample[column_name].mean()
         else:
-            grouped = time_grouper[column_name].median().to_frame()
-        # Choose the lookback spread for a given time.
-        value = get_target_value(grouped, timestamp.time(), column_name)
+            value = sample[column_name].median()
     else:
         value = np.nan
     return value
@@ -313,161 +305,70 @@ def get_lookback_value(
 
 # %%
 date = pd.Timestamp("2022-01-21 19:00", tz="UTC")
-display(get_lookback_value(btc, date, 14, "quoted_spread"))
-display(get_lookback_value(btc, date, 14, "volume"))
+display(get_lookback_value(data, date, 14, "quoted_spread"))
+display(get_lookback_value(data, date, 14, "volume"))
 
 
 # %% [markdown]
 # # Collect all estimators for the whole period
 
 # %%
+def attach_resampled_y_var(resampled_df, estimators_df, target):
+    if target == "spread":
+        # Choose Y-var.
+        resampled_df = resampled_df[[f"quoted_{target}"]]
+        # Rename Y-var.
+        resampled_df = resampled_df.rename(columns={"quoted_spread": "real_spread_0"})
+    elif target == "volume":
+        # Choose Y-var.
+        resampled_df = resampled_df[[f"{target}"]]
+        # Rename Y-var.
+        resampled_df = resampled_df.rename(columns={"volume": "real_volume_0"})
+    # Attach Y-var to the computed estimators.
+    yx_df = pd.merge(resampled_df, estimators_df, left_index=True, right_index=True)
+    return yx_df
+
+
+# %%
 # This is building the ml_df
 # the predicted var is always y
 # compute lags
 # add the median feature
-
-def collect_real_naive_lookback_est(
-    estimators_df: pd.DataFrame,
-    original_df,
-    target: str,
-    est_type: str,
-    delay_in_mins: int = 2,
-    lookback: int = 14,
-) -> pd.DataFrame:
-    """
-    :param target: e.g., "spread" or "volume"
-    :param est_type: e.g., "real", "naive" or "lookback"
-    """
-    estimators_df[f"{est_type}_{target}"] = estimators_df.index
-    # Add the values of a real value.
-    if est_type == "real":
-        estimators_df[f"{est_type}_{target}_0"] = estimators_df[
-            f"{est_type}_{target}"
-        ].apply(lambda x: get_target_value(original_df, x, target))
-        estimators_df = estimators_df.drop(columns=[f"{est_type}_{target}"])
-    # Add the values of naive estimator.
-    elif est_type == "naive":
-        estimators_df[f"{est_type}_{target}"] = estimators_df[
-            f"{est_type}_{target}"
-        ].apply(lambda x: get_naive_value(original_df, x, target, delay_in_mins))
-    # Add the values of lookback estimator.
-    else:
-        estimators_df[f"{est_type}_{target}"] = estimators_df[
-            f"{est_type}_{target}"
-        ].apply(lambda x: get_lookback_value(original_df, x, lookback, target))
-    return estimators_df
-
-
-# %%
-# Generate the separate DataFrame for estimators.
-estimators = pd.DataFrame(index=btc.index[1:])
-# Choose the target value.
 target = config["analysis"]["target_value"]
-delay_in_mins = int(config["analysis"]["resampling_rule"][0]) * 2
-
-estimators = collect_real_naive_lookback_est(estimators, btc, target, "real")
-estimators = collect_real_naive_lookback_est(
-    estimators, btc, target, "naive", delay_in_mins
+# Add initial target values.
+estimators = data[[target]]
+estimators.columns =  [f"real_{target}_0"]
+# Add lagged values.
+delay_lag = config["model"]["delay_lag"]
+num_lags = config["model"]["num_lags"]
+estimators, info = cofeatur.compute_lagged_features(
+    estimators, f"real_{target}_0", delay_lag, num_lags
 )
-estimators = collect_real_naive_lookback_est(estimators, btc, target, "lookback")
+# Add lookback estimator.
+estimators[f"lookback_{target}"] = estimators.index
+estimators[f"lookback_{target}"] = estimators[f"lookback_{target}"].apply(lambda x: get_lookback_value(data, 
+                                                                                                         x, 
+                                                                                                         14, 
+                                                                                                         target))
+# Drop the column with real_0, since Y-var will be added later (resampled).
+estimators=estimators.drop(columns=f"real_{target}_0")
 estimators
 
-
-# %% [markdown]
-# # Evaluate results
-
 # %%
-def get_mean_error(
-    df: pd.DataFrame,
-    column_name_actual: str,
-    column_name_estimator: str,
-    num_std: int = 1,
-    print_results: bool = True,
-) -> pd.Series:
-    """
-    - Calculate the error of difference between real and estimated values.
-    - Show the mean and ± num_std*standard_deviation levels.
+# Resample bid ask.
+bid_ask_df_5min = resample_and_process_bid_ask_data(bid_ask_df, "5T")
+# Resample OHLCV
+df_ohlcv_5min = df_ohlcv.resample("5T").agg({
+    "close": "last",
+    "volume": "sum"
+})
 
-    :param df: data with real values and estimators
-    :param column_name_actual: e.g., "spread", "volume")
-    :param column_name_estimator: estimator (e.g., "naive_spread", "lookback_spread")
-    :param num_std: number of standard deviations from mean
-    :param print_results: whether or not print results
-    :return: errors for each data point
-    """
-    err = (
-        abs(df[column_name_actual] - df[column_name_estimator])
-        / df[column_name_actual]
-    )
-    err_mean = err.mean()
-    err_std = err.std()
-    if print_results:
-        print(
-            f"Mean error + {num_std} std = {err_mean+num_std*err_std} \
-              \nMean error = {err_mean}\
-              \nMean error - {num_std} std = {err_mean-num_std*err_std}"
-        )
-    return err
+df_5min = pd.concat([df_ohlcv_5min, bid_ask_df_5min],axis=1)
 
+est_df = attach_resampled_y_var(df_5min, estimators, target)
 
-# %%
-# Choose the period that is equally filled by both estimators.
-test = estimators[estimators[f"lookback_{target}"].notna()]
-test.head(3)
+est_df.head()
 
-
-# %% [markdown]
-# ## Naive estimator
-
-# %%
-# TODO(max): Remove this since it's just testing each predictor by itself in the new framework
-
-# %%
-# # Mean error and upper/lower level of errors' standard deviation.
-# column_name_actual = f"real_{target}_0"
-# column_name_estimator = f"naive_{target}"
-# naive_err = get_mean_error(test, column_name_actual, column_name_estimator)
-
-# %% run_control={"marked": false}
-# # Regress (OLS) between `real_spread` and `naive_spread`.
-# predicted_var = f"real_{target}_0"
-# predictor_vars = f"naive_{target}"
-# intercept = True
-# # Run OLS.
-# coexplor.ols_regress(
-#     test,
-#     predicted_var,
-#     predictor_vars,
-#     intercept,
-# )
-
-# %%
-# test[[f"real_{target}_0", f"naive_{target}"]].plot(figsize=(15, 7))
-
-# %% [markdown]
-# ## Lookback estimator
-
-# %%
-# # Mean error and upper/lower level of errors' standard deviation.
-# column_name_actual = f"real_{target}_0"
-# column_name_estimator = f"lookback_{target}"
-# lookback_err = get_mean_error(test, column_name_actual, column_name_estimator)
-
-# %%
-# # Regress (OLS) between `real_spread` and `lookback_spread`.
-# predicted_var = f"real_{target}_0"
-# predictor_vars = f"lookback_{target}"
-# intercept = True
-# # Run OLS.
-# coexplor.ols_regress(
-#     test,
-#     predicted_var,
-#     predictor_vars,
-#     intercept,
-# )
-
-# %%
-# test[[f"real_{target}_0", f"lookback_{target}"]].plot(figsize=(15, 7))
 
 # %% [markdown]
 # # Predict via sklearn
@@ -498,43 +399,26 @@ def regression_results(y_true, y_pred, mae_only: bool = True):
 # ## Defining training and test sets
 
 # %%
-# TODO(max): test_sk -> ml_df
-
-# %%
-# Drop NaNs.
-test_sk = hpandas.dropna(test)
-# Get rid of days with only one observations (first and last rows).
-test_sk = test_sk.iloc[:-1]
-# Add more lags as features
-delay_lag = config["model"]["delay_lag"]
-num_lags = config["model"]["num_lags"]
-test_sk, info = cofeatur.compute_lagged_features(
-    test_sk, f"real_{target}_0", delay_lag=delay_lag, num_lags=num_lags
-)
-# Hardcoded solution: omit "naive" estimator in favor of new lag estimators.
-test_sk = test_sk.drop(columns=[f"naive_{target}"])
-print(info)
-# Display the results.
-#display(test_sk.corr())
-display(test_sk.shape)
-display(test_sk.tail(3))
-print(f"Set of prediciton features = {list(test_sk.columns[1:])}")
+ml_df = hpandas.dropna(est_df)
+display(ml_df.shape)
+display(ml_df.head(3))
+print(f"Set of prediciton features = {list(ml_df.columns[1:])}")
 
 # %% [markdown]
 # ## Train / test data separation
 
 # %%
 # TODO(max): Use time series splits vs train/test
-start_test = test_sk.index[0].date()
-end_test = test_sk.index[-1].date()
+start_test = ml_df.index[0].date()
+end_test = ml_df.index[-1].date()
 
 # Training dataset.
-X_train = test_sk.loc[start_test:"2022-03-24"].drop([f"real_{target}_0"], axis=1)
-y_train = test_sk.loc[start_test:"2022-03-24", f"real_{target}_0"]
+X_train = ml_df.loc[start_test:"2022-03-24"].drop([f"real_{target}_0"], axis=1)
+y_train = ml_df.loc[start_test:"2022-03-24", f"real_{target}_0"]
 
 # Testing dataset.
-X_test = test_sk.loc["2022-03-25":end_test].drop([f"real_{target}_0"], axis=1)
-y_test = test_sk.loc["2022-03-25":end_test, f"real_{target}_0"]
+X_test = ml_df.loc["2022-03-25":end_test].drop([f"real_{target}_0"], axis=1)
+y_test = ml_df.loc["2022-03-25":end_test, f"real_{target}_0"]
 
 # %%
 n_splits = (X_train.index.max() - X_train.index.min()).days + 1
@@ -638,3 +522,7 @@ lr_test.plot(figsize=(15, 7))
 # Plot the difference between true and predicted values.
 lr_test["diff"] = lr_test["true"] - lr_test["predicted"]
 lr_test["diff"].plot(figsize=(15, 7))
+
+# %%
+
+# %%
