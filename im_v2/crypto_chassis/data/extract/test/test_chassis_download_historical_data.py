@@ -5,8 +5,8 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
-import im_v2.crypto_chassis.data.extract.download_historical_data as imvcdedhda
 import im_v2.common.data.extract.extract_utils as imvcdeexut
+import im_v2.crypto_chassis.data.extract.download_historical_data as imvccdedhd
 
 
 @pytest.mark.skipif(
@@ -20,7 +20,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
 
         Mostly for coverage and to detect argument changes.
         """
-        parser = imvcdedhda._parse()
+        parser = imvccdedhd._parse()
         cmd = []
         cmd.extend(["--data_type", "ohlcv"])
         cmd.extend(["--start_timestamp", "2022-02-08"])
@@ -41,7 +41,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/historical.manual.pq/",
             "log_level": "INFO",
-            "file_format": "parquet"
+            "file_format": "parquet",
         }
         self.assertDictEqual(actual, expected)
 
@@ -64,12 +64,12 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "incremental": False,
             "log_level": "INFO",
             "s3_path": "s3://mock_bucket",
-            "aws_profile": "ck"
+            "aws_profile": "ck",
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
-        imvcdedhda._main(mock_argument_parser)
+        imvccdedhd._main(mock_argument_parser)
         # Check call.
         self.assertEqual(len(mock_download_historical.call_args), 2)
         self.assertEqual(

@@ -6,7 +6,6 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
-import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
@@ -42,7 +41,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/realtime/",
             "log_level": "INFO",
-            "file_format": "parquet"
+            "file_format": "parquet",
         }
         self.assertDictEqual(actual, expected)
 
@@ -65,7 +64,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "incremental": False,
             "log_level": "INFO",
             "s3_path": "s3://mock_bucket",
-            "aws_profile": "ck"
+            "aws_profile": "ck",
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
