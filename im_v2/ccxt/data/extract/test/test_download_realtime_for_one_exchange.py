@@ -35,6 +35,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         cmd.extend(["--db_table", "ccxt_ohlcv"])
         cmd.extend(["--aws_profile", "ck"])
         cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
+        cmd.extend(["--data_type", "ohlcv"])
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
@@ -48,7 +49,8 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "log_level": "INFO",
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/realtime/",
-            "file_format": "parquet"
+            "file_format": "parquet",
+            "data_type": "ohlcv"
         }
         self.assertDictEqual(actual, expected)
 
@@ -80,7 +82,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         imvcdedrfoe._main(mock_argument_parser)
         # Check call.
         self.assertEqual(len(mock_download_realtime.call_args), 2)
-        self.assertEqual(mock_download_realtime.call_args.args[0], namespace)
+        self.assertEqual(mock_download_realtime.call_args.args[0], kwargs)
         self.assertEqual(
-            mock_download_realtime.call_args.args[1], imvcdeex.CcxtExtractor
+            type(mock_download_realtime.call_args.args[1]), imvcdeex.CcxtExtractor
         )
