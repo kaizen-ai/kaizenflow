@@ -6,7 +6,7 @@ import market_data.market_data_example as mdmadaex
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -256,25 +256,25 @@ def _get_last_timestamp(
 
 # TODO(gp): @Grisha This should not be here. It should be somewhere else.
 def get_HistoricalImClientMarketData_example1(
-    im_client: Any,
+    im_client: icdc.ImClient,
     asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
     *,
-    last_timestamp: Optional[pd.Timestamp] = None,
+    wall_clock_time: Optional[pd.Timestamp] = None,
     filter_data_mode: str = "assert",
 ) -> mdimcmada.ImClientMarketData:
     """
     Build a `ImClientMarketData` backed with the data defined by `im_client`.
     """
     # Build a function that returns a wall clock to initialise `MarketData`.
-    if last_timestamp is None:
+    if wall_clock_time is None:
         # The maximum timestamp is set from the data except for the cases when
         # it's too computationally expensive to read all of the data on the fly.
-        last_timestamp = _get_last_timestamp(im_client, asset_ids)
+        wall_clock_time = _get_last_timestamp(im_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
-        return last_timestamp
+        return wall_clock_time
 
     #
     asset_id_col = "asset_id"

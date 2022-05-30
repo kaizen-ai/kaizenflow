@@ -45,7 +45,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -60,7 +61,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -73,7 +75,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -86,7 +89,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -99,7 +103,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -112,7 +117,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -125,7 +131,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -138,7 +145,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -151,7 +159,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -193,7 +202,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = None
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -238,7 +248,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -284,7 +295,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -330,7 +342,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -376,7 +389,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -423,7 +437,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -456,7 +471,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -469,7 +485,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [3187272957, 1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -498,7 +515,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [1467591036]
         columns = None
         column_remap = None
-        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min=True)
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
@@ -1049,9 +1067,8 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         columns = None
         column_remap = None
         filter_data_mode = "assert"
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min=False
-        )
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1071,9 +1088,8 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         columns = None
         column_remap = None
         filter_data_mode = "assert"
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min=False
-        )
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1125,9 +1141,8 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         columns = ["asset_id", "full_symbol", "close", "start_ts"]
         column_remap = None
         filter_data_mode = "assert"
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min=False
-        )
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1158,9 +1173,8 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         columns = ["asset_id", "close", "start_ts"]
         column_remap = None
         filter_data_mode = "assert"
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min=False
-        )
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1187,9 +1201,8 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         columns = ["full_symbol", "close"]
         column_remap = None
         filter_data_mode = "assert"
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min=False
-        )
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
@@ -1206,9 +1219,8 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         columns = ["full_symbol", "close"]
         column_remap = None
         filter_data_mode = "warn_and_trim"
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min=False
-        )
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client,
             asset_ids,
