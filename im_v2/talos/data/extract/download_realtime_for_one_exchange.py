@@ -14,7 +14,8 @@ Use as:
     --db_table 'talos_ohlcv' \
     --api_stage 'sandbox' \
     --aws_profile 'ck' \
-    --s3_path 's3://<ck-data>/real_time/talos'
+    --s3_path 's3://<ck-data>/real_time/talos' \
+    --data_type 'ohlcv'
 """
 
 import argparse
@@ -43,6 +44,13 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="(Optional) API 'stage' to use ('sandbox' or 'prod'), default: 'sandbox'",
     )
+    parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="OHLCV, market_depth or trades data.",
+    )
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcdeexut.add_exchange_download_args(parser)
@@ -54,7 +62,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_realtime_for_one_exchange(args, imvtdeex.TalosExtractor)
+    # Initialize the Talos Extractor class.
+    exchange = imvtdeex.TalosExtractor(args.api_stage)
+    args = vars(args)
+    imvcdeexut.download_realtime_for_one_exchange(args, exchange)
 
 
 if __name__ == "__main__":
