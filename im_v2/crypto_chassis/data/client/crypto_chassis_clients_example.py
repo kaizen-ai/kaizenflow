@@ -12,7 +12,6 @@ import helpers.hs3 as hs3
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 
 
-
 def get_CryptoChassisHistoricalPqByTileClient_example1(
     resample_1min: bool,
 ) -> imvccdcccc.CryptoChassisHistoricalPqByTileClient:
