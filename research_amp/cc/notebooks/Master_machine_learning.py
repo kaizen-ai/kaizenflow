@@ -29,21 +29,23 @@ import numpy as np
 import pandas as pd
 import sklearn.metrics as metrics
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import GridSearchCV, TimeSeriesSplit, cross_val_score
+from sklearn.model_selection import (
+    GridSearchCV,
+    TimeSeriesSplit,
+    cross_val_score,
+    train_test_split,
+)
 
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
-import core.explore as coexplor
 import core.features as cofeatur
-import core.finance.resampling as cfinresa
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 import research_amp.cc.crypto_chassis_api as raccchap
 import research_amp.transform as ramptran
-import helpers.hparquet as hparquet
 
 # %%
 warnings.filterwarnings("ignore")
@@ -69,7 +71,7 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "universe_version": "v1",
                 "resample_1min": True,
                 "root_dir": os.path.join(
-                    #hs3.get_s3_bucket_path("ck"),
+                    # hs3.get_s3_bucket_path("ck"),
                     "s3://cryptokaizen-data",
                     "reorg",
                     "historical.manual.pq",
@@ -79,7 +81,7 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "aws_profile": "ck",
             },
             "bid_ask_im_client": {
-                "begin_url": f"s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/",
+                "begin_url": "s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/",
                 "aws_profile": "ck",
                 "resample_bid_ask": "1T",
             },
@@ -88,7 +90,7 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "full_symbols": ["binance::BTC_USDT"],
                 "start_ts": pd.Timestamp("2022-01-01 00:00", tz="UTC"),
                 "end_ts": pd.Timestamp("2022-03-31 23:59", tz="UTC"),
-                "columns": ['close', 'full_symbol', 'volume'],
+                "columns": ["close", "full_symbol", "volume"],
                 "filter_data_mode": "assert",
             },
         },
@@ -104,11 +106,12 @@ def get_cmtask1953_config() -> cconconf.Config:
     config = ccocouti.get_config_from_nested_dict(param_dict)
     return config
 
+
 config = get_cmtask1953_config()
 print(config)
 
 # %% [markdown]
-# # Load the data
+# # Read data
 
 # %% [markdown]
 # ## OHLCV
@@ -119,7 +122,6 @@ client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
     **config["data"]["ohlcv_im_client"]
 )
 # Load OHLCV data.
-# TODO(max): -> df_ohlcv
 df_ohlcv = client.read_data(**config["data"]["read_data"])
 # Resample.
 df_ohlcv.head(3)
@@ -131,22 +133,18 @@ df_ohlcv.head(3)
 # %%
 def resample_and_process_bid_ask_data(df, resample_rule):
     # Resample.
-    df = raccchap.resample_bid_ask(
-        df, resample_rule
-    )
+    df = raccchap.resample_bid_ask(df, resample_rule)
     # Convert.
     for cols in df.columns[:-1]:
         df[cols] = pd.to_numeric(df[cols], downcast="float")
-
     # Compute bid ask stats.
     df = ramptran.calculate_bid_ask_statistics(df)
     # Choose only necessary values (`full_symbol`).
-    df = df.swaplevel(axis=1)[str(config["data"]["read_data"]["full_symbols"])[
-    2:-2
-]][
-        ["bid_size", "ask_size", "bid_price", "ask_price", "mid", "quoted_spread"]
-    ]
+    df = df.swaplevel(axis=1)[
+        str(config["data"]["read_data"]["full_symbols"])[2:-2]
+    ][["bid_size", "ask_size", "bid_price", "ask_price", "mid", "quoted_spread"]]
     return df
+
 
 # %%
 start_date = config["data"]["read_data"]["start_ts"]
@@ -158,23 +156,26 @@ result = []
 
 for i in range(start_date.month, end_date.month + 1):
     print(i)
-    tmp_df = hparquet.from_parquet(
-        os.path.join(config["data"]["bid_ask_im_client"]["begin_url"], f"month={i}/data.parquet"), 
-        aws_profile=config["data"]["bid_ask_im_client"]["aws_profile"]
+    tmp_df = hparque.from_parquet(
+        os.path.join(
+            config["data"]["bid_ask_im_client"]["begin_url"],
+            f"month={i}/data.parquet",
+        ),
+        aws_profile=config["data"]["bid_ask_im_client"]["aws_profile"],
     )
     result.append(tmp_df)
 bid_ask_df = pd.concat(result)
 bid_ask_df = bid_ask_df[:end_date]
 # Add `full_symbol` (necessary param for `calculate_bid_ask_statistics`).
-bid_ask_df["full_symbol"] = str(config["data"]["read_data"]["full_symbols"])[
-    2:-2
-]
+bid_ask_df["full_symbol"] = str(config["data"]["read_data"]["full_symbols"])[2:-2]
 # Choose only valid cols.
 bid_ask_df = bid_ask_df[
     ["bid_price", "bid_size", "ask_price", "ask_size", "full_symbol"]
 ]
 # Resample to 1-min (to be consistent with OHLCV data).
-bid_ask_df_1min = resample_and_process_bid_ask_data(bid_ask_df, config["data"]["bid_ask_im_client"]["resample_bid_ask"])
+bid_ask_df_1min = resample_and_process_bid_ask_data(
+    bid_ask_df, config["data"]["bid_ask_im_client"]["resample_bid_ask"]
+)
 
 bid_ask_df_1min.head(3)
 
@@ -188,88 +189,11 @@ data.head(3)
 
 
 # %% [markdown]
-# # Create and test functions for each estimator
-
-# %% [markdown]
-# ## Estimate intraday spread, volume
+# # Compute features
+#
 
 # %%
-def get_target_value(df: pd.DataFrame, timestamp: pd.Timestamp, column_name: str):
-    """
-    :param df: data that contains spread and/or volume
-    :param timestamp: timestamp for prediciton
-    :param column_name: targeted estimation value (e.g., "quoted_spread", "volume")
-    :return: value of targeted spread or volume
-    """
-    hpandas.dassert_monotonic_index(df.index)
-    if timestamp >= df.index.min() and timestamp <= df.index.max():
-        value = df[column_name].loc[timestamp]
-    else:
-        value = np.nan
-    return value
-
-
-# %%
-date = pd.Timestamp("2022-01-01 00:00", tz="UTC")
-display(get_target_value(data, date, "quoted_spread"))
-display(get_target_value(data, date, "volume"))
-
-
-# %% [markdown]
-# ## Naive estimator
-
-# %% [markdown]
-# Value(t+2) = Value(t)
-
-# %%
-# TODO(max): delete this guy, because we will use lags 
-def get_naive_value(
-    df: pd.DataFrame,
-    timestamp: pd.Timestamp,
-    column_name: str,
-    delay_in_mins: int = 2,
-) -> float:
-    """
-    Estimator for a given time is a `t - delay_in_mins` of a real value.
-
-    :param df: data that contains spread and/or volume
-    :param timestamp: timestamp for prediciton
-    :param column_name: targeted estimation value (e.g., "quoted_spread", "volume")
-    :param delay_in_mins: desired gap for target estimator, in mins
-    :return: value of predicted spread or volume
-    """
-    # Check and define delay.
-    hdbg.dassert_lte(1, delay_in_mins)
-    delay_in_mins = timedelta(minutes=delay_in_mins)
-    # Get the value.
-    lookup_timestamp = timestamp - delay_in_mins
-    if lookup_timestamp >= df.index.min() and lookup_timestamp <= df.index.max():
-        value = get_target_value(df, lookup_timestamp, column_name)
-    else:
-        value = np.nan
-    return value
-
-
-# %%
-date = pd.Timestamp("2022-01-01 10:00", tz="UTC")
-display(get_naive_value(data, date, "quoted_spread", delay_in_mins=10))
-display(get_naive_value(data, date, "volume", delay_in_mins=10))
-
-# %% [markdown]
-# ## Look back N days
-
-# %% [markdown]
-# spread_lookback(t) = E_date[spread(t, date)]
-
-# %%
-# Add column with intraday time.
-data["time"] = data.index.time
-
-
-# %%
-# TODO(max): -> get_average_intraday_value
-# TODO(max): This is a feature specific of volume, spread, and volatility (not useful for returns)
-def get_lookback_value(
+def get_average_intraday_value(
     df: pd.DataFrame,
     timestamp: pd.Timestamp,
     lookback_days: int,
@@ -278,6 +202,11 @@ def get_lookback_value(
     mode: str = "mean",
 ) -> float:
     """
+    value_lookback(t) = E_date[value(t, date)]
+
+    This is a feature specific of volume, spread, and volatility (not useful
+    for returns)
+
     1) Set the period that is equal `timestamp for prediciton` - N days (lookback_days).
     2) For that period, calculate mean (or median) value for spread in time during days.
     3) Choose this mean value as an estimation for spread in the given timestamp.
@@ -303,78 +232,105 @@ def get_lookback_value(
     return value
 
 
-# %%
-date = pd.Timestamp("2022-01-21 19:00", tz="UTC")
-display(get_lookback_value(data, date, 14, "quoted_spread"))
-display(get_lookback_value(data, date, 14, "volume"))
+# %% [markdown]
+# # Assemble ml_df
+#
+
+# %% run_control={"marked": false}
+# Specify target value.
+target = config["analysis"]["target_value"]
+# Add column with intraday time.
+data["time"] = data.index.time
+# Add initial target values.
+ml_df = data[[target]]
+ml_df.columns = [f"real_{target}_0"]
+# Add lagged values.
+delay_lag = config["model"]["delay_lag"]
+num_lags = config["model"]["num_lags"]
+ml_df, info = cofeatur.compute_lagged_features(
+    ml_df, f"real_{target}_0", delay_lag, num_lags
+)
+# Add lookback estimator.
+ml_df[f"avg_intraday_{target}"] = ml_df.index
+ml_df[f"avg_intraday_{target}"] = ml_df[f"avg_intraday_{target}"].apply(
+    lambda x: get_average_intraday_value(data, x, 14, target)
+)
+# Drop the column with real_0, since Y-var will be added later (resampled).
+ml_df = ml_df.drop(columns=f"real_{target}_0")
+ml_df
 
 
 # %% [markdown]
-# # Collect all estimators for the whole period
+# # Y pre-processing
 
 # %%
-def attach_resampled_y_var(resampled_df, estimators_df, target):
+def attach_resampled_y_var(
+    resampled_df: pd.DataFrame, estimators_df: pd.DataFrame, target: str
+) -> pd.DataFrame:
+    """
+    :param resampled_df: Data for Y-vat with >1-mon frequency
+    :param estimators_df: Data for X-vars with 1-min frequency
+    :param target: i.e., "spread" or "volume"
+    """
     if target == "spread":
         # Choose Y-var.
         resampled_df = resampled_df[[f"quoted_{target}"]]
         # Rename Y-var.
-        resampled_df = resampled_df.rename(columns={"quoted_spread": "real_spread_0"})
+        resampled_df = resampled_df.rename(
+            columns={"quoted_spread": "real_spread_0"}
+        )
     elif target == "volume":
         # Choose Y-var.
         resampled_df = resampled_df[[f"{target}"]]
         # Rename Y-var.
         resampled_df = resampled_df.rename(columns={"volume": "real_volume_0"})
     # Attach Y-var to the computed estimators.
-    yx_df = pd.merge(resampled_df, estimators_df, left_index=True, right_index=True)
+    yx_df = pd.merge(
+        resampled_df, estimators_df, left_index=True, right_index=True
+    )
     return yx_df
 
 
 # %%
-# This is building the ml_df
-# the predicted var is always y
-# compute lags
-# add the median feature
-target = config["analysis"]["target_value"]
-# Add initial target values.
-estimators = data[[target]]
-estimators.columns =  [f"real_{target}_0"]
-# Add lagged values.
-delay_lag = config["model"]["delay_lag"]
-num_lags = config["model"]["num_lags"]
-estimators, info = cofeatur.compute_lagged_features(
-    estimators, f"real_{target}_0", delay_lag, num_lags
-)
-# Add lookback estimator.
-estimators[f"lookback_{target}"] = estimators.index
-estimators[f"lookback_{target}"] = estimators[f"lookback_{target}"].apply(lambda x: get_lookback_value(data, 
-                                                                                                         x, 
-                                                                                                         14, 
-                                                                                                         target))
-# Drop the column with real_0, since Y-var will be added later (resampled).
-estimators=estimators.drop(columns=f"real_{target}_0")
-estimators
+# The goal is to set Y-var with 5-mon frequency and
+# attach previously calculated features with 1-min frequency.
+resampling_rule = config["analysis"]["resampling_rule"]
+# Resample initial bid ask.
+bid_ask_df_5min = resample_and_process_bid_ask_data(bid_ask_df, resampling_rule)
+# Resample initial OHLCV.
+df_ohlcv_5min = df_ohlcv.resample(resampling_rule).agg({"close": "last", "volume": "sum"})
+# Combine resampled data.
+df_5min = pd.concat([df_ohlcv_5min, bid_ask_df_5min], axis=1)
+# Update DataFrame with ML features (add resampled y-var).
+ml_df = attach_resampled_y_var(df_5min, ml_df, target)
+
+# Now we have Y-var that is sampled by 5-min, while X-vars are 1-mins.
+ml_df.head()
+
+# %% [markdown]
+# # Train / test separation
+#
 
 # %%
-# Resample bid ask.
-bid_ask_df_5min = resample_and_process_bid_ask_data(bid_ask_df, "5T")
-# Resample OHLCV
-df_ohlcv_5min = df_ohlcv.resample("5T").agg({
-    "close": "last",
-    "volume": "sum"
-})
+# Specify modelling data.
+ml_df = hpandas.dropna(ml_df)
+display(ml_df.shape)
+display(ml_df.head(3))
+print(f"Set of prediciton features = {list(ml_df.columns[1:])}")
 
-df_5min = pd.concat([df_ohlcv_5min, bid_ask_df_5min],axis=1)
-
-est_df = attach_resampled_y_var(df_5min, estimators, target)
-
-est_df.head()
+# %%
+# Construct X and y.
+y_var_col = f"real_{target}_0"
+y = ml_df[[y_var_col]]
+X = ml_df.drop(columns=[y_var_col])
+# Split into train and test sets.
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, shuffle=False
+)
 
 
 # %% [markdown]
-# # Predict via sklearn
-
-# %% [markdown]
-# ## Functions
+# # Model set-up
 
 # %%
 def regression_results(y_true, y_pred, mae_only: bool = True):
@@ -395,37 +351,9 @@ def regression_results(y_true, y_pred, mae_only: bool = True):
         print("RMSE: ", round(np.sqrt(mse), 4))
 
 
-# %% [markdown]
-# ## Defining training and test sets
-
-# %%
-ml_df = hpandas.dropna(est_df)
-display(ml_df.shape)
-display(ml_df.head(3))
-print(f"Set of prediciton features = {list(ml_df.columns[1:])}")
-
-# %% [markdown]
-# ## Train / test data separation
-
-# %%
-# TODO(max): Use time series splits vs train/test
-start_test = ml_df.index[0].date()
-end_test = ml_df.index[-1].date()
-
-# Training dataset.
-X_train = ml_df.loc[start_test:"2022-03-24"].drop([f"real_{target}_0"], axis=1)
-y_train = ml_df.loc[start_test:"2022-03-24", f"real_{target}_0"]
-
-# Testing dataset.
-X_test = ml_df.loc["2022-03-25":end_test].drop([f"real_{target}_0"], axis=1)
-y_test = ml_df.loc["2022-03-25":end_test, f"real_{target}_0"]
-
 # %%
 n_splits = (X_train.index.max() - X_train.index.min()).days + 1
 print(n_splits)
-
-# %% [markdown]
-# ## Models Evaluation
 
 # %%
 # Create a set of various estimation modes.
@@ -438,6 +366,9 @@ models.append(("LR", LinearRegression()))
 # )  # Ensemble method - collection of many decision trees
 # models.append(("SVR", SVR(gamma="auto")))  # kernel = linear
 models
+
+# %% [markdown]
+# # Learn / evaluate
 
 # %%
 # Evaluate each model in turn
@@ -465,7 +396,7 @@ plt.title("Algorithm Comparison")
 plt.show()
 
 # %% [markdown]
-# ### Grid Searching Hyperparameters (LinearRegression)
+# ## Grid Searching Hyperparameters (LinearRegression)
 
 # %% run_control={"marked": false}
 # Model param variations.
@@ -495,7 +426,7 @@ display(best_score)
 display(best_model)
 
 # %% [markdown]
-# #### Evaluate results using testing sample
+# # Model analysis
 
 # %%
 # Estimate testing results.
@@ -506,14 +437,16 @@ regression_results(y_true, y_pred)
 # %%
 # Check coefficients.
 coef = pd.DataFrame(
-    {"coef_value": best_model.coef_}, index=best_model.feature_names_in_
+    {"coef_value": best_model.coef_.ravel()}, index=best_model.feature_names_in_
 )
 coef = coef.sort_values(by="coef_value", ascending=False)
 coef
 
 # %%
 # Plot the results of predicting on testing sample.
-lr_test = pd.concat([pd.Series(y_true), pd.Series(y_pred)], axis=1)
+lr_test = pd.concat(
+    [pd.Series(y_true.ravel()), pd.Series(y_pred.ravel())], axis=1
+)
 lr_test.columns = ["true", "predicted"]
 lr_test.index = y_test.index
 lr_test.plot(figsize=(15, 7))
@@ -522,7 +455,3 @@ lr_test.plot(figsize=(15, 7))
 # Plot the difference between true and predicted values.
 lr_test["diff"] = lr_test["true"] - lr_test["predicted"]
 lr_test["diff"].plot(figsize=(15, 7))
-
-# %%
-
-# %%
