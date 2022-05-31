@@ -103,7 +103,7 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
         end_datetime = datetime.datetime(2022, 1, 1)
     elif period == "2018_2022":
         start_datetime = datetime.datetime(2018, 1, 1)
-        end_datetime = datetime.datetime(2022, 5, 31)
+        end_datetime = datetime.datetime(2022, 6, 1)
     elif period == "2019_2022":
         start_datetime = datetime.datetime(2019, 1, 1)
         end_datetime = datetime.datetime(2022, 3, 1)
@@ -286,6 +286,8 @@ def build_configs_varying_tiled_periods(
             - pd.tseries.frequencies.to_offset(freq_as_pd_str)
             + pd.Timedelta("1D")
         )
+        # Move end timestamp to the end of the day.
+        end_ts = end_ts + pd.Timedelta(days=1, seconds=-1)
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         #
         config_tmp = config.copy()
