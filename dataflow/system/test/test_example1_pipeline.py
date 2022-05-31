@@ -82,8 +82,6 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
             result_bundles = result_bundles[0][0]
         return result_bundles
 
-    # ///////////////////////////////////////////////////////////////////////////
-
     def test1(self) -> None:
         """
         Verify the contents of DAG prediction.
@@ -99,6 +97,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
 
 
 # TODO(gp): This should derive from SystemTester.
+# TODO(gp): Update this to the new style.
 class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     """
     Test using fake data and features:
