@@ -26,6 +26,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): -> example1_system.py or system_example1.py?
 
+# TODO(gp): Update this to the new style.
 
 # TODO(gp): I've tried to use a mixin put the class hierarchy was not working as
 #  I would have expected in C++. In general I think it's better / clearer to use
