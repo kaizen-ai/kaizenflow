@@ -37,6 +37,24 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         return currency_pair.replace("_", "/").lower()
 
     @staticmethod
+    def coerce_to_numeric(
+        data: pd.DataFrame, float_columns: Optional[List[str]] = None
+    ):
+        """
+        Coerce given DataFrame to numeric data type.
+
+        :param data: data to transform
+        :param float_columns: columns to enforce float data type
+        :return: DataFrame with numeric data.
+        """
+        # Convert data to numeric.
+        data = data.apply(pd.to_numeric)
+        # Enforce float type for certain columns.
+        if float_columns:
+            data[float_columns] = data[float_columns].astype(float)
+        return data
+
+    @staticmethod
     def _build_query_url(base_url: str, **kwargs: Any) -> str:
         """
         Combine base API URL and query parameters.
@@ -63,13 +81,13 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         return query_url
 
     def _download_market_depth(
-            self,
-            exchange_id: str,
-            currency_pair: str,
-            start_timestamp: pd.Timestamp,
-            end_timestamp: pd.Timestamp,
-            *,
-            depth: int = 1,
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
+        *,
+        depth: int = 1,
     ) -> pd.DataFrame:
         """
         Download snapshot data on market depth.
@@ -145,19 +163,23 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         market_depth = market_depth.drop(
             columns=["bid_price_bid_size", "ask_price_ask_size"]
         )
+        bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
+        market_depth = self.coerce_to_numeric(
+            market_depth, float_columns=bid_ask_cols
+        )
         # Rename time column.
         market_depth = market_depth.rename(columns={"time_seconds": "timestamp"})
         return market_depth
 
     def _download_ohlcv(
-            self,
-            exchange_id: str,
-            currency_pair: str,
-            start_timestamp: Optional[pd.Timestamp],
-            end_timestamp: Optional[pd.Timestamp],
-            *,
-            interval: Optional[str] = "1m",
-            include_realtime: str = "1",
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        start_timestamp: Optional[pd.Timestamp],
+        end_timestamp: Optional[pd.Timestamp],
+        *,
+        interval: Optional[str] = "1m",
+        include_realtime: str = "1",
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
@@ -319,19 +341,3 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         # Build main API URL.
         core_url = f"{self._endpoint}/{data_type}/{exchange}/{currency_pair}"
         return core_url
-    
-    @staticmethod
-    def coerce_to_numeric(data: pd.DataFrame, float_columns: Optional[List[str]] = None):
-        """
-        Coerce given DataFrame to numeric data type.
-
-        :param data: data to transform
-        :param float_columns: columns to enforce float data type
-        :return: DataFrame with numeric data.
-        """
-        # Convert data to numeric.
-        data = data.apply(pd.to_numeric)
-        # Enforce float type for certain columns.
-        if float_columns:
-            data[float_columns] = data[float_columns].astype(float)
-        return data
