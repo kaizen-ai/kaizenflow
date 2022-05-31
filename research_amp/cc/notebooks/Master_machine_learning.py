@@ -68,7 +68,7 @@ def get_cmtask1953_config() -> cconconf.Config:
     param_dict = {
         "data": {
             # Parameters for client initialization.
-            "ohlcv_im_client": {
+            "im_client_ohlcv": {
                 "universe_version": "v1",
                 "resample_1min": True,
                 "root_dir": os.path.join(
@@ -81,8 +81,8 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "data_snapshot": "latest",
                 "aws_profile": "ck",
             },
-            "bid_ask_im_client": {
-                "begin_url": "s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/",
+            "im_client_bid_ask": {
+                "base_path": "s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/",
                 "aws_profile": "ck",
                 "resample_bid_ask": "1T",
             },
@@ -101,6 +101,7 @@ def get_cmtask1953_config() -> cconconf.Config:
             "delay_lag": 1,
             "num_lags": 4,
             "test_size": 0.2,
+            "shuffle": False,
             "n_splits": 5,
         },
     }
@@ -120,7 +121,7 @@ print(config)
 # %%
 # Initiate the client.
 client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
-    **config["data"]["ohlcv_im_client"]
+    **config["data"]["im_client_ohlcv"]
 )
 # Load OHLCV data.
 df_ohlcv = client.read_data(**config["data"]["read_data"])
@@ -159,10 +160,10 @@ for i in range(start_date.month, end_date.month + 1):
     print(i)
     tmp_df = hparque.from_parquet(
         os.path.join(
-            config["data"]["bid_ask_im_client"]["begin_url"],
+            config["data"]["im_client_bid_ask"]["base_path"],
             f"month={i}/data.parquet",
         ),
-        aws_profile=config["data"]["bid_ask_im_client"]["aws_profile"],
+        aws_profile=config["data"]["im_client_bid_ask"]["aws_profile"],
     )
     result.append(tmp_df)
 bid_ask_df = pd.concat(result)
@@ -175,7 +176,7 @@ bid_ask_df = bid_ask_df[
 ]
 # Resample to 1-min (to be consistent with OHLCV data).
 bid_ask_df_1min = resample_and_process_bid_ask_data(
-    bid_ask_df, config["data"]["bid_ask_im_client"]["resample_bid_ask"]
+    bid_ask_df, config["data"]["im_client_bid_ask"]["resample_bid_ask"]
 )
 
 bid_ask_df_1min.head(3)
@@ -203,10 +204,10 @@ def get_average_intraday_value(
     mode: str = "mean",
 ) -> float:
     """
-    value_lookback(t) = E_date[value(t, date)]
+    Compute a feature as the mean / median of the target variable in the same
+    period of time using data in the last `lookback_days` days.
 
-    This is a feature specific of volume, spread, and volatility (not useful
-    for returns)
+    This is useful for volume, spread, volatility.
 
     1) Set the period that is equal `timestamp for prediciton` - N days (lookback_days).
     2) For that period, calculate mean (or median) value for target in time during days.
@@ -244,20 +245,20 @@ target = config["model"]["target_value"]
 data["time"] = data.index.time
 # Add initial target values.
 ml_df = data[[target]]
-ml_df.columns = [f"real_{target}_0"]
+ml_df.columns = [f"{target}_0"]
 # Add lagged values.
 delay_lag = config["model"]["delay_lag"]
 num_lags = config["model"]["num_lags"]
 ml_df, info = cofeatur.compute_lagged_features(
-    ml_df, f"real_{target}_0", delay_lag, num_lags
+    ml_df, f"{target}_0", delay_lag, num_lags
 )
 # Add lookback estimator.
 ml_df[f"avg_intraday_{target}"] = ml_df.index
 ml_df[f"avg_intraday_{target}"] = ml_df[f"avg_intraday_{target}"].apply(
     lambda x: get_average_intraday_value(data, x, 14, target)
 )
-# Drop the column with real_0, since Y-var will be added later (resampled).
-ml_df = ml_df.drop(columns=f"real_{target}_0")
+# Drop the column with `{target}_0`, since Y-var will be added later (resampled).
+ml_df = ml_df.drop(columns=f"{target}_0")
 ml_df
 
 
@@ -269,7 +270,7 @@ def attach_resampled_y_var(
     resampled_df: pd.DataFrame, estimators_df: pd.DataFrame, target: str
 ) -> pd.DataFrame:
     """
-    :param resampled_df: Data for Y-vat with >1-mon frequency
+    :param resampled_df: Data for Y-var with >1-min frequency
     :param estimators_df: Data for X-vars with 1-min frequency
     :param target: i.e., "spread" or "volume"
     """
@@ -277,14 +278,14 @@ def attach_resampled_y_var(
         # Choose Y-var.
         resampled_df = resampled_df[[f"quoted_{target}"]]
         # Rename Y-var.
-        resampled_df = resampled_df.rename(
-            columns={"quoted_spread": "real_spread_0"}
-        )
+        resampled_df = resampled_df.rename(columns={"quoted_spread": "spread_0"})
     elif target == "volume":
         # Choose Y-var.
         resampled_df = resampled_df[[f"{target}"]]
         # Rename Y-var.
-        resampled_df = resampled_df.rename(columns={"volume": "real_volume_0"})
+        resampled_df = resampled_df.rename(columns={"volume": "volume_0"})
+    else:
+        raise ValueError(f"Invalid target='{target}'")
     # Attach Y-var to the computed estimators.
     yx_df = pd.merge(
         resampled_df, estimators_df, left_index=True, right_index=True
@@ -323,12 +324,15 @@ print(f"Set of prediciton features = {list(ml_df.columns[1:])}")
 
 # %%
 # Construct X and y.
-y_var_col = f"real_{target}_0"
+y_var_col = f"{target}_0"
 y = ml_df[[y_var_col]]
 X = ml_df.drop(columns=[y_var_col])
 # Split into train and test sets.
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=config["model"]["test_size"], shuffle=False
+    X,
+    y,
+    test_size=config["model"]["test_size"],
+    shuffle=config["model"]["shuffle"],
 )
 
 
@@ -425,7 +429,7 @@ def calculate_p_values(model, X_train, y_train):
         len(new_X) - len(new_X[0])
     )
     v_b = M_S_E * (np.linalg.inv(np.dot(new_X.T, new_X)).diagonal())
-    # Omit intercept param.
+    # Omit intercept coef.
     s_b = np.sqrt(v_b)[1:]
     t_b = params / s_b
     p_val = [
