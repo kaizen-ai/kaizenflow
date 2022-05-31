@@ -9,6 +9,12 @@
       "ETH_USDT",
       "SOL_USDT"
     ],
+    "coinbase": [
+      "BTC_USDT",
+      "DOGE_USDT",
+      "ETH_USDT",
+      "SOL_USDT"
+    ],
     "ftx": [
       "BNB_USDT",
       "BTC_USDT",
@@ -38,4 +44,5 @@
       "XRP_USDT"
     ]
   }
-}
+  }
+  
