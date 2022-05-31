@@ -6,7 +6,7 @@ Import as:
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 """
 import logging
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 import requests
@@ -231,15 +231,13 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             recent_data = pd.DataFrame(
                 columns=columns, data=data_json["recent"]["data"]
             )
-            recent_data = recent_data.apply(pd.to_numeric)
-            ohlcv_columns = ["open", "high", "low", "close", "volume"]
-            recent_data[ohlcv_columns] = recent_data[ohlcv_columns].astype(float)
             data.append(recent_data)
         # Combine historical and recent Dataframes.
         if not data:
             # Return empty Dataframe if there is no data.
             return pd.DataFrame()
         ohlcv = pd.concat(data)
+        ohlcv = self.coerce_to_numeric(ohlcv)
         # Filter the time period since Crypto Chassis doesn't provide this functionality.
         # (CmTask #1887).
         if start_timestamp:
@@ -321,3 +319,19 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         # Build main API URL.
         core_url = f"{self._endpoint}/{data_type}/{exchange}/{currency_pair}"
         return core_url
+    
+    @staticmethod
+    def coerce_to_numeric(data: pd.DataFrame, float_columns: Optional[List[str]] = None):
+        """
+        Coerce given DataFrame to numeric data type.
+
+        :param data: data to transform
+        :param float_columns: columns to enforce float data type
+        :return: DataFrame with numeric data.
+        """
+        # Convert data to numeric.
+        data = data.apply(pd.to_numeric)
+        # Enforce float type for certain columns.
+        if float_columns:
+            data[float_columns] = data[float_columns].astype(float)
+        return data
