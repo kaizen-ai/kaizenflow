@@ -212,6 +212,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             includeRealTime=include_realtime,
         )
         # Request the data.
+        _LOG.info("Downloading from %s", query_url)
         r = requests.get(query_url)
         # Retrieve raw data.
         data_json = r.json()
@@ -230,12 +231,15 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             recent_data = pd.DataFrame(
                 columns=columns, data=data_json["recent"]["data"]
             )
+            recent_data = recent_data.apply(pd.to_numeric)
+            ohlcv_columns = ["open", "high", "low", "close", "volume"]
+            recent_data[ohlcv_columns] = recent_data[ohlcv_columns].astype(float)
             data.append(recent_data)
         # Combine historical and recent Dataframes.
         if not data:
             # Return empty Dataframe if there is no data.
             return pd.DataFrame()
-        ohlcv = pd.concat(data, axis=1)
+        ohlcv = pd.concat(data)
         # Filter the time period since Crypto Chassis doesn't provide this functionality.
         # (CmTask #1887).
         if start_timestamp:
