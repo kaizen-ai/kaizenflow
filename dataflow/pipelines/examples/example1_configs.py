@@ -20,6 +20,8 @@ import market_data as mdata
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Update this to the new style.
+
 # TODO(gp): We should unify with `ForecastSystem`. A `System` contains all the
 # info to build and run a DAG and then it can be simulated or put in prod.
 def _build_base_config() -> cconfig.Config:
