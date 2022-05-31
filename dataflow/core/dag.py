@@ -247,6 +247,7 @@ class DAG:
         """
         Remove node from DAG and clear any connected edges.
         """
+        hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
         hdbg.dassert(self._nx_dag.has_node(nid), "Node `%s` is not in DAG", nid)
         self._nx_dag.remove_node(nid)
 
@@ -282,6 +283,7 @@ class DAG:
             parent_out = hlist.assert_single_element_and_return(
                 self.get_node(parent_nid).output_names
             )
+        hdbg.dassert_isinstance(parent_nid, dtfcornode.NodeId)
         hdbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         # Automatically infer input name when the child has only one input.
         # Ensure that child node belongs to DAG (through `get_node` call).
@@ -292,6 +294,7 @@ class DAG:
             child_in = hlist.assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
+        hdbg.dassert_isinstance(child_nid, dtfcornode.NodeId)
         hdbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         # Ensure that `child_in` is not already hooked up to an output.
         for nid in self._nx_dag.predecessors(child_nid):
@@ -313,6 +316,30 @@ class DAG:
             hdbg.dfatal(
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
+
+    def compose(self, dag: "DAG") -> None:
+        """
+        Add `dag` to self.
+
+        Node sets of `self` and `dag` must be disjoint.
+        The composition is the union of nodes and edges of `self` and `dag`.
+        """
+        hdbg.dassert_isinstance(dag, DAG)
+        if self.mode == "loose":
+            # The "loose" mode is for idempotent operations in a notebook.
+            # If this is needed, we could implement it by
+            # - ensuring all nodes of `dag` belong to `self`
+            # - removing the intersection of nodes the ancestors of those nodes
+            raise NotImplementedError
+        elif self.mode == "strict":
+            my_nodes = set(self._nx_dag.nodes)
+            their_nodes = set(dag._nx_dag.nodes)
+            hdbg.dassert(not my_nodes.intersection(their_nodes))
+            composition = networ.compose(self._nx_dag, dag._nx_dag)
+            hdbg.dassert(networ.is_directed_acyclic_graph(composition))
+            self._nx_dag = composition
+        else:
+            hdbg.dfatal("Invalid mode='%s'", self.mode)
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -368,15 +395,25 @@ class DAG:
             return True
         return False
 
-    def insert_at_head(self, node: dtfcornode.Node) -> None:
+    def insert_at_head(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
         """
-        Connect a node to the head (root) of the DAG.
+        Connect a node or single-sink DAG to the head (root) of the DAG.
 
-        Asserts if the DAG does not have a single source.
+        Asserts if the DAG has more than one source.
         """
-        source_nid = self.get_unique_source()
-        self.add_node(node)
-        self.connect(node.nid, source_nid)
+        sources = self.get_sources()
+        hdbg.dassert_lte(len(sources), 1)
+        if isinstance(obj, dtfcornode.Node):
+            self.add_node(obj)
+            sink_nid = obj.nid
+        elif isinstance(obj, DAG):
+            sink_nid = obj.get_unique_sink()
+            self.compose(obj)
+        else:
+            raise ValueError("Unsupported type(obj)=%s", type(obj))
+        if sources:
+            source_nid = sources[0]
+            self.connect(sink_nid, source_nid)
 
     def has_single_sink(self) -> bool:
         sinks = self.get_sinks()
@@ -384,15 +421,25 @@ class DAG:
             return True
         return False
 
-    def append_to_tail(self, node: dtfcornode.Node) -> None:
+    def append_to_tail(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
         """
-        Connect a node to the tail (leaf) of the DAG.
+        Connect a node or single-source DAG to the tail (leaf) of the DAG.
 
-        Asserts if the DAG does not have a single sink.
+        Asserts if the DAG has more thank one sink.
         """
-        sink_nid = self.get_unique_sink()
-        self.add_node(node)
-        self.connect(sink_nid, node.nid)
+        sinks = self.get_sinks()
+        hdbg.dassert_lte(len(sinks), 1)
+        if isinstance(obj, dtfcornode.Node):
+            self.add_node(obj)
+            source_nid = obj.nid
+        elif isinstance(obj, DAG):
+            source_nid = obj.get_unique_source()
+            self.compose(obj)
+        else:
+            raise ValueError("Unsupported type(obj)=%s", type(obj))
+        if sinks:
+            sink_nid = sinks[0]
+            self.connect(sink_nid, source_nid)
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -428,6 +475,8 @@ class DAG:
         :return: the mapping from output name to corresponding value (i.e., the
             result of node `nid`'s `get_outputs(method)`
         """
+        hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
+        hdbg.dassert_isinstance(method, dtfcornode.Method)
         ancestors = filter(
             lambda x: x in networ.ancestors(self._nx_dag, nid),
             networ.topological_sort(self._nx_dag),
