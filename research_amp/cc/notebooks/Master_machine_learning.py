@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sklearn.metrics as metrics
+from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import (
     GridSearchCV,
@@ -94,13 +95,13 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "filter_data_mode": "assert",
             },
         },
-        "analysis": {
+        "model": {
             "resampling_rule": "5T",
             "target_value": "volume",
-        },
-        "model": {
             "delay_lag": 1,
             "num_lags": 4,
+            "test_size": 0.2,
+            "n_splits": 5,
         },
     }
     config = ccocouti.get_config_from_nested_dict(param_dict)
@@ -208,16 +209,16 @@ def get_average_intraday_value(
     for returns)
 
     1) Set the period that is equal `timestamp for prediciton` - N days (lookback_days).
-    2) For that period, calculate mean (or median) value for spread in time during days.
-    3) Choose this mean value as an estimation for spread in the given timestamp.
+    2) For that period, calculate mean (or median) value for target in time during days.
+    3) Choose this mean value as an estimation for target in the given timestamp.
 
-    :param df: data that contains spread
+    :param df: data that contains target value
     :param timestamp: timestamp for prediciton
     :param lookback_days: historical period for estimation, in days
     :param column_name: targeted estimation value (e.g., "quoted_spread", "volume")
     :param delay: how many minutes to substract from the lookback starting period
     :param mode: 'mean' or 'median'
-    :return: value of predicted spread
+    :return: value of predicted target
     """
     # Choose sample data using lookback period (with a delay).
     start_date = timestamp - timedelta(days=lookback_days, minutes=delay)
@@ -238,7 +239,7 @@ def get_average_intraday_value(
 
 # %% run_control={"marked": false}
 # Specify target value.
-target = config["analysis"]["target_value"]
+target = config["model"]["target_value"]
 # Add column with intraday time.
 data["time"] = data.index.time
 # Add initial target values.
@@ -292,13 +293,15 @@ def attach_resampled_y_var(
 
 
 # %%
-# The goal is to set Y-var with 5-mon frequency and
+# The goal is to set Y-var with 5-min frequency and
 # attach previously calculated features with 1-min frequency.
-resampling_rule = config["analysis"]["resampling_rule"]
+resampling_rule = config["model"]["resampling_rule"]
 # Resample initial bid ask.
 bid_ask_df_5min = resample_and_process_bid_ask_data(bid_ask_df, resampling_rule)
 # Resample initial OHLCV.
-df_ohlcv_5min = df_ohlcv.resample(resampling_rule).agg({"close": "last", "volume": "sum"})
+df_ohlcv_5min = df_ohlcv.resample(resampling_rule).agg(
+    {"close": "last", "volume": "sum"}
+)
 # Combine resampled data.
 df_5min = pd.concat([df_ohlcv_5min, bid_ask_df_5min], axis=1)
 # Update DataFrame with ML features (add resampled y-var).
@@ -313,7 +316,7 @@ ml_df.head()
 
 # %%
 # Specify modelling data.
-ml_df = hpandas.dropna(ml_df)
+ml_df = hpandas.dropna(ml_df, report_stats=True)
 display(ml_df.shape)
 display(ml_df.head(3))
 print(f"Set of prediciton features = {list(ml_df.columns[1:])}")
@@ -325,7 +328,7 @@ y = ml_df[[y_var_col]]
 X = ml_df.drop(columns=[y_var_col])
 # Split into train and test sets.
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, shuffle=False
+    X, y, test_size=config["model"]["test_size"], shuffle=False
 )
 
 
@@ -352,8 +355,8 @@ def regression_results(y_true, y_pred, mae_only: bool = True):
 
 
 # %%
-n_splits = (X_train.index.max() - X_train.index.min()).days + 1
-print(n_splits)
+n_splits = config["model"]["n_splits"]
+print(f"Number of splits: {n_splits}")
 
 # %%
 # Create a set of various estimation modes.
@@ -395,49 +398,51 @@ plt.boxplot(results, labels=names)
 plt.title("Algorithm Comparison")
 plt.show()
 
-# %% [markdown]
-# ## Grid Searching Hyperparameters (LinearRegression)
-
-# %% run_control={"marked": false}
-# Model param variations.
-model = LinearRegression()
-param_search = {
-    "fit_intercept": [True, False],
-    "normalize": [True, False],
-    "n_jobs": [1, 20, 50],
-    "positive": [True, False],
-}
-tscv = TimeSeriesSplit(n_splits=n_splits)
-# If scoring = None, the estimator's score method is used.
-
-# Run the model with different param variations.
-gsearch = GridSearchCV(
-    estimator=model,
-    cv=tscv,
-    param_grid=param_search,
-)
-gsearch.fit(X_train, y_train)
+# %%
+# TODO(Max): consider adding the hyperparameters tuning step.
 
 # %%
-# Results of the best param fit.
-best_score = gsearch.best_score_
-best_model = gsearch.best_estimator_
-display(best_score)
-display(best_model)
+# Train the model.
+model = LinearRegression()
+model = model.fit(X_train, y_train)
+
+# Estimate testing results.
+y_true = y_test.values
+y_pred = model.predict(X_test)
+regression_results(y_true, y_pred)
+
 
 # %% [markdown]
 # # Model analysis
 
 # %%
-# Estimate testing results.
-y_true = y_test.values
-y_pred = best_model.predict(X_test)
-regression_results(y_true, y_pred)
+# Hardcoded p-value solution.
+def calculate_p_values(model, X_train, y_train):
+    params = model.coef_  # np.append(model.intercept_,model.coef_)
+    predictions = model.predict(X_train)
+    new_X = np.append(np.ones((len(X), 1)), X, axis=1)
+    M_S_E = (sum((y_train.values - predictions) ** 2)) / (
+        len(new_X) - len(new_X[0])
+    )
+    v_b = M_S_E * (np.linalg.inv(np.dot(new_X.T, new_X)).diagonal())
+    # Omit intercept param.
+    s_b = np.sqrt(v_b)[1:]
+    t_b = params / s_b
+    p_val = [
+        2 * (1 - stats.t.cdf(np.abs(i), (len(new_X) - len(new_X[0]))))
+        for i in t_b
+    ]
+    # p_val = np.round(p_val,3)
+    return p_val
+
 
 # %%
+# Calculate p-values.
+p_val = calculate_p_values(model, X_train, y_train)
 # Check coefficients.
 coef = pd.DataFrame(
-    {"coef_value": best_model.coef_.ravel()}, index=best_model.feature_names_in_
+    {"coef_value": model.coef_.ravel(), "p-value": np.array(p_val).ravel()},
+    index=model.feature_names_in_,
 )
 coef = coef.sort_values(by="coef_value", ascending=False)
 coef
