@@ -68,7 +68,7 @@ parquet_tile_analyzer.compute_universe_size_by_time(parquet_tile_metadata)
 
 # %%
 asset_ids = parquet_tile_metadata.index.levels[0].to_list()
-# TODO(Grisha): CmTask #1817 "Save asset_ids from the tiled backtest as integers". 
+# TODO(Grisha): CmTask #1817 "Save asset_ids from the tiled backtest as integers".
 asset_ids = list(map(str, asset_ids))
 display(asset_ids)
 
@@ -198,7 +198,7 @@ overnight_returns = cofinanc.compute_overnight_returns(
 # %%
 regression_dict = {
     "target_col": "vwap.ret_0.vol_adj_2_hat",
-    # "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],  
+    # "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
     "feature_cols": ["vwap.ret_0.vol_adj"],
     "feature_lag": 2,
     "batch_size": 50,
