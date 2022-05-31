@@ -285,4 +285,4 @@ kucoin_bad_data_stats_by_year_month
 # %%
 _ = _plot_bad_data_by_year_month_stats(
     config, kucoin_bad_data_stats_by_year_month
-)
+) 
