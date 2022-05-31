@@ -415,37 +415,14 @@ y_true = y_test.values
 y_pred = model.predict(X_test)
 regression_results(y_true, y_pred)
 
-
 # %% [markdown]
 # # Model analysis
 
 # %%
-# Hardcoded p-value solution.
-def calculate_p_values(model, X_train, y_train):
-    params = model.coef_  # np.append(model.intercept_,model.coef_)
-    predictions = model.predict(X_train)
-    new_X = np.append(np.ones((len(X), 1)), X, axis=1)
-    M_S_E = (sum((y_train.values - predictions) ** 2)) / (
-        len(new_X) - len(new_X[0])
-    )
-    v_b = M_S_E * (np.linalg.inv(np.dot(new_X.T, new_X)).diagonal())
-    # Omit intercept coef.
-    s_b = np.sqrt(v_b)[1:]
-    t_b = params / s_b
-    p_val = [
-        2 * (1 - stats.t.cdf(np.abs(i), (len(new_X) - len(new_X[0]))))
-        for i in t_b
-    ]
-    # p_val = np.round(p_val,3)
-    return p_val
-
-
-# %%
-# Calculate p-values.
-p_val = calculate_p_values(model, X_train, y_train)
+# TODO(Max): consider displaying p-values.
 # Check coefficients.
 coef = pd.DataFrame(
-    {"coef_value": model.coef_.ravel(), "p-value": np.array(p_val).ravel()},
+    {"coef_value": model.coef_.ravel()},
     index=model.feature_names_in_,
 )
 coef = coef.sort_values(by="coef_value", ascending=False)
