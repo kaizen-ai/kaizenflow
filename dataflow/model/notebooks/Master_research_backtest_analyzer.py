@@ -69,7 +69,8 @@ parquet_tile_analyzer.compute_universe_size_by_time(parquet_tile_metadata)
 # %%
 asset_ids = parquet_tile_metadata.index.levels[0].to_list()
 # TODO(Grisha): CmTask #1817 "Save asset_ids from the tiled backtest as integers".
-asset_ids = list(map(str, asset_ids))
+# NOTE(Paul): The flow requires that the asset_ids be integers.
+# asset_ids = list(map(str, asset_ids))
 display(asset_ids)
 
 # %% [markdown]
