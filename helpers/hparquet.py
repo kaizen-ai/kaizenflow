@@ -698,7 +698,6 @@ def to_partitioned_parquet(
         )
 
 
-# TODO(Nikola): Add unit test in CMTask #1426.
 def list_and_merge_pq_files(
     root_dir: str,
     *,
