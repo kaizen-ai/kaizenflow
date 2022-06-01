@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider calling that code directly if it doesn't violate the
 #  dependencies.
 
+# TODO(gp): Update this to the new style.
 
 def _build_base_config() -> cconfig.Config:
     wrapper = cconfig.Config()
