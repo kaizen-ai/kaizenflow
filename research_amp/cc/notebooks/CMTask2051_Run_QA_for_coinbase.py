@@ -16,7 +16,7 @@
 # # Description
 
 # %% [markdown]
-# This notebooks performs QA checks for a single vendor:
+# This notebooks performs QA checks for Crypto Chassis `coinbase`:
 #    - Number of NaN data points as % of total
 #    - Number of data points where `volume=0` as % of total
 
