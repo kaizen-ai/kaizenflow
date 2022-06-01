@@ -17,12 +17,12 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         """
         Test Python script call, check return value and amount of downloads.
         """
-        cmd = "im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py \
+        cmd = "im_v2/talos/data/extract/download_realtime_for_one_exchange_periodically.py \
         --data_type 'ohlcv' \
         --exchange_id 'binance' \
-        --universe 'v3' \
+        --universe 'v1' \
         --db_stage 'dev' \
-        --db_table 'ccxt_ohlcv_test' \
+        --db_table 'talos_ohlcv_test' \
         --aws_profile 'ck' \
         --s3_path 's3://cryptokaizen-data-test/realtime/' \
         --interval_min '1' \

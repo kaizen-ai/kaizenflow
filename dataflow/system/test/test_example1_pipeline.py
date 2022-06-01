@@ -279,6 +279,7 @@ class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
 
 
 # TODO(gp): This should derive from SystemTester.
+# TODO(gp): Update this to the new style.
 class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     """
     Test using fake data and features:
