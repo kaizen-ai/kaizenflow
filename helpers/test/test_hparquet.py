@@ -15,6 +15,7 @@ import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
@@ -832,7 +833,6 @@ class TestToPartitionedDataset(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
-
 # #############################################################################
 
 
@@ -841,9 +841,9 @@ class TestToPartitionedDataset(hunitest.TestCase):
     reason="Run only if CK S3 is available",
 )
 class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
-    def generate_test_data(self) -> None:
+    def generate_test_data(self) -> hs3.AwsProfile:
         """
-        Generate test data in form of daily Parquet files.
+        Upload test daily Parquet files for 3 days to the mocked S3 bucket.
 
         Also, data is transferred to mocked bucket.
         """
@@ -863,79 +863,61 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         cmd.append(f"--dst_dir {test_dir}")
         cmd = " ".join(cmd)
         hsystem.system(cmd)
-        for root, _, files in os.walk(test_dir):
-            for file in files:
-                file_name_as_asset = f'{root[root.find("/year") - 1]}.parquet'
-                new_file_path = os.path.join(
-                    os.path.relpath(root, test_dir), file_name_as_asset
-                )
-                self.moto_client.upload_file(
-                    os.path.join(root, file), self.bucket_name, new_file_path
-                )
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        s3_bucket = f"s3://{self.bucket_name}"
+        s3fs_.put(test_dir, s3_bucket, recursive=True)
+        return s3fs_
 
     def test_list_and_merge_pq_files(self) -> None:
         """
         Check if predefined generated Parquet files are properly merged.
         """
-        self.generate_test_data()
+        s3fs_ = self.generate_test_data()
+        # Prepare common `hs3.listdir` params.
+        s3_bucket = f"s3://{self.bucket_name}"
+        pattern = "*.parquet"
+        only_files = True
+        use_relative_paths = True
         # Check bucket content before merge.
-        parquet_meta_list_before = self.moto_client.list_objects(
-            Bucket=self.bucket_name
-        )["Contents"]
-        parquet_path_list_before = [
-            meta["Key"] for meta in parquet_meta_list_before
-        ]
+        parquet_path_list_before = hs3.listdir(
+            s3_bucket, pattern, only_files, use_relative_paths, aws_profile=s3fs_
+        )
         self.assertEqual(len(parquet_path_list_before), 6)
-        # Add extra parquet files.
-        # e.g., `A.parquet`, `A_new.parquet`.
-        for path in parquet_path_list_before[::2]:
-            copy_source = {"Bucket": self.bucket_name, "Key": path}
-            self.moto_client.copy_object(
-                CopySource=copy_source,
-                Bucket=self.bucket_name,
-                Key=path.replace(".parquet", "_new.parquet"),
-            )
-        # Create single `data.parquet` file to replicate ready out-of-the-box folder.
+        # Add extra parquet files and rename existing one.
+        # e.g., `dummy.parquet`, `dummy_new.parquet`.
+        # Every second file is left intact to replicate ready out-of-the-box folder.
         # e.g., `asset=A/year=2022/month=2/data.parquet`.
-        for path in parquet_path_list_before[1:4:2]:
-            copy_source = {"Bucket": self.bucket_name, "Key": path}
-            self.moto_client.copy_object(
-                CopySource=copy_source,
-                Bucket=self.bucket_name,
-                Key=os.path.join(*path.split("/")[:-1], "data.parquet"),
+        for path in parquet_path_list_before[::2]:
+            original_path = f"s3://{self.bucket_name}/{path}"
+            renamed_path = original_path.replace("data.parquet", "dummy.parquet")
+            additional_path = original_path.replace(
+                "data.parquet", "dummy_new.parquet"
             )
-            self.moto_client.delete_object(Bucket=self.bucket_name, Key=path)
+            s3fs_.rename(original_path, renamed_path)
+            s3fs_.copy(renamed_path, additional_path)
         # Check if edits are in place.
-        updated_parquet_meta_list = self.moto_client.list_objects(
-            Bucket=self.bucket_name
-        )["Contents"]
-        updated_parquet_path_list = [
-            meta["Key"] for meta in updated_parquet_meta_list
-        ]
+        updated_parquet_path_list = hs3.listdir(
+            s3_bucket, pattern, only_files, use_relative_paths, aws_profile=s3fs_
+        )
         data_parquet_path_list = [
             path
             for path in updated_parquet_path_list
             if path.endswith("/data.parquet")
         ]
         self.assertEqual(len(updated_parquet_path_list), 9)
-        self.assertEqual(len(data_parquet_path_list), 2)
+        self.assertEqual(len(data_parquet_path_list), 3)
         # Check bucket content after merge.
-        hparque.list_and_merge_pq_files(
-            self.bucket_name, aws_profile=self.mock_aws_profile
+        hparque.list_and_merge_pq_files(self.bucket_name, aws_profile=s3fs_)
+        parquet_path_list_after = hs3.listdir(
+            s3_bucket, pattern, only_files, use_relative_paths, aws_profile=s3fs_
         )
-        parquet_meta_list_after = self.moto_client.list_objects(
-            Bucket=self.bucket_name
-        )["Contents"]
-        parquet_path_list_after = [
-            meta["Key"] for meta in parquet_meta_list_after
-        ]
         parquet_path_list_after.sort()
         expected_list = [
-            "asset=A/year=2022/month=2/data.parquet",
-            "asset=B/year=2022/month=2/data.parquet",
-            "asset=C/year=2022/month=2/data.parquet",
-            "asset=D/year=2022/month=2/data.parquet",
-            "asset=E/year=2022/month=2/data.parquet",
-            "asset=F/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=A/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=B/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=C/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=D/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=E/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=F/year=2022/month=2/data.parquet",
         ]
         self.assertListEqual(parquet_path_list_after, expected_list)
