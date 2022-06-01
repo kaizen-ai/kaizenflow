@@ -244,8 +244,7 @@ def use_docker_sibling_containers() -> bool:
     """
     Return whether to use Docker sibling containers.
     """
-    # TODO(gp): We should enable it for dev4.
-    val = False
+    val = bool(is_dev4())
     return val
 
 
@@ -370,7 +369,7 @@ def is_CK_S3_available() -> bool:
         # CK bucket is not available on dev4.
         val = False
     elif is_inside_ci():
-        if get_name() in ("//amp", "//dev_tools"):
+        if get_name() in ("//amp", "//dev_tools", "//lemonade"):
             # No CK bucket.
             val = False
     _LOG.debug("val=%s", val)

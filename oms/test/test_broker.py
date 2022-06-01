@@ -47,42 +47,42 @@ class TestSimulatedBroker1(hunitest.TestCase):
 class TestSimulatedBroker2(hunitest.TestCase):
     def test_collect_spread_buy(self) -> None:
         order = oordexam.get_order_example3(0.0)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0308407941129"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.03"""
         self.helper(order, expected)
 
     def test_collect_spread_sell(self) -> None:
         order = oordexam.get_order_example3(0.0, -100)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0311059094466"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0575"""
         self.helper(order, expected)
 
     def test_midpoint_buy(self) -> None:
         order = oordexam.get_order_example3(0.5)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0309733517797"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.04375"""
         self.helper(order, expected)
 
     def test_midpoint_sell(self) -> None:
         order = oordexam.get_order_example3(0.5, -100)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0309733517797"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.04375"""
         self.helper(order, expected)
 
     def test_quarter_spread_buy(self) -> None:
         order = oordexam.get_order_example3(0.75)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0310396306132"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0506250000001"""
         self.helper(order, expected)
 
     def test_quarter_spread_sell(self) -> None:
         order = oordexam.get_order_example3(0.75, -100)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0309070729463"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.036875"""
         self.helper(order, expected)
 
     def test_cross_spread_buy(self) -> None:
         order = oordexam.get_order_example3(1.0)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0311059094466"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0575"""
         self.helper(order, expected)
 
     def test_cross_spread_sell(self) -> None:
         order = oordexam.get_order_example3(1.0, -100)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0308407941129"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.03"""
         self.helper(order, expected)
 
     def helper(self, order: omorder.Order, expected: str) -> ombroker.Fill:
@@ -129,11 +129,11 @@ class TestSimulatedBroker2(hunitest.TestCase):
 
 
 class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
-    
+
     def setUp(self) -> None:
         super().setUp()
         # Create OMS tables.
