@@ -1,4 +1,4 @@
-# camp-1.1.0
+# cmamp-1.1.0
 - 2022-04-18
 - Generate `docker-compose` programmatically instead of composing different files
 

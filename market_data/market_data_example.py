@@ -327,7 +327,6 @@ def get_RealTimeImClientMarketData_example1(
     # Build a `ReplayedMarketData`.
     sleep_in_secs = 1.0
     time_out_in_secs = 60 * 2
-    # Note: the `asset_id` value in Example1 data is 1467591036.
     market_data = mdrtmada.RealTimeMarketData2(
         im_client,
         #
