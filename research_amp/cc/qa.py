@@ -23,19 +23,19 @@ def compare_data_stats(
     Note: it is assumed that vendor names are stored in `vendor_df.name`.
 
     E.g.:
-    '''
-                    bad data [%]            ...                       NaNs [%]
-                    Crypto Chassis     CCXT        diff        ...    Crypto Chassis     CCXT        diff
-    kucoin::ADA_USDT     0.199483     46.558741     -46.359258 ...    0.199483        14.319763     -14.120281
-    kucoin::BNB_USDT     0.294219     60.489152     -60.194933 ...    0.294219        14.734591     -14.440372
+    ```
+                    bad data [%]                    ...    NaNs [%]
+                    Crypto Chassis     CCXT         ...    Crypto Chassis     CCXT
+    kucoin::ADA_USDT     0.199483     46.558741     ...    0.199483        14.319763
+    kucoin::BNB_USDT     0.294219     60.489152     ...    0.294219        14.734591
     ...
-    kucoin::SOL_USDT     0.342937     77.271483     -76.928546 ...    0.342937       75.172764     -74.829827
-    kucoin::XRP_USDT     0.096933     31.608797     -31.511864 ...    0.096933       18.636685     -18.539752
-    '''
+    kucoin::SOL_USDT     0.342937     77.271483     ...    0.342937       75.172764
+    kucoin::XRP_USDT     0.096933     31.608797     ...    0.096933       18.636685
+    ```
 
-    :param vendor1_df: data stats of some vendor, e.g. bad data for `CCXT`
-    :param vendor2_df: data stats of another vendor
-    :return: comparison of stats of two vendors
+    :param vendor1_df: data stats for some vendor, e.g. bad data for `CCXT`
+    :param vendor2_df: data stats for another vendor
+    :return: comparison of stats for two vendors
     """
     # Check if columns are equal in order for it is used in `MultiIndex`.
     hdbg.dassert_set_eq(vendor1_df.columns, vendor2_df.columns)
@@ -50,15 +50,8 @@ def compare_data_stats(
     )
     # Drop stats for not intersecting time periods.
     stats_comparison = stats_comparison.dropna()
-    # Compute difference between bad data stats.
-    columns = vendor1_df.columns.to_list()
-    if "bad data [%]" in columns:
-        for col in stats_comparison.columns.levels[1]:
-            stats_comparison["diff", col] = (
-                stats_comparison[vendor_names[0]][col]
-                - stats_comparison[vendor_names[1]][col]
-            )
     # Reorder columns.
+    columns = vendor1_df.columns.to_list()
     stats_comparison.columns = stats_comparison.columns.swaplevel(0, 1)
     new_cols = stats_comparison.columns.reindex(columns, level=0)
     stats_comparison = stats_comparison.reindex(columns=new_cols[0])
