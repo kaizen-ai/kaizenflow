@@ -163,7 +163,7 @@ def to_parquet(
     hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
     if hs3.is_s3_path(file_name):
         filesystem = hs3.get_s3fs(aws_profile)
-        #hs3.dassert_path_not_exists(file_name, filesystem)
+        hs3.dassert_path_not_exists(file_name, filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
@@ -547,8 +547,11 @@ def get_parquet_filters_from_timestamp_interval(
     elif partition_mode == "by_year_week":
         # TODO(gp): Consider using the same approach above for months also here.
         # Partition by year and week.
-        hdbg.dassert_is_not(end_timestamp, None,
-                "Parquet backend can't determine the boundaries of the data")
+        hdbg.dassert_is_not(
+            end_timestamp,
+            None,
+            "Parquet backend can't determine the boundaries of the data",
+        )
         # Include last week in the interval.
         end_timestamp += pd.DateOffset(weeks=1)
         # Get all weeks in the interval.
@@ -757,10 +760,9 @@ def list_and_merge_pq_files(
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
         # Drop duplicates on non-metadata columns.
         subset_cols = data.columns.to_list()
-        if "knowledge_timestamp" in subset_cols:
-            subset_cols.remove("knowledge_timestamp")
-        if "end_download_timestamp" in subset_cols:
-            subset_cols.remove("end_download_timestamp")
+        for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
+            if col_name in subset_cols:
+                subset_cols.remove(col_name)
         data = data.drop_duplicates(subset=subset_cols)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
