@@ -57,7 +57,8 @@ jobs:
         if: github.event.pull_request.draft == false
         env:
           AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
-          # For now, we always get Docker images from AM account, so we don't need `CK_ECR_BASE_PATH`.
+          # For now, we always get Docker images from AM account, so we don't
+          # need `CK_ECR_BASE_PATH`.
           # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
         run: invoke docker_pull
 
