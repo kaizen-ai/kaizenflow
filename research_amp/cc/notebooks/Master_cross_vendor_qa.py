@@ -27,9 +27,6 @@
 # %%
 import logging
 import os
-from typing import List, Optional, Tuple
-
-import pandas as pd
 
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
@@ -104,70 +101,6 @@ def get_cmtask1966_config_ccxt() -> cconconf.Config:
 config = get_cmtask1966_config_ccxt()
 print(config)
 
-
-# %% [markdown]
-# # Functions
-
-# %%
-# TODO(Dan): Clean up and move to a lib.
-# TODO(Dan): Make functions independent from hard-coded vendor names.
-# TODO(Dan): @Nina add more detailed description of functions.
-def _compare_vendor_universes(
-    crypto_chassis_universe: List[str],
-    ccxt_universe: List[str],
-) -> Tuple[List[Optional[str]], List[Optional[str]], List[Optional[str]]]:
-    """
-    Get common and unique vendors universes.
-    """
-    common_universe = list(
-        set(ccxt_universe).intersection(set(crypto_chassis_universe))
-    )
-    unique_crypto_chassis_universe = list(
-        set(crypto_chassis_universe) - set(ccxt_universe)
-    )
-    unique_ccxt_universe = list(set(ccxt_universe) - set(crypto_chassis_universe))
-    return common_universe, unique_crypto_chassis_universe, unique_ccxt_universe
-
-
-# TODO(Dan): Add filtering by dates.
-def _plot_bad_data_by_year_month_stats(
-    config: cconconf.Config, bad_data_stats: pd.DataFrame
-) -> None:
-    """
-    Plot bad data stats by year and month per unique full symbol in data.
-
-    Bad data is the sum of NaNs and "volume=0" stats.
-    """
-    full_symbols = bad_data_stats.index.get_level_values(0).unique()
-    for full_symbol in full_symbols:
-        bad_data_col_name = "bad data [%]"
-        ax = bad_data_stats.loc[full_symbol].plot.bar(
-            y=bad_data_col_name, rot=0, title=full_symbol
-        )
-        #
-        ax.hlines(
-            y=config["stats"]["threshold"],
-            xmin=0,
-            xmax=len(bad_data_stats),
-            color="r",
-        )
-        # TODO(Dan): Make ticklabels more readable.
-        # Get ticks and labels for x-axis.
-        ticks = ax.xaxis.get_ticklocs()
-        ticklabels = [
-            l.get_text().strip("()").split(", ")
-            for l in ax.xaxis.get_ticklabels()
-        ]
-        ticklabels = [".".join([l[0], l[1]]) for l in ticklabels]
-        # Adjust x-axis labels so they do not overlap on plot by
-        # picking ticks and labels by specified stride that limits
-        # the number of final ticks to 10.
-        stride = len(ticks) // 10 + 1
-        ax.xaxis.set_ticks(ticks[::stride])
-        ax.xaxis.set_ticklabels(ticklabels[::stride])
-        ax.figure.show()
-
-
 # %% [markdown]
 # # Compare universes
 
@@ -182,23 +115,13 @@ crypto_chassis_universe = crypto_chassis_client.get_universe()
 ccxt_universe = ccxt_client.get_universe()
 
 # %%
-(
-    common_universe,
-    unique_crypto_chassis_universe,
-    unique_ccxt_universe,
-) = _compare_vendor_universes(crypto_chassis_universe, ccxt_universe)
+common_universe = list(set(crypto_chassis_universe) & set(ccxt_universe))
 
 # %%
-print(len(common_universe))
-common_universe
-
-# %%
-print(len(unique_crypto_chassis_universe))
-unique_crypto_chassis_universe
-
-# %%
-print(len(unique_ccxt_universe))
-unique_ccxt_universe
+compare_universe = hprint.set_diff_to_str(
+    crypto_chassis_universe, ccxt_universe, add_space=True
+)
+print(compare_universe)
 
 # %% [markdown]
 # # Compare Binance QA stats
@@ -272,8 +195,8 @@ binance_bad_data_stats_by_year_month_qa = ramccqa.compare_data_stats(
 binance_bad_data_stats_by_year_month_qa
 
 # %%
-_plot_bad_data_by_year_month_stats(
-    config, binance_bad_data_stats_by_year_month_qa
+ramccqa.plot_bad_data_by_year_month_stats(
+    binance_bad_data_stats_by_year_month_qa, config["stats"]["threshold"]
 )
 
 # %% [markdown]
@@ -340,7 +263,9 @@ ftx_bad_data_stats_by_year_month_qa = ramccqa.compare_data_stats(
 ftx_bad_data_stats_by_year_month_qa
 
 # %%
-_plot_bad_data_by_year_month_stats(config, ftx_bad_data_stats_by_year_month_qa)
+ramccqa.plot_bad_data_by_year_month_stats(
+    ftx_bad_data_stats_by_year_month_qa, config["stats"]["threshold"]
+)
 
 # %% [markdown]
 # # Compare Gateio QA stats
@@ -410,7 +335,9 @@ gateio_bad_data_stats_by_year_month_qa = ramccqa.compare_data_stats(
 gateio_bad_data_stats_by_year_month_qa
 
 # %%
-_plot_bad_data_by_year_month_stats(config, gateio_bad_data_stats_by_year_month_qa)
+ramccqa.plot_bad_data_by_year_month_stats(
+    gateio_bad_data_stats_by_year_month_qa, config["stats"]["threshold"]
+)
 
 # %% [markdown]
 # # Compare Kucoin QA stats
@@ -480,4 +407,6 @@ kucoin_bad_data_stats_by_year_month_qa = ramccqa.compare_data_stats(
 kucoin_bad_data_stats_by_year_month_qa
 
 # %%
-_plot_bad_data_by_year_month_stats(config, kucoin_bad_data_stats_by_year_month_qa)
+ramccqa.plot_bad_data_by_year_month_stats(
+    kucoin_bad_data_stats_by_year_month_qa, config["stats"]["threshold"]
+)

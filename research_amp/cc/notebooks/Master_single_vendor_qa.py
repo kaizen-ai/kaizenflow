@@ -27,8 +27,6 @@
 import logging
 import os
 
-import pandas as pd
-
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
 import helpers.hdbg as hdbg
@@ -93,50 +91,6 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
 config = get_cmtask1866_config_ccxt()
 print(config)
 
-
-# %% [markdown]
-# # Functions
-
-# %%
-# TODO(Dan): Add filtering by dates.
-def _plot_bad_data_by_year_month_stats(
-    config: cconconf.Config, bad_data_stats: pd.DataFrame
-) -> None:
-    """
-    Plot bad data stats by year and month per unique full symbol in data.
-
-    Bad data is the sum of NaNs and "volume=0" stats.
-    """
-    full_symbols = bad_data_stats.index.get_level_values(0).unique()
-    for full_symbol in full_symbols:
-        bad_data_col_name = "bad data [%]"
-        ax = bad_data_stats.loc[full_symbol].plot.bar(
-            y=bad_data_col_name, rot=0, title=full_symbol
-        )
-        #
-        ax.hlines(
-            y=config["stats"]["threshold"],
-            xmin=0,
-            xmax=len(bad_data_stats),
-            color="r",
-        )
-        # TODO(Dan): Make ticklabels more readable.
-        # Get ticks and labels for x-axis.
-        ticks = ax.xaxis.get_ticklocs()
-        ticklabels = [
-            l.get_text().strip("()").split(", ")
-            for l in ax.xaxis.get_ticklabels()
-        ]
-        ticklabels = [".".join([l[0], l[1]]) for l in ticklabels]
-        # Adjust x-axis labels so they do not overlap on plot by
-        # picking ticks and labels by specified stride that limits
-        # the number of final ticks to 10.
-        stride = len(ticks) // 10 + 1
-        ax.xaxis.set_ticks(ticks[::stride])
-        ax.xaxis.set_ticklabels(ticklabels[::stride])
-        ax.figure.show()
-
-
 # %% [markdown]
 # # QA checks
 
@@ -183,8 +137,8 @@ binance_bad_data_stats_by_year_month = ramccqa.get_bad_data_stats(
 binance_bad_data_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_by_year_month_stats(
-    config, binance_bad_data_stats_by_year_month
+_ = ramccqa.plot_bad_data_by_year_month_stats(
+    binance_bad_data_stats_by_year_month, config["stats"]["threshold"]
 )
 
 # %% [markdown]
@@ -217,7 +171,9 @@ ftx_bad_data_stats_by_year_month = ramccqa.get_bad_data_stats(
 ftx_bad_data_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_by_year_month_stats(config, ftx_bad_data_stats_by_year_month)
+_ = ramccqa.plot_bad_data_by_year_month_stats(
+    ftx_bad_data_stats_by_year_month, config["stats"]["threshold"]
+)
 
 # %% [markdown]
 # ## Gateio
@@ -249,8 +205,8 @@ gateio_bad_data_stats_by_year_month = ramccqa.get_bad_data_stats(
 gateio_bad_data_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_by_year_month_stats(
-    config, gateio_bad_data_stats_by_year_month
+_ = ramccqa.plot_bad_data_by_year_month_stats(
+    gateio_bad_data_stats_by_year_month, config["stats"]["threshold"]
 )
 
 # %% [markdown]
@@ -283,6 +239,6 @@ kucoin_bad_data_stats_by_year_month = ramccqa.get_bad_data_stats(
 kucoin_bad_data_stats_by_year_month
 
 # %%
-_ = _plot_bad_data_by_year_month_stats(
-    config, kucoin_bad_data_stats_by_year_month
+_ = ramccqa.plot_bad_data_by_year_month_stats(
+    kucoin_bad_data_stats_by_year_month, config["stats"]["threshold"]
 )
