@@ -163,7 +163,7 @@ def to_parquet(
     hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
     if hs3.is_s3_path(file_name):
         filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_path_not_exists(file_name, filesystem)
+        #hs3.dassert_path_not_exists(file_name, filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
@@ -755,6 +755,13 @@ def list_and_merge_pq_files(
             continue
         # Read all files in target folder.
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
+        # Drop duplicates on non-metadata columns.
+        subset_cols = data.columns.to_list()
+        if "knowledge_timestamp" in subset_cols:
+            subset_cols.remove("knowledge_timestamp")
+        if "end_download_timestamp" in subset_cols:
+            subset_cols.remove("end_download_timestamp")
+        data = data.drop_duplicates(subset=subset_cols)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
         pq.write_table(data, folder + "/" + file_name, filesystem=filesystem)
