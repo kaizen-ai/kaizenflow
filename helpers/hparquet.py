@@ -767,7 +767,7 @@ def list_and_merge_pq_files(
         data = data.drop_duplicates(subset=subset_cols)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
-        pq.write_table(data, folder + "/" + file_name, filesystem=filesystem)
+        pq.write_table(pa.Table.from_pandas(data), folder + "/" + file_name, filesystem=filesystem)
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:
