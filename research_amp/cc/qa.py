@@ -187,8 +187,8 @@ def get_timestamp_stats(data: pd.DataFrame, vendor_name: str) -> pd.DataFrame:
 def plot_bad_data_by_year_month_stats(
     bad_data_stats: pd.DataFrame,
     threshold: int,
-    year: int,
-    month: int,
+    year: list,
+    month: list,
 ) -> None:
     """
     Plot bad data stats by year and month per unique full symbol in data.
@@ -197,8 +197,8 @@ def plot_bad_data_by_year_month_stats(
     """
     if year and month:
         bad_data_stats = bad_data_stats[
-            (bad_data_stats.index.get_level_values(1) == year)
-            & (bad_data_stats.index.get_level_values(2) == month)
+            (bad_data_stats.index.get_level_values(1).isin(year))
+            & (bad_data_stats.index.get_level_values(2).isin(month))
         ]
     full_symbols = bad_data_stats.index.get_level_values(0).unique()
     for full_symbol in full_symbols:
