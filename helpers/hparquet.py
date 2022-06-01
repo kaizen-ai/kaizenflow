@@ -758,7 +758,7 @@ def list_and_merge_pq_files(
             continue
         # Read all files in target folder.
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
-        data = data.read().to_pandas()
+        data = data.to_pandas()
         # Drop duplicates on non-metadata columns.
         subset_cols = data.columns.to_list()
         for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
