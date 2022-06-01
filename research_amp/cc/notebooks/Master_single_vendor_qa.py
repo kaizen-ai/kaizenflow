@@ -164,20 +164,21 @@ binance_data = client.read_data(binance_universe, **config["data"]["read_data"])
 binance_data.head(3)
 
 # %%
-binance_timestamp_stats = ramccqa.get_timestamp_stats(binance_data)
+vendor_name = "CCXT"
+binance_timestamp_stats = ramccqa.get_timestamp_stats(binance_data, vendor_name)
 binance_timestamp_stats
 
 # %%
 agg_level_full_symbol = ["full_symbol"]
 binance_bad_data_stats = ramccqa.get_bad_data_stats(
-    binance_data, agg_level_full_symbol
+    binance_data, agg_level_full_symbol, vendor_name
 )
 binance_bad_data_stats
 
 # %%
 agg_level_full_symbol_year_month = ["full_symbol", "year", "month"]
 binance_bad_data_stats_by_year_month = ramccqa.get_bad_data_stats(
-    binance_data, agg_level_full_symbol_year_month
+    binance_data, agg_level_full_symbol_year_month, vendor_name
 )
 binance_bad_data_stats_by_year_month
 
@@ -200,16 +201,18 @@ ftx_data = client.read_data(ftx_universe, **config["data"]["read_data"])
 ftx_data.head(3)
 
 # %%
-ftx_timestamp_stats = ramccqa.get_timestamp_stats(ftx_data)
+ftx_timestamp_stats = ramccqa.get_timestamp_stats(ftx_data, vendor_name)
 ftx_timestamp_stats
 
 # %%
-ftx_bad_data_stats = ramccqa.get_bad_data_stats(ftx_data, agg_level_full_symbol)
+ftx_bad_data_stats = ramccqa.get_bad_data_stats(
+    ftx_data, agg_level_full_symbol, vendor_name
+)
 ftx_bad_data_stats
 
 # %%
 ftx_bad_data_stats_by_year_month = ramccqa.get_bad_data_stats(
-    ftx_data, agg_level_full_symbol_year_month
+    ftx_data, agg_level_full_symbol_year_month, vendor_name
 )
 ftx_bad_data_stats_by_year_month
 
@@ -230,18 +233,18 @@ gateio_data = client.read_data(gateio_universe, **config["data"]["read_data"])
 gateio_data.head(3)
 
 # %%
-gateio_timestamp_stats = ramccqa.get_timestamp_stats(gateio_data)
+gateio_timestamp_stats = ramccqa.get_timestamp_stats(gateio_data, vendor_name)
 gateio_timestamp_stats
 
 # %%
 gateio_bad_data_stats = ramccqa.get_bad_data_stats(
-    gateio_data, agg_level_full_symbol
+    gateio_data, agg_level_full_symbol, vendor_name
 )
 gateio_bad_data_stats
 
 # %%
 gateio_bad_data_stats_by_year_month = ramccqa.get_bad_data_stats(
-    gateio_data, agg_level_full_symbol_year_month
+    gateio_data, agg_level_full_symbol_year_month, vendor_name
 )
 gateio_bad_data_stats_by_year_month
 
@@ -264,18 +267,18 @@ kucoin_data = client.read_data(kucoin_universe, **config["data"]["read_data"])
 kucoin_data.head(3)
 
 # %%
-kucoin_timestamp_stats = ramccqa.get_timestamp_stats(kucoin_data)
+kucoin_timestamp_stats = ramccqa.get_timestamp_stats(kucoin_data, vendor_name)
 kucoin_timestamp_stats
 
 # %%
 kucoin_bad_data_stats = ramccqa.get_bad_data_stats(
-    kucoin_data, agg_level_full_symbol
+    kucoin_data, agg_level_full_symbol, vendor_name
 )
 kucoin_bad_data_stats
 
 # %%
 kucoin_bad_data_stats_by_year_month = ramccqa.get_bad_data_stats(
-    kucoin_data, agg_level_full_symbol_year_month
+    kucoin_data, agg_level_full_symbol_year_month, vendor_name
 )
 kucoin_bad_data_stats_by_year_month
 
