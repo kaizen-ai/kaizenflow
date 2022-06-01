@@ -195,11 +195,10 @@ def plot_bad_data_by_year_month_stats(
 
     Bad data is the sum of NaNs and "volume=0" stats.
     """
-    if year and month:
-        bad_data_stats = bad_data_stats[
-            (bad_data_stats.index.get_level_values(1) == year)
-            & (bad_data_stats.index.get_level_values(2) == month)
-        ]
+    bad_data_stats = bad_data_stats[
+        (bad_data_stats.index.get_level_values(1) == year)
+        & (bad_data_stats.index.get_level_values(2) == month)
+    ]
     full_symbols = bad_data_stats.index.get_level_values(0).unique()
     for full_symbol in full_symbols:
         bad_data_col_name = "bad data [%]"
