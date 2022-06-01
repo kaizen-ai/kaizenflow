@@ -58,6 +58,7 @@ def get_cmtask2051_config_crypto_chassis() -> cconconf.Config:
     """
     config = cconconf.Config()
     param_dict = {
+        "vendor": "crypto_chassis",
         "data": {
             # Parameters for client initialization.
             "im_client": {
@@ -167,7 +168,7 @@ coinbase_data = client.read_data(coinbase_universe, **config["data"]["read_data"
 coinbase_data.head(3)
 
 # %%
-vendor_name = "CryptoChassis"
+vendor_name = config["vendor"]
 coinbase_timestamp_stats = ramccqa.get_timestamp_stats(coinbase_data, vendor_name)
 coinbase_timestamp_stats
 
