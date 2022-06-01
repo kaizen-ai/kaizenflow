@@ -259,7 +259,9 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             # Return empty Dataframe if there is no data.
             return pd.DataFrame()
         ohlcv = pd.concat(data)
-        ohlcv = self.coerce_to_numeric(ohlcv)
+        # Coerce principal data columns to numeric dtype.
+        ohlcv_columns = ["open", "high", "low", "close", "volume"]
+        ohlcv = self.coerce_to_numeric(ohlcv, float_columns=ohlcv_columns)
         # Filter the time period since Crypto Chassis doesn't provide this functionality.
         # (CmTask #1887).
         if start_timestamp:
