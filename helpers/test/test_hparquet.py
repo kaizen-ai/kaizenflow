@@ -888,7 +888,7 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         # Every second file is left intact to replicate ready out-of-the-box folder.
         # e.g., `asset=A/year=2022/month=2/data.parquet`.
         for path in parquet_path_list_before[::2]:
-            original_path = f"s3://{self.bucket_name}/{path}"
+            original_path = f"{s3_bucket}/{path}"
             renamed_path = original_path.replace("data.parquet", "dummy.parquet")
             additional_path = original_path.replace(
                 "data.parquet", "dummy_new.parquet"
@@ -921,3 +921,30 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
             "tmp.scratch/asset=F/year=2022/month=2/data.parquet",
         ]
         self.assertListEqual(parquet_path_list_after, expected_list)
+
+    def test_list_and_merge_pq_files_duplicate_drop(self) -> None:
+        # Prepare test data.
+        test_data = {
+            "dummy_value_1": [1, 1, 1],
+            "dummy_value_2": ["A", "A", "A"],
+            "knowledge_timestamp": [1, 2, 3],
+            "end_download_timestamp": [3, 2, 1],
+        }
+        df = pd.DataFrame(data=test_data)
+        # Save test data to s3 bucket.
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        s3_bucket = f"s3://{self.bucket_name}"
+        original_sample_path = f"{s3_bucket}/dummy/data.parquet"
+        dummy_sample_path = original_sample_path.replace(
+            "data.parquet", "dummy.parquet"
+        )
+        hparque.to_parquet(df, dummy_sample_path, aws_profile=s3fs_)
+        # Check if new columns are in place.
+        df = hmoto.from_parquet_with_s3fs(dummy_sample_path, s3fs_)
+        self.assertIn("knowledge_timestamp", df.columns)
+        self.assertIn("end_download_timestamp", df.columns)
+        self.assertEqual(len(df), 3)
+        # Check if duplicates are dropped after merge.
+        hparque.list_and_merge_pq_files(self.bucket_name, aws_profile=s3fs_)
+        df = hmoto.from_parquet_with_s3fs(original_sample_path, s3fs_)
+        self.assertEqual(len(df), 1)
