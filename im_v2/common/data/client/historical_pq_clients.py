@@ -446,6 +446,8 @@ class HistoricalPqByDateClient(
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns,
+        *,
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -471,8 +473,11 @@ class HistoricalPqByDateClient(
             full_symbols,
             start_date,
             end_date,
+            columns,
             normalize=True,
             tz_zone=tz_zone,
+            root_data_dir="",
+            aws_profile=None,
             **kwargs,
         )
         # Convert to datetime.

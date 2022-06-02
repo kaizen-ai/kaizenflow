@@ -82,14 +82,14 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        full_symbol_col_name: str,
+        columns: list,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Same as abstract method.
         """
         df = super()._read_data_for_multiple_symbols(
-            full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
+            full_symbols, start_ts, end_ts, columns, **kwargs
         )
         # Historical data doesn't have a knowledge time so we use the end of the
         # interval as a proxy for it, which for now it's the index.
