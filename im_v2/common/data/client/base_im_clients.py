@@ -210,6 +210,10 @@ class ImClient(abc.ABC):
         _LOG.debug("full_symbols=%s", df[full_symbol_col_name].unique())
         dfs = []
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
+            # HACK(!).
+            df_tmp = df_tmp.reset_index().sort_values(["timestamp", "volume"])
+            df_tmp = df_tmp.set_index("timestamp", drop=True)
+            df_tmp = df_tmp[~df_tmp.index.duplicated(keep="last")]
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
                 df_tmp,
@@ -360,9 +364,9 @@ class ImClient(abc.ABC):
             .duplicated(subset=["timestamp", full_symbol_col_name])
             .sum()
         )
-        hdbg.dassert_eq(
-            n_duplicated_rows, 0, msg="There are duplicated rows in the data"
-        )
+        # hdbg.dassert_eq(
+        #     n_duplicated_rows, 0, msg="There are duplicated rows in the data"
+        # )
         # Ensure that all the data is in [start_ts, end_ts].
         hdateti.dassert_timestamp_lte(start_ts, df.index.min())
         hdateti.dassert_timestamp_lte(df.index.max(), end_ts)
