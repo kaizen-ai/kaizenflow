@@ -284,9 +284,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
 
         See the parent class for parameters description.
 
-        :param dataset: the dataset type
-            - "ohlcv"
-            - "bid_ask"
+        :param dataset: the dataset type, e.g. "ohlcv", "bid_ask"
         :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         infer_exchange_id = True
@@ -298,6 +296,9 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             partition_mode,
             infer_exchange_id,
             aws_profile=aws_profile,
+        )
+        hdbg.dassert_in(
+            dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
         )
         self._dataset = dataset
         self._data_snapshot = data_snapshot
