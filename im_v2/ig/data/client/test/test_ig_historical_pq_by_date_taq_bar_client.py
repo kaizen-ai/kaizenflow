@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
     def read_data_helper(self, *args: Any, **kwargs: Dict[str, Any]) -> None:
         # Execute.
-        root_dir = "s3://alphamatic-data/unit_test/tiled_data/tiled.bar_data.all.2010_2022.20220204"
+        root_dir = "s3://alphamatic-data/unit_test/ig_parquet"
         aws_profile = "am"
         im_client = imvidcihpbdtbc.IgHistoricalPqByDateTaqBarClient(
             root_dir, aws_profile=aws_profile
