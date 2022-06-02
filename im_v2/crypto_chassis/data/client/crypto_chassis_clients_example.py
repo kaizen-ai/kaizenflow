@@ -16,6 +16,10 @@ def get_CryptoChassisHistoricalPqByTileClient_example1(
     """
     Get `CryptoChassisHistoricalPqByTileClient` object for the prod model
     reading actual historical data, which is stored on S3.
+
+    Client is initialized to process CryptoChassis data for:
+    - universe version: "v1"
+    - data snapshot: "latest"
     """
     universe_version = "v1"
     aws_profile = "ck"
@@ -40,6 +44,10 @@ def get_CryptoChassisHistoricalPqByTileClient_example2(
     """
     Get `CryptoChassisHistoricalPqByTileClient` object for the prod model
     reading actual historical data, which is stored on S3.
+
+    Client is initialized to process CryptoChassis data for:
+    - universe version: "v2"
+    - data snapshot: "20220530"
     """
     universe_version = "v2"
     aws_profile = "ck"

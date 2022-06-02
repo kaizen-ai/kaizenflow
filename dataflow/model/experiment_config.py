@@ -60,6 +60,20 @@ def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
 # TODO(gp): -> get_time_interval
 # TODO(Grisha): "Refactor or remove `get_period()`" CmTask #1723.
 def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
+    """
+    Get start and end timestamps from the specified period.
+
+    For interval periods:
+    - "JanFeb2020" = [Jan 2020, Feb 2020]
+    - "FebMar2020" = [Feb 2020, Mar 2020]
+    - "NovDec2020" = [Nov 2020, Dec 2020]
+    - "2018_2019" = [2018, 2019]
+    - "2009_2019" = [2009, 2019)
+    - "2015_2022" = [2015, 2022)
+    - "2012_2022" = [2012, 2022)
+    - "2018_2022" = [2018, April 2022]
+    - "2018_2022" = [2018, Feb 2022]
+    """
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
         end_datetime = datetime.datetime(2020, 1, 7)
@@ -92,20 +106,24 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
         start_datetime = datetime.datetime(2018, 1, 1)
         end_datetime = datetime.datetime(2020, 1, 1)
     elif period == "2009_2019":
-        # Entire 2009-2019 period.
+        # Entire 2009-2018 period.
         start_datetime = datetime.datetime(2009, 1, 1)
         end_datetime = datetime.datetime(2019, 1, 1)
     elif period == "2015_2022":
+        # Entire 2015-2021 period.
         start_datetime = datetime.datetime(2015, 1, 1)
         end_datetime = datetime.datetime(2022, 1, 1)
     elif period == "2012_2022":
+        # Entire 2012-2021 period.
         start_datetime = datetime.datetime(2012, 1, 1)
         end_datetime = datetime.datetime(2022, 1, 1)
     elif period == "2018_2022":
         start_datetime = datetime.datetime(2018, 1, 1)
+        # TODO(Dan): "Duplicated indices for different data rows CmTask #2062."
         end_datetime = datetime.datetime(2022, 5, 1)
     elif period == "2019_2022":
         start_datetime = datetime.datetime(2019, 1, 1)
+        # TODO(Dan): Extend to the actual month in 2022 before using next time.
         end_datetime = datetime.datetime(2022, 3, 1)
     else:
         hdbg.dfatal("Invalid period='%s'" % period)
