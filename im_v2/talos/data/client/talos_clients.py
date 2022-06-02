@@ -75,6 +75,8 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
             aws_profile=aws_profile,
         )
         self._data_snapshot = data_snapshot
+        # TODO(Sonya): Consider moving it to the base class as the `dataset` param.
+        self._dataset = "ohlcv"
 
     def get_metadata(self) -> pd.DataFrame:
         """
