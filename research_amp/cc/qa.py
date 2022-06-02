@@ -18,17 +18,27 @@ def compare_data_stats(
     vendor2_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Compare data statistics from two different vendors, i.e. bad data or
-    timestamp statistics.
+    Compare stats for two different vendors for intersecting time intervals.
 
-    :param vendor1_df: data statistics of some vendor, e.g. bad data of `CCXT`
-    :param vendor2_df: data statistics of another vendor
-    return: comparison of statistics of two vendors
+    Note: it is assumed that vendor names are stored in `vendor_df.name`.
+
+    E.g.:
+    ```
+                    bad data [%]                    ...    NaNs [%]
+                    Crypto Chassis     CCXT         ...    Crypto Chassis     CCXT
+    kucoin::ADA_USDT     0.199483     46.558741     ...    0.199483        14.319763
+    kucoin::BNB_USDT     0.294219     60.489152     ...    0.294219        14.734591
+    ...
+    kucoin::SOL_USDT     0.342937     77.271483     ...    0.342937       75.172764
+    kucoin::XRP_USDT     0.096933     31.608797     ...    0.096933       18.636685
+    ```
+
+    :param vendor1_df: data stats for some vendor, e.g. bad data for `CCXT`
+    :param vendor2_df: data stats for another vendor
+    :return: comparison of stats for two vendors
     """
-    vendor1_columns = vendor1_df.columns.to_list()
-    vendor2_columns = vendor2_df.columns.to_list()
     # Check if columns are equal in order for it is used in `MultiIndex`.
-    hdbg.dassert_eq(vendor1_columns, vendor2_columns)
+    hdbg.dassert_set_eq(vendor1_df.columns, vendor2_df.columns)
     vendor_names = [vendor1_df.name, vendor2_df.name]
     stats_comparison = pd.concat(
         [
@@ -40,16 +50,10 @@ def compare_data_stats(
     )
     # Drop stats for not intersecting time periods.
     stats_comparison = stats_comparison.dropna()
-    # Compute difference between bad data stats.
-    if "min_timestamp" not in vendor1_columns and len(vendor1_df.index[0]) != 3:
-        for col in stats_comparison.columns.levels[1]:
-            stats_comparison["diff", col] = (
-                stats_comparison[vendor_names[0]][col]
-                - stats_comparison[vendor_names[1]][col]
-            )
     # Reorder columns.
+    columns = vendor1_df.columns.to_list()
     stats_comparison.columns = stats_comparison.columns.swaplevel(0, 1)
-    new_cols = stats_comparison.columns.reindex(vendor1_columns, level=0)
+    new_cols = stats_comparison.columns.reindex(columns, level=0)
     stats_comparison = stats_comparison.reindex(columns=new_cols[0])
     return stats_comparison
 
