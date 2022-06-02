@@ -844,8 +844,6 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
     def generate_test_data(self) -> hs3.AwsProfile:
         """
         Upload test daily Parquet files for 3 days to the mocked S3 bucket.
-
-        Also, data is transferred to mocked bucket.
         """
         test_dir = self.get_scratch_space()
         cmd = []
