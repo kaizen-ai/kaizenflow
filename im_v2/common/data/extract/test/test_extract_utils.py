@@ -54,6 +54,7 @@ class TestDownloadRealtimeForOneExchange1(
             "end_timestamp": "20211110-101200",
             "exchange_id": "binance",
             "universe": "v3",
+            "data_type": "ohlcv",
             "db_stage": "local",
             "db_table": "ccxt_ohlcv",
             "incremental": False,
@@ -62,16 +63,15 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
+        extractor = imvcdeex.CcxtExtractor(kwargs["exchange_id"])
         if use_s3:
             # Update kwargs.
             kwargs.update(
                 {"aws_profile": "ck", "s3_path": f"s3://{self.bucket_name}/"}
             )
         # Run.
-        args = argparse.Namespace(**kwargs)
         imvcdeexut.download_realtime_for_one_exchange(
-            args, imvcdeex.CcxtExtractor
-        )
+            kwargs, extractor)
         # Get saved data in db.
         select_all_query = "SELECT * FROM ccxt_ohlcv;"
         actual_df = hsql.execute_query_to_df(self.connection, select_all_query)
@@ -189,21 +189,21 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         Test directly function call for coverage increase.
         """
         # Prepare inputs.
-        kwargs = {
+        args = {
             "start_timestamp": "2021-12-31 23:00:00",
             "end_timestamp": "2022-01-01 01:00:00",
             "exchange_id": "binance",
+            "data_type": "ohlcv",
             "universe": "v3",
-            "sleep_time": 1,
             "incremental": False,
             "aws_profile": "ck",
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
-            "file_format": "parquet"
+            "file_format": "parquet",
+            "unit": "ms"
         }
-        # Run.
-        args = argparse.Namespace(**kwargs)
-        imvcdeexut.download_historical_data(args, imvcdeex.CcxtExtractor)
+        exchange = imvcdeex.CcxtExtractor(args["exchange_id"])
+        imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.slow("Around 15s")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")

@@ -11,9 +11,8 @@ import argparse
 import logging
 import os
 import time
-
 from datetime import datetime, timedelta
-from typing import Any, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 
 import pandas as pd
 import psycopg2
@@ -23,11 +22,12 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.data.extract.extractor as imvcdeexcl
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.extract.extractor as imvtdeexcl
+import im_v2.talos.data.extract.extractor as imvtdexex
+import im_v2.common.data.extract.extractor as imvcdexex
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -126,15 +126,12 @@ def add_periodical_download_args(
     return parser
 
 
-CCXT_EXCHANGE = "CcxtExtractor"
-TALOS_EXCHANGE = "TalosExtractor"
-CRYPTO_CHASSIS_EXCHANGE = "CryptoChassisExtractor"
 # Time limit for each download execution.
 TIMEOUT_SEC = 60
 
 
 def download_realtime_for_one_exchange(
-    args: argparse.Namespace, exchange_class: Any
+    args: Dict[str, Any], exchange: imvcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for downloading exchange data.
@@ -142,33 +139,18 @@ def download_realtime_for_one_exchange(
     :param args: arguments passed on script run
     :param exchange_class: which exchange is used in script run
     """
-    # Initialize exchange class and prepare additional args, if any.
-    # Every exchange can potentially have a specific set of init args.
-    additional_args = []
-    # TODO(Nikola): Unify exchange initialization as separate function CMTask #1776.
-    if exchange_class.__name__ == CCXT_EXCHANGE:
-        # Initialize CCXT with `exchange_id`.
-        exchange = exchange_class(args.exchange_id)
-        vendor = "CCXT"
-    elif exchange_class.__name__ == TALOS_EXCHANGE:
-        # Unlike CCXT, Talos is initialized with `api_stage`.
-        exchange = exchange_class(args.api_stage)
-        vendor = "talos"
-        additional_args.append(args.exchange_id)
-    else:
-        hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
-    universe = ivcu.get_vendor_universe(vendor, version=args.universe)
-    currency_pairs = universe[args.exchange_id]
+    universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
+    currency_pairs = universe[args["exchange_id"]]
     # Connect to database.
-    env_file = imvimlita.get_db_env_path(args.db_stage)
+    env_file = imvimlita.get_db_env_path(args["db_stage"])
     try:
         # Connect with the parameters from the env file.
         connection_params = hsql.get_connection_info_from_env_file(env_file)
         connection = hsql.get_connection(*connection_params)
     except psycopg2.OperationalError:
         # Connect with the dynamic parameters (usually during tests).
-        actual_details = hsql.db_connection_to_tuple(args.connection)._asdict()
+        actual_details = hsql.db_connection_to_tuple(args["connection"])._asdict()
         connection_params = hsql.DbConnectionInfo(
             host=actual_details["host"],
             dbname=actual_details["dbname"],
@@ -177,11 +159,8 @@ def download_realtime_for_one_exchange(
             password=actual_details["password"],
         )
         connection = hsql.get_connection(*connection_params)
-    # Connect to S3 filesystem, if provided.
-    if args.aws_profile:
-        fs = hs3.get_s3fs(args.aws_profile)
     # Load DB table to work with
-    db_table = args.db_table
+    db_table = args["db_table"]
     # Generate a query to remove duplicates.
     dup_query = hsql.get_remove_duplicates_query(
         table_name=db_table,
@@ -189,25 +168,26 @@ def download_realtime_for_one_exchange(
         column_names=["timestamp", "exchange_id", "currency_pair"],
     )
     # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
+    start_timestamp = pd.Timestamp(args["start_timestamp"])
+    end_timestamp = pd.Timestamp(args["end_timestamp"])
     # Download data for specified time period.
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        currency_pair_for_download = exchange_class.convert_currency_pair(
+        currency_pair_for_download = exchange.convert_currency_pair(
             currency_pair
         )
         # Download data.
-        data = exchange.download_ohlcv_data(
-            currency_pair_for_download,
-            *additional_args,
+        data = exchange.download_data(
+            data_type=args["data_type"],
+            currency_pair=currency_pair_for_download,
+            exchange_id=args["exchange_id"],
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
         )
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
-        data["exchange_id"] = args.exchange_id
+        data["exchange_id"] = args["exchange_id"]
         # Get timestamp of insertion in UTC.
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Insert data into the DB.
@@ -216,8 +196,12 @@ def download_realtime_for_one_exchange(
             obj=data,
             table_name=db_table,
         )
+        # Remove duplicated entries.
+        connection.cursor().execute(dup_query)
         # Save data to S3 bucket.
-        if args.s3_path:
+        if args["s3_path"]:
+            # Connect to S3 filesystem.
+            fs = hs3.get_s3fs(args["aws_profile"])
             # Get file name.
             file_name = (
                 currency_pair
@@ -225,20 +209,16 @@ def download_realtime_for_one_exchange(
                 + hdateti.get_current_timestamp_as_string("UTC")
                 + ".csv"
             )
-            path_to_file = os.path.join(args.s3_path, args.exchange_id, file_name)
+            path_to_file = os.path.join(args["s3_path"], args["exchange_id"], file_name)
             # Save data to S3 filesystem.
             with fs.open(path_to_file, "w") as f:
                 data.to_csv(f, index=False)
-        # Remove duplicated entries.
-        connection.cursor().execute(dup_query)
 
 
 @timeout(TIMEOUT_SEC)
 def _download_realtime_for_one_exchange_with_timeout(
-    args: argparse.Namespace,
-    exchange_class: Type[
-        Union[imvcdeexcl.CcxtExtractor, imvtdeexcl.TalosExtractor]
-    ],
+    args: Dict[str, Any],
+    exchange_class: imvcdexex.Extractor,
     start_timestamp: datetime,
     end_timestamp: datetime,
 ) -> None:
@@ -250,7 +230,7 @@ def _download_realtime_for_one_exchange_with_timeout(
     :param start_timestamp: beginning of the downloaded period
     :param end_timestamp: end of the downloaded period
     """
-    args.start_timestamp, args.end_timestamp = start_timestamp, end_timestamp
+    args["start_timestamp"], args["end_timestamp"] = start_timestamp, end_timestamp
     _LOG.info(
         "Starting data download from: %s, till: %s",
         start_timestamp,
@@ -260,7 +240,7 @@ def _download_realtime_for_one_exchange_with_timeout(
 
 
 def download_realtime_for_one_exchange_periodically(
-    args: argparse.Namespace, exchange_class: Any
+    args: Dict[str, Any], exchange: imvcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for periodical exchange data download.
@@ -271,9 +251,9 @@ def download_realtime_for_one_exchange_periodically(
     # Time range for each download.
     time_window_min = 5
     # Check values.
-    start_time = pd.Timestamp(args.start_time)
-    stop_time = pd.Timestamp(args.stop_time)
-    interval_min = args.interval_min
+    start_time = pd.Timestamp(args["start_time"])
+    stop_time = pd.Timestamp(args["stop_time"])
+    interval_min = args["interval_min"]
     hdbg.dassert_lte(
         1, interval_min, "interval_min: %s should be greater than 0", interval_min
     )
@@ -305,7 +285,7 @@ def download_realtime_for_one_exchange_periodically(
         end_timestamp = datetime.now(tz)
         try:
             _download_realtime_for_one_exchange_with_timeout(
-                args, exchange_class, start_timestamp, end_timestamp
+                args, exchange, start_timestamp, end_timestamp
             )
             # Reset failures counter.
             num_failures = 0
@@ -391,13 +371,17 @@ def save_csv(
 
 
 def save_parquet(
-    data: pd.DataFrame, path_to_exchange: str, aws_profile: Optional[str]
+    data: pd.DataFrame,
+    path_to_exchange: str,
+    unit: str,
+    aws_profile: Optional[str],
 ) -> None:
     """
     Save Parquet dataset.
     """
     # Update indexing and add partition columns.
-    data = imvcdttrut.reindex_on_datetime(data, "timestamp")
+    # TODO(Danya): Add `unit` as a parameter in the function.
+    data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit=unit)
     data, partition_cols = hparque.add_date_partition_columns(
         data, "by_year_month"
     )
@@ -415,7 +399,7 @@ def save_parquet(
 
 
 def download_historical_data(
-    args: argparse.Namespace, exchange_class: Any
+    args: Dict[str, Any], exchange: imvcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for downloading historical exchange data.
@@ -425,58 +409,43 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    args = vars(args)
     path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
     elif not args["incremental"]:
         hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
-    # Initialize exchange class.
-    # Every exchange can potentially have a specific set of init args.
-    if exchange_class.__name__ == CCXT_EXCHANGE:
-        # Initialize CCXT with `exchange_id`.
-        exchange = exchange_class(args["exchange_id"])
-        vendor = "CCXT"
-        data_type = "ohlcv"
-    elif exchange_class.__name__ == TALOS_EXCHANGE:
-        # Unlike CCXT, Talos is initialized with `api_stage`.
-        exchange = exchange_class(args["api_stage"])
-        vendor = "talos"
-        data_type = "ohlcv"
-    elif exchange_class.__name__ == CRYPTO_CHASSIS_EXCHANGE:
-        exchange = exchange_class()
-        vendor = "crypto_chassis"
-        data_type = "market_depth"
-    else:
-        hdbg.dfatal(f"Unsupported `{exchange_class.__name__}` exchange!")
     # Load currency pairs.
-    universe = ivcu.get_vendor_universe(vendor, version=args["universe"])
+    universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
     currency_pairs = universe[args["exchange_id"]]
     # Convert timestamps.
-    args["end_timestamp"] = pd.Timestamp(args["end_timestamp"])
-    args["start_timestamp"] = pd.Timestamp(args["start_timestamp"])
+    start_timestamp = pd.Timestamp(args["start_timestamp"])
+    end_timestamp = pd.Timestamp(args["end_timestamp"])
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        args["currency_pair"] = exchange.convert_currency_pair(currency_pair)
+        converted_currency_pair = exchange.convert_currency_pair(currency_pair)
         # Download data.
-        data = exchange.download_data(data_type, **args)
+        data = exchange.download_data(
+            args["data_type"],
+            args["exchange_id"],
+            converted_currency_pair,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+        )
         if data.empty:
             continue
         # Assign pair and exchange columns.
-        # TODO(Nikola): Exchange id was missing and it is added additionally to
-        #  match signature of other scripts.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args["exchange_id"]
-        # Change index to allow calling add_date_partition_cols function on the dataframe.
-        # TODO(Danya): Move to parquet!
-        # Get current time of push to s3 in UTC.
+        # Get current time of download.
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
         if args["file_format"] == "parquet":
-            save_parquet(data, path_to_exchange, args["aws_profile"])
+            save_parquet(
+                data, path_to_exchange, args["unit"], args["aws_profile"]
+            )
         elif args["file_format"] == "csv":
             save_csv(
                 data,
@@ -487,6 +456,3 @@ def download_historical_data(
             )
         else:
             hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
-        # Sleep between iterations is needed for CCXT.
-        if exchange_class == CCXT_EXCHANGE:
-            time.sleep(args["sleep_time"])

@@ -1,3 +1,11 @@
+v5
+- 2022-05-25
+- Coinbase full symbols are added
+
+v4
+- 2022-04-23
+- Kucoin and Gateio full symbols are removed due to bad data quality
+
 small
 - 2021-11-07
 - Small universe for fast unit tests
