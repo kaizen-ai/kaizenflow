@@ -323,12 +323,8 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "crypto_chassis_v2":
         version = "v2"
         ret = _get_crypto_chassis_universe(version, top_n)
-        # Remove after duplicates are dropped.
-        ret = [
-            full_symbol
-            for full_symbol in ret
-            if full_symbol not in ["binance::ADA_USDT"]
-        ]
+        # Remove DOGE data due to its bad quality.
+        ret.remove("coinbase::DOGE_USDT")
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret
