@@ -66,6 +66,7 @@ def get_cmtask1966_config_ccxt() -> cconconf.Config:
                     hs3.get_s3_bucket_path("ck"), "reorg", "historical.manual.pq"
                 ),
                 "partition_mode": "by_year_month",
+                "dataset": "ohlcv",
                 "aws_profile": "ck",
             },
             "crypto_chassis": {
@@ -75,6 +76,7 @@ def get_cmtask1966_config_ccxt() -> cconconf.Config:
                     hs3.get_s3_bucket_path("ck"), "reorg", "historical.manual.pq"
                 ),
                 "partition_mode": "by_year_month",
+                "dataset": "ohlcv",
                 "aws_profile": "ck",
             },
             # Parameters for data query.
