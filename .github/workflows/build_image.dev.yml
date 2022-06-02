@@ -2,8 +2,52 @@ name: Build dev image
 on:
   # Run manually.
   workflow_dispatch:
-    # TODO(Nikola): Add default input parameters for manual workflow run.
-    # https://damienaicheh.github.io/github/actions/2022/01/20/set-dynamic-parameters-github-workflows-en.html
+    # User controlled inputs that will affect build flow.
+    inputs:
+      version:
+        description: Version to tag the image and code with
+        required: true
+        type: string
+      cache:
+        description: ???
+        required: true
+        type: boolean
+        default: true
+      skip_tests:
+        description: Skip all the tests and release the dev image
+        required: true
+        type: boolean
+        default: false
+      fast_tests:
+        description: Run fast tests, unless all tests are skipped
+        required: true
+        type: boolean
+        default: true
+      slow_tests:
+        description: Run slow tests, unless all tests are skipped
+        required: true
+        type: boolean
+        default: true
+      superslow_tests:
+        description: Run superslow tests, unless all tests are skipped
+        required: true
+        type: boolean
+        default: false
+      qa_tests:
+        description: Run end-to-end linter tests, unless all tests skipped
+        required: true
+        type: boolean
+        default: true
+      push_to_repo:
+        description: Push the image to the repo_short_name
+        required: true
+        type: boolean
+        default: true
+      update_poetry:
+        description: Update package dependencies using poetry
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   build_dev_image:
