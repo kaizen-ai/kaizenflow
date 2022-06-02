@@ -12,13 +12,14 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Use ImClientTestCase.
-# @pytest.mark.skip(
-#     reason="Fix after CmTask2053_Add_a_proxy_for_the_ImClients_in_equities_and_futures"
-# )
 class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
     def read_data_helper(self, *args: Any, **kwargs: Dict[str, Any]) -> None:
         # Execute.
-        im_client = imvidcihpbdtbc.IgHistoricalPqByDateTaqBarClient()
+        root_dir = "s3://alphamatic-data/unit_test/tiled_data/tiled.bar_data.all.2010_2022.20220204"
+        aws_profile = "am"
+        im_client = imvidcihpbdtbc.IgHistoricalPqByDateTaqBarClient(
+            root_dir, aws_profile=aws_profile
+        )
         actual = im_client.read_data(*args, **kwargs)
         # Check the output values.
         actual_string = hpandas.df_to_str(actual, print_shape_info=True, tag="df")
@@ -34,8 +35,6 @@ class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
         start_ts = pd.Timestamp("2021-12-27 9:00:00-05:00")
         end_ts = pd.Timestamp("2021-12-27 16:00:00-05:00")
         columns = ["end_time", "ticker", "igid", "close"]
-        aws_profile = None
-        root_data_dir = ""
         filter_data_mode = "assert"
         # Execute.
         self.read_data_helper(
@@ -59,8 +58,8 @@ class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
         # Execute.
         self.read_data_helper(
             full_symbols,
-            start_ts=start_ts,
-            end_ts=end_ts,
-            columns=columns,
-            filter_data_mode=filter_data_mode,
+            start_ts,
+            end_ts,
+            columns,
+            filter_data_mode,
         )

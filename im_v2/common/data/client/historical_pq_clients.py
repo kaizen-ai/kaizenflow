@@ -428,8 +428,10 @@ class HistoricalPqByDateClient(
         self,
         vendor: str,
         resample_1min: bool,
+        root_dir: str,
         read_func,
         *,
+        aws_profile: Optional[str] = None,
         full_symbol_col_name: Optional[str] = None,
     ):
         universe_version = None
@@ -439,15 +441,16 @@ class HistoricalPqByDateClient(
             resample_1min,
             full_symbol_col_name=full_symbol_col_name,
         )
+        self._root_dir = root_dir
         self._read_func = read_func
+        self._aws_profile = aws_profile
 
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        columns,
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -468,16 +471,17 @@ class HistoricalPqByDateClient(
             end_date = None
         # Get the data for [start_date, end_date].
         # TODO(gp): Use an abstract_method.
+        normalize = True
         tz_zone = "UTC"
         df = self._read_func(
             full_symbols,
             start_date,
             end_date,
             columns,
-            normalize=True,
-            tz_zone=tz_zone,
-            root_data_dir="",
-            aws_profile=None,
+            normalize,
+            tz_zone,
+            self._root_dir,
+            self._aws_profile,
             **kwargs,
         )
         # Convert to datetime.

@@ -366,7 +366,7 @@ def get_bar_data_for_date_interval(
     `end_date`].
     """
     # Get the available dates in the data set.
-    available_dates = get_available_dates()
+    available_dates = get_available_dates(root_data_dir, aws_profile)
     # Filter in the given interval.
     dates = vlieguti.filter_dates(start_date, end_date, available_dates)
     # Retrieve data.

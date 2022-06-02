@@ -186,6 +186,7 @@ class ImClient(abc.ABC):
             start_ts,
             end_ts,
             columns,
+            full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
@@ -566,7 +567,7 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
             start_ts,
             end_ts,
             columns,
-            full_symbol_col_name=full_symbol_col_name,
+            full_symbol_col_name,
             **kwargs,
         )
         return df
