@@ -287,6 +287,8 @@ def build_configs_varying_tiled_periods(
             + pd.Timedelta("1D")
         )
         # Move end timestamp to the end of the day.
+        # E.g., if a user passes `2022-05-31` it becomes `2022-05-31 00:00:00`
+        # but should `2022-05-31 23:59:00` to include all the data.
         end_ts = end_ts + pd.Timedelta(days=1, seconds=-1)
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         #
