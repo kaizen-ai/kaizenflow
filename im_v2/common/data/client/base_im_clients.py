@@ -95,8 +95,6 @@ class ImClient(abc.ABC):
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
-        # TODO(Grisha): consider passing it as a parameter to also read bid/ask data.
-        self._dataset = "ohlcv"
 
     # TODO(gp): Why static?
     @staticmethod
@@ -432,8 +430,11 @@ class ImClient(abc.ABC):
         columns = None
         filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol], start_timestamp, end_timestamp, columns,
-            filter_data_mode
+            [full_symbol],
+            start_timestamp,
+            end_timestamp,
+            columns,
+            filter_data_mode,
         )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
@@ -588,13 +589,14 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # SqlRealTimeImClient
 # #############################################################################
 
+
 class RealTimeImClient(ImClient):
     """
     A realtime client for typing annotation.
 
     In practice all realtime clients use SQL backend.
     """
-    pass
+
 
 class SqlRealTimeImClient(RealTimeImClient):
     def __init__(

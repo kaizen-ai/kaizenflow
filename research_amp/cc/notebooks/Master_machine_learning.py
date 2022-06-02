@@ -78,6 +78,7 @@ def get_cmtask1953_config() -> cconconf.Config:
                     "historical.manual.pq",
                 ),
                 "partition_mode": "by_year_month",
+                "dataset": "ohlcv",
                 "data_snapshot": "latest",
                 "aws_profile": "ck",
             },

@@ -32,6 +32,7 @@ class CryptoChassisHistoricalPqByTileClient(
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
+        dataset: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -48,6 +49,7 @@ class CryptoChassisHistoricalPqByTileClient(
             resample_1min,
             root_dir,
             partition_mode,
+            dataset,
             data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )
