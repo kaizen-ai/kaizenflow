@@ -15,7 +15,6 @@ moto = pytest.importorskip("moto")
 # It is necessary that boto3 is imported after moto.
 # If not, boto3 will access real AWS.
 import boto3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import pyarrow.parquet as pq  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
 import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-positiona
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -39,7 +38,6 @@ class S3Mock_TestCase(hunitest.TestCase):
     # Mocked bucket.
     mock_s3 = moto.mock_s3()
     bucket_name = "mock_bucket"
-    moto_client = None
 
     def setUp(self) -> None:
         # Start boto3 mock.
@@ -48,8 +46,8 @@ class S3Mock_TestCase(hunitest.TestCase):
         # or it will be overridden by moto with `foobar` values.
         self.mock_aws_credentials = self.mock_aws_credentials_patch.start()
         # Initialize boto client and create bucket for testing.
-        self.moto_client = boto3.client("s3")
-        self.moto_client.create_bucket(Bucket=self.bucket_name)
+        moto_client = boto3.client("s3")
+        moto_client.create_bucket(Bucket=self.bucket_name)
         # Precaution to ensure that we are using mocked botocore.
         test_client = boto3.client("s3")
         buckets = test_client.list_buckets()["Buckets"]
@@ -64,21 +62,3 @@ class S3Mock_TestCase(hunitest.TestCase):
         # Stop moto.
         self.mock_aws_credentials_patch.stop()
         self.mock_s3.stop()
-
-
-def from_parquet_with_s3fs(
-    path: str, s3fs_: "s3fs.core.S3FileSystem"
-) -> "pandas.DataFrame":
-    """
-    Can not use `hparque.from_parquet` as it uses pyarrow's `s3fs`.
-
-    Mostly used for testing purposes in conjunction with class above.
-    """
-    dataset = pq.ParquetDataset(
-        path,
-        filesystem=s3fs_,
-        use_legacy_dataset=False,
-    )
-    table = dataset.read()
-    df = table.to_pandas()
-    return df

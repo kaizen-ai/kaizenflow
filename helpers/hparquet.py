@@ -51,7 +51,7 @@ def from_parquet(
     filters: Optional[List[Any]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
 ) -> pd.DataFrame:
     """
     Load a dataframe from a Parquet file.
@@ -65,14 +65,20 @@ def from_parquet(
     :param filters: Parquet query filters
     :param log_level: logging level to execute at
     :param report_stats: whether to report Parquet file size or not
-    :param aws_profile: AWS profile, e.g., `ck`
+    :param aws_profile: AWS profile to use if and only if using an S3 path,
+        otherwise `None` for local path
     :return: data from Parquet dataset
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
     hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
     if hs3.is_s3_path(file_name):
-        filesystem = get_pyarrow_s3fs(aws_profile)
+        if isinstance(aws_profile, str):
+            filesystem = get_pyarrow_s3fs(aws_profile)
+        else:
+            # Note: `s3fs` filesystem is only to be used on exact file path
+            # as `pq.ParquetDataset` is not properly handling directory path.
+            filesystem = aws_profile
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
         hs3.dassert_path_exists(file_name, s3_filesystem)

@@ -940,11 +940,11 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         )
         hparque.to_parquet(df, dummy_sample_path, aws_profile=s3fs_)
         # Check if new columns are in place.
-        df = hmoto.from_parquet_with_s3fs(dummy_sample_path, s3fs_)
+        df = hparque.from_parquet(dummy_sample_path, aws_profile=s3fs_)
         self.assertIn("knowledge_timestamp", df.columns)
         self.assertIn("end_download_timestamp", df.columns)
         self.assertEqual(len(df), 3)
         # Check if duplicates are dropped after merge.
         hparque.list_and_merge_pq_files(self.bucket_name, aws_profile=s3fs_)
-        df = hmoto.from_parquet_with_s3fs(original_sample_path, s3fs_)
+        df = hparque.from_parquet(original_sample_path, aws_profile=s3fs_)
         self.assertEqual(len(df), 1)

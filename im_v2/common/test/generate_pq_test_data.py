@@ -281,7 +281,8 @@ def _parse() -> argparse.ArgumentParser:
         "--custom_partition_cols",
         action="store",
         type=str,
-        help="If specified, overrides partition columns by time above",
+        default=None,
+        help="Overrides default partition by time",
     )
     parser.add_argument(
         "--reset_index",
