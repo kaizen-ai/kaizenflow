@@ -95,8 +95,6 @@ class ImClient(abc.ABC):
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
-        # TODO(Grisha): consider passing it as a parameter to also read bid/ask data.
-        self._dataset = "ohlcv"
 
     # TODO(gp): Why static?
     @staticmethod
@@ -211,16 +209,6 @@ class ImClient(abc.ABC):
         dfs = []
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
-            # Drop duplicates based on the index and all columns except
-            # `knowledge_timestamp`.
-            df_tmp = df_tmp.reset_index()
-            cols_besides_know_ts = [
-                col for col in df_tmp.columns if col != "knowledge_timestamp"
-            ]
-            df_tmp = df_tmp.drop_duplicates(
-                subset=cols_besides_know_ts
-            ).set_index("timestamp", drop=True)
-            # Apply normalization.
             df_tmp = self._apply_im_normalizations(
                 df_tmp,
                 full_symbol_col_name,

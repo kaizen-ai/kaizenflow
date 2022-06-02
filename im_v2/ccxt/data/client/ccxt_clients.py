@@ -273,6 +273,8 @@ class CcxtCddCsvParquetByAssetClient(
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+        # TODO(Sonya): Consider moving it to the base class as the `dataset` param.
+        self._dataset = "ohlcv"
 
     def get_metadata(self) -> pd.DataFrame:
         """
