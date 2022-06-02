@@ -211,6 +211,16 @@ class ImClient(abc.ABC):
         dfs = []
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
+            # Drop duplicates based on the index and all columns except
+            # `knowledge_timestamp`.
+            df_tmp = df_tmp.reset_index()
+            cols_besides_know_ts = [
+                col for col in df_tmp.columns if col != "knowledge_timestamp"
+            ]
+            df_tmp = df_tmp.drop_duplicates(
+                subset=cols_besides_know_ts
+            ).set_index("timestamp", drop=True)
+            # Apply normalization.
             df_tmp = self._apply_im_normalizations(
                 df_tmp,
                 full_symbol_col_name,
@@ -432,8 +442,11 @@ class ImClient(abc.ABC):
         columns = None
         filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol], start_timestamp, end_timestamp, columns,
-            filter_data_mode
+            [full_symbol],
+            start_timestamp,
+            end_timestamp,
+            columns,
+            filter_data_mode,
         )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
@@ -588,13 +601,14 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # SqlRealTimeImClient
 # #############################################################################
 
+
 class RealTimeImClient(ImClient):
     """
     A realtime client for typing annotation.
 
     In practice all realtime clients use SQL backend.
     """
-    pass
+
 
 class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
