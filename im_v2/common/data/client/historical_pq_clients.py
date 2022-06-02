@@ -273,6 +273,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
+        # TODO(Sonya): Consider moving the `dataset` param to the base class.
         dataset: str,
         *,
         data_snapshot: str = "latest",
