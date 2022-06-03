@@ -13,6 +13,7 @@ import pandas as pd
 import core.finance as cofinanc
 import core.plotting.plotting_utils as cplpluti
 import helpers.hdbg as hdbg
+import matplotlib.pyplot as plt
 
 _LOG = logging.getLogger(__name__)
 
@@ -96,3 +97,4 @@ def plot_portfolio_stats(
     nmv.plot(ax=axes[10], title="NMV", ylabel="dollars")
     nmv_rel = 100 * nmv.divide(gmv)
     nmv_rel.plot(ax=axes[11], title="NMV", ylabel="% GMV")
+    plt.pause(0.0001)
