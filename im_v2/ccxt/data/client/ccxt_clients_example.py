@@ -99,7 +99,7 @@ def get_CcxtHistoricalPqByTileClient_example1(
         resample_1min,
         root_dir,
         partition_mode,
-        data_snapshot="latest",
+        data_snapshot="20220530",
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client
