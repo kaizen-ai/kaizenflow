@@ -20,19 +20,11 @@ import im_v2.common.db.db_utils as imvcddbut
 class TestDownloadRealtimeForOneExchange1(
     hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper
 ):
-    # Secret needed for getting realtime data.
-    binance_secret = None
-
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
 
     def setUp(self) -> None:
-        # Getting necessary secret before boto3 is mocked.
-        if self.binance_secret is None:
-            import helpers.hsecrets as hsecret
-
-            self.binance_secret = hsecret.get_secret("binance")
         super().setUp()
         # Initialize database.
         ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
@@ -67,7 +59,10 @@ class TestDownloadRealtimeForOneExchange1(
         if use_s3:
             # Update kwargs.
             kwargs.update(
-                {"aws_profile": "ck", "s3_path": f"s3://{self.bucket_name}/"}
+                {
+                    "aws_profile": self.mock_aws_profile,
+                    "s3_path": f"s3://{self.bucket_name}/",
+                }
             )
         # Run.
         imvcdeexut.download_realtime_for_one_exchange(kwargs, extractor)
@@ -181,18 +176,7 @@ class TestDownloadRealtimeForOneExchange1(
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
-    # Secret needed for getting historical data.
-    binance_secret = None
-
-    def setUp(self) -> None:
-        # Getting necessary secret before boto3 is mocked.
-        if self.binance_secret is None:
-            import helpers.hsecrets as hsecret
-
-            self.binance_secret = hsecret.get_secret("binance")
-        super().setUp()
-
-    def call_download_historical_data(self) -> None:
+    def call_download_historical_data(self, incremental: bool) -> None:
         """
         Test directly function call for coverage increase.
         """
@@ -203,8 +187,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "exchange_id": "binance",
             "data_type": "ohlcv",
             "universe": "v3",
-            "incremental": False,
-            "aws_profile": "ck",
+            "incremental": incremental,
+            "aws_profile": self.mock_aws_profile,
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
             "file_format": "parquet",
@@ -231,7 +215,11 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
         mock_get_secret.return_value = self.binance_secret
         # TODO(Nikola): Remove comments below and use it in docs, CMTask #1349.
-        self.call_download_historical_data()
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
+            f.write("test")
+        incremental = True
+        self.call_download_historical_data(incremental)
         # Check number of calls and args for current time.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
@@ -242,7 +230,9 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         # Check first argument, `root_dir`.
         self.assertEqual(expected_args[0], "s3://mock_bucket/binance")
         # Check keyword arguments. In this case only `aws_profile`.
-        self.assertDictEqual(expected_kwargs, {"aws_profile": "ck"})
+        self.assertDictEqual(
+            expected_kwargs, {"aws_profile": self.mock_aws_profile}
+        )
         # Prepare common `hs3.listdir` params.
         s3_bucket = f"s3://{self.bucket_name}"
         pattern = "*.parquet"
@@ -283,3 +273,28 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "binance/currency_pair=SOL_USDT/year=2022/month=1",
         ]
         self.assertListEqual(parquet_path_list, expected_list)
+
+    def test_function_call2(self) -> None:
+        """
+        Verify error on non incremental run.
+        """
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
+            f.write("test")
+        incremental = False
+        with pytest.raises(AssertionError) as fail:
+            self.call_download_historical_data(incremental)
+        self.assertIn(
+            "S3 path 's3://mock_bucket/binance' already exist!", str(fail.value)
+        )
+
+    def test_function_call3(self) -> None:
+        """
+        Verify error on incremental run.
+        """
+        incremental = True
+        with pytest.raises(AssertionError) as fail:
+            self.call_download_historical_data(incremental)
+        self.assertIn(
+            "S3 path 's3://mock_bucket/binance' doesn't exist!", str(fail.value)
+        )
