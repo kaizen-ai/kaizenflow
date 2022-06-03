@@ -345,7 +345,8 @@ class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
@@ -667,11 +668,10 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 class TestTalosSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
-    
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
-    
+
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
@@ -903,9 +903,6 @@ class TestTalosSqlRealTimeImClient1(
             resample_1min, self.connection, table_name
         )
         return sql_talos_client
-
-    def test_get_universe1(self) -> None:
-        """ """
 
     def test_read_data1(self) -> None:
         # Load test data.
@@ -1211,7 +1208,7 @@ class TestTalosSqlRealTimeImClient1(
         hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         im_client = self.setup_talos_sql_client()
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns = ['full_symbol', 'open', 'high', 'low', 'close', 'volume']
+        columns = ["full_symbol", "open", "high", "low", "close", "volume"]
         self._test_filter_columns1(im_client, full_symbols, columns)
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
@@ -1241,8 +1238,8 @@ class TestTalosSqlRealTimeImClient1(
         self._test_filter_columns3(im_client, full_symbol, columns)
         # Delete the table.
         hsql.remove_table(self.connection, "talos_ohlcv")
-    # ///////////////////////////////////////////////////////////////////////
 
+    # ///////////////////////////////////////////////////////////////////////
 
     def test_build_numerical_to_string_id_mapping(self) -> None:
         """

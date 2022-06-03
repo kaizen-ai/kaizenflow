@@ -979,7 +979,7 @@ class CcxtSqlRealTimeImClient1(
             resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
-        columns = ['full_symbol', 'open', 'high', 'low', 'close', 'volume']
+        columns = ["full_symbol", "open", "high", "low", "close", "volume"]
         self._test_filter_columns1(im_client, full_symbols, columns)
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
@@ -1017,6 +1017,7 @@ class CcxtSqlRealTimeImClient1(
         self._test_filter_columns3(im_client, full_symbol, columns)
         # Delete the table.
         hsql.remove_table(self.connection, "ccxt_ohlcv")
+
     # ///////////////////////////////////////////////////////////////////////
 
     @staticmethod
