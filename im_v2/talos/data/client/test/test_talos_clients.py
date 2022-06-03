@@ -1203,6 +1203,46 @@ class TestTalosSqlRealTimeImClient1(
         hsql.remove_table(self.connection, "talos_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
+    @pytest.mark.slow
+    def test_filter_columns1(self) -> None:
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        columns = ['full_symbol', 'open', 'high', 'low', 'close', 'volume']
+        self._test_filter_columns1(im_client, full_symbols, columns)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    @pytest.mark.slow
+    def test_filter_columns2(self) -> None:
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = self.setup_talos_sql_client()
+        full_symbol = "binance::BTC_USDT"
+        columns = ["full_symbol", "whatever"]
+        self._test_filter_columns2(im_client, full_symbol, columns)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    @pytest.mark.slow
+    def test_filter_columns3(self) -> None:
+        # Load data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+        im_client = self.setup_talos_sql_client()
+        full_symbol = "binance::BTC_USDT"
+        columns = ["open", "close"]
+        self._test_filter_columns3(im_client, full_symbol, columns)
+        # Delete the table.
+        hsql.remove_table(self.connection, "talos_ohlcv")
+    # ///////////////////////////////////////////////////////////////////////
+
 
     def test_build_numerical_to_string_id_mapping(self) -> None:
         """

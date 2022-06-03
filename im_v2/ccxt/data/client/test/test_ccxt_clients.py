@@ -967,6 +967,57 @@ class CcxtSqlRealTimeImClient1(
         hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
+    @pytest.mark.slow
+    def test_filter_columns1(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
+        )
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        columns = ['full_symbol', 'open', 'high', 'low', 'close', 'volume']
+        self._test_filter_columns1(im_client, full_symbols, columns)
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
+    @pytest.mark.slow
+    def test_filter_columns2(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
+        )
+        full_symbol = "binance::BTC_USDT"
+        columns = ["full_symbol", "whatever"]
+        self._test_filter_columns2(im_client, full_symbol, columns)
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+
+    @pytest.mark.slow
+    def test_filter_columns3(self) -> None:
+        # Load test data.
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+        #
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
+        )
+        full_symbol = "binance::BTC_USDT"
+        columns = ["open", "close"]
+        self._test_filter_columns3(im_client, full_symbol, columns)
+        # Delete the table.
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+    # ///////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:

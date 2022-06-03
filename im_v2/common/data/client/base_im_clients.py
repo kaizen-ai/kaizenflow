@@ -710,6 +710,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         )
         if columns is None:
             columns = data.columns
+        hdbg.dassert_is_subset(columns, data.columns)
         data = data[columns]
         return data
 
