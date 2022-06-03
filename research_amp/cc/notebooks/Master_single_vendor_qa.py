@@ -50,7 +50,7 @@ hprint.config_notebook()
 # # Configs
 
 # %%
-def get_cmtask1866_config_ccxt() -> cconconf.Config:
+def get_master_single_vendor_qa_config() -> cconconf.Config:
     """
     Get task1866-specific config.
     """
@@ -89,7 +89,7 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
 
 
 # %%
-config = get_cmtask1866_config_ccxt()
+config = get_master_single_vendor_qa_config()
 print(config)
 
 # %% [markdown]

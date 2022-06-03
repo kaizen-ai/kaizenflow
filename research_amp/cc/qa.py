@@ -110,6 +110,8 @@ def get_bad_data_stats(
     ```
 
     :param agg_level: columns to group data by
+    :param vendor_name: vendor to compute stats for
+    :return: bad data stats for each full symbol
     """
     hdbg.dassert_lte(1, len(agg_level))
     # Copy in order not to modify original data.
@@ -165,6 +167,9 @@ def get_timestamp_stats(data: pd.DataFrame, vendor_name: str) -> pd.DataFrame:
     ftx::ADA_USDT  2021-08-07       2022-05-18      284
     ftx::BTC_USDT  2018-01-01       2022-05-18      1598
     ```
+
+    :param vendor_name: vendor to compute stats for
+    :return: stats for timestamp values for each full symbol
     """
     res_stats = []
     for full_symbol, symbol_data in data.groupby("full_symbol"):
@@ -192,6 +197,10 @@ def plot_bad_data_by_year_month_stats(
     Plot bad data stats by year and month per unique full symbol in data.
 
     Bad data is the sum of NaNs and "volume=0" stats.
+
+    :param bad_data_stats: QA stats per specified groups
+    :param threshold: a limit to define acceptable value of bad data
+    :return: a plot by year and month for each full symbol in the data
     """
     full_symbols = bad_data_stats.index.get_level_values(0).unique()
     for full_symbol in full_symbols:
@@ -212,6 +221,7 @@ def plot_bad_data_by_year_month_stats(
         ticklabels = [
             label.get_text().strip("()").split(", ") for label in labels
         ]
+        # Reformat ticklabels for readability.
         ticklabels = [".".join([label[0], label[1]]) for label in ticklabels]
         # Adjust x-axis labels so they do not overlap on plot by
         # picking ticks and labels by specified stride that limits
