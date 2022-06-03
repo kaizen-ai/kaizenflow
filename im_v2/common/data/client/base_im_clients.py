@@ -708,6 +708,9 @@ class SqlRealTimeImClient(RealTimeImClient):
         data = self._apply_normalization(
             data, full_symbol_col_name=full_symbol_col_name
         )
+        if columns is None:
+            columns = data.columns
+        data = data[columns]
         return data
 
     def _build_select_query(
