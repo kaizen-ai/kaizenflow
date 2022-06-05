@@ -628,11 +628,6 @@ class CcxtSqlRealTimeImClient1(
         return hash(cls.__name__) % 1000
 
     def test_read_data1(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -665,15 +660,8 @@ class CcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data2(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -710,15 +698,8 @@ class CcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data3(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -754,15 +735,8 @@ class CcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data4(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -797,15 +771,8 @@ class CcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data5(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -841,28 +808,16 @@ class CcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data6(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
         )
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_read_data7(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = False
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -897,17 +852,10 @@ class CcxtSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_start_ts_for_symbol1(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -917,15 +865,8 @@ class CcxtSqlRealTimeImClient1(
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     def test_get_end_ts_for_symbol1(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -933,16 +874,10 @@ class CcxtSqlRealTimeImClient1(
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2021-09-09 00:04:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
 
     def test_get_universe1(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -964,16 +899,10 @@ class CcxtSqlRealTimeImClient1(
             expected_first_elements,
             expected_last_elements,
         )
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
     @pytest.mark.slow
     def test_filter_columns1(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -981,16 +910,9 @@ class CcxtSqlRealTimeImClient1(
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         columns = ["full_symbol", "open", "high", "low", "close", "volume"]
         self._test_filter_columns1(im_client, full_symbols, columns)
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow
     def test_filter_columns2(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -998,16 +920,9 @@ class CcxtSqlRealTimeImClient1(
         full_symbol = "binance::BTC_USDT"
         columns = ["full_symbol", "whatever"]
         self._test_filter_columns2(im_client, full_symbol, columns)
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     @pytest.mark.slow
     def test_filter_columns3(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-        #
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, self.connection, "ccxt_ohlcv"
@@ -1015,8 +930,6 @@ class CcxtSqlRealTimeImClient1(
         full_symbol = "binance::BTC_USDT"
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
-        # Delete the table.
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1060,6 +973,16 @@ class CcxtSqlRealTimeImClient1(
         """
         query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
+
+    def setUp(self):
+        super().setUp()
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+
+    def tearDown(self):
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+        super().tearDown()
 
 
 # #############################################################################
