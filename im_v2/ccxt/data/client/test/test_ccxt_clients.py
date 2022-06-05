@@ -931,6 +931,16 @@ class CcxtSqlRealTimeImClient1(
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
 
+    def setUp(self) -> None:
+        super().setUp()
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
+
+    def tearDown(self) -> None:
+        hsql.remove_table(self.connection, "ccxt_ohlcv")
+        super().tearDown()
+
     # ///////////////////////////////////////////////////////////////////////
 
     @staticmethod
@@ -973,16 +983,6 @@ class CcxtSqlRealTimeImClient1(
         """
         query = imvccdbut.get_ccxt_ohlcv_create_table_query()
         self.connection.cursor().execute(query)
-
-    def setUp(self):
-        super().setUp()
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "ccxt_ohlcv")
-
-    def tearDown(self):
-        hsql.remove_table(self.connection, "ccxt_ohlcv")
-        super().tearDown()
 
 
 # #############################################################################

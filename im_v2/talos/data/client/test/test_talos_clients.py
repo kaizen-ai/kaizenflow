@@ -1208,7 +1208,8 @@ class TestTalosSqlRealTimeImClient1(
         data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.min()
-        # Create the expected outcomes. Extracted timestamp should be equal to the rounded `start_ts` param.
+        # Create the expected outcomes. Extracted timestamp should be equal to the rounded
+        # `start_ts` param.
         expected_outcome = start_ts.round(freq="min", ambiguous=True)
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
@@ -1228,7 +1229,8 @@ class TestTalosSqlRealTimeImClient1(
         data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
-        # Create the expected outcomes. Extracted timestamp should be equal to the rounded `end_ts` param.
+        # Create the expected outcomes. Extracted timestamp should be equal to the rounded
+        # `end_ts` param.
         expected_outcome = end_ts.round(freq="min", ambiguous=True)
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
@@ -1246,6 +1248,16 @@ class TestTalosSqlRealTimeImClient1(
         self.assertEqual(
             actual, ["binance::BTC_USDT", "binance::ETH_USDT"], message
         )
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+
+    def tearDown(self) -> None:
+        hsql.remove_table(self.connection, "talos_ohlcv")
+        super().tearDown()
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1318,13 +1330,3 @@ class TestTalosSqlRealTimeImClient1(
             1464553467: "binance::ETH_USDT",
         }
         return test_dict
-
-    def setUp(self):
-        super().setUp()
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-
-    def tearDown(self):
-        hsql.remove_table(self.connection, "talos_ohlcv")
-        super().tearDown()
