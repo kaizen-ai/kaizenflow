@@ -345,7 +345,8 @@ class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
 @pytest.mark.skipif(
     not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    reason="Run only if CK S3 is available",
+)
 class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
@@ -667,18 +668,15 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 class TestTalosSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
-    
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 1000
-    
+
     def test_build_select_query1(self) -> None:
         """
         `start_unix_epoch` is not int type.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "binance"
         currency_pair = "AVAX_USDT"
@@ -689,15 +687,12 @@ class TestTalosSqlRealTimeImClient1(
             talos_sql_client._build_select_query(
                 parsed_symbols, start_unix_epoch, end_unix_epoch
             )
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query2(self) -> None:
         """
         `parsed_symbols` is not a list of tuple.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "unsupported_type"
         currency_pair = ["AVAX_USDT"]
@@ -708,15 +703,12 @@ class TestTalosSqlRealTimeImClient1(
             talos_sql_client._build_select_query(
                 parsed_symbols, start_unix_epoch, end_unix_epoch
             )
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query3(self) -> None:
         """
         Start unix epoch is larger than end.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "binance"
         currency_pair = "AVAX_USDT"
@@ -727,15 +719,12 @@ class TestTalosSqlRealTimeImClient1(
             talos_sql_client._build_select_query(
                 parsed_symbols, start_unix_epoch, end_unix_epoch
             )
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query4(self) -> None:
         """
         Test SQL query string with every param provided.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "binance"
         currency_pair = "BTC_USDT"
@@ -752,15 +741,12 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query5(self) -> None:
         """
         Test SQL query string with `None` timestamps.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "binance"
         currency_pair = "BTC_USDT"
@@ -777,15 +763,12 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query6(self) -> None:
         """
         Test SQL query string with only timestamps provided.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = ""
         currency_pair = ""
@@ -802,15 +785,12 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query7(self) -> None:
         """
         Test SQL query with changed left_close and right_close arguments.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "binance"
         currency_pair = "BTC_USDT"
@@ -831,15 +811,12 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query8(self) -> None:
         """
         Test SQL query string with changed timestamp column name.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "binance"
         currency_pair = "BTC_USDT"
@@ -859,15 +836,12 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_build_select_query9(self) -> None:
         """
         Test SQL query string with given list of columns.
         """
         self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         talos_sql_client = self.setup_talos_sql_client()
         exchange_id = "binance"
         currency_pair = "BTC_USDT"
@@ -889,7 +863,6 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected SQL queries are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def setup_talos_sql_client(
         self,
@@ -904,15 +877,7 @@ class TestTalosSqlRealTimeImClient1(
         )
         return sql_talos_client
 
-    def test_get_universe1(self) -> None:
-        """ """
-
     def test_read_data1(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbol = "binance::ETH_USDT"
         #
@@ -940,15 +905,8 @@ class TestTalosSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_read_data2(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -981,15 +939,8 @@ class TestTalosSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_read_data3(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00")
@@ -1024,15 +975,8 @@ class TestTalosSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_read_data4(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         end_ts = pd.Timestamp("2022-03-24T16:24:00-00:00")
@@ -1067,15 +1011,8 @@ class TestTalosSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_read_data5(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         start_ts = pd.Timestamp("2022-03-24T16:21:00-00:00")
@@ -1112,15 +1049,8 @@ class TestTalosSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_read_data6(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client(resample_1min=False)
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
@@ -1128,11 +1058,6 @@ class TestTalosSqlRealTimeImClient1(
         hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_read_data7(self) -> None:
-        # Load test data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
-        #
         im_client = self.setup_talos_sql_client(False)
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
@@ -1165,8 +1090,6 @@ class TestTalosSqlRealTimeImClient1(
             expected_column_unique_values,
             expected_signature,
         )
-        # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     # ////////////////////////////////////////////////////////////////////////
 
@@ -1174,10 +1097,6 @@ class TestTalosSqlRealTimeImClient1(
         """
         Verify that earlies timestamp is extracted correctly.
         """
-        # Load data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         im_client = self.setup_talos_sql_client()
         # Provide expected outcomes.
         full_symbol = "binance::BTC_USDT"
@@ -1185,22 +1104,38 @@ class TestTalosSqlRealTimeImClient1(
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
         )
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_get_end_ts_for_symbol1(self) -> None:
         """
         Verify that earlies timestamp is extracted correctly.
         """
-        # Load data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         im_client = self.setup_talos_sql_client()
         # Provide expected outcomes.
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2022-03-24 16:23:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
-        hsql.remove_table(self.connection, "talos_ohlcv")
+
+    # ///////////////////////////////////////////////////////////////////////
+    @pytest.mark.slow
+    def test_filter_columns1(self) -> None:
+        im_client = self.setup_talos_sql_client()
+        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        columns = ["full_symbol", "open", "high", "low", "close", "volume"]
+        self._test_filter_columns1(im_client, full_symbols, columns)
+
+    @pytest.mark.slow
+    def test_filter_columns2(self) -> None:
+        im_client = self.setup_talos_sql_client()
+        full_symbol = "binance::BTC_USDT"
+        columns = ["full_symbol", "whatever"]
+        self._test_filter_columns2(im_client, full_symbol, columns)
+
+    @pytest.mark.slow
+    def test_filter_columns3(self) -> None:
+        im_client = self.setup_talos_sql_client()
+        full_symbol = "binance::BTC_USDT"
+        columns = ["open", "close"]
+        self._test_filter_columns3(im_client, full_symbol, columns)
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1209,10 +1144,6 @@ class TestTalosSqlRealTimeImClient1(
         Verify that the mapping from numerical ids (e.g., encoding asset ids)
         to the corresponding `full_symbol` is done correctly.
         """
-        # Load data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         # Initialize client and create testing outcomes.
         im_client = self.setup_talos_sql_client()
         actual_outcome = im_client._build_asset_id_to_full_symbol_mapping()
@@ -1220,7 +1151,6 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected mappings are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1229,10 +1159,6 @@ class TestTalosSqlRealTimeImClient1(
         Verify that the start round timestamps are extracted correctly
         according to the description in class TalosHistoricalPqByTileClient.
         """
-        # Load data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
@@ -1247,17 +1173,12 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_round_end_timestamp_behavior(self) -> None:
         """
         Verify that the end round timestamps are extracted correctly according
         to the description in class TalosHistoricalPqByTileClient.
         """
-        # Load data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
@@ -1272,17 +1193,12 @@ class TestTalosSqlRealTimeImClient1(
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_intermediate_start_timestamp_behavior(self) -> None:
         """
         Verify that the start intermediate timestamps are extracted correctly
         according to the description in class TalosHistoricalPqByTileClient.
         """
-        # Load data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
@@ -1292,22 +1208,18 @@ class TestTalosSqlRealTimeImClient1(
         data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.min()
-        # Create the expected outcomes. Extracted timestamp should be equal to the rounded `start_ts` param.
+        # Create the expected outcomes. Extracted timestamp should be equal to the rounded
+        # `start_ts` param.
         expected_outcome = start_ts.round(freq="min", ambiguous=True)
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_intermediate_end_timestamp_behavior(self) -> None:
         """
         Verify that the end intermediate timestamps are extracted correctly
         according to the description in class TalosHistoricalPqByTileClient.
         """
-        # Load data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         full_symbols = ["binance::BTC_USDT"]
@@ -1317,21 +1229,17 @@ class TestTalosSqlRealTimeImClient1(
         data = im_client._read_data(full_symbols, start_ts, end_ts, columns)
         # Choose the last timestamp that is available in the loaded data.
         actual_outcome = data.index.max()
-        # Create the expected outcomes. Extracted timestamp should be equal to the rounded `end_ts` param.
+        # Create the expected outcomes. Extracted timestamp should be equal to the rounded
+        # `end_ts` param.
         expected_outcome = end_ts.round(freq="min", ambiguous=True)
         # Message in case if test case got failed.
         message = "Actual and expected timestamps are not equal!"
         self.assertEqual(actual_outcome, expected_outcome, message)
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_get_universe1(self) -> pd.DataFrame:
         """
         Verify that the universes are extracted correctly.
         """
-        # Load data.
-        self._create_test_table()
-        test_data = self._get_test_data()
-        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
         # Initialize client and load the data.
         im_client = self.setup_talos_sql_client()
         actual = im_client.get_universe()
@@ -1340,7 +1248,16 @@ class TestTalosSqlRealTimeImClient1(
         self.assertEqual(
             actual, ["binance::BTC_USDT", "binance::ETH_USDT"], message
         )
+
+    def setUp(self) -> None:
+        super().setUp()
+        self._create_test_table()
+        test_data = self._get_test_data()
+        hsql.copy_rows_with_copy_from(self.connection, test_data, "talos_ohlcv")
+
+    def tearDown(self) -> None:
         hsql.remove_table(self.connection, "talos_ohlcv")
+        super().tearDown()
 
     # ///////////////////////////////////////////////////////////////////////
 
