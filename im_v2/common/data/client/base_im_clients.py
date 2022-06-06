@@ -757,8 +757,12 @@ class SqlRealTimeImClient(RealTimeImClient):
             elem_type=tuple,
             msg="`parsed_symbols` should be a list of tuple",
         )
+        table_columns = hsql.get_table_columns(self._db_connection, self._table_name)
+        if columns is None:
+            columns = table_columns
+        hdbg.dassert_is_subset(columns, table_columns)
         # Add columns to the SELECT query
-        columns_as_str = "*" if columns is None else ",".join(columns)
+        columns_as_str = ",".join(columns)
         # Build a SELECT query.
         select_query = f"SELECT {columns_as_str} FROM {self._table_name} WHERE "
         # Build a WHERE query.
