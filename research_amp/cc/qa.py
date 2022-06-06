@@ -194,13 +194,10 @@ def plot_bad_data_by_year_month_stats(
     threshold: int,
 ) -> None:
     """
-    Plot bad data stats by year and month per unique full symbol in data.
+    Plot stats by year and month per unique full symbol in data.
 
-    Bad data is the sum of NaNs and "volume=0" stats.
-
-    :param bad_data_stats: QA stats per specified groups
-    :param threshold: a limit to define acceptable value of bad data
-    :return: a plot by year and month for each full symbol in the data
+    :param bad_data_stats: see `get_bad_data_stats` for details
+    :param threshold: a value above which data quality is considered low
     """
     full_symbols = bad_data_stats.index.get_level_values(0).unique()
     for full_symbol in full_symbols:
