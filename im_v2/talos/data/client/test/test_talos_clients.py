@@ -5,12 +5,12 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hsql as hsql
+import im_v2.common.data.client.realtime_clients_example as imvcdcrcex
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex
 import im_v2.talos.db.utils as imvtadbut
-import im_v2.common.data.client.realtime_clients_example as imvcdcrcex
 
 
 def get_expected_column_names() -> List[str]:
@@ -1335,17 +1335,20 @@ class TestTalosSqlRealTimeImClient1(
 # TestMockSqlRealTimeImClient1
 # #############################################################################
 
-class TestMockSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper):
+
+class TestMockSqlRealTimeImClient1(
+    icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
+):
     """
-        For all the test methods see description of corresponding private method in
-        the parent class.
-        """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
 
     @staticmethod
     def get_expected_column_names():
         """
-            Return a list of expected column names.
-            """
+        Return a list of expected column names.
+        """
         expected_column_names = [
             "asset_id",
             "full_symbol",
@@ -1374,7 +1377,7 @@ class TestMockSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImD
         columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
         shape=(3, 8)
                                    open  high   low  close  volume        full_symbol           start_timestamp    asset_id
-        timestamp                                                                                                          
+        timestamp
         2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
         2022-04-22 15:30:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT 2022-04-22 15:29:00+00:00  1467591036
         2022-04-22 17:10:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT 2022-04-22 17:09:00+00:00  1467591036
@@ -1403,7 +1406,7 @@ class TestMockSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImD
         columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
         shape=(6, 8)
                                    open  high   low  close  volume        full_symbol           start_timestamp    asset_id
-        timestamp                                                                                                          
+        timestamp
         2022-04-22 14:30:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT 2022-04-22 14:29:00+00:00  1464553467
         2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
         2022-04-22 15:00:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT 2022-04-22 14:59:00+00:00  1464553467
@@ -1436,7 +1439,7 @@ class TestMockSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImD
         columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
         shape=(2, 8)
                                    open  high   low  close  volume        full_symbol           start_timestamp    asset_id
-        timestamp                                                                                                          
+        timestamp
         2022-04-22 16:30:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT 2022-04-22 16:29:00+00:00  1464553467
         2022-04-22 17:10:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT 2022-04-22 17:09:00+00:00  1467591036
         """
@@ -1467,7 +1470,7 @@ class TestMockSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImD
         columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
         shape=(2, 8)
                                    open  high   low  close  volume        full_symbol           start_timestamp    asset_id
-        timestamp                                                                                                          
+        timestamp
         2022-04-22 14:30:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT 2022-04-22 14:29:00+00:00  1464553467
         2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
         """
@@ -1498,7 +1501,7 @@ class TestMockSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImD
         columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
         shape=(4, 8)
                                    open  high   low  close  volume        full_symbol           start_timestamp    asset_id
-        timestamp                                                                                                          
+        timestamp
         2022-04-22 14:30:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT 2022-04-22 14:29:00+00:00  1464553467
         2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
         2022-04-22 15:00:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT 2022-04-22 14:59:00+00:00  1464553467
@@ -1535,7 +1538,7 @@ class TestMockSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImD
         columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
         shape=(6, 8)
                                    open  high   low  close  volume        full_symbol           start_timestamp    asset_id
-        timestamp                                                                                                          
+        timestamp
         2022-04-22 14:30:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT 2022-04-22 14:29:00+00:00  1464553467
         2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
         2022-04-22 15:00:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT 2022-04-22 14:59:00+00:00  1464553467
@@ -1565,7 +1568,9 @@ class TestMockSqlRealTimeImClient1(icdctictc.ImClientTestCase, imvcddbut.TestImD
     def test_get_end_ts_for_symbol1(self) -> None:
         full_symbol = "binance::BTC_USDT"
         expected_end_ts = pd.to_datetime("2022-04-22 17:10:00", utc=True)
-        self._test_get_end_ts_for_symbol1(self.client, full_symbol, expected_end_ts)
+        self._test_get_end_ts_for_symbol1(
+            self.client, full_symbol, expected_end_ts
+        )
 
     # ///////////////////////////////////////////////////////////////////////
 
