@@ -708,6 +708,10 @@ class SqlRealTimeImClient(RealTimeImClient):
         data = self._apply_normalization(
             data, full_symbol_col_name=full_symbol_col_name
         )
+        if columns is None:
+            columns = data.columns
+        hdbg.dassert_is_subset(columns, data.columns.to_list())
+        data = data[columns]
         return data
 
     def _build_select_query(
