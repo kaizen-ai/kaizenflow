@@ -4,8 +4,9 @@ Import as:
 import dataflow.test.test_real_time as cdtfttrt
 """
 import asyncio
+import datetime
 import logging
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 import pytest
@@ -113,7 +114,7 @@ class TestReplayedTime1(hunitest.TestCase):
 
 class Test_execute_with_real_time_loop1(hunitest.TestCase):
     """
-    Run `execute_all_with_real_time_loop` with a workload that naively wait
+    Run `execute_all_with_real_time_loop()` with a workload that naively wait
     some time using different time semantics:
 
     - real time
@@ -140,13 +141,37 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
             await asyncio.sleep(0.1)
         return need_execute
 
-    def helper(
+    @staticmethod
+    def get_execute_with_rt_loop_kwargs1() -> Dict[str, Any]:
+        """
+        Do 3 iterations of 1.0s.
+        """
+        kwargs = {
+            "sleep_interval_in_secs": 1.0,
+            "time_out_in_secs": 1.0 * 3 + 0.1,
+        }
+        return kwargs
+
+    @staticmethod
+    def get_execute_with_rt_loop_kwargs2() -> Dict[str, Any]:
+        """
+        Iterate until 9:30:06, i.e., 6 iterations.
+        """
+        exit_time = datetime.time(9, 30, 6)
+        kwargs = {
+            "sleep_interval_in_secs": 1.0,
+            "time_out_in_secs": exit_time,
+        }
+        return kwargs
+
+    def run_workload(
         self,
         get_wall_clock_time: hdateti.GetWallClockTime,
+        execute_with_rt_loop_kwargs: Dict[str, Any],
         event_loop: Optional[asyncio.AbstractEventLoop],
     ) -> Tuple[str, str]:
         """
-        Execute `_workload()` every second for 3 seconds using the passed event
+        Execute `workload()` every second for 3 seconds using the passed event
         loops and wall clock times.
 
         :return: signature of the execution
@@ -157,15 +182,11 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         creatime.align_on_time_grid(
             get_wall_clock_time, grid_time_in_secs, event_loop=event_loop
         )
-        # Do 3 iterations of 1.0s.
-        sleep_interval_in_secs = 1.0
-        time_out_in_secs = 1.0 * 3 + 0.1
         #
         coroutine = creatime.execute_all_with_real_time_loop(
             get_wall_clock_time,
-            sleep_interval_in_secs,
-            time_out_in_secs,
-            self.workload,
+            **execute_with_rt_loop_kwargs,
+            workload=self.workload,
         )
         events, results = hasynci.run(coroutine, event_loop=event_loop)
         _LOG.debug("events=\n%s", str(events))
@@ -177,9 +198,15 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         results_as_str = "results=\n%s" % str(results)
         return events_as_str, results_as_str
 
-    def replayed_time_helper(
-        self, event_loop: Optional[asyncio.AbstractEventLoop]
+    def replayed_time_run_workload(
+        self,
+        execute_with_rt_loop_kwargs: Dict[str, Any],
+        event_loop: Optional[asyncio.AbstractEventLoop],
     ) -> Tuple[str, str]:
+        """
+        Like `run_workload()` but in replayed time.
+        """
+        # Create the replayed wall clock time.
         tz = "ET"
         initial_replayed_dt = pd.Timestamp(
             "2010-01-04 09:30:01", tz=hdateti.get_ET_tz()
@@ -187,8 +214,9 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         get_wall_clock_time = creatime.get_replayed_wall_clock_time(
             tz, initial_replayed_dt, event_loop=event_loop
         )
-        events_as_str, results_as_str = self.helper(
-            get_wall_clock_time, event_loop
+        # Run.
+        events_as_str, results_as_str = self.run_workload(
+            get_wall_clock_time, execute_with_rt_loop_kwargs, event_loop
         )
         return events_as_str, results_as_str
 
@@ -204,13 +232,13 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         exp = """
         results=
         [True, False, True]"""
-        self.assert_equal(results_as_str, exp, dedent=True)
+        self.assert_equal(results_as_str, exp, fuzzy_match=True)
 
     def check_output_simulated(
         self, events_as_str: str, results_as_str: str
     ) -> None:
         """
-        Check the output when we run in simulate time.
+        Check the output when we run in simulated time.
         """
         # Check that the events are triggered on even seconds.
         act = f"{events_as_str}\n{results_as_str}"
@@ -221,22 +249,23 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         num_it=3 current_time='2010-01-04 09:30:04-05:00'
         results=
         [True, False, True]"""
-        self.assert_equal(act, exp, dedent=True)
+        self.assert_equal(act, exp, fuzzy_match=True)
 
-    # #########################################################################
+    # ////////////////////////////////////////////////////////////////////////////
 
     def test_real_time1(self) -> None:
         """
         Use real-time semantic.
 
-        We wait actual wall-clock time (without simulating the event
-        loop).
+        We wait actual wall-clock time, without simulating the event
+        loop.
         """
         # Run.
         event_loop = None
         get_wall_clock_time = lambda: hdateti.get_current_time(tz="ET")
-        events_as_str, results_as_str = self.helper(
-            get_wall_clock_time, event_loop
+        execute_with_rt_loop_kwargs = self.get_execute_with_rt_loop_kwargs1()
+        events_as_str, results_as_str = self.run_workload(
+            get_wall_clock_time, execute_with_rt_loop_kwargs, event_loop
         )
         # TODO(gp): This is flakey so we skip the check.
         # Check.
@@ -245,9 +274,7 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
 
     def test_simulated_time1(self) -> None:
         """
-        Use simulated time semantic.
-
-        We simulate real-time passing.
+        Use simulated real-time semantic.
         """
         with htimer.TimedScope(logging.DEBUG, "") as ts:
             # Use the solipsistic event loop to simulate the real-time faster.
@@ -256,8 +283,11 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
                 get_wall_clock_time = lambda: hdateti.get_current_time(
                     tz="ET", event_loop=event_loop
                 )
-                events_as_str, results_as_str = self.helper(
-                    get_wall_clock_time, event_loop
+                execute_with_rt_loop_kwargs = (
+                    self.get_execute_with_rt_loop_kwargs1()
+                )
+                events_as_str, results_as_str = self.run_workload(
+                    get_wall_clock_time, execute_with_rt_loop_kwargs, event_loop
                 )
         # Check.
         self.check_output_real_time(events_as_str, results_as_str)
@@ -268,11 +298,14 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         """
         Use replayed time semantic.
 
-        We wait actual wall-clock time, but the time is rewinded to a
+        We wait actual wall-clock time, but the time is rewound to a
         point in the past.
         """
         event_loop = None
-        events_as_str, results_as_str = self.replayed_time_helper(event_loop)
+        execute_with_rt_loop_kwargs = self.get_execute_with_rt_loop_kwargs1()
+        events_as_str, results_as_str = self.replayed_time_run_workload(
+            execute_with_rt_loop_kwargs, event_loop
+        )
         # Check.
         self.check_output_simulated(events_as_str, results_as_str)
 
@@ -284,10 +317,45 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         """
         with htimer.TimedScope(logging.DEBUG, "") as ts:
             with hasynci.solipsism_context() as event_loop:
-                events_as_str, results_as_str = self.replayed_time_helper(
-                    event_loop
+                execute_with_rt_loop_kwargs = (
+                    self.get_execute_with_rt_loop_kwargs1()
+                )
+                events_as_str, results_as_str = self.replayed_time_run_workload(
+                    execute_with_rt_loop_kwargs,
+                    event_loop,
                 )
         # Check.
         self.check_output_simulated(events_as_str, results_as_str)
+        # It should take less than 1 sec to simulate 4 secs.
+        self.assertLess(ts.elapsed_time, 1)
+
+    # ////////////////////////////////////////////////////////////////////////////
+
+    def test_exit_condition1(self) -> None:
+        """
+        Check that `execute_all_with_real_time_loop()` stops at a certain time,
+        using simulated replayed semantic.
+
+        We simulate real-time passing in the past.
+        """
+        with htimer.TimedScope(logging.DEBUG, "") as ts:
+            with hasynci.solipsism_context() as event_loop:
+                execute_with_rt_loop_kwargs = (
+                    self.get_execute_with_rt_loop_kwargs2()
+                )
+                events_as_str, results_as_str = self.replayed_time_run_workload(
+                    execute_with_rt_loop_kwargs, event_loop
+                )
+        # Check that the events are triggered on even seconds.
+        act = f"{events_as_str}\n{results_as_str}"
+        exp = r"""events=
+        num_it=1 current_time='2010-01-04 09:30:02-05:00'
+        num_it=2 current_time='2010-01-04 09:30:03-05:00'
+        num_it=3 current_time='2010-01-04 09:30:04-05:00'
+        num_it=4 current_time='2010-01-04 09:30:05-05:00'
+        num_it=5 current_time='2010-01-04 09:30:06-05:00'
+        results=
+        [True, False, True, False, True]"""
+        self.assert_equal(act, exp, fuzzy_match=True)
         # It should take less than 1 sec to simulate 4 secs.
         self.assertLess(ts.elapsed_time, 1)

@@ -409,6 +409,14 @@ class StatsComputer:
         ]
         stats = self._compute_stat_functions(srs, name, functions)
         results.append(pd.concat([stats], keys=["dollar"]))
+        # Add PnL stats.
+        pnl_stats = pd.Series(
+            {
+                "pnl_mean": df["pnl"].mean(),
+                "pnl_std": df["pnl"].std(),
+            }
+        )
+        results.append(pd.concat([pnl_stats], keys=["dollar"]))
         # Add dollar turnover, bias.
         dollar_turnover_and_bias = costatis.compute_turnover_and_bias(
             df["gross_volume"],
@@ -424,6 +432,14 @@ class StatsComputer:
         ]
         stats = 100 * self._compute_stat_functions(srs, name, functions)
         results.append(pd.concat([stats], keys=["percentage"]))
+        #
+        pnl_stats = 100 * pd.Series(
+            {
+                "pnl_mean": srs.mean(),
+                "pnl_std": srs.std(),
+            }
+        )
+        results.append(pd.concat([pnl_stats], keys=["percentage"]))
         # Add dollar turnover, bias.
         percentage_turnover_and_bias = 100 * costatis.compute_turnover_and_bias(
             df["gross_volume"] / df["gmv"],

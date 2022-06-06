@@ -15,10 +15,10 @@ import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import im_v2.ccxt.data.client as icdcl
+import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.talos.data.client as itdcl
 import market_data.im_client_market_data as mdimcmada
+import market_data.real_time_market_data as mdrtmada
 import market_data.replayed_market_data as mdremada
 
 _LOG = logging.getLogger(__name__)
@@ -233,7 +233,7 @@ def get_ReplayedTimeMarketData_example5(
 
 
 # #############################################################################
-# ImClientMarketData examples
+# Historical ImClientMarketData examples
 # #############################################################################
 
 
@@ -254,104 +254,117 @@ def _get_last_timestamp(
     return last_timestamp
 
 
-# TODO(gp): -> `CcxtImClientMarketData`.
-def get_ImClientMarketData_example1(
+# TODO(gp): @Grisha This should not be here. It should be somewhere else.
+def get_HistoricalImClientMarketData_example1(
+    im_client: icdc.ImClient,
     asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
+    *,
+    wall_clock_time: Optional[pd.Timestamp] = None,
+    filter_data_mode: str = "assert",
 ) -> mdimcmada.ImClientMarketData:
     """
-    Build a `ImClientMarketData` backed with `CCXT` data.
+    Build a `ImClientMarketData` backed with the data defined by `im_client`.
     """
-    resample_1min = True
-    ccxt_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
     # Build a function that returns a wall clock to initialise `MarketData`.
-    last_timestamp = _get_last_timestamp(ccxt_client, asset_ids)
+    if wall_clock_time is None:
+        # The maximum timestamp is set from the data except for the cases when
+        # it's too computationally expensive to read all of the data on the fly.
+        wall_clock_time = _get_last_timestamp(im_client, asset_ids)
 
     def get_wall_clock_time() -> pd.Timestamp:
-        return last_timestamp
+        return wall_clock_time
 
     #
     asset_id_col = "asset_id"
     start_time_col_name = "start_ts"
     end_time_col_name = "end_ts"
-    market_data_client = mdimcmada.ImClientMarketData(
+    market_data = mdimcmada.ImClientMarketData(
         asset_id_col,
         asset_ids,
         start_time_col_name,
         end_time_col_name,
         columns,
         get_wall_clock_time,
-        im_client=ccxt_client,
+        im_client=im_client,
         column_remap=column_remap,
+        filter_data_mode=filter_data_mode,
     )
-    return market_data_client
+    return market_data
 
 
-def get_ImClientMarketData_example2(
-    asset_ids: Optional[List[int]],
-    columns: List[str],
-    column_remap: Optional[Dict[str, str]],
-) -> mdimcmada.ImClientMarketData:
+# #############################################################################
+# Real-time ImClientMarketData examples
+# #############################################################################
+
+
+def get_RealTimeImClientMarketData_example1(
+    # TODO(Danya): Initialize im_client from outside the method.
+    im_client: hsql.DbConnection,
+    event_loop: asyncio.AbstractEventLoop,
+    asset_ids: List[int],
+) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
-    Build a `ImClientMarketData` backed with synthetic data.
+    Build a `RealTimeMarketData` with data coming from an `RealTimeImClient`.
     """
-    data_frame_client = icdc.get_DataFrameImClient_example1()
-    # Build a function that returns a wall clock to initialise `MarketData`.
-    last_timestamp = _get_last_timestamp(data_frame_client, asset_ids)
-
-    def get_wall_clock_time() -> pd.Timestamp:
-        return last_timestamp
-
-    #
     asset_id_col = "asset_id"
-    start_time_col_name = "start_ts"
-    end_time_col_name = "end_ts"
-    market_data_client = mdimcmada.ImClientMarketData(
+    start_time_col_name = "start_timestamp"
+    end_time_col_name = "end_timestamp"
+    columns = None
+    # Build a `ReplayedMarketData`.
+    tz = "ET"
+    initial_replayed_dt = pd.Timestamp(
+        "2000-01-01 09:30:00-05:00", tz="America/New_York"
+    )
+    speed_up_factor = 1.0
+    get_wall_clock_time = creatime.get_replayed_wall_clock_time(
+        tz,
+        initial_replayed_dt,
+        event_loop=event_loop,
+        speed_up_factor=speed_up_factor,
+    )
+    # Build a `ReplayedMarketData`.
+    sleep_in_secs = 1.0
+    time_out_in_secs = 60 * 2
+    market_data = mdrtmada.RealTimeMarketData2(
+        im_client,
+        #
         asset_id_col,
         asset_ids,
         start_time_col_name,
         end_time_col_name,
         columns,
         get_wall_clock_time,
-        im_client=data_frame_client,
-        column_remap=column_remap,
+        sleep_in_secs=sleep_in_secs,
+        time_out_in_secs=time_out_in_secs,
     )
-    return market_data_client
+    return market_data, get_wall_clock_time
 
 
-def get_ImClientMarketData_example3(
-    asset_ids: Optional[List[int]],
-    columns: List[str],
-    column_remap: Optional[Dict[str, str]],
-) -> mdimcmada.ImClientMarketData:
+def get_RealtimeMarketData_example1(
+    im_client: icdc.RealTimeImClient,
+) -> mdrtmada.RealTimeMarketData2:
     """
-    Build a `ImClientMarketData` backed with `Talos` data.
+    Create a RealTimeMarketData2 to use in tests.
+
+    This example is geared to work with `icdc.get_mock_realtime_client`.
     """
-    resample_1min = False
-    talos_client = (
-        itdcl.talos_clients_example.get_TalosHistoricalPqByTileClient_example2(
-            resample_1min
-        )
-    )
-    # Build a function that returns a wall clock to initialise `MarketData`.
-    last_timestamp = _get_last_timestamp(talos_client, asset_ids)
-
-    def get_wall_clock_time() -> pd.Timestamp:
-        return last_timestamp
-
-    #
     asset_id_col = "asset_id"
-    start_time_col_name = "start_ts"
-    end_time_col_name = "end_ts"
-    market_data_client = mdimcmada.ImClientMarketData(
+    asset_ids = [1464553467]
+    start_time_col_name = "start_timestamp"
+    end_time_col_name = "end_timestamp"
+    columns = None
+    get_wall_clock_time = lambda: pd.Timestamp(
+        "2022-04-22", tz="America/New_York"
+    )
+    market_data = mdrtmada.RealTimeMarketData2(
+        im_client,
         asset_id_col,
         asset_ids,
         start_time_col_name,
         end_time_col_name,
         columns,
         get_wall_clock_time,
-        im_client=talos_client,
-        column_remap=column_remap,
     )
-    return market_data_client
+    return market_data

@@ -5,12 +5,14 @@
 echo "# Configure env"
 echo "which gh="$(which gh)
 
-# Select which profile to use by default.
+# AWS profiles which are propagated to Docker.
 export AM_AWS_PROFILE="am"
+export CK_AWS_PROFILE="ck"
 
 # These variables are propagated to Docker.
 export AM_ECR_BASE_PATH="665840871993.dkr.ecr.us-east-1.amazonaws.com"
-export AM_S3_BUCKET="alphamatic-data"
+export AM_AWS_S3_BUCKET="alphamatic-data"
+export CK_AWS_S3_BUCKET="cryptokaizen-data"
 
 # Print the AM env vars.
 printenv | egrep "AM_|AWS_" | sort

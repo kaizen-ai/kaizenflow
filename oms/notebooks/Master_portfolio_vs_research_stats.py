@@ -62,7 +62,7 @@ end_timestamp = config["end_timestamp"]
 
 # %%
 # Load and time-localize Portfolio logged data.
-paper_df, paper_stats_df = oms.AbstractPortfolio.read_state(
+paper_df, paper_stats_df = oms.Portfolio.read_state(
     config["portfolio_data_dir"],
     file_name=config["portfolio_file_name"],
 )
@@ -71,7 +71,10 @@ paper_stats_df = paper_stats_df.loc[start_timestamp:end_timestamp]
 
 # %%
 # Load and time localize ForecastEvaluator logged data.
-research_df, research_stats_df = dtfmod.ForecastEvaluator.read_portfolio(
+(
+    research_df,
+    research_stats_df,
+) = dtfmod.ForecastEvaluatorFromReturns.read_portfolio(
     config["research_data_dir"],
     file_name=config["research_file_name"],
 )

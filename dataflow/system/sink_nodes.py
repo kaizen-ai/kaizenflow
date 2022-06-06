@@ -33,8 +33,9 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         prediction_col: str,
         volatility_col: str,
         spread_col: Optional[str],
-        portfolio: omportfo.AbstractPortfolio,
+        portfolio: omportfo.Portfolio,
         process_forecasts_config: Dict[str, Any],
+        *,
         evaluate_forecasts_config: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
@@ -106,10 +107,11 @@ class ProcessForecasts(dtfcore.FitPredictNode):
 
     def _evaluate_forecasts(self, df: pd.DataFrame) -> None:
         log_dir = self._evaluate_forecasts_config["log_dir"]
+        _LOG.info("log_dir=%s", log_dir)
         target_gmv = self._evaluate_forecasts_config["target_gmv"]
-        returns_col = self._evaluate_forecasts_config["returns_col"]
-        forecast_evaluator = dtfmod.ForecastEvaluator(
-            returns_col=returns_col,
+        price_col = self._evaluate_forecasts_config["price_col"]
+        forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
+            price_col=price_col,
             volatility_col=self._volatility_col,
             prediction_col=self._prediction_col,
         )

@@ -103,12 +103,18 @@ display(data_talos_db.tail(3))
 # %%
 # Specify the params.
 vendor = "CCXT"
+universe_version = "v3"
 root_dir = "s3://alphamatic-data/data"
 extension = "csv.gz"
 aws_profile_ccxt = "am"
 # Initialize CCXT client.
 ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-    vendor, True, root_dir, extension, aws_profile=aws_profile_ccxt
+    vendor,
+    universe_version,
+    True,
+    root_dir,
+    extension,
+    aws_profile=aws_profile_ccxt,
 )
 
 # %% run_control={"marked": false}
@@ -139,10 +145,13 @@ display(data_ccxt_client.tail(3))
 
 # %%
 env_file = imvimlita.get_db_env_path("dev")
+universe_version = "v1"
 connection_params = hsql.get_connection_info_from_env_file(env_file)
 connection = hsql.get_connection(*connection_params)
 table_name = "talos_ohlcv"
-talos_client = imvtdctacl.RealTimeSqlTalosClient(True, connection, table_name)
+talos_client = imvtdctacl.RealTimeSqlTalosClient(
+    universe_version, True, connection, table_name
+)
 
 # %%
 df = get_data_from_talos_client(

@@ -13,7 +13,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
-import im_v2.talos.data.client.talos_clients as imvtdctacl
+import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class RealTimeMarketData(mdabmada.MarketData):
         table_name: str,
         where_clause: Optional[str],
         valid_id: Any,
-        # Params from `MarketData`.
+        # Params from abstract `MarketData`.
         *args: Any,
         **kwargs: Any,
     ):
@@ -108,7 +108,7 @@ class RealTimeMarketData(mdabmada.MarketData):
             sort_time,
             limit,
         )
-        _LOG.info("query=%s", query)
+        _LOG.debug("query=%s", query)
         df = hsql.execute_query_to_df(self.connection, query)
         # Prepare data for normalization by the parent class.
         df = self._convert_data_for_normalization(df)
@@ -252,23 +252,17 @@ class RealTimeMarketData(mdabmada.MarketData):
 
 class RealTimeMarketData2(mdabmada.MarketData):
     """
-    Interface for real-time market data accessed through Talos API.
-
-    Note: RealTimeSqlTalosClient is passed at the initialization.
+    Interface for real-time market data accessed through a realtime SQL client.
     """
-
-    def __init__(
-        self, client: imvtdctacl.RealTimeSqlTalosClient, *args, **kwargs
-    ):
+    def __init__(self, client: icdc.SqlRealTimeImClient, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         hdbg.dassert_eq(
             client._mode,
             "market_data",
-            msg="Requires a RealTimeSqlTalosClient in 'market_data' mode.",
+            msg="Requires a SqlRealTimeImClient in 'market_data' mode.",
         )
         self._client = client
 
-    # TODO(Danya): A copy of the Talos client method.
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         return self._client.should_be_online()
 
@@ -287,6 +281,8 @@ class RealTimeMarketData2(mdabmada.MarketData):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        *,
+        columns: Optional[List[str]] = None
     ) -> pd.DataFrame:
         """
         Build a query and load SQL data in MarketData format.
@@ -303,27 +299,14 @@ class RealTimeMarketData2(mdabmada.MarketData):
             full_symbols,
             start_ts,
             end_ts,
+            columns,
+            self._filter_data_mode,
             ts_col_name=ts_col_name,
             left_close=left_close,
             right_close=right_close,
             limit=limit,
         )
         # Rename the index to fit the MarketData format.
-        # TODO(Danya): The client requires the data to have a `timestamp` index,
-        #  while AbstractMarketData requires to have integer index.
-        #  This conversion is redundant, but necessary to combine
-        #  the client and AbstractMarketData.
         data.index.name = "end_timestamp"
         data = data.reset_index()
-        market_data_columns = [
-            "end_timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "start_timestamp",
-            "asset_id",
-        ]
-        data = data[market_data_columns]
         return data

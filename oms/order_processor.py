@@ -38,7 +38,7 @@ class OrderProcessor:
         db_connection: hsql.DbConnection,
         delay_to_accept_in_secs: float,
         delay_to_fill_in_secs: float,
-        broker: ombroker.AbstractBroker,
+        broker: ombroker.Broker,
         *,
         submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
         accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
@@ -194,7 +194,7 @@ class OrderProcessor:
         fulfillment_deadline = max([order.end_timestamp for order in orders])
         _LOG.debug("Order fulfillment deadline=%s", fulfillment_deadline)
         # Wait until the order fulfillment deadline to return fill.
-        await hasynci.wait_until(fulfillment_deadline, get_wall_clock_time)
+        await hasynci.async_wait_until(fulfillment_deadline, get_wall_clock_time)
         # Get the fills.
         _LOG.debug("Getting fills.")
         fills = self._broker.get_fills()

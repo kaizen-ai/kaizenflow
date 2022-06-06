@@ -8,7 +8,7 @@ import asyncio
 import collections
 import datetime
 import logging
-from typing import Any, AsyncGenerator, Callable, List, Optional, Tuple
+from typing import Any, AsyncGenerator, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -17,11 +17,14 @@ import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hnumpy as hnumpy
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
-_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
+_LOG.verb_debug = hprint.install_log_verb_debug(  # type: ignore[attr-defined]
+    _LOG, verbose=False
+)
 
 # There are different ways of reproducing real-time behaviors:
 # 1) True real-time
@@ -73,7 +76,7 @@ class ReplayedTime:
         speed_up_factor: float = 1.0,
     ):
         """
-        Constructor.
+        Construct the class instance.
 
         If param `initial_replayed_dt` has timezone info then this class works in
         the same timezone.
@@ -194,7 +197,9 @@ def get_data_as_of_datetime(
     _LOG.debug(
         hprint.to_str("knowledge_datetime_col_name datetime_ delay_in_secs")
     )
-    # _LOG.verb_debug(hpandas.df_to_str(df, print_shape_info=True, tag="Before get_data_as_of_datetime"))
+    # _LOG.verb_debug(
+    # hpandas.df_to_str(df, print_shape_info=True, tag="Before get_data_as_of_datetime")
+    # )
     hdbg.dassert_lte(0, delay_in_secs)
     datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     # TODO(gp): We could / should use binary search.
@@ -202,20 +207,27 @@ def get_data_as_of_datetime(
         datetime_, df, knowledge_datetime_col_name
     )
     if not allow_future_peeking:
-        if knowledge_datetime_col_name is None:
-            # Filter based on the index.
-            mask = df.index <= datetime_eff
-        else:
-            # Filter based on a column.
-            hdbg.dassert_in(knowledge_datetime_col_name, df.columns)
-            mask = df[knowledge_datetime_col_name] <= datetime_eff
-        df = df[mask]
+        # Filter the df to the values before and including `datetime_eff`.
+        start_ts = None
+        end_ts = datetime_eff
+        left_close = True
+        right_close = True
+        df = hpandas.trim_df(
+            df,
+            knowledge_datetime_col_name,
+            start_ts,
+            end_ts,
+            left_close,
+            right_close,
+        )
     else:
         # Sometimes we need to allow the future peeking. E.g., to know what's the
         # execution price of an order that will terminate in the future.
         raise ValueError("Future peeking")
         # pass
-    # _LOG.verb_debug(hpandas.df_to_str(df, print_shape_info=True, tag="After get_data_as_of_datetime"))
+    # _LOG.verb_debug(
+    # hpandas.df_to_str(df, print_shape_info=True, tag="After get_data_as_of_datetime")
+    # )
     return df
 
 
@@ -259,15 +271,9 @@ def align_on_time_grid(
             hasynci.run(coroutine, event_loop=event_loop, close_event_loop=False)
             _LOG.debug("wall_clock=%s", get_wall_clock_time())
 
-    _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
-    current_time = get_wall_clock_time()
-    # Align on the time grid.
-    hdbg.dassert_lt(0, grid_time_in_secs)
-    freq = f"{grid_time_in_secs}S"
-    target_time = current_time.ceil(freq)
-    hdbg.dassert_lte(current_time, target_time)
-    _LOG.debug("target_time=%s", target_time)
-    secs_to_wait = (target_time - current_time).total_seconds()
+    # _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
+    target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
+        grid_time_in_secs, get_wall_clock_time)
     #
     if use_high_resolution:
         # Wait for a bit and then busy wait.
@@ -275,8 +281,8 @@ def align_on_time_grid(
             event_loop, None, "High resolution sleep works only in real-time"
         )
         _wait(secs_to_wait - 1)
-        # Busy waiting. OS courses says to never do this, but in this case we need
-        # a high-resolution wait.
+        # Busy waiting. Operating system courses say to never do this, but in this
+        # case we need a high-resolution wait.
         while True:
             current_time = get_wall_clock_time()
             if current_time >= target_time:
@@ -311,15 +317,15 @@ class Event(
         self, include_tenths_of_secs: bool, include_wall_clock_time: bool
     ) -> str:
         vals = []
-        vals.append("num_it=%s" % self.num_it)
+        vals.append(f"num_it={self.num_it}")
         #
         current_time = self.current_time
         if not include_tenths_of_secs:
             current_time = current_time.replace(microsecond=0, nanosecond=0)
-        vals.append("current_time='%s'" % current_time)
+        vals.append(f"current_time='{current_time}'")
         #
         if include_wall_clock_time:
-            vals.append("wall_clock_time='%s'" % self.wall_clock_time)
+            vals.append(f"wall_clock_time='{self.wall_clock_time}'")
         return " ".join(vals)
 
 
@@ -338,7 +344,8 @@ class Events(List[Event]):
 async def execute_with_real_time_loop(
     get_wall_clock_time: hdateti.GetWallClockTime,
     sleep_interval_in_secs: float,
-    time_out_in_secs: Optional[int],
+    # TODO(gp): -> exit_condition
+    time_out_in_secs: Union[float, int, datetime.time, None],
     workload: Callable[[pd.Timestamp], Any],
 ) -> AsyncGenerator[Tuple[Event, Any], None]:
     """
@@ -347,7 +354,11 @@ async def execute_with_real_time_loop(
     :param get_wall_clock_time: function returning the current true or simulated time
     :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
         true or simulated seconds
-    :param time_out_in_secs: for how long to execute the loop. `None` means an infinite loop
+    :param time_out_in_secs: for how long to execute the loop
+        - int: number of iterations to execute
+        - datetime.time: time of the day to iterate until, in the same timezone
+            as `get_wall_clock_time()`
+        - `None` means an infinite loop
     :param workload: function executing the workload
 
     :return: a Tuple with:
@@ -361,13 +372,7 @@ async def execute_with_real_time_loop(
         str(get_wall_clock_time),
     )
     hdbg.dassert_lt(0, sleep_interval_in_secs)
-    num_iterations: Optional[int] = None
-    if time_out_in_secs is not None:
-        # TODO(gp): Consider using a real-time check instead of number of iterations.
-        num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
-        hdbg.dassert_lt(0, num_iterations)
-    _LOG.debug(hprint.to_str("num_iterations"))
-    #
+    # Number of iterations executed.
     num_it = 1
     while True:
         wall_clock_time = get_wall_clock_time()
@@ -379,7 +384,7 @@ async def execute_with_real_time_loop(
             "Real-time loop: "
             + "num_it=%s / %s: wall_clock_time='%s' real_wall_clock_time='%s'",
             num_it,
-            num_iterations,
+            time_out_in_secs,
             wall_clock_time,
             real_wall_clock_time,
             level=1,
@@ -400,8 +405,30 @@ async def execute_with_real_time_loop(
         _, workload_result = result
         yield event, workload_result
         # Exit, if needed.
-        if num_iterations is not None and num_it >= num_iterations:
-            break
+        if time_out_in_secs is not None:
+            if isinstance(time_out_in_secs, (int, float)):
+                num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
+                hdbg.dassert_lt(0, num_iterations)
+                _LOG.debug(hprint.to_str("num_it num_iterations"))
+                if num_it >= num_iterations:
+                    _LOG.debug(
+                        "Exiting loop: %s", hprint.to_str("num_it num_iterations")
+                    )
+                    break
+            elif isinstance(time_out_in_secs, datetime.time):
+                curr_time = wall_clock_time.time()
+                _LOG.debug(hprint.to_str("curr_time time_out_in_secs"))
+                if curr_time >= time_out_in_secs:
+                    _LOG.debug(
+                        "Exiting loop: %s",
+                        hprint.to_str("curr_time time_out_in_secs"),
+                    )
+                    break
+            else:
+                raise ValueError(
+                    f"Can't process time_out_in_secs={time_out_in_secs} of type "
+                    + f"'{type(time_out_in_secs)}'"
+                )
         num_it += 1
 
 
@@ -414,14 +441,7 @@ async def execute_all_with_real_time_loop(
     This is a way to bridge the async to sync semantic. It is
     conceptually equivalent to adding a list around a Python generator.
     """
-    vals = zip(
-        *[
-            v
-            async for v in execute_with_real_time_loop(
-                *args, **kwargs  # type: ignore[arg-type]
-            )
-        ]
-    )
+    vals = zip(*[v async for v in execute_with_real_time_loop(*args, **kwargs)])
     events, results = list(vals)
     events = Events(events)
     results = list(results)

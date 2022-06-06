@@ -15,6 +15,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider calling that code directly if it doesn't violate the
 #  dependencies.
 
+# TODO(gp): Update this to the new style.
 
 def _build_base_config() -> cconfig.Config:
     wrapper = cconfig.Config()
@@ -46,7 +47,7 @@ def build_configs_with_tiled_universe(
     """
     asset_ids = _get_universe_tiny()
     universe_tiles = (asset_ids,)
-    egid_key = ("meta", "asset_ids")
+    egid_key = ("market_data", "asset_ids")
     configs = dtfmoexcon.build_configs_varying_universe_tiles(
         config, egid_key, universe_tiles
     )
@@ -76,7 +77,7 @@ def build_tile_configs(
     #
     config = _build_base_config()
     #
-    config["meta", "dag_runner"] = get_dag_runner
+    config["dag_runner"] = get_dag_runner
     # Name of the asset_ids to save.
     config["meta", "asset_id_name"] = "asset_id"
     configs = [config]
@@ -111,7 +112,7 @@ class Test_get_configs_from_command_line1(hunitest.TestCase):
             )
             dst_dir = "./dst_dir"
             experiment_builder = (
-                "dataflow.model.master_experiment.run_tiled_experiment"
+                "dataflow.model.master_experiment.run_tiled_backtest"
             )
             index = 0
             start_from_index = 0

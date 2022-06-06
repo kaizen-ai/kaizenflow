@@ -77,7 +77,7 @@ def get_branch_next_name(
     hdbg.dassert_ne(curr_branch_name, "master")
     _LOG.log(log_verb, "curr_branch_name='%s'", curr_branch_name)
     #
-    max_num_ids = 20
+    max_num_ids = 100
     for i in range(1, max_num_ids):
         new_branch_name = f"{curr_branch_name}_{i}"
         _LOG.log(log_verb, "Trying branch name '%s'", new_branch_name)
@@ -687,15 +687,20 @@ def get_task_prefix_from_repo_short_name(short_name: str) -> str:
 
 
 @functools.lru_cache()
-def find_file_in_git_tree(file_name: str, super_module: bool = True) -> str:
+def find_file_in_git_tree(
+    file_name: str, super_module: bool = True, remove_tmp_base: bool = False
+) -> str:
     """
     Find the path of a file in a Git tree.
 
     We get the Git root and then search for the file from there.
     """
     root_dir = get_client_root(super_module=super_module)
-    # TODO(gp): Use -not -path '*/\.git/*'
-    cmd = f"find {root_dir} -name '{file_name}' | grep -v .git"
+    if remove_tmp_base:
+        cmd = rf"find {root_dir} -name '{file_name}' -not -path '*/\.git/*' -not -path '*/tmp\.base/*'"
+    else:
+        # TODO(gp): Use -not -path '*/\.git/*'
+        cmd = f"find {root_dir} -name '{file_name}' | grep -v .git"
     _, file_name = hsystem.system_to_one_line(cmd)
     _LOG.debug("file_name=%s", file_name)
     hdbg.dassert_ne(
@@ -748,7 +753,7 @@ def get_path_from_git_root(
 
 
 @functools.lru_cache()
-def get_amp_abs_path() -> str:
+def get_amp_abs_path(remove_tmp_base: bool = True) -> str:
     """
     Return the absolute path of `amp` dir.
     """
@@ -767,7 +772,9 @@ def get_amp_abs_path() -> str:
         amp_dir = git_root
     else:
         # If we are not in the amp repo, then look for the amp dir.
-        amp_dir = find_file_in_git_tree("amp", super_module=True)
+        amp_dir = find_file_in_git_tree(
+            "amp", super_module=True, remove_tmp_base=True
+        )
         git_root = get_client_root(super_module=True)
         amp_dir = os.path.join(git_root, amp_dir)
     amp_dir = os.path.abspath(amp_dir)

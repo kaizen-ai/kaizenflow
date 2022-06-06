@@ -289,7 +289,11 @@ def clear_global_cache(
     if not _IS_CLEAR_CACHE_ENABLED:
         hdbg.dfatal(f"Trying to delete cache '{cache_path}'")
     description = f"global {cache_type}"
-    info_before = _get_cache_size(cache_path, description)
+    try:
+        info_before = _get_cache_size(cache_path, description)
+    except ValueError:
+        _LOG.warning("Cache has already been deleted by another process.")
+        return
     _LOG.info("Before clear_global_cache: %s", info_before)
     _LOG.warning("Resetting 'global %s' cache '%s'", cache_type, cache_path)
     if hs3.is_s3_path(cache_path):
@@ -307,7 +311,11 @@ def clear_global_cache(
         cache_backend = get_global_cache(cache_type, tag)
         cache_backend.clear(warn=True)
     # Report stats before and after.
-    info_after = _get_cache_size(cache_path, description)
+    try:
+        info_after = _get_cache_size(cache_path, description)
+    except ValueError:
+        _LOG.warning("Cache has already been deleted by another process.")
+        return
     _LOG.info("After clear_global_cache: %s", info_after)
 
 
@@ -359,7 +367,7 @@ class _Cached:
         verbose: bool = False,
         tag: Optional[str] = None,
         disk_cache_path: Optional[str] = None,
-        aws_profile: Optional[str] = None,
+        aws_profile: Optional[str] = "am",
     ):
         """
         Construct the class.
@@ -702,12 +710,7 @@ class _Cached:
 
                 # Register the S3 backend.
                 hjoblib.register_s3fs_store_backend()
-                # Use the default profile, unless it was explicitly passed.
-                if self._aws_profile is None:
-                    aws_profile = hs3.get_aws_profile()
-                else:
-                    aws_profile = self._aws_profile
-                s3fs = hs3.get_s3fs(aws_profile)
+                s3fs = hs3.get_s3fs(self._aws_profile)
                 bucket, path = hs3.split_path(self._disk_cache_path)
                 # Remove the initial `/` from the path that makes the path
                 # absolute, since `Joblib.Memory` wants a path relative to the

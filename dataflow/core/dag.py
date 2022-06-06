@@ -30,6 +30,8 @@ _LOG = logging.getLogger(__name__)
 DagOutput = Dict[dtfcornode.NodeId, dtfcornode.NodeOutput]
 
 
+# TODO(gp): Consider calling it `Dag` given our convention of snake case
+#  abbreviations in the code (but not in comments).
 class DAG:
     """
     Class for creating and executing a DAG of `Node`s.
@@ -45,12 +47,6 @@ class DAG:
         self,
         name: Optional[str] = None,
         mode: Optional[str] = None,
-        *,
-        save_node_interface: str = "",
-        profile_execution: bool = False,
-        dst_dir: Optional[str] = None,
-        #
-        force_freeing_nodes: bool = False,
     ) -> None:
         """
         Create a DAG.
@@ -61,9 +57,6 @@ class DAG:
             - "strict": asserts
             - "loose": deletes old node (also removes edges) and adds new node. This
               is useful for interactive notebooks and debugging
-        :param save_node_interface, profile_execution, dst_dir: see `set_debug_mode()`
-        :param force_freeing_nodes: force freeing DAG nodes after they are not
-            needed any more
         """
         self._nx_dag = networ.DiGraph()
         # Store the DAG name.
@@ -74,10 +67,14 @@ class DAG:
         mode = mode or "strict"
         hdbg.dassert_in(mode, ["strict", "loose"], "Unsupported mode requested")
         self._mode = mode
-        #
-        self.set_debug_mode(save_node_interface, profile_execution, dst_dir)
-        hdbg.dassert_isinstance(force_freeing_nodes, bool)
-        self.force_freeing_nodes = force_freeing_nodes
+        # Set default debug/logging parameters.
+        self._save_node_io = ""
+        self._profile_execution = False
+        self._dst_dir = None
+        self.force_free_nodes = False
+        self.set_debug_mode(
+            self._save_node_io, self._profile_execution, self._dst_dir
+        )
 
     def __str__(self) -> str:
         """
@@ -129,7 +126,7 @@ class DAG:
 
     def set_debug_mode(
         self,
-        save_node_interface: str,
+        save_node_io: str,
         profile_execution: bool,
         dst_dir: Optional[str],
     ) -> None:
@@ -139,7 +136,7 @@ class DAG:
         Sometimes it's difficult to pass these parameters (e.g., through a
         `DagBuilder`) so we allow to set them after construction.
 
-        :param save_node_interface: store the values at the interface of the nodes
+        :param save_node_io: store the values at the interface of the nodes
             into a directory `dst_dir`. Disclaimer: the amount of data generate can
             be huge
             - ``: save no information
@@ -151,10 +148,8 @@ class DAG:
             execution of the nodes
         :param dst_dir: directory to save node interface and execution profiling info
         """
-        hdbg.dassert_in(
-            save_node_interface, ("", "stats", "df_as_csv", "df_as_parquet")
-        )
-        self._save_node_interface = save_node_interface
+        hdbg.dassert_in(save_node_io, ("", "stats", "df_as_csv", "df_as_parquet"))
+        self._save_node_io = save_node_io
         # To process the profiling info in a human consumable form:
         # ```
         # ls -tr -1 tmp.dag_profile/*after* | xargs -n 1 -i sh -c 'echo; echo; echo "# {}"; cat {}'
@@ -163,10 +158,10 @@ class DAG:
         self._dst_dir = dst_dir
         if self._dst_dir:
             hio.create_dir(self._dst_dir, incremental=False)
-        if self._save_node_interface or self._profile_execution:
+        if self._save_node_io or self._profile_execution:
             _LOG.warning(
                 "Setting up debug mode: %s",
-                hprint.to_str("save_node_interface profile_execution dst_dir"),
+                hprint.to_str("save_node_io profile_execution dst_dir"),
             )
             hdbg.dassert_is_not(
                 dst_dir, None, "Need to specify a directory to save the data"
@@ -252,6 +247,7 @@ class DAG:
         """
         Remove node from DAG and clear any connected edges.
         """
+        hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
         hdbg.dassert(self._nx_dag.has_node(nid), "Node `%s` is not in DAG", nid)
         self._nx_dag.remove_node(nid)
 
@@ -287,6 +283,7 @@ class DAG:
             parent_out = hlist.assert_single_element_and_return(
                 self.get_node(parent_nid).output_names
             )
+        hdbg.dassert_isinstance(parent_nid, dtfcornode.NodeId)
         hdbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         # Automatically infer input name when the child has only one input.
         # Ensure that child node belongs to DAG (through `get_node` call).
@@ -297,6 +294,7 @@ class DAG:
             child_in = hlist.assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
+        hdbg.dassert_isinstance(child_nid, dtfcornode.NodeId)
         hdbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         # Ensure that `child_in` is not already hooked up to an output.
         for nid in self._nx_dag.predecessors(child_nid):
@@ -319,14 +317,31 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
-    # /////////////////////////////////////////////////////////////////////////////
+    def compose(self, dag: "DAG") -> None:
+        """
+        Add `dag` to self.
 
-    def insert_at_head(
-        self, node_id: dtfcornode.NodeId, node: dtfcornode.Node
-    ) -> None:
-        source_nid = self.get_unique_source()
-        self.add_node(node)
-        self.connect(node_id, source_nid)
+        Node sets of `self` and `dag` must be disjoint.
+        The composition is the union of nodes and edges of `self` and `dag`.
+        """
+        hdbg.dassert_isinstance(dag, DAG)
+        if self.mode == "loose":
+            # The "loose" mode is for idempotent operations in a notebook.
+            # If this is needed, we could implement it by
+            # - ensuring all nodes of `dag` belong to `self`
+            # - removing the intersection of nodes the ancestors of those nodes
+            raise NotImplementedError
+        elif self.mode == "strict":
+            my_nodes = set(self._nx_dag.nodes)
+            their_nodes = set(dag._nx_dag.nodes)
+            hdbg.dassert(not my_nodes.intersection(their_nodes))
+            composition = networ.compose(self._nx_dag, dag._nx_dag)
+            hdbg.dassert(networ.is_directed_acyclic_graph(composition))
+            self._nx_dag = composition
+        else:
+            hdbg.dfatal("Invalid mode='%s'", self.mode)
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     def get_sources(self) -> List[dtfcornode.NodeId]:
         """
@@ -337,6 +352,16 @@ class DAG:
             if not any(True for _ in self._nx_dag.predecessors(nid)):
                 sources.append(nid)
         return sources
+
+    def get_sinks(self) -> List[dtfcornode.NodeId]:
+        """
+        :return: list of nid's of sink nodes
+        """
+        sinks = []
+        for nid in networ.topological_sort(self._nx_dag):
+            if not any(True for _ in self._nx_dag.successors(nid)):
+                sinks.append(nid)
+        return sinks
 
     def get_unique_source(self) -> dtfcornode.NodeId:
         """
@@ -351,16 +376,6 @@ class DAG:
         )
         return sources[0]
 
-    def get_sinks(self) -> List[dtfcornode.NodeId]:
-        """
-        :return: list of nid's of sink nodes
-        """
-        sinks = []
-        for nid in networ.topological_sort(self._nx_dag):
-            if not any(True for _ in self._nx_dag.successors(nid)):
-                sinks.append(nid)
-        return sinks
-
     def get_unique_sink(self) -> dtfcornode.NodeId:
         """
         Return the only sink node, asserting if there is more than one.
@@ -373,6 +388,58 @@ class DAG:
             str(sinks),
         )
         return sinks[0]
+
+    def has_single_source(self) -> bool:
+        sources = self.get_sources()
+        if len(sources) == 1:
+            return True
+        return False
+
+    def insert_at_head(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
+        """
+        Connect a node or single-sink DAG to the head (root) of the DAG.
+
+        Asserts if the DAG has more than one source.
+        """
+        sources = self.get_sources()
+        hdbg.dassert_lte(len(sources), 1)
+        if isinstance(obj, dtfcornode.Node):
+            self.add_node(obj)
+            sink_nid = obj.nid
+        elif isinstance(obj, DAG):
+            sink_nid = obj.get_unique_sink()
+            self.compose(obj)
+        else:
+            raise ValueError("Unsupported type(obj)=%s", type(obj))
+        if sources:
+            source_nid = sources[0]
+            self.connect(sink_nid, source_nid)
+
+    def has_single_sink(self) -> bool:
+        sinks = self.get_sinks()
+        if len(sinks) == 1:
+            return True
+        return False
+
+    def append_to_tail(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
+        """
+        Connect a node or single-source DAG to the tail (leaf) of the DAG.
+
+        Asserts if the DAG has more thank one sink.
+        """
+        sinks = self.get_sinks()
+        hdbg.dassert_lte(len(sinks), 1)
+        if isinstance(obj, dtfcornode.Node):
+            self.add_node(obj)
+            source_nid = obj.nid
+        elif isinstance(obj, DAG):
+            source_nid = obj.get_unique_source()
+            self.compose(obj)
+        else:
+            raise ValueError("Unsupported type(obj)=%s", type(obj))
+        if sinks:
+            sink_nid = sinks[0]
+            self.connect(sink_nid, source_nid)
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -408,6 +475,8 @@ class DAG:
         :return: the mapping from output name to corresponding value (i.e., the
             result of node `nid`'s `get_outputs(method)`
         """
+        hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
+        hdbg.dassert_isinstance(method, dtfcornode.Method)
         ancestors = filter(
             lambda x: x in networ.ancestors(self._nx_dag, nid),
             networ.topological_sort(self._nx_dag),
@@ -523,9 +592,9 @@ class DAG:
             )
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
-            if self._save_node_interface == "df_as_csv":
+            if self._save_node_io == "df_as_csv":
                 df.to_csv(file_name + ".csv")
-            elif self._save_node_interface == "df_as_parquet":
+            elif self._save_node_io == "df_as_parquet":
                 import helpers.hparquet as hparque
 
                 hparque.to_parquet(df, file_name + ".parquet")
@@ -571,7 +640,7 @@ class DAG:
             for input_name, value in kvs.items():
                 # Retrieve output from store.
                 kwargs[input_name] = pred_node.get_output(method, value)
-                if self.force_freeing_nodes:
+                if self.force_free_nodes:
                     _LOG.warning(
                         "Forcing deallocation of pred_node=%s", pred_node
                     )
@@ -596,7 +665,7 @@ class DAG:
             node._store_output(  # pylint: disable=protected-access
                 method, output_name, value
             )
-            if self._save_node_interface:
+            if self._save_node_io:
                 # Save info for the output of the node.
                 self._write_node_interface_to_dst_dir(
                     topological_id, nid, method, output_name, value

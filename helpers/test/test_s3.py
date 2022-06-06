@@ -6,18 +6,20 @@ import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
+_AWS_PROFILE = "am"
+
 
 class Test_s3_get_credentials1(hunitest.TestCase):
     def test1(self) -> None:
-        aws_profile = "am"
-        res = hs3.get_aws_credentials(aws_profile)
+        res = hs3.get_aws_credentials(_AWS_PROFILE)
         _LOG.debug("res=%s", str(res))
 
 
 class Test_s3_functions1(hunitest.TestCase):
     def test_extract_bucket_from_path1(self) -> None:
         path = os.path.join(
-            hs3.get_path(), "tmp/TestCachingOnS3.test_with_caching1/joblib"
+            hs3.get_s3_bucket_path(_AWS_PROFILE),
+            "tmp/TestCachingOnS3.test_with_caching1/joblib",
         )
         bucket, path = hs3.split_path(path)
         self.assert_equal(bucket, "alphamatic-data")
@@ -26,7 +28,9 @@ class Test_s3_functions1(hunitest.TestCase):
 
 class Test_s3_1(hunitest.TestCase):
     def test_ls1(self) -> None:
-        file_path = os.path.join(hs3.get_path(), "README.md")
+        file_path = os.path.join(
+            hs3.get_s3_bucket_path(_AWS_PROFILE), "README.md"
+        )
         _LOG.debug("file_path=%s", file_path)
         # > aws s3 ls s3://*****
         #                   PRE data/
@@ -43,7 +47,9 @@ class Test_s3_1(hunitest.TestCase):
         # 2021-04-26 08:39:00   61677776 symbols-2021-04-01-134738089177.csv
         # 2021-04-26 08:39:00   61677776 symbols-2021-04-01-143112738505.csv
         s3fs = hs3.get_s3fs("am")
-        file_path = os.path.join(hs3.get_path(), "data/ib/metadata")
+        file_path = os.path.join(
+            hs3.get_s3_bucket_path(_AWS_PROFILE), "data/ib/metadata"
+        )
         glob_pattern = file_path + "/exchanges-*"
         _LOG.debug("glob_pattern=%s", glob_pattern)
         file_names = s3fs.glob(glob_pattern)
@@ -52,7 +58,9 @@ class Test_s3_1(hunitest.TestCase):
 
     def test_exists1(self) -> None:
         s3fs = hs3.get_s3fs("am")
-        file_path = os.path.join(hs3.get_path(), "README.md")
+        file_path = os.path.join(
+            hs3.get_s3_bucket_path(_AWS_PROFILE), "README.md"
+        )
         _LOG.debug("file_path=%s", file_path)
         act = s3fs.exists(file_path)
         exp = True
@@ -60,7 +68,9 @@ class Test_s3_1(hunitest.TestCase):
 
     def test_exists2(self) -> None:
         s3fs = hs3.get_s3fs("am")
-        file_path = os.path.join(hs3.get_path(), "README_does_not_exist.md")
+        file_path = os.path.join(
+            hs3.get_s3_bucket_path(_AWS_PROFILE), "README_does_not_exist.md"
+        )
         _LOG.debug("file_path=%s", file_path)
         act = s3fs.exists(file_path)
         exp = False
@@ -71,7 +81,8 @@ class Test_s3_1(hunitest.TestCase):
         # 2021-04-26 08:39:00   61677776 symbols-2021-04-01-143112738505.csv
         s3fs = hs3.get_s3fs("am")
         file_path = os.path.join(
-            hs3.get_path(), "data/ib/metadata/symbols-2021-04-01-143112738505.csv"
+            hs3.get_s3_bucket_path(_AWS_PROFILE),
+            "data/ib/metadata/symbols-2021-04-01-143112738505.csv",
         )
         _LOG.debug("file_path=%s", file_path)
         act = s3fs.exists(file_path)

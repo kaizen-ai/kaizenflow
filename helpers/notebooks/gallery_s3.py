@@ -24,15 +24,15 @@
 import helpers.hs3 as hs3
 
 # %%
-profile = "am"
+aws_profile = "am"
 
 # %%
 # s3 = s3fs.S3FileSystem(anon=False, key=aws_access_key_id, secret=aws_secret_access_key)
 
-s3 = hs3.get_s3fs(profile)
+s3 = hs3.get_s3fs(aws_profile)
 
 # %%
-bucket = hs3.get_bucket()
+bucket = hs3.get_s3_bucket_path(aws_profile, add_s3_prefix=False)
 print("bucket=%s" % bucket)
 s3.ls(bucket)
 

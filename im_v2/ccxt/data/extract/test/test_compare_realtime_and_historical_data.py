@@ -1,28 +1,36 @@
 import argparse
+import os
 import unittest.mock as umock
 
 import pandas as pd
 import pytest
 
+import helpers.hgit as hgit
 import helpers.hparquet as hparque
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import helpers.hsystem as hsystem
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1292/1666.",
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
 )
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
-    S3_PATH = "s3://cryptokaizen-data/unit_test/parquet/historical"
+    aws_profile = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    S3_PATH = os.path.join(s3_bucket_path, "unit_test/parquet/historical")
     FILTERS = [
         [("year", "==", 2021), ("month", ">=", 12)],
         [("year", "==", 2022), ("month", "<=", 1)],
     ]
     _ohlcv_dataframe_sample = None
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
 
     def setUp(self) -> None:
         super().setUp()
@@ -50,6 +58,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # preserve original data for each test.
         return self._ohlcv_dataframe_sample.copy()
 
+    @pytest.mark.slow
     def test_function_call1(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
@@ -61,6 +70,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self._save_sample_in_db(sample)
         self._test_function_call()
 
+    @pytest.mark.slow
     def test_function_call2(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
@@ -95,6 +105,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         ################################################################################"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.slow
     def test_function_call3(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
@@ -149,6 +160,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         ################################################################################"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.slow
     def test_function_call4(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
@@ -230,7 +242,9 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         cmd.extend(["--db_stage", "dev"])
         cmd.extend(["--db_table", "ccxt_ohlcv"])
         cmd.extend(["--aws_profile", "ck"])
-        cmd.extend(["--s3_path", "s3://cryptokaizen-data/historical/"])
+        cmd.extend(
+            ["--s3_path", "s3://cryptokaizen-data/reorg/historical.manual.pq/"]
+        )
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
@@ -241,7 +255,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "db_table": "ccxt_ohlcv",
             "log_level": "INFO",
             "aws_profile": "ck",
-            "s3_path": "s3://cryptokaizen-data/historical/",
+            "s3_path": "s3://cryptokaizen-data/reorg/historical.manual.pq/",
         }
         self.assertDictEqual(actual, expected)
 
@@ -274,6 +288,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "log_level": "INFO",
             "aws_profile": "ck",
             "s3_path": f"{self.S3_PATH}/",
+            "connection": self.connection,
         }
         # Run.
         args = argparse.Namespace(**kwargs)

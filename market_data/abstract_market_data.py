@@ -98,6 +98,7 @@ class MarketData(abc.ABC):
         sleep_in_secs: float = 1.0,
         time_out_in_secs: int = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
+        filter_data_mode: str = "assert",
     ):
         """
         Constructor.
@@ -120,8 +121,16 @@ class MarketData(abc.ABC):
             seconds waiting up to `time_out_in_secs` seconds
         :param column_remap: dict of columns to remap the output data or `None` for
             no remapping
+        :param filter_data_mode: control class behavior with respect to extra
+            or missing columns, like in `hpandas.check_and_filter_matching_columns()`
         """
-        _LOG.debug("")
+        _LOG.debug(
+            hprint.to_str(
+                "asset_id_col asset_ids start_time_col_name "
+                "end_time_col_name columns get_wall_clock_time "
+                "timezone sleep_in_secs time_out_in_secs column_remap filter_data_mode"
+            )
+        )
         self._asset_id_col = asset_id_col
         dassert_valid_asset_ids(asset_ids)
         self._asset_ids = asset_ids
@@ -137,6 +146,8 @@ class MarketData(abc.ABC):
         #
         self._timezone = timezone
         self._column_remap = column_remap
+        #
+        self._filter_data_mode = filter_data_mode
         # Compute the max number of iterations.
         hdbg.dassert_lt(0, time_out_in_secs)
         max_iterations = int(time_out_in_secs / sleep_in_secs)
@@ -148,6 +159,7 @@ class MarketData(abc.ABC):
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
+        ts_col_name: Optional[str] = None,
         *,
         # TODO(gp): @Grisha not sure limit is really needed. We could move it
         # to the DB implementation.
@@ -162,14 +174,21 @@ class MarketData(abc.ABC):
         Note that we use `asset_ids` from the constructor instead of passing it
         since the use case is for clients to just ask data that has been
         configured upstream when this object was built.
+
+        :param timedelta: length of last time period
+        :param ts_col_name: name of timestamp column, None to use start_timestamp
+        :param limit: max number of rows to output
+        :return: DataFrame with data for last given period
         """
         # Handle `timedelta`.
         _LOG.verb_debug(hprint.to_str("timedelta"))
         wall_clock_time = self.get_wall_clock_time()
         start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = None
-        # By convention to get the last chunk of data we use the start_time column.
-        ts_col_name = self._start_time_col_name
+        if ts_col_name is None:
+            # By convention to get the last chunk of data we use the start_time column.
+            # TODO(Danya): Make passing of ts_col_name mandatory.
+            ts_col_name = self._start_time_col_name
         asset_ids = self._asset_ids
         # Get the data.
         df = self.get_data_for_interval(
@@ -260,6 +279,7 @@ class MarketData(abc.ABC):
             right_close,
             limit,
         )
+        _LOG.debug("get_data_for_interval() columns '%s'", df.columns)
         # If the assets were specified, check that the returned data doesn't contain
         # data that we didn't request.
         # TODO(Danya): How do we handle NaNs?
@@ -269,12 +289,16 @@ class MarketData(abc.ABC):
         )
         # TODO(gp): If asset_ids was specified but the backend has a universe
         #  specified already, we might need to apply a filter by asset_ids.
-        # TODO(gp): Check data with respect to start_ts, end_ts.
         # Normalize data.
         df = self._normalize_data(df)
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
-        # Remap column names.
+        # Check that columns are required ones.
+        if self._columns is not None:
+            df = hpandas.check_and_filter_matching_columns(
+                df, self._columns, self._filter_data_mode
+            )
+        # Remap result columns to the required names.
         df = self._remap_columns(df)
         _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -356,7 +380,7 @@ class MarketData(abc.ABC):
         """
         dassert_valid_asset_ids(asset_ids)
         last_end_time = self.get_last_end_time()
-        _LOG.info("last_end_time=%s", last_end_time)
+        _LOG.debug("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
         first_end_time = last_end_time - offset
         # We rely on the assumption that we are reading 1-minute bars.
@@ -651,7 +675,6 @@ class MarketData(abc.ABC):
         hpandas.dassert_index_is_datetime(df)
         df.index = df.index.tz_convert(self._timezone)
         # Convert start timestamp column values.
-        hdbg.dassert_in(self._start_time_col_name, df.columns)
         df[self._start_time_col_name] = df[
             self._start_time_col_name
         ].dt.tz_convert(self._timezone)

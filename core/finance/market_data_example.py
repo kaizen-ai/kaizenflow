@@ -367,32 +367,41 @@ def generate_random_top_of_book_bars_for_asset(
       - columns include timestamps, asset id, price, volume, and fake features
     """
     price_process = carsigen.PriceProcess(seed)
-    bid = price_process.generate_price_series_from_normal_log_returns(
-        start_datetime,
-        end_datetime,
-        asset_id,
-        bar_duration=bar_duration,
-        bar_volatility_in_bps=bar_volatility_in_bps,
-        last_price=last_price,
-        start_time=start_time,
-        end_time=end_time,
-    ).rename("bid")
-    spread = (
+    bid = (
         price_process.generate_price_series_from_normal_log_returns(
             start_datetime,
             end_datetime,
             asset_id,
             bar_duration=bar_duration,
-            bar_volatility_in_bps=bar_spread_in_bps,
+            bar_volatility_in_bps=bar_volatility_in_bps,
             last_price=last_price,
             start_time=start_time,
             end_time=end_time,
         )
-        .pct_change()
-        .shift(-1)
-        .abs()
+        .rename("bid")
+        .round(2)
     )
-    ask = (bid + spread).rename("ask")
+    spread = (
+        (
+            100
+            * price_process.generate_price_series_from_normal_log_returns(
+                start_datetime,
+                end_datetime,
+                asset_id,
+                bar_duration=bar_duration,
+                bar_volatility_in_bps=bar_spread_in_bps,
+                last_price=last_price,
+                start_time=start_time,
+                end_time=end_time,
+            )
+            .pct_change()
+            .shift(-1)
+            .abs()
+        )
+        .round(2)
+        .clip(lower=0.01)
+    )
+    ask = (bid + spread).rename("ask").round(2)
     midpoint = (0.5 * (bid + ask)).rename("midpoint")
     volume = price_process.generate_volume_series_from_poisson_process(
         start_datetime,
@@ -558,7 +567,6 @@ def get_im_client_market_data_df1(full_symbols: List[str]) -> pd.DataFrame:
     price = price_pattern * 4
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
-    # TODO(Dan): CmTask1588 "Consider possible flaws of dropping duplicates from data".
     # Generate unique volume values to avoid dropping rows as duplicates.
     volume = list(range(40))
     # Generate data for each symbol.

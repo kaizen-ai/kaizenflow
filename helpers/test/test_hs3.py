@@ -5,18 +5,17 @@ import pytest
 
 import helpers.hmoto as hmoto
 import helpers.hs3 as hs3
-import helpers.hsystem as hsystem
+import helpers.hgit as hgit
 
 
 @pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1292/1666.",
-)
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
     def write_read_helper(self, file_name: str, force_flush: bool) -> None:
         # Prepare inputs.
         file_content = "line_mock1\nline_mock2\nline_mock3"
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{file_name}"
         # Save file.
         # TODO(Nikola): Is it possible to verify `force_flush`?
@@ -58,7 +57,7 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
         # Prepare inputs.
         regular_file_name = "mock.txt"
         regular_file_content = "line_mock1\nline_mock2\nline_mock3"
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
         # Save file with `t` mode.
         with pytest.raises(ValueError) as fail:
@@ -76,7 +75,7 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
         """
         # Prepare inputs.
         regular_file_name = "mock.txt"
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         s3_path = f"s3://{self.bucket_name}/{regular_file_name}"
         # Read with encoding.
         with pytest.raises(ValueError) as fail:
@@ -88,15 +87,14 @@ class TestToFileAndFromFile1(hmoto.S3Mock_TestCase):
 
 
 @pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1292/1666.",
-)
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestListdir1(hmoto.S3Mock_TestCase):
     def prepare_test_data(self) -> Tuple[str, hs3.AwsProfile]:
         bucket_s3_path = f"s3://{self.bucket_name}"
         depth_one_s3_path = f"{bucket_s3_path}/depth_one"
         # Prepare test files.
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         first_s3_path = f"{depth_one_s3_path}/mock1.txt"
         lines = [b"line_mock1"]
         with moto_s3fs.open(first_s3_path, "wb") as s3_file:
@@ -226,9 +224,8 @@ class TestListdir1(hmoto.S3Mock_TestCase):
 
 
 @pytest.mark.skipif(
-    hsystem.is_inside_ci(),
-    reason="Extend AWS authentication system CmTask #1292/1666.",
-)
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available")
 class TestDu1(hmoto.S3Mock_TestCase):
     def test_du1(self) -> None:
         """
@@ -237,7 +234,7 @@ class TestDu1(hmoto.S3Mock_TestCase):
         bucket_s3_path = f"s3://{self.bucket_name}"
         depth_one_s3_path = f"{bucket_s3_path}/depth_one"
         # Prepare test files.
-        moto_s3fs = hs3.get_s3fs("ck")
+        moto_s3fs = hs3.get_s3fs(self.mock_aws_profile)
         first_s3_path = f"{bucket_s3_path}/mock1.txt"
         lines = [b"line_mock\n"] * 150
         with moto_s3fs.open(first_s3_path, "wb") as s3_file:

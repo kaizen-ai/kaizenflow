@@ -3,6 +3,9 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hgit as hgit
+import im_v2.ccxt.data.client as icdcl
+import im_v2.common.data.client as icdc
 import market_data as mdata
 import market_data.test.market_data_test_case as mdtmdtca
 
@@ -11,6 +14,7 @@ import market_data.test.market_data_test_case as mdtmdtca
 # #############################################################################
 
 
+# TODO(Grisha): @Dan, can we use CcxtHistoricalPqByTileClient?
 class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
@@ -39,10 +43,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_is_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         # Run.
         actual = market_data.is_online()
@@ -53,10 +59,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1D")
         # Run.
@@ -65,10 +73,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period2(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("2D")
         # Run.
@@ -77,10 +87,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period3(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1W")
         # Run.
@@ -89,10 +101,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period4(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("10T")
         # Run.
@@ -101,10 +115,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("5T")
         # Run.
@@ -113,10 +129,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period6(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1T")
         # Run.
@@ -125,10 +143,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period7(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("365D")
         # Run.
@@ -137,10 +157,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_at_timestamp1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         #
@@ -178,10 +200,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval1(self) -> None:
         # Prepare inputs.
         asset_ids = None
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -222,10 +246,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval2(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -267,10 +293,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval3(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -312,10 +340,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval4(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -357,10 +387,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -403,10 +435,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_twap_price1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
@@ -435,10 +469,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_last_end_time1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         exp_last_end_time = pd.Timestamp("2018-08-17T01:39:00+00:00")
         # Run.
@@ -447,10 +483,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_last_price1(self) -> None:
         # Prepare inputs.
         asset_ids = [3187272957, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         #
         expected_length = 2
@@ -475,10 +513,12 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_should_be_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example1(
-            asset_ids, columns, column_remap
+        resample_1min = True
+        im_client = icdcl.get_CcxtCsvClient_example1(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         wall_clock_time = pd.Timestamp("2018-08-17T00:01:00")
         # Run.
@@ -519,10 +559,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_is_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns=columns, column_remap=column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns=columns, column_remap=column_remap
         )
         # Run.
         actual = market_data.is_online()
@@ -533,10 +574,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period1(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1D")
         # Run.
@@ -545,10 +587,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period2(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("2D")
         # Run.
@@ -557,10 +600,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period3(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1W")
         # Run.
@@ -569,10 +613,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period4(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("10T")
         # Run.
@@ -581,10 +626,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period5(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("5T")
         # Run.
@@ -593,10 +639,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period6(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1T")
         # Run.
@@ -605,10 +652,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_last_period7(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("365D")
         # Run.
@@ -617,10 +665,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_at_timestamp1(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         #
@@ -658,10 +707,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval1(self) -> None:
         # Prepare inputs.
         asset_ids = None
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
@@ -702,10 +752,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval2(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns=columns, column_remap=column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
@@ -747,10 +798,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval3(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns=columns, column_remap=column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
@@ -792,10 +844,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval4(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
@@ -837,10 +890,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [3303714233, 1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
@@ -884,10 +938,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_twap_price1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036, 3303714233]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
@@ -916,10 +971,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_last_end_time1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         exp_last_end_time = pd.Timestamp("2000-01-01T10:10:00-05:00")
         # Run.
@@ -928,10 +984,11 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_last_price1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036, 3303714233]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         #
         expected_length = 2
@@ -956,11 +1013,230 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
     def test_should_be_online1(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036]
-        columns: List[str] = []
+        columns = None
         column_remap = None
-        market_data = mdata.get_ImClientMarketData_example2(
-            asset_ids, columns, column_remap
+        im_client = icdc.get_DataFrameImClient_example1()
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client, asset_ids, columns, column_remap
         )
         wall_clock_time = pd.Timestamp("2000-01-01T09:42:00-05:00")
         # Run.
         self._test_should_be_online1(market_data, wall_clock_time)
+
+
+# #############################################################################
+# TestImClientMarketData3
+# #############################################################################
+
+
+# TODO(Dan): Replace `TestImClientMarketData1` on this one when extended.
+# TODO(Dan): use local data instead of S3.
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
+@pytest.mark.slow("~8 seconds by GH actions.")
+class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
+    @staticmethod
+    def get_expected_column_names() -> List[str]:
+        """
+        Return a list of expected column names.
+        """
+        expected_column_names = [
+            "asset_id",
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "start_ts",
+        ]
+        return expected_column_names
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_is_online1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns = None
+        column_remap = None
+        filter_data_mode = "assert"
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client,
+            asset_ids,
+            columns,
+            column_remap,
+            filter_data_mode=filter_data_mode,
+        )
+        # Run.
+        actual = market_data.is_online()
+        self.assertTrue(actual)
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_get_data_for_interval5(self) -> None:
+        # Prepare inputs.
+        asset_ids = [3187272957, 1467591036]
+        columns = None
+        column_remap = None
+        filter_data_mode = "assert"
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client,
+            asset_ids,
+            columns,
+            column_remap,
+            filter_data_mode=filter_data_mode,
+        )
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_length = 6
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2018-08-16 20:02:00-04:00, 2018-08-16 20:04:00-04:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,start_ts
+        shape=(6, 8)
+                                     asset_id        full_symbol         open         high          low        close     volume                  start_ts
+        end_ts
+        2018-08-16 20:02:00-04:00  1467591036  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226 2018-08-16 20:01:00-04:00
+        2018-08-16 20:02:00-04:00  3187272957   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255 2018-08-16 20:01:00-04:00
+        2018-08-16 20:03:00-04:00  1467591036  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797 2018-08-16 20:02:00-04:00
+        2018-08-16 20:03:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260 2018-08-16 20:02:00-04:00
+        2018-08-16 20:04:00-04:00  1467591036  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586 2018-08-16 20:03:00-04:00
+        2018-08-16 20:04:00-04:00  3187272957   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655 2018-08-16 20:03:00-04:00
+        """
+        # pylint: enable=line-too-long
+        # Run.
+        self._test_get_data_for_interval5(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    def test_filter_columns1(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns = ["asset_id", "full_symbol", "close", "start_ts"]
+        column_remap = None
+        filter_data_mode = "assert"
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client,
+            asset_ids,
+            columns,
+            column_remap,
+            filter_data_mode=filter_data_mode,
+        )
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_column_names = ["asset_id", "full_symbol", "close", "start_ts"]
+        # Run.
+        self._test_filter_columns1(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_column_names,
+        )
+
+    def test_filter_columns1_2(self) -> None:
+        """
+        Test that columns are filtered correctly when full symbol column is not
+        requested.
+        """
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns = ["asset_id", "close", "start_ts"]
+        column_remap = None
+        filter_data_mode = "assert"
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client,
+            asset_ids,
+            columns,
+            column_remap,
+            filter_data_mode=filter_data_mode,
+        )
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_column_names = ["asset_id", "close", "start_ts"]
+        # Run.
+        self._test_filter_columns1(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_column_names,
+        )
+
+    def test_filter_columns2(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns = ["full_symbol", "close"]
+        column_remap = None
+        filter_data_mode = "assert"
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client,
+            asset_ids,
+            columns,
+            column_remap,
+            filter_data_mode=filter_data_mode,
+        )
+        # Run.
+        self._test_filter_columns2(market_data, asset_ids)
+
+    def test_filter_columns3(self) -> None:
+        # Prepare inputs.
+        asset_ids = [1467591036]
+        columns = ["full_symbol", "close"]
+        column_remap = None
+        filter_data_mode = "warn_and_trim"
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example2(resample_1min)
+        market_data = mdata.get_HistoricalImClientMarketData_example1(
+            im_client,
+            asset_ids,
+            columns,
+            column_remap,
+            filter_data_mode=filter_data_mode,
+        )
+        start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
+        end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        #
+        expected_column_names = ["full_symbol", "close"]
+        # Run.
+        self._test_filter_columns3(
+            market_data,
+            start_ts,
+            end_ts,
+            asset_ids,
+            expected_column_names,
+        )

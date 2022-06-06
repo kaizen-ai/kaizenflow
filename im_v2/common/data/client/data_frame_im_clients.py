@@ -50,8 +50,15 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         self._universe = sorted(universe)
         # Initialise the parent class.
         vendor = "data_frame"
+        # For this specific client we pass the universe to the ctor, so
+        # the version is not needed, i.e. could be any. Passing here just
+        # to make the parent class happy.
+        universe_version = None
         super().__init__(
-            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor,
+            universe_version,
+            resample_1min,
+            full_symbol_col_name=full_symbol_col_name,
         )
         # Validate and set input dataframe.
         hpandas.dassert_time_indexed_df(
@@ -72,12 +79,13 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         return self._universe
 
+    # TODO(Dan): Implement usage of `columns` parameter.
     def _read_data_for_multiple_symbols(
         self,
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:

@@ -43,6 +43,7 @@ def get_pyarrow_s3fs(*args: Any, **kwargs: Any) -> pafs.S3FileSystem:
     return s3fs_
 
 
+# TODO(Dan): Add mode to allow querying even when some non-existing columns are passed.
 def from_parquet(
     file_name: str,
     *,
@@ -50,19 +51,34 @@ def from_parquet(
     filters: Optional[List[Any]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
 ) -> pd.DataFrame:
     """
     Load a dataframe from a Parquet file.
 
     The difference with `pd.read_pq` is that here we use Parquet
     Dataset.
+
+    :param file_name: path to a Parquet dataset
+    :param columns: columns to return, skipping reading columns that are not requested
+       - `None` means return all available columns
+    :param filters: Parquet query filters
+    :param log_level: logging level to execute at
+    :param report_stats: whether to report Parquet file size or not
+    :param aws_profile: AWS profile to use if and only if using an S3 path,
+        otherwise `None` for local path
+    :return: data from Parquet dataset
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
     hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
     if hs3.is_s3_path(file_name):
-        filesystem = get_pyarrow_s3fs(aws_profile)
+        if isinstance(aws_profile, str):
+            filesystem = get_pyarrow_s3fs(aws_profile)
+        else:
+            # Note: `s3fs` filesystem is only to be used on exact file path
+            # as `pq.ParquetDataset` is not properly handling directory path.
+            filesystem = aws_profile
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
         hs3.dassert_path_exists(file_name, s3_filesystem)
@@ -81,6 +97,9 @@ def from_parquet(
             filters=filters,
             use_legacy_dataset=False,
         )
+        if columns:
+            # Note: `schema.names` also includes and index.
+            hdbg.dassert_is_subset(columns, dataset.schema.names)
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.
         # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
@@ -155,7 +174,7 @@ def to_parquet(
     else:
         filesystem = None
         hdbg.dassert_path_not_exists(file_name)
-    hdbg.dassert_file_extension(file_name, "parquet")
+    hdbg.dassert_file_extension(file_name, ["parquet", "pq"])
     # There is no concept of directory on S3.
     # Only applicable to local filesystem.
     if aws_profile is None:
@@ -534,6 +553,11 @@ def get_parquet_filters_from_timestamp_interval(
     elif partition_mode == "by_year_week":
         # TODO(gp): Consider using the same approach above for months also here.
         # Partition by year and week.
+        hdbg.dassert_is_not(
+            end_timestamp,
+            None,
+            "Parquet backend can't determine the boundaries of the data",
+        )
         # Include last week in the interval.
         end_timestamp += pd.DateOffset(weeks=1)
         # Get all weeks in the interval.
@@ -664,6 +688,9 @@ def to_partitioned_parquet(
     filesystem = None
     if aws_profile is not None:
         filesystem = hs3.get_s3fs(aws_profile)
+        # ParquetDataset appends an extra "/", creating an empty-named folder
+        #  when saving on S3.
+        dst_dir = dst_dir.rstrip("/")
     with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
         # Read.
         table = pa.Table.from_pandas(df)
@@ -680,8 +707,6 @@ def to_partitioned_parquet(
         )
 
 
-# TODO(Nikola): Currently indirectly tested in
-#  `im_v2/ccxt/data/extract/test/test_download_historical_data.py`.
 def list_and_merge_pq_files(
     root_dir: str,
     *,
@@ -738,9 +763,16 @@ def list_and_merge_pq_files(
             continue
         # Read all files in target folder.
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
+        data = data.to_pandas()
+        # Drop duplicates on non-metadata columns.
+        subset_cols = data.columns.to_list()
+        for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
+            if col_name in subset_cols:
+                subset_cols.remove(col_name)
+        data = data.drop_duplicates(subset=subset_cols)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
-        pq.write_table(data, folder + "/" + file_name, filesystem=filesystem)
+        pq.write_table(pa.Table.from_pandas(data), folder + "/" + file_name, filesystem=filesystem)
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:

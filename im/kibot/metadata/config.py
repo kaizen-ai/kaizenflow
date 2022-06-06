@@ -7,8 +7,9 @@ import im.kibot.metadata.config as imkimecon
 
 import helpers.hs3 as hs3
 
-# TODO(\*): Merge / reconcile S3_PREFIX in with im.kibot/data/config.py.
-S3_BUCKET = hs3.get_bucket()
+AM_AWS_PROFILE = "am"
+# TODO(gp): Merge / reconcile S3_PREFIX in with im.kibot/data/config.py.
+S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 S3_PREFIX = f"s3://{S3_BUCKET}/data/kibot/metadata"
 
 # TODO(amr): move common configs between data & metadata to

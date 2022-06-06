@@ -14,6 +14,11 @@ import oms.test.oms_db_helper as omtodh
 
 
 class TestOrderProcessor1(omtodh.TestOmsDbHelper):
+    
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+    
     def setUp(self) -> None:
         super().setUp()
         # Create OMS tables.
@@ -26,12 +31,12 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
 
     def helper(self, termination_condition: Union[int, pd.Timestamp]) -> None:
         """
-        Create two coroutines, one with a MockedBroker, the other with an
+        Create two coroutines, one with a DatabaseBroker, the other with an
         OrderProcessor.
         """
         #
         with hasynci.solipsism_context() as event_loop:
-            # Build MockedBroker.
+            # Build DatabaseBroker.
             broker = obroexam.get_mocked_broker_example1(
                 event_loop, self.connection
             )
@@ -56,7 +61,7 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
 
     async def broker_coroutine(
         self,
-        broker: ombroker.AbstractBroker,
+        broker: ombroker.Broker,
         get_wall_clock_time: hdateti.GetWallClockTime,
     ) -> None:
         # We need to wait 1 sec to make sure that the OrderProcessor comes up first
@@ -87,7 +92,7 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
         """
         Test submitting one order and having the OrderProcessor accept that.
         """
-        # Shut down after two orders are received, but the MockedBroker sends only
+        # Shut down after two orders are received, but the DatabaseBroker sends only
         # one, so OrderProcessor times out.
         termination_condition = 2
         with self.assertRaises(TimeoutError):
@@ -97,7 +102,7 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
         """
         Test submitting one order and having the OrderProcessor accept that.
         """
-        # Shut down after 1 hour, but the MockedBroker sends only one at 9:35,
+        # Shut down after 1 hour, but the DatabaseBroker sends only one at 9:35,
         # so OrderProcessor times out.
         termination_condition = pd.Timestamp("2000-01-01 10:30:00-05:00")
         with self.assertRaises(TimeoutError):

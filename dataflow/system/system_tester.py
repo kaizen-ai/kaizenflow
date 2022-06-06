@@ -47,46 +47,13 @@ class SystemTester:
         _LOG.debug("pnl=\n%s", pnl)
         return actual, pnl
 
-    def get_research_pnl_signature(
-        self,
-        result_bundle,
-        *,
-        returns_col: str,
-        volatility_col: str,
-        prediction_col: str,
-        target_gmv: float = 100000,
-        dollar_neutrality: str = "no_constraint",
-    ) -> Tuple[str, pd.Series]:
-        actual = ["\n# forecast_evaluator signature=\n"]
-        forecast_evaluator = dtfmod.ForecastEvaluator(
-            returns_col=returns_col,
-            volatility_col=volatility_col,
-            prediction_col=prediction_col,
-        )
-        result_df = result_bundle.result_df
-        signature = forecast_evaluator.to_str(
-            result_df,
-            target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-        )
-        actual.append(signature)
-        _, _, stats = forecast_evaluator.compute_portfolio(
-            result_df,
-            target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-            reindex_like_input=True,
-        )
-        research_pnl = stats["pnl"]
-        actual = "\n".join(map(str, actual))
-        return actual, research_pnl
-
     def compute_run_signature(
         self,
         dag_runner,
         portfolio,
         result_bundle,
         *,
-        returns_col: str,
+        price_col: str,
         volatility_col: str,
         prediction_col: str,
     ) -> str:
@@ -99,100 +66,70 @@ class SystemTester:
         actual.append(signature)
         signature, research_pnl = self.get_research_pnl_signature(
             result_bundle,
-            returns_col=returns_col,
+            price_col=price_col,
             volatility_col=volatility_col,
             prediction_col=prediction_col,
         )
         actual.append(signature)
         if min(pnl.count(), research_pnl.count()) > 1:
-            # Resample `pnl` so that its datetime index aligns on even bars, like
-            #  research_pnl's does.
-            freq = research_pnl.index.freq
-            pnl = pnl.resample(rule=freq).sum(min_count=1)
-            _LOG.debug("resampled pnl=\n%s", pnl)
-            correlation = pnl.corr(research_pnl)
+            # Drop leading NaNs and burn the first PnL entry.
+            research_pnl = research_pnl.dropna().iloc[1:]
+            tail = research_pnl.size
+            # We create new series because the portfolio times may be
+            # disaligned from the research bar times.
+            pnl1 = pd.Series(pnl.tail(tail).values)
+            _LOG.debug("portfolio pnl=\n%s", pnl1)
+            pnl2 = pd.Series(research_pnl.tail(min(tail, pnl1.size)).values)
+            _LOG.debug("research pnl=\n%s", pnl2)
+            correlation = pnl1.corr(pnl2)
             actual.append("\n# pnl agreement with research pnl\n")
             actual.append(f"corr = {correlation:.3f}")
         actual = "\n".join(map(str, actual))
         return actual
 
-    def get_research_pnl_from_prices_signature(
+    def get_research_pnl_signature(
         self,
         result_bundle,
         *,
         price_col: str,
         volatility_col: str,
         prediction_col: str,
-        target_gmv: float = 100000,
-        dollar_neutrality: str = "no_constraint",
-        quantization: str = "no_quantization",
+        bulk_frac_to_remove: float = 0.0,
+        bulk_fill_method: str = "zero",
+        target_gmv: float = 1e5,
+        liquidate_at_end_of_day: bool = False,
     ) -> Tuple[str, pd.Series]:
-        actual = ["\n# forecast_evaluator signature=\n"]
+        # TODO(gp): @all use actual.append(hprint.frame("system_config"))
+        #  to separate the sections of the output.
+        actual = ["\n# forecast_evaluator_from_prices signature=\n"]
         forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
             price_col=price_col,
             volatility_col=volatility_col,
             prediction_col=prediction_col,
         )
         result_df = result_bundle.result_df
+        _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
         signature = forecast_evaluator.to_str(
             result_df,
+            bulk_frac_to_remove=bulk_frac_to_remove,
+            bulk_fill_method=bulk_fill_method,
+            liquidate_at_end_of_day=liquidate_at_end_of_day,
             target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-            quantization=quantization,
         )
+        _LOG.debug("signature=\n%s", signature)
         actual.append(signature)
         _, _, _, _, stats = forecast_evaluator.compute_portfolio(
             result_df,
+            bulk_frac_to_remove=bulk_frac_to_remove,
+            bulk_fill_method=bulk_fill_method,
             target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-            quantization=quantization,
+            liquidate_at_end_of_day=liquidate_at_end_of_day,
             reindex_like_input=True,
+            burn_in_bars=0,
         )
         research_pnl = stats["pnl"]
         actual = "\n".join(map(str, actual))
         return actual, research_pnl
-
-    def compute_run_signature_from_prices(
-        self,
-        dag_runner,
-        portfolio,
-        result_bundle,
-        *,
-        price_col: str,
-        volatility_col: str,
-        prediction_col: str,
-        target_gmv: float = 100000,
-        dollar_neutrality: str = "no_constraint",
-        quantization: str = "no_quantization",
-    ) -> str:
-        # Check output.
-        actual = []
-        #
-        events = dag_runner.events
-        actual.append(self.get_events_signature(events))
-        signature, pnl = self.get_portfolio_signature(portfolio)
-        actual.append(signature)
-        signature, research_pnl = self.get_research_pnl_from_prices_signature(
-            result_bundle,
-            price_col=price_col,
-            volatility_col=volatility_col,
-            prediction_col=prediction_col,
-            target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-            quantization=quantization,
-        )
-        actual.append(signature)
-        if min(pnl.count(), research_pnl.count()) > 1:
-            # Resample `pnl` so that its datetime index aligns on even bars, like
-            #  research_pnl's does.
-            freq = research_pnl.index.freq
-            pnl = pnl.resample(rule=freq).sum(min_count=1)
-            _LOG.debug("resampled pnl=\n%s", pnl)
-            correlation = pnl.corr(research_pnl)
-            actual.append("\n# pnl agreement with research pnl\n")
-            actual.append(f"corr = {correlation:.3f}")
-        actual = "\n".join(map(str, actual))
-        return actual
 
     @staticmethod
     def _append(

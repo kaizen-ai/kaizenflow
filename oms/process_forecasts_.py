@@ -33,7 +33,7 @@ _LOG = logging.getLogger(__name__)
 async def process_forecasts(
     prediction_df: pd.DataFrame,
     volatility_df: pd.DataFrame,
-    portfolio: omportfo.AbstractPortfolio,
+    portfolio: omportfo.Portfolio,
     config: cconfig.Config,
     spread_df: Optional[pd.DataFrame],
     restrictions_df: Optional[pd.DataFrame],
@@ -75,7 +75,7 @@ async def process_forecasts(
     _validate_compatibility(prediction_df, volatility_df)
     _validate_compatibility(prediction_df, spread_df)
     # Check `portfolio`.
-    hdbg.dassert_isinstance(portfolio, omportfo.AbstractPortfolio)
+    hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     hdbg.dassert_isinstance(config, cconfig.Config)
     #
     if restrictions_df is None:
@@ -120,6 +120,7 @@ async def process_forecasts(
         spread_df = cofinanc.remove_weekends(spread_df)
     # Get log dir.
     log_dir = config.get("log_dir", None)
+    _LOG.info("log_dir=%s", log_dir)
     # We should not have anything left in the config that we didn't extract.
     # hdbg.dassert(not config, "config=%s", str(config))
     #
@@ -160,7 +161,8 @@ async def process_forecasts(
             # it's later, either assert or log it as a problem.
             hdbg.dassert_lte(get_wall_clock_time(), timestamp + offset_min)
         else:
-            await hasynci.wait_until(timestamp, get_wall_clock_time)
+            _LOG.debug("async_wait_until")
+            await hasynci.async_wait_until(timestamp, get_wall_clock_time)
         # Get the wall clock timestamp.
         wall_clock_timestamp = get_wall_clock_time()
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
@@ -213,7 +215,7 @@ async def process_forecasts(
 class ForecastProcessor:
     def __init__(
         self,
-        portfolio: omportfo.AbstractPortfolio,
+        portfolio: omportfo.Portfolio,
         order_config: cconfig.Config,
         optimizer_config: cconfig.Config,
         restrictions: Optional[pd.DataFrame],
@@ -439,17 +441,22 @@ class ForecastProcessor:
         )
         # Compute the target positions in cash (call the optimizer).
         backend = self._optimizer_config["backend"]
-        if backend == "compute_target_positions_in_cash":
+        if backend == "pomo":
+            bulk_frac_to_remove = _get_object_from_config(
+                self._optimizer_config, "bulk_frac_to_remove", float
+            )
+            bulk_fill_method = _get_object_from_config(
+                self._optimizer_config, "bulk_fill_method", str
+            )
             target_gmv = _get_object_from_config(
                 self._optimizer_config, "target_gmv", float
             )
-            dollar_neutrality = _get_object_from_config(
-                self._optimizer_config, "dollar_neutrality", str
-            )
             df = ocalopti.compute_target_positions_in_cash(
                 assets_and_predictions,
+                bulk_frac_to_remove=bulk_frac_to_remove,
+                bulk_fill_method=bulk_fill_method,
                 target_gmv=target_gmv,
-                dollar_neutrality=dollar_neutrality,
+                volatility_lower_bound=1e-5,
             )
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
@@ -475,7 +482,7 @@ class ForecastProcessor:
         elif backend == "service_optimizer":
             raise NotImplementedError
         else:
-            raise ValueError
+            raise ValueError("Unsupported `backend`=%s", backend)
         # Convert the target positions from cash values to target share counts.
         # Round to nearest integer towards zero.
         # df["diff_num_shares"] = np.fix(df["target_trade"] / df["price"])
@@ -749,10 +756,8 @@ def _validate_optimizer_config(config: cconfig.Config) -> None:
 
 
 def _validate_compatibility(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
-    hdbg.dassert_isinstance(df1, pd.DataFrame)
-    hdbg.dassert_isinstance(df2, pd.DataFrame)
-    hdbg.dassert(df1.index.equals(df2.index))
-    hdbg.dassert(df2.columns.equals(df2.columns))
+    hpandas.dassert_indices_equal(df1, df2)
+    hpandas.dassert_columns_equal(df1, df2)
 
 
 # Extract the objects from the config.

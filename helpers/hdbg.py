@@ -818,9 +818,11 @@ def init_logger(
     # Exit to avoid to replicate the same output multiple times.
     if not in_pytest and root_logger.handlers:
         print(WARNING + ": Logger already initialized: skipping")
-        import traceback
+        if False:
+            # Print info about the caller.
+            import traceback
 
-        traceback.print_stack()
+            traceback.print_stack()
         return
     #
     print(INFO + f": > cmd='{get_command_line()}'")
@@ -861,7 +863,10 @@ def init_logger(
             os.mkdir(log_dirname)
         # Delete the file since we don't want to append.
         if os.path.exists(log_filename):
-            os.unlink(log_filename)
+            try:
+                os.unlink(log_filename)
+            except FileNotFoundError as e:
+                print(e)
         # Tee to file.
         file_handler = logging.FileHandler(log_filename)
         root_logger.addHandler(file_handler)

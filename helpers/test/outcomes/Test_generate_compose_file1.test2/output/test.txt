@@ -1,4 +1,4 @@
-use_privileged_mode=False, use_sibling_container=False, use_shared_cache=True, mount_as_submodule=False
+use_privileged_mode=False, use_sibling_container=False, shared_data_dirs={'/data/shared': '/shared_data'}, mount_as_submodule=False, use_network_mode_host=True
 version: '3'
 
 services:
@@ -11,11 +11,23 @@ services:
       - AM_ENABLE_DIND=0
       - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
       - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
-      - AM_S3_BUCKET=$AM_S3_BUCKET
+      - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
       - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
-      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-      - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
+      - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
+      - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
+      - CK_AWS_PROFILE=$CK_AWS_PROFILE
+      # - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
+      # - CK_ENABLE_DIND=
+      # - CK_FORCE_TEST_FAIL=$CK_FORCE_TEST_FAIL
+      # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
+      - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
+      - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
+      # - CK_HOST_NAME=
+      # - CK_HOST_OS_NAME=
+      - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
+      - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
+      - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
       - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
       # This env var is used by GH Action to signal that we are inside the CI.
       - CI=$CI
@@ -29,8 +41,8 @@ services:
       - ~/.config/gspread_pandas/:/home/.config/gspread_pandas/
       - ~/.config/gh:/home/.config/gh
 
-      # Shared cache. This is specific of lime.
-      - /local/home/share/cache:/cache
+      # Shared data directories.
+      - /data/shared:/shared_data
 
   # Mount `amp` when it is used as supermodule.
   app:
@@ -39,12 +51,19 @@ services:
     volumes:
       - ../../:/app
 
+    # Default network mode set to host so we can reach e.g.
+    # a database container pointing to localhost:5432.
+    # In tests we use dind so we need set back to the default "bridge".
+    # See CmTask988 and https://stackoverflow.com/questions/24319662
+    network_mode: ${NETWORK_MODE:-host}
+
   jupyter_server:
     command: devops/docker_run/run_jupyter_server.sh
     environment:
       - PORT=${PORT}
     extends:
       app
+    network_mode: ${NETWORK_MODE:-bridge}
     ports:
       # TODO(gp): Rename `AM_PORT`.
       - "${PORT}:${PORT}"

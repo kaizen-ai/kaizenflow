@@ -1,3 +1,7 @@
+# cmamp-1.1.0
+- 2022-04-18
+- Generate `docker-compose` programmatically instead of composing different files
+
 # cmamp-1.0.9
 - 2022-03-15
 - Update `docker-compose` version

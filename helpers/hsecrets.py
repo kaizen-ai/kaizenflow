@@ -12,14 +12,19 @@ from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 
 import helpers.hdbg as hdbg
+import helpers.hs3 as hs3
 
 
-def get_secrets_client(*, aws_profile: str = "ck") -> BaseClient:
+def get_secrets_client(aws_profile: str) -> BaseClient:
     """
     Return client to work with AWS Secrets Manager in the specified region.
     """
     hdbg.dassert_isinstance(aws_profile, str)
-    session = boto3.session.Session(profile_name=aws_profile)
+    # Original credentials are cached, thus we do not want to edit them.
+    credentials = {**hs3.get_aws_credentials(aws_profile=aws_profile)}
+    # Boto session expects `region_name`.
+    credentials["region_name"] = credentials.pop("aws_region")
+    session = boto3.session.Session(**credentials)
     client = session.client(service_name="secretsmanager")
     return client
 
@@ -34,9 +39,8 @@ def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
     """
     hdbg.dassert_isinstance(secret_name, str)
     # Create a AWS Secrets Manager client.
-    client = get_secrets_client()
-    # Stores value of retrieved secret.
-    secret_val = {}
+    aws_profile = "ck"
+    client = get_secrets_client(aws_profile)
     # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
     # for the full list of exceptions.
     try:
@@ -65,7 +69,8 @@ def store_secret(
     """
     hdbg.dassert_isinstance(secret_name, str)
     # Create a AWS Secrets Manager client.
-    client = get_secrets_client()
+    aws_profile = "ck"
+    client = get_secrets_client(aws_profile)
     # See
     # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_CreateSecret.html
     # for the full list of exceptions.

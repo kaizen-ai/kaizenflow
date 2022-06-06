@@ -482,7 +482,7 @@ def purify_file_names(file_names: List[str]) -> List[str]:
 
 
 def purify_from_env_vars(txt: str) -> str:
-    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
+    for env_var in ["AM_ECR_BASE_PATH", "AM_AWS_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
         if env_var in os.environ:
             val = os.environ[env_var]
             hdbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
@@ -787,6 +787,7 @@ def assert_equal(
     # Dedent expected, if needed.
     if dedent:
         _LOG.debug("# Dedent expected")
+        #actual = hprint.dedent(actual)
         expected = hprint.dedent(expected)
         _LOG.debug("exp='\n%s'", expected)
     # Purify actual text, if needed.
@@ -1092,7 +1093,8 @@ class TestCase(unittest.TestCase):
         # Assemble everything in a single path.
         import helpers.hs3 as hs3
 
-        s3_bucket = hs3.get_path()
+        aws_profile = "am"
+        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
 
@@ -1168,6 +1170,12 @@ class TestCase(unittest.TestCase):
         """
         self.assertEqual(actual.index.to_list(), expected.index.to_list())
         self.assertEqual(actual.columns.to_list(), expected.columns.to_list())
+        # Often the output of a failing assertion is difficult to parse
+        # so we resort to our special `assert_equal()`.
+        if not np.allclose(actual, expected, **kwargs):
+            import helpers.hpandas as hpandas
+
+            self.assert_equal(hpandas.df_to_str(actual), hpandas.df_to_str(expected))
         np.testing.assert_allclose(actual, expected, **kwargs)
 
     # TODO(gp): There is a lot of similarity between `check_string()` and

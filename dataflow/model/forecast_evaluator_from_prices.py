@@ -3,17 +3,16 @@ Import as:
 
 import dataflow.model.forecast_evaluator_from_prices as dtfmfefrpr
 """
-
-import datetime
+import collections
 import logging
 import os
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
+import core.config as cconfig
 import core.finance as cofinanc
-import core.signal_processing as sigproc
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
@@ -31,20 +30,17 @@ class ForecastEvaluatorFromPrices:
         price_col: str,
         volatility_col: str,
         prediction_col: str,
-        *,
-        first_bar_of_day_open: datetime.time = datetime.time(9, 30),
-        first_bar_of_day_close: datetime.time = datetime.time(9, 45),
-        last_bar_of_day_close: datetime.time = datetime.time(16, 00),
-        remove_weekends: bool = True,
+        spread_col: Optional[str] = None,
     ) -> None:
         """
         Initialize column names.
 
         Note:
+        - the `price_col` is unadjusted price (no adjustment for splits,
+          dividends, or volatility)
+        - the `volatility_col` is used for position sizing
         - the `prediction_col` is a prediction of vol-adjusted returns
-        - the `price_col` is unadjusted
-        - by passing `volatility_col` explicitly, we can easily calculate PnL
-          at a specified GMV and under a dollar neutrality constraint
+          (presumably with volatility given by `volatility_col`)
 
         :param price_col: price per share
         :param volatility_col: volatility used for adjustment of forward returns
@@ -58,15 +54,9 @@ class ForecastEvaluatorFromPrices:
         self._volatility_col = volatility_col
         hdbg.dassert_isinstance(prediction_col, str)
         self._prediction_col = prediction_col
-        #
-        hdbg.dassert_isinstance(first_bar_of_day_open, datetime.time)
-        self._first_bar_of_day_open = first_bar_of_day_open
-        hdbg.dassert_isinstance(first_bar_of_day_close, datetime.time)
-        self._first_bar_of_day_close = first_bar_of_day_close
-        hdbg.dassert_isinstance(last_bar_of_day_close, datetime.time)
-        self._last_bar_of_day_close = last_bar_of_day_close
-        #
-        self._remove_weekends = remove_weekends
+        if spread_col is not None:
+            hdbg.dassert_isinstance(spread_col, str)
+        self._spread_col = spread_col
 
     @staticmethod
     def read_portfolio(
@@ -79,7 +69,13 @@ class ForecastEvaluatorFromPrices:
         """
         Read and process logged portfolio.
 
+        :param log_dir: directory for reading log files of portfolio state
         :param file_name: if `None`, find and use the latest
+        :param tz: timezone to apply to timestamps (this information is lost in
+            the logging/reading round trip)
+        :param cast_asset_ids_to_int: cast asset ids from integers-as-strings
+            to integers (the data type is lost in the logging/reading round
+            trip)
         """
         if file_name is None:
             dir_name = os.path.join(log_dir, "price")
@@ -89,6 +85,7 @@ class ForecastEvaluatorFromPrices:
             files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
             files.sort()
             file_name = files[-1]
+            _LOG.info("`file_name`=%s", file_name)
         price = ForecastEvaluatorFromPrices._read_df(
             log_dir, "price", file_name, tz
         )
@@ -119,15 +116,16 @@ class ForecastEvaluatorFromPrices:
                 pnl,
             ]:
                 ForecastEvaluatorFromPrices._cast_cols_to_int(df)
-        portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(
-            price,
-            volatility,
-            predictions,
-            holdings,
-            positions,
-            flows,
-            pnl,
-        )
+        dfs = {
+            "price": price,
+            "volatility": volatility,
+            "prediction": predictions,
+            "holdings": holdings,
+            "position": positions,
+            "flow": flows,
+            "pnl": pnl,
+        }
+        portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(dfs)
         statistics_df = ForecastEvaluatorFromPrices._read_df(
             log_dir, "statistics", file_name, tz
         )
@@ -136,23 +134,18 @@ class ForecastEvaluatorFromPrices:
     def to_str(
         self,
         df: pd.DataFrame,
-        *,
-        target_gmv: Optional[float] = None,
-        dollar_neutrality: str = "no_constraint",
-        quantization: str = "no_quantization",
+        **kwargs,
     ) -> str:
         """
-        Return the state of the Portfolio in terms of the holdings as a string.
+        Return the state of the Portfolio as a string.
 
         :param df: as in `compute_portfolio`
-        :param target_gmv: as in `compute_portfolio`
-        :param dollar_neutrality: as in `compute_portfolio`
+        :param kwargs: forwarded to `compute_portfolio()`
+        :return: portfolio state (rounded) as a string
         """
         holdings, positions, flows, pnl, stats = self.compute_portfolio(
             df,
-            target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-            quantization=quantization,
+            **kwargs,
         )
         act = []
         round_precision = 6
@@ -202,24 +195,25 @@ class ForecastEvaluatorFromPrices:
         self,
         df: pd.DataFrame,
         log_dir: str,
-        *,
-        target_gmv: Optional[float] = None,
-        dollar_neutrality: str = "no_constraint",
-        quantization: str = "no_quantization",
-        reindex_like_input: bool = False,
+        **kwargs,
     ) -> str:
+        """
+        Log portfolio state to the file system.
+
+        :param df: as in `compute_portfolio()`
+        :param log_dir: directory for writing log files of portfolio state
+        :param kwargs: forwarded to `compute_portfolio()`
+        :return: name of log files with timestamp
+        """
         hdbg.dassert(log_dir, "Must specify `log_dir` to log portfolio.")
         holdings, position, flow, pnl, statistics = self.compute_portfolio(
             df,
-            target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-            quantization=quantization,
-            reindex_like_input=reindex_like_input,
+            **kwargs,
         )
         last_timestamp = df.index[-1]
         hdbg.dassert_isinstance(last_timestamp, pd.Timestamp)
-        last_time_str = last_timestamp.strftime("%Y%m%d_%H%M%S")
-        file_name = f"{last_time_str}.csv"
+        last_timestamp_str = last_timestamp.strftime("%Y%m%d_%H%M%S")
+        file_name = f"{last_timestamp_str}.csv"
         #
         ForecastEvaluatorFromPrices._write_df(
             df[self._price_col], log_dir, "price", file_name
@@ -247,23 +241,43 @@ class ForecastEvaluatorFromPrices:
         self,
         df: pd.DataFrame,
         *,
-        target_gmv: Optional[float] = None,
-        dollar_neutrality: str = "no_constraint",
+        style: str = "cross_sectional",
         quantization: str = "no_quantization",
+        liquidate_at_end_of_day: bool = "True",
         reindex_like_input: bool = False,
+        burn_in_bars: int = 3,
+        burn_in_days: int = 0,
+        **kwargs,
     ) -> Tuple[
         pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
     ]:
         """
         Compute target positions, PnL, and portfolio stats.
 
-        :param df: multiindexed dataframe with predictions, returns, volatility
-        :param target_gmv: if `None`, then GMV may float
-        :param dollar_neutrality: enforce a hard dollar neutrality constraint
+        :param df: multiindexed dataframe with predictions, price, volatility
         :param reindex_like_input: output dataframes to have the same input as
             `df` (e.g., including any weekends or values outside of the
             `start_time`-`end_time` range)
+        :param style: belongs to
+            - "cross_sectional": cross-sectionally normalize predictions,
+              possibly remove a portion of the bulk of the distribution,
+              and allocate a target GMV
+            - "longitudinal": normalize and threshold predictions
+              longitudinally, allocating an equal dollar risk to each name
+              independently
         :param quantization: indicate whether to round to nearest share, lot
+        :param liquidate_at_end_of_day: force holdings to zero at the last
+            trade if true (otherwise hold overnight)
+        :param reindex_like_input: if `False`, only return dataframes indexed
+            by the inferred "active index" of datetimes
+        :param burn_in_bars: number of leading bars to trim (to remove warm-up
+            artifacts)
+        :param burn_in_days: number of leading days to trim (to remove warm-up
+            artifacts). Applied independently of `burn_in_bars`.
+        :param kwargs: forwarded to either
+            `compute_target_positions_cross_sectionally()` or
+            `compute_target_positions_longitudinally()` depending upon the
+            value of `style`
         :return: (holdings, position, flow, pnl, stats)
         """
         self._validate_df(df)
@@ -275,28 +289,78 @@ class ForecastEvaluatorFromPrices:
         prediction_df = ForecastEvaluatorFromPrices._get_df(
             df, self._prediction_col
         )
+        _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
         volatility_df = ForecastEvaluatorFromPrices._get_df(
             df, self._volatility_col
         )
-        # The values of`target_positions` represent cash values.
-        target_positions = (
-            ForecastEvaluatorFromPrices._compute_target_positions_from_forecasts(
-                volatility_df,
-                prediction_df,
-                target_gmv=target_gmv,
-                dollar_neutrality=dollar_neutrality,
+        _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
+        if kwargs:
+            target_positions_config = cconfig.get_config_from_flattened_dict(
+                kwargs
             )
-        )
+        else:
+            target_positions_config = cconfig.Config()
+        _LOG.debug("target_positions_config=\n%s", target_positions_config)
+        spread_df = None
+        compute_extended_stats = False
+        if self._spread_col is not None:
+            spread_df = ForecastEvaluatorFromPrices._get_df(df, self._spread_col)
+            compute_extended_stats = True
+        # The values of`target_positions` represent cash values.
+        if style == "cross_sectional":
+            target_positions = (
+                cofinanc.compute_target_positions_cross_sectionally(
+                    prediction_df,
+                    volatility_df,
+                    target_positions_config,
+                )
+            )
+        elif style == "longitudinal":
+            target_positions = cofinanc.compute_target_positions_longitudinally(
+                prediction_df,
+                volatility_df,
+                target_positions_config,
+                spread_df,
+            )
+        else:
+            raise ValueError("Unsupported `style`=%s", style)
+        self._validate_target_position_df(target_positions, prediction_df)
         # Compute target holdings.
         price_df = ForecastEvaluatorFromPrices._get_df(df, self._price_col)
         holdings, flows = self._compute_holdings_and_flows(
-            price_df, target_positions, quantization=quantization
+            price_df,
+            target_positions,
+            quantization=quantization,
+            liquidate_at_end_of_day=liquidate_at_end_of_day,
         )
         # Current positions in dollars.
         positions = holdings.multiply(price_df)
-        pnl = positions.diff().add(flows, fill_value=0)
+        pnl = positions.subtract(positions.shift(1), fill_value=0).add(
+            flows, fill_value=0
+        )
         # Compute statistics.
-        stats = self._compute_statistics(positions, flows, pnl)
+        stats = self._compute_statistics(
+            positions, flows, pnl, spread_df, compute_extended_stats
+        )
+        # Remove initial bars.
+        if burn_in_bars > 0:
+            holdings = holdings.iloc[burn_in_bars:]
+            positions = positions.iloc[burn_in_bars:]
+            flows = flows.iloc[burn_in_bars:]
+            pnl = pnl.iloc[burn_in_bars:]
+            stats = stats.iloc[burn_in_bars:]
+        if burn_in_days > 0:
+            # TODO(Paul): Consider making this more efficient (and less
+            # awkward).
+            date_idx = df.gropuby(lambda x: x.date()).count().index
+            hdbg.dassert_lt(burn_in_days, date_idx.size)
+            first_date = date_idx.iloc[burn_in_days]
+            _LOG.info("Initial date after burn-in=%s", first_date)
+            holdings = holdings.loc[first_date:]
+            positions = positions.loc[first_date:]
+            flows = flows.loc[first_date:]
+            pnl = pnl.loc[first_date:]
+            stats = stats.loc[first_date:]
         # Convert one-step-ahead target positions to "point-in-time"
         # (hypothetically) realized positions.
         # Possibly reindex dataframes.
@@ -311,40 +375,38 @@ class ForecastEvaluatorFromPrices:
     def annotate_forecasts(
         self,
         df: pd.DataFrame,
-        *,
-        target_gmv: Optional[float] = None,
-        dollar_neutrality: str = "no_constraint",
-        quantization: str = "no_quantization",
-        reindex_like_input: bool = True,
+        **kwargs,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Wraps `compute_portfolio()`, returns a single multiindexed dataframe.
 
         :param df: as in `compute_portfolio()`
-        :param target_gmv: as in `compute_portfolio()`
-        :param dollar_neutrality: as in `compute_portfolio()`
+        :param kwargs: forwarded to `compute_portfolio()`
         :return: multiindexed dataframe with level-0 columns
             "returns", "volatility", "prediction", "position", "pnl"
         """
         holdings, position, flow, pnl, statistics_df = self.compute_portfolio(
             df,
-            target_gmv=target_gmv,
-            dollar_neutrality=dollar_neutrality,
-            quantization=quantization,
-            reindex_like_input=reindex_like_input,
+            **kwargs,
         )
-        portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(
-            df[self._price_col],
-            df[self._volatility_col],
-            df[self._prediction_col],
-            holdings,
-            position,
-            flow,
-            pnl,
-        )
+        dfs = {
+            "price": df[self._price_col],
+            "volatility": df[self._volatility_col],
+            "prediction": df[self._prediction_col],
+            "holdings": holdings,
+            "position": position,
+            "flow": flow,
+            "pnl": pnl,
+        }
+        if self._spread_col is not None:
+            dfs["spread"] = df[self._spread_col]
+        portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(dfs)
         return portfolio_df, statistics_df
 
     def get_cols(self) -> List[str]:
+        """
+        Return the names of the price, volatility, and prediction columns.
+        """
         cols = [
             self._price_col,
             self._volatility_col,
@@ -352,25 +414,32 @@ class ForecastEvaluatorFromPrices:
         ]
         return cols
 
-    @staticmethod
-    def _build_multiindex_df(
-        price: pd.DataFrame,
-        volatility: pd.DataFrame,
-        prediction: pd.DataFrame,
-        holdings: pd.DataFrame,
-        position: pd.DataFrame,
-        flow: pd.DataFrame,
-        pnl: pd.DataFrame,
-    ) -> pd.DataFrame:
+    def compute_counts(self, df: pd.DataFrame) -> pd.DataFrame:
+        self._validate_df(df)
+
+        def _compute_counts(df: pd.DataFrame, col: str) -> pd.DataFrame:
+            return df[col].groupby(lambda x: x.time()).count()
+
         dfs = {
-            "price": price,
-            "volatility": volatility,
-            "prediction": prediction,
-            "holdings": holdings,
-            "position": position,
-            "flow": flow,
-            "pnl": pnl,
+            "price_count": _compute_counts(df, self._price_col),
+            "volatility_count": _compute_counts(df, self._volatility_col),
+            "prediction_count": _compute_counts(df, self._prediction_col),
         }
+        count_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+        return count_df
+
+    def _validate_target_position_df(
+        self, target_positions: pd.DataFrame, predictions: pd.DataFrame
+    ) -> None:
+        hpandas.dassert_time_indexed_df(
+            target_positions, allow_empty=True, strictly_increasing=True
+        )
+        hdbg.dassert_eq(target_positions.columns.nlevels, 1)
+        hpandas.dassert_columns_equal(target_positions, predictions)
+        hpandas.dassert_indices_equal(target_positions, predictions)
+
+    @staticmethod
+    def _build_multiindex_df(dfs: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         portfolio_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         return portfolio_df
 
@@ -406,117 +475,44 @@ class ForecastEvaluatorFromPrices:
         return df
 
     @staticmethod
-    def _compute_target_positions_from_forecasts(
-        volatility: pd.DataFrame,
-        predictions: pd.DataFrame,
-        *,
-        target_gmv: Optional[float] = None,
-        dollar_neutrality: str = "no_constraint",
-    ) -> pd.DataFrame:
-        """
-        Compute target dollar positions based on forecasts, basic constraints.
-        """
-        target_positions = predictions.divide(volatility)
-        _LOG.debug(
-            "target_positions=\n%s",
-            hpandas.df_to_str(target_positions, num_rows=None),
-        )
-        target_positions = ForecastEvaluatorFromPrices._apply_dollar_neutrality(
-            target_positions, dollar_neutrality
-        )
-        target_positions = ForecastEvaluatorFromPrices._apply_gmv_scaling(
-            target_positions, target_gmv
-        )
-        return target_positions
-
-    @staticmethod
-    def _apply_dollar_neutrality(
-        target_positions: pd.DataFrame,
-        dollar_neutrality: str,
-    ) -> pd.DataFrame:
-        hdbg.dassert_isinstance(dollar_neutrality, str)
-        if dollar_neutrality == "no_constraint":
-            pass
-        elif dollar_neutrality == "gaussian_rank":
-            target_positions = sigproc.gaussian_rank(target_positions)
-        elif dollar_neutrality == "demean":
-            # Cross-sectionally demean signals on a per-bar basis.
-            # This is equivalent to a dollar neutralizing linear projection.
-            hdbg.dassert_lt(
-                1,
-                target_positions.shape[1],
-                "Unable to enforce dollar neutrality with a single asset.",
-            )
-            net_asset_value = target_positions.mean(axis=1)
-            _LOG.debug(
-                "net asset value=\n%s"
-                % hpandas.df_to_str(net_asset_value, num_rows=None)
-            )
-            target_positions = target_positions.subtract(net_asset_value, axis=0)
-            _LOG.debug(
-                "dollar neutral target_positions=\n%s"
-                % hpandas.df_to_str(target_positions, num_rows=None)
-            )
-        else:
-            raise ValueError(
-                "Unrecognized option `dollar_neutrality`=%s" % dollar_neutrality
-            )
-        return target_positions
-
-    @staticmethod
-    def _apply_gmv_scaling(
-        target_positions: pd.DataFrame,
-        target_gmv: Optional[float],
-    ) -> pd.DataFrame:
-        if target_gmv is not None:
-            hdbg.dassert_lt(0, target_gmv)
-            l1_norm = target_positions.abs().sum(axis=1, min_count=1)
-            scale_factor = l1_norm / target_gmv
-            _LOG.debug(
-                "scale factor=\n%s",
-                hpandas.df_to_str(scale_factor, num_rows=None),
-            )
-            target_positions = target_positions.divide(scale_factor, axis=0)
-            _LOG.debug(
-                "gmv scaled target_positions=\n%s",
-                hpandas.df_to_str(target_positions, num_rows=None),
-            )
-        return target_positions
-
-    @staticmethod
     def _apply_quantization(
         holdings: pd.DataFrame,
         quantization: str,
     ) -> pd.DataFrame:
         if quantization == "no_quantization":
-            pass
+            quantized_holdings = holdings
         elif quantization == "nearest_share":
-            holdings = np.rint(holdings)
+            quantized_holdings = np.rint(holdings)
         elif quantization == "nearest_lot":
-            holdings = 100 * np.rint(holdings / 100)
+            quantized_holdings = 100 * np.rint(holdings / 100)
         else:
             raise ValueError(f"Invalid quantization strategy `{quantization}`")
-        return holdings
+        _LOG.debug(
+            "`quantized_holdings`=\n%s", hpandas.df_to_str(quantized_holdings)
+        )
+        return quantized_holdings
 
     @staticmethod
     def _compute_statistics(
         positions: pd.DataFrame,
         flows: pd.DataFrame,
         pnl: pd.DataFrame,
+        spread: Optional[pd.DataFrame] = None,
+        compute_extended_stats: bool = False,
     ) -> pd.DataFrame:
         # Gross market value (gross exposure).
         gmv = positions.abs().sum(axis=1, min_count=1)
         # Net market value (net asset value or net exposure).
         nmv = positions.sum(axis=1, min_count=1)
-        # This is an approximation that does not take into account returns.
+        # Compute gross and net volume stats.
         traded_volume = -1 * flows
         # Absolute volume traded.
-        gross_volume = flows.abs().sum(axis=1, min_count=1)
+        gross_volume = traded_volume.abs().sum(axis=1, min_count=1)
         # Net volume traded.
         net_volume = traded_volume.sum(axis=1, min_count=1)
         # Aggregated PnL.
         portfolio_pnl = pnl.sum(axis=1, min_count=1)
-        stats = pd.DataFrame(
+        stats_dict = collections.OrderedDict(
             {
                 "pnl": portfolio_pnl,
                 "gross_volume": gross_volume,
@@ -525,6 +521,20 @@ class ForecastEvaluatorFromPrices:
                 "nmv": nmv,
             }
         )
+        if compute_extended_stats:
+            # Gross position count.
+            gpc = np.sign(positions).abs().sum(axis=1, min_count=1)
+            stats_dict["gpc"] = gpc
+            # Net position count.
+            npc = np.sign(positions).sum(axis=1, min_count=1)
+            stats_dict["npc"] = npc
+            # Winners and losers.
+            wnl = np.sign(pnl).sum(axis=1, min_count=1)
+            stats_dict["wnl"] = wnl
+            if spread is not None:
+                tc = 0.5 * flows.abs().multiply(spread).sum(axis=1, min_count=1)
+                stats_dict["tc"] = tc
+        stats = pd.DataFrame(stats_dict)
         return stats
 
     @staticmethod
@@ -547,35 +557,35 @@ class ForecastEvaluatorFromPrices:
         Trim `df` according to ATH, weekends, missing data.
         """
         # Restrict to required columns.
-        df = df[[self._price_col, self._volatility_col, self._prediction_col]]
-        # Remove weekends if enabled.
-        if self._remove_weekends:
-            df = cofinanc.remove_weekends(df)
-        # Filter dateframe by time.
-        _LOG.debug(
-            "Filtering to data between time %s and %s",
-            self._first_bar_of_day_open,
-            self._last_bar_of_day_close,
+        cols = [self._price_col, self._volatility_col, self._prediction_col]
+        if self._spread_col is not None:
+            cols += [self._spread_col]
+        df = df[cols]
+        active_index = cofinanc.infer_active_bars(df[self._price_col])
+        # Drop rows with no prices (this is an approximate way to handle weekends,
+        # market holidays, and shortened trading sessions).
+        df = df.reindex(index=active_index)
+        # Drop indices with prices that proceed any returns prediction or
+        # volatility computation.
+        first_valid_prediction_index = df[
+            self._prediction_col
+        ].first_valid_index()
+        first_valid_volatility_index = df[
+            self._volatility_col
+        ].first_valid_index()
+        first_valid_index = max(
+            first_valid_prediction_index, first_valid_volatility_index
         )
-        df = df.between_time(
-            self._first_bar_of_day_open, self._last_bar_of_day_close
-        )
-        # Drop rows with no prices (this is an approximate way to handle half-days).
-        df = df.dropna(how="all")
-        # Forward fill to mitigate spurious artifacts at the portfolio bar
-        # level.
-        # TODO(Paul): Make this optional, or only apply to assets for which we
-        # have predictions (e.g., the universe may change over the time window
-        # of interest).
-        df = df.ffill()
+        df = df.loc[first_valid_index:]
+        _LOG.debug("trimmed df=\n%s", hpandas.df_to_str(df))
         return df
 
     def _compute_holdings_and_flows(
         self,
         price: pd.DataFrame,
         target_positions: pd.DataFrame,
-        *,
-        quantization: str = "no_quantization",
+        quantization: str,
+        liquidate_at_end_of_day: bool,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Compute holdings in shares from price and dollar position targets.
@@ -588,55 +598,42 @@ class ForecastEvaluatorFromPrices:
         )
         # Assume target shares are obtained.
         holdings = target_holdings.shift(1)
+        # Determine beginning-of-day and possibly end-of-day timestamps.
+        timestamps = pd.DataFrame(
+            price.index.to_list(), price.index, ["timestamp"]
+        )
+        bod_timestamps = timestamps.groupby(lambda x: x.date()).min()
+        if liquidate_at_end_of_day:
+            eod_timestamps = timestamps.groupby(lambda x: x.date()).max()
+            holdings.loc[eod_timestamps["timestamp"], :] = 0.0
+            holdings.loc[bod_timestamps["timestamp"], :] *= 0
         # TODO(Paul): Give the user the option of supplying the share
         # adjustment factors. Infer as below if they are not supplied.
-        # Handle overnight period specially.
-        # 1. Make beginning-of-day-holdings NaN.
-        first_bar_of_day_close_idx = holdings.index.indexer_between_time(
-            start_time=self._first_bar_of_day_close,
-            end_time=self._first_bar_of_day_close,
-        )
-        holdings.iloc[first_bar_of_day_close_idx] = np.nan
-        # 2. Compute overnight bar-to-bar price change.
-        day_rollover_price_bars = price.between_time(
-            self._last_bar_of_day_close, self._first_bar_of_day_close
-        )
-        overnight_price_change_multiple = 1 + day_rollover_price_bars.pct_change()
-        # 3. Infer one-to-many splits by rounding to the nearest integer the
-        #    inverse of the price change multiple.
-        # NOTE: This heuristic does not properly handle reverse splits. There
-        # may also be false positives and false negatives for other types of
-        # splits.
-        # TODO(Paul): log and reports inferred split factors that are not 1.0.
-        inferred_split = (
-            1
-            / overnight_price_change_multiple.between_time(
-                self._first_bar_of_day_close, self._first_bar_of_day_close
+        else:
+            split_factors = cofinanc.infer_splits(price)
+            splits = split_factors.merge(
+                bod_timestamps, left_index=True, right_index=True
+            ).set_index("timestamp")
+            eod_holdings = cofinanc.retrieve_end_of_day_values(holdings)
+            bod_holdings = (
+                eod_holdings.shift(1)
+                .merge(bod_timestamps, left_index=True, right_index=True)
+                .set_index("timestamp")
+                .multiply(splits)
             )
-        ).round()
-        _LOG.debug(
-            "inferred_split=\n%s",
-            hpandas.df_to_str(inferred_split, num_rows=None),
-        )
-        # 4. Compute beginning-of-day holdings from previous end-of-day
-        #    holdings and the inferred split factors.
-        bod_holdings = (
-            holdings.shift(1)
-            .between_time(
-                self._first_bar_of_day_close, self._first_bar_of_day_close
-            )
-            .multiply(inferred_split)
-        )
-        holdings = holdings.add(bod_holdings, fill_value=0)
+            # Set beginning-of-day holdings.
+            holdings.loc[bod_timestamps["timestamp"], :] = bod_holdings
+            holdings = holdings.groupby(lambda x: x.date()).ffill(limit=2)
+        # TODO(Paul): Make this parameter one that the user can set.
+        ffill_limit = 4
+        holdings = holdings.ffill(limit=ffill_limit)
+        # Compute trades as the difference in (share) holdings.
+        trades = holdings.subtract(holdings.shift(1), fill_value=0)
+        # Set overnight trades to zero.
+        trades.loc[bod_timestamps["timestamp"]] *= 0
+        _LOG.debug("`trades`=\n%s", hpandas.df_to_str(trades))
         # Change in shares priced at end of bar. Only valid intraday.
-        flows = -1 * holdings.subtract(holdings.shift(1), fill_value=0).multiply(
-            price
-        )
-        # Set the overnight flow to zero (since we do not trade and since
-        # the share count may change due to corporate actions).
-        first_bar_of_day_close_idx = flows.index.indexer_between_time(
-            start_time=self._first_bar_of_day_close,
-            end_time=self._first_bar_of_day_close,
-        )
-        flows.iloc[first_bar_of_day_close_idx] = np.nan
+        # Note that the overnight flow is zero because there are no
+        # overnight trades.
+        flows = -trades.multiply(price.ffill(limit=ffill_limit))
         return holdings, flows

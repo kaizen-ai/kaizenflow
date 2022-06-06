@@ -43,22 +43,15 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
-    def __init__(self, vendor: str, resample_1min: bool) -> None:
+    def __init__(
+        self, vendor: str, universe_version: str, resample_1min: bool
+    ) -> None:
         """
         Constructor.
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
-
-    def get_universe(self) -> List[ivcu.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        universe = ivcu.get_vendor_universe(
-            vendor=self._vendor, as_full_symbol=True
-        )
-        return universe  # type: ignore[no-any-return]
 
     @staticmethod
     def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
@@ -121,77 +114,107 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
+        # Round up float values in case values in raw data are rounded up incorrectly when
+        # being read from a file.
+        data = data.round(8)
         return data
 
 
 # #############################################################################
-# CcxtCddDbClient
+# CcxtSqlRealTimeImClient
 # #############################################################################
 
 
-# TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
-class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
-    """
-    `CCXT` client for data stored in an SQL database.
-    """
-
+class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(
         self,
-        vendor: str,
         resample_1min: bool,
-        connection: hsql.DbConnection,
+        db_connection: hsql.DbConnection,
+        table_name: str,
+        mode: str = "data_client",
     ) -> None:
-        """
-        Load `CCXT` and `CDD` price data from the database.
+        super().__init__(resample_1min, db_connection, table_name, vendor="ccxt")
+        self._mode = mode
 
-        This code path is typically used for the real-time data.
-
-        :param connection: connection for a SQL database
+    @staticmethod
+    def should_be_online() -> bool:  # pylint: disable=arguments-differ'
         """
-        super().__init__(vendor, resample_1min)
-        self._connection = connection
-
-    def get_metadata(self) -> pd.DataFrame:
+        The real-time system for CCXT should always be online.
         """
-        See description in the parent class.
-        """
-        raise NotImplementedError
+        return True
 
-    def _read_data_for_one_symbol(
+    def _apply_normalization(
         self,
-        full_symbol: ivcu.FullSymbol,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        **read_sql_kwargs: Any,
+        data: pd.DataFrame,
+        *,
+        full_symbol_col_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Same as parent class.
+        Apply Talos-specific normalization.
+
+         `data_client` mode:
+        - Convert `timestamp` column to a UTC timestamp and set index.
+        - Keep `open`, `high`, `low`, `close`, `volume` columns.
+
+        `market_data` mode:
+        - Add `start_timestamp` column in UTC timestamp format.
+        - Add `end_timestamp` column in UTC timestamp format.
+        - Add `asset_id` column which is result of mapping full_symbol to integer.
+        - Drop extra columns.
+        - The output looks like:
+        ```
+        open  high  low   close volume  start_timestamp          end_timestamp            asset_id
+        0.825 0.826 0.825 0.825 18427.9 2022-03-16 2:46:00+00:00 2022-03-16 2:47:00+00:00 3303714233
+        0.825 0.826 0.825 0.825 52798.5 2022-03-16 2:47:00+00:00 2022-03-16 2:48:00+00:00 3303714233
+        ```
         """
-        table_name = self._vendor.lower() + "_ohlcv"
-        # Verify that table with specified name exists.
-        hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
-        # Initialize SQL query.
-        sql_query = "SELECT * FROM %s" % table_name
-        # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
-        # Initialize a list for SQL conditions.
-        sql_conditions = []
-        # Fill SQL conditions list for each provided data parameter.
-        sql_conditions.append(f"exchange_id = '{exchange_id}'")
-        sql_conditions.append(f"currency_pair = '{currency_pair}'")
-        if start_ts:
-            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            sql_conditions.append(f"timestamp >= {start_ts}")
-        if end_ts:
-            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            sql_conditions.append(f"timestamp <= {end_ts}")
-        # Append all the provided SQL conditions to the main SQL query.
-        sql_conditions = " AND ".join(sql_conditions)
-        sql_query = " WHERE ".join([sql_query, sql_conditions])
-        # Execute SQL query.
-        data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
-        # Normalize data according to the vendor.
-        data = self._apply_vendor_normalization(data)
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        full_symbol_col_name = self._get_full_symbol_col_name(
+            full_symbol_col_name
+        )
+        ohlcv_columns = [
+            full_symbol_col_name,
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
+        if self._mode == "data_client":
+            pass
+        elif self._mode == "market_data":
+            # TODO(Danya): Move this transformation to MarketData.
+            # Add `asset_id` column using mapping on `full_symbol` column.
+            data["asset_id"] = data[full_symbol_col_name].apply(
+                ivcu.string_to_numerical_id
+            )
+            # Convert to int64 to keep NaNs alongside with int values.
+            data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
+            # Generate `start_timestamp` from `end_timestamp` by substracting delta.
+            delta = pd.Timedelta("1M")
+            data["start_timestamp"] = data["timestamp"].apply(
+                lambda pd_timestamp: (pd_timestamp - delta)
+            )
+            # Columns that should left in the table.
+            market_data_ohlcv_columns = [
+                "start_timestamp",
+                "asset_id",
+            ]
+            # Concatenate two lists of columns.
+            ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
+        else:
+            hdbg.dfatal(
+                "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
+                % self._mode
+            )
+        data = data.set_index("timestamp")
+        # Verify that dataframe contains OHLCV columns.
+        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
+        # Rearrange the columns.
+        data = data.loc[:, ohlcv_columns]
         return data
 
 
@@ -217,6 +240,7 @@ class CcxtCddCsvParquetByAssetClient(
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         # TODO(gp): -> file_extension
@@ -229,14 +253,14 @@ class CcxtCddCsvParquetByAssetClient(
         Load `CCXT` data from local or S3 filesystem.
 
         :param vendor: price data provider, i.e. `CCXT` or `CDD`
-        :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://alphamatic-data/data") to `CCXT` data
-        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
-        :param aws_profile: AWS profile name (e.g., "am")
+        :param root_dir: either a local root path (e.g., `/app/im`) or
+            an S3 root path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`) to `CCXT` data
+        :param extension: file extension, e.g., `csv.gz` or `parquet`
+        :param aws_profile: AWS profile, e.g., `am`
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -249,6 +273,8 @@ class CcxtCddCsvParquetByAssetClient(
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+        # TODO(Sonya): Consider moving it to the base class as the `dataset` param.
+        self._dataset = "ohlcv"
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -333,7 +359,9 @@ class CcxtCddCsvParquetByAssetClient(
         Get the absolute path to a file with `CCXT` or `CDD` price data.
 
         The file path is constructed in the following way:
-        `<root_dir>/<vendor>/<snapshot>/<exchange_id>/<currency_pair>.<self._extension>`
+        `<root_dir>/<data_snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`.
+        
+        E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`.
 
         :param data_snapshot: snapshot of datetime when data was loaded,
             e.g. "20210924"
@@ -346,8 +374,9 @@ class CcxtCddCsvParquetByAssetClient(
         file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
             self._root_dir,
-            self._vendor.lower(),
             data_snapshot,
+            self._dataset,
+            self._vendor.lower(),
             exchange_id,
             file_name,
         )
@@ -359,7 +388,7 @@ class CcxtCddCsvParquetByAssetClient(
 # #############################################################################
 
 
-class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
+class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
     """
     Read historical data for `CCXT` assets stored as Parquet dataset.
 
@@ -368,9 +397,11 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
     def __init__(
         self,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
+        dataset: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -379,119 +410,15 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         Constructor.
 
         See the parent class for parameters description.
-
-        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         vendor = "CCXT"
-        infer_exchange_id = True
         super().__init__(
             vendor,
+            universe_version,
             resample_1min,
             root_dir,
             partition_mode,
-            infer_exchange_id,
+            dataset,
+            data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )
-        self._data_snapshot = data_snapshot
-
-    def get_metadata(self) -> pd.DataFrame:
-        """
-        See description in the parent class.
-        """
-        raise NotImplementedError
-
-    def get_universe(self) -> List[ivcu.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        universe = ivcu.get_vendor_universe(
-            vendor=self._vendor, as_full_symbol=True
-        )
-        return universe  # type: ignore[no-any-return]
-
-    @staticmethod
-    def _get_columns_for_query() -> List[str]:
-        """
-        See description in the parent class.
-        """
-        columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "currency_pair",
-        ]
-        return columns
-
-    @staticmethod
-    def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str, **kwargs
-    ) -> pd.DataFrame:
-        """
-        See description in the parent class.
-        """
-        if "exchange_id" in kwargs:
-            df["exchange_id"] = kwargs["exchange_id"]
-        # Convert to string, see the parent class for details.
-        df["exchange_id"] = df["exchange_id"].astype(str)
-        df["currency_pair"] = df["currency_pair"].astype(str)
-        # Add full symbol column.
-        df[full_symbol_col_name] = df.apply(
-            lambda x: ivcu.build_full_symbol(
-                x["exchange_id"], x["currency_pair"]
-            ),
-            axis=1,
-        )
-        # Select only necessary columns.
-        columns = [full_symbol_col_name, "open", "high", "low", "close", "volume"]
-        df = df[columns]
-        return df
-
-    def _get_root_dirs_symbol_filters(
-        self, full_symbols: List[ivcu.FullSymbol], full_symbol_col_name: str
-    ) -> Dict[str, hparque.ParquetFilter]:
-        """
-        Build a dict with exchange root dirs of the `CCXT` data as keys and
-        filtering conditions on corresponding currency pairs as values.
-
-        E.g.,
-        ```
-        {
-            "s3://cryptokaizen-data/historical/ccxt/latest/binance": (
-                "currency_pair", "in", ["ADA_USDT", "BTC_USDT"]
-            ),
-            "s3://cryptokaizen-data/historical/ccxt/latest/coinbase": (
-                "currency_pair", "in", ["BTC_USDT", "ETH_USDT"]
-            ),
-        }
-        ```
-        """
-        # Build a root dir to the list of exchange ids subdirs, e.g.,
-        # "s3://cryptokaizen-data/historical/ccxt/latest/binance".
-        root_dir = os.path.join(
-            self._root_dir, self._vendor.lower(), self._data_snapshot
-        )
-        # Split full symbols into exchange id and currency pair tuples, e.g.,
-        # [('binance', 'ADA_USDT'),
-        # ('coinbase', 'BTC_USDT')].
-        full_symbol_tuples = [
-            ivcu.parse_full_symbol(full_symbol) for full_symbol in full_symbols
-        ]
-        # Store full symbols as a dictionary, e.g., `{exchange_id1: [currency_pair1, currency_pair2]}`.
-        # `Defaultdict` provides a default value for the key that does not exists that prevents from
-        # getting `KeyError`.
-        symbol_dict = collections.defaultdict(list)
-        for exchange_id, *currency_pair in full_symbol_tuples:
-            symbol_dict[exchange_id].extend(currency_pair)
-        # Build a dict with exchange root dirs as keys and Parquet filters by
-        # the corresponding currency pairs as values.
-        root_dir_symbol_filter_dict = {
-            os.path.join(root_dir, exchange_id): (
-                "currency_pair",
-                "in",
-                currency_pairs,
-            )
-            for exchange_id, currency_pairs in symbol_dict.items()
-        }
-        return root_dir_symbol_filter_dict

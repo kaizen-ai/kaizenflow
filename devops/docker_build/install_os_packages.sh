@@ -22,9 +22,18 @@ APT_GET_OPTS="-y --no-install-recommends"
 
 # TODO(gp): We can remove lots of this.
 apt-get install $APT_GET_OPTS cifs-utils
+
+# To update Git to latest version after 2.25.1
+# https://www.linuxcapable.com/how-to-install-and-update-latest-git-on-ubuntu-20-04/
+# sudo add-apt-repository ppa:git-core/ppa -y
 apt-get install $APT_GET_OPTS git
+
 apt-get install $APT_GET_OPTS keyutils
 apt-get install $APT_GET_OPTS make
+
+# We need `ip` to test Docker for running in privileged mode.
+# See AmpTask2200 "Update tests after pandas update".
+apt-get install $APT_GET_OPTS iproute2
 
 # Install vim.
 apt-get install $APT_GET_OPTS vim

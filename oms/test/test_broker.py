@@ -47,42 +47,42 @@ class TestSimulatedBroker1(hunitest.TestCase):
 class TestSimulatedBroker2(hunitest.TestCase):
     def test_collect_spread_buy(self) -> None:
         order = oordexam.get_order_example3(0.0)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0308407941129"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.03"""
         self.helper(order, expected)
 
     def test_collect_spread_sell(self) -> None:
         order = oordexam.get_order_example3(0.0, -100)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0311059094466"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0575"""
         self.helper(order, expected)
 
     def test_midpoint_buy(self) -> None:
         order = oordexam.get_order_example3(0.5)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0309733517797"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.04375"""
         self.helper(order, expected)
 
     def test_midpoint_sell(self) -> None:
         order = oordexam.get_order_example3(0.5, -100)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0309733517797"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.04375"""
         self.helper(order, expected)
 
     def test_quarter_spread_buy(self) -> None:
         order = oordexam.get_order_example3(0.75)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0310396306132"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0506250000001"""
         self.helper(order, expected)
 
     def test_quarter_spread_sell(self) -> None:
         order = oordexam.get_order_example3(0.75, -100)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0309070729463"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.036875"""
         self.helper(order, expected)
 
     def test_cross_spread_buy(self) -> None:
         order = oordexam.get_order_example3(1.0)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0311059094466"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=998.0575"""
         self.helper(order, expected)
 
     def test_cross_spread_sell(self) -> None:
         order = oordexam.get_order_example3(1.0, -100)
-        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.0308407941129"""
+        expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=-100.0 price=998.03"""
         self.helper(order, expected)
 
     def helper(self, order: omorder.Order, expected: str) -> ombroker.Fill:
@@ -122,13 +122,18 @@ class TestSimulatedBroker2(hunitest.TestCase):
         await broker.submit_orders(orders)
         # Wait until order fulfillment.
         fulfillment_deadline = order.end_timestamp
-        await hasynci.wait_until(fulfillment_deadline, get_wall_clock_time)
+        await hasynci.async_wait_until(fulfillment_deadline, get_wall_clock_time)
         # Check fills.
         fills = broker.get_fills()
         return fills
 
 
-class TestMockedBroker1(omtodh.TestOmsDbHelper):
+class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+
     def setUp(self) -> None:
         super().setUp()
         # Create OMS tables.
@@ -141,7 +146,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
 
     def test1(self) -> None:
         """
-        Test submitting orders to a MockedBroker.
+        Test submitting orders to a DatabaseBroker.
         """
         order = oordexam.get_order_example1()
         expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:40:00-05:00 num_shares=100.0 price=999.9161531095003
@@ -164,7 +169,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
             self.assert_equal(actual, expected, fuzzy_match=True)
 
     async def _order_processor_coroutine(
-        self, broker: ombroker.MockedBroker
+        self, broker: ombroker.DatabaseBroker
     ) -> None:
         delay_to_accept_in_secs = 2
         delay_to_fill_in_secs = 1
@@ -177,7 +182,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
         await order_processor.enqueue_orders()
 
     async def _broker_coroutine(
-        self, broker: ombroker.MockedBroker, order
+        self, broker: ombroker.DatabaseBroker, order
     ) -> List[ombroker.Fill]:
         orders = [order]
         get_wall_clock_time = broker.market_data.get_wall_clock_time
@@ -186,7 +191,7 @@ class TestMockedBroker1(omtodh.TestOmsDbHelper):
         await broker.submit_orders(orders)
         # Wait until order fulfillment.
         fulfillment_deadline = order.end_timestamp
-        await hasynci.wait_until(fulfillment_deadline, get_wall_clock_time)
+        await hasynci.async_wait_until(fulfillment_deadline, get_wall_clock_time)
         # Check fills.
         fills = broker.get_fills()
         return fills

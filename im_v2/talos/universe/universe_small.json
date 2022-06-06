@@ -1,8 +1,10 @@
 {
-  "binance": [
-    "ADA_USDT"
-  ],
-  "ftx": [
-    "BNB_USDT"
-  ]
+  "talos": {
+    "binance": [
+      "ADA_USDT"
+    ],
+    "ftx": [
+      "BNB_USDT"
+    ]
+  }
 }
