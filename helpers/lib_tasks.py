@@ -4589,14 +4589,13 @@ def run_coverage_report(  # type: ignore
           - Post it on S3 (optional)
 
     :param target_dir: directory to compute coverage stats for
+        - "." for all the dirs in the current working directory
     :param generate_html_report: whether to generate HTML coverage report or not
     :param publish_html_on_s3: whether to publish HTML coverage report or not
     :param aws_profile: the AWS profile to use for publishing HTML report
     """
     # TODO(Grisha): allow user to specify which tests to run.
     # Run tests for the target dir and collect coverage stats.
-    if target_dir == "cmamp":
-        target_dir = "/app"
     fast_tests_cmd = (
         f"invoke run_fast_tests --coverage -p {target_dir}; "
         "cp .coverage .coverage_fast_tests"
@@ -4618,10 +4617,13 @@ def run_coverage_report(  # type: ignore
     report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
     )
-    # Only target dir is included in the reports.
-    if target_dir == '/app':
-        target_dir = 'app'
-    include_in_report = f"*/{target_dir}/*"
+    # Specify the dir to include in the report.
+    if target_dir == ".":
+        # Include all dirs.
+        include_in_report = "*"
+    else:
+        # Include only the target dir.
+        include_in_report = f"*/{target_dir}/*"
     # Generate text report with the coverage stats.
     report_cmd.append(
         f"coverage report --include={include_in_report} --sort=Cover"
