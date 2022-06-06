@@ -38,20 +38,28 @@ class S3Mock_TestCase(hunitest.TestCase):
     # Mocked bucket.
     mock_s3 = moto.mock_s3()
     bucket_name = "mock_bucket"
-    moto_client = None
+    # TODO(Nikola): Temporary here to ensure it is called only once.
+    #   Used in some tests that are obtaining data from 3rd party providers.
+    binance_secret = None
 
     def setUp(self) -> None:
+        # Getting necessary secret before boto3 is mocked.
+        if self.binance_secret is None:
+            import helpers.hsecrets as hsecret
+
+            self.binance_secret = hsecret.get_secret("binance")
+
         # Start boto3 mock.
         self.mock_s3.start()
         # Start AWS credentials mock. Must be started after moto mock,
         # or it will be overridden by moto with `foobar` values.
         self.mock_aws_credentials = self.mock_aws_credentials_patch.start()
         # Initialize boto client and create bucket for testing.
-        self.moto_client = boto3.client("s3")
-        self.moto_client.create_bucket(Bucket=self.bucket_name)
+        s3_client = boto3.client("s3")
+        s3_client.create_bucket(Bucket=self.bucket_name)
         # Precaution to ensure that we are using mocked botocore.
-        test_client = boto3.client("s3")
-        buckets = test_client.list_buckets()["Buckets"]
+        s3_test_client = boto3.client("s3")
+        buckets = s3_test_client.list_buckets()["Buckets"]
         self.assertEqual(len(buckets), 1)
         self.assertEqual(buckets[0]["Name"], self.bucket_name)
         #
@@ -60,6 +68,9 @@ class S3Mock_TestCase(hunitest.TestCase):
     def tearDown(self) -> None:
         # We need to deallocate in reverse order to avoid race conditions.
         super().tearDown()
+        # Delete bucket.
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        s3fs_.delete(f"s3://{self.bucket_name}", recursive=True)
         # Stop moto.
         self.mock_aws_credentials_patch.stop()
         self.mock_s3.stop()
