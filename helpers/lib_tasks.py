@@ -4617,20 +4617,31 @@ def run_coverage_report(  # type: ignore
     report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
     )
-    # Specify the dir to include in the report.
+    # Specify the dirs to include and exclude in the report.
+    exclude_from_report = None
     if target_dir == ".":
         # Include all dirs.
         include_in_report = "*"
+        if hgit.execute_repo_config_code("skip_submodules_test()"):
+            # Exclude submodules.
+            submodule_paths = hgit.get_submodule_paths()
+            exclude_from_report = ",".join(path+"/*" for path in submodule_paths)         
     else:
         # Include only the target dir.
         include_in_report = f"*/{target_dir}/*"
     # Generate text report with the coverage stats.
-    report_cmd.append(
+    report_stats_cmd = (
         f"coverage report --include={include_in_report} --sort=Cover"
     )
+    if exclude_from_report is not None:
+        report_stats_cmd += f" --omit={exclude_from_report}"
+    report_cmd.append(report_stats_cmd)
     if generate_html_report:
         # Generate HTML report with the coverage stats.
-        report_cmd.append(f"coverage html --include={include_in_report}")
+        report_html_cmd = f"coverage html --include={include_in_report}"
+        if exclude_from_report is not None:
+            report_html_cmd += f" --omit={exclude_from_report}"
+        report_cmd.append(report_html_cmd)
     # Execute commands above one-by-one inside docker. Coverage tool is not
     # installed outside docker.
     full_report_cmd = " && ".join(report_cmd)
