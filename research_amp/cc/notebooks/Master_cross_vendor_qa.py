@@ -19,7 +19,7 @@
 # This notebook performs cross-vendor QA checks to compare vendors in terms of:
 #    - Difference and intersection of vendor universes
 #    - Time intervals, i.e. which vendor has the longest data available for each full symbol in intersecting universe
-#    - Data quality (NaN [%], volume=0 [%], bad data [%]) for intersecting universe and time intervals
+#    - Data quality (bad data [%], missing bars [%], volume=0 [%], NaNs [%]) for intersecting universe and time intervals
 
 # %% [markdown]
 # # Imports
@@ -33,13 +33,13 @@ import pandas as pd
 
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
-import core.statistics as costatis
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.client as icdcl
 import im_v2.crypto_chassis.data.client as iccdc
+import research_amp.cc.qa as ramccqa
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -64,20 +64,22 @@ def get_cmtask1966_config_ccxt() -> cconconf.Config:
         "data": {
             "ccxt": {
                 "universe_version": "v3",
-                "resample_1min": True,
+                "resample_1min": False,
                 "root_dir": os.path.join(
                     hs3.get_s3_bucket_path("ck"), "reorg", "historical.manual.pq"
                 ),
                 "partition_mode": "by_year_month",
+                "dataset": "ohlcv",
                 "aws_profile": "ck",
             },
             "crypto_chassis": {
                 "universe_version": "v1",
-                "resample_1min": True,
+                "resample_1min": False,
                 "root_dir": os.path.join(
                     hs3.get_s3_bucket_path("ck"), "reorg", "historical.manual.pq"
                 ),
                 "partition_mode": "by_year_month",
+                "dataset": "ohlcv",
                 "aws_profile": "ck",
             },
             # Parameters for data query.
@@ -111,6 +113,7 @@ print(config)
 # %%
 # TODO(Dan): Clean up and move to a lib.
 # TODO(Dan): Make functions independent from hard-coded vendor names.
+# TODO(Dan): @Nina add more detailed description of functions.
 def _compare_vendor_universes(
     crypto_chassis_universe: List[str],
     ccxt_universe: List[str],
@@ -126,185 +129,6 @@ def _compare_vendor_universes(
     )
     unique_ccxt_universe = list(set(ccxt_universe) - set(crypto_chassis_universe))
     return common_universe, unique_crypto_chassis_universe, unique_ccxt_universe
-
-
-def _compare_timestamp_stats(
-    crypto_chassis_timestamp_stats: pd.DataFrame,
-    ccxt_timestamp_stats: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Compare timestamp stats for vendors data.
-
-    E.g,:
-
-    ```
-                   min_timestamp           max_timestamp           days_available
-                      vendor1     vendor2     vendor1     vendor2  vendor1  vendor2
-    ftx::ADA_USDT  2021-08-07  2018-08-07  2022-05-18  2022-05-06      284     1358
-    ftx::BTC_USDT  2018-01-01  2018-08-17  2022-05-18  2022-05-06     1598     1358
-    ```
-    """
-    stat_df = pd.concat(
-        [crypto_chassis_timestamp_stats, ccxt_timestamp_stats],
-        keys=["crypto_chassis", "ccxt"],
-        axis=1,
-    )
-    # Reorder columns.
-    cols = ["min_timestamp", "max_timestamp", "days_available"]
-    stat_df = _swap_column_levels(stat_df, cols)
-    return stat_df
-
-
-def _compare_bad_data_stats(
-    crypto_chassis_bad_data_stats: pd.DataFrame,
-    ccxt_bad_data_stats: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Compare bad data stats for vendors data.
-
-    E.g,:
-
-    ```
-                   bad data [%]            NaNs[%]                 volume=0 [%]
-                   vendor1  vendor2  diff  vendor1  vendor2  diff  vendor1  vendor2  diff
-    ftx::ADA_USDT      3.5      6.5  -3.0      3.5      0.5   3.0      0.0      6.0  -6.0
-    ftx::BTC_USDT      1.5      0.5   1.0      1.5      0.5   1.0      0.0      0.0   0.0
-    ```
-    """
-    stat_df = pd.concat(
-        [crypto_chassis_bad_data_stats, ccxt_bad_data_stats],
-        keys=["crypto_chassis", "ccxt"],
-        axis=1,
-    )
-    # Compute difference between bad data stats.
-    for col in stat_df.columns.levels[1]:
-        stat_df["diff", col] = (
-            stat_df["crypto_chassis"][col] - stat_df["ccxt"][col]
-        )
-    # Reorder columns.
-    cols = ["bad data [%]", "NaNs [%]", "volume=0 [%]"]
-    stat_df = _swap_column_levels(stat_df, cols)
-    return stat_df
-
-
-def _compare_bad_data_stats_by_year_month(
-    crypto_chassis_bad_data_stats_by_year_month: pd.DataFrame,
-    ccxt_bad_data_stats_by_year_month: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Compare bad data stats for vendors data by year and month.
-
-    Stats are compared only for intersecting time intervals.
-
-    E.g,:
-
-    ```
-                                bad data [%]      NaNs[%]           volume=0 [%]
-                                vendor1  vendor2  vendor1  vendor2  vendor1  vendor2
-      full_symbol  year  month
-    ftx::ADA_USDT  2021     11      3.5      6.5      3.5      0.5      0.0      6.0
-                            12      2.4      4.8      2.7      1.5      0.0      5.1
-    ftx::BTC_USDT  2022      1      1.5      0.5      1.5      0.5      0.0      0.0
-    ```
-    """
-    stat_df = pd.concat(
-        [
-            crypto_chassis_bad_data_stats_by_year_month,
-            ccxt_bad_data_stats_by_year_month,
-        ],
-        keys=["crypto_chassis", "ccxt"],
-        axis=1,
-    )
-    # Drop stats for not intersecting time periods.
-    stat_df = stat_df.dropna()
-    # Reorder columns.
-    cols = ["bad data [%]", "NaNs [%]", "volume=0 [%]"]
-    stat_df = _swap_column_levels(stat_df, cols)
-    return stat_df
-
-
-def _get_timestamp_stats(
-    config: cconconf.Config, data: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Get min max timstamp stats per full symbol.
-    """
-    res_stats = []
-    for full_symbol, symbol_data in data.groupby(
-        config["column_names"]["full_symbol"]
-    ):
-        # Compute stats for a full symbol.
-        symbol_stats = pd.Series(dtype="object", name=full_symbol)
-        index = symbol_data.index
-        symbol_stats["min_timestamp"] = index.min()
-        symbol_stats["max_timestamp"] = index.max()
-        symbol_stats["days_available"] = (
-            symbol_stats["max_timestamp"] - symbol_stats["min_timestamp"]
-        ).days
-        res_stats.append(symbol_stats)
-    # Combine all full symbol stats.
-    res_stats_df = pd.concat(res_stats, axis=1).T
-    return res_stats_df
-
-
-# TODO(Dan): Merge with `_get_bad_data_stats_by_year_month()` by passing `agg_level`.
-def _get_bad_data_stats(
-    config: cconconf.Config, data: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Get quality assurance stats per full symbol.
-    """
-    res_stats = []
-    for full_symbol, symbol_data in data.groupby(
-        config["column_names"]["full_symbol"]
-    ):
-        # Compute stats for a full symbol.
-        symbol_stats = pd.Series(dtype="object", name=full_symbol)
-        symbol_stats["NaNs [%]"] = 100 * (
-            costatis.compute_frac_nan(
-                symbol_data[config["column_names"]["close_price"]]
-            )
-        )
-        symbol_stats["volume=0 [%]"] = 100 * (
-            symbol_data[symbol_data["volume"] == 0].shape[0]
-            / symbol_data.shape[0]
-        )
-        symbol_stats["bad data [%]"] = (
-            symbol_stats["NaNs [%]"] + symbol_stats["volume=0 [%]"]
-        )
-        res_stats.append(symbol_stats)
-    # Combine all full symbol stats.
-    res_stats_df = pd.concat(res_stats, axis=1).T
-    return res_stats_df
-
-
-def _get_bad_data_stats_by_year_month(
-    config: cconconf.Config, data: pd.DataFrame
-) -> pd.DataFrame:
-    """
-    Get quality assurance stats per full symbol, year, and month.
-    """
-    # Get year and month columns to group by them.
-    data["year"] = data.index.year
-    data["month"] = data.index.month
-    #
-    res_stats = []
-    for index, data_monthly in data.groupby(["year", "month"]):
-        #
-        year, month = index
-        #
-        stats_monthly = _get_bad_data_stats(config, data_monthly)
-        #
-        stats_monthly["year"] = year
-        stats_monthly["month"] = month
-        res_stats.append(stats_monthly)
-    res_stats_df = pd.concat(res_stats)
-    # Set index by full symbol, year, and month.
-    res_stats_df[config["column_names"]["full_symbol"]] = res_stats_df.index
-    index_columns = [config["column_names"]["full_symbol"], "year", "month"]
-    res_stats_df = res_stats_df.sort_values(index_columns)
-    res_stats_df = res_stats_df.set_index(index_columns)
-    return res_stats_df
 
 
 # TODO(Dan): Add filtering by dates.
@@ -344,41 +168,6 @@ def _plot_bad_data_by_year_month_stats(
         ax.xaxis.set_ticks(ticks[::stride])
         ax.xaxis.set_ticklabels(ticklabels[::stride])
         ax.figure.show()
-
-
-# TODO(Dan): Move to hpandas.
-def _swap_column_levels(
-    df: pd.DataFrame, upper_level_cols: List[str]
-) -> pd.DataFrame:
-    """
-    Swap column levels with specified upper-level column order.
-
-    Applicable only for 2-level columned dataframes.
-
-    Input:
-
-    ```
-        vendor1                       vendor2
-        feature1  feature2  feature3  feature1  feature2  feature3
-    0         10       -10       0.5        11       -11       0.6
-    1         20       -20       0.6        21       -21       0.7
-    2         30       -30       0.7        31       -31       0.8
-    ```
-
-    Output:
-
-    ```
-        feature1          feature2          feature3
-        vendor1  vendor2  vendor1  vendor2  vendor1  vendor2
-    0        10       11      -10      -11      0.5      0.6
-    1        20       21      -20      -21      0.6      0.7
-    2        30       31      -30      -31      0.7      0.8
-    ```
-    """
-    df.columns = df.columns.swaplevel(0, 1)
-    new_cols = df.columns.reindex(upper_level_cols, level=0)
-    df = df.reindex(columns=new_cols[0])
-    return df
 
 
 # %% [markdown]
@@ -428,47 +217,57 @@ binance_universe
 ccxt_binance_data = ccxt_client.read_data(
     binance_universe, **config["data"]["read_data"]
 )
-ccxt_binance_data.head()
+ccxt_binance_data.head(3)
 
 # %%
 crypto_chassis_binance_data = crypto_chassis_client.read_data(
     binance_universe, **config["data"]["read_data"]
 )
-crypto_chassis_binance_data.head()
+crypto_chassis_binance_data.head(3)
 
 # %%
-crypto_chassis_timestamp_binance_stats = _get_timestamp_stats(
-    config, crypto_chassis_binance_data
+crypto_chassis_vendor = "Crypto Chassis"
+crypto_chassis_timestamp_binance_stats = ramccqa.get_timestamp_stats(
+    crypto_chassis_binance_data, crypto_chassis_vendor
 )
-ccxt_timestamp_binance_stats = _get_timestamp_stats(config, ccxt_binance_data)
+ccxt_vendor = "CCXT"
+ccxt_timestamp_binance_stats = ramccqa.get_timestamp_stats(
+    ccxt_binance_data, ccxt_vendor
+)
 #
-binance_timestamp_stats_qa = _compare_timestamp_stats(
+binance_timestamp_stats_qa = ramccqa.compare_data_stats(
     crypto_chassis_timestamp_binance_stats,
     ccxt_timestamp_binance_stats,
 )
 binance_timestamp_stats_qa
 
 # %%
-crypto_chassis_bad_data_binance_stats = _get_bad_data_stats(
-    config, crypto_chassis_binance_data
+agg_level_full_symbol = ["full_symbol"]
+crypto_chassis_bad_data_binance_stats = ramccqa.get_bad_data_stats(
+    crypto_chassis_binance_data, agg_level_full_symbol, crypto_chassis_vendor
 )
-ccxt_bad_data_binance_stats = _get_bad_data_stats(config, ccxt_binance_data)
+ccxt_bad_data_binance_stats = ramccqa.get_bad_data_stats(
+    ccxt_binance_data, agg_level_full_symbol, ccxt_vendor
+)
 #
-binance_bad_data_stats_qa = _compare_bad_data_stats(
+binance_bad_data_stats_qa = ramccqa.compare_data_stats(
     crypto_chassis_bad_data_binance_stats,
     ccxt_bad_data_binance_stats,
 )
 binance_bad_data_stats_qa
 
 # %%
-crypto_chassis_bad_data_binance_stats_by_year_month = (
-    _get_bad_data_stats_by_year_month(config, crypto_chassis_binance_data)
+agg_level_full_symbol_year_month = ["full_symbol", "year", "month"]
+crypto_chassis_bad_data_binance_stats_by_year_month = ramccqa.get_bad_data_stats(
+    crypto_chassis_binance_data,
+    agg_level_full_symbol_year_month,
+    crypto_chassis_vendor,
 )
-ccxt_bad_data_binance_stats_by_year_month = _get_bad_data_stats_by_year_month(
-    config, ccxt_binance_data
+ccxt_bad_data_binance_stats_by_year_month = ramccqa.get_bad_data_stats(
+    ccxt_binance_data, agg_level_full_symbol_year_month, ccxt_vendor
 )
 #
-binance_bad_data_stats_by_year_month_qa = _compare_bad_data_stats_by_year_month(
+binance_bad_data_stats_by_year_month_qa = ramccqa.compare_data_stats(
     crypto_chassis_bad_data_binance_stats_by_year_month,
     ccxt_bad_data_binance_stats_by_year_month,
 )
@@ -492,47 +291,51 @@ ftx_universe
 
 # %%
 ccxt_ftx_data = ccxt_client.read_data(ftx_universe, **config["data"]["read_data"])
-ccxt_ftx_data.head()
+ccxt_ftx_data.head(3)
 
 # %%
 crypto_chassis_ftx_data = crypto_chassis_client.read_data(
     ftx_universe, **config["data"]["read_data"]
 )
-crypto_chassis_ftx_data.head()
+crypto_chassis_ftx_data.head(3)
 
 # %%
-crypto_chassis_timestamp_ftx_stats = _get_timestamp_stats(
-    config, crypto_chassis_ftx_data
+crypto_chassis_timestamp_ftx_stats = ramccqa.get_timestamp_stats(
+    crypto_chassis_ftx_data, crypto_chassis_vendor
 )
-ccxt_timestamp_ftx_stats = _get_timestamp_stats(config, ccxt_ftx_data)
+ccxt_timestamp_ftx_stats = ramccqa.get_timestamp_stats(ccxt_ftx_data, ccxt_vendor)
 #
-ftx_timestamp_stats_qa = _compare_timestamp_stats(
+ftx_timestamp_stats_qa = ramccqa.compare_data_stats(
     crypto_chassis_timestamp_ftx_stats,
     ccxt_timestamp_ftx_stats,
 )
 ftx_timestamp_stats_qa
 
 # %%
-crypto_chassis_bad_data_ftx_stats = _get_bad_data_stats(
-    config, crypto_chassis_ftx_data
+crypto_chassis_bad_data_ftx_stats = ramccqa.get_bad_data_stats(
+    crypto_chassis_ftx_data, agg_level_full_symbol, crypto_chassis_vendor
 )
-ccxt_bad_data_ftx_stats = _get_bad_data_stats(config, ccxt_ftx_data)
+ccxt_bad_data_ftx_stats = ramccqa.get_bad_data_stats(
+    ccxt_ftx_data, agg_level_full_symbol, ccxt_vendor
+)
 #
-ftx_bad_data_stats_qa = _compare_bad_data_stats(
+ftx_bad_data_stats_qa = ramccqa.compare_data_stats(
     crypto_chassis_bad_data_ftx_stats,
     ccxt_bad_data_ftx_stats,
 )
 ftx_bad_data_stats_qa
 
 # %%
-crypto_chassis_bad_data_ftx_stats_by_year_month = (
-    _get_bad_data_stats_by_year_month(config, crypto_chassis_ftx_data)
+crypto_chassis_bad_data_ftx_stats_by_year_month = ramccqa.get_bad_data_stats(
+    crypto_chassis_ftx_data,
+    agg_level_full_symbol_year_month,
+    crypto_chassis_vendor,
 )
-ccxt_bad_data_ftx_stats_by_year_month = _get_bad_data_stats_by_year_month(
-    config, ccxt_ftx_data
+ccxt_bad_data_ftx_stats_by_year_month = ramccqa.get_bad_data_stats(
+    ccxt_ftx_data, agg_level_full_symbol_year_month, ccxt_vendor
 )
 #
-ftx_bad_data_stats_by_year_month_qa = _compare_bad_data_stats_by_year_month(
+ftx_bad_data_stats_by_year_month_qa = ramccqa.compare_data_stats(
     crypto_chassis_bad_data_ftx_stats_by_year_month,
     ccxt_bad_data_ftx_stats_by_year_month,
 )
@@ -556,47 +359,53 @@ gateio_universe
 ccxt_gateio_data = ccxt_client.read_data(
     gateio_universe, **config["data"]["read_data"]
 )
-ccxt_gateio_data.head()
+ccxt_gateio_data.head(3)
 
 # %%
 crypto_chassis_gateio_data = crypto_chassis_client.read_data(
     gateio_universe, **config["data"]["read_data"]
 )
-crypto_chassis_gateio_data.head()
+crypto_chassis_gateio_data.head(3)
 
 # %%
-crypto_chassis_timestamp_gateio_stats = _get_timestamp_stats(
-    config, crypto_chassis_gateio_data
+crypto_chassis_timestamp_gateio_stats = ramccqa.get_timestamp_stats(
+    crypto_chassis_gateio_data, crypto_chassis_vendor
 )
-ccxt_timestamp_gateio_stats = _get_timestamp_stats(config, ccxt_gateio_data)
+ccxt_timestamp_gateio_stats = ramccqa.get_timestamp_stats(
+    ccxt_gateio_data, ccxt_vendor
+)
 #
-gateio_timestamp_stats_qa = _compare_timestamp_stats(
+gateio_timestamp_stats_qa = ramccqa.compare_data_stats(
     crypto_chassis_timestamp_gateio_stats,
     ccxt_timestamp_gateio_stats,
 )
 gateio_timestamp_stats_qa
 
 # %%
-crypto_chassis_bad_data_gateio_stats = _get_bad_data_stats(
-    config, crypto_chassis_gateio_data
+crypto_chassis_bad_data_gateio_stats = ramccqa.get_bad_data_stats(
+    crypto_chassis_gateio_data, agg_level_full_symbol, crypto_chassis_vendor
 )
-ccxt_bad_data_gateio_stats = _get_bad_data_stats(config, ccxt_gateio_data)
+ccxt_bad_data_gateio_stats = ramccqa.get_bad_data_stats(
+    ccxt_gateio_data, agg_level_full_symbol, ccxt_vendor
+)
 #
-gateio_bad_data_stats_qa = _compare_bad_data_stats(
+gateio_bad_data_stats_qa = ramccqa.compare_data_stats(
     crypto_chassis_bad_data_gateio_stats,
     ccxt_bad_data_gateio_stats,
 )
 gateio_bad_data_stats_qa
 
 # %%
-crypto_chassis_bad_data_gateio_stats_by_year_month = (
-    _get_bad_data_stats_by_year_month(config, crypto_chassis_gateio_data)
+crypto_chassis_bad_data_gateio_stats_by_year_month = ramccqa.get_bad_data_stats(
+    crypto_chassis_gateio_data,
+    agg_level_full_symbol_year_month,
+    crypto_chassis_vendor,
 )
-ccxt_bad_data_gateio_stats_by_year_month = _get_bad_data_stats_by_year_month(
-    config, ccxt_gateio_data
+ccxt_bad_data_gateio_stats_by_year_month = ramccqa.get_bad_data_stats(
+    ccxt_gateio_data, agg_level_full_symbol_year_month, ccxt_vendor
 )
 #
-gateio_bad_data_stats_by_year_month_qa = _compare_bad_data_stats_by_year_month(
+gateio_bad_data_stats_by_year_month_qa = ramccqa.compare_data_stats(
     crypto_chassis_bad_data_gateio_stats_by_year_month,
     ccxt_bad_data_gateio_stats_by_year_month,
 )
@@ -620,47 +429,53 @@ kucoin_universe
 ccxt_kucoin_data = ccxt_client.read_data(
     kucoin_universe, **config["data"]["read_data"]
 )
-ccxt_kucoin_data.head()
+ccxt_kucoin_data.head(3)
 
 # %%
 crypto_chassis_kucoin_data = crypto_chassis_client.read_data(
     kucoin_universe, **config["data"]["read_data"]
 )
-crypto_chassis_kucoin_data.head()
+crypto_chassis_kucoin_data.head(3)
 
 # %%
-crypto_chassis_timestamp_kucoin_stats = _get_timestamp_stats(
-    config, crypto_chassis_kucoin_data
+crypto_chassis_timestamp_kucoin_stats = ramccqa.get_timestamp_stats(
+    crypto_chassis_kucoin_data, crypto_chassis_vendor
 )
-ccxt_timestamp_kucoin_stats = _get_timestamp_stats(config, ccxt_kucoin_data)
+ccxt_timestamp_kucoin_stats = ramccqa.get_timestamp_stats(
+    ccxt_kucoin_data, ccxt_vendor
+)
 #
-kucoin_timestamp_stats_qa = _compare_timestamp_stats(
+kucoin_timestamp_stats_qa = ramccqa.compare_data_stats(
     crypto_chassis_timestamp_kucoin_stats,
     ccxt_timestamp_kucoin_stats,
 )
 kucoin_timestamp_stats_qa
 
 # %%
-crypto_chassis_bad_data_kucoin_stats = _get_bad_data_stats(
-    config, crypto_chassis_kucoin_data
+crypto_chassis_bad_data_kucoin_stats = ramccqa.get_bad_data_stats(
+    crypto_chassis_kucoin_data, agg_level_full_symbol, crypto_chassis_vendor
 )
-ccxt_bad_data_kucoin_stats = _get_bad_data_stats(config, ccxt_kucoin_data)
+ccxt_bad_data_kucoin_stats = ramccqa.get_bad_data_stats(
+    ccxt_kucoin_data, agg_level_full_symbol, ccxt_vendor
+)
 #
-kucoin_bad_data_stats_qa = _compare_bad_data_stats(
+kucoin_bad_data_stats_qa = ramccqa.compare_data_stats(
     crypto_chassis_bad_data_kucoin_stats,
     ccxt_bad_data_kucoin_stats,
 )
 kucoin_bad_data_stats_qa
 
 # %%
-crypto_chassis_bad_data_kucoin_stats_by_year_month = (
-    _get_bad_data_stats_by_year_month(config, crypto_chassis_kucoin_data)
+crypto_chassis_bad_data_kucoin_stats_by_year_month = ramccqa.get_bad_data_stats(
+    crypto_chassis_kucoin_data,
+    agg_level_full_symbol_year_month,
+    crypto_chassis_vendor,
 )
-ccxt_bad_data_kucoin_stats_by_year_month = _get_bad_data_stats_by_year_month(
-    config, ccxt_kucoin_data
+ccxt_bad_data_kucoin_stats_by_year_month = ramccqa.get_bad_data_stats(
+    ccxt_kucoin_data, agg_level_full_symbol_year_month, ccxt_vendor
 )
 #
-kucoin_bad_data_stats_by_year_month_qa = _compare_bad_data_stats_by_year_month(
+kucoin_bad_data_stats_by_year_month_qa = ramccqa.compare_data_stats(
     crypto_chassis_bad_data_kucoin_stats_by_year_month,
     ccxt_bad_data_kucoin_stats_by_year_month,
 )
@@ -668,5 +483,3 @@ kucoin_bad_data_stats_by_year_month_qa
 
 # %%
 _plot_bad_data_by_year_month_stats(config, kucoin_bad_data_stats_by_year_month_qa)
-
-# %%

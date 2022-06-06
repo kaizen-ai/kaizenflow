@@ -273,6 +273,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
+        # TODO(Sonya): Consider moving the `dataset` param to the base class.
+        dataset: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -282,6 +284,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
 
         See the parent class for parameters description.
 
+        :param dataset: the dataset type, e.g. "ohlcv", "bid_ask"
         :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         infer_exchange_id = True
@@ -294,6 +297,10 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             infer_exchange_id,
             aws_profile=aws_profile,
         )
+        hdbg.dassert_in(
+            dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
+        )
+        self._dataset = dataset
         self._data_snapshot = data_snapshot
 
     @staticmethod

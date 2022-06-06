@@ -35,7 +35,7 @@ def run_experiment(config: cconfig.Config) -> None:
     config = config.copy()
     # dag_config = config.pop("DAG")
     # dag_runner = dtfcore.PredictionDagRunner(
-    #    dag_config, config["meta"]["dag_builder"]
+    #    dag_config, config["dag_builder"]
     # )
     dag_runner = config["dag_runner"](config)
     # TODO(gp): Maybe save the drawing to file?
@@ -70,7 +70,7 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
     dag_config = config.pop("DAG")
     dag_runner = dtfcore.RollingFitPredictDagRunner(
         dag_config,
-        config["meta"]["dag_builder"],
+        config["dag_builder"],
         config["meta"]["start"],
         config["meta"]["end"],
         config["meta"]["retraining_freq"],

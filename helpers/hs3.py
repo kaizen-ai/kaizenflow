@@ -477,7 +477,6 @@ def get_aws_credentials(
         `aws_region` and optionally `aws_session_token`
     """
     _LOG.debug("Getting credentials for aws_profile='%s'", aws_profile)
-    hdbg.dassert_in(aws_profile, ("am", "ck", "__mock__"))
     if aws_profile == "__mock__":
         # `mock` profile is artificial construct used only in tests.
         aws_profile = aws_profile.strip("__")

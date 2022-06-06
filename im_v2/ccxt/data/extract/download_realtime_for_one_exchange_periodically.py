@@ -10,6 +10,7 @@ Use as:
     --db_table 'ccxt_ohlcv_test' \
     --aws_profile 'ck' \
     --s3_path 's3://cryptokaizen-data-test/realtime/' \
+    --data_type 'ohlcv' \
     --interval_min '1' \
     --start_time '2022-05-16 00:45:00' \
     --stop_time '2022-05-16 00:55:00'
@@ -38,8 +39,11 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
+    # Initialize the CCXT Extractor class.
+    exchange = imvcdeex.CcxtExtractor(args.exchange_id)
+    args = vars(args)
     imvcdeexut.download_realtime_for_one_exchange_periodically(
-        args, imvcdeex.CcxtExtractor
+        args, exchange
     )
 
 
