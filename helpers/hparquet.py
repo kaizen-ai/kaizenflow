@@ -712,6 +712,7 @@ def list_and_merge_pq_files(
     *,
     file_name: str = "data.parquet",
     aws_profile: hs3.AwsProfile = None,
+    drop_duplicates_mode: Optional[str] = None,
 ) -> None:
     """
     Merge all files of the Parquet dataset.
@@ -765,14 +766,44 @@ def list_and_merge_pq_files(
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
         data = data.to_pandas()
         # Drop duplicates on non-metadata columns.
-        subset_cols = data.columns.to_list()
-        for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
-            if col_name in subset_cols:
-                subset_cols.remove(col_name)
-        data = data.drop_duplicates(subset=subset_cols)
+        if drop_duplicates_mode is None:
+            continue
+        elif drop_duplicates_mode == "ohlcv":
+            duplicate_columns = ["timestamp", "exchange_id"]
+            control_column = "volume"
+            data = remove_duplicates(data, duplicate_columns, control_column)
+        else:
+            hdbg.dassert(msg="Supported drop duplicates modes: ohlcv")
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
-        pq.write_table(pa.Table.from_pandas(data), folder + "/" + file_name, filesystem=filesystem)
+        pq.write_table(
+            pa.Table.from_pandas(data),
+            folder + "/" + file_name,
+            filesystem=filesystem,
+        )
+
+
+def remove_duplicates(
+    data: pd.DataFrame,
+    duplicate_columns: Optional[List[str]],
+    control_column: Optional[str],
+) -> pd.DataFrame:
+    """
+    Remove duplicates from DataFrame.
+
+    :param data: DataFrame to process
+    :param duplicate_columns: subset of column names, None for all
+    :param control_column: column max value of which determines the kept row
+    :return: DataFrame with removed duplicates
+    """
+    # Fix maximum value of control column at the bottom.
+    if control_column:
+        data = data.sort_values(by=control_column)
+    duplicate_columns = duplicate_columns or data.columns
+    data = data.drop_duplicates(subset=duplicate_columns)
+    # Sort by index to return to original view.
+    data = data.sort_index()
+    return data
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:
