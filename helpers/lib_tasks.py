@@ -4625,7 +4625,9 @@ def run_coverage_report(  # type: ignore
         if hgit.execute_repo_config_code("skip_submodules_test()"):
             # Exclude submodules.
             submodule_paths = hgit.get_submodule_paths()
-            exclude_from_report = ",".join(path+"/*" for path in submodule_paths)         
+            exclude_from_report = ",".join(
+                path + "/*" for path in submodule_paths
+            )
     else:
         # Include only the target dir.
         include_in_report = f"*/{target_dir}/*"
