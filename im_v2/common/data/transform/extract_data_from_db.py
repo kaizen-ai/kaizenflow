@@ -107,7 +107,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         start_ts = timespan[date_index]
-        end_ts = imespan[date_index + 1]
+        end_ts = timespan[date_index + 1]
         columns = None
         filter_data_mode = "assert"
         # TODO(Nikola): Refactor to use one db call.
