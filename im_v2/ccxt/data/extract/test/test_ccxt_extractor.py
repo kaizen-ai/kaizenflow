@@ -35,7 +35,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         hdbg.dassert_container_type(curr_list, list, str)
         self.assertGreater(len(curr_list), 0)
 
-    @pytest.mark.slow()
+    @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeex.hdateti, "get_current_time")
     def test_download_ohlcv1(
         self, mock_get_current_time: umock.MagicMock
