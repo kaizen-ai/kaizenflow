@@ -110,6 +110,8 @@ def get_bad_data_stats(
     ```
 
     :param agg_level: columns to group data by
+    :param vendor_name: vendor to compute stats for
+    :return: bad data stats for each full symbol
     """
     hdbg.dassert_lte(1, len(agg_level))
     # Copy in order not to modify original data.
@@ -165,6 +167,9 @@ def get_timestamp_stats(data: pd.DataFrame, vendor_name: str) -> pd.DataFrame:
     ftx::ADA_USDT  2021-08-07       2022-05-18      284
     ftx::BTC_USDT  2018-01-01       2022-05-18      1598
     ```
+
+    :param vendor_name: vendor to compute stats for
+    :return: stats for timestamp values for each full symbol
     """
     res_stats = []
     for full_symbol, symbol_data in data.groupby("full_symbol"):
@@ -181,3 +186,44 @@ def get_timestamp_stats(data: pd.DataFrame, vendor_name: str) -> pd.DataFrame:
     res_stats_df = pd.concat(res_stats, axis=1).T
     res_stats_df.name = vendor_name
     return res_stats_df
+
+
+# TODO(Dan): Add filtering by dates.
+def plot_bad_data_by_year_month_stats(
+    bad_data_stats: pd.DataFrame,
+    threshold: int,
+) -> None:
+    """
+    Plot stats by year and month per unique full symbol in data.
+
+    :param bad_data_stats: see `get_bad_data_stats` for details
+    :param threshold: a value above which data quality is considered low
+    """
+    full_symbols = bad_data_stats.index.get_level_values(0).unique()
+    for full_symbol in full_symbols:
+        bad_data_col_name = "bad data [%]"
+        ax = bad_data_stats.loc[full_symbol].plot.bar(
+            y=bad_data_col_name, rot=0, title=full_symbol
+        )
+        #
+        ax.hlines(
+            y=threshold,
+            xmin=0,
+            xmax=len(bad_data_stats),
+            color="r",
+        )
+        # Get ticks and labels for x-axis.
+        ticks = ax.xaxis.get_ticklocs()
+        labels = ax.xaxis.get_ticklabels()
+        ticklabels = [
+            label.get_text().strip("()").split(", ") for label in labels
+        ]
+        # Reformat ticklabels for readability.
+        ticklabels = [".".join([label[0], label[1]]) for label in ticklabels]
+        # Adjust x-axis labels so they do not overlap on plot by
+        # picking ticks and labels by specified stride that limits
+        # the number of final ticks to 10.
+        stride = len(ticks) // 10 + 1
+        ax.xaxis.set_ticks(ticks[::stride])
+        ax.xaxis.set_ticklabels(ticklabels[::stride])
+        ax.figure.show()

@@ -732,11 +732,12 @@ class TestTalosSqlRealTimeImClient1(
         parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
+        test_columns = ["open", "close", "volume"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
+            "SELECT open,close,volume FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
             "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
@@ -754,11 +755,12 @@ class TestTalosSqlRealTimeImClient1(
         parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = None
         end_unix_epoch = None
+        test_columns = ["high", "low", "currency_pair"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv "
+            "SELECT high,low,currency_pair FROM talos_ohlcv "
             "WHERE ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
@@ -776,11 +778,12 @@ class TestTalosSqlRealTimeImClient1(
         parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
+        test_columns = ["currency_pair", "open", "close"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch
+            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv "
+            "SELECT currency_pair,open,close FROM talos_ohlcv "
             "WHERE timestamp >= 1647470940000 AND timestamp <= 1647471180000"
         )
         # Message in case if test case got failed.
@@ -798,15 +801,17 @@ class TestTalosSqlRealTimeImClient1(
         parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
+        test_columns = ["timestamp", "currency_pair", "volume"]
         actual_outcome = talos_sql_client._build_select_query(
             parsed_symbols,
             start_unix_epoch,
             end_unix_epoch,
+            columns=test_columns,
             left_close=False,
             right_close=False,
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv WHERE timestamp > 1647470940000 AND timestamp < "
+            "SELECT timestamp,currency_pair,volume FROM talos_ohlcv WHERE timestamp > 1647470940000 AND timestamp < "
             "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
@@ -824,14 +829,16 @@ class TestTalosSqlRealTimeImClient1(
         parsed_symbols = [(exchange_id, currency_pair)]
         start_unix_epoch = 1647470940000
         end_unix_epoch = 1647471180000
+        test_columns = ["currency_pair", "volume"]
         actual_outcome = talos_sql_client._build_select_query(
             parsed_symbols,
             start_unix_epoch,
             end_unix_epoch,
+            columns=test_columns,
             ts_col_name="test_timestamp",
         )
         expected_outcome = (
-            "SELECT * FROM talos_ohlcv WHERE test_timestamp >= 1647470940000 AND test_timestamp <= "
+            "SELECT currency_pair,volume FROM talos_ohlcv WHERE test_timestamp >= 1647470940000 AND test_timestamp <= "
             "1647471180000 AND ((exchange_id='binance' AND currency_pair='BTC_USDT'))"
         )
         # Message in case if test case got failed.
