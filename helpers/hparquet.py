@@ -767,13 +767,17 @@ def list_and_merge_pq_files(
         data = data.to_pandas()
         # Drop duplicates on non-metadata columns.
         if drop_duplicates_mode is None:
-            continue
+            subset_cols = data.columns.to_list()
+            for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
+                if col_name in subset_cols:
+                    subset_cols.remove(col_name)
+            control_column = None
         elif drop_duplicates_mode == "ohlcv":
             duplicate_columns = ["timestamp", "exchange_id"]
             control_column = "volume"
-            data = remove_duplicates(data, duplicate_columns, control_column)
         else:
             hdbg.dassert(msg="Supported drop duplicates modes: ohlcv")
+        data = remove_duplicates(data, duplicate_columns, control_column)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
         pq.write_table(
