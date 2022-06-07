@@ -12,7 +12,7 @@ import collections
 import functools
 import logging
 import operator
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
