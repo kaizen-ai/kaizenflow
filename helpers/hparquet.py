@@ -16,6 +16,7 @@ import pyarrow.fs as pafs
 import pyarrow.parquet as pq
 from tqdm.autonotebook import tqdm
 
+import helpers.hdataframe as hdatafr
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
@@ -772,12 +773,13 @@ def list_and_merge_pq_files(
                 if col_name in duplicate_columns:
                     duplicate_columns.remove(col_name)
             control_column = None
+        # Drop duplicates on timestamp index.
         elif drop_duplicates_mode == "ohlcv":
             duplicate_columns = ["timestamp", "exchange_id"]
             control_column = "volume"
         else:
             hdbg.dassert(msg="Supported drop duplicates modes: ohlcv")
-        data = remove_duplicates(data, duplicate_columns, control_column)
+        data = hdatafr.remove_duplicates(data, duplicate_columns, control_column)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
         pq.write_table(
@@ -785,29 +787,6 @@ def list_and_merge_pq_files(
             folder + "/" + file_name,
             filesystem=filesystem,
         )
-
-
-def remove_duplicates(
-    data: pd.DataFrame,
-    duplicate_columns: Optional[List[str]],
-    control_column: Optional[str],
-) -> pd.DataFrame:
-    """
-    Remove duplicates from DataFrame.
-
-    :param data: DataFrame to process
-    :param duplicate_columns: subset of column names, None for all
-    :param control_column: column max value of which determines the kept row
-    :return: DataFrame with removed duplicates
-    """
-    # Fix maximum value of control column at the bottom.
-    if control_column:
-        data = data.sort_values(by=control_column)
-    duplicate_columns = duplicate_columns or data.columns
-    data = data.drop_duplicates(subset=duplicate_columns)
-    # Sort by index to return to original view.
-    data = data.sort_index()
-    return data
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:
