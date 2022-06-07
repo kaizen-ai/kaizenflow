@@ -5,7 +5,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hsql as hsql
-import im_v2.common.data.client.realtime_clients_example as imvcdcrcex
+import im_v2.common.data.client as icdc
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
@@ -734,7 +734,10 @@ class TestTalosSqlRealTimeImClient1(
         end_unix_epoch = 1647471180000
         test_columns = ["open", "close", "volume"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            columns=test_columns,
         )
         expected_outcome = (
             "SELECT open,close,volume FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
@@ -757,7 +760,10 @@ class TestTalosSqlRealTimeImClient1(
         end_unix_epoch = None
         test_columns = ["high", "low", "currency_pair"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            columns=test_columns,
         )
         expected_outcome = (
             "SELECT high,low,currency_pair FROM talos_ohlcv "
@@ -780,7 +786,10 @@ class TestTalosSqlRealTimeImClient1(
         end_unix_epoch = 1647471180000
         test_columns = ["currency_pair", "open", "close"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            columns=test_columns,
         )
         expected_outcome = (
             "SELECT currency_pair,open,close FROM talos_ohlcv "
@@ -1133,7 +1142,7 @@ class TestTalosSqlRealTimeImClient1(
     def test_filter_columns2(self) -> None:
         im_client = self.setup_talos_sql_client()
         full_symbol = "binance::BTC_USDT"
-        columns = ["full_symbol", "whatever"]
+        columns = ["full_symbol", "unsupported"]
         self._test_filter_columns2(im_client, full_symbol, columns)
 
     @pytest.mark.slow
@@ -1352,7 +1361,7 @@ class TestMockSqlRealTimeImClient1(
     """
 
     @staticmethod
-    def get_expected_column_names():
+    def get_expected_column_names() -> list:
         """
         Return a list of expected column names.
         """
@@ -1603,7 +1612,7 @@ class TestMockSqlRealTimeImClient1(
 
     def test_filter_columns2(self) -> None:
         full_symbol = "binance::BTC_USDT"
-        columns = ["full_symbol", "whatever"]
+        columns = ["full_symbol", "unsupported"]
         self._test_filter_columns2(self.client, full_symbol, columns)
 
     def test_filter_columns3(self) -> None:
@@ -1613,7 +1622,7 @@ class TestMockSqlRealTimeImClient1(
 
     def setUp(self) -> None:
         super().setUp()
-        self.client = imvcdcrcex.get_mock_realtime_client(self.connection)
+        self.client = icdc.get_mock_realtime_client(self.connection)
 
     def tearDown(self) -> None:
         hsql.remove_table(self.connection, "example2_marketdata")
