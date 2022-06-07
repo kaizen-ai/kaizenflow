@@ -231,7 +231,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         self.assertEqual(expected_args[0], "s3://mock_bucket/binance")
         # Check keyword arguments. In this case only `aws_profile`.
         self.assertDictEqual(
-            expected_kwargs, {"aws_profile": self.mock_aws_profile}
+            expected_kwargs, {"aws_profile": self.mock_aws_profile, "drop_duplicates_mode": "ohlcv"}
         )
         # Prepare common `hs3.listdir` params.
         s3_bucket = f"s3://{self.bucket_name}"
