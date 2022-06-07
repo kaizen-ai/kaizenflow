@@ -5,6 +5,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hsql as hsql
+import im_v2.common.data.client as icdc
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
@@ -733,7 +734,10 @@ class TestTalosSqlRealTimeImClient1(
         end_unix_epoch = 1647471180000
         test_columns = ["open", "close", "volume"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            columns=test_columns,
         )
         expected_outcome = (
             "SELECT open,close,volume FROM talos_ohlcv WHERE timestamp >= 1647470940000 AND timestamp <= "
@@ -756,7 +760,10 @@ class TestTalosSqlRealTimeImClient1(
         end_unix_epoch = None
         test_columns = ["high", "low", "currency_pair"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            columns=test_columns,
         )
         expected_outcome = (
             "SELECT high,low,currency_pair FROM talos_ohlcv "
@@ -779,7 +786,10 @@ class TestTalosSqlRealTimeImClient1(
         end_unix_epoch = 1647471180000
         test_columns = ["currency_pair", "open", "close"]
         actual_outcome = talos_sql_client._build_select_query(
-            parsed_symbols, start_unix_epoch, end_unix_epoch, columns=test_columns,
+            parsed_symbols,
+            start_unix_epoch,
+            end_unix_epoch,
+            columns=test_columns,
         )
         expected_outcome = (
             "SELECT currency_pair,open,close FROM talos_ohlcv "
@@ -1061,8 +1071,6 @@ class TestTalosSqlRealTimeImClient1(
         im_client = self.setup_talos_sql_client(resample_1min=False)
         full_symbol = "unsupported_exchange::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
-        # Delete the table.
-        hsql.remove_table(self.connection, "talos_ohlcv")
 
     def test_read_data7(self) -> None:
         im_client = self.setup_talos_sql_client(False)
@@ -1134,7 +1142,7 @@ class TestTalosSqlRealTimeImClient1(
     def test_filter_columns2(self) -> None:
         im_client = self.setup_talos_sql_client()
         full_symbol = "binance::BTC_USDT"
-        columns = ["full_symbol", "whatever"]
+        columns = ["full_symbol", "unsupported"]
         self._test_filter_columns2(im_client, full_symbol, columns)
 
     @pytest.mark.slow
@@ -1337,3 +1345,285 @@ class TestTalosSqlRealTimeImClient1(
             1464553467: "binance::ETH_USDT",
         }
         return test_dict
+
+
+# #############################################################################
+# TestMockSqlRealTimeImClient1
+# #############################################################################
+
+
+class TestMockSqlRealTimeImClient1(
+    icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
+):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
+    @staticmethod
+    def get_expected_column_names() -> list:
+        """
+        Return a list of expected column names.
+        """
+        expected_column_names = [
+            "asset_id",
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "start_timestamp",
+            "volume",
+        ]
+        return expected_column_names
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+
+    def test_read_data1(self) -> None:
+        full_symbol = "binance::BTC_USDT"
+        #
+        expected_length = 3
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        # pylint: disable=line-too-long
+        expected_signature = r"""# df=
+        index=[2022-04-22 14:40:00+00:00, 2022-04-22 17:10:00+00:00]
+        columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
+        shape=(3, 8)
+                                   open  high   low  close  volume        full_symbol           start_timestamp    asset_id
+        timestamp
+        2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
+        2022-04-22 15:30:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT 2022-04-22 15:29:00+00:00  1467591036
+        2022-04-22 17:10:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT 2022-04-22 17:09:00+00:00  1467591036
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data1(
+            self.client,
+            full_symbol,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data2(self) -> None:
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        #
+        expected_length = 6
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""# df=
+        index=[2022-04-22 14:30:00+00:00, 2022-04-22 17:10:00+00:00]
+        columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
+        shape=(6, 8)
+                                   open  high   low  close  volume        full_symbol           start_timestamp    asset_id
+        timestamp
+        2022-04-22 14:30:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT 2022-04-22 14:29:00+00:00  1464553467
+        2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
+        2022-04-22 15:00:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT 2022-04-22 14:59:00+00:00  1464553467
+        2022-04-22 15:30:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT 2022-04-22 15:29:00+00:00  1467591036
+        2022-04-22 16:30:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT 2022-04-22 16:29:00+00:00  1464553467
+        2022-04-22 17:10:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT 2022-04-22 17:09:00+00:00  1467591036
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data2(
+            self.client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data3(self) -> None:
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        start_ts = pd.Timestamp("2022-04-22T16:30:00-00:00")
+        #
+        expected_length = 2
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""# df=
+        index=[2022-04-22 16:30:00+00:00, 2022-04-22 17:10:00+00:00]
+        columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
+        shape=(2, 8)
+                                   open  high   low  close  volume        full_symbol           start_timestamp    asset_id
+        timestamp
+        2022-04-22 16:30:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT 2022-04-22 16:29:00+00:00  1464553467
+        2022-04-22 17:10:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT 2022-04-22 17:09:00+00:00  1467591036
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data3(
+            self.client,
+            full_symbols,
+            start_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data4(self) -> None:
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        end_ts = pd.Timestamp("2022-04-22T14:40:00-00:00")
+        #
+        expected_length = 2
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2022-04-22 14:30:00+00:00, 2022-04-22 14:40:00+00:00]
+        columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
+        shape=(2, 8)
+                                   open  high   low  close  volume        full_symbol           start_timestamp    asset_id
+        timestamp
+        2022-04-22 14:30:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT 2022-04-22 14:29:00+00:00  1464553467
+        2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data4(
+            self.client,
+            full_symbols,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data5(self) -> None:
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        start_ts = pd.Timestamp("2022-04-22T13:00:00-00:00")
+        end_ts = pd.Timestamp("2022-04-22T15:30:00-00:00")
+        #
+        expected_length = 4
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""# df=
+        index=[2022-04-22 14:30:00+00:00, 2022-04-22 15:30:00+00:00]
+        columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
+        shape=(4, 8)
+                                   open  high   low  close  volume        full_symbol           start_timestamp    asset_id
+        timestamp
+        2022-04-22 14:30:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT 2022-04-22 14:29:00+00:00  1464553467
+        2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
+        2022-04-22 15:00:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT 2022-04-22 14:59:00+00:00  1464553467
+        2022-04-22 15:30:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT 2022-04-22 15:29:00+00:00  1467591036
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data5(
+            self.client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_read_data6(self) -> None:
+        full_symbol = "unsupported_exchange::unsupported_currency"
+        self._test_read_data6(self.client, full_symbol)
+
+    def test_read_data7(self) -> None:
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        #
+        expected_length = 6
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2022-04-22 14:30:00+00:00, 2022-04-22 17:10:00+00:00]
+        columns=open,high,low,close,volume,full_symbol,start_timestamp,asset_id
+        shape=(6, 8)
+                                   open  high   low  close  volume        full_symbol           start_timestamp    asset_id
+        timestamp
+        2022-04-22 14:30:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT 2022-04-22 14:29:00+00:00  1464553467
+        2022-04-22 14:40:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT 2022-04-22 14:39:00+00:00  1467591036
+        2022-04-22 15:00:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT 2022-04-22 14:59:00+00:00  1464553467
+        2022-04-22 15:30:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT 2022-04-22 15:29:00+00:00  1467591036
+        2022-04-22 16:30:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT 2022-04-22 16:29:00+00:00  1464553467
+        2022-04-22 17:10:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT 2022-04-22 17:09:00+00:00  1467591036
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data7(
+            self.client,
+            full_symbols,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    # ///////////////////////////////////////////////////////////////////////
+
+    def test_get_start_ts_for_symbol1(self) -> None:
+        full_symbol = "binance::BTC_USDT"
+        expected_start_ts = pd.to_datetime("2022-04-22 14:40:00", utc=True)
+        self._test_get_start_ts_for_symbol1(
+            self.client, full_symbol, expected_start_ts
+        )
+
+    def test_get_end_ts_for_symbol1(self) -> None:
+        full_symbol = "binance::BTC_USDT"
+        expected_end_ts = pd.to_datetime("2022-04-22 17:10:00", utc=True)
+        self._test_get_end_ts_for_symbol1(
+            self.client, full_symbol, expected_end_ts
+        )
+
+    # ///////////////////////////////////////////////////////////////////////
+
+    def test_get_universe1(self) -> None:
+        expected_length = 2
+        expected_first_elements = [
+            "binance::BTC_USDT",
+            "binance::ETH_USDT",
+        ]
+        expected_last_elements = expected_first_elements
+        self._test_get_universe1(
+            self.client,
+            expected_length,
+            expected_first_elements,
+            expected_last_elements,
+        )
+
+    # ///////////////////////////////////////////////////////////////////////
+    def test_filter_columns1(self) -> None:
+        full_symbols = ["binance::ETH_USDT", "binance::BTC_USDT"]
+        columns = self.get_expected_column_names()
+        self._test_filter_columns1(self.client, full_symbols, columns)
+
+    def test_filter_columns2(self) -> None:
+        full_symbol = "binance::BTC_USDT"
+        columns = ["full_symbol", "unsupported"]
+        self._test_filter_columns2(self.client, full_symbol, columns)
+
+    def test_filter_columns3(self) -> None:
+        full_symbol = "binance::BTC_USDT"
+        columns = ["open", "close"]
+        self._test_filter_columns3(self.client, full_symbol, columns)
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.client = icdc.get_mock_realtime_client(self.connection)
+
+    def tearDown(self) -> None:
+        hsql.remove_table(self.connection, "example2_marketdata")
+        super().tearDown()
