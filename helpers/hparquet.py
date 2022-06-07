@@ -767,10 +767,10 @@ def list_and_merge_pq_files(
         data = data.to_pandas()
         # Drop duplicates on non-metadata columns.
         if drop_duplicates_mode is None:
-            subset_cols = data.columns.to_list()
+            duplicate_columns = data.columns.to_list()
             for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
-                if col_name in subset_cols:
-                    subset_cols.remove(col_name)
+                if col_name in duplicate_columns:
+                    duplicate_columns.remove(col_name)
             control_column = None
         elif drop_duplicates_mode == "ohlcv":
             duplicate_columns = ["timestamp", "exchange_id"]
