@@ -16,6 +16,7 @@ import pyarrow.fs as pafs
 import pyarrow.parquet as pq
 from tqdm.autonotebook import tqdm
 
+import helpers.hdataframe as hdatafr
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
@@ -712,6 +713,7 @@ def list_and_merge_pq_files(
     *,
     file_name: str = "data.parquet",
     aws_profile: hs3.AwsProfile = None,
+    drop_duplicates_mode: Optional[str] = None,
 ) -> None:
     """
     Merge all files of the Parquet dataset.
@@ -765,14 +767,26 @@ def list_and_merge_pq_files(
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
         data = data.to_pandas()
         # Drop duplicates on non-metadata columns.
-        subset_cols = data.columns.to_list()
-        for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
-            if col_name in subset_cols:
-                subset_cols.remove(col_name)
-        data = data.drop_duplicates(subset=subset_cols)
+        if drop_duplicates_mode is None:
+            duplicate_columns = data.columns.to_list()
+            for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
+                if col_name in duplicate_columns:
+                    duplicate_columns.remove(col_name)
+            control_column = None
+        # Drop duplicates on timestamp index.
+        elif drop_duplicates_mode == "ohlcv":
+            duplicate_columns = ["timestamp", "exchange_id"]
+            control_column = "volume"
+        else:
+            hdbg.dassert(msg="Supported drop duplicates modes: ohlcv")
+        data = hdatafr.remove_duplicates(data, duplicate_columns, control_column)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
-        pq.write_table(pa.Table.from_pandas(data), folder + "/" + file_name, filesystem=filesystem)
+        pq.write_table(
+            pa.Table.from_pandas(data),
+            folder + "/" + file_name,
+            filesystem=filesystem,
+        )
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:
