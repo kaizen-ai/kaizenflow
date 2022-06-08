@@ -92,7 +92,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
             "'<class 'pandas._libs.tslibs.timestamps.Timestamp'"
         )
         self.assertIn(expected, actual)
-
+        
+    @pytest.mark.skip(reason="CMTask2089")
     def test_download_ohlcv_invalid_input2(self) -> None:
         """
         Run with invalid end timestamp.
@@ -174,7 +175,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
             "nonce",
         ]
         self.assertListEqual(order_book_keys, list(order_book.keys()))
-
+    
+    @pytest.mark.skip(reason="CMTask2089")
     def test_download_order_book_invalid_input1(self) -> None:
         """
         Run with invalid currency pair.
