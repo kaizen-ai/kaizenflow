@@ -50,7 +50,7 @@ class CcxtBroker(ombroker.Broker):
         self._asset_id_to_symbol_mapping = self._build_asset_id_to_symbol_mapping(universe_version)
         # Will be used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
-        # TODO(Juraj): not sure how to generalize this coinbaseprime-specific parameter.
+        # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         if mode == "test":
             self._exchange.set_sandbox_mode(True)

@@ -20,7 +20,7 @@ import oms.test.oms_db_helper as omtodh
 
 import oms.ccxt_broker as occxbrok
 import oms.order_example as oordexam
-import oms.coinbaseprime_exchange as ocoiexch
+import oms.coinbasepro_exchange as ocoiexch
 
 
 class TestCcxtBroker1(hunitest.TestCase):
@@ -34,7 +34,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         market_data, _ = mdata.get_ReplayedTimeMarketData_example3(None)
         strategy = "SAU1"
         # Instantiante a broker with specified exchange.
-        exchange =  self._log_into_coinbaseprime_exchange()
+        exchange =  self._log_into_coinbasepro_exchange()
         # TODO(Juraj) mock the API calls.
         broker = occxbrok.CcxtBroker(exchange, "v5", "prod", "c27158ee-ac73-49bb-a1f3-ec022cac33c2", strategy_id=strategy, market_data=market_data)                                                             
         # Submit an order.
@@ -67,17 +67,17 @@ class TestCcxtBroker1(hunitest.TestCase):
         actual = str(fail.value)
         self.assertIn("The coinbase exchange is not fully supported for placing orders.", actual)
 
-    def _log_into_coinbaseprime_exchange(self) -> ocoiexch.coinbaseprime:
+    def _log_into_coinbasepo_exchange(self) -> ocoiexch.coinbasepro:
         """
-        Log into coinbaseprime and return the corresponding
+        Log into coinbasepro and return the corresponding
         `ccxt.Exchange` object.
         """
         # Select credentials for provided exchange.
-        credentials = hsecret.get_secret("coinbaseprime")
+        credentials = hsecret.get_secret("coinbasepro")
         # Enable rate limit.
         credentials["rateLimit"] = True
         # Create a CCXT Exchange class object.
-        exchange = ocoiexch.coinbaseprime(credentials)
+        exchange = ocoiexch.coinbasepro(credentials)
         hdbg.dassert(
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
