@@ -58,7 +58,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         strategy = "SAU1"
         with self.assertRaises(ValueError):
             broker = occxbrok.CcxtBroker(
-                "coinbasepro",
+                "coinbase",
                 "v3",
                 "test",
                 "c27158ee-ac73-49bb-a1f3-ec022cac33c2",
