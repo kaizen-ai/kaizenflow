@@ -26,7 +26,7 @@ def _run(args: argparse.Namespace) -> None:
             }
         )
         currency_pair = currency_pair_dir.split("=")[0]
-        full_symbol = f"{df['exchange_id']}::{currency_pair}"
+        full_symbol = [f"{df['exchange_id']}::{currency_pair}"] * df.shape[0]
         df = df.insert(0, "full_symbol", full_symbol)
         df = df.drop(columns=["exchange_id"])
         partition_columns = ["year", "month"]
