@@ -1,11 +1,8 @@
 import asyncio
 
-import ccxt
 import pytest
 
 import helpers.hasyncio as hasynci
-import helpers.hdbg as hdbg
-import helpers.hsecrets as hsecret
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
@@ -61,28 +58,10 @@ class TestCcxtBroker1(hunitest.TestCase):
         strategy = "SAU1"
         with self.assertRaises(ValueError):
             broker = occxbrok.CcxtBroker(
-                ccxt.coinbase(),
+                "coinbasepro",
                 "v3",
                 "test",
                 "c27158ee-ac73-49bb-a1f3-ec022cac33c2",
                 strategy_id=strategy,
                 market_data=market_data,
             )
-
-    @staticmethod
-    def _log_into_coinbasepro_exchange() -> ccxt.Exchange:
-        """
-        Log into coinbasepro and return the corresponding `ccxt.Exchange`
-        object.
-        """
-        # Select credentials for provided exchange.
-        credentials = hsecret.get_secret("coinbasepro")
-        # Enable rate limit.
-        credentials["rateLimit"] = True
-        # Create a CCXT Exchange class object.
-        exchange = ccxt.coinbasepro(credentials)
-        hdbg.dassert(
-            exchange.checkRequiredCredentials(),
-            msg="Required credentials not passed",
-        )
-        return exchange

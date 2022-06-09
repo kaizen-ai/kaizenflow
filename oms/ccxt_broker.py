@@ -26,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 class CcxtBroker(ombroker.Broker):
     def __init__(
         self,
-        exchange: ccxt.Exchange,
+        exchange_id: str,
         universe_version: str,
         mode: str,
         portfolio_id: str,
@@ -44,8 +44,9 @@ class CcxtBroker(ombroker.Broker):
          if "prod" launches with production API.
         """
         hdbg.dassert_in(mode, ["prod", "test"])
-        self._exchange = exchange
-        self._exchange_id = exchange.id
+        self._mode = mode
+        self._exchange_id = exchange_id
+        self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
         # Enable mapping back from asset ids when placing orders.
         self._asset_id_to_symbol_mapping = self._build_asset_id_to_symbol_mapping(
@@ -55,9 +56,6 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
-        if mode == "test":
-            self._exchange.set_sandbox_mode(True)
-            _LOG.warning("Running in sandbox mode")
 
     def get_fills(self) -> List[ombroker.Fill]:
         """
@@ -92,24 +90,6 @@ class CcxtBroker(ombroker.Broker):
             raise ValueError(
                 f"The {self._exchange_id} exchange is not fully supported for placing orders."
             )
-
-    def _log_into_exchange(self) -> ccxt.Exchange:
-        """
-        Log into an exchange via CCXT and return the corresponding
-        `ccxt.Exchange` object.
-        """
-        # Select credentials for provided exchange.
-        credentials = hsecret.get_secret(self._exchange_id)
-        # Enable rate limit.
-        credentials["rateLimit"] = True
-        exchange_class = getattr(ccxt, self._exchange_id)
-        # Create a CCXT Exchange class object.
-        exchange = exchange_class(credentials)
-        hdbg.dassert(
-            exchange.checkRequiredCredentials(),
-            msg="Required credentials not passed",
-        )
-        return exchange
 
     async def _submit_orders(
         self,
@@ -174,3 +154,28 @@ class CcxtBroker(ombroker.Broker):
         file_name: str,
     ) -> None:
         _ = file_name
+
+    def _log_into_exchange(self) -> ccxt.Exchange:
+        """
+        Log into coinbasepro and return the corresponding `ccxt.Exchange`
+        object.
+        """
+        # Select credentials for provided exchange.
+        if self._mode == "test":
+            secrets_id = self._exchange_id + "_sandbox"
+        else:
+            secrets_id = self._exchange_id
+        credentials = hsecret.get_secret(secrets_id)
+        # Enable rate limit.
+        credentials["rateLimit"] = True
+        # Create a CCXT Exchange class object.
+        ccxt_exchange = getattr(ccxt, self._exchange_id)
+        exchange = ccxt_exchange(credentials)
+        if self._mode == "test":
+            exchange.set_sandbox_mode(True)
+            _LOG.warning("Running in sandbox mode")
+        hdbg.dassert(
+            exchange.checkRequiredCredentials(),
+            msg="Required credentials not passed",
+        )
+        return exchange
