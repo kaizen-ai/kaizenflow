@@ -376,15 +376,13 @@ def is_CK_S3_available() -> bool:
     # CK bucket is not available for `//lemonade` and `//amp` unless it's on
     # `dev_ck`.
     val = True
-    if is_mac():
-        val = False
-    elif is_dev4():
-        # CK bucket is not available on dev4.
-        val = False
-    elif is_inside_ci():
+    if is_mac() or is_inside_ci():
         if get_name() in ("//amp", "//dev_tools", "//lemonade"):
             # No CK bucket.
             val = False
+    elif is_dev4():
+        # CK bucket is not available on dev4.
+        val = False
     _LOG.debug("val=%s", val)
     return val
 

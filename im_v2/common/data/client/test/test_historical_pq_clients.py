@@ -273,7 +273,6 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_columns = ["full_symbol", "whatever"]
         self._test_filter_columns2(im_client, full_symbol, expected_columns)
 
-    @pytest.mark.skip(reason="Enable after `Assertion in TestIgHistoricalPqByDateTaqBarClient1 #2110`")
     def test_filter_columns3(self) -> None:
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
@@ -283,7 +282,6 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_columns = ["close"]
         self._test_filter_columns3(im_client, full_symbol, expected_columns)
 
-    @pytest.mark.skip(reason="Enable after `Assertion in TestIgHistoricalPqByDateTaqBarClient1 #2110`")
     def test_filter_columns4(self) -> None:
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
