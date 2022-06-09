@@ -63,16 +63,7 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
     Get start and end timestamps from the specified period.
 
-    For interval periods:
-    - "JanFeb2020" = [Jan 2020, Feb 2020]
-    - "FebMar2020" = [Feb 2020, Mar 2020]
-    - "NovDec2020" = [Nov 2020, Dec 2020]
-    - "2018_2019" = [2018, 2019]
-    - "2009_2019" = [2009, 2019)
-    - "2015_2022" = [2015, 2022)
-    - "2012_2022" = [2012, 2022)
-    - "2018_2022" = [2018, April 2022]
-    - "2018_2022" = [2018, Feb 2022]
+    The interval type is [a, b), i.e. the last day of the interval is excluded.
     """
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
@@ -123,7 +114,6 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
         end_datetime = datetime.datetime(2022, 5, 1)
     elif period == "2019_2022":
         start_datetime = datetime.datetime(2019, 1, 1)
-        # TODO(Dan): Extend to the actual month in 2022 before using next time.
         end_datetime = datetime.datetime(2022, 3, 1)
     else:
         hdbg.dfatal("Invalid period='%s'" % period)
@@ -306,7 +296,7 @@ def build_configs_varying_tiled_periods(
         )
         # Move end timestamp to the end of the day.
         # E.g., if a user passes `2022-05-31` it becomes `2022-05-31 00:00:00`
-        # but should `2022-05-31 23:59:00` to include all the data.
+        # but should be `2022-05-31 23:59:00` to include all the data.
         end_ts = end_ts + pd.Timedelta(days=1, seconds=-1)
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         #

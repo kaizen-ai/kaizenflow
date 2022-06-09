@@ -56,6 +56,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example2(
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     partition_mode = "by_year_month"
+    dataset = "ohlcv"
     data_snapshot = "20220530"
     crypto_chassis_parquet_client = (
         imvccdcccc.CryptoChassisHistoricalPqByTileClient(
@@ -63,6 +64,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example2(
             resample_1min,
             root_dir,
             partition_mode,
+            dataset,
             data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )
