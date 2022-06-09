@@ -60,6 +60,11 @@ def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
 # TODO(gp): -> get_time_interval
 # TODO(Grisha): "Refactor or remove `get_period()`" CmTask #1723.
 def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
+    """
+    Get start and end timestamps from the specified period.
+
+    The interval type is [a, b), i.e. the last day of the interval is excluded.
+    """
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
         end_datetime = datetime.datetime(2020, 1, 7)
@@ -92,18 +97,21 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
         start_datetime = datetime.datetime(2018, 1, 1)
         end_datetime = datetime.datetime(2020, 1, 1)
     elif period == "2009_2019":
-        # Entire 2009-2019 period.
+        # Entire 2009-2018 period.
         start_datetime = datetime.datetime(2009, 1, 1)
         end_datetime = datetime.datetime(2019, 1, 1)
     elif period == "2015_2022":
+        # Entire 2015-2021 period.
         start_datetime = datetime.datetime(2015, 1, 1)
         end_datetime = datetime.datetime(2022, 1, 1)
     elif period == "2012_2022":
+        # Entire 2012-2021 period.
         start_datetime = datetime.datetime(2012, 1, 1)
         end_datetime = datetime.datetime(2022, 1, 1)
     elif period == "2018_2022":
         start_datetime = datetime.datetime(2018, 1, 1)
-        end_datetime = datetime.datetime(2022, 5, 31)
+        # TODO(Dan): "Duplicated indices for different data rows CmTask #2062."
+        end_datetime = datetime.datetime(2022, 5, 1)
     elif period == "2019_2022":
         start_datetime = datetime.datetime(2019, 1, 1)
         end_datetime = datetime.datetime(2022, 3, 1)
@@ -286,6 +294,10 @@ def build_configs_varying_tiled_periods(
             - pd.tseries.frequencies.to_offset(freq_as_pd_str)
             + pd.Timedelta("1D")
         )
+        # Move end timestamp to the end of the day.
+        # E.g., if a user passes `2022-05-31` it becomes `2022-05-31 00:00:00`
+        # but should be `2022-05-31 23:59:00` to include all the data.
+        end_ts = end_ts + pd.Timedelta(days=1, seconds=-1)
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         #
         config_tmp = config.copy()
