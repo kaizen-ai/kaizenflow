@@ -12,6 +12,7 @@ import oms.oms_lib_tasks as oomlitas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Share code with TestImDbHelper.
 class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
     """
     Configure the helper to build an OMS test DB.
@@ -54,6 +55,7 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
 
     @classmethod
     def _create_docker_files(cls) -> None:
+        # Create compose file.
         service_name = cls._get_service_name()
         idx = cls.get_id()
         host_port = 5432 + idx
@@ -67,7 +69,7 @@ services:
     environment:
       - POSTGRES_HOST=${{POSTGRES_HOST}}
       - POSTGRES_DB=${{POSTGRES_DB}}
-      - POSTGRES_PORT={{POSTGRES_PORT}}
+      - POSTGRES_PORT=${{POSTGRES_PORT}}
       - POSTGRES_USER=${{POSTGRES_USER}}
       - POSTGRES_PASSWORD=${{POSTGRES_PASSWORD}}
     volumes:
@@ -85,7 +87,7 @@ networks:
 """
         compose_file_name = cls._get_compose_file()
         hio.to_file(compose_file_name, txt)
-        #
+        # Create env file.
         txt = []
         if hgit.execute_repo_config_code("use_main_network()"):
             host = "cf-spm-dev4"

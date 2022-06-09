@@ -68,6 +68,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         # Read the connection parameters from the env file.
         cls.db_env_file = cls._get_db_env_path()
         connection_info = hsql.get_connection_info_from_env_file(cls.db_env_file)
+        _LOG.debug("connection_info=%s", connection_info)
         conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
@@ -86,6 +87,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
                 f"--env-file {cls.db_env_file} "
                 f"up -d {cls._get_service_name()}"
             )
+            _LOG.debug("cmd=%s", cmd)
             hsystem.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
             hsql.wait_db_connection(*connection_info)
@@ -169,3 +171,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Create the compose and env file for the DB run.
         """
         raise NotImplementedError
+
+
+
+# TODO(gp): @all Create a class sharing some common code from TestOmsDbHelper
+#  and TestImDbHelper.
+# class TestImOmsDbHelper(hunitest.TestCase, abc.ABC):
