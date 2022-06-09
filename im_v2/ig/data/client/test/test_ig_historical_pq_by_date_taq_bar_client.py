@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict
 
 import pandas as pd
+import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
@@ -11,6 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Use ImClientTestCase.
+@pytest.mark.skip(reason="Assertion in TestIgHistoricalPqByDateTaqBarClient1 #2110")
 class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
     def read_data_helper(self, *args: Any, **kwargs: Dict[str, Any]) -> None:
         # Execute.

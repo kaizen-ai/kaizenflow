@@ -376,6 +376,7 @@ def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     env_var = f"{prefix}_AWS_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
+    hdbg.dassert_ne(s3_bucket, "", "Env var '%s' is empty", env_var)
     hdbg.dassert(
         not s3_bucket.startswith("s3://"),
         "Invalid %s value '%s'",
