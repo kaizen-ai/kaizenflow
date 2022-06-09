@@ -18,6 +18,7 @@ def compute_close_var(
     df: pd.DataFrame,
     close_col: str,
     apply_log: bool = True,
+    take_square_root: bool = False,
 ) -> pd.DataFrame:
     """
     Compute the close-to-close volatility [squared].
@@ -27,7 +28,8 @@ def compute_close_var(
     :param df: dataframe of close bar values
     :param close_col: name of close col
     :param apply_log: apply `log()` to data prior to var calculation iff True
-    :return: 1-col dataframe with close-to-close variance
+    :param take_square_root: apply `np.sqrt()` to variance before returning
+    :return: 1-col dataframe with close-to-close variance or sqrt variance
     """
     # Sanity-check data.
     cols = [close_col]
@@ -40,8 +42,8 @@ def compute_close_var(
     close_diff = close[close_col].diff()
     variance = np.square(close_diff)
     # Package and return.
-    variance.name = "close_var"
-    return variance.to_frame()
+    result = _package_var(variance, take_square_root, "close")
+    return result
 
 
 def compute_parkinson_var(
@@ -49,6 +51,7 @@ def compute_parkinson_var(
     high_col: str,
     low_col: str,
     apply_log: bool = True,
+    take_square_root: bool = False,
 ) -> pd.DataFrame:
     """
     Compute the squared Parkinson volatility [squared].
@@ -62,6 +65,7 @@ def compute_parkinson_var(
     :param high_col: name of high-value col
     :param low_col: name of low-value col
     :param apply_log: apply `log()` to data prior to var calculation iff True
+    :param take_square_root: apply `np.sqrt()` to variance before returning
     :return: 1-col dataframe with Parkinson variance
     """
     # Sanity-check data.
@@ -76,8 +80,8 @@ def compute_parkinson_var(
     hl_diff = hl[high_col] - hl[low_col]
     variance = coeff * np.square(hl_diff)
     # Package and return.
-    variance.name = "parkinson_var"
-    return variance.to_frame()
+    result = _package_var(variance, take_square_root, "parkinson")
+    return result
 
 
 def compute_garman_klass_var(
@@ -87,6 +91,7 @@ def compute_garman_klass_var(
     low_col: str,
     close_col: str,
     apply_log: bool = True,
+    take_square_root: bool = False,
 ) -> pd.DataFrame:
     """
     Compute the squared Garman-Klass volatility.
@@ -105,6 +110,7 @@ def compute_garman_klass_var(
     :param low_col: name of low-value col
     :param close_col: name of close col
     :param apply_log: apply `log()` to data prior to var calculation iff True
+    :param take_square_root: apply `np.sqrt()` to variance before returning
     :return: 1-col dataframe with Garman-Klass variance
     """
     # Sanity-check data.
@@ -119,8 +125,8 @@ def compute_garman_klass_var(
     co_diff = ohlc[close_col] - ohlc[open_col]
     variance = 0.5 * np.square(hl_diff) - (2 * np.log(2) - 1) * np.square(co_diff)
     # Package and return.
-    variance.name = "garman_klass_var"
-    return variance.to_frame()
+    result = _package_var(variance, take_square_root, "garman_klass")
+    return result
 
 
 # TODO(Paul): Implement the Rogers-Satchell estimator
@@ -136,3 +142,20 @@ def _validate_data(
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_container_type(cols, container_type=list, elem_type=str)
     hdbg.dassert_is_subset(cols, df.columns)
+
+
+def _package_var(
+    srs: pd.Series,
+    take_square_root: bool,
+    name_prefix: str,
+) -> pd.DataFrame:
+    """
+    Maybe convert var to vol, name srs appropriately, and convert to df.
+    """
+    hdbg.dassert_isinstance(srs, pd.Series)
+    if take_square_root:
+        srs = np.sqrt(srs)
+        srs.name = name_prefix + "_vol"
+    else:
+        srs.name = name_prefix + "_var"
+    return srs.to_frame()
