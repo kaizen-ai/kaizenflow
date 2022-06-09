@@ -123,6 +123,13 @@ def add_periodical_download_args(
         type=str,
         help="Trading universe to download data for",
     )
+    parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="OHLCV, market_depth or trades data.",
+    )
     return parser
 
 
@@ -385,6 +392,8 @@ def save_parquet(
     data, partition_cols = hparque.add_date_partition_columns(
         data, "by_year_month"
     )
+    # Drop DB metadata columns.
+    data = data.drop(["end_download_timestamp", "exchange_id"], axis=1, errors="ignore")
     # Save filename as `uuid`, e.g.
     #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
     hparque.to_partitioned_parquet(

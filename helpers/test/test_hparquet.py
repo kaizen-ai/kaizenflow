@@ -10,9 +10,13 @@ import pyarrow.parquet as parquet
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -827,3 +831,118 @@ class TestToPartitionedDataset(hunitest.TestCase):
         val1 - val2=['void_column']
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+@pytest.mark.skipif(
+    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
+class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
+    def generate_test_data(self) -> hs3.AwsProfile:
+        """
+        Upload test daily Parquet files for 3 days to the mocked S3 bucket.
+        """
+        test_dir = self.get_scratch_space()
+        cmd = []
+        file_path = os.path.join(
+            hgit.get_amp_abs_path(),
+            "im_v2/common/test/generate_pq_test_data.py",
+        )
+        cmd.append(file_path)
+        cmd.append("--start_date 2022-02-02")
+        cmd.append("--end_date 2022-02-04")
+        cmd.append("--assets A,B,C,D,E,F")
+        cmd.append("--asset_col_name asset")
+        cmd.append("--partition_mode by_year_month")
+        cmd.append("--custom_partition_cols asset,year,month")
+        cmd.append(f"--dst_dir {test_dir}")
+        cmd = " ".join(cmd)
+        hsystem.system(cmd)
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        s3_bucket = f"s3://{self.bucket_name}"
+        s3fs_.put(test_dir, s3_bucket, recursive=True)
+        return s3fs_
+
+    def test_list_and_merge_pq_files(self) -> None:
+        """
+        Check if predefined generated Parquet files are properly merged.
+        """
+        s3fs_ = self.generate_test_data()
+        # Prepare common `hs3.listdir` params.
+        s3_bucket = f"s3://{self.bucket_name}"
+        pattern = "*.parquet"
+        only_files = True
+        use_relative_paths = True
+        # Check bucket content before merge.
+        parquet_path_list_before = hs3.listdir(
+            s3_bucket, pattern, only_files, use_relative_paths, aws_profile=s3fs_
+        )
+        self.assertEqual(len(parquet_path_list_before), 6)
+        # Add extra parquet files and rename existing one.
+        # e.g., `dummy.parquet`, `dummy_new.parquet`.
+        # Every second file is left intact to replicate ready out-of-the-box folder.
+        # e.g., `asset=A/year=2022/month=2/data.parquet`.
+        for path in parquet_path_list_before[::2]:
+            original_path = f"{s3_bucket}/{path}"
+            renamed_path = original_path.replace("data.parquet", "dummy.parquet")
+            additional_path = original_path.replace(
+                "data.parquet", "dummy_new.parquet"
+            )
+            s3fs_.rename(original_path, renamed_path)
+            s3fs_.copy(renamed_path, additional_path)
+        # Check if edits are in place.
+        updated_parquet_path_list = hs3.listdir(
+            s3_bucket, pattern, only_files, use_relative_paths, aws_profile=s3fs_
+        )
+        data_parquet_path_list = [
+            path
+            for path in updated_parquet_path_list
+            if path.endswith("/data.parquet")
+        ]
+        self.assertEqual(len(updated_parquet_path_list), 9)
+        self.assertEqual(len(data_parquet_path_list), 3)
+        # Check bucket content after merge.
+        hparque.list_and_merge_pq_files(self.bucket_name, aws_profile=s3fs_)
+        parquet_path_list_after = hs3.listdir(
+            s3_bucket, pattern, only_files, use_relative_paths, aws_profile=s3fs_
+        )
+        parquet_path_list_after.sort()
+        expected_list = [
+            "tmp.scratch/asset=A/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=B/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=C/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=D/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=E/year=2022/month=2/data.parquet",
+            "tmp.scratch/asset=F/year=2022/month=2/data.parquet",
+        ]
+        self.assertListEqual(parquet_path_list_after, expected_list)
+
+    def test_list_and_merge_pq_files_duplicate_drop(self) -> None:
+        # Prepare test data.
+        test_data = {
+            "dummy_value_1": [1, 1, 1],
+            "dummy_value_2": ["A", "A", "A"],
+            "knowledge_timestamp": [1, 2, 3],
+            "end_download_timestamp": [3, 2, 1],
+        }
+        df = pd.DataFrame(data=test_data)
+        # Save test data to s3 bucket.
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        s3_bucket = f"s3://{self.bucket_name}"
+        original_sample_path = f"{s3_bucket}/dummy/data.parquet"
+        dummy_sample_path = original_sample_path.replace(
+            "data.parquet", "dummy.parquet"
+        )
+        hparque.to_parquet(df, dummy_sample_path, aws_profile=s3fs_)
+        # Check if new columns are in place.
+        df = hparque.from_parquet(dummy_sample_path, aws_profile=s3fs_)
+        self.assertIn("knowledge_timestamp", df.columns)
+        self.assertIn("end_download_timestamp", df.columns)
+        self.assertEqual(len(df), 3)
+        # Check if duplicates are dropped after merge.
+        hparque.list_and_merge_pq_files(self.bucket_name, aws_profile=s3fs_)
+        df = hparque.from_parquet(original_sample_path, aws_profile=s3fs_)
+        self.assertEqual(len(df), 1)

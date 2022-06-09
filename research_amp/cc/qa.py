@@ -13,6 +13,51 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 
+def compare_data_stats(
+    vendor1_df: pd.DataFrame,
+    vendor2_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Compare stats for two different vendors for intersecting time intervals.
+
+    Note: it is assumed that vendor names are stored in `vendor_df.name`.
+
+    E.g.:
+    ```
+                    bad data [%]                    ...    NaNs [%]
+                    Crypto Chassis     CCXT         ...    Crypto Chassis     CCXT
+    kucoin::ADA_USDT     0.199483     46.558741     ...    0.199483        14.319763
+    kucoin::BNB_USDT     0.294219     60.489152     ...    0.294219        14.734591
+    ...
+    kucoin::SOL_USDT     0.342937     77.271483     ...    0.342937       75.172764
+    kucoin::XRP_USDT     0.096933     31.608797     ...    0.096933       18.636685
+    ```
+
+    :param vendor1_df: data stats for some vendor, e.g. bad data for `CCXT`
+    :param vendor2_df: data stats for another vendor
+    :return: comparison of stats for two vendors
+    """
+    # Check if columns are equal in order for it is used in `MultiIndex`.
+    hdbg.dassert_set_eq(vendor1_df.columns, vendor2_df.columns)
+    vendor_names = [vendor1_df.name, vendor2_df.name]
+    stats_comparison = pd.concat(
+        [
+            vendor1_df,
+            vendor2_df,
+        ],
+        keys=vendor_names,
+        axis=1,
+    )
+    # Drop stats for not intersecting time periods.
+    stats_comparison = stats_comparison.dropna()
+    # Reorder columns.
+    columns = vendor1_df.columns.to_list()
+    stats_comparison.columns = stats_comparison.columns.swaplevel(0, 1)
+    new_cols = stats_comparison.columns.reindex(columns, level=0)
+    stats_comparison = stats_comparison.reindex(columns=new_cols[0])
+    return stats_comparison
+
+
 def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
     """
     Preprocess OHLCV data for QA stats computations.
@@ -43,7 +88,9 @@ def _preprocess_data(data: pd.DataFrame) -> pd.DataFrame:
     return preprocessed_data
 
 
-def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame:
+def get_bad_data_stats(
+    data: pd.DataFrame, agg_level: List[str], vendor_name: str
+) -> pd.DataFrame:
     """
     Get QA stats per specified groups.
 
@@ -99,10 +146,11 @@ def get_bad_data_stats(data: pd.DataFrame, agg_level: List[str]) -> pd.DataFrame
     res_stats_df = pd.concat(res_stats, axis=1).T
     cols = ["bad data [%]", "missing bars [%]", "volume=0 [%]", "NaNs [%]"]
     res_stats_df = res_stats_df[cols]
+    res_stats_df.name = vendor_name
     return res_stats_df
 
 
-def get_timestamp_stats(data: pd.DataFrame) -> pd.DataFrame:
+def get_timestamp_stats(data: pd.DataFrame, vendor_name: str) -> pd.DataFrame:
     """
     Get timestamp stats per full symbol.
 
@@ -131,4 +179,5 @@ def get_timestamp_stats(data: pd.DataFrame) -> pd.DataFrame:
         res_stats.append(symbol_stats)
     # Combine all full symbol stats.
     res_stats_df = pd.concat(res_stats, axis=1).T
+    res_stats_df.name = vendor_name
     return res_stats_df

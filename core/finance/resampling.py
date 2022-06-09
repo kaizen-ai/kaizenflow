@@ -23,8 +23,6 @@ _LOG = logging.getLogger(__name__)
 # Resampling.
 # #############################################################################
 
-# TODO(Paul): Consider moving resampling code to a new `resampling.py`
-
 
 def compute_vwap(
     df: pd.DataFrame,
