@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 import argparse
 import logging
-import helpers.hparser as hparser
-import helpers.hparquet as hparquet
-import helpers.hdbg as hdbg
+import os
+
 import core.finance.resampling as cfinresa
+import helpers.hdbg as hdbg
+import helpers.hparquet as hparque
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 
@@ -13,7 +15,7 @@ def _run(args: argparse.Namespace) -> None:
     currency_pair_dirs = os.listdir(args.src_dir)
     for currency_pair_dir in currency_pair_dirs:
         src_path = os.path.join(args.src_dir, currency_pair_dir)
-        df = hparquet.from_parquet(src_path, aws_profile="ck")
+        df = hparque.from_parquet(src_path, aws_profile="ck")
         df = cfinresa.resample(df, rule="T").agg(
             {
                 "bid_price": "last",
@@ -29,8 +31,8 @@ def _run(args: argparse.Namespace) -> None:
         df = df.drop(columns=["exchange_id"])
         partition_columns = ["year", "month"]
         dst_path = os.path.join(args.dst_dir, currency_pair_dir)
-        hparquet.to_partitioned_parquet(df, partition_columns, dst_path)
-        _LOG.info(f"Resampled data was uploaded to {dst_path}")
+        hparque.to_partitioned_parquet(df, partition_columns, dst_path)
+        _LOG.info("Resampled data was uploaded to %s", dst_path)
 
 
 def _parse() -> argparse.ArgumentParser:
