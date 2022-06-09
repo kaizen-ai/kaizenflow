@@ -16,11 +16,9 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         market_data, _ = mdata.get_ReplayedTimeMarketData_example3(None)
         strategy = "SAU1"
-        # Instantiante a broker with specified exchange.
-        exchange = self._log_into_coinbasepro_exchange()
         # TODO(Juraj) mock the API calls.
         broker = occxbrok.CcxtBroker(
-            exchange,
+            "coinbasepro",
             "v5",
             "prod",
             "c27158ee-ac73-49bb-a1f3-ec022cac33c2",
@@ -39,7 +37,7 @@ class TestCcxtBroker1(hunitest.TestCase):
                     """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    @pytest.mark.skip(reason="API key for Coinbase Pro not available.")
+    #@pytest.mark.skip(reason="API key for Coinbase Pro not available.")
     # TODO(Danya): Rewrite as a mock.
     def test_submit_and_fill1(self) -> None:
         """
