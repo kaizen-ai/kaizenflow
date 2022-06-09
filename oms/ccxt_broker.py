@@ -66,7 +66,13 @@ class CcxtBroker(ombroker.Broker):
         fills: List[ombroker.Fill] = []
         if self.last_order_execution_ts:
             _LOG.info("Inside get_fills")
-            orders = exchange.fetch_orders(since=self.last_order_execution_ts)
+            orders = self._exchange.fetch_orders(
+                since=self.last_order_execution_ts
+            )
+            for order in orders:
+                if order["status"] == "closed":
+                    # TODO(Danya): Transform filled order to a `Fill` object.
+                    fills.append(order["id"])
         return fills
 
     def _assert_order_methods_presence(self) -> None:
@@ -79,7 +85,7 @@ class CcxtBroker(ombroker.Broker):
         for method in methods:
             if not self._exchange.has[method]:
                 _LOG.error(
-                    f"Method {method} is unsupported for {self._exchange_id}."
+                    "Method %s is unsupported for %s.", method, self._exchange_id
                 )
                 abort = True
         if abort:
@@ -125,11 +131,14 @@ class CcxtBroker(ombroker.Broker):
                 type=order.type_,
                 side=side,
                 amount=order.diff_num_shares,
-                client_order_id=order.order_id,
+                # id=order.order_id,
                 # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
                 # but most likely the method will need to be overriden per each exchange
                 # to accomodate endpoint specific behavior.
-                params={"portfolio_id": self._portfolio_id},
+                params={
+                    "portfolio_id": self._portfolio_id,
+                    "client_order_id": order.order_id,
+                },
             )
             _LOG.info(order_resp)
 
