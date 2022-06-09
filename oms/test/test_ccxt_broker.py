@@ -67,8 +67,9 @@ class TestCcxtBroker1(hunitest.TestCase):
             "The coinbase exchange is not fully supported for placing orders.",
             actual,
         )
-
-    def _log_into_coinbasepro_exchange(self) -> ccxt.Exchange:
+    
+    @staticmethod
+    def _log_into_coinbasepro_exchange() -> ccxt.Exchange:
         """
         Log into coinbasepro and return the corresponding `ccxt.Exchange`
         object.

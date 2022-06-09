@@ -110,7 +110,7 @@ def get_order_example4() -> omorder.Order:
         "2000-01-01 09:30:00-05:00", tz="America/New_York"
     )
     # Corresponds to coinbasepro::BTC_USDT.
-    asset_id = 1782456637
+    asset_id = 3171350587
     type_ = "market"
     start_timestamp = pd.Timestamp(
         "2000-01-01 09:35:00-05:00", tz="America/New_York"
