@@ -504,7 +504,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             #
             oomsdb.create_oms_tables(self.connection, incremental=False)
             #
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 db_connection,
                 table_name,
@@ -778,7 +778,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             db_connection = self.connection
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
             oomsdb.create_oms_tables(self.connection, incremental=False)
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 db_connection,
                 table_name,

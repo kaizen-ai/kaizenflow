@@ -363,7 +363,7 @@ class Example1_TimeForecastSystemWithDatabasePortfolio(
         market_data: mdata.MarketData,
     ) -> oms.Portfolio:
         table_name = oms.CURRENT_POSITIONS_TABLE_NAME
-        portfolio = oms.get_mocked_portfolio_example1(
+        portfolio = oms.get_DatabasePortfolio_example1(
             self._event_loop,
             self._db_connection,
             table_name,

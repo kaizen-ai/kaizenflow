@@ -20,8 +20,9 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
+    not hgit.execute_repo_config_code("has_dind_support()") and
+    not hgit.execute_repo_config_code("use_docker_sibling_containers()"),
+    reason="Need docker children / sibling support",
 )
 class TestDbHelper(hunitest.TestCase, abc.ABC):
     """
@@ -99,7 +100,16 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Bring down the test container.
         """
         _LOG.info("\n%s", hprint.frame("tearDown"))
-        if cls.bring_down_db:
+        docker_compose_cleanup = cls.bring_down_db
+        if hgit.execute_repo_config_code("use_main_network()"):
+            # TODO(gp): When using sibling containers `docker-compose down` tries to
+            #  shut down also the `main_network`, while it is attached to the Docker
+            #  container running the tests.
+            #  > docker network inspect main_network
+            #  We should clean up the containers and volumes directly. We can put
+            #  this in a invoke target.
+            docker_compose_cleanup = False
+        if docker_compose_cleanup:
             # TODO(Grisha): use invoke task CMTask #547.
             cmd = (
                 "sudo docker-compose "
