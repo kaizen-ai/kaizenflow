@@ -8,6 +8,9 @@ import logging
 import os
 from typing import List, Tuple
 
+import helpers.hgit as hgit
+import helpers.hprint as hprint
+
 # This module should not depend on any other helper or 3rd party modules.
 
 _LOG = logging.getLogger(__name__)
@@ -132,6 +135,23 @@ def env_vars_to_string() -> str:
     return msg
 
 
+def env_to_str() -> str:
+    msg = ""
+    #
+    msg += "# Repo config:\n"
+    msg += hprint.indent(hgit.execute_repo_config_code("config_func_to_str()"))
+    msg += "\n"
+    # System signature.
+    msg += "# System signature:\n"
+    msg += hprint.indent(get_system_signature()[0])
+    msg += "\n"
+    # Check which env vars are defined.
+    msg += "# Env vars:\n"
+    msg += hprint.indent(env_vars_to_string())
+    msg += "\n"
+    return msg
+
+
 # #############################################################################
 # Print the library versions.
 # #############################################################################
@@ -166,8 +186,6 @@ def _append(
 
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # We use dynamic imports to minimize the dependencies.
-    import helpers.hgit as hgit
-    import helpers.hprint as hprint
     import helpers.hsystem as hsystem
     import helpers.hversion as hversio
 
