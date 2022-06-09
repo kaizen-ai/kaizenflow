@@ -1,6 +1,8 @@
 import asyncio
 import logging
 from typing import List
+import helpers.hsecrets as hsecret
+import helpers.hdbg as hdbg
 
 import pandas as pd
 import pytest
@@ -17,14 +19,13 @@ import oms.order_processor as oordproc
 import oms.test.oms_db_helper as omtodh
 
 import oms.ccxt_broker as occxbrok
+import oms.order_example as oordexam
+import oms.coinbaseprime_exchange as ocoiexch
 
 
 class TestCcxtBroker1(hunitest.TestCase):
-    def test_submit_and_fill1(self) -> None:
-        event_loop = None
-        hasynci.run(self._test_coroutine1(event_loop), event_loop=event_loop)
 
-    async def _test_coroutine1(
+    async def run_coroutine1(
         self, event_loop: asyncio.AbstractEventLoop
     ) -> None:
         """
@@ -33,9 +34,11 @@ class TestCcxtBroker1(hunitest.TestCase):
         market_data, _ = mdata.get_ReplayedTimeMarketData_example3(None)
         strategy = "SAU1"
         # Instantiante a broker with specified exchange.
-        broker = occxbrok.CcxtBroker("coinbaseprime", "test", strategy_id=strategy, market_data=market_data)                                                                      
+        exchange =  self._log_into_coinbaseprime_exchange()
+        # TODO(Juraj) mock the API calls.
+        broker = occxbrok.CcxtBroker(exchange, "v5", "prod", "c27158ee-ac73-49bb-a1f3-ec022cac33c2", strategy_id=strategy, market_data=market_data)                                                             
         # Submit an order.
-        order = _get_order_example1()
+        order = oordexam.get_order_example4()
         orders = [order]
         await broker.submit_orders(orders)
         # Check fills.
@@ -46,6 +49,11 @@ class TestCcxtBroker1(hunitest.TestCase):
         #"""
         #self.assert_equal(actual, expected, fuzzy_match=True)
 
+    def test_submit_and_fill1(self) -> None:
+        event_loop = None
+        hasynci.run(self.run_coroutine1(event_loop), event_loop=event_loop)
+
+    @pytest.mark.skip(reason="Code in development.")
     def test_unsupported_exchange1(self) -> None:
         """
         Test that ValueError is raised when CcxtBroker cannot be
@@ -55,35 +63,23 @@ class TestCcxtBroker1(hunitest.TestCase):
         market_data, _ = mdata.get_ReplayedTimeMarketData_example3(None)
         strategy = "SAU1"
         with pytest.raises(ValueError) as fail:
-            broker = occxbrok.CcxtBroker("coinbase", "test", strategy_id=strategy, market_data=market_data) 
+            broker = occxbrok.CcxtBroker("coinbase", "v3", "test", strategy_id=strategy, market_data=market_data) 
         actual = str(fail.value)
-        self.assertIn("coinbase", actual)
-        self.assertIn("fetchClosedOrders", actual)
+        self.assertIn("The coinbase exchange is not fully supported for placing orders.", actual)
 
-def _get_order_example1() -> omorder.Order:
-    creation_timestamp = pd.Timestamp(
-        "2000-01-01 09:30:00-05:00", tz="America/New_York"
-    )
-    asset_id = "ADA/USDT"
-    type_ = "TWAP"
-    start_timestamp = pd.Timestamp(
-        "2000-01-01 09:35:00-05:00", tz="America/New_York"
-    )
-    end_timestamp = pd.Timestamp(
-        "2000-01-01 09:40:00-05:00", tz="America/New_York"
-    )
-    curr_num_shares = 0
-    diff_num_shares = 100
-    order_id = 0
-    # Build Order.
-    order = omorder.Order(
-        creation_timestamp,
-        asset_id,
-        type_,
-        start_timestamp,
-        end_timestamp,
-        curr_num_shares,
-        diff_num_shares,
-        order_id=order_id,
-    )
-    return order
+    def _log_into_coinbaseprime_exchange(self) -> ocoiexch.coinbaseprime:
+        """
+        Log into coinbaseprime and return the corresponding
+        `ccxt.Exchange` object.
+        """
+        # Select credentials for provided exchange.
+        credentials = hsecret.get_secret("coinbaseprime")
+        # Enable rate limit.
+        credentials["rateLimit"] = True
+        # Create a CCXT Exchange class object.
+        exchange = ocoiexch.coinbaseprime(credentials)
+        hdbg.dassert(
+            exchange.checkRequiredCredentials(),
+            msg="Required credentials not passed",
+        )
+        return exchange
