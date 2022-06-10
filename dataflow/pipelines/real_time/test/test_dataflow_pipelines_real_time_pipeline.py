@@ -288,7 +288,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     # TODO(gp): Move to market_data_example.py to reuse?
     @staticmethod

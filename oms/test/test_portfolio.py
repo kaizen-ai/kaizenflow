@@ -304,7 +304,7 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
     
     def test1(self) -> None:
         """
@@ -432,7 +432,7 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
     
     def test1(self) -> None:
         """
@@ -506,7 +506,7 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
     
     def test1(self) -> None:
         """
