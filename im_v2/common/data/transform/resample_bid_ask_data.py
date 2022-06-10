@@ -1,38 +1,65 @@
 #!/usr/bin/env python
+"""
+Load bid/ask parquet data from S3 exchange dir, resample to 1 minute and upload
+back.
+
+# Usage sample:
+> im_v2/common/data/transform/resample_bid_ask_data.py \
+    --src_dir 's3://<ck-data>/bid_ask/crypto_chassis/ftx' \
+    --dst_dir 's3://<ck-data>/resampled_bid_ask/ftx/...' \
+
+Import as:
+
+import im_v2.common.data.transform.resample_bid_ask_data as imvcdtrbad
+"""
 import argparse
 import logging
 import os
+
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 import core.finance.resampling as cfinresa
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
+import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
 
 def _run(args: argparse.Namespace) -> None:
-    currency_pair_dirs = os.listdir(args.src_dir)
-    for currency_pair_dir in currency_pair_dirs:
-        src_path = os.path.join(args.src_dir, currency_pair_dir)
-        df = hparque.from_parquet(src_path, aws_profile="ck")
+    pattern = "*"
+    only_files = True
+    use_relative_paths = True
+    aws_profile = "ck"
+    # Get all files in the root dir.
+    files_to_read = hs3.listdir(
+        args.src_dir,
+        pattern,
+        only_files,
+        use_relative_paths,
+        aws_profile=aws_profile,
+    )
+    filesystem = hs3.get_s3fs(aws_profile)
+    for file in files_to_read:
+        file_path = os.path.join(args.dst_dir, file)
+        df = hparque.from_parquet(file_path, aws_profile=aws_profile)
         df = cfinresa.resample(df, rule="T").agg(
             {
                 "bid_price": "last",
                 "bid_size": "sum",
                 "ask_price": "last",
                 "ask_size": "last",
-                "full_symbol": "last",
+                "exchange_id": "last",
             }
         )
-        currency_pair = currency_pair_dir.split("=")[0]
-        full_symbol = [f"{df['exchange_id']}::{currency_pair}"] * df.shape[0]
-        df = df.insert(0, "full_symbol", full_symbol)
-        df = df.drop(columns=["exchange_id"])
-        partition_columns = ["year", "month"]
-        dst_path = os.path.join(args.dst_dir, currency_pair_dir)
-        hparque.to_partitioned_parquet(df, partition_columns, dst_path)
-        _LOG.info("Resampled data was uploaded to %s", dst_path)
+        pq.write_table(
+            pa.Table.from_pandas(df),
+            args.dst_dir + "/" + file,
+            filesystem=filesystem,
+        )
+        _LOG.info("Resampled data was uploaded to %s", args.dst_dir)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -44,7 +71,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         type=str,
         required=True,
-        help="Dir with input parquet files to resample to 1 minute frequency",
+        help="Path to exchange dir with input parquet files to resample to 1 minute frequency",
     )
     parser.add_argument(
         "--dst_dir",
