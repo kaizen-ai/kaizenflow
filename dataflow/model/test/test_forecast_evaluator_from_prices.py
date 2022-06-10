@@ -85,6 +85,36 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
 2022-01-03 10:00:00-05:00    -1.26          0.00        0.00  9975.38 -9975.38"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    def test_annotate_forecasts_with_extended_stats_1_asset(self) -> None:
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
+            asset_ids=[101],
+        )
+        forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
+            price_col="price",
+            volatility_col="volatility",
+            prediction_col="prediction",
+        )
+        _, stats_df = forecast_evaluator.annotate_forecasts(
+            data,
+            target_gmv=1e4,
+            quantization="nearest_share",
+            liquidate_at_end_of_day=False,
+            burn_in_bars=0,
+            compute_extended_stats=True,
+        )
+        precision = 2
+        actual = hpandas.df_to_str(stats_df, num_rows=None, precision=precision)
+        expected = r"""
+                            pnl  gross_volume  net_volume      gmv      nmv  gpc  npc  wnl
+2022-01-03 09:40:00-05:00   NaN           NaN         NaN      NaN      NaN  NaN  NaN  NaN
+2022-01-03 09:45:00-05:00  0.00       9973.93     9973.93  9973.93  9973.93  1.0  1.0  0.0
+2022-01-03 09:50:00-05:00  2.66          0.00        0.00  9976.60  9976.60  1.0  1.0  1.0
+2022-01-03 09:55:00-05:00 -2.48      19948.23   -19948.23  9974.12 -9974.12  1.0 -1.0 -1.0
+2022-01-03 10:00:00-05:00 -1.26          0.00        0.00  9975.38 -9975.38  1.0 -1.0 -1.0"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
     def test_to_str_intraday_1_asset_longitudinal(self) -> None:
         data = self.get_data(
             pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
@@ -143,6 +173,36 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
 2022-01-03 09:50:00-05:00      3.73        997.66     -997.66  12969.57  12969.57
 2022-01-03 09:55:00-05:00     -3.22      29922.35   -29922.35  16956.00 -16956.00
 2022-01-03 10:00:00-05:00     -2.14       2992.61    -2992.61  19950.75 -19950.75"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_annotate_forecasts_with_extended_stats_3_assets(self) -> None:
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
+            asset_ids=[101, 201, 301],
+        )
+        forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
+            price_col="price",
+            volatility_col="volatility",
+            prediction_col="prediction",
+        )
+        _, stats_df = forecast_evaluator.annotate_forecasts(
+            data,
+            target_gmv=1e4,
+            quantization="nearest_share",
+            liquidate_at_end_of_day=False,
+            burn_in_bars=0,
+            compute_extended_stats=True,
+        )
+        precision = 2
+        actual = hpandas.df_to_str(stats_df, num_rows=None, precision=precision)
+        expected = r"""
+                             pnl  gross_volume  net_volume      gmv      nmv  gpc  npc  wnl
+2022-01-03 09:40:00-05:00    NaN           NaN         NaN      NaN      NaN  NaN  NaN  NaN
+2022-01-03 09:45:00-05:00   0.00       9974.12     7978.96  9974.12  7978.96  2.0  0.0  0.0
+2022-01-03 09:50:00-05:00   1.38       9976.74    -7979.55  9975.80     0.79  2.0  0.0  0.0
+2022-01-03 09:55:00-05:00  -2.76       9983.16    -1986.56  9985.14 -1988.54  2.0  0.0 -2.0
+2022-01-03 10:00:00-05:00  13.60       1996.17    -1996.17  9972.34 -3971.11  2.0  0.0  2.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_to_str_intraday_3_assets(self) -> None:

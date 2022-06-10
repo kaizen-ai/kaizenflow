@@ -346,7 +346,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
     ) -> oms.DatabasePortfolio:
         db_connection = self.connection
         table_name = oms.CURRENT_POSITIONS_TABLE_NAME
-        portfolio = oms.get_mocked_portfolio_example1(
+        portfolio = oms.get_DatabasePortfolio_example1(
             event_loop,
             db_connection,
             table_name,
@@ -367,22 +367,8 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
         self, portfolio: oms.DatabasePortfolio
     ) -> oms.OrderProcessor:
         db_connection = self.connection
-        get_wall_clock_time = portfolio._get_wall_clock_time
-        order_processor_poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
-        # order_processor_poll_kwargs["sleep_in_secs"] = 1
-        # Since orders should come every 5 mins we give it a buffer of 5 extra
-        # mins.
-        order_processor_poll_kwargs["timeout_in_secs"] = 60 * 20
-        delay_to_accept_in_secs = 3
-        delay_to_fill_in_secs = 10
-        broker = portfolio.broker
-        order_processor = oms.OrderProcessor(
-            db_connection,
-            delay_to_accept_in_secs,
-            delay_to_fill_in_secs,
-            broker,
-            poll_kwargs=order_processor_poll_kwargs,
-        )
+        order_processor = oms.get_order_processor_example1(db_connection,
+                                     portfolio)
         return order_processor
 
     def test1(self) -> None:
@@ -427,6 +413,7 @@ class TestRealTimeMvnReturnsWithOms1(otodh.TestOmsDbHelper):
                 "dst_dir": None,
             }
             # Build OrderProcessor.
+            # TODO(gp): Use get_order_processor_coroutine_example1?
             order_processor = self.get_order_processor(portfolio)
             termination_condition = pd.Timestamp("2000-01-03 09:45:00-05:00")
             order_processor_coroutine = order_processor.run_loop(
@@ -500,7 +487,7 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
         initial_timestamp = pd.Timestamp(
             "2000-01-03 09:30:00-05:00", tz="America/New_York"
         )
-        portfolio = oms.get_mocked_portfolio_example1(
+        portfolio = oms.get_DatabasePortfolio_example1(
             event_loop,
             db_connection,
             table_name,
@@ -522,22 +509,8 @@ class TestRealTimeMvnReturnsWithOms2(otodh.TestOmsDbHelper):
         self, portfolio: oms.DatabasePortfolio
     ) -> oms.OrderProcessor:
         db_connection = self.connection
-        get_wall_clock_time = portfolio._get_wall_clock_time
-        order_processor_poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
-        # order_processor_poll_kwargs["sleep_in_secs"] = 1
-        # Since orders should come every 5 mins we give it a buffer of 5 extra
-        # mins.
-        order_processor_poll_kwargs["timeout_in_secs"] = 60 * 20
-        delay_to_accept_in_secs = 3
-        delay_to_fill_in_secs = 10
-        broker = portfolio.broker
-        order_processor = oms.OrderProcessor(
-            db_connection,
-            delay_to_accept_in_secs,
-            delay_to_fill_in_secs,
-            broker,
-            poll_kwargs=order_processor_poll_kwargs,
-        )
+        order_processor = oms.get_order_processor_example1(db_connection,
+                                     portfolio)
         return order_processor
 
     # @pytest.mark.slow("~18 seconds")

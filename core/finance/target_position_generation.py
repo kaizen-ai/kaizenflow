@@ -26,15 +26,30 @@ def compute_target_positions_cross_sectionally(
     """
     Compute target dollar positions based on forecasts, basic constraints.
 
-    :param bulk_frac_to_remove: applied to predictions; as in
-        `csigproc.gaussian_rank()`
-    :param bulk_fill_method: applied to predictions; as in
-        `csigproc.gaussian_rank()`
-    :param target_gmv: a float (constant target GMV) or else a
+    :param prediction: dataframe of (t + 1, t + 2] returns forecasts
+    :param volatility: dataframe of volatility forecasts
+    :param config: configuration optionally with
+      - "bulk_frac_to_remove": float = 0.0
+        applied to predictions, as in `csigproc.gaussian_rank()`
+      - "bulk_fill_method": str = "zero"
+        applied to predictions, as in `csigproc.gaussian_rank()`
+      - "target_gmv": Union[float, pd.Series] = 1e6
+        a float (constant target GMV) or else a
         `datetime.time` indexed `pd.Series` of GMVs (e.g., to simulate
         intraday ramp-up/ramp-down)
-    :param volatility_lower_bound: threshold for volatility clipping
+      - "volatility_lower_bound": float = 1e-5
+        threshold for volatility clipping
+    :return: dataframe of t + 1 target positions
     """
+    # TODO(Paul): Some callers compute at a single time step with an
+    # integer-indexed dataframe. Either update the callers to use a timestamp
+    # or relax constraints uniformly in this file.
+    # hpandas.dassert_time_indexed_df(
+    #     prediction, allow_empty=True, strictly_increasing=True
+    # )
+    # hpandas.dassert_time_indexed_df(
+    #     volatility, allow_empty=True, strictly_increasing=True
+    # )
     _validate_compatibility(prediction, volatility)
     bulk_frac_to_remove = _get_object_from_config(
         config, "bulk_frac_to_remove", float, 0.0
@@ -125,10 +140,25 @@ def compute_target_positions_longitudinally(
     """
     Compute target dollar positions based on forecasts, basic constraints.
 
-    :prediction_scaling_factor: a multiplicative scaling factor to
-        pre-apply to each column, e.g., to set to a unit scale
-    :prediction_abs_threshold: absolute value threshold below which
-        predictions are
+    :param prediction: dataframe of (t + 1, t + 2] returns forecasts
+    :param volatility: dataframe of volatility forecasts
+    :param config: configuration optionally with
+      - "prediction_abs_threshold": float = 0.0
+        threshold below which predictions are interpreted as a flat signal
+      - "volatility_to_spread_threshold": float = 0.0
+        threshold below which predictions are interpreted as a flat signal
+      - "volatility_lower_bound": float = 1e-5
+        threshold for volatility clipping
+      - "gamma": float = 0.0
+        prediction.abs() * vol_to_spread threshold; larger is more relaxed
+      - "target_dollar_disk_risk_per_name": float = 1e2
+        target dollar risk to have on a name (not a target notional)
+      - "volatility_lower_bound": float = 1e-5
+        threshold for volatility clipping
+      - "spread_lower_bound": float = 1e-4
+        minimum allowable spread estimate
+    :param spread: optional dataframe of spread forecasts; if `None`, then
+        impute `spread_lower_bound`.
     """
     hpandas.dassert_time_indexed_df(
         prediction, allow_empty=True, strictly_increasing=True
@@ -143,9 +173,7 @@ def compute_target_positions_longitudinally(
     volatility_to_spread_threshold = _get_object_from_config(
         config, "volatility_to_spread_threshold", float, 0.0
     )
-    gamma = _get_object_from_config(
-        config, "gamma", float, 0.0
-    )
+    gamma = _get_object_from_config(config, "gamma", float, 0.0)
     target_dollar_risk_per_name = _get_object_from_config(
         config, "target_dollar_risk_per_name", float, 1e2
     )
@@ -161,9 +189,14 @@ def compute_target_positions_longitudinally(
         config, "spread_lower_bound", float, 1e-4
     )
     if spread is None:
-        _LOG.info("spread is `None`; imputing spread_lower_bound=%f", spread_lower_bound)
-        spread = pd.DataFrame(spread_lower_bound, prediction.index, prediction.columns)
+        _LOG.info(
+            "spread is `None`; imputing spread_lower_bound=%f", spread_lower_bound
+        )
+        spread = pd.DataFrame(
+            spread_lower_bound, prediction.index, prediction.columns
+        )
     _validate_compatibility(prediction, spread)
+    spread = spread.clip(lower=spread_lower_bound)
     _LOG.debug(
         "spread=\n%s",
         hpandas.df_to_str(spread),
@@ -178,7 +211,9 @@ def compute_target_positions_longitudinally(
         hpandas.df_to_str(volatility_to_spread),
     )
     pred_term = (prediction.abs() - prediction_abs_threshold).clip(lower=0.0)
-    vol_to_spread_term = (volatility_to_spread - volatility_to_spread_threshold).clip(lower=0.0)
+    vol_to_spread_term = (
+        volatility_to_spread - volatility_to_spread_threshold
+    ).clip(lower=0.0)
     mask = pred_term.multiply(vol_to_spread_term) <= gamma
     prediction = prediction[~mask]
     prediction = prediction.reindex(index=non_nan_idx)

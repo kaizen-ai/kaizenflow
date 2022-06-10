@@ -5,8 +5,9 @@ import dataflow.system.system_runner as dtfsysyrun
 """
 
 import abc
+import asyncio
 import logging
-from typing import Any, Coroutine, Tuple
+from typing import Any, Coroutine, Optional, Tuple
 
 import pandas as pd
 
@@ -103,6 +104,21 @@ _LOG = logging.getLogger(__name__)
 #   - trading_period_str
 #   - time_interval_str
 
+# Inheritance style conventions:
+# - Each class derives only from interfaces (i.e., classes that have all methods
+#   abstract)
+# - We don't want to use inheritance to share code but we want to explicitly call
+#   shared code
+#   - Related classes need to specify each abstract method of the base class calling
+#     implementations of the methods explicitly, passing `self`, if needed
+#   - This makes the code easier to "resolve" for humans since everything is explicit
+#     and doesn't rely on the class hierarchy
+# - If only one object needs a function we are ok with inlining
+#   - As soon as multiple objects need the same code we don't copy-paste or use
+#     inheritance, but refactor the common code into a function and call it from
+#     everywhere
+
+
 # #############################################################################
 # System
 # #############################################################################
@@ -110,7 +126,7 @@ _LOG = logging.getLogger(__name__)
 
 class System(abc.ABC):
     """
-    The simplest possible System, i.e. an empty one.
+    The simplest possible DataFlow-based System, i.e. an empty one.
     """
 
 
@@ -122,14 +138,14 @@ class System(abc.ABC):
 #  get_system_config_template() and get_dag_runner()
 class ForecastSystem(System):
     """
-    The simplest DataFlow-based system comprised of a:
+    A simple System making forecasts and comprised of a:
 
+    - `DAG`
     - `MarketData` that can be:
-        - historical (for backtesting)
+        - historical (for back testing)
         - replayed-time (for simulating real time)
         - real-time (for production)
-    - `Dag`
-    This system allows making forecasts given data.
+
     The forecasts can then be processed in terms of a PnL through a notebook or
     other pipelines.
     """
@@ -139,14 +155,15 @@ class ForecastSystem(System):
         self,
     ) -> cconfig.Config:
         """
-        Create a Dataflow DAG config with the basic information about this
-        method.
+        Create a System config with the basic information (e.g., DAG config and
+        builder).
 
-        This is the analogue to `get_template_config()` of a
-        `DagBuilder`.
+        This is the analogue of `DagBuilder.get_template_config()`.
         """
         ...
 
+    # TODO(gp): This method should be called only once and the result saved in the
+    #  config. Try to enforce this invariant, e.g., through caching.
     @abc.abstractmethod
     def get_market_data(
         self,
@@ -194,15 +211,14 @@ class ForecastSystem(System):
 
 class ForecastSystemWithPortfolio(ForecastSystem):
     """
-    Create an end-to-end DataFlow-based system composed of:
+    Create a System composed of:
 
     - `MarketData`
     - `Dag`
-    - `DagRunner`
     - `Portfolio`
     """
 
-    def __init__(self, event_loop):
+    def __init__(self, event_loop: Optional[asyncio.AbstractEventLoop]):
         self._event_loop = event_loop
 
     @abc.abstractmethod
@@ -220,42 +236,15 @@ class ForecastSystemWithPortfolio(ForecastSystem):
 
 class TimeForecastSystemWithPortfolio(ForecastSystemWithPortfolio):
     """
-    Create an end-to-end DataFlow-based system composed of:
+    Create a System composed of:
 
     - `MarketData`
     - `Dag`
-    - `DagRunner`
     - `Portfolio`
 
-    where time advances clock by clock.
+    Time advances clock by clock.
     """
 
-    # This method should be called only once and the result saved in the config.
-    @abc.abstractmethod
-    def get_market_data(self, system_config: cconfig.Config) -> mdata.MarketData:
-        ...
-
-    # This method should be called only once and the result saved in the config.
-    @abc.abstractmethod
-    def get_portfolio(
-        self,
-        system_config: cconfig.Config,
-    ) -> oms.Portfolio:
-        ...
-
-    @abc.abstractmethod
-    def get_dag(
-        self,
-        system_config: cconfig.Config,
-    ) -> Tuple[cconfig.Config, dtfcore.DAG]:
-        """
-        We need to pass `Portfolio` because ProcessForecast node requires it.
-        """
-        ...
-
-    # TODO(gp): This could be `get_DagRunner_example()`.
-    # TODO(gp): This code should go in a descendant class since it's about RealTime
-    #  behavior.
     @abc.abstractmethod
     def get_dag_runner(
         self,
@@ -274,12 +263,11 @@ class TimeForecastSystemWithDatabasePortfolioAndDatabaseBrokerAndOrderProcessor(
     TimeForecastSystemWithPortfolio
 ):
     """
-    Create an end-to-end DataFlow-based system composed of:
+    Create a System composed of:
 
     - `MarketData`
     - `Dag`
-    - `DagRunner`
-    - `DataBasePortfolio` (which includes a DatabaseBroker)
+    - `DataBasePortfolio` (which includes a `DatabaseBroker`)
     - `OrderProcessor` (mimicking market execution)
 
     Time advances clock by clock.
@@ -296,44 +284,19 @@ class TimeForecastSystemWithDatabasePortfolioAndDatabaseBrokerAndOrderProcessor(
         self._db_connection = db_connection
         oms.create_oms_tables(self._db_connection, incremental=False)
 
-    # TODO(gp): Part of this should become a `get_OrderProcessor_example()`.
-    def get_order_processor(
-        self,
-        portfolio: oms.Portfolio,
-        *,
-        timeout_in_secs: int = 60 * (5 + 15),
-    ) -> oms.OrderProcessor:
-        db_connection = self._db_connection
-        get_wall_clock_time = portfolio._get_wall_clock_time
-        order_processor_poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
-        # order_processor_poll_kwargs["sleep_in_secs"] = 1
-        # Since orders should come every 5 mins we give it a buffer of 15 extra
-        # mins.
-        order_processor_poll_kwargs["timeout_in_secs"] = timeout_in_secs
-        delay_to_accept_in_secs = 3
-        delay_to_fill_in_secs = 10
-        broker = portfolio.broker
-        order_processor = oms.OrderProcessor(
-            db_connection,
-            delay_to_accept_in_secs,
-            delay_to_fill_in_secs,
-            broker,
-            poll_kwargs=order_processor_poll_kwargs,
-        )
-        return order_processor
-
     def get_order_processor_coroutine(
         self,
         portfolio: oms.Portfolio,
         real_time_loop_time_out_in_secs: int,
     ) -> Coroutine:
-        # Build OrderProcessor.
-        order_processor = self.get_order_processor(portfolio)
-        get_wall_clock_time = portfolio.broker.market_data.get_wall_clock_time
-        initial_timestamp = get_wall_clock_time()
-        offset = pd.Timedelta(real_time_loop_time_out_in_secs, unit="seconds")
-        termination_condition = initial_timestamp + offset
-        order_processor_coroutine = order_processor.run_loop(
-            termination_condition
-        )
+        db_connection = self._db_connection
+        timeout_in_secs = 60 * (5 + 15)
+        order_processor = oms.get_order_processor_example1(db_connection,
+                                                           portfolio,
+                                                           timeout_in_secs=timeout_in_secs)
+        #
+        order_processor_coroutine = oms.get_order_processor_coroutine_example1(
+                order_processor,
+                portfolio,
+                real_time_loop_time_out_in_secs)
         return order_processor_coroutine

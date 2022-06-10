@@ -536,8 +536,16 @@ def execute_repo_config_code(code_to_execute: str) -> Any:
     code = _get_repo_config_code()
     # TODO(gp): make the linter happy creating this symbol that comes from the
     #  `exec()`.
-    exec(code, globals())  # pylint: disable=exec-used
-    ret = eval(code_to_execute)
+    try:
+        exec(code, globals())  # pylint: disable=exec-used
+        ret = eval(code_to_execute)
+    except NameError as e:
+        _LOG.error(
+            "While executing %s caught error:\n%s\nTrying to continue",
+            code_to_execute,
+            e,
+        )
+        ret = None
     return ret
 
 
