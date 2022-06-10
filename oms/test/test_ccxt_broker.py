@@ -37,7 +37,7 @@ class TestCcxtBroker1(hunitest.TestCase):
                     """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    #@pytest.mark.skip(reason="API key for Coinbase Pro not available.")
+    @pytest.mark.skip(reason="API key for Coinbase Pro not available.")
     # TODO(Danya): Rewrite as a mock.
     def test_submit_and_fill1(self) -> None:
         """
@@ -46,7 +46,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         event_loop = None
         hasynci.run(self.run_coroutine1(event_loop), event_loop=event_loop)
 
-    # @pytest.mark.skip(reason="Code in development.")
+    @pytest.mark.skip(reason="Code in development.")
     def test_unsupported_exchange1(self) -> None:
         """
         Verify that CcxtBroker is not instantiated for exchanges without
