@@ -30,6 +30,7 @@ except ModuleNotFoundError:
 
 # To enforce this order of the imports we use the directive for the linter below.
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.hgit as hgit  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hintrospection as hintros  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hio as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -91,9 +92,13 @@ def dassert_is_valid_aws_profile(path: str, aws_profile: AwsProfile) -> None:
         otherwise `None` for local path
     """
     if is_s3_path(path):
-        hdbg.dassert_is_not(aws_profile, None)
+        hdbg.dassert_is_not(
+            aws_profile, None, "path=%s aws_profile=%s", path, aws_profile
+        )
     else:
-        hdbg.dassert_is(aws_profile, None)
+        hdbg.dassert_is(
+            aws_profile, None, "path=%s aws_profile=%s", path, aws_profile
+        )
 
 
 def dassert_path_exists(
@@ -361,14 +366,17 @@ def get_local_or_s3_stream(
 def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     """
     Return the S3 bucket from environment variable corresponding to a given
-    `aws_profile`. E.g., `aws_profile="am"` uses the value in `AM_AWS_S3_BUCKET`
-    which is usually set to `s3://alphamatic-data`.
+    `aws_profile`.
+
+    E.g., `aws_profile="am"` uses the value in `AM_AWS_S3_BUCKET` which
+    is usually set to `s3://alphamatic-data`.
     """
     hdbg.dassert_type_is(aws_profile, str)
     prefix = aws_profile.upper()
     env_var = f"{prefix}_AWS_S3_BUCKET"
     hdbg.dassert_in(env_var, os.environ)
     s3_bucket = os.environ[env_var]
+    hdbg.dassert_ne(s3_bucket, "", "Env var '%s' is empty", env_var)
     hdbg.dassert(
         not s3_bucket.startswith("s3://"),
         "Invalid %s value '%s'",
@@ -559,21 +567,34 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
 
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    if isinstance(aws_profile, str):
-        # From https://stackoverflow.com/questions/62562945
-        aws_credentials = get_aws_credentials(aws_profile)
-        _LOG.debug("%s", pprint.pformat(aws_credentials))
-        s3fs_ = s3fs.core.S3FileSystem(
-            anon=False,
-            key=aws_credentials["aws_access_key_id"],
-            secret=aws_credentials["aws_secret_access_key"],
-            token=aws_credentials["aws_session_token"],
-            client_kwargs={"region_name": aws_credentials["aws_region"]},
-        )
-    elif isinstance(aws_profile, s3fs.core.S3FileSystem):
-        s3fs_ = aws_profile
+    # TODO(gp): Make this more robust.
+    is_prod_machine = not (
+        hgit.execute_repo_config_code("is_dev4()")
+        or hgit.execute_repo_config_code("is_dev_ck()")
+        or hgit.execute_repo_config_code("is_mac()")
+        or hgit.execute_repo_config_code("is_inside_ci()")
+    )
+    if is_prod_machine:
+        # On prod machines we let the Docker container infer the right AWS
+        # account.
+        _LOG.warning("Not using AWS profile='%s'", aws_profile)
+        s3fs_ = s3fs.core.S3FileSystem()
     else:
-        raise ValueError(f"Invalid aws_profile='{aws_profile}'")
+        if isinstance(aws_profile, str):
+            # From https://stackoverflow.com/questions/62562945
+            aws_credentials = get_aws_credentials(aws_profile)
+            _LOG.debug("%s", pprint.pformat(aws_credentials))
+            s3fs_ = s3fs.core.S3FileSystem(
+                anon=False,
+                key=aws_credentials["aws_access_key_id"],
+                secret=aws_credentials["aws_secret_access_key"],
+                token=aws_credentials["aws_session_token"],
+                client_kwargs={"region_name": aws_credentials["aws_region"]},
+            )
+        elif isinstance(aws_profile, s3fs.core.S3FileSystem):
+            s3fs_ = aws_profile
+        else:
+            raise ValueError(f"Invalid aws_profile='{aws_profile}'")
     return s3fs_
 
 

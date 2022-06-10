@@ -324,6 +324,7 @@ class PriceProcess:
         """
         self._rng = np.random.default_rng(seed=seed)
 
+    # TODO(Paul): drop "log" from the name.
     def generate_log_normal_series(
         self,
         start_datetime: pd.Timestamp,

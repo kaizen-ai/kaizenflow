@@ -35,11 +35,17 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
     This layer uses low-level functions from `historical_bars` to access the data.
     """
 
-    def __init__(self):
-        vendor = "ig"
-        resample_1min = False
+    def __init__(
+        self,
+        vendor: str,
+        resample_1min: bool,
+        root_dir: str,
+        aws_profile: Optional[str],
+        full_symbol_col_name: str,
+    ):
+        self._root_dir = root_dir
+        self._aws_profile = aws_profile
         read_func = imvidchiba.get_bar_data_for_date_interval
-        full_symbol_col_name = "igid"
         super().__init__(
             vendor,
             resample_1min,
@@ -82,6 +88,7 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -89,7 +96,13 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
         Same as abstract method.
         """
         df = super()._read_data_for_multiple_symbols(
-            full_symbols, start_ts, end_ts, full_symbol_col_name, **kwargs
+            full_symbols,
+            start_ts,
+            end_ts,
+            columns,
+            full_symbol_col_name,
+            root_data_dir=self._root_dir,
+            aws_profile=self._aws_profile,
         )
         # Historical data doesn't have a knowledge time so we use the end of the
         # interval as a proxy for it, which for now it's the index.

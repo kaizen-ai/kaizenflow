@@ -44,7 +44,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "file_format": "parquet",
         }
         self.assertDictEqual(actual, expected)
-    
+
     @pytest.mark.slow
     @umock.patch.object(imvcdeexut, "download_historical_data")
     def test_main(self, mock_download_historical: umock.MagicMock) -> None:
