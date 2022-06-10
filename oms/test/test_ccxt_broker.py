@@ -19,8 +19,8 @@ class TestCcxtBroker1(hunitest.TestCase):
         # TODO(Juraj) mock the API calls.
         broker = occxbrok.CcxtBroker(
             "coinbasepro",
-            "v5",
-            "prod",
+            "coinbase_test",
+            "test",
             "c27158ee-ac73-49bb-a1f3-ec022cac33c2",
             strategy_id=strategy,
             market_data=market_data,
