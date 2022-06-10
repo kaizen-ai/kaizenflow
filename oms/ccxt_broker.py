@@ -110,7 +110,7 @@ class CcxtBroker(ombroker.Broker):
                 symbol=symbol,
                 type=order.type_,
                 side=side,
-                amount=order.diff_num_shares,
+                amount=abs(order.diff_num_shares),
                 # id=order.order_id,
                 # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
                 # but most likely the method will need to be overriden per each exchange
