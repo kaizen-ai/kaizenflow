@@ -106,12 +106,13 @@ class Broker(abc.ABC):
     """
     Represent a broker to which we can place orders and receive fills back.
 
-    The broker
-    - keeps an internal book keeping of orders submitted and deadlines when they
-      are supposed to be executed
-    - passes the orders to the actual Order Management System (OMS) through an
-      interface (e.g., a table of a DB, file system)
-    - waits for an acknowledgement of orders being submitted successfully by the OMS
+    The broker:
+    1) keeps an internal book keeping of orders submitted and deadlines when they
+       are supposed to be executed
+    2) passes the orders to the actual Order Management System (OMS) through an
+       interface (e.g., DB, file system)
+    3) waits for an acknowledgement of orders being submitted successfully by the OMS
+    4) reports the order fills from the market
     """
 
     _submitted_order_id: int = 0
@@ -176,7 +177,8 @@ class Broker(abc.ABC):
 
         :param dry_run: do not submit orders to the OMS, but keep track of them
             internally
-        :return: path of the file created on S3 with the order info
+        :return: a string representing the receipt of submission / acceptance
+            (e.g., path of the file created on S3 with the order info)
         """
         wall_clock_timestamp = self._get_wall_clock_time()
         # Log the order for internal book keeping.
@@ -214,13 +216,6 @@ class Broker(abc.ABC):
             )
         return file_name
 
-    @abc.abstractmethod
-    def get_fills(self) -> List[Fill]:
-        """
-        Get any new fills filled since last execution.
-        """
-        ...
-
     @staticmethod
     def _get_next_submitted_order_id() -> int:
         submitted_order_id = Broker._submitted_order_id
@@ -252,6 +247,13 @@ class Broker(abc.ABC):
         """
         ...
 
+    @abc.abstractmethod
+    def get_fills(self) -> List[Fill]:
+        """
+        Get any new fills filled since last execution.
+        """
+        ...
+
     def _get_fills_helper(self) -> List[Fill]:
         """
         Implement logic simulating orders being filled.
@@ -275,9 +277,9 @@ class Broker(abc.ABC):
                 )
                 orders_to_execute_timestamps.append(timestamp)
         _LOG.debug("Executing %d orders", len(orders_to_execute))
-        # Ensure that no orders are included with `end_timestamp` greater
-        # than `wall_clock_timestamp`, e.g., assume that in general
-        # orders take their entire allotted window to fill.
+        # Ensure that no orders are included with `end_timestamp` greater than
+        # `wall_clock_timestamp`, e.g., assume that in general orders take their
+        # entire allotted window to fill.
         for order in orders_to_execute:
             hdbg.dassert_lte(order.end_timestamp, wall_clock_timestamp)
         # "Execute" the orders.
@@ -345,7 +347,13 @@ class Broker(abc.ABC):
 
 class SimulatedBroker(Broker):
     """
-    Represent a broker to which we can place orders and receive fills back.
+    Represent a broker to which we place orders and receive fills back
+    1) completely
+    2) as soon as their deadline comes
+    3) at the price from the Market
+
+    There is no interaction with  an OMS (e.g., no need to waiting for acceptance
+    and execution).
     """
 
     def __init__(

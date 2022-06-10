@@ -671,7 +671,7 @@ class TestTalosSqlRealTimeImClient1(
 ):
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def test_build_select_query1(self) -> None:
         """
@@ -1379,7 +1379,7 @@ class TestMockSqlRealTimeImClient1(
 
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def test_read_data1(self) -> None:
         full_symbol = "binance::BTC_USDT"

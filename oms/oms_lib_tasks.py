@@ -89,7 +89,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
         .../devops/set_schema_im_db.py
     ```
 
-    :param cmd: command to execute inside docker
+    :param docker_cmd: command to execute inside docker
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.

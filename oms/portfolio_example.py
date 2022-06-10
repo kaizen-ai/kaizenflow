@@ -16,6 +16,7 @@ import market_data as mdata
 import oms.broker as ombroker
 import oms.broker_example as obroexam
 import oms.portfolio as omportfo
+import oms.oms_db as oomsdb
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,8 +30,14 @@ def get_DataFramePortfolio_example1(
     timestamp_col: str = "end_datetime",
     asset_ids: Optional[List[int]] = None,
 ) -> omportfo.DataFramePortfolio:
+    """
+    Contain:
+    - a SimulatedBroker (i.e., a broker that executes the orders immediately)
+    - a DataFramePortfolio (i.e., a portfolio backed by a dataframe to keep
+      track of the state)
+    """
     # Build SimulatedBroker.
-    broker = obroexam.get_simulated_broker_example1(
+    broker = obroexam.get_SimulatedBroker_example1(
         event_loop,
         market_data=market_data,
         timestamp_col=timestamp_col,
@@ -61,7 +68,12 @@ def get_DataFramePortfolio_example2(
     column_remap: Optional[Dict[str, str]] = None,
 ) -> omportfo.DataFramePortfolio:
     """
-    Expose all parameters for creating a `DataFramePortfolio`.
+    Contain:
+    - a SimulatedBroker (i.e., a broker that executes the orders immediately)
+    - a DataFramePortfolio (i.e., a portfolio backed by a dataframe to keep
+      track of the state)
+
+    exposing all the parameters for creating these objects.
     """
     # Build SimulatedBroker.
     broker = ombroker.SimulatedBroker(
@@ -81,11 +93,13 @@ def get_DataFramePortfolio_example2(
     return portfolio
 
 
-# TODO(gp): -> get_DatabasePortfolio_example
-def get_mocked_portfolio_example1(
+# #################################################################################
+
+
+def get_DatabasePortfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
-    # TODO(gp): For symmetry with get_mocked_broker_example1 we should have a
+    # TODO(gp): For symmetry with get_DatabaseBroker_example1 we should have a
     #  default value.
     table_name: str,
     *,
@@ -95,8 +109,13 @@ def get_mocked_portfolio_example1(
     timestamp_col: str = "end_datetime",
     asset_ids: Optional[List[int]] = None,
 ) -> omportfo.DatabasePortfolio:
+    """
+    Contain:
+    - a DatabaseBroker
+    - a DatabasePortfolio
+    """
     # Build DatabaseBroker.
-    broker = obroexam.get_mocked_broker_example1(
+    broker = obroexam.get_DatabaseBroker_example1(
         event_loop,
         db_connection,
         market_data=market_data,
@@ -120,7 +139,7 @@ def get_mocked_portfolio_example1(
 def get_DatabasePortfolio_example2(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
-    # TODO(gp): For symmetry with get_mocked_broker_example1 we should have a
+    # TODO(gp): For symmetry with get_DatabaseBroker_example1 we should have a
     #  default value.
     table_name: str,
     universe: List[int],
@@ -131,10 +150,12 @@ def get_DatabasePortfolio_example2(
     timestamp_col: str = "end_datetime",
 ) -> omportfo.DatabasePortfolio:
     """
-    Get a Portfolio initialized from the database.
+    Contain:
+    - a DatabaseBroker
+    - a DatabasePortfolio, which is initialized from the database.
     """
     # Build DatabaseBroker.
-    broker = obroexam.get_mocked_broker_example1(
+    broker = obroexam.get_DatabaseBroker_example1(
         event_loop,
         db_connection,
         market_data=market_data,
@@ -151,4 +172,45 @@ def get_DatabasePortfolio_example2(
         table_name=table_name,
         retrieve_initial_holdings_from_db=True,
     )
+    return portfolio
+
+
+def get_DatabasePortfolio_example3(
+    db_connection: hsql.DbConnection,
+    event_loop: asyncio.AbstractEventLoop,
+    market_data: mdata.MarketData,
+    # TODO(gp): Return oms.Portfolio like parent class?
+) -> omportfo.DatabasePortfolio:
+    """
+    Contain:
+    - a DatabaseBroker
+    - a DatabasePortfolio
+
+    configured to use 3 asset ids.
+    """
+    table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+    # Neither the fake data nor the pipeline is filtering out weekends, and
+    # so this is treated as a valid trading day.
+    asset_ids = [
+        17085,
+        # 13684,
+        # 10971
+    ]
+    timestamp_col = "end_time"
+    portfolio = get_DatabasePortfolio_example1(
+        event_loop,
+        db_connection,
+        table_name,
+        market_data=market_data,
+        mark_to_market_col="close",
+        pricing_method="twap.5T",
+        timestamp_col=timestamp_col,
+        asset_ids=asset_ids,
+    )
+    portfolio.broker._column_remap = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
     return portfolio

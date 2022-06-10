@@ -62,7 +62,7 @@ def generate_limit_order_price(
     hdbg.dassert_isinstance(subsample_freq, str)
     hdbg.dassert_isinstance(ffill_limit, int)
     # Subsample the reference price col, e.g., take samples every "15T" on a
-    # "1T" seires.
+    # "1T" series.
     buy_subsampled = cfinresa.resample(
         df[buy_reference_price_col], rule=subsample_freq
     ).last()
@@ -112,12 +112,15 @@ def estimate_limit_order_execution(
     cols = [bid_col, ask_col, buy_limit_price_col, sell_limit_price_col]
     hdbg.dassert_is_subset(cols, df.columns)
     # TODO(Paul): Add a switch to allow equality.
-    buy_limit_executed = (df[ask_col] < df[buy_limit_price_col]).rename(
+    # Delay by one bar the limit price columns. The columns are indexed by
+    # knowledge time (the limit price to use is known at end-of-bar), and so
+    # earliest execution takes place in the next bar.
+    buy_limit_executed = (df[ask_col] < df[buy_limit_price_col].shift(1)).rename(
         "limit_buy_executed"
     )
-    sell_limit_executed = (df[bid_col] > df[sell_limit_price_col]).rename(
-        "limit_sell_executed"
-    )
+    sell_limit_executed = (
+        df[bid_col] > df[sell_limit_price_col].shift(1)
+    ).rename("limit_sell_executed")
     limit_executed = pd.concat([buy_limit_executed, sell_limit_executed], axis=1)
     return limit_executed
 
