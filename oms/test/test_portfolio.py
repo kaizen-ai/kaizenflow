@@ -98,7 +98,7 @@ class TestDataFramePortfolio2(hunitest.TestCase):
                 get_wall_clock_time,
             ) = mdata.get_ReplayedTimeMarketData_example3(event_loop)
             # Build Broker.
-            broker = obroexam.get_simulated_broker_example1(
+            broker = obroexam.get_SimulatedBroker_example1(
                 event_loop, market_data=market_data
             )
             # Build Portfolio.
@@ -156,7 +156,7 @@ leverage                            0.0"""
                 get_wall_clock_time,
             ) = mdata.get_ReplayedTimeMarketData_example3(event_loop)
             # Build Broker.
-            broker = obroexam.get_simulated_broker_example1(
+            broker = obroexam.get_SimulatedBroker_example1(
                 event_loop, market_data=market_data
             )
             # Build Portfolio.
@@ -326,7 +326,7 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
                 assert 0
             #
             # Create DatabasePortfolio with some initial cash.
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 self.connection,
                 table_name,
@@ -355,7 +355,7 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
                 assert 0
             #
             # Create DatabasePortfolio with some initial cash.
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 self.connection,
                 table_name,
@@ -454,7 +454,7 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
                 assert 0
             #
             # Create DatabasePortfolio with some initial cash.
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 self.connection,
                 table_name,

@@ -151,10 +151,14 @@ def create_im_database(
 # TODO(gp): Move to db_test_utils.py
 
 
+# TODO(gp): Share code with TestOmsDbHelper.
 class TestImDbHelper(hsqltest.TestDbHelper, abc.ABC):
+    """
+    Configure the helper to build an IM test DB.
+    """
 
     # TODO(gp): For some reason without having this function defined, the
-    # derived classes can't be instantiated because of get_id().
+    #  derived classes can't be instantiated because of get_id().
     @classmethod
     @abc.abstractmethod
     def get_id(cls) -> int:
@@ -190,6 +194,7 @@ class TestImDbHelper(hsqltest.TestDbHelper, abc.ABC):
 
     @classmethod
     def _create_docker_files(cls) -> None:
+        # Create compose file.
         service_name = cls._get_service_name()
         idx = cls.get_id()
         host_port = 5432 + idx
@@ -203,7 +208,7 @@ services:
     environment:
       - POSTGRES_HOST=${{POSTGRES_HOST}}
       - POSTGRES_DB=${{POSTGRES_DB}}
-      - POSTGRES_PORT={{POSTGRES_PORT}}
+      - POSTGRES_PORT=${{POSTGRES_PORT}}
       - POSTGRES_USER=${{POSTGRES_USER}}
       - POSTGRES_PASSWORD=${{POSTGRES_PASSWORD}}
     volumes:
@@ -216,15 +221,22 @@ volumes:
 
 networks:
   default:
-    name: {service_name}_network
+    #name: {service_name}_network
+    name: main_network
 """
         compose_file_name = cls._get_compose_file()
         hio.to_file(compose_file_name, txt)
-        #
-        txt = f"""POSTGRES_HOST=localhost
-POSTGRES_DB=im_postgres_db_local
-POSTGRES_PORT={host_port}
-POSTGRES_USER=aljsdalsd
-POSTGRES_PASSWORD=alsdkqoen"""
+        # Create env file.
+        txt = []
+        if hgit.execute_repo_config_code("use_main_network()"):
+            host = "cf-spm-dev4"
+        else:
+            host = "localhost"
+        txt.append(f"POSTGRES_HOST={host}")
+        txt.append("POSTGRES_DB=im_postgres_db_local")
+        txt.append(f"POSTGRES_PORT={host_port}")
+        txt.append("POSTGRES_USER=aljsdalsd")
+        txt.append("POSTGRES_PASSWORD=alsdkqoen")
+        txt = "\n".join(txt)
         env_file_name = cls._get_db_env_path()
         hio.to_file(env_file_name, txt)

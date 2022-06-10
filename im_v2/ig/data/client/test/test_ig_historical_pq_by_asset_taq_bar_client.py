@@ -8,7 +8,6 @@ import helpers.hpandas as hpandas
 import im_v2.common.data.client.test.im_client_test_case as icdcttch
 import im_v2.ig.data.client.ig_historical_pq_by_asset_taq_bar_client as imvidcihpbatbc
 
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -21,6 +20,7 @@ class TestIgHistoricalPqByTileTaqBarClient1(icdcttch.ImClientTestCase):
     # TODO(gp): This should go in an example file.
     @staticmethod
     def get_IgHistoricalPqByTileTaqBarClient_example1():
+        vendor = "ig"
         # TODO(gp): Use the weekly data once they also support the shorter
         # Parquet condition filtering since it's faster.
         # root_dir_name = "/cache/tiled.bar_data.all.2010.weekofyear"
@@ -30,14 +30,14 @@ class TestIgHistoricalPqByTileTaqBarClient1(icdcttch.ImClientTestCase):
         aws_profile = "am"
         partition_mode = "by_year_month"
         im_client = imvidcihpbatbc.IgHistoricalPqByTileTaqBarClient(
-            root_dir_name, aws_profile, partition_mode
+            vendor, root_dir_name, aws_profile, partition_mode
         )
         return im_client
 
     # TODO(gp): Add this check to ImClientTestCase so that we can check what is
     #  the output of the derived class.
     @pytest.mark.slow("6 secs")
-    def test_read_data_for_multiple_symbols1(self) -> pd.DataFrame:
+    def test_read_data_for_multiple_symbols1(self) -> None:
         """
         Test:
         - reading data for one full symbol

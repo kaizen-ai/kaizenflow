@@ -140,21 +140,21 @@ end_datetime
 2022-01-10 09:37:00-05:00               False                False
 2022-01-10 09:38:00-05:00               False                False
 2022-01-10 09:39:00-05:00               False                False
-2022-01-10 09:40:00-05:00               False                 True
+2022-01-10 09:40:00-05:00               False                False
 2022-01-10 09:41:00-05:00                True                False
 2022-01-10 09:42:00-05:00                True                False
 2022-01-10 09:43:00-05:00                True                False
-2022-01-10 09:44:00-05:00               False                False
+2022-01-10 09:44:00-05:00                True                False
 2022-01-10 09:45:00-05:00               False                False
 2022-01-10 09:46:00-05:00               False                False
 2022-01-10 09:47:00-05:00               False                False
 2022-01-10 09:48:00-05:00               False                False
 2022-01-10 09:49:00-05:00               False                False
-2022-01-10 09:50:00-05:00               False                 True
+2022-01-10 09:50:00-05:00               False                False
 2022-01-10 09:51:00-05:00                True                False
 2022-01-10 09:52:00-05:00                True                False
 2022-01-10 09:53:00-05:00                True                False
-2022-01-10 09:54:00-05:00               False                False
+2022-01-10 09:54:00-05:00                True                False
 2022-01-10 09:55:00-05:00               False                False
 2022-01-10 09:56:00-05:00               False                False
 2022-01-10 09:57:00-05:00               False                False
@@ -199,27 +199,27 @@ end_datetime
 2022-01-10 09:34:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:35:00-05:00                 997.44                  997.44               False                False              NaN               NaN
 2022-01-10 09:36:00-05:00                 997.44                  997.44               False                 True              NaN            997.44
-2022-01-10 09:37:00-05:00                    NaN                     NaN               False                False              NaN               NaN
+2022-01-10 09:37:00-05:00                    NaN                     NaN               False                 True              NaN               NaN
 2022-01-10 09:38:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:39:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:40:00-05:00                 999.28                  999.28               False                False              NaN               NaN
 2022-01-10 09:41:00-05:00                 999.28                  999.28                True                False           999.28               NaN
-2022-01-10 09:42:00-05:00                    NaN                     NaN               False                False              NaN               NaN
+2022-01-10 09:42:00-05:00                    NaN                     NaN                True                False              NaN               NaN
 2022-01-10 09:43:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:44:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:45:00-05:00                 996.36                  996.36               False                False              NaN               NaN
 2022-01-10 09:46:00-05:00                 996.36                  996.36                True                False           996.36               NaN
-2022-01-10 09:47:00-05:00                    NaN                     NaN               False                False              NaN               NaN
+2022-01-10 09:47:00-05:00                    NaN                     NaN                True                False              NaN               NaN
 2022-01-10 09:48:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:49:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:50:00-05:00                 993.94                  993.94               False                False              NaN               NaN
 2022-01-10 09:51:00-05:00                 993.94                  993.94                True                False           993.94               NaN
-2022-01-10 09:52:00-05:00                    NaN                     NaN               False                False              NaN               NaN
+2022-01-10 09:52:00-05:00                    NaN                     NaN                True                False              NaN               NaN
 2022-01-10 09:53:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:54:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:55:00-05:00                 991.64                  991.64               False                False              NaN               NaN
 2022-01-10 09:56:00-05:00                 991.64                  991.64                True                False           991.64               NaN
-2022-01-10 09:57:00-05:00                    NaN                     NaN               False                False              NaN               NaN
+2022-01-10 09:57:00-05:00                    NaN                     NaN                True                False              NaN               NaN
 2022-01-10 09:58:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 09:59:00-05:00                    NaN                     NaN               False                False              NaN               NaN
 2022-01-10 10:00:00-05:00                    NaN                     NaN               False                False              NaN               NaN"""

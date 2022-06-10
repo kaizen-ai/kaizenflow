@@ -107,7 +107,8 @@ def is_dev_ck() -> bool:
     # sysname='Darwin'
     # nodename='gpmac.lan'
     # release='19.6.0'
-    # version='Darwin Kernel Version 19.6.0: Mon Aug 31 22:12:52 PDT 2020; root:xnu-6153.141.2~1/RELEASE_X86_64'
+    # version='Darwin Kernel Version 19.6.0: Mon Aug 31 22:12:52 PDT 2020;
+    #   root:xnu-6153.141.2~1/RELEASE_X86_64'
     # machine='x86_64'
     host_name = os.uname()[1]
     host_names = ("dev1", "dev2")
@@ -272,6 +273,18 @@ def use_docker_network_mode_host() -> bool:
     return ret
 
 
+def use_main_network() -> bool:
+    """
+    Run all Docker containers in the same network so that they can communicate
+    with each other.
+    """
+    if is_dev4():
+        val = True
+    else:
+        val = False
+    return val
+
+
 def run_docker_as_root() -> bool:
     """
     Return whether Docker should be run with root user.
@@ -363,15 +376,13 @@ def is_CK_S3_available() -> bool:
     # CK bucket is not available for `//lemonade` and `//amp` unless it's on
     # `dev_ck`.
     val = True
-    if is_mac():
-        val = False
-    elif is_dev4():
-        # CK bucket is not available on dev4.
-        val = False
-    elif is_inside_ci():
+    if is_mac() or is_inside_ci():
         if get_name() in ("//amp", "//dev_tools", "//lemonade"):
             # No CK bucket.
             val = False
+    elif is_dev4():
+        # CK bucket is not available on dev4.
+        val = False
     _LOG.debug("val=%s", val)
     return val
 
@@ -379,6 +390,7 @@ def is_CK_S3_available() -> bool:
 def is_cmamp_prod() -> bool:
     """
     Detect whether this is a production container.
+
     This env var is set inside devops/docker_build/prod.Dockerfile.
     """
     return os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False)
@@ -417,6 +429,7 @@ def config_func_to_str() -> str:
             "skip_submodules_test",
             "use_docker_sibling_containers",
             "use_docker_network_mode_host",
+            "use_main_network",
         ]
     ):
         try:
