@@ -515,11 +515,14 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
 def get_repo_config_file(super_module: bool = True) -> str:
     """
     Return the absolute path to `repo_config.py` that should be used.
+
+    The `repo_config.py` is determined based on an overriding env var or based
+    on the root of the Git path.
     """
-    env_name = "AM_REPO_CONFIG_PATH"
-    file_name = henv.get_env_var(env_name, abort_on_missing=False)
+    env_var = "AM_REPO_CONFIG_PATH"
+    file_name = henv.get_env_var(env_var, abort_on_missing=False)
     if file_name:
-        _LOG.warning("Using value for %s from env var %s", env_name, file_name)
+        _LOG.warning("Using value for %s from env var %s", env_var, file_name)
     else:
         # TODO(gp): We should actually ask Git where the super-module is.
         client_root = get_client_root(super_module)

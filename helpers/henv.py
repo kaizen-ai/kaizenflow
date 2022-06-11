@@ -128,8 +128,8 @@ def get_secret_env_vars() -> List[str]:
     env_vars = get_env_vars()
     if not set(secret_env_var_names).issubset(set(env_vars)):
         diff = set(secret_env_var_names).difference(set(env_vars))
-        print(f"Secret vars in `{str(diff)} are not in '{str(env_vars)}'")
-        assert 0
+        cmd = f"Secret vars in `{str(diff)} are not in '{str(env_vars)}'"
+        assert 0, cmd
     # Sort.
     secret_env_var_names = sorted(secret_env_var_names)
     return secret_env_var_names

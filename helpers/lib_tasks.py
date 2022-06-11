@@ -2482,15 +2482,18 @@ def _get_docker_compose_files(
         use_docker_network_mode_host = hgit.execute_repo_config_code("use_docker_network_mode_host()")
         use_main_network = hgit.execute_repo_config_code("use_main_network()")
     #
-    _generate_compose_file(
-        enable_privileged_mode,
-        use_docker_sibling_containers,
-        get_shared_data_dirs,
-        mount_as_submodule,
-        use_docker_network_mode_host,
-        use_main_network,
-        file_name,
-    )
+    if generate_docker_compose_file:
+        _generate_docker_compose_file(
+            enable_privileged_mode,
+            use_docker_sibling_containers,
+            get_shared_data_dirs,
+            mount_as_submodule,
+            use_docker_network_mode_host,
+            use_main_network,
+            file_name,
+        )
+    else:
+        _LOG.warning("Skipping generating Docker compose file '%s'", file_name)
     docker_compose_files.append(file_name)
     # Add the compose files from command line.
     if extra_docker_compose_files:
@@ -5222,7 +5225,7 @@ def _get_lint_docker_cmd(
     # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
     # and run Linter on the specific version, e.g., `1.1.5`.
     # Execute command line.
-    cmd = _get_docker_cmd(
+    cmd = _get_docker_compose_cmd(
         linter_image, stage, version, docker_cmd_, entrypoint=entrypoint, service_name="linter"
     )
     return cmd
