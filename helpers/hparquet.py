@@ -16,6 +16,7 @@ import pyarrow.fs as pafs
 import pyarrow.parquet as pq
 from tqdm.autonotebook import tqdm
 
+import helpers.hdataframe as hdatafr
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
@@ -51,7 +52,7 @@ def from_parquet(
     filters: Optional[List[Any]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
 ) -> pd.DataFrame:
     """
     Load a dataframe from a Parquet file.
@@ -65,14 +66,20 @@ def from_parquet(
     :param filters: Parquet query filters
     :param log_level: logging level to execute at
     :param report_stats: whether to report Parquet file size or not
-    :param aws_profile: AWS profile, e.g., `ck`
+    :param aws_profile: AWS profile to use if and only if using an S3 path,
+        otherwise `None` for local path
     :return: data from Parquet dataset
     """
     _LOG.debug(hprint.to_str("file_name columns filters"))
     hdbg.dassert_isinstance(file_name, str)
     hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
     if hs3.is_s3_path(file_name):
-        filesystem = get_pyarrow_s3fs(aws_profile)
+        if isinstance(aws_profile, str):
+            filesystem = get_pyarrow_s3fs(aws_profile)
+        else:
+            # Note: `s3fs` filesystem is only to be used on exact file path
+            # as `pq.ParquetDataset` is not properly handling directory path.
+            filesystem = aws_profile
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
         hs3.dassert_path_exists(file_name, s3_filesystem)
@@ -547,8 +554,11 @@ def get_parquet_filters_from_timestamp_interval(
     elif partition_mode == "by_year_week":
         # TODO(gp): Consider using the same approach above for months also here.
         # Partition by year and week.
-        hdbg.dassert_is_not(end_timestamp, None,
-                "Parquet backend can't determine the boundaries of the data")
+        hdbg.dassert_is_not(
+            end_timestamp,
+            None,
+            "Parquet backend can't determine the boundaries of the data",
+        )
         # Include last week in the interval.
         end_timestamp += pd.DateOffset(weeks=1)
         # Get all weeks in the interval.
@@ -698,12 +708,12 @@ def to_partitioned_parquet(
         )
 
 
-# TODO(Nikola): Add unit test in CMTask #1426.
 def list_and_merge_pq_files(
     root_dir: str,
     *,
     file_name: str = "data.parquet",
     aws_profile: hs3.AwsProfile = None,
+    drop_duplicates_mode: Optional[str] = None,
 ) -> None:
     """
     Merge all files of the Parquet dataset.
@@ -755,9 +765,28 @@ def list_and_merge_pq_files(
             continue
         # Read all files in target folder.
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
+        data = data.to_pandas()
+        # Drop duplicates on non-metadata columns.
+        if drop_duplicates_mode is None:
+            duplicate_columns = data.columns.to_list()
+            for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
+                if col_name in duplicate_columns:
+                    duplicate_columns.remove(col_name)
+            control_column = None
+        # Drop duplicates on timestamp index.
+        elif drop_duplicates_mode == "ohlcv":
+            duplicate_columns = ["timestamp", "exchange_id"]
+            control_column = "volume"
+        else:
+            hdbg.dassert(msg="Supported drop duplicates modes: ohlcv")
+        data = hdatafr.remove_duplicates(data, duplicate_columns, control_column)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
-        pq.write_table(data, folder + "/" + file_name, filesystem=filesystem)
+        pq.write_table(
+            pa.Table.from_pandas(data),
+            folder + "/" + file_name,
+            filesystem=filesystem,
+        )
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:

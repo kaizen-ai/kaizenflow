@@ -26,6 +26,7 @@ from invoke import task
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
@@ -442,12 +443,16 @@ def print_env(ctx):  # type: ignore
     Print the repo configuration.
     """
     _ = ctx
-    print(hversio.env_to_str())
+    print(henv.env_to_str())
 
 
 # #############################################################################
 # Git.
 # #############################################################################
+
+# TODO(gp): @all Move all this code to lib_tasks_git.py
+#  In practice we want to split the code based on the first part of the invoke
+#  command. We should also separate the unit tests (probably in a different PR).
 
 
 @task
@@ -1154,6 +1159,9 @@ def git_branch_diff_with_master(  # type: ignore
 # Integrate.
 # #############################################################################
 
+
+# TODDO(gp): @all Move to lib_tasks_integrate.py
+
 # ## Concepts
 #
 # - We have two dirs storing two forks of the same repo
@@ -1840,6 +1848,8 @@ def integrate_diff_overlapping_files(  # type: ignore
 # Basic Docker commands.
 # #############################################################################
 
+# TODO(gp): @all move to lib_tasks_docker.py
+
 
 def _get_docker_exec(sudo: bool) -> str:
     docker_exec = "docker"
@@ -2109,6 +2119,8 @@ def docker_login(ctx):  # type: ignore
 # Compose files.
 # ////////////////////////////////////////////////////////////////////////////////
 
+# TODO(gp): All this code can become `DockerComposeFileGenerator`.
+
 # There are several combinations to consider:
 # - whether the Docker host can run with / without privileged mode
 # - amp as submodule / as supermodule
@@ -2148,25 +2160,31 @@ def _get_linter_service() -> str:
     return linter_spec_txt
 
 
-def _generate_compose_file(
+def _generate_docker_compose_file(
     use_privileged_mode: bool,
     use_sibling_container: bool,
     shared_data_dirs: Optional[str],
     mount_as_submodule: bool,
     use_network_mode_host: bool,
+    use_main_network: bool,
     file_name: Optional[str],
 ) -> str:
     """
     Generate `docker-compose.yml` file and save it.
 
-    :param shared_data_dir: data directory in the host filesystem to mount to mount
+    :param shared_data_dirs: data directory in the host filesystem to mount to mount
         inside the container. `None` means no dir sharing
+    :param use_main_network: use `main_network` as default network
     """
     _LOG.debug(
         hprint.to_str(
-            "use_privileged_mode use_sibling_container "
-            "shared_data_dirs mount_as_submodule "
-            "use_network_mode_host file_name"
+            "use_privileged_mode "
+            "use_sibling_container "
+            "shared_data_dirs "
+            "mount_as_submodule "
+            "use_network_mode_host "
+            "use_main_network "
+            "file_name "
         )
     )
     txt = []
@@ -2383,8 +2401,18 @@ def _generate_compose_file(
           ports:
             - "${PORT}:${PORT}"
         """
-        # This is at the level of `services`.
+        # This is inside `services`.
         indent_level = 1
+        append(txt_tmp, indent_level)
+    #
+    if use_main_network:
+        txt_tmp = """
+        networks:
+          default:
+            name: main_network
+        """
+        # This is at the level of `services`.
+        indent_level = 0
         append(txt_tmp, indent_level)
     # Save file.
     txt_str: str = "\n".join(txt)
@@ -2398,7 +2426,7 @@ def _generate_compose_file(
 
 def get_base_docker_compose_path() -> str:
     """
-    Return the absolute path to base docker compose.
+    Return the absolute path to the Docker compose file.
 
     E.g., `devops/compose/docker-compose.yml`.
     """
@@ -2411,35 +2439,16 @@ def get_base_docker_compose_path() -> str:
     return docker_compose_path
 
 
-def _get_amp_docker_compose_path() -> Optional[str]:
-    """
-    Return the docker compose to use for `amp`, depending whether it is a
-    supermodule or as submodule.
-
-    E.g.,
-    - for submodule -> `devops/compose/docker-compose_as_submodule.yml`
-    - for supermodule -> None
-    """
-    path, _ = hgit.get_path_from_supermodule()
-    docker_compose_path: Optional[str]
-    if path != "":
-        _LOG.warning("amp is a submodule")
-        docker_compose_path = "docker-compose_as_submodule.yml"
-        # Add the default path.
-        dir_name = "devops/compose"
-        docker_compose_path = os.path.join(dir_name, docker_compose_path)
-        docker_compose_path = os.path.abspath(docker_compose_path)
-    else:
-        docker_compose_path = None
-    return docker_compose_path
-
-
-def _get_docker_compose_paths(
+def _get_docker_compose_files(
+    generate_docker_compose_file: bool,
     service_name: str,
     extra_docker_compose_files: Optional[List[str]],
 ) -> List[str]:
     """
-    Return the list of the needed docker compose path.
+    Generate the Docker compose file and return the list of Docker compose
+    paths.
+
+    :return: list of the Docker compose paths
     """
     docker_compose_files = []
     # Get the repo short name (e.g., amp).
@@ -2464,12 +2473,14 @@ def _get_docker_compose_paths(
         use_docker_sibling_containers = False
         get_shared_data_dirs = None
         use_docker_network_mode_host = False
+        use_main_network = False
     else:
         # Use the settings from the `repo_config` corresponding to this container.
         enable_privileged_mode = hgit.execute_repo_config_code("enable_privileged_mode()")
         use_docker_sibling_containers = hgit.execute_repo_config_code("use_docker_sibling_containers()")
         get_shared_data_dirs = hgit.execute_repo_config_code("get_shared_data_dirs()")
         use_docker_network_mode_host = hgit.execute_repo_config_code("use_docker_network_mode_host()")
+        use_main_network = hgit.execute_repo_config_code("use_main_network()")
     #
     _generate_compose_file(
         enable_privileged_mode,
@@ -2477,6 +2488,7 @@ def _get_docker_compose_paths(
         get_shared_data_dirs,
         mount_as_submodule,
         use_docker_network_mode_host,
+        use_main_network,
         file_name,
     )
     docker_compose_files.append(file_name)
@@ -2742,13 +2754,14 @@ def _get_docker_base_cmd(
     stage: str,
     version: str,
     service_name,
+    generate_docker_compose_file: bool,
     extra_env_vars: Optional[List[str]],
     extra_docker_compose_files: Optional[List[str]],
 ) -> List[str]:
     r"""
     Get base `docker-compose` command encoded as a list of strings.
 
-    It can be used as a base to build more complicated commands, e.g., `run`, `up`, `down`.
+    It can be used as a base to build more complex commands, e.g., `run`, `up`, `down`.
 
     E.g.,
     ```
@@ -2758,6 +2771,8 @@ def _get_docker_base_cmd(
             '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
             '\n        --env-file devops/env/default.env']
     ```
+    :param generate_docker_compose_file: whether to generate or reuse the existing
+        Docker compose file
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param extra_docker_compose_files: `docker-compose` override files
     """
@@ -2782,7 +2797,10 @@ def _get_docker_base_cmd(
         r"""
         docker-compose"""
     )
-    docker_compose_files = _get_docker_compose_paths(service_name, extra_docker_compose_files)
+    docker_compose_files = _get_docker_compose_files(
+        service_name,
+        generate_docker_compose_file, extra_docker_compose_files
+    )
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
@@ -2799,18 +2817,19 @@ def _get_docker_base_cmd(
     return docker_cmd_
 
 
-# TODO(Grisha): -> `_get_docker_run_cmd` CmTask #1486.
-def _get_docker_cmd(
+def _get_docker_compose_cmd(
     base_image: str,
     stage: str,
     version: str,
     cmd: str,
     *,
+    # TODO(gp): make these params mandatory.
     extra_env_vars: Optional[List[str]] = None,
     extra_docker_compose_files: Optional[List[str]] = None,
     extra_docker_run_opts: Optional[List[str]] = None,
     service_name: str = "app",
     entrypoint: bool = True,
+    generate_docker_compose_file: bool = True,
     as_user: bool = True,
     print_docker_config: bool = False,
     use_bash: bool = False,
@@ -2834,7 +2853,8 @@ def _get_docker_cmd(
     :param cmd: command to run inside Docker container
     :param extra_docker_run_opts: additional `docker-compose` run options
     :param service_name: service to use to run a command
-    :param entrypoint: use whether to use `entrypoint` or not
+    :param entrypoint: whether to use the `entrypoint` or not
+    :param generate_docker_compose_file: generate the Docker compose file or not
     :param as_user: pass the user / group id or not
     :param print_docker_config: print the docker config for debugging purposes
     :param use_bash: run command through a shell
@@ -2851,6 +2871,7 @@ def _get_docker_cmd(
         stage,
         version,
         service_name,
+        generate_docker_compose_file,
         extra_env_vars,
         extra_docker_compose_files,
     )
@@ -2950,17 +2971,26 @@ def docker_bash(  # type: ignore
     version="",
     entrypoint=True,
     as_user=True,
+    generate_docker_compose_file=True,
     container_dir_name=".",
 ):
     """
     Start a bash shell inside the container corresponding to a stage.
 
-    TODO(gp): Add description of non-obvious interface params.
+    :param entrypoint: whether to use the `entrypoint` or not
+    :param as_user: pass the user / group id or not
+    :param generate_docker_compose_file: generate the Docker compose file or not
     """
     _report_task(container_dir_name=container_dir_name)
     cmd = "bash"
-    docker_cmd_ = _get_docker_cmd(
-        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
+    docker_cmd_ = _get_docker_compose_cmd(
+        base_image,
+        stage,
+        version,
+        cmd,
+        generate_docker_compose_file=generate_docker_compose_file,
+        entrypoint=entrypoint,
+        as_user=as_user,
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -2973,22 +3003,26 @@ def docker_cmd(  # type: ignore
     version="",
     cmd="",
     as_user=True,
+    generate_docker_compose_file=True,
     use_bash=False,
     container_dir_name=".",
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
 
-    TODO(gp): Add description of non-obvious interface params.
+    :param as_user: pass the user / group id or not
+    :param generate_docker_compose_file: generate or reuse the Docker compose file
+    :param use_bash: run command through a shell
     """
     _report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(
+    docker_cmd_ = _get_docker_compose_cmd(
         base_image,
         stage,
         version,
         cmd,
+        generate_docker_compose_file=generate_docker_compose_file,
         as_user=as_user,
         use_bash=use_bash,
     )
@@ -3014,7 +3048,7 @@ def _get_docker_jupyter_cmd(
     extra_docker_run_opts = ["--service-ports"]
     service_name = "jupyter_server_test" if self_test else "jupyter_server"
     #
-    docker_cmd_ = _get_docker_cmd(
+    docker_cmd_ = _get_docker_compose_cmd(
         base_image,
         stage,
         version,
@@ -3072,6 +3106,8 @@ def docker_jupyter(  # type: ignore
 # #############################################################################
 # Docker image workflows.
 # #############################################################################
+
+# TODO(gp): @all Move all the release code to lib_tasks_docker_release.py
 
 
 def _to_abs_path(filename: str) -> str:
@@ -3605,6 +3641,9 @@ def docker_rollback_prod_image(  # type: ignore
 # #############################################################################
 
 
+# TODO(gp): @all Move all the find-related code to lib_tasks_find.py
+
+
 def _find_test_files(
     dir_name: Optional[str] = None, use_absolute_path: bool = False
 ) -> List[str]:
@@ -4028,6 +4067,8 @@ def find_check_string_output(  # type: ignore
 # Run tests.
 # #############################################################################
 
+# TODO(gp): @all Move all the run test code to lib_tasks_pytest.py
+
 _COV_PYTEST_OPTS = [
     # Only compute coverage for current project and not venv libraries.
     "--cov=.",
@@ -4067,7 +4108,7 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     _ = ctx
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
+    docker_cmd_ = _get_docker_compose_cmd(base_image, stage, version, cmd)
     hsystem.system(docker_cmd_, abort_on_error=False, suppress_output=False)
 
 
@@ -4201,7 +4242,7 @@ def _run_test_cmd(
     # exposing port 5432 on localhost (of the server), when running dind we
     # need to switch back to bridge. See CmTask988.
     extra_env_vars = ["NETWORK_MODE=bridge"]
-    docker_cmd_ = _get_docker_cmd(
+    docker_cmd_ = _get_docker_compose_cmd(
         base_image, stage, version, cmd, extra_env_vars=extra_env_vars
     )
     _LOG.info("cmd=%s", docker_cmd_)
@@ -4625,6 +4666,7 @@ def run_coverage_report(  # type: ignore
           - Post it on S3 (optional)
 
     :param target_dir: directory to compute coverage stats for
+        - "." for all the dirs in the current working directory
     :param generate_html_report: whether to generate HTML coverage report or not
     :param publish_html_on_s3: whether to publish HTML coverage report or not
     :param aws_profile: the AWS profile to use for publishing HTML report
@@ -4652,15 +4694,33 @@ def run_coverage_report(  # type: ignore
     report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
     )
-    # Only target dir is included in the reports.
-    include_in_report = f"*/{target_dir}/*"
+    # Specify the dirs to include and exclude in the report.
+    exclude_from_report = None
+    if target_dir == ".":
+        # Include all dirs.
+        include_in_report = "*"
+        if hgit.execute_repo_config_code("skip_submodules_test()"):
+            # Exclude submodules.
+            submodule_paths = hgit.get_submodule_paths()
+            exclude_from_report = ",".join(
+                path + "/*" for path in submodule_paths
+            )
+    else:
+        # Include only the target dir.
+        include_in_report = f"*/{target_dir}/*"
     # Generate text report with the coverage stats.
-    report_cmd.append(
+    report_stats_cmd = (
         f"coverage report --include={include_in_report} --sort=Cover"
     )
+    if exclude_from_report is not None:
+        report_stats_cmd += f" --omit={exclude_from_report}"
+    report_cmd.append(report_stats_cmd)
     if generate_html_report:
         # Generate HTML report with the coverage stats.
-        report_cmd.append(f"coverage html --include={include_in_report}")
+        report_html_cmd = f"coverage html --include={include_in_report}"
+        if exclude_from_report is not None:
+            report_html_cmd += f" --omit={exclude_from_report}"
+        report_cmd.append(report_html_cmd)
     # Execute commands above one-by-one inside docker. Coverage tool is not
     # installed outside docker.
     full_report_cmd = " && ".join(report_cmd)
@@ -5035,6 +5095,8 @@ def pytest_find_unused_goldens(  # type: ignore
 # #############################################################################
 # Linter.
 # #############################################################################
+
+# TODO(gp): Move all linter-related code to lib_tasks_lint.py
 
 
 @task
@@ -5453,6 +5515,8 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 # #############################################################################
 # GitHub CLI.
 # #############################################################################
+
+# TODO(gp): Move all linter-related code to lib_tasks_gh.py
 
 
 @task

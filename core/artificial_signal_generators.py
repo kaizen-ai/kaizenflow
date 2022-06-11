@@ -324,6 +324,7 @@ class PriceProcess:
         """
         self._rng = np.random.default_rng(seed=seed)
 
+    # TODO(Paul): drop "log" from the name.
     def generate_log_normal_series(
         self,
         start_datetime: pd.Timestamp,
@@ -428,7 +429,7 @@ class PriceProcess:
         #
         n_samples = index.size
         # Generate random absolute price movements.
-        n_binomial = 4 * (bar_volatility_in_ticks**2)
+        n_binomial = 4 * (bar_volatility_in_ticks ** 2)
         tick_movements = (
             self._rng.binomial(n_binomial, 0.5, n_samples) - n_binomial * 0.5
         )
@@ -487,7 +488,7 @@ class PriceProcess:
         hdbg.dassert_isinstance(end_time, datetime.time)
         # Create index.
         index = pd.date_range(start_datetime, end_datetime, freq=freq)
-        srs = pd.Series(index=index)
+        srs = pd.Series(index=index, dtype="float64")
         srs = srs.between_time(start_time, end_time)
         index = srs.index
         return index

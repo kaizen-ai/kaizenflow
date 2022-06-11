@@ -20,6 +20,8 @@ import market_data as mdata
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Update this to the new style.
+
 # TODO(gp): We should unify with `ForecastSystem`. A `System` contains all the
 # info to build and run a DAG and then it can be simulated or put in prod.
 def _build_base_config() -> cconfig.Config:
@@ -67,8 +69,9 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.DagRunner:
     # TODO(gp): Specify only the columns that are needed.
     columns = None
     columns_remap = None
-    market_data = mdata.get_DataFrameImClientMarketData_example1(
-        asset_ids, columns, columns_remap
+    im_client = icdc.get_DataFrameImClient_example1()
+    market_data = mdata.get_HistoricalImClientMarketData_example1(
+        im_client, asset_ids, columns, columns_remap
     )
     # Create HistoricalDataSource.
     stage = "read_data"

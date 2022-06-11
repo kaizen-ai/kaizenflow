@@ -11,6 +11,7 @@ import helpers.hasyncio as hasynci
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
 import market_data as mdata
+import oms as oms
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
 
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def setUp(self) -> None:
         super().setUp()
@@ -82,8 +83,6 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
             result_bundles = result_bundles[0][0]
         return result_bundles
 
-    # ///////////////////////////////////////////////////////////////////////////
-
     def test1(self) -> None:
         """
         Verify the contents of DAG prediction.
@@ -99,6 +98,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
 
 
 # TODO(gp): This should derive from SystemTester.
+# TODO(gp): Update this to the new style.
 class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
     """
     Test using fake data and features:
@@ -111,7 +111,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
 
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def run_coroutines(
         self,
@@ -159,8 +159,12 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             coroutines = [dag_runner.predict()]
             #
             if is_database_portfolio:
+                order_processor = oms.get_order_processor_example1(
+                        self.connection,
+                        portfolio)
                 order_processor_coroutine = (
-                    system_runner.get_order_processor_coroutine(
+                    oms.get_order_processor_coroutine_example1(
+                        order_processor,
                         portfolio,
                         real_time_loop_time_out_in_secs,
                     )

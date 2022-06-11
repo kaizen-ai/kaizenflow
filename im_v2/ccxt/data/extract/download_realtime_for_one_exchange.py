@@ -14,6 +14,7 @@ Use as:
     --db_table 'ccxt_ohlcv_test' \
     --aws_profile 'ck' \
     --s3_path 's3://cryptokaizen-data-test/realtime/'\
+    --data_type 'ohlcv'
 """
 
 import argparse
@@ -34,6 +35,13 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
+    parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="OHLCV, market_depth or trades data.",
+    )
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = imvcddbut.add_db_args(parser)
@@ -44,7 +52,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_realtime_for_one_exchange(args, imvcdeex.CcxtExtractor)
+    # Initialize the CCXT Extractor class.
+    exchange = imvcdeex.CcxtExtractor(args.exchange_id)
+    args = vars(args)
+    imvcdeexut.download_realtime_for_one_exchange(args, exchange)
 
 
 if __name__ == "__main__":

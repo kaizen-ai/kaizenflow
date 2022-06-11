@@ -468,35 +468,34 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
 asset_id                     101    202      -1
 2000-01-01 09:35:01-05:00   0.00   0.00  1.00e+06
 2000-01-01 09:40:01-05:00 -50.13  49.91  1.00e+06
-2000-01-01 09:45:01-05:00 -50.04  49.97  1.00e+06
+2000-01-01 09:45:01-05:00 -50.04  49.96  1.00e+06
 # historical holdings marked to market=
 asset_id                        101       202      -1
 2000-01-01 09:35:01-05:00      0.00      0.00  1.00e+06
-2000-01-01 09:40:01-05:00 -50092.66  49944.32  1.00e+06
-2000-01-01 09:45:01-05:00 -49853.37  50081.80  1.00e+06
+2000-01-01 09:40:01-05:00 -50091.23  49944.85  1.00e+06
+2000-01-01 09:45:01-05:00 -49854.64  50080.69  1.00e+06
 # historical flows=
 asset_id                        101       202
-2000-01-01 09:40:01-05:00  50070.84 -49991.21
-2000-01-01 09:45:01-05:00    -92.49    -55.77
+2000-01-01 09:40:01-05:00  50070.28 -49991.02
+2000-01-01 09:45:01-05:00    -91.07    -55.25
 # historical pnl=
 asset_id                      101    202
 2000-01-01 09:35:01-05:00     NaN    NaN
-2000-01-01 09:40:01-05:00  -21.83 -46.88
-2000-01-01 09:45:01-05:00  146.80  81.70
+2000-01-01 09:40:01-05:00  -20.95 -46.17
+2000-01-01 09:45:01-05:00  145.52  80.60
 # historical statistics=
                               pnl  gross_volume  net_volume        gmv     nmv      cash  net_wealth  leverage
 2000-01-01 09:35:01-05:00     NaN          0.00        0.00       0.00    0.00  1.00e+06    1.00e+06       0.0
-2000-01-01 09:40:01-05:00  -68.71     100062.04      -79.63  100036.99 -148.34  1.00e+06    1.00e+06       0.1
-2000-01-01 09:45:01-05:00  228.51        148.27      148.27   99935.17  228.44  1.00e+06    1.00e+06       0.1"""
+2000-01-01 09:40:01-05:00  -67.12     100061.30      -79.26  100036.08 -146.38  1.00e+06    1.00e+06       0.1
+2000-01-01 09:45:01-05:00  226.12        146.31      146.31   99935.34  226.05  1.00e+06    1.00e+06       0.1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
-    
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
-    
+        return hash(cls.__name__) % 10000
+
     def test_mocked_system1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Build a Portfolio.
@@ -505,7 +504,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             #
             oomsdb.create_oms_tables(self.connection, incremental=False)
             #
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 db_connection,
                 table_name,
@@ -624,11 +623,10 @@ asset_id                     101    202
 
 
 class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
-    
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
-    
+        return hash(cls.__name__) % 10000
+
     def test_mocked_system1(self) -> None:
         data = self._get_market_data_df1()
         predictions, volatility = self._get_predictions_and_volatility1(data)
@@ -780,7 +778,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             db_connection = self.connection
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
             oomsdb.create_oms_tables(self.connection, incremental=False)
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 db_connection,
                 table_name,
