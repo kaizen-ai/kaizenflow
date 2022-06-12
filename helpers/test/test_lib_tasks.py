@@ -508,6 +508,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
         txt.append(txt_tmp)
         #
         txt = "\n".join(txt)
+        txt = hunitest.filter_text(r"working_dir", txt)
         self.check_string(txt)
 
     def test1(self) -> None:
