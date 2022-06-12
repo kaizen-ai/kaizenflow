@@ -522,7 +522,8 @@ def get_repo_config_file(super_module: bool = True) -> str:
     env_var = "AM_REPO_CONFIG_PATH"
     file_name = henv.get_env_var(env_var, abort_on_missing=False)
     if file_name:
-        _LOG.warning("Using value for %s from env var %s", env_var, file_name)
+        _LOG.warning("Using value '%s' for %s from env var", file_name,
+                env_var)
     else:
         # TODO(gp): We should actually ask Git where the super-module is.
         client_root = get_client_root(super_module)

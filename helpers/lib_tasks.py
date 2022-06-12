@@ -2234,7 +2234,7 @@ def _generate_docker_compose_file(
           - AM_HOST_OS_NAME={am_host_os_name}
           - AM_REPO_CONFIG_CHECK=True
           # Use inferred path for `repo_config.py`.
-          - AM_REPO_CONFIG_PATH=""
+          - AM_REPO_CONFIG_PATH=
           - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
           - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
           - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
