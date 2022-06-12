@@ -21,7 +21,7 @@ if [[ ! -d $VENV_DIR ]]; then
     # The venv in the container is in a different spot. Check that.
     VENV_DIR="/venv/amp.client_venv"
     if [[ ! -d $VENV_DIR ]]; then
-        echo "ERROR: Can't find VENV_DIR='$VENV_DIR'"
+        echo "ERROR: Can't find VENV_DIR='$VENV_DIR'. Create it with client_setup/build.sh"
         return -1
     fi;
 fi;
