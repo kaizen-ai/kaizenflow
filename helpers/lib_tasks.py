@@ -3012,7 +3012,7 @@ def docker_jupyter(  # type: ignore
     version="",
     base_image="",
     auto_assign_port=True,
-    port=9999,
+    port=None,
     self_test=False,
     container_dir_name=".",
 ):
@@ -3023,18 +3023,21 @@ def docker_jupyter(  # type: ignore
         repo (e.g., 4 for `~/src/amp4`) to get a unique port
     """
     _report_task(container_dir_name=container_dir_name)
-    if auto_assign_port:
-        uid = os.getuid()
-        _LOG.debug("uid=%s", uid)
-        git_repo_idx = hgit.get_project_dirname(only_index=True)
-        git_repo_idx = int(git_repo_idx)
-        _LOG.debug("git_repo_idx=%s", git_repo_idx)
-        # We assume that there are no more than `max_idx_per_users` clients.
-        max_idx_per_user = 10
-        hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
-        port = (uid * max_idx_per_user) + git_repo_idx
-        _LOG.info("Assigned port is %s", port)
+    if port is None:
+        if auto_assign_port:
+            uid = os.getuid()
+            _LOG.debug("uid=%s", uid)
+            git_repo_idx = hgit.get_project_dirname(only_index=True)
+            git_repo_idx = int(git_repo_idx)
+            _LOG.debug("git_repo_idx=%s", git_repo_idx)
+            # We assume that there are no more than `max_idx_per_users` clients.
+            max_idx_per_user = 10
+            hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
+            port = (uid * max_idx_per_user) + git_repo_idx
+        else:
+            port = 9999
     #
+    _LOG.info("Assigned port is %s", port)
     print_docker_config = False
     docker_cmd_ = _get_docker_jupyter_cmd(
         base_image,
