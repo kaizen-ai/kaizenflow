@@ -204,7 +204,6 @@ def has_dind_support() -> bool:
     if not is_inside_docker():
         # Outside Docker there is no privileged mode.
         return False
-    # return True
     # TODO(gp): This part is not multi-process friendly. When multiple
     # processes try to run this code they interfere. A solution is to run `ip
     # link` in the entrypoint and create a `has_docker_privileged_mode` file
@@ -245,7 +244,9 @@ def has_dind_support() -> bool:
             else:
                 _raise_invalid_host()
     else:
-        print(_WARNING + f": Skipping checking since AM_REPO_CONFIG_CHECK='{am_repo_config}'")
+        print(_WARNING +
+                ": Skip checking since AM_REPO_CONFIG_CHECK=" +
+                f"'{am_repo_config}'")
     return has_dind
 
 
