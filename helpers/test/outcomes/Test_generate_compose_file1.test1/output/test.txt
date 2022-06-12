@@ -67,7 +67,6 @@ services:
       base_app
     volumes:
       - /app:/src
-    working_dir: /src/amp
     environment:
       - MYPYPATH
       # Use the `repo_config.py` inside the dev_tools container instead of
