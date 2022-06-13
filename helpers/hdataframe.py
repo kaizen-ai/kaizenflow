@@ -271,6 +271,7 @@ def compute_count_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
     count_per_year = cast(float, count_per_year)
     return count_per_year
 
+
 def remove_duplicates(
     data: pd.DataFrame,
     duplicate_columns: Optional[List[str]],

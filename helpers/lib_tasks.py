@@ -1478,7 +1478,7 @@ def integrate_diff_dirs(  # type: ignore
             cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
             if remove_usual:
                 vals = [
-                    "\/\.github\/",
+                    r"\/\.github\/",
                 ]
                 regex = "|".join(vals)
                 cmd += f" --ignore_files='{regex}'"
@@ -2130,6 +2130,36 @@ def docker_login(ctx):  # type: ignore
 #  use_sibling_container -> use_docker_containers_containers
 
 
+def _get_linter_service() -> str:
+    """
+    Get the linter service specification for the `docker-compose.yml` file.
+
+    :return: the text of the linter service specification
+    """
+    superproject_path, submodule_path = hgit.get_path_from_supermodule()
+    if superproject_path:
+        # We are running in a Git submodule.
+        work_dir = f"/src/{submodule_path}"
+        repo_root = superproject_path
+    else:
+        work_dir = "/src"
+        repo_root = os.getcwd()
+    linter_spec_txt = f"""
+    linter:
+      extends:
+        base_app
+      volumes:
+        - {repo_root}:/src
+      working_dir: {work_dir}
+      environment:
+        - MYPYPATH
+        # Use the `repo_config.py` inside the dev_tools container instead of
+        # the one in the calling repo.
+        - AM_REPO_CONFIG_PATH=/app/repo_config.py
+    """
+    return linter_spec_txt
+
+
 def _generate_docker_compose_file(
     use_privileged_mode: bool,
     use_sibling_container: bool,
@@ -2143,7 +2173,7 @@ def _generate_docker_compose_file(
     Generate `docker-compose.yml` file and save it.
 
     :param shared_data_dirs: data directory in the host filesystem to mount to mount
-        inside the container. None means no dir sharing
+        inside the container. `None` means no dir sharing
     :param use_main_network: use `main_network` as default network
     """
     _LOG.debug(
@@ -2183,9 +2213,8 @@ def _generate_docker_compose_file(
     am_host_os_name = os.uname()[0]
     am_host_name = os.uname()[1]
     # We could do the same also with IMAGE for symmetry.
-    # Use % instead of f-string since `${IMAGE}` confuses f-string as a variable.
-    # Keep the env vars in sync with what we print in entrypoint.sh.
-    txt_tmp = """
+    # Keep the env vars in sync with what we print in `henv.get_env_vars()`.
+    txt_tmp = f"""
     version: '3'
 
     services:
@@ -2193,39 +2222,38 @@ def _generate_docker_compose_file(
         cap_add:
           - SYS_ADMIN
         environment:
-          - AM_AWS_PROFILE=$AM_AWS_PROFILE
-          - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
-          - AM_ENABLE_DIND=%s
-          - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
-          - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
-          - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
-          - AM_HOST_NAME=%s
-          - AM_HOST_OS_NAME=%s
           - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
           - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
+          - AM_AWS_PROFILE=$AM_AWS_PROFILE
+          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
           - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
+          - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
+          - AM_ENABLE_DIND={am_enable_dind}
+          - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
+          - AM_HOST_NAME={am_host_name}
+          - AM_HOST_OS_NAME={am_host_os_name}
+          - AM_REPO_CONFIG_CHECK=True
+          # Use inferred path for `repo_config.py`.
+          - AM_REPO_CONFIG_PATH=
+          - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
+          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
+          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
           - CK_AWS_PROFILE=$CK_AWS_PROFILE
+          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
+          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
           # - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
           # - CK_ENABLE_DIND=
           # - CK_FORCE_TEST_FAIL=$CK_FORCE_TEST_FAIL
-          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
-          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
           # - CK_HOST_NAME=
           # - CK_HOST_OS_NAME=
-          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
-          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
-          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
+          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
           - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
           # This env var is used by GH Action to signal that we are inside the CI.
           - CI=$CI
-        image: ${IMAGE}
-    """ % (
-        am_enable_dind,
-        am_host_name,
-        am_host_os_name,
-    )
+        image: ${{IMAGE}}
+    """
     indent_level = 0
     append(txt_tmp, indent_level)
     #
@@ -2295,6 +2323,21 @@ def _generate_docker_compose_file(
               # memory is available.
               memory: 60G
         """
+        # This is at the level of `services/app`.
+        indent_level = 2
+        append(txt_tmp, indent_level)
+    #
+    if use_network_mode_host:
+        txt_tmp = """
+        # Default network mode set to host so we can reach e.g.
+        # a database container pointing to localhost:5432.
+        # In tests we use dind so we need set back to the default "bridge".
+        # See CmTask988 and https://stackoverflow.com/questions/24319662
+        network_mode: ${NETWORK_MODE:-host}
+        """
+        # This is at the level of `services/app`.
+        indent_level = 2
+        append(txt_tmp, indent_level)
     #
     if mount_as_submodule:
         txt_tmp = """
@@ -2323,16 +2366,11 @@ def _generate_docker_compose_file(
     indent_level = 1
     append(txt_tmp, indent_level)
     #
-    if use_network_mode_host:
-        txt_tmp = """
-        # Default network mode set to host so we can reach e.g.
-        # a database container pointing to localhost:5432.
-        # In tests we use dind so we need set back to the default "bridge".
-        # See CmTask988 and https://stackoverflow.com/questions/24319662
-        network_mode: ${NETWORK_MODE:-host}
-        """
-        # This is at the level of `services/app`.
-        indent_level = 2
+    if True:
+        # Specify the linter service.
+        txt_tmp = _get_linter_service()
+        # Append at the level of `services`.
+        indent_level = 1
         append(txt_tmp, indent_level)
     #
     if True:
@@ -2377,13 +2415,13 @@ def _generate_docker_compose_file(
         indent_level = 0
         append(txt_tmp, indent_level)
     # Save file.
-    txt: str = "\n".join(txt)
+    txt_str: str = "\n".join(txt)
     if file_name:
-        hio.to_file(file_name, txt)
+        hio.to_file(file_name, txt_str)
     # Sanity check of the YAML file.
-    stream = io.StringIO(txt)
+    stream = io.StringIO(txt_str)
     _ = yaml.safe_load(stream)
-    return txt
+    return txt_str
 
 
 def get_base_docker_compose_path() -> str:
@@ -2403,7 +2441,8 @@ def get_base_docker_compose_path() -> str:
 
 def _get_docker_compose_files(
     generate_docker_compose_file: bool,
-    extra_docker_compose_files: List[str],
+    service_name: str,
+    extra_docker_compose_files: Optional[List[str]],
 ) -> List[str]:
     """
     Generate the Docker compose file and return the list of Docker compose
@@ -2421,20 +2460,36 @@ def _get_docker_compose_files(
     if repo_short_name in ("amp", "cm"):
         # Check if `amp` is a submodule.
         path, _ = hgit.get_path_from_supermodule()
-        docker_compose_path: Optional[str]
         if path != "":
             _LOG.warning("amp is a submodule")
             mount_as_submodule = True
     # Write Docker compose file.
     file_name = get_base_docker_compose_path()
+    if service_name == "linter":
+        # Since we are running the prod `dev_tools` container we need to use the
+        # settings from the `repo_config` from that container, and not the settings
+        # launch the container corresponding to this repo.
+        enable_privileged_mode = False
+        use_docker_sibling_containers = False
+        get_shared_data_dirs = None
+        use_docker_network_mode_host = False
+        use_main_network = False
+    else:
+        # Use the settings from the `repo_config` corresponding to this container.
+        enable_privileged_mode = hgit.execute_repo_config_code("enable_privileged_mode()")
+        use_docker_sibling_containers = hgit.execute_repo_config_code("use_docker_sibling_containers()")
+        get_shared_data_dirs = hgit.execute_repo_config_code("get_shared_data_dirs()")
+        use_docker_network_mode_host = hgit.execute_repo_config_code("use_docker_network_mode_host()")
+        use_main_network = hgit.execute_repo_config_code("use_main_network()")
+    #
     if generate_docker_compose_file:
         _generate_docker_compose_file(
-            hgit.execute_repo_config_code("enable_privileged_mode()"),
-            hgit.execute_repo_config_code("use_docker_sibling_containers()"),
-            hgit.execute_repo_config_code("get_shared_data_dirs()"),
+            enable_privileged_mode,
+            use_docker_sibling_containers,
+            get_shared_data_dirs,
             mount_as_submodule,
-            hgit.execute_repo_config_code("use_docker_network_mode_host()"),
-            hgit.execute_repo_config_code("use_main_network()"),
+            use_docker_network_mode_host,
+            use_main_network,
             file_name,
         )
     else:
@@ -2701,6 +2756,7 @@ def _get_docker_base_cmd(
     base_image: str,
     stage: str,
     version: str,
+    service_name,
     generate_docker_compose_file: bool,
     extra_env_vars: Optional[List[str]],
     extra_docker_compose_files: Optional[List[str]],
@@ -2745,6 +2801,7 @@ def _get_docker_base_cmd(
         docker-compose"""
     )
     docker_compose_files = _get_docker_compose_files(
+        service_name,
         generate_docker_compose_file, extra_docker_compose_files
     )
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
@@ -2816,6 +2873,7 @@ def _get_docker_compose_cmd(
         base_image,
         stage,
         version,
+        service_name,
         generate_docker_compose_file,
         extra_env_vars,
         extra_docker_compose_files,
@@ -2867,6 +2925,7 @@ def _get_docker_compose_cmd(
         {cmd}"""
             )
     else:
+        # No entrypoint.
         docker_cmd_.append(
             rf"""
         --entrypoint bash \
@@ -3012,7 +3071,7 @@ def docker_jupyter(  # type: ignore
     version="",
     base_image="",
     auto_assign_port=True,
-    port=9999,
+    port=None,
     self_test=False,
     container_dir_name=".",
 ):
@@ -3023,18 +3082,21 @@ def docker_jupyter(  # type: ignore
         repo (e.g., 4 for `~/src/amp4`) to get a unique port
     """
     _report_task(container_dir_name=container_dir_name)
-    if auto_assign_port:
-        uid = os.getuid()
-        _LOG.debug("uid=%s", uid)
-        git_repo_idx = hgit.get_project_dirname(only_index=True)
-        git_repo_idx = int(git_repo_idx)
-        _LOG.debug("git_repo_idx=%s", git_repo_idx)
-        # We assume that there are no more than `max_idx_per_users` clients.
-        max_idx_per_user = 10
-        hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
-        port = (uid * max_idx_per_user) + git_repo_idx
-        _LOG.info("Assigned port is %s", port)
+    if port is None:
+        if auto_assign_port:
+            uid = os.getuid()
+            _LOG.debug("uid=%s", uid)
+            git_repo_idx = hgit.get_project_dirname(only_index=True)
+            git_repo_idx = int(git_repo_idx)
+            _LOG.debug("git_repo_idx=%s", git_repo_idx)
+            # We assume that there are no more than `max_idx_per_users` clients.
+            max_idx_per_user = 10
+            hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
+            port = (uid * max_idx_per_user) + git_repo_idx
+        else:
+            port = 9999
     #
+    _LOG.info("Assigned port is %s", port)
     print_docker_config = False
     docker_cmd_ = _get_docker_jupyter_cmd(
         base_image,
@@ -5000,9 +5062,8 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
 def pytest_find_unused_goldens(  # type: ignore
     ctx,
     dir_name=".",
-    run_bash=False,
     stage="prod",
-    as_user=True,
+    version="",
     out_file_name="pytest_find_unused_goldens.output.txt",
 ):
     """
@@ -5020,7 +5081,6 @@ def pytest_find_unused_goldens(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     amp_abs_path = hgit.get_amp_abs_path()
     amp_path = amp_abs_path.replace(
@@ -5032,7 +5092,7 @@ def pytest_find_unused_goldens(  # type: ignore
     docker_cmd_opts = [f"--dir_name {dir_name}"]
     docker_cmd_ = f"{script_path} " + _to_single_line_cmd(docker_cmd_opts)
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     _run(ctx, cmd)
@@ -5150,67 +5210,28 @@ def lint_check_python_files(  # type: ignore
 
 def _get_lint_docker_cmd(
     docker_cmd_: str,
-    run_bash: bool,
     stage: str,
-    as_user: bool,
+    version: str,
+    *,
+    entrypoint: bool = True,
 ) -> str:
     """
-    Create a command to run in Docker.
+    Create a command to run in the Linter service.
 
-    For parameter descriptions, see `lint()`.
-
-    :param docker_cmd_: command to run inside the container
-    :return: the full command to run in Docker
+    :param docker_cmd_: command to run
+    :param stage: the image stage to use
+    :return: the full command to run
     """
-    superproject_path, submodule_path = hgit.get_path_from_supermodule()
-    if superproject_path:
-        # We are running in a Git submodule.
-        work_dir = f"/src/{submodule_path}"
-        repo_root = superproject_path
-    else:
-        work_dir = "/src"
-        repo_root = os.getcwd()
-    _LOG.debug("work_dir=%s repo_root=%s", work_dir, repo_root)
-    # TODO(gp): Do not hardwire the repo_short_name.
-    # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
-    # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
+    # Get an image to run the linter on.
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-    image = f"{ecr_base_path}/dev_tools:{stage}"
-    docker_wrapper_cmd = ["docker run", "--rm"]
-    if stage in ("local", "dev"):
-        # Map repository root to /app in the container, so that we can
-        # reuse the current code being developed inside Docker before
-        # releasing the prod image.
-        docker_wrapper_cmd.append(f"-v '{repo_root}':/app")
-    if run_bash:
-        docker_wrapper_cmd.append("-it")
-    else:
-        docker_wrapper_cmd.append("-t")
-    if as_user:
-        docker_wrapper_cmd.append(r"--user $(id -u):$(id -g)")
-    docker_wrapper_cmd.extend(
-        [
-            # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
-            "-e MYPYPATH",
-            f"-v '{repo_root}':/src",
-            f"--workdir={work_dir}",
-            f"{image}",
-        ]
+    linter_image = f"{ecr_base_path}/dev_tools"
+    # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
+    # and run Linter on the specific version, e.g., `1.1.5`.
+    # Execute command line.
+    cmd = _get_docker_compose_cmd(
+        linter_image, stage, version, docker_cmd_, entrypoint=entrypoint, service_name="linter"
     )
-    # Build the command inside Docker.
-    cmd = f"'{docker_cmd_}'"
-    if run_bash:
-        _LOG.warning("Run bash instead of:\n  > %s", cmd)
-        cmd = "bash"
-    docker_wrapper_cmd.append(cmd)
-    docker_wrapper_cmd = _to_single_line_cmd(docker_wrapper_cmd)
-    if run_bash:
-        # We don't execute this command since pty=True corrupts the terminal
-        # session.
-        print("# To get a bash session inside Docker run:")
-        print(docker_wrapper_cmd)
-        sys.exit(0)
-    return docker_wrapper_cmd
+    return cmd
 
 
 def _parse_linter_output(txt: str) -> str:
@@ -5255,10 +5276,8 @@ def _parse_linter_output(txt: str) -> str:
 def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
-    run_bash=False,
-    # TODO(gp): This is the backdoor.
     stage="prod",
-    as_user=True,
+    version="",
     out_file_name="lint_detect_cycles.output.txt",
 ):
     """
@@ -5275,7 +5294,6 @@ def lint_detect_cycles(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
     docker_cmd_ = (
@@ -5283,7 +5301,7 @@ def lint_detect_cycles(  # type: ignore
         + _to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     _run(ctx, cmd)
@@ -5302,12 +5320,13 @@ def lint(  # type: ignore
     only_format=False,
     only_check=False,
     fast=False,
-    # stage="prod",
-    run_bash=False,
     run_linter_step=True,
     parse_linter_output=True,
+    run_entrypoint_and_bash=False,
+    run_bash_without_entrypoint=False,
+    # TODO(gp): These params should go earlier, since are more important.
     stage="prod",
-    as_user=True,
+    version="",
     out_file_name="linter_output.txt",
 ):
     """
@@ -5335,11 +5354,14 @@ def lint(  # type: ignore
         don't change the code
     :param fast: run everything but skip `pylint`, since it is often very picky
         and slow
-    :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
+    :param run_entrypoint_and_bash: run the entrypoint of the container (which
+        configures the environment) and then `bash`, instead of running the
+        lint command
+    :param run_bash_without_entrypoint: run bash, skipping the entrypoint
+    TODO(gp): This seems to work but have some problems with tty
     :param stage: the image stage to use
-    :param as_user: pass the user / group id or not
     :param out_file_name: name of the file to save the log output in
     """
     _report_task()
@@ -5373,6 +5395,22 @@ def lint(  # type: ignore
     # amp_pylint.......................................(no files to check)Skipped
     # amp_mypy.........................................(no files to check)Skipped
     # ```
+    if run_bash_without_entrypoint:
+        # Run bash, without the Docker entrypoint.
+        docker_cmd_ = "bash"
+        cmd = _get_lint_docker_cmd(docker_cmd_, stage, version, entrypoint=False)
+        cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+        # Run.
+        _run(ctx, cmd)
+        return
+    if run_entrypoint_and_bash:
+        # Run the Docker entrypoint (which configures the environment) and then bash.
+        docker_cmd_ = "bash"
+        cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
+        cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+        # Run.
+        _run(ctx, cmd)
+        return
     if only_format:
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
@@ -5395,6 +5433,7 @@ def lint(  # type: ignore
                 "amp_mypy",
             ]
         )
+
     if run_linter_step:
         # We don't want to run this all the times.
         # docker_pull(ctx, stage=stage, images="dev_tools")
@@ -5428,7 +5467,6 @@ def lint(  # type: ignore
             return
         files_as_str = " ".join(files_as_list)
         phases = phases.split(" ")
-        as_user = _run_docker_as_user(as_user)
         for phase in phases:
             # Prepare the command line.
             precommit_opts = []
@@ -5442,8 +5480,7 @@ def lint(  # type: ignore
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             if fast:
                 docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
-            # Execute command line.
-            cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+            cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
