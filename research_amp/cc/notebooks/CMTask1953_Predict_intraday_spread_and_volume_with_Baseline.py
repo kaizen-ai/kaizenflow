@@ -19,7 +19,6 @@
 # %load_ext autoreload
 # %autoreload 2
 
-
 import logging
 import os
 import warnings
@@ -61,18 +60,17 @@ hprint.config_notebook()
 
 # %%
 def get_cmtask1953_config() -> cconconf.Config:
-    """
-    Get task1866-specific config.
-    """
     config = cconconf.Config()
     param_dict = {
         "data": {
             # Parameters for client initialization.
+            # TODO(max): ohlcv_im_client
             "im_client": {
                 "universe_version": "v1",
                 "resample_1min": True,
                 "root_dir": os.path.join(
-                    hs3.get_s3_bucket_path("ck"),
+                    #hs3.get_s3_bucket_path("ck"),
+                    "s3://cryptokaizen-data",
                     "reorg",
                     "historical.manual.pq",
                 ),
@@ -80,6 +78,8 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "data_snapshot": "latest",
                 "aws_profile": "ck",
             },
+            # TODO(max): bid_ask_im_client
+            
             # Parameters for data query.
             "read_data": {
                 "full_symbols": ["binance::BTC_USDT"],
@@ -101,8 +101,6 @@ def get_cmtask1953_config() -> cconconf.Config:
     config = ccocouti.get_config_from_nested_dict(param_dict)
     return config
 
-
-# %%
 config = get_cmtask1953_config()
 print(config)
 
@@ -118,17 +116,20 @@ client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
     **config["data"]["im_client"]
 )
 # Load OHLCV data.
+# TODO(max): -> df_ohlcv
 btc_ohlcv = client.read_data(**config["data"]["read_data"])
 # Post-processing.
+# TODO(max): load only a subset of the data from the config
 ohlcv_cols = [
-    "open",
-    "high",
-    "low",
+    #"open",
+    #"high",
+    #"low",
     "close",
     "volume",
 ]
 btc_ohlcv = btc_ohlcv[ohlcv_cols]
 # Resample.
+# TODO(max): compute features on 1 min grid and then resample later
 btc_ohlcv = cfinresa.resample_ohlcv_bars(
     btc_ohlcv, config["analysis"]["resampling_rule"]
 )
@@ -141,11 +142,17 @@ btc_ohlcv.head(3)
 start_date = config["data"]["read_data"]["start_ts"]
 end_date = config["data"]["read_data"]["end_ts"]
 
+# TODO(max): move also this part to sub-config ImClientBidAsk
+
 # Load bid ask from s3. Note: works only for 2022 for now.
+# TODO(Grisha, Dan): How to load the bid/ask data through ImClient?
 result = []
+import helpers.hparquet as hparquet
 for i in range(start_date.month, end_date.month + 1):
-    tmp_df = pd.read_parquet(
-        f"s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/month={i}/data.parquet"
+    print(i)
+    tmp_df = hparquet.from_parquet(
+        f"s3://cryptokaizen-data/reorg/historical.manual.pq/20220520/bid_ask/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/month={i}/data.parquet",
+        aws_profile="ck"
     )
     result.append(tmp_df)
 bid_ask_btc = pd.concat(result)
@@ -219,6 +226,7 @@ display(get_target_value(btc, date, "volume"))
 # Value(t+2) = Value(t)
 
 # %%
+# TODO(max): delete this guy, because we will use lags 
 def get_naive_value(
     df: pd.DataFrame,
     timestamp: pd.Timestamp,
@@ -263,6 +271,8 @@ btc["time"] = btc.index.time
 
 
 # %%
+# TODO(max): -> get_average_intraday_value
+# TODO(max): This is a feature specific of volume, spread, and volatility (not useful for returns)
 def get_lookback_value(
     df: pd.DataFrame,
     timestamp: pd.Timestamp,
@@ -311,6 +321,11 @@ display(get_lookback_value(btc, date, 14, "volume"))
 # # Collect all estimators for the whole period
 
 # %%
+# This is building the ml_df
+# the predicted var is always y
+# compute lags
+# add the median feature
+
 def collect_real_naive_lookback_est(
     estimators_df: pd.DataFrame,
     original_df,
@@ -400,56 +415,59 @@ def get_mean_error(
 test = estimators[estimators[f"lookback_{target}"].notna()]
 test.head(3)
 
+
 # %% [markdown]
 # ## Naive estimator
 
 # %%
-# Mean error and upper/lower level of errors' standard deviation.
-column_name_actual = f"real_{target}_0"
-column_name_estimator = f"naive_{target}"
-naive_err = get_mean_error(test, column_name_actual, column_name_estimator)
-
-# %% run_control={"marked": false}
-# Regress (OLS) between `real_spread` and `naive_spread`.
-predicted_var = f"real_{target}_0"
-predictor_vars = f"naive_{target}"
-intercept = True
-# Run OLS.
-coexplor.ols_regress(
-    test,
-    predicted_var,
-    predictor_vars,
-    intercept,
-)
+# TODO(max): Remove this since it's just testing each predictor by itself in the new framework
 
 # %%
-test[[f"real_{target}_0", f"naive_{target}"]].plot(figsize=(15, 7))
+# # Mean error and upper/lower level of errors' standard deviation.
+# column_name_actual = f"real_{target}_0"
+# column_name_estimator = f"naive_{target}"
+# naive_err = get_mean_error(test, column_name_actual, column_name_estimator)
+
+# %% run_control={"marked": false}
+# # Regress (OLS) between `real_spread` and `naive_spread`.
+# predicted_var = f"real_{target}_0"
+# predictor_vars = f"naive_{target}"
+# intercept = True
+# # Run OLS.
+# coexplor.ols_regress(
+#     test,
+#     predicted_var,
+#     predictor_vars,
+#     intercept,
+# )
+
+# %%
+# test[[f"real_{target}_0", f"naive_{target}"]].plot(figsize=(15, 7))
 
 # %% [markdown]
 # ## Lookback estimator
 
 # %%
-# Mean error and upper/lower level of errors' standard deviation.
-column_name_actual = f"real_{target}_0"
-column_name_estimator = f"lookback_{target}"
-lookback_err = get_mean_error(test, column_name_actual, column_name_estimator)
+# # Mean error and upper/lower level of errors' standard deviation.
+# column_name_actual = f"real_{target}_0"
+# column_name_estimator = f"lookback_{target}"
+# lookback_err = get_mean_error(test, column_name_actual, column_name_estimator)
 
 # %%
-# Regress (OLS) between `real_spread` and `lookback_spread`.
-predicted_var = f"real_{target}_0"
-predictor_vars = f"lookback_{target}"
-intercept = True
-# Run OLS.
-coexplor.ols_regress(
-    test,
-    predicted_var,
-    predictor_vars,
-    intercept,
-)
+# # Regress (OLS) between `real_spread` and `lookback_spread`.
+# predicted_var = f"real_{target}_0"
+# predictor_vars = f"lookback_{target}"
+# intercept = True
+# # Run OLS.
+# coexplor.ols_regress(
+#     test,
+#     predicted_var,
+#     predictor_vars,
+#     intercept,
+# )
 
 # %%
-test[[f"real_{target}_0", f"lookback_{target}"]].plot(figsize=(15, 7))
-
+# test[[f"real_{target}_0", f"lookback_{target}"]].plot(figsize=(15, 7))
 
 # %% [markdown]
 # # Predict via sklearn
@@ -480,6 +498,9 @@ def regression_results(y_true, y_pred, mae_only: bool = True):
 # ## Defining training and test sets
 
 # %%
+# TODO(max): test_sk -> ml_df
+
+# %%
 # Drop NaNs.
 test_sk = hpandas.dropna(test)
 # Get rid of days with only one observations (first and last rows).
@@ -494,12 +515,16 @@ test_sk, info = cofeatur.compute_lagged_features(
 test_sk = test_sk.drop(columns=[f"naive_{target}"])
 print(info)
 # Display the results.
-display(test_sk.corr())
+#display(test_sk.corr())
 display(test_sk.shape)
 display(test_sk.tail(3))
 print(f"Set of prediciton features = {list(test_sk.columns[1:])}")
 
+# %% [markdown]
+# ## Train / test data separation
+
 # %%
+# TODO(max): Use time series splits vs train/test
 start_test = test_sk.index[0].date()
 end_test = test_sk.index[-1].date()
 
@@ -513,6 +538,7 @@ y_test = test_sk.loc["2022-03-25":end_test, f"real_{target}_0"]
 
 # %%
 n_splits = (X_train.index.max() - X_train.index.min()).days + 1
+print(n_splits)
 
 # %% [markdown]
 # ## Models Evaluation

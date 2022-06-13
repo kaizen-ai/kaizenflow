@@ -31,13 +31,17 @@ class ForecastEvaluatorFromPrices:
         volatility_col: str,
         prediction_col: str,
         spread_col: Optional[str] = None,
+        buy_price_col: Optional[str] = None,
+        sell_price_col: Optional[str] = None,
     ) -> None:
         """
         Initialize column names.
 
         Note:
         - the `price_col` is unadjusted price (no adjustment for splits,
-          dividends, or volatility)
+          dividends, or volatility); it is used for marking to market and,
+          unless buy/sell prices columns are also supplied, execution
+          simulation
         - the `volatility_col` is used for position sizing
         - the `prediction_col` is a prediction of vol-adjusted returns
           (presumably with volatility given by `volatility_col`)
@@ -54,9 +58,25 @@ class ForecastEvaluatorFromPrices:
         self._volatility_col = volatility_col
         hdbg.dassert_isinstance(prediction_col, str)
         self._prediction_col = prediction_col
+        # Process optional columns.
         if spread_col is not None:
             hdbg.dassert_isinstance(spread_col, str)
+            _LOG.debug("Initialized with spread_col=%s", spread_col)
         self._spread_col = spread_col
+        if buy_price_col is not None:
+            hdbg.dassert_isinstance(buy_price_col, str)
+            # If `buy_price_col` is not `None`, then `sell_price_col` must also
+            # not be `None`.
+            hdbg.dassert_isinstance(sell_price_col, str)
+            _LOG.debug("Initialized with buy_price_col=%s", buy_price_col)
+        self._buy_price_col = buy_price_col
+        if sell_price_col is not None:
+            hdbg.dassert_isinstance(sell_price_col, str)
+            # If `sell_price_col` is not `None`, then `buy_price_col` must also
+            # not be `None`.
+            hdbg.dassert_isinstance(buy_price_col, str)
+            _LOG.debug("Initialized with sell_price_col=%s", sell_price_col)
+        self._sell_price_col = sell_price_col
 
     @staticmethod
     def read_portfolio(
@@ -243,10 +263,11 @@ class ForecastEvaluatorFromPrices:
         *,
         style: str = "cross_sectional",
         quantization: str = "no_quantization",
-        liquidate_at_end_of_day: bool = "True",
+        liquidate_at_end_of_day: bool = True,
         reindex_like_input: bool = False,
         burn_in_bars: int = 3,
         burn_in_days: int = 0,
+        compute_extended_stats: bool = False,
         **kwargs,
     ) -> Tuple[
         pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
@@ -274,6 +295,8 @@ class ForecastEvaluatorFromPrices:
             artifacts)
         :param burn_in_days: number of leading days to trim (to remove warm-up
             artifacts). Applied independently of `burn_in_bars`.
+        :param compute_extended_stats: compute additional stats beyond the
+            five "core" stats.
         :param kwargs: forwarded to either
             `compute_target_positions_cross_sectionally()` or
             `compute_target_positions_longitudinally()` depending upon the
@@ -294,6 +317,7 @@ class ForecastEvaluatorFromPrices:
             df, self._volatility_col
         )
         _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
+        # Handle `kwargs` as config params for computing target positions.
         if kwargs:
             target_positions_config = cconfig.get_config_from_flattened_dict(
                 kwargs
@@ -301,11 +325,10 @@ class ForecastEvaluatorFromPrices:
         else:
             target_positions_config = cconfig.Config()
         _LOG.debug("target_positions_config=\n%s", target_positions_config)
+        #
         spread_df = None
-        compute_extended_stats = False
         if self._spread_col is not None:
             spread_df = ForecastEvaluatorFromPrices._get_df(df, self._spread_col)
-            compute_extended_stats = True
         # The values of`target_positions` represent cash values.
         if style == "cross_sectional":
             target_positions = (
@@ -325,16 +348,44 @@ class ForecastEvaluatorFromPrices:
         else:
             raise ValueError("Unsupported `style`=%s", style)
         self._validate_target_position_df(target_positions, prediction_df)
-        # Compute target holdings.
-        price_df = ForecastEvaluatorFromPrices._get_df(df, self._price_col)
-        holdings, flows = self._compute_holdings_and_flows(
-            price_df,
-            target_positions,
-            quantization=quantization,
-            liquidate_at_end_of_day=liquidate_at_end_of_day,
+        # Extract price. Use for marking to market and, unless separate
+        # execution prices are provided, for estimating execution.
+        mark_to_market_price_df = ForecastEvaluatorFromPrices._get_df(
+            df, self._price_col
         )
-        # Current positions in dollars.
-        positions = holdings.multiply(price_df)
+        # Compute holdings.
+        # Compute target holdings based on prices available at decision time.
+        target_holdings = target_positions.divide(mark_to_market_price_df)
+        # Quantize holdings (e.g., nearest share).
+        target_holdings = ForecastEvaluatorFromPrices._apply_quantization(
+            target_holdings, quantization
+        )
+        ffill_limit = 4
+        ideal_holdings = ForecastEvaluatorFromPrices._compute_ideal_holdings(
+            target_holdings,
+            mark_to_market_price_df,
+            liquidate_at_end_of_day,
+            ffill_limit,
+        )
+        #
+        holdings = self._adjust_holdings_for_underfills(
+            df, ideal_holdings, mark_to_market_price_df
+        )
+        # Determine execution prices for buys/sells and holds, based on changes in
+        # `target_positions`.
+        execution_price_df = self._compute_execution_prices(
+            df,
+            holdings,
+            mark_to_market_price_df,
+        )
+        flows = self._compute_flows(
+            execution_price_df,
+            mark_to_market_price_df,
+            holdings,
+        )
+        # Compute current positions in dollars.
+        positions = holdings.multiply(mark_to_market_price_df)
+        # Compute PnL.
         pnl = positions.subtract(positions.shift(1), fill_value=0).add(
             flows, fill_value=0
         )
@@ -352,17 +403,15 @@ class ForecastEvaluatorFromPrices:
         if burn_in_days > 0:
             # TODO(Paul): Consider making this more efficient (and less
             # awkward).
-            date_idx = df.gropuby(lambda x: x.date()).count().index
+            date_idx = df.groupby(lambda x: x.date()).count().index
             hdbg.dassert_lt(burn_in_days, date_idx.size)
-            first_date = date_idx.iloc[burn_in_days]
+            first_date = pd.Timestamp(date_idx[burn_in_days], tz=df.index.tz)
             _LOG.info("Initial date after burn-in=%s", first_date)
             holdings = holdings.loc[first_date:]
             positions = positions.loc[first_date:]
             flows = flows.loc[first_date:]
             pnl = pnl.loc[first_date:]
             stats = stats.loc[first_date:]
-        # Convert one-step-ahead target positions to "point-in-time"
-        # (hypothetically) realized positions.
         # Possibly reindex dataframes.
         if reindex_like_input:
             holdings = holdings.reindex(idx)
@@ -412,19 +461,37 @@ class ForecastEvaluatorFromPrices:
             self._volatility_col,
             self._prediction_col,
         ]
+        optional_cols = [
+            self._spread_col,
+            self._buy_price_col,
+            self._sell_price_col,
+        ]
+        for col in optional_cols:
+            if col is not None:
+                cols = cols + [col]
         return cols
 
     def compute_counts(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Compute data counts by column grouped by time.
+        """
         self._validate_df(df)
 
         def _compute_counts(df: pd.DataFrame, col: str) -> pd.DataFrame:
             return df[col].groupby(lambda x: x.time()).count()
 
-        dfs = {
-            "price_count": _compute_counts(df, self._price_col),
-            "volatility_count": _compute_counts(df, self._volatility_col),
-            "prediction_count": _compute_counts(df, self._prediction_col),
+        count_to_col = {
+            "price_count": self._price_col,
+            "volatility_count": self._price_col,
+            "prediction_count": self._price_col,
+            "spread_count": self._spread_col,
+            "buy_price_count": self._buy_price_col,
+            "sell_price_count": self._sell_price_col,
         }
+        dfs = collections.OrderedDict()
+        for key, value in count_to_col.items():
+            if value is not None:
+                dfs[key] = _compute_counts(df, value)
         count_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         return count_df
 
@@ -479,6 +546,9 @@ class ForecastEvaluatorFromPrices:
         holdings: pd.DataFrame,
         quantization: str,
     ) -> pd.DataFrame:
+        """
+        Keep factional holdings or round to nearest share or lot.
+        """
         if quantization == "no_quantization":
             quantized_holdings = holdings
         elif quantization == "nearest_share":
@@ -500,6 +570,26 @@ class ForecastEvaluatorFromPrices:
         spread: Optional[pd.DataFrame] = None,
         compute_extended_stats: bool = False,
     ) -> pd.DataFrame:
+        """
+        Compute core statistics and optionally additional stats.
+
+        The core statistics are:
+        - pnl
+        - gross volume
+        - net volume
+        - gmv
+        - nmv
+
+        Optional stats include binary position-based versions of a subset of
+        core stats:
+        - gpc (gross position count: total number of positions on in a bar)
+        - npc (net position count: net long/short position count in a bar)
+        - wnl (winners and losers: net winning positions in a bar)
+
+        If a spread column is available and `computed_extended_stats=True`,
+        then a "tc" column is generated by penalizing transactions (flows) by
+        half of the spread.
+        """
         # Gross market value (gross exposure).
         gmv = positions.abs().sum(axis=1, min_count=1)
         # Net market value (net asset value or net exposure).
@@ -558,8 +648,14 @@ class ForecastEvaluatorFromPrices:
         """
         # Restrict to required columns.
         cols = [self._price_col, self._volatility_col, self._prediction_col]
-        if self._spread_col is not None:
-            cols += [self._spread_col]
+        optional_cols = [
+            self._spread_col,
+            self._buy_price_col,
+            self._sell_price_col,
+        ]
+        for col in optional_cols:
+            if col is not None:
+                cols += [col]
         df = df[cols]
         active_index = cofinanc.infer_active_bars(df[self._price_col])
         # Drop rows with no prices (this is an approximate way to handle weekends,
@@ -580,27 +676,108 @@ class ForecastEvaluatorFromPrices:
         _LOG.debug("trimmed df=\n%s", hpandas.df_to_str(df))
         return df
 
-    def _compute_holdings_and_flows(
+    def _compute_flows(
         self,
-        price: pd.DataFrame,
-        target_positions: pd.DataFrame,
-        quantization: str,
-        liquidate_at_end_of_day: bool,
+        execution_price_df: pd.DataFrame,
+        mark_to_market_price_df: pd.DataFrame,
+        holdings: pd.DataFrame,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
-        Compute holdings in shares from price and dollar position targets.
+        Compute trade inflows and outflows.
         """
-        # Compute target holdings based on prices available now.
-        target_holdings = target_positions.divide(price)
-        # Quantize.
-        target_holdings = ForecastEvaluatorFromPrices._apply_quantization(
-            target_holdings, quantization
+        # TODO(Paul): Factor out bod_timestamp generation.
+        # Determine beginning-of-day timestamps.
+        timestamps = pd.DataFrame(
+            mark_to_market_price_df.index.to_list(),
+            mark_to_market_price_df.index,
+            ["timestamp"],
         )
+        bod_timestamps = timestamps.groupby(lambda x: x.date()).min()
+        # Compute trades as the difference in (share) holdings.
+        trades = holdings.subtract(holdings.shift(1), fill_value=0)
+        # Set overnight trades to zero.
+        trades.loc[bod_timestamps["timestamp"]] *= 0
+        _LOG.debug("`trades`=\n%s", hpandas.df_to_str(trades))
+        # Change in shares priced at end of bar. Only valid intraday.
+        # Note that the overnight flow is zero because there are no
+        # overnight trades.
+        # TODO(Paul): Factor out ffill_limit.
+        ffill_limit = 2
+        flows = -trades.multiply(execution_price_df.ffill(limit=ffill_limit))
+        return flows
+
+    def _compute_execution_prices(
+        self,
+        df: pd.DataFrame,
+        holdings: pd.DataFrame,
+        mark_to_market_price_df: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Compute execution prices from buy/sell price columns if available.
+        """
+        # Use separate buy/sell prices if available.
+        if self._buy_price_col is not None and self._sell_price_col is not None:
+            buy_price_df = ForecastEvaluatorFromPrices._get_df(
+                df, self._buy_price_col
+            )
+            sell_price_df = ForecastEvaluatorFromPrices._get_df(
+                df, self._sell_price_col
+            )
+            # Generate a signal indicating when we should buy or sell.
+            trade_signal = holdings.diff()
+            _LOG.debug("trade_signal=\n%s", hpandas.df_to_str(trade_signal))
+            # Generate a filter for when we should use "buy price".
+            use_buy_price = trade_signal > 0
+            use_buy_price = use_buy_price.replace(True, 1.0).replace(
+                False, np.nan
+            )
+            # Generate a filter for when we should use "sell price".
+            use_sell_price = trade_signal < 0
+            use_sell_price = use_sell_price.replace(True, 1.0).replace(
+                False, np.nan
+            )
+            # Splice buy and sell prices.
+            execution_price_df = buy_price_df.multiply(use_buy_price).add(
+                sell_price_df.multiply(use_sell_price), fill_value=0.0
+            )
+            # Use mark to market price at close.
+            timestamps = pd.DataFrame(
+                mark_to_market_price_df.index.to_list(),
+                mark_to_market_price_df.index,
+                ["timestamp"],
+            )
+            eod_timestamps = timestamps.groupby(lambda x: x.date()).max()
+            execution_price_df.loc[
+                eod_timestamps["timestamp"], :
+            ] = mark_to_market_price_df.loc[eod_timestamps["timestamp"], :]
+        else:
+            execution_price_df = mark_to_market_price_df
+        return execution_price_df
+
+    @staticmethod
+    def _compute_ideal_holdings(
+        target_holdings: pd.DataFrame,
+        mark_to_market_price: pd.DataFrame,
+        liquidate_at_end_of_day: bool,
+        ffill_limit: int,
+    ) -> pd.DataFrame:
+        """
+        Generate endtime-indexed holdings assuming perfect fills.
+
+        :param target_holdings: next bar target holdings (in shares)
+        :param mark_to_market_price: end-of-bar mark-to-market price
+        :param liquidate_at_end_of_day: liquidate at EOD iff `True`
+        :param ffill_limit: limit on forward-filling holdings (e.g., useful
+            if a bar is missing a mark-to-market price)
+        :return: dataframe of share holdings (endtime-indexed)
+        """
         # Assume target shares are obtained.
         holdings = target_holdings.shift(1)
         # Determine beginning-of-day and possibly end-of-day timestamps.
         timestamps = pd.DataFrame(
-            price.index.to_list(), price.index, ["timestamp"]
+            mark_to_market_price.index.to_list(),
+            mark_to_market_price.index,
+            ["timestamp"],
         )
         bod_timestamps = timestamps.groupby(lambda x: x.date()).min()
         if liquidate_at_end_of_day:
@@ -610,7 +787,7 @@ class ForecastEvaluatorFromPrices:
         # TODO(Paul): Give the user the option of supplying the share
         # adjustment factors. Infer as below if they are not supplied.
         else:
-            split_factors = cofinanc.infer_splits(price)
+            split_factors = cofinanc.infer_splits(mark_to_market_price)
             splits = split_factors.merge(
                 bod_timestamps, left_index=True, right_index=True
             ).set_index("timestamp")
@@ -624,16 +801,81 @@ class ForecastEvaluatorFromPrices:
             # Set beginning-of-day holdings.
             holdings.loc[bod_timestamps["timestamp"], :] = bod_holdings
             holdings = holdings.groupby(lambda x: x.date()).ffill(limit=2)
-        # TODO(Paul): Make this parameter one that the user can set.
-        ffill_limit = 4
         holdings = holdings.ffill(limit=ffill_limit)
-        # Compute trades as the difference in (share) holdings.
-        trades = holdings.subtract(holdings.shift(1), fill_value=0)
-        # Set overnight trades to zero.
-        trades.loc[bod_timestamps["timestamp"]] *= 0
-        _LOG.debug("`trades`=\n%s", hpandas.df_to_str(trades))
-        # Change in shares priced at end of bar. Only valid intraday.
-        # Note that the overnight flow is zero because there are no
-        # overnight trades.
-        flows = -trades.multiply(price.ffill(limit=ffill_limit))
-        return holdings, flows
+        return holdings
+
+    def _adjust_holdings_for_underfills(
+        self,
+        df: pd.DataFrame,
+        holdings: pd.DataFrame,
+        mark_to_market_price: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """
+        Adapt holdings by taking into account underfills.
+
+        :param holdings: ideal holdings (assuming complete fills)
+        :param mark_to_market_price: mark-to-market price, used in the day's
+            last bar of execution
+        :return: dataframe of holdings adjusted to account for underfills
+        """
+        # Do not perform an adjustment if separate buy/sell prices are not
+        # provided.
+        if self._buy_price_col is None:
+            return holdings
+        # Extract buy and sell price dataframes from `df`.
+        buy_price_df = ForecastEvaluatorFromPrices._get_df(
+            df, self._buy_price_col
+        ).copy()
+        sell_price_df = ForecastEvaluatorFromPrices._get_df(
+            df, self._sell_price_col
+        ).copy()
+        # Use mark to market price at close.
+        timestamps = pd.DataFrame(
+            mark_to_market_price.index.to_list(),
+            mark_to_market_price.index,
+            ["timestamp"],
+        )
+        eod_timestamps = timestamps.groupby(lambda x: x.date()).max()
+        # TODO(Paul): Factor out ffill_limit.
+        ffill_limit = 2
+        prices = mark_to_market_price.ffill(limit=ffill_limit)
+        buy_price_df.loc[eod_timestamps["timestamp"]] = prices.loc[
+            eod_timestamps["timestamp"]
+        ]
+        sell_price_df.loc[eod_timestamps["timestamp"]] = prices.loc[
+            eod_timestamps["timestamp"]
+        ]
+        # Create filters to indicate where no buy price is available (leading
+        # to underfills for buy orders) or no sell price is available (leading
+        # to underfills for sell orders).
+        no_buy_price = buy_price_df.isna()
+        no_sell_price = sell_price_df.isna()
+        # Create a copy of `holdings` to perform the adjustment.
+        adjusted_holdings = holdings.copy()
+        iteration_count = 1
+        while True:
+            _LOG.debug("Underfill adjustment iteration cycle=%d", iteration_count)
+            # If we want to buy but no buy price is available, or we want to
+            # sell and no sell price is available, then hold.
+            force_hold = ((adjusted_holdings.diff() > 0) & no_buy_price) | (
+                (adjusted_holdings.diff() < 0) & no_sell_price
+            )
+            if force_hold is None or (force_hold.sum().sum() == 0):
+                _LOG.info(
+                    "Performed %d iterations of underfill adjustments",
+                    iteration_count - 1,
+                )
+                break
+            # Impute NaN and forward fill to force holding. This is a heuristic
+            # that should provide a reasonable approximation in many (not
+            # necessarily all) scenarios.
+            adjusted_holdings[force_hold.values] = np.nan
+            adjusted_holdings.ffill(limit=1, inplace=True)
+            adjusted_holdings = adjusted_holdings.combine_first(holdings)
+            iteration_count += 1
+            hdbg.dassert_lt(
+                iteration_count,
+                100,
+                "Exceeded underfill adjustment iteration limit",
+            )
+        return adjusted_holdings

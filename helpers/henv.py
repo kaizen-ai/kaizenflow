@@ -6,7 +6,10 @@ import helpers.henv as henv
 
 import logging
 import os
-from typing import List, Tuple
+from typing import Any, List, Tuple, Union
+
+import helpers.hgit as hgit
+import helpers.hprint as hprint
 
 # This module should not depend on any other helper or 3rd party modules.
 
@@ -42,24 +45,59 @@ except ImportError as e:
 # #############################################################################
 
 
+def get_env_var(env_name: str, as_bool: bool=False, default_value: Any = None,
+                abort_on_missing: bool = True) -> Union[str, bool]:
+    """
+    Get an environment variable by name.
+
+    :param env_name: name of the env var
+    :param as_bool: convert the value into a Boolean
+    :param default_value: the default value to use in case it's not defined
+    :param abort_on_missing: if the env var is not defined aborts, otherwise use
+        the default value
+    :return: value of env var
+    """
+    if env_name not in os.environ:
+        if abort_on_missing:
+            assert 0, f"Can't find env var '{env_name}' in '{str(os.environ)}'"
+        else:
+            return default_value
+    value = os.environ[env_name]
+    if as_bool:
+        # Convert the value into a boolean.
+        if value in ("0", "", "None", "False"):
+            value = False
+        else:
+            value = True
+    return value
+
+
 def get_env_vars() -> List[str]:
     """
     Return all the env vars that are expected to be set in Docker.
     """
     # Keep in sync with `lib_tasks.py:_generate_compose_file()`.
     env_var_names = [
+        "AM_AWS_ACCESS_KEY_ID",
+        "AM_AWS_DEFAULT_REGION",
         "AM_AWS_PROFILE",
+        "AM_AWS_S3_BUCKET",
+        "AM_AWS_SECRET_ACCESS_KEY",
         "AM_ECR_BASE_PATH",
         "AM_ENABLE_DIND",
         "AM_FORCE_TEST_FAIL",
-        "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
-        "AM_AWS_S3_BUCKET",
-        "AM_TELEGRAM_TOKEN",
+        # The name of the host running Docker.
         "AM_HOST_NAME",
+        # The OS of the host running Docker.
         "AM_HOST_OS_NAME",
-        "AM_AWS_ACCESS_KEY_ID",
-        "AM_AWS_DEFAULT_REGION",
-        "AM_AWS_SECRET_ACCESS_KEY",
+        "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
+        # Whether to check if certain property of the repo are as expected or not.
+        "AM_REPO_CONFIG_CHECK",
+        # Path to use for `repo_config.py`. E.g., used when running `dev_tools`
+        # container to avoid using the `repo_config.py` corresponding to the
+        # container launching the linter.
+        "AM_REPO_CONFIG_PATH",
+        "AM_TELEGRAM_TOKEN",
         "GH_ACTION_ACCESS_TOKEN",
         "CI",
     ]
@@ -88,10 +126,10 @@ def get_secret_env_vars() -> List[str]:
     ), f"There are duplicates: {str(secret_env_var_names)}"
     # Secret env vars are a subset of the env vars.
     env_vars = get_env_vars()
-    assert set(secret_env_var_names).issubset(set(env_vars)), (
-        f"There are secret vars in `{str(secret_env_var_names)} that are not in "
-        + f"'{str(env_vars)}'"
-    )
+    if not set(secret_env_var_names).issubset(set(env_vars)):
+        diff = set(secret_env_var_names).difference(set(env_vars))
+        cmd = f"Secret vars in `{str(diff)} are not in '{str(env_vars)}'"
+        assert 0, cmd
     # Sort.
     secret_env_var_names = sorted(secret_env_var_names)
     return secret_env_var_names
@@ -99,7 +137,7 @@ def get_secret_env_vars() -> List[str]:
 
 def check_env_vars() -> None:
     """
-    Make sure all the env vars are defined.
+    Make sure all the expected env vars are defined.
     """
     env_vars = get_env_vars()
     for env_var in env_vars:
@@ -109,6 +147,10 @@ def check_env_vars() -> None:
 
 
 def env_vars_to_string() -> str:
+    """
+    Return a string with the signature of all the expected env vars (including the
+    secret ones).
+    """
     msg = []
     # Get the expected env vars and the secret ones.
     env_vars = get_env_vars()
@@ -121,6 +163,7 @@ def env_vars_to_string() -> str:
             msg.append(f"{env_name}=undef")
         else:
             if env_name in secret_env_vars:
+                # Secret env var: print if it's empty or not.
                 if is_empty:
                     msg.append(f"{env_name}=empty")
                 else:
@@ -129,6 +172,23 @@ def env_vars_to_string() -> str:
                 # Not a secret var: print the value.
                 msg.append(f"{env_name}='{os.environ[env_name]}'")
     msg = "\n".join(msg)
+    return msg
+
+
+def env_to_str() -> str:
+    msg = ""
+    #
+    msg += "# Repo config:\n"
+    msg += hprint.indent(hgit.execute_repo_config_code("config_func_to_str()"))
+    msg += "\n"
+    # System signature.
+    msg += "# System signature:\n"
+    msg += hprint.indent(get_system_signature()[0])
+    msg += "\n"
+    # Check which env vars are defined.
+    msg += "# Env vars:\n"
+    msg += hprint.indent(env_vars_to_string())
+    msg += "\n"
     return msg
 
 
@@ -166,8 +226,6 @@ def _append(
 
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # We use dynamic imports to minimize the dependencies.
-    import helpers.hgit as hgit
-    import helpers.hprint as hprint
     import helpers.hsystem as hsystem
     import helpers.hversion as hversio
 

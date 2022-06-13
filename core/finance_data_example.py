@@ -3,7 +3,7 @@ Import as:
 
 import core.finance_data_example as cfidaexa
 """
-
+import collections
 import datetime
 import logging
 from typing import List
@@ -245,4 +245,87 @@ def get_portfolio_bar_metrics_dataframe(
         "nmv": nmv,
     }
     df = pd.DataFrame(dict_)
+    return df
+
+
+def get_target_position_generation_dataframe(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
+    *,
+    num_features: int = 0,
+    bar_duration: str = "5T",
+    bar_volatility_in_bps: int = 10,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    vol_to_spread_ratio: float = 5.0,
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Return a multiindexed dataframe of predictions, vol, spread per asset.
+
+    Timestamps are to be regarded as knowledge times. All columns are to be
+    interpreted as forecasts for two bars ahead.
+
+    Example output (with `num_features=0`):
+
+    Note that changes to any inputs may change the random output on any
+    overlapping data.
+    """
+    hdbg.dassert_lte(0, num_features)
+    price_process = carsigen.PriceProcess(seed=seed)
+    dfs = {}
+    for asset_id in asset_ids:
+        prediction = price_process.generate_log_normal_series(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        volatility = price_process.generate_log_normal_series(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            start_time=start_time,
+            end_time=end_time,
+        ).abs()
+        spread = (
+            price_process.generate_log_normal_series(
+                start_datetime,
+                end_datetime,
+                asset_id,
+                bar_duration=bar_duration,
+                bar_volatility_in_bps=bar_volatility_in_bps,
+                start_time=start_time,
+                end_time=end_time,
+            ).abs()
+            / vol_to_spread_ratio
+        )
+        dict_ = collections.OrderedDict()
+        dict_["prediction"] = prediction
+        dict_["volatility"] = volatility
+        dict_["spread"] = spread
+        if num_features > 0:
+            for idx in range(1, num_features + 1):
+                feature = price_process.generate_log_normal_series(
+                    start_datetime,
+                    end_datetime,
+                    asset_id,
+                    bar_duration=bar_duration,
+                    bar_volatility_in_bps=bar_volatility_in_bps,
+                    start_time=start_time,
+                    end_time=end_time,
+                )
+                dict_[idx] = feature
+        df = pd.DataFrame(dict_)
+        dfs[asset_id] = df
+    df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
+    # Swap column levels so that symbols are leaves.
+    df = df.swaplevel(i=0, j=1, axis=1)
+    df.sort_index(axis=1, level=0, inplace=True)
     return df

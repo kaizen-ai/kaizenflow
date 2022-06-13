@@ -13,17 +13,16 @@ import oms.broker as ombroker
 import oms.oms_db as oomsdb
 
 
-def get_simulated_broker_example1(
+def get_SimulatedBroker_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     *,
     market_data: Optional[mdata.MarketData] = None,
     timestamp_col: str = "end_datetime",
 ) -> ombroker.SimulatedBroker:
     """
-    Build an example of `SimulatedBroker` using an example `MarketData`, unless
-    specified.
+    Build a `SimulatedBroker` using a `MarketData`, unless specified.
     """
-    # Build MarketData.
+    # Build MarketData, if needed.
     if market_data is None:
         (
             market_data,
@@ -38,7 +37,7 @@ def get_simulated_broker_example1(
     return broker
 
 
-def get_mocked_broker_example1(
+def get_DatabaseBroker_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
     *,
@@ -46,12 +45,11 @@ def get_mocked_broker_example1(
     timestamp_col: str = "end_datetime",
     submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
     accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
-) -> ombroker.SimulatedBroker:
+) -> ombroker.DatabaseBroker:
     """
-    Build an example of `DatabaseBroker` using an example `MarketData`, unless
-    specified.
+    Build a `DatabaseBroker` using `MarketData`, unless specified.
     """
-    # Build MarketData.
+    # Build MarketData, if needed.
     if market_data is None:
         (
             market_data,

@@ -10,6 +10,9 @@ from typing import Dict, List, Optional
 _LOG = logging.getLogger(__name__)
 
 
+_WARNING = "\033[33mWARNING\033[0m"
+
+
 def _print(msg: str) -> None:
     # _LOG.info(msg)
     print(msg)
@@ -107,7 +110,8 @@ def is_dev_ck() -> bool:
     # sysname='Darwin'
     # nodename='gpmac.lan'
     # release='19.6.0'
-    # version='Darwin Kernel Version 19.6.0: Mon Aug 31 22:12:52 PDT 2020; root:xnu-6153.141.2~1/RELEASE_X86_64'
+    # version='Darwin Kernel Version 19.6.0: Mon Aug 31 22:12:52 PDT 2020;
+    #   root:xnu-6153.141.2~1/RELEASE_X86_64'
     # machine='x86_64'
     host_name = os.uname()[1]
     host_names = ("dev1", "dev2")
@@ -202,11 +206,10 @@ def has_dind_support() -> bool:
         return False
     # TODO(gp): This part is not multi-process friendly. When multiple
     # processes try to run this code they interfere. A solution is to run `ip
-    # link` in the entrypoint and create a has_docker_privileged_mode file
+    # link` in the entrypoint and create a `has_docker_privileged_mode` file
     # which contains the value.
-    # return True
-    # Thus we rely on the approach from https://stackoverflow.com/questions/32144575
-    # checking if we can execute.
+    # We rely on the approach from https://stackoverflow.com/questions/32144575
+    # to check if there is support for privileged mode.
     # Sometimes there is some state left, so we need to clean it up.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
     # TODO(gp): use `has_docker_sudo`.
@@ -225,18 +228,25 @@ def has_dind_support() -> bool:
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
     # dind is supported on both Mac and GH Actions.
-    if True:
+    am_repo_config = os.environ.get("AM_REPO_CONFIG_CHECK", False)
+    check = am_repo_config != ""
+    if check:
         if is_cmamp_prod():
             assert not has_dind, "Not expected privileged mode"
         elif get_name() == "//dev_tools":
             assert not has_dind, "Not expected privileged mode"
         else:
             if is_mac() or is_dev_ck() or is_inside_ci():
+                # dind is supported on both Mac and GH Actions.
                 assert has_dind, "Expected privileged mode"
             elif is_dev4():
                 assert not has_dind, "Not expected privileged mode"
             else:
                 _raise_invalid_host()
+    else:
+        print(_WARNING +
+                ": Skip checking since AM_REPO_CONFIG_CHECK=" +
+                f"'{am_repo_config}'")
     return has_dind
 
 
@@ -244,8 +254,7 @@ def use_docker_sibling_containers() -> bool:
     """
     Return whether to use Docker sibling containers.
     """
-    # TODO(gp): We should enable it for dev4.
-    val = False
+    val = bool(is_dev4())
     return val
 
 
@@ -271,6 +280,18 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
 def use_docker_network_mode_host() -> bool:
     ret = bool(is_mac() or is_dev_ck())
     return ret
+
+
+def use_main_network() -> bool:
+    """
+    Run all Docker containers in the same network so that they can communicate
+    with each other.
+    """
+    if is_dev4():
+        val = True
+    else:
+        val = False
+    return val
 
 
 def run_docker_as_root() -> bool:
@@ -364,15 +385,13 @@ def is_CK_S3_available() -> bool:
     # CK bucket is not available for `//lemonade` and `//amp` unless it's on
     # `dev_ck`.
     val = True
-    if is_mac():
-        val = False
+    if is_mac() or is_inside_ci():
+        if get_name() in ("//amp", "//dev_tools", "//lemonade"):
+            # No CK bucket.
+            val = False
     elif is_dev4():
         # CK bucket is not available on dev4.
         val = False
-    elif is_inside_ci():
-        if get_name() in ("//amp", "//dev_tools"):
-            # No CK bucket.
-            val = False
     _LOG.debug("val=%s", val)
     return val
 
@@ -380,6 +399,7 @@ def is_CK_S3_available() -> bool:
 def is_cmamp_prod() -> bool:
     """
     Detect whether this is a production container.
+
     This env var is set inside devops/docker_build/prod.Dockerfile.
     """
     return os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False)
@@ -418,6 +438,7 @@ def config_func_to_str() -> str:
             "skip_submodules_test",
             "use_docker_sibling_containers",
             "use_docker_network_mode_host",
+            "use_main_network",
         ]
     ):
         try:

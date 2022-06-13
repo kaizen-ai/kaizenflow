@@ -334,6 +334,8 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
         # If expression is a list of space-separated expression, convert each in a
         # string.
         exprs = [v.lstrip().rstrip() for v in expression.split(" ")]
+        # Remove empty names.
+        exprs = [v for v in exprs if v.strip().rstrip() != ""]
         _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
         return ", ".join(list(map(_to_str, exprs)))
     frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access

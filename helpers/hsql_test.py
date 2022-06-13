@@ -20,8 +20,9 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()"),
-    reason="Need dind support",
+    not hgit.execute_repo_config_code("has_dind_support()") and
+    not hgit.execute_repo_config_code("use_docker_sibling_containers()"),
+    reason="Need docker children / sibling support",
 )
 class TestDbHelper(hunitest.TestCase, abc.ABC):
     """
@@ -67,6 +68,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         # Read the connection parameters from the env file.
         cls.db_env_file = cls._get_db_env_path()
         connection_info = hsql.get_connection_info_from_env_file(cls.db_env_file)
+        _LOG.debug("connection_info=%s", connection_info)
         conn_exists = hsql.check_db_connection(*connection_info)[0]
         if conn_exists:
             _LOG.warning("DB is already up: skipping docker compose")
@@ -85,6 +87,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
                 f"--env-file {cls.db_env_file} "
                 f"up -d {cls._get_service_name()}"
             )
+            _LOG.debug("cmd=%s", cmd)
             hsystem.system(cmd, suppress_output=False)
             # Wait for the DB to be available.
             hsql.wait_db_connection(*connection_info)
@@ -99,7 +102,16 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Bring down the test container.
         """
         _LOG.info("\n%s", hprint.frame("tearDown"))
-        if cls.bring_down_db:
+        docker_compose_cleanup = cls.bring_down_db
+        if hgit.execute_repo_config_code("use_main_network()"):
+            # TODO(gp): When using sibling containers `docker-compose down` tries to
+            #  shut down also the `main_network`, while it is attached to the Docker
+            #  container running the tests.
+            #  > docker network inspect main_network
+            #  We should clean up the containers and volumes directly. We can put
+            #  this in a invoke target.
+            docker_compose_cleanup = False
+        if docker_compose_cleanup:
             # TODO(Grisha): use invoke task CMTask #547.
             cmd = (
                 "sudo docker-compose "
@@ -159,3 +171,9 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         Create the compose and env file for the DB run.
         """
         raise NotImplementedError
+
+
+
+# TODO(gp): @all Create a class sharing some common code from TestOmsDbHelper
+#  and TestImDbHelper.
+# class TestImOmsDbHelper(hunitest.TestCase, abc.ABC):

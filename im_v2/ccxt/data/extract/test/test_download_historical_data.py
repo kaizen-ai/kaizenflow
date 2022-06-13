@@ -6,7 +6,6 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
-import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
@@ -42,12 +41,13 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/realtime/",
             "log_level": "INFO",
-            "file_format": "parquet"
+            "file_format": "parquet",
         }
         self.assertDictEqual(actual, expected)
 
+    @pytest.mark.slow
     @umock.patch.object(imvcdeexut, "download_historical_data")
-    def test_main(self, mock_download_realtime: umock.MagicMock) -> None:
+    def test_main(self, mock_download_historical: umock.MagicMock) -> None:
         """
         Smoke test to directly run `_main` function for coverage increase.
         """
@@ -59,22 +59,20 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "data_type": "ohlcv",
             "start_timestamp": "2021-12-31 23:00:00",
             "end_timestamp": "2022-01-01 01:00:00",
-            "exchange_id": "binance",
             "universe": "v3",
-            "db_stage": "local",
-            "db_table": "ccxt_ohlcv",
+            "exchange_id": "binance",
+            "file_format": "parquet",
             "incremental": False,
             "log_level": "INFO",
-            "aws_profile": "ck",
             "s3_path": "s3://mock_bucket",
+            "aws_profile": "ck",
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
         imvcdedhda._main(mock_argument_parser)
         # Check call.
-        self.assertEqual(len(mock_download_realtime.call_args), 2)
-        print(mock_download_realtime.call_args.args[0])
+        self.assertEqual(len(mock_download_historical.call_args), 2)
         self.assertEqual(
-            mock_download_realtime.call_args.args[1].exchange_id, "binance"
+            mock_download_historical.call_args.args[1].exchange_id, "binance"
         )

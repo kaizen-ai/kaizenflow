@@ -23,8 +23,6 @@ _LOG = logging.getLogger(__name__)
 # Resampling.
 # #############################################################################
 
-# TODO(Paul): Consider moving resampling code to a new `resampling.py`
-
 
 def compute_vwap(
     df: pd.DataFrame,
@@ -50,11 +48,8 @@ def compute_vwap(
     hdbg.dassert_in(volume_col, df.columns)
     # Only use rows where both price and volume are non-NaN.
     non_nan_idx = df[[price_col, volume_col]].dropna().index
-    nan_idx = df.index.difference(non_nan_idx)
-    price = df[price_col]
-    price.loc[nan_idx] = np.nan
-    volume = df[volume_col]
-    volume.loc[nan_idx] = np.nan
+    price = df[price_col].loc[non_nan_idx].reindex(index=df.index)
+    volume = df[volume_col].loc[non_nan_idx].reindex(index=df.index)
     # Weight price according to volume.
     volume_weighted_price = price.multiply(volume)
     resampled_volume_weighted_price = resample(
