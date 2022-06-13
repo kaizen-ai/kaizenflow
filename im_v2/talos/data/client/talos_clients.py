@@ -26,6 +26,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): The naming should reflect the class hierarchy
+# Client -> Historical -> PqByTile (like Sql) -> Talos
+# -> TalosPqByTileHistoricalClient
 # TODO(Grisha): "Update Talos code CmTask #1967".
 class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     """

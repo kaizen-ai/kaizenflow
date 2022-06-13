@@ -415,6 +415,9 @@ class RealTimeDataSource(dtfcore.DataSource):
         timedelta: pd.Timedelta,
         asset_id_col: Union[int, str],
         multiindex_output: bool,
+        #
+        *,
+        knowledge_datetime_col_name: str = "timestamp_db",
     ) -> None:
         """
         Constructor.
@@ -431,6 +434,7 @@ class RealTimeDataSource(dtfcore.DataSource):
         self._timedelta = timedelta
         self._asset_id_col = asset_id_col
         self._multiindex_output = multiindex_output
+        self._knowledge_datetime_col_name = knowledge_datetime_col_name
 
     # TODO(gp): Can we use a run and move it inside fit?
     async def wait_for_latest_data(
@@ -450,7 +454,9 @@ class RealTimeDataSource(dtfcore.DataSource):
     def _get_data(self) -> None:
         # TODO(gp): This approach of communicating params through the state
         #  makes the code difficult to understand.
-        self.df = self._market_data.get_data_for_last_period(self._timedelta)
+        self.df = self._market_data.get_data_for_last_period(self._timedelta,
+                                                             #ts_col_name = "timestamp")
+                ts_col_name = self._knowledge_datetime_col_name)
         if self._multiindex_output:
             self.df = _convert_to_multiindex(self.df, self._asset_id_col)
 

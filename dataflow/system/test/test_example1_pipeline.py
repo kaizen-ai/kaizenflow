@@ -8,15 +8,78 @@ import core.finance as cofinanc
 import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
+import helpers.hunit_test as hunitest
+import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
 import market_data as mdata
 import oms as oms
 import oms.test.oms_db_helper as otodh
+import im_v2.common.data.client as icdc
+import market_data.real_time_market_data as mdrtmada
 
 _LOG = logging.getLogger(__name__)
 
 
+# ################
+
+
+class Test_Example1_ReplayedForecastSystem(hunitest.TestCase):
+    """
+    Test a System composed of:
+
+    - a `ReplayedMarketData` (providing fake data and features)
+    - an `Example1` DAG
+    """
+
+    def run_coroutines(
+            self,
+            data: pd.DataFrame,
+    ) -> str:
+        """
+        Run a system using the desired portfolio based on DB or dataframe.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            asset_ids = [101]
+            system = dtfsepsyru.Example1_ForecastSystem(
+                asset_ids,
+                event_loop,
+            )
+            config = system.get_dag_config()
+            market_data = system.get_market_data(data)
+            dag_runner = system.get_dag_runner(
+                config,
+                market_data,
+                real_time_loop_time_out_in_secs=60 * 5,
+            )
+            coroutines = [dag_runner.predict()]
+            #
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            result_bundles = result_bundles[0][0]
+        return result_bundles
+
+    # ///////////////////////////////////////////////////////////////////////////
+
+    def test1(self) -> None:
+        """
+        Verify the contents of DAG prediction.
+        """
+        data, _ = cofinanc.get_market_data_df1()
+        actual = self.run_coroutines(
+            data,
+        )
+        self.check_string(str(actual))
+
+
+# ######################################################
+
+
+# TODO(gp): Add another test with ReplayedMarketData that requires longer to update
+#  so that we can test the interaction between DAG and waiting for bar.
+
+# TODO(gp): -> Test_Example1_SimulatedRealTimeWithFixedDatabase
 class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
     """
     Test a System composed of:
@@ -63,23 +126,141 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         Run a system using the desired portfolio based on DB or dataframe.
         """
         with hasynci.solipsism_context() as event_loop:
-            asset_ids = [1467591036]
+            # Get the system to simulate.
             system = dtfsepsyru.Example1_ForecastSystem(
                 asset_ids,
                 event_loop,
             )
-            config = system.get_system_config_template()
+            # Instantiate the system.
+            config = system.get_dag_config()
+            market_data = system.get_market_data(data)
+            # Run for 5 bars.
+            real_time_loop_time_out_in_secs = 5 * (60 * 5)
+            dag_runner = system.get_dag_runner(
+                config,
+                market_data,
+                real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
+            )
+            # Run.
+            coroutines = [dag_runner.predict()]
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            #print(result_bundles)
+            #assert 0
+            #result_bundles = result_bundles[0]
+        act = dag_runner.compute_run_signature(result_bundles[0])
+        return act
+
+    def test1(self) -> None:
+        """
+        Verify the contents of DAG prediction.
+        """
+        data, _ = cofinanc.get_market_data_df1()
+        actual = self.run_coroutines(
+            data,
+        )
+        # TODO(gp): PP to make sure the output is correct.
+        self.check_string(str(actual))
+
+
+# #############################################################################
+
+
+# TODO(gp): -> Test_Example1_SimulatedRealTimeWithUpdatingDatabase
+
+
+# Run.
+# TODO(gp): Add a coroutine that given a df writes in the
+#  DB the data according to the knowledge ts.
+# TODO(gp): Fix this.
+class Test_Example1_SimulatedRealTimeForecastSystem(imvcddbut.TestImDbHelper):
+    """
+    Test a System composed of:
+
+    - a `RealTimeMarketData` connected to a DB with fake data
+    - an `Example1` DAG
+
+    The system is simulated in real-time in the past.
+
+    The simulated real-time is more accurate in reproducing the interactions between
+    DB and reading nodes than the replayed market data updates data instantaneous.
+    """
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 1000
+
+    # TODO(gp): @Danya this should be setup method.
+    @staticmethod
+    def setup_test_market_data(
+        im_client: icdc.SqlRealTimeImClient
+    ) -> mdrtmada.RealTimeMarketData2:
+        """
+        Setup RealTimeMarketData2 interface.
+        """
+        asset_id_col = "asset_id"
+        asset_ids = [1467591036]
+        start_time_col_name = "start_timestamp"
+        end_time_col_name = "end_timestamp"
+        columns = None
+        get_wall_clock_time = lambda: pd.Timestamp(
+            "2022-04-22", tz="America/New_York"
+        )
+        market_data = mdrtmada.RealTimeMarketData2(
+            im_client,
+            asset_id_col,
+            asset_ids,
+            start_time_col_name,
+            end_time_col_name,
+            columns,
+            get_wall_clock_time,
+        )
+        return market_data
+
+    # TOOD(gp): Use setup / teardown instead of calling the method.
+    def set_up_class(self):
+        # Create test table.
+        im_client = icdc.get_example1_realtime_client(
+            self.connection, resample_1min=True
+        )
+        # Set up market data client.
+        market_data = self.setup_test_market_data(im_client)
+        self.market_data = market_data
+
+    def run_coroutines(
+            self,
+            data: pd.DataFrame,
+    ) -> str:
+        """
+        # TO
+        """
+        self.set_up_class()
+        # Use simulated real-time.
+        with hasynci.solipsism_context() as event_loop:
+            asset_ids = [1467591036]
+            # Get the system to simulate.
+            system = dtfsepsyru.Example1_RealTimeForecastSystem(
+                self.connection,
+                asset_ids,
+                event_loop,
+            )
+            # Instantiate the system.
+            config = system.get_dag_config()
             market_data = system.get_market_data(data)
             dag_runner = system.get_dag_runner(
                 config,
                 market_data,
                 real_time_loop_time_out_in_secs=60 * 5,
             )
+            # Run.
+            # TODO(gp): Add a coroutine that given a df writes in the
+            #  DB the data according to the knowledge ts.
             coroutines = [dag_runner.predict()]
-            #
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
+            # TODO(gp): Fix this.
             result_bundles = result_bundles[0][0]
         return result_bundles
 
@@ -91,6 +272,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         actual = self.run_coroutines(
             data,
         )
+        # TODO(gp): PP to make sure the output is correct.
         self.check_string(str(actual))
 
 

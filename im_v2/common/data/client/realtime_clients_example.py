@@ -17,7 +17,13 @@ import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
 
 
-def _get_example1_create_table_query() -> str:
+# #############################################################################
+# Example1SqlRealTimeImClient
+# #############################################################################
+
+
+# TODO(Danya): -> _get_example
+def get_example1_create_table_query() -> str:
     """
     Get SQL query to create an Example1 table.
 
@@ -45,15 +51,15 @@ def _create_example1_sql_data() -> pd.DataFrame:
     Generate a dataframe with price features and fixed currency_pair and
     exchange_id.
 
-    This imulates contents of DBs with crypto data, e.g. from Talos and CCXT.
+    This simulates the content of DBs with crypto data, e.g. from Talos and CCXT.
 
     Output example:
 
     ```
-    timestamp  close  volume  feature1 currency_pair exchange_id              timestamp_db
-    946737060000  101.0     100       1.0      BTC_USDT     binance 2000-01-01 09:31:00-05:00
-    946737120000  101.0     100       1.0      BTC_USDT     binance 2000-01-01 09:32:00-05:00
-    946737180000  101.0     100       1.0      BTC_USDT     binance 2000-01-01 09:33:00-05:00
+    timestamp     close  volume  feature1 currency_pair exchange_id               timestamp_db
+    946737060000  101.0     100       1.0      BTC_USDT     binance  2000-01-01 09:31:00-05:00
+    946737120000  101.0     100       1.0      BTC_USDT     binance  2000-01-01 09:32:00-05:00
+    946737180000  101.0     100       1.0      BTC_USDT     binance  2000-01-01 09:33:00-05:00
     ```
     """
     idx = pd.date_range(
@@ -101,9 +107,14 @@ def _create_example1_sql_data() -> pd.DataFrame:
     return data
 
 
+# TODO(gp): Maybe all Example1 -> Mock1
 class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
+    """
+    SQL RealTime ImClient used to feed data to Example1.
+    """
     def __init__(
         self,
+        # TODO(Danya): default False
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
@@ -168,20 +179,22 @@ class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
 
 
 def get_example1_realtime_client(
-    connection: hsql.DbConnection, *, resample_1min: bool = False
+    connection: hsql.DbConnection,
+    # TODO(gp): Default to False
+    resample_1min: bool
 ) -> Example1SqlRealTimeImClient:
     """
     Set up a real time Example1 SQL client.
 
-    - Creates an Example1 table
-    - Uploads example1 data
-    - Creates a client connected to the given DB
+    - Create an Example1 table
+    - Insert some Example1 data int he DB
+    - Create a client connected to the given DB
     """
     # Create example table.
     table_name = "example1_marketdata"
     query = _get_example1_create_table_query()
     connection.cursor().execute(query)
-    # Create a data example and upload to local DB.
+    # Create a data example and insert local DB.
     data = _create_example1_sql_data()
     hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
@@ -190,10 +203,13 @@ def get_example1_realtime_client(
 
 
 # #############################################################################
-# TestSqlRealTimeImClient
+# Example2SqlRealTimeImClient
 # #############################################################################
 
+# TODO(gp): MockSqlRealTime? VendorAgnosticSqlRealTime?
 
+
+# TODO(Danya) -> _get_
 def _get_example2_create_table_query() -> str:
     """
     Get SQL query to create a test table.

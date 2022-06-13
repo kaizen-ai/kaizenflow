@@ -176,7 +176,7 @@ def enable_privileged_mode() -> bool:
 
 def has_docker_sudo() -> bool:
     """
-    Return whether commands should be run with sudo or not.
+    Return whether commands in Docker can be run with sudo or not.
     """
     if is_dev_ck():
         val = True

@@ -87,7 +87,7 @@ def set_non_ath_to_nan(
       - `time <= end_time`
     """
     hdbg.dassert_isinstance(data.index, pd.DatetimeIndex)
-    hpandas.dassert_strictly_increasing_index(data)
+    #hpandas.dassert_strictly_increasing_index(data)
     if start_time is None:
         start_time = datetime.time(9, 30)
     if end_time is None:

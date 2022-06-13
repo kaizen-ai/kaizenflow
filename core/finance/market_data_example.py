@@ -445,6 +445,8 @@ def get_market_data_df1() -> pd.DataFrame:
     2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
     2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
     ```
+
+    The knowledge time is called "timestamp_db".
     """
     idx = pd.date_range(
         start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),

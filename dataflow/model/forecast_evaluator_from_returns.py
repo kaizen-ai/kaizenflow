@@ -514,9 +514,10 @@ class ForecastEvaluatorFromReturns:
         return df[col]
 
     def _validate_df(self, df: pd.DataFrame) -> None:
-        hpandas.dassert_time_indexed_df(
-            df, allow_empty=True, strictly_increasing=True
-        )
+        assert 0
+        # hpandas.dassert_time_indexed_df(
+        #     df, allow_empty=True, strictly_increasing=True
+        # )
         hdbg.dassert_eq(df.columns.nlevels, 2)
         hdbg.dassert_is_subset(
             [self._returns_col, self._volatility_col, self._prediction_col],
