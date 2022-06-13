@@ -5,7 +5,7 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks_git as hlitagit
-import helpers.test.test_lib_tasks as helptestestlib
+import helpers.test.test_lib_tasks as httestlib
 
 _LOG = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     def helper(
         modified: bool, branch: bool, last_commit: bool, files: str
     ) -> None:
-        ctx = helptestestlib._build_mock_context_returning_ok()
+        ctx = httestlib._build_mock_context_returning_ok()
         #
         mode = "tar"
         hlitagit.git_create_patch(ctx, mode, modified, branch, last_commit, files)
@@ -88,7 +88,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         # This test needs a reference to Git master branch.
         hgit.fetch_origin_master_if_needed()
         #
-        ctx = helptestestlib._build_mock_context_returning_ok()
+        ctx = httestlib._build_mock_context_returning_ok()
         mode = "tar"
         modified = True
         branch = False
@@ -108,7 +108,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         # This test needs a reference to Git master branch.
         hgit.fetch_origin_master_if_needed()
         #
-        ctx = helptestestlib._build_mock_context_returning_ok()
+        ctx = httestlib._build_mock_context_returning_ok()
         mode = "diff"
         modified = False
         branch = False
