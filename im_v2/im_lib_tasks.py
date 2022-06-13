@@ -249,7 +249,7 @@ def _extract_image_hash(output: str) -> str:
     return tag
 
 
-def update_task_definition(task_definition: str, image_tag: str) -> None:
+def update_task_definition(ctx, task_definition: str, image_tag: str) -> None:
     """
     Create the new revision of the task definition with the new image tag.
 
