@@ -1,7 +1,6 @@
 #
 # //amp/im/tasks.py
 #
-from ctypes.wintypes import tagPOINT
 import logging
 import re
 
@@ -18,6 +17,9 @@ _LOG = logging.getLogger(__name__)
 @task
 def docker_create_candidate_image(task_definition: str):  # type: ignore
     """
+    Create new prod candidate image and update task definition with it.
+
+    :param task_definition: the name of the task, e.g. `cmamp-test`
     """
     # Get latest version.
     last_version = hversio.get_changelog_version(".")
@@ -44,7 +46,7 @@ def _extract_image_hash(output: str) -> str:
     """
     # Extract image hash, it is stored in the last line of the output.
     lines = output[1].split("\n")
-    # Split last output line into columns, get `TAG` column.
+    # Split the last output line into columns, get `TAG` column.
     tag = lines[-1].split("   ")[1]
     # Extract hash, e.g. 'prod-13538588e' -> `13538588e`.
     tag = tag.split("-")[1]
