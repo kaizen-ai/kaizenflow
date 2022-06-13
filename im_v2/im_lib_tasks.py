@@ -210,7 +210,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 
 
 @task
-def docker_create_candidate_image(task_definition: str):  # type: ignore
+def docker_create_candidate_image(ctx, task_definition: str):  # type: ignore
     """
     Create new prod candidate image and update task definition with it.
 
@@ -249,7 +249,7 @@ def _extract_image_hash(output: str) -> str:
     return tag
 
 
-def update_task_definition(ctx, task_definition: str, image_tag: str) -> None:
+def update_task_definition(task_definition: str, image_tag: str) -> None:
     """
     Create the new revision of the task definition with the new image tag.
 
