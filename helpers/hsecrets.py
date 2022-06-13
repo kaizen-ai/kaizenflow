@@ -15,9 +15,9 @@ import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
 
-def get_secrets_client(aws_profile: str) -> BaseClient:
+def get_session(aws_profile: str) -> boto3.session.Session:
     """
-    Return client to work with AWS Secrets Manager in the specified region.
+    Return connected Boto3 session.
     """
     hdbg.dassert_isinstance(aws_profile, str)
     # Original credentials are cached, thus we do not want to edit them.
@@ -25,9 +25,23 @@ def get_secrets_client(aws_profile: str) -> BaseClient:
     # Boto session expects `region_name`.
     credentials["region_name"] = credentials.pop("aws_region")
     session = boto3.session.Session(**credentials)
-    client = session.client(service_name="secretsmanager")
+    return session
+
+def get_ecs_client(aws_profile: str) -> BaseClient:
+    """
+    Return client to work with Elastic Client Service in the specific region.
+    """
+    session = get_session(aws_profile)
+    client = session.client(service_name="ecs")
     return client
 
+def get_secrets_client(aws_profile: str) -> BaseClient:
+    """
+    Return client to work with AWS Secrets Manager in the specified region.
+    """
+    session = get_session(aws_profile)
+    client = session.client(service_name="secretsmanager")
+    return client
 
 # TODO(Juraj): add support to access secrets for different profiles, not important rn
 def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
