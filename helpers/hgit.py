@@ -13,6 +13,7 @@ import re
 from typing import Any, Dict, List, Match, Optional, Tuple, cast
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
@@ -511,13 +512,31 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
 # Execute code from the `repo_config.py` in the super module.
 
 
+def get_repo_config_file(super_module: bool = True) -> str:
+    """
+    Return the absolute path to `repo_config.py` that should be used.
+
+    The `repo_config.py` is determined based on an overriding env var or based
+    on the root of the Git path.
+    """
+    env_var = "AM_REPO_CONFIG_PATH"
+    file_name = henv.get_env_var(env_var, abort_on_missing=False)
+    if file_name:
+        _LOG.warning("Using value '%s' for %s from env var", file_name,
+                env_var)
+    else:
+        # TODO(gp): We should actually ask Git where the super-module is.
+        client_root = get_client_root(super_module)
+        file_name = os.path.join(client_root, "repo_config.py")
+        file_name = os.path.abspath(file_name)
+    return file_name
+
+
 def _get_repo_config_code(super_module: bool = True) -> str:
     """
     Return the text of the code stored in `repo_config.py`.
     """
-    # TODO(gp): We should actually ask Git where the super-module is.
-    client_root = get_client_root(super_module)
-    file_name = os.path.join(client_root, "repo_config.py")
+    file_name = get_repo_config_file(super_module)
     hdbg.dassert_file_exists(file_name)
     code: str = hio.from_file(file_name)
     return code
@@ -525,7 +544,7 @@ def _get_repo_config_code(super_module: bool = True) -> str:
 
 def execute_repo_config_code(code_to_execute: str) -> Any:
     """
-    Execute code in `repo_config.py`.
+    Execute code in `repo_config.py` by dynamically finding the correct one.
 
     E.g.,
     ```
