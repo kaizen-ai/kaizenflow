@@ -212,9 +212,11 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 @task
 def docker_create_candidate_image(ctx, task_definition: str):  # type: ignore
     """
-    Create new prod candidate image and update task definition with it.
+    Create new prod candidate image and update the specified ECS task definition such that
+    the Image URL specified in container definition points to the new candidate image.
 
-    :param task_definition: the name of the task, e.g. `cmamp-test`
+    :param task_definition: the name of the ECS task definition for which an update 
+    to container image URL is made, e.g. `cmamp-test`
     """
     # Get latest version.
     last_version = hversio.get_changelog_version(".")
@@ -238,7 +240,7 @@ def _extract_image_hash(output: str) -> str:
     Extract prod image hash from the output log.
 
     :param output: output of `i docker_build_prod_image`
-    :return: image hash, e.g. `13538588e`
+    :return: the hash of the new candidate image, e.g. `13538588e`
     """
     # Extract image hash, it is stored in the last line of the output.
     lines = output[1].split("\n")
@@ -251,10 +253,12 @@ def _extract_image_hash(output: str) -> str:
 
 def update_task_definition(task_definition: str, image_tag: str) -> None:
     """
-    Create the new revision of the task definition with the new image tag.
+    Create the new revision of specified ECS task definition and point 
+    Image URL specified to the new candidate image.
 
-    :param task_definition: the name of the task, e.g. `cmamp-test`
-    :param image_tag: image tag, e.g. `13538588e`
+    :param task_definition: the name of the ECS task definition for which an update 
+    to container image URL is made, e.g. `cmamp-test`
+    :param image_tag: the hash of the new candidate image, e.g. `13538588e`
     """
     client = hsecret.get_ecs_client("ck")
     # Get the last revison of the task definition.
