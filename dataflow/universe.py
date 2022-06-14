@@ -320,8 +320,11 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "crypto_chassis_v1":
         version = "v1"
         ret = _get_crypto_chassis_universe(version, top_n)
-        # Remove failing full symbol.
-        ret.remove("binance::EOS_USDT")
+    elif universe_version == "crypto_chassis_v2":
+        version = "v2"
+        ret = _get_crypto_chassis_universe(version, top_n)
+        # Remove DOGE data due to its bad quality CmTask2052.
+        ret.remove("coinbase::DOGE_USDT")
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret

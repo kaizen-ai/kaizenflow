@@ -45,7 +45,7 @@ class TestOmsDbSubmittedOrdersTable1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     @pytest.mark.slow("9 seconds.")
     def test_create_table1(self) -> None:
@@ -130,7 +130,7 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     @pytest.mark.slow("8 seconds.")
     def test_create_table1(self) -> None:
@@ -184,7 +184,7 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def wait_for_table_helper(self, coroutines: List[Any]) -> Any:
         """
@@ -303,7 +303,7 @@ class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     @pytest.mark.slow("9 seconds.")
     def test_create_table1(self) -> None:
@@ -325,7 +325,7 @@ class TestOmsDbRestrictionsTable1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     @pytest.mark.slow("20 seconds.")
     def test_create_table1(self) -> None:

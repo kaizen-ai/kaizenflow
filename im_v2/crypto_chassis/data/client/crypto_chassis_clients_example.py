@@ -16,6 +16,10 @@ def get_CryptoChassisHistoricalPqByTileClient_example1(
     """
     Get `CryptoChassisHistoricalPqByTileClient` object for the prod model
     reading actual historical data, which is stored on S3.
+
+    Client is initialized to process CryptoChassis data for:
+    - universe version: "v1"
+    - data snapshot: "latest"
     """
     universe_version = "v1"
     aws_profile = "ck"
@@ -30,6 +34,38 @@ def get_CryptoChassisHistoricalPqByTileClient_example1(
             root_dir,
             partition_mode,
             dataset,
+            aws_profile=aws_profile,
+        )
+    )
+    return crypto_chassis_parquet_client
+
+
+def get_CryptoChassisHistoricalPqByTileClient_example2(
+    resample_1min: bool,
+) -> imvccdcccc.CryptoChassisHistoricalPqByTileClient:
+    """
+    Get `CryptoChassisHistoricalPqByTileClient` object for the prod model
+    reading actual historical data, which is stored on S3.
+
+    Client is initialized to process CryptoChassis data for:
+    - universe version: "v2"
+    - data snapshot: "20220530"
+    """
+    universe_version = "v2"
+    aws_profile = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
+    partition_mode = "by_year_month"
+    dataset = "ohlcv"
+    data_snapshot = "20220530"
+    crypto_chassis_parquet_client = (
+        imvccdcccc.CryptoChassisHistoricalPqByTileClient(
+            universe_version,
+            resample_1min,
+            root_dir,
+            partition_mode,
+            dataset,
+            data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )
     )

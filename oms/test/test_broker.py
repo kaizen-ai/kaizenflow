@@ -30,7 +30,7 @@ class TestSimulatedBroker1(hunitest.TestCase):
         Submit orders to a SimulatedBroker.
         """
         # Build a SimulatedBroker.
-        broker = obroexam.get_simulated_broker_example1(event_loop)
+        broker = obroexam.get_SimulatedBroker_example1(event_loop)
         # Submit an order.
         order = oordexam.get_order_example2()
         orders = [order]
@@ -100,7 +100,7 @@ class TestSimulatedBroker2(hunitest.TestCase):
                 end_datetime,
                 asset_ids,
             )
-            broker = obroexam.get_simulated_broker_example1(
+            broker = obroexam.get_SimulatedBroker_example1(
                 event_loop, market_data=market_data
             )
             broker_coroutine = self._broker_coroutine(broker, order)
@@ -132,7 +132,7 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
 
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def setUp(self) -> None:
         super().setUp()
@@ -155,7 +155,7 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
 
     def helper(self, order: omorder.Order, expected: str) -> ombroker.Fill:
         with hasynci.solipsism_context() as event_loop:
-            broker = obroexam.get_mocked_broker_example1(
+            broker = obroexam.get_DatabaseBroker_example1(
                 event_loop, self.connection
             )
             order_processor_coroutine = self._order_processor_coroutine(broker)

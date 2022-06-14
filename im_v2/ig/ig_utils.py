@@ -12,17 +12,11 @@ import re
 from typing import List, Optional
 
 import pandas as pd
-import s3fs
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hgit as hgit
 
 _LOG = logging.getLogger(__name__)
-
-
-# IG ids are encoded as ints.
-Igid = int
 
 
 # This represents a date in the format for the IG TAQ data on S3, as
