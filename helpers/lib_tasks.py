@@ -38,6 +38,10 @@ import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
 import helpers.hversion as hversio
 
+# Import this way to avoid complexity in propagating the refactoring in all
+# the repos downstream.
+from helpers.lib_tasks_git import *  # isort:skip  # noqa: F401,F403 # pylint: disable=unused-import,unused-wildcard-import,wildcard-import
+
 _LOG = logging.getLogger(__name__)
 
 
