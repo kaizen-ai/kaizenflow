@@ -31,11 +31,11 @@ data
 # %%
 # `Partner` in job, `Venture,Capital,VC` in company.
 tier1 = pd.concat([
-    data[data["job"].str.contains('Partner', case = True, na=False)],
-    data[data["company"].str.contains('venture|capital|VC', case = True, na=False)],
+    data[data["job"].str.contains('Partner', case = False, na=False)],
+    data[data["company"].str.contains('venture|capital|VC', case = False, na=False)],
 ])
 # Exclude LLP (lawyer firms).
-tier1 = tier1[~tier1["company"].str.contains('LLP', case = True, na=False)]
+tier1 = tier1[~tier1["company"].str.contains('LLP', na=False)]
 tier1 = tier1.drop_duplicates()
 tier1
 
