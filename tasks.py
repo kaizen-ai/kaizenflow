@@ -43,30 +43,6 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     gh_login,
     gh_workflow_list,
     gh_workflow_run,
-    git_add_all_untracked,
-    git_branch_copy,
-    git_branch_diff_with_base,
-    git_branch_diff_with_master,
-    git_branch_files,
-    git_branch_next_name,
-    git_clean,
-    # TODO(gp): -> git_branch_create
-    git_create_branch,
-    # TODO(gp): -> git_patch_create
-    git_create_patch,
-    git_delete_merged_branches,
-    # TODO(gp): -> git_master_fetch
-    git_fetch_master,
-    # TODO(gp): -> git_files_list
-    git_files,
-    # TODO(gp): -> git_files_last_commit_
-    git_last_commit_files,
-    # TODO(gp): -> git_master_merge
-    git_merge_master,
-    git_pull,
-    # TODO(gp): -> git_branch_rename
-    git_rename_branch,
-    git_roll_amp_forward,
     integrate_create_branch,
     integrate_diff_dirs,
     integrate_diff_overlapping_files,
@@ -98,6 +74,34 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     traceback,
 )
 
+from helpers.lib_tasks_git import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+    git_add_all_untracked,
+    git_branch_copy,
+    git_branch_diff_with_base,
+    git_branch_diff_with_master,
+    git_branch_files,
+    git_branch_next_name,
+    git_clean,
+    # TODO(gp): -> git_branch_create
+    git_create_branch,
+    # TODO(gp): -> git_patch_create
+    git_create_patch,
+    git_delete_merged_branches,
+    # TODO(gp): -> git_master_fetch
+    git_fetch_master,
+    # TODO(gp): -> git_files_list
+    git_files,
+    # TODO(gp): -> git_files_last_commit_
+    git_last_commit_files,
+    # TODO(gp): -> git_master_merge
+    git_merge_master,
+    git_pull,
+    # TODO(gp): -> git_branch_rename
+    git_rename_branch,
+    git_roll_amp_forward,
+)
+
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -120,7 +124,7 @@ def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
     _ = ctx
     # The QA tests are in `qa_test_dir` and are marked with `qa_test_tag`.
     qa_test_dir = "test"
-    #qa_test_dir = "test/test_tasks.py::TestExecuteTasks1::test_docker_bash"
+    # qa_test_dir = "test/test_tasks.py::TestExecuteTasks1::test_docker_bash"
     qa_test_tag = "qa and not superslow"
     cmd = f'pytest -m "{qa_test_tag}" {qa_test_dir} --image_stage {stage}'
     if version:
