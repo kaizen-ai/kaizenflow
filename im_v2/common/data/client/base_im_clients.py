@@ -208,6 +208,10 @@ class ImClient(abc.ABC):
         _LOG.debug("full_symbols=%s", df[full_symbol_col_name].unique())
         dfs = []
         for full_symbol, df_tmp in df.groupby(full_symbol_col_name):
+            # Hack for the RT demo.
+            df_tmp = df_tmp.reset_index().sort_values(["timestamp", "knowledge_timestamp"])
+            df_tmp = df_tmp.set_index("timestamp", drop=True)
+            df_tmp = df_tmp[~df_tmp.index.duplicated(keep="last")]
             _LOG.debug("apply_im_normalization: full_symbol=%s", full_symbol)
             df_tmp = self._apply_im_normalizations(
                 df_tmp,

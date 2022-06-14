@@ -127,3 +127,31 @@ def get_CcxtHistoricalPqByTileClient_example2(
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client
+
+
+def get_CcxtHistoricalPqByTileClient_example3(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+    """
+    Get `CcxtHistoricalPqByTileClient` object for the investors RT demo.
+
+    - s3_bucker: "s3://cryptokaizen-data-test"
+    - universe version: "v4"
+    - data snapshot: "20220530"
+    """
+    universe_version = "v4"
+    aws_profile = "ck"
+    root_dir = os.path.join("s3://cryptokaizen-data-test", "reorg", "historical.manual.pq")
+    partition_mode = "by_year_month"
+    dataset = "ohlcv"
+    data_snapshot = "20220530"
+    ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
+        universe_version,
+        resample_1min,
+        root_dir,
+        partition_mode,
+        dataset,
+        data_snapshot=data_snapshot,
+        aws_profile=aws_profile,
+    )
+    return ccxt_parquet_client
