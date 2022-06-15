@@ -2606,13 +2606,13 @@ def docker_push_dev_image(  # type: ignore
 def docker_release_dev_image(  # type: ignore
     ctx,
     version,
-    skip_tests,
-    superslow_tests,
-    # TODO(Nikola): CMTask #2137 - QA test run issues.
-    qa_tests,
     cache=True,
+    skip_tests=False,
     fast_tests=True,
     slow_tests=True,
+    superslow_tests=False,
+    # TODO(Nikola): CMTask #2137 - QA test run issues.
+    qa_tests=False,
     push_to_repo=True,
     # TODO(Nikola): poetry does not work via GH actions,
     #  see "Switch all the build systems to Python 3.9" CmTask #535.
@@ -2894,14 +2894,7 @@ def docker_release_all(ctx, version, container_dir_name="."):  # type: ignore
     :param version: version to tag the image and code with
     """
     _report_task()
-    docker_release_dev_image(
-        ctx,
-        version,
-        container_dir_name=container_dir_name,
-        skip_tests=False,
-        superslow_tests=False,
-        qa_tests=False,
-    )
+    docker_release_dev_image(ctx, version, container_dir_name=container_dir_name)
     docker_release_prod_image(ctx, version, container_dir_name=container_dir_name)
     _LOG.info("==> SUCCESS <==")
 

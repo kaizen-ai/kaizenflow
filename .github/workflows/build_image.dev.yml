@@ -82,12 +82,7 @@ jobs:
           CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
-        run: >
-          invoke docker_release_dev_image 
-          --version=FROM_CHANGELOG 
-          --skip-tests=${{ github.event.inputs.skip_tests }} 
-          --superslow-tests=${{ github.event.inputs.superslow_tests }} 
-          --qa-tests=${{ github.event.inputs.qa_tests }}
+        run: invoke docker_release_dev_image --version=FROM_CHANGELOG
 
       # Notify the team via Telegram in case of success.
       - name: Send Telegram notification for success
