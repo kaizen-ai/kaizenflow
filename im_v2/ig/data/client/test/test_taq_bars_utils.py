@@ -7,15 +7,19 @@ import pandas as pd
 import pytest
 
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.htimer as htimer
 import helpers.hunit_test as hunitest
 import im_v2.ig.data.client.historical_bars as imvidchiba
-import im_v2.ig.ig_utils as vlieguti
+import im_v2.ig.ig_utils as imvigigut
 
 _LOG = logging.getLogger(__name__)
 
 _ROOT_DATA_DIR = "s3://alphamatic-data/unit_test/ig_parquet"
 _AWS_PROFILE = "am"
+
+# Start date for mock data.
+_IG_START_DATE = "2019-01-07"
 
 # This data was generated with
 # //lime/notebooks/vendors_lime/taq_bars/notebooks/LimeTask1_explore_IG_price_data.ipynb
@@ -33,13 +37,13 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         # Perform some sanity checks.
         self.assertGreater(len(dates), 0)
         self.assertEqual(sorted(dates), dates)
-        self.assertEqual(str(dates[0]), imvidchiba._IG_START_DATE)
+        self.assertEqual(str(dates[0]), _IG_START_DATE)
 
     def test_filter_dates1(self) -> None:
         start_date = "2019-01-07"
         end_date = "2019-01-08"
         dates = imvidchiba.get_available_dates(_ROOT_DATA_DIR, _AWS_PROFILE)
-        filtered_dates = vlieguti.filter_dates(start_date, end_date, dates)
+        filtered_dates = imvigigut.filter_dates(start_date, end_date, dates)
         # Check.
         self.assertEqual(sorted(filtered_dates), filtered_dates)
         self.assertEqual(str(min(filtered_dates)), start_date)
@@ -53,10 +57,10 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         start_date = None
         end_date = "2019-01-07"
         dates = imvidchiba.get_available_dates(_ROOT_DATA_DIR, _AWS_PROFILE)
-        filtered_dates = vlieguti.filter_dates(start_date, end_date, dates)
+        filtered_dates = imvigigut.filter_dates(start_date, end_date, dates)
         # Check.
         self.assertEqual(sorted(filtered_dates), filtered_dates)
-        self.assertEqual(str(min(filtered_dates)), imvidchiba._IG_START_DATE)
+        self.assertEqual(str(min(filtered_dates)), _IG_START_DATE)
         self.assertEqual(str(max(filtered_dates)), end_date)
         self.assertEqual(len(filtered_dates), 1)
 
@@ -64,13 +68,13 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         """
         Filter with [_IG_START_DATE, None].
         """
-        start_date = imvidchiba._IG_START_DATE
+        start_date = _IG_START_DATE
         end_date = None
         dates = imvidchiba.get_available_dates(_ROOT_DATA_DIR, _AWS_PROFILE)
-        filtered_dates = vlieguti.filter_dates(start_date, end_date, dates)
+        filtered_dates = imvigigut.filter_dates(start_date, end_date, dates)
         # Check.
         self.assertEqual(sorted(filtered_dates), filtered_dates)
-        self.assertEqual(str(min(filtered_dates)), imvidchiba._IG_START_DATE)
+        self.assertEqual(str(min(filtered_dates)), _IG_START_DATE)
         self.assertGreater(str(max(filtered_dates)), "2019-01-07")
         self.assertGreater(len(filtered_dates), 1)
 
@@ -81,7 +85,7 @@ class TestTaqBarsUtils1(hunitest.TestCase):
         start_date = None
         end_date = None
         dates = imvidchiba.get_available_dates(_ROOT_DATA_DIR, _AWS_PROFILE)
-        filtered_dates = vlieguti.filter_dates(start_date, end_date, dates)
+        filtered_dates = imvigigut.filter_dates(start_date, end_date, dates)
         # Check.
         self.assertEqual(sorted(filtered_dates), filtered_dates)
         self.assertEqual(filtered_dates, dates)
@@ -93,7 +97,8 @@ class TestTaqBarsUtils1(hunitest.TestCase):
 class TestGetBarData1(hunitest.TestCase):
     def get_bar_data_helper(self, *args: Any, **kwargs: Any) -> None:
         df = imvidchiba.get_bar_data_for_dates(*args, **kwargs)
-        igids = args[0]
+        asset_ids = args[0]
+        asset_id_name = args[1]
         #
         act = []
 
@@ -103,7 +108,9 @@ class TestGetBarData1(hunitest.TestCase):
             _LOG.debug("%s", act_tmp)
             act.append(act_tmp)
             #
-            stats = imvidchiba.compute_bar_data_stats(df, igids)
+            stats = imvidchiba.compute_bar_data_stats(
+                df, asset_ids, asset_id_name
+            )
             act_tmp = "## stats=\n%s" % stats
             _LOG.debug("%s", act_tmp)
             act.append(act_tmp)
@@ -117,7 +124,7 @@ class TestGetBarData1(hunitest.TestCase):
         _add_stats()
         #
         act_result = "\n".join(act)
-        self.check_string(act_result)
+        self.check_string(act_result, fuzzy_match=True)
         return df
 
     def test1(self) -> None:
@@ -127,9 +134,10 @@ class TestGetBarData1(hunitest.TestCase):
         # SPY: 10971
         # AAPL: 17085
         # BAC: 15224
-        igids = [10971, 17085, 15224]
+        asset_ids = [10971, 17085, 15224]
+        asset_id_name = "igid"
         dates = ["2019-01-07"]
-        dates = list(map(vlieguti.convert_to_date, dates))
+        dates = list(map(imvigigut.convert_to_date, dates))
         columns = ["end_time", "close", "volume", "igid"]
         normalize = True
         tz_zone = "America/New_York"
@@ -138,7 +146,8 @@ class TestGetBarData1(hunitest.TestCase):
         aws_profile = _AWS_PROFILE
         num_concurrent_requests = 10
         self.get_bar_data_helper(
-            igids,
+            asset_ids,
+            asset_id_name,
             dates,
             columns,
             normalize,
@@ -153,9 +162,10 @@ class TestGetBarData1(hunitest.TestCase):
         """
         Get multiple days and check the format.
         """
-        igids = [17085, 15224]
+        asset_ids = [17085, 15224]
+        asset_id_name = "igid"
         dates = ["2019-01-07", "2019-01-08"]
-        dates = list(map(vlieguti.convert_to_date, dates))
+        dates = list(map(imvigigut.convert_to_date, dates))
         columns = ["end_time", "close", "volume", "igid"]
         normalize = True
         tz_zone = "America/New_York"
@@ -164,7 +174,8 @@ class TestGetBarData1(hunitest.TestCase):
         aws_profile = _AWS_PROFILE
         num_concurrent_requests = 10
         self.get_bar_data_helper(
-            igids,
+            asset_ids,
+            asset_id_name,
             dates,
             columns,
             normalize,
@@ -184,16 +195,25 @@ class Test_get_cached_bar_data_for_date_interval1(hunitest.TestCase):
         """
         Get the data the day before TSLA IPO: there should be no data.
         """
-        igids = [13684]
+        asset_ids = [13684]
+        asset_id_name = "igid"
         start_date = datetime.date(2019, 1, 7)
         end_date = datetime.date(2019, 1, 8)
         columns = ["end_time", "close", "volume", "igid"]
         root_data_dir = _ROOT_DATA_DIR
         aws_profile = _AWS_PROFILE
         df = imvidchiba.get_cached_bar_data_for_date_interval(
-            igids, start_date, end_date, columns, root_data_dir, aws_profile,
+            asset_ids,
+            asset_id_name,
+            start_date,
+            end_date,
+            columns,
+            root_data_dir,
+            aws_profile,
         )
-        stats_as_str = imvidchiba.compute_bar_data_stats(df, igids)
+        stats_as_str = imvidchiba.compute_bar_data_stats(
+            df, asset_ids, asset_id_name
+        )
         _LOG.debug("stats_as_str=%s", stats_as_str)
         self.check_string(stats_as_str)
 
@@ -209,13 +229,14 @@ class Test_get_cached_bar_data_for_date_interval_perf1(hunitest.TestCase):
         """
         use_reference = True
         if use_reference:
-            igids = [10971, 17085, 15224]
+            asset_ids = [10971, 17085, 15224]
             start_date = datetime.date(2019, 1, 7)
             end_date = datetime.date(2019, 1, 8)
         else:
-            igids = [13684]
+            asset_ids = [13684]
             start_date = datetime.date(2019, 1, 7)
             end_date = datetime.date(2019, 1, 7)
+        asset_id_name = "igid"
         columns = ["end_time", "close", "volume", "igid"]
         root_data_dir = _ROOT_DATA_DIR
         aws_profile = _AWS_PROFILE
@@ -224,7 +245,8 @@ class Test_get_cached_bar_data_for_date_interval_perf1(hunitest.TestCase):
         # num_concurrent_requests = 20
         with htimer.TimedScope(logging.INFO, "Run"):
             df = imvidchiba.get_cached_bar_data_for_date_interval(
-                igids,
+                asset_ids,
+                asset_id_name,
                 start_date,
                 end_date,
                 columns,
@@ -243,7 +265,8 @@ class Test_get_cached_bar_data_for_date_interval_perf1(hunitest.TestCase):
         Get data for one assets and multiple days.
         """
         use_reference = True
-        igids = [13684]
+        asset_ids = [13684]
+        asset_id_name = "igid"
         if use_reference:
             start_date = datetime.date(2019, 1, 7)
             end_date = datetime.date(2019, 1, 8)
@@ -258,7 +281,8 @@ class Test_get_cached_bar_data_for_date_interval_perf1(hunitest.TestCase):
         # num_concurrent_requests = 20
         with htimer.TimedScope(logging.INFO, "Run"):
             df = imvidchiba.get_cached_bar_data_for_date_interval(
-                igids,
+                asset_ids,
+                asset_id_name,
                 start_date,
                 end_date,
                 columns,
@@ -283,14 +307,14 @@ class TestTaqBarsUtils2(hunitest.TestCase):
         """
         # Get the data.
         ig_date = "20190107"
-        igids = 17085
+        asset_ids = 17085
         columns = ["end_time", "close"]
         with htimer.TimedScope(logging.INFO, "Read S3 data"):
             df_taq_bars = imvidchiba.get_raw_historical_data(
-                ig_date, igids=[igids], columns=columns
+                ig_date, asset_ids=[asset_ids], columns=columns
             )
         # Subset.
-        df_taq_bars = hunitest.subset_df(df_taq_bars, nrows=200, seed=43)
+        df_taq_bars = hpandas.subset_df(df_taq_bars, nrows=200, seed=43)
         # Save the data.
         file_name = self._get_test_data_file_name()
         hio.create_enclosing_dir(file_name, incremental=True)

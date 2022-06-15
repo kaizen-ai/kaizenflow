@@ -16,8 +16,6 @@ import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> ig_historical_pq_by_tile_taq_bar_client.py
-
 
 class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
     """
@@ -28,12 +26,18 @@ class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
     """
 
     # TODO(gp): Factor out with our approach of *args and **kwargs.
-    def __init__(self, root_dir_name: str, aws_profile: Optional[str], partition_mode: str):
-        vendor = "ig"
+    def __init__(
+        self,
+        vendor: str,
+        root_dir_name: str,
+        aws_profile: Optional[str],
+        partition_mode: str,
+        # TODO(gp): Pass this.
+        full_symbol_col_name: str = "igid",
+    ):
         # TODO(gp): Not sure how to set this.
         universe_version = None
         resample_1min = False
-        full_symbol_col_name = "igid"
         infer_exchange_id = False
         super().__init__(
             vendor,

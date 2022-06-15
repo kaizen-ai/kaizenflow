@@ -7,8 +7,6 @@ Import as:
 import im_v2.ig.data.client.historical_bars as imvidchiba
 """
 
-# TODO(gp): -> historical_bars.py
-
 import concurrent.futures
 import datetime
 import functools
@@ -28,8 +26,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.htimer as htimer
 import helpers.htqdm as htqdm
-import im_v2.ig.ig_utils as vlieguti
-
+import im_v2.ig.ig_utils as imvigigut
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,25 +36,11 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# Start date for IG data.
-_IG_START_DATE = "2019-01-07"
-
-# Default root dir for the 1-min data.
-#_ROOT_DATA_DIR = "s3://iglp-core-data/ds/ext/bars/taq/v1.0-prod/60"
-#_ROOT_DATA_DIR = "s3://alphamatic-data/unit_test/parquet"
-
-
-def date_to_file_path(
-    date: datetime.date, root_data_dir: str
-) -> str:
-    ig_date = vlieguti.convert_to_ig_date(date)
-    #root_data_dir = root_data_dir or _ROOT_DATA_DIR
+def date_to_file_path(date: datetime.date, root_data_dir: str) -> str:
+    ig_date = imvigigut.convert_to_ig_date(date)
     hdbg.dassert_isinstance(root_data_dir, str)
     path = os.path.join(root_data_dir, ig_date, "data.parquet")
     return path
-
-
-# #############################################################################
 
 
 def _convert_string_to_timestamp(
@@ -97,7 +80,7 @@ def normalize_bar_data(
 
     The input data looks like:
     ```
-         end_time ticker   igid  close
+         end_time ticker   asset_id  close
     0  1640613660   AAPL  17085    NaN
     1  1640613720   AAPL  17085    NaN
     2  1640613780   AAPL  17085    NaN
@@ -110,7 +93,7 @@ def normalize_bar_data(
 
     The output data looks like:
     ```
-                              ticker   igid  close ...
+                              ticker   asset_id  close ...
     end_time
     2021-12-27 09:01:00-05:00   AAPL  17085    NaN
     2021-12-27 09:02:00-05:00   AAPL  17085    NaN
@@ -168,20 +151,23 @@ def get_available_dates(
 
 
 def get_raw_bar_data_from_file(
-    path: str, igids: Optional[List[int]], columns: Optional[List[str]],
+    path: str,
+    asset_ids: Optional[List[int]],
+    asset_id_name: str,
+    columns: Optional[List[str]],
     aws_profile: str,
 ) -> pd.DataFrame:
-    _LOG.debug(hprint.to_str("path igids columns"))
+    _LOG.debug(hprint.to_str("path asset_ids asset_id_name columns"))
     # Compute the Parquet filter.
-    if igids is None:
+    if asset_ids is None:
         filters = None
     else:
         # Build the Parquet filter, which is an OR of AND constraints. In this
         # case the AND is a single equality constraint (see
         # https://stackoverflow.com/questions/56522977).
         filters = []
-        for igid in igids:
-            filters.append([("igid", "=", igid)])
+        for asset_id in asset_ids:
+            filters.append([(asset_id_name, "=", asset_id)])
     # Load the data as a pd.DataFrame.
     # _LOG.debug("filters=%s", filters)
     filesystem = hs3.get_s3fs(aws_profile) if path.startswith("s3://") else None
@@ -191,25 +177,26 @@ def get_raw_bar_data_from_file(
         filters=filters,
         use_legacy_dataset=False,
     )
+    print("columns=%s", columns)
     table = dataset.read(columns=columns)
     df = table.to_pandas()
     if df is None:
         raise RuntimeError(f"Received empty data for path={path}")
-    # _LOG.debug("Done: path=%s igids=%s columns=%s", path, igids, columns)
     return df
 
 
-# TODO(gp): Change the order of the params (igids, date, columns) everywhere.
+# TODO(gp): Change the order of the params (asset_ids, date, columns) everywhere.
 def get_raw_bar_data_for_date(
     date: datetime.date,
     root_data_dir: str,
     aws_profile: str,
     columns: Optional[List[str]],
-    igids: Optional[List[int]],
+    asset_id: Optional[List[int]],
+    asset_id_name: str,
     abort_on_error: bool,
 ) -> pd.DataFrame:
     """
-    Get data from the S3 backend for a single date, and multiple igids and
+    Get data from the S3 backend for a single date, and multiple asset_id and
     columns.
 
     The data is stored in a by-date Parquet format.
@@ -221,11 +208,13 @@ def get_raw_bar_data_for_date(
     # path = os.path.join(root_data_dir, ig_date, "data.parquet")
     path = date_to_file_path(date, root_data_dir)
     try:
-        df = get_raw_bar_data_from_file(path, igids, columns, aws_profile)
+        df = get_raw_bar_data_from_file(
+            path, asset_id, asset_id_name, columns, aws_profile
+        )
     except Exception as e:
         txt = []
         txt.append("date=%s" % date)
-        txt.append("igids=%s" % str(igids))
+        txt.append("asset_id=%s" % str(asset_id))
         txt.append("columns=%s" % str(columns))
         txt.append("aws_profile=%s" % str(aws_profile))
         txt.append("exception=\n%s" % str(e))
@@ -238,7 +227,8 @@ def get_raw_bar_data_for_date(
 
 
 def get_bar_data_for_dates(
-    igids: Optional[List[vlieguti.Igid]],
+    asset_ids: Optional[List[int]],
+    asset_id_name: str,
     dates: List[datetime.date],
     columns: Optional[List[str]],
     normalize: bool,
@@ -249,7 +239,7 @@ def get_bar_data_for_dates(
     num_concurrent_requests: int,
 ) -> pd.DataFrame:
     """
-    Get data for a set of dates and multiple igids and columns.
+    Get data for a set of dates and multiple asset_ids and columns.
 
     This function:
     - parallelizes the access through `_get_raw_bar_data_for_date()` to the S3 files
@@ -257,7 +247,7 @@ def get_bar_data_for_dates(
 
     The returned data looks like:
     ```
-                               close  volume   igid
+                               close  volume   asset_id
     end_time
     2021-06-21 09:01:00-04:00    NaN       0  17085
     2021-06-21 09:01:00-04:00    NaN       0  15224
@@ -267,11 +257,11 @@ def get_bar_data_for_dates(
     The IG "start_time", "end_time" columns are converted from int64's to
     timestamps with ET timezone.
 
-    :param igids: list of requested igids
-        - `None` for requesting all the igids
+    :param asset_ids: list of requested asset_ids
+        - `None` for requesting all the asset_ids
     :param dates: the dates to access
     :param columns: the columns of data to access. `None` means the minimum
-        subset of columns, i.e., "close", "volume", "igid"
+        subset of columns, i.e., "close", "volume", "asset_id"
     :param normalize: normalize the data if needed
     :param abort_on_error: whether to stop or not the computation if an error
         occur
@@ -280,13 +270,13 @@ def get_bar_data_for_dates(
     :param num_concurrent_requests: the number of parallel requests to S3
     :return: df with bar data
     """
-    if igids is not None:
-        if isinstance(igids[0], str):
-            igids = list(map(int, igids))
-        # Check that `igids` are valid.
-        hdbg.dassert_container_type(igids, List, int)
-        hdbg.dassert_no_duplicates(igids)
-        igids = sorted(igids)
+    if asset_ids is not None:
+        if isinstance(asset_ids[0], str):
+            asset_ids = list(map(int, asset_ids))
+        # Check that `asset_ids` are valid.
+        hdbg.dassert_container_type(asset_ids, List, int)
+        hdbg.dassert_no_duplicates(asset_ids)
+        asset_ids = sorted(asset_ids)
     # Check the dates.
     hdbg.dassert_container_type(dates, List, datetime.date)
     hdbg.dassert_no_duplicates(dates)
@@ -298,7 +288,13 @@ def get_bar_data_for_dates(
         hdbg.dassert_in("end_time", columns)
     #
     func = lambda date: get_raw_bar_data_for_date(
-        date, root_data_dir, aws_profile, columns, igids, abort_on_error
+        date,
+        root_data_dir,
+        aws_profile,
+        columns,
+        asset_ids,
+        asset_id_name,
+        abort_on_error,
     )
     # TODO(gp): Use the code in `joblib_helpers` or copy/paste the version with the
     #  progress bar.
@@ -335,7 +331,7 @@ def get_bar_data_for_dates(
     with htimer.TimedScope(logging.INFO, "Process pd data"):
         df = pd.concat(dfs, axis=0)
         # Sort.
-        sorting_keys = ["end_time", "igid"]
+        sorting_keys = ["end_time", asset_id_name]
         hdbg.dassert_is_subset(sorting_keys, df.columns)
         df = df.sort_values(by=sorting_keys, ascending=[True] * len(sorting_keys))
         if normalize:
@@ -349,7 +345,8 @@ def get_bar_data_for_dates(
 
 
 def get_bar_data_for_date_interval(
-    igids: List[vlieguti.Igid],
+    asset_ids: List[int],
+    asset_id_name: str,
     start_date: datetime.date,
     end_date: datetime.date,
     columns: Optional[List[str]],
@@ -362,16 +359,17 @@ def get_bar_data_for_date_interval(
     num_concurrent_requests: int = 10,
 ) -> pd.DataFrame:
     """
-    Return bar data for `igids` in the date interval [`start_date`,
+    Return bar data for `asset_ids` in the date interval [`start_date`,
     `end_date`].
     """
     # Get the available dates in the data set.
-    available_dates = get_available_dates()
+    available_dates = get_available_dates(root_data_dir, aws_profile)
     # Filter in the given interval.
-    dates = vlieguti.filter_dates(start_date, end_date, available_dates)
+    dates = imvigigut.filter_dates(start_date, end_date, available_dates)
     # Retrieve data.
     df = get_bar_data_for_dates(
-        igids,
+        asset_ids,
+        asset_id_name,
         dates,
         columns,
         normalize,
@@ -392,7 +390,8 @@ def get_bar_data_for_date_interval(
 # TODO(gp): -> def get_cached_bar_data_for_dates(
 @hcache.cache(set_verbose_mode=True)
 def get_bar_data(
-    igids: Optional[List[vlieguti.Igid]],
+    asset_ids: Optional[List[int]],
+    asset_id_name: str,
     dates: List[datetime.date],
     columns: Optional[List[str]],
     root_data_dir: str,
@@ -402,11 +401,12 @@ def get_bar_data(
     num_concurrent_requests: int = 10,
 ) -> pd.DataFrame:
     """
-    Extract bar data for the requested `igid`s concatenating across `dates`.
+    Extract bar data for the requested `asset_id`s concatenating across
+    `dates`.
 
     The returned data looks like:
     ```
-                               close  volume   igid
+                               close  volume   asset_id
     end_time
     2021-06-21 09:01:00-04:00    NaN       0  17085
     2021-06-21 09:01:00-04:00    NaN       0  15224
@@ -416,11 +416,11 @@ def get_bar_data(
     The IG "start_time", "end_time" columns are converted from int64's to
     timestamps with ET timezone.
 
-    :param igids: list of requested igids
-        - `None` for requesting all the igids
+    :param asset_ids: list of requested asset_ids
+        - `None` for requesting all the asset_ids
     :param dates: the dates to access
     :param columns: the columns of data to access. `None` means the minimum
-        subset of columns, i.e., "close", "volume", "igid"
+        subset of columns, i.e., "close", "volume", "asset_id"
     :param abort_on_error: whether to stop or not the computation if an error
         occur
     :param root_data_dir: the directory containing the data
@@ -429,7 +429,8 @@ def get_bar_data(
     normalize = True
     tz_zone = "America/New_York"
     return get_bar_data_for_dates(
-        igids,
+        asset_ids,
+        asset_id_name,
         dates,
         columns,
         normalize,
@@ -443,7 +444,8 @@ def get_bar_data(
 
 # TODO(gp): Maybe cache this.
 def get_cached_bar_data_for_date_interval(
-    igids: List[vlieguti.Igid],
+    asset_ids: List[int],
+    asset_id_name: str,
     start_date: Optional[datetime.date],
     end_date: Optional[datetime.date],
     columns: Optional[List[str]],
@@ -455,7 +457,7 @@ def get_cached_bar_data_for_date_interval(
     num_concurrent_requests: int = 10,
 ) -> pd.DataFrame:
     """
-    Return bar data for `igids` in the date interval [`start_date`,
+    Return bar data for `asset_ids` in the date interval [`start_date`,
     `end_date`].
 
     :param start_date, end_date: date to start / end or `None` for no limit
@@ -463,10 +465,11 @@ def get_cached_bar_data_for_date_interval(
     # Get the available dates in the data set.
     available_dates = get_available_dates(root_data_dir, aws_profile)
     # Filter in the given interval.
-    dates = vlieguti.filter_dates(start_date, end_date, available_dates)
+    dates = imvigigut.filter_dates(start_date, end_date, available_dates)
     # Retrieve data.
     df = get_bar_data(
-        igids,
+        asset_ids,
+        asset_id_name,
         dates,
         columns,
         root_data_dir,
@@ -500,7 +503,8 @@ def _prepare_get_bar_data_cache(cache_dir: str) -> None:
 
 
 def load_single_instrument_data(
-    igid: vlieguti.Igid,
+    asset_id: int,
+    asset_id_name: str,
     start_datetime: datetime.datetime,
     end_datetime: datetime.datetime,
     columns: Optional[List[str]],
@@ -521,12 +525,13 @@ def load_single_instrument_data(
         end_date = end_datetime
     if cache_dir is not None:
         _prepare_get_bar_data_cache(cache_dir)
-    igids = [igid]
+    asset_ids = [asset_id]
     # TODO(gp): This needs to match how the cache was generated, until we
     #  implement the logic to ignore some parameters in the caching framework.
     num_concurrent_requests = 20
     df = get_cached_bar_data_for_date_interval(
-        igids,
+        asset_ids,
+        asset_id_name,
         start_date,
         end_date,
         columns,
@@ -534,12 +539,13 @@ def load_single_instrument_data(
         aws_profile,
         num_concurrent_requests=num_concurrent_requests,
     )
-    # _LOG.debug("price_stats=\n%s", compute_bar_data_stats(df, [igid]))
+    # _LOG.debug("price_stats=\n%s", compute_bar_data_stats(df, [asset_id]))
     return df
 
 
 def _load_multiple_instrument_data(
-    igids: List[vlieguti.Igid],
+    asset_ids: List[int],
+    asset_id_name: str,
     start_datetime: datetime.datetime,
     end_datetime: datetime.datetime,
     columns: Optional[List[str]],
@@ -563,8 +569,9 @@ def _load_multiple_instrument_data(
         use_parallel = False
         if use_parallel:
             num_concurrent_requests = 5
-            func = lambda igid: load_single_instrument_data(
-                igid,
+            func = lambda asset_id: load_single_instrument_data(
+                asset_id,
+                asset_id_name,
                 start_datetime,
                 end_datetime,
                 columns,
@@ -575,23 +582,25 @@ def _load_multiple_instrument_data(
             with concurrent.futures.ThreadPoolExecutor(
                 max_workers=num_concurrent_requests
             ) as executor:
-                dfs = list(executor.map(func, igids))
-            dfs = dict(zip(igids, dfs))
+                dfs = list(executor.map(func, asset_ids))
+            dfs = dict(zip(asset_ids, dfs))
         else:
             dfs = {}
-            for igid in tqdm(igids, "load_multiple_instrument_data"):
+            for asset_id in tqdm(asset_ids, "load_multiple_instrument_data"):
                 data = load_single_instrument_data(
-                    igid,
+                    asset_id,
+                    asset_id_name,
                     start_datetime,
                     end_datetime,
                     columns,
-                    root_data_dir=root_data_dir,
+                    root_data_dir,
+                    aws_profile,
                     cache_dir=cache_dir,
                 )
                 if data.empty:
-                    _LOG.warning("No data available for igid=%s", igid)
+                    _LOG.warning("No data available for asset_id=%s", asset_id)
                     continue
-                dfs[igid] = data
+                dfs[asset_id] = data
     with htimer.TimedScope(logging.INFO, "Concat"):
         # Reorganize the data into the desired format.
         df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
@@ -604,7 +613,8 @@ def _load_multiple_instrument_data(
 
 @hcache.cache(set_verbose_mode=True)
 def load_multiple_instrument_data(
-    igids: List[vlieguti.Igid],
+    asset_ids: List[int],
+    asset_id_name: str,
     start_datetime: datetime.datetime,
     end_datetime: datetime.datetime,
     columns: Optional[List[str]],
@@ -614,13 +624,13 @@ def load_multiple_instrument_data(
     cache_dir: Optional[str] = None,
 ) -> pd.DataFrame:
     return _load_multiple_instrument_data(
-        igids,
+        asset_ids,
+        asset_id_name,
         start_datetime,
         end_datetime,
         columns,
         root_data_dir,
         aws_profile,
-        root_data_dir=root_data_dir,
         cache_dir=cache_dir,
     )
 
@@ -649,7 +659,9 @@ def clean_bars(df: pd.DataFrame, thr: float = 0.001) -> pd.DataFrame:
 
 
 def compute_bar_data_stats(
-    df: pd.DataFrame, igids: Optional[List[vlieguti.Igid]]
+    df: pd.DataFrame,
+    asset_ids: Optional[List[int]],
+    asset_id_name: str,
 ) -> str:
     """
     Compute stats about bar data.
@@ -663,20 +675,22 @@ def compute_bar_data_stats(
     txt.append("max index=%s" % max(df.index))
     txt.append("num unique index=%s" % len(df.index.unique()))
     txt.append("df.shape=%s" % str(df.shape))
-    txt.append("igids=%s" % str(igids))
-    found_igids = df["igid"].unique()
-    txt.append("found igids=%d" % len(found_igids))
+    txt.append("asset_ids=%s" % str(asset_ids))
+    found_asset_ids = df[asset_id_name].unique()
+    txt.append("found asset_ids=%d" % len(found_asset_ids))
     #
-    if igids is not None:
-        txt.append("requested igids=%d" % len(igids))
-        # Check that the returned igids are included in the requested ones.
-        hdbg.dassert_is_subset(found_igids, igids)
-        # Report igids that are without any data.
-        igids_without_data = sorted(list(set(igids) - set(found_igids)))
-        if igids_without_data:
-            msg = "Found %s igids without data: %s" % (
-                hprint.perc(len(igids_without_data), len(igids)),
-                ",".join(map(str, igids_without_data)),
+    if asset_ids is not None:
+        txt.append("requested asset_ids=%d" % len(asset_ids))
+        # Check that the returned asset_ids are included in the requested ones.
+        hdbg.dassert_is_subset(found_asset_ids, asset_ids)
+        # Report asset_ids that are without any data.
+        asset_ids_without_data = sorted(
+            list(set(asset_ids) - set(found_asset_ids))
+        )
+        if asset_ids_without_data:
+            msg = "Found %s asset_ids without data: %s" % (
+                hprint.perc(len(asset_ids_without_data), len(asset_ids)),
+                ",".join(map(str, asset_ids_without_data)),
             )
             _LOG.warning(msg)
             txt.append(msg)

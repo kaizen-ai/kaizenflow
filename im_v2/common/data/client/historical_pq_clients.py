@@ -179,7 +179,7 @@ class HistoricalPqByTileClient(
             # )
             # Convert index to datetime.
             root_dir_df.index = pd.to_datetime(root_dir_df.index)
-            # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
+            # TODO(gp): IgHistoricalPqByTileTaqBarClient used a ctor param to rename a column.
             #  Not sure if this is still needed.
             #        # Rename column storing `full_symbols`, if needed.
             #        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
@@ -354,8 +354,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         # The columns are used just to partition the data but these columns
         # are not included in the `ImClient` output.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
-        # Round up float values in case values in raw data are rounded up incorrectly when
-        # being read from a file.
+        # Round up float values in case values in raw data are rounded up incorrectly
+        # when being read from a file.
         df = df.round(8)
         return df
 
@@ -446,6 +446,7 @@ class HistoricalPqByDateClient(
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -466,14 +467,22 @@ class HistoricalPqByDateClient(
             end_date = None
         # Get the data for [start_date, end_date].
         # TODO(gp): Use an abstract_method.
+        # TODO(gp): This should not be hardwired but passed.
+        asset_id_name = self._full_symbol_col_name
+        hdbg.dassert_is_not(asset_id_name, None)
+        normalize = True
         tz_zone = "UTC"
         df = self._read_func(
+            # TODO(gp): These are int.
             full_symbols,
+            asset_id_name,
             start_date,
             end_date,
-            normalize=True,
-            tz_zone=tz_zone,
-            **kwargs,
+            columns,
+            normalize,
+            tz_zone,
+            kwargs["root_data_dir"],
+            kwargs["aws_profile"],
         )
         # Convert to datetime.
         df.index = pd.to_datetime(df.index)

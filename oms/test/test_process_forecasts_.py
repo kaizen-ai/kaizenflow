@@ -494,7 +494,7 @@ asset_id                      101    202
 class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def test_mocked_system1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
@@ -504,7 +504,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             #
             oomsdb.create_oms_tables(self.connection, incremental=False)
             #
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 db_connection,
                 table_name,
@@ -625,7 +625,7 @@ asset_id                     101    202
 class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def test_mocked_system1(self) -> None:
         data = self._get_market_data_df1()
@@ -778,7 +778,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             db_connection = self.connection
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
             oomsdb.create_oms_tables(self.connection, incremental=False)
-            portfolio = oporexam.get_mocked_portfolio_example1(
+            portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 db_connection,
                 table_name,
