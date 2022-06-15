@@ -473,8 +473,8 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         act = re.sub(r"[0-9]{2}:[0-9]{2}:[0-9]{2} - ", r"HH:MM:SS - ", act)
         act = act.replace("/app/amp/", "/app/")
         act = re.sub(
-            r"lib_tasks.py pytest_repro:[0-9]+",
-            r"lib_tasks.py pytest_repro:{LINE_NUM}",
+            r"lib_tasks_pytest.py pytest_repro:[0-9]+",
+            r"lib_tasks_pytest.py pytest_repro:{LINE_NUM}",
             act,
         )
         # Remove unstable content.
