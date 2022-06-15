@@ -29,7 +29,15 @@ import helpers.hs3 as hs3
 _LOG = logging.getLogger(__name__)
 
 
-def _resample_bid_ask_data(data: pd.DataFrame) -> pd.DataFrame:
+def _resample_bid_ask_data(
+    data: pd.DataFrame, mode: str = "VWAP"
+) -> pd.DataFrame:
+    """
+    Resample bid/ask data to 1 minute interval.
+
+    :param mode: designate strategy to use, i.e. volume-weighted average
+        (VWAP) or time-weighted average price (TWAP)
+    """
     resample_rule = "T"
     df = cfinresa.resample(data, rule=resample_rule).agg(
         {
@@ -38,13 +46,24 @@ def _resample_bid_ask_data(data: pd.DataFrame) -> pd.DataFrame:
             "exchange_id": "last",
         }
     )
-    df_mean = (
-        df[["bid_size", "ask_size"]]
-        .groupby(pd.Grouper(freq=resample_rule))
-        .mean()
-    )
-    df.insert(0, "bid_price", df_mean["bid_size"])
-    df.insert(2, "ask_price", df_mean["ask_size"])
+    if mode == "VWAP":
+        bid_price = cfinresa.compute_twap_vwap(
+            df, resample_rule, price_col="bid_price", volume_col="bid_size"
+        )
+        ask_price = cfinresa.compute_twap_vwap(
+            df, resample_rule, price_col="ask_price", volume_col="ask_size"
+        )
+        bid_ask_price_df = pd.concat([bid_price, ask_price])
+    elif mode == "TWAP":
+        bid_ask_price_df = (
+            df[["bid_size", "ask_size"]]
+            .groupby(pd.Grouper(freq=resample_rule))
+            .mean()
+        )
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
+    df.insert(0, "bid_price", bid_ask_price_df["bid_size"])
+    df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
     return df
 
 
@@ -71,14 +90,15 @@ def _run(args: argparse.Namespace) -> None:
         "exchange_id",
     ]
     for file in files_to_read:
-        file_path = os.path.join(args.dst_dir, file)
+        file_path = os.path.join(args.src_dir, file)
         df = hparque.from_parquet(
             file_path, columns=columns, aws_profile=aws_profile
         )
         df = _resample_bid_ask_data(df)
+        dst_path = os.path.join(args.dst_dir, file)
         pq.write_table(
             pa.Table.from_pandas(df),
-            args.dst_dir + "/" + file,
+            dst_path,
             filesystem=filesystem,
         )
         _LOG.info("Resampled data was uploaded to %s", args.dst_dir)
