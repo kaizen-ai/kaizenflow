@@ -87,6 +87,12 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
     ) -> Optional[List[str]]:
         """
         Get columns for Parquet data query.
+
+        IG data by date does not contain "timestamp_db" column, so we use
+        "end_time" column (which is used also as index) as timestamp.
+
+        Note that `_get_columns_for_query()` and `_apply_transformations()` are
+        working on columns and data in a coordinated way and need to be kept in sync.
         """
         if columns is not None:
             # In order not to modify the input.
@@ -119,10 +125,8 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
         df["timestamp_db"] = df.index
         # Post-process columns.
         if columns is not None:
-            # Make end time column from index if it was specified.
             if "end_time" in columns:
                 df["end_time"] = df.index
-            # Drop timestamp DB column if it was not specified.
             if "timestamp_db" not in columns:
                 df = df.drop(["timestamp_db"], axis=1)
         return df
