@@ -68,7 +68,9 @@ def get_master_ml_config() -> cconconf.Config:
             "columns": "volume vwap vwap.ret_0 vwap.ret_0.vol_adj vwap.ret_0.vol_adj.c vwap.ret_0.vol_adj_2 vwap.ret_0.vol_adj_2_hat".split(),
             "start_date": datetime.date(2018, 1, 1),
             "end_date": datetime.date(2022, 5, 1),
-            "im_client": iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(True)
+            "im_client": iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(
+                True
+            ),
         },
         "column_names": {
             "asset_id": "asset_id",
@@ -123,12 +125,14 @@ def load_predictions_df(config: cconconf.Config) -> pd.DataFrame:
     return predict_df
 
 
-def preprocess_predictions_df(config: cconconf.Config, predict_df: pd.DataFrame) -> pd.DataFrame:
+def preprocess_predictions_df(
+    config: cconconf.Config, predict_df: pd.DataFrame
+) -> pd.DataFrame:
     """
     Preprocess data with ML predictions for analysis.
-    
+
     Input:
-    
+
     ```
                         volume                  vwap
     asset_id            1464553467  1467591036  1464553467  1467591036
@@ -136,9 +140,9 @@ def preprocess_predictions_df(config: cconconf.Config, predict_df: pd.DataFrame)
     2018-01-01 09:35:00   314.0657     47.3976    729.7789  12887.3945
     2018-01-01 09:40:00   178.6543     35.1098    731.0134  12913.6854
     ```
-    
+
     Output:
-    
+
     ```
                                               volume        vwap
     end_ts                        asset_id
@@ -151,18 +155,27 @@ def preprocess_predictions_df(config: cconconf.Config, predict_df: pd.DataFrame)
     # Convert the prediction stats data to Multiindex by time and asset id.
     metrics_df = predict_df.stack()
     # Compute hit and PnL.
-    metrics_df["hit"] = metrics_df[config["column_names"]["y"]] * metrics_df[config["column_names"]["y_hat"]] >= 0
-    metrics_df["trade_pnl"] = metrics_df[config["column_names"]["y"]] * metrics_df[config["column_names"]["y_hat"]]
+    metrics_df["hit"] = (
+        metrics_df[config["column_names"]["y"]]
+        * metrics_df[config["column_names"]["y_hat"]]
+        >= 0
+    )
+    metrics_df["trade_pnl"] = (
+        metrics_df[config["column_names"]["y"]]
+        * metrics_df[config["column_names"]["y_hat"]]
+    )
     # TODO(*): Think about avoiding using `ImClient` for mapping.
     # Convert asset ids to full symbols using `ImClient` mapping.
     im_client = config["data"]["im_client"]
     metrics_df.index = metrics_df.index.set_levels(
-        metrics_df.index.levels[1].map(im_client._asset_id_to_full_symbol_mapping),
+        metrics_df.index.levels[1].map(
+            im_client._asset_id_to_full_symbol_mapping
+        ),
         level=1,
     )
     return metrics_df
 
-    
+
 def plot_metric(
     config: cconconf.Config,
     metrics_df: pd.DataFrame,
@@ -224,7 +237,7 @@ def _x_axis_preprocesing(
     elif by == "prediction_magnitude":
         x_name = ".".join([y_hat, "quantile_rank"])
         # Make a column with prediction quantile ranks.
-        data[x_name] = pd.qcut(data[y_hat], quantile_ranks, labels = False)
+        data[x_name] = pd.qcut(data[y_hat], quantile_ranks, labels=False)
     elif by == "volume":
         x_name = ".".join([volume, "quantile_rank"])
         # Make a column with volume quantile ranks per asset id.
@@ -252,9 +265,12 @@ def _y_axis_preprocesing(
     elif metric == "sharpe_ratio":
         y_name = config["column_names"]["trade_pnl"]
         # Compute Shapre Ratio per X-axis category.
-        data = data.groupby(x_name)[y_name].agg(
-            lambda x: x.mean() / x.std()
-        ).sort_values(ascending=False).reset_index()
+        data = (
+            data.groupby(x_name)[y_name]
+            .agg(lambda x: x.mean() / x.std())
+            .sort_values(ascending=False)
+            .reset_index()
+        )
     else:
         raise
     # Rename Y-axis column name to metric name and store it.
@@ -276,8 +292,8 @@ predict_df.head(3)
 
 # %%
 (
-    predict_df[config["column_names"]["y"]] * 
-    predict_df[config["column_names"]["y_hat"]]
+    predict_df[config["column_names"]["y"]]
+    * predict_df[config["column_names"]["y_hat"]]
 ).sum(axis=1).cumsum().plot()
 
 # %% [markdown]
@@ -304,19 +320,27 @@ _ = plot_metric(config, metrics_df, "hit_rate", "asset_id")
 
 # %%
 # Cumulative PnL for a given coin.
-pnl_stats = metrics_df.groupby(
-    config["column_names"]["asset_id"]
-)[config["column_names"]["trade_pnl"]].sum().sort_values(ascending=False)
-# Plot overall PnL per asset id.
-_ = sns.barplot(
-    x=pnl_stats.index, y=pnl_stats.values, color="C0", capsize=0.2
+pnl_stats = (
+    metrics_df.groupby(config["column_names"]["asset_id"])[
+        config["column_names"]["trade_pnl"]
+    ]
+    .sum()
+    .sort_values(ascending=False)
 )
+# Plot overall PnL per asset id.
+_ = sns.barplot(x=pnl_stats.index, y=pnl_stats.values, color="C0", capsize=0.2)
 plt.xticks(rotation=70)
 plt.show()
 
 # %%
 # Plot cumulative PnL over time per asset id.
-_ = metrics_df[config["column_names"]["trade_pnl"]].dropna().unstack().cumsum().plot()
+_ = (
+    metrics_df[config["column_names"]["trade_pnl"]]
+    .dropna()
+    .unstack()
+    .cumsum()
+    .plot()
+)
 
 # %%
 _ = plot_metric(config, metrics_df, "avg_pnl", "asset_id")
