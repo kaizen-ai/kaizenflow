@@ -95,15 +95,48 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
         """
         Same as abstract method.
         """
+        query_columns = self._get_columns_for_query(columns)
         df = super()._read_data_for_multiple_symbols(
             full_symbols,
             start_ts,
             end_ts,
-            columns,
+            query_columns,
             full_symbol_col_name,
             root_data_dir=self._root_dir,
             aws_profile=self._aws_profile,
         )
+        df = self._apply_transformations(df, columns)
+        return df
+
+    @staticmethod
+    def _get_columns_for_query(
+        columns: Optional[List[str]]
+    ) -> Optional[List[str]]:
+        """
+        Get columns for Parquet data query.
+        """
+        if columns is not None:
+            # In order not to modify the input.
+            query_columns = columns.copy()
+            if "end_time" not in columns:
+                # End time column is necessary for `IG` data reading.
+                query_columns.append("end_time")
+            if "timestamp_db" in columns:
+                # Timestamp DB column is not present in raw data.
+                query_columns.remove("timestamp_db")
+        else:
+            query_columns = columns
+        return query_columns
+    
+    @staticmethod
+    def _apply_transformations(
+        df: pd.DataFrame,
+        columns: Optional[str],
+        **kwargs: Any,
+    ) -> pd.DataFrame:
+        """
+        Apply transformations to loaded data.
+        """
         # Historical data doesn't have a knowledge time so we use the end of the
         # interval as a proxy for it, which for now it's the index.
         hdbg.dassert_not_in("timestamp_db", df.columns)
@@ -111,4 +144,12 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
         #  index.
         # df["timestamp_db"] = df["end_time"]
         df["timestamp_db"] = df.index
+        # Post-process columns.
+        if columns is not None:
+            # Make end time column from index if it was specified.
+            if "end_time" in columns:
+                df["end_time"] = df.index
+            # Drop timestamp DB column if it was not specified.
+            if "timestamp_db" not in columns:
+                df = df.drop(["timestamp_db"], axis=1)
         return df
