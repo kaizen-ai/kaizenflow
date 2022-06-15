@@ -31,9 +31,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): @all Move all the find-related code to lib_tasks_find.py
-
-
 def _find_test_files(
     dir_name: Optional[str] = None, use_absolute_path: bool = False
 ) -> List[str]:
