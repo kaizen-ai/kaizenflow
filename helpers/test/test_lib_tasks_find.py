@@ -82,7 +82,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
             "TestLibTasksRunTests1", file_names
         )
         act = hunitest.purify_file_names(file_names)
-        exp = ["helpers/test/test_lib_tasks.py::TestLibTasksRunTests1"]
+        exp = ["helpers/test/test_lib_tasks_find.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
 
     def test_find_test_class2(self) -> None:
@@ -95,7 +95,7 @@ class TestLibTasksRunTests1(hunitest.TestCase):
             "TestLibTasksRunTests1", file_names
         )
         act = hunitest.purify_file_names(file_names)
-        exp = ["helpers/test/test_lib_tasks.py::TestLibTasksRunTests1"]
+        exp = ["helpers/test/test_lib_tasks_find.py::TestLibTasksRunTests1"]
         self.assert_equal(str(act), str(exp))
 
     def test_find_test_class3(self) -> None:
