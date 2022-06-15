@@ -2588,9 +2588,10 @@ def docker_release_dev_image(  # type: ignore
     fast_tests=True,
     slow_tests=True,
     superslow_tests=False,
-    qa_tests=True,
+    # TODO(Nikola): CMTask #2137 - QA test run issues.
+    qa_tests=False,
     push_to_repo=True,
-    update_poetry=False,
+    update_poetry=True,
     container_dir_name=".",
 ):
     """
