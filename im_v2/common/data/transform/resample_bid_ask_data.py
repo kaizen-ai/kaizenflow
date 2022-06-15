@@ -42,7 +42,9 @@ def _resample_bid_ask_data(
     resample_rule = "T"
     df = cfinresa.resample(data, rule=resample_rule).agg(
         {
+            "bid_price": "last",
             "bid_size": "sum",
+            "ask_price": "last",
             "ask_size": "sum",
             "exchange_id": "last",
         }
@@ -51,12 +53,12 @@ def _resample_bid_ask_data(
         bid_price = cfinresa.compute_vwap(
             df, rule=resample_rule, price_col="bid_price", volume_col="bid_size"
         )
-        bid_price.rename(columns={"vwap": "bid_size"}, inplace=True)
         ask_price = cfinresa.compute_vwap(
             df, rule=resample_rule, price_col="ask_price", volume_col="ask_size"
         )
-        ask_price.rename(columns={"vwap": "ask_size"}, inplace=True)
-        bid_ask_price_df = pd.concat([bid_price, ask_price])
+        bid_ask_price_df = pd.DataFrame(
+            [bid_price, ask_price], index=["bid_size", "ask_size"]
+        ).T
     elif mode == "TWAP":
         bid_ask_price_df = (
             df[["bid_size", "ask_size"]]
@@ -65,8 +67,8 @@ def _resample_bid_ask_data(
         )
     else:
         raise ValueError(f"Invalid mode='{mode}'")
-    df.insert(0, "bid_price", bid_ask_price_df["bid_size"])
-    df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
+    df["bid_price"] = bid_ask_price_df["bid_size"]
+    df["ask_price"] = bid_ask_price_df["ask_size"]
     return df
 
 
@@ -89,7 +91,6 @@ def _run(args: argparse.Namespace) -> None:
         "bid_size",
         "ask_price",
         "ask_size",
-        "currency_pair",
         "exchange_id",
     ]
     for file in tqdm.tqdm(files_to_read):
