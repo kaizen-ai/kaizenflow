@@ -29,13 +29,18 @@ data
 # # Tier 1 filter
 
 # %%
-# `Partner` in job, `Venture,Capital,VC` in company.
-tier1 = pd.concat([
-    data[data["job"].str.contains('Partner', case = False, na=False)],
-    data[data["company"].str.contains('venture|capital|VC', case = False, na=False)],
-])
+# `Partner` in job.
+mask1 = data["job"].str.contains('Partner', case = False, na=False)
+print("Selecting partner=", mask1.sum())
+# `Venture,Capital,VC` in company.
+mask2 = data["company"].str.contains('venture|capital|VC', case = False, na=False)
+print("Company count=", mask2.sum())
 # Exclude LLP (lawyer firms).
-tier1 = tier1[~tier1["company"].str.contains('LLP', na=False)]
+mask3 = data["company"].str.contains('LLP', na=False)
+print("Company count=", mask3.sum())
+
+# Collect all Tier-1 contacts.
+tier1 = data[(mask1|mask2) & ~mask3]
 tier1 = tier1.drop_duplicates()
 tier1
 
