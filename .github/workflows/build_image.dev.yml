@@ -2,24 +2,7 @@ name: Build dev image
 on:
   # Run manually.
   workflow_dispatch:
-    # User controlled inputs that will affect build flow.
-    inputs:
-      skip_tests:
-        description: Skip all the tests and release the dev image
-        required: true
-        type: boolean
-        default: false
-      superslow_tests:
-        description: Run superslow tests, unless all tests are skipped
-        required: true
-        type: boolean
-        default: false
-      qa_tests:
-        # TODO(Nikola): CMTask #2137 - QA test run issues.
-        description: Run end-to-end linter tests, unless all tests skipped
-        required: true
-        type: boolean
-        default: false
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
 
 jobs:
   build_dev_image:
