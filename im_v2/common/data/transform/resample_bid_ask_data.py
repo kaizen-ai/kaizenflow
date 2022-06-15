@@ -19,6 +19,7 @@ import os
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import tqdm
 
 import core.finance.resampling as cfinresa
 import helpers.hdbg as hdbg
@@ -89,7 +90,7 @@ def _run(args: argparse.Namespace) -> None:
         "currency_pair",
         "exchange_id",
     ]
-    for file in files_to_read:
+    for file in tqdm.tqdm(files_to_read):
         file_path = os.path.join(args.src_dir, file)
         df = hparque.from_parquet(
             file_path, columns=columns, aws_profile=aws_profile
