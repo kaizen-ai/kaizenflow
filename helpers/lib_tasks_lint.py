@@ -133,37 +133,6 @@ def lint_check_python_files(  # type: ignore
     hlibtask._run(ctx, cmd)
 
 
-def _get_lint_docker_cmd(
-    docker_cmd_: str,
-    stage: str,
-    version: str,
-    *,
-    entrypoint: bool = True,
-) -> str:
-    """
-    Create a command to run in the Linter service.
-
-    :param docker_cmd_: command to run
-    :param stage: the image stage to use
-    :return: the full command to run
-    """
-    # Get an image to run the linter on.
-    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-    linter_image = f"{ecr_base_path}/dev_tools"
-    # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
-    # and run Linter on the specific version, e.g., `1.1.5`.
-    # Execute command line.
-    cmd: str = hlibtask._get_docker_compose_cmd(
-        linter_image,
-        stage,
-        version,
-        docker_cmd_,
-        entrypoint=entrypoint,
-        service_name="linter",
-    )
-    return cmd
-
-
 def _parse_linter_output(txt: str) -> str:
     """
     Parse the output of the linter and return a file suitable for vim quickfix.
@@ -231,7 +200,7 @@ def lint_detect_cycles(  # type: ignore
         + hlibtask._to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
+    cmd = hlibtask._get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     hlibtask._run(ctx, cmd)
@@ -328,7 +297,9 @@ def lint(  # type: ignore
     if run_bash_without_entrypoint:
         # Run bash, without the Docker entrypoint.
         docker_cmd_ = "bash"
-        cmd = _get_lint_docker_cmd(docker_cmd_, stage, version, entrypoint=False)
+        cmd = hlibtask._get_lint_docker_cmd(
+            docker_cmd_, stage, version, entrypoint=False
+        )
         cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
         # Run.
         hlibtask._run(ctx, cmd)
@@ -336,7 +307,7 @@ def lint(  # type: ignore
     if run_entrypoint_and_bash:
         # Run the Docker entrypoint (which configures the environment) and then bash.
         docker_cmd_ = "bash"
-        cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
+        cmd = hlibtask._get_lint_docker_cmd(docker_cmd_, stage, version)
         cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
         # Run.
         hlibtask._run(ctx, cmd)
@@ -412,7 +383,7 @@ def lint(  # type: ignore
             )
             if fast:
                 docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
-            cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
+            cmd = hlibtask._get_lint_docker_cmd(docker_cmd_, stage, version)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             hlibtask._run(ctx, cmd)

@@ -2270,6 +2270,37 @@ def _get_docker_compose_cmd(
     return docker_cmd_
 
 
+def _get_lint_docker_cmd(
+    docker_cmd_: str,
+    stage: str,
+    version: str,
+    *,
+    entrypoint: bool = True,
+) -> str:
+    """
+    Create a command to run in the Linter service.
+
+    :param docker_cmd_: command to run
+    :param stage: the image stage to use
+    :return: the full command to run
+    """
+    # Get an image to run the linter on.
+    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+    linter_image = f"{ecr_base_path}/dev_tools"
+    # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
+    # and run Linter on the specific version, e.g., `1.1.5`.
+    # Execute command line.
+    cmd: str = _get_docker_compose_cmd(
+        linter_image,
+        stage,
+        version,
+        docker_cmd_,
+        entrypoint=entrypoint,
+        service_name="linter",
+    )
+    return cmd
+
+
 # ////////////////////////////////////////////////////////////////////////////////
 # bash and cmd.
 # ////////////////////////////////////////////////////////////////////////////////
