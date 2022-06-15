@@ -9,16 +9,6 @@ on:
         required: true
         type: boolean
         default: false
-      fast_tests:
-        description: Run fast tests, unless all tests are skipped
-        required: true
-        type: boolean
-        default: true
-      slow_tests:
-        description: Run slow tests, unless all tests are skipped
-        required: true
-        type: boolean
-        default: true
       superslow_tests:
         description: Run superslow tests, unless all tests are skipped
         required: true
@@ -30,11 +20,6 @@ on:
         required: true
         type: boolean
         default: false
-      update_poetry:
-        description: Update package dependencies using poetry
-        required: true
-        type: boolean
-        default: true
 
 jobs:
   build_dev_image:
@@ -97,7 +82,12 @@ jobs:
           CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
-        run: invoke docker_release_dev_image --version=FROM_CHANGELOG
+        run: >
+          invoke docker_release_dev_image 
+          --version=FROM_CHANGELOG 
+          --skip-tests=${{ github.event.inputs.skip_tests }} 
+          --superslow-tests=${{ github.event.inputs.superslow_tests }} 
+          --qa_tests=${{ github.event.inputs.qa_tests }}
 
       # Notify the team via Telegram in case of success.
       - name: Send Telegram notification for success
