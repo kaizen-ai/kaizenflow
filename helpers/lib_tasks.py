@@ -2643,8 +2643,11 @@ def docker_release_dev_image(  # type: ignore
     fast_tests=True,
     slow_tests=True,
     superslow_tests=False,
-    qa_tests=True,
+    # TODO(Nikola): CMTask #2137 - QA test run issues.
+    qa_tests=False,
     push_to_repo=True,
+    # TODO(Nikola): poetry does not work via GH actions,
+    #  see "Switch all the build systems to Python 3.9" CmTask #535.
     update_poetry=False,
     container_dir_name=".",
 ):
