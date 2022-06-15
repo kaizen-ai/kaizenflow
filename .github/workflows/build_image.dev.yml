@@ -87,7 +87,7 @@ jobs:
           --version=FROM_CHANGELOG 
           --skip-tests=${{ github.event.inputs.skip_tests }} 
           --superslow-tests=${{ github.event.inputs.superslow_tests }} 
-          --qa_tests=${{ github.event.inputs.qa_tests }}
+          --qa-tests=${{ github.event.inputs.qa_tests }}
 
       # Notify the team via Telegram in case of success.
       - name: Send Telegram notification for success
