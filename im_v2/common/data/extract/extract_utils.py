@@ -396,7 +396,7 @@ def save_parquet(
     )
     # Drop DB metadata columns.
     data = data.drop(
-        ["end_download_timestamp", "exchange_id"], axis=1, errors="ignore"
+        ["end_download_timestamp"], axis=1, errors="ignore"
     )
     # Save filename as `uuid`, e.g.
     #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
