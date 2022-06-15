@@ -48,12 +48,14 @@ def _resample_bid_ask_data(
         }
     )
     if mode == "VWAP":
-        bid_price = cfinresa.compute_twap_vwap(
-            df, resample_rule, price_col="bid_price", volume_col="bid_size"
+        bid_price = cfinresa.compute_vwap(
+            df, rule=resample_rule, price_col="bid_price", volume_col="bid_size"
         )
-        ask_price = cfinresa.compute_twap_vwap(
-            df, resample_rule, price_col="ask_price", volume_col="ask_size"
+        bid_price.rename(columns={"vwap": "bid_size"}, inplace=True)
+        ask_price = cfinresa.compute_vwap(
+            df, rule=resample_rule, price_col="ask_price", volume_col="ask_size"
         )
+        ask_price.rename(columns={"vwap": "ask_size"}, inplace=True)
         bid_ask_price_df = pd.concat([bid_price, ask_price])
     elif mode == "TWAP":
         bid_ask_price_df = (
