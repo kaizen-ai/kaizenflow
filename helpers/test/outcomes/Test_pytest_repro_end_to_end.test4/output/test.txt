@@ -1,8 +1,8 @@
 INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test4/input/log.txt --show-stacktrace'
 ## pytest_repro: 
-HH:MM:SS - INFO  lib_tasks.py pytest_repro:{LINE_NUM}                         Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test4/input/log.txt'
-HH:MM:SS - INFO  lib_tasks.py pytest_repro:{LINE_NUM}                         Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test4/input/log.txt'
-HH:MM:SS - INFO  lib_tasks.py pytest_repro:{LINE_NUM}                         Found 3 failed pytest 'tests' target(s); to reproduce run:
+HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:827                   Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test4/input/log.txt'
+HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:829                   Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test4/input/log.txt'
+HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:940                   Found 3 failed pytest 'tests' target(s); to reproduce run:
 pytest dataflow/pipelines/real_time/test/test_dataflow_pipelines_real_time_pipeline.py::TestRealTimeMvnReturnsWithOms1::test1
 pytest dataflow/core/nodes/test/test_sources.py::TestMultivariateNormalDataSource::test1
 pytest dataflow/core/test/test_builders.py::TestMvnReturnsBuilder::test1
