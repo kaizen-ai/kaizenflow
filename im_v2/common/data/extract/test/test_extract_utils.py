@@ -219,7 +219,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         # Set mock return values.
         mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
         mock_get_secret.return_value = self.binance_secret
-        # Create `s3://mock_bucket/binance` path for incremental mode.
+        # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
             f.write("test")
