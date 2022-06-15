@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 import ccxt
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
@@ -57,20 +58,40 @@ class CcxtBroker(ombroker.Broker):
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
 
-    def get_fills(self) -> List[ombroker.Fill]:
+    def get_fills(
+        self, sent_orders: List[omorder.Order] = None
+    ) -> List[ombroker.Fill]:
         """
         Return list of fills from the last order execution.
+
+        :param sent_orders: a list of orders submitted by Broker
+        :return: a list of filled orders
         """
         fills: List[ombroker.Fill] = []
         if self.last_order_execution_ts:
             _LOG.info("Inside get_fills")
             orders = self._exchange.fetch_orders(
-                since=self.last_order_execution_ts
+                since=hdateti.convert_timestamp_to_unix_epoch(
+                    self.last_order_execution_ts
+                )
             )
             for order in orders:
                 if order["status"] == "closed":
-                    # TODO(Danya): Transform filled order to a `Fill` object.
-                    fills.append(order["id"])
+                    # Select order matching to CCXT exchange id.
+                    filled_order = [
+                        order
+                        for order in sent_orders
+                        if order.ccxt_id == order["id"]
+                    ][0]
+                    fill = ombroker.Fill(
+                        filled_order,
+                        hdateti.convert_unix_epoch_to_timestamp(
+                            order["timestamp"]
+                        ),
+                        num_shares=order["size"],
+                        price=order["price"],
+                    )
+                    fills.append(fill)
         return fills
 
     def _assert_order_methods_presence(self) -> None:
@@ -97,11 +118,12 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> str:
+    ) -> List[omorder.Order]:
         """
         Submit orders.
         """
         self.last_order_execution_ts = pd.Timestamp.now()
+        sent_orders: List[str] = []
         for order in orders:
             # TODO(Juraj): perform bunch of assertions for order attributes.
             symbol = self._asset_id_to_symbol_mapping[order.asset_id]
@@ -110,17 +132,21 @@ class CcxtBroker(ombroker.Broker):
                 symbol=symbol,
                 type=order.type_,
                 side=side,
-                amount=order.diff_num_shares,
+                amount=abs(order.diff_num_shares),
+                # id = order.order_id,
                 # id=order.order_id,
                 # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
                 # but most likely the method will need to be overriden per each exchange
                 # to accomodate endpoint specific behavior.
                 params={
                     "portfolio_id": self._portfolio_id,
-                    "client_order_id": order.order_id,
+                    "client_oid": order.order_id,
                 },
             )
+            order.exchange_id = order_resp["id"]
+            sent_orders.append(order)
             _LOG.info(order_resp)
+            return sent_orders
 
     def _build_asset_id_to_symbol_mapping(
         self, universe_version: str
