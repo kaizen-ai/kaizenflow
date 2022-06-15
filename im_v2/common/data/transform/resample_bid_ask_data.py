@@ -16,6 +16,7 @@ import argparse
 import logging
 import os
 
+import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -37,9 +38,11 @@ def _resample_bid_ask_data(data: pd.DataFrame) -> pd.DataFrame:
             "exchange_id": "last",
         }
     )
-    df_mean = df[["bid_size", "ask_size"]].groupby(pd.Grouper(
-        freq=resample_rule)
-    ).mean()
+    df_mean = (
+        df[["bid_size", "ask_size"]]
+        .groupby(pd.Grouper(freq=resample_rule))
+        .mean()
+    )
     df.insert(0, "bid_price", df_mean["bid_size"])
     df.insert(2, "ask_price", df_mean["ask_size"])
     return df
@@ -70,9 +73,7 @@ def _run(args: argparse.Namespace) -> None:
     for file in files_to_read:
         file_path = os.path.join(args.dst_dir, file)
         df = hparque.from_parquet(
-            file_path,
-            columns=columns,
-            aws_profile=aws_profile
+            file_path, columns=columns, aws_profile=aws_profile
         )
         df = _resample_bid_ask_data(df)
         pq.write_table(
