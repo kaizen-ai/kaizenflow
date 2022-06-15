@@ -95,8 +95,6 @@ class ImClient(abc.ABC):
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
         )
-        # TODO(Grisha): consider passing it as a parameter to also read bid/ask data.
-        self._dataset = "ohlcv"
 
     # TODO(gp): Why static?
     @staticmethod
@@ -432,8 +430,11 @@ class ImClient(abc.ABC):
         columns = None
         filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol], start_timestamp, end_timestamp, columns,
-            filter_data_mode
+            [full_symbol],
+            start_timestamp,
+            end_timestamp,
+            columns,
+            filter_data_mode,
         )
         # Assume that the timestamp is always stored as index.
         if mode == "start":
@@ -588,13 +589,14 @@ class ImClientReadingMultipleSymbols(ImClient, abc.ABC):
 # SqlRealTimeImClient
 # #############################################################################
 
+
 class RealTimeImClient(ImClient):
     """
     A realtime client for typing annotation.
 
     In practice all realtime clients use SQL backend.
     """
-    pass
+
 
 class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
@@ -706,6 +708,10 @@ class SqlRealTimeImClient(RealTimeImClient):
         data = self._apply_normalization(
             data, full_symbol_col_name=full_symbol_col_name
         )
+        if columns is None:
+            columns = data.columns
+        hdbg.dassert_is_subset(columns, data.columns.to_list())
+        data = data[columns]
         return data
 
     def _build_select_query(
@@ -751,8 +757,14 @@ class SqlRealTimeImClient(RealTimeImClient):
             elem_type=tuple,
             msg="`parsed_symbols` should be a list of tuple",
         )
+        table_columns = hsql.get_table_columns(
+            self._db_connection, self._table_name
+        )
+        if columns is None:
+            columns = table_columns
+        hdbg.dassert_is_subset(columns, table_columns)
         # Add columns to the SELECT query
-        columns_as_str = "*" if columns is None else ",".join(columns)
+        columns_as_str = ",".join(columns)
         # Build a SELECT query.
         select_query = f"SELECT {columns_as_str} FROM {self._table_name} WHERE "
         # Build a WHERE query.

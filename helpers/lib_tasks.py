@@ -26,6 +26,7 @@ from invoke import task
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
@@ -36,6 +37,10 @@ import helpers.htable as htable
 import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
 import helpers.hversion as hversio
+
+# Import this way to avoid complexity in propagating the refactoring in all
+# the repos downstream.
+from helpers.lib_tasks_git import *  # isort:skip  # noqa: F401,F403 # pylint: disable=unused-import,unused-wildcard-import,wildcard-import
 
 _LOG = logging.getLogger(__name__)
 
@@ -442,717 +447,15 @@ def print_env(ctx):  # type: ignore
     Print the repo configuration.
     """
     _ = ctx
-    print(hversio.env_to_str())
+    print(henv.env_to_str())
 
-
-# #############################################################################
-# Git.
-# #############################################################################
-
-
-@task
-def git_pull(ctx):  # type: ignore
-    """
-    Pull all the repos.
-    """
-    _report_task()
-    #
-    cmd = "git pull --autostash"
-    _run(ctx, cmd)
-    #
-    cmd = "git submodule foreach 'git pull --autostash'"
-    _run(ctx, cmd)
-
-
-@task
-def git_fetch_master(ctx):  # type: ignore
-    """
-    Pull master without changing branch.
-    """
-    _report_task()
-    #
-    cmd = "git fetch origin master:master"
-    _run(ctx, cmd)
-
-
-@task
-def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: ignore
-    """
-    Merge `origin/master` into the current branch.
-
-    :param ff_only: abort if fast-forward is not possible
-    """
-    _report_task()
-    # Check that the Git client is clean.
-    hgit.is_client_clean(dir_name=".", abort_if_not_clean=abort_if_not_clean)
-    # Pull master.
-    git_fetch_master(ctx)
-    # Merge master.
-    cmd = "git merge master"
-    if ff_only:
-        cmd += " --ff-only"
-    _run(ctx, cmd)
-
-
-@task
-def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
-    """
-    Clean the repo_short_name and its submodules from artifacts.
-
-    Run `git status --ignored` to see what it's skipped.
-    """
-    _report_task(txt=hprint.to_str("dry_run"))
-    # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
-    #  mistake.
-    # Fix permissions, if needed.
-    if fix_perms_:
-        cmd = "invoke fix_perms"
-        _run(ctx, cmd)
-    # Clean recursively.
-    git_clean_cmd = "git clean -fd"
-    if dry_run:
-        git_clean_cmd += " --dry-run"
-    # Clean current repo.
-    cmd = git_clean_cmd
-    _run(ctx, cmd)
-    # Clean submodules.
-    cmd = f"git submodule foreach '{git_clean_cmd}'"
-    _run(ctx, cmd)
-    # Delete other files.
-    to_delete = [
-        r"*\.pyc",
-        r"*\.pyo",
-        r".coverage",
-        r".ipynb_checkpoints",
-        r".mypy_cache",
-        r".pytest_cache",
-        r"__pycache__",
-        r"cfile",
-        r"tmp.*",
-        r"*.tmp",
-    ]
-    opts = [f"-name '{opt}'" for opt in to_delete]
-    opts = " -o ".join(opts)
-    cmd = f"find . {opts} | sort"
-    if not dry_run:
-        cmd += " | xargs rm -rf"
-    _run(ctx, cmd)
-
-
-@task
-def git_add_all_untracked(ctx):  # type: ignore
-    """
-    Add all untracked files to Git.
-    """
-    _report_task()
-    cmd = "git add $(git ls-files -o --exclude-standard)"
-    _run(ctx, cmd)
-
-
-@task
-def git_create_patch(  # type: ignore
-    ctx, mode="diff", modified=False, branch=False, last_commit=False, files=""
-):
-    """
-    Create a patch file for the entire repo_short_name client from the base
-    revision. This script accepts a list of files to package, if specified.
-
-    The parameters `modified`, `branch`, `last_commit` have the same meaning as
-    in `_get_files_to_process()`.
-
-    :param mode: what kind of patch to create
-        - "diff": (default) creates a patch with the diff of the files
-        - "tar": creates a tar ball with all the files
-    """
-    _report_task(txt=hprint.to_str("mode modified branch last_commit files"))
-    _ = ctx
-    # TODO(gp): Check that the current branch is up to date with master to avoid
-    #  failures when we try to merge the patch.
-    hdbg.dassert_in(mode, ("tar", "diff"))
-    # For now we just create a patch for the current submodule.
-    # TODO(gp): Extend this to handle also nested repos.
-    super_module = False
-    git_client_root = hgit.get_client_root(super_module)
-    hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
-    timestamp = _get_ET_timestamp()
-    #
-    tag = os.path.basename(git_client_root)
-    dst_file = f"patch.{tag}.{hash_}.{timestamp}"
-    if mode == "tar":
-        dst_file += ".tgz"
-    elif mode == "diff":
-        dst_file += ".patch"
-    else:
-        hdbg.dfatal("Invalid code path")
-    _LOG.debug("dst_file=%s", dst_file)
-    # Summary of files.
-    _LOG.info(
-        "Difference between HEAD and master:\n%s",
-        hgit.get_summary_files_in_branch("master", dir_name="."),
-    )
-    # Get the files.
-    all_ = False
-    # We allow to specify files as a subset of files modified in the branch or
-    # in the client.
-    mutually_exclusive = False
-    # We don't allow to specify directories.
-    remove_dirs = True
-    files_as_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
-    )
-    _LOG.info("Files to save:\n%s", hprint.indent("\n".join(files_as_list)))
-    if not files_as_list:
-        _LOG.warning("Nothing to patch: exiting")
-        return
-    files_as_str = " ".join(files_as_list)
-    # Prepare the patch command.
-    cmd = ""
-    if mode == "tar":
-        cmd = f"tar czvf {dst_file} {files_as_str}"
-        cmd_inv = "tar xvzf"
-    elif mode == "diff":
-        if modified:
-            opts = "HEAD"
-        elif branch:
-            opts = "master..."
-        elif last_commit:
-            opts = "HEAD^"
-        else:
-            hdbg.dfatal(
-                "You need to specify one among -modified, --branch, "
-                "--last-commit"
-            )
-        cmd = f"git diff {opts} --binary {files_as_str} >{dst_file}"
-        cmd_inv = "git apply"
-    # Execute patch command.
-    _LOG.info("Creating the patch into %s", dst_file)
-    hdbg.dassert_ne(cmd, "")
-    _LOG.debug("cmd=%s", cmd)
-    rc = hsystem.system(cmd, abort_on_error=False)
-    if not rc:
-        _LOG.warning("Command failed with rc=%d", rc)
-    # Print message to apply the patch.
-    remote_file = os.path.basename(dst_file)
-    abs_path_dst_file = os.path.abspath(dst_file)
-    msg = f"""
-# To apply the patch and execute:
-> git checkout {hash_}
-> {cmd_inv} {abs_path_dst_file}
-
-# To apply the patch to a remote client:
-> export SERVER="server"
-> export CLIENT_PATH="~/src"
-> scp {dst_file} $SERVER:
-> ssh $SERVER 'cd $CLIENT_PATH && {cmd_inv} ~/{remote_file}'"
-    """
-    print(msg)
-
-
-@task
-def git_files(  # type: ignore
-    ctx, modified=False, branch=False, last_commit=False, pbcopy=False
-):
-    """
-    Report which files are changed in the current branch with respect to
-    `master`.
-
-    The params have the same meaning as in `_get_files_to_process()`.
-    """
-    _report_task()
-    _ = ctx
-    all_ = False
-    files = ""
-    mutually_exclusive = True
-    # pre-commit doesn't handle directories, but only files.
-    remove_dirs = True
-    files_as_list = _get_files_to_process(
-        modified,
-        branch,
-        last_commit,
-        all_,
-        files,
-        mutually_exclusive,
-        remove_dirs,
-    )
-    print("\n".join(sorted(files_as_list)))
-    if pbcopy:
-        res = " ".join(files_as_list)
-        _to_pbcopy(res, pbcopy)
-
-
-@task
-def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
-    """
-    Print the status of the files in the previous commit.
-
-    :param pbcopy: save the result into the system clipboard (only on macOS)
-    """
-    cmd = 'git log -1 --name-status --pretty=""'
-    _run(ctx, cmd)
-    # Get the list of existing files.
-    files = hgit.get_previous_committed_files(".")
-    txt = "\n".join(files)
-    print(f"\n# The files modified are:\n{txt}")
-    # Save to clipboard.
-    res = " ".join(files)
-    _to_pbcopy(res, pbcopy)
-
-
-@task
-def git_roll_amp_forward(ctx):
-    """
-    Roll amp forward.
-    """
-    _report_task()
-    AMP_DIR = "amp"
-    if os.path.exists(AMP_DIR):
-        cmds = [
-            f"cd {AMP_DIR} && git checkout master",
-            f"cd {AMP_DIR} && git pull",
-            f"git add {AMP_DIR}",
-            f"git commit -m 'Roll {AMP_DIR} pointer forward'",
-            "git push",
-        ]
-        for cmd in cmds:
-            _run(ctx, cmd)
-    else:
-        _LOG.warning("%s does not exist, aborting", AMP_DIR)
-
-
-# TODO(gp): Add git_co(ctx)
-# Reuse hgit.git_stash_push() and hgit.stash_apply()
-# git stash save your-file-name
-# git checkout master
-# # do whatever you had to do with master
-# git checkout staging
-# git stash pop
-
-
-# #############################################################################
-# Branches workflows
-# #############################################################################
-
-
-# TODO(gp): Consider renaming the commands as `git_branch_*`
-
-
-@task
-def git_branch_files(ctx):  # type: ignore
-    """
-    Report which files were added, changed, and modified in the current branch
-    with respect to `master`.
-
-    This is a more detailed version of `i git_files --branch`.
-    """
-    _report_task()
-    _ = ctx
-    print(
-        "Difference between HEAD and master:\n"
-        + hgit.get_summary_files_in_branch("master", dir_name=".")
-    )
-
-
-@task
-def git_create_branch(  # type: ignore
-    ctx,
-    branch_name="",
-    issue_id=0,
-    repo_short_name="current",
-    suffix="",
-    only_branch_from_master=True,
-):
-    """
-    Create and push upstream branch `branch_name` or the one corresponding to
-    `issue_id` in repo_short_name `repo_short_name`.
-
-    E.g.,
-    ```
-    > git checkout -b LemTask169_Get_GH_actions
-    > git push --set- upstream origin LemTask169_Get_GH_actions
-    ```
-
-    :param branch_name: name of the branch to create (e.g.,
-        `LemTask169_Get_GH_actions`)
-    :param issue_id: use the canonical name for the branch corresponding to that
-        issue
-    :param repo_short_name: name of the GitHub repo_short_name that the `issue_id`
-        belongs to
-        - "current" (default): the current repo_short_name
-        - short name (e.g., "amp", "lm") of the branch
-    :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
-    :param only_branch_from_master: only allow to branch from master
-    """
-    _report_task()
-    if issue_id > 0:
-        # User specified an issue id on GitHub.
-        hdbg.dassert_eq(
-            branch_name, "", "You can't specify both --issue and --branch_name"
-        )
-        title, _ = _get_gh_issue_title(issue_id, repo_short_name)
-        branch_name = title
-        _LOG.info(
-            "Issue %d in %s repo_short_name corresponds to '%s'",
-            issue_id,
-            repo_short_name,
-            branch_name,
-        )
-        if suffix != "":
-            # Add the the suffix.
-            _LOG.debug("Adding suffix '%s' to '%s'", suffix, branch_name)
-            if suffix[0] in ("-", "_"):
-                _LOG.warning(
-                    "Suffix '%s' should not start with '%s': removing",
-                    suffix,
-                    suffix[0],
-                )
-                suffix = suffix.rstrip("-_")
-            branch_name += "_" + suffix
-    #
-    _LOG.info("branch_name='%s'", branch_name)
-    hdbg.dassert_ne(branch_name, "")
-    # Check that the branch is not just a number.
-    m = re.match(r"^\d+$", branch_name)
-    hdbg.dassert(not m, "Branch names with only numbers are invalid")
-    # The valid format of a branch name is `AmpTask1903_Implemented_system_...`.
-    m = re.match(r"^\S+Task\d+_\S+$", branch_name)
-    hdbg.dassert(m, "Branch name should be '{Amp,...}TaskXYZ_...'")
-    hdbg.dassert(
-        not hgit.does_branch_exist(branch_name, mode="all"),
-        "The branch '%s' already exists",
-        branch_name,
-    )
-    # Make sure we are branching from `master`, unless that's what the user wants.
-    curr_branch = hgit.get_branch_name()
-    if curr_branch != "master":
-        if only_branch_from_master:
-            hdbg.dfatal(
-                f"You should branch from master and not from '{curr_branch}'"
-            )
-    # Fetch master.
-    cmd = "git pull --autostash"
-    _run(ctx, cmd)
-    # git checkout -b LmTask169_Get_GH_actions_working_on_lm
-    cmd = f"git checkout -b {branch_name}"
-    _run(ctx, cmd)
-    cmd = f"git push --set-upstream origin {branch_name}"
-    _run(ctx, cmd)
-
-
-# TODO(gp): Move to hgit.
-def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
-    if tag == "local":
-        # Delete local branches that are already merged into master.
-        # > git branch --merged
-        # * AmpTask1251_Update_GH_actions_for_amp_02
-        find_cmd = r"git branch --merged master | grep -v master | grep -v \*"
-        delete_cmd = "git branch -d"
-    elif tag == "remote":
-        # Get the branches to delete.
-        find_cmd = (
-            "git branch -r --merged origin/master"
-            + r" | grep -v master | sed 's/origin\///'"
-        )
-        delete_cmd = "git push origin --delete"
-    else:
-        raise ValueError(f"Invalid tag='{tag}'")
-    # TODO(gp): Use system_to_lines
-    _, txt = hsystem.system_to_string(find_cmd, abort_on_error=False)
-    branches = hsystem.text_to_list(txt)
-    # Print info.
-    _LOG.info(
-        "There are %d %s branches to delete:\n%s",
-        len(branches),
-        tag,
-        "\n".join(branches),
-    )
-    if not branches:
-        # No branch to delete, then we are done.
-        return
-    # Ask whether to continue.
-    if confirm_delete:
-        hsystem.query_yes_no(
-            hdbg.WARNING + f": Delete these {tag} branches?", abort_on_no=True
-        )
-    for branch in branches:
-        cmd_tmp = f"{delete_cmd} {branch}"
-        _run(ctx, cmd_tmp)
-
-
-@task
-def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
-    """
-    Remove (both local and remote) branches that have been merged into master.
-    """
-    _report_task()
-    hdbg.dassert(
-        hgit.get_branch_name(),
-        "master",
-        "You need to be on master to delete dead branches",
-    )
-    #
-    cmd = "git fetch --all --prune"
-    _run(ctx, cmd)
-    # Delete local and remote branches that are already merged into master.
-    _delete_branches(ctx, "local", confirm_delete)
-    _delete_branches(ctx, "remote", confirm_delete)
-    #
-    cmd = "git fetch --all --prune"
-    _run(ctx, cmd)
-
-
-@task
-def git_rename_branch(ctx, new_branch_name):  # type: ignore
-    """
-    Rename current branch both locally and remotely.
-    """
-    _report_task()
-    #
-    old_branch_name = hgit.get_branch_name(".")
-    hdbg.dassert_ne(old_branch_name, new_branch_name)
-    msg = (
-        f"Do you want to rename the current branch '{old_branch_name}' to "
-        f"'{new_branch_name}'"
-    )
-    hsystem.query_yes_no(msg, abort_on_no=True)
-    # https://stackoverflow.com/questions/30590083
-    # Rename the local branch to the new name.
-    # > git branch -m <old_name> <new_name>
-    cmd = f"git branch -m {new_branch_name}"
-    _run(ctx, cmd)
-    # Delete the old branch on remote.
-    # > git push <remote> --delete <old_name>
-    cmd = f"git push origin --delete {old_branch_name}"
-    _run(ctx, cmd)
-    # Prevent Git from using the old name when pushing in the next step.
-    # Otherwise, Git will use the old upstream name instead of <new_name>.
-    # > git branch --unset-upstream <new_name>
-    cmd = f"git branch --unset-upstream {new_branch_name}"
-    _run(ctx, cmd)
-    # Push the new branch to remote.
-    # > git push <remote> <new_name>
-    cmd = f"git push origin {new_branch_name}"
-    _run(ctx, cmd)
-    # Reset the upstream branch for the new_name local branch.
-    # > git push <remote> -u <new_name>
-    cmd = f"git push origin u {new_branch_name}"
-    _run(ctx, cmd)
-    print("Done")
-
-
-@task
-def git_branch_next_name(ctx):  # type: ignore
-    """
-    Return a name derived from the branch so that the branch doesn't exist.
-
-    E.g., `AmpTask1903_Implemented_system_Portfolio` ->
-    `AmpTask1903_Implemented_system_Portfolio_3`
-    """
-    _report_task()
-    _ = ctx
-    branch_next_name = hgit.get_branch_next_name(log_verb=logging.INFO)
-    print(f"branch_next_name='{branch_next_name}'")
-
-
-@task
-def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
-    """
-    Create a new branch with the same content of the current branch.
-    """
-    hdbg.dassert(not use_patch, "Patch flow not implemented yet")
-    #
-    curr_branch_name = hgit.get_branch_name()
-    hdbg.dassert_ne(curr_branch_name, "master")
-    # Make sure `old_branch_name` doesn't need to have `master` merged.
-    cmd = "invoke git_merge_master --ff-only"
-    _run(ctx, cmd)
-    if use_patch:
-        # TODO(gp): Create a patch or do a `git merge`.
-        pass
-    # If new_branch_name was not specified, find a new branch with the next index.
-    if new_branch_name == "":
-        new_branch_name = hgit.get_branch_next_name()
-    _LOG.info("new_branch_name='%s'", new_branch_name)
-    # Create or go to the new branch.
-    mode = "all"
-    new_branch_exists = hgit.does_branch_exist(new_branch_name, mode)
-    if new_branch_exists:
-        cmd = f"git checkout {new_branch_name}"
-    else:
-        cmd = f"git checkout master && invoke git_create_branch -b '{new_branch_name}'"
-    _run(ctx, cmd)
-    if use_patch:
-        # TODO(gp): Apply the patch.
-        pass
-    #
-    cmd = f"git merge --squash --ff {curr_branch_name} && git reset HEAD"
-    _run(ctx, cmd)
-
-
-def _git_diff_with_branch(
-    ctx: Any,
-    hash_: str,
-    tag: str,
-    dir_name: str,
-    diff_type: str,
-    subdir: str,
-    extensions: str,
-    dry_run: bool,
-) -> None:
-    _LOG.debug(
-        hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
-    )
-    # Check that this branch is not master.
-    curr_branch_name = hgit.get_branch_name()
-    hdbg.dassert_ne(curr_branch_name, "master")
-    # Get the modified files.
-    cmd = []
-    cmd.append("git diff")
-    if diff_type:
-        cmd.append(f"--diff-filter={diff_type}")
-    cmd.append(f"--name-only HEAD {hash_}")
-    cmd = " ".join(cmd)
-    files = hsystem.system_to_files(cmd, dir_name, remove_files_non_present=False)
-    files = sorted(files)
-    print("files=%s\n%s" % (len(files), "\n".join(files)))
-    # Filter the files, if needed.
-    if extensions:
-        extensions_lst = extensions.split(",")
-        _LOG.warning(
-            "Requested filtering by %d extensions: %s",
-            len(extensions_lst),
-            extensions_lst,
-        )
-        files_tmp = []
-        for f in files:
-            if any(f.endswith(ext) for ext in extensions_lst):
-                files_tmp.append(f)
-        files = files_tmp
-        print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
-    if len(files) == 0:
-        _LOG.warning("Nothing to diff: exiting")
-        return
-    # Create the dir storing all the files to compare.
-    dst_dir = f"./tmp.{tag}"
-    hio.create_dir(dst_dir, incremental=False)
-    # Retrieve the original file and create the diff command.
-    script_txt = []
-    for branch_file in files:
-        _LOG.debug("\n%s", hprint.frame(f"branch_file={branch_file}"))
-        # Check if it needs to be compared.
-        if subdir != "":
-            if not branch_file.startswith(subdir):
-                _LOG.debug(
-                    "Skipping since '%s' doesn't start with '%s'",
-                    branch_file,
-                    subdir,
-                )
-                continue
-        # Get the file on the right of the vimdiff.
-        if os.path.exists(branch_file):
-            right_file = branch_file
-        else:
-            right_file = "/dev/null"
-        # Flatten the file dirs: e.g.,
-        # dataflow/core/nodes/test/test_volatility_models.base.py
-        tmp_file = branch_file
-        tmp_file = tmp_file.replace("/", "_")
-        tmp_file = os.path.join(dst_dir, tmp_file)
-        _LOG.debug(
-            "branch_file='%s' exists in branch -> master_file='%s'",
-            branch_file,
-            tmp_file,
-        )
-        # Save the base file.
-        cmd = f"git show {hash_}:{branch_file} >{tmp_file}"
-        rc = hsystem.system(cmd, abort_on_error=False)
-        if rc != 0:
-            # For new files we get the error:
-            # fatal: path 'dev_scripts/configure_env.sh' exists on disk, but
-            # not in 'c92cfe4382325678fdfccd0ddcd1927008090602'
-            _LOG.debug("branch_file='%s' doesn't exist in master", branch_file)
-            left_file = "/dev/null"
-        else:
-            left_file = tmp_file
-        # Update the script to diff.
-        cmd = f"vimdiff {left_file} {right_file}"
-        _LOG.debug("-> %s", cmd)
-        script_txt.append(cmd)
-    script_txt = "\n".join(script_txt)
-    # Files to diff.
-    print(hprint.frame("Diffing script"))
-    print(script_txt)
-    # Save the script to compare.
-    script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
-    msg = f"To diff against {tag} run"
-    hio.create_executable_script(script_file_name, script_txt, msg=msg)
-    _run(ctx, script_file_name, dry_run=dry_run, pty=True)
-    # Clean up file.
-    cmd = f"rm -rf {dst_dir}"
-    _run(ctx, cmd, dry_run=dry_run)
-
-
-@task
-def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", extensions="", dry_run=False
-):
-    """
-    Diff files of the current branch with master at the branching point.
-
-    :param diff_type: files to diff using git `--diff-filter` options
-    :param subdir: subdir to consider for diffing, instead of `.`
-    :param extensions: a comma-separated list of extensions to check, e.g.,
-        'csv,py'. An empty string means all the files
-    :param dry_run: execute diffing script or not
-    """
-    # Get the branching point.
-    dir_name = "."
-    hash_ = hgit.get_branch_hash(dir_name=dir_name)
-    #
-    tag = "base"
-    _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
-    )
-
-
-@task
-def git_branch_diff_with_master(  # type: ignore
-    ctx, diff_type="", subdir="", extensions="", dry_run=False
-):
-    """
-    Diff files of the current branch with origin/master.
-
-    :param diff_type: files to diff using git `--diff-filter` options
-    :param subdir: subdir to consider for diffing, instead of `.`
-    :param extensions: a comma-separated list of extensions to check, e.g.,
-        'csv,py'. An empty string means all the files
-    :param dry_run: execute diffing script or not
-    """
-    dir_name = "."
-    hash_ = "origin/master"
-    tag = "origin_master"
-    _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
-    )
-
-
-# pylint: disable=line-too-long
-
-# TODO(gp): Add the following scripts:
-# dev_scripts/git/git_backup.sh
-# dev_scripts/git/gcl
-# dev_scripts/git/git_branch.sh
-# dev_scripts/git/git_branch_point.sh
-# dev_scripts/create_class_diagram.sh
 
 # #############################################################################
 # Integrate.
 # #############################################################################
+
+
+# TODDO(gp): @all Move to lib_tasks_integrate.py
 
 # ## Concepts
 #
@@ -1470,7 +773,7 @@ def integrate_diff_dirs(  # type: ignore
             cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
             if remove_usual:
                 vals = [
-                    "\/\.github\/",
+                    r"\/\.github\/",
                 ]
                 regex = "|".join(vals)
                 cmd += f" --ignore_files='{regex}'"
@@ -1840,6 +1143,8 @@ def integrate_diff_overlapping_files(  # type: ignore
 # Basic Docker commands.
 # #############################################################################
 
+# TODO(gp): @all move to lib_tasks_docker.py
+
 
 def _get_docker_exec(sudo: bool) -> str:
     docker_exec = "docker"
@@ -2109,6 +1414,8 @@ def docker_login(ctx):  # type: ignore
 # Compose files.
 # ////////////////////////////////////////////////////////////////////////////////
 
+# TODO(gp): All this code can become `DockerComposeFileGenerator`.
+
 # There are several combinations to consider:
 # - whether the Docker host can run with / without privileged mode
 # - amp as submodule / as supermodule
@@ -2118,25 +1425,61 @@ def docker_login(ctx):  # type: ignore
 #  use_sibling_container -> use_docker_containers_containers
 
 
-def _generate_compose_file(
+def _get_linter_service() -> str:
+    """
+    Get the linter service specification for the `docker-compose.yml` file.
+
+    :return: the text of the linter service specification
+    """
+    superproject_path, submodule_path = hgit.get_path_from_supermodule()
+    if superproject_path:
+        # We are running in a Git submodule.
+        work_dir = f"/src/{submodule_path}"
+        repo_root = superproject_path
+    else:
+        work_dir = "/src"
+        repo_root = os.getcwd()
+    linter_spec_txt = f"""
+    linter:
+      extends:
+        base_app
+      volumes:
+        - {repo_root}:/src
+      working_dir: {work_dir}
+      environment:
+        - MYPYPATH
+        # Use the `repo_config.py` inside the dev_tools container instead of
+        # the one in the calling repo.
+        - AM_REPO_CONFIG_PATH=/app/repo_config.py
+    """
+    return linter_spec_txt
+
+
+def _generate_docker_compose_file(
     use_privileged_mode: bool,
     use_sibling_container: bool,
-    shared_data_dirs: Optional[str],
+    shared_data_dirs: Optional[Dict[str, str]],
     mount_as_submodule: bool,
     use_network_mode_host: bool,
+    use_main_network: bool,
     file_name: Optional[str],
 ) -> str:
     """
     Generate `docker-compose.yml` file and save it.
 
-    :param shared_data_dir: data directory in the host filesystem to mount to mount
-        inside the container. None means no dir sharing
+    :param shared_data_dirs: data directory in the host filesystem to mount
+        inside the container. `None` means no dir sharing
+    :param use_main_network: use `main_network` as default network
     """
     _LOG.debug(
         hprint.to_str(
-            "use_privileged_mode use_sibling_container "
-            "shared_data_dirs mount_as_submodule "
-            "use_network_mode_host file_name"
+            "use_privileged_mode "
+            "use_sibling_container "
+            "shared_data_dirs "
+            "mount_as_submodule "
+            "use_network_mode_host "
+            "use_main_network "
+            "file_name "
         )
     )
     txt = []
@@ -2165,9 +1508,8 @@ def _generate_compose_file(
     am_host_os_name = os.uname()[0]
     am_host_name = os.uname()[1]
     # We could do the same also with IMAGE for symmetry.
-    # Use % instead of f-string since `${IMAGE}` confuses f-string as a variable.
-    # Keep the env vars in sync with what we print in entrypoint.sh.
-    txt_tmp = """
+    # Keep the env vars in sync with what we print in `henv.get_env_vars()`.
+    txt_tmp = f"""
     version: '3'
 
     services:
@@ -2175,39 +1517,38 @@ def _generate_compose_file(
         cap_add:
           - SYS_ADMIN
         environment:
-          - AM_AWS_PROFILE=$AM_AWS_PROFILE
-          - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
-          - AM_ENABLE_DIND=%s
-          - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
-          - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
-          - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
-          - AM_HOST_NAME=%s
-          - AM_HOST_OS_NAME=%s
           - AM_AWS_ACCESS_KEY_ID=$AM_AWS_ACCESS_KEY_ID
           - AM_AWS_DEFAULT_REGION=$AM_AWS_DEFAULT_REGION
+          - AM_AWS_PROFILE=$AM_AWS_PROFILE
+          - AM_AWS_S3_BUCKET=$AM_AWS_S3_BUCKET
           - AM_AWS_SECRET_ACCESS_KEY=$AM_AWS_SECRET_ACCESS_KEY
+          - AM_ECR_BASE_PATH=$AM_ECR_BASE_PATH
+          - AM_ENABLE_DIND={am_enable_dind}
+          - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
+          - AM_HOST_NAME={am_host_name}
+          - AM_HOST_OS_NAME={am_host_os_name}
+          - AM_REPO_CONFIG_CHECK=True
+          # Use inferred path for `repo_config.py`.
+          - AM_REPO_CONFIG_PATH=
+          - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
+          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
+          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
           - CK_AWS_PROFILE=$CK_AWS_PROFILE
+          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
+          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
           # - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
           # - CK_ENABLE_DIND=
           # - CK_FORCE_TEST_FAIL=$CK_FORCE_TEST_FAIL
-          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
-          - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
-          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
           # - CK_HOST_NAME=
           # - CK_HOST_OS_NAME=
-          - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
-          - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
-          - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
+          # - CK_PUBLISH_NOTEBOOK_LOCAL_PATH=$CK_PUBLISH_NOTEBOOK_LOCAL_PATH
+          - CK_TELEGRAM_TOKEN=$CK_TELEGRAM_TOKEN
           - GH_ACTION_ACCESS_TOKEN=$GH_ACTION_ACCESS_TOKEN
           # This env var is used by GH Action to signal that we are inside the CI.
           - CI=$CI
-        image: ${IMAGE}
-    """ % (
-        am_enable_dind,
-        am_host_name,
-        am_host_os_name,
-    )
+        image: ${{IMAGE}}
+    """
     indent_level = 0
     append(txt_tmp, indent_level)
     #
@@ -2277,6 +1618,21 @@ def _generate_compose_file(
               # memory is available.
               memory: 60G
         """
+        # This is at the level of `services/app`.
+        indent_level = 2
+        append(txt_tmp, indent_level)
+    #
+    if use_network_mode_host:
+        txt_tmp = """
+        # Default network mode set to host so we can reach e.g.
+        # a database container pointing to localhost:5432.
+        # In tests we use dind so we need set back to the default "bridge".
+        # See CmTask988 and https://stackoverflow.com/questions/24319662
+        network_mode: ${NETWORK_MODE:-host}
+        """
+        # This is at the level of `services/app`.
+        indent_level = 2
+        append(txt_tmp, indent_level)
     #
     if mount_as_submodule:
         txt_tmp = """
@@ -2305,16 +1661,11 @@ def _generate_compose_file(
     indent_level = 1
     append(txt_tmp, indent_level)
     #
-    if use_network_mode_host:
-        txt_tmp = """
-        # Default network mode set to host so we can reach e.g.
-        # a database container pointing to localhost:5432.
-        # In tests we use dind so we need set back to the default "bridge".
-        # See CmTask988 and https://stackoverflow.com/questions/24319662
-        network_mode: ${NETWORK_MODE:-host}
-        """
-        # This is at the level of `services/app`.
-        indent_level = 2
+    if True:
+        # Specify the linter service.
+        txt_tmp = _get_linter_service()
+        # Append at the level of `services`.
+        indent_level = 1
         append(txt_tmp, indent_level)
     #
     if True:
@@ -2345,22 +1696,32 @@ def _generate_compose_file(
           ports:
             - "${PORT}:${PORT}"
         """
-        # This is at the level of `services`.
+        # This is inside `services`.
         indent_level = 1
         append(txt_tmp, indent_level)
+    #
+    if use_main_network:
+        txt_tmp = """
+        networks:
+          default:
+            name: main_network
+        """
+        # This is at the level of `services`.
+        indent_level = 0
+        append(txt_tmp, indent_level)
     # Save file.
-    txt: str = "\n".join(txt)
+    txt_str: str = "\n".join(txt)
     if file_name:
-        hio.to_file(file_name, txt)
+        hio.to_file(file_name, txt_str)
     # Sanity check of the YAML file.
-    stream = io.StringIO(txt)
+    stream = io.StringIO(txt_str)
     _ = yaml.safe_load(stream)
-    return txt
+    return txt_str
 
 
 def get_base_docker_compose_path() -> str:
     """
-    Return the absolute path to base docker compose.
+    Return the absolute path to the Docker compose file.
 
     E.g., `devops/compose/docker-compose.yml`.
     """
@@ -2373,34 +1734,16 @@ def get_base_docker_compose_path() -> str:
     return docker_compose_path
 
 
-def _get_amp_docker_compose_path() -> Optional[str]:
-    """
-    Return the docker compose to use for `amp`, depending whether it is a
-    supermodule or as submodule.
-
-    E.g.,
-    - for submodule -> `devops/compose/docker-compose_as_submodule.yml`
-    - for supermodule -> None
-    """
-    path, _ = hgit.get_path_from_supermodule()
-    docker_compose_path: Optional[str]
-    if path != "":
-        _LOG.warning("amp is a submodule")
-        docker_compose_path = "docker-compose_as_submodule.yml"
-        # Add the default path.
-        dir_name = "devops/compose"
-        docker_compose_path = os.path.join(dir_name, docker_compose_path)
-        docker_compose_path = os.path.abspath(docker_compose_path)
-    else:
-        docker_compose_path = None
-    return docker_compose_path
-
-
-def _get_docker_compose_paths(
-    extra_docker_compose_files: List[str],
+def _get_docker_compose_files(
+    generate_docker_compose_file: bool,
+    service_name: str,
+    extra_docker_compose_files: Optional[List[str]],
 ) -> List[str]:
     """
-    Return the list of the needed docker compose path.
+    Generate the Docker compose file and return the list of Docker compose
+    paths.
+
+    :return: list of the Docker compose paths
     """
     docker_compose_files = []
     # Get the repo short name (e.g., amp).
@@ -2412,41 +1755,49 @@ def _get_docker_compose_paths(
     if repo_short_name in ("amp", "cm"):
         # Check if `amp` is a submodule.
         path, _ = hgit.get_path_from_supermodule()
-        docker_compose_path: Optional[str]
         if path != "":
             _LOG.warning("amp is a submodule")
             mount_as_submodule = True
     # Write Docker compose file.
     file_name = get_base_docker_compose_path()
-    _generate_compose_file(
-        hgit.execute_repo_config_code("enable_privileged_mode()"),
-        hgit.execute_repo_config_code("use_docker_sibling_containers()"),
-        hgit.execute_repo_config_code("get_shared_data_dirs()"),
-        mount_as_submodule,
-        hgit.execute_repo_config_code("use_docker_network_mode_host()"),
-        file_name,
-    )
+    if service_name == "linter":
+        # Since we are running the prod `dev_tools` container we need to use the
+        # settings from the `repo_config` from that container, and not the settings
+        # launch the container corresponding to this repo.
+        enable_privileged_mode = False
+        use_docker_sibling_containers = False
+        get_shared_data_dirs = None
+        use_docker_network_mode_host = False
+        use_main_network = False
+    else:
+        # Use the settings from the `repo_config` corresponding to this container.
+        enable_privileged_mode = hgit.execute_repo_config_code(
+            "enable_privileged_mode()"
+        )
+        use_docker_sibling_containers = hgit.execute_repo_config_code(
+            "use_docker_sibling_containers()"
+        )
+        get_shared_data_dirs = hgit.execute_repo_config_code(
+            "get_shared_data_dirs()"
+        )
+        use_docker_network_mode_host = hgit.execute_repo_config_code(
+            "use_docker_network_mode_host()"
+        )
+        use_main_network = hgit.execute_repo_config_code("use_main_network()")
+    #
+    if generate_docker_compose_file:
+        _generate_docker_compose_file(
+            enable_privileged_mode,
+            use_docker_sibling_containers,
+            get_shared_data_dirs,
+            mount_as_submodule,
+            use_docker_network_mode_host,
+            use_main_network,
+            file_name,
+        )
+    else:
+        _LOG.warning("Skipping generating Docker compose file '%s'", file_name)
     docker_compose_files.append(file_name)
-    # if False:
-    # docker_compose_files = []
-    # if has_default_param("USE_ONLY_ONE_DOCKER_COMPOSE"):
-    #     # Use only one docker compose file, instead of two.
-    #     # TODO(gp): Hacky fix for CmampTask386 "Clean up docker compose".
-    #     if repo_short_name == "amp":
-    #         # For amp use only
-    #         docker_compose_file_tmp = _get_amp_docker_compose_path()
-    #     else:
-    #         docker_compose_file_tmp = get_base_docker_compose_path()
-    #     docker_compose_files.append(docker_compose_file_tmp)
-    # else:
-    #     # Typically we use one or two docker compose files, depending if we need
-    #     # submodule behavior or not.
-    #     docker_compose_files.append(get_base_docker_compose_path())
-    #     if repo_short_name == "amp":
-    #         docker_compose_file_tmp = _get_amp_docker_compose_path()
-    #         if docker_compose_file_tmp:
-    #             docker_compose_files.append(docker_compose_file_tmp)
-
     # Add the compose files from command line.
     if extra_docker_compose_files:
         hdbg.dassert_isinstance(extra_docker_compose_files, list)
@@ -2708,13 +2059,15 @@ def _get_docker_base_cmd(
     base_image: str,
     stage: str,
     version: str,
+    service_name: str,
+    generate_docker_compose_file: bool,
     extra_env_vars: Optional[List[str]],
     extra_docker_compose_files: Optional[List[str]],
 ) -> List[str]:
     r"""
     Get base `docker-compose` command encoded as a list of strings.
 
-    It can be used as a base to build more complicated commands, e.g., `run`, `up`, `down`.
+    It can be used as a base to build more complex commands, e.g., `run`, `up`, `down`.
 
     E.g.,
     ```
@@ -2724,6 +2077,8 @@ def _get_docker_base_cmd(
             '\n        --file amp/devops/compose/docker-compose_as_submodule.yml',
             '\n        --env-file devops/env/default.env']
     ```
+    :param generate_docker_compose_file: whether to generate or reuse the existing
+        Docker compose file
     :param extra_env_vars: represent vars to add, e.g., `["PORT=9999", "DRY_RUN=1"]`
     :param extra_docker_compose_files: `docker-compose` override files
     """
@@ -2748,7 +2103,9 @@ def _get_docker_base_cmd(
         r"""
         docker-compose"""
     )
-    docker_compose_files = _get_docker_compose_paths(extra_docker_compose_files)
+    docker_compose_files = _get_docker_compose_files(
+        generate_docker_compose_file, service_name, extra_docker_compose_files
+    )
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))
     # TODO(gp): Use something like `.append(rf"{space}{...}")`
@@ -2765,18 +2122,19 @@ def _get_docker_base_cmd(
     return docker_cmd_
 
 
-# TODO(Grisha): -> `_get_docker_run_cmd` CmTask #1486.
-def _get_docker_cmd(
+def _get_docker_compose_cmd(
     base_image: str,
     stage: str,
     version: str,
     cmd: str,
     *,
+    # TODO(gp): make these params mandatory.
     extra_env_vars: Optional[List[str]] = None,
     extra_docker_compose_files: Optional[List[str]] = None,
     extra_docker_run_opts: Optional[List[str]] = None,
     service_name: str = "app",
     entrypoint: bool = True,
+    generate_docker_compose_file: bool = True,
     as_user: bool = True,
     print_docker_config: bool = False,
     use_bash: bool = False,
@@ -2800,7 +2158,8 @@ def _get_docker_cmd(
     :param cmd: command to run inside Docker container
     :param extra_docker_run_opts: additional `docker-compose` run options
     :param service_name: service to use to run a command
-    :param entrypoint: use whether to use `entrypoint` or not
+    :param entrypoint: whether to use the `entrypoint` or not
+    :param generate_docker_compose_file: generate the Docker compose file or not
     :param as_user: pass the user / group id or not
     :param print_docker_config: print the docker config for debugging purposes
     :param use_bash: run command through a shell
@@ -2816,6 +2175,8 @@ def _get_docker_cmd(
         base_image,
         stage,
         version,
+        service_name,
+        generate_docker_compose_file,
         extra_env_vars,
         extra_docker_compose_files,
     )
@@ -2866,6 +2227,7 @@ def _get_docker_cmd(
         {cmd}"""
             )
     else:
+        # No entrypoint.
         docker_cmd_.append(
             rf"""
         --entrypoint bash \
@@ -2914,17 +2276,26 @@ def docker_bash(  # type: ignore
     version="",
     entrypoint=True,
     as_user=True,
+    generate_docker_compose_file=True,
     container_dir_name=".",
 ):
     """
     Start a bash shell inside the container corresponding to a stage.
 
-    TODO(gp): Add description of non-obvious interface params.
+    :param entrypoint: whether to use the `entrypoint` or not
+    :param as_user: pass the user / group id or not
+    :param generate_docker_compose_file: generate the Docker compose file or not
     """
     _report_task(container_dir_name=container_dir_name)
     cmd = "bash"
-    docker_cmd_ = _get_docker_cmd(
-        base_image, stage, version, cmd, entrypoint=entrypoint, as_user=as_user
+    docker_cmd_ = _get_docker_compose_cmd(
+        base_image,
+        stage,
+        version,
+        cmd,
+        generate_docker_compose_file=generate_docker_compose_file,
+        entrypoint=entrypoint,
+        as_user=as_user,
     )
     _docker_cmd(ctx, docker_cmd_)
 
@@ -2937,22 +2308,26 @@ def docker_cmd(  # type: ignore
     version="",
     cmd="",
     as_user=True,
+    generate_docker_compose_file=True,
     use_bash=False,
     container_dir_name=".",
 ):
     """
     Execute the command `cmd` inside a container corresponding to a stage.
 
-    TODO(gp): Add description of non-obvious interface params.
+    :param as_user: pass the user / group id or not
+    :param generate_docker_compose_file: generate or reuse the Docker compose file
+    :param use_bash: run command through a shell
     """
     _report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
-    docker_cmd_ = _get_docker_cmd(
+    docker_cmd_ = _get_docker_compose_cmd(
         base_image,
         stage,
         version,
         cmd,
+        generate_docker_compose_file=generate_docker_compose_file,
         as_user=as_user,
         use_bash=use_bash,
     )
@@ -2978,7 +2353,7 @@ def _get_docker_jupyter_cmd(
     extra_docker_run_opts = ["--service-ports"]
     service_name = "jupyter_server_test" if self_test else "jupyter_server"
     #
-    docker_cmd_ = _get_docker_cmd(
+    docker_cmd_ = _get_docker_compose_cmd(
         base_image,
         stage,
         version,
@@ -2998,7 +2373,7 @@ def docker_jupyter(  # type: ignore
     version="",
     base_image="",
     auto_assign_port=True,
-    port=9999,
+    port=None,
     self_test=False,
     container_dir_name=".",
 ):
@@ -3009,18 +2384,21 @@ def docker_jupyter(  # type: ignore
         repo (e.g., 4 for `~/src/amp4`) to get a unique port
     """
     _report_task(container_dir_name=container_dir_name)
-    if auto_assign_port:
-        uid = os.getuid()
-        _LOG.debug("uid=%s", uid)
-        git_repo_idx = hgit.get_project_dirname(only_index=True)
-        git_repo_idx = int(git_repo_idx)
-        _LOG.debug("git_repo_idx=%s", git_repo_idx)
-        # We assume that there are no more than `max_idx_per_users` clients.
-        max_idx_per_user = 10
-        hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
-        port = (uid * max_idx_per_user) + git_repo_idx
-        _LOG.info("Assigned port is %s", port)
+    if port is None:
+        if auto_assign_port:
+            uid = os.getuid()
+            _LOG.debug("uid=%s", uid)
+            git_repo_idx = hgit.get_project_dirname(only_index=True)
+            git_repo_idx = int(git_repo_idx)
+            _LOG.debug("git_repo_idx=%s", git_repo_idx)
+            # We assume that there are no more than `max_idx_per_users` clients.
+            max_idx_per_user = 10
+            hdbg.dassert_lte(git_repo_idx, max_idx_per_user)
+            port = (uid * max_idx_per_user) + git_repo_idx
+        else:
+            port = 9999
     #
+    _LOG.info("Assigned port is %s", port)
     print_docker_config = False
     docker_cmd_ = _get_docker_jupyter_cmd(
         base_image,
@@ -3036,6 +2414,8 @@ def docker_jupyter(  # type: ignore
 # #############################################################################
 # Docker image workflows.
 # #############################################################################
+
+# TODO(gp): @all Move all the release code to lib_tasks_docker_release.py
 
 
 def _to_abs_path(filename: str) -> str:
@@ -3569,6 +2949,9 @@ def docker_rollback_prod_image(  # type: ignore
 # #############################################################################
 
 
+# TODO(gp): @all Move all the find-related code to lib_tasks_find.py
+
+
 def _find_test_files(
     dir_name: Optional[str] = None, use_absolute_path: bool = False
 ) -> List[str]:
@@ -3992,6 +3375,8 @@ def find_check_string_output(  # type: ignore
 # Run tests.
 # #############################################################################
 
+# TODO(gp): @all Move all the run test code to lib_tasks_pytest.py
+
 _COV_PYTEST_OPTS = [
     # Only compute coverage for current project and not venv libraries.
     "--cov=.",
@@ -4031,7 +3416,7 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     _ = ctx
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
-    docker_cmd_ = _get_docker_cmd(base_image, stage, version, cmd)
+    docker_cmd_ = _get_docker_compose_cmd(base_image, stage, version, cmd)
     hsystem.system(docker_cmd_, abort_on_error=False, suppress_output=False)
 
 
@@ -4165,7 +3550,7 @@ def _run_test_cmd(
     # exposing port 5432 on localhost (of the server), when running dind we
     # need to switch back to bridge. See CmTask988.
     extra_env_vars = ["NETWORK_MODE=bridge"]
-    docker_cmd_ = _get_docker_cmd(
+    docker_cmd_ = _get_docker_compose_cmd(
         base_image, stage, version, cmd, extra_env_vars=extra_env_vars
     )
     _LOG.info("cmd=%s", docker_cmd_)
@@ -4589,6 +3974,7 @@ def run_coverage_report(  # type: ignore
           - Post it on S3 (optional)
 
     :param target_dir: directory to compute coverage stats for
+        - "." for all the dirs in the current working directory
     :param generate_html_report: whether to generate HTML coverage report or not
     :param publish_html_on_s3: whether to publish HTML coverage report or not
     :param aws_profile: the AWS profile to use for publishing HTML report
@@ -4616,15 +4002,33 @@ def run_coverage_report(  # type: ignore
     report_cmd.append(
         "coverage combine --keep .coverage_fast_tests .coverage_slow_tests"
     )
-    # Only target dir is included in the reports.
-    include_in_report = f"*/{target_dir}/*"
+    # Specify the dirs to include and exclude in the report.
+    exclude_from_report = None
+    if target_dir == ".":
+        # Include all dirs.
+        include_in_report = "*"
+        if hgit.execute_repo_config_code("skip_submodules_test()"):
+            # Exclude submodules.
+            submodule_paths = hgit.get_submodule_paths()
+            exclude_from_report = ",".join(
+                path + "/*" for path in submodule_paths
+            )
+    else:
+        # Include only the target dir.
+        include_in_report = f"*/{target_dir}/*"
     # Generate text report with the coverage stats.
-    report_cmd.append(
+    report_stats_cmd = (
         f"coverage report --include={include_in_report} --sort=Cover"
     )
+    if exclude_from_report is not None:
+        report_stats_cmd += f" --omit={exclude_from_report}"
+    report_cmd.append(report_stats_cmd)
     if generate_html_report:
         # Generate HTML report with the coverage stats.
-        report_cmd.append(f"coverage html --include={include_in_report}")
+        report_html_cmd = f"coverage html --include={include_in_report}"
+        if exclude_from_report is not None:
+            report_html_cmd += f" --omit={exclude_from_report}"
+        report_cmd.append(report_html_cmd)
     # Execute commands above one-by-one inside docker. Coverage tool is not
     # installed outside docker.
     full_report_cmd = " && ".join(report_cmd)
@@ -4960,9 +4364,8 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
 def pytest_find_unused_goldens(  # type: ignore
     ctx,
     dir_name=".",
-    run_bash=False,
     stage="prod",
-    as_user=True,
+    version="",
     out_file_name="pytest_find_unused_goldens.output.txt",
 ):
     """
@@ -4980,7 +4383,6 @@ def pytest_find_unused_goldens(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     amp_abs_path = hgit.get_amp_abs_path()
     amp_path = amp_abs_path.replace(
@@ -4992,7 +4394,7 @@ def pytest_find_unused_goldens(  # type: ignore
     docker_cmd_opts = [f"--dir_name {dir_name}"]
     docker_cmd_ = f"{script_path} " + _to_single_line_cmd(docker_cmd_opts)
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     _run(ctx, cmd)
@@ -5001,6 +4403,8 @@ def pytest_find_unused_goldens(  # type: ignore
 # #############################################################################
 # Linter.
 # #############################################################################
+
+# TODO(gp): Move all linter-related code to lib_tasks_lint.py
 
 
 @task
@@ -5108,67 +4512,33 @@ def lint_check_python_files(  # type: ignore
 
 def _get_lint_docker_cmd(
     docker_cmd_: str,
-    run_bash: bool,
     stage: str,
-    as_user: bool,
+    version: str,
+    *,
+    entrypoint: bool = True,
 ) -> str:
     """
-    Create a command to run in Docker.
+    Create a command to run in the Linter service.
 
-    For parameter descriptions, see `lint()`.
-
-    :param docker_cmd_: command to run inside the container
-    :return: the full command to run in Docker
+    :param docker_cmd_: command to run
+    :param stage: the image stage to use
+    :return: the full command to run
     """
-    superproject_path, submodule_path = hgit.get_path_from_supermodule()
-    if superproject_path:
-        # We are running in a Git submodule.
-        work_dir = f"/src/{submodule_path}"
-        repo_root = superproject_path
-    else:
-        work_dir = "/src"
-        repo_root = os.getcwd()
-    _LOG.debug("work_dir=%s repo_root=%s", work_dir, repo_root)
-    # TODO(gp): Do not hardwire the repo_short_name.
-    # image = get_default_param("DEV_TOOLS_IMAGE_PROD")
-    # image="*****.dkr.ecr.us-east-1.amazonaws.com/dev_tools:local"
+    # Get an image to run the linter on.
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
-    image = f"{ecr_base_path}/dev_tools:{stage}"
-    docker_wrapper_cmd = ["docker run", "--rm"]
-    if stage in ("local", "dev"):
-        # Map repository root to /app in the container, so that we can
-        # reuse the current code being developed inside Docker before
-        # releasing the prod image.
-        docker_wrapper_cmd.append(f"-v '{repo_root}':/app")
-    if run_bash:
-        docker_wrapper_cmd.append("-it")
-    else:
-        docker_wrapper_cmd.append("-t")
-    if as_user:
-        docker_wrapper_cmd.append(r"--user $(id -u):$(id -g)")
-    docker_wrapper_cmd.extend(
-        [
-            # Pass MYPYPATH for `mypy` to find the packages from PYTHONPATH.
-            "-e MYPYPATH",
-            f"-v '{repo_root}':/src",
-            f"--workdir={work_dir}",
-            f"{image}",
-        ]
+    linter_image = f"{ecr_base_path}/dev_tools"
+    # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
+    # and run Linter on the specific version, e.g., `1.1.5`.
+    # Execute command line.
+    cmd = _get_docker_compose_cmd(
+        linter_image,
+        stage,
+        version,
+        docker_cmd_,
+        entrypoint=entrypoint,
+        service_name="linter",
     )
-    # Build the command inside Docker.
-    cmd = f"'{docker_cmd_}'"
-    if run_bash:
-        _LOG.warning("Run bash instead of:\n  > %s", cmd)
-        cmd = "bash"
-    docker_wrapper_cmd.append(cmd)
-    docker_wrapper_cmd = _to_single_line_cmd(docker_wrapper_cmd)
-    if run_bash:
-        # We don't execute this command since pty=True corrupts the terminal
-        # session.
-        print("# To get a bash session inside Docker run:")
-        print(docker_wrapper_cmd)
-        sys.exit(0)
-    return docker_wrapper_cmd
+    return cmd
 
 
 def _parse_linter_output(txt: str) -> str:
@@ -5213,10 +4583,8 @@ def _parse_linter_output(txt: str) -> str:
 def lint_detect_cycles(  # type: ignore
     ctx,
     dir_name=".",
-    run_bash=False,
-    # TODO(gp): This is the backdoor.
     stage="prod",
-    as_user=True,
+    version="",
     out_file_name="lint_detect_cycles.output.txt",
 ):
     """
@@ -5233,7 +4601,6 @@ def lint_detect_cycles(  # type: ignore
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
         _run(ctx, cmd)
-    as_user = _run_docker_as_user(as_user)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
     docker_cmd_ = (
@@ -5241,7 +4608,7 @@ def lint_detect_cycles(  # type: ignore
         + _to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
-    cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+    cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     _run(ctx, cmd)
@@ -5260,12 +4627,13 @@ def lint(  # type: ignore
     only_format=False,
     only_check=False,
     fast=False,
-    # stage="prod",
-    run_bash=False,
     run_linter_step=True,
     parse_linter_output=True,
+    run_entrypoint_and_bash=False,
+    run_bash_without_entrypoint=False,
+    # TODO(gp): These params should go earlier, since are more important.
     stage="prod",
-    as_user=True,
+    version="",
     out_file_name="linter_output.txt",
 ):
     """
@@ -5293,11 +4661,14 @@ def lint(  # type: ignore
         don't change the code
     :param fast: run everything but skip `pylint`, since it is often very picky
         and slow
-    :param run_bash: instead of running pre-commit, run bash to debug
     :param run_linter_step: run linter step
     :param parse_linter_output: parse linter output and generate vim cfile
+    :param run_entrypoint_and_bash: run the entrypoint of the container (which
+        configures the environment) and then `bash`, instead of running the
+        lint command
+    :param run_bash_without_entrypoint: run bash, skipping the entrypoint
+    TODO(gp): This seems to work but have some problems with tty
     :param stage: the image stage to use
-    :param as_user: pass the user / group id or not
     :param out_file_name: name of the file to save the log output in
     """
     _report_task()
@@ -5331,6 +4702,22 @@ def lint(  # type: ignore
     # amp_pylint.......................................(no files to check)Skipped
     # amp_mypy.........................................(no files to check)Skipped
     # ```
+    if run_bash_without_entrypoint:
+        # Run bash, without the Docker entrypoint.
+        docker_cmd_ = "bash"
+        cmd = _get_lint_docker_cmd(docker_cmd_, stage, version, entrypoint=False)
+        cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+        # Run.
+        _run(ctx, cmd)
+        return
+    if run_entrypoint_and_bash:
+        # Run the Docker entrypoint (which configures the environment) and then bash.
+        docker_cmd_ = "bash"
+        cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
+        cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+        # Run.
+        _run(ctx, cmd)
+        return
     if only_format:
         hdbg.dassert_eq(phases, "")
         phases = " ".join(
@@ -5353,6 +4740,7 @@ def lint(  # type: ignore
                 "amp_mypy",
             ]
         )
+
     if run_linter_step:
         # We don't want to run this all the times.
         # docker_pull(ctx, stage=stage, images="dev_tools")
@@ -5386,7 +4774,6 @@ def lint(  # type: ignore
             return
         files_as_str = " ".join(files_as_list)
         phases = phases.split(" ")
-        as_user = _run_docker_as_user(as_user)
         for phase in phases:
             # Prepare the command line.
             precommit_opts = []
@@ -5400,8 +4787,7 @@ def lint(  # type: ignore
             docker_cmd_ = "pre-commit " + _to_single_line_cmd(precommit_opts)
             if fast:
                 docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
-            # Execute command line.
-            cmd = _get_lint_docker_cmd(docker_cmd_, run_bash, stage, as_user)
+            cmd = _get_lint_docker_cmd(docker_cmd_, stage, version)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             _run(ctx, cmd)
@@ -5442,6 +4828,8 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 # #############################################################################
 # GitHub CLI.
 # #############################################################################
+
+# TODO(gp): Move all linter-related code to lib_tasks_gh.py
 
 
 @task

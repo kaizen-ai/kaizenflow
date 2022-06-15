@@ -12,7 +12,7 @@ import logging
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional
 
 import pandas as pd
 import psycopg2
@@ -22,12 +22,10 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.common.data.extract.extractor as imvcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-import im_v2.talos.data.extract.extractor as imvtdexex
-import im_v2.common.data.extract.extractor as imvcdexex
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -181,9 +179,7 @@ def download_realtime_for_one_exchange(
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
-        currency_pair_for_download = exchange.convert_currency_pair(
-            currency_pair
-        )
+        currency_pair_for_download = exchange.convert_currency_pair(currency_pair)
         # Download data.
         data = exchange.download_data(
             data_type=args["data_type"],
@@ -216,7 +212,9 @@ def download_realtime_for_one_exchange(
                 + hdateti.get_current_timestamp_as_string("UTC")
                 + ".csv"
             )
-            path_to_file = os.path.join(args["s3_path"], args["exchange_id"], file_name)
+            path_to_file = os.path.join(
+                args["s3_path"], args["exchange_id"], file_name
+            )
             # Save data to S3 filesystem.
             with fs.open(path_to_file, "w") as f:
                 data.to_csv(f, index=False)
@@ -237,7 +235,10 @@ def _download_realtime_for_one_exchange_with_timeout(
     :param start_timestamp: beginning of the downloaded period
     :param end_timestamp: end of the downloaded period
     """
-    args["start_timestamp"], args["end_timestamp"] = start_timestamp, end_timestamp
+    args["start_timestamp"], args["end_timestamp"] = (
+        start_timestamp,
+        end_timestamp,
+    )
     _LOG.info(
         "Starting data download from: %s, till: %s",
         start_timestamp,
@@ -382,6 +383,7 @@ def save_parquet(
     path_to_exchange: str,
     unit: str,
     aws_profile: Optional[str],
+    data_type: str,
 ) -> None:
     """
     Save Parquet dataset.
@@ -392,6 +394,10 @@ def save_parquet(
     data, partition_cols = hparque.add_date_partition_columns(
         data, "by_year_month"
     )
+    # Drop DB metadata columns.
+    data = data.drop(
+        ["end_download_timestamp", "exchange_id"], axis=1, errors="ignore"
+    )
     # Save filename as `uuid`, e.g.
     #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
     hparque.to_partitioned_parquet(
@@ -401,8 +407,14 @@ def save_parquet(
         partition_filename=None,
         aws_profile=aws_profile,
     )
+    if data_type == "ohlcv":
+        mode = "ohlcv"
+    elif data_type == "bid_ask":
+        mode = None
     # Merge all new parquet into a single `data.parquet`.
-    hparque.list_and_merge_pq_files(path_to_exchange, aws_profile=aws_profile)
+    hparque.list_and_merge_pq_files(
+        path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=mode
+    )
 
 
 def download_historical_data(
@@ -451,7 +463,11 @@ def download_historical_data(
         # Save data to S3 filesystem.
         if args["file_format"] == "parquet":
             save_parquet(
-                data, path_to_exchange, args["unit"], args["aws_profile"]
+                data,
+                path_to_exchange,
+                args["unit"],
+                args["aws_profile"],
+                args["data_type"],
             )
         elif args["file_format"] == "csv":
             save_csv(

@@ -20,17 +20,12 @@ import os
 import re
 from typing import Optional, cast
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
-import helpers.hdbg as hdbg
-import helpers.henv as henv
-import helpers.hgit as hgit
-import helpers.hio as hio
-import helpers.hprint as hprint
-import helpers.hsystem as hsystem
-
 # Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
 # import cycles.
-
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hio as hio
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -40,23 +35,6 @@ _WARNING = "\033[33mWARNING\033[0m"
 _ERROR = "\033[31mERROR\033[0m"
 #
 _VERSION_RE = r"\d+\.\d+\.\d+"
-
-
-def env_to_str() -> str:
-    msg = ""
-    #
-    msg += "# Repo config:\n"
-    msg += hprint.indent(hgit.execute_repo_config_code("config_func_to_str()"))
-    msg += "\n"
-    # System signature.
-    msg += "# System signature:\n"
-    msg += hprint.indent(henv.get_system_signature()[0])
-    msg += "\n"
-    # Check which env vars are defined.
-    msg += "# Env vars:\n"
-    msg += hprint.indent(henv.env_vars_to_string())
-    msg += "\n"
-    return msg
 
 
 def check_version(container_dir_name: str) -> None:

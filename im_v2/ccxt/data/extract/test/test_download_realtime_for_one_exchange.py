@@ -17,7 +17,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
   
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
       
     def test_parser(self) -> None:
         """

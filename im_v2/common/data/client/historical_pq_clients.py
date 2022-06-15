@@ -179,7 +179,7 @@ class HistoricalPqByTileClient(
             # )
             # Convert index to datetime.
             root_dir_df.index = pd.to_datetime(root_dir_df.index)
-            # TODO(gp): IgHistoricalPqByTileClient used a ctor param to rename a column.
+            # TODO(gp): IgHistoricalPqByTileTaqBarClient used a ctor param to rename a column.
             #  Not sure if this is still needed.
             #        # Rename column storing `full_symbols`, if needed.
             #        hdbg.dassert_in(self._full_symbol_col_name, df.columns)
@@ -273,6 +273,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
+        # TODO(Sonya): Consider moving the `dataset` param to the base class.
+        dataset: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -282,6 +284,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
 
         See the parent class for parameters description.
 
+        :param dataset: the dataset type, e.g. "ohlcv", "bid_ask"
         :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
         """
         infer_exchange_id = True
@@ -294,6 +297,10 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             infer_exchange_id,
             aws_profile=aws_profile,
         )
+        hdbg.dassert_in(
+            dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
+        )
+        self._dataset = dataset
         self._data_snapshot = data_snapshot
 
     @staticmethod
@@ -347,8 +354,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         # The columns are used just to partition the data but these columns
         # are not included in the `ImClient` output.
         df = df.drop(["exchange_id", "currency_pair"], axis=1)
-        # Round up float values in case values in raw data are rounded up incorrectly when
-        # being read from a file.
+        # Round up float values in case values in raw data are rounded up incorrectly
+        # when being read from a file.
         df = df.round(8)
         return df
 
@@ -439,6 +446,7 @@ class HistoricalPqByDateClient(
         full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -459,14 +467,22 @@ class HistoricalPqByDateClient(
             end_date = None
         # Get the data for [start_date, end_date].
         # TODO(gp): Use an abstract_method.
+        # TODO(gp): This should not be hardwired but passed.
+        asset_id_name = self._full_symbol_col_name
+        hdbg.dassert_is_not(asset_id_name, None)
+        normalize = True
         tz_zone = "UTC"
         df = self._read_func(
+            # TODO(gp): These are int.
             full_symbols,
+            asset_id_name,
             start_date,
             end_date,
-            normalize=True,
-            tz_zone=tz_zone,
-            **kwargs,
+            columns,
+            normalize,
+            tz_zone,
+            kwargs["root_data_dir"],
+            kwargs["aws_profile"],
         )
         # Convert to datetime.
         df.index = pd.to_datetime(df.index)

@@ -35,7 +35,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         hdbg.dassert_container_type(curr_list, list, str)
         self.assertGreater(len(curr_list), 0)
 
-    @pytest.mark.slow()
+    @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeex.hdateti, "get_current_time")
     def test_download_ohlcv1(
         self, mock_get_current_time: umock.MagicMock
@@ -93,6 +93,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         )
         self.assertIn(expected, actual)
 
+    @pytest.mark.skip(reason="CMTask2089")
     def test_download_ohlcv_invalid_input2(self) -> None:
         """
         Run with invalid end timestamp.
@@ -175,6 +176,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         ]
         self.assertListEqual(order_book_keys, list(order_book.keys()))
 
+    @pytest.mark.skip(reason="CMTask2089")
     def test_download_order_book_invalid_input1(self) -> None:
         """
         Run with invalid currency pair.

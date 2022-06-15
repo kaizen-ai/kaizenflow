@@ -273,6 +273,8 @@ class CcxtCddCsvParquetByAssetClient(
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+        # TODO(Sonya): Consider moving it to the base class as the `dataset` param.
+        self._dataset = "ohlcv"
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -399,6 +401,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         resample_1min: bool,
         root_dir: str,
         partition_mode: str,
+        dataset: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -415,6 +418,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
             resample_1min,
             root_dir,
             partition_mode,
+            dataset,
             data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )

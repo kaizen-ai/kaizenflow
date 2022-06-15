@@ -1,4 +1,3 @@
-import argparse
 import unittest.mock as umock
 
 import pytest
@@ -6,8 +5,9 @@ import pytest
 import helpers.hgit as hgit
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.ccxt.data.extract.extractor as imvcdeex
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
@@ -20,19 +20,11 @@ import im_v2.common.db.db_utils as imvcddbut
 class TestDownloadRealtimeForOneExchange1(
     hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper
 ):
-    # Secret needed for getting realtime data.
-    binance_secret = None
-
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
 
     def setUp(self) -> None:
-        # Getting necessary secret before boto3 is mocked.
-        if self.binance_secret is None:
-            import helpers.hsecrets as hsecret
-
-            self.binance_secret = hsecret.get_secret("binance")
         super().setUp()
         # Initialize database.
         ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
@@ -63,15 +55,17 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = imvcdeex.CcxtExtractor(kwargs["exchange_id"])
+        extractor = ivcdexex.CcxtExtractor(kwargs["exchange_id"])
         if use_s3:
             # Update kwargs.
             kwargs.update(
-                {"aws_profile": "ck", "s3_path": f"s3://{self.bucket_name}/"}
+                {
+                    "aws_profile": self.mock_aws_profile,
+                    "s3_path": f"s3://{self.bucket_name}/",
+                }
             )
         # Run.
-        imvcdeexut.download_realtime_for_one_exchange(
-            kwargs, extractor)
+        imvcdeexut.download_realtime_for_one_exchange(kwargs, extractor)
         # Get saved data in db.
         select_all_query = "SELECT * FROM ccxt_ohlcv;"
         actual_df = hsql.execute_query_to_df(self.connection, select_all_query)
@@ -95,9 +89,9 @@ class TestDownloadRealtimeForOneExchange1(
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
-    @umock.patch.object(imvcdeex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(imvcdeex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call1(
         self,
         mock_get_secret: umock.MagicMock,
@@ -121,10 +115,10 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 0)
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
-    @pytest.mark.slow
-    @umock.patch.object(imvcdeex.hdateti, "get_current_timestamp_as_string")
+    @pytest.mark.skip(reason="CMTask2089")
+    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(imvcdeex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call2(
         self,
         mock_get_secret: umock.MagicMock,
@@ -149,11 +143,20 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(
             mock_get_current_timestamp_as_string.call_args.args, ("UTC",)
         )
+        # Prepare common `hs3.listdir` params.
+        s3_bucket = f"s3://{self.bucket_name}"
+        pattern = "*.csv"
+        only_files = True
+        use_relative_paths = True
         # Check csv files on s3.
-        csv_meta_list = self.moto_client.list_objects(Bucket=self.bucket_name)[
-            "Contents"
-        ]
-        csv_files = sorted([csv_meta["Key"] for csv_meta in csv_meta_list])
+        csv_path_list = hs3.listdir(
+            s3_bucket,
+            pattern,
+            only_files,
+            use_relative_paths,
+            aws_profile=self.mock_aws_profile,
+        )
+        csv_path_list.sort()
         expected = [
             "binance/ADA_USDT_20211110-000001.csv",
             "binance/AVAX_USDT_20211110-000001.csv",
@@ -165,7 +168,7 @@ class TestDownloadRealtimeForOneExchange1(
             "binance/LINK_USDT_20211110-000001.csv",
             "binance/SOL_USDT_20211110-000001.csv",
         ]
-        self.assertListEqual(csv_files, expected)
+        self.assertListEqual(csv_path_list, expected)
 
 
 @pytest.mark.skipif(
@@ -173,18 +176,7 @@ class TestDownloadRealtimeForOneExchange1(
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
-    # Secret needed for getting historical data.
-    binance_secret = None
-
-    def setUp(self) -> None:
-        # Getting necessary secret before boto3 is mocked.
-        if self.binance_secret is None:
-            import helpers.hsecrets as hsecret
-
-            self.binance_secret = hsecret.get_secret("binance")
-        super().setUp()
-
-    def call_download_historical_data(self) -> None:
+    def call_download_historical_data(self, incremental: bool) -> None:
         """
         Test directly function call for coverage increase.
         """
@@ -195,19 +187,19 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "exchange_id": "binance",
             "data_type": "ohlcv",
             "universe": "v3",
-            "incremental": False,
-            "aws_profile": "ck",
+            "incremental": incremental,
+            "aws_profile": self.mock_aws_profile,
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
             "file_format": "parquet",
-            "unit": "ms"
+            "unit": "ms",
         }
-        exchange = imvcdeex.CcxtExtractor(args["exchange_id"])
+        exchange = ivcdexex.CcxtExtractor(args["exchange_id"])
         imvcdeexut.download_historical_data(args, exchange)
 
-    @pytest.mark.slow("Around 15s")
+    @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
-    @umock.patch.object(imvcdeex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call1(
         self,
@@ -223,7 +215,11 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
         mock_get_secret.return_value = self.binance_secret
         # TODO(Nikola): Remove comments below and use it in docs, CMTask #1349.
-        self.call_download_historical_data()
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
+            f.write("test")
+        incremental = True
+        self.call_download_historical_data(incremental)
         # Check number of calls and args for current time.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
@@ -234,16 +230,32 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         # Check first argument, `root_dir`.
         self.assertEqual(expected_args[0], "s3://mock_bucket/binance")
         # Check keyword arguments. In this case only `aws_profile`.
-        self.assertDictEqual(expected_kwargs, {"aws_profile": "ck"})
-        parquet_meta_list = self.moto_client.list_objects(
-            Bucket=self.bucket_name
-        )["Contents"]
+        self.assertDictEqual(
+            expected_kwargs,
+            {
+                "aws_profile": self.mock_aws_profile,
+                "drop_duplicates_mode": "ohlcv",
+            },
+        )
+        # Prepare common `hs3.listdir` params.
+        s3_bucket = f"s3://{self.bucket_name}"
+        pattern = "*.parquet"
+        only_files = True
+        use_relative_paths = True
+        # Check parquet files on s3.
+        parquet_path_list = hs3.listdir(
+            s3_bucket,
+            pattern,
+            only_files,
+            use_relative_paths,
+            aws_profile=self.mock_aws_profile,
+        )
+        parquet_path_list.sort()
         parquet_path_list = [
             # Remove uuid names.
-            "/".join(meta["Key"].split("/")[:-1])
-            for meta in parquet_meta_list
+            "/".join(path.split("/")[:-1])
+            for path in parquet_path_list
         ]
-        parquet_path_list.sort()
         expected_list = [
             "binance/currency_pair=ADA_USDT/year=2021/month=12",
             "binance/currency_pair=ADA_USDT/year=2022/month=1",
@@ -265,3 +277,28 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "binance/currency_pair=SOL_USDT/year=2022/month=1",
         ]
         self.assertListEqual(parquet_path_list, expected_list)
+
+    def test_function_call2(self) -> None:
+        """
+        Verify error on non incremental run.
+        """
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
+            f.write("test")
+        incremental = False
+        with pytest.raises(AssertionError) as fail:
+            self.call_download_historical_data(incremental)
+        self.assertIn(
+            "S3 path 's3://mock_bucket/binance' already exist!", str(fail.value)
+        )
+
+    def test_function_call3(self) -> None:
+        """
+        Verify error on incremental run.
+        """
+        incremental = True
+        with pytest.raises(AssertionError) as fail:
+            self.call_download_historical_data(incremental)
+        self.assertIn(
+            "S3 path 's3://mock_bucket/binance' doesn't exist!", str(fail.value)
+        )

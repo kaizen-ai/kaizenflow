@@ -17,7 +17,7 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
     
     @classmethod
     def get_id(cls) -> int:
-        return hash(cls.__name__) % 1000
+        return hash(cls.__name__) % 10000
     
     def setUp(self) -> None:
         super().setUp()
@@ -37,7 +37,7 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
         #
         with hasynci.solipsism_context() as event_loop:
             # Build DatabaseBroker.
-            broker = obroexam.get_mocked_broker_example1(
+            broker = obroexam.get_DatabaseBroker_example1(
                 event_loop, self.connection
             )
             get_wall_clock_time = broker.market_data.get_wall_clock_time
