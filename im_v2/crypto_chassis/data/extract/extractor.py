@@ -30,11 +30,15 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         self.vendor = "crypto_chassis"
 
     @staticmethod
-    def convert_currency_pair(currency_pair: str) -> str:
+    def convert_currency_pair(currency_pair: str, data_type: str) -> str:
         """
         Convert currency pair used for getting data from exchange.
         """
-        return currency_pair.replace("_", "/").lower()
+        if data_type.endswith("futures"):
+            currency_pair = currency_pair.replace("_", "").lower()
+        else:
+            currency_pair = currency_pair.replace("_", "-").lower()
+        return currency_pair
 
     @staticmethod
     def coerce_to_numeric(
@@ -86,6 +90,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         currency_pair: str,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
+        data_type: str,
         *,
         depth: int = 1,
     ) -> pd.DataFrame:
@@ -115,10 +120,14 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         if depth:
             hdbg.dassert_lgt(1, depth, 10, True, True)
             depth = str(depth)
-        # Currency pairs in market data are stored in `cur1/cur2` format,
-        # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
-        # convert the specified pair to this view.
-        currency_pair = currency_pair.replace("/", "-")
+        # Set an exchange ID for futures, if applicable.
+        if data_type.endswith("futures"):
+            hdbg.dassert_eq(
+                exchange_id, "binance", msg="Only binance futures are supported"
+            )
+            exchange_id = "binance-usds-futures"
+        # Convert currency pair to CryptoChassis supported format.
+        currency_pair = self.convert_currency_pair(currency_pair, data_type)
         # Build base URL.
         core_url = self._build_base_url(
             data_type="market-depth",
@@ -177,6 +186,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         currency_pair: str,
         start_timestamp: Optional[pd.Timestamp],
         end_timestamp: Optional[pd.Timestamp],
+        data_type: str,
         *,
         interval: Optional[str] = "1m",
         include_realtime: str = "1",
@@ -218,7 +228,13 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         # Currency pairs in market data are stored in `cur1/cur2` format,
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
-        currency_pair = currency_pair.replace("/", "-")
+        currency_pair = self.convert_currency_pair(currency_pair, data_type=data_type)
+        # Set an exchange ID for futures, if applicable.
+        if data_type.endswith("futures"):
+            hdbg.dassert_eq(
+                exchange_id, "binance", msg="Only binance futures are supported"
+            )
+            exchange_id = "binance-usds-futures"
         # Build base URL.
         core_url = self._build_base_url(
             data_type="ohlc",
@@ -276,6 +292,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         self,
         exchange_id: str,
         currency_pair: str,
+        data_type: str,
         *,
         start_timestamp: Optional[pd.Timestamp] = None,
     ) -> pd.DataFrame:
@@ -298,10 +315,13 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
                 pd.Timestamp,
             )
             start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
-        # Currency pairs in market data are stored in `cur1/cur2` format,
-        # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
-        # convert the specified pair to this view.
-        currency_pair = currency_pair.replace("/", "-")
+        currency_pair = self.convert_currency_pair(currency_pair, data_type=data_type)
+        # Set an exchange ID for futures, if applicable.
+        if data_type.endswith("futures"):
+            hdbg.dassert_eq(
+                exchange_id, "binance", msg="Only binance futures are supported"
+            )
+            exchange_id = "binance-usds-futures"
         # Build base URL.
         core_url = self._build_base_url(
             data_type="trade",
