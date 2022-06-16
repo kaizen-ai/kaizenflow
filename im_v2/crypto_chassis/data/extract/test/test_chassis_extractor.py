@@ -158,7 +158,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = actual.reset_index(drop=True)
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
-
+    
+    @pytest.mark.skip(reason="CmTask1997")
+    @pytest.mark.slow("10 seconds.")
     def test_download_ohlcv_futures1(
         self,
     ) -> None:
