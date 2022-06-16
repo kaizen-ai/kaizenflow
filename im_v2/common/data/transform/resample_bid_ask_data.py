@@ -30,8 +30,15 @@ import helpers.hs3 as hs3
 _LOG = logging.getLogger(__name__)
 
 
-def _calculate_vwap(data: pd.Series, price_col: str, volume_col, **resample_kwargs) -> pd.DataFrame:
-    price = data[price_col].multiply(data[volume_col]).resample(**resample_kwargs).agg({f"{volume_col}": "sum"})
+def _calculate_vwap(
+    data: pd.Series, price_col: str, volume_col: str, **resample_kwargs
+) -> pd.DataFrame:
+    price = (
+        data[price_col]
+        .multiply(data[volume_col])
+        .resample(**resample_kwargs)
+        .agg({f"{volume_col}": "sum"})
+    )
     size = data[volume_col].resample(**resample_kwargs).agg({volume_col: "sum"})
     calculated_price = price.divide(size)
     return calculated_price
@@ -52,8 +59,12 @@ def _resample_bid_ask_data(
         "label": None,
     }
     if mode == "VWAP":
-        bid_price = _calculate_vwap(data, "bid_price", "bid_size", **resample_kwargs)
-        ask_price = _calculate_vwap(data, "ask_price", "ask_size", **resample_kwargs)
+        bid_price = _calculate_vwap(
+            data, "bid_price", "bid_size", **resample_kwargs
+        )
+        ask_price = _calculate_vwap(
+            data, "ask_price", "ask_size", **resample_kwargs
+        )
         bid_ask_price_df = pd.concat([bid_price, ask_price], axis=1)
     elif mode == "TWAP":
         bid_ask_price_df = (
