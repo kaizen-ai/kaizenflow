@@ -30,6 +30,13 @@ import helpers.hs3 as hs3
 _LOG = logging.getLogger(__name__)
 
 
+def _calculate_vwap(data: pd.Series, price_col: str, volume_col, **resample_kwargs) -> pd.DataFrame:
+    price = data[price_col].multiply(data[volume_col]).resample(**resample_kwargs).agg({f"{volume_col}": "sum"})
+    size = data[volume_col].resample(**resample_kwargs).agg({volume_col: "sum"})
+    calculated_price = price.divide(size)
+    return calculated_price
+
+
 def _resample_bid_ask_data(
     data: pd.DataFrame, mode: str = "VWAP"
 ) -> pd.DataFrame:
@@ -39,36 +46,32 @@ def _resample_bid_ask_data(
     :param mode: designate strategy to use, i.e. volume-weighted average
         (VWAP) or time-weighted average price (TWAP)
     """
-    resample_rule = "T"
-    df = cfinresa.resample(data, rule=resample_rule).agg(
-        {
-            "bid_price": "last",
-            "bid_size": "sum",
-            "ask_price": "last",
-            "ask_size": "sum",
-            "exchange_id": "last",
-        }
-    )
+    resample_kwargs = {
+        "rule": "T",
+        "closed": None,
+        "label": None,
+    }
     if mode == "VWAP":
-        bid_price = cfinresa.compute_vwap(
-            df, rule=resample_rule, price_col="bid_price", volume_col="bid_size"
-        )
-        ask_price = cfinresa.compute_vwap(
-            df, rule=resample_rule, price_col="ask_price", volume_col="ask_size"
-        )
-        bid_ask_price_df = pd.DataFrame(
-            [bid_price, ask_price], index=["bid_size", "ask_size"]
-        ).T
+        bid_price = _calculate_vwap(data, "bid_price", "bid_size", **resample_kwargs)
+        ask_price = _calculate_vwap(data, "ask_price", "ask_size", **resample_kwargs)
+        bid_ask_price_df = pd.concat([bid_price, ask_price], axis=1)
     elif mode == "TWAP":
         bid_ask_price_df = (
-            df[["bid_size", "ask_size"]]
-            .groupby(pd.Grouper(freq=resample_rule))
+            data[["bid_size", "ask_size"]]
+            .groupby(pd.Grouper(freq=resample_kwargs["rule"]))
             .mean()
         )
     else:
         raise ValueError(f"Invalid mode='{mode}'")
-    df["bid_price"] = bid_ask_price_df["bid_size"]
-    df["ask_price"] = bid_ask_price_df["ask_size"]
+    df = cfinresa.resample(data, **resample_kwargs).agg(
+        {
+            "bid_size": "sum",
+            "ask_size": "sum",
+            "exchange_id": "last",
+        }
+    )
+    df.insert(0, "bid_price", bid_ask_price_df["bid_size"])
+    df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
     return df
 
 
