@@ -176,109 +176,6 @@ def preprocess_predictions_df(
     return metrics_df
 
 
-def plot_metric(
-    config: cconconf.Config,
-    metrics_df: pd.DataFrame,
-    metric: str,
-    by: str,
-    *,
-    y_min_lim: Optional[float] = None,
-    y_max_lim: Optional[float] = None,
-) -> None:
-    """
-    Plot requested metrics by specified column.
-    """
-    # Preprocess data and set column names to plot.
-    data = metrics_df.reset_index().copy()
-    x_name, data = _x_axis_preprocesing(config, data, by)
-    y_name, data = _y_axis_preprocesing(config, data, metric, x_name)
-    #
-    sns.barplot(
-        x=x_name,
-        y=y_name,
-        data=data,
-        color=config["plot_kwargs"]["color"],
-        capsize=config["plot_kwargs"]["capsize"],
-    )
-    plt.xticks(rotation=config["plot_kwargs"]["xticks_rotation"])
-    #
-    if metric == "hit_rate":
-        y_min_lim = y_min_lim or config["plot_kwargs"]["y_min_lim"]
-        y_max_lim = config["plot_kwargs"]["y_max_lim"]
-    plt.ylim(y_min_lim, y_max_lim)
-    plt.show()
-
-
-def _x_axis_preprocesing(
-    config: cconconf.Config,
-    data: pd.DataFrame,
-    by: str,
-) -> Tuple[str, pd.DataFrame]:
-    """
-    Set X-axis column name and transform data for it if needed.
-    """
-    # Set used config parameters.
-    asset_id = config["column_names"]["asset_id"]
-    timestamp = config["column_names"]["timestamp"]
-    y_hat = config["column_names"]["y_hat"]
-    volume = config["column_names"]["volume"]
-    quantile_ranks = config["plot_kwargs"]["quantile_ranks"]
-    #
-    if by == "asset_id":
-        x_name = asset_id
-    elif by in ["hour", "weekday", "month"]:
-        x_name = by
-        if by == "hour":
-            data[x_name] = data[timestamp].dt.hour
-        elif by == "weekday":
-            data[x_name] = data[timestamp].dt.day_name()
-        else:
-            data["month"] = data[timestamp].dt.month_name()
-    elif by == "prediction_magnitude":
-        x_name = ".".join([y_hat, "quantile_rank"])
-        # Make a column with prediction quantile ranks.
-        data[x_name] = pd.qcut(data[y_hat], quantile_ranks, labels=False)
-    elif by == "volume":
-        x_name = ".".join([volume, "quantile_rank"])
-        # Make a column with volume quantile ranks per asset id.
-        data[x_name] = data.groupby(asset_id)[volume].transform(
-            lambda x: pd.qcut(x, quantile_ranks, labels=False)
-        )
-    else:
-        raise
-    return x_name, data
-
-
-def _y_axis_preprocesing(
-    config: cconconf.Config,
-    data: pd.DataFrame,
-    metric: str,
-    x_name: str,
-) -> Tuple[str, pd.DataFrame]:
-    """
-    Set Y-axis column name and transform data for it if needed.
-    """
-    if metric == "avg_pnl":
-        y_name = config["column_names"]["trade_pnl"]
-    elif metric == "hit_rate":
-        y_name = config["column_names"]["hit"]
-    elif metric == "sharpe_ratio":
-        y_name = config["column_names"]["trade_pnl"]
-        # Compute Shapre Ratio per X-axis category.
-        data = (
-            data.groupby(x_name)[y_name]
-            .agg(lambda x: x.mean() / x.std())
-            .sort_values(ascending=False)
-            .reset_index()
-        )
-    else:
-        raise
-    # Rename Y-axis column name to metric name and store it.
-    data = data.rename(columns={y_name: metric})
-    y_name = metric
-    return y_name, data
-
-
 # %% [markdown]
 # # Load data with predictions
 
@@ -303,8 +200,29 @@ predict_df.head(3)
 metrics_df = preprocess_predictions_df(config, predict_df)
 metrics_df.head()
 
+# %%
+# Reset index to ease further preprocessing.
+# TODO(Dan): Move index resetting under plotting funtions.
+metrics_df_reset_index = metrics_df.reset_index()
+
 # %% [markdown]
 # # Stats
+
+# %%
+# Set oftenly used config parameters.
+asset_id = config["column_names"]["asset_id"]
+timestamp = config["column_names"]["timestamp"]
+volume = config["column_names"]["volume"]
+y_hat = config["column_names"]["y_hat"]
+hit = config["column_names"]["hit"]
+trade_pnl = config["column_names"]["trade_pnl"]
+#
+y_min_lim = config["plot_kwargs"]["y_min_lim"]
+y_max_lim = config["plot_kwargs"]["y_max_lim"]
+quantile_ranks = config["plot_kwargs"]["quantile_ranks"]
+color = config["plot_kwargs"]["color"]
+capsize = config["plot_kwargs"]["capsize"]
+xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
 
 # %% [markdown]
 # ## By asset
@@ -313,99 +231,254 @@ metrics_df.head()
 # ### Hit rate
 
 # %%
-_ = plot_metric(config, metrics_df, "hit_rate", "asset_id")
+sns.barplot(
+    x=asset_id,
+    y=hit,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("hit_rate")
+plt.ylim(y_min_lim, y_max_lim)
+plt.show()
 
 # %% [markdown]
 # ### PnL
 
 # %%
-# Cumulative PnL for a given coin.
-pnl_stats = (
-    metrics_df.groupby(config["column_names"]["asset_id"])[
-        config["column_names"]["trade_pnl"]
-    ]
-    .sum()
-    .sort_values(ascending=False)
+# Summary PnL for a given coin.
+pnl_stats = metrics_df.groupby(asset_id)[trade_pnl].sum().sort_values(ascending=False)
+# Plot summary PnL per asset id.
+_ = sns.barplot(
+    x=pnl_stats.index,
+    y=pnl_stats.values,
+    color=color,
+    capsize=capsize,
 )
-# Plot overall PnL per asset id.
-_ = sns.barplot(x=pnl_stats.index, y=pnl_stats.values, color="C0", capsize=0.2)
-plt.xticks(rotation=70)
+plt.xticks(rotation=xticks_rotation)
 plt.show()
 
 # %%
 # Plot cumulative PnL over time per asset id.
-_ = (
-    metrics_df[config["column_names"]["trade_pnl"]]
-    .dropna()
-    .unstack()
-    .cumsum()
-    .plot()
-)
+_ = metrics_df[trade_pnl].dropna().unstack().cumsum().plot()
 
 # %%
-_ = plot_metric(config, metrics_df, "avg_pnl", "asset_id")
+# Plot average PnL per asset id.
+sns.barplot(
+    x=asset_id,
+    y=trade_pnl,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("avg_pnl")
+plt.show()
 
 # %% [markdown]
 # ### Sharpe Ratio
 
 # %%
-_ = plot_metric(config, metrics_df, "sharpe_ratio", "asset_id")
+# Compute Shapre Ratio asset id.
+sr_data = (
+    metrics_df.groupby(asset_id)[trade_pnl]
+    .agg(lambda x: x.mean() / x.std())
+    .sort_values(ascending=False)
+    .reset_index()
+)
+# Plot Sharpe Ratio per asset id.
+sns.barplot(
+    x=asset_id,
+    y=trade_pnl,
+    data=sr_data,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("sharpe_ratio")
+plt.show()
 
 # %% [markdown]
 # ## By time
+
+# %%
+metrics_df_reset_index["hour"] = metrics_df_reset_index[timestamp].dt.hour
+metrics_df_reset_index["weekday"] = metrics_df_reset_index[timestamp].dt.day_name()
+metrics_df_reset_index["month"] = metrics_df_reset_index[timestamp].dt.month_name()
 
 # %% [markdown]
 # ### Hit Rate
 
 # %%
-_ = plot_metric(config, metrics_df, "hit_rate", "hour", y_min_lim=0.4)
+sns.barplot(
+    x="hour",
+    y=hit,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("hit_rate")
+plt.ylim(y_min_lim, y_max_lim)
+plt.show()
 
 # %%
-_ = plot_metric(config, metrics_df, "hit_rate", "weekday")
+sns.barplot(
+    x="weekday",
+    y=hit,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("hit_rate")
+plt.ylim(y_min_lim, y_max_lim)
+plt.show()
 
 # %%
-_ = plot_metric(config, metrics_df, "hit_rate", "month")
+sns.barplot(
+    x="month",
+    y=hit,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("hit_rate")
+plt.ylim(y_min_lim, y_max_lim)
+plt.show()
 
 # %% [markdown]
 # ### PnL
 
 # %%
-_ = plot_metric(config, metrics_df, "avg_pnl", "hour")
+sns.barplot(
+    x="hour",
+    y=trade_pnl,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("avg_pnl")
+plt.show()
 
 # %%
-_ = plot_metric(config, metrics_df, "avg_pnl", "weekday")
+sns.barplot(
+    x="weekday",
+    y=trade_pnl,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("avg_pnl")
+plt.show()
 
 # %%
-_ = plot_metric(config, metrics_df, "avg_pnl", "month")
+sns.barplot(
+    x="month",
+    y=trade_pnl,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("avg_pnl")
+plt.show()
 
 # %% [markdown]
 # ## By prediction magnitude
 
+# %%
+prediction_magnitude = ".".join([y_hat, "quantile_rank"])
+metrics_df_reset_index[prediction_magnitude] = pd.qcut(
+    metrics_df_reset_index[y_hat], quantile_ranks, labels=False
+)
+
 # %% [markdown]
 # ### Hit rate
 
 # %%
-_ = plot_metric(config, metrics_df, "hit_rate", "prediction_magnitude")
+sns.barplot(
+    x=prediction_magnitude,
+    y=hit,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("hit_rate")
+plt.ylim(y_min_lim, y_max_lim)
+plt.show()
 
 # %% [markdown]
 # ### PnL
 
 # %%
-_ = plot_metric(config, metrics_df, "avg_pnl", "prediction_magnitude")
+sns.barplot(
+    x=prediction_magnitude,
+    y=trade_pnl,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("avg_pnl")
+plt.show()
 
 # %% [markdown]
 # ## By volume
 
+# %%
+volume_quantile = ".".join([volume, "quantile_rank"])
+metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(asset_id)[volume].transform(
+    lambda x: pd.qcut(x, quantile_ranks, labels=False)
+)
+
 # %% [markdown]
 # ### Hit rate
 
 # %%
-_ = plot_metric(config, metrics_df, "hit_rate", "volume")
+sns.barplot(
+    x=volume_quantile,
+    y=hit,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("hit_rate")
+plt.ylim(y_min_lim, y_max_lim)
+plt.show()
 
 # %% [markdown]
 # ### PnL
 
 # %%
-_ = plot_metric(config, metrics_df, "avg_pnl", "volume")
+sns.barplot(
+    x=volume_quantile,
+    y=trade_pnl,
+    data=metrics_df_reset_index,
+    color=color,
+    capsize=capsize,
+)
+#
+plt.xticks(rotation=xticks_rotation)
+plt.ylabel("avg_pnl")
+plt.show()
 
 # %%
