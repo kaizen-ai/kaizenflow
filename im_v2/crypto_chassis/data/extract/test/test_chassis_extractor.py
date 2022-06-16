@@ -56,7 +56,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
             exchange_id, currency_pair, start_timestamp, end_timestamp, data_type=data_type
         )
         # Verify dataframe length.
-        self.assertEqual(86007, actual.shape[0])
+        self.assertEqual(86369, actual.shape[0])
         # Verify corner datetime if output is not empty.
         first_date = int(actual["timestamp"].iloc[0])
         last_date = int(actual["timestamp"].iloc[-1])
@@ -136,7 +136,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         """
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
-        exchange = "coinbase"
+        exchange = "binance"
         currency_pair = "btc/usdt"
         data_type = "ohlcv"
         client = imvccdexex.CryptoChassisExtractor()
@@ -167,7 +167,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         """
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
-        exchange = "coinbase"
+        exchange = "binance"
         currency_pair = "btc/usdt"
         data_type = "ohlcv-futures"
         client = imvccdexex.CryptoChassisExtractor()
@@ -297,7 +297,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         Test download for historical data.
         """
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
-        exchange = "coinbase"
+        exchange = "binance"
         currency_pair = "btc/usdt"
         data_type = "trade-futures"
         client = imvccdexex.CryptoChassisExtractor()
@@ -305,12 +305,12 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
             exchange, currency_pair, data_type=data_type, start_timestamp=start_timestamp
         )
         # Verify dataframe length.
-        self.assertEqual(12396, actual.shape[0])
+        self.assertEqual(1265597, actual.shape[0])
         # Verify corner datetime if output is not empty.
         first_date = int(actual["timestamp"].iloc[0])
         last_date = int(actual["timestamp"].iloc[-1])
-        self.assertEqual(1641686404, first_date)
-        self.assertEqual(1641772751, last_date)
+        self.assertEqual(1641686402, first_date)
+        self.assertEqual(1641772799, last_date)
         # Check the output values.
         actual = actual.reset_index(drop=True)
         actual = hpandas.convert_df_to_json_string(actual)

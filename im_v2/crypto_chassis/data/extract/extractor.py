@@ -36,8 +36,10 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         """
         if data_type.endswith("futures"):
             currency_pair = currency_pair.replace("_", "").lower()
+            currency_pair = currency_pair.replace("/", "").lower()
         else:
-            currency_pair = currency_pair.replace("_", "/").lower()
+            currency_pair = currency_pair.replace("/", "-").lower()
+            currency_pair = currency_pair.replace("_", "-").lower()
         return currency_pair
 
     @staticmethod
