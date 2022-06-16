@@ -35,9 +35,11 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         Convert currency pair used for getting data from exchange.
         """
         if data_type.endswith("futures"):
+            # Remove the separators for futures.
             currency_pair = currency_pair.replace("_", "").lower()
             currency_pair = currency_pair.replace("/", "").lower()
         else:
+            # Replace separators with "-".
             currency_pair = currency_pair.replace("/", "-").lower()
             currency_pair = currency_pair.replace("_", "-").lower()
         return currency_pair
