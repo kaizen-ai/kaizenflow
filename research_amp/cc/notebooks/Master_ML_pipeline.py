@@ -29,7 +29,6 @@
 # %%
 import datetime
 import logging
-from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -249,7 +248,9 @@ plt.show()
 
 # %%
 # Summary PnL for a given coin.
-pnl_stats = metrics_df.groupby(asset_id)[trade_pnl].sum().sort_values(ascending=False)
+pnl_stats = (
+    metrics_df.groupby(asset_id)[trade_pnl].sum().sort_values(ascending=False)
+)
 # Plot summary PnL per asset id.
 _ = sns.barplot(
     x=pnl_stats.index,
@@ -307,8 +308,12 @@ plt.show()
 
 # %%
 metrics_df_reset_index["hour"] = metrics_df_reset_index[timestamp].dt.hour
-metrics_df_reset_index["weekday"] = metrics_df_reset_index[timestamp].dt.day_name()
-metrics_df_reset_index["month"] = metrics_df_reset_index[timestamp].dt.month_name()
+metrics_df_reset_index["weekday"] = metrics_df_reset_index[
+    timestamp
+].dt.day_name()
+metrics_df_reset_index["month"] = metrics_df_reset_index[
+    timestamp
+].dt.month_name()
 
 # %% [markdown]
 # ### Hit Rate
@@ -444,9 +449,9 @@ plt.show()
 
 # %%
 volume_quantile = ".".join([volume, "quantile_rank"])
-metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(asset_id)[volume].transform(
-    lambda x: pd.qcut(x, quantile_ranks, labels=False)
-)
+metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(
+    asset_id
+)[volume].transform(lambda x: pd.qcut(x, quantile_ranks, labels=False))
 
 # %% [markdown]
 # ### Hit rate
