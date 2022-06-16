@@ -23,7 +23,34 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
         exchange_id = "binance"
         currency_pair = "btc/usdt"
-        data_type = "market-depth"
+        data_type = "market_depth"
+        client = imvccdexex.CryptoChassisExtractor()
+        actual = client._download_market_depth(
+            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type=data_type
+        )
+        # Verify dataframe length.
+        self.assertEqual(86007, actual.shape[0])
+        # Verify corner datetime if output is not empty.
+        first_date = int(actual["timestamp"].iloc[0])
+        last_date = int(actual["timestamp"].iloc[-1])
+        self.assertEqual(1641686400, first_date)
+        self.assertEqual(1641772799, last_date)
+        # Check the output values.
+        actual = actual.reset_index(drop=True)
+        actual = hpandas.convert_df_to_json_string(actual)
+        self.check_string(actual)
+
+    def test_download_market_depth_data_futures1(
+        self,
+    ) -> None:
+        """
+        Test download for historical data.
+        """
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
+        exchange_id = "binance"
+        currency_pair = "btc/usdt"
+        data_type = "market_depth-futures"
         client = imvccdexex.CryptoChassisExtractor()
         actual = client._download_market_depth(
             exchange_id, currency_pair, start_timestamp, end_timestamp, data_type=data_type
@@ -132,6 +159,37 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
 
+    def test_download_ohlcv_futures1(
+        self,
+    ) -> None:
+        """
+        Test download for historical data.
+        """
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
+        exchange = "coinbase"
+        currency_pair = "btc/usdt"
+        data_type = "ohlcv-futures"
+        client = imvccdexex.CryptoChassisExtractor()
+        actual = client._download_ohlcv(
+            exchange,
+            currency_pair,
+            start_timestamp=start_timestamp,
+            end_timestamp=end_timestamp,
+            data_type=data_type
+        )
+        # Verify dataframe length.
+        self.assertEqual(84961, actual.shape[0])
+        # Verify corner datetime if output is not empty.
+        first_date = int(actual["timestamp"].iloc[0])
+        last_date = int(actual["timestamp"].iloc[-1])
+        self.assertEqual(1641686400, first_date)
+        self.assertEqual(1646784000, last_date)
+        # Check the output values.
+        actual = actual.reset_index(drop=True)
+        actual = hpandas.convert_df_to_json_string(actual)
+        self.check_string(actual)
+
     @pytest.mark.skip(reason="CmTask1997")
     def test_download_ohlcv_invalid_input1(self) -> None:
         """
@@ -215,7 +273,33 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         exchange = "coinbase"
         currency_pair = "btc/usdt"
-        data_type = "trades"
+        data_type = "trade"
+        client = imvccdexex.CryptoChassisExtractor()
+        actual = client._download_trades(
+            exchange, currency_pair, data_type=data_type, start_timestamp=start_timestamp
+        )
+        # Verify dataframe length.
+        self.assertEqual(12396, actual.shape[0])
+        # Verify corner datetime if output is not empty.
+        first_date = int(actual["timestamp"].iloc[0])
+        last_date = int(actual["timestamp"].iloc[-1])
+        self.assertEqual(1641686404, first_date)
+        self.assertEqual(1641772751, last_date)
+        # Check the output values.
+        actual = actual.reset_index(drop=True)
+        actual = hpandas.convert_df_to_json_string(actual)
+        self.check_string(actual)
+
+    def test_download_trade_futures1(
+        self,
+    ) -> None:
+        """
+        Test download for historical data.
+        """
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        exchange = "coinbase"
+        currency_pair = "btc/usdt"
+        data_type = "trade-futures"
         client = imvccdexex.CryptoChassisExtractor()
         actual = client._download_trades(
             exchange, currency_pair, data_type=data_type, start_timestamp=start_timestamp
