@@ -23,10 +23,10 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
         exchange_id = "binance"
         currency_pair = "btc/usdt"
-        data_type = "market_depth"
+        data_type = "market-depth"
         client = imvccdexex.CryptoChassisExtractor()
         actual = client._download_market_depth(
-            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type
+            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type=data_type
         )
         # Verify dataframe length.
         self.assertEqual(86007, actual.shape[0])
@@ -218,7 +218,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         data_type = "trades"
         client = imvccdexex.CryptoChassisExtractor()
         actual = client._download_trades(
-            exchange, currency_pair, data_type, start_timestamp=start_timestamp
+            exchange, currency_pair, data_type=data_type, start_timestamp=start_timestamp
         )
         # Verify dataframe length.
         self.assertEqual(12396, actual.shape[0])
