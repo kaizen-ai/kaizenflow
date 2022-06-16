@@ -2,7 +2,6 @@ import logging
 from typing import Any, Dict
 
 import pandas as pd
-import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
@@ -12,7 +11,6 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): Use ImClientTestCase.
-@pytest.mark.skip(reason="Assertion in TestIgHistoricalPqByDateTaqBarClient1 #2110")
 class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
     def read_data_helper(self, *args: Any, **kwargs: Dict[str, Any]) -> None:
         # Execute.
@@ -38,7 +36,7 @@ class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
         full_symbols = ["17085"]
         start_ts = pd.Timestamp("2019-01-07 9:00:00-05:00")
         end_ts = pd.Timestamp("2019-01-07 16:00:00-05:00")
-        columns = ["end_time", "ticker", "igid", "close"]
+        columns = ["timestamp_db", "ticker", "igid", "close"]
         filter_data_mode = "assert"
         # Execute.
         self.read_data_helper(
@@ -57,7 +55,7 @@ class TestIgHistoricalPqByDateTaqBarClient1(hunitest.TestCase):
         full_symbols = ["17085", "13684"]
         start_ts = pd.Timestamp("2019-01-07 9:00:00-05:00")
         end_ts = pd.Timestamp("2019-01-08 16:00:00-05:00")
-        columns = ["end_time", "ticker", "igid", "close", "open"]
+        columns = ["timestamp_db", "ticker", "igid", "close", "open"]
         filter_data_mode = "assert"
         # Execute.
         self.read_data_helper(

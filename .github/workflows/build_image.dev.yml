@@ -2,11 +2,10 @@ name: Build dev image
 on:
   # Run manually.
   workflow_dispatch:
-    # TODO(Nikola): Add default input parameters for manual workflow run.
-    # https://damienaicheh.github.io/github/actions/2022/01/20/set-dynamic-parameters-github-workflows-en.html
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
 
 jobs:
-  build_image:
+  build_dev_image:
     runs-on: ubuntu-latest
 
     steps:
@@ -50,11 +49,8 @@ jobs:
           # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
         run: invoke docker_pull
 
-      # Under the hood `docker_release_dev_image` step use invoke that:
-      # - builds the local image
-      # - tags local image as dev
-      # - runs the regressions
-      # - pushes the dev image to ECR
+      # Run the `invoke` target `docker_release_dev_image` to release the image.
+      # See the corresponding documentation for more information.
       - name: Run 'docker_release_dev_image' workflow
         env:
           GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
