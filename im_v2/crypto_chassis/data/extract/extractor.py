@@ -46,7 +46,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             # If contract type is not specified, "spot" is assumed.
             # Replace separators with '-', e.g.
             # 'BTC/USDT' -> 'btc-usdt'.
-            replace = [("/", ""), ("_", "")]
+            replace = [("/", "-"), ("_", "-")]
         for old, new in replace:
             currency_pair = currency_pair.replace(old, new).lower()
         return currency_pair
