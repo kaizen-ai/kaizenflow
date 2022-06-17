@@ -124,10 +124,10 @@ def run_optimizer(
     # TODO(Grisha): Move this inside the `opt_docker_cmd`.
     # TODO(Grisha): maybe move `docker_login` to the entrypoint?
     # To avoid to call init_logger overwriting the call to it from `main`.
-    import helpers.lib_tasks as hlibtask
+    import helpers.lib_tasks_docker as hlitadoc
 
     ctx = invoke.context.Context()
-    hlibtask.docker_login(ctx)
+    hlitadoc.docker_login(ctx)
     # Serialize the inputs in `tmp_dir`.
     hio.create_dir(tmp_dir, incremental=True)
     input_obj = {"config": config, "df": df}

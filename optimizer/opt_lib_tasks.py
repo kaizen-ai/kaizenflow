@@ -12,8 +12,13 @@ from invoke import task
 
 import helpers.hgit as hgit
 import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_docker as hlitadoc
+import helpers.lib_tasks_docker_release as hltadore
+import helpers.lib_tasks_pytest as hlitapyt
 
 _LOG = logging.getLogger(__name__)
+
+# pylint: disable=protected-access
 
 
 _OPTIMIZER_DIR = os.path.join(hgit.get_amp_abs_path(), "optimizer")
@@ -37,7 +42,7 @@ def opt_docker_build_local_image(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_build_local_image(
+    hltadore.docker_build_local_image(
         ctx,
         version,
         cache=cache,
@@ -58,7 +63,7 @@ def opt_docker_tag_local_image_as_dev(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_tag_local_image_as_dev(
+    hltadore.docker_tag_local_image_as_dev(
         ctx,
         version,
         base_image=base_image,
@@ -77,7 +82,7 @@ def opt_docker_push_dev_image(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_push_dev_image(
+    hltadore.docker_push_dev_image(
         ctx, version, base_image=base_image, container_dir_name=_OPTIMIZER_DIR
     )
 
@@ -95,7 +100,7 @@ def opt_docker_release_dev_image(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_release_dev_image(
+    hltadore.docker_release_dev_image(
         ctx,
         version,
         cache=cache,
@@ -125,7 +130,7 @@ def opt_docker_pull(ctx, stage="dev", version=None):  # type: ignore
     hlibtask._report_task()
     #
     base_image = ""
-    hlibtask._docker_pull(ctx, base_image, stage, version)
+    hlitadoc._docker_pull(ctx, base_image, stage, version)
 
 
 @task
@@ -142,7 +147,7 @@ def opt_docker_bash(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_bash(
+    hlitadoc.docker_bash(
         ctx,
         base_image=base_image,
         stage=stage,
@@ -168,7 +173,7 @@ def opt_docker_jupyter(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_jupyter(
+    hlitadoc.docker_jupyter(
         ctx,
         stage=stage,
         version=version,
@@ -195,7 +200,7 @@ def opt_docker_cmd(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_cmd(
+    hlitadoc.docker_cmd(
         ctx,
         base_image=base_image,
         stage=stage,
@@ -248,7 +253,7 @@ def opt_run_fast_tests(
     skip_submodules = False
     # False since we cannot call `git_clean` invoke from the `optimizer` dir.
     git_clean = False
-    rc = hlibtask._run_tests(
+    rc = hlitapyt._run_tests(
         ctx,
         test_list_name,
         stage,
@@ -301,7 +306,7 @@ def opt_run_slow_tests(
     # False since we cannot call `git_clean` invoke
     # from the `optimizer` dir.
     git_clean = False
-    rc = hlibtask._run_tests(
+    rc = hlitapyt._run_tests(
         ctx,
         test_list_name,
         stage,
@@ -345,7 +350,7 @@ def _get_opt_docker_up_cmd(
     """
     extra_env_vars = None
     extra_docker_compose_files = None
-    docker_up_cmd_ = hlibtask._get_docker_base_cmd(
+    docker_up_cmd_ = hlitadoc._get_docker_base_cmd(
         base_image,
         stage,
         version,
@@ -376,7 +381,8 @@ def _get_opt_docker_up_cmd(
 
 @task
 def opt_docker_up(  # type: ignore
-        ctx, detach=True, base_image="", stage="dev", version=""):
+    ctx, detach=True, base_image="", stage="dev", version=""
+):
     """
     Start the optimizer as a service.
     """
@@ -404,7 +410,7 @@ def _get_opt_docker_down_cmd(
     """
     extra_env_vars = None
     extra_docker_compose_files = None
-    docker_down_cmd_ = hlibtask._get_docker_base_cmd(
+    docker_down_cmd_ = hlitadoc._get_docker_base_cmd(
         base_image,
         stage,
         version,
@@ -421,8 +427,7 @@ def _get_opt_docker_down_cmd(
 
 
 @task
-def opt_docker_down(  # type: ignore
-        ctx, base_image="", stage="dev", version=""):
+def opt_docker_down(ctx, base_image="", stage="dev", version=""):  # type: ignore
     """
     Bring down the optimizer service.
     """
