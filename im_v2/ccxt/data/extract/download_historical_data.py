@@ -49,7 +49,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
-    exchange = ivcdexex.CcxtExtractor(args.exchange_id)
+    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.data_type)
     # Assign extractor-specific variables.
     args = vars(args)
     args["unit"] = "ms"
