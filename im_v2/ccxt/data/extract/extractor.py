@@ -34,7 +34,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         Construct CCXT extractor.
 
         :param exchange_id: CCXT exchange id to log into (e.g., 'binance')
-        :param data_type: data type including contract type, e.g. 'ohlcv-futures'
+        :param contract_type: spot or futures contracts to extract
         """
         super().__init__()
         hdbg.dassert_in(contract_type, ["futures", "spot"], msg="Supported contract types: spot, futures")
