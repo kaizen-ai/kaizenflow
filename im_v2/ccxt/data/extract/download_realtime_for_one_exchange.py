@@ -53,7 +53,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
-    exchange = imvcdeex.CcxtExtractor(args.exchange_id, args.data_type)
+    exchange = imvcdeex.CcxtExtractor(args.exchange_id, args.contract_type)
     args = vars(args)
     imvcdeexut.download_realtime_for_one_exchange(args, exchange)
 
