@@ -55,7 +55,7 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(kwargs["exchange_id"])
+        extractor = ivcdexex.CcxtExtractor(kwargs["exchange_id"], kwargs["data_type"])
         if use_s3:
             # Update kwargs.
             kwargs.update(
@@ -194,7 +194,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "file_format": "parquet",
             "unit": "ms",
         }
-        exchange = ivcdexex.CcxtExtractor(args["exchange_id"])
+        exchange = ivcdexex.CcxtExtractor(args["exchange_id"], args["data_type"])
         imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.skip(reason="CMTask2089")

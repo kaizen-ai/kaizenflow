@@ -22,14 +22,14 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         Smoke test that the class is being initialized correctly.
         """
-        _ = imvcdeex.CcxtExtractor("binance")
+        _ = imvcdeex.CcxtExtractor("binance", "ohlcv")
 
     def test_get_exchange_currency_pairs(self) -> None:
         """
         Test that a non-empty list of exchange currencies is loaded.
         """
         # Extract a list of currencies.
-        exchange_class = imvcdeex.CcxtExtractor("binance")
+        exchange_class = imvcdeex.CcxtExtractor("binance", "ohlcv")
         curr_list = exchange_class.get_exchange_currency_pairs()
         # Verify that the output is a non-empty list with only string values.
         hdbg.dassert_container_type(curr_list, list, str)
@@ -74,7 +74,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Run with invalid start timestamp.
         """
         # Initialize class.
-        exchange_class = imvcdeex.CcxtExtractor("binance")
+        exchange_class = imvcdeex.CcxtExtractor("binance", "ohlcv")
         # Run with invalid input.
         start_timestamp = "invalid"
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
@@ -99,7 +99,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Run with invalid end timestamp.
         """
         # Initialize class.
-        exchange_class = imvcdeex.CcxtExtractor("binance")
+        exchange_class = imvcdeex.CcxtExtractor("binance", "ohlcv")
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
         end_timestamp = "invalid"
@@ -125,7 +125,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Start greater than the end.
         """
         # Initialize class.
-        exchange_class = imvcdeex.CcxtExtractor("binance")
+        exchange_class = imvcdeex.CcxtExtractor("binance", "ohlcv")
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
@@ -146,7 +146,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Run with invalid currency pair.
         """
         # Initialize class.
-        exchange_class = imvcdeex.CcxtExtractor("binance")
+        exchange_class = imvcdeex.CcxtExtractor("binance", "ohlcv")
         # Run with invalid input.
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
@@ -164,7 +164,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         Verify that order book is downloaded correctly.
         """
-        exchange_class = imvcdeex.CcxtExtractor("gateio")
+        exchange_class = imvcdeex.CcxtExtractor("gateio", "order_book")
         order_book = exchange_class.download_order_book("BTC_USDT")
         order_book_keys = [
             "symbol",
@@ -182,7 +182,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Run with invalid currency pair.
         """
         # Initialize class.
-        exchange_class = imvcdeex.CcxtExtractor("binance")
+        exchange_class = imvcdeex.CcxtExtractor("binance", "ohlcv")
         # Run with invalid input.
         with pytest.raises(AssertionError) as fail:
             exchange_class.download_order_book("invalid_currency_pair")
@@ -202,7 +202,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Data is returned for further checking in different tests.
         """
         # Initiate class and set date parameters.
-        exchange_class = imvcdeex.CcxtExtractor("binance")
+        exchange_class = imvcdeex.CcxtExtractor("binance", "ohlcv")
         # Extract data.
         actual = exchange_class._download_ohlcv(
             currency_pair="BTC/USDT",
