@@ -91,6 +91,7 @@ services:
       - PORT=${PORT}
     extends:
       app
+    network_mode: ${NETWORK_MODE:-bridge}
     ports:
       - "${PORT}:${PORT}"
 
