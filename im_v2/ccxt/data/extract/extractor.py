@@ -40,7 +40,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
         self.vendor = "CCXT"
-        self._data_type = data_type
+        self.data_type = data_type
 
     @staticmethod
     def convert_currency_pair(currency_pair: str) -> str:
@@ -60,7 +60,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         exchange_params.update(credentials)
         # Enable rate limit.
         exchange_params["rateLimit"] = True
-        if self._data_type.endswith("futures"):
+        if self.data_type.endswith("futures"):
             exchange_params["option"] = { 'defaultMarket': 'futures' }
         exchange_class = getattr(ccxt, self.exchange_id)
         exchange = exchange_class(exchange_params)
