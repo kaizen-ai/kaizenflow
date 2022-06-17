@@ -19,6 +19,7 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_gh as hlitagh
 
 _LOG = logging.getLogger(__name__)
 
@@ -371,7 +372,7 @@ def git_create_branch(  # type: ignore
         hdbg.dassert_eq(
             branch_name, "", "You can't specify both --issue and --branch_name"
         )
-        title, _ = hlibtask._get_gh_issue_title(issue_id, repo_short_name)
+        title, _ = hlitagh._get_gh_issue_title(issue_id, repo_short_name)
         branch_name = title
         _LOG.info(
             "Issue %d in %s repo_short_name corresponds to '%s'",
