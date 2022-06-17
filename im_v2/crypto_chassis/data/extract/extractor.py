@@ -36,6 +36,24 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         self._endpoint = "https://api.cryptochassis.com/v1"
         self.vendor = "crypto_chassis"
 
+    @staticmethod
+    def coerce_to_numeric(
+        data: pd.DataFrame, float_columns: Optional[List[str]] = None
+    ):
+        """
+        Coerce given DataFrame to numeric data type.
+
+        :param data: data to transform
+        :param float_columns: columns to enforce float data type
+        :return: DataFrame with numeric data.
+        """
+        # Convert data to numeric.
+        data = data.apply(pd.to_numeric)
+        # Enforce float type for certain columns.
+        if float_columns:
+            data[float_columns] = data[float_columns].astype(float)
+        return data
+
     def convert_currency_pair(self, currency_pair: str) -> str:
         """
         Convert currency pair used for getting data from exchange.
@@ -56,24 +74,6 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         for old, new in replace:
             currency_pair = currency_pair.replace(old, new).lower()
         return currency_pair
-
-    @staticmethod
-    def coerce_to_numeric(
-        data: pd.DataFrame, float_columns: Optional[List[str]] = None
-    ):
-        """
-        Coerce given DataFrame to numeric data type.
-
-        :param data: data to transform
-        :param float_columns: columns to enforce float data type
-        :return: DataFrame with numeric data.
-        """
-        # Convert data to numeric.
-        data = data.apply(pd.to_numeric)
-        # Enforce float type for certain columns.
-        if float_columns:
-            data[float_columns] = data[float_columns].astype(float)
-        return data
 
     @staticmethod
     def _build_query_url(base_url: str, **kwargs: Any) -> str:
@@ -137,7 +137,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             hdbg.dassert_lgt(1, depth, 10, True, True)
             depth = str(depth)
         # Set an exchange ID for futures, if applicable.
-        if self.contract_type=="futures":
+        if self.contract_type == "futures":
             hdbg.dassert_eq(
                 exchange_id, "binance", msg="Only binance futures are supported"
             )
