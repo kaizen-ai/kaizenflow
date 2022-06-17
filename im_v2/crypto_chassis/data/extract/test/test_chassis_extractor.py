@@ -26,7 +26,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         data_type = "market_depth"
         client = imvccdexex.CryptoChassisExtractor()
         actual = client._download_market_depth(
-            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type=data_type
+            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type
         )
         # Verify dataframe length.
         self.assertEqual(86007, actual.shape[0])
@@ -53,7 +53,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         data_type = "market_depth-futures"
         client = imvccdexex.CryptoChassisExtractor()
         actual = client._download_market_depth(
-            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type=data_type
+            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type
         )
         # Verify dataframe length.
         self.assertEqual(86369, actual.shape[0])
@@ -143,9 +143,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = client._download_ohlcv(
             exchange,
             currency_pair,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            data_type=data_type
+            start_timestamp,
+            end_timestamp,
+            data_type
         )
         # Verify dataframe length.
         self.assertEqual(84961, actual.shape[0])
@@ -176,9 +176,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = client._download_ohlcv(
             exchange,
             currency_pair,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            data_type=data_type
+            start_timestamp,
+            end_timestamp,
+            data_type
         )
         # Verify dataframe length.
         self.assertEqual(84961, actual.shape[0])
@@ -208,9 +208,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         df = client._download_ohlcv(
             exchange,
             currency_pair,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            data_type=data_type
+            start_timestamp,
+            end_timestamp,
+            data_type
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -232,9 +232,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         df = client._download_ohlcv(
             exchange,
             currency_pair,
-            start_timestamp=start_timestamp,
-            end_timestamp=end_timestamp,
-            data_type=data_type
+            start_timestamp,
+            end_timestamp,
+            data_type
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -258,9 +258,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
             client._download_ohlcv(
                 exchange,
                 currency_pair,
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-                data_type=data_type
+                start_timestamp,
+                end_timestamp,
+                data_type
             )
         # Check output for error.
         actual = str(cm.exception)
@@ -278,7 +278,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         data_type = "trade"
         client = imvccdexex.CryptoChassisExtractor()
         actual = client._download_trades(
-            exchange, currency_pair, data_type=data_type, start_timestamp=start_timestamp
+            exchange, currency_pair, data_type, start_timestamp=start_timestamp
         )
         # Verify dataframe length.
         self.assertEqual(12396, actual.shape[0])
@@ -304,7 +304,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         data_type = "trade-futures"
         client = imvccdexex.CryptoChassisExtractor()
         actual = client._download_trades(
-            exchange, currency_pair, data_type=data_type, start_timestamp=start_timestamp
+            exchange, currency_pair, data_type, start_timestamp=start_timestamp
         )
         # Verify dataframe length.
         self.assertEqual(1265597, actual.shape[0])

@@ -33,15 +33,22 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
     def convert_currency_pair(currency_pair: str, data_type: str) -> str:
         """
         Convert currency pair used for getting data from exchange.
+
+        :param currency_pair: extracted asset, e.g. "BTC_USDT"
+        :param data_type: data type that may include contract type, e.g. "ohlcv" or "ohlcv-futures"
+        :return: currency pair in CryptoChassis format.
         """
         if data_type.endswith("futures"):
-            # Remove the separators for futures.
-            currency_pair = currency_pair.replace("_", "").lower()
-            currency_pair = currency_pair.replace("/", "").lower()
+            # Remove separator for futures contracts, e.g.
+            #  'BTC/USDT' -> 'btcusdt'
+            replace = [("/", ""), ("_", "")]
         else:
-            # Replace separators with "-".
-            currency_pair = currency_pair.replace("/", "-").lower()
-            currency_pair = currency_pair.replace("_", "-").lower()
+            # If contract type is not specified, "spot" is assumed.
+            # Replace separators with '-', e.g.
+            # 'BTC/USDT' -> 'btc-usdt'.
+            replace = [("/", ""), ("_", "")]
+        for old, new in replace:
+            currency_pair = currency_pair.replace(old, new).lower()
         return currency_pair
 
     @staticmethod
@@ -105,9 +112,10 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         0     1641686400     41678.35     0.017939     41686.97     1.69712319
         1     1641686401     41678.35     0.017939     41690.58     0.04
 
-        :param exchange: the name of exchange, e.g. `binance`, `coinbase`
+        :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :param start_timestamp: start of processing
+        :param data_type: type of data, e.g. "ohlcv" or "ohlcv-futures".
         :param depth: allowed values: 1 to 10. Defaults to 1.
         :return: market depth data
         """
@@ -206,6 +214,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
         :param start_timestamp: timestamp of start
         :param end_timestamp: timestamp of end
+        :param data_type: type of data, e.g. "ohlcv" or "ohlcv-futures".
         :param interval: interval between data points in one bar, e.g. `1m` (default), `5h`, `2d`
         :param include_realtime: 0 (default) or 1. If set to 1, request rate limit on this
             endpoint is 1 request per second per public IP.
