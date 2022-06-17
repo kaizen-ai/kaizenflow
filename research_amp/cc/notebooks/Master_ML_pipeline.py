@@ -29,12 +29,12 @@
 # %%
 import datetime
 import logging
-import sklearn
 from typing import Any, Callable, List
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import sklearn
 
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
@@ -188,7 +188,7 @@ def bootstrap(
 ) -> List[Any]:
     """
     Bootstrap computations on specified number of data resamples.
-    
+
     :param data: input data to resample
     :param func: function accepting a series and returning a single scalar value
     :param n_resamples: number of resamples to create
@@ -215,7 +215,7 @@ def plot_sharpe_ratio(
             pnl, time_scaling=config["plot_kwargs"]["time_scaling"]
         )
         # Multiple Sharpe Ratios are being computed on many resamples
-        # in order to find and plot confidence intervals. 
+        # in order to find and plot confidence intervals.
         sharpe_ratio_srs = pd.Series(
             bootstrap(srs, func, config["plot_kwargs"]["n_resamples"]),
             name="sharpe_ratio",
