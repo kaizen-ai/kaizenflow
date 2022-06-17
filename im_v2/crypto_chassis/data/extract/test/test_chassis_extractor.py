@@ -126,7 +126,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
-    @pytest.mark.skip(reason="CmTask1997")
+    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     @pytest.mark.slow("10 seconds.")
     def test_download_ohlcv1(
         self,
@@ -159,7 +159,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
     
-    @pytest.mark.skip(reason="CmTask1997")
+    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     @pytest.mark.slow("10 seconds.")
     def test_download_ohlcv_futures1(
         self,
@@ -192,7 +192,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
 
-    @pytest.mark.skip(reason="CmTask1997")
+    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     def test_download_ohlcv_invalid_input1(self) -> None:
         """
         Run with invalid exchange name.
@@ -215,7 +215,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
-    @pytest.mark.skip(reason="CmTask1997")
+    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     def test_download_ohlcv_invalid_input2(self) -> None:
         """
         Run with invalid currency pair.
