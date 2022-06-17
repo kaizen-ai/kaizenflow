@@ -23,6 +23,7 @@ import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
 import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_docker as hlitadoc
 
 _LOG = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     _ = ctx
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
-    docker_cmd_ = hlibtask._get_docker_compose_cmd(
+    docker_cmd_ = hlitadoc._get_docker_compose_cmd(
         base_image, stage, version, cmd
     )
     hsystem.system(docker_cmd_, abort_on_error=False, suppress_output=False)
@@ -209,13 +210,13 @@ def _run_test_cmd(
     # exposing port 5432 on localhost (of the server), when running dind we
     # need to switch back to bridge. See CmTask988.
     extra_env_vars = ["NETWORK_MODE=bridge"]
-    docker_cmd_ = hlibtask._get_docker_compose_cmd(
+    docker_cmd_ = hlitadoc._get_docker_compose_cmd(
         base_image, stage, version, cmd, extra_env_vars=extra_env_vars
     )
     _LOG.info("cmd=%s", docker_cmd_)
     # We can't use `hsystem.system()` because of buffering of the output,
     # losing formatting and so on, so we stick to executing through `ctx`.
-    rc: Optional[int] = hlibtask._docker_cmd(ctx, docker_cmd_, **ctx_run_kwargs)
+    rc: Optional[int] = hlitadoc._docker_cmd(ctx, docker_cmd_, **ctx_run_kwargs)
     # Print message about coverage.
     if coverage:
         msg = """
@@ -1055,7 +1056,7 @@ def pytest_find_unused_goldens(  # type: ignore
         docker_cmd_opts
     )
     # Execute command line.
-    cmd = hlibtask._get_lint_docker_cmd(docker_cmd_, stage, version)
+    cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     hlibtask._run(ctx, cmd)

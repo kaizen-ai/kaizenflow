@@ -19,6 +19,7 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_docker as hlitadoc
 
 _LOG = logging.getLogger(__name__)
 
@@ -200,7 +201,7 @@ def lint_detect_cycles(  # type: ignore
         + hlibtask._to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
-    cmd = hlibtask._get_lint_docker_cmd(docker_cmd_, stage, version)
+    cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     hlibtask._run(ctx, cmd)
@@ -297,7 +298,7 @@ def lint(  # type: ignore
     if run_bash_without_entrypoint:
         # Run bash, without the Docker entrypoint.
         docker_cmd_ = "bash"
-        cmd = hlibtask._get_lint_docker_cmd(
+        cmd = hlitadoc._get_lint_docker_cmd(
             docker_cmd_, stage, version, entrypoint=False
         )
         cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
@@ -307,7 +308,7 @@ def lint(  # type: ignore
     if run_entrypoint_and_bash:
         # Run the Docker entrypoint (which configures the environment) and then bash.
         docker_cmd_ = "bash"
-        cmd = hlibtask._get_lint_docker_cmd(docker_cmd_, stage, version)
+        cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
         cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
         # Run.
         hlibtask._run(ctx, cmd)
@@ -383,7 +384,7 @@ def lint(  # type: ignore
             )
             if fast:
                 docker_cmd_ = "SKIP=amp_pylint " + docker_cmd_
-            cmd = hlibtask._get_lint_docker_cmd(docker_cmd_, stage, version)
+            cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
             hlibtask._run(ctx, cmd)
