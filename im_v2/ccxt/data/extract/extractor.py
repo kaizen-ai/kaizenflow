@@ -29,7 +29,7 @@ class CcxtExtractor(imvcdexex.Extractor):
     - retrieves data in multiple chunks to avoid throttling
     """
 
-    def __init__(self, exchange_id: str) -> None:
+    def __init__(self, exchange_id: str, data_type: str) -> None:
         """
         Construct CCXT extractor.
 
@@ -40,6 +40,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
         self.vendor = "CCXT"
+        self._data_type = data_type
 
     @staticmethod
     def convert_currency_pair(currency_pair: str) -> str:
@@ -53,13 +54,16 @@ class CcxtExtractor(imvcdexex.Extractor):
         Log into an exchange via CCXT and return the corresponding
         `ccxt.Exchange` object.
         """
+        exchange_params: Dict[str, Any] = {}
         # Select credentials for provided exchange.
         credentials = hsecret.get_secret(self.exchange_id)
+        exchange_params.update(credentials)
         # Enable rate limit.
-        credentials["rateLimit"] = True
+        exchange_params["rateLimit"] = True
+        if self._data_type.endswith("futures"):
+            exchange_params["option"] = { 'defaultMarket': 'futures' }
         exchange_class = getattr(ccxt, self.exchange_id)
-        # Create a CCXT Exchange class object.
-        exchange = exchange_class(credentials)
+        exchange = exchange_class(exchange_params)
         hdbg.dassert(
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
