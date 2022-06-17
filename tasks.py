@@ -126,6 +126,8 @@ def _run_qa_tests(ctx: Any, stage: str, version: str) -> bool:
     cmd = f'pytest -m "{qa_test_tag}" {qa_test_dir} --image_stage {stage}'
     if version:
         cmd = f"{cmd} --image_version {version}"
+    # Only QA tests are run outside docker container, thus path is not set.
+    os.environ["PYTHONPATH"] = os.getcwd()
     ctx.run(cmd)
     return True
 
