@@ -1002,6 +1002,8 @@ def _generate_docker_compose_file(
         append(txt_tmp, indent_level)
     #
     if True:
+        # For Jupyter server we cannot use "host" network_mode because
+        # it is incompatible with the port bindings.
         txt_tmp = """
         jupyter_server:
           command: devops/docker_run/run_jupyter_server.sh
@@ -1026,6 +1028,7 @@ def _generate_docker_compose_file(
             - PORT=${PORT}
           extends:
             app
+          network_mode: ${NETWORK_MODE:-bridge}
           ports:
             - "${PORT}:${PORT}"
         """
