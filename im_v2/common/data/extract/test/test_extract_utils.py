@@ -55,7 +55,7 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(kwargs["exchange_id"], args["data_type"])
+        extractor = ivcdexex.CcxtExtractor(kwargs["exchange_id"], kwargs["data_type"])
         if use_s3:
             # Update kwargs.
             kwargs.update(
