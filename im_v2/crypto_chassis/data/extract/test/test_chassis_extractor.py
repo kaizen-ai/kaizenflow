@@ -11,7 +11,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         """
         Smoke test that the class is being initialized correctly.
         """
-        _ = imvccdexex.CryptoChassisExtractor()
+        _ = imvccdexex.CryptoChassisExtractor("spot")
 
     def test_download_market_depth_data1(
         self,
@@ -23,10 +23,10 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
         exchange_id = "binance"
         currency_pair = "btc/usdt"
-        data_type = "market_depth"
-        client = imvccdexex.CryptoChassisExtractor()
+        contract_type = "spot"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         actual = client._download_market_depth(
-            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type
+            exchange_id, currency_pair, start_timestamp, end_timestamp
         )
         # Verify dataframe length.
         self.assertEqual(86007, actual.shape[0])
@@ -50,10 +50,10 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
         exchange_id = "binance"
         currency_pair = "btc/usdt"
-        data_type = "market_depth-futures"
-        client = imvccdexex.CryptoChassisExtractor()
+        contract_type = "futures"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         actual = client._download_market_depth(
-            exchange_id, currency_pair, start_timestamp, end_timestamp, data_type
+            exchange_id, currency_pair, start_timestamp, end_timestamp
         )
         # Verify dataframe length.
         self.assertEqual(86369, actual.shape[0])
@@ -75,15 +75,15 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         currency_pair = "btc/usdt"
         start_timestamp = "invalid"
         end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
-        data_type = "market_depth"
+        contract_type = "spot"
         expected = """
 * Failed assertion *
 Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
 """
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         with self.assertRaises(AssertionError) as cm:
             client._download_market_depth(
-                exchange, currency_pair, start_timestamp, end_timestamp, data_type
+                exchange, currency_pair, start_timestamp, end_timestamp
             )
         # Check output for error.
         actual = str(cm.exception)
@@ -97,12 +97,12 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         currency_pair = "btc/usdt"
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
-        data_type = "market_depth"
+        contract_type = "spot"
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         df = client._download_market_depth(
-            exchange, currency_pair, start_timestamp, end_timestamp, data_type
+            exchange, currency_pair, start_timestamp, end_timestamp
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -116,12 +116,12 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # End is before start -> invalid.
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
-        data_type = "market_depth"
+        contract_type = "spot"
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         df = client._download_market_depth(
-            exchange, currency_pair, start_timestamp, end_timestamp, data_type
+            exchange, currency_pair, start_timestamp, end_timestamp
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -138,14 +138,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
         exchange = "binance"
         currency_pair = "btc/usdt"
-        data_type = "ohlcv"
-        client = imvccdexex.CryptoChassisExtractor()
+        contract_type = "spot"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         actual = client._download_ohlcv(
             exchange,
             currency_pair,
             start_timestamp,
             end_timestamp,
-            data_type
         )
         # Verify dataframe length.
         self.assertEqual(84961, actual.shape[0])
@@ -158,7 +157,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = actual.reset_index(drop=True)
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
-    
+
     @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     @pytest.mark.slow("10 seconds.")
     def test_download_ohlcv_futures1(
@@ -171,14 +170,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
         exchange = "binance"
         currency_pair = "btc/usdt"
-        data_type = "ohlcv-futures"
-        client = imvccdexex.CryptoChassisExtractor()
+        contract_type = "futures"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         actual = client._download_ohlcv(
             exchange,
             currency_pair,
             start_timestamp,
             end_timestamp,
-            data_type
         )
         # Verify dataframe length.
         self.assertEqual(84961, actual.shape[0])
@@ -201,16 +199,15 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         currency_pair = "btc/usdt"
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
-        data_type = "ohlcv"
+        contract_type = "spot"
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         df = client._download_ohlcv(
             exchange,
             currency_pair,
             start_timestamp,
             end_timestamp,
-            data_type
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -225,16 +222,15 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # End is before start -> invalid.
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
-        data_type = "ohlcv"
+        contract_type = "spot"
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         df = client._download_ohlcv(
             exchange,
             currency_pair,
             start_timestamp,
             end_timestamp,
-            data_type
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -247,9 +243,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         currency_pair = "btc/usdt"
         start_timestamp = "invalid"
         end_timestamp = "invalid"
-        data_type = "ohlcv"
+        contract_type = "spot"
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         expected = """
 * Failed assertion *
 Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
@@ -260,7 +256,6 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
                 currency_pair,
                 start_timestamp,
                 end_timestamp,
-                data_type
             )
         # Check output for error.
         actual = str(cm.exception)
@@ -275,10 +270,10 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         exchange = "coinbase"
         currency_pair = "btc/usdt"
-        data_type = "trade"
-        client = imvccdexex.CryptoChassisExtractor()
+        contract_type = "spot"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         actual = client._download_trades(
-            exchange, currency_pair, data_type, start_timestamp=start_timestamp
+            exchange, currency_pair, start_timestamp=start_timestamp
         )
         # Verify dataframe length.
         self.assertEqual(12396, actual.shape[0])
@@ -301,10 +296,10 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         exchange = "binance"
         currency_pair = "btc/usdt"
-        data_type = "trade-futures"
-        client = imvccdexex.CryptoChassisExtractor()
+        contract_type = "futures"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         actual = client._download_trades(
-            exchange, currency_pair, data_type, start_timestamp=start_timestamp
+            exchange, currency_pair, start_timestamp=start_timestamp
         )
         # Verify dataframe length.
         self.assertEqual(1265597, actual.shape[0])
@@ -325,16 +320,16 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         exchange = "binance"
         currency_pair = "btc/usdt"
         start_timestamp = "invalid"
-        data_type = "trades"
+        contract_type = "spot"
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         expected = """
 * Failed assertion *
 Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
 """
         with self.assertRaises(AssertionError) as cm:
             client._download_trades(
-                exchange, currency_pair, data_type, start_timestamp=start_timestamp
+                exchange, currency_pair, start_timestamp=start_timestamp
             )
         # Check output for error.
         actual = str(cm.exception)
@@ -346,13 +341,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         """
         exchange = "bibance"
         currency_pair = "btc/usdt"
-        data_type = "trades"
+        contract_type = "spot"
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         df = client._download_trades(
-            exchange, currency_pair, data_type, start_timestamp=start_timestamp
+            exchange, currency_pair, start_timestamp=start_timestamp
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -363,14 +358,14 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         """
         exchange = "binance"
         currency_pair = "btc/busdt"
-        data_type = "trades"
+        contract_type = "spot"
         # End is before start -> invalid.
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
-        client = imvccdexex.CryptoChassisExtractor()
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
         df = client._download_trades(
-            exchange, currency_pair, data_type, start_timestamp=start_timestamp
+            exchange, currency_pair, start_timestamp=start_timestamp
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
