@@ -30,6 +30,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         cmd.extend(["--start_timestamp", "20211110-101100"])
         cmd.extend(["--end_timestamp", "20211110-101200"])
         cmd.extend(["--exchange_id", "binance"])
+        cmd.extend(["--contract_type", "spot"])
         cmd.extend(["--universe", "v3"])
         cmd.extend(["--db_stage", "dev"])
         cmd.extend(["--db_table", "ccxt_ohlcv"])
@@ -42,6 +43,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "start_timestamp": "20211110-101100",
             "end_timestamp": "20211110-101200",
             "exchange_id": "binance",
+            "contract_type": "spot",
             "universe": "v3",
             "db_stage": "dev",
             "db_table": "ccxt_ohlcv",
@@ -67,6 +69,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "start_timestamp": "20211110-101100",
             "end_timestamp": "20211110-101200",
             "exchange_id": "binance",
+            "contract_type": "spot",
             "data_type": "ohlcv",
             "universe": "v3",
             "db_stage": "local",

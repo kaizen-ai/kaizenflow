@@ -26,6 +26,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         cmd.extend(["--start_timestamp", "2022-02-08"])
         cmd.extend(["--end_timestamp", "2022-02-09"])
         cmd.extend(["--exchange_id", "binance"])
+        cmd.extend(["--contract_type", "spot"])
         cmd.extend(["--universe", "v3"])
         cmd.extend(["--aws_profile", "ck"])
         cmd.extend(["--s3_path", "s3://cryptokaizen-data/historical.manual.pq/"])
@@ -36,6 +37,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "start_timestamp": "2022-02-08",
             "end_timestamp": "2022-02-09",
             "exchange_id": "binance",
+            "contract_type": "spot",
             "universe": "v3",
             "incremental": False,
             "aws_profile": "ck",
@@ -60,6 +62,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "end_timestamp": "2022-01-01 01:00:00",
             "universe": "v1",
             "exchange_id": "binance",
+            "contract_type": "spot",
             "file_format": "parquet",
             "incremental": False,
             "log_level": "INFO",
