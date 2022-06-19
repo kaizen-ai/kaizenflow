@@ -302,6 +302,17 @@ def dassert_columns_equal(
     )
 
 
+def dassert_axes_equal(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+) -> None:
+    """
+    Ensure that `df1` and `df2` have the same index and same columns.
+    """
+    dassert_indices_equal(df1, df2)
+    dassert_columns_equal(df1, df2)
+
+
 # #############################################################################
 
 

@@ -20,10 +20,9 @@ import market_data as mdata
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Update this to the new style.
+# TODO(gp): Update this to the new style (see E8_config.py).
 
-# TODO(gp): We should unify with `ForecastSystem`. A `System` contains all the
-# info to build and run a DAG and then it can be simulated or put in prod.
+
 def _build_base_config() -> cconfig.Config:
     backtest_config = cconfig.Config()
     # Save the `DagBuilder` and the `DagConfig` in the config.
@@ -104,6 +103,9 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.DagRunner:
     return dag_runner
 
 
+# #############################################################################
+
+
 def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
     """
     Build a tile configs for Example1 pipeline.
@@ -118,8 +120,9 @@ def build_tile_configs(experiment_config: str) -> List[cconfig.Config]:
     # TODO(gp): `trading_period_str` is not used for Example1 pipeline.
     # Apply specific config.
     # config = _apply_config(config, trading_period_str)
+    _ = trading_period_str
     # TODO(Grisha): do not specify `ImClient` twice, it is already specified
-    # in `market_data`.
+    #  in `market_data`.
     # Get universe from `ImClient` and convert it to asset ids.
     full_symbols = dtfuniver.get_universe(universe_str)
     im_client = icdc.get_DataFrameImClient_example1()
