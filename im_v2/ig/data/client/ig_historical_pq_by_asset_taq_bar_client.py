@@ -76,6 +76,23 @@ class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
         full_symbols = list(map(str, asset_ids))
         return full_symbols
 
+    @staticmethod
+    def _get_columns_for_query(
+        full_symbol_col_name: str, columns: Optional[List[str]]
+    ) -> Optional[List[str]]:
+        """
+        Get columns for Parquet data query.
+        """
+        if columns is not None:
+            # In order not to modify the input.
+            query_columns = columns.copy()
+            if "timestamp_db" in columns:
+                # Timestamp DB column is not present in raw data.
+                query_columns.remove("timestamp_db")
+        else:
+            query_columns = columns
+        return query_columns
+
     # /////////////////////////////////////////////////////////////////////////////
 
     def _read_data_for_multiple_symbols(
