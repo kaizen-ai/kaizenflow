@@ -1,7 +1,7 @@
 import logging
 import os
 
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_utils as hlitauti
 
 # Expose the pytest targets.
 # Extract with:
@@ -42,4 +42,4 @@ default_params = {
 }
 
 
-hlibtask.set_default_params(default_params)
+hlitauti.set_default_params(default_params)
