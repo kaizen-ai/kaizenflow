@@ -80,6 +80,6 @@ jobs:
             🧨 PRODUCTION IMAGE BUILD PROCESS FAILED
             Build failure '${{ github.workflow }}'
             Repo: '${{ github.repository }}'
-            Branch: '$${{ github.ref_name }}'
+            Branch: '${{ github.ref_name }}'
             Event: '${{ github.event_name }}'
             https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

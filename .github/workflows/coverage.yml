@@ -3,10 +3,9 @@ on:
   # Run manually.
   workflow_dispatch:
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
-# TODO(Nikola): Temporarily disabled until tested.
-#  schedule:
-#    # Run this once a day.
-#    - cron:  '0 0 */1 * *'
+  schedule:
+    # Run this once a day.
+    - cron:  '0 0 */1 * *'
 
 jobs:
   coverage:
@@ -70,3 +69,27 @@ jobs:
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
         run: invoke run_coverage_report .
+
+      - name: Send Telegram notification for success
+        if: ${{ success() && github.ref_name == 'master' }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🎉 Coverage run was successful.
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send Telegram notification for failure
+        if: ${{ failure() && github.ref_name == 'master'}}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            💣 COVERAGE RUN FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '${{ github.ref_name }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
