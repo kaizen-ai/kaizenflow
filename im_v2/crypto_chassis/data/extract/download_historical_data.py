@@ -47,7 +47,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    exchange = imvccdexex.CryptoChassisExtractor()
+    exchange = imvccdexex.CryptoChassisExtractor(args.contract_type)
     args = vars(args)
     args["unit"] = "s"
     imvcdeexut.download_historical_data(args, exchange)

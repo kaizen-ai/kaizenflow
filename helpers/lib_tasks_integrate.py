@@ -18,7 +18,7 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
@@ -228,7 +228,7 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     :param dir_basename: specify the dir name (e.g., `amp1`) to ensure the set-up is
         correct.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     # Check that the current dir has the name `dir_basename`.
     _dassert_current_dir_matches(dir_basename)
     # Create the integration branch with the current date, e.g.,
@@ -239,7 +239,7 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     # query_yes_no("Are you sure you want to create the branch ")
     _LOG.info("Creating branch '%s'", branch_name)
     cmd = f"invoke git_create_branch -b '{branch_name}'"
-    hlibtask._run(ctx, cmd, dry_run=dry_run)
+    hlitauti._run(ctx, cmd, dry_run=dry_run)
 
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -303,7 +303,7 @@ def integrate_diff_dirs(  # type: ignore
     :param use_linux_diff: use Linux `diff` instead of `diff_to_vimdiff.py`
     :param remove_usual: remove the usual mismatching files (e.g., `.github`)
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
         _LOG.warning(
@@ -350,7 +350,7 @@ def integrate_diff_dirs(  # type: ignore
                 ]
                 regex = "|".join(vals)
                 cmd += f" --ignore_files='{regex}'"
-    hlibtask._run(ctx, cmd, dry_run=dry_run, print_cmd=True)
+    hlitauti._run(ctx, cmd, dry_run=dry_run, print_cmd=True)
 
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -435,7 +435,7 @@ def integrate_find_files_touched_since_last_integration(  # type: ignore
     """
     Print the list of files modified since the last integration for this dir.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     abs_dir = os.getcwd()
     _ = ctx
     files = _find_files_touched_since_last_integration(abs_dir, subdir)
@@ -526,7 +526,7 @@ def integrate_files(  # type: ignore
     :param only_different_files: consider only the files that are different among
         the branches
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     _ = ctx
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
@@ -627,7 +627,7 @@ def integrate_find_files(  # type: ignore
     Find the files that are touched in the current branch since last
     integration.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     _ = ctx
     #
     abs_src_dir = "."
@@ -652,7 +652,7 @@ def integrate_diff_overlapping_files(  # type: ignore
     This is used to check what changes were made to files modified by
     both branches.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     _ = ctx
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)

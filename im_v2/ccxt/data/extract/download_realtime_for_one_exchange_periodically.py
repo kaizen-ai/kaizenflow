@@ -40,7 +40,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Initialize the CCXT Extractor class.
-    exchange = imvcdeex.CcxtExtractor(args.exchange_id)
+    exchange = imvcdeex.CcxtExtractor(args.exchange_id, args.contract_type)
     args = vars(args)
     imvcdeexut.download_realtime_for_one_exchange_periodically(
         args, exchange

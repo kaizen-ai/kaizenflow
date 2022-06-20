@@ -53,8 +53,7 @@ class TestExecuteTasks1(hunitest.QaTestCase):
         self._config = request.config
 
     def test_list(self) -> None:
-        invoke_cmd = self.get_invoke_command()
-        cmd = f"{invoke_cmd} --list"
+        cmd = "invoke --list"
         hsystem.system(cmd)
 
     def test_print_setup1(self) -> None:
@@ -90,13 +89,6 @@ class TestExecuteTasks1(hunitest.QaTestCase):
         invoke_target = "docker_jupyter"
         invoke_params = _get_invoke_cmd_params(self)
         invoke_params += " --self-test --no-auto-assign-port"
-        cmd = f"invoke {invoke_target} {invoke_params}"
-        hsystem.system(cmd)
-
-    def test_docker_bash(self) -> None:
-        invoke_target = "docker_bash"
-        invoke_params = _get_invoke_cmd_params(self)
-        invoke_params += " < <(echo 'exit\n')"
         cmd = f"invoke {invoke_target} {invoke_params}"
         hsystem.system(cmd)
 
