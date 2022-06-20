@@ -49,6 +49,12 @@ jobs:
           # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
         run: invoke docker_pull
 
+      # Set the PYTHONPATH so that Python can import the 1st party modules.
+      # It is needed to run the QA tests.
+      - name: Set the PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+
       # Run the `invoke` target `docker_release_dev_image` to release the image.
       # See the corresponding documentation for more information.
       - name: Run 'docker_release_dev_image' workflow
