@@ -221,9 +221,14 @@ def docker_create_candidate_image(ctx, task_definition: str):  # type: ignore
     # Get latest version.
     last_version = hversio.get_changelog_version(".")
     # Create new prod image.
-    cmd = f"invoke docker_build_prod_image -v {last_version} --candidate"
-    rc = hsystem.system_to_string(cmd, abort_on_error=False)
-    hdbg.dassert_eq(rc[0], 0)
+    #cmd = f"invoke docker_build_prod_image -v {last_version} --candidate"
+    hlibtask.docker_build_prod_image(
+        ctx,
+        last_version,
+        candidate=True
+    )
+    #rc = hsystem.system_to_string(cmd, abort_on_error=False)
+    #hdbg.dassert_eq(rc[0], 0)
     # Extract the image tag from the output log.
     tag = _extract_image_hash(rc[1])
     # Push candidate image.
