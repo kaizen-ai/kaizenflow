@@ -16,7 +16,7 @@
 # # Description
 
 # %% [markdown]
-# Compute stats from ML pipeline result.
+# Compute and analyze model performance stats.
 
 # %% [markdown]
 # # Imports
@@ -59,9 +59,9 @@ hprint.config_notebook()
 # # Configs
 
 # %%
-def get_master_ml_config() -> cconconf.Config:
+def get_notebook_config() -> cconconf.Config:
     """
-    Get Master ML pipeline specific config.
+    Get notebook specific config.
     """
     config = cconconf.Config()
     param_dict = {
@@ -83,11 +83,11 @@ def get_master_ml_config() -> cconconf.Config:
             "hit": "hit",
             "trade_pnl": "trade_pnl",
         },
-        "plot_kwargs": {
-            "y_min_lim": 0.4,
-            "y_max_lim": 0.6,
+        "stats_kwargs": {
+            "y_min_lim": 0.45,
+            "y_max_lim": 0.55,
             "quantile_ranks": 10,
-            "time_scaling": 1,
+            "time_scaling": 28500,
             "n_resamples": 1000,
             "color": "C0",
             "capsize": 0.2,
@@ -99,7 +99,7 @@ def get_master_ml_config() -> cconconf.Config:
 
 
 # %%
-config = get_master_ml_config()
+config = get_notebook_config()
 print(config)
 
 
@@ -158,7 +158,7 @@ def preprocess_predictions_df(
     """
     # Convert the prediction stats data to Multiindex by time and asset id.
     metrics_df = predict_df.stack()
-    # Compute hit and PnL.
+    # Compute hit and trade PnL.
     metrics_df["hit"] = (
         metrics_df[config["column_names"]["y"]]
         * metrics_df[config["column_names"]["y_hat"]]
@@ -212,12 +212,12 @@ def plot_sharpe_ratio(
     for by, data in metrics_df.groupby(by_col):
         srs = data[config["column_names"]["trade_pnl"]].dropna()
         func = lambda pnl: cstshrat.compute_sharpe_ratio(
-            pnl, time_scaling=config["plot_kwargs"]["time_scaling"]
+            pnl, time_scaling=config["stats_kwargs"]["time_scaling"]
         )
         # Multiple Sharpe Ratios are being computed on many resamples
         # in order to find and plot confidence intervals.
         sharpe_ratio_srs = pd.Series(
-            bootstrap(srs, func, config["plot_kwargs"]["n_resamples"]),
+            bootstrap(srs, func, config["stats_kwargs"]["n_resamples"]),
             name="sharpe_ratio",
         )
         # Transform and combine data for plotting.
@@ -230,10 +230,10 @@ def plot_sharpe_ratio(
         x=by_col,
         y="sharpe_ratio",
         data=res_df,
-        color=config["plot_kwargs"]["color"],
-        capsize=config["plot_kwargs"]["capsize"],
+        color=config["stats_kwargs"]["color"],
+        capsize=config["stats_kwargs"]["capsize"],
     )
-    plt.xticks(rotation=config["plot_kwargs"]["xticks_rotation"])
+    plt.xticks(rotation=config["stats_kwargs"]["xticks_rotation"])
     plt.show()
 
 
@@ -278,12 +278,12 @@ y_hat = config["column_names"]["y_hat"]
 hit = config["column_names"]["hit"]
 trade_pnl = config["column_names"]["trade_pnl"]
 #
-y_min_lim = config["plot_kwargs"]["y_min_lim"]
-y_max_lim = config["plot_kwargs"]["y_max_lim"]
-quantile_ranks = config["plot_kwargs"]["quantile_ranks"]
-color = config["plot_kwargs"]["color"]
-capsize = config["plot_kwargs"]["capsize"]
-xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
+y_min_lim = config["stats_kwargs"]["y_min_lim"]
+y_max_lim = config["stats_kwargs"]["y_max_lim"]
+quantile_ranks = config["stats_kwargs"]["quantile_ranks"]
+color = config["stats_kwargs"]["color"]
+capsize = config["stats_kwargs"]["capsize"]
+xticks_rotation = config["stats_kwargs"]["xticks_rotation"]
 
 # %% [markdown]
 # ## By asset
@@ -309,11 +309,11 @@ plt.show()
 # ### PnL
 
 # %%
-# Summary PnL for a given coin.
+# Compute PnL for each asset id.
 pnl_stats = (
     metrics_df.groupby(asset_id)[trade_pnl].sum().sort_values(ascending=False)
 )
-# Plot summary PnL per asset id.
+# Plot PnL per asset id.
 _ = sns.barplot(
     x=pnl_stats.index,
     y=pnl_stats.values,
@@ -328,7 +328,7 @@ plt.show()
 _ = metrics_df[trade_pnl].dropna().unstack().cumsum().plot()
 
 # %%
-# Plot average PnL per asset id.
+# Plot average trade PnL per asset id.
 sns.barplot(
     x=asset_id,
     y=trade_pnl,
@@ -373,7 +373,7 @@ sns.barplot(
 #
 plt.xticks(rotation=xticks_rotation)
 plt.ylabel("hit_rate")
-plt.ylim(y_min_lim, y_max_lim)
+plt.ylim(0.4, y_max_lim)
 plt.show()
 
 # %%
