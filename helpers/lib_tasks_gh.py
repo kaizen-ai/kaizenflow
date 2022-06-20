@@ -408,3 +408,6 @@ def gh_create_pr(  # type: ignore
         hlitauti._run(ctx, cmd)
         cmd = f"gh pr merge {title} --auto --delete-branch --squash"
         hlitauti._run(ctx, cmd)
+
+
+# TODO(gp): Add gh_open_pr to jump to the PR from this branch.
