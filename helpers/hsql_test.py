@@ -173,7 +173,6 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         raise NotImplementedError
 
 
-
 # TODO(gp): @all Create a class sharing some common code from TestOmsDbHelper
 #  and TestImDbHelper.
 # class TestImOmsDbHelper(hunitest.TestCase, abc.ABC):

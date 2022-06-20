@@ -19,9 +19,6 @@ import im_v2.common.db.db_utils as imvcddbut
     reason="Run only if CK S3 is available",
 )
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
-    aws_profile = "ck"
-    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    S3_PATH = os.path.join(s3_bucket_path, "unit_test/parquet/historical")
     FILTERS = [
         [("year", "==", 2021), ("month", ">=", 12)],
         [("year", "==", 2022), ("month", "<=", 1)],
@@ -44,9 +41,16 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv;"
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
+    @staticmethod
+    def get_s3_path() -> str:
+        aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        s3_path = os.path.join(s3_bucket_path, "unit_test/parquet/historical")
+        return s3_path
+
     def ohlcv_dataframe_sample(self) -> pd.DataFrame:
         if self._ohlcv_dataframe_sample is None:
-            file_name = f"{self.S3_PATH}/binance/"
+            file_name = f"{self.get_s3_path()}/binance/"
             ohlcv_sample = hparque.from_parquet(
                 file_name, filters=self.FILTERS, aws_profile="ck"
             )
@@ -130,7 +134,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_from_parquet.call_count, 1)
         self.assertEqual(
             mock_from_parquet.call_args.args,
-            (f"{self.S3_PATH}/binance/",),
+            (f"{self.get_s3_path()}/binance/",),
         )
         self.assertEqual(
             mock_from_parquet.call_args.kwargs,
@@ -287,7 +291,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "db_table": "ccxt_ohlcv",
             "log_level": "INFO",
             "aws_profile": "ck",
-            "s3_path": f"{self.S3_PATH}/",
+            "s3_path": f"{self.get_s3_path()}/",
             "connection": self.connection,
         }
         # Run.
