@@ -5,9 +5,10 @@ import pandas as pd
 import pytest
 
 import core.finance as cofinanc
-import dataflow.system.example_pipeline1_system_runner as dtfsepsyru
+import dataflow.system.example1_system as dtfsyexsys
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
+import helpers.hunit_test as hunitest
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
 import market_data as mdata
@@ -64,7 +65,7 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
         """
         with hasynci.solipsism_context() as event_loop:
             asset_ids = [1467591036]
-            system = dtfsepsyru.Example1_ForecastSystem(
+            system = dtfsyexsys.Example1_ForecastSystem(
                 asset_ids,
                 event_loop,
             )
@@ -92,6 +93,80 @@ class Test_Example1_ReplayedForecastSystem(imvcddbut.TestImDbHelper):
             data,
         )
         self.check_string(str(actual))
+
+
+# #############################################################################
+
+# TODO(gp): This should derive from SystemTester.
+# TODO(gp): Update this to the new style.
+class Test_Example1_TimeForecastSystemWithDataFramePortfolio1(hunitest.TestCase):
+        
+    def run_coroutines(
+        self,
+        data: pd.DataFrame,
+        real_time_loop_time_out_in_secs: int,
+    ) -> str:
+        """
+        Run a system using the desired portfolio based on DB or dataframe.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            asset_ids = [101]
+            system = (
+                dtfsyexsys.Example1_TimeForecastSystemWithDataFramePortfolio(
+                    asset_ids, event_loop
+                )
+            )
+            #
+            market_data = system.get_market_data(data)
+            #
+            portfolio = system.get_portfolio(market_data)
+            #
+            price_col = "vwap"
+            returns_col = "vwap.ret_0"
+            volatility_col = "vwap.ret_0.vol"
+            prediction_col = "feature1"
+            config, dag_builder = system.get_dag(
+                portfolio,
+                prediction_col=prediction_col,
+                volatility_col=volatility_col,
+                returns_col=returns_col,
+            )
+            #
+            get_wall_clock_time = market_data.get_wall_clock_time
+            dag_runner = system.get_dag_runner(
+                dag_builder,
+                config,
+                get_wall_clock_time,
+                real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
+            )
+            coroutines = [dag_runner.predict()]
+            #
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            system_tester = dtfsysytes.SystemTester()
+            result_bundles = result_bundles[0]
+            result_bundle = result_bundles[-1]
+            _LOG.debug("result_bundle=\n%s", result_bundle)
+            actual = system_tester.compute_run_signature(
+                dag_runner,
+                portfolio,
+                result_bundle,
+                price_col=price_col,
+                volatility_col=volatility_col,
+                prediction_col=prediction_col,
+            )
+            return actual
+
+    # ///////////////////////////////////////////////////////////////////////////
+
+    @pytest.mark.slow
+    def test_market_data1_dataframe_portfolio1(self) -> None:
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        actual = self.run_coroutines(
+            data, real_time_loop_time_out_in_secs
+        )
+        self.check_string(actual)
 
 
 # #############################################################################
@@ -126,23 +201,27 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             asset_ids = [101]
             # TODO(gp): Can we derive `System` from the class?
             if is_database_portfolio:
-                system_runner = dtfsepsyru.Example1_TimeForecastSystemWithDatabasePortfolio(
-                    asset_ids, event_loop, db_connection=self.connection
+                system = (
+                    dtfsyexsys.Example1_TimeForecastSystemWithDatabasePortfolio(
+                        asset_ids, event_loop, db_connection=self.connection
+                    )
                 )
             else:
-                system_runner = dtfsepsyru.Example1_TimeForecastSystemWithDataFramePortfolio(
-                    asset_ids, event_loop
+                system = (
+                    dtfsyexsys.Example1_TimeForecastSystemWithDataFramePortfolio(
+                        asset_ids, event_loop
+                    )
                 )
             #
-            market_data = system_runner.get_market_data(data)
+            market_data = system.get_market_data(data)
             #
-            portfolio = system_runner.get_portfolio(market_data)
+            portfolio = system.get_portfolio(market_data)
             #
             price_col = "vwap"
             returns_col = "vwap.ret_0"
             volatility_col = "vwap.ret_0.vol"
             prediction_col = "feature1"
-            config, dag_builder = system_runner.get_dag(
+            config, dag_builder = system.get_dag(
                 portfolio,
                 prediction_col=prediction_col,
                 volatility_col=volatility_col,
@@ -150,7 +229,7 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             )
             #
             get_wall_clock_time = market_data.get_wall_clock_time
-            dag_runner = system_runner.get_dag_runner(
+            dag_runner = system.get_dag_runner(
                 dag_builder,
                 config,
                 get_wall_clock_time,
@@ -160,8 +239,8 @@ class Test_Example1_SimulatedOmsSystem(otodh.TestOmsDbHelper):
             #
             if is_database_portfolio:
                 order_processor = oms.get_order_processor_example1(
-                        self.connection,
-                        portfolio)
+                    self.connection, portfolio
+                )
                 order_processor_coroutine = (
                     oms.get_order_processor_coroutine_example1(
                         order_processor,

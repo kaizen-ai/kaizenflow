@@ -5,7 +5,7 @@ import core.finance.target_position_generation as cftapoge
 """
 
 import logging
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,7 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Paul): Consider changing the config to a list of kwargs.
 def compute_target_positions_cross_sectionally(
     prediction: pd.DataFrame,
     volatility: pd.DataFrame,
@@ -50,17 +51,17 @@ def compute_target_positions_cross_sectionally(
     # hpandas.dassert_time_indexed_df(
     #     volatility, allow_empty=True, strictly_increasing=True
     # )
-    _validate_compatibility(prediction, volatility)
-    bulk_frac_to_remove = _get_object_from_config(
+    hpandas.dassert_axes_equal(prediction, volatility)
+    bulk_frac_to_remove = cconfig.get_object_from_config(
         config, "bulk_frac_to_remove", float, 0.0
     )
-    bulk_fill_method = _get_object_from_config(
+    bulk_fill_method = cconfig.get_object_from_config(
         config, "bulk_fill_method", str, "zero"
     )
-    target_gmv = _get_object_from_config(
+    target_gmv = cconfig.get_object_from_config(
         config, "target_gmv", (float, pd.Series), 1e6
     )
-    volatility_lower_bound = _get_object_from_config(
+    volatility_lower_bound = cconfig.get_object_from_config(
         config, "volatility_lower_bound", float, 1e-5
     )
     #
@@ -166,18 +167,18 @@ def compute_target_positions_longitudinally(
     hpandas.dassert_time_indexed_df(
         volatility, allow_empty=True, strictly_increasing=True
     )
-    _validate_compatibility(prediction, volatility)
-    prediction_abs_threshold = _get_object_from_config(
+    hpandas.dassert_axes_equal(prediction, volatility)
+    prediction_abs_threshold = cconfig.get_object_from_config(
         config, "prediction_abs_threshold", float, 0.0
     )
-    volatility_to_spread_threshold = _get_object_from_config(
+    volatility_to_spread_threshold = cconfig.get_object_from_config(
         config, "volatility_to_spread_threshold", float, 0.0
     )
-    gamma = _get_object_from_config(config, "gamma", float, 0.0)
-    target_dollar_risk_per_name = _get_object_from_config(
+    gamma = cconfig.get_object_from_config(config, "gamma", float, 0.0)
+    target_dollar_risk_per_name = cconfig.get_object_from_config(
         config, "target_dollar_risk_per_name", float, 1e2
     )
-    volatility_lower_bound = _get_object_from_config(
+    volatility_lower_bound = cconfig.get_object_from_config(
         config, "volatility_lower_bound", float, 1e-4
     )
     #
@@ -185,7 +186,7 @@ def compute_target_positions_longitudinally(
     hdbg.dassert_lt(0, target_dollar_risk_per_name)
     hdbg.dassert_lte(0, volatility_lower_bound)
     #
-    spread_lower_bound = _get_object_from_config(
+    spread_lower_bound = cconfig.get_object_from_config(
         config, "spread_lower_bound", float, 1e-4
     )
     if spread is None:
@@ -195,7 +196,7 @@ def compute_target_positions_longitudinally(
         spread = pd.DataFrame(
             spread_lower_bound, prediction.index, prediction.columns
         )
-    _validate_compatibility(prediction, spread)
+    hpandas.dassert_axes_equal(prediction, spread)
     spread = spread.clip(lower=spread_lower_bound)
     _LOG.debug(
         "spread=\n%s",
@@ -251,28 +252,3 @@ def compute_target_positions_longitudinally(
     #
     hdbg.dassert_isinstance(target_positions, pd.DataFrame)
     return target_positions
-
-
-# TODO(Paul): This also exists in `process_forecasts_.py`. Factor it out.
-def _validate_compatibility(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
-    hpandas.dassert_indices_equal(df1, df2)
-    hpandas.dassert_columns_equal(df1, df2)
-
-
-# TODO(Paul): This also exists in `process_forecasts_.py`. Factor it out.
-# Extract the objects from the config.
-def _get_object_from_config(
-    config: cconfig.Config,
-    key: str,
-    expected_type: type,
-    default_value: Any,
-) -> Any:
-    hdbg.dassert_isinstance(config, cconfig.Config),
-    hdbg.dassert_isinstance(key, str)
-    hdbg.dassert_issubclass(default_value, expected_type)
-    if key in config:
-        obj = config[key]
-        hdbg.dassert_issubclass(obj, expected_type)
-    else:
-        obj = default_value
-    return obj
