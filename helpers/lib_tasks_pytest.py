@@ -1060,3 +1060,6 @@ def pytest_find_unused_goldens(  # type: ignore
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     hlitauti._run(ctx, cmd)
+
+
+# TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
