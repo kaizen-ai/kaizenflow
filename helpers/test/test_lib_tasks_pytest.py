@@ -11,7 +11,6 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
-import helpers.lib_tasks as hlibtask
 import helpers.lib_tasks_pytest as hlitapyt
 import helpers.test.test_lib_tasks as httestlib
 
@@ -230,7 +229,7 @@ class Test_build_run_command_line1(hunitest.TestCase):
 class Test_pytest_repro1(hunitest.TestCase):
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
         ctx = httestlib._build_mock_context_returning_ok()
-        act = hlibtask.pytest_repro(
+        act = hlitapyt.pytest_repro(
             ctx,
             mode=mode,
             file_name=file_name,

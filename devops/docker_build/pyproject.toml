@@ -40,6 +40,8 @@ pytest-instafail = "*"
 pytest-rerunfailures = "*"
 pytest-timeout = "*"
 pytest-xdist = "*"
+# TODO(Nikola): poetry does not work with Python 3.9.* via GH actions,
+#  see "Switch all the build systems to Python 3.9" CmTask #535.
 python = "3.8.*"
 python-dotenv = "*"
 pywavelets = "*"

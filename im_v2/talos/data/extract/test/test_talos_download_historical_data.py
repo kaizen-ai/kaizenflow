@@ -24,6 +24,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         cmd = []
         cmd.extend(["--api_stage", "sandbox"])
         cmd.extend(["--data_type", "ohlcv"])
+        cmd.extend(["--contract_type", "spot"])
         cmd.extend(["--start_timestamp", "2022-02-08"])
         cmd.extend(["--end_timestamp", "2022-02-09"])
         cmd.extend(["--exchange_id", "binance"])
@@ -35,6 +36,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         expected = {
             "api_stage": "sandbox",
             "data_type": "ohlcv",
+            "contract_type": "spot",
             "start_timestamp": "2022-02-08",
             "end_timestamp": "2022-02-09",
             "exchange_id": "binance",
