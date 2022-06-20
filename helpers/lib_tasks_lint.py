@@ -18,8 +18,8 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
-import helpers.lib_tasks as hlibtask
 import helpers.lib_tasks_docker as hlitadoc
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,12 +49,12 @@ def lint_check_python_files_in_docker(  # type: ignore
 
     The params have the same meaning as in `_get_files_to_process()`.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     _ = ctx
     # We allow to filter through the user specified `files`.
     mutually_exclusive = False
     remove_dirs = True
-    file_list = hlibtask._get_files_to_process(
+    file_list = hlitauti._get_files_to_process(
         modified,
         branch,
         last_commit,
@@ -131,7 +131,7 @@ def lint_check_python_files(  # type: ignore
     ]
     docker_cmd_ = " ".join(cmd_line)
     cmd = f'invoke docker_cmd --cmd="{docker_cmd_}"'
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 def _parse_linter_output(txt: str) -> str:
@@ -189,22 +189,22 @@ def lint_detect_cycles(  # type: ignore
         - By default, the check will be carried out in the dir from where
           the task is run
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     # Remove the log file.
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
     docker_cmd_ = (
         "/app/import_check/detect_import_cycles.py "
-        + hlibtask._to_single_line_cmd(docker_cmd_opts)
+        + hlitauti._to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
     cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 # pylint: disable=line-too-long
@@ -264,11 +264,11 @@ def lint(  # type: ignore
     :param stage: the image stage to use
     :param out_file_name: name of the file to save the log output in
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     # Remove the file.
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
     # The available phases are:
     # ```
     # > i lint -f "foobar.py"
@@ -303,7 +303,7 @@ def lint(  # type: ignore
         )
         cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
         # Run.
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
         return
     if run_entrypoint_and_bash:
         # Run the Docker entrypoint (which configures the environment) and then bash.
@@ -311,7 +311,7 @@ def lint(  # type: ignore
         cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
         cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
         # Run.
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
         return
     if only_format:
         hdbg.dassert_eq(phases, "")
@@ -354,7 +354,7 @@ def lint(  # type: ignore
         mutually_exclusive = True
         # pre-commit doesn't handle directories, but only files.
         remove_dirs = True
-        files_as_list = hlibtask._get_files_to_process(
+        files_as_list = hlitauti._get_files_to_process(
             modified,
             branch,
             last_commit,
@@ -379,7 +379,7 @@ def lint(  # type: ignore
                     f"--files {files_as_str}",
                 ]
             )
-            docker_cmd_ = "pre-commit " + hlibtask._to_single_line_cmd(
+            docker_cmd_ = "pre-commit " + hlitauti._to_single_line_cmd(
                 precommit_opts
             )
             if fast:
@@ -387,7 +387,7 @@ def lint(  # type: ignore
             cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
-            hlibtask._run(ctx, cmd)
+            hlitauti._run(ctx, cmd)
     else:
         _LOG.warning("Skipping linter step, as per user request")
     #
@@ -411,7 +411,7 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 
     The dir needs to be specified to ensure the set-up is correct.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     #
     date = datetime.datetime.now().date()
     date_as_str = date.strftime("%Y%m%d")
@@ -419,4 +419,4 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
     # query_yes_no("Are you sure you want to create the branch '{branch_name}'")
     _LOG.info("Creating branch '%s'", branch_name)
     cmd = f"invoke git_create_branch -b '{branch_name}'"
-    hlibtask._run(ctx, cmd, dry_run=dry_run)
+    hlitauti._run(ctx, cmd, dry_run=dry_run)

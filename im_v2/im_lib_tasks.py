@@ -15,8 +15,8 @@ from invoke import task
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
-import helpers.lib_tasks as hlibtask
 import helpers.lib_tasks_docker as hlitadoc
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     cmd.append(f"run --rm {service_name}")
     cmd.append(docker_cmd)
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+    multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
 
@@ -96,7 +96,7 @@ def im_docker_cmd(ctx, stage, cmd):  # type: ignore
     # Get docker cmd.
     docker_cmd = _get_docker_cmd(stage, cmd)
     # Execute the command.
-    hlibtask._run(ctx, docker_cmd, pty=True)
+    hlitauti._run(ctx, docker_cmd, pty=True)
 
 
 # #############################################################################
@@ -132,7 +132,7 @@ def _get_docker_up_cmd(stage: str, detach: bool) -> str:
         cmd.append("-d")
     service = "im_postgres"
     cmd.append(service)
-    cmd = hlibtask._to_multi_line_cmd(cmd)
+    cmd = hlitauti._to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
 
 
@@ -148,7 +148,7 @@ def im_docker_up(ctx, stage, detach=False):  # type: ignore
     # Get docker down command.
     docker_clean_up_cmd = _get_docker_up_cmd(stage, detach)
     # Execute the command.
-    hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
+    hlitauti._run(ctx, docker_clean_up_cmd, pty=True)
 
 
 # #############################################################################
@@ -185,7 +185,7 @@ def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
             "Removing the attached volumes resetting the state of the DB"
         )
         cmd.append("-v")
-    cmd = hlibtask._to_multi_line_cmd(cmd)
+    cmd = hlitauti._to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
 
 
@@ -204,7 +204,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     # Get docker down command.
     cmd = _get_docker_down_cmd(stage, volumes_remove)
     # Execute the command.
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)
 
 
 # #############################################################################
@@ -244,7 +244,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #         cmd.append("--overwrite")
 #     # Add quotes so that credentials as string are handled properly by invoke.
 #     cmd.append(f"--credentials '\"{credentials}\"'")
-#     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+#     multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
 #     return multiline_docker_cmd  # type: ignore[no-any-return]
 #
 #
@@ -274,7 +274,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     # Get docker cmd.
 #     docker_cmd = _get_create_db_cmd(dbname, overwrite, credentials)
 #     # Execute the command.
-#     hlibtask._run(ctx, docker_cmd, pty=True)
+#     hlitauti._run(ctx, docker_cmd, pty=True)
 #
 #
 # # #############################################################################
@@ -309,7 +309,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     cmd.append(f"--db-name '{dbname}'")
 #     # Add quotes so that credentials as string are handled properly by invoke.
 #     cmd.append(f"--credentials '\"{credentials}\"'")
-#     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+#     multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
 #     return multiline_docker_cmd  # type: ignore[no-any-return]
 #
 #
@@ -337,4 +337,4 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     # Get docker cmd.
 #     docker_cmd = _get_remove_db_cmd(dbname, credentials)
 #     # Execute the command.
-#     hlibtask._run(ctx, docker_cmd, pty=True)
+#     hlitauti._run(ctx, docker_cmd, pty=True)

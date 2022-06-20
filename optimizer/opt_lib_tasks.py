@@ -11,10 +11,10 @@ from typing import Optional
 from invoke import task
 
 import helpers.hgit as hgit
-import helpers.lib_tasks as hlibtask
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_docker_release as hltadore
 import helpers.lib_tasks_pytest as hlitapyt
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ def opt_docker_pull(ctx, stage="dev", version=None):  # type: ignore
     """
     Pull the latest dev `opt` image from the Docker registry.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     #
     base_image = ""
     hlitadoc._docker_pull(ctx, base_image, stage, version)
@@ -375,7 +375,7 @@ def _get_opt_docker_up_cmd(
         {service}"""
     )
     #
-    docker_up_cmd = hlibtask._to_multi_line_cmd(docker_up_cmd_)
+    docker_up_cmd = hlitauti._to_multi_line_cmd(docker_up_cmd_)
     return docker_up_cmd  # type: ignore[no-any-return]
 
 
@@ -389,7 +389,7 @@ def opt_docker_up(  # type: ignore
     # Build `docker-compose up` cmd.
     docker_up_cmd = _get_opt_docker_up_cmd(detach, base_image, stage, version)
     # Run.
-    hlibtask._run(ctx, docker_up_cmd, pty=True)
+    hlitauti._run(ctx, docker_up_cmd, pty=True)
 
 
 # TODO(gp): @all merge this command with the up command passing a `mode` switch.
@@ -422,7 +422,7 @@ def _get_opt_docker_down_cmd(
         r"""
         down"""
     )
-    docker_down_cmd = hlibtask._to_multi_line_cmd(docker_down_cmd_)
+    docker_down_cmd = hlitauti._to_multi_line_cmd(docker_down_cmd_)
     return docker_down_cmd  # type: ignore[no-any-return]
 
 
@@ -434,4 +434,4 @@ def opt_docker_down(ctx, base_image="", stage="dev", version=""):  # type: ignor
     # Build `docker-compose down` cmd.
     docker_down_cmd = _get_opt_docker_down_cmd(base_image, stage, version)
     # Run.
-    hlibtask._run(ctx, docker_down_cmd, pty=True)
+    hlitauti._run(ctx, docker_down_cmd, pty=True)

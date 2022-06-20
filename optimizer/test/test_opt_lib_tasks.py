@@ -5,7 +5,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_utils as hlitauti
 import optimizer.opt_lib_tasks as ooplitas
 
 # TODO(Grisha): unify with `helpers/test/test_lib_tasks.py` CmTask #1485.
@@ -34,10 +34,10 @@ class _OptLibTasksTestCase(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         params = _get_default_params()
-        hlibtask.set_default_params(params)
+        hlitauti.set_default_params(params)
 
     def tearDown(self) -> None:
-        hlibtask.reset_default_params()
+        hlitauti.reset_default_params()
         super().tearDown()
 
 

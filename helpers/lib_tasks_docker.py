@@ -22,7 +22,7 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hversion as hversio
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,11 +46,11 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     List images in the logged in repo_short_name.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     docker_login(ctx)
-    ecr_base_path = hlibtask.get_default_param("AM_ECR_BASE_PATH")
+    ecr_base_path = hlitauti.get_default_param("AM_ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
-    hlibtask._run(ctx, f"{docker_exec} image ls {ecr_base_path}")
+    hlitauti._run(ctx, f"{docker_exec} image ls {ecr_base_path}")
 
 
 @task
@@ -65,7 +65,7 @@ def docker_ps(ctx, sudo=False):  # type: ignore
     2ece37303ec9  gp    *****....:latest  "./docker_build/entry.sh"  5 seconds ago  Up 4 seconds         user_space
     ```
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     # pylint: enable=line-too-long
     fmt = (
         r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
@@ -74,8 +74,8 @@ def docker_ps(ctx, sudo=False):  # type: ignore
     )
     docker_exec = _get_docker_exec(sudo)
     cmd = f"{docker_exec} ps --format='{fmt}'"
-    cmd = hlibtask._to_single_line_cmd(cmd)
-    hlibtask._run(ctx, cmd)
+    cmd = hlitauti._to_single_line_cmd(cmd)
+    hlitauti._run(ctx, cmd)
 
 
 def _get_last_container_id(sudo: bool) -> str:
@@ -110,7 +110,7 @@ def docker_stats(  # type: ignore
     :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    hlibtask._report_task(txt=hprint.to_str("all"))
+    hlitauti._report_task(txt=hprint.to_str("all"))
     _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
@@ -154,7 +154,7 @@ def docker_kill(  # type: ignore
     :param all: kill all the containers (be careful!)
     :param sudo: use sudo for the Docker commands
     """
-    hlibtask._report_task(txt=hprint.to_str("all"))
+    hlitauti._report_task(txt=hprint.to_str("all"))
     docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
@@ -164,10 +164,10 @@ def docker_kill(  # type: ignore
         opts = "-a"
     # Print the containers that will be terminated.
     cmd = f"{docker_exec} ps {opts}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Kill.
     cmd = f"{docker_exec} rm -f $({docker_exec} ps {opts} -q)"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 # docker system prune
@@ -222,7 +222,7 @@ def _docker_pull(
     _LOG.info("image='%s'", image)
     _dassert_is_image_name_valid(image)
     cmd = f"docker pull {image}"
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)
 
 
 @task
@@ -230,7 +230,7 @@ def docker_pull(ctx, stage="dev", version=None):  # type: ignore
     """
     Pull latest dev image corresponding to the current repo from the registry.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     #
     base_image = ""
     _docker_pull(ctx, base_image, stage, version)
@@ -241,9 +241,9 @@ def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
     """
     Pull latest prod image of `dev_tools` from the registry.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     #
-    base_image = hlibtask.get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
+    base_image = hlitauti.get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
     _docker_pull(ctx, base_image, stage, version)
 
 
@@ -270,7 +270,7 @@ def docker_login(ctx):  # type: ignore
     """
     Log in the AM Docker repo_short_name on AWS.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     if hsystem.is_inside_ci():
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
@@ -285,7 +285,7 @@ def docker_login(ctx):  # type: ignore
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
     else:
-        ecr_base_path = hlibtask.get_default_param("AM_ECR_BASE_PATH")
+        ecr_base_path = hlitauti.get_default_param("AM_ECR_BASE_PATH")
         cmd = (
             f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
             + f"https://{ecr_base_path}"
@@ -295,7 +295,7 @@ def docker_login(ctx):  # type: ignore
     # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
     #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
     #  with `@task` decorator) do not work.
-    hlibtask._run(ctx, cmd, use_system=True)
+    hlitauti._run(ctx, cmd, use_system=True)
 
 
 # ////////////////////////////////////////////////////////////////////////////////
@@ -695,8 +695,8 @@ def _get_docker_compose_files(
         docker_compose_files.extend(extra_docker_compose_files)
     # Add the compose files from the global params.
     key = "DOCKER_COMPOSE_FILES"
-    if hlibtask.has_default_param(key):
-        docker_compose_files.append(hlibtask.get_default_param(key))
+    if hlitauti.has_default_param(key):
+        docker_compose_files.append(hlitauti.get_default_param(key))
     #
     _LOG.debug(hprint.to_str("docker_compose_files"))
     for docker_compose in docker_compose_files:
@@ -827,9 +827,9 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            hlibtask.get_default_param("AM_ECR_BASE_PATH")
+            hlitauti.get_default_param("AM_ECR_BASE_PATH")
             + "/"
-            + hlibtask.get_default_param("BASE_IMAGE")
+            + hlitauti.get_default_param("BASE_IMAGE")
         )
     _dassert_is_base_image_name_valid(base_image)
     return base_image
@@ -847,7 +847,7 @@ def _get_base_image(base_image: str) -> str:
 #      """
 #      hdbg.dassert_is_not(version, None)
 #      _dassert_is_version_valid(version)
-#      base_image = hlibtask.get_default_param("BASE_IMAGE")
+#      base_image = hlibtaskut.get_default_param("BASE_IMAGE")
 #      tag_name = f"{base_image}-{version}"
 #      return tag_name
 
@@ -934,9 +934,9 @@ def _get_container_name(service_name: str) -> str:
     # Get dir name.
     project_dir = hgit.get_project_dirname()
     # Get Docker image base name.
-    image_name = hlibtask.get_default_param("BASE_IMAGE")
+    image_name = hlitauti.get_default_param("BASE_IMAGE")
     # Get current timestamp.
-    current_timestamp = hlibtask._get_ET_timestamp()
+    current_timestamp = hlitauti._get_ET_timestamp()
     # Build container name.
     container_name = f"{linux_user}.{image_name}.{service_name}.{project_dir}.{current_timestamp}"
     _LOG.debug(
@@ -1126,14 +1126,14 @@ def _get_docker_compose_cmd(
         )
     # Print the config for debugging purpose.
     if print_docker_config:
-        docker_config_cmd_as_str = hlibtask._to_multi_line_cmd(docker_config_cmd)
+        docker_config_cmd_as_str = hlitauti._to_multi_line_cmd(docker_config_cmd)
         _LOG.debug("docker_config_cmd=\n%s", docker_config_cmd_as_str)
         _LOG.debug(
             "docker_config=\n%s",
             hsystem.system_to_string(docker_config_cmd_as_str)[1],
         )
     # Print the config for debugging purpose.
-    docker_cmd_: str = hlibtask._to_multi_line_cmd(docker_cmd_)
+    docker_cmd_: str = hlitauti._to_multi_line_cmd(docker_cmd_)
     return docker_cmd_
 
 
@@ -1186,7 +1186,7 @@ def _docker_cmd(
     _LOG.info("Pulling the latest version of Docker")
     docker_pull(ctx)
     _LOG.debug("cmd=%s", docker_cmd_)
-    rc: Optional[int] = hlibtask._run(
+    rc: Optional[int] = hlitauti._run(
         ctx, docker_cmd_, pty=True, **ctx_run_kwargs
     )
     return rc
@@ -1210,7 +1210,7 @@ def docker_bash(  # type: ignore
     :param as_user: pass the user / group id or not
     :param generate_docker_compose_file: generate the Docker compose file or not
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     cmd = "bash"
     docker_cmd_ = _get_docker_compose_cmd(
         base_image,
@@ -1243,7 +1243,7 @@ def docker_cmd(  # type: ignore
     :param generate_docker_compose_file: generate or reuse the Docker compose file
     :param use_bash: run command through a shell
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_compose_cmd(
@@ -1307,7 +1307,7 @@ def docker_jupyter(  # type: ignore
     :param auto_assign_port: use the UID of the user and the inferred number of the
         repo (e.g., 4 for `~/src/amp4`) to get a unique port
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     if port is None:
         if auto_assign_port:
             uid = os.getuid()
