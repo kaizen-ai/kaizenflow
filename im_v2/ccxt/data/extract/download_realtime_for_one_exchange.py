@@ -23,7 +23,7 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.extractor as imvcdeex
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -53,7 +53,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
-    exchange = imvcdeex.CcxtExtractor(args.exchange_id)
+    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type)
     args = vars(args)
     imvcdeexut.download_realtime_for_one_exchange(args, exchange)
 

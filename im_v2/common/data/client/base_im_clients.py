@@ -598,6 +598,8 @@ class RealTimeImClient(ImClient):
     """
 
 
+# TODO(gp): @all cleanup resample_1min should go last and probably have a default
+#  value of False.
 class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,
@@ -630,7 +632,8 @@ class SqlRealTimeImClient(RealTimeImClient):
         """
         See description in the parent class.
         """
-        # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
+        # Extract DataFrame with unique combinations of `exchange_id`,
+        # `currency_pair`.
         query = (
             f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
         )
@@ -657,7 +660,8 @@ class SqlRealTimeImClient(RealTimeImClient):
         Apply vendor-specific normalization.
         """
 
-    # TODO(Danya): Propagate usage of `columns` parameter here and in descendant classes.
+    # TODO(Danya): Propagate usage of `columns` parameter here and in descendant
+    #  classes.
     def _read_data(
         self,
         full_symbols: List[ivcu.FullSymbol],

@@ -18,7 +18,8 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_gh as hlitagh
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
@@ -30,13 +31,13 @@ def git_pull(ctx):  # type: ignore
     """
     Pull all the repos.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     #
     cmd = "git pull --autostash"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     #
     cmd = "git submodule foreach 'git pull --autostash'"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -44,10 +45,10 @@ def git_fetch_master(ctx):  # type: ignore
     """
     Pull master without changing branch.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     #
     cmd = "git fetch origin master:master"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -57,7 +58,7 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
 
     :param ff_only: abort if fast-forward is not possible
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     # Check that the Git client is clean.
     hgit.is_client_clean(dir_name=".", abort_if_not_clean=abort_if_not_clean)
     # Pull master.
@@ -66,7 +67,7 @@ def git_merge_master(ctx, ff_only=False, abort_if_not_clean=True):  # type: igno
     cmd = "git merge master"
     if ff_only:
         cmd += " --ff-only"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -76,23 +77,23 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
 
     Run `git status --ignored` to see what it's skipped.
     """
-    hlibtask._report_task(txt=hprint.to_str("dry_run"))
+    hlitauti._report_task(txt=hprint.to_str("dry_run"))
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Fix permissions, if needed.
     if fix_perms_:
         cmd = "invoke fix_perms"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
     # Clean recursively.
     git_clean_cmd = "git clean -fd"
     if dry_run:
         git_clean_cmd += " --dry-run"
     # Clean current repo.
     cmd = git_clean_cmd
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Clean submodules.
     cmd = f"git submodule foreach '{git_clean_cmd}'"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Delete other files.
     to_delete = [
         r"*\.pyc",
@@ -111,7 +112,7 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     cmd = f"find . {opts} | sort"
     if not dry_run:
         cmd += " | xargs rm -rf"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -119,9 +120,9 @@ def git_add_all_untracked(ctx):  # type: ignore
     """
     Add all untracked files to Git.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     cmd = "git add $(git ls-files -o --exclude-standard)"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -139,7 +140,7 @@ def git_create_patch(  # type: ignore
         - "diff": (default) creates a patch with the diff of the files
         - "tar": creates a tar ball with all the files
     """
-    hlibtask._report_task(
+    hlitauti._report_task(
         txt=hprint.to_str("mode modified branch last_commit files")
     )
     _ = ctx
@@ -151,7 +152,7 @@ def git_create_patch(  # type: ignore
     super_module = False
     git_client_root = hgit.get_client_root(super_module)
     hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
-    timestamp = hlibtask._get_ET_timestamp()
+    timestamp = hlitauti._get_ET_timestamp()
     #
     tag = os.path.basename(git_client_root)
     dst_file = f"patch.{tag}.{hash_}.{timestamp}"
@@ -174,7 +175,7 @@ def git_create_patch(  # type: ignore
     mutually_exclusive = False
     # We don't allow to specify directories.
     remove_dirs = True
-    files_as_list = hlibtask._get_files_to_process(
+    files_as_list = hlitauti._get_files_to_process(
         modified,
         branch,
         last_commit,
@@ -241,14 +242,14 @@ def git_files(  # type: ignore
 
     The params have the same meaning as in `_get_files_to_process()`.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     _ = ctx
     all_ = False
     files = ""
     mutually_exclusive = True
     # pre-commit doesn't handle directories, but only files.
     remove_dirs = True
-    files_as_list = hlibtask._get_files_to_process(
+    files_as_list = hlitauti._get_files_to_process(
         modified,
         branch,
         last_commit,
@@ -260,7 +261,7 @@ def git_files(  # type: ignore
     print("\n".join(sorted(files_as_list)))
     if pbcopy:
         res = " ".join(files_as_list)
-        hlibtask._to_pbcopy(res, pbcopy)
+        hlitauti._to_pbcopy(res, pbcopy)
 
 
 @task
@@ -271,14 +272,14 @@ def git_last_commit_files(ctx, pbcopy=True):  # type: ignore
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
     cmd = 'git log -1 --name-status --pretty=""'
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Get the list of existing files.
     files = hgit.get_previous_committed_files(".")
     txt = "\n".join(files)
     print(f"\n# The files modified are:\n{txt}")
     # Save to clipboard.
     res = " ".join(files)
-    hlibtask._to_pbcopy(res, pbcopy)
+    hlitauti._to_pbcopy(res, pbcopy)
 
 
 @task
@@ -286,7 +287,7 @@ def git_roll_amp_forward(ctx):  # type: ignore
     """
     Roll amp forward.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     AMP_DIR = "amp"
     if os.path.exists(AMP_DIR):
         cmds = [
@@ -297,7 +298,7 @@ def git_roll_amp_forward(ctx):  # type: ignore
             "git push",
         ]
         for cmd in cmds:
-            hlibtask._run(ctx, cmd)
+            hlitauti._run(ctx, cmd)
     else:
         _LOG.warning("%s does not exist, aborting", AMP_DIR)
 
@@ -327,7 +328,7 @@ def git_branch_files(ctx):  # type: ignore
 
     This is a more detailed version of `i git_files --branch`.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     _ = ctx
     print(
         "Difference between HEAD and master:\n"
@@ -365,13 +366,13 @@ def git_create_branch(  # type: ignore
     :param suffix: suffix (e.g., "02") to add to the branch name when using issue_id
     :param only_branch_from_master: only allow to branch from master
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     if issue_id > 0:
         # User specified an issue id on GitHub.
         hdbg.dassert_eq(
             branch_name, "", "You can't specify both --issue and --branch_name"
         )
-        title, _ = hlibtask._get_gh_issue_title(issue_id, repo_short_name)
+        title, _ = hlitagh._get_gh_issue_title(issue_id, repo_short_name)
         branch_name = title
         _LOG.info(
             "Issue %d in %s repo_short_name corresponds to '%s'",
@@ -413,12 +414,12 @@ def git_create_branch(  # type: ignore
             )
     # Fetch master.
     cmd = "git pull --autostash"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # git checkout -b LmTask169_Get_GH_actions_working_on_lm
     cmd = f"git checkout -b {branch_name}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     cmd = f"git push --set-upstream origin {branch_name}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 # TODO(gp): Move to hgit.
@@ -458,7 +459,7 @@ def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
         )
     for branch in branches:
         cmd_tmp = f"{delete_cmd} {branch}"
-        hlibtask._run(ctx, cmd_tmp)
+        hlitauti._run(ctx, cmd_tmp)
 
 
 @task
@@ -466,7 +467,7 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     """
     Remove (both local and remote) branches that have been merged into master.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     hdbg.dassert(
         hgit.get_branch_name(),
         "master",
@@ -474,13 +475,13 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     )
     #
     cmd = "git fetch --all --prune"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Delete local and remote branches that are already merged into master.
     _delete_branches(ctx, "local", confirm_delete)
     _delete_branches(ctx, "remote", confirm_delete)
     #
     cmd = "git fetch --all --prune"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -488,7 +489,7 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
     """
     Rename current branch both locally and remotely.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     #
     old_branch_name = hgit.get_branch_name(".")
     hdbg.dassert_ne(old_branch_name, new_branch_name)
@@ -501,24 +502,24 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
     # Rename the local branch to the new name.
     # > git branch -m <old_name> <new_name>
     cmd = f"git branch -m {new_branch_name}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Delete the old branch on remote.
     # > git push <remote> --delete <old_name>
     cmd = f"git push origin --delete {old_branch_name}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Prevent Git from using the old name when pushing in the next step.
     # Otherwise, Git will use the old upstream name instead of <new_name>.
     # > git branch --unset-upstream <new_name>
     cmd = f"git branch --unset-upstream {new_branch_name}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Push the new branch to remote.
     # > git push <remote> <new_name>
     cmd = f"git push origin {new_branch_name}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Reset the upstream branch for the new_name local branch.
     # > git push <remote> -u <new_name>
     cmd = f"git push origin u {new_branch_name}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     print("Done")
 
 
@@ -530,7 +531,7 @@ def git_branch_next_name(ctx):  # type: ignore
     E.g., `AmpTask1903_Implemented_system_Portfolio` ->
     `AmpTask1903_Implemented_system_Portfolio_3`
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     _ = ctx
     branch_next_name = hgit.get_branch_next_name(log_verb=logging.INFO)
     print(f"branch_next_name='{branch_next_name}'")
@@ -547,7 +548,7 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
     hdbg.dassert_ne(curr_branch_name, "master")
     # Make sure `old_branch_name` doesn't need to have `master` merged.
     cmd = "invoke git_merge_master --ff-only"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     if use_patch:
         # TODO(gp): Create a patch or do a `git merge`.
         pass
@@ -562,13 +563,13 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
         cmd = f"git checkout {new_branch_name}"
     else:
         cmd = f"git checkout master && invoke git_create_branch -b '{new_branch_name}'"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     if use_patch:
         # TODO(gp): Apply the patch.
         pass
     #
     cmd = f"git merge --squash --ff {curr_branch_name} && git reset HEAD"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 def _git_diff_with_branch(
@@ -668,10 +669,10 @@ def _git_diff_with_branch(
     script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
     msg = f"To diff against {tag} run"
     hio.create_executable_script(script_file_name, script_txt, msg=msg)
-    hlibtask._run(ctx, script_file_name, dry_run=dry_run, pty=True)
+    hlitauti._run(ctx, script_file_name, dry_run=dry_run, pty=True)
     # Clean up file.
     cmd = f"rm -rf {dst_dir}"
-    hlibtask._run(ctx, cmd, dry_run=dry_run)
+    hlitauti._run(ctx, cmd, dry_run=dry_run)
 
 
 @task

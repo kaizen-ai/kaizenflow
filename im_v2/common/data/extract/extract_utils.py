@@ -74,6 +74,14 @@ def add_exchange_download_args(
         help="File format to save files on disk",
     )
     parser.add_argument(
+        "--contract_type",
+        action="store",
+        required=False,
+        default="spot",
+        type=str,
+        help="Type of contract, spot or futures"
+    )
+    parser.add_argument(
         "--incremental",
         action="store_true",
         required=False,
@@ -407,10 +415,9 @@ def save_parquet(
         partition_filename=None,
         aws_profile=aws_profile,
     )
+    mode = None
     if data_type == "ohlcv":
         mode = "ohlcv"
-    elif data_type == "bid_ask":
-        mode = None
     # Merge all new parquet into a single `data.parquet`.
     hparque.list_and_merge_pq_files(
         path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=mode

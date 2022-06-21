@@ -86,6 +86,42 @@ def infer_splits(df: pd.DataFrame) -> pd.DataFrame:
     return inferred_splits
 
 
+def retrieve_beginning_of_day_timestamps(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Retrieve beginning of day "active bar" timestamps for each day.
+
+    :param df: datetime-indexed dataframe with int asset ids as cols
+    :return: dataframe of beginning-of-day timestamps
+    """
+    _is_valid_df(df)
+    df = df.dropna(how="all")
+    timestamps = pd.DataFrame(
+        df.index.to_list(),
+        df.index,
+        ["timestamp"],
+    )
+    bod_timestamps = timestamps.groupby(lambda x: x.date()).min()
+    return bod_timestamps
+
+
+def retrieve_end_of_day_timestamps(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Retrieve end of day "active bar" timestamps for each day.
+
+    :param df: datetime-indexed dataframe with int asset ids as cols
+    :return: dataframe of end-of-day timestamps
+    """
+    _is_valid_df(df)
+    df = df.dropna(how="all")
+    timestamps = pd.DataFrame(
+        df.index.to_list(),
+        df.index,
+        ["timestamp"],
+    )
+    eod_timestamps = timestamps.groupby(lambda x: x.date()).max()
+    return eod_timestamps
+
+
 def retrieve_beginning_of_day_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     Retrieve first "active bar" values by asset for each active date.
@@ -119,3 +155,28 @@ def _is_valid_df(df: pd.DataFrame):
     hdbg.dassert_in(
         df.columns.dtype.type, [np.int64], "The asset ids should be integers."
     )
+
+
+def replace_end_of_day_values(
+    df1: pd.DataFrame, df2: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Replace end-of-day values in `df1` with values from `df2`.
+    """
+    hpandas.dassert_time_indexed_df(
+        df1,
+        allow_empty=False,
+        strictly_increasing=True,
+    )
+    hpandas.dassert_time_indexed_df(
+        df2,
+        allow_empty=False,
+        strictly_increasing=True,
+    )
+    hpandas.dassert_columns_equal(df1, df2)
+    eod_timestamps = retrieve_end_of_day_timestamps(df1)
+    df1 = df1.copy()
+    df1.loc[eod_timestamps["timestamp"], :] = df2.loc[
+        eod_timestamps["timestamp"], :
+    ]
+    return df1

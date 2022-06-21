@@ -3,14 +3,14 @@ import unittest.mock as umock
 
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hunitest.TestCase):
@@ -36,6 +36,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "start_timestamp": "2022-02-08",
             "end_timestamp": "2022-02-09",
             "exchange_id": "binance",
+            "contract_type": "spot",
             "universe": "v3",
             "incremental": False,
             "aws_profile": "ck",
@@ -61,6 +62,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "end_timestamp": "2022-01-01 01:00:00",
             "universe": "v3",
             "exchange_id": "binance",
+            "contract_type": "spot",
             "file_format": "parquet",
             "incremental": False,
             "log_level": "INFO",

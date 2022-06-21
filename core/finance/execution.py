@@ -6,6 +6,7 @@ import core.finance.execution as cfinexec
 
 import logging
 
+import numpy as np
 import pandas as pd
 
 import core.finance.resampling as cfinresa
@@ -186,3 +187,46 @@ def generate_limit_orders_and_estimate_execution(
         axis=1,
     )
     return execution_df
+
+
+def apply_execution_prices_to_trades(
+    trade: pd.DataFrame,
+    buy_price: pd.DataFrame,
+    sell_price: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Apply buy/sell prices to trades.
+    """
+    # Sanity-check inputs.
+    hpandas.dassert_time_indexed_df(
+        trade, allow_empty=False, strictly_increasing=True
+    )
+    hpandas.dassert_time_indexed_df(
+        buy_price, allow_empty=False, strictly_increasing=True
+    )
+    hpandas.dassert_time_indexed_df(
+        sell_price, allow_empty=False, strictly_increasing=True
+    )
+    hpandas.dassert_axes_equal(buy_price, trade)
+    hpandas.dassert_axes_equal(sell_price, trade)
+    # Ensure all buys may be filled.
+    use_buy_price = trade > 0
+    no_buy_price_available = buy_price.isna()
+    # TODO(Paul): Factor out trimming a boolean df to rows and cols with
+    # `True`.
+    no_buy_fills = use_buy_price & no_buy_price_available
+    no_buy_fills = no_buy_fills.loc[no_buy_fills.any(axis=1)]
+    hdbg.dassert(not no_buy_fills.any().any(), msg=str(no_buy_fills))
+    use_buy_price = use_buy_price.replace(True, 1.0).replace(False, np.nan)
+    # Ensure all sells may be filled.
+    use_sell_price = trade < 0
+    no_sell_price_available = sell_price.isna()
+    no_sell_fills = use_sell_price & no_sell_price_available
+    no_sell_fills = no_sell_fills.loc[no_sell_fills.any(axis=1)]
+    hdbg.dassert(not no_sell_fills.any().any(), msg=str(no_sell_fills))
+    use_sell_price = use_sell_price.replace(True, 1.0).replace(False, np.nan)
+    # Splice buy and sell prices.
+    execution_price = buy_price.multiply(use_buy_price).add(
+        sell_price.multiply(use_sell_price), fill_value=0.0
+    )
+    return execution_price

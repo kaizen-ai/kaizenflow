@@ -2,7 +2,7 @@ import unittest.mock as umock
 
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
@@ -14,7 +14,7 @@ import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchange1(
@@ -47,6 +47,7 @@ class TestDownloadRealtimeForOneExchange1(
             "exchange_id": "binance",
             "universe": "v3",
             "data_type": "ohlcv",
+            "contract_type": "spot",
             "db_stage": "local",
             "db_table": "ccxt_ohlcv",
             "incremental": False,
@@ -55,7 +56,9 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(kwargs["exchange_id"])
+        extractor = ivcdexex.CcxtExtractor(
+            kwargs["exchange_id"], kwargs["contract_type"]
+        )
         if use_s3:
             # Update kwargs.
             kwargs.update(
@@ -172,7 +175,7 @@ class TestDownloadRealtimeForOneExchange1(
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
@@ -186,6 +189,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "end_timestamp": "2022-01-01 01:00:00",
             "exchange_id": "binance",
             "data_type": "ohlcv",
+            "contract_type": "spot",
             "universe": "v3",
             "incremental": incremental,
             "aws_profile": self.mock_aws_profile,
@@ -194,7 +198,9 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "file_format": "parquet",
             "unit": "ms",
         }
-        exchange = ivcdexex.CcxtExtractor(args["exchange_id"])
+        exchange = ivcdexex.CcxtExtractor(
+            args["exchange_id"], args["contract_type"]
+        )
         imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.skip(reason="CMTask2089")
