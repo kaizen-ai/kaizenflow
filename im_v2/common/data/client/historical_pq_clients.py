@@ -302,16 +302,17 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
         )
         self._dataset = dataset
+        # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
+        contract_type_separator = "-"
         hdbg.dassert_in(
             contract_type,
             ["spot", "futures"],
             f"Invalid dataset type='{contract_type}'",
         )
-        # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
+        self._contract_type = contract_type
         if contract_type == "spot":
             self._contract_type = ""
-        else:
-            self._contract_type = "-futures"
+            contract_type_separator = ""
         self._data_snapshot = data_snapshot
 
     @staticmethod
@@ -392,7 +393,9 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
-            self._dataset + self._contract_type,
+            self._dataset,
+            contract_type_separator,
+            self._contract_type,
             self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,

@@ -43,7 +43,7 @@ class CryptoChassisHistoricalPqByTileClient(
 
         See the parent class for parameters description.
         """
-        vendor = "crypto-chassis"
+        vendor = "crypto_chassis"
         super().__init__(
             vendor,
             universe_version,

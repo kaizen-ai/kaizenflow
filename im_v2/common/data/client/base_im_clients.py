@@ -126,8 +126,7 @@ class ImClient(abc.ABC):
         Return the entire universe of valid full symbols.
         """
         universe = ivcu.get_vendor_universe(
-            # TODO(Dan): "Rename crypto-chassis to crypto_chassis in S3 paths CmTask #2191."
-            self._vendor.replace("-", "_"),
+            self._vendor,
             version=self._universe_version,
             as_full_symbol=True,
         )
