@@ -5,7 +5,7 @@ import unittest.mock as umock
 import pandas as pd
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
@@ -15,7 +15,7 @@ import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
@@ -24,6 +24,13 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         [("year", "==", 2022), ("month", "<=", 1)],
     ]
     _ohlcv_dataframe_sample = None
+
+    @staticmethod
+    def get_s3_path() -> str:
+        aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        s3_path = os.path.join(s3_bucket_path, "unit_test/parquet/historical")
+        return s3_path
 
     @classmethod
     def get_id(cls) -> int:
@@ -40,13 +47,6 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Drop table used in tests.
         ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv;"
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
-
-    @staticmethod
-    def get_s3_path() -> str:
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        s3_path = os.path.join(s3_bucket_path, "unit_test/parquet/historical")
-        return s3_path
 
     def ohlcv_dataframe_sample(self) -> pd.DataFrame:
         if self._ohlcv_dataframe_sample is None:

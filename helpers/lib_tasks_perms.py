@@ -17,7 +17,7 @@ from invoke import task
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
@@ -177,9 +177,9 @@ def _print_problems(dir_name: str = ".") -> None:
     """
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     user = hsystem.get_user_name()
-    docker_user = hgit.execute_repo_config_code("get_docker_user()")
+    docker_user = henv.execute_repo_config_code("get_docker_user()")
     # user_group = f"{user}_g"
-    # shared_group = hgit.execute_repo_config_code("get_docker_shared_group()")
+    # shared_group = henv.execute_repo_config_code("get_docker_shared_group()")
     files_with_problems = []
     for file, (curr_user, curr_group) in file_to_user_group.items():
         _ = curr_user, curr_group
@@ -238,7 +238,7 @@ def _fix_invalid_owner(dir_name: str, fix: bool, abort_on_error: bool) -> None:
     _, _, file_to_user_group = _compute_stats_by_user_and_group(dir_name)
     #
     user = hsystem.get_user_name()
-    docker_user = hgit.execute_repo_config_code("get_docker_user()")
+    docker_user = henv.execute_repo_config_code("get_docker_user()")
     for file, (curr_user, _) in tqdm.tqdm(file_to_user_group.items()):
         if curr_user not in (user, docker_user):
             _LOG.info("Fixing file '%s'", file)
@@ -265,7 +265,7 @@ def _fix_group(dir_name: str, fix: bool, abort_on_error: bool) -> None:
         # Get the user and the group.
         user = hsystem.get_user_name()
         user_group = f"{user}_g"
-        shared_group = hgit.execute_repo_config_code("get_docker_shared_group()")
+        shared_group = henv.execute_repo_config_code("get_docker_shared_group()")
         #
         for file, (curr_user, curr_group) in file_to_user_group.items():
             # If the group is the shared group there is nothing to do.
@@ -339,7 +339,7 @@ def fix_perms(  # type: ignore
     _ = ctx
     hlitauti._report_task()
     #
-    if hgit.execute_repo_config_code("is_dev4()"):
+    if henv.execute_repo_config_code("is_dev4()"):
         if action == "all":
             action = ["fix_invalid_owner", "fix_group", "fix_group_permissions"]
         else:
@@ -364,7 +364,7 @@ def fix_perms(  # type: ignore
         #
         cmd = f"To compare run:\n> vimdiff {file_name1} {file_name2}"
         print(cmd)
-    elif hgit.execute_repo_config_code("is_dev_ck()"):
+    elif henv.execute_repo_config_code("is_dev_ck()"):
         user = hsystem.get_user_name()
         group = user
         cmd = f"sudo chown -R {user}:{group} *"
