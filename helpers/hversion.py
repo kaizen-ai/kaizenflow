@@ -15,6 +15,7 @@ import helpers.hversion as hversio
 # This file should depend only on Python standard package since it's used by
 # helpers/dbg.py, which is used everywhere.
 
+import functools
 import logging
 import os
 import re
@@ -23,7 +24,6 @@ from typing import Optional, cast
 # Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
 # import cycles.
 import helpers.hdbg as hdbg
-import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsystem as hsystem
 
@@ -67,7 +67,7 @@ def get_changelog_version(container_dir_name: str) -> Optional[str]:
     """
     version: Optional[str] = None
     supermodule = True
-    root_dir = hgit.get_client_root(supermodule)
+    root_dir = get_client_root(supermodule)
     # Note: for `amp` as submodule one should pass `container_dir_name` relative
     # to the root, e.g., `amp/optimizer` and not just `optimizer`.
     hdbg.dassert_ne(container_dir_name, "")
@@ -144,3 +144,63 @@ You need to:
         print(msg)
         # raise RuntimeError(msg)
     return is_ok
+
+
+# Copied from helpers.hgit to avoid circular dependencies.
+
+
+@functools.lru_cache()
+def get_client_root(super_module: bool) -> str:
+    """
+    Return the full path of the root of the Git client.
+
+    E.g., `/Users/saggese/src/.../amp`.
+
+    :param super_module: if True use the root of the Git super_module,
+        if we are in a submodule. Otherwise use the Git sub_module root
+    """
+    if super_module and is_inside_submodule():
+        # https://stackoverflow.com/questions/957928
+        # > cd /Users/saggese/src/.../amp
+        # > git rev-parse --show-superproject-working-tree
+        # /Users/saggese/src/...
+        cmd = "git rev-parse --show-superproject-working-tree"
+    else:
+        # > git rev-parse --show-toplevel
+        # /Users/saggese/src/.../amp
+        cmd = "git rev-parse --show-toplevel"
+    # TODO(gp): Use system_to_one_line().
+    _, out = hsystem.system_to_string(cmd)
+    out = out.rstrip("\n")
+    hdbg.dassert_eq(len(out.split("\n")), 1, msg=f"Invalid out='{out}'")
+    client_root: str = os.path.realpath(out)
+    return client_root
+
+
+@functools.lru_cache()
+def is_inside_submodule(git_dir: str = ".") -> bool:
+    """
+    Return whether a dir is inside a Git submodule or a Git supermodule.
+
+    We determine this checking if the current Git repo is included
+    inside another Git repo.
+    """
+    cmd = []
+    # - Find the git root of the current directory
+    # - Check if the dir one level up is a valid Git repo
+    # Go to the dir.
+    cmd.append(f"cd {git_dir}")
+    # > cd im/
+    # > git rev-parse --show-toplevel
+    # /Users/saggese/src/.../amp
+    cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
+    # > git rev-parse --is-inside-work-tree
+    # true
+    cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
+    cmd_as_str = " && ".join(cmd)
+    rc = hsystem.system(cmd_as_str, abort_on_error=False)
+    ret: bool = rc == 0
+    return ret
+
+
+# End copy.
