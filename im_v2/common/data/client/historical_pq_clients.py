@@ -307,6 +307,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             ["spot", "futures"],
             f"Invalid dataset type='{contract_type}'",
         )
+        # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
         if contract_type == "spot":
             self._contract_type = ""
         else:
