@@ -84,15 +84,18 @@ def get_notebook_config() -> cconconf.Config:
             "trade_pnl": "trade_pnl",
         },
         "stats_kwargs": {
-            "y_min_lim": 0.45,
-            "y_max_lim": 0.55,
             "quantile_ranks": 10,
+            # 28500 is the number of 5-minute intervals in ATH in a year.
             "time_scaling": 28500,
             "n_resamples": 1000,
+        },
+        "plot_kwargs": {
+            "y_min_lim_hit_rate": 0.45,
+            "y_max_lim_hit_rate": 0.55,
             "color": "C0",
             "capsize": 0.2,
             "xticks_rotation": 70,
-        },
+        }
     }
     config = ccocouti.get_config_from_nested_dict(param_dict)
     return config
@@ -230,10 +233,10 @@ def plot_sharpe_ratio(
         x=by_col,
         y="sharpe_ratio",
         data=res_df,
-        color=config["stats_kwargs"]["color"],
-        capsize=config["stats_kwargs"]["capsize"],
+        color=config["plot_kwargs"]["color"],
+        capsize=config["plot_kwargs"]["capsize"],
     )
-    plt.xticks(rotation=config["stats_kwargs"]["xticks_rotation"])
+    plt.xticks(rotation=config["plot_kwargs"]["xticks_rotation"])
     plt.show()
 
 
@@ -278,12 +281,12 @@ y_hat = config["column_names"]["y_hat"]
 hit = config["column_names"]["hit"]
 trade_pnl = config["column_names"]["trade_pnl"]
 #
-y_min_lim = config["stats_kwargs"]["y_min_lim"]
-y_max_lim = config["stats_kwargs"]["y_max_lim"]
 quantile_ranks = config["stats_kwargs"]["quantile_ranks"]
-color = config["stats_kwargs"]["color"]
-capsize = config["stats_kwargs"]["capsize"]
-xticks_rotation = config["stats_kwargs"]["xticks_rotation"]
+y_min_lim_hit_rate = config["plot_kwargs"]["y_min_lim_hit_rate"]
+y_max_lim_hit_rate = config["plot_kwargs"]["y_max_lim_hit_rate"]
+color = config["plot_kwargs"]["color"]
+capsize = config["plot_kwargs"]["capsize"]
+xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
 
 # %% [markdown]
 # ## By asset
@@ -302,7 +305,7 @@ sns.barplot(
 #
 plt.xticks(rotation=xticks_rotation)
 plt.ylabel("hit_rate")
-plt.ylim(y_min_lim, y_max_lim)
+plt.ylim(y_min_lim_hit_rate, y_max_lim_hit_rate)
 plt.show()
 
 # %% [markdown]
@@ -373,7 +376,7 @@ sns.barplot(
 #
 plt.xticks(rotation=xticks_rotation)
 plt.ylabel("hit_rate")
-plt.ylim(0.4, y_max_lim)
+plt.ylim(0.4, y_max_lim_hit_rate)
 plt.show()
 
 # %%
@@ -387,7 +390,7 @@ sns.barplot(
 #
 plt.xticks(rotation=xticks_rotation)
 plt.ylabel("hit_rate")
-plt.ylim(y_min_lim, y_max_lim)
+plt.ylim(y_min_lim_hit_rate, y_max_lim_hit_rate)
 plt.show()
 
 # %%
@@ -401,7 +404,7 @@ sns.barplot(
 #
 plt.xticks(rotation=xticks_rotation)
 plt.ylabel("hit_rate")
-plt.ylim(y_min_lim, y_max_lim)
+plt.ylim(y_min_lim_hit_rate, y_max_lim_hit_rate)
 plt.show()
 
 # %% [markdown]
@@ -481,7 +484,7 @@ sns.barplot(
 #
 plt.xticks(rotation=xticks_rotation)
 plt.ylabel("hit_rate")
-plt.ylim(y_min_lim, y_max_lim)
+plt.ylim(y_min_lim_hit_rate, y_max_lim_hit_rate)
 plt.show()
 
 # %% [markdown]
@@ -529,7 +532,7 @@ sns.barplot(
 #
 plt.xticks(rotation=xticks_rotation)
 plt.ylabel("hit_rate")
-plt.ylim(y_min_lim, y_max_lim)
+plt.ylim(y_min_lim_hit_rate, y_max_lim_hit_rate)
 plt.show()
 
 # %% [markdown]
