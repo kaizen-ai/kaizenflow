@@ -88,8 +88,8 @@ resample_1min = True
 root_dir = config["load"]["data_dir"]
 partition_mode = config["load"]["partition_mode"]
 dataset = config["load"]["dataset"]
-data_snapshot = config["load"]["data_snapshot"]
 contract_type = config["load"]["contract_type"]
+data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
 
 # Initiate the client.
@@ -99,6 +99,7 @@ historical_client = icdcl.CcxtHistoricalPqByTileClient(
     root_dir,
     partition_mode,
     dataset,
+    contract_type,
     data_snapshot=data_snapshot,
     aws_profile=aws_profile,
 )
