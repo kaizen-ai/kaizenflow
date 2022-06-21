@@ -3,14 +3,14 @@ import unittest.mock as umock
 
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hunitest.TestCase):
