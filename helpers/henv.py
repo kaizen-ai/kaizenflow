@@ -232,6 +232,37 @@ def _append(
     return txt, to_add
 
 
+# Copied from helpers.hgit to avoid circular dependencies.
+
+
+def _git_log(num_commits: int = 5, my_commits: bool = False) -> str:
+    """
+    Return the output of a pimped version of git log.
+
+    :param num_commits: number of commits to report
+    :param my_commits: True to report only the current user commits
+    :return: string
+    """
+    cmd = []
+    cmd.append("git log --date=local --oneline --graph --date-order --decorate")
+    cmd.append(
+        "--pretty=format:" "'%h %<(8)%aN%  %<(65)%s (%>(14)%ar) %ad %<(10)%d'"
+    )
+    cmd.append(f"-{num_commits}")
+    if my_commits:
+        # This doesn't work in a container if the user relies on `~/.gitconfig` to
+        # set the user name.
+        # TODO(gp): We should use `get_git_name()`.
+        cmd.append("--author $(git config user.name)")
+    cmd = " ".join(cmd)
+    data: Tuple[int, str] = hsystem.system_to_string(cmd)
+    _, txt = data
+    return txt
+
+
+# End copy.
+
+
 def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # TODO(gp): This should return a string that we append to the rest.
     container_dir_name = "."
@@ -253,11 +284,11 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         num_commits = 3
         if git_commit_type == "all":
             txt_tmp.append("# Last commits:")
-            log_txt = git_log(num_commits=num_commits, my_commits=False)
+            log_txt = _git_log(num_commits=num_commits, my_commits=False)
             txt_tmp.append(hprint.indent(log_txt))
         elif git_commit_type == "mine":
             txt_tmp.append("# Your last commits:")
-            log_txt = git_log(num_commits=num_commits, my_commits=True)
+            log_txt = _git_log(num_commits=num_commits, my_commits=True)
             txt_tmp.append(hprint.indent(log_txt))
         elif git_commit_type == "none":
             pass
@@ -329,6 +360,65 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
 # Execute code from the `repo_config.py` in the super module.
 # #############################################################################
 
+# Copied from helpers.hgit to avoid circular dependencies.
+
+
+@functools.lru_cache()
+def _is_inside_submodule(git_dir: str = ".") -> bool:
+    """
+    Return whether a dir is inside a Git submodule or a Git supermodule.
+
+    We determine this checking if the current Git repo is included
+    inside another Git repo.
+    """
+    cmd = []
+    # - Find the git root of the current directory
+    # - Check if the dir one level up is a valid Git repo
+    # Go to the dir.
+    cmd.append(f"cd {git_dir}")
+    # > cd im/
+    # > git rev-parse --show-toplevel
+    # /Users/saggese/src/.../amp
+    cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
+    # > git rev-parse --is-inside-work-tree
+    # true
+    cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
+    cmd_as_str = " && ".join(cmd)
+    rc = hsystem.system(cmd_as_str, abort_on_error=False)
+    ret: bool = rc == 0
+    return ret
+
+
+@functools.lru_cache()
+def _get_client_root(super_module: bool) -> str:
+    """
+    Return the full path of the root of the Git client.
+
+    E.g., `/Users/saggese/src/.../amp`.
+
+    :param super_module: if True use the root of the Git super_module,
+        if we are in a submodule. Otherwise use the Git sub_module root
+    """
+    if super_module and _is_inside_submodule():
+        # https://stackoverflow.com/questions/957928
+        # > cd /Users/saggese/src/.../amp
+        # > git rev-parse --show-superproject-working-tree
+        # /Users/saggese/src/...
+        cmd = "git rev-parse --show-superproject-working-tree"
+    else:
+        # > git rev-parse --show-toplevel
+        # /Users/saggese/src/.../amp
+        cmd = "git rev-parse --show-toplevel"
+    # TODO(gp): Use system_to_one_line().
+    _, out = hsystem.system_to_string(cmd)
+    out = out.rstrip("\n")
+    hdbg.dassert_eq(len(out.split("\n")), 1, msg=f"Invalid out='{out}'")
+    client_root: str = os.path.realpath(out)
+    return client_root
+
+
+# End copy.
+
 
 def get_repo_config_file(super_module: bool = True) -> str:
     """
@@ -343,7 +433,7 @@ def get_repo_config_file(super_module: bool = True) -> str:
         _LOG.warning("Using value '%s' for %s from env var", file_name, env_var)
     else:
         # TODO(gp): We should actually ask Git where the super-module is.
-        client_root = get_client_root(super_module)
+        client_root = _get_client_root(super_module)
         file_name = os.path.join(client_root, "repo_config.py")
         file_name = os.path.abspath(file_name)
     return file_name
@@ -383,88 +473,3 @@ def execute_repo_config_code(code_to_execute: str) -> Any:
         )
         ret = None
     return ret
-
-
-# Copied from helpers.hgit to avoid circular dependencies.
-
-
-@functools.lru_cache()
-def get_client_root(super_module: bool) -> str:
-    """
-    Return the full path of the root of the Git client.
-
-    E.g., `/Users/saggese/src/.../amp`.
-
-    :param super_module: if True use the root of the Git super_module,
-        if we are in a submodule. Otherwise use the Git sub_module root
-    """
-    if super_module and is_inside_submodule():
-        # https://stackoverflow.com/questions/957928
-        # > cd /Users/saggese/src/.../amp
-        # > git rev-parse --show-superproject-working-tree
-        # /Users/saggese/src/...
-        cmd = "git rev-parse --show-superproject-working-tree"
-    else:
-        # > git rev-parse --show-toplevel
-        # /Users/saggese/src/.../amp
-        cmd = "git rev-parse --show-toplevel"
-    # TODO(gp): Use system_to_one_line().
-    _, out = hsystem.system_to_string(cmd)
-    out = out.rstrip("\n")
-    hdbg.dassert_eq(len(out.split("\n")), 1, msg=f"Invalid out='{out}'")
-    client_root: str = os.path.realpath(out)
-    return client_root
-
-
-@functools.lru_cache()
-def is_inside_submodule(git_dir: str = ".") -> bool:
-    """
-    Return whether a dir is inside a Git submodule or a Git supermodule.
-
-    We determine this checking if the current Git repo is included
-    inside another Git repo.
-    """
-    cmd = []
-    # - Find the git root of the current directory
-    # - Check if the dir one level up is a valid Git repo
-    # Go to the dir.
-    cmd.append(f"cd {git_dir}")
-    # > cd im/
-    # > git rev-parse --show-toplevel
-    # /Users/saggese/src/.../amp
-    cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
-    # > git rev-parse --is-inside-work-tree
-    # true
-    cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
-    cmd_as_str = " && ".join(cmd)
-    rc = hsystem.system(cmd_as_str, abort_on_error=False)
-    ret: bool = rc == 0
-    return ret
-
-
-def git_log(num_commits: int = 5, my_commits: bool = False) -> str:
-    """
-    Return the output of a pimped version of git log.
-
-    :param num_commits: number of commits to report
-    :param my_commits: True to report only the current user commits
-    :return: string
-    """
-    cmd = []
-    cmd.append("git log --date=local --oneline --graph --date-order --decorate")
-    cmd.append(
-        "--pretty=format:" "'%h %<(8)%aN%  %<(65)%s (%>(14)%ar) %ad %<(10)%d'"
-    )
-    cmd.append(f"-{num_commits}")
-    if my_commits:
-        # This doesn't work in a container if the user relies on `~/.gitconfig` to
-        # set the user name.
-        # TODO(gp): We should use `get_git_name()`.
-        cmd.append("--author $(git config user.name)")
-    cmd = " ".join(cmd)
-    data: Tuple[int, str] = hsystem.system_to_string(cmd)
-    _, txt = data
-    return txt
-
-
-# End copy.
