@@ -303,7 +303,9 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         )
         self._dataset = dataset
         hdbg.dassert_in(
-            contract_type, ["spot", "futures"], f"Invalid dataset type='{contract_type}'"
+            contract_type,
+            ["spot", "futures"],
+            f"Invalid dataset type='{contract_type}'",
         )
         if contract_type == "spot":
             self._contract_type = ""
