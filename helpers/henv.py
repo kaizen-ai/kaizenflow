@@ -4,12 +4,16 @@ Import as:
 import helpers.henv as henv
 """
 
+import functools
 import logging
 import os
 from typing import Any, List, Tuple, Union
 
-import helpers.hgit as hgit
+import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hsystem as hsystem
+import helpers.hversion as hversio
 
 # This module should not depend on any other helper or 3rd party modules.
 
@@ -45,8 +49,12 @@ except ImportError as e:
 # #############################################################################
 
 
-def get_env_var(env_name: str, as_bool: bool=False, default_value: Any = None,
-                abort_on_missing: bool = True) -> Union[str, bool]:
+def get_env_var(
+    env_name: str,
+    as_bool: bool = False,
+    default_value: Any = None,
+    abort_on_missing: bool = True,
+) -> Union[str, bool]:
     """
     Get an environment variable by name.
 
@@ -148,8 +156,8 @@ def check_env_vars() -> None:
 
 def env_vars_to_string() -> str:
     """
-    Return a string with the signature of all the expected env vars (including the
-    secret ones).
+    Return a string with the signature of all the expected env vars (including
+    the secret ones).
     """
     msg = []
     # Get the expected env vars and the secret ones.
@@ -179,7 +187,7 @@ def env_to_str() -> str:
     msg = ""
     #
     msg += "# Repo config:\n"
-    msg += hprint.indent(hgit.execute_repo_config_code("config_func_to_str()"))
+    msg += hprint.indent(execute_repo_config_code("config_func_to_str()"))
     msg += "\n"
     # System signature.
     msg += "# System signature:\n"
@@ -224,11 +232,38 @@ def _append(
     return txt, to_add
 
 
-def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
-    # We use dynamic imports to minimize the dependencies.
-    import helpers.hsystem as hsystem
-    import helpers.hversion as hversio
+# Copied from helpers.hgit to avoid circular dependencies.
 
+
+def _git_log(num_commits: int = 5, my_commits: bool = False) -> str:
+    """
+    Return the output of a pimped version of git log.
+
+    :param num_commits: number of commits to report
+    :param my_commits: True to report only the current user commits
+    :return: string
+    """
+    cmd = []
+    cmd.append("git log --date=local --oneline --graph --date-order --decorate")
+    cmd.append(
+        "--pretty=format:" "'%h %<(8)%aN%  %<(65)%s (%>(14)%ar) %ad %<(10)%d'"
+    )
+    cmd.append(f"-{num_commits}")
+    if my_commits:
+        # This doesn't work in a container if the user relies on `~/.gitconfig` to
+        # set the user name.
+        # TODO(gp): We should use `get_git_name()`.
+        cmd.append("--author $(git config user.name)")
+    cmd = " ".join(cmd)
+    data: Tuple[int, str] = hsystem.system_to_string(cmd)
+    _, txt = data
+    return txt
+
+
+# End copy.
+
+
+def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # TODO(gp): This should return a string that we append to the rest.
     container_dir_name = "."
     hversio.check_version(container_dir_name)
@@ -249,11 +284,11 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
         num_commits = 3
         if git_commit_type == "all":
             txt_tmp.append("# Last commits:")
-            log_txt = hgit.git_log(num_commits=num_commits, my_commits=False)
+            log_txt = _git_log(num_commits=num_commits, my_commits=False)
             txt_tmp.append(hprint.indent(log_txt))
         elif git_commit_type == "mine":
             txt_tmp.append("# Your last commits:")
-            log_txt = hgit.git_log(num_commits=num_commits, my_commits=True)
+            log_txt = _git_log(num_commits=num_commits, my_commits=True)
             txt_tmp.append(hprint.indent(log_txt))
         elif git_commit_type == "none":
             pass
@@ -319,3 +354,122 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     #
     txt = "\n".join(txt)
     return txt, failed_imports
+
+
+# #############################################################################
+# Execute code from the `repo_config.py` in the super module.
+# #############################################################################
+
+# Copied from helpers.hgit to avoid circular dependencies.
+
+
+@functools.lru_cache()
+def _is_inside_submodule(git_dir: str = ".") -> bool:
+    """
+    Return whether a dir is inside a Git submodule or a Git supermodule.
+
+    We determine this checking if the current Git repo is included
+    inside another Git repo.
+    """
+    cmd = []
+    # - Find the git root of the current directory
+    # - Check if the dir one level up is a valid Git repo
+    # Go to the dir.
+    cmd.append(f"cd {git_dir}")
+    # > cd im/
+    # > git rev-parse --show-toplevel
+    # /Users/saggese/src/.../amp
+    cmd.append('cd "$(git rev-parse --show-toplevel)/.."')
+    # > git rev-parse --is-inside-work-tree
+    # true
+    cmd.append("(git rev-parse --is-inside-work-tree | grep -q true)")
+    cmd_as_str = " && ".join(cmd)
+    rc = hsystem.system(cmd_as_str, abort_on_error=False)
+    ret: bool = rc == 0
+    return ret
+
+
+@functools.lru_cache()
+def _get_client_root(super_module: bool) -> str:
+    """
+    Return the full path of the root of the Git client.
+
+    E.g., `/Users/saggese/src/.../amp`.
+
+    :param super_module: if True use the root of the Git super_module,
+        if we are in a submodule. Otherwise use the Git sub_module root
+    """
+    if super_module and _is_inside_submodule():
+        # https://stackoverflow.com/questions/957928
+        # > cd /Users/saggese/src/.../amp
+        # > git rev-parse --show-superproject-working-tree
+        # /Users/saggese/src/...
+        cmd = "git rev-parse --show-superproject-working-tree"
+    else:
+        # > git rev-parse --show-toplevel
+        # /Users/saggese/src/.../amp
+        cmd = "git rev-parse --show-toplevel"
+    # TODO(gp): Use system_to_one_line().
+    _, out = hsystem.system_to_string(cmd)
+    out = out.rstrip("\n")
+    hdbg.dassert_eq(len(out.split("\n")), 1, msg=f"Invalid out='{out}'")
+    client_root: str = os.path.realpath(out)
+    return client_root
+
+
+# End copy.
+
+
+def get_repo_config_file(super_module: bool = True) -> str:
+    """
+    Return the absolute path to `repo_config.py` that should be used.
+
+    The `repo_config.py` is determined based on an overriding env var or
+    based on the root of the Git path.
+    """
+    env_var = "AM_REPO_CONFIG_PATH"
+    file_name = get_env_var(env_var, abort_on_missing=False)
+    if file_name:
+        _LOG.warning("Using value '%s' for %s from env var", file_name, env_var)
+    else:
+        # TODO(gp): We should actually ask Git where the super-module is.
+        client_root = _get_client_root(super_module)
+        file_name = os.path.join(client_root, "repo_config.py")
+        file_name = os.path.abspath(file_name)
+    return file_name
+
+
+def _get_repo_config_code(super_module: bool = True) -> str:
+    """
+    Return the text of the code stored in `repo_config.py`.
+    """
+    file_name = get_repo_config_file(super_module)
+    hdbg.dassert_file_exists(file_name)
+    code: str = hio.from_file(file_name)
+    return code
+
+
+def execute_repo_config_code(code_to_execute: str) -> Any:
+    """
+    Execute code in `repo_config.py` by dynamically finding the correct one.
+
+    E.g.,
+    ```
+    henv.execute_repo_config_code("has_dind_support()")
+    ```
+    """
+    # Read the info from the current repo.
+    code = _get_repo_config_code()
+    # TODO(gp): make the linter happy creating this symbol that comes from the
+    #  `exec()`.
+    try:
+        exec(code, globals())  # pylint: disable=exec-used
+        ret = eval(code_to_execute)
+    except NameError as e:
+        _LOG.error(
+            "While executing %s caught error:\n%s\nTrying to continue",
+            code_to_execute,
+            e,
+        )
+        ret = None
+    return ret
