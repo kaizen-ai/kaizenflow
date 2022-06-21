@@ -275,6 +275,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         partition_mode: str,
         # TODO(Sonya): Consider moving the `dataset` param to the base class.
         dataset: str,
+        contract_type: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -301,6 +302,13 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
         )
         self._dataset = dataset
+        hdbg.dassert_in(
+            contract_type, ["spot", "futures"], f"Invalid dataset type='{contract_type}'"
+        )
+        if contract_type == "spot":
+            self._contract_type = ""
+        else:
+            self._contract_type = "-futures"
         self._data_snapshot = data_snapshot
 
     @staticmethod
@@ -381,7 +389,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
-            self._dataset,
+            self._dataset + self._contract_type,
             self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,

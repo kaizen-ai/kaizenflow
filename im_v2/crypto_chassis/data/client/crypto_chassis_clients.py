@@ -33,6 +33,7 @@ class CryptoChassisHistoricalPqByTileClient(
         root_dir: str,
         partition_mode: str,
         dataset: str,
+        contract_type: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -42,7 +43,7 @@ class CryptoChassisHistoricalPqByTileClient(
 
         See the parent class for parameters description.
         """
-        vendor = "crypto_chassis"
+        vendor = "crypto-chassis"
         super().__init__(
             vendor,
             universe_version,
@@ -50,6 +51,7 @@ class CryptoChassisHistoricalPqByTileClient(
             root_dir,
             partition_mode,
             dataset,
+            contract_type,
             data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )

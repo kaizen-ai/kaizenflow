@@ -402,6 +402,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         root_dir: str,
         partition_mode: str,
         dataset: str,
+        contract_type: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -419,6 +420,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
             root_dir,
             partition_mode,
             dataset,
+            contract_type,
             data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )
