@@ -6,26 +6,27 @@ import pandas as pd
 import pytest
 
 import helpers.hdbg as hdbg
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
-import im_v2.talos.data.extract.extractor as imvtdeex
+import im_v2.talos.data.extract.extractor as imvtdexex
 
 _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available")
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestTalosExtractor1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
         """
-        _ = imvtdeex.TalosExtractor("sandbox")
+        _ = imvtdexex.TalosExtractor("sandbox")
 
     @pytest.mark.slow()
-    @umock.patch.object(imvtdeex.hdateti, "get_current_time")
+    @umock.patch.object(imvtdexex.hdateti, "get_current_time")
     def test_download_ohlcv1(
         self, mock_get_current_time: umock.MagicMock
     ) -> None:
@@ -106,7 +107,7 @@ class TestTalosExtractor1(hunitest.TestCase):
         # End is before start -> invalid.
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00")
-        # One second is added in download_ohlcv_method 
+        # One second is added in download_ohlcv_method
         # of the exchange class.
         expected = "2021-09-10 00:00:00 <= 2021-09-09 00:00:01"
         self.download_ohlcv_data_invalid_input_param_helper(
@@ -169,10 +170,10 @@ class TestTalosExtractor1(hunitest.TestCase):
         Make creation of tests with invalid input easier.
         """
         # Initialize class.
-        exchange_class = imvtdeex.TalosExtractor("sandbox")
+        exchange_class = imvtdexex.TalosExtractor("sandbox")
         # Run with invalid input.
         with pytest.raises(raises) as fail:
-            exchange_class._download_ohlcv( 
+            exchange_class._download_ohlcv(
                 currency_pair=currency_pair,
                 exchange_id=exchange,
                 start_timestamp=start_timestamp,
@@ -193,7 +194,7 @@ class TestTalosExtractor1(hunitest.TestCase):
         Data is returned for further checking in different tests.
         """
         # Initiate class and set date parameters.
-        exchange_class = imvtdeex.TalosExtractor("sandbox")
+        exchange_class = imvtdexex.TalosExtractor("sandbox")
         # Extract data.
         actual = exchange_class._download_ohlcv(
             currency_pair="BTC_USDT",

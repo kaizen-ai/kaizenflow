@@ -17,6 +17,7 @@ from invoke import task
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
@@ -662,19 +663,19 @@ def _get_docker_compose_files(
         use_main_network = False
     else:
         # Use the settings from the `repo_config` corresponding to this container.
-        enable_privileged_mode = hgit.execute_repo_config_code(
+        enable_privileged_mode = henv.execute_repo_config_code(
             "enable_privileged_mode()"
         )
-        use_docker_sibling_containers = hgit.execute_repo_config_code(
+        use_docker_sibling_containers = henv.execute_repo_config_code(
             "use_docker_sibling_containers()"
         )
-        get_shared_data_dirs = hgit.execute_repo_config_code(
+        get_shared_data_dirs = henv.execute_repo_config_code(
             "get_shared_data_dirs()"
         )
-        use_docker_network_mode_host = hgit.execute_repo_config_code(
+        use_docker_network_mode_host = henv.execute_repo_config_code(
             "use_docker_network_mode_host()"
         )
-        use_main_network = hgit.execute_repo_config_code("use_main_network()")
+        use_main_network = henv.execute_repo_config_code("use_main_network()")
     #
     if generate_docker_compose_file:
         _generate_docker_compose_file(
@@ -900,7 +901,7 @@ def get_image(
 
 
 def _run_docker_as_user(as_user_from_cmd_line: bool) -> bool:
-    as_root = hgit.execute_repo_config_code("run_docker_as_root()")
+    as_root = henv.execute_repo_config_code("run_docker_as_root()")
     as_user = as_user_from_cmd_line
     if as_root:
         as_user = False

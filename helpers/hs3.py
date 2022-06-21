@@ -30,7 +30,7 @@ except ModuleNotFoundError:
 
 # To enforce this order of the imports we use the directive for the linter below.
 import helpers.hdbg as hdbg  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
-import helpers.hgit as hgit  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.henv as henv  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hintrospection as hintros  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hio as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
@@ -569,10 +569,10 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
     """
     # TODO(gp): Make this more robust.
     is_prod_machine = not (
-        hgit.execute_repo_config_code("is_dev4()")
-        or hgit.execute_repo_config_code("is_dev_ck()")
-        or hgit.execute_repo_config_code("is_mac()")
-        or hgit.execute_repo_config_code("is_inside_ci()")
+        henv.execute_repo_config_code("is_dev4()")
+        or henv.execute_repo_config_code("is_dev_ck()")
+        or henv.execute_repo_config_code("is_mac()")
+        or henv.execute_repo_config_code("is_inside_ci()")
     )
     if is_prod_machine:
         # On prod machines we let the Docker container infer the right AWS
