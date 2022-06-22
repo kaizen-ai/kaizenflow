@@ -64,7 +64,7 @@ def _get_universe_file_path(
         file_path = max(universe_files, key=_extract_universe_version)
     else:
         # TODO(Juraj): #1487 Assert version format (include 'small').
-        file_name = "".join([mode, "/universe_", version, ".json"])
+        file_name = "".join(["universe_", version, ".json"])
         file_path = os.path.join(vendor_dir, file_name)
     hdbg.dassert_path_exists(file_path)
     return file_path
