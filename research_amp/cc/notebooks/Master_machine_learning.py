@@ -79,6 +79,7 @@ def get_cmtask1953_config() -> cconconf.Config:
                 ),
                 "partition_mode": "by_year_month",
                 "dataset": "ohlcv",
+                "contract_type": "spot",
                 "data_snapshot": "latest",
                 "aws_profile": "ck",
             },
