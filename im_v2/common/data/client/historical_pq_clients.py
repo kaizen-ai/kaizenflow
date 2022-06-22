@@ -388,13 +388,16 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
         contract_type_separator = "-"
         contract_type = self._contract_type
-        if self._contract_type == "spot":
+        if contract_type == "spot":
+            # E.g., `s3://.../20210924/ohlcv/ccxt/coinbase`.
             contract_type_separator = ""
             contract_type = ""
+        # E.g., `ohlcv-futures` for futures.
+        dataset = "".join([self._dataset, contract_type_separator, contract_type])
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
-            "".join([self._dataset, contract_type_separator, contract_type]),
+            dataset,
             self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
