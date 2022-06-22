@@ -143,7 +143,7 @@ class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
         )
         self.assertEqual(actual, expected)
 
-    def _test_get_latest_file_version(self, mode: str, vendor: str) -> None:
+    def _test_get_latest_file_version(self, vendor: str, mode: str) -> None:
         """
         Verify that the max universe version is correctly detected and
         returned.

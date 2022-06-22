@@ -14,7 +14,7 @@ class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1_TestCase):
         Verify that the max universe version is correctly detected and
         returned.
         """
-        self._test_get_latest_file_version("talos")
+        self._test_get_latest_file_version("talos", "download")
 
 
 class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
