@@ -275,6 +275,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         partition_mode: str,
         # TODO(Sonya): Consider moving the `dataset` param to the base class.
         dataset: str,
+        contract_type: str,
         *,
         data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
@@ -301,6 +302,12 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
         )
         self._dataset = dataset
+        hdbg.dassert_in(
+            contract_type,
+            ["spot", "futures"],
+            f"Invalid dataset type='{contract_type}'",
+        )
+        self._contract_type = contract_type
         self._data_snapshot = data_snapshot
 
     @staticmethod
@@ -378,10 +385,19 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         }
         ```
         """
+        # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
+        contract_type_separator = "-"
+        contract_type = self._contract_type
+        if contract_type == "spot":
+            # E.g., `s3://.../20210924/ohlcv/ccxt/coinbase`.
+            contract_type_separator = ""
+            contract_type = ""
+        # E.g., `ohlcv-futures` for futures.
+        dataset = "".join([self._dataset, contract_type_separator, contract_type])
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
-            self._dataset,
+            dataset,
             self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
