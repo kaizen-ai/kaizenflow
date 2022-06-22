@@ -13,8 +13,9 @@ Use as:
     --db_stage 'dev' \
     --db_table 'ccxt_ohlcv_test' \
     --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-data-test/realtime/'\
-    --data_type 'ohlcv'
+    --s3_path 's3://cryptokaizen-data-test/realtime/' \
+    --data_type 'ohlcv' \
+    --contract_type 'spot'
 """
 
 import argparse
