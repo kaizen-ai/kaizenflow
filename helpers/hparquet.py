@@ -251,7 +251,7 @@ def _yield_parquet_tile(
     :return: a generator of `from_parquet()` dataframes
     """
     # Without the schema being provided `pyarrow` incorrectly infers
-    # type of the `asset_id` column, i.e. `pyarrow` reads asset as
+    # type of the `asset_id` column, i.e. `pyarrow` reads assets as
     # strings instead of integers. See the related discussion at
     # `https://issues.apache.org/jira/browse/ARROW-6114`.
     int_type = np.int64
@@ -289,7 +289,7 @@ def yield_parquet_tiles_by_year(
     :param end_date: last date to load; day is ignored
     :param cols: if an `int` is supplied, it is cast to a string before reading
     :param asset_ids: asset ids to load
-    :param asset_id_col: see `_yield_parquet_tile`
+    :param asset_id_col: see `_yield_parquet_tile()`
     :return: a generator of `from_parquet()` dataframes
     """
     time_filters = build_year_month_filter(start_date, end_date)
@@ -335,7 +335,7 @@ def yield_parquet_tiles_by_assets(
 
     :param file_name: as in `from_parquet()`
     :param asset_ids: asset ids to load
-    :param asset_id_col: see `_yield_parquet_tile`
+    :param asset_id_col: see `_yield_parquet_tile()`
     :param asset_batch_size: the number of asset to load in a single batch
     :param cols: if an `int` is supplied, it is cast to a string before reading
     :return: a generator of `from_parquet()` dataframes
