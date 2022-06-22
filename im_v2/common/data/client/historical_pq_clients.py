@@ -302,17 +302,12 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
         )
         self._dataset = dataset
-        # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
-        contract_type_separator = "-"
         hdbg.dassert_in(
             contract_type,
             ["spot", "futures"],
             f"Invalid dataset type='{contract_type}'",
         )
         self._contract_type = contract_type
-        if contract_type == "spot":
-            self._contract_type = ""
-            contract_type_separator = ""
         self._data_snapshot = data_snapshot
 
     @staticmethod
@@ -390,6 +385,11 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         }
         ```
         """
+        contract_type_separator = "-"
+        # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
+        if self._contract_type == "spot":
+            self._contract_type = ""
+            contract_type_separator = ""
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
