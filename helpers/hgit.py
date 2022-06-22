@@ -10,11 +10,10 @@ import logging
 import os
 import pprint
 import re
-from typing import Any, Dict, List, Match, Optional, Tuple, cast
+from typing import Dict, List, Match, Optional, Tuple, cast
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 
@@ -238,7 +237,7 @@ def is_in_amp_as_supermodule() -> bool:
 # on the repo. We should control the tests through what functionalities they have,
 # e.g.,
 # ```
-# hgit.execute_repo_config_code("has_dind_support()"),
+# henv.execute_repo_config_code("has_dind_support()"),
 # ```
 #
 # rather than their name.
@@ -509,67 +508,6 @@ def get_repo_full_name_from_client(super_module: bool) -> str:
 
 # /////////////////////////////////////////////////////////////////////////
 
-# Execute code from the `repo_config.py` in the super module.
-
-
-def get_repo_config_file(super_module: bool = True) -> str:
-    """
-    Return the absolute path to `repo_config.py` that should be used.
-
-    The `repo_config.py` is determined based on an overriding env var or based
-    on the root of the Git path.
-    """
-    env_var = "AM_REPO_CONFIG_PATH"
-    file_name = henv.get_env_var(env_var, abort_on_missing=False)
-    if file_name:
-        _LOG.warning("Using value '%s' for %s from env var", file_name,
-                env_var)
-    else:
-        # TODO(gp): We should actually ask Git where the super-module is.
-        client_root = get_client_root(super_module)
-        file_name = os.path.join(client_root, "repo_config.py")
-        file_name = os.path.abspath(file_name)
-    return file_name
-
-
-def _get_repo_config_code(super_module: bool = True) -> str:
-    """
-    Return the text of the code stored in `repo_config.py`.
-    """
-    file_name = get_repo_config_file(super_module)
-    hdbg.dassert_file_exists(file_name)
-    code: str = hio.from_file(file_name)
-    return code
-
-
-def execute_repo_config_code(code_to_execute: str) -> Any:
-    """
-    Execute code in `repo_config.py` by dynamically finding the correct one.
-
-    E.g.,
-    ```
-    hgit.execute_repo_config_code("has_dind_support()")
-    ```
-    """
-    # Read the info from the current repo.
-    code = _get_repo_config_code()
-    # TODO(gp): make the linter happy creating this symbol that comes from the
-    #  `exec()`.
-    try:
-        exec(code, globals())  # pylint: disable=exec-used
-        ret = eval(code_to_execute)
-    except NameError as e:
-        _LOG.error(
-            "While executing %s caught error:\n%s\nTrying to continue",
-            code_to_execute,
-            e,
-        )
-        ret = None
-    return ret
-
-
-# /////////////////////////////////////////////////////////////////////////
-
 
 def _decorate_with_host_name(
     dict_: Dict[str, str], host_name: str
@@ -601,7 +539,7 @@ def _get_repo_short_to_full_name(include_host_name: bool) -> Dict[str, str]:
         pprint.pformat(repo_map),
     )
     # Read the info from the current repo.
-    code = _get_repo_config_code()
+    code = henv._get_repo_config_code()
     # TODO(gp): make the linter happy creating this symbol that comes from the
     # `exec()`.
     exec(code, globals())  # pylint: disable=exec-used
@@ -789,7 +727,7 @@ def get_amp_abs_path(remove_tmp_base: bool = True) -> str:
     repo_sym_names = ["alphamatic/amp"]
     code = "get_extra_amp_repo_sym_name()"
     try:
-        repo_sym_names.append(execute_repo_config_code(code))
+        repo_sym_names.append(henv.execute_repo_config_code(code))
     except NameError:
         _LOG.debug("Can't execute the code '%s'", code)
     if repo_sym_name in repo_sym_names:

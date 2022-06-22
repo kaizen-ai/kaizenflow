@@ -10,6 +10,7 @@ import os
 
 import pytest
 
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hprint as hprint
 import helpers.hsql as hsql
@@ -20,8 +21,8 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("has_dind_support()") and
-    not hgit.execute_repo_config_code("use_docker_sibling_containers()"),
+    not henv.execute_repo_config_code("has_dind_support()")
+    and not henv.execute_repo_config_code("use_docker_sibling_containers()"),
     reason="Need docker children / sibling support",
 )
 class TestDbHelper(hunitest.TestCase, abc.ABC):
@@ -103,7 +104,7 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         _LOG.info("\n%s", hprint.frame("tearDown"))
         docker_compose_cleanup = cls.bring_down_db
-        if hgit.execute_repo_config_code("use_main_network()"):
+        if henv.execute_repo_config_code("use_main_network()"):
             # TODO(gp): When using sibling containers `docker-compose down` tries to
             #  shut down also the `main_network`, while it is attached to the Docker
             #  container running the tests.

@@ -14,9 +14,9 @@ from invoke import task
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.lib_tasks as hlibtask
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_pytest as hlitapyt
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def _prepare_docker_ignore(ctx: Any, docker_ignore: str) -> None:
     # https://stackoverflow.com/questions/40904409
     hdbg.dassert_path_exists(docker_ignore)
     cmd = f"cp -f {docker_ignore} .dockerignore"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 # =============================================================================
@@ -84,7 +84,7 @@ def docker_build_local_image(  # type: ignore
     :param update_poetry: run poetry lock to update the packages
     :param just_do_it: execute the action ignoring the checks
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     if just_do_it:
         _LOG.warning("Skipping subsequent version check")
     else:
@@ -97,7 +97,7 @@ def docker_build_local_image(  # type: ignore
     # Update poetry, if needed.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
     # Prepare `.dockerignore`.
     docker_ignore = ".dockerignore.dev"
     _prepare_docker_ignore(ctx, docker_ignore)
@@ -124,10 +124,10 @@ def docker_build_local_image(  # type: ignore
         --file {dockerfile} \
         .
     """
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Check image and report stats.
     cmd = f"docker image ls {image_local}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -143,7 +143,7 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param version: version to tag the image and code with
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
@@ -151,12 +151,12 @@ def docker_tag_local_image_as_dev(  # type: ignore
     image_versioned_local = hlitadoc.get_image(base_image, "local", version)
     image_versioned_dev = hlitadoc.get_image(base_image, "dev", version)
     cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     # Tag local image as dev image.
     latest_version = None
     image_dev = hlitadoc.get_image(base_image, "dev", latest_version)
     cmd = f"docker tag {image_versioned_local} {image_dev}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -172,7 +172,7 @@ def docker_push_dev_image(  # type: ignore
     :param version: version to tag the image and code with
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
@@ -181,12 +181,12 @@ def docker_push_dev_image(  # type: ignore
     # Push Docker versioned tag.
     image_versioned_dev = hlitadoc.get_image(base_image, "dev", version)
     cmd = f"docker push {image_versioned_dev}"
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)
     # Push Docker tag.
     latest_version = None
     image_dev = hlitadoc.get_image(base_image, "dev", latest_version)
     cmd = f"docker push {image_dev}"
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)
 
 
 @task
@@ -226,7 +226,7 @@ def docker_release_dev_image(  # type: ignore
     :param push_to_repo: push the image to the repo_short_name
     :param update_poetry: update package dependencies using poetry
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     # 1) Build "local" image.
     docker_build_local_image(
         ctx,
@@ -305,7 +305,7 @@ def docker_build_prod_image(  # type: ignore
     :param candidate: build a prod image with a tag format: prod-{hash}
         where hash is the output of hgit.get_head_hash
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
@@ -344,7 +344,7 @@ def docker_build_prod_image(  # type: ignore
         --build-arg VERSION={version} \
         .
     """
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
     if candidate:
         _LOG.info("Head hash: %s", head_hash)
         cmd = f"docker image ls {image_versioned_prod}"
@@ -353,11 +353,11 @@ def docker_build_prod_image(  # type: ignore
         latest_version = None
         image_prod = hlitadoc.get_image(base_image, "prod", latest_version)
         cmd = f"docker tag {image_versioned_prod} {image_prod}"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
         #
         cmd = f"docker image ls {image_prod}"
 
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -373,7 +373,7 @@ def docker_push_prod_image(  # type: ignore
     :param version: version to tag the image and code with
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
@@ -382,12 +382,12 @@ def docker_push_prod_image(  # type: ignore
     # Push versioned tag.
     image_versioned_prod = hlitadoc.get_image(base_image, "prod", version)
     cmd = f"docker push {image_versioned_prod}"
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)
     #
     latest_version = None
     image_prod = hlitadoc.get_image(base_image, "prod", latest_version)
     cmd = f"docker push {image_prod}"
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)
 
 
 @task
@@ -403,13 +403,13 @@ def docker_push_prod_candidate_image(  # type: ignore
     :param candidate: hash tag of the candidate prod image to push
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     #
     hlitadoc.docker_login(ctx)
     # Push image with tagged with a hash ID.
     image_versioned_prod = hlitadoc.get_image(base_image, "prod", None)
     cmd = f"docker push {image_versioned_prod}-{candidate}"
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)
 
 
 @task
@@ -439,7 +439,7 @@ def docker_release_prod_image(  # type: ignore
     :param superslow_tests: run superslow tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
     """
-    hlibtask._report_task(container_dir_name=container_dir_name)
+    hlitauti._report_task(container_dir_name=container_dir_name)
     version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
@@ -479,7 +479,7 @@ def docker_release_all(ctx, version, container_dir_name="."):  # type: ignore
 
     :param version: version to tag the image and code with
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     docker_release_dev_image(ctx, version, container_dir_name=container_dir_name)
     docker_release_prod_image(ctx, version, container_dir_name=container_dir_name)
     _LOG.info("==> SUCCESS <==")
@@ -499,7 +499,7 @@ def _docker_rollback_image(
     latest_version = None
     image_dev = hlitadoc.get_image(base_image, stage, latest_version)
     cmd = f"docker tag {image_versioned_dev} {image_dev}"
-    hlibtask._run(ctx, cmd)
+    hlitauti._run(ctx, cmd)
 
 
 @task
@@ -519,7 +519,7 @@ def docker_rollback_dev_image(  # type: ignore
     :param version: version to tag the image and code with
     :param push_to_repo: push the image to the ECR repo
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     # 1) Ensure that version of the image exists locally.
     hlitadoc._docker_pull(ctx, base_image="", stage="dev", version=version)
     # 2) Promote requested image as dev image.
@@ -543,7 +543,7 @@ def docker_rollback_prod_image(  # type: ignore
 
     Same as parameters and meaning as `docker_rollback_dev_image`.
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     # 1) Ensure that version of the image exists locally.
     hlitadoc._docker_pull(ctx, base_image="", stage="prod", version=version)
     # 2) Promote requested image as prod image.

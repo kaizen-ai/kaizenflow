@@ -2,6 +2,7 @@ import logging
 
 import pytest
 
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 
@@ -32,7 +33,7 @@ class TestRepoConfig_Amp(hunitest.TestCase):
         """
         If //amp is a supermodule, then repo_config should report //amp.
         """
-        actual = hgit.execute_repo_config_code("get_name()")
+        actual = henv.execute_repo_config_code("get_name()")
         self.assertEqual(actual, self.expected_repo_name)
 
     @pytest.mark.skipif(
@@ -43,8 +44,8 @@ class TestRepoConfig_Amp(hunitest.TestCase):
         If //amp is a supermodule, then repo_config should report something
         different than //amp.
         """
-        actual = hgit.execute_repo_config_code("get_name()")
+        actual = henv.execute_repo_config_code("get_name()")
         self.assertNotEqual(actual, self.expected_repo_name)
 
     def test_config_func_to_str(self) -> None:
-        _LOG.info(hgit.execute_repo_config_code("config_func_to_str()"))
+        _LOG.info(henv.execute_repo_config_code("config_func_to_str()"))
