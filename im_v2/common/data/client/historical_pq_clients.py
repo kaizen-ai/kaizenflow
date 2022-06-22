@@ -385,17 +385,18 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         }
         ```
         """
-        contract_type_separator = "-"
         # TODO(Dan): "Rename S3 files to spot and futures CmTask #2150."
+        contract_type_separator = "-"
+        contract_type = self._contract_type
         if self._contract_type == "spot":
-            self._contract_type = ""
             contract_type_separator = ""
+            contract_type = ""
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
-            self._dataset,
-            contract_type_separator,
-            self._contract_type,
+            "".join(
+                [self._dataset, contract_type_separator, contract_type]
+            ),
             self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
