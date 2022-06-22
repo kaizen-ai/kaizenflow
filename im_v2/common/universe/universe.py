@@ -17,7 +17,7 @@ import im_v2.common.universe.full_symbol as imvcufusy
 def _extract_universe_version(universe_file: str) -> Tuple[int, int]:
     """
     Extract version number from universe_vXX.json file. e.g.
-    'download_universe_v3.1.json' -> (3, 1), 'download_universe_v1.json' -> (1,
+    'universe_v3.1.json' -> (3, 1), 'universe_v1.json' -> (1,
     0)
 
     :param file_name: universe file to extract version part from

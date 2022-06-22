@@ -90,7 +90,7 @@ class TestExtractUniverseVersion1(hunitest.TestCase):
         :param version: version in string format to input, e.g. 1.0
         :param expected: expected output version in (major, minor) format
         """
-        fn = f"/app/im_v2/ccxt/universe/download_universe_v{version}.json"
+        fn = f"/app/im_v2/ccxt/universe/download/universe_v{version}.json"
         self.assertEqual(imvcounun._extract_universe_version(fn), expected)
 
     def _test_extract_universe_version_incorrect_format(
@@ -135,7 +135,7 @@ class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
          e.g. Talos -> v1, CCXT -> v1/v2/v3
         """
         # These should already exist in the filesystem.
-        expected_part = "im_v2/{}/universe/{}_universe_{}.json"
+        expected_part = "im_v2/{}/universe/{}/universe_{}.json"
         actual = imvcounun._get_universe_file_path(vendor, mode, version=version)
         expected = os.path.join(
             hgit.get_amp_abs_path(),
@@ -153,7 +153,7 @@ class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
         # Future proof this test when new versions are added.
         # Assuming we won't have more versions :).
         max_ver = 9999
-        expected_part = "im_v2/{}/universe/{}_universe_v{}.json"
+        expected_part = "im_v2/{}/universe/{}/universe_v{}.json"
         mock_universe = os.path.join(
             hgit.get_amp_abs_path(),
             expected_part.format(vendor.lower(), mode, max_ver),
