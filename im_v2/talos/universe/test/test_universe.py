@@ -7,7 +7,7 @@ class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1_TestCase):
         A smoke test to test correct file path return when correct version is
         provided.
         """
-        self._test_get_universe_file_path("talos", "v1")
+        self._test_get_universe_file_path("talos", "download", "v1")
 
     def test_get_latest_file_version(self) -> None:
         """
