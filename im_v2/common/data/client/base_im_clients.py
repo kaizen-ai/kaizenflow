@@ -66,7 +66,7 @@ class ImClient(abc.ABC):
         universe_version: Optional[str],
         resample_1min: bool,
         *,
-        full_symbol_col_name: Optional[str] = None,
+        full_symbol_col_name: Optional[str] = None
     ) -> None:
         """
         Constructor.
@@ -79,6 +79,8 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
+        # TODO(Danya): add "mode" as a parameter.
+        self._mode = "download"
         if universe_version is not None:
             hdbg.dassert_isinstance(universe_version, str)
         self._universe_version = universe_version
@@ -127,6 +129,7 @@ class ImClient(abc.ABC):
         """
         universe = ivcu.get_vendor_universe(
             self._vendor,
+
             version=self._universe_version,
             as_full_symbol=True,
         )
