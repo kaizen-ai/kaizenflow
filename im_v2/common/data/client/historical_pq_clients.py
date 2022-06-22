@@ -394,9 +394,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
-            "".join(
-                [self._dataset, contract_type_separator, contract_type]
-            ),
+            "".join([self._dataset, contract_type_separator, contract_type]),
             self._vendor.lower(),
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
