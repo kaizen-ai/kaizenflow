@@ -53,7 +53,7 @@ def from_parquet(
     *,
     columns: Optional[List[str]] = None,
     filters: Optional[List[Any]] = None,
-    schema:  Optional[Any] = None,
+    schema:  Optional[List[Tuple[str, pa.DataType]]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
     aws_profile: hs3.AwsProfile = None,
@@ -68,13 +68,14 @@ def from_parquet(
     :param columns: columns to return, skipping reading columns that are not requested
        - `None` means return all available columns
     :param filters: Parquet query filters
+    :param schema: see `pyarrow.Schema`, e.g., `[("int", pa.int32()), ("str", pa.string())]`
     :param log_level: logging level to execute at
     :param report_stats: whether to report Parquet file size or not
     :param aws_profile: AWS profile to use if and only if using an S3 path,
         otherwise `None` for local path
     :return: data from Parquet dataset
     """
-    _LOG.debug(hprint.to_str("file_name columns filters"))
+    _LOG.debug(hprint.to_str("file_name columns filters schema"))
     hdbg.dassert_isinstance(file_name, str)
     hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
     if hs3.is_s3_path(file_name):
@@ -96,6 +97,7 @@ def from_parquet(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
         if schema is not None:
+            # Pass partition columns types explicitly.
             schema = pa.schema(schema)
         partitioning = ds.partitioning(schema, flavor="hive")
         dataset = pq.ParquetDataset(
@@ -214,12 +216,44 @@ def to_parquet(
 
 def _yield_parquet_tile(
     file_name: str,
-    columns: Optional[List[str]],
+    columns: List[str],
     filters: List[Any],
     asset_id_col: str,
 ) -> Iterator[pd.DataFrame]:
     """
+    Yield Parquet data in tiles given the filters.
+
+    It is assumed that data is partitioned by `asset_id`, `year` and `month`, i.e.
+    the file layout is:
+    ```
+    file_name/
+        asset_id=1032127330/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+        ...
+        asset_id=2133227690/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+    ```
+    
+    :param file_name: see `from_parquet()`
+    :param columns: see `from_parquet()`
+    :param filters: see `from_parquet()`
+    :param asset_id_col: name of the column with asset ids
+    :return: a generator of `from_parquet()` dataframes
     """
+    # Without the schema being provided `pyarrow` incorrectly infers
+    # type of the `asset_id` column, i.e. `pyarrow` reads asset as
+    # strings instead of integers. See the related discussion at
+    # `https://issues.apache.org/jira/browse/ARROW-6114`.
     int_type = np.int64
     pyarrow_int_type = pa.from_numpy_dtype(int_type)
     schema = [
@@ -254,10 +288,11 @@ def yield_parquet_tiles_by_year(
     :param start_date: first date to load; day is ignored
     :param end_date: last date to load; day is ignored
     :param cols: if an `int` is supplied, it is cast to a string before reading
+    :param asset_ids: asset ids to load
+    :param asset_id_col: see `_yield_parquet_tile`
     :return: a generator of `from_parquet()` dataframes
     """
     time_filters = build_year_month_filter(start_date, end_date)
-    print("time_filters", time_filters)
     hdbg.dassert_isinstance(time_filters, list)
     # The list should not be empty.
     hdbg.dassert(time_filters)
@@ -299,6 +334,9 @@ def yield_parquet_tiles_by_assets(
     Yield Parquet data in tiles batched by asset ids.
 
     :param file_name: as in `from_parquet()`
+    :param asset_ids: asset ids to load
+    :param asset_id_col: see `_yield_parquet_tile`
+    :param asset_batch_size: the number of asset to load in a single batch
     :param cols: if an `int` is supplied, it is cast to a string before reading
     :return: a generator of `from_parquet()` dataframes
     """
@@ -311,10 +349,6 @@ def yield_parquet_tiles_by_assets(
     columns: Optional[List[str]] = None
     if cols:
         columns = [str(col) for col in cols]
-    # Since data is partitioned by `asset_id`, `asset_id` is not stored in the 
-    # actual data. That is why `pyarrow` incorrectly infers `asset_id` type, 
-    # it reads `asset_ids` as strings by default. So we explicitly specify the
-    # `asset_id` type. See the discussion `https://issues.apache.org/jira/browse/ARROW-6114`.
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
         filter_ = build_asset_id_filter(batch, asset_id_col)
