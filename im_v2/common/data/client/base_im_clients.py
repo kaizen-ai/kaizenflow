@@ -129,7 +129,7 @@ class ImClient(abc.ABC):
         """
         universe = ivcu.get_vendor_universe(
             self._vendor,
-
+            self._mode,
             version=self._universe_version,
             as_full_symbol=True,
         )

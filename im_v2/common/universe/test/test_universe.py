@@ -210,7 +210,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         Helper function to test universe is loaded correctly as dict.
         """
         universe = imvcounun.get_vendor_universe(
-            vendor, mode="download", version="small"
+            vendor, "download", version="small"
         )
         self.assertIn(exchange, universe)
         self.assertEqual([currency_pair], universe[exchange])
@@ -227,7 +227,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
             full symbols in format exchange_id::SYMBOL_SYMBOL
         """
         actual = imvcounun.get_vendor_universe(
-            vendor, mode="download", version="small", as_full_symbol=True
+            vendor, "download", version="small", as_full_symbol=True
         )
         self.assertEqual(len(universe_as_full_symbols), len(actual))
         self.assertEqual(actual[0], universe_as_full_symbols[0])
