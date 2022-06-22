@@ -11,6 +11,7 @@ Use as:
     --aws_profile 'ck' \
     --s3_path 's3://cryptokaizen-data-test/realtime/' \
     --data_type 'ohlcv' \
+    --contract_type 'spot' \
     --interval_min '1' \
     --start_time '2022-05-16 00:45:00' \
     --stop_time '2022-05-16 00:55:00'
