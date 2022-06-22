@@ -309,7 +309,7 @@ def yield_parquet_tiles_by_year(
             ]
         else:
             combined_filter = time_filter
-        _yield_parquet_tile(file_name, columns, combined_filter, asset_id_col)
+        yield from _yield_parquet_tile(file_name, columns, combined_filter, asset_id_col)
 
 
 def build_asset_id_filter(
@@ -352,7 +352,7 @@ def yield_parquet_tiles_by_assets(
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
         filter_ = build_asset_id_filter(batch, asset_id_col)
-        _yield_parquet_tile(file_name, columns, filter_, asset_id_col)
+        yield from _yield_parquet_tile(file_name, columns, filter_, asset_id_col)
 
 
 def build_year_month_filter(
