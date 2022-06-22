@@ -10,8 +10,10 @@ import logging
 import os
 from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import pyarrow as pa
+import pyarrow.dataset as ds
 import pyarrow.fs as pafs
 import pyarrow.parquet as pq
 from tqdm.autonotebook import tqdm
@@ -20,6 +22,7 @@ import helpers.hdataframe as hdatafr
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.htimer as htimer
@@ -50,6 +53,7 @@ def from_parquet(
     *,
     columns: Optional[List[str]] = None,
     filters: Optional[List[Any]] = None,
+    schema:  Optional[Any] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
     aws_profile: hs3.AwsProfile = None,
@@ -91,11 +95,15 @@ def from_parquet(
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
+        if schema is not None:
+            schema = pa.schema(schema)
+        partitioning = ds.partitioning(schema, flavor="hive")
         dataset = pq.ParquetDataset(
             # Replace URI with path.
             file_name,
             filesystem=filesystem,
             filters=filters,
+            partitioning=partitioning,
             use_legacy_dataset=False,
         )
         if columns:
@@ -204,6 +212,31 @@ def to_parquet(
 
 # #############################################################################
 
+def _yield_parquet_tile(
+    file_name: str,
+    columns: Optional[List[str]],
+    filters: List[Any],
+    asset_id_col: str,
+) -> Iterator[pd.DataFrame]:
+    """
+    """
+    int_type = np.int64
+    pyarrow_int_type = pa.from_numpy_dtype(int_type)
+    schema = [
+        (asset_id_col, pyarrow_int_type), 
+        # TODO(Grisha): consider passing `year` and `month` column names as params.
+        ("year", pyarrow_int_type), 
+        ("month", pyarrow_int_type)
+    ]
+    tile = from_parquet(
+        file_name,
+        columns=columns,
+        filters=filters,
+        schema=schema,
+    )
+    hpandas.dassert_series_type_is(tile[asset_id_col], int_type)
+    yield tile
+
 
 def yield_parquet_tiles_by_year(
     file_name: str,
@@ -224,6 +257,7 @@ def yield_parquet_tiles_by_year(
     :return: a generator of `from_parquet()` dataframes
     """
     time_filters = build_year_month_filter(start_date, end_date)
+    print("time_filters", time_filters)
     hdbg.dassert_isinstance(time_filters, list)
     # The list should not be empty.
     hdbg.dassert(time_filters)
@@ -240,12 +274,7 @@ def yield_parquet_tiles_by_year(
             ]
         else:
             combined_filter = time_filter
-        tile = from_parquet(
-            file_name,
-            columns=columns,
-            filters=combined_filter,
-        )
-        yield tile
+        _yield_parquet_tile(file_name, columns, combined_filter, asset_id_col)
 
 
 def build_asset_id_filter(
@@ -282,15 +311,14 @@ def yield_parquet_tiles_by_assets(
     columns: Optional[List[str]] = None
     if cols:
         columns = [str(col) for col in cols]
+    # Since data is partitioned by `asset_id`, `asset_id` is not stored in the 
+    # actual data. That is why `pyarrow` incorrectly infers `asset_id` type, 
+    # it reads `asset_ids` as strings by default. So we explicitly specify the
+    # `asset_id` type. See the discussion `https://issues.apache.org/jira/browse/ARROW-6114`.
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
         filter_ = build_asset_id_filter(batch, asset_id_col)
-        tile = from_parquet(
-            file_name,
-            columns=columns,
-            filters=filter_,
-        )
-        yield tile
+        _yield_parquet_tile(file_name, columns, filter_, asset_id_col)
 
 
 def build_year_month_filter(
