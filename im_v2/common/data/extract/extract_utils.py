@@ -74,6 +74,14 @@ def add_exchange_download_args(
         help="File format to save files on disk",
     )
     parser.add_argument(
+        "--contract_type",
+        action="store",
+        required=False,
+        default="spot",
+        type=str,
+        help="Type of contract, spot or futures"
+    )
+    parser.add_argument(
         "--incremental",
         action="store_true",
         required=False,

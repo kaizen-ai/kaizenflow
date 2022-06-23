@@ -10,6 +10,7 @@ import pyarrow.parquet as parquet
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
@@ -837,7 +838,7 @@ class TestToPartitionedDataset(hunitest.TestCase):
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):

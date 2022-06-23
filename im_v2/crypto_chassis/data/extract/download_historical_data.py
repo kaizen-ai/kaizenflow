@@ -1,18 +1,22 @@
 #!/usr/bin/env python
 """
 Download historical data from Crypto-Chassis and save to S3. The script is
-meant to run daily for reconciliation with realtime data.
+meant to run daily for reconciliation with realtime data and downloadng
+larger historical data snapshots.
 
 Use as:
 
-# Download data for Crypto-Chassis for binance from 2022-02-08:
-> python im_v2/crypto_chassis/data/extract/download_historical_data.py \
-     --start_timestamp '2022-02-08' \
-     --exchange_id 'binance' \
-     --universe 'v1' \
-     --depth '1' \
-     --aws_profile 'ck' \
-     --s3_path 's3://<ck-data>/daily_staged/'
+# Download bid/ask data for Crypto-Chassis for binance from 2018-01-01:
+> im_v2/crypto_chassis/data/extract/download_historical_data.py \
+    --start_timestamp '2018-01-01' \
+    --end_timestamp '2022-06-20' \
+    --exchange_id 'binance' \
+    --universe 'v2' \
+    --data_type 'ohlcv' \
+    --contract_type 'spot' \
+    --file_format 'parquet' \
+    --aws_profile 'ck' \
+    --s3_path 's3://cryptokaizen-data/reorg/historical.manual.pq/20220620/ohlcv/crypto_chassis/'
 """
 
 import argparse
@@ -47,7 +51,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    exchange = imvccdexex.CryptoChassisExtractor()
+    exchange = imvccdexex.CryptoChassisExtractor(args.contract_type)
     args = vars(args)
     args["unit"] = "s"
     imvcdeexut.download_historical_data(args, exchange)

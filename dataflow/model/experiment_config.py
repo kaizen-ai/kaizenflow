@@ -5,7 +5,7 @@ import dataflow.model.experiment_config as dtfmoexcon
 """
 import datetime
 import logging
-from typing import Any, Callable, Iterable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -167,11 +167,11 @@ def parse_experiment_config(backtest_config: str) -> Tuple[str, str, str]:
 def set_asset_id(
     config: cconfig.Config,
     asset_id_key: cconfig.Config.Key,
-    asset_id: int,
+    asset_id: Union[List[int], int],
     *,
     allow_new_key: bool = True,
     assume_dummy: bool = True,
-) -> None:
+) -> cconfig.Config:
     """
     Assign an `asset_id` to a config.
 
@@ -218,7 +218,7 @@ def build_configs_varying_asset_id(
 def build_configs_varying_universe_tiles(
     config: cconfig.Config,
     universe_tile_id: cconfig.Config.Key,
-    universe_tiles: Iterable[List[int]],
+    universe_tiles: List[List[int]],
 ) -> List[cconfig.Config]:
     """
     Create a list of `Config`s based on `config` using different universe

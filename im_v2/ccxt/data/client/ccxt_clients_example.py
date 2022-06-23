@@ -94,12 +94,14 @@ def get_CcxtHistoricalPqByTileClient_example1(
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     partition_mode = "by_year_month"
     dataset = "ohlcv"
+    contract_type = "spot"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
         resample_1min,
         root_dir,
         partition_mode,
         dataset,
+        contract_type,
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client
@@ -118,12 +120,14 @@ def get_CcxtHistoricalPqByTileClient_example2(
     root_dir = os.path.join(s3_bucket_path, "unit_test", "historical.manual.pq")
     partition_mode = "by_year_month"
     dataset = "ohlcv"
+    contract_type = "spot"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
         resample_1min,
         root_dir,
         partition_mode,
         dataset,
+        contract_type,
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client

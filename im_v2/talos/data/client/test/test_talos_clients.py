@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
@@ -345,7 +345,7 @@ class TestTalosHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
