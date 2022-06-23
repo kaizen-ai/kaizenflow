@@ -221,7 +221,7 @@ def _yield_parquet_tile(
     asset_id_col: str,
 ) -> Iterator[pd.DataFrame]:
     """
-    Yield Parquet data in tiles given the filters.
+    Yield Parquet data in a single tile given the filters.
 
     It is assumed that data is partitioned by `asset_id`, `year` and `month`, i.e.
     the file layout is:
@@ -248,7 +248,7 @@ def _yield_parquet_tile(
     :param columns: see `from_parquet()`
     :param filters: see `from_parquet()`
     :param asset_id_col: name of the column with asset ids
-    :return: a generator of `from_parquet()` dataframes
+    :return: a generator of `from_parquet()` dataframe
     """
     # Without the schema being provided `pyarrow` incorrectly infers
     # type of the `asset_id` column, i.e. `pyarrow` reads assets as
