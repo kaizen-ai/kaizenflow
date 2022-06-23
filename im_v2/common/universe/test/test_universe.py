@@ -161,7 +161,7 @@ class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
         # Create tmp mock file as max version.
         with open(mock_universe, mode="w", encoding="utf-8") as _:
             pass
-        actual = imvcounun._get_universe_file_path(vendor, "download")
+        actual = imvcounun._get_universe_file_path(vendor, "trade")
         # Delete tmp file.
         hio.delete_file(mock_universe)
         self.assertEqual(actual, mock_universe)
