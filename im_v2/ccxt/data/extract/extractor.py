@@ -64,7 +64,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Enable rate limit.
         exchange_params["rateLimit"] = True
         if self.contract_type == "futures":
-            exchange_params["option"] = { 'defaultMarket': 'futures' }
+            exchange_params["options"] = { 'defaultType': 'future' }
         exchange_class = getattr(ccxt, self.exchange_id)
         exchange = exchange_class(exchange_params)
         hdbg.dassert(
