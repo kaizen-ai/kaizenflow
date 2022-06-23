@@ -18,29 +18,52 @@
 # %%
 import re
 
+import gspread as gs
 import pandas as pd
+
+# %%
+# # !sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread)"
+
+# %% [markdown]
+# # Configs
+
+# %%
+json_key = "steady-computer-354216-eb3e67b30a7b.json"
+gc = gs.service_account(filename=json_key)
 
 # %% [markdown]
 # # Load the data
 
+# %% [markdown]
+# ## MIG
+
 # %%
-# Monster Investment Gsheet.
-mig = pd.read_csv("Monster Investor Gsheet - Firms.csv")
+# Configuration for MIG.
+mig_link = "https://docs.google.com/spreadsheets/d/1gxOVAtjk_oEz7WsNVfdST67SupISZ2U-ePUzuep5IEo/edit#gid=0"
+mig_env = gc.open_by_url(mig_link)
+
+# %% run_control={"marked": false}
+# Read MIG from gsheet.
+mig_ws = mig_env.worksheet("Firms")
+mig = pd.DataFrame(mig_ws.get_all_records())
 # Unify the absense of e-mails.
-mig["Submit by email"] = mig["Submit by email"].fillna("not available")
+mig["Submit by email"] = mig["Submit by email"].replace({"": "not available"})
 mig.head(3)
 
-# %%
-# Reach e-mails.
-iterations = [
-    "Mail_merge - Mail Merge - 2021-06-18.csv",
-    "Mail_merge - Mail Merge - 2021-06-20.csv",
-    "Mail_merge - Mail Merge - 2021-06-20-bis.csv",
-]
+# %% [markdown]
+# ## Mail_merge
 
+# %%
+# Configuration for `Mail_merge`.
+mm_link = "https://docs.google.com/spreadsheets/d/11AXt9Yzwmk1is_wprFDuE3vbS67gpwOO8gRfB4teC34/edit#gid=348677750"
+mm_env = gc.open_by_url(mm_link)
+worksheet_list = mm_env.worksheets()
+worksheet_list
+
+# %%
 mail_merge = []
-for file in iterations:
-    df_tmp = pd.read_csv(file).iloc[:, :4]
+for i in range(len(worksheet_list)):
+    df_tmp = pd.DataFrame(mm_env.get_worksheet(i).get_all_records()).iloc[:, :4]
     df_tmp.columns = ["Email", "Name", "Company", "Consensus"]
     mail_merge.append(df_tmp)
 mail_merge = pd.concat(mail_merge)
