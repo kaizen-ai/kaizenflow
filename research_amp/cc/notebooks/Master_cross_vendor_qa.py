@@ -67,6 +67,7 @@ def get_master_cross_vendor_qa_config() -> cconconf.Config:
                 ),
                 "partition_mode": "by_year_month",
                 "dataset": "ohlcv",
+                "contract_type": "spot",
                 "aws_profile": "ck",
             },
             "crypto_chassis": {
@@ -77,6 +78,7 @@ def get_master_cross_vendor_qa_config() -> cconconf.Config:
                 ),
                 "partition_mode": "by_year_month",
                 "dataset": "ohlcv",
+                "contract_type": "spot",
                 "aws_profile": "ck",
             },
             # Parameters for data query.

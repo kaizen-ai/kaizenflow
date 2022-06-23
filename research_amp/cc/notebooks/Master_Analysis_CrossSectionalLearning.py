@@ -67,6 +67,8 @@ def get_CrossSectionalLearning_config() -> cconconf.Config:
                     "reorg",
                     "historical.manual.pq",
                 ),
+                "dataset": "ohlcv",
+                "contract_type": "spot",
                 "partition_mode": "by_year_month",
                 "data_snapshot": "latest",
                 "aws_profile": "ck",

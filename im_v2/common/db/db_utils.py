@@ -13,6 +13,7 @@ from typing import Optional
 
 import psycopg2 as psycop
 
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
@@ -228,7 +229,7 @@ networks:
         hio.to_file(compose_file_name, txt)
         # Create env file.
         txt = []
-        if hgit.execute_repo_config_code("use_main_network()"):
+        if henv.execute_repo_config_code("use_main_network()"):
             host = "cf-spm-dev4"
         else:
             host = "localhost"

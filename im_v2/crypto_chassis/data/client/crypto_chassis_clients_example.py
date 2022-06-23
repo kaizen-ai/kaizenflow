@@ -27,6 +27,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example1(
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     partition_mode = "by_year_month"
     dataset = "ohlcv"
+    contract_type = "spot",
     crypto_chassis_parquet_client = (
         imvccdcccc.CryptoChassisHistoricalPqByTileClient(
             universe_version,
@@ -34,6 +35,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example1(
             root_dir,
             partition_mode,
             dataset,
+            contract_type,
             aws_profile=aws_profile,
         )
     )
@@ -57,6 +59,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example2(
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     partition_mode = "by_year_month"
     dataset = "ohlcv"
+    contract_type = "spot"
     data_snapshot = "20220530"
     crypto_chassis_parquet_client = (
         imvccdcccc.CryptoChassisHistoricalPqByTileClient(
@@ -65,6 +68,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example2(
             root_dir,
             partition_mode,
             dataset,
+            contract_type,
             data_snapshot=data_snapshot,
             aws_profile=aws_profile,
         )
