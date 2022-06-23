@@ -155,8 +155,9 @@ class CcxtBroker(ombroker.Broker):
         Build asset id to full symbol mapping.
         """
         # Get full symbol universe.
+        # TODO(Danya): Change mode to "trade".
         full_symbol_universe = imvcounun.get_vendor_universe(
-            "CCXT", version=universe_version, as_full_symbol=True
+            "CCXT", "download", version=universe_version, as_full_symbol=True
         )
         # Filter symbols of the exchange corresponding to this instance.
         full_symbol_universe = list(
