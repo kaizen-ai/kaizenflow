@@ -199,7 +199,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
     # Load universe.
-    universe = ivcu.get_vendor_universe("CCXT", version=args.universe)
+    universe = ivcu.get_vendor_universe("CCXT", "download", version=args.universe)
     exchange_ids = universe.keys()
     # Build mappings from exchange ids to classes and currencies.
     exchanges = []

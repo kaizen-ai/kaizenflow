@@ -103,7 +103,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Get universe of symbols.
     vendor = "CCXT"
-    symbols = ivcu.get_vendor_universe(vendor, as_full_symbol=True)
+    mode = "download"
+    symbols = ivcu.get_vendor_universe(vendor, mode, as_full_symbol=True)
     for date_index in range(len(timespan) - 1):
         _LOG.debug("Checking for RT data on %s.", timespan[date_index])
         start_ts = timespan[date_index]
