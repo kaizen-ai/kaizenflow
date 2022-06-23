@@ -174,8 +174,8 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
 
         :param vendor: vendor to apply test to, e.g. CCXT or Talos
         """
-        _ = imvcounun._get_universe(vendor, "download")
-        _ = imvcounun._get_universe(vendor, "download", version="v1")
+        _ = imvcounun._get_universe(vendor, "trade")
+        _ = imvcounun._get_universe(vendor, "trade", version="v1")
 
     def _test_get_universe_invalid_version(
         self, vendor: str, *, version: str = "unknown"
@@ -210,7 +210,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         Helper function to test universe is loaded correctly as dict.
         """
         universe = imvcounun.get_vendor_universe(
-            vendor, "download", version="small"
+            vendor, "trade", version="small"
         )
         self.assertIn(exchange, universe)
         self.assertEqual([currency_pair], universe[exchange])
@@ -227,7 +227,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
             full symbols in format exchange_id::SYMBOL_SYMBOL
         """
         actual = imvcounun.get_vendor_universe(
-            vendor, "download", version="small", as_full_symbol=True
+            vendor, "trade", version="small", as_full_symbol=True
         )
         self.assertEqual(len(universe_as_full_symbols), len(actual))
         self.assertEqual(actual[0], universe_as_full_symbols[0])
