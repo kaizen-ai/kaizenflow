@@ -1,7 +1,7 @@
-v1
-- 2022-05-10
-- Universe up to date with CCXT v4 universe
-
 v2
 - 2022-05-20
 - Universe up to date with CCXT v5 universe
+
+v1
+- 2022-05-10
+- Universe up to date with CCXT v4 universe

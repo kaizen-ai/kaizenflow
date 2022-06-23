@@ -27,7 +27,7 @@ def _extract_universe_version(universe_file: str) -> Tuple[int, int]:
     m = re.search(r"v(\d+(\.\d+)?)$", basename)
     hdbg.dassert(
         m,
-        "Can't parse file '%s', correct format is e.g. 'download_universe_v03.json'.",
+        "Can't parse file '%s', correct format is e.g. 'universe_v03.json'.",
         basename,
     )
     # Groups return tuple.
@@ -70,7 +70,7 @@ def _get_universe_file_path(
     return file_path
 
 
-def _get_trade_universe(
+def _get_universe(
     vendor: str,
     mode: str,
     *,
@@ -144,7 +144,7 @@ def get_vendor_universe(
         }
         or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
-    vendor_universe = _get_trade_universe(vendor, mode, version=version)
+    vendor_universe = _get_universe(vendor, mode, version=version)
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.
         vendor_universe = [
