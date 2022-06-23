@@ -15,13 +15,8 @@ from invoke import task
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
-<<<<<<< HEAD
-import helpers.lib_tasks as hlibtask
-
-=======
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_utils as hlitauti
->>>>>>> f0453c5e143b3b00bc61be1590ce46534aa294d8
 
 _LOG = logging.getLogger(__name__)
 
@@ -213,7 +208,6 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 
 
 # #############################################################################
-
 
 # TODO(Grisha): use `cmamp` for invokes and move out from `im` CMTask #789.
 
