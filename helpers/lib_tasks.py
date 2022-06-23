@@ -32,6 +32,10 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hversion as hversio
+import helpers.hsecrets as hsecret
+import helpers.hversion as hversio
+import helpers.hsystem as hsystem
+import repo_config as rconf
 
 # Import this way to avoid complexity in propagating the refactoring in all
 # the repos downstream.
@@ -60,8 +64,10 @@ _LOG = logging.getLogger(__name__)
 
 # This is used to inject the default params.
 # TODO(gp): Using a singleton here is not elegant but simple.
-_DEFAULT_PARAMS = {}
-
+_DEFAULT_PARAMS = {
+    "BASE_IMAGE": rconf.get_docker_base_image_name(),
+    "AM_ECR_BASE_PATH": os.environ["AM_ECR_BASE_PATH"]
+}
 
 def set_default_params(params: Dict[str, Any]) -> None:
     global _DEFAULT_PARAMS
@@ -2675,6 +2681,66 @@ def fix_perms(  # type: ignore
     else:
         raise ValueError(f"Invalid machine {os.uname()[1]}")
 
+
+def _update_task_definition(task_definition: str, image_tag: str) -> None:
+    """
+    Create the new revision of specified ECS task definition and point 
+    Image URL specified to the new candidate image.
+
+    :param task_definition: the name of the ECS task definition for which an update 
+    to container image URL is made, e.g. `cmamp-test`
+    :param image_tag: the hash of the new candidate image, e.g. `13538588e`
+    """
+    client = hsecret.get_ecs_client("ck")
+    # Get the last revison of the task definition.
+    task_description = client.describe_task_definition(
+    taskDefinition=task_definition
+    )
+    task_def = task_description["taskDefinition"]
+    old_image = task_def["containerDefinitions"][0]["image"]
+    # Edit container version, e.g. `cmamp:prod-12a45` - > cmamp:prod-12b46`
+    new_image = re.sub("prod-(.+)$", f"prod-{image_tag}", old_image)
+    task_def["containerDefinitions"][0]["image"] = new_image
+    # Register the new revision with the new image.
+    client.register_task_definition(
+        family=task_definition,
+        taskRoleArn=task_def["taskRoleArn"],
+        executionRoleArn=task_def["taskRoleArn"],
+        networkMode=task_def["networkMode"],
+        containerDefinitions=task_def["containerDefinitions"],
+        volumes=task_def["volumes"],
+        placementConstraints=task_def["placementConstraints"],
+        requiresCompatibilities=task_def["requiresCompatibilities"],
+        cpu=task_def["cpu"],
+        memory=task_def["memory"]
+    )
+    return
+
+@task
+def docker_create_candidate_image(ctx, task_definition: str):  # type: ignore
+    """
+    Create new prod candidate image and update the specified ECS task definition such that
+    the Image URL specified in container definition points to the new candidate image.
+
+    :param task_definition: the name of the ECS task definition for which an update 
+    to container image URL is made, e.g. `cmamp-test`
+    """
+    # Get latest version.
+    last_version = hversio.get_changelog_version(".")
+    # Create new prod image.
+    #cmd = f"invoke docker_build_prod_image -v {last_version} --candidate"
+    out = docker_build_prod_image(
+        ctx,
+        last_version,
+        candidate=True
+    )
+    # Get the hash of the image.
+    tag = hgit.get_head_hash(".", short_hash=True)
+    # Push candidate image.
+    out = docker_push_prod_candidate_image(ctx, tag)
+    # Register new task definition revision with updated image URL. 
+    #_update_task_definition(task_definition, tag)
+    return
 
 # TODO(gp): Add gh_open_pr to jump to the PR from this branch.
 
