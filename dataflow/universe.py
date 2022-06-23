@@ -242,7 +242,7 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
     Create universe for Example1 DAG.
     """
     vendor = "example1"
-    mode = "download"
+    mode = "trade"
     full_symbols = ivcu.get_vendor_universe(
         vendor, mode, version="v1", as_full_symbol=True
     )
