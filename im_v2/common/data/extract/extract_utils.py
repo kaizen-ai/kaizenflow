@@ -153,7 +153,8 @@ def download_realtime_for_one_exchange(
     :param exchange_class: which exchange is used in script run
     """
     # Load currency pairs.
-    universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
+    mode = "download"
+    universe = ivcu.get_vendor_universe(exchange.vendor, mode, version=args["universe"])
     currency_pairs = universe[args["exchange_id"]]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args["db_stage"])
@@ -442,7 +443,8 @@ def download_historical_data(
     elif not args["incremental"]:
         hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
     # Load currency pairs.
-    universe = ivcu.get_vendor_universe(exchange.vendor, version=args["universe"])
+    mode = "download"
+    universe = ivcu.get_vendor_universe(exchange.vendor, mode, version=args["universe"])
     currency_pairs = universe[args["exchange_id"]]
     # Convert timestamps.
     start_timestamp = pd.Timestamp(args["start_timestamp"])
