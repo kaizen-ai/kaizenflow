@@ -955,7 +955,7 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
 class TestYieldParquetTiles(hunitest.TestCase):
     def generate_test_data(self) -> None:
         """
-        Generate test data and write it into a scratch dir.
+        Generate test data and write it to a scratch dir.
 
         Data has the following structure:
 
@@ -983,8 +983,8 @@ class TestYieldParquetTiles(hunitest.TestCase):
         df["year"] = df.index.get_level_values(0).year
         df["month"] = df.index.get_level_values(0).month
         df = df.reset_index(level=1)
-        print(hpandas.df_to_str(df))
-        # Write the data into a scratch dir.
+        _LOG.debug("Test data: df=\n%s", hpandas.df_to_str(df))
+        # Write the data to a scratch dir.
         partition_columns = ["asset_id", "year", "month"]
         dst_dir = self.get_scratch_space()
         hparque.to_partitioned_parquet(df, partition_columns, dst_dir)
@@ -1004,6 +1004,7 @@ class TestYieldParquetTiles(hunitest.TestCase):
             file_name, asset_ids, asset_id_col, asset_batch_size, columns
         )
         df = pd.concat(generator_)
+        _LOG.debug("Filtered data: df=\n%s", hpandas.df_to_str(df))
         # Check asset ids filtering.
         actual = str(asset_ids)
         expected = str(df[asset_id_col].unique().tolist())
@@ -1029,6 +1030,7 @@ class TestYieldParquetTiles(hunitest.TestCase):
             file_name, start_date, end_date, columns, asset_ids=asset_ids, asset_id_col=asset_id_col
         )
         df = pd.concat(generator_)
+        _LOG.debug("Filtered data: df=\n%s", hpandas.df_to_str(df))
         # Check asset ids filtering.
         actual = str(asset_ids)
         expected = str(df[asset_id_col].unique().tolist())

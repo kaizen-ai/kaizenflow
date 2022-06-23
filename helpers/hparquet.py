@@ -68,7 +68,8 @@ def from_parquet(
     :param columns: columns to return, skipping reading columns that are not requested
        - `None` means return all available columns
     :param filters: Parquet query filters
-    :param schema: see `pyarrow.Schema`, e.g., `[("int", pa.int32()), ("str", pa.string())]`
+    :param schema: see `pyarrow.Schema`, e.g., `schema = 
+        [("int_col", pa.int32()), ("str_col", pa.string())]`
     :param log_level: logging level to execute at
     :param report_stats: whether to report Parquet file size or not
     :param aws_profile: AWS profile to use if and only if using an S3 path,
@@ -223,8 +224,9 @@ def _yield_parquet_tile(
     """
     Yield Parquet data in a single tile given the filters.
 
-    It is assumed that data is partitioned by `asset_id`, `year` and `month`, i.e.
+    It is assumed that data is partitioned by asset_id, year and month, i.e.
     the file layout is:
+
     ```
     file_name/
         asset_id=1032127330/
@@ -251,14 +253,14 @@ def _yield_parquet_tile(
     :return: a generator of `from_parquet()` dataframe
     """
     # Without the schema being provided `pyarrow` incorrectly infers
-    # type of the `asset_id` column, i.e. `pyarrow` reads assets as
+    # type of the asset id column, i.e. `pyarrow` reads assets as
     # strings instead of integers. See the related discussion at
     # `https://issues.apache.org/jira/browse/ARROW-6114`.
     int_type = np.int64
     pyarrow_int_type = pa.from_numpy_dtype(int_type)
     schema = [
         (asset_id_col, pyarrow_int_type), 
-        # TODO(Grisha): consider passing `year` and `month` column names as params.
+        # TODO(Grisha): consider passing year and month column names as params.
         ("year", pyarrow_int_type), 
         ("month", pyarrow_int_type)
     ]
