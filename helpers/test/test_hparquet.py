@@ -961,7 +961,7 @@ class TestYieldParquetTiles(hunitest.TestCase):
 
         ```
                     asset_id  ...  year  month
-        end_ts                                              
+        end_ts
         2021-11-01       100       2021     11
         2021-11-01       200       2021     11
         2021-11-01       300       2021     11
@@ -978,8 +978,12 @@ class TestYieldParquetTiles(hunitest.TestCase):
         dates = ["2021-11-01", "2021-12-01", "2022-01-01", "2022-02-01"]
         dates = map(pd.Timestamp, dates)
         index_ = [dates, asset_ids]
-        multi_index = pd.MultiIndex.from_product(index_, names=["end_ts", "asset_id"])
-        df = pd.DataFrame({"price": prices, "volatility": volatility}, index=multi_index)
+        multi_index = pd.MultiIndex.from_product(
+            index_, names=["end_ts", "asset_id"]
+        )
+        df = pd.DataFrame(
+            {"price": prices, "volatility": volatility}, index=multi_index
+        )
         df["year"] = df.index.get_level_values(0).year
         df["month"] = df.index.get_level_values(0).month
         df = df.reset_index(level=1)
@@ -1027,7 +1031,12 @@ class TestYieldParquetTiles(hunitest.TestCase):
         asset_id_col = "asset_id"
         columns = [asset_id_col, "price"]
         generator_ = hparque.yield_parquet_tiles_by_year(
-            file_name, start_date, end_date, columns, asset_ids=asset_ids, asset_id_col=asset_id_col
+            file_name,
+            start_date,
+            end_date,
+            columns,
+            asset_ids=asset_ids,
+            asset_id_col=asset_id_col,
         )
         df = pd.concat(generator_)
         _LOG.debug("Filtered data: df=\n%s", hpandas.df_to_str(df))
@@ -1043,6 +1052,3 @@ class TestYieldParquetTiles(hunitest.TestCase):
         max_date = df.index.max()
         self.assertEqual(max_date.month, end_month)
         self.assertEqual(max_date.year, end_year)
-
-
-    

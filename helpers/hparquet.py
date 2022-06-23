@@ -53,7 +53,7 @@ def from_parquet(
     *,
     columns: Optional[List[str]] = None,
     filters: Optional[List[Any]] = None,
-    schema:  Optional[List[Tuple[str, pa.DataType]]] = None,
+    schema: Optional[List[Tuple[str, pa.DataType]]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
     aws_profile: hs3.AwsProfile = None,
@@ -68,7 +68,7 @@ def from_parquet(
     :param columns: columns to return, skipping reading columns that are not requested
        - `None` means return all available columns
     :param filters: Parquet query filters
-    :param schema: see `pyarrow.Schema`, e.g., `schema = 
+    :param schema: see `pyarrow.Schema`, e.g., `schema =
         [("int_col", pa.int32()), ("str_col", pa.string())]`
     :param log_level: logging level to execute at
     :param report_stats: whether to report Parquet file size or not
@@ -215,6 +215,7 @@ def to_parquet(
 
 # #############################################################################
 
+
 def _yield_parquet_tile(
     file_name: str,
     columns: List[str],
@@ -245,7 +246,7 @@ def _yield_parquet_tile(
                 month=01/
                     data.parquet
     ```
-    
+
     :param file_name: see `from_parquet()`
     :param columns: see `from_parquet()`
     :param filters: see `from_parquet()`
@@ -259,10 +260,10 @@ def _yield_parquet_tile(
     int_type = np.int64
     pyarrow_int_type = pa.from_numpy_dtype(int_type)
     schema = [
-        (asset_id_col, pyarrow_int_type), 
+        (asset_id_col, pyarrow_int_type),
         # TODO(Grisha): consider passing year and month column names as params.
-        ("year", pyarrow_int_type), 
-        ("month", pyarrow_int_type)
+        ("year", pyarrow_int_type),
+        ("month", pyarrow_int_type),
     ]
     tile = from_parquet(
         file_name,
@@ -311,7 +312,9 @@ def yield_parquet_tiles_by_year(
             ]
         else:
             combined_filter = time_filter
-        yield from _yield_parquet_tile(file_name, columns, combined_filter, asset_id_col)
+        yield from _yield_parquet_tile(
+            file_name, columns, combined_filter, asset_id_col
+        )
 
 
 def build_asset_id_filter(
