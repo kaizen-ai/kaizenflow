@@ -80,7 +80,8 @@ class DagRunner(abc.ABC):
             # TODO(gp): Not sure what to do here.
             self._column_to_tags_mapping = []
         else:
-            raise ValueError("Invalid dag_builder=%s" % dag_builder)
+            raise ValueError("Invalid dag_builder=%s %s" % (str(type(dag_builder)),
+                str(dag_builder)))
         # Extract the sink node.
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)

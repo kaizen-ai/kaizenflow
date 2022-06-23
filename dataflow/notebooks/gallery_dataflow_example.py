@@ -65,6 +65,7 @@ def get_gallery_dataflow_example_config() -> cconconf.Config:
     config["load"]["data_snapshot"] = "latest"
     config["load"]["partition_mode"] = "by_year_month"
     config["load"]["dataset"] = "ohlcv"
+    config["load"]["contract_type"] = "spot"
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["start_date"] = pd.Timestamp("2021-09-01", tz="UTC")
@@ -87,6 +88,7 @@ resample_1min = True
 root_dir = config["load"]["data_dir"]
 partition_mode = config["load"]["partition_mode"]
 dataset = config["load"]["dataset"]
+contract_type = config["load"]["contract_type"]
 data_snapshot = config["load"]["data_snapshot"]
 aws_profile = config["load"]["aws_profile"]
 
@@ -97,6 +99,7 @@ historical_client = icdcl.CcxtHistoricalPqByTileClient(
     root_dir,
     partition_mode,
     dataset,
+    contract_type,
     data_snapshot=data_snapshot,
     aws_profile=aws_profile,
 )

@@ -5,7 +5,7 @@ import unittest.mock as umock
 import pandas as pd
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
@@ -15,18 +15,22 @@ import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
-    aws_profile = "ck"
-    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    S3_PATH = os.path.join(s3_bucket_path, "unit_test/parquet/historical")
     FILTERS = [
         [("year", "==", 2021), ("month", ">=", 12)],
         [("year", "==", 2022), ("month", "<=", 1)],
     ]
     _ohlcv_dataframe_sample = None
+
+    @staticmethod
+    def get_s3_path() -> str:
+        aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        s3_path = os.path.join(s3_bucket_path, "unit_test/parquet/historical")
+        return s3_path
 
     @classmethod
     def get_id(cls) -> int:
@@ -46,7 +50,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
     def ohlcv_dataframe_sample(self) -> pd.DataFrame:
         if self._ohlcv_dataframe_sample is None:
-            file_name = f"{self.S3_PATH}/binance/"
+            file_name = f"{self.get_s3_path()}/binance/"
             ohlcv_sample = hparque.from_parquet(
                 file_name, filters=self.FILTERS, aws_profile="ck"
             )
@@ -130,7 +134,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_from_parquet.call_count, 1)
         self.assertEqual(
             mock_from_parquet.call_args.args,
-            (f"{self.S3_PATH}/binance/",),
+            (f"{self.get_s3_path()}/binance/",),
         )
         self.assertEqual(
             mock_from_parquet.call_args.kwargs,
@@ -287,7 +291,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "db_table": "ccxt_ohlcv",
             "log_level": "INFO",
             "aws_profile": "ck",
-            "s3_path": f"{self.S3_PATH}/",
+            "s3_path": f"{self.get_s3_path()}/",
             "connection": self.connection,
         }
         # Run.

@@ -72,8 +72,8 @@ async def process_forecasts(
         _LOG.info("spread_df is `None`; imputing 0.0 spread")
         spread_df = pd.DataFrame(0.0, prediction_df.index, prediction_df.columns)
     # Check index/column compatibility.
-    _validate_compatibility(prediction_df, volatility_df)
-    _validate_compatibility(prediction_df, spread_df)
+    hpandas.dassert_axes_equal(prediction_df, volatility_df)
+    hpandas.dassert_axes_equal(prediction_df, spread_df)
     # Check `portfolio`.
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     hdbg.dassert_isinstance(config, cconfig.Config)
@@ -81,31 +81,37 @@ async def process_forecasts(
     if restrictions_df is None:
         _LOG.info("restrictions_df is `None`; no restrictions will be enforced")
     # Create an `order_config` from `config` elements.
-    order_config = _get_object_from_config(config, "order_config", cconfig.Config)
+    order_config = cconfig.get_object_from_config(
+        config, "order_config", cconfig.Config, None
+    )
     _validate_order_config(order_config)
     #
-    optimizer_config = _get_object_from_config(
-        config, "optimizer_config", cconfig.Config
+    optimizer_config = cconfig.get_object_from_config(
+        config, "optimizer_config", cconfig.Config, None
     )
     _validate_optimizer_config(optimizer_config)
     # Extract ATH and trading start times from config.
     # TODO(Paul): Add a check for ATH start/end.
-    ath_start_time = _get_object_from_config(
-        config, "ath_start_time", datetime.time
+    ath_start_time = cconfig.get_object_from_config(
+        config, "ath_start_time", datetime.time, None
     )
-    trading_start_time = _get_object_from_config(
-        config, "trading_start_time", datetime.time
+    trading_start_time = cconfig.get_object_from_config(
+        config, "trading_start_time", datetime.time, None
     )
     # Ensure `ath_start_time` <= `trading_start_time`.
     hdbg.dassert_lte(ath_start_time, trading_start_time)
     # Extract end times and sanity-check.
-    ath_end_time = _get_object_from_config(config, "ath_end_time", datetime.time)
-    trading_end_time = _get_object_from_config(
-        config, "trading_end_time", datetime.time
+    ath_end_time = cconfig.get_object_from_config(
+        config, "ath_end_time", datetime.time, None
+    )
+    trading_end_time = cconfig.get_object_from_config(
+        config, "trading_end_time", datetime.time, None
     )
     hdbg.dassert_lte(trading_end_time, ath_end_time)
     # Get execution mode ("real_time" or "batch").
-    execution_mode = _get_object_from_config(config, "execution_mode", str)
+    execution_mode = cconfig.get_object_from_config(
+        config, "execution_mode", str, None
+    )
     if execution_mode == "real_time":
         prediction_df = prediction_df.tail(1)
     elif execution_mode == "batch":
@@ -442,14 +448,14 @@ class ForecastProcessor:
         # Compute the target positions in cash (call the optimizer).
         backend = self._optimizer_config["backend"]
         if backend == "pomo":
-            bulk_frac_to_remove = _get_object_from_config(
-                self._optimizer_config, "bulk_frac_to_remove", float
+            bulk_frac_to_remove = cconfig.get_object_from_config(
+                self._optimizer_config, "bulk_frac_to_remove", float, None
             )
-            bulk_fill_method = _get_object_from_config(
-                self._optimizer_config, "bulk_fill_method", str
+            bulk_fill_method = cconfig.get_object_from_config(
+                self._optimizer_config, "bulk_fill_method", str, None
             )
-            target_gmv = _get_object_from_config(
-                self._optimizer_config, "target_gmv", float
+            target_gmv = cconfig.get_object_from_config(
+                self._optimizer_config, "target_gmv", float, None
             )
             df = ocalopti.compute_target_positions_in_cash(
                 assets_and_predictions,
@@ -745,28 +751,27 @@ class ForecastProcessor:
 
 def _validate_order_config(config: cconfig.Config) -> None:
     hdbg.dassert_isinstance(config, cconfig.Config)
-    _ = _get_object_from_config(config, "order_type", str)
-    _ = _get_object_from_config(config, "order_duration", int)
+    order_type_type = str
+    order_type = cconfig.get_object_from_config(
+        config, "order_type", order_type_type, None
+    )
+    hdbg.dassert_isinstance(order_type, order_type_type)
+    order_duration_type = int
+    order_duration = cconfig.get_object_from_config(
+        config, "order_duration", order_duration_type, None
+    )
+    hdbg.dassert_issubclass(order_duration, order_duration_type)
 
 
 def _validate_optimizer_config(config: cconfig.Config) -> None:
     hdbg.dassert_isinstance(config, cconfig.Config)
-    _ = _get_object_from_config(config, "backend", str)
-    _ = _get_object_from_config(config, "target_gmv", float)
-
-
-def _validate_compatibility(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
-    hpandas.dassert_indices_equal(df1, df2)
-    hpandas.dassert_columns_equal(df1, df2)
-
-
-# Extract the objects from the config.
-def _get_object_from_config(
-    config: cconfig.Config, key: str, expected_type: type
-) -> Any:
-    hdbg.dassert_isinstance(config, cconfig.Config),
-    hdbg.dassert_isinstance(key, str)
-    hdbg.dassert_in(key, config)
-    obj = config[key]
-    hdbg.dassert_issubclass(obj, expected_type)
-    return obj
+    backend_type = str
+    backend = cconfig.get_object_from_config(
+        config, "backend", backend_type, None
+    )
+    hdbg.dassert_issubclass(backend, backend_type)
+    target_gmv_type = float
+    target_gmv = cconfig.get_object_from_config(
+        config, "target_gmv", target_gmv_type, None
+    )
+    hdbg.dassert_issubclass(target_gmv, target_gmv_type)

@@ -19,7 +19,7 @@ import helpers.hgit as hgit
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htable as htable
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def gh_login(  # type: ignore
     account="",
     print_status=False,
 ):
-    hlibtask._report_task()
+    hlitauti._report_task()
     #
     if not account:
         # Retrieve the name of the repo, e.g., "alphamatic/amp".
@@ -57,18 +57,18 @@ def gh_login(  # type: ignore
     #
     if print_status:
         cmd = "gh auth status"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
     #
     github_pat_filename = os.path.expanduser(f"~/.ssh/github_pat.{account}.txt")
     if os.path.exists(github_pat_filename):
         cmd = f"gh auth login --with-token <{github_pat_filename}"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
     else:
         _LOG.warning("Can't find file '%s'", github_pat_filename)
     #
     if print_status:
         cmd = "gh auth status"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
 
 
 def _get_branch_name(branch_mode: str) -> Optional[str]:
@@ -137,7 +137,7 @@ def gh_workflow_list(  # type: ignore
     :param filter_by_status: filter table by the status of the workflow
         - E.g., "failure", "success"
     """
-    hlibtask._report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
+    hlitauti._report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
     # Login.
     gh_login(ctx)
     # Get the table.
@@ -207,7 +207,7 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
     """
     Run GH workflows in a branch.
     """
-    hlibtask._report_task(txt=hprint.to_str("branch workflows"))
+    hlitauti._report_task(txt=hprint.to_str("branch workflows"))
     # Login.
     gh_login(ctx)
     # Get the branch name.
@@ -229,7 +229,7 @@ def gh_workflow_run(ctx, branch="current_branch", workflows="all"):  # type: ign
         gh_test += ".yml"
         # gh workflow run fast_tests.yml --ref AmpTask1251_Update_GH_actions_for_amp
         cmd = f"gh workflow run {gh_test} --ref {branch_name}"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
 
 
 def _get_repo_full_name_from_cmd(repo_short_name: str) -> Tuple[str, str]:
@@ -318,7 +318,7 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
 
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    hlibtask._report_task(txt=hprint.to_str("issue_id repo_short_name"))
+    hlitauti._report_task(txt=hprint.to_str("issue_id repo_short_name"))
     # Login.
     gh_login(ctx)
     #
@@ -327,7 +327,7 @@ def gh_issue_title(ctx, issue_id, repo_short_name="current", pbcopy=True):  # ty
     title, url = _get_gh_issue_title(issue_id, repo_short_name)
     # Print or copy to clipboard.
     msg = f"{title}: {url}"
-    hlibtask._to_pbcopy(msg, pbcopy)
+    hlitauti._to_pbcopy(msg, pbcopy)
 
 
 def _check_if_pr_exists(title: str) -> bool:
@@ -368,7 +368,7 @@ def gh_create_pr(  # type: ignore
     :param auto_merge: enable auto merging PR
     :param title: title of the PR or the branch name, if title is empty
     """
-    hlibtask._report_task()
+    hlitauti._report_task()
     # Login.
     gh_login(ctx)
     #
@@ -402,9 +402,12 @@ def gh_create_pr(  # type: ignore
             + f' --body "{body}"'
         )
         # TODO(gp): Use _to_single_line_cmd
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
     if auto_merge:
         cmd = f"gh pr ready {title}"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
         cmd = f"gh pr merge {title} --auto --delete-branch --squash"
-        hlibtask._run(ctx, cmd)
+        hlitauti._run(ctx, cmd)
+
+
+# TODO(gp): Add gh_open_pr to jump to the PR from this branch.
