@@ -1,12 +1,11 @@
-name: Coverage
+name: Test coverage
 on:
   # Run manually.
   workflow_dispatch:
     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
-# TODO(Nikola): Temporarily disabled until tested.
-#  schedule:
-#    # Run this once a day.
-#    - cron:  '0 0 */1 * *'
+  schedule:
+    # Run every Monday.
+    - cron:  '0 0 * * 1'
 
 jobs:
   coverage:
@@ -70,3 +69,30 @@ jobs:
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
         run: invoke run_coverage_report .
+
+      # TODO(Nikola): Investigate ways to only notify on build status change, CmTask #2202.
+      #   https://github.community/t/send-notification-when-build-status-changes/18490
+      #   https://github.com/MercymeIlya/last-workflow-status
+#      - name: Send Telegram notification for success
+#        if: ${{ success() && ??? }}
+#        uses: appleboy/telegram-action@master
+#        with:
+#          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+#          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+#          message: |
+#            🎉 Test coverage run was successful.
+#            s3://cryptokaizen-html/html_coverage/runner_master/index.html
+
+      - name: Send Telegram notification for failure
+        if: ${{ failure() && github.ref_name == 'master'}}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            💣 TEST COVERAGE RUN FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '${{ github.ref_name }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
