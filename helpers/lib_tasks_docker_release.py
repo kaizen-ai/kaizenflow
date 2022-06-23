@@ -17,6 +17,7 @@ import helpers.hgit as hgit
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_pytest as hlitapyt
 import helpers.lib_tasks_utils as hlitauti
+import helpers.hversion as hversio
 
 _LOG = logging.getLogger(__name__)
 
@@ -554,3 +555,30 @@ def docker_rollback_prod_image(  # type: ignore
     else:
         _LOG.warning("Skipping pushing prod image to ECR, as requested")
     _LOG.info("==> SUCCESS <==")
+
+
+@task
+def docker_create_candidate_image(ctx, task_definition):  # type: ignore
+    """
+    Create new prod candidate image and update the specified ECS task definition such that
+    the Image URL specified in container definition points to the new candidate image.
+
+    :param task_definition: the name of the ECS task definition for which an update 
+    to container image URL is made, e.g. cmamp-test
+    """
+    # Get latest version.
+    last_version = hversio.get_changelog_version(".")
+    # Create new prod image.
+    docker_build_prod_image(
+        ctx,
+        last_version,
+        candidate=True
+    )
+    # Get the hash of the image.
+    tag = hgit.get_head_hash(".", short_hash=True)
+    # Push candidate image.
+    docker_push_prod_candidate_image(ctx, tag)
+    # Register new task definition revision with updated image URL. 
+    cmd = f"invoke docker_cmd -c python helpers/hboto3.py -t {task_definition} -i {tag}"
+    hlitauti._run(ctx, cmd)
+    return
