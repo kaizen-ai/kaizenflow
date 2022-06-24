@@ -117,8 +117,17 @@ crypto_chassis_client = iccdc.CryptoChassisHistoricalPqByTileClient(
 ccxt_client = icdcl.CcxtHistoricalPqByTileClient(**config["data"]["ccxt"])
 
 # %%
-crypto_chassis_universe = crypto_chassis_client.get_universe()
-ccxt_universe = ccxt_client.get_universe()
+# We have futures data only for Binance.
+crypto_chassis_universe = [
+    full_symbol
+    for full_symbol in crypto_chassis_client.get_universe()
+    if full_symbol.startswith("binance")
+]
+ccxt_universe = [
+    full_symbol
+    for full_symbol in ccxt_client.get_universe()
+    if full_symbol.startswith("binance")
+]
 
 # %%
 common_universe = list(set(crypto_chassis_universe) & set(ccxt_universe))
@@ -130,25 +139,17 @@ compare_universe = hprint.set_diff_to_str(
 print(compare_universe)
 
 # %% [markdown]
-# # Compare Binance QA stats
-
-# %%
-binance_universe = [
-    full_symbol
-    for full_symbol in common_universe
-    if full_symbol.startswith("binance")
-]
-binance_universe
+# # Compare QA stats
 
 # %%
 ccxt_binance_data = ccxt_client.read_data(
-    binance_universe, **config["data"]["read_data"]
+    common_universe, **config["data"]["read_data"]
 )
 ccxt_binance_data.head(3)
 
 # %%
 crypto_chassis_binance_data = crypto_chassis_client.read_data(
-    binance_universe, **config["data"]["read_data"]
+    common_universe, **config["data"]["read_data"]
 )
 crypto_chassis_binance_data.head(3)
 
