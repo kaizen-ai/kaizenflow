@@ -79,7 +79,6 @@ class ImClient(abc.ABC):
         """
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
-        self._universe_mode = "trade"
         if universe_version is not None:
             hdbg.dassert_isinstance(universe_version, str)
         self._universe_version = universe_version
@@ -126,9 +125,11 @@ class ImClient(abc.ABC):
         """
         Return the entire universe of valid full symbols.
         """
+        # We use only `trade` universe for `ImClient`.
+        universe_mode = "trade"
         universe = ivcu.get_vendor_universe(
             self._vendor,
-            self._universe_mode,
+            universe_mode,
             version=self._universe_version,
             as_full_symbol=True,
         )
