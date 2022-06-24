@@ -119,7 +119,7 @@ class TestGetUniverseGeneral1(hunitest.TestCase):
         Verify that incorrect vendor name is recognized.
         """
         with self.assertRaises(AssertionError):
-            _ = imvcounun._get_universe("unknown", "download")
+            _ = imvcounun._get_vedor_universe("unknown", "download")
 
 
 class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
@@ -174,8 +174,8 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
 
         :param vendor: vendor to apply test to, e.g. CCXT or Talos
         """
-        _ = imvcounun._get_universe(vendor, "trade")
-        _ = imvcounun._get_universe(vendor, "trade", version="v1")
+        _ = imvcounun._get_vedor_universe(vendor, "trade")
+        _ = imvcounun._get_vedor_universe(vendor, "trade", version="v1")
 
     def _test_get_universe_invalid_version(
         self, vendor: str, *, version: str = "unknown"
@@ -186,7 +186,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         :param vendor: vendor to apply test to, e.g. CCXT or Talos
         """
         with self.assertRaises(AssertionError):
-            _ = imvcounun._get_universe(
+            _ = imvcounun._get_vedor_universe(
                 vendor, mode="download", version=version
             )
 
