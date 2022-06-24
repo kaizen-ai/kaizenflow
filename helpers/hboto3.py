@@ -8,26 +8,26 @@ import argparse
 import logging
 import re
 
+import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.haws as haws
 
 _LOG = logging.getLogger(__name__)
 
 
 def _update_task_definition(task_definition: str, image_tag: str) -> None:
     """
-    Create the new revision of specified ECS task definition and point 
-    Image URL specified to the new candidate image.
+    Create the new revision of specified ECS task definition and point Image
+    URL specified to the new candidate image.
 
-    :param task_definition: the name of the ECS task definition for which an update 
+    :param task_definition: the name of the ECS task definition for which an update
     to container image URL is made, e.g. cmamp-test
     :param image_tag: the hash of the new candidate image, e.g. 13538588e
     """
     client = haws.get_ecs_client("ck")
     # Get the last revison of the task definition.
     task_description = client.describe_task_definition(
-    taskDefinition=task_definition
+        taskDefinition=task_definition
     )
     task_def = task_description["taskDefinition"]
     old_image = task_def["containerDefinitions"][0]["image"]
@@ -45,13 +45,16 @@ def _update_task_definition(task_definition: str, image_tag: str) -> None:
         placementConstraints=task_def["placementConstraints"],
         requiresCompatibilities=task_def["requiresCompatibilities"],
         cpu=task_def["cpu"],
-        memory=task_def["memory"]
+        memory=task_def["memory"],
     )
     new_image_url = response["taskDefinition"]["containerDefinitions"][0]["image"]
     # Check if the image URL is updated.
     hdbg.dassert_eq(new_image_url.endswith(image_tag), True)
-    _LOG.info("The image URL of `%s` task definition is updated to `%s`", task_definition, new_image_url)
-    return
+    _LOG.info(
+        "The image URL of `%s` task definition is updated to `%s`",
+        task_definition,
+        new_image_url,
+    )
 
 
 def _parse() -> argparse.ArgumentParser:

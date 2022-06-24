@@ -19,6 +19,7 @@ def get_ecs_client(aws_profile: str) -> BaseClient:
     client = session.client(service_name="ecs")
     return client
 
+
 def get_session(aws_profile: str) -> boto3.session.Session:
     """
     Return connected Boto3 session.
