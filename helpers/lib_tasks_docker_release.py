@@ -579,6 +579,6 @@ def docker_create_candidate_image(ctx, task_definition):  # type: ignore
     # Push candidate image.
     docker_push_prod_candidate_image(ctx, tag)
     # Register new task definition revision with updated image URL. 
-    cmd = f"invoke docker_cmd -c python helpers/hboto3.py -t {task_definition} -i {tag}"
+    cmd = f'invoke docker_cmd -c "python helpers/hboto3.py -t {task_definition} -i {tag}"'
     hlitauti._run(ctx, cmd)
     return
