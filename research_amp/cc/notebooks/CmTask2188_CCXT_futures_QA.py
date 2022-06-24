@@ -143,3 +143,5 @@ binance_bad_data_stats_by_year_month
 _ = ramccqa.plot_bad_data_by_year_month_stats(
     binance_bad_data_stats_by_year_month, config["stats"]["threshold"]
 )
+
+# %%
