@@ -121,7 +121,7 @@ binance_data = client.read_data(binance_universe, **config["data"]["read_data"])
 binance_data.head(3)
 
 # %%
-vendor_name = "CCXT"
+vendor_name = "CryptoChassis"
 binance_timestamp_stats = ramccqa.get_timestamp_stats(binance_data, vendor_name)
 binance_timestamp_stats
 
