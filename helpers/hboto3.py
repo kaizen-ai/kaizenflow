@@ -1,12 +1,18 @@
-""
-""
+"""
+Import as:
+
+import helpers.hboto3 as hboto3
+"""
 
 import argparse
+import logging
 import re
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.haws as haws
+
+_LOG = logging.getLogger(__name__)
 
 
 def _update_task_definition(task_definition: str, image_tag: str) -> None:
@@ -29,7 +35,7 @@ def _update_task_definition(task_definition: str, image_tag: str) -> None:
     new_image = re.sub("prod-(.+)$", f"prod-{image_tag}", old_image)
     task_def["containerDefinitions"][0]["image"] = new_image
     # Register the new revision with the new image.
-    client.register_task_definition(
+    response = client.register_task_definition(
         family=task_definition,
         taskRoleArn=task_def["taskRoleArn"],
         executionRoleArn=task_def["taskRoleArn"],
@@ -41,7 +47,12 @@ def _update_task_definition(task_definition: str, image_tag: str) -> None:
         cpu=task_def["cpu"],
         memory=task_def["memory"]
     )
+    new_image_url = response["taskDefinition"]["containerDefinitions"][0]["image"]
+    # Check if the image URL is updated.
+    hdbg.dassert_eq(new_image_url.endswith(image_tag), True)
+    _LOG.info("The image URL of `%s` task definition is updated to `%s`", task_definition, new_image_url)
     return
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -66,7 +77,6 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    #
     _update_task_definition(args.task_definition, args.image_tag)
 
 
