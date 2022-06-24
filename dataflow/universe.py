@@ -260,7 +260,7 @@ def _get_crypto_chassis_universe(version: str, n: Optional[int]) -> List[Amid]:
     Create universe for `CryptoChassis`.
     """
     vendor = "crypto_chassis"
-    mode = "download"
+    mode = "trade"
     full_symbols = ivcu.get_vendor_universe(
         vendor, mode, version=version, as_full_symbol=True
     )
@@ -278,7 +278,7 @@ def _get_ccxt_universe(version: str, n: Optional[int]) -> List[Amid]:
     Create universe for `CCXT`.
     """
     vendor = "CCXT"
-    mode = "download"
+    mode = "trade"
     full_symbols = ivcu.get_vendor_universe(
         vendor, mode, version=version, as_full_symbol=True
     )
@@ -305,29 +305,15 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "ccxt_v3":
         version = "v3"
         ret = _get_ccxt_universe(version, top_n)
-        # Remove Kucoin data due to its bad quality.
-        ret = [
-            full_symbol
-            for full_symbol in ret
-            if not full_symbol.startswith("kucoin")
-        ]
     elif universe_version == "ccxt_v4":
         version = "v4"
         ret = _get_ccxt_universe(version, top_n)
-        # As the other data is of bad quality we keep Binance data only.
-        ret = [
-            full_symbol
-            for full_symbol in ret
-            if full_symbol.startswith("binance")
-        ]
     elif universe_version == "crypto_chassis_v1":
         version = "v1"
         ret = _get_crypto_chassis_universe(version, top_n)
     elif universe_version == "crypto_chassis_v2":
         version = "v2"
         ret = _get_crypto_chassis_universe(version, top_n)
-        # Remove DOGE data due to its bad quality CmTask2052.
-        ret.remove("coinbase::DOGE_USDT")
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret
