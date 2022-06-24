@@ -242,8 +242,9 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
     Create universe for Example1 DAG.
     """
     vendor = "example1"
+    mode = "trade"
     full_symbols = ivcu.get_vendor_universe(
-        vendor, version="v1", as_full_symbol=True
+        vendor, mode, version="v1", as_full_symbol=True
     )
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
@@ -259,8 +260,9 @@ def _get_crypto_chassis_universe(version: str, n: Optional[int]) -> List[Amid]:
     Create universe for `CryptoChassis`.
     """
     vendor = "crypto_chassis"
+    mode = "download"
     full_symbols = ivcu.get_vendor_universe(
-        vendor, version=version, as_full_symbol=True
+        vendor, mode, version=version, as_full_symbol=True
     )
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
@@ -276,8 +278,9 @@ def _get_ccxt_universe(version: str, n: Optional[int]) -> List[Amid]:
     Create universe for `CCXT`.
     """
     vendor = "CCXT"
+    mode = "download"
     full_symbols = ivcu.get_vendor_universe(
-        vendor, version=version, as_full_symbol=True
+        vendor, mode, version=version, as_full_symbol=True
     )
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
