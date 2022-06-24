@@ -4,7 +4,7 @@ v5
 
 v4
 - 2022-04-23
-- Kucoin, Gateio and FTX full symbols are removed due to bad data quality CmTask #1866.
+- Trade: Kucoin, Gateio and FTX full symbols are removed due to CmTask #1866
 
 small
 - 2021-11-07
