@@ -20,6 +20,7 @@ import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlist as hlist
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
@@ -605,15 +606,12 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     )
     # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
-    cp_cmd = (
-        f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} "
-        f"--recursive --profile {aws_profile}"
-    )
+    s3fs_ = hs3.get_s3fs(aws_profile)
+    s3fs_.put(local_coverage_path, s3_html_coverage_path, recursive=True)
     _LOG.info(
         "HTML coverage report is published on S3: path=`%s`",
         s3_html_coverage_path,
     )
-    hsystem.system(cp_cmd)
 
 
 @task

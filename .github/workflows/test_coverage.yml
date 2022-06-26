@@ -8,7 +8,7 @@ on:
     - cron:  '0 0 * * 1'
 
 jobs:
-  coverage:
+  run_test_coverage:
     runs-on: ubuntu-latest
 
     steps:
