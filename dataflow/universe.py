@@ -314,6 +314,13 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "crypto_chassis_v2":
         version = "v2"
         ret = _get_crypto_chassis_universe(version, top_n)
+    elif universe_version == "crypto_chassis_futures_v2":
+        version = "v2"
+        ret = _get_crypto_chassis_universe(version, top_n)
+        # Futures traded only at Binance.
+        ret = [
+            full_symbol for full_symbol in ret if full_symbol.startswith("binance")
+        ]
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret
