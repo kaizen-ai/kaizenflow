@@ -49,6 +49,7 @@ class CcxtBroker(ombroker.Broker):
         hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._mode = mode
         self._exchange_id = exchange_id
+        self._contract_type = contract_type
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
         # Enable mapping back from asset ids when placing orders.
@@ -70,30 +71,38 @@ class CcxtBroker(ombroker.Broker):
         :return: a list of filled orders
         """
         fills: List[ombroker.Fill] = []
+        order_symbols = set(
+            [
+                self._asset_id_to_symbol_mapping[order.asset_id]
+                for order in sent_orders
+            ]
+        )
         if self.last_order_execution_ts:
-            _LOG.info("Inside get_fills")
-            orders = self._exchange.fetch_orders(
-                since=hdateti.convert_timestamp_to_unix_epoch(
-                    self.last_order_execution_ts
+            for symbol in order_symbols:
+                _LOG.info("Inside get_fills")
+                orders = self._exchange.fetch_orders(
+                    since=hdateti.convert_timestamp_to_unix_epoch(
+                        self.last_order_execution_ts,
+                    ),
+                    symbol=symbol,
                 )
-            )
-            for order in orders:
-                if order["status"] == "closed":
-                    # Select order matching to CCXT exchange id.
-                    filled_order = [
-                        order
-                        for order in sent_orders
-                        if order.ccxt_id == order["id"]
-                    ][0]
-                    fill = ombroker.Fill(
-                        filled_order,
-                        hdateti.convert_unix_epoch_to_timestamp(
-                            order["timestamp"]
-                        ),
-                        num_shares=order["size"],
-                        price=order["price"],
-                    )
-                    fills.append(fill)
+                for order in orders:
+                    if order["status"] == "closed":
+                        # Select order matching to CCXT exchange id.
+                        filled_order = [
+                            order
+                            for sent_order in sent_orders
+                            if sent_order.exchange_id == order["id"]
+                        ][0]
+                        fill = ombroker.Fill(
+                            filled_order,
+                            hdateti.convert_unix_epoch_to_timestamp(
+                                order["timestamp"]
+                            ),
+                            num_shares=order["amount"],
+                            price=order["price"],
+                        )
+                        fills.append(fill)
         return fills
 
     def _assert_order_methods_presence(self) -> None:
@@ -148,7 +157,7 @@ class CcxtBroker(ombroker.Broker):
             order.exchange_id = order_resp["id"]
             sent_orders.append(order)
             _LOG.info(order_resp)
-            return sent_orders
+        return sent_orders
 
     def _build_asset_id_to_symbol_mapping(
         self, universe_version: str
@@ -159,7 +168,7 @@ class CcxtBroker(ombroker.Broker):
         # Get full symbol universe.
         # TODO(Danya): Change mode to "trade".
         full_symbol_universe = imvcounun.get_vendor_universe(
-            "CCXT", "download", version=universe_version, as_full_symbol=True
+            "CCXT", "trade", version=universe_version, as_full_symbol=True
         )
         # Filter symbols of the exchange corresponding to this instance.
         full_symbol_universe = list(
@@ -198,8 +207,8 @@ class CcxtBroker(ombroker.Broker):
         # Enable rate limit.
         exchange_params["rateLimit"] = True
         # Log into futures/spot market.
-        if self.contract_type == "futures":
-            exchange_params["options"] = { 'defaultType': 'future' }
+        if self._contract_type == "futures":
+            exchange_params["options"] = {"defaultType": "future"}
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
         exchange = ccxt_exchange(exchange_params)
