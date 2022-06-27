@@ -31,7 +31,9 @@ import datetime
 import logging
 from typing import Any, Callable, List
 
+import ipywidgets as widgets
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import sklearn
@@ -42,6 +44,7 @@ import core.statistics.sharpe_ratio as cstshrat
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.crypto_chassis.data.client as iccdc
 
@@ -95,7 +98,7 @@ def get_notebook_config() -> cconconf.Config:
             "color": "C0",
             "capsize": 0.2,
             "xticks_rotation": 70,
-        }
+        },
     }
     config = ccocouti.get_config_from_nested_dict(param_dict)
     return config
@@ -277,6 +280,7 @@ metrics_df_reset_index = metrics_df.reset_index()
 asset_id = config["column_names"]["asset_id"]
 timestamp = config["column_names"]["timestamp"]
 volume = config["column_names"]["volume"]
+y = config["column_names"]["y"]
 y_hat = config["column_names"]["y_hat"]
 hit = config["column_names"]["hit"]
 trade_pnl = config["column_names"]["trade_pnl"]
@@ -295,18 +299,42 @@ xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
 # ### Hit rate
 
 # %%
-sns.barplot(
-    x=asset_id,
-    y=hit,
-    data=metrics_df_reset_index,
-    color=color,
-    capsize=capsize,
+hit_df = metrics_df_reset_index[[asset_id, y, y_hat, hit]]
+hit_df = hpandas.dropna(hit_df, report_stats=True)
+
+
+# %%
+def plot_hit(sort_values, ascending):
+    if sort_values == "by_value":
+        hit_order = (
+            hit_df.groupby([asset_id])[hit]
+            .mean()
+            .sort_values(ascending=ascending)
+            .index
+        )
+    elif sort_values == "by_asset":
+        hit_order = np.sort(hit_df.asset_id.unique())
+    elif not sort_values:
+        hit_order = hit_df.asset_id.unique()
+    sns.barplot(
+        x=asset_id,
+        y=hit,
+        data=hit_df,
+        order=hit_order,
+        color=color,
+        capsize=capsize,
+    )
+    #
+    plt.xticks(rotation=xticks_rotation)
+    plt.ylabel("hit_rate")
+    plt.ylim(y_min_lim_hit_rate, y_max_lim_hit_rate)
+    plt.show()
+
+
+# %%
+_ = widgets.interact(
+    plot_hit, sort_values=["by_value", "by_asset", False], ascending=[True, False]
 )
-#
-plt.xticks(rotation=xticks_rotation)
-plt.ylabel("hit_rate")
-plt.ylim(y_min_lim_hit_rate, y_max_lim_hit_rate)
-plt.show()
 
 # %% [markdown]
 # ### PnL
