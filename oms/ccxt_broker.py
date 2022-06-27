@@ -44,6 +44,7 @@ class CcxtBroker(ombroker.Broker):
         :param mode: supported values: "test", "prod", if "test", launches the broker
          in sandbox environment (not supported for every exchange),
          if "prod" launches with production API.
+        :param contract_type: "spot" or "futures"
         """
         hdbg.dassert_in(mode, ["prod", "test"])
         hdbg.dassert_in(contract_type, ["spot", "futures"])
@@ -78,6 +79,7 @@ class CcxtBroker(ombroker.Broker):
             ]
         )
         if self.last_order_execution_ts:
+            # Load orders for each given symbol.
             for symbol in order_symbols:
                 _LOG.info("Inside get_fills")
                 orders = self._exchange.fetch_orders(
@@ -86,14 +88,16 @@ class CcxtBroker(ombroker.Broker):
                     ),
                     symbol=symbol,
                 )
+                # Select closed orders.
                 for order in orders:
                     if order["status"] == "closed":
                         # Select order matching to CCXT exchange id.
                         filled_order = [
                             order
                             for sent_order in sent_orders
-                            if sent_order.exchange_id == order["id"]
+                            if sent_order.ccxt_id == order["id"]
                         ][0]
+                        # Create a Fill object.
                         fill = ombroker.Fill(
                             filled_order,
                             hdateti.convert_unix_epoch_to_timestamp(
@@ -154,7 +158,7 @@ class CcxtBroker(ombroker.Broker):
                     "client_oid": order.order_id,
                 },
             )
-            order.exchange_id = order_resp["id"]
+            order.ccxt_id = order_resp["id"]
             sent_orders.append(order)
             _LOG.info(order_resp)
         return sent_orders
