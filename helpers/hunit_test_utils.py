@@ -95,7 +95,7 @@ class UnitTestRenamer:
         for name in [old_test_name, new_test_name]:
             hdbg.dassert(
                 name.startswith("Test"),
-                "Invalid test_class_name='%s'",
+                "Invalid test_class_name='%s'. A test class should start with `Test`",
                 name,
             )
         # Assert if the names are the same.

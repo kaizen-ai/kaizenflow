@@ -16,10 +16,12 @@ import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
+import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hintrospection as hintros
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -170,7 +172,12 @@ class Config:
                 txt_tmp = str(v)
                 txt.append("%s:\n%s" % (k, hprint.indent(txt_tmp)))
             else:
-                txt.append("%s: %s" % (k, v))
+                if isinstance(v, (pd.DataFrame, pd.Series, pd.Index)):
+                    v_as_str = hpandas.df_to_str(v, print_shape_info=True)
+                    v_as_str = "\n" + hprint.indent(v_as_str)
+                else:
+                    v_as_str = str(v)
+                txt.append("%s: %s" % (k, v_as_str))
         ret = "\n".join(txt)
         # Remove memory locations of functions, if config contains them, e.g.,
         #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
