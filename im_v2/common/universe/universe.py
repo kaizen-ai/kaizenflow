@@ -45,7 +45,7 @@ def _get_universe_file_path(
 
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
     :param mode: download or trade universe
-    :param version: universe release version (e.g. "v01"). If None it uses
+    :param version: universe version (e.g. "v01"). If None it uses
       the latest version available
     :return: file path to the universe file corresponding to the specified version
     """
@@ -70,18 +70,16 @@ def _get_universe_file_path(
     return file_path
 
 
-def _get_universe(
+def _get_vedor_universe(
     vendor: str,
     mode: str,
     *,
     version: Optional[str] = None,
 ) -> Dict[str, List[str]]:
     """
-    Load trade universe for which we have historical data.
+    Load universe specific of a vendor.
 
     :param vendor: vendor to load data for (e.g., CCXT/Talos)
-    :param mode: download or trade
-    :param version: release version
     :return: trade universe as a nested dictionary of
       exchange name (e.g., binance) to list of symbols e.g.,
         {
@@ -121,9 +119,6 @@ def get_vendor_universe(
     Load vendor universe either as a list of currency pairs per each vendor or
     list of full symbols.
 
-    :param vendor: vendor to load data for (e.g., CCXT, Talos)
-    :param mode: trade or download
-    :param version: release version
     :param as_full_symbol: if True transform the universe into list of
         full symbols e.g. gateio::XRP_USDT
     :return: vendor universe as a list of symbol or list of full symbols e.g.:
@@ -144,7 +139,7 @@ def get_vendor_universe(
         }
         or ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
     """
-    vendor_universe = _get_universe(vendor, mode, version=version)
+    vendor_universe = _get_vedor_universe(vendor, mode, version=version)
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.
         vendor_universe = [

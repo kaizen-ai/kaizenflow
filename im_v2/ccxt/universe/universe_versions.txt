@@ -1,10 +1,10 @@
 v5
 - 2022-05-25
-- Coinbase full symbols are added
+- Trade: not applicable, starting v5 CryptoChassis data is used
 
 v4
 - 2022-04-23
-- Kucoin and Gateio full symbols are removed due to bad data quality
+- Trade: Kucoin, Gateio and FTX full symbols are removed due to CmTask #1866
 
 small
 - 2021-11-07
@@ -13,6 +13,7 @@ small
 v3
 - 2021-11-04
 - CDD is removed due to CmTask324
+- Trade: Kucoin was removed due to bad quality
 
 v2
 - 2021-11-03
