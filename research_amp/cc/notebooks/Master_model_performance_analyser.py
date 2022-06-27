@@ -390,6 +390,12 @@ metrics_df_reset_index["month"] = metrics_df_reset_index[
     timestamp
 ].dt.month_name()
 
+# %%
+hit_df_times = metrics_df_reset_index[
+    [asset_id, y, y_hat, hit, "hour", "weekday", "month"]
+]
+hit_df_times = hpandas.dropna(hit_df_times, report_stats=True)
+
 # %% [markdown]
 # ### Hit Rate
 
@@ -397,7 +403,7 @@ metrics_df_reset_index["month"] = metrics_df_reset_index[
 sns.barplot(
     x="hour",
     y=hit,
-    data=metrics_df_reset_index,
+    data=hit_df_times,
     color=color,
     capsize=capsize,
 )
@@ -411,7 +417,7 @@ plt.show()
 sns.barplot(
     x="weekday",
     y=hit,
-    data=metrics_df_reset_index,
+    data=hit_df_times,
     color=color,
     capsize=capsize,
 )
@@ -425,7 +431,7 @@ plt.show()
 sns.barplot(
     x="month",
     y=hit,
-    data=metrics_df_reset_index,
+    data=hit_df_times,
     color=color,
     capsize=capsize,
 )
@@ -498,6 +504,12 @@ metrics_df_reset_index[prediction_magnitude] = pd.qcut(
     metrics_df_reset_index[y_hat], quantile_ranks, labels=False
 )
 
+# %%
+hit_df_pred_magn = metrics_df_reset_index[
+    [asset_id, y, y_hat, hit, prediction_magnitude]
+]
+hit_df_pred_magn = hpandas.dropna(hit_df_pred_magn, report_stats=True)
+
 # %% [markdown]
 # ### Hit rate
 
@@ -505,7 +517,7 @@ metrics_df_reset_index[prediction_magnitude] = pd.qcut(
 sns.barplot(
     x=prediction_magnitude,
     y=hit,
-    data=metrics_df_reset_index,
+    data=hit_df_pred_magn,
     color=color,
     capsize=capsize,
 )
@@ -546,6 +558,10 @@ metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(
     asset_id
 )[volume].transform(lambda x: pd.qcut(x, quantile_ranks, labels=False))
 
+# %%
+hit_df_volume = metrics_df_reset_index[[asset_id, y, y_hat, hit, volume_quantile]]
+hit_df_volume = hpandas.dropna(hit_df_volume, report_stats=True)
+
 # %% [markdown]
 # ### Hit rate
 
@@ -553,7 +569,7 @@ metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(
 sns.barplot(
     x=volume_quantile,
     y=hit,
-    data=metrics_df_reset_index,
+    data=hit_df_volume,
     color=color,
     capsize=capsize,
 )
