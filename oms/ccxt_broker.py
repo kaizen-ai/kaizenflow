@@ -31,6 +31,7 @@ class CcxtBroker(ombroker.Broker):
         universe_version: str,
         mode: str,
         portfolio_id: str,
+        contract_type: str,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -45,6 +46,7 @@ class CcxtBroker(ombroker.Broker):
          if "prod" launches with production API.
         """
         hdbg.dassert_in(mode, ["prod", "test"])
+        hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._mode = mode
         self._exchange_id = exchange_id
         self._exchange = self._log_into_exchange()
@@ -192,12 +194,15 @@ class CcxtBroker(ombroker.Broker):
             secrets_id = self._exchange_id + "_sandbox"
         else:
             secrets_id = self._exchange_id
-        credentials = hsecret.get_secret(secrets_id)
+        exchange_params = hsecret.get_secret(secrets_id)
         # Enable rate limit.
-        credentials["rateLimit"] = True
+        exchange_params["rateLimit"] = True
+        # Log into futures/spot market.
+        if self.contract_type == "futures":
+            exchange_params["options"] = { 'defaultType': 'future' }
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
-        exchange = ccxt_exchange(credentials)
+        exchange = ccxt_exchange(exchange_params)
         if self._mode == "test":
             exchange.set_sandbox_mode(True)
             _LOG.warning("Running in sandbox mode")
