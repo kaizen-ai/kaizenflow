@@ -16,7 +16,6 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         market_data, _ = mdata.get_ReplayedTimeMarketData_example3(None)
         strategy = "SAU1"
-        contract_type = "spot"
         # TODO(Juraj) mock the API calls.
         broker = occxbrok.CcxtBroker(
             "coinbasepro",
@@ -56,7 +55,6 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         market_data, _ = mdata.get_ReplayedTimeMarketData_example3(None)
         strategy = "SAU1"
-        contract_type = "spot"
         with self.assertRaises(ValueError):
             broker = occxbrok.CcxtBroker(
                 "coinbase",
