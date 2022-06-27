@@ -107,12 +107,14 @@ class TestDownloadRealtimeForOneExchange1(
 
         Run without saving to s3.
         """
+        # Set mock return values.
         mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
+        # Run.
         use_s3 = False
         self.call_download_realtime_for_one_exchange(use_s3)
-        # Check number of calls and args for current time.
+        # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 0)
@@ -134,12 +136,14 @@ class TestDownloadRealtimeForOneExchange1(
 
         Run and save to s3.
         """
+        # Set mock return values.
         mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
+        # Run.
         use_s3 = True
         self.call_download_realtime_for_one_exchange(use_s3)
-        # Check number of calls and args for current time.
+        # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 9)
@@ -218,24 +222,23 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         line arguments and comparing function output with predefined directory
         structure and file contents.
         """
+        # Set mock return values.
         mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
         mock_get_secret.return_value = self.binance_secret
-        # TODO(Nikola): Remove comments below and use it in docs, CMTask #1349.
+        # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
             f.write("test")
+        # Run.
         incremental = True
         self.call_download_historical_data(incremental)
-        # Check number of calls and args for current time.
+        # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
-        # Check args/kwargs that were used for function call.
         expected_args = mock_list_and_merge.call_args.args
         expected_kwargs = mock_list_and_merge.call_args.kwargs
         self.assertEqual(len(expected_args), 1)
-        # Check first argument, `root_dir`.
         self.assertEqual(expected_args[0], "s3://mock_bucket/binance")
-        # Check keyword arguments. In this case only `aws_profile`.
         self.assertDictEqual(
             expected_kwargs,
             {
