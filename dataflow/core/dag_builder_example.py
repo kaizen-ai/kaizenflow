@@ -183,9 +183,9 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
 # #############################################################################
 
 
-# TODO(gp): Builder -> _DagBuiler
+# TODO(gp): Builder -> _DagBuilder
 # TODO(gp): Remove the first node from these DAG and express ArmaReturnsBuilder and
-#  MvnReturnsBuilder in terms of a DagAdapter and ReturnsBuilder.
+#  MvnReturnsBuilder in terms of a MarketData and ReturnsBuilder.
 class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from an ARMA process.

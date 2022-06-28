@@ -20,11 +20,11 @@ class TestRollingFitPredictDagRunner1(hunitest.TestCase):
         """
         dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
-        dag_builder.get_dag(config)
+        dag = dag_builder.get_dag(config)
         #
         dag_runner = dtfcodarun.RollingFitPredictDagRunner(
             config=config,
-            dag_builder=dag_builder,
+            dag_builder=dag,
             start_timestamp="2010-01-04 09:30",
             end_timestamp="2010-01-04 15:30",
             retraining_freq="H",
@@ -52,7 +52,7 @@ class TestIncrementalDagRunner1(hunitest.TestCase):
         #
         dag_runner = dtfcodarun.IncrementalDagRunner(
             config=config,
-            dag_builder=dag_builder,
+            dag_builder=dag,
             start_timestamp="2010-01-04 15:30",
             end_timestamp="2010-01-04 15:45",
             freq="5T",

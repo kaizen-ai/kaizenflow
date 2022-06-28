@@ -5,7 +5,6 @@ import oms.order_processor as oordproc
 """
 
 import asyncio
-import collections
 import logging
 from typing import Any, Dict, Optional, Union
 
@@ -25,12 +24,19 @@ _LOG = logging.getLogger(__name__)
 
 class OrderProcessor:
     """
-    Mock the behavior of part of the implemented broker and the market.
+    An `OrderProcessor` mocks the behavior of part of a real-world OMS to allow
+    the simulation of a `DatabasePortfolio` and `DatabaseBroker` without a real
+    OMS.
 
-    This class:
-    - polls a table of the DB for submitted orders
-    - updates the accepted orders DB table
-    - updates the current positions DB table
+    In practice, an OMS can consist of a DB storing:
+    - submitted and accepted orders (accessed by a `DatabaseBroker`)
+    - current position (accessed by a `DatabasePortfolio`)
+
+    This class implements the loop around a `DatabasePortfolio` and `DatabaseBroker`
+    by:
+    - polling a table of the DB for submitted orders
+    - updating the accepted orders DB table
+    - updating the current positions DB table
     """
 
     def __init__(
@@ -43,6 +49,7 @@ class OrderProcessor:
         submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
         accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
         current_positions_table_name: str = oomsdb.CURRENT_POSITIONS_TABLE_NAME,
+        # TODO(gp): -> wait_for_order_poll_kwargs?
         poll_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
@@ -52,11 +59,14 @@ class OrderProcessor:
             the accepted orders table
         :param delay_to_fill_in_secs: delay after the order is accepted to update the
             position table with the filled positions
-        :param delay_to_accept_in_secs:
-        :param delay_to_fill_in_secs:
+        :param poll_kwargs: this controls how often and for how long we poll the DB
+            table for new orders. In practice, `poll_kwargs` are used in `poll()` for
+            `hsql.wait_for_change_in_number_of_rows()`
         """
         self._db_connection = db_connection
+        hdbg.dassert_lte(0, delay_to_accept_in_secs)
         self._delay_to_accept_in_secs = delay_to_accept_in_secs
+        hdbg.dassert_lte(0, delay_to_fill_in_secs)
         self._delay_to_fill_in_secs = delay_to_fill_in_secs
         self._broker = broker
         self._submitted_orders_table_name = submitted_orders_table_name
@@ -64,15 +74,13 @@ class OrderProcessor:
         self._current_positions_table_name = current_positions_table_name
         #
         self._get_wall_clock_time = broker.market_data.get_wall_clock_time
-        #
         self._poll_kwargs = poll_kwargs or hasynci.get_poll_kwargs(
             self._get_wall_clock_time
         )
-        # NOTE: In our current execution model, at most one order should be in
+        # NOTE: In our current execution model, at most one order list should be in
         #  this queue at any given time. If we change our execution model, then
         #  we may need to resize the queue.
         self._orders = asyncio.Queue(maxsize=1)
-        self._processed_order_files = collections.OrderedDict
         self._target_list_id = 0
 
     async def run_loop(
@@ -82,11 +90,11 @@ class OrderProcessor:
         """
         Run the order processing loop.
 
-        :param termination_condition: when to terminate polling the table of submitted
-            orders.
-            - pd.timestamp: when this object should stop checking for orders. Be
-              careful since this can create deadlocks if this timestamp is set after
-              the broker stops submitting orders.
+        :param termination_condition: when to terminate polling the table of
+            submitted orders
+            - pd.timestamp: when this object should stop checking for orders. This
+                can create deadlocks if this timestamp is set after the broker stops
+                submitting orders.
             - int: number of orders to accept before shut down
         """
         while True:
@@ -94,15 +102,15 @@ class OrderProcessor:
             target_list_id = self._target_list_id
             # Check whether we should exit or continue.
             if isinstance(termination_condition, pd.Timestamp):
-                exit = wall_clock_time >= termination_condition
+                is_done = wall_clock_time >= termination_condition
             elif isinstance(termination_condition, int):
-                exit = target_list_id >= termination_condition
+                is_done = target_list_id >= termination_condition
             else:
                 raise ValueError(
                     "Invalid termination_condition=%s type=%s"
                     % (termination_condition, str(type(termination_condition)))
                 )
-            if exit:
+            if is_done:
                 _LOG.debug(
                     "Reached the end: "
                     + hprint.to_str(
@@ -135,7 +143,6 @@ class OrderProcessor:
         hdbg.dassert_lte(
             diff_num_rows,
             len(df),
-            1,
             "There are not enough new rows in df=\n%s",
             hpandas.df_to_str(df),
         )
@@ -143,7 +150,7 @@ class OrderProcessor:
         hdbg.dassert_eq(diff_num_rows, 1)
         file_name = df.tail(1).squeeze()["filename"]
         _LOG.debug("file_name=%s", file_name)
-        # Wait until the submission is parsed.
+        # Wait to simulate the submission being parsed and accepted.
         hdbg.dassert_lt(0, self._delay_to_accept_in_secs)
         await hasynci.sleep(
             self._delay_to_accept_in_secs, self._get_wall_clock_time
@@ -209,8 +216,9 @@ class OrderProcessor:
             num_shares = fill.num_shares
             cost = fill.price * fill.num_shares
             _LOG.debug("cost=%f" % cost)
-            # #################################################################
+            #
             # Get the current positions for `asset_id`.
+            #
             query = []
             query.append(f"SELECT * FROM {self._current_positions_table_name}")
             query.append(
@@ -221,8 +229,9 @@ class OrderProcessor:
             positions_df = hsql.execute_query_to_df(self._db_connection, query)
             hdbg.dassert_lte(positions_df.shape[0], 1)
             _LOG.debug("positions_df=%s", hpandas.df_to_str(positions_df))
-            # #################################################################
+            #
             # Delete the row from the positions table.
+            #
             query = []
             query.append(f"DELETE FROM {self._current_positions_table_name}")
             query.append(
@@ -233,8 +242,9 @@ class OrderProcessor:
             deletions = hsql.execute_query(self._db_connection, query)
             deletions = deletions or 0
             _LOG.debug("Num deletions=%d", deletions)
-            # #################################################################
+            #
             # Update the row and insert into the positions table.
+            #
             # TODO(Paul): Need to handle BOD.
             if not positions_df.empty:
                 row = positions_df.squeeze()

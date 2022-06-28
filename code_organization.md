@@ -92,7 +92,6 @@
       - `local_level_models.py`
       - `Dag`
       - `DagBuilders`
-      - `DagAdapters`
       - `DagRunners`
       - `ResultBundle`
   - `/pipelines`
@@ -118,8 +117,6 @@
     - `sink_nodes.py`
       - `ProcessForecasts`
     - `RealTimeDagRunner`
-    - `RealTimeDagAdapter`
-    - `ResearchDagAdapter`
   - `/model`
     - """Code for evaluating a DataFlow model"""
 - `/oms`

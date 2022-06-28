@@ -433,15 +433,6 @@ class ForecastEvaluatorFromPrices:
         count_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         return count_df
 
-    def _validate_target_position_df(
-        self, target_positions: pd.DataFrame, predictions: pd.DataFrame
-    ) -> None:
-        hpandas.dassert_time_indexed_df(
-            target_positions, allow_empty=True, strictly_increasing=True
-        )
-        hdbg.dassert_eq(target_positions.columns.nlevels, 1)
-        hpandas.dassert_axes_equal(target_positions, predictions)
-
     @staticmethod
     def _build_multiindex_df(dfs: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         portfolio_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
@@ -482,6 +473,15 @@ class ForecastEvaluatorFromPrices:
     def _get_df(df: pd.DataFrame, col: str) -> pd.DataFrame:
         hdbg.dassert_in(col, df.columns)
         return df[col]
+
+    def _validate_target_position_df(
+        self, target_positions: pd.DataFrame, predictions: pd.DataFrame
+    ) -> None:
+        hpandas.dassert_time_indexed_df(
+            target_positions, allow_empty=True, strictly_increasing=True
+        )
+        hdbg.dassert_eq(target_positions.columns.nlevels, 1)
+        hpandas.dassert_axes_equal(target_positions, predictions)
 
     def _validate_df(self, df: pd.DataFrame) -> None:
         hpandas.dassert_time_indexed_df(
@@ -524,9 +524,13 @@ class ForecastEvaluatorFromPrices:
         first_valid_prediction_index = df[
             self._prediction_col
         ].first_valid_index()
+        hdbg.dassert_is_not(first_valid_prediction_index, None)
+        #
         first_valid_volatility_index = df[
             self._volatility_col
         ].first_valid_index()
+        hdbg.dassert_is_not(first_valid_volatility_index, None)
+        #
         first_valid_index = max(
             first_valid_prediction_index, first_valid_volatility_index
         )
