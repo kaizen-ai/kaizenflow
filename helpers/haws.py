@@ -13,7 +13,10 @@ import helpers.hs3 as hs3
 
 def get_ecs_client(aws_profile: str) -> BaseClient:
     """
-    Return client to work with Elastic Client Service in the specific region.
+    Return client to work with Elastic Container Service in the specific region.
+
+    TODO(Toma): to abstract the function to be able to instantiate client for 
+    any service so we don't have duplicate code 
     """
     session = get_session(aws_profile)
     client = session.client(service_name="ecs")
