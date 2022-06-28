@@ -135,6 +135,10 @@ def load_predictions_df(config: cconconf.Config) -> pd.DataFrame:
     return predict_df
 
 
+# TODO(Max): Move the code out of the lib so we can unit test, 
+# e.g., we want to add (small) specific unit tests for hit.
+# TODO(Max): Harmonize the code with calculate_hit_rate and other code there.
+# E.g., factor out the piece of calculate_hit_rate that computes hit, etc.
 def preprocess_predictions_df(
     config: cconconf.Config, predict_df: pd.DataFrame
 ) -> pd.DataFrame:
