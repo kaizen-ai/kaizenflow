@@ -335,8 +335,8 @@ def _get_linter_service(stage: str) -> str:
       volumes:
         - {repo_root}:/src"""
     if stage != "prod":
-        # When we run a development linter container, we need to mount the
-        # the linter repo under `/app`. For prod container instead we copy / freeze
+        # When we run a development Linter container, we need to mount the
+        # the Linter repo under `/app`. For prod container instead we copy / freeze
         # the repo code in `/app`, so we should not mount it.
         if superproject_path:
             # When running in a Git submodule we need to go one extra level up.
@@ -349,7 +349,7 @@ def _get_linter_service(stage: str) -> str:
         - MYPYPATH
     """
     if stage == "prod":
-        linter_spec_txt = f"""
+        linter_spec_txt += """
         # Use the `repo_config.py` inside the dev_tools container instead of
         # the one in the calling repo.
         - AM_REPO_CONFIG_PATH=/app/repo_config.py
@@ -1013,7 +1013,9 @@ def _get_docker_base_cmd(
     )
     docker_compose_files = _get_docker_compose_files(
         stage,
-        generate_docker_compose_file, service_name, extra_docker_compose_files
+        generate_docker_compose_file,
+        service_name,
+        extra_docker_compose_files,
     )
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
     _LOG.debug(hprint.to_str("file_opts"))

@@ -19,6 +19,7 @@ _LOG = logging.getLogger(__name__)
 class Test_generate_compose_file1(hunitest.TestCase):
     def helper(
         self,
+        stage: str = "dev",
         use_privileged_mode: bool = False,
         use_sibling_container: bool = False,
         shared_data_dirs: Optional[Dict[str, str]] = None,
@@ -40,6 +41,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
         #
         file_name = None
         txt_tmp = hlitadoc._generate_docker_compose_file(
+            stage,
             use_privileged_mode,
             use_sibling_container,
             shared_data_dirs,
@@ -63,6 +65,9 @@ class Test_generate_compose_file1(hunitest.TestCase):
 
     def test3(self) -> None:
         self.helper(use_main_network=True)
+
+    def test4(self) -> None:
+        self.helper(stage="prod")
 
 
 # #############################################################################
