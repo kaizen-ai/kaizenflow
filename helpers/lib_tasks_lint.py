@@ -151,7 +151,13 @@ def _parse_linter_output(txt: str) -> str:
             result = m.group(2)
             _LOG.debug("  -> stage='%s' (%s)", stage, result)
             continue
-        # core/dataflow/nodes.py:601:9: F821 undefined name '_check_col_names'
+        # The regex only fires when the line starts with an alphabetic character.
+        # In our target case the line starts with the name of the file.
+        # If the line starts with a number (e.g. a timestamp in debug messages,
+        # warnings, etc), there will be no match.
+        # E.g.,
+        # "core/dataflow/nodes.py:601:9: F821 undefined name 'a'" will be matched;
+        # "17:24:53 lib_tasks.py _parse_linter_output:5244" will not be matched.
         m = re.search(r"^([a-zA-Z]\S+):(\d+)[:\d+:]\s+(.*)$", line)
         if m:
             _LOG.debug("  -> Found a lint to parse: '%s'", line)
