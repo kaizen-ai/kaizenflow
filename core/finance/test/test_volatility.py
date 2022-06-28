@@ -14,10 +14,10 @@ class Test_compute_close_var1(hunitest.TestCase):
     def test1(self) -> None:
         data = get_data()
         close_col = "close"
-        variance = cfinvola.compute_close_var(
+        volatility = cfinvola.compute_close_var(
             data, close_col, take_square_root=True
         )
-        actual = get_df_as_str(variance)
+        actual = get_df_as_str(volatility)
         expected = r"""
                            close_vol
 2022-01-10 09:45:00-05:00        NaN
@@ -54,10 +54,10 @@ class Test_compute_parkinson_var1(hunitest.TestCase):
         data = get_data()
         high_col = "high"
         low_col = "low"
-        variance = cfinvola.compute_parkinson_var(
+        volatility = cfinvola.compute_parkinson_var(
             data, high_col, low_col, take_square_root=True
         )
-        actual = get_df_as_str(variance)
+        actual = get_df_as_str(volatility)
         expected = r"""
                            parkinson_vol
 2022-01-10 09:45:00-05:00        0.00203
@@ -96,7 +96,7 @@ class Test_compute_garman_klass_var1(hunitest.TestCase):
         high_col = "high"
         low_col = "low"
         close_col = "close"
-        variance = cfinvola.compute_garman_klass_var(
+        volatility = cfinvola.compute_garman_klass_var(
             data,
             open_col,
             high_col,
@@ -104,7 +104,7 @@ class Test_compute_garman_klass_var1(hunitest.TestCase):
             close_col,
             take_square_root=True,
         )
-        actual = get_df_as_str(variance)
+        actual = get_df_as_str(volatility)
         expected = r"""
                            garman_klass_vol
 2022-01-10 09:45:00-05:00           0.00178
@@ -133,6 +133,104 @@ class Test_compute_garman_klass_var1(hunitest.TestCase):
 2022-01-10 15:30:00-05:00           0.00296
 2022-01-10 15:45:00-05:00           0.00202
 2022-01-10 16:00:00-05:00           0.00189"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_estimate_squared_volatility(hunitest.TestCase):
+    def test1(self) -> None:
+        data = get_data()
+        estimators = ["close", "parkinson", "garman_klass"]
+        open_col = "open"
+        high_col = "high"
+        low_col = "low"
+        close_col = "close"
+        volatility = cfinvola.estimate_squared_volatility(
+            data,
+            estimators,
+            open_col=open_col,
+            high_col=high_col,
+            low_col=low_col,
+            close_col=close_col,
+            apply_log=True,
+            take_square_root=True,
+        )
+        actual = get_df_as_str(volatility)
+        expected = r"""
+                           close_vol  parkinson_vol  garman_klass_vol
+2022-01-10 09:45:00-05:00        NaN        0.00203           0.00178
+2022-01-10 10:00:00-05:00    0.00444        0.00375           0.00390
+2022-01-10 10:15:00-05:00    0.00028        0.00161           0.00190
+2022-01-10 10:30:00-05:00    0.00481        0.00369           0.00228
+2022-01-10 10:45:00-05:00    0.00596        0.00337           0.00250
+2022-01-10 11:00:00-05:00    0.00313        0.00170           0.00169
+2022-01-10 11:15:00-05:00    0.00211        0.00258           0.00252
+2022-01-10 11:30:00-05:00    0.00345        0.00226           0.00218
+2022-01-10 11:45:00-05:00    0.00874        0.00623           0.00350
+2022-01-10 12:00:00-05:00    0.00131        0.00183           0.00216
+2022-01-10 12:15:00-05:00    0.00701        0.00268           0.00151
+2022-01-10 12:30:00-05:00    0.01230        0.00742           0.00502
+2022-01-10 12:45:00-05:00    0.00430        0.00515           0.00432
+2022-01-10 13:00:00-05:00    0.00048        0.00121           0.00142
+2022-01-10 13:15:00-05:00    0.00247        0.00244           0.00222
+2022-01-10 13:30:00-05:00    0.00175        0.00171           0.00197
+2022-01-10 13:45:00-05:00    0.00406        0.00326           0.00268
+2022-01-10 14:00:00-05:00    0.00212        0.00151           0.00099
+2022-01-10 14:15:00-05:00    0.00743        0.00492           0.00375
+2022-01-10 14:30:00-05:00    0.00342        0.00277           0.00218
+2022-01-10 14:45:00-05:00    0.00500        0.00367           0.00277
+2022-01-10 15:00:00-05:00    0.00132        0.00193           0.00224
+2022-01-10 15:15:00-05:00    0.00342        0.00285           0.00160
+2022-01-10 15:30:00-05:00    0.00362        0.00285           0.00296
+2022-01-10 15:45:00-05:00    0.00220        0.00176           0.00202
+2022-01-10 16:00:00-05:00    0.00319        0.00176           0.00189"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        data = get_data()
+        estimators = ["close", "parkinson"]
+        open_col = None
+        high_col = "high"
+        low_col = "low"
+        close_col = "close"
+        volatility = cfinvola.estimate_squared_volatility(
+            data,
+            estimators,
+            open_col=open_col,
+            high_col=high_col,
+            low_col=low_col,
+            close_col=close_col,
+            apply_log=True,
+            take_square_root=True,
+        )
+        actual = get_df_as_str(volatility)
+        expected = r"""
+                           close_vol  parkinson_vol
+2022-01-10 09:45:00-05:00        NaN        0.00203
+2022-01-10 10:00:00-05:00    0.00444        0.00375
+2022-01-10 10:15:00-05:00    0.00028        0.00161
+2022-01-10 10:30:00-05:00    0.00481        0.00369
+2022-01-10 10:45:00-05:00    0.00596        0.00337
+2022-01-10 11:00:00-05:00    0.00313        0.00170
+2022-01-10 11:15:00-05:00    0.00211        0.00258
+2022-01-10 11:30:00-05:00    0.00345        0.00226
+2022-01-10 11:45:00-05:00    0.00874        0.00623
+2022-01-10 12:00:00-05:00    0.00131        0.00183
+2022-01-10 12:15:00-05:00    0.00701        0.00268
+2022-01-10 12:30:00-05:00    0.01230        0.00742
+2022-01-10 12:45:00-05:00    0.00430        0.00515
+2022-01-10 13:00:00-05:00    0.00048        0.00121
+2022-01-10 13:15:00-05:00    0.00247        0.00244
+2022-01-10 13:30:00-05:00    0.00175        0.00171
+2022-01-10 13:45:00-05:00    0.00406        0.00326
+2022-01-10 14:00:00-05:00    0.00212        0.00151
+2022-01-10 14:15:00-05:00    0.00743        0.00492
+2022-01-10 14:30:00-05:00    0.00342        0.00277
+2022-01-10 14:45:00-05:00    0.00500        0.00367
+2022-01-10 15:00:00-05:00    0.00132        0.00193
+2022-01-10 15:15:00-05:00    0.00342        0.00285
+2022-01-10 15:30:00-05:00    0.00362        0.00285
+2022-01-10 15:45:00-05:00    0.00220        0.00176
+2022-01-10 16:00:00-05:00    0.00319        0.00176"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 

@@ -20,6 +20,7 @@ import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlist as hlist
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
@@ -605,15 +606,12 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     )
     # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
-    cp_cmd = (
-        f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} "
-        f"--recursive --profile {aws_profile}"
-    )
+    s3fs_ = hs3.get_s3fs(aws_profile)
+    s3fs_.put(local_coverage_path, s3_html_coverage_path, recursive=True)
     _LOG.info(
         "HTML coverage report is published on S3: path=`%s`",
         s3_html_coverage_path,
     )
-    hsystem.system(cp_cmd)
 
 
 @task
@@ -954,50 +952,6 @@ def pytest_repro(  # type: ignore
 # #############################################################################
 
 
-def _purify_test_output(src_file_name: str, dst_file_name: str) -> None:
-    """
-    Clean up the output of `pytest -s --dbg` to make easier to compare two
-    runs.
-
-    E.g., remove the timestamps, reference to Git repo.
-    """
-    _LOG.info("Converted '%s' -> '%s", src_file_name, dst_file_name)
-    txt = hio.from_file(src_file_name)
-    out_txt = []
-    for line in txt.split("\n"):
-        # 10:05:18       portfolio        : _get_holdings       : 431 :
-        m = re.match(r"^\d\d:\d\d:\d\d\s+(.*:.*)$", line)
-        if m:
-            new_line = m.group(1)
-        else:
-            new_line = line
-        out_txt.append(new_line)
-    #
-    out_txt = "\n".join(out_txt)
-    hio.to_file(dst_file_name, out_txt)
-
-
-@task
-def pytest_compare(ctx, file_name1, file_name2):  # type: ignore
-    """
-    Compare the output of two runs of `pytest -s --dbg` removing irrelevant
-    details.
-    """
-    hlitauti._report_task()
-    _ = ctx
-    # TODO(gp): Change the name of the file before the extension.
-    dst_file_name1 = file_name1 + ".purified"
-    _purify_test_output(file_name1, dst_file_name1)
-    dst_file_name2 = file_name2 + ".purified"
-    _purify_test_output(file_name2, dst_file_name2)
-    # TODO(gp): Call vimdiff automatically.
-    cmd = f"vimdiff {dst_file_name1} {dst_file_name2}"
-    print(f"> {cmd}")
-
-
-# #############################################################################
-
-
 @task
 def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: ignore
     """
@@ -1063,4 +1017,67 @@ def pytest_find_unused_goldens(  # type: ignore
     hlitauti._run(ctx, cmd)
 
 
-# TODO(gp): Add ./dev_scripts/testing/pytest_count_files.sh
+# #############################################################################
+
+
+def _purify_log_file(
+    file_name: str, remove_line_numbers: bool, grep_regex: str
+) -> str:
+    txt = hio.from_file(file_name)
+    # Remove leading `16:34:27`.
+    txt = re.sub(r"^\d\d:\d\d:\d\d ", "", txt, flags=re.MULTILINE)
+    # Remove references like `at 0x7f43493442e0`.
+    txt = re.sub(r"at 0x\S{12}", "at 0x", txt, flags=re.MULTILINE)
+    # Remove `done (0.014 s)`
+    txt = re.sub(r"(done) \(\d+\.\d+ s\)", "\\1", txt, flags=re.MULTILINE)
+    # Remove wall_clock_time='2022-06-17 04:36:56.062645-04:00'
+    txt = re.sub(r"(wall_clock_time=)'.*'", "\\1", txt, flags=re.MULTILINE)
+    # Remove `real_wall_clock_time = '2022-06-17 04:33:19.946025-04:00'`
+    txt = re.sub(r"(real_wall_clock_time=)'.*'", "\\1", txt, flags=re.MULTILINE)
+    # Remove tqdm [00:00<00:00,  4.05it/s]
+    txt = re.sub(r"(htqdm.py.*)\[.*\]", "\\1", txt, flags=re.MULTILINE)
+    # Remove line number: `htqdm.py abstract_market_data.py get_data_for_interval:259 `
+    if remove_line_numbers:
+        txt = re.sub(
+            r"(\.py [a-zA-Z_][a-zA-Z0-9_]*):\d+ ",
+            "\\1:0 ",
+            txt,
+            flags=re.MULTILINE,
+        )
+    #
+    if grep_regex:
+        lines = []
+        for line in txt.split("\n"):
+            if re.search(grep_regex, line):
+                lines.append(line)
+        txt = "\n".join(lines)
+    return txt
+
+
+@task
+def pytest_compare_logs(  # type: ignore
+    ctx, file1, file2, remove_line_numbers=False, grep_regex="", dry_run=False
+):
+    """
+    Diff two log files removing the irrelevant parts (e.g., timestamps, object
+    pointers).
+
+    :param remove_line_numbers: remove line numbers from function calls (e.g.,
+        `abstract_market_data.py get_data_for_interval:259`
+    :param grep_regex: select lines based on a regex
+    """
+    suffix = "tmp"
+    #
+    txt = _purify_log_file(file1, remove_line_numbers, grep_regex)
+    file1_tmp = hio.add_suffix_to_filename(file1, suffix)
+    hio.to_file(file1_tmp, txt)
+    #
+    txt = _purify_log_file(file2, remove_line_numbers, grep_regex)
+    file2_tmp = hio.add_suffix_to_filename(file2, suffix)
+    hio.to_file(file2_tmp, txt)
+    # Save the script to compare.
+    script_file_name = f"./tmp.vimdiff_log.sh"
+    script_txt = f"vimdiff {file1_tmp} {file2_tmp}"
+    msg = f"To diff run:"
+    hio.create_executable_script(script_file_name, script_txt, msg=msg)
+    _run(ctx, script_file_name, dry_run=dry_run, pty=True)

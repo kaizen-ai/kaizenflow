@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.order_processor_example as omsope
+import oms.order_processor_example as oorprexa
 """
 
 import logging
@@ -11,8 +11,8 @@ import pandas as pd
 
 import helpers.hasyncio as hasynci
 import helpers.hsql as hsql
-import oms.portfolio as omportfo
 import oms.order_processor as oordproc
+import oms.portfolio as omportfo
 
 _LOG = logging.getLogger(__name__)
 
@@ -21,8 +21,7 @@ _LOG = logging.getLogger(__name__)
 def get_order_processor_example1(
     db_connection: hsql.DbConnection,
     portfolio: omportfo.Portfolio,
-    *,
-    timeout_in_secs: int = 60 * (5 + 15),
+    timeout_in_secs: int,
 ) -> oordproc.OrderProcessor:
     """
     Build an order processor.
@@ -58,7 +57,5 @@ def get_order_processor_coroutine_example1(
     initial_timestamp = get_wall_clock_time()
     offset = pd.Timedelta(real_time_loop_time_out_in_secs, unit="seconds")
     termination_condition = initial_timestamp + offset
-    order_processor_coroutine = order_processor.run_loop(
-        termination_condition
-    )
+    order_processor_coroutine = order_processor.run_loop(termination_condition)
     return order_processor_coroutine

@@ -6,7 +6,7 @@ import dataflow.core.dag_runner as dtfcodarun
 
 import abc
 import logging
-from typing import Generator, Optional, Tuple, Union
+from typing import Generator, Optional, Tuple
 
 import pandas as pd
 
@@ -44,8 +44,10 @@ class DagRunner(abc.ABC):
 
     def __init__(
         self,
+        # TODO(Paul): Remove `Config` from the interface and just pass a `Dag`.
         config: cconfig.Config,
-        dag_builder: Union[dtfcordag.DAG, dtfcodabui.DagBuilder],
+        # TODO(Paul): Rename `dag`.
+        dag_builder: dtfcordag.DAG,
     ) -> None:
         """
         Constructor.
@@ -56,32 +58,10 @@ class DagRunner(abc.ABC):
         # Save input parameters.
         hdbg.dassert_isinstance(config, cconfig.Config)
         self.config = config
-        # Build DAG using DAG builder.
-        hdbg.dassert_is_not(dag_builder, None)
-        # TODO(gp): Now a DagRunner builds and runs a DAG. This creates some
-        #  coupling. Consider having a DagRunner accept a DAG however built and run
-        #  it.
-        if isinstance(dag_builder, dtfcodabui.DagBuilder):
-            self._dag_builder = dag_builder
-            self.dag = self._dag_builder.get_dag(self.config)
-            _LOG.debug("dag=%s", self.dag)
-            # Check that the DAG has the required methods.
-            methods = self._dag_builder.methods
-            _LOG.debug("methods=%s", methods)
-            hdbg.dassert_in("fit", methods)
-            hdbg.dassert_in("predict", methods)
-            # Get the mapping from columns to tags.
-            self._column_to_tags_mapping = (
-                self._dag_builder.get_column_to_tags_mapping(self.config)
-            )
-            _LOG.debug("_column_to_tags_mapping=%s", self._column_to_tags_mapping)
-        elif isinstance(dag_builder, dtfcordag.DAG):
-            self.dag = dag_builder
-            # TODO(gp): Not sure what to do here.
-            self._column_to_tags_mapping = []
-        else:
-            raise ValueError("Invalid dag_builder=%s %s" % (str(type(dag_builder)),
-                str(dag_builder)))
+        hdbg.dassert_isinstance(dag_builder, dtfcordag.DAG)
+        self.dag = dag_builder
+        # TODO(gp): Not sure what to do here.
+        self._column_to_tags_mapping = []
         # Extract the sink node.
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)

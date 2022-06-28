@@ -26,8 +26,9 @@ class TestArmaReturnsBuilder(hunitest.TestCase):
     def test1(self) -> None:
         dag_builder = dtfcdabuex.ArmaReturnsBuilder()
         config = dag_builder.get_config_template()
+        dag = dag_builder.get_dag(config)
         #
-        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag)
         result_bundle = dag_runner.fit()
         #
         df_out = result_bundle.result_df

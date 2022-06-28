@@ -15,7 +15,7 @@ import re
 import shutil
 import time
 import uuid
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -514,31 +514,33 @@ def create_executable_script(
         print(f"# {msg}:\n> {file_name}")
 
 
-def add_idx_to_filename(
+def add_suffix_to_filename(
     file_name: str,
-    idx: int,
+    suffix: Union[int, str],
     *,
     before_extension: bool = True,
     with_underscore: bool = True,
 ) -> str:
     """
-    Add an index to a file name.
+    Add a suffix to a file name, with or without changing the extension.
 
     :param file_name: file name to modify
-    :param idx: index to add to the file name
+    :param suffix: index to add to the file name
     :param before_extension: whether to insert the index before the file extension
     :param with_underscore: whether to separate the index with an underscore
     :return: modified file name with an index
     """
-    idx = str(idx)
+    suffix = str(suffix)
     if with_underscore:
-        idx = "_" + idx
+        suffix = "_" + suffix
     if before_extension:
         # Add the index to the file name before the extension, e.g.
         # `dir/file.txt` -> `dir/file_1.txt`.
         file_name_no_ext, ext = file_name.rsplit(".", 1)
-        return file_name_no_ext + idx + "." + ext
-    return file_name + idx
+        ret = file_name_no_ext + suffix + "." + ext
+    else:
+        ret = file_name + suffix
+    return ret
 
 
 # #############################################################################
