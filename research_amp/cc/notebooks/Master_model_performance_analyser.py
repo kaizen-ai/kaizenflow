@@ -164,6 +164,8 @@ def preprocess_predictions_df(
     """
     # Convert the prediction stats data to Multiindex by time and asset id.
     metrics_df = predict_df.stack()
+    # Drop NaNs to compute the performance statistics.
+    metrics_df = hpandas.dropna(metrics_df, report_stats=True)
     # Compute hit and trade PnL.
     metrics_df["hit"] = (
         metrics_df[config["column_names"]["y"]]
@@ -292,6 +294,7 @@ color = config["plot_kwargs"]["color"]
 capsize = config["plot_kwargs"]["capsize"]
 xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
 
+
 # %% [markdown]
 # ## By asset
 
@@ -299,27 +302,22 @@ xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
 # ### Hit rate
 
 # %%
-hit_df = metrics_df_reset_index[[asset_id, y, y_hat, hit]]
-hit_df = hpandas.dropna(hit_df, report_stats=True)
-
-
-# %%
 def plot_hit(sort_values, ascending):
     if sort_values == "by_value":
         hit_order = (
-            hit_df.groupby([asset_id])[hit]
+            metrics_df_reset_index.groupby([asset_id])[hit]
             .mean()
             .sort_values(ascending=ascending)
             .index
         )
     elif sort_values == "by_asset":
-        hit_order = np.sort(hit_df.asset_id.unique())
+        hit_order = np.sort(metrics_df_reset_index.asset_id.unique())
     elif not sort_values:
-        hit_order = hit_df.asset_id.unique()
+        hit_order = metrics_df_reset_index.asset_id.unique()
     sns.barplot(
         x=asset_id,
         y=hit,
-        data=hit_df,
+        data=metrics_df_reset_index,
         order=hit_order,
         color=color,
         capsize=capsize,
@@ -390,12 +388,6 @@ metrics_df_reset_index["month"] = metrics_df_reset_index[
     timestamp
 ].dt.month_name()
 
-# %%
-hit_df_times = metrics_df_reset_index[
-    [asset_id, y, y_hat, hit, "hour", "weekday", "month"]
-]
-hit_df_times = hpandas.dropna(hit_df_times, report_stats=True)
-
 # %% [markdown]
 # ### Hit Rate
 
@@ -403,7 +395,7 @@ hit_df_times = hpandas.dropna(hit_df_times, report_stats=True)
 sns.barplot(
     x="hour",
     y=hit,
-    data=hit_df_times,
+    data=metrics_df_reset_index,
     color=color,
     capsize=capsize,
 )
@@ -417,7 +409,7 @@ plt.show()
 sns.barplot(
     x="weekday",
     y=hit,
-    data=hit_df_times,
+    data=metrics_df_reset_index,
     color=color,
     capsize=capsize,
 )
@@ -431,7 +423,7 @@ plt.show()
 sns.barplot(
     x="month",
     y=hit,
-    data=hit_df_times,
+    data=metrics_df_reset_index,
     color=color,
     capsize=capsize,
 )
@@ -504,12 +496,6 @@ metrics_df_reset_index[prediction_magnitude] = pd.qcut(
     metrics_df_reset_index[y_hat], quantile_ranks, labels=False
 )
 
-# %%
-hit_df_pred_magn = metrics_df_reset_index[
-    [asset_id, y, y_hat, hit, prediction_magnitude]
-]
-hit_df_pred_magn = hpandas.dropna(hit_df_pred_magn, report_stats=True)
-
 # %% [markdown]
 # ### Hit rate
 
@@ -517,7 +503,7 @@ hit_df_pred_magn = hpandas.dropna(hit_df_pred_magn, report_stats=True)
 sns.barplot(
     x=prediction_magnitude,
     y=hit,
-    data=hit_df_pred_magn,
+    data=metrics_df_reset_index,
     color=color,
     capsize=capsize,
 )
@@ -558,10 +544,6 @@ metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(
     asset_id
 )[volume].transform(lambda x: pd.qcut(x, quantile_ranks, labels=False))
 
-# %%
-hit_df_volume = metrics_df_reset_index[[asset_id, y, y_hat, hit, volume_quantile]]
-hit_df_volume = hpandas.dropna(hit_df_volume, report_stats=True)
-
 # %% [markdown]
 # ### Hit rate
 
@@ -569,7 +551,7 @@ hit_df_volume = hpandas.dropna(hit_df_volume, report_stats=True)
 sns.barplot(
     x=volume_quantile,
     y=hit,
-    data=hit_df_volume,
+    data=metrics_df_reset_index,
     color=color,
     capsize=capsize,
 )
@@ -600,5 +582,3 @@ plt.show()
 
 # %%
 plot_sharpe_ratio(config, metrics_df_reset_index, volume_quantile)
-
-# %%
