@@ -513,6 +513,15 @@ def purify_txt_from_client(txt: str) -> str:
     return txt
 
 
+def purify_white_spaces(txt: str) -> str:
+    txt_new = []
+    for line in txt.split("\n"):
+        line = line.rstrip()
+        txt_new.append(line)
+    txt = "\n".join(txt_new)
+    return txt
+
+
 # #############################################################################
 
 
@@ -781,9 +790,9 @@ def assert_equal(
     _LOG.debug("Before any transformation:")
     _LOG.debug("act='\n%s'", actual)
     _LOG.debug("exp='\n%s'", expected)
-    # Remove `\n` at the end of the strings.
-    actual = actual.rstrip("\n")
-    expected = expected.rstrip("\n")
+    # Remove white spaces.
+    actual = purify_white_spaces(actual)
+    expected = purify_white_spaces(expected)
     # Dedent expected, if needed.
     if dedent:
         _LOG.debug("# Dedent expected")
@@ -795,6 +804,9 @@ def assert_equal(
         _LOG.debug("# Purify actual")
         actual = purify_txt_from_client(actual)
         _LOG.debug("act='\n%s'", actual)
+    # Ensure that there is a single `\n` at the end of the strings.
+    actual = actual.rstrip("\n") + "\n"
+    expected = expected.rstrip("\n") + "\n"
     # Fuzzy match, if needed.
     actual_orig = actual
     expected_orig = expected

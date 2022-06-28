@@ -37,7 +37,7 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     # Get the file name depending on the stage.
     env_file_name = f"{stage}.im_db_config.env"
     if idx is not None:
-        env_file_name = hio.add_idx_to_filename(env_file_name, idx)
+        env_file_name = hio.add_suffix_to_filename(env_file_name, idx)
     # Get file path.
     amp_path = hgit.get_amp_abs_path()
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)

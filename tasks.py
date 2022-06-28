@@ -83,7 +83,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     print_setup,
     print_tasks,
     pytest_clean,
-    pytest_compare,
+    pytest_compare_logs,
     pytest_find_unused_goldens,
     pytest_rename_test,
     pytest_repro,

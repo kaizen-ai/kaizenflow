@@ -23,6 +23,7 @@ import core.config as cconfig
 import core.finance as cofinanc
 import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
+import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hlogging as hloggin
 import helpers.hparser as hparser
@@ -109,6 +110,9 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     # Prepare book-keeping files.
     file_name = os.path.join(experiment_result_dir, "config.pkl")
     _LOG.debug("Saving '%s'", file_name)
+    if "dag_runner" in config:
+        if not hintros.is_pickleable(config["dag_runner"]):
+            config["dag_runner"] = None
     hpickle.to_pickle(config, file_name)
     #
     file_name = os.path.join(experiment_result_dir, "config.txt")
