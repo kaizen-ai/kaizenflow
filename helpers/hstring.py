@@ -4,8 +4,9 @@ Import as:
 import helpers.hstring as hstring
 """
 import logging
+import re
 import tempfile
-from typing import Optional, cast
+from typing import List, Optional, cast
 
 import helpers.hio as hio
 import helpers.hsystem as hsystem
@@ -15,13 +16,13 @@ _LOG = logging.getLogger(__name__)
 
 def remove_suffix(string: str, suffix: str, assert_on_error: bool = True) -> str:
     if string.endswith(suffix):
-        res = string[:-len(suffix)]
+        res = string[: -len(suffix)]
     else:
         if assert_on_error:
-            raise RuntimeError(f"string='{string}' doesn't end with suffix='{suffix}'")
-        else:
-            res = string
-    return
+            raise RuntimeError(
+                f"string='{string}' doesn't end with suffix='{suffix}'"
+            )
+    return res
 
 
 def diff_strings(
@@ -52,3 +53,26 @@ def diff_strings(
     # string.
     txt = cast(str, txt)
     return txt
+
+
+def get_docstring_line_indices(lines: List[str]) -> List[int]:
+    """
+    Get indices of lines of code that are inside (doc)strings.
+
+    :param lines: the code lines to check
+    :return: the indices of docstrings
+    """
+    docstring_line_indices = []
+    quotes = {'"""': False, "'''": False}
+    for i, line in enumerate(lines):
+        # Determine if the current line is inside a (doc)string.
+        for quote in quotes:
+            quotes_matched = re.findall(quote, line)
+            for q in quotes_matched:
+                # Switch the docstring flag.
+                # pylint: disable=modified-iterating-dict
+                quotes[q] = not quotes[q]
+        if any(quotes.values()):
+            # Store the index if the quotes have been opened but not closed yet.
+            docstring_line_indices.append(i)
+    return docstring_line_indices
