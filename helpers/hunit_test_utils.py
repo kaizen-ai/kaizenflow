@@ -12,6 +12,7 @@ from typing import Dict, List, Tuple
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hstring as hstring
 import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
@@ -167,32 +168,6 @@ class UnitTestRenamer:
         return config
 
     @staticmethod
-    def _is_docstring(
-        line: str,
-        quotes_count: Dict[str, int],
-    ) -> Tuple[bool, Dict[str, int]]:
-        """
-        Check if the line is inside of the docstring.
-
-        :param line: the line to check
-        :param quotes_count: the count of the quotes of two types
-        :return:
-            - whether the line is inside the docstring or not
-            - the updated counter of the quotes
-        """
-        # Determine the current line's status: in a multi-line string
-        # or not.
-        for quotes in quotes_count:
-            if line.count(quotes) == 1:
-                quotes_count[quotes] += 1
-        # The line is in a string if the quotes have been opened but not
-        # closed yet.
-        in_docstring = any(
-            (quote_count % 2) == 1 for quote_count in quotes_count.values()
-        )
-        return in_docstring, quotes_count
-
-    @staticmethod
     def _rename_directory(outcome_path_old: str, outcome_path_new: str) -> None:
         """
         Rename the outcomes directory and add it to git.
@@ -278,11 +253,10 @@ class UnitTestRenamer:
           of substitutions replaced
         """
         lines = content.split("\n")
-        quotes_count = {"'''": 0, '"""': 0}
+        docstring_line_indices = hstring.get_docstring_line_indices(lines)
         for ind, line in enumerate(lines):
-            # Check if the line is inside of the docstring.
-            in_docstring, quotes_count = self._is_docstring(line, quotes_count)
-            if not in_docstring:
+            # Skip if the line is inside a docstring.
+            if ind not in docstring_line_indices:
                 # Rename the class.
                 new_line, num_replaced = re.subn(
                     rf"class {self.cfg['old_class']}\(",
@@ -312,13 +286,12 @@ class UnitTestRenamer:
         num_replaced = 0
         class_pattern = rf"class {self.cfg['old_class']}\("
         method_pattern = rf"def {self.cfg['old_method']}\("
-        quotes_count = {"'''": 0, '"""': 0}
+        docstring_line_indices = hstring.get_docstring_line_indices(lines)
         for ind, line in enumerate(lines):
-            # Check if the line is inside of the docstring.
-            in_docstring, quotes_count = self._is_docstring(line, quotes_count)
             # Iterate over the lines of the file to find the specific method of the
             # class that should be renamed.
-            if class_found and not in_docstring:
+            # Skip if the line is inside a docstring.
+            if class_found and ind not in docstring_line_indices:
                 if line.startswith("class"):
                     # Break if the next class started and the method was not found.
                     break
