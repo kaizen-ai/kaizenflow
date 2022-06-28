@@ -20,7 +20,6 @@ import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlist as hlist
-import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
@@ -593,6 +592,10 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     Target S3 dir is constructed from linux user and Git branch name, e.g.
     `s3://...-html/html_coverage/grisha_CmTask1047_fix_tests`.
     """
+    # TODO(Nikola): Temporary workaround to stop fail on `i docker_pull`.
+    #  See CmTask #2234.
+    import helpers.hs3 as hs3
+
     # Build the dir name from user and branch name.
     user = hsystem.get_user_name()
     branch_name = hgit.get_branch_name()
