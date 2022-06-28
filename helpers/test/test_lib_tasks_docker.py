@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 class Test_generate_compose_file1(hunitest.TestCase):
     def helper(
         self,
-        stage: str = "dev",
+        stage: str = "prod",
         use_privileged_mode: bool = False,
         use_sibling_container: bool = False,
         shared_data_dirs: Optional[Dict[str, str]] = None,
@@ -67,7 +67,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
         self.helper(use_main_network=True)
 
     def test4(self) -> None:
-        self.helper(stage="prod")
+        self.helper(stage="dev")
 
 
 # #############################################################################
