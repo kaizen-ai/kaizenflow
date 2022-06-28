@@ -172,7 +172,7 @@ class TestImDbHelper(hsqltest.TestDbHelper, abc.ABC):
         docker_compose_path = os.path.join(
             dir_name, "im_v2/devops/compose/docker-compose.yml"
         )
-        docker_compose_path_idx: str = hio.add_idx_to_filename(
+        docker_compose_path_idx: str = hio.add_suffix_to_filename(
             docker_compose_path, idx
         )
         return docker_compose_path_idx

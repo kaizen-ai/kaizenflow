@@ -10,6 +10,7 @@ import inspect
 import logging
 import re
 import sys
+import types
 from typing import Any, Callable, List, Optional, cast
 
 import helpers.hdbg as hdbg
@@ -44,6 +45,49 @@ def get_function_name(count: int = 0) -> str:
         ptr = ptr.f_back  # type: ignore
     func_name = ptr.f_code.co_name  # type: ignore
     return func_name
+
+
+# From https://stackoverflow.com/questions/53225
+def is_bound_to_object(method: object) -> bool:
+    """
+    Return whether a method is bound to an object.
+    """
+    _LOG.debug("method=%s", method)
+    if not hasattr(method, "__self__"):
+        _LOG.debug("hasattr(im_self)=False")
+        val = False
+    else:
+        # val = method.im_self is not None
+        val = True
+    return val
+
+
+# From https://stackoverflow.com/questions/23852423
+def is_lambda_function(method: object) -> bool:
+    _LOG.debug("type(method)=%s", str(type(method)))
+    return isinstance(method, types.LambdaType) and method.__name__ == "<lambda>"
+
+
+def is_pickleable(obj: object) -> bool:
+    """
+    Return if an object is a bound method.
+    """
+    _LOG.debug("obj=%s", obj)
+    _LOG.debug("callable=%s", callable(obj))
+    if not callable:
+        return True
+    #
+    is_bound = is_bound_to_object(obj)
+    _LOG.debug("is_bound=%s", is_bound)
+    if is_bound:
+        return False
+    #
+    is_lambda = is_lambda_function(obj)
+    _LOG.debug("is_lambda=%s", is_lambda)
+    if is_lambda:
+        return False
+    #
+    return True
 
 
 # #############################################################################
@@ -130,13 +174,15 @@ def get_methods(obj: Any, access: str = "all") -> List[str]:
 # #############################################################################
 
 
-def print_stacktrace() -> None:
+def stacktrace_to_str() -> str:
     """
     Print the stack trace.
     """
     import traceback
 
-    traceback.print_stack()
+    txt = traceback.format_stack()
+    txt = "".join(txt)
+    return txt
 
 
 # #############################################################################

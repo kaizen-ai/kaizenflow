@@ -15,10 +15,15 @@ import helpers.hsql as hsql
 import market_data as mdata
 import oms.broker as ombroker
 import oms.broker_example as obroexam
-import oms.portfolio as omportfo
 import oms.oms_db as oomsdb
+import oms.portfolio as omportfo
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# DataFramePortfolio
+# #############################################################################
 
 
 def get_DataFramePortfolio_example1(
@@ -32,17 +37,17 @@ def get_DataFramePortfolio_example1(
 ) -> omportfo.DataFramePortfolio:
     """
     Contain:
-    - a SimulatedBroker (i.e., a broker that executes the orders immediately)
-    - a DataFramePortfolio (i.e., a portfolio backed by a dataframe to keep
+    - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
       track of the state)
+    - a `SimulatedBroker` (i.e., a broker that executes the orders immediately)
     """
-    # Build SimulatedBroker.
+    # Build a SimulatedBroker.
     broker = obroexam.get_SimulatedBroker_example1(
         event_loop,
         market_data=market_data,
         timestamp_col=timestamp_col,
     )
-    # Build DataFramePortfolio.
+    # Build a DataFramePortfolio.
     mark_to_market_col = mark_to_market_col
     initial_cash = 1e6
     portfolio = omportfo.DataFramePortfolio.from_cash(
@@ -69,9 +74,9 @@ def get_DataFramePortfolio_example2(
 ) -> omportfo.DataFramePortfolio:
     """
     Contain:
-    - a SimulatedBroker (i.e., a broker that executes the orders immediately)
-    - a DataFramePortfolio (i.e., a portfolio backed by a dataframe to keep
+    - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
       track of the state)
+    - a `SimulatedBroker` (i.e., a broker that executes the orders immediately)
 
     exposing all the parameters for creating these objects.
     """
@@ -93,7 +98,9 @@ def get_DataFramePortfolio_example2(
     return portfolio
 
 
-# #################################################################################
+# #############################################################################
+# DatabasePortfolio
+# #############################################################################
 
 
 def get_DatabasePortfolio_example1(
@@ -111,8 +118,8 @@ def get_DatabasePortfolio_example1(
 ) -> omportfo.DatabasePortfolio:
     """
     Contain:
-    - a DatabaseBroker
-    - a DatabasePortfolio
+    - a `DatabasePortfolio`
+    - a `DatabaseBroker`
     """
     # Build DatabaseBroker.
     broker = obroexam.get_DatabaseBroker_example1(
@@ -151,8 +158,8 @@ def get_DatabasePortfolio_example2(
 ) -> omportfo.DatabasePortfolio:
     """
     Contain:
-    - a DatabaseBroker
-    - a DatabasePortfolio, which is initialized from the database.
+    - a `DatabasePortfolio`, which is initialized from the database.
+    - a `DatabaseBroker`
     """
     # Build DatabaseBroker.
     broker = obroexam.get_DatabaseBroker_example1(

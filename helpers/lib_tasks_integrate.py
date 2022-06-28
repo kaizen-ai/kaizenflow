@@ -129,6 +129,11 @@ _LOG = logging.getLogger(__name__)
 #   ```
 #   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
 #   ```
+#
+# - Copy a dir
+#   ```
+#   > rsync -r /Users/saggese/src/cmamp1/research_amp/ /Users/saggese/src/amp1/research_amp
+#   ```
 
 # ## Double check the integration
 #
