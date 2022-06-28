@@ -496,7 +496,7 @@ def log_frame(
 #  of each module independently.
 def install_log_verb_debug(logger: logging.Logger, *, verbose: bool) -> Callable:
     """
-    Create in a module a _LOG.verb_debug() that can be disabled in a
+    Create a _LOG.verb_debug() in a module that can be disabled in a
     centralized way.
 
     This is useful when we want to have an higher-level of verbose debugging that

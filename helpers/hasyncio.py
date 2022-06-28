@@ -168,9 +168,9 @@ async def poll(
     tag: Optional[str] = None,
 ) -> Tuple[int, Any]:
     """
-    Call `polling_func` every `sleep_in_secs` until `polling_func` returns
-    success or there is a timeout, if no success is achieved within
-    `timeout_in_secs`.
+    Call `polling_func` every `sleep_in_secs` secs until `polling_func()`
+    returns success or there is a timeout. A timeout happens if no success is
+    achieved within `timeout_in_secs` secs.
 
     :param polling_func: function returning a tuple (success, value)
     :return:
@@ -295,10 +295,12 @@ async def sleep(
 # //////////////////////////////////////////////////////////////////////////////////
 
 
-def get_seconds_to_align_to_grid(grid_time_in_secs: float, get_wall_clock_time: hdateti.GetWallClockTime) -> Tuple[pd.Timestamp, int]:
+def get_seconds_to_align_to_grid(
+    grid_time_in_secs: float, get_wall_clock_time: hdateti.GetWallClockTime
+) -> Tuple[pd.Timestamp, int]:
     """
-    Given the current time return the amount of seconds to wait to align on a grid
-    with period `grid_time_in_secs`.
+    Given the current time return the amount of seconds to wait to align on a
+    grid with period `grid_time_in_secs`.
 
     E.g., current_time=9:31:02am, grid_time_in_secs=120 -> return 58
     """
