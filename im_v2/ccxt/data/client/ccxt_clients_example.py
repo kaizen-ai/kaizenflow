@@ -131,3 +131,36 @@ def get_CcxtHistoricalPqByTileClient_example2(
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client
+
+
+def get_CcxtHistoricalPqByTileClient_example3(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+    """
+    Get `CcxtHistoricalPqByTileClient` object for the prod model
+    reading actual historical data, which is stored on S3.
+
+    Client is initialized to process CCXT data for:
+    - universe version: "v6"
+    - contract type: "futures"
+    - data snapshot: "20220620"
+    """
+    universe_version = "v6"
+    aws_profile = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
+    partition_mode = "by_year_month"
+    dataset = "ohlcv"
+    contract_type = "futures"
+    data_snapshot = "20220620"
+    ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
+        universe_version,
+        resample_1min,
+        root_dir,
+        partition_mode,
+        dataset,
+        contract_type,
+        data_snapshot=data_snapshot,
+        aws_profile=aws_profile,
+    )
+    return ccxt_parquet_client

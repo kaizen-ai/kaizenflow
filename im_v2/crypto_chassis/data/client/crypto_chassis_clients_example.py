@@ -86,11 +86,11 @@ def get_CryptoChassisHistoricalPqByTileClient_example3(
     reading actual historical data, which is stored on S3.
 
     Client is initialized to process CryptoChassis data for:
-    - universe version: "v2"
+    - universe version: "v3"
     - contract type: "futures"
     - data snapshot: "20220620"
     """
-    universe_version = "v2"
+    universe_version = "v3"
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
