@@ -152,7 +152,7 @@ def _parse_linter_output(txt: str) -> str:
             _LOG.debug("  -> stage='%s' (%s)", stage, result)
             continue
         # core/dataflow/nodes.py:601:9: F821 undefined name '_check_col_names'
-        m = re.search(r"^(\S+):(\d+)[:\d+:]\s+(.*)$", line)
+        m = re.search(r"^([a-zA-Z]\S+):(\d+)[:\d+:]\s+(.*)$", line)
         if m:
             _LOG.debug("  -> Found a lint to parse: '%s'", line)
             hdbg.dassert_is_not(stage, None)
