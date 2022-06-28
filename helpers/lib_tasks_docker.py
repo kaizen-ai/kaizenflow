@@ -314,7 +314,7 @@ def docker_login(ctx):  # type: ignore
 #  use_sibling_container -> use_docker_containers_containers
 
 
-def _get_linter_service() -> str:
+def _get_linter_service(stage: str) -> str:
     """
     Get the linter service specification for the `docker-compose.yml` file.
 
@@ -333,18 +333,32 @@ def _get_linter_service() -> str:
       extends:
         base_app
       volumes:
-        - {repo_root}:/src
+        - {repo_root}:/src"""
+    if stage != "prod":
+        # When we run a development linter container, we need to mount the
+        # the linter repo under `/app`. For prod container instead we copy / freeze
+        # the repo code in `/app`, so we should not mount it.
+        if superproject_path:
+            # When running in a Git submodule we need to go one extra level up.
+            linter_spec_txt += "\n        - ../../../:/app"
+        else:
+            linter_spec_txt += "\n        - ../../:/app"
+    linter_spec_txt += f"""
       working_dir: {work_dir}
       environment:
         - MYPYPATH
+    """
+    if stage == "prod":
+        linter_spec_txt = f"""
         # Use the `repo_config.py` inside the dev_tools container instead of
         # the one in the calling repo.
         - AM_REPO_CONFIG_PATH=/app/repo_config.py
-    """
+        """
     return linter_spec_txt
 
 
 def _generate_docker_compose_file(
+    stage: str,
     use_privileged_mode: bool,
     use_sibling_container: bool,
     shared_data_dirs: Optional[Dict[str, str]],
@@ -552,7 +566,7 @@ def _generate_docker_compose_file(
     #
     if True:
         # Specify the linter service.
-        txt_tmp = _get_linter_service()
+        txt_tmp = _get_linter_service(stage)
         # Append at the level of `services`.
         indent_level = 1
         append(txt_tmp, indent_level)
@@ -627,6 +641,7 @@ def get_base_docker_compose_path() -> str:
 
 
 def _get_docker_compose_files(
+    stage: str,
     generate_docker_compose_file: bool,
     service_name: str,
     extra_docker_compose_files: Optional[List[str]],
@@ -679,6 +694,7 @@ def _get_docker_compose_files(
     #
     if generate_docker_compose_file:
         _generate_docker_compose_file(
+            stage,
             enable_privileged_mode,
             use_docker_sibling_containers,
             get_shared_data_dirs,
@@ -996,6 +1012,7 @@ def _get_docker_base_cmd(
         docker-compose"""
     )
     docker_compose_files = _get_docker_compose_files(
+        stage,
         generate_docker_compose_file, service_name, extra_docker_compose_files
     )
     file_opts = " ".join([f"--file {dcf}" for dcf in docker_compose_files])
