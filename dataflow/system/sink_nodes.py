@@ -6,7 +6,9 @@ import dataflow.system.sink_nodes as dtfsysinod
 
 
 import collections
+import datetime
 import logging
+import os
 from typing import Any, Dict, Optional
 
 import pandas as pd
@@ -120,3 +122,92 @@ class ProcessForecasts(dtfcore.FitPredictNode):
             log_dir,
             target_gmv=target_gmv,
         )
+
+
+# #############################################################################
+# Dict builders.
+# #############################################################################
+
+
+def get_process_forecasts_dict_example1(
+    portfolio: omportfo.Portfolio,
+    prediction_col: str,
+    volatility_col: str,
+    price_col: str,
+    spread_col: Optional[str],
+    *,
+    bulk_frac_to_remove: float = 0.0,
+    target_gmv: float = 1e5,
+    log_dir: Optional[str] = None,
+) -> Dict[str, Any]:
+    order_type = "price@twap"
+    if log_dir is not None:
+        evaluate_forecasts_config_dict = {
+            "log_dir": os.path.join(log_dir, "evaluate_forecasts"),
+            "bulk_frac_to_remove": bulk_frac_to_remove,
+            "target_gmv": target_gmv,
+            "price_col": price_col,
+        }
+    else:
+        evaluate_forecasts_config_dict = None
+    process_forecasts_config_dict = {
+        "order_config": {
+            "order_type": order_type,
+            "order_duration": 5,
+        },
+        "optimizer_config": {
+            "backend": "pomo",
+            "bulk_frac_to_remove": bulk_frac_to_remove,
+            "bulk_fill_method": "zero",
+            "target_gmv": target_gmv,
+        },
+        # TODO(gp): Use datetime.time()
+        "ath_start_time": pd.Timestamp(
+            "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        ).time(),
+        "trading_start_time": pd.Timestamp(
+            "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        ).time(),
+        "ath_end_time": pd.Timestamp(
+            "2000-01-01 16:40:00-05:00", tz="America/New_York"
+        ).time(),
+        "trading_end_time": pd.Timestamp(
+            "2000-01-01 16:40:00-05:00", tz="America/New_York"
+        ).time(),
+        "execution_mode": "real_time",
+        "log_dir": log_dir,
+    }
+    process_forecasts_dict = {
+        "prediction_col": prediction_col,
+        "volatility_col": volatility_col,
+        "spread_col": spread_col,
+        "portfolio": portfolio,
+        "process_forecasts_config": process_forecasts_config_dict,
+        "evaluate_forecasts_config": evaluate_forecasts_config_dict,
+    }
+    return process_forecasts_dict
+
+
+def get_process_forecasts_dict_example2(
+    portfolio: omportfo.Portfolio,
+) -> Dict[str, Any]:
+    prediction_col = "prediction"
+    volatility_col = "vwap.ret_0.vol"
+    price_col = "vwap"
+    spread_col = "pct_bar_spread"
+    bulk_frac_to_remove = 0.0
+    target_gmv = 1e5
+    # log_dir = None
+    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    #
+    process_forecasts_dict = get_process_forecasts_dict_example1(
+        portfolio,
+        prediction_col,
+        volatility_col,
+        price_col,
+        spread_col,
+        bulk_frac_to_remove=bulk_frac_to_remove,
+        target_gmv=target_gmv,
+        log_dir=log_dir
+    )
+    return process_forecasts_dict

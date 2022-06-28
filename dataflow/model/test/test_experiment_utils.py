@@ -5,7 +5,7 @@ import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.model.experiment_utils as dtfmoexuti
-import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
+import dataflow.pipelines.example1.example1_pipeline as dtfpexexpi
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -15,7 +15,8 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider calling that code directly if it doesn't violate the
 #  dependencies.
 
-# TODO(gp): Update this to the new style.
+# TODO(gp): Port to new System style (see E8_config.py).
+
 
 def _build_base_config() -> cconfig.Config:
     wrapper = cconfig.Config()
@@ -99,7 +100,7 @@ def build_tile_configs(
 
 class Test_get_configs_from_command_line1(hunitest.TestCase):
     """
-    Test the configs for backtest.
+    Test building (but not running) the configs for backtest.
     """
 
     def test1(self) -> None:

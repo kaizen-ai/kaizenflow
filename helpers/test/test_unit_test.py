@@ -166,14 +166,14 @@ class TestTestCase1(hunitest.TestCase):
 
     def test_assert_not_equal1(self) -> None:
         actual = "hello world"
-        expected = "hello world "
+        expected = "hello world w"
         tmp_dir = tempfile.mkdtemp()
         with self.assertRaises(RuntimeError):
             self.assert_equal(actual, expected, dst_dir=tmp_dir)
 
     def test_assert_not_equal2(self) -> None:
         actual = "hello world"
-        expected = "hello world "
+        expected = "hello world w"
         # Create a dir like `/var/tmp/tmph_kun9xq`.
         tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
@@ -323,7 +323,8 @@ EXPECTED VARIABLE: Test_AssertEqual1.test_not_equal1
 exp = r"""
 completed failure Lint    Run_linter
 completed       success Lint    Fast_tests
-completed       success Lint    Slow_tests"""'''
+completed       success Lint    Slow_tests
+"""'''
         if act != exp:
             hio.to_file("act.txt", act)
             hio.to_file("exp.txt", exp)

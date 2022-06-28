@@ -4,7 +4,7 @@ Import as:
 import core.finance.volatility as cfinvola
 """
 import logging
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -12,6 +12,53 @@ import pandas as pd
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
+
+
+def estimate_squared_volatility(
+    df: pd.DataFrame,
+    estimators: List[str],
+    *,
+    open_col: Optional[str] = None,
+    high_col: Optional[str] = None,
+    low_col: Optional[str] = None,
+    close_col: Optional[str] = None,
+    apply_log: bool = True,
+    take_square_root: bool = False,
+) -> pd.DataFrame:
+    hdbg.dassert_container_type(estimators, container_type=list, elem_type=str)
+    hdbg.dassert_lt(0, len(estimators))
+    vols = []
+    for vol_name in estimators:
+        if vol_name == "close":
+            vol = compute_close_var(
+                df,
+                close_col,
+                apply_log,
+                take_square_root,
+            )
+        elif vol_name == "parkinson":
+            vol = compute_parkinson_var(
+                df,
+                high_col,
+                low_col,
+                apply_log,
+                take_square_root,
+            )
+        elif vol_name == "garman_klass":
+            vol = compute_garman_klass_var(
+                df,
+                open_col,
+                high_col,
+                low_col,
+                close_col,
+                apply_log,
+                take_square_root,
+            )
+        else:
+            raise ValueError("Unsupported vol `%s`", vol_name)
+        vols.append(vol)
+    vols = pd.concat(vols, axis=1)
+    return vols
 
 
 def compute_close_var(
