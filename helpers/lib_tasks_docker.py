@@ -349,8 +349,8 @@ def _get_linter_service(stage: str) -> str:
         - MYPYPATH
     """
     if stage == "prod":
-        linter_spec_txt += """
-        # Use the `repo_config.py` inside the dev_tools container instead of
+        linter_spec_txt += """\
+    # Use the `repo_config.py` inside the dev_tools container instead of
         # the one in the calling repo.
         - AM_REPO_CONFIG_PATH=/app/repo_config.py
         """

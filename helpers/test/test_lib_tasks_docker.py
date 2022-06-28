@@ -30,6 +30,7 @@ class Test_generate_compose_file1(hunitest.TestCase):
         txt = []
         #
         params = [
+            "stage",
             "use_privileged_mode",
             "use_sibling_container",
             "shared_data_dirs",
