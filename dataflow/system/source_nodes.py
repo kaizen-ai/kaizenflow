@@ -424,6 +424,11 @@ class RealTimeDataSource(dtfcore.DataSource):
         :param asset_id_col: the name of the column from `market_data`
             containing the asset ids
         """
+        _LOG.debug(
+            hprint.to_str(
+                "nid market_data timedelta asset_id_col, multiindex_output"
+            )
+        )
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.MarketData)
         self._market_data = market_data
@@ -450,6 +455,7 @@ class RealTimeDataSource(dtfcore.DataSource):
     def _get_data(self) -> None:
         # TODO(gp): This approach of communicating params through the state
         #  makes the code difficult to understand.
+        _LOG.debug("timedelta=%s", self._timedelta)
         self.df = self._market_data.get_data_for_last_period(self._timedelta)
         if self._multiindex_output:
             self.df = _convert_to_multiindex(self.df, self._asset_id_col)
@@ -487,6 +493,11 @@ class HistoricalDataSource(dtfcore.DataSource):
         """
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.MarketData)
+        _LOG.debug(
+            hprint.to_str(
+                "market_data asset_id_col ts_col_name multiindex_output"
+            )
+        )
         self._market_data = market_data
         self._asset_id_col = asset_id_col
         self._ts_col_name = ts_col_name
