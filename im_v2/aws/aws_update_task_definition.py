@@ -1,7 +1,18 @@
-"""
+#!/usr/bin/env python
+r"""
+Create the new revision of ECS task definition and point 
+Image URL to the new candidate image.
+
+Use as:
+
+# To create the new revision of `cmamp-test` task definition with `13538588e` image tag:
+> aws_update_task_definition.py \
+    --task_definition "cmamp-test" \
+    --image_tag "13538588e"
+
 Import as:
 
-import helpers.hboto3 as hboto3
+import im_v2.aws.aws_update_task_definition as iaautd
 """
 
 import argparse
