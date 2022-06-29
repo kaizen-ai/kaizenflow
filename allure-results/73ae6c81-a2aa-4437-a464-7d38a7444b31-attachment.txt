@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:38:54 - [36mINFO [0m hunit_test.py setUp:912            17:38:54 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestDataFramePortfolio2.test_initialization_with_holdings1
+################################################################################
+[32mINFO    [0m market_data.abstract_market_data:abstract_market_data.py:429 17:38:54 - [36mINFO [0m abstract_market_data.py get_last_price:429             17:38:54 - [36mINFO [0m abstract_market_data.py get_last_price:429             last_end_time=2000-01-01 09:35:00-05:00

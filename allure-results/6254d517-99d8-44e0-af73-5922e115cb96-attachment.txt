@@ -1,0 +1,2 @@
+/app/helpers/hcache.py:913: JobLibCollisionWarning: Possible name collisions between functions 'add' (/app/helpers/test/test_cache.py:394) and 'add' (/app/helpers/test/test_cache.py:411)
+  obj = self._disk_cached_func(*args, **kwargs)

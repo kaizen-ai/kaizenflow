@@ -1,0 +1,7 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:57 - [36mINFO [0m hunit_test.py setUp:912            17:37:57 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestCryptoChassisExtractor1.test_download_market_depth_invalid_input3
+################################################################################
+[32mINFO    [0m im_v2.crypto_chassis.data.extract.extractor:extractor.py:161 17:37:57 - [36mINFO [0m extractor.py _download_market_depth:161                17:37:57 - [36mINFO [0m extractor.py _download_market_depth:161                https://api.cryptochassis.com/v1/market-depth/binance/btc-busdt?startTime=2022-01-09T00:00:00Z&depth=1
+[33mWARNING [0m im_v2.crypto_chassis.data.extract.extractor:extractor.py:168 17:37:57 - [33mWARN [0m extractor.py _download_market_depth:168                17:37:57 - [33mWARN [0m extractor.py _download_market_depth:168                No data at https://api.cryptochassis.com/v1/market-depth/binance/btc-busdt?startTime=2022-01-09T00:00:00Z&depth=1
+[33mWARNING [0m im_v2.crypto_chassis.data.extract.extractor:extractor.py:177 17:37:57 - [33mWARN [0m extractor.py _download_market_depth:177                17:37:57 - [33mWARN [0m extractor.py _download_market_depth:177                No data found for given query parameters.

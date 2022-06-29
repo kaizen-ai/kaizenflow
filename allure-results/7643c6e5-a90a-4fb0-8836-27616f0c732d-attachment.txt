@@ -1,0 +1,4 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:32:49 - [36mINFO [0m hunit_test.py setUp:912            17:32:49 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestCheckString1.test_check_string_not_equal2
+################################################################################

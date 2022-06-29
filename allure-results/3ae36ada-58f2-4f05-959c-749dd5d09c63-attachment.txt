@@ -1,0 +1,6 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:30:55 - [36mINFO [0m hunit_test.py setUp:912            17:30:55 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_Example1_Time_ForecastSystem1.test1
+################################################################################
+[33mWARNING [0m dataflow.core.nodes.transformers:transformers.py:715 17:30:56 - [33mWARN [0m Task-3 transformers.py _apply_func_to_data:715         17:30:56 - [33mWARN [0m Task-3 transformers.py _apply_func_to_data:715         Exception encountered!
+[33mWARNING [0m dataflow.core.nodes.transformers:transformers.py:663 17:30:56 - [33mWARN [0m Task-3 transformers.py _transform:663                  17:30:56 - [33mWARN [0m Task-3 transformers.py _transform:663                  No output for key=101, imputing NaNs

@@ -1,0 +1,41 @@
+17:44:08 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestCachePerformance.test_performance_dataframe
+################################################################################
+17:44:08 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem.TestCachePerformance::test_performance_dataframe', size=nan
+17:44:08 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem.TestCachePerformance::test_performance_dataframe'
+17:44:08 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/mnt/tmpfs/tmp.cache.mem.TestCachePerformance::test_performance_dataframe' ...
+17:44:08 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem.TestCachePerformance::test_performance_dataframe', size=nan
+17:44:08 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global disk' cache: path='/app/tmp.cache.disk.TestCachePerformance::test_performance_dataframe', size=nan
+17:44:08 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global disk' cache '/app/tmp.cache.disk.TestCachePerformance::test_performance_dataframe'
+17:44:08 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/app/tmp.cache.disk.TestCachePerformance::test_performance_dataframe' ...
+17:44:08 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global disk' cache: path='/app/tmp.cache.disk.TestCachePerformance::test_performance_dataframe', size=nan
+17:44:08 - [33mWARN [0m hcache.py _execute_func_from_mem_cache:954             Skipping disk cache
+17:44:08 - [36mINFO [0m htimer.py dtimer_start:133                             Executing intrinsic function ...
+17:44:08 - [36mINFO [0m htimer.py dtimer_stop:150                              Executing intrinsic function done (0.012 s)
+17:44:08 - [36mINFO [0m htimer.py dtimer_start:133                             Loading cached version from memory ...
+17:44:08 - [36mINFO [0m htimer.py dtimer_stop:150                              Loading cached version from memory done (0.001 s)
+17:44:08 - [33mWARN [0m hcache.py _execute_func:998                            Skipping memory cache
+17:44:08 - [36mINFO [0m htimer.py dtimer_start:133                             Updating cached version on disk ...
+17:44:08 - [36mINFO [0m htimer.py dtimer_stop:150                              Updating cached version on disk done (0.014 s)
+17:44:08 - [33mWARN [0m hcache.py _execute_func:998                            Skipping memory cache
+17:44:08 - [36mINFO [0m htimer.py dtimer_start:133                             Loading cached version from disk ...
+17:44:08 - [36mINFO [0m htimer.py dtimer_stop:150                              Loading cached version from disk done (0.001 s)
+17:44:08 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem.TestCachePerformance::test_performance_dataframe', size=40.0 KB
+17:44:08 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem.TestCachePerformance::test_performance_dataframe'
+17:44:08 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/mnt/tmpfs/tmp.cache.mem.TestCachePerformance::test_performance_dataframe' ...
+17:44:08 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem.TestCachePerformance::test_performance_dataframe', size=nan
+17:44:09 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global disk' cache: path='/app/tmp.cache.disk.TestCachePerformance::test_performance_dataframe', size=40.0 KB
+17:44:09 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global disk' cache '/app/tmp.cache.disk.TestCachePerformance::test_performance_dataframe'
+17:44:09 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/app/tmp.cache.disk.TestCachePerformance::test_performance_dataframe' ...
+17:44:09 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global disk' cache: path='/app/tmp.cache.disk.TestCachePerformance::test_performance_dataframe', size=nan
+testing pandas dataframe, with sample size (100, 4)
+no cache run time=0.010074172168970108
+empty memory cache run time=0.01875361707061529
+empty memory cache overhead=0.008679444901645184
+hot memory cache run time=0.005465473048388958
+hot memory cache benefit=0.00460869912058115
+empty disk cache run time=0.019097983837127686
+empty disk cache overhead=0.009023811668157578
+hot disk cache run time=0.005692495033144951
+hot disk cache benefit=0.004381677135825157

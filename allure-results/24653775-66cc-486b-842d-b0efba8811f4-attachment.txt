@@ -1,0 +1,12 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:36:32 - [36mINFO [0m hunit_test.py setUp:912            17:36:32 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestTalosSqlRealTimeImClient1.test_read_data6
+################################################################################
+[33mWARNING [0m helpers.hdbg:hdbg.py:131 17:36:32 - [33mWARN [0m hdbg.py _dfatal:131                17:36:32 - [33mWARN [0m hdbg.py _dfatal:131                * Failed assertion *
+val1 - val2=['unsupported_exchange::unsupported_currency']
+val2 - val1=[]
+val1=['unsupported_exchange::unsupported_currency']
+set eq
+val2=[]
+Not all the requested symbols were retrieved
+Continuing as per user request with only_warning=True

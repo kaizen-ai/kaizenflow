@@ -1,0 +1,18 @@
+[32mINFO    [0m helpers.hsql_test:hsql_test.py:67 17:38:12 - [36mINFO [0m hsql_test.py setUpClass:67                             17:38:12 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:14 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:14 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:15 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:15 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:16 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:16 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:17 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:17 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:18 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:18 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:167 17:38:18 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          17:38:18 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 4 seconds)
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:38:18 - [36mINFO [0m hunit_test.py setUp:912            17:38:18 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestDatabaseBroker1.test1
+################################################################################
+[32mINFO    [0m helpers.hsql_test:hsql_test.py:105 17:38:19 - [36mINFO [0m hsql_test.py tearDownClass:105                         17:38:19 - [36mINFO [0m hsql_test.py tearDownClass:105                         
+################################################################################
+tearDown
+################################################################################

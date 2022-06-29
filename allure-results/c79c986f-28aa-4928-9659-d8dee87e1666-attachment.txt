@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:40:16 - [36mINFO [0m hunit_test.py setUp:912            17:40:16 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestForecastEvaluatorFromPrices1.test_log_portfolio_read_portfolio
+################################################################################
+[32mINFO    [0m dataflow.model.forecast_evaluator_from_prices:forecast_evaluator_from_prices.py:107 17:40:16 - [36mINFO [0m forecast_evaluator_from_prices.py read_portfolio:107   17:40:16 - [36mINFO [0m forecast_evaluator_from_prices.py read_portfolio:107   `file_name`=20220103_100000.csv

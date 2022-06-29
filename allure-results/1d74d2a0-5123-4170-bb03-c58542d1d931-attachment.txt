@@ -1,0 +1,10 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:45:48 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:45:48 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+Test_render_md3.test_render_plantuml4
+################################################################################
+[32mINFO    [0m documentation.scripts.render_md:render_md.py:138 17:45:48 @ 2022-06-28 01:44:12 - [36mINFO [0m render_md.py _render_plantuml_code:138 17:45:48 @ 2022-06-28 01:44:12 - [36mINFO [0m render_md.py _render_plantuml_code:138 Creating uml diagram from /tmp/out.1.puml source.
+[32mINFO    [0m documentation.scripts.render_md:render_md.py:139 17:45:48 @ 2022-06-28 01:44:12 - [36mINFO [0m render_md.py _render_plantuml_code:139 17:45:48 @ 2022-06-28 01:44:12 - [36mINFO [0m render_md.py _render_plantuml_code:139 Saving image to /app/documentation/scripts/test/outcomes/Test_render_md3.test_render_plantuml4/tmp.scratch/plantuml-images.
+[32mINFO    [0m documentation.scripts.render_md:render_md.py:140 17:45:48 @ 2022-06-28 01:44:12 - [36mINFO [0m render_md.py _render_plantuml_code:140 17:45:48 @ 2022-06-28 01:44:12 - [36mINFO [0m render_md.py _render_plantuml_code:140 > plantuml -tpng -o /app/documentation/scripts/test/outcomes/Test_render_md3.test_render_plantuml4/tmp.scratch/plantuml-images /tmp/out.1.puml
+[33mWARNING [0m helpers.hsystem:hsystem.py:218 17:45:48 @ 2022-06-28 01:44:12 - [33mWARN [0m hsystem.py _system:218           17:45:48 @ 2022-06-28 01:44:12 - [33mWARN [0m hsystem.py _system:218           Not executing cmd
+(plantuml -tpng -o /app/documentation/scripts/test/outcomes/Test_render_md3.test_render_plantuml4/tmp.scratch/plantuml-images /tmp/out.1.puml) 2>&1
+as per user request

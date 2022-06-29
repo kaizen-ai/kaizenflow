@@ -1,0 +1,21 @@
+[32mINFO    [0m helpers.hsql_test:hsql_test.py:67 17:38:47 - [36mINFO [0m hsql_test.py setUpClass:67                             17:38:47 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:49 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:49 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:50 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:50 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:51 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:51 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:52 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:52 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:38:53 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:38:53 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:167 17:38:53 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          17:38:53 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 4 seconds)
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:38:53 - [36mINFO [0m hunit_test.py setUp:912            17:38:53 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestOmsDbRestrictionsTable1.test_create_table1
+################################################################################
+[32mINFO    [0m oms.test.oms_db_helper:oms_db_helper.py:122 17:38:53 - [36mINFO [0m oms_db_helper.py _test_create_table_helper:122         17:38:53 - [36mINFO [0m oms_db_helper.py _test_create_table_helper:122         db_list=['oms_postgres_db_local', 'postgres', 'template0', 'template1']
+[32mINFO    [0m oms.test.oms_db_helper:oms_db_helper.py:127 17:38:53 - [36mINFO [0m oms_db_helper.py _test_create_table_helper:127         17:38:53 - [36mINFO [0m oms_db_helper.py _test_create_table_helper:127         get_table_names=[]
+[32mINFO    [0m oms.test.oms_db_helper:oms_db_helper.py:133 17:38:53 - [36mINFO [0m oms_db_helper.py _test_create_table_helper:133         17:38:53 - [36mINFO [0m oms_db_helper.py _test_create_table_helper:133         get_table_names=['restrictions']
+[32mINFO    [0m helpers.hsql_test:hsql_test.py:105 17:38:53 - [36mINFO [0m hsql_test.py tearDownClass:105                         17:38:53 - [36mINFO [0m hsql_test.py tearDownClass:105                         
+################################################################################
+tearDown
+################################################################################

@@ -1,0 +1,8 @@
+17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+Test_get_files_to_rename.test5
+################################################################################
+17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_rename:494 Found 2 files to rename
+17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_rename:496 Replacing:
+{'dir/Test.subdir/test2.py': 'dir/outcomes/Test.subdir/test2.py',
+ 'dir/subdir/test1.py': 'dir/outcomes/subdir/test1.py'}

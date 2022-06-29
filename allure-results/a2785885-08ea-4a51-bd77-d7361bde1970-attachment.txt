@@ -1,0 +1,12 @@
+17:40:25 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestCheckAndFilterMatchingColumns.test_check_and_filter_matching_columns4
+################################################################################
+17:40:25 - [33mWARN [0m hdbg.py _dfatal:131                * Failed assertion *
+val1 - val2=[]
+val2 - val1=['col2']
+val1=['col1', 'col3']
+set eq
+val2=['col1', 'col2', 'col3']
+Received columns do not match required columns.
+Continuing as per user request with only_warning=True

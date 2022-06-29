@@ -1,0 +1,19 @@
+17:39:01 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestDatabasePortfolio1.test2
+################################################################################
+17:39:01 - [36mINFO [0m Task-310 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:35:00-05:00
+17:39:01 - [36mINFO [0m Task-310 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:40:00-05:00
+17:39:01 - [36mINFO [0m hsql_test.py tearDownClass:105                         
+################################################################################
+tearDown
+################################################################################
+  ==> Container compose-oms_postgres3512-1  Stopping
+  ==> Container compose-oms_postgres3512-1  Stopping
+  ==> Container compose-oms_postgres3512-1  Stopped
+  ==> Container compose-oms_postgres3512-1  Removing
+  ==> Container compose-oms_postgres3512-1  Removed
+  ==> Volume compose_oms_postgres3512_data  Removing
+  ==> Network main_network  Removing
+  ==> Volume compose_oms_postgres3512_data  Removed
+  ==> Network main_network  Removed

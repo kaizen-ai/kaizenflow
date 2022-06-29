@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:40:53 - [36mINFO [0m hunit_test.py setUp:912            17:40:53 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestRunExperimentFail2.test_parallel1
+################################################################################
+[33mWARNING [0m app.dataflow.model.test.test_run_experiment:test_run_experiment.py:182 17:40:53 - [33mWARN [0m test_run_experiment.py test_parallel1:182              17:40:53 - [33mWARN [0m test_run_experiment.py test_parallel1:182              This command is supposed to fail

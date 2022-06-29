@@ -1,0 +1,5 @@
+17:46:56 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestGetConfigsFromBuilder1.test1
+################################################################################
+17:46:56 @ 2022-06-28 01:44:12 - [36mINFO [0m builder.py get_configs_from_builder:32 Executing function 'core.config.test.test_config_builders._build_test_configs()'

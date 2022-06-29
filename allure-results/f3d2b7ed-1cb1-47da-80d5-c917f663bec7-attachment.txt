@@ -1,0 +1,2 @@
+/venv/lib/python3.8/site-packages/numpy/lib/nanfunctions.py:1560: RuntimeWarning: All-NaN slice encountered
+  r, k = function_base._ureduce(a,

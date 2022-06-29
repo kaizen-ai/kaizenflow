@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:49 - [36mINFO [0m hunit_test.py setUp:912            17:37:49 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestRepoConfig_Amp.test_repo_name1
+################################################################################
+[32mINFO    [0m app.helpers.test.test_repo_config:test_repo_config.py:24 17:37:49 - [36mINFO [0m test_repo_config.py test_repo_name1:24                 17:37:49 - [36mINFO [0m test_repo_config.py test_repo_name1:24                 actual=//cmamp expected_repo_name=//amp

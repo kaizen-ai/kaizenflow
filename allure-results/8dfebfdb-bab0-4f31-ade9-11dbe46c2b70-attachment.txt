@@ -1,0 +1,9 @@
+17:32:49 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestCheckString1.test_check_string_not_equal1
+################################################################################
+17:32:49 - [31mERROR[0m hunit_test.py assert_equal:823                         
+================================================================================
+Test 'TestCheckString1.test_check_string_not_equal1' failed
+================================================================================
+17:32:49 - [36mINFO [0m hunit_test.py assert_equal:855                         Saved exp_var in tmp.exp_var.txt

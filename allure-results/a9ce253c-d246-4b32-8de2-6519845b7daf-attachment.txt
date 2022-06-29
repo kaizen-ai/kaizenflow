@@ -1,0 +1,20 @@
+17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+Test_parallel_execute3.test_parallel_loky2
+################################################################################
+17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:549  dry_run=False, num_threads='3', incremental=True, num_attempts=1, abort_on_error=True
+17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:557  Saving log info in '/app/helpers/test/outcomes/Test_parallel_execute3.test_parallel_loky2/tmp.scratch/log.txt'
+17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:558  Number of executing threads=3 (3)
+17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:563  Number of tasks=6
+17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m htqdm.py flush:42                num_threads=3 backend=loky:   0%|          | 0/6 [00:00<?, ?it/s]
+17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:604  Using 3 threads, backend='loky'
+17:44:20 @ 2022-06-28 01:44:12 - [36mINFO [0m htqdm.py flush:42                num_threads=3 backend=loky:   0%|          | 0/6 [00:01<?, ?it/s]
+################################################################################
+Workload
+################################################################################
+[Parallel(n_jobs=3)]: Using backend LokyBackend with 3 concurrent workers.
+[Parallel(n_jobs=3)]: Done   1 tasks      | elapsed:    1.4s
+[Parallel(n_jobs=3)]: Done   2 out of   6 | elapsed:    1.4s remaining:    2.8s
+[Parallel(n_jobs=3)]: Done   3 out of   6 | elapsed:    1.4s remaining:    1.4s
+[Parallel(n_jobs=3)]: Done   4 out of   6 | elapsed:    1.4s remaining:    0.7s
+[Parallel(n_jobs=3)]: Done   6 out of   6 | elapsed:    1.5s remaining:    0.0s

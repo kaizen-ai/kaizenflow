@@ -1,0 +1,13 @@
+17:47:23 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestDeepARGlobalModel.test_fit1
+################################################################################
+17:47:23 @ 2022-06-28 01:44:12 - [36mINFO [0m _base.py __call__:193            Start model training
+17:47:23 @ 2022-06-28 01:44:12 - [36mINFO [0m _base.py __call__:339            Epoch[0] Learning rate is 0.001
+17:47:23 @ 2022-06-28 01:44:12 - [36mINFO [0m _base.py loop:310                Number of parameters in DeepARTrainingNetwork: 24924
+17:47:24 @ 2022-06-28 01:44:12 - [36mINFO [0m _base.py loop:315                Epoch[0] Elapsed time 1.111 seconds
+17:47:24 @ 2022-06-28 01:44:12 - [36mINFO [0m _base.py loop:321                Epoch[0] Evaluation metric 'epoch_loss'=1.432552
+17:47:24 @ 2022-06-28 01:44:12 - [36mINFO [0m _base.py __call__:404            Computing averaged parameters.
+17:47:24 @ 2022-06-28 01:44:12 - [36mINFO [0m _base.py __call__:409            Loading averaged parameters.
+17:47:24 @ 2022-06-28 01:44:12 - [36mINFO [0m _base.py __call__:416            End model training
+learning rate from ``lr_scheduler`` has been overwritten by ``learning_rate`` in optimizer.

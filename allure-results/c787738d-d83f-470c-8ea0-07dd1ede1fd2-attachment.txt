@@ -1,0 +1,11 @@
+17:44:02 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestReplayedMarketData2.test_get_data_at_timestamp1
+################################################################################
+17:44:02 - [36mINFO [0m test_replayed_market_data.py _check_get_data:47        -> # df=
+index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:36:00-05:00]
+columns=asset_id,last_price,start_datetime,timestamp_db
+shape=(1, 4)
+                           asset_id  last_price            start_datetime              timestamp_db
+end_datetime                                                                                       
+2000-01-01 09:36:00-05:00      1000   999.96792 2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00

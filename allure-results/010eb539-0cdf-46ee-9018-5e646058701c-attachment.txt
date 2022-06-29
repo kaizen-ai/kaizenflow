@@ -1,0 +1,13 @@
+17:44:13 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+Test_parallel_execute1.test_dry_run1
+################################################################################
+17:44:13 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:549  dry_run=True, num_threads='serial', incremental=True, num_attempts=1, abort_on_error=True
+17:44:13 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:557  Saving log info in '/app/helpers/test/outcomes/Test_parallel_execute1.test_dry_run1/tmp.scratch/log.txt'
+17:44:13 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:558  Number of executing threads=1 (serial)
+17:44:13 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:563  Number of tasks=5
+17:44:13 @ 2022-06-28 01:44:12 - [33mWARN [0m hjoblib.py parallel_execute:569  Workload saved at './tmp.parallel_execute.workload.txt'
+17:44:13 @ 2022-06-28 01:44:12 - [33mWARN [0m hjoblib.py parallel_execute:570  Exiting without executing workload, as per user request
+################################################################################
+Workload
+################################################################################

@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:45:21 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:45:21 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestIbSymbolUniverse.test_parse_symbols_file1
+################################################################################
+[32mINFO    [0m im.ib.metadata.ib_symbols:ib_symbols.py:50 17:45:21 @ 2022-06-28 01:44:12 - [36mINFO [0m ib_symbols.py _parse_symbols_file:50 17:45:21 @ 2022-06-28 01:44:12 - [36mINFO [0m ib_symbols.py _parse_symbols_file:50 Reading symbols from /app/im/ib/metadata/test/outcomes/TestIbSymbolUniverse.test_parse_symbols_file1/input/test_symbols.csv

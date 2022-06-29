@@ -1,0 +1,58 @@
+17:37:49 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_pytest_repro1.test_tests2
+################################################################################
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:830                   Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro1.test_tests2/tmp.scratch/cache/lastfailed'
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:832                   Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro1.test_tests2/tmp.scratch/cache/lastfailed'
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:943                   Found 48 failed pytest 'tests' target(s); to reproduce run:
+pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression1
+pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_compare_to_linear_regression2
+pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit1
+pytest core/dataflow/nodes/test/test_sarimax_models.py::TestContinuousSarimaxModel::test_fit_no_x1
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test1
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test2
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestMultiindexVolatilityModel::test3
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test1
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test2
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestSingleColumnVolatilityModel::test3
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test1
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test2
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test3
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test4
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestSmaModel::test5
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test01
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test02
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test03
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test04
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test05
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test06
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test07
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test09
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test10
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test11
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test12
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModel::test13
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode1
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_col_mode2
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_demodulate1
+pytest core/dataflow/nodes/test/test_volatility_models.py::TestVolatilityModulator::test_modulate1
+pytest core/dataflow/test/test_builders.py::TestArmaReturnsBuilder::test1
+pytest core/dataflow/test/test_runners.py::TestIncrementalDagRunner::test1
+pytest core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_dump_json1
+pytest core/dataflow_model/test/test_model_evaluator.py::TestModelEvaluator::test_load_json1
+pytest core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test1
+pytest core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test2
+pytest core/dataflow_model/test/test_run_experiment.py::TestRunExperiment1::test3
+pytest core/test/test_config.py::Test_subtract_config1::test_test1
+pytest core/test/test_config.py::Test_subtract_config1::test_test2
+pytest core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_dump_json1
+pytest core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json1
+pytest core/test/test_dataframe_modeler.py::TestDataFrameModeler::test_load_json2
+pytest dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test1
+pytest dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test2
+pytest dev_scripts/test/test_run_notebook.py::TestRunNotebook1::test3
+pytest helpers/test/test_lib_tasks.py::Test_find_check_string_output1::test2
+pytest helpers/test/test_printing.py::Test_dedent1::test2
+[95m## pytest_repro: [0m
+# To run the tests:
+> ./tmp.pytest_repro.sh

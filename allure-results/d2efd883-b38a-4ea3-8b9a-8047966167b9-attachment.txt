@@ -1,0 +1,46 @@
+17:39:23 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+  ==> Network main_network  Creating
+  ==> Network main_network  Created
+  ==> Volume "compose_oms_postgres9436_data"  Creating
+  ==> Volume "compose_oms_postgres9436_data"  Created
+  ==> Container compose-oms_postgres9436-1  Creating
+  ==> Container compose-oms_postgres9436-1  Created
+  ==> Container compose-oms_postgres9436-1  Starting
+  ==> Container compose-oms_postgres9436-1  Started
+17:39:25 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:26 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:27 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:28 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:29 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:29 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 4 seconds)
+17:39:29 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestMockedProcessForecasts1.test_mocked_system1
+################################################################################
+17:39:29 - [36mINFO [0m Task-316 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:39:29 - [36mINFO [0m Task-316 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:39:29 - [36mINFO [0m Task-316 process_forecasts_.py process_forecasts:129   log_dir=None
+17:39:29 - [36mINFO [0m Task-316 htqdm.py flush:42                             0%|          | 0/3 [00:00<?, ?it/s]
+17:39:29 - [36mINFO [0m Task-316 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:35:00-05:00
+17:39:29 - [36mINFO [0m Task-316 htqdm.py flush:42                             33%|###3      | 1/3 [00:00<00:00,  4.97it/s]
+17:39:29 - [36mINFO [0m Task-316 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:40:00-05:00
+17:39:29 - [36mINFO [0m Task-316 htqdm.py flush:42                             67%|######6   | 2/3 [00:00<00:00,  4.13it/s]
+17:39:30 - [36mINFO [0m Task-316 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:45:00-05:00
+17:39:30 - [36mINFO [0m Task-316 htqdm.py flush:42                             100%|##########| 3/3 [00:00<00:00,  3.80it/s]
+17:39:30 - [36mINFO [0m Task-316 htqdm.py flush:42                             100%|##########| 3/3 [00:00<00:00,  3.94it/s]
+17:39:30 - [36mINFO [0m hsql_test.py tearDownClass:105                         
+################################################################################
+tearDown
+################################################################################
+  ==> Container compose-oms_postgres9436-1  Stopping
+  ==> Container compose-oms_postgres9436-1  Stopping
+  ==> Container compose-oms_postgres9436-1  Stopped
+  ==> Container compose-oms_postgres9436-1  Removing
+  ==> Container compose-oms_postgres9436-1  Removed
+  ==> Volume compose_oms_postgres9436_data  Removing
+  ==> Network main_network  Removing
+  ==> Volume compose_oms_postgres9436_data  Removed
+  ==> Network main_network  Removed

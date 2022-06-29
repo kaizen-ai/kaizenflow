@@ -1,0 +1,120 @@
+17:41:37 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestRunExperimentFail2.test_serial2
+################################################################################
+  ==> [0m[36mINFO[0m: > cmd='/app/dataflow/model/run_experiment.py --experiment_builder dataflow.model.test.simple_experiment.run_experiment --dst_dir /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch --config_builder dev_scripts.test.test_run_notebook.build_configs2() --skip_on_error --num_threads serial --aws_profile am'
+  ==> report_memory_usage=False report_cpu_usage=False
+  ==> [36mINFO[0m: Saving log to file '/app/dataflow/model/run_experiment.py.log'
+  ==> 17:41:41 - [36mINFO [0m builder.py get_configs_from_builder:32                 Executing function 'dev_scripts.test.test_run_notebook.build_configs2()'
+  ==> 17:41:41 - [36mINFO [0m experiment_utils.py get_configs_from_command_line:201  Generated 3 configs from the builder
+  ==> 17:41:41 - [36mINFO [0m experiment_utils.py select_config:177                  Selected 3 configs
+  ==> 17:41:41 - [36mINFO [0m experiment_utils.py get_configs_from_command_line:216  Selected 3 configs from command line
+  ==> 17:41:41 - [36mINFO [0m experiment_utils.py get_configs_from_command_line:220  Removed 0 configs since already executed
+  ==> 17:41:41 - [36mINFO [0m experiment_utils.py get_configs_from_command_line:221  Need to execute 3 configs
+  ==> 17:41:41 - [36mINFO [0m run_experiment.py _main:184                            log_file='/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/log.20220628-174141.txt'
+  ==> ################################################################################
+  ==> Workload
+  ==> ################################################################################
+  ==> 17:41:41 - [36mINFO [0m hjoblib.py parallel_execute:549                        dry_run=False, num_threads='serial', incremental=True, num_attempts=1, abort_on_error=False
+  ==> 17:41:41 - [36mINFO [0m hjoblib.py parallel_execute:557                        Saving log info in '/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/log.20220628-174141.txt'
+  ==> 17:41:41 - [36mINFO [0m hjoblib.py parallel_execute:558                        Number of executing threads=1 (serial)
+  ==> 17:41:41 - [36mINFO [0m hjoblib.py parallel_execute:563                        Number of tasks=3
+  ==> 17:41:41 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading:   0%|          | 0/3 [00:00<?, ?it/s]
+  ==> 17:41:41 - [36mINFO [0m experiment_utils.py setup_experiment_dir:108           Creating experiment dir '/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_0'
+  ==> 17:41:41 - [36mINFO [0m run_experiment.py _run_experiment_stub:68              
+  ==> ################################################################################
+  ==> Executing experiment for config 0
+  ==> ################################################################################
+  ==> 17:41:41 - [36mINFO [0m run_experiment.py _run_experiment_stub:69              config=
+  ==> fail: False
+  ==> id: 0
+  ==> meta:
+  ==>   id: 0
+  ==>   config_builder: dev_scripts.test.test_run_notebook.build_configs2()
+  ==>   dst_dir: /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch
+  ==>   experiment_builder: dataflow.model.test.simple_experiment.run_experiment
+  ==>   experiment_result_dir: /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_0
+  ==> 17:41:41 - [36mINFO [0m run_experiment.py _run_experiment_stub:89              Executing '/app/dataflow/model/run_experiment_stub.py --experiment_builder 'dataflow.model.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_configs2()' --config_idx 0 --dst_dir /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO'
+  ==> 17:41:45 - [36mINFO [0m run_experiment.py _run_experiment_stub:93              Executed cmd
+  ==> 17:41:45 - [36mINFO [0m experiment_utils.py mark_config_as_success:233         Creating file_name='/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_0/success.txt'
+  ==> 17:41:45 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading:  33%|###3      | 1/3 [00:04<00:08,  4.24s/it]
+  ==> 17:41:45 - [36mINFO [0m experiment_utils.py setup_experiment_dir:108           Creating experiment dir '/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_1'
+  ==> 17:41:45 - [36mINFO [0m run_experiment.py _run_experiment_stub:68              
+  ==> ################################################################################
+  ==> Executing experiment for config 1
+  ==> ################################################################################
+  ==> 17:41:45 - [36mINFO [0m run_experiment.py _run_experiment_stub:69              config=
+  ==> fail: False
+  ==> id: 1
+  ==> meta:
+  ==>   id: 1
+  ==>   config_builder: dev_scripts.test.test_run_notebook.build_configs2()
+  ==>   dst_dir: /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch
+  ==>   experiment_builder: dataflow.model.test.simple_experiment.run_experiment
+  ==>   experiment_result_dir: /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_1
+  ==> 17:41:45 - [36mINFO [0m run_experiment.py _run_experiment_stub:89              Executing '/app/dataflow/model/run_experiment_stub.py --experiment_builder 'dataflow.model.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_configs2()' --config_idx 1 --dst_dir /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO'
+  ==> 17:41:49 - [36mINFO [0m run_experiment.py _run_experiment_stub:93              Executed cmd
+  ==> 17:41:49 - [36mINFO [0m experiment_utils.py mark_config_as_success:233         Creating file_name='/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_1/success.txt'
+  ==> 17:41:49 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading:  67%|######6   | 2/3 [00:08<00:04,  4.22s/it]
+  ==> 17:41:49 - [36mINFO [0m experiment_utils.py setup_experiment_dir:108           Creating experiment dir '/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_2'
+  ==> 17:41:49 - [36mINFO [0m run_experiment.py _run_experiment_stub:68              
+  ==> ################################################################################
+  ==> Executing experiment for config 2
+  ==> ################################################################################
+  ==> 17:41:49 - [36mINFO [0m run_experiment.py _run_experiment_stub:69              config=
+  ==> fail: True
+  ==> id: 2
+  ==> meta:
+  ==>   id: 2
+  ==>   config_builder: dev_scripts.test.test_run_notebook.build_configs2()
+  ==>   dst_dir: /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch
+  ==>   experiment_builder: dataflow.model.test.simple_experiment.run_experiment
+  ==>   experiment_result_dir: /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_2
+  ==> 17:41:49 - [36mINFO [0m run_experiment.py _run_experiment_stub:89              Executing '/app/dataflow/model/run_experiment_stub.py --experiment_builder 'dataflow.model.test.simple_experiment.run_experiment' --config_builder 'dev_scripts.test.test_run_notebook.build_configs2()' --config_idx 2 --dst_dir /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch -v INFO'
+  ==>   ==> Traceback (most recent call last):
+  ==>   ==>   File "/app/dataflow/model/run_experiment_stub.py", line 113, in <module>
+  ==>   ==>     _main(_parse())
+  ==>   ==>   File "/app/dataflow/model/run_experiment_stub.py", line 109, in _main
+  ==>   ==>     exec(python_code)  # pylint: disable=exec-used
+  ==>   ==>   File "<string>", line 1, in <module>
+  ==>   ==>   File "/app/dataflow/model/test/simple_experiment.py", line 17, in run_experiment
+  ==>   ==>     raise ValueError("Failure")
+  ==>   ==> ValueError: Failure
+  ==> 17:41:54 - [36mINFO [0m run_experiment.py _run_experiment_stub:93              Executed cmd
+  ==> 17:41:54 - [31mERROR[0m run_experiment.py _run_experiment_stub:99              Execution failed for experiment 2
+  ==> 17:41:54 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:479             Execution failed
+  ==> 17:41:54 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:495             
+  ==> ################################################################################
+  ==> 3/3 (20220628-174149)
+  ==> ################################################################################
+  ==> 
+  ==> tag=3/3 (20220628-174149)
+  ==> workload_func=_run_experiment_stub
+  ==> func_name=_run_experiment_stub
+  ==> args=(fail: True
+  ==> id: 2
+  ==> meta:
+  ==>   id: 2
+  ==>   config_builder: dev_scripts.test.test_run_notebook.build_configs2()
+  ==>   dst_dir: /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch
+  ==>   experiment_builder: dataflow.model.test.simple_experiment.run_experiment
+  ==>   experiment_result_dir: /app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/result_2,)
+  ==> kwargs={}
+  ==> exception='Execution failed for experiment 2'
+  ==> func_res=
+  ==>   None
+  ==> elapsed_time_in_secs=4.444
+  ==> start_ts=20220628-174149
+  ==> end_ts=20220628-174154
+  ==> error=True
+  ==> 17:41:54 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:499             Continuing execution since abort_on_error=False
+  ==> 17:41:54 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading: 100%|##########| 3/3 [00:12<00:00,  4.33s/it]
+  ==> 17:41:54 - [36mINFO [0m htqdm.py flush:42                  num_threads=serial backend=asyncio_threading: 100%|##########| 3/3 [00:12<00:00,  4.30s/it]
+  ==> 17:41:54 - [36mINFO [0m hjoblib.py parallel_execute:669                        Saved log info in '/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/log.20220628-174141.txt'
+  ==> 17:41:54 - [36mINFO [0m run_experiment.py _main:201                            dst_dir='/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch'
+  ==> 17:41:54 - [36mINFO [0m run_experiment.py _main:202                            log_file='/app/dataflow/model/test/outcomes/TestRunExperimentFail2.test_serial2/tmp.scratch/log.20220628-174141.txt'
+  ==> 17:41:54 - [33mWARN [0m run_experiment.py _main:222                            To archive results on S3 use --archive_on_S3
+  ==> 17:41:54 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan
+  ==> 17:41:54 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
+  ==> 17:41:54 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
+  ==> 17:41:54 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan

@@ -1,0 +1,4 @@
+17:40:16 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestForecastEvaluatorFromPrices1.test_annotate_forecasts_with_extended_stats_3_assets
+################################################################################

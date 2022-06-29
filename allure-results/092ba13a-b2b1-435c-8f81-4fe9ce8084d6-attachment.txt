@@ -1,0 +1,17 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:38:10 - [36mINFO [0m hunit_test.py setUp:912            17:38:10 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestRealTimeMarketData2.test_get_data_for_last_period1
+################################################################################
+[32mINFO    [0m app.market_data.test.test_real_time_market_data:test_real_time_market_data.py:175 17:38:10 - [36mINFO [0m test_real_time_market_data.py _check_dataframe:175     17:38:10 - [36mINFO [0m test_real_time_market_data.py _check_dataframe:175     -> # df=
+index=[2022-04-22 10:30:00-04:00, 2022-04-22 12:30:00-04:00]
+columns=asset_id,close,full_symbol,high,low,open,start_timestamp,volume
+shape=(121, 8)
+                             asset_id  close        full_symbol  high   low  open           start_timestamp  volume
+end_timestamp                                                                                                      
+2022-04-22 10:30:00-04:00  1464553467   60.0  binance::ETH_USDT  40.0  50.0  30.0 2022-04-22 10:29:00-04:00    70.0
+2022-04-22 10:31:00-04:00        <NA>    NaN  binance::ETH_USDT   NaN   NaN   NaN                       NaT     NaN
+2022-04-22 10:32:00-04:00        <NA>    NaN  binance::ETH_USDT   NaN   NaN   NaN                       NaT     NaN
+...
+2022-04-22 12:28:00-04:00        <NA>    NaN  binance::ETH_USDT   NaN   NaN   NaN                       NaT     NaN
+2022-04-22 12:29:00-04:00        <NA>    NaN  binance::ETH_USDT   NaN   NaN   NaN                       NaT     NaN
+2022-04-22 12:30:00-04:00  1464553467   65.0  binance::ETH_USDT  45.0  55.0  35.0 2022-04-22 12:29:00-04:00    75.0

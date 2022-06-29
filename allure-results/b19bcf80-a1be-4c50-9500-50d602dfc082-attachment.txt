@@ -1,0 +1,19 @@
+  0%|          | 0/50 [00:00<?, ?it/s]/venv/lib/python3.8/site-packages/gluonts/transform/split.py:36: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  return _shift_timestamp_helper(ts, ts.freq, offset)
+/venv/lib/python3.8/site-packages/gluonts/transform/split.py:57: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  return ts + offset * ts.freq
+/venv/lib/python3.8/site-packages/gluonts/transform/feature.py:352: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  self._min_time_point, self._max_time_point, freq=start.freq
+/venv/lib/python3.8/site-packages/gluonts/transform/split.py:36: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  return _shift_timestamp_helper(ts, ts.freq, offset)
+/venv/lib/python3.8/site-packages/gluonts/transform/split.py:57: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  return ts + offset * ts.freq
+/venv/lib/python3.8/site-packages/gluonts/transform/split.py:36: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  return _shift_timestamp_helper(ts, ts.freq, offset)
+/venv/lib/python3.8/site-packages/gluonts/transform/split.py:57: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  return ts + offset * ts.freq
+100%|██████████| 50/50 [00:01<00:00, 45.02it/s, epoch=1/1, avg_epoch_loss=1.43]
+/venv/lib/python3.8/site-packages/gluonts/transform/split.py:36: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  return _shift_timestamp_helper(ts, ts.freq, offset)
+/app/dataflow/core/nodes/gluonts_models.py:290: FutureWarning: Using the level keyword in DataFrame and Series aggregations is deprecated and will be removed in a future version. Use groupby instead. df.median(level=1) should use df.groupby(level=1).median().
+  y_hat = y_hat_traces.mean(level=[0, 1])

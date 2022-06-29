@@ -1,0 +1,21 @@
+17:37:49 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_pytest_repro1.test_files2
+################################################################################
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:830                   Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro1.test_files2/tmp.scratch/cache/lastfailed'
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:832                   Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro1.test_files2/tmp.scratch/cache/lastfailed'
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:943                   Found 11 failed pytest 'files' target(s); to reproduce run:
+pytest core/dataflow/nodes/test/test_sarimax_models.py
+pytest core/dataflow/nodes/test/test_volatility_models.py
+pytest core/dataflow/test/test_builders.py
+pytest core/dataflow/test/test_runners.py
+pytest core/dataflow_model/test/test_model_evaluator.py
+pytest core/dataflow_model/test/test_run_experiment.py
+pytest core/test/test_config.py
+pytest core/test/test_dataframe_modeler.py
+pytest dev_scripts/test/test_run_notebook.py
+pytest helpers/test/test_lib_tasks.py
+pytest helpers/test/test_printing.py
+[95m## pytest_repro: [0m
+# To run the tests:
+> ./tmp.pytest_repro.sh

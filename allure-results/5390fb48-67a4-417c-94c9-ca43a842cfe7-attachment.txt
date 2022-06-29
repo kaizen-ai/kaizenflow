@@ -1,0 +1,6 @@
+17:30:55 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_Example1_Time_ForecastSystem1.test1
+################################################################################
+17:30:56 - [33mWARN [0m Task-3 transformers.py _apply_func_to_data:715         Exception encountered!
+17:30:56 - [33mWARN [0m Task-3 transformers.py _transform:663                  No output for key=101, imputing NaNs

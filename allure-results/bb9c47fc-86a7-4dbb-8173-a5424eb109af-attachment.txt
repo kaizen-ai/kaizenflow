@@ -1,0 +1,10 @@
+17:44:02 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestReplayedMarketData1.test_get_data_for_minute_0
+################################################################################
+17:44:02 - [36mINFO [0m test_replayed_market_data.py _check_get_data:47        -> # df=
+Empty DataFrame
+Columns: [asset_id, last_price, start_datetime, timestamp_db]
+Index: []
+17:44:02 - [36mINFO [0m test_replayed_market_data.py check_last_end_time:69    -> last_end_time=None
+17:44:02 - [36mINFO [0m test_replayed_market_data.py check_last_end_time:73    -> is_online=False

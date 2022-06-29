@@ -1,0 +1,28 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:32:50 - [36mINFO [0m hunit_test.py setUp:912            17:32:50 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestCheckDataFrame1.test_check_df_not_equal4
+################################################################################
+[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:1589 17:32:50 - [31mERROR[0m hunit_test.py _check_df_compare_outcome:1589           17:32:50 - [31mERROR[0m hunit_test.py _check_df_compare_outcome:1589           Dataframe values are not close
+[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:1687 17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           actual=
+   a     b  c
+0  0  1.06  2
+1  3  4.00  5
+[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:1687 17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           expected=
+   a  b  c
+0  0  1  2
+1  3  4  5
+[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:1687 17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           actual_masked=
+[[ nan 1.06  nan]
+ [ nan  nan  nan]]
+[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:1687 17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           expected_masked=
+[[nan  1. nan]
+ [nan nan nan]]
+[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:1687 17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           err=
+[[ nan 0.06  nan]
+ [ nan  nan  nan]]
+[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:1687 17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           17:32:50 - [31mERROR[0m hunit_test.py _to_error:1687                           max_err=0.060
+[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:823 17:32:50 - [31mERROR[0m hunit_test.py assert_equal:823                         17:32:50 - [31mERROR[0m hunit_test.py assert_equal:823                         
+================================================================================
+Test 'TestCheckDataFrame1.test_check_df_not_equal4' failed
+================================================================================
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:855 17:32:50 - [36mINFO [0m hunit_test.py assert_equal:855                         17:32:50 - [36mINFO [0m hunit_test.py assert_equal:855                         Saved exp_var in tmp.exp_var.txt

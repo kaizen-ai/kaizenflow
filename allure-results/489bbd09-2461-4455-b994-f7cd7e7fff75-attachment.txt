@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:30:54 - [36mINFO [0m hunit_test.py setUp:912            17:30:54 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestRollingFitPredictDagRunner1.test1
+################################################################################
+[32mINFO    [0m dataflow.core.dag_runner:dag_runner.py:244 17:30:54 - [36mINFO [0m dag_runner.py __init__:244                             17:30:54 - [36mINFO [0m dag_runner.py __init__:244                             _retraining_datetimes=DatetimeIndex(['2010-01-04 13:30:00', '2010-01-04 14:30:00'], dtype='datetime64[ns]', freq='H')

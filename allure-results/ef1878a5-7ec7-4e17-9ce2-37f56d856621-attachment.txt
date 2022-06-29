@@ -1,0 +1,24 @@
+[32mINFO    [0m helpers.hsql_test:hsql_test.py:67 17:35:50 - [36mINFO [0m hsql_test.py setUpClass:67                             17:35:50 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:35:52 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:35:52 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:35:53 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:35:53 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:35:54 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:35:54 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:164 17:35:55 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          17:35:55 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+[32mINFO    [0m helpers.hsql_implementation:hsql_implementation.py:167 17:35:55 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          17:35:55 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 3 seconds)
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:35:55 - [36mINFO [0m hunit_test.py setUp:912            17:35:55 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestDownloadRealtimeForOneExchange1.test_function_call1
+################################################################################
+[32mINFO    [0m responses:__init__.py:791 17:35:55 - [36mINFO [0m __init__.py _on_request:791                            17:35:55 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:35:56 - [36mINFO [0m __init__.py _on_request:791                            17:35:56 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:35:56 - [36mINFO [0m __init__.py _on_request:791                            17:35:56 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:35:58 - [36mINFO [0m __init__.py _on_request:791                            17:35:58 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:35:59 - [36mINFO [0m __init__.py _on_request:791                            17:35:59 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:36:00 - [36mINFO [0m __init__.py _on_request:791                            17:36:00 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:36:02 - [36mINFO [0m __init__.py _on_request:791                            17:36:02 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:36:03 - [36mINFO [0m __init__.py _on_request:791                            17:36:03 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:36:04 - [36mINFO [0m __init__.py _on_request:791                            17:36:04 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:36:06 - [36mINFO [0m __init__.py _on_request:791                            17:36:06 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+[32mINFO    [0m responses:__init__.py:791 17:36:07 - [36mINFO [0m __init__.py _on_request:791                            17:36:07 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru

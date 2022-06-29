@@ -1,0 +1,35 @@
+Calculating positions:   0%|          | 0/8 [00:00<?, ?it/s]Calculating positions: 100%|██████████| 8/8 [00:00<00:00, 683.71it/s]
+Calculating PnL:   0%|          | 0/8 [00:00<?, ?it/s]Calculating PnL: 100%|██████████| 8/8 [00:00<00:00, 1766.39it/s]
+Calculating stats:   0%|          | 0/8 [00:00<?, ?it/s]/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
+look-up table. The actual p-value is greater than the p-value returned.
+
+  warnings.warn(
+Calculating stats:  12%|█▎        | 1/8 [00:00<00:01,  5.79it/s]/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
+look-up table. The actual p-value is greater than the p-value returned.
+
+  warnings.warn(
+Calculating stats:  25%|██▌       | 2/8 [00:00<00:01,  5.74it/s]/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
+look-up table. The actual p-value is greater than the p-value returned.
+
+  warnings.warn(
+Calculating stats:  38%|███▊      | 3/8 [00:00<00:00,  5.72it/s]/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
+look-up table. The actual p-value is greater than the p-value returned.
+
+  warnings.warn(
+Calculating stats:  50%|█████     | 4/8 [00:00<00:00,  5.70it/s]/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
+look-up table. The actual p-value is greater than the p-value returned.
+
+  warnings.warn(
+Calculating stats:  62%|██████▎   | 5/8 [00:00<00:00,  5.66it/s]/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
+look-up table. The actual p-value is greater than the p-value returned.
+
+  warnings.warn(
+Calculating stats:  75%|███████▌  | 6/8 [00:01<00:00,  5.74it/s]/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
+look-up table. The actual p-value is greater than the p-value returned.
+
+  warnings.warn(
+Calculating stats:  88%|████████▊ | 7/8 [00:01<00:00,  5.83it/s]/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
+look-up table. The actual p-value is greater than the p-value returned.
+
+  warnings.warn(
+Calculating stats: 100%|██████████| 8/8 [00:01<00:00,  5.89it/s]Calculating stats: 100%|██████████| 8/8 [00:01<00:00,  5.79it/s]

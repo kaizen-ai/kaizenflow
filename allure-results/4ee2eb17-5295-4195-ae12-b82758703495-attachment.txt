@@ -1,0 +1,6 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:32:48 - [36mINFO [0m hunit_test.py setUp:912            17:32:48 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestPytestRenameOutcomes.test_rename_method_outcomes
+################################################################################
+[32mINFO    [0m helpers.hunit_test_utils:hunit_test_utils.py:208 17:32:48 - [36mINFO [0m hunit_test_utils.py _rename_directory:208              17:32:48 - [36mINFO [0m hunit_test_utils.py _rename_directory:208              Renaming `toyCmTask1279.test_rename_method_outcomes/test/outcomes/TestCase.test_rename` directory to `toyCmTask1279.test_rename_method_outcomes/test/outcomes/TestCase.test_method_renamed`. Output log: 0
+[32mINFO    [0m helpers.hunit_test_utils:hunit_test_utils.py:80 17:32:48 - [36mINFO [0m hunit_test_utils.py rename_outcomes:80                 17:32:48 - [36mINFO [0m hunit_test_utils.py rename_outcomes:80                 No outcomes for `TestCase` were found in `toyCmTask1279.test_rename_method_outcomes/test/outcomes`.

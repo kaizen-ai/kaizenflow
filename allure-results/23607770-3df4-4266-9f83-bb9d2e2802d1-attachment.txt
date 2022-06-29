@@ -1,0 +1,8 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+Test_get_files_to_replace.test1
+################################################################################
+[32mINFO    [0m dev_scripts.replace_text:replace_text.py:182 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_replace:182 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_replace:182 Found 2 occurrences to replace
+  /app/dev_scripts/test/outcomes/Test_get_files_to_replace.test1/input/file1.txt:1:testing for Test.file1
+  /app/dev_scripts/test/outcomes/Test_get_files_to_replace.test1/input/file2.txt:2:testing for Test.file2
+[32mINFO    [0m dev_scripts.replace_text:replace_text.py:183 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_replace:183 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_replace:183 Found 2 files to replace

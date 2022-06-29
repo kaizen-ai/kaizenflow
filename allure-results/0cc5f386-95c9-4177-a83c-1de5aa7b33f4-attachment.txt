@@ -1,0 +1,38 @@
+17:39:02 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+  ==> Network main_network  Creating
+  ==> Network main_network  Created
+  ==> Volume "compose_oms_postgres3399_data"  Creating
+  ==> Volume "compose_oms_postgres3399_data"  Created
+  ==> Container compose-oms_postgres3399-1  Creating
+  ==> Container compose-oms_postgres3399-1  Created
+  ==> Container compose-oms_postgres3399-1  Starting
+  ==> Container compose-oms_postgres3399-1  Started
+17:39:04 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:05 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:06 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:07 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:08 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:08 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 4 seconds)
+17:39:08 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestDatabasePortfolio2.test1
+################################################################################
+17:39:08 - [36mINFO [0m Task-311 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:35:00-05:00
+17:39:08 - [36mINFO [0m Task-311 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:40:00-05:00
+17:39:08 - [36mINFO [0m Task-311 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:45:00-05:00
+17:39:08 - [36mINFO [0m hsql_test.py tearDownClass:105                         
+################################################################################
+tearDown
+################################################################################
+  ==> Container compose-oms_postgres3399-1  Stopping
+  ==> Container compose-oms_postgres3399-1  Stopping
+  ==> Container compose-oms_postgres3399-1  Stopped
+  ==> Container compose-oms_postgres3399-1  Removing
+  ==> Container compose-oms_postgres3399-1  Removed
+  ==> Volume compose_oms_postgres3399_data  Removing
+  ==> Network main_network  Removing
+  ==> Volume compose_oms_postgres3399_data  Removed
+  ==> Network main_network  Removed

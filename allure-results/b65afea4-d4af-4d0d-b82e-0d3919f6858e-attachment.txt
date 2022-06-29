@@ -1,0 +1,29 @@
+17:38:04 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+  ==> Network main_network  Creating
+  ==> Network main_network  Created
+  ==> Volume "compose_im_postgres9278_data"  Creating
+  ==> Volume "compose_im_postgres9278_data"  Created
+  ==> Container compose-im_postgres9278-1  Creating
+  ==> Container compose-im_postgres9278-1  Created
+  ==> Container compose-im_postgres9278-1  Starting
+  ==> Container compose-im_postgres9278-1  Started
+17:38:06 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:38:07 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:38:08 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:38:09 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:38:10 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:38:10 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 4 seconds)
+17:38:10 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestRealTimeMarketData2.test_get_data_at_timestamp1
+################################################################################
+17:38:10 - [36mINFO [0m test_real_time_market_data.py _check_dataframe:175     -> # df=
+index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
+columns=asset_id,close,full_symbol,high,low,open,start_timestamp,volume
+shape=(1, 8)
+                             asset_id  close        full_symbol  high   low  open           start_timestamp  volume
+end_timestamp                                                                                                      
+2022-04-22 10:30:00-04:00  1464553467   60.0  binance::ETH_USDT  40.0  50.0  30.0 2022-04-22 10:29:00-04:00    70.0

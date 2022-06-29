@@ -1,0 +1,8 @@
+/app/oms/portfolio.py:724: FutureWarning: pandas.Int64Index is deprecated and will be removed from pandas in a future version. Use pandas.Index with the appropriate dtype instead.
+  hdbg.dassert_isinstance(idx, pd.Int64Index)
+/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (2). n_quantiles is set to n_samples.
+  warnings.warn(
+/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (2). n_quantiles is set to n_samples.
+  warnings.warn(
+/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (2). n_quantiles is set to n_samples.
+  warnings.warn(

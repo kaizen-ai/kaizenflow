@@ -1,0 +1,10 @@
+17:32:49 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestTestCase1.test_assert_not_equal2
+################################################################################
+17:32:49 - [31mERROR[0m hunit_test.py assert_equal:823                         
+================================================================================
+Test 'TestTestCase1.test_assert_not_equal2' failed
+================================================================================
+17:32:49 - [36mINFO [0m hunit_test.py assert_equal:855                         Saved exp_var in tmp.exp_var.txt
+17:32:49 - [33mWARN [0m hsystem.py remove_dirs:448                             Removed dirs: /tmp/tmpehinx6mp

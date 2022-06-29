@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:36:54 - [36mINFO [0m hunit_test.py setUp:912            17:36:54 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestImClientMarketData2.test_get_last_price1
+################################################################################
+[32mINFO    [0m market_data.im_client_market_data:im_client_market_data.py:50 17:36:54 - [36mINFO [0m im_client_market_data.py get_last_price:50             17:36:54 - [36mINFO [0m im_client_market_data.py get_last_price:50             last_end_time=2000-01-01 10:10:00-05:00

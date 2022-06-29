@@ -1,0 +1,10 @@
+/app/oms/portfolio.py:724: FutureWarning: pandas.Int64Index is deprecated and will be removed from pandas in a future version. Use pandas.Index with the appropriate dtype instead.
+  hdbg.dassert_isinstance(idx, pd.Int64Index)
+/venv/lib/python3.8/site-packages/pandas/io/sql.py:761: UserWarning: pandas only support SQLAlchemy connectable(engine/connection) ordatabase string URI or sqlite3 DBAPI2 connectionother DBAPI2 objects are not tested, please consider using SQLAlchemy
+  warnings.warn(
+/venv/lib/python3.8/site-packages/pandas/io/sql.py:761: UserWarning: pandas only support SQLAlchemy connectable(engine/connection) ordatabase string URI or sqlite3 DBAPI2 connectionother DBAPI2 objects are not tested, please consider using SQLAlchemy
+  warnings.warn(
+Loading `holdings` files...:   0%|          | 0/2 [00:00<?, ?it/s]Loading `holdings` files...: 100%|██████████| 2/2 [00:00<00:00, 308.55it/s]
+Loading `holdings_marked_to_market` files...:   0%|          | 0/2 [00:00<?, ?it/s]Loading `holdings_marked_to_market` files...: 100%|██████████| 2/2 [00:00<00:00, 310.44it/s]
+Loading `flows` files...:   0%|          | 0/2 [00:00<?, ?it/s]Loading `flows` files...: 100%|██████████| 2/2 [00:00<00:00, 326.24it/s]
+Loading `statistics` files...:   0%|          | 0/2 [00:00<?, ?it/s]Loading `statistics` files...: 100%|██████████| 2/2 [00:00<00:00, 291.28it/s]

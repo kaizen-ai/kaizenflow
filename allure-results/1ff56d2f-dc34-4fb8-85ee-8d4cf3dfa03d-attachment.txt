@@ -1,0 +1,12 @@
+/venv/lib/python3.8/site-packages/gluonts/dataset/artificial/_base.py:672: FutureWarning: The 'freq' argument in Timestamp is deprecated and will be removed in a future version.
+  self.data_start = pd.Timestamp(data_start, freq=self._metadata.freq)
+/venv/lib/python3.8/site-packages/gluonts/dataset/artificial/_base.py:717: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  start=x[FieldName.START] + length * x[FieldName.START].freq,
+/venv/lib/python3.8/site-packages/gluonts/dataset/common.py:321: FutureWarning: The 'freq' argument in Timestamp is deprecated and will be removed in a future version.
+  timestamp = pd.Timestamp(string, freq=freq)
+/venv/lib/python3.8/site-packages/gluonts/dataset/common.py:324: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  if isinstance(timestamp.freq, Tick):
+/venv/lib/python3.8/site-packages/gluonts/dataset/common.py:326: FutureWarning: Timestamp.freq is deprecated and will be removed in a future version.
+  timestamp.floor(timestamp.freq), timestamp.freq
+/venv/lib/python3.8/site-packages/gluonts/dataset/common.py:325: FutureWarning: The 'freq' argument in Timestamp is deprecated and will be removed in a future version.
+  return pd.Timestamp(

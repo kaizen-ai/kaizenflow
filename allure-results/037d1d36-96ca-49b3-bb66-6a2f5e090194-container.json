@@ -1,0 +1,1 @@
+{"uuid": "76e72c0b-92c3-440f-b2ed-7fc065c2a70e", "children": ["08bdd578-144b-4db9-9e89-0394a63562db"], "befores": [{"name": "capsys", "status": "passed", "start": 1656452841168, "stop": 1656452841168}], "afters": [{"name": "capsys::0", "status": "passed", "start": 1656452841176, "stop": 1656452841176}], "start": 1656452841168, "stop": 1656452841177}

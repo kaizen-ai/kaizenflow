@@ -1,0 +1,38 @@
+17:39:31 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+  ==> Network main_network  Creating
+  ==> Network main_network  Created
+  ==> Volume "compose_oms_postgres9194_data"  Creating
+  ==> Volume "compose_oms_postgres9194_data"  Created
+  ==> Container compose-oms_postgres9194-1  Creating
+  ==> Container compose-oms_postgres9194-1  Created
+  ==> Container compose-oms_postgres9194-1  Starting
+  ==> Container compose-oms_postgres9194-1  Started
+17:39:33 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:34 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:35 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:36 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:39:36 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 3 seconds)
+17:39:36 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestMockedProcessForecasts2.test_mocked_system1
+################################################################################
+17:39:36 - [36mINFO [0m Task-318 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:39:36 - [36mINFO [0m Task-318 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:39:36 - [36mINFO [0m Task-318 process_forecasts_.py process_forecasts:129   log_dir=None
+17:39:36 - [36mINFO [0m Task-318 htqdm.py flush:42                             0%|          | 0/4 [00:00<?, ?it/s]
+17:39:36 - [36mINFO [0m Task-318 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:35:00-05:00
+17:39:36 - [36mINFO [0m Task-318 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:39:36 - [36mINFO [0m Task-318 htqdm.py flush:42                             25%|##5       | 1/4 [00:00<00:00,  5.76it/s]
+17:39:36 - [36mINFO [0m Task-318 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:40:00-05:00
+17:39:36 - [36mINFO [0m Task-318 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:39:36 - [36mINFO [0m Task-318 htqdm.py flush:42                             50%|#####     | 2/4 [00:00<00:00,  4.69it/s]
+17:39:36 - [36mINFO [0m Task-318 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:45:00-05:00
+17:39:36 - [36mINFO [0m Task-318 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:39:36 - [36mINFO [0m Task-318 htqdm.py flush:42                             75%|#######5  | 3/4 [00:00<00:00,  4.30it/s]
+17:39:37 - [36mINFO [0m Task-318 abstract_market_data.py get_last_price:429    last_end_time=2000-01-01 09:50:00-05:00
+17:39:37 - [36mINFO [0m Task-318 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:39:37 - [36mINFO [0m Task-318 htqdm.py flush:42                             100%|##########| 4/4 [00:00<00:00,  4.14it/s]
+17:39:37 - [36mINFO [0m Task-318 htqdm.py flush:42                             100%|##########| 4/4 [00:00<00:00,  4.32it/s]

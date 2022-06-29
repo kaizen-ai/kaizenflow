@@ -1,0 +1,5 @@
+17:44:29 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestContractSymbolMapper.test_get_contract2
+################################################################################
+17:44:29 @ 2022-06-28 01:44:12 - [33mWARN [0m contract_symbol_mapping.py get_contract:35 No metadata for  symbol

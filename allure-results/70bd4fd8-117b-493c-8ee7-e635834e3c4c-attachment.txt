@@ -1,0 +1,4 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:36 - [36mINFO [0m hunit_test.py setUp:912            17:37:36 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestExtractUniverseVersion1.test_extract_universe_version_incorrect_format3
+################################################################################

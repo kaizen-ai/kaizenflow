@@ -1,0 +1,5 @@
+17:39:47 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestLibTasksRunTests1.test_find_test_class1
+################################################################################
+17:39:47 - [36mINFO [0m lib_tasks_find.py _find_test_files:44                  Searching from '/app'

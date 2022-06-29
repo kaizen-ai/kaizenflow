@@ -1,0 +1,4 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:36 - [36mINFO [0m hunit_test.py setUp:912            17:37:36 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_execute_repo_config_code1.test_has_didn_support1
+################################################################################

@@ -1,0 +1,6 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:44:05 - [36mINFO [0m hunit_test.py setUp:912            17:44:05 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_dassert_eq1.test5
+################################################################################
+[33mWARNING [0m helpers.hdbg:hdbg.py:100 17:44:05 - [33mWARN [0m hdbg.py _to_msg:100                17:44:05 - [33mWARN [0m hdbg.py _to_msg:100                Caught assertion while formatting message:
+'not enough arguments for format string'

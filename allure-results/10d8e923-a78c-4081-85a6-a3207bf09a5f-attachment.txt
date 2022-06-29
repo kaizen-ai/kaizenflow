@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:44:12 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:44:12 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+Test_open_pdf.test_mac1
+################################################################################
+[33mWARNING [0m helpers.hopen:hopen.py:37 17:44:12 @ 2022-06-28 01:44:12 - [33mWARN [0m hopen.py _cmd_open_html:37       17:44:12 @ 2022-06-28 01:44:12 - [33mWARN [0m hopen.py _cmd_open_html:37       Can't execute the command 'open' on this platform

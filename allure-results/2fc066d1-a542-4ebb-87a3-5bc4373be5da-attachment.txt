@@ -1,0 +1,32 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+Test_parallel_execute2.test_serial2
+################################################################################
+[32mINFO    [0m helpers.hjoblib:hjoblib.py:549 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:549  17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:549  dry_run=False, num_threads='serial', incremental=True, num_attempts=1, abort_on_error=False
+[32mINFO    [0m helpers.hjoblib:hjoblib.py:557 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:557  17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:557  Saving log info in '/app/helpers/test/outcomes/Test_parallel_execute2.test_serial2/tmp.scratch/log.txt'
+[32mINFO    [0m helpers.hjoblib:hjoblib.py:558 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:558  17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:558  Number of executing threads=1 (serial)
+[32mINFO    [0m helpers.hjoblib:hjoblib.py:563 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:563  17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:563  Number of tasks=1
+[32mINFO    [0m helpers.hjoblib:htqdm.py:42 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m htqdm.py flush:42                17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m htqdm.py flush:42                num_threads=serial backend=:   0%|          | 0/1 [00:00<?, ?it/s]
+[32mINFO    [0m app.helpers.test.test_joblib_helpers:test_joblib_helpers.py:26 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m test_joblib_helpers.py workload_function:26 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m test_joblib_helpers.py workload_function:26 Starting workload -1
+[32mINFO    [0m app.helpers.test.test_joblib_helpers:test_joblib_helpers.py:35 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m test_joblib_helpers.py workload_function:35 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m test_joblib_helpers.py workload_function:35 Ending workload -1
+[1m[31mERROR   [0m helpers.hjoblib:hjoblib.py:479 17:44:18 @ 2022-06-28 01:44:12 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:479 17:44:18 @ 2022-06-28 01:44:12 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:479 Execution failed
+[1m[31mERROR   [0m helpers.hjoblib:hjoblib.py:495 17:44:18 @ 2022-06-28 01:44:12 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:495 17:44:18 @ 2022-06-28 01:44:12 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:495 
+################################################################################
+1/1 (20220628-174418)
+################################################################################
+
+tag=1/1 (20220628-174418)
+workload_func=workload_function
+func_name=workload_function
+args=(-1, 7)
+kwargs={'good2': 'bye2', 'hello2': 'world2'}
+exception='Error: val1=-1, val2=7, incremental=True, num_attempts=1, kwargs={'hello2': 'world2', 'good2': 'bye2'}'
+func_res=
+  None
+elapsed_time_in_secs=0.012
+start_ts=20220628-174418
+end_ts=20220628-174418
+error=True
+[1m[31mERROR   [0m helpers.hjoblib:hjoblib.py:499 17:44:18 @ 2022-06-28 01:44:12 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:499 17:44:18 @ 2022-06-28 01:44:12 - [31mERROR[0m hjoblib.py _parallel_execute_decorator:499 Continuing execution since abort_on_error=False
+[32mINFO    [0m helpers.hjoblib:htqdm.py:42 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m htqdm.py flush:42                17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m htqdm.py flush:42                num_threads=serial backend=: 100%|##########| 1/1 [00:00<00:00, 76.06it/s]
+[32mINFO    [0m helpers.hjoblib:hjoblib.py:669 17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:669  17:44:18 @ 2022-06-28 01:44:12 - [36mINFO [0m hjoblib.py parallel_execute:669  Saved log info in '/app/helpers/test/outcomes/Test_parallel_execute2.test_serial2/tmp.scratch/log.txt'

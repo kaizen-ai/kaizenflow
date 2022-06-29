@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:42:53 - [36mINFO [0m hunit_test.py setUp:912            17:42:53 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestRunNotebook2.test_parallel1
+################################################################################
+[33mWARNING [0m app.dev_scripts.test.test_run_notebook:test_run_notebook.py:143 17:42:53 - [33mWARN [0m test_run_notebook.py test_parallel1:143                17:42:53 - [33mWARN [0m test_run_notebook.py test_parallel1:143                This command is supposed to fail

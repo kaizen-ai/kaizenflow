@@ -1,0 +1,24 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:34 - [36mINFO [0m hunit_test.py setUp:912            17:37:34 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestDownloadRealtimeForOneExchangePeriodically1.test_amount_of_downloads
+################################################################################
+[1m[31mERROR   [0m helpers.hsystem:hsystem.py:274 17:37:36 - [31mERROR[0m hsystem.py _system:274             17:37:36 - [31mERROR[0m hsystem.py _system:274             
+################################################################################
+cmd='(im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py         --data_type 'ohlcv'         --exchange_id 'binance'         --universe 'v3'         --db_stage 'dev'         --db_table 'ccxt_ohlcv_test'         --aws_profile 'ck'         --s3_path 's3://cryptokaizen-data-test/realtime/'         --interval_min '1'         --start_time '2022-06-28 21:37:39'         --stop_time '2022-06-28 21:38:39') 2>&1' failed with rc='1'
+################################################################################
+Output of the failing command is:
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+[0m[36mINFO[0m: > cmd='im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py --data_type ohlcv --exchange_id binance --universe v3 --db_stage dev --db_table ccxt_ohlcv_test --aws_profile ck --s3_path s3://cryptokaizen-data-test/realtime/ --interval_min 1 --start_time 2022-06-28 21:37:39 --stop_time 2022-06-28 21:38:39'
+report_memory_usage=False report_cpu_usage=False
+Traceback (most recent call last):
+  File "im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py", line 52, in <module>
+    _main(_parse())
+  File "im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py", line 44, in _main
+    exchange = imvcdeex.CcxtExtractor(args.exchange_id, args.contract_type)
+AttributeError: 'Namespace' object has no attribute 'contract_type'
+17:37:36 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=32.0 KB
+17:37:36 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
+17:37:36 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
+17:37:36 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

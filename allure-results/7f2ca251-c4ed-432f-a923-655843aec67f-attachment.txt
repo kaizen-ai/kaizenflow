@@ -1,0 +1,6 @@
+17:44:05 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_dassert_is_proportion1.test_assert3
+################################################################################
+17:44:05 - [33mWARN [0m hdbg.py _to_msg:100                Caught assertion while formatting message:
+'not all arguments converted during string formatting'

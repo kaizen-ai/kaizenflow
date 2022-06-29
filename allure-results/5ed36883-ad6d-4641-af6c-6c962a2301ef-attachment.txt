@@ -1,0 +1,16 @@
+17:30:52 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_get_cached_bar_data_for_date_interval_perf1.test1
+################################################################################
+17:30:52 - [36mINFO [0m htimer.py dtimer_start:133                             Run ...
+17:30:52 - [36mINFO [0m htimer.py dtimer_start:133                             Updating cached version on disk ...
+17:30:52 - [36mINFO [0m htqdm.py flush:42                  Reading historical data from S3:   0%|          | 0/2 [00:00<?, ?it/s]
+17:30:53 - [36mINFO [0m htqdm.py flush:42                  Reading historical data from S3:  50%|#####     | 1/2 [00:01<00:01,  1.03s/it]
+17:30:53 - [36mINFO [0m htqdm.py flush:42                  Reading historical data from S3: 100%|##########| 2/2 [00:01<00:00,  1.93it/s]
+17:30:53 - [36mINFO [0m htimer.py dtimer_start:133                             Process pd data ...
+17:30:53 - [36mINFO [0m htimer.py dtimer_stop:150                              Process pd data done (0.022 s)
+17:30:53 - [36mINFO [0m htimer.py dtimer_stop:150                              Updating cached version on disk done (1.070 s)
+17:30:53 - [36mINFO [0m hcache.py __call__:462               --> Cache data for 'get_bar_data' from 'no_cache' cache (size=nan, time=1.08 s, tag=None, loc=no_cache)
+17:30:53 - [36mINFO [0m htimer.py dtimer_stop:150                              Run done (1.077 s)
+columns=%s ['end_time', 'close', 'volume', 'igid']
+columns=%s ['end_time', 'close', 'volume', 'igid']

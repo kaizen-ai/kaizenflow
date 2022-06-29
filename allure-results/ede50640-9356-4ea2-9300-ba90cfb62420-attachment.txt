@@ -1,0 +1,6 @@
+17:42:07 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestKibotFuturesCsvParquetByAssetClient.test_read_parquet_data7
+################################################################################
+17:42:07 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:405         Reading data for `Kibot` futures, trade symbol='EZ', contract type='continuous' from file='/app/im_v2/kibot/data/client/test/test_data/kibot/pq/All_Futures_Continuous_Contracts_1min/EZ.pq'...
+17:42:07 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:405         Reading data for `Kibot` futures, trade symbol='ZI', contract type='continuous' from file='/app/im_v2/kibot/data/client/test/test_data/kibot/pq/All_Futures_Continuous_Contracts_1min/ZI.pq'...

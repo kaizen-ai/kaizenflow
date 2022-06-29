@@ -1,0 +1,10 @@
+17:45:59 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+Test_gallery_signal_processing1.test_notebook1
+################################################################################
+  ==> [NbConvertApp] Converting notebook /app/core/notebooks/gallery_signal_processing.ipynb to html
+  ==> /venv/lib/python3.8/site-packages/IPython/paths.py:70: UserWarning: IPython parent '/home' is not a writable location, using a temp directory.
+  ==>   warn("IPython parent '{0}' is not a writable location,"
+  ==> /venv/lib/python3.8/site-packages/IPython/paths.py:70: UserWarning: IPython parent '/home' is not a writable location, using a temp directory.
+  ==>   warn("IPython parent '{0}' is not a writable location,"
+  ==> [NbConvertApp] Writing 6250501 bytes to /app/core/notebooks/gallery_signal_processing.html

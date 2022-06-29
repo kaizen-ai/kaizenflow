@@ -1,0 +1,1 @@
+Processing assets:   0%|          | 0/2 [00:00<?, ?it/s]Processing assets: 100%|██████████| 2/2 [00:00<00:00, 65.40it/s]

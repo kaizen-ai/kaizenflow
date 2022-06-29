@@ -1,0 +1,7 @@
+17:44:22 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestPlaybackInputOutput1.test6
+################################################################################
+17:44:22 @ 2022-06-28 01:44:12 - [33mWARN [0m hplayback.py to_python_code:79   Type <class 'datetime.date'> not found in serialization function: using jsonpickle.
+17:44:22 @ 2022-06-28 01:44:12 - [33mWARN [0m hplayback.py to_python_code:79   Type <class 'datetime.date'> not found in serialization function: using jsonpickle.
+17:44:22 @ 2022-06-28 01:44:12 - [33mWARN [0m hplayback.py to_python_code:79   Type <class 'datetime.timedelta'> not found in serialization function: using jsonpickle.

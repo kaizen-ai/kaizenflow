@@ -1,0 +1,21 @@
+17:36:12 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+  ==> Network main_network  Creating
+  ==> Network main_network  Created
+  ==> Volume "compose_oms_postgres6267_data"  Creating
+  ==> Volume "compose_oms_postgres6267_data"  Created
+  ==> Container compose-oms_postgres6267-1  Creating
+  ==> Container compose-oms_postgres6267-1  Created
+  ==> Container compose-oms_postgres6267-1  Starting
+  ==> Container compose-oms_postgres6267-1  Started
+17:36:14 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:36:15 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:36:16 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:36:17 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:36:17 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 3 seconds)
+17:36:17 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestOrderProcessor1.test_submit_order1
+################################################################################

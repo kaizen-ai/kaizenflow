@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:49 - [36mINFO [0m hunit_test.py setUp:912            17:37:49 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_build_run_command_line1.test_run_fast_tests2
+################################################################################
+[33mWARNING [0m helpers.lib_tasks_pytest:lib_tasks_pytest.py:174 17:37:49 - [33mWARN [0m lib_tasks_pytest.py _build_run_command_line:174        17:37:49 - [33mWARN [0m lib_tasks_pytest.py _build_run_command_line:174        Only collecting tests as per user request

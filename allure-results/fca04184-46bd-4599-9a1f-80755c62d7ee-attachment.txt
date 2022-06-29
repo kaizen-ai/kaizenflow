@@ -1,0 +1,8 @@
+17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestKibotEquityReader.test1
+################################################################################
+17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m htimer.py dtimer_start:133       Updating cached version on disk ...
+17:47:11 @ 2022-06-28 01:44:12 - [36mINFO [0m htimer.py dtimer_stop:150        Updating cached version on disk done (3.779 s)
+17:47:15 @ 2022-06-28 01:44:12 - [36mINFO [0m htimer.py dtimer_start:133       Updating cached version on disk ...
+17:47:18 @ 2022-06-28 01:44:12 - [36mINFO [0m htimer.py dtimer_stop:150        Updating cached version on disk done (2.411 s)

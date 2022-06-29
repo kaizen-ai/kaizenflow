@@ -1,0 +1,12 @@
+17:47:03 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestModelPlotter1.test_plot_rets_signal_analysis1
+################################################################################
+17:47:03 @ 2022-06-28 01:44:12 - [36mINFO [0m model_evaluator.py compute_pnl:410 memory_usage=rss=0.953GB vms=6.455GB mem_pct=3%
+17:47:03 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           140.416746
+turnover_frequency      <BusinessDay>
+avg_holding_period           0.712166
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+17:47:03 @ 2022-06-28 01:44:12 - [36mINFO [0m model_evaluator.py aggregate_models:270 memory_usage=rss=0.953GB vms=6.455GB mem_pct=3%

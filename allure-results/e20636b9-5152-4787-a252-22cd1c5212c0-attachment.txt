@@ -1,0 +1,54 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:47:05 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:47:05 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestModelEvaluator1.test_calculate_stats1
+################################################################################
+[32mINFO    [0m dataflow.model.model_evaluator:model_evaluator.py:410 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m model_evaluator.py compute_pnl:410 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m model_evaluator.py compute_pnl:410 memory_usage=rss=0.954GB vms=6.456GB mem_pct=3%
+[32mINFO    [0m dataflow.model.stats_computer:stats_computer.py:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           139.764843
+turnover_frequency      <BusinessDay>
+avg_holding_period           0.715488
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+[32mINFO    [0m dataflow.model.stats_computer:stats_computer.py:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           140.990116
+turnover_frequency      <BusinessDay>
+avg_holding_period            0.70927
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+[32mINFO    [0m dataflow.model.stats_computer:stats_computer.py:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           140.320278
+turnover_frequency      <BusinessDay>
+avg_holding_period           0.712655
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+[32mINFO    [0m dataflow.model.stats_computer:stats_computer.py:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           143.461111
+turnover_frequency      <BusinessDay>
+avg_holding_period           0.697053
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+[32mINFO    [0m dataflow.model.stats_computer:stats_computer.py:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 17:47:06 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           140.184307
+turnover_frequency      <BusinessDay>
+avg_holding_period           0.713347
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+[32mINFO    [0m dataflow.model.stats_computer:stats_computer.py:491 17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           141.935645
+turnover_frequency      <BusinessDay>
+avg_holding_period           0.704545
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+[32mINFO    [0m dataflow.model.stats_computer:stats_computer.py:491 17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           141.107129
+turnover_frequency      <BusinessDay>
+avg_holding_period           0.708681
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+[32mINFO    [0m dataflow.model.stats_computer:stats_computer.py:491 17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m stats_computer.py _compute_position_stats:491 stats=
+avg_turnover_(%)           140.187758
+turnover_frequency      <BusinessDay>
+avg_holding_period           0.713329
+holding_period_units    <BusinessDay>
+Name: positions, dtype: object
+[32mINFO    [0m dataflow.model.model_evaluator:model_evaluator.py:326 17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m model_evaluator.py calculate_stats:326 17:47:07 @ 2022-06-28 01:44:12 - [36mINFO [0m model_evaluator.py calculate_stats:326 memory_usage=rss=0.954GB vms=6.456GB mem_pct=3%

@@ -1,0 +1,6 @@
+17:36:11 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestDownloadHistoricalData1.test_function_call3
+################################################################################
+17:36:11 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:36:11 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru

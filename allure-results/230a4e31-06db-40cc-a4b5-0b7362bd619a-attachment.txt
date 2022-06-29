@@ -1,0 +1,7 @@
+17:37:48 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_get_files_to_process1.test_files2
+################################################################################
+17:37:48 - [31mERROR[0m lib_tasks_utils.py _filter_existing_paths:369          'testfile1.py' does not exist
+17:37:48 - [31mERROR[0m lib_tasks_utils.py _filter_existing_paths:359          'testfiles1/*' pattern doesn't match any files: the directory is empty or path does not exist
+17:37:48 - [33mWARN [0m lib_tasks_utils.py _get_files_to_process:339           No files were selected

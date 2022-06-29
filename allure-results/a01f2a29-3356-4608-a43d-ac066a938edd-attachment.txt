@@ -1,0 +1,5 @@
+/app/dataflow/core/nodes/test/test_sklearn_models.py:210: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  data["weights"].loc["2010-01-01 00:31:00":] = np.nan  # type: ignore[misc]

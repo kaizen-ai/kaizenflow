@@ -1,0 +1,32 @@
+17:35:50 - [36mINFO [0m hsql_test.py setUpClass:67                             
+################################################################################
+setUpClass
+################################################################################
+  ==> Network main_network  Creating
+  ==> Network main_network  Created
+  ==> Volume "compose_im_postgres4032_data"  Creating
+  ==> Volume "compose_im_postgres4032_data"  Created
+  ==> Container compose-im_postgres4032-1  Creating
+  ==> Container compose-im_postgres4032-1  Created
+  ==> Container compose-im_postgres4032-1  Starting
+  ==> Container compose-im_postgres4032-1  Started
+17:35:52 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:35:53 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:35:54 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:35:55 - [36mINFO [0m hsql_implementation.py wait_db_connection:164          Waiting for PostgreSQL to become available...
+17:35:55 - [36mINFO [0m hsql_implementation.py wait_db_connection:167          PostgreSQL is available (after 3 seconds)
+17:35:55 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestDownloadRealtimeForOneExchange1.test_function_call1
+################################################################################
+17:35:55 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:35:56 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:35:56 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:35:58 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:35:59 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:36:00 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:36:02 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:36:03 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:36:04 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:36:06 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
+17:36:07 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru

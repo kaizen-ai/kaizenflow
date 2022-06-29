@@ -1,0 +1,12 @@
+17:30:48 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestGetBarData1.test2
+################################################################################
+17:30:48 - [36mINFO [0m htqdm.py flush:42                  Reading historical data from S3:   0%|          | 0/2 [00:00<?, ?it/s]
+17:30:50 - [36mINFO [0m htqdm.py flush:42                  Reading historical data from S3:  50%|#####     | 1/2 [00:01<00:01,  1.28s/it]
+17:30:51 - [36mINFO [0m htqdm.py flush:42                  Reading historical data from S3: 100%|##########| 2/2 [00:02<00:00,  1.04s/it]
+17:30:51 - [36mINFO [0m htqdm.py flush:42                  Reading historical data from S3: 100%|##########| 2/2 [00:02<00:00,  1.07s/it]
+17:30:51 - [36mINFO [0m htimer.py dtimer_start:133                             Process pd data ...
+17:30:51 - [36mINFO [0m htimer.py dtimer_stop:150                              Process pd data done (0.014 s)
+columns=%s ['end_time', 'close', 'volume', 'igid']
+columns=%s ['end_time', 'close', 'volume', 'igid']

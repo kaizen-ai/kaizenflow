@@ -1,0 +1,5 @@
+17:30:55 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestFeaturePipeline.test1
+################################################################################
+17:30:55 - [33mWARN [0m features.py _log_opposite_sign_warning:412             Calculating feature cross `normalized_difference`: features `bid_size` and `ask_size` have entries with opposite signs.

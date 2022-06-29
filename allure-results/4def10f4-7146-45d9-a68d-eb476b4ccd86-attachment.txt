@@ -1,0 +1,6 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:40:17 - [36mINFO [0m hunit_test.py setUp:912            17:40:17 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_dataflow_core_DAG1.test_add_nodes2
+################################################################################
+[33mWARNING [0m dataflow.core.dag:dag.py:219 17:40:17 - [33mWARN [0m dag.py add_node:219                17:40:17 - [33mWARN [0m dag.py add_node:219                Node `n1` is already in DAG. Removing existing node, successors, and all incident edges of such nodes
+[33mWARNING [0m dataflow.core.dag:dag.py:229 17:40:17 - [33mWARN [0m dag.py add_node:229                17:40:17 - [33mWARN [0m dag.py add_node:229                Removing nid=n1

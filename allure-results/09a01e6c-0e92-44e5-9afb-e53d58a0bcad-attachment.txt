@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:37 - [36mINFO [0m hunit_test.py setUp:912            17:37:37 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_git_repo_name1.test_get_all_repo_names2
+################################################################################
+[33mWARNING [0m app.helpers.test.test_git:test_git.py:187 17:37:37 - [33mWARN [0m test_git.py test_get_all_repo_names2:187               17:37:37 - [33mWARN [0m test_git.py test_get_all_repo_names2:187               Skipping this test, since it can run only in amp as super-module

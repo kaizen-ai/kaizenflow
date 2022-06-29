@@ -1,0 +1,2 @@
+/app/core/statistics/test/test_signed_runs.py:326: FutureWarning: The default dtype for empty Series will be 'object' instead of 'float64' in a future version. Specify a dtype explicitly to silence this warning.
+  expected = pd.Series(index=idx).dropna()

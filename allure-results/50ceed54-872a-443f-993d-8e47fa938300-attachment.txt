@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:42:16 - [36mINFO [0m hunit_test.py setUp:912            17:42:16 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_execute_with_real_time_loop1.test_real_time1
+################################################################################
+[32mINFO    [0m core.real_time:real_time.py:264 17:42:16 - [36mINFO [0m real_time.py align_on_time_grid:264                    17:42:16 - [36mINFO [0m real_time.py align_on_time_grid:264                    Aligning on 2 secs

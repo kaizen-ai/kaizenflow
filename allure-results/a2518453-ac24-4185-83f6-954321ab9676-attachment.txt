@@ -1,0 +1,355 @@
+17:32:11 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_Example1_Time_ForecastSystem_with_DatabasePortfolio1.test_market_data3_database_vs_dataframe_portfolio
+################################################################################
+17:32:11 - [33mWARN [0m Task-179 transformers.py _apply_func_to_data:715       Exception encountered!
+17:32:11 - [33mWARN [0m Task-179 transformers.py _transform:663                No output for key=101, imputing NaNs
+17:32:11 - [36mINFO [0m Task-179 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:11 - [36mINFO [0m Task-179 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:11 - [36mINFO [0m Task-179 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:11 - [36mINFO [0m Task-179 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:11 - [36mINFO [0m Task-179 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:11 - [36mINFO [0m Task-179 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  5.53it/s]
+17:32:11 - [36mINFO [0m Task-179 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  5.51it/s]
+17:32:11 - [33mWARN [0m Task-181 transformers.py _apply_func_to_data:715       Exception encountered!
+17:32:11 - [33mWARN [0m Task-181 transformers.py _transform:663                No output for key=101, imputing NaNs
+17:32:11 - [36mINFO [0m Task-181 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:11 - [36mINFO [0m Task-181 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:11 - [36mINFO [0m Task-181 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:11 - [36mINFO [0m Task-181 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:12 - [36mINFO [0m Task-181 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:12 - [36mINFO [0m Task-181 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.81it/s]
+17:32:12 - [36mINFO [0m Task-181 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.80it/s]
+17:32:12 - [33mWARN [0m Task-183 transformers.py _apply_func_to_data:715       Exception encountered!
+17:32:12 - [33mWARN [0m Task-183 transformers.py _transform:663                No output for key=101, imputing NaNs
+17:32:12 - [36mINFO [0m Task-183 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:12 - [36mINFO [0m Task-183 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:12 - [36mINFO [0m Task-183 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:12 - [36mINFO [0m Task-183 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:12 - [36mINFO [0m Task-183 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:12 - [36mINFO [0m Task-183 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.64it/s]
+17:32:12 - [36mINFO [0m Task-183 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.63it/s]
+17:32:13 - [36mINFO [0m Task-185 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:13 - [36mINFO [0m Task-185 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:13 - [36mINFO [0m Task-185 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:13 - [36mINFO [0m Task-185 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:13 - [36mINFO [0m Task-185 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:13 - [36mINFO [0m Task-185 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.62it/s]
+17:32:13 - [36mINFO [0m Task-185 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.61it/s]
+17:32:13 - [36mINFO [0m Task-187 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:13 - [36mINFO [0m Task-187 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:13 - [36mINFO [0m Task-187 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:13 - [36mINFO [0m Task-187 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:13 - [36mINFO [0m Task-187 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:13 - [36mINFO [0m Task-187 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.50it/s]
+17:32:13 - [36mINFO [0m Task-187 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.49it/s]
+17:32:14 - [36mINFO [0m Task-189 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:14 - [36mINFO [0m Task-189 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:14 - [36mINFO [0m Task-189 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:14 - [36mINFO [0m Task-189 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:14 - [36mINFO [0m Task-189 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:14 - [36mINFO [0m Task-189 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.63it/s]
+17:32:14 - [36mINFO [0m Task-189 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.62it/s]
+17:32:14 - [36mINFO [0m Task-191 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:14 - [36mINFO [0m Task-191 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:14 - [36mINFO [0m Task-191 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:14 - [36mINFO [0m Task-191 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:15 - [36mINFO [0m Task-191 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:15 - [36mINFO [0m Task-191 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.55it/s]
+17:32:15 - [36mINFO [0m Task-191 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.54it/s]
+17:32:15 - [36mINFO [0m Task-193 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:15 - [36mINFO [0m Task-193 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:15 - [36mINFO [0m Task-193 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:15 - [36mINFO [0m Task-193 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:15 - [36mINFO [0m Task-193 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:15 - [36mINFO [0m Task-193 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.46it/s]
+17:32:15 - [36mINFO [0m Task-193 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.45it/s]
+17:32:15 - [36mINFO [0m Task-195 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:15 - [36mINFO [0m Task-195 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:15 - [36mINFO [0m Task-195 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:15 - [36mINFO [0m Task-195 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:16 - [36mINFO [0m Task-195 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:16 - [36mINFO [0m Task-195 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.31it/s]
+17:32:16 - [36mINFO [0m Task-195 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.30it/s]
+17:32:16 - [36mINFO [0m Task-197 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:16 - [36mINFO [0m Task-197 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:16 - [36mINFO [0m Task-197 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:16 - [36mINFO [0m Task-197 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:16 - [36mINFO [0m Task-197 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:16 - [36mINFO [0m Task-197 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.50it/s]
+17:32:16 - [36mINFO [0m Task-197 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.50it/s]
+17:32:17 - [36mINFO [0m Task-199 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:17 - [36mINFO [0m Task-199 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:17 - [36mINFO [0m Task-199 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:17 - [36mINFO [0m Task-199 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:17 - [36mINFO [0m Task-199 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:17 - [36mINFO [0m Task-199 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.38it/s]
+17:32:17 - [36mINFO [0m Task-199 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.37it/s]
+17:32:17 - [36mINFO [0m Task-201 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:17 - [36mINFO [0m Task-201 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:17 - [36mINFO [0m Task-201 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:17 - [36mINFO [0m Task-201 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:18 - [36mINFO [0m Task-201 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:18 - [36mINFO [0m Task-201 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.24it/s]
+17:32:18 - [36mINFO [0m Task-201 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.23it/s]
+17:32:18 - [36mINFO [0m Task-203 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:18 - [36mINFO [0m Task-203 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:18 - [36mINFO [0m Task-203 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:18 - [36mINFO [0m Task-203 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:18 - [36mINFO [0m Task-203 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:18 - [36mINFO [0m Task-203 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.43it/s]
+17:32:18 - [36mINFO [0m Task-203 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.42it/s]
+17:32:19 - [36mINFO [0m Task-205 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:19 - [36mINFO [0m Task-205 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:19 - [36mINFO [0m Task-205 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:19 - [36mINFO [0m Task-205 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:19 - [36mINFO [0m Task-205 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:19 - [36mINFO [0m Task-205 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.47it/s]
+17:32:19 - [36mINFO [0m Task-205 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.46it/s]
+17:32:19 - [36mINFO [0m Task-207 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:19 - [36mINFO [0m Task-207 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:19 - [36mINFO [0m Task-207 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:19 - [36mINFO [0m Task-207 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:19 - [36mINFO [0m Task-207 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:20 - [36mINFO [0m Task-207 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.46it/s]
+17:32:20 - [36mINFO [0m Task-207 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.45it/s]
+17:32:20 - [36mINFO [0m Task-209 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:20 - [36mINFO [0m Task-209 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:20 - [36mINFO [0m Task-209 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:20 - [36mINFO [0m Task-209 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:20 - [36mINFO [0m Task-209 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:20 - [36mINFO [0m Task-209 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.43it/s]
+17:32:20 - [36mINFO [0m Task-209 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.43it/s]
+17:32:20 - [36mINFO [0m Task-211 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:20 - [36mINFO [0m Task-211 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:20 - [36mINFO [0m Task-211 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:20 - [36mINFO [0m Task-211 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:21 - [36mINFO [0m Task-211 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:21 - [36mINFO [0m Task-211 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.56it/s]
+17:32:21 - [36mINFO [0m Task-211 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.56it/s]
+17:32:21 - [36mINFO [0m Task-213 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:21 - [36mINFO [0m Task-213 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:21 - [36mINFO [0m Task-213 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:21 - [36mINFO [0m Task-213 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:21 - [36mINFO [0m Task-213 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:21 - [36mINFO [0m Task-213 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.53it/s]
+17:32:21 - [36mINFO [0m Task-213 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.53it/s]
+17:32:22 - [36mINFO [0m Task-215 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:22 - [36mINFO [0m Task-215 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:22 - [36mINFO [0m Task-215 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:22 - [36mINFO [0m Task-215 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:22 - [36mINFO [0m Task-215 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:22 - [36mINFO [0m Task-215 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.51it/s]
+17:32:22 - [36mINFO [0m Task-215 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.50it/s]
+17:32:22 - [36mINFO [0m Task-217 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:22 - [36mINFO [0m Task-217 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:22 - [36mINFO [0m Task-217 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:22 - [36mINFO [0m Task-217 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:22 - [36mINFO [0m Task-217 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:23 - [36mINFO [0m Task-217 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.56it/s]
+17:32:23 - [36mINFO [0m Task-217 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.55it/s]
+17:32:23 - [36mINFO [0m Task-219 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:23 - [36mINFO [0m Task-219 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:23 - [36mINFO [0m Task-219 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:23 - [36mINFO [0m Task-219 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:23 - [36mINFO [0m Task-219 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:23 - [36mINFO [0m Task-219 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.60it/s]
+17:32:23 - [36mINFO [0m Task-219 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.59it/s]
+17:32:23 - [36mINFO [0m Task-221 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:23 - [36mINFO [0m Task-221 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:23 - [36mINFO [0m Task-221 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:23 - [36mINFO [0m Task-221 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:24 - [36mINFO [0m Task-221 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:24 - [36mINFO [0m Task-221 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.54it/s]
+17:32:24 - [36mINFO [0m Task-221 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.54it/s]
+17:32:24 - [36mINFO [0m Task-223 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:24 - [36mINFO [0m Task-223 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:24 - [36mINFO [0m Task-223 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:24 - [36mINFO [0m Task-223 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:24 - [36mINFO [0m Task-223 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:24 - [36mINFO [0m Task-223 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.57it/s]
+17:32:24 - [36mINFO [0m Task-223 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  3.57it/s]
+17:32:24 - [36mINFO [0m target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:25 - [36mINFO [0m target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:25 - [33mWARN [0m Task-226 transformers.py _apply_func_to_data:715       Exception encountered!
+17:32:25 - [33mWARN [0m Task-226 transformers.py _transform:663                No output for key=101, imputing NaNs
+17:32:25 - [36mINFO [0m Task-226 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:25 - [36mINFO [0m Task-226 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:25 - [36mINFO [0m Task-226 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:25 - [36mINFO [0m Task-226 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:25 - [36mINFO [0m Task-226 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:25 - [36mINFO [0m Task-226 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  6.49it/s]
+17:32:25 - [36mINFO [0m Task-226 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  6.47it/s]
+17:32:25 - [33mWARN [0m Task-228 transformers.py _apply_func_to_data:715       Exception encountered!
+17:32:25 - [33mWARN [0m Task-228 transformers.py _transform:663                No output for key=101, imputing NaNs
+17:32:25 - [36mINFO [0m Task-228 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:25 - [36mINFO [0m Task-228 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:25 - [36mINFO [0m Task-228 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:25 - [36mINFO [0m Task-228 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:25 - [36mINFO [0m Task-228 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:25 - [36mINFO [0m Task-228 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.60it/s]
+17:32:25 - [36mINFO [0m Task-228 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.59it/s]
+17:32:26 - [33mWARN [0m Task-230 transformers.py _apply_func_to_data:715       Exception encountered!
+17:32:26 - [33mWARN [0m Task-230 transformers.py _transform:663                No output for key=101, imputing NaNs
+17:32:26 - [36mINFO [0m Task-230 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:26 - [36mINFO [0m Task-230 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:26 - [36mINFO [0m Task-230 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:26 - [36mINFO [0m Task-230 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:26 - [36mINFO [0m Task-230 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:26 - [36mINFO [0m Task-230 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.63it/s]
+17:32:26 - [36mINFO [0m Task-230 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.62it/s]
+17:32:26 - [36mINFO [0m Task-232 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:26 - [36mINFO [0m Task-232 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:26 - [36mINFO [0m Task-232 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:26 - [36mINFO [0m Task-232 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:26 - [36mINFO [0m Task-232 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:27 - [36mINFO [0m Task-232 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.49it/s]
+17:32:27 - [36mINFO [0m Task-232 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.48it/s]
+17:32:27 - [36mINFO [0m Task-234 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:27 - [36mINFO [0m Task-234 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:27 - [36mINFO [0m Task-234 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:27 - [36mINFO [0m Task-234 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:27 - [36mINFO [0m Task-234 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:27 - [36mINFO [0m Task-234 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.61it/s]
+17:32:27 - [36mINFO [0m Task-234 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.60it/s]
+17:32:27 - [36mINFO [0m Task-236 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:27 - [36mINFO [0m Task-236 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:27 - [36mINFO [0m Task-236 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:27 - [36mINFO [0m Task-236 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:28 - [36mINFO [0m Task-236 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:28 - [36mINFO [0m Task-236 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.50it/s]
+17:32:28 - [36mINFO [0m Task-236 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.49it/s]
+17:32:28 - [36mINFO [0m Task-238 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:28 - [36mINFO [0m Task-238 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:28 - [36mINFO [0m Task-238 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:28 - [36mINFO [0m Task-238 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:28 - [36mINFO [0m Task-238 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:28 - [36mINFO [0m Task-238 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.59it/s]
+17:32:28 - [36mINFO [0m Task-238 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.58it/s]
+17:32:28 - [36mINFO [0m Task-240 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:28 - [36mINFO [0m Task-240 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:28 - [36mINFO [0m Task-240 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:28 - [36mINFO [0m Task-240 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:29 - [36mINFO [0m Task-240 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:29 - [36mINFO [0m Task-240 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.50it/s]
+17:32:29 - [36mINFO [0m Task-240 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.49it/s]
+17:32:29 - [36mINFO [0m Task-242 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:29 - [36mINFO [0m Task-242 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:29 - [36mINFO [0m Task-242 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:29 - [36mINFO [0m Task-242 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:29 - [36mINFO [0m Task-242 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:29 - [36mINFO [0m Task-242 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.52it/s]
+17:32:29 - [36mINFO [0m Task-242 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.51it/s]
+17:32:30 - [36mINFO [0m Task-244 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:30 - [36mINFO [0m Task-244 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:30 - [36mINFO [0m Task-244 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:30 - [36mINFO [0m Task-244 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:30 - [36mINFO [0m Task-244 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:30 - [36mINFO [0m Task-244 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.43it/s]
+17:32:30 - [36mINFO [0m Task-244 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.42it/s]
+17:32:30 - [36mINFO [0m Task-246 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:30 - [36mINFO [0m Task-246 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:30 - [36mINFO [0m Task-246 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:30 - [36mINFO [0m Task-246 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:30 - [36mINFO [0m Task-246 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:30 - [36mINFO [0m Task-246 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.63it/s]
+17:32:30 - [36mINFO [0m Task-246 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.62it/s]
+17:32:31 - [36mINFO [0m Task-248 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:31 - [36mINFO [0m Task-248 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:31 - [36mINFO [0m Task-248 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:31 - [36mINFO [0m Task-248 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:31 - [36mINFO [0m Task-248 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:31 - [36mINFO [0m Task-248 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.59it/s]
+17:32:31 - [36mINFO [0m Task-248 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.58it/s]
+17:32:31 - [36mINFO [0m Task-250 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:31 - [36mINFO [0m Task-250 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:31 - [36mINFO [0m Task-250 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:31 - [36mINFO [0m Task-250 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:31 - [36mINFO [0m Task-250 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:31 - [36mINFO [0m Task-250 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.67it/s]
+17:32:31 - [36mINFO [0m Task-250 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.66it/s]
+17:32:32 - [36mINFO [0m Task-252 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:32 - [36mINFO [0m Task-252 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:32 - [36mINFO [0m Task-252 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:32 - [36mINFO [0m Task-252 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:32 - [36mINFO [0m Task-252 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:32 - [36mINFO [0m Task-252 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.51it/s]
+17:32:32 - [36mINFO [0m Task-252 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.49it/s]
+17:32:32 - [36mINFO [0m Task-254 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:32 - [36mINFO [0m Task-254 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:32 - [36mINFO [0m Task-254 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:32 - [36mINFO [0m Task-254 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:32 - [36mINFO [0m Task-254 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:32 - [36mINFO [0m Task-254 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.64it/s]
+17:32:32 - [36mINFO [0m Task-254 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.63it/s]
+17:32:33 - [36mINFO [0m Task-256 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:33 - [36mINFO [0m Task-256 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:33 - [36mINFO [0m Task-256 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:33 - [36mINFO [0m Task-256 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:33 - [36mINFO [0m Task-256 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:33 - [36mINFO [0m Task-256 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.67it/s]
+17:32:33 - [36mINFO [0m Task-256 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.66it/s]
+17:32:33 - [36mINFO [0m Task-258 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:33 - [36mINFO [0m Task-258 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:33 - [36mINFO [0m Task-258 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:33 - [36mINFO [0m Task-258 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:33 - [36mINFO [0m Task-258 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:33 - [36mINFO [0m Task-258 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.62it/s]
+17:32:33 - [36mINFO [0m Task-258 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.61it/s]
+17:32:34 - [36mINFO [0m Task-260 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:34 - [36mINFO [0m Task-260 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:34 - [36mINFO [0m Task-260 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:34 - [36mINFO [0m Task-260 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:34 - [36mINFO [0m Task-260 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:34 - [36mINFO [0m Task-260 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.67it/s]
+17:32:34 - [36mINFO [0m Task-260 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.66it/s]
+17:32:34 - [36mINFO [0m Task-262 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:34 - [36mINFO [0m Task-262 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:34 - [36mINFO [0m Task-262 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:34 - [36mINFO [0m Task-262 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:34 - [36mINFO [0m Task-262 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:34 - [36mINFO [0m Task-262 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.69it/s]
+17:32:34 - [36mINFO [0m Task-262 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.68it/s]
+17:32:35 - [36mINFO [0m Task-264 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:35 - [36mINFO [0m Task-264 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:35 - [36mINFO [0m Task-264 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:35 - [36mINFO [0m Task-264 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:35 - [36mINFO [0m Task-264 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:35 - [36mINFO [0m Task-264 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.67it/s]
+17:32:35 - [36mINFO [0m Task-264 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.65it/s]
+17:32:35 - [36mINFO [0m Task-266 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:35 - [36mINFO [0m Task-266 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:35 - [36mINFO [0m Task-266 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:35 - [36mINFO [0m Task-266 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:35 - [36mINFO [0m Task-266 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:35 - [36mINFO [0m Task-266 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.69it/s]
+17:32:35 - [36mINFO [0m Task-266 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.68it/s]
+17:32:36 - [36mINFO [0m Task-268 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:36 - [36mINFO [0m Task-268 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:36 - [36mINFO [0m Task-268 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:36 - [36mINFO [0m Task-268 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:36 - [36mINFO [0m Task-268 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:36 - [36mINFO [0m Task-268 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.70it/s]
+17:32:36 - [36mINFO [0m Task-268 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.69it/s]
+17:32:36 - [36mINFO [0m Task-270 process_forecasts_.py process_forecasts:72    spread_df is `None`; imputing 0.0 spread
+17:32:36 - [36mINFO [0m Task-270 process_forecasts_.py process_forecasts:82    restrictions_df is `None`; no restrictions will be enforced
+17:32:36 - [36mINFO [0m Task-270 process_forecasts_.py process_forecasts:129   log_dir=None
+17:32:36 - [36mINFO [0m Task-270 htqdm.py flush:42                             0%|          | 0/1 [00:00<?, ?it/s]
+17:32:36 - [36mINFO [0m Task-270 target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:36 - [36mINFO [0m Task-270 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.70it/s]
+17:32:36 - [36mINFO [0m Task-270 htqdm.py flush:42                             100%|##########| 1/1 [00:00<00:00,  4.69it/s]
+17:32:37 - [36mINFO [0m target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:37 - [36mINFO [0m target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.
+17:32:37 - [36mINFO [0m hsql_test.py tearDownClass:105                         
+################################################################################
+tearDown
+################################################################################
+  ==> Container compose-oms_postgres3764-1  Stopping
+  ==> Container compose-oms_postgres3764-1  Stopping
+  ==> Container compose-oms_postgres3764-1  Stopped
+  ==> Container compose-oms_postgres3764-1  Removing
+  ==> Container compose-oms_postgres3764-1  Removed
+  ==> Volume compose_oms_postgres3764_data  Removing
+  ==> Network main_network  Removing
+  ==> Volume compose_oms_postgres3764_data  Removed
+  ==> Network main_network  Removed

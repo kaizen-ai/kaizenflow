@@ -1,0 +1,6 @@
+17:36:59 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestCcxtCsvClient1.test_read_data7
+################################################################################
+17:36:59 - [36mINFO [0m ccxt_clients.py _read_data_for_one_symbol:302          Reading data for vendor=`CCXT`, exchange id='binance', currencies='BTC_USDT' from file='/app/im_v2/ccxt/data/client/test/test_data/20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz'...
+17:36:59 - [36mINFO [0m ccxt_clients.py _read_data_for_one_symbol:302          Reading data for vendor=`CCXT`, exchange id='kucoin', currencies='ETH_USDT' from file='/app/im_v2/ccxt/data/client/test/test_data/20210924/ohlcv/ccxt/kucoin/ETH_USDT.csv.gz'...

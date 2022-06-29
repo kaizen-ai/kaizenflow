@@ -1,0 +1,18 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:38:03 - [36mINFO [0m hunit_test.py setUp:912            17:38:03 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestLibTasks1.test_get_gh_issue_title1
+################################################################################
+[1m[31mERROR   [0m helpers.hsystem:hsystem.py:274 17:38:04 - [31mERROR[0m hsystem.py _system:274             17:38:04 - [31mERROR[0m hsystem.py _system:274             
+################################################################################
+cmd='(gh auth status) 2>&1' failed with rc='1'
+################################################################################
+Output of the failing command is:
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+github.com
+  X github.com: authentication failed
+  - The github.com token in /home/.config/gh/hosts.yml is no longer valid.
+  - To re-authenticate, run: gh auth login -h github.com
+  - To forget about this host, run: gh auth logout -h github.com
+  
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

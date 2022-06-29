@@ -1,0 +1,19 @@
+Execution failed
+
+################################################################################
+6/6 (20220628-174422)
+################################################################################
+
+tag=6/6 (20220628-174422)
+workload_func=workload_function
+func_name=workload_function
+args=(-1, 7)
+kwargs={'good2': 'bye2', 'hello2': 'world2'}
+exception='Error: val1=-1, val2=7, incremental=True, num_attempts=1, kwargs={'hello2': 'world2', 'good2': 'bye2'}'
+func_res=
+  None
+elapsed_time_in_secs=0.01
+start_ts=20220628-174422
+end_ts=20220628-174422
+error=True
+Continuing execution since abort_on_error=False

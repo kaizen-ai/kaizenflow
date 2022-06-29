@@ -1,0 +1,7 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:48 - [36mINFO [0m hunit_test.py setUp:912            17:37:48 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_get_files_to_process1.test_files2
+################################################################################
+[1m[31mERROR   [0m helpers.lib_tasks_utils:lib_tasks_utils.py:369 17:37:48 - [31mERROR[0m lib_tasks_utils.py _filter_existing_paths:369          17:37:48 - [31mERROR[0m lib_tasks_utils.py _filter_existing_paths:369          'testfile1.py' does not exist
+[1m[31mERROR   [0m helpers.lib_tasks_utils:lib_tasks_utils.py:359 17:37:48 - [31mERROR[0m lib_tasks_utils.py _filter_existing_paths:359          17:37:48 - [31mERROR[0m lib_tasks_utils.py _filter_existing_paths:359          'testfiles1/*' pattern doesn't match any files: the directory is empty or path does not exist
+[33mWARNING [0m helpers.lib_tasks_utils:lib_tasks_utils.py:339 17:37:48 - [33mWARN [0m lib_tasks_utils.py _get_files_to_process:339           17:37:48 - [33mWARN [0m lib_tasks_utils.py _get_files_to_process:339           No files were selected

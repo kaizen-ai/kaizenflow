@@ -1,0 +1,30 @@
+17:44:05 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestGlobalCache1.test_redefined_function
+################################################################################
+17:44:05 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem.TestGlobalCache1::test_redefined_function', size=nan
+17:44:05 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem.TestGlobalCache1::test_redefined_function'
+17:44:05 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/mnt/tmpfs/tmp.cache.mem.TestGlobalCache1::test_redefined_function' ...
+17:44:05 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem.TestGlobalCache1::test_redefined_function', size=nan
+17:44:05 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global disk' cache: path='/app/tmp.cache.disk.TestGlobalCache1::test_redefined_function', size=nan
+17:44:05 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global disk' cache '/app/tmp.cache.disk.TestGlobalCache1::test_redefined_function'
+17:44:05 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/app/tmp.cache.disk.TestGlobalCache1::test_redefined_function' ...
+17:44:05 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global disk' cache: path='/app/tmp.cache.disk.TestGlobalCache1::test_redefined_function', size=nan
+17:44:05 - [36mINFO [0m htimer.py dtimer_start:133                             Updating cached version on disk ...
+17:44:05 - [36mINFO [0m htimer.py dtimer_stop:150                              Updating cached version on disk done (0.002 s)
+17:44:05 - [36mINFO [0m htimer.py dtimer_start:133                             Loading cached version from memory ...
+17:44:05 - [36mINFO [0m htimer.py dtimer_stop:150                              Loading cached version from memory done (0.001 s)
+17:44:05 - [36mINFO [0m htimer.py dtimer_start:133                             Loading cached version from memory ...
+17:44:05 - [36mINFO [0m htimer.py dtimer_stop:150                              Loading cached version from memory done (0.001 s)
+17:44:05 - [36mINFO [0m htimer.py dtimer_start:133                             Loading cached version from memory ...
+17:44:05 - [36mINFO [0m htimer.py dtimer_stop:150                              Loading cached version from memory done (0.000 s)
+17:44:05 - [36mINFO [0m htimer.py dtimer_start:133                             Updating cached version on disk ...
+17:44:05 - [36mINFO [0m htimer.py dtimer_stop:150                              Updating cached version on disk done (0.001 s)
+17:44:05 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem.TestGlobalCache1::test_redefined_function', size=48.0 KB
+17:44:05 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem.TestGlobalCache1::test_redefined_function'
+17:44:05 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/mnt/tmpfs/tmp.cache.mem.TestGlobalCache1::test_redefined_function' ...
+17:44:05 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem.TestGlobalCache1::test_redefined_function', size=nan
+17:44:05 - [36mINFO [0m hcache.py clear_global_cache:297                       Before clear_global_cache: 'global disk' cache: path='/app/tmp.cache.disk.TestGlobalCache1::test_redefined_function', size=56.0 KB
+17:44:05 - [33mWARN [0m hcache.py clear_global_cache:298                       Resetting 'global disk' cache '/app/tmp.cache.disk.TestGlobalCache1::test_redefined_function'
+17:44:05 - [33mWARN [0m hcache.py clear_global_cache:308                       Destroying '/app/tmp.cache.disk.TestGlobalCache1::test_redefined_function' ...
+17:44:05 - [36mINFO [0m hcache.py clear_global_cache:319                       After clear_global_cache: 'global disk' cache: path='/app/tmp.cache.disk.TestGlobalCache1::test_redefined_function', size=nan

@@ -1,0 +1,17 @@
+17:37:49 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_pytest_repro1.test_files1
+################################################################################
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:830                   Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro1.test_files1/tmp.scratch/cache/lastfailed'
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:832                   Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro1.test_files1/tmp.scratch/cache/lastfailed'
+17:37:49 - [36mINFO [0m lib_tasks_pytest.py pytest_repro:943                   Found 7 failed pytest 'files' target(s); to reproduce run:
+pytest dev_scripts/testing/test/test_run_tests.py
+pytest dev_scripts/testing/test/test_run_tests2.py
+pytest helpers/test/test_printing.py
+pytest documentation/scripts/test/test_all.py
+pytest documentation/scripts/test/test_render_md.py
+pytest helpers/test/helpers/test/test_list.py
+pytest helpers/test/test_cache.py
+[95m## pytest_repro: [0m
+# To run the tests:
+> ./tmp.pytest_repro.sh

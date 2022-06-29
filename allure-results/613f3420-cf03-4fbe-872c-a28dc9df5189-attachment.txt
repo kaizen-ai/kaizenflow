@@ -1,0 +1,4 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:44:05 - [36mINFO [0m hunit_test.py setUp:912            17:44:05 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+Test_dassert_container_type1.test1
+################################################################################

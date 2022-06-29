@@ -1,0 +1,5 @@
+17:47:01 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
+################################################################################
+TestModelPlotter1.test_plot_model_return_correlation1
+################################################################################
+17:47:01 @ 2022-06-28 01:44:12 - [36mINFO [0m model_evaluator.py compute_pnl:410 memory_usage=rss=0.953GB vms=6.455GB mem_pct=3%

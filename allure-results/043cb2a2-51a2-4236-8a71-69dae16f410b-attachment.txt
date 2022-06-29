@@ -1,0 +1,5 @@
+[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:53 - [36mINFO [0m hunit_test.py setUp:912            17:37:53 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestCryptoChassisExtractor1.test_download_market_depth_data_futures1
+################################################################################
+[32mINFO    [0m im_v2.crypto_chassis.data.extract.extractor:extractor.py:161 17:37:54 - [36mINFO [0m extractor.py _download_market_depth:161                17:37:54 - [36mINFO [0m extractor.py _download_market_depth:161                https://api.cryptochassis.com/v1/market-depth/binance-usds-futures/btcusdt?startTime=2022-01-09T00:00:00Z&depth=1

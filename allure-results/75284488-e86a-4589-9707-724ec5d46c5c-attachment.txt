@@ -1,0 +1,6 @@
+17:42:06 - [36mINFO [0m hunit_test.py setUp:912            
+################################################################################
+TestKibotEquitiesCsvParquetByAssetClient.test_read_csv_data4
+################################################################################
+17:42:06 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:203         Reading data for `Kibot`, asset class='stocks', trade symbol='AMP'unadjusted='False' from file='/app/im_v2/kibot/data/client/test/test_data/kibot/all_stocks_1min/AMP.csv.gz'...
+17:42:06 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:203         Reading data for `Kibot`, asset class='stocks', trade symbol='HD'unadjusted='False' from file='/app/im_v2/kibot/data/client/test/test_data/kibot/all_stocks_1min/HD.csv.gz'...

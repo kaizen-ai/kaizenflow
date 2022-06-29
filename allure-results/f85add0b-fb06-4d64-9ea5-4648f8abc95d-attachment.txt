@@ -1,0 +1,2 @@
+/app/core/statistics/test/test_interarrival_time.py:17: FutureWarning: The default dtype for empty Series will be 'object' instead of 'float64' in a future version. Specify a dtype explicitly to silence this warning.
+  series = pd.Series([])
