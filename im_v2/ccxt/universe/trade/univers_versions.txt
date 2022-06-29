@@ -1,0 +1,27 @@
+coinbase_test
+- 2022-06-15
+- Coinbasepro universe for unit tests
+
+v5
+- 2022-05-25
+- Kucoin, Gateio, Coinbase, Coinbasepro full symbols are added due to CmTask #1948
+
+v4
+- 2022-04-23
+- Kucoin, Gateio and FTX full symbols are removed due to CmTask #1866
+
+small
+- 2021-11-07
+- Small universe for fast unit tests
+
+v3
+- 2021-11-04
+- Kucoin was removed due to bad quality
+
+v2
+- 2021-11-03
+- Removed: bitfinex due to CmTask #274
+
+v1
+- 2021-09-25
+- Initial version
