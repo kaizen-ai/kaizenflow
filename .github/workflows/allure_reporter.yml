@@ -15,7 +15,10 @@ jobs:
         with:
           submodules: true
           token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
-          
+
+      - name: Cleanup
+        run: sudo chmod 777 -R .
+
       - name: allure-html-report-s3-website
         uses: PavanMudigonda/allure-html-reporter-aws-s3-website@v1.0
         with:
