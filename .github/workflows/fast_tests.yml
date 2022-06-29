@@ -18,7 +18,7 @@ jobs:
           keep_reports: 2
           args: --acl public-read --follow-symlinks
         env:
-          AWS_S3_BUCKET: cryptokaizen-html
+          AWS_S3_BUCKET: "cryptokaizen-html"
           AWS_ACCESS_KEY_ID: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}   # optional: defaults to us-east-1
