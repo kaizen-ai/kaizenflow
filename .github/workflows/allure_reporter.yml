@@ -8,6 +8,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Check out the code from GitHub so that we can run the action inside
+      # the Docker container.
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
+          
       - name: allure-html-report-s3-website
         uses: PavanMudigonda/allure-html-reporter-aws-s3-website@v1.0
         with:
