@@ -16,9 +16,6 @@ jobs:
           submodules: true
           token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
 
-      - name: Cleanup
-        run: sudo chmod 777 -R .
-
       - name: allure-html-report-s3-website
         uses: PavanMudigonda/allure-html-reporter-aws-s3-website@v1.0
         with:
@@ -27,7 +24,7 @@ jobs:
           allure_history: allure-history
           allure_report: allure-report
           keep_reports: 2
-          args: --acl public-read --follow-symlinks
+          args: --follow-symlinks
         env:
           AWS_S3_BUCKET: "cryptokaizen-html"
           AWS_ACCESS_KEY_ID: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
