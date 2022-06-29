@@ -1,9 +1,0 @@
-17:46:57 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-TestFromEnvVar1.test1
-################################################################################
-  ==> load_experiment_kwargs:
-  ==>   file_name: result_bundle.v2_0.pkl
-  ==>   experiment_type: ins_oos
-  ==>   selected_idxs: None
-  ==>   aws_profile: None

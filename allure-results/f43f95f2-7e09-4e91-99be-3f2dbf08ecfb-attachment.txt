@@ -1,5 +1,0 @@
-17:40:16 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestForecastEvaluatorFromPrices1.test_to_str_intraday_3_assets_longitudinal
-################################################################################
-17:40:16 - [36mINFO [0m target_position_generation.py compute_target_positions_longitudinally:193 spread is `None`; imputing spread_lower_bound=0.000100

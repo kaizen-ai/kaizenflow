@@ -1,6 +1,0 @@
-17:42:12 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_align_on_time_grid1.test_real_time2
-################################################################################
-17:42:12 - [36mINFO [0m real_time.py align_on_time_grid:264                    Aligning on 2 secs
-17:42:14 - [36mINFO [0m real_time.py align_on_time_grid:264                    Aligning on 2 secs

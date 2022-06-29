@@ -1,4 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:37 - [36mINFO [0m hunit_test.py setUp:912            17:37:37 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_git_repo_name1.test_get_repo_full_name_from_dirname1
-################################################################################

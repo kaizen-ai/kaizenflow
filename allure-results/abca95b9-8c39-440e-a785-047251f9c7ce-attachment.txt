@@ -1,5 +1,0 @@
-17:40:16 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestForecastEvaluatorFromPrices1.test_annotate_forecasts_with_extended_stats_1_asset
-################################################################################
-17:40:16 - [36mINFO [0m target_position_generation.py compute_target_positions_cross_sectionally:75 Predictions provided for one asset; skipping Gaussian ranking.

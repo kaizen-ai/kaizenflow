@@ -1,4 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:40:17 - [36mINFO [0m hunit_test.py setUp:912            17:40:17 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_resample_srs.test_no_freq_day_to_business_day1
-################################################################################

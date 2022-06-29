@@ -1,6 +1,0 @@
-17:37:49 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_adjust_holdings_for_overnight.test_adjust_for_splits
-################################################################################
-17:37:49 - [36mINFO [0m bar_processing.py infer_splits:79                      num dates with splits=1
-17:37:49 - [36mINFO [0m bar_processing.py infer_splits:84                      num assets with splits=1

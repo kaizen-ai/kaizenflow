@@ -1,39 +1,0 @@
-/app/oms/portfolio.py:724: FutureWarning: pandas.Int64Index is deprecated and will be removed from pandas in a future version. Use pandas.Index with the appropriate dtype instead.
-  hdbg.dassert_isinstance(idx, pd.Int64Index)
-run_leq_node:   0%|          | 0/8 [00:00<?, ?it/s]run_leq_node:  50%|█████     | 4/8 [00:00<00:00, 39.82it/s]/app/core/signal_processing/swt.py:186: RuntimeWarning: divide by zero encountered in log2
-  pow2_ceil = int(2 ** np.ceil(np.log2(arr_len)))
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-run_leq_node: 100%|██████████| 8/8 [00:00<00:00, 50.49it/s]
-run_leq_node:   0%|          | 0/8 [00:00<?, ?it/s]run_leq_node:  38%|███▊      | 3/8 [00:00<00:00, 29.98it/s]/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-run_leq_node: 100%|██████████| 8/8 [00:00<00:00, 46.57it/s]
-run_leq_node:   0%|          | 0/8 [00:00<?, ?it/s]run_leq_node:  38%|███▊      | 3/8 [00:00<00:00, 29.20it/s]/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-run_leq_node: 100%|██████████| 8/8 [00:00<00:00, 45.29it/s]
-run_leq_node:   0%|          | 0/8 [00:00<?, ?it/s]run_leq_node:  38%|███▊      | 3/8 [00:00<00:00, 28.91it/s]/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-run_leq_node: 100%|██████████| 8/8 [00:00<00:00, 43.88it/s]
-run_leq_node:   0%|          | 0/8 [00:00<?, ?it/s]run_leq_node:  38%|███▊      | 3/8 [00:00<00:00, 29.49it/s]/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-run_leq_node: 100%|██████████| 8/8 [00:00<00:00, 44.08it/s]
-run_leq_node:   0%|          | 0/8 [00:00<?, ?it/s]run_leq_node:  38%|███▊      | 3/8 [00:00<00:00, 29.18it/s]/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-run_leq_node: 100%|██████████| 8/8 [00:00<00:00, 43.86it/s]
-run_leq_node:   0%|          | 0/8 [00:00<?, ?it/s]run_leq_node:  38%|███▊      | 3/8 [00:00<00:00, 28.89it/s]/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-run_leq_node: 100%|██████████| 8/8 [00:00<00:00, 43.23it/s]

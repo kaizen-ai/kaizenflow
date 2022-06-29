@@ -1,6 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:45:53 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:45:53 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-Test_summarize_time_index_info.test7
-################################################################################
-[33mWARNING [0m helpers.hdataframe:hdataframe.py:184 17:45:53 @ 2022-06-28 01:44:12 - [33mWARN [0m hdataframe.py apply_nan_mode:184 17:45:53 @ 2022-06-28 01:44:12 - [33mWARN [0m hdataframe.py apply_nan_mode:184 Empty input series `None`
-[33mWARNING [0m core.statistics.descriptive:descriptive.py:51 17:45:53 @ 2022-06-28 01:44:12 - [33mWARN [0m descriptive.py summarize_time_index_info:51 17:45:53 @ 2022-06-28 01:44:12 - [33mWARN [0m descriptive.py summarize_time_index_info:51 Empty input series `None`

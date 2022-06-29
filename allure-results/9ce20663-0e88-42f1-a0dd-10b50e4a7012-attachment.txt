@@ -1,5 +1,0 @@
-17:36:40 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestDownloadHistoricalData1.test_main
-################################################################################
-[0m[33mWARNING[0m: Logger already initialized: skipping

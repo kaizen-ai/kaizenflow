@@ -1,2 +1,0 @@
-/app/core/statistics/test/test_descriptive.py:163: FutureWarning: The 'check_less_precise' keyword in testing.assert_*_equal is deprecated and will be removed in a future version. You can stop passing 'check_less_precise' to silence this warning.
-  pd.testing.assert_series_equal(actual, expected, check_less_precise=3)

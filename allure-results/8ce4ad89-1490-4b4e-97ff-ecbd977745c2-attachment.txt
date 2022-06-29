@@ -1,4 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:48 - [36mINFO [0m hunit_test.py setUp:912            17:37:48 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_get_files_to_process1.test_modified1
-################################################################################

@@ -1,8 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:29 - [36mINFO [0m hunit_test.py setUp:912            17:37:29 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestCompareRealtimeAndHistoricalData1.test_parser
-################################################################################
-[32mINFO    [0m helpers.hsql_test:hsql_test.py:105 17:37:29 - [36mINFO [0m hsql_test.py tearDownClass:105                         17:37:29 - [36mINFO [0m hsql_test.py tearDownClass:105                         
-################################################################################
-tearDown
-################################################################################

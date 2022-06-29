@@ -1,4 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:47 - [36mINFO [0m hunit_test.py setUp:912            17:37:47 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestDryRunTasks1.test_git_clean
-################################################################################

@@ -1,5 +1,0 @@
-17:32:50 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_get_dir_signature1.test2
-################################################################################
-17:32:50 - [33mWARN [0m hsystem.py remove_dirs:448                             Removed dirs: /app/helpers/test/outcomes/Test_get_dir_signature1.test2/input, /app/helpers/test/outcomes/Test_get_dir_signature1.test2/input/result_0, /app/helpers/test/outcomes/Test_get_dir_signature1.test2/input/result_1

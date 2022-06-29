@@ -1,8 +1,0 @@
-/venv/lib/python3.8/site-packages/statsmodels/tsa/statespace/sarimax.py:966: UserWarning: Non-stationary starting autoregressive parameters found. Using zeros as starting parameters.
-  warn('Non-stationary starting autoregressive parameters'
-/venv/lib/python3.8/site-packages/statsmodels/base/model.py:604: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-  warnings.warn("Maximum Likelihood optimization failed to "
-ContinuosSarimax predict:   0%|          | 0/71 [00:00<?, ?it/s]ContinuosSarimax predict:  18%|█▊        | 13/71 [00:00<00:00, 120.42it/s]ContinuosSarimax predict:  37%|███▋      | 26/71 [00:00<00:00, 119.16it/s]ContinuosSarimax predict:  55%|█████▍    | 39/71 [00:00<00:00, 119.59it/s]ContinuosSarimax predict:  73%|███████▎  | 52/71 [00:00<00:00, 120.45it/s]ContinuosSarimax predict:  92%|█████████▏| 65/71 [00:00<00:00, 120.24it/s]ContinuosSarimax predict: 100%|██████████| 71/71 [00:00<00:00, 120.12it/s]
-ContinuosSarimax predict:   0%|          | 0/22 [00:00<?, ?it/s]ContinuosSarimax predict:  59%|█████▉    | 13/22 [00:00<00:00, 122.00it/s]ContinuosSarimax predict: 100%|██████████| 22/22 [00:00<00:00, 122.27it/s]
-ContinuosSarimax predict:   0%|          | 0/29 [00:00<?, ?it/s]ContinuosSarimax predict:  45%|████▍     | 13/29 [00:00<00:00, 124.54it/s]ContinuosSarimax predict:  90%|████████▉ | 26/29 [00:00<00:00, 124.13it/s]ContinuosSarimax predict: 100%|██████████| 29/29 [00:00<00:00, 123.99it/s]
-ContinuosSarimax predict:   0%|          | 0/27 [00:00<?, ?it/s]ContinuosSarimax predict:  48%|████▊     | 13/27 [00:00<00:00, 126.99it/s]ContinuosSarimax predict:  96%|█████████▋| 26/27 [00:00<00:00, 126.72it/s]ContinuosSarimax predict: 100%|██████████| 27/27 [00:00<00:00, 126.55it/s]

@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:44:29 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:44:29 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-TestContractSymbolMapper.test_get_kibot_symbol4
-################################################################################
-[33mWARNING [0m im.kibot.metadata.load.contract_symbol_mapping:contract_symbol_mapping.py:63 17:44:29 @ 2022-06-28 01:44:12 - [33mWARN [0m contract_symbol_mapping.py get_kibot_symbol:63 17:44:29 @ 2022-06-28 01:44:12 - [33mWARN [0m contract_symbol_mapping.py get_kibot_symbol:63 No metadata for non-existent:non-existent contract

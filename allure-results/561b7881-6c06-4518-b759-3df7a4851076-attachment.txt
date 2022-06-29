@@ -1,4 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:06 - [36mINFO [0m hunit_test.py setUp:912            17:37:06 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-CcxtSqlRealTimeImClient1.test_read_data5
-################################################################################

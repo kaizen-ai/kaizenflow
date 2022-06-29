@@ -1,8 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:44:02 - [36mINFO [0m hunit_test.py setUp:912            17:44:02 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestReplayedMarketData2.test_get_data_at_timestamp2
-################################################################################
-[32mINFO    [0m app.market_data.test.test_replayed_market_data:test_replayed_market_data.py:47 17:44:02 - [36mINFO [0m test_replayed_market_data.py _check_get_data:47        17:44:02 - [36mINFO [0m test_replayed_market_data.py _check_get_data:47        -> # df=
-Empty DataFrame
-Columns: [asset_id, last_price, start_datetime, timestamp_db]
-Index: []

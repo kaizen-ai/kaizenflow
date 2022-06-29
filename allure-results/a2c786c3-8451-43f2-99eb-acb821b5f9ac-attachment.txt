@@ -1,4 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:49 - [36mINFO [0m hunit_test.py setUp:912            17:37:49 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestLibTasksGetDockerCmd1.test_docker_bash5
-################################################################################

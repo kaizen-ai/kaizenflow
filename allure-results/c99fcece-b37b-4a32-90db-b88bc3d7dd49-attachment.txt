@@ -1,6 +1,0 @@
-Calculating positions:   0%|          | 0/8 [00:00<?, ?it/s]Calculating positions: 100%|██████████| 8/8 [00:00<00:00, 2304.88it/s]
-Calculating PnL:   0%|          | 0/8 [00:00<?, ?it/s]Calculating PnL: 100%|██████████| 8/8 [00:00<00:00, 1614.13it/s]
-/venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:2022: InterpolationWarning: The test statistic is outside of the range of p-values available in the
-look-up table. The actual p-value is greater than the p-value returned.
-
-  warnings.warn(

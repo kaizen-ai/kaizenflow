@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:41:20 - [36mINFO [0m hunit_test.py setUp:912            17:41:20 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestRunExperimentFail2.test_serial1
-################################################################################
-[33mWARNING [0m app.dataflow.model.test.test_run_experiment:test_run_experiment.py:144 17:41:20 - [33mWARN [0m test_run_experiment.py test_serial1:144                17:41:20 - [33mWARN [0m test_run_experiment.py test_serial1:144                This command is supposed to fail

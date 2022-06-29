@@ -1,9 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:40:02 - [36mINFO [0m hunit_test.py setUp:912            17:40:02 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestCreateDb1.test_up1
-################################################################################
-[32mINFO    [0m app.im_v2.common.db.test.test_create_db:test_create_db.py:23 17:40:02 - [36mINFO [0m test_create_db.py test_up1:23                          17:40:02 - [36mINFO [0m test_create_db.py test_up1:23                          db_list=['im_postgres_db_local', 'postgres', 'template0', 'template1']
-[32mINFO    [0m helpers.hsql_test:hsql_test.py:105 17:40:02 - [36mINFO [0m hsql_test.py tearDownClass:105                         17:40:02 - [36mINFO [0m hsql_test.py tearDownClass:105                         
-################################################################################
-tearDown
-################################################################################

@@ -1,6 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:42:16 - [36mINFO [0m hunit_test.py setUp:912            17:42:16 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestReplayedTime1.test1
-################################################################################
-[32mINFO    [0m app.core.test.test_real_time:test_real_time.py:103 17:42:16 - [36mINFO [0m test_real_time.py _helper:103                          17:42:16 - [36mINFO [0m test_real_time.py _helper:103                            -> time=2010-01-04 09:30:00.000184
-[32mINFO    [0m app.core.test.test_real_time:test_real_time.py:103 17:42:16 - [36mINFO [0m test_real_time.py _helper:103                          17:42:16 - [36mINFO [0m test_real_time.py _helper:103                            -> time=2010-01-04 09:30:00.001316

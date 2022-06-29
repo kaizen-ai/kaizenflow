@@ -1,2 +1,0 @@
-/app/helpers/hparquet.py:701: FutureWarning: weekofyear and week have been deprecated, please use DatetimeIndex.isocalendar().week instead, which returns a Series. To exactly reproduce the behavior of week and weekofyear and return an Index, you may call pd.Int64Index(idx.isocalendar().week)
-  df[column_name] = getattr(df.index, column_name)

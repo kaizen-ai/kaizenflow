@@ -1,5 +1,0 @@
-17:45:56 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-TestTimeSeriesDailyStudy.test_usual_case
-################################################################################
-17:45:56 @ 2022-06-28 01:44:12 - [36mINFO [0m timeseries_study.py plot_by_year:138 Skipping years [2018]: not enough data to plot

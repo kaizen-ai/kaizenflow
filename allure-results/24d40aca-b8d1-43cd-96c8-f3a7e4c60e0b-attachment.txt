@@ -1,6 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:45:54 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:45:54 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-TestCalculateHitRate.test_smoke
-################################################################################
-[33mWARNING [0m helpers.hdataframe:hdataframe.py:184 17:45:54 @ 2022-06-28 01:44:12 - [33mWARN [0m hdataframe.py apply_nan_mode:184 17:45:54 @ 2022-06-28 01:44:12 - [33mWARN [0m hdataframe.py apply_nan_mode:184 Empty input series `None`
-[33mWARNING [0m core.statistics.requires_statsmodels:requires_statsmodels.py:309 17:45:54 @ 2022-06-28 01:44:12 - [33mWARN [0m requires_statsmodels.py calculate_hit_rate:309 17:45:54 @ 2022-06-28 01:44:12 - [33mWARN [0m requires_statsmodels.py calculate_hit_rate:309 Empty input series `None`

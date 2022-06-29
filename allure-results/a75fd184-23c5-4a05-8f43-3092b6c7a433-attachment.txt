@@ -1,4 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:37:36 - [36mINFO [0m hunit_test.py setUp:912            17:37:36 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_git_submodule2.test_get_head_hash1
-################################################################################

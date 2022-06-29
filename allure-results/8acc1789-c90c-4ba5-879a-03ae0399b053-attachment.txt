@@ -1,6 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:36:09 - [36mINFO [0m hunit_test.py setUp:912            17:36:09 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestDownloadHistoricalData1.test_function_call2
-################################################################################
-[32mINFO    [0m responses:__init__.py:791 17:36:10 - [36mINFO [0m __init__.py _on_request:791                            17:36:10 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru
-[32mINFO    [0m responses:__init__.py:791 17:36:10 - [36mINFO [0m __init__.py _on_request:791                            17:36:10 - [36mINFO [0m __init__.py _on_request:791                            request.allowed-passthru

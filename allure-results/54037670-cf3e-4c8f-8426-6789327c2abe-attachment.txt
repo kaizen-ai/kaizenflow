@@ -1,6 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:32:49 - [36mINFO [0m hunit_test.py setUp:912            17:32:49 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestCheckString1.test_check_string_missing3
-################################################################################
-[33mWARNING [0m helpers.hunit_test:hunit_test.py:1279 17:32:49 - [33mWARN [0m hunit_test.py check_string:1279                        17:32:49 - [33mWARN [0m hunit_test.py check_string:1279                        Can't find golden outcome file '/app/helpers/test/outcomes/TestCheckString1.test_check_string_missing3/output/test.txt'
-[33mWARNING [0m helpers.hunit_test:hunit_test.py:1293 17:32:49 - [33mWARN [0m hunit_test.py check_string:1293                        17:32:49 - [33mWARN [0m hunit_test.py check_string:1293                        Creating the golden outcome

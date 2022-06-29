@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:32:48 - [36mINFO [0m hunit_test.py setUp:912            17:32:48 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_is_pickleable1.test_lambda2
-################################################################################
-[1m[31mERROR   [0m app.helpers.test.test_hintrospection:test_hintrospection.py:56 17:32:48 - [31mERROR[0m test_hintrospection.py helper:56                       17:32:48 - [31mERROR[0m test_hintrospection.py helper:56                       e=Can't pickle local object 'Test_is_pickleable1.test_lambda2.<locals>.<lambda>'

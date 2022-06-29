@@ -1,9 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:32:48 - [36mINFO [0m hunit_test.py setUp:912            17:32:48 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestTestCase1.test_assert_not_equal1
-################################################################################
-[1m[31mERROR   [0m helpers.hunit_test:hunit_test.py:823 17:32:48 - [31mERROR[0m hunit_test.py assert_equal:823                         17:32:48 - [31mERROR[0m hunit_test.py assert_equal:823                         
-================================================================================
-Test 'TestTestCase1.test_assert_not_equal1' failed
-================================================================================
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:855 17:32:48 - [36mINFO [0m hunit_test.py assert_equal:855                         17:32:48 - [36mINFO [0m hunit_test.py assert_equal:855                         Saved exp_var in tmp.exp_var.txt

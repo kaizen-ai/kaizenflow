@@ -1,5 +1,0 @@
-17:46:57 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-TestDassertIsSerializable1.test2
-################################################################################
-17:46:57 @ 2022-06-28 01:44:12 - [31mERROR[0m config_.py from_python:282       Error deserializing: invalid syntax (<string>, line 1)

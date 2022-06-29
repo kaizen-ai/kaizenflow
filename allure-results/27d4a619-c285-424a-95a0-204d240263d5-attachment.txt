@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:40:16 - [36mINFO [0m hunit_test.py setUp:912            17:40:16 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_apply_nan_mode.test6
-################################################################################
-[33mWARNING [0m helpers.hdataframe:hdataframe.py:184 17:40:16 - [33mWARN [0m hdataframe.py apply_nan_mode:184                       17:40:16 - [33mWARN [0m hdataframe.py apply_nan_mode:184                       Empty input series `None`

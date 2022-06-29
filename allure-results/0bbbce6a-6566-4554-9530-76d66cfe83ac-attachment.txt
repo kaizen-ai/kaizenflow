@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:32:49 - [36mINFO [0m hunit_test.py setUp:912            17:32:49 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestCheckDataFrame1.test_check_df_missing1
-################################################################################
-[33mWARNING [0m app.helpers.test.test_unit_test:test_unit_test.py:31 17:32:49 - [33mWARN [0m test_unit_test.py _git_add:31                          17:32:49 - [33mWARN [0m test_unit_test.py _git_add:31                          Can't run 'git add -u /app/helpers/test/outcomes/TestCheckDataFrame1.test_check_df_missing1/output/test_df.txt': you need to add the file manually

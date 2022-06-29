@@ -1,2 +1,0 @@
-Calculating positions:   0%|          | 0/8 [00:00<?, ?it/s]Calculating positions: 100%|██████████| 8/8 [00:00<00:00, 2382.28it/s]
-Calculating PnL:   0%|          | 0/8 [00:00<?, ?it/s]Calculating PnL: 100%|██████████| 8/8 [00:00<00:00, 1525.76it/s]

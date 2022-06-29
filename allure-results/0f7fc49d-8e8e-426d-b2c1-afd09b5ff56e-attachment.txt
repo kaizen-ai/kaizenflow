@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:43:30 - [36mINFO [0m hunit_test.py setUp:912            17:43:30 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestRunNotebook2.test_serial1
-################################################################################
-[33mWARNING [0m app.dev_scripts.test.test_run_notebook:test_run_notebook.py:109 17:43:30 - [33mWARN [0m test_run_notebook.py test_serial1:109                  17:43:30 - [33mWARN [0m test_run_notebook.py test_serial1:109                  This command is supposed to fail

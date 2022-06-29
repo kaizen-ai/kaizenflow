@@ -1,24 +1,0 @@
-  0%|          | 0/2 [00:00<?, ?it/s]
-  0%|          | 0/2 [00:00<?, ?it/s][A/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
-/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
-/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
-/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
-/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
- 50%|█████     | 1/2 [00:00<00:00,  1.20it/s]
- 50%|█████     | 1/2 [00:00<00:00,  1.20it/s][A/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
-/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
-/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
-/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
-/venv/lib/python3.8/site-packages/sklearn/preprocessing/_data.py:2590: UserWarning: n_quantiles (1001) is greater than the total number of samples (4). n_quantiles is set to n_samples.
-  warnings.warn(
- 50%|█████     | 1/2 [00:01<00:01,  1.53s/it]
- 50%|█████     | 1/2 [00:01<00:01,  1.52s/it]

@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:40:17 - [36mINFO [0m hunit_test.py setUp:912            17:40:17 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_compute_target_positions_longitudinally1.test_4assets_with_defaults
-################################################################################
-[32mINFO    [0m core.finance.target_position_generation:target_position_generation.py:193 17:40:17 - [36mINFO [0m target_position_generation.py compute_target_positions_longitudinally:193 17:40:17 - [36mINFO [0m target_position_generation.py compute_target_positions_longitudinally:193 spread is `None`; imputing spread_lower_bound=0.000100

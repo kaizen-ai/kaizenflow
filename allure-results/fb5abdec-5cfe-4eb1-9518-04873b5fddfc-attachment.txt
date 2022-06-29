@@ -1,6 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:42:07 - [36mINFO [0m hunit_test.py setUp:912            17:42:07 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestKibotFuturesCsvParquetByAssetClient.test_read_csv_expiry_data5
-################################################################################
-[32mINFO    [0m im_v2.kibot.data.client.kibot_clients:kibot_clients.py:405 17:42:07 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:405         17:42:07 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:405         Reading data for `Kibot` futures, trade symbol='BB', contract type='expiry' from file='/app/im_v2/kibot/data/client/test/test_data/kibot/all_futures_contracts_1min/BB.csv.gz'...
-[32mINFO    [0m im_v2.kibot.data.client.kibot_clients:kibot_clients.py:405 17:42:07 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:405         17:42:07 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:405         Reading data for `Kibot` futures, trade symbol='NN', contract type='expiry' from file='/app/im_v2/kibot/data/client/test/test_data/kibot/all_futures_contracts_1min/NN.csv.gz'...

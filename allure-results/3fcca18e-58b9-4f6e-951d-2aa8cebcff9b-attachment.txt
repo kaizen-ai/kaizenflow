@@ -1,7 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:44:11 - [36mINFO [0m hunit_test.py setUp:912            17:44:11 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_logging1.test_logging_levels1
-################################################################################
-[32mINFO    [0m helpers.hlogging:hlogging.py:190 17:44:11 - [36mINFO [0m hlogging.py test_logger:190                            17:44:11 - [36mINFO [0m hlogging.py test_logger:190                            INFO=20
-[33mWARNING [0m helpers.hlogging:hlogging.py:192 17:44:11 - [33mWARN [0m hlogging.py test_logger:192                            17:44:11 - [33mWARN [0m hlogging.py test_logger:192                            WARNING=30
-[31mCRITICAL[0m helpers.hlogging:hlogging.py:194 17:44:11 - [41mCRTCL[0m hlogging.py test_logger:194                            17:44:11 - [41mCRTCL[0m hlogging.py test_logger:194                            CRITICAL=50

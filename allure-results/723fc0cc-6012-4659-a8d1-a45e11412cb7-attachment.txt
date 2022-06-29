@@ -1,8 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-Test_get_files_to_rename.test5
-################################################################################
-[32mINFO    [0m dev_scripts.replace_text:replace_text.py:494 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_rename:494 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_rename:494 Found 2 files to rename
-[32mINFO    [0m dev_scripts.replace_text:replace_text.py:496 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_rename:496 17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m replace_text.py _get_files_to_rename:496 Replacing:
-{'dir/Test.subdir/test2.py': 'dir/outcomes/Test.subdir/test2.py',
- 'dir/subdir/test1.py': 'dir/outcomes/subdir/test1.py'}

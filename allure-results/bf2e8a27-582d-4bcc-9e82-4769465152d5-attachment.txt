@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:36:17 - [36mINFO [0m hunit_test.py setUp:912            17:36:17 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestOrderProcessor1.test_submit_order_and_timeout1
-################################################################################
-[1m[31mERROR   [0m helpers.hasyncio:hasyncio.py:217 17:36:17 - [31mERROR[0m Task-283 hasyncio.py poll:217                          17:36:17 - [31mERROR[0m Task-283 hasyncio.py poll:217                          Timeout for polling_func=<function wait_for_change_in_number_of_rows.<locals>._is_number_of_rows_changed at 0x7feac12840d0>, sleep_in_secs=1.0, timeout_in_secs=10.0, tag='wait_for_change_in_number_of_rows'

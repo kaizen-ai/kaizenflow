@@ -1,9 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:38:40 - [36mINFO [0m hunit_test.py setUp:912            17:38:40 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestOmsDbTableInteraction1.test_wait_for_table3
-################################################################################
-[1m[31mERROR   [0m helpers.hasyncio:hasyncio.py:217 17:38:40 - [31mERROR[0m Task-308 hasyncio.py poll:217                          17:38:40 - [31mERROR[0m Task-308 hasyncio.py poll:217                          Timeout for polling_func=<function wait_for_order_acceptance.<locals>.<lambda> at 0x7fe9a30b4160>, sleep_in_secs=1.0, timeout_in_secs=5.0, tag='wait_for_order_acceptance'
-[32mINFO    [0m helpers.hsql_test:hsql_test.py:105 17:38:40 - [36mINFO [0m hsql_test.py tearDownClass:105                         17:38:40 - [36mINFO [0m hsql_test.py tearDownClass:105                         
-################################################################################
-tearDown
-################################################################################

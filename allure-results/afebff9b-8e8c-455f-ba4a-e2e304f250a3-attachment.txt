@@ -1,7 +1,0 @@
-run_leq_node:   0%|          | 0/7 [00:00<?, ?it/s]run_leq_node:  57%|█████▋    | 4/7 [00:00<00:00, 38.51it/s]/app/core/signal_processing/swt.py:186: RuntimeWarning: divide by zero encountered in log2
-  pow2_ceil = int(2 ** np.ceil(np.log2(arr_len)))
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-/app/helpers/hdbg.py:280: PerformanceWarning: indexing past lexsort depth may impact performance.
-  cond = value in valid_values
-run_leq_node: 100%|██████████| 7/7 [00:00<00:00, 44.83it/s]

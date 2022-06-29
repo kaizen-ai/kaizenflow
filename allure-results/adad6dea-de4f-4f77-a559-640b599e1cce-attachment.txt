@@ -1,4 +1,0 @@
-17:42:25 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestSeriesToDfTransformer2.test_drop_nans_without_reindexing_then_attempt_join
-################################################################################

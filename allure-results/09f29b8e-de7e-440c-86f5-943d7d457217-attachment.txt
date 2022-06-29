@@ -1,9 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:30:53 - [36mINFO [0m hunit_test.py setUp:912            17:30:53 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_get_cached_bar_data_for_date_interval_perf1.test2
-################################################################################
-[32mINFO    [0m helpers.htimer:htimer.py:133 17:30:53 - [36mINFO [0m htimer.py dtimer_start:133                             17:30:53 - [36mINFO [0m htimer.py dtimer_start:133                             Run ...
-[32mINFO    [0m helpers.htimer:htimer.py:133 17:30:53 - [36mINFO [0m htimer.py dtimer_start:133                             17:30:53 - [36mINFO [0m htimer.py dtimer_start:133                             Loading cached version from memory ...
-[32mINFO    [0m helpers.htimer:htimer.py:150 17:30:53 - [36mINFO [0m htimer.py dtimer_stop:150                              17:30:53 - [36mINFO [0m htimer.py dtimer_stop:150                              Loading cached version from memory done (0.002 s)
-[32mINFO    [0m helpers.hcache:hcache.py:462 17:30:53 - [36mINFO [0m hcache.py __call__:462             17:30:53 - [36mINFO [0m hcache.py __call__:462               --> Cache data for 'get_bar_data' from 'mem' cache (size=nan, time=0.00 s, tag=None, loc=/mnt/tmpfs/tmp.cache.mem)
-[32mINFO    [0m helpers.htimer:htimer.py:150 17:30:53 - [36mINFO [0m htimer.py dtimer_stop:150                              17:30:53 - [36mINFO [0m htimer.py dtimer_stop:150                              Run done (0.004 s)

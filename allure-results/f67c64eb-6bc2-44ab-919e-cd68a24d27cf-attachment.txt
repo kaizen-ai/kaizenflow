@@ -1,5 +1,0 @@
-17:30:54 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestRollingFitPredictDagRunner1.test1
-################################################################################
-17:30:54 - [36mINFO [0m dag_runner.py __init__:244                             _retraining_datetimes=DatetimeIndex(['2010-01-04 13:30:00', '2010-01-04 14:30:00'], dtype='datetime64[ns]', freq='H')

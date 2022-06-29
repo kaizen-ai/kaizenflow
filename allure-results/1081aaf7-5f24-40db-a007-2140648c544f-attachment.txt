@@ -1,5 +1,0 @@
-17:47:51 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-TestGetImDockerDown.test2
-################################################################################
-17:47:51 @ 2022-06-28 01:44:12 - [33mWARN [0m im_lib_tasks.py _get_docker_down_cmd:184 Removing the attached volumes resetting the state of the DB

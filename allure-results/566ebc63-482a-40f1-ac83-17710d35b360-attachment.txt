@@ -1,6 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:46:59 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          17:46:59 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-TestDataFrameModeler.test_merge
-################################################################################
-[33mWARNING [0m dataflow.model.dataframe_modeler:dataframe_modeler.py:284 17:46:59 @ 2022-06-28 01:44:12 - [33mWARN [0m dataframe_modeler.py merge:284   17:46:59 @ 2022-06-28 01:44:12 - [33mWARN [0m dataframe_modeler.py merge:284   `oos_start` dates are different.
-`oos_start` for merged `DataFrameModelers` was set to 2010-01-01 00:00:00

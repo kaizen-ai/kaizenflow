@@ -1,2 +1,0 @@
-/app/oms/portfolio.py:724: FutureWarning: pandas.Int64Index is deprecated and will be removed from pandas in a future version. Use pandas.Index with the appropriate dtype instead.
-  hdbg.dassert_isinstance(idx, pd.Int64Index)

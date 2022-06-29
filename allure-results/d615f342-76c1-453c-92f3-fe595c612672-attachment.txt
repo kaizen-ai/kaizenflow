@@ -1,5 +1,0 @@
-17:37:48 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-Test_get_files_to_process1.test_branch1
-################################################################################
-17:37:48 - [33mWARN [0m lib_tasks_utils.py _get_files_to_process:339           No files were selected

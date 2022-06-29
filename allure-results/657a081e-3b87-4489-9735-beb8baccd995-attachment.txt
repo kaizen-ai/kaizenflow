@@ -1,5 +1,0 @@
-17:44:53 @ 2022-06-28 01:44:12 - [36mINFO [0m hunit_test.py setUp:912          
-################################################################################
-TestIbSymbolUniverse.test_get_1
-################################################################################
-17:44:53 @ 2022-06-28 01:44:12 - [36mINFO [0m ib_symbols.py _parse_symbols_file:50 Reading symbols from s3://alphamatic-data/data/ib/metadata/symbols-2021-04-01-143112738505.csv

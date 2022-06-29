@@ -1,5 +1,0 @@
-[32mINFO    [0m helpers.hunit_test:hunit_test.py:912 17:42:05 - [36mINFO [0m hunit_test.py setUp:912            17:42:05 - [36mINFO [0m hunit_test.py setUp:912            
-################################################################################
-TestKibotEquitiesCsvParquetByAssetClient.test_get_end_ts_for_symbol1
-################################################################################
-[32mINFO    [0m im_v2.kibot.data.client.kibot_clients:kibot_clients.py:203 17:42:05 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:203         17:42:05 - [36mINFO [0m kibot_clients.py _read_data_for_one_symbol:203         Reading data for `Kibot`, asset class='stocks', trade symbol='AMP'unadjusted='False' from file='/app/im_v2/kibot/data/client/test/test_data/kibot/all_stocks_1min/AMP.csv.gz'...
