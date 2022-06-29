@@ -19,14 +19,14 @@ jobs:
       - name: allure-html-report-s3-website
         uses: PavanMudigonda/allure-html-reporter-aws-s3-website@v1.0
         with:
-          report_url: "http://cryptokaizen-html.s3-website-${{ secrets.CK_AWS_DEFAULT_REGION }}.amazonaws.com"
+          report_url: "http://cryptokaizen-allure-reports.s3-website-${{ secrets.CK_AWS_DEFAULT_REGION }}.amazonaws.com"
           allure_results: allure-results
           allure_history: allure-history
           allure_report: allure-report
           keep_reports: 2
           args: --follow-symlinks
         env:
-          AWS_S3_BUCKET: "cryptokaizen-html"
+          AWS_S3_BUCKET: "cryptokaizen-allure-reports"
           AWS_ACCESS_KEY_ID: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}   # optional: defaults to us-east-1
@@ -42,4 +42,4 @@ jobs:
           description: 'Job is done (manual run)'
           state: ${{ job.status }}
           sha: ${{ github.sha }}
-          target_url: "http://cryptokaizen-html.s3-website-${{ secrets.CK_AWS_DEFAULT_REGION }}.amazonaws.com/${{ github.run_number }}/index.html"
+          target_url: "http://cryptokaizen-allure-reports.s3-website-${{ secrets.CK_AWS_DEFAULT_REGION }}.amazonaws.com/${{ github.run_number }}/index.html"
