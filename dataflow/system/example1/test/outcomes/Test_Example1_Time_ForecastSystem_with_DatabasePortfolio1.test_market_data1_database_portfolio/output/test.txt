@@ -12,7 +12,7 @@ num_it=7 current_time='2000-01-01 10:05:00-05:00'
 # portfolio signature=
 
 # historical holdings=
-asset_id                      101      -1
+asset_id                      101      -1  
 2000-01-01 09:35:01-05:00    0.00  1.00e+06
 2000-01-01 09:40:01-05:00  990.10  9.01e+05
 2000-01-01 09:45:01-05:00 -998.34  1.10e+06
@@ -21,7 +21,7 @@ asset_id                      101      -1
 2000-01-01 10:00:01-05:00  991.74  9.05e+05
 2000-01-01 10:05:01-05:00 -998.34  1.11e+06
 # historical holdings marked to market=
-asset_id                         101      -1
+asset_id                         101      -1  
 2000-01-01 09:35:01-05:00       0.00  1.00e+06
 2000-01-01 09:40:01-05:00   99174.92  9.01e+05
 2000-01-01 09:45:01-05:00 -100665.56  1.10e+06
@@ -60,23 +60,23 @@ asset_id                      101
 
 # holdings=
                               101
-end_datetime
+end_datetime                     
 2000-01-01 10:05:00-05:00 -1000.0
 # holdings marked to market=
                                 101
-end_datetime
+end_datetime                       
 2000-01-01 10:05:00-05:00 -101000.0
 # flows=
                                 101
-end_datetime
+end_datetime                       
 2000-01-01 10:05:00-05:00  201000.0
 # pnl=
                              101
-end_datetime
+end_datetime                    
 2000-01-01 10:05:00-05:00  990.1
 # statistics=
                              pnl  gross_volume  net_volume       gmv       nmv
-end_datetime
+end_datetime                                                                  
 2000-01-01 10:05:00-05:00  990.1      201000.0   -201000.0  101000.0 -101000.0
 
 # pnl agreement with research pnl
