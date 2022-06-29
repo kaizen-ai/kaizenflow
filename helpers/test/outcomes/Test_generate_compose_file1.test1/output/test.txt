@@ -1,4 +1,4 @@
-use_privileged_mode=True, use_sibling_container=False, shared_data_dirs=None, mount_as_submodule=False, use_network_mode_host=True
+stage='prod', use_privileged_mode=True, use_sibling_container=False, shared_data_dirs=None, mount_as_submodule=False, use_network_mode_host=True
 version: '3'
 
 services:
