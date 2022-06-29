@@ -1,0 +1,37 @@
+name: Allure reporter
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run_allure_reporter:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: allure-html-report-s3-website
+        uses: PavanMudigonda/allure-html-reporter-aws-s3-website@v1.0
+        with:
+          report_url: "http://cryptokaizen-html.s3-website-${{ secrets.CK_AWS_DEFAULT_REGION }}.amazonaws.com"
+          allure_results: allure-results
+          allure_history: allure-history
+          allure_report: allure-report
+          keep_reports: 2
+          args: --acl public-read --follow-symlinks
+        env:
+          AWS_S3_BUCKET: cryptokaizen-html
+          AWS_ACCESS_KEY_ID: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}   # optional: defaults to us-east-1
+          SOURCE_DIR: 'allure-history'      # optional: defaults to entire repository
+          DEST_DIR: ${{ env.GITHUB_RUN_NUMBER }}
+
+      - name: Post the link to the report
+        if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+        uses: Sibz/github-status-action@v1
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: "run_allure_reporter"
+          description: 'Job is done (manual run)'
+          state: ${{ job.status }}
+          sha: ${{ github.sha }}
+          target_url: "http://${{ env.AWS_S3_BUCKET }}.s3-website-${{ env.AWS_REGION }}.amazonaws.com/${{ github.run_number }}/index.html"
