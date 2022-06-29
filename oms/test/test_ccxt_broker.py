@@ -22,6 +22,7 @@ class TestCcxtBroker1(hunitest.TestCase):
             "coinbase_test",
             "test",
             "c27158ee-ac73-49bb-a1f3-ec022cac33c2",
+            "spot",
             strategy_id=strategy,
             market_data=market_data,
         )
@@ -60,6 +61,7 @@ class TestCcxtBroker1(hunitest.TestCase):
                 "v3",
                 "test",
                 "c27158ee-ac73-49bb-a1f3-ec022cac33c2",
+                "spot",
                 strategy_id=strategy,
                 market_data=market_data,
             )
