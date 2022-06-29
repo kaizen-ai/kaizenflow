@@ -39,6 +39,7 @@ import sklearn
 
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
+import core.statistics.requires_statsmodels as cstresta
 import core.statistics.sharpe_ratio as cstshrat
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
@@ -166,12 +167,16 @@ def preprocess_predictions_df(
     metrics_df = predict_df.stack()
     # Drop NaNs to compute the performance statistics.
     metrics_df = hpandas.dropna(metrics_df, report_stats=True)
-    # Compute hit and trade PnL.
+    # Compute hit.
     metrics_df["hit"] = (
         metrics_df[config["column_names"]["y"]]
         * metrics_df[config["column_names"]["y_hat"]]
         >= 0
     )
+    # Convert hit rates to the desired format.
+    metrics_df["hit"] = metrics_df["hit"].replace(True, 1)
+    metrics_df["hit"] = metrics_df["hit"].replace(False, -1)
+    # Compute trade PnL.
     metrics_df["trade_pnl"] = (
         metrics_df[config["column_names"]["y"]]
         * metrics_df[config["column_names"]["y_hat"]]
@@ -327,6 +332,74 @@ def widget_plot(
     )
 
 
+def calculate_hit_rate_with_CI(df, group_by, value_col):
+    hit_df_stacked = df.groupby([group_by])[value_col].apply(
+        lambda data: cstresta.calculate_hit_rate(data)
+    )
+    hit_df = hit_df_stacked.unstack()
+    hit_df.columns = ["y", "ci_low", "ci_high"]
+    hit_df["err1"] = hit_df["y"] - hit_df["ci_low"]
+    hit_df["err2"] = hit_df["ci_high"] - hit_df["y"]
+    hit_df["errors"] = (hit_df["err1"] + hit_df["err2"]) / 2
+    hit_df = hit_df.drop(columns=["err1", "err2"])
+    return hit_df
+
+
+def plot_hit_rates(df, sort_by, ascending, ylim_min, ylim_max):
+    if sort_by == "x":
+        df_sorted = df.sort_index(ascending=ascending)
+    elif not sort_by:
+        df_sorted = df.copy()
+    else:
+        df_sorted = df.sort_values(by=sort_by, ascending=ascending)
+    errors = df_sorted["errors"]
+    df_sorted["y"].plot.bar(
+        yerr=errors,
+        capsize=4,
+        width=0.8,
+    )
+    plt.xticks(rotation=xticks_rotation)
+    plt.ylabel("hit_rate")
+    plt.ylim(ylim_min, ylim_max)
+    plt.show()
+
+
+def widget_plot_hit(
+    df: pd.DataFrame,
+    ylim_min: float,
+    ylim_max: float,
+) -> None:
+    """
+    Add widges to expand the sorting parameters for barplots.
+
+    :param df: data with prediction statistics
+    :param x: values on X-axis (e.g., `asset_id`)
+    :param y: values on Y-axis (e.g., `hit`)
+    :param ylim_min: lower value on Y-axis graph scale
+    :param ylim_max: upper value on Y-axis graph scale
+    :return: barplot with edible model performance statistics.
+    """
+    _ = widgets.interact(
+        plot_hit_rates,
+        df=widgets.fixed(df),
+        sort_by=widgets.ToggleButtons(
+            options=["x", "y", "ci_low", "ci_high", False], description="Sort by:"
+        ),
+        ascending=widgets.ToggleButtons(
+            options=[True, False], description="Ascending:"
+        ),
+        # ylabel=widgets.fixed(f"{y_column_name}_rate"),
+        ylim_min=widgets.FloatText(
+            value=ylim_min,
+            description="Min y-scale:",
+        ),
+        ylim_max=widgets.FloatText(
+            value=ylim_max,
+            description="Max y-scale:",
+        ),
+    )
+
+
 # %% [markdown]
 # # Load data with predictions
 
@@ -383,9 +456,8 @@ xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
 # ### Hit rate
 
 # %%
-widget_plot(
-    metrics_df_reset_index, asset_id, hit, y_min_lim_hit_rate, y_max_lim_hit_rate
-)
+hit_by_asset = calculate_hit_rate_with_CI(metrics_df_reset_index, asset_id, hit)
+widget_plot_hit(hit_by_asset, 49, 54)
 
 # %% [markdown]
 # ### PnL
@@ -430,19 +502,22 @@ metrics_df_reset_index["month"] = metrics_df_reset_index[
 # ### Hit Rate
 
 # %%
-widget_plot(
-    metrics_df_reset_index, "hour", hit, y_min_lim_hit_rate, y_max_lim_hit_rate
+hits_by_time_hour = calculate_hit_rate_with_CI(
+    metrics_df_reset_index, "hour", hit
 )
+widget_plot_hit(hits_by_time_hour, 49, 54)
 
 # %%
-widget_plot(
-    metrics_df_reset_index, "weekday", hit, y_min_lim_hit_rate, y_max_lim_hit_rate
+hits_by_time_weekday = calculate_hit_rate_with_CI(
+    metrics_df_reset_index, "weekday", hit
 )
+widget_plot_hit(hits_by_time_weekday, 49, 54)
 
 # %%
-widget_plot(
-    metrics_df_reset_index, "month", hit, y_min_lim_hit_rate, y_max_lim_hit_rate
+hits_by_time_month = calculate_hit_rate_with_CI(
+    metrics_df_reset_index, "month", hit
 )
+widget_plot_hit(hits_by_time_month, 49, 54)
 
 # %% [markdown]
 # ### PnL
@@ -481,13 +556,10 @@ metrics_df_reset_index[prediction_magnitude] = pd.qcut(
 # ### Hit rate
 
 # %%
-widget_plot(
-    metrics_df_reset_index,
-    prediction_magnitude,
-    hit,
-    y_min_lim_hit_rate,
-    y_max_lim_hit_rate,
+hits_by_prediction_magnitude = calculate_hit_rate_with_CI(
+    metrics_df_reset_index, prediction_magnitude, hit
 )
+widget_plot_hit(hits_by_prediction_magnitude, 49, 55)
 
 # %% [markdown]
 # ### PnL
@@ -514,13 +586,10 @@ metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(
 # ### Hit rate
 
 # %%
-widget_plot(
-    metrics_df_reset_index,
-    volume_quantile,
-    hit,
-    y_min_lim_hit_rate,
-    y_max_lim_hit_rate,
+hits_by_volume = calculate_hit_rate_with_CI(
+    metrics_df_reset_index, volume_quantile, hit
 )
+widget_plot_hit(hits_by_volume, 49, 55)
 
 # %% [markdown]
 # ### PnL
