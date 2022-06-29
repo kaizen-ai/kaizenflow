@@ -340,6 +340,7 @@ def _get_linter_service(stage: str) -> str:
         # the repo code in `/app`, so we should not mount it.
         if superproject_path:
             # When running in a Git submodule we need to go one extra level up.
+            # TODO(*): Clean up the indentation, #2242 (also below).
             linter_spec_txt += "\n        - ../../../:/app"
         else:
             linter_spec_txt += "\n        - ../../:/app"
