@@ -34,4 +34,4 @@ jobs:
           description: 'Job is done (manual run)'
           state: ${{ job.status }}
           sha: ${{ github.sha }}
-          target_url: "http://${{ env.AWS_S3_BUCKET }}.s3-website-${{ env.AWS_REGION }}.amazonaws.com/${{ github.run_number }}/index.html"
+          target_url: "http://cryptokaizen-html.s3-website-${{ secrets.CK_AWS_DEFAULT_REGION }}.amazonaws.com/${{ github.run_number }}/index.html"
