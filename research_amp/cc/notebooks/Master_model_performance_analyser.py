@@ -125,11 +125,8 @@ def load_predictions_df(config: cconconf.Config) -> pd.DataFrame:
         asset_ids=None,
     )
     #
-    dfs = []
-    for df in backtest_df_iter:
-        dfs.append(df)
     #
-    predict_df = pd.concat(dfs)
+    predict_df = pd.concat(backtest_df_iter)
     predict_df = predict_df.sort_index()
     return predict_df
 
@@ -250,13 +247,13 @@ def plot_sharpe_ratio(
 
 def plot_sorted_barplot(
     df: pd.DataFrame,
-    x: str,
-    y: str,
+    x_column_name: str,
+    y_column_name: str,
     sort_by: [str, bool],
     ascending: bool,
     ylabel: str,
-    ylim_min: int,
-    ylim_max: int,
+    ylim_min: float,
+    ylim_max: float,
 ) -> None:
     """
     :param df: data with prediction statistics
@@ -269,16 +266,16 @@ def plot_sorted_barplot(
     :return: barplot with model performance statistics
     """
     if sort_by:
-        stats_srs = df.groupby([x])[y].mean()
+        stats_srs = df.groupby([x_column_name])[y_column_name].mean()
         stats_srs_sorted = stats_srs.reset_index().sort_values(
             by=[sort_by], ascending=ascending
         )
-        order = stats_srs_sorted[x]
+        order = stats_srs_sorted[x_column_name]
     else:
         order = None
     sns.barplot(
-        x=x,
-        y=y,
+        x=x_column_name,
+        y=y_column_name,
         data=df,
         order=order,
         color=color,
@@ -291,7 +288,11 @@ def plot_sorted_barplot(
 
 
 def widget_plot(
-    df: pd.DataFrame, x: str, y: str, ylim_min: int, ylim_max: int
+    df: pd.DataFrame,
+    x_column_name: str,
+    y_column_name: str,
+    ylim_min: float,
+    ylim_max: float,
 ) -> None:
     """
     Add widges to expand the sorting parameters for barplots.
@@ -306,15 +307,15 @@ def widget_plot(
     _ = widgets.interact(
         plot_sorted_barplot,
         df=widgets.fixed(df),
-        x=widgets.fixed(x),
-        y=widgets.fixed(y),
+        x_column_name=widgets.fixed(x_column_name),
+        y_column_name=widgets.fixed(y_column_name),
         sort_by=widgets.ToggleButtons(
-            options=[y, x, False], description="Sort by:"
+            options=[y_column_name, x_column_name, False], description="Sort by:"
         ),
         ascending=widgets.ToggleButtons(
             options=[True, False], description="Ascending:"
         ),
-        ylabel=widgets.fixed(f"{y}_rate"),
+        ylabel=widgets.fixed(f"{y_column_name}_rate"),
         ylim_min=widgets.FloatText(
             value=ylim_min,
             description="Min y-scale:",
