@@ -1,0 +1,8 @@
+v2
+- 2022-05-20
+- Coinbase is added CMTask #1875
+- `coinbase::DOGE` was removed due to bad quality CmTask #2052
+
+v1
+- 2022-05-10
+- Universe up to date with CCXT v4 universe
