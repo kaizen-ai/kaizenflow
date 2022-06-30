@@ -87,10 +87,6 @@ def get_CcxtHistoricalPqByTileClient_example1(
     """
     Get `CcxtHistoricalPqByTileClient` object for the prod model reading actual
     historical data, which is stored on S3.
-
-    Client is initialized to process CCXT data for:
-    - universe version: "v4"
-    - contract type: "spot"
     """
     universe_version = "v4"
     aws_profile = "ck"
@@ -117,10 +113,6 @@ def get_CcxtHistoricalPqByTileClient_example2(
     """
     Get `CcxtHistoricalPqByTileClient` object for the tests reading data
     snippets created for unit tests.
-
-    Client is initialized to process CCXT data for:
-    - universe version: "small"
-    - contract type: "spot"
     """
     universe_version = "small"
     aws_profile = "ck"
@@ -146,7 +138,7 @@ def get_CcxtHistoricalPqByTileClient_example3(
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the prod model
-    reading actual futures historical data, which is stored on S3.
+    reading actual historical data, which is stored on S3.
 
     Client is initialized to process CCXT data for:
     - universe version: "v6"
