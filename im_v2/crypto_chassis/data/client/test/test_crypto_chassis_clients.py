@@ -3,8 +3,9 @@ import os
 import pandas as pd
 import pytest
 
-import helpers.hs3 as hs3
+import helpers.henv as henv
 import helpers.hpandas as hpandas
+import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 
@@ -15,7 +16,9 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
         self.resample_1min = True
         self.aws_profile = "ck"
         s3_bucket_path = hs3.get_s3_bucket_path(self.aws_profile)
-        self.root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
+        self.root_dir = os.path.join(
+            s3_bucket_path, "reorg", "historical.manual.pq"
+        )
         self.partition_mode = "by_year_month"
         self.dataset = "ohlcv"
         self.filter_data_mode = "assert"
@@ -49,7 +52,7 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
             self.filter_data_mode,
         )
         df = hpandas.df_to_str(df)
-        expected_signature = r"""                                
+        expected_signature = r"""
                                         full_symbol     open     high      low
         timestamp
         2022-06-15 13:00:00+00:00  binance::BTC_USDT  21183.7  21211.7  21156.0
@@ -73,17 +76,15 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
         universe_version = "v2"
         contract_type = "spot"
         data_snapshot = "20220530"
-        client = (
-            imvccdcccc.CryptoChassisHistoricalPqByTileClient(
-                universe_version,
-                self.resample_1min,
-                self.root_dir,
-                self.partition_mode,
-                self.dataset,
-                contract_type,
-                data_snapshot=data_snapshot,
-                aws_profile=self.aws_profile,
-            )
+        client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
+            universe_version,
+            self.resample_1min,
+            self.root_dir,
+            self.partition_mode,
+            self.dataset,
+            contract_type,
+            data_snapshot=data_snapshot,
+            aws_profile=self.aws_profile,
         )
         full_symbols = ["binance::BTC_USDT"]
         start_ts = pd.Timestamp("2022-05-15 13:00:00+00:00")
