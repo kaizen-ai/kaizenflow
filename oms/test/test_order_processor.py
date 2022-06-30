@@ -34,7 +34,9 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
     def setUp(self) -> None:
         super().setUp()
         # Create OMS tables.
-        oomsdb.create_oms_tables(self.connection, incremental=False)
+        incremental = False
+        asset_id_name = "asset_id"
+        oomsdb.create_oms_tables(self.connection, incremental, asset_id_name)
 
     def tearDown(self) -> None:
         # Remove the OMS tables.

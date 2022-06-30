@@ -54,7 +54,11 @@ class TestOmsDbSubmittedOrdersTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.SUBMITTED_ORDERS_TABLE_NAME
         create_table_func = oomsdb.create_submitted_orders_table
-        self._test_create_table_helper(table_name, create_table_func)
+        create_table_func_kwargs = {
+            "table_name": table_name
+        }
+        self._test_create_table_helper(table_name, create_table_func, create_table_func_kwargs)
+
 
 
 # #############################################################################
@@ -139,7 +143,10 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.ACCEPTED_ORDERS_TABLE_NAME
         create_table_func = oomsdb.create_accepted_orders_table
-        self._test_create_table_helper(table_name, create_table_func)
+        create_table_func_kwargs = {
+            "table_name": table_name
+        }
+        self._test_create_table_helper(table_name, create_table_func, create_table_func_kwargs)
 
     @pytest.mark.slow("8 seconds.")
     def test_insert1(self) -> None:
@@ -312,7 +319,11 @@ class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
         create_table_func = oomsdb.create_current_positions_table
-        self._test_create_table_helper(table_name, create_table_func)
+        create_table_func_kwargs = {
+            "asset_id_name": "asset_id",
+            "table_name": table_name
+        }
+        self._test_create_table_helper(table_name, create_table_func, create_table_func_kwargs)
 
 
 # #############################################################################
@@ -334,4 +345,10 @@ class TestOmsDbRestrictionsTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.RESTRICTIONS_TABLE_NAME
         create_table_func = oomsdb.create_restrictions_table
-        self._test_create_table_helper(table_name, create_table_func)
+        create_table_func_kwargs = {
+            "asset_id_name": "asset_id",
+            "table_name": table_name
+        }
+        self._test_create_table_helper(table_name, create_table_func,
+                                       create_table_func_kwargs)
+
