@@ -78,6 +78,20 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     Run `git status --ignored` to see what it's skipped.
     """
     hlitauti._report_task(txt=hprint.to_str("dry_run"))
+    def _run_all_repos(cmd: str) -> str:
+        # Clean current repo.
+        cmd = git_clean_cmd
+        hlitauti._run(ctx, cmd)
+        # Clean submodules.
+        cmd = f"git submodule foreach '{git_clean_cmd}'"
+        hlitauti._run(ctx, cmd)
+
+    # Clean recursively.
+    # This cmd is supposed to give errors so we mute them.
+    git_clean_cmd = "git clean -fd >/dev/null 2>&1"
+    if dry_run:
+        git_clean_cmd += " --dry-run"
+    _run_all_repos(git_clean_cmd)
     # TODO(*): Add "are you sure?" or a `--force switch` to avoid to cancel by
     #  mistake.
     # Fix permissions, if needed.
@@ -88,12 +102,7 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     git_clean_cmd = "git clean -fd"
     if dry_run:
         git_clean_cmd += " --dry-run"
-    # Clean current repo.
-    cmd = git_clean_cmd
-    hlitauti._run(ctx, cmd)
-    # Clean submodules.
-    cmd = f"git submodule foreach '{git_clean_cmd}'"
-    hlitauti._run(ctx, cmd)
+    _run_all_repos(git_clean_cmd)
     # Delete other files.
     to_delete = [
         r"*\.pyc",

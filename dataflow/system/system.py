@@ -74,13 +74,14 @@ _LOG = logging.getLogger(__name__)
 #       - profile_execution
 #       - dst_dir
 #     - force_free_nodes
-#   - dag_builder
-#     - TODO(gp): -> dag_builder_object
+#   - TODO(gp): -> dag_builder_object
+#   - dag_builder_object
 #   - dag_builder_meta
 #     - """information about methods to be called on the DagBuilder"""
 #     - fast_prod_setup
-#   - market_data
-#     - TODO(gp): -> market_data_object
+#   - TODO(gp): -> market_data_object
+#   - market_data_object
+#   - market_data_config
 #     - asset_ids
 #     - initial_replayed_delay
 #   - portfolio
@@ -218,6 +219,15 @@ class ForecastSystem(System):
         return market_data
 
     @property
+    def forecast_dag(
+        self,
+    ) -> dtfcore.DAG:
+        forecast_dag: dtfcore.DAG = self._get_cached_value(
+            "forecast_dag_object", self._get_forecast_dag
+        )
+        return forecast_dag
+
+    @property
     def dag(
         self,
     ) -> dtfcore.DAG:
@@ -238,6 +248,14 @@ class ForecastSystem(System):
         Given a completely filled `system_config` build and return the DAG.
         """
         ...
+
+    def _get_forecast_dag(self) -> dtfcore.DAG:
+        # TODO(gp): -> dag_builder_object
+        dag_builder = self.config["dag_builder"]
+        config = self.config["DAG"]
+        _LOG.debug("config=\n%s", config)
+        dag = dag_builder.get_dag(config)
+        return dag
 
 
 # #############################################################################
@@ -430,8 +448,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         self,
         db_connection: hsql.DbConnection,
     ):
-        super().__init__()
-        #
+        _Time_ForecastSystem_Mixin.__init__(self)
+        _ForecastSystem_with_Portfolio.__init__(self)
         self._db_connection = db_connection
         oms.create_oms_tables(self._db_connection, incremental=False)
 
