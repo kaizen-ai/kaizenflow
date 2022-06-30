@@ -114,7 +114,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example3(
 
 
 def get_CryptoChassisHistoricalPqByTileClient_example4(
-    resample_1min: bool,
+    resample_1min: bool, contract_type: str, dataset: str, data_snapshot: str
 ) -> imvccdcccc.CryptoChassisHistoricalPqByTileClient:
     """
     Get `CryptoChassisHistoricalPqByTileClient` object for unit test
@@ -122,18 +122,12 @@ def get_CryptoChassisHistoricalPqByTileClient_example4(
 
     Client is initialized to process CryptoChassis data for:
     - universe version: `v3`
-    - dataset: `bid_ask-futures`
-    - contract type: `futures`
-    - data snapshot: `20220620`
     """
     universe_version = "v3"
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     partition_mode = "by_year_month"
-    dataset = "bid_ask-futures"
-    contract_type = "futures"
-    data_snapshot = "20220620"
     crypto_chassis_client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
         universe_version,
         resample_1min,
