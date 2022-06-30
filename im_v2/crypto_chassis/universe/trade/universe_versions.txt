@@ -5,4 +5,4 @@ v2
 
 v1
 - 2022-05-10
-- Universe up to date with CCXT v4 universe
+- Same as v1 download universe

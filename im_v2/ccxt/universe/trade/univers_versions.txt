@@ -1,10 +1,10 @@
 coinbase_test
 - 2022-06-15
-- Coinbasepro universe for unit tests
+- Same as "coinbase_test" download universe
 
 v5
 - 2022-05-25
-- Kucoin, Gateio, Coinbase, Coinbasepro full symbols are added due to CmTask #1948
+- Same as v5 download universe
 
 v4
 - 2022-04-23
@@ -12,7 +12,7 @@ v4
 
 small
 - 2021-11-07
-- Small universe for fast unit tests
+- Same as "small" download universe
 
 v3
 - 2021-11-04
@@ -20,7 +20,7 @@ v3
 
 v2
 - 2021-11-03
-- Removed: bitfinex due to CmTask #274
+- Same as v2 download universe
 
 v1
 - 2021-09-25

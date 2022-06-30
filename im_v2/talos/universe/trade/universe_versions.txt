@@ -1,7 +1,7 @@
 small
 - 2022-03-18
-- Small universe for fast unit tests
+- Same as "small" download universe
 
 v1
 - 2022-03-17
-- Initial version (contains intersection with ccxt_v3 - binance and ftx)
+- Initial version same as v1 download universe
