@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
@@ -44,6 +45,7 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
         """
         self.assert_equal(df, expected_signature, fuzzy_match=True)
 
+    @pytest.mark.slow("Slow via GH, fast on the server")
     def test2(self) -> None:
         """
         `dataset = ohlcv`
