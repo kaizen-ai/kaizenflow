@@ -20,7 +20,9 @@ import market_data_lime.eg_real_time_market_data as mdlertmda
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): These normalization operations should be done by the ImClient.
+# TODO(gp): These normalization operations should be done by the ImClient. The
+#  invariant is that the output of each ImClient is mostly consistent. We might
+#  need to do some renaming in IgStitchedMarketData.
 def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
     df.index.name = "end_time"
     df.index = df.index.tz_convert("America/New_York")
@@ -44,21 +46,28 @@ def normalize_historical_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# TODO(gp): Since we are using composition here, we just need an empty interface
-#  instead of MarketData (only asset_ids and get_wall_clock_time).
+# TODO(gp): Create a general StitchedMarketData class that accepts an Historical and
+#  a RealTime ImClient. Then derive IgStitchedMarketData from it customizing the
+#  columns to read from each ImClient.
+# TODO(gp): Add tests using MarketData_TestCase.
 class IgStitchedMarketData(mdata.MarketData):
+    """
+    Accept a RealTimeImClient and an historical ImClient, and
+
+    """
     def __init__(
         self,
         asset_ids: List[Any],
         get_wall_clock_time: hdateti.GetWallClockTime,
+        # TODO(gp): Can we accept two ImClient?
         eg_rt_market_data: mdlertmda.IgRealTimeMarketData,
         eg_historical_im_client: imlimeg.IgHistoricalPqByDateTaqBarClient,
+        # TODO(gp): It should accept two column remapping and then support another
+        #  remapping after the merge?
         **kwargs: Any,
     ):
-        self._eg_rt_market_data = eg_rt_market_data
-        self._eg_historical_im_client = eg_historical_im_client
-        # TODO(gp): From IgRealTimeMarketData. Factor out this common code into a
-        #  class IgMarketData.
+        self._ig_rt_market_data = eg_rt_market_data
+        self._ig_historical_im_client = eg_historical_im_client
         asset_id_col = "asset_id"
         start_time_col_name = "start_time"
         end_time_col_name = "end_time"
@@ -116,7 +125,7 @@ class IgStitchedMarketData(mdata.MarketData):
         # Parse the `timedelta`.
         hpandas.dassert_is_days(timedelta, min_num_days=2)
         # Retrieve the wall clock time.
-        get_wall_clock_time = self._eg_rt_market_data.get_wall_clock_time
+        get_wall_clock_time = self._ig_rt_market_data.get_wall_clock_time
         # The last day is retrieved from the RT MarketData.
         # rt_timedelta = pd.Timedelta("1D")
         wall_clock_time = get_wall_clock_time()
@@ -125,7 +134,7 @@ class IgStitchedMarketData(mdata.MarketData):
         )
         rt_timedelta = wall_clock_time - historical_market_data_end_ts
         _LOG.debug("rt_timedelta=%s", rt_timedelta)
-        rt_market_data_df = self._eg_rt_market_data.get_data_for_last_period(
+        rt_market_data_df = self._ig_rt_market_data.get_data_for_last_period(
             rt_timedelta,
         )
         _LOG.debug(
@@ -159,14 +168,14 @@ class IgStitchedMarketData(mdata.MarketData):
         )
         full_symbol_col_name = "asset_ids"
         # TODO(gp): timestamp_db is not in the historical bar data. Hopefully
-        # it is in the archived bar data.
+        #  it is in the archived bar data.
         columns = "end_time start_time asset_id close volume good_bid good_ask sided_bid_count sided_ask_count day_spread day_num_spread"
         #
         columns = columns.split()
         # TODO(gp): Call the proper function to convert asset_ids to full_symbols.
         full_symbols = list(map(str, self._asset_ids))
         filter_data_mode = "assert"
-        historical_market_data_df = self._eg_historical_im_client.read_data(
+        historical_market_data_df = self._ig_historical_im_client.read_data(
             full_symbols,
             historical_market_data_start_ts,
             historical_market_data_end_ts,
@@ -219,7 +228,7 @@ class IgStitchedMarketData(mdata.MarketData):
         return df
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
-        return self._eg_rt_market_data.should_be_online(wall_clock_time)
+        return self._ig_rt_market_data.should_be_online(wall_clock_time)
 
     def _get_data(
         self,
@@ -227,8 +236,8 @@ class IgStitchedMarketData(mdata.MarketData):
         **kwargs: Any,
     ) -> pd.DataFrame:
         # TODO(gp): Check that we are asking for data that comes from the RT part.
-        df = self._eg_rt_market_data._get_data(*args, **kwargs)
+        df = self._ig_rt_market_data._get_data(*args, **kwargs)
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        return self._eg_rt_market_data._get_last_end_time()
+        return self._ig_rt_market_data._get_last_end_time()
