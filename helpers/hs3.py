@@ -573,6 +573,9 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
         or henv.execute_repo_config_code("is_dev_ck()")
         or henv.execute_repo_config_code("is_mac()")
         or henv.execute_repo_config_code("is_inside_ci()")
+        # Note(Juraj): cmamp prod container is an exception since we
+        # actually want to acces creds from ~/.aws.
+        or henv.execute_repo_config_code("is_cmamp_prod()")
     )
     if is_prod_machine:
         # On prod machines we let the Docker container infer the right AWS
