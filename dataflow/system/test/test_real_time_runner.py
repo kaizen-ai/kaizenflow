@@ -65,8 +65,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
             )
         )
         dag_runner_kwargs = {
-            "config": config,
-            "dag_builder": dag,
+            "dag": dag,
             "fit_state": None,
             "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
             "dst_dir": None,

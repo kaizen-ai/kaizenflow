@@ -182,6 +182,7 @@ class MarketData(abc.ABC):
         """
         # Handle `timedelta`.
         _LOG.verb_debug(hprint.to_str("timedelta"))
+        hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         wall_clock_time = self.get_wall_clock_time()
         start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = None
