@@ -10,6 +10,10 @@ import helpers.hunit_test as hunitest
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 
 
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -65,10 +69,7 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
         """
         self.assert_equal(df, expected_signature, fuzzy_match=True)
 
-    @pytest.mark.skipif(
-        not henv.execute_repo_config_code("is_CK_S3_available()"),
-        reason="Run only if CK S3 is available",
-    )
+    @pytest.mark.slow("Slow via GH, fast on the server")
     def test2(self) -> None:
         """
         `contract_type = spot`
