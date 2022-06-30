@@ -83,7 +83,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example3(
 ) -> imvccdcccc.CryptoChassisHistoricalPqByTileClient:
     """
     Get `CryptoChassisHistoricalPqByTileClient` object for the prod model
-    reading actual historical data, which is stored on S3.
+    reading actual futures historical data, which is stored on S3.
 
     Client is initialized to process CryptoChassis data for:
     - universe version: "v3"
