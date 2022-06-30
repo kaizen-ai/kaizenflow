@@ -37,6 +37,27 @@ def get_ccxt_ohlcv_create_table_query() -> str:
             """
     return query
 
+# TODO(gp): -> get_create_ccxt_ohlcv_futures_table_query()
+def get_ccxt_ohlcv_futures_create_table_query() -> str:
+    """
+    Get SQL query to create CCXT OHLCV futures table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS ccxt_ohlcv_futures(
+            id SERIAL PRIMARY KEY,
+            timestamp BIGINT NOT NULL,
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            volume NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL,
+            end_download_timestamp TIMESTAMP WITH TIME ZONE,
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE
+            )
+            """
+    return query
 
 def get_exchange_name_create_table_query() -> str:
     """
