@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 
 import helpers.henv as henv
-import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
@@ -24,14 +23,15 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
             s3_bucket_path, "reorg", "historical.manual.pq"
         )
         self.partition_mode = "by_year_month"
-        self.dataset = "ohlcv"
         self.filter_data_mode = "assert"
 
     def test1(self) -> None:
         """
+        `dataset = bid_ask`
         `contract_type = futures`
         """
         universe_version = "v2"
+        dataset = "bid_ask"
         contract_type = "futures"
         data_snapshot = "20220620"
         client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
@@ -39,15 +39,15 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
             self.resample_1min,
             self.root_dir,
             self.partition_mode,
-            self.dataset,
+            dataset,
             contract_type,
             data_snapshot=data_snapshot,
             aws_profile=self.aws_profile,
         )
-        full_symbols = ["binance::BTC_USDT"]
+        full_symbols = ["binance::BTC_USDT", "binance::DOGE_USDT"]
         start_ts = pd.Timestamp("2022-06-15 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-06-15 16:00:00+00:00")
-        columns = ["full_symbol", "open", "high", "low"]
+        columns = ["full_symbol", "bid_size"]
         df = client.read_data(
             full_symbols,
             start_ts,
@@ -55,26 +55,41 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
             columns,
             self.filter_data_mode,
         )
-        df = hpandas.df_to_str(df)
-        expected_signature = r"""
-                                        full_symbol     open     high      low
+        expected_length = 362
+        expected_column_names = columns
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::DOGE_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2022-06-15 13:00:00+00:00, 2022-06-15 16:00:00+00:00]
+        columns=full_symbol,bid_size
+        shape=(362, 2)
+                                          full_symbol     bid_size
         timestamp
-        2022-06-15 13:00:00+00:00  binance::BTC_USDT  21183.7  21211.7  21156.0
-        2022-06-15 13:01:00+00:00  binance::BTC_USDT  21162.8  21178.9  21142.0
-        2022-06-15 13:02:00+00:00  binance::BTC_USDT  21158.0  21209.0  21158.0
+        2022-06-15 13:00:00+00:00   binance::BTC_USDT       93.832
+        2022-06-15 13:00:00+00:00  binance::DOGE_USDT  2130364.000
+        2022-06-15 13:01:00+00:00   binance::BTC_USDT       75.307
         ...
-        2022-06-15 15:58:00+00:00  binance::BTC_USDT  21396.0  21408.8  21384.2
-        2022-06-15 15:59:00+00:00  binance::BTC_USDT  21402.0  21419.1  21393.0
-        2022-06-15 16:00:00+00:00  binance::BTC_USDT  21408.8  21429.0  21367.9
+        2022-06-15 15:59:00+00:00  binance::DOGE_USDT  2682318.000
+        2022-06-15 16:00:00+00:00   binance::BTC_USDT       73.926
+        2022-06-15 16:00:00+00:00  binance::DOGE_USDT  3317330.000
         """
-        self.assert_equal(df, expected_signature, fuzzy_match=True)
+        self.check_df_output(
+            df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
 
     @pytest.mark.slow("Slow via GH, fast on the server")
     def test2(self) -> None:
         """
+        `dataset = ohlcv`
         `contract_type = spot`
         """
         universe_version = "v2"
+        dataset = "ohlcv"
         contract_type = "spot"
         data_snapshot = "20220530"
         client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
@@ -82,15 +97,15 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
             self.resample_1min,
             self.root_dir,
             self.partition_mode,
-            self.dataset,
+            dataset,
             contract_type,
             data_snapshot=data_snapshot,
             aws_profile=self.aws_profile,
         )
-        full_symbols = ["binance::BTC_USDT"]
+        full_symbols = ["binance::BTC_USDT", "binance::DOGE_USDT"]
         start_ts = pd.Timestamp("2022-05-15 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-15 16:00:00+00:00")
-        columns = ["full_symbol", "open", "high", "low"]
+        columns = ["full_symbol", "close"]
         df = client.read_data(
             full_symbols,
             start_ts,
@@ -98,16 +113,29 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
             columns,
             self.filter_data_mode,
         )
-        df = hpandas.df_to_str(df)
-        expected_signature = r"""
-                                        full_symbol      open      high       low
+        expected_length = 362
+        expected_column_names = columns
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::DOGE_USDT"]
+        }
+        expected_signature = r"""# df=
+        index=[2022-05-15 13:00:00+00:00, 2022-05-15 16:00:00+00:00]
+        columns=full_symbol,close
+        shape=(362, 2)
+                                          full_symbol       close
         timestamp
-        2022-05-15 13:00:00+00:00  binance::BTC_USDT  30309.99  30315.91  30280.00
-        2022-05-15 13:01:00+00:00  binance::BTC_USDT  30280.95  30299.57  30263.28
-        2022-05-15 13:02:00+00:00  binance::BTC_USDT  30263.31  30277.61  30234.97
+        2022-05-15 13:00:00+00:00   binance::BTC_USDT  30280.9500
+        2022-05-15 13:00:00+00:00  binance::DOGE_USDT      0.0894
+        2022-05-15 13:01:00+00:00   binance::BTC_USDT  30263.3100
         ...
-        2022-05-15 15:58:00+00:00  binance::BTC_USDT  29960.20  29976.90  29941.20
-        2022-05-15 15:59:00+00:00  binance::BTC_USDT  29976.90  30040.40  29968.33
-        2022-05-15 16:00:00+00:00  binance::BTC_USDT  30013.46  30045.63  30007.45
+        2022-05-15 15:59:00+00:00  binance::DOGE_USDT      0.0888
+        2022-05-15 16:00:00+00:00   binance::BTC_USDT  30015.1900
+        2022-05-15 16:00:00+00:00  binance::DOGE_USDT      0.0887
         """
-        self.assert_equal(df, expected_signature, fuzzy_match=True)
+        self.check_df_output(
+            df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
