@@ -151,7 +151,7 @@ def create_current_positions_table(
     incremental: bool,
     asset_id_name: str,
     table_name: str
-    #= CURRENT_POSITIONS_TABLE_NAME,
+    # = CURRENT_POSITIONS_TABLE_NAME,
 ) -> str:
     """
     Create a table holding the current positions.
@@ -227,7 +227,7 @@ def create_restrictions_table(
     incremental: bool,
     asset_id_name: str,
     table_name: str
-    #= RESTRICTIONS_TABLE_NAME,
+    # = RESTRICTIONS_TABLE_NAME,
 ) -> str:
     """
     Create a table holding restrictions.
@@ -268,16 +268,20 @@ def create_restrictions_table(
 
 # TODO(gp): Add the restriction tables.
 def create_oms_tables(
-    db_connection: hsql.DbConnection,
-    incremental: bool,
-    asset_id_name: str
+    db_connection: hsql.DbConnection, incremental: bool, asset_id_name: str
 ) -> None:
-    create_accepted_orders_table(db_connection, incremental,
-                                 ACCEPTED_ORDERS_TABLE_NAME)
-    create_submitted_orders_table(db_connection, incremental,
-                                  SUBMITTED_ORDERS_TABLE_NAME)
-    create_current_positions_table(db_connection, incremental, asset_id_name,
-                CURRENT_POSITIONS_TABLE_NAME)
+    create_accepted_orders_table(
+        db_connection, incremental, ACCEPTED_ORDERS_TABLE_NAME
+    )
+    create_submitted_orders_table(
+        db_connection, incremental, SUBMITTED_ORDERS_TABLE_NAME
+    )
+    create_current_positions_table(
+        db_connection, incremental, asset_id_name, CURRENT_POSITIONS_TABLE_NAME
+    )
+    create_restrictions_table(
+        db_connection, incremental, asset_id_name, RESTRICTIONS_TABLE_NAME
+    )
 
 
 def remove_oms_tables(db_connection: hsql.DbConnection) -> None:
@@ -285,6 +289,7 @@ def remove_oms_tables(db_connection: hsql.DbConnection) -> None:
         SUBMITTED_ORDERS_TABLE_NAME,
         ACCEPTED_ORDERS_TABLE_NAME,
         CURRENT_POSITIONS_TABLE_NAME,
+        RESTRICTIONS_TABLE_NAME,
     ]:
         hsql.remove_table(db_connection, table_name)
 
