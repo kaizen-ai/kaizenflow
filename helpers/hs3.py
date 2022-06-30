@@ -567,13 +567,16 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
 
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    # TODO(gp): Make this more robust.
-    is_prod_machine = not (
-        henv.execute_repo_config_code("is_dev4()")
-        or henv.execute_repo_config_code("is_dev_ck()")
-        or henv.execute_repo_config_code("is_mac()")
-        or henv.execute_repo_config_code("is_inside_ci()")
-    )
+      # TODO(gp): Make this more robust.
+      is_prod_machine = not (
+          henv.execute_repo_config_code("is_dev4()")
+          or henv.execute_repo_config_code("is_dev_ck()")
+          or henv.execute_repo_config_code("is_mac()")
+          or henv.execute_repo_config_code("is_inside_ci()")
+          # Note(Juraj): cmamp prod container is an exception since we
+          # actually want to acces creds from ~/.aws.
+          or henv.execute_repo_config_code("is_cmamp_prod()")
+      )
     if is_prod_machine:
         # On prod machines we let the Docker container infer the right AWS
         # account.
