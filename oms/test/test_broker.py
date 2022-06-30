@@ -137,7 +137,7 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
     def setUp(self) -> None:
         super().setUp()
         # Create OMS tables.
-        assert_id_name = "asset_id"
+        asset_id_name = "asset_id"
         incremental = False
         oomsdb.create_oms_tables(self.connection, incremental, asset_id_name)
 

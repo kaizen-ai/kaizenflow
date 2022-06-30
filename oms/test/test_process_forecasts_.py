@@ -500,9 +500,10 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
         with hasynci.solipsism_context() as event_loop:
             # Build a Portfolio.
             db_connection = self.connection
+            asset_id_name = "asset_id"
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
             #
-            oomsdb.create_oms_tables(self.connection, incremental=False)
+            oomsdb.create_oms_tables(self.connection, False, asset_id_name)
             #
             portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
@@ -512,9 +513,6 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             )
             # Build OrderProcessor.
             get_wall_clock_time = portfolio._get_wall_clock_time
-            poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
-            # poll_kwargs["sleep_in_secs"] = 1
-            poll_kwargs["timeout_in_secs"] = 60 * 10
             delay_to_accept_in_secs = 3
             delay_to_fill_in_secs = 10
             broker = portfolio.broker
@@ -524,7 +522,6 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
                 broker,
-                poll_kwargs=poll_kwargs,
             )
             order_processor_coroutine = order_processor.run_loop(
                 termination_condition
@@ -768,7 +765,8 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         with hasynci.solipsism_context() as event_loop:
             # Build MarketData.
             initial_replayed_delay = 5
-            asset_id = [data["asset_id"][0]]
+            asset_id_name = "egid"
+            asset_id = [data[asset_id_name][0]]
             market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
                 event_loop,
                 initial_replayed_delay,
@@ -777,7 +775,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             # Create a portfolio with one asset (and cash).
             db_connection = self.connection
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
-            oomsdb.create_oms_tables(self.connection, incremental=False)
+            oomsdb.create_oms_tables(self.connection, False, asset_id_name)
             portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 db_connection,
@@ -789,14 +787,12 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             delay_to_accept_in_secs = 3
             delay_to_fill_in_secs = 10
             broker = portfolio.broker
-            poll_kwargs = hasynci.get_poll_kwargs(portfolio._get_wall_clock_time)
-            poll_kwargs["timeout_in_secs"] = 60 * 10
             order_processor = oordproc.OrderProcessor(
                 db_connection,
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
                 broker,
-                poll_kwargs=poll_kwargs,
+                asset_id_name,
             )
             # Build order process coroutine.
             termination_condition = 4
