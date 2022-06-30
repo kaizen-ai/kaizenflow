@@ -16,6 +16,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
 import im_v2.common.universe as ivcu
 
@@ -277,7 +278,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         dataset: str,
         contract_type: str,
         *,
-        data_snapshot: str = "latest",
+        data_snapshot: Optional[str] = None,
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -308,6 +309,14 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             f"Invalid dataset type='{contract_type}'",
         )
         self._contract_type = contract_type
+        if data_snapshot is None:
+            pattern = "*"
+            only_files = False
+            use_relatives_paths = True
+            dirs = hs3.listdir(
+                root_dir, pattern, only_files, use_relatives_paths, aws_profile=aws_profile)
+            dirs = [snapshot for snapshot in dirs if snapshot.isnumeric()]
+            data_snapshot = max(dirs)
         self._data_snapshot = data_snapshot
 
     @staticmethod
