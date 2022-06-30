@@ -37,7 +37,6 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 import seaborn as sns
-import sklearn
 
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
@@ -212,7 +211,7 @@ def bootstrap(
     """
     res_list = []
     for i in range(n_resamples):
-        resampled_data = sklearn.utils.resample(data)
+        resampled_data = data.sample(frac=1, replace=True)
         res = func(resampled_data)
         res_list.append(res)
     return res_list
@@ -253,19 +252,40 @@ def plot_sharpe_ratio(
     plt.show()
 
 
-def calculate_hit_rate_with_CI(df, group_by, value_col):
+def calculate_hit_rate_with_CI(
+    df: pd.DataFrame, group_by: str, value_col: str
+) -> pd.DataFrame:
+    """
+    Compute hit rates, confidence intervals and errors relative to the specific
+    entity.
+
+    :param df: data with hit rates values
+    :param group_by: column name for grouping entity
+    :param value_col: column name for PnL data
+    :return: data with CIs and errors
+    """
     hit_df_stacked = df.groupby([group_by])[value_col].apply(
         lambda data: cstresta.calculate_hit_rate(
             data, alpha=config["stats_kwargs"]["alpha"]
         )
     )
     hit_df = hit_df_stacked.unstack()
-    hit_df.columns = ["y", "ci_low", "ci_high"]
-    hit_df["errors"] = (hit_df["ci_high"] - hit_df["ci_low"]) / 2
-    return hit_df
+    hit_errors_df = add_errors_to_ci_data(hit_df)
+    return hit_errors_df
 
 
-def calculate_CI_for_PnLs(df, group_by, value_col):
+def calculate_CI_for_PnLs(
+    df: pd.DataFrame, group_by: str, value_col: str
+) -> pd.DataFrame:
+    """
+    Compute mean PnL, confidence intervals and errors relative to the specific
+    entity.
+
+    :param df: data with PnL values
+    :param group_by: column name for grouping entity
+    :param value_col: column name for PnL data
+    :return: data with CIs and errors
+    """
     grouper = df.groupby([group_by])[value_col]
     pnl_df = grouper.mean().to_frame()
     conf_ints = grouper.apply(
@@ -277,9 +297,17 @@ def calculate_CI_for_PnLs(df, group_by, value_col):
         )
     )
     pnl_df[["low", "up"]] = pd.DataFrame(conf_ints.tolist(), index=pnl_df.index)
-    pnl_df.columns = ["y", "ci_low", "ci_high"]
-    pnl_df["errors"] = (pnl_df["ci_high"] - pnl_df["ci_low"]) / 2
-    return pnl_df
+    pnl_errors_df = add_errors_to_ci_data(pnl_df)
+    return pnl_errors_df
+
+
+def add_errors_to_ci_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Process CI data and add errors.
+    """
+    df.columns = ["y", "ci_low", "ci_high"]
+    df["errors"] = (df["ci_high"] - df["ci_low"]) / 2
+    return df
 
 
 def plot_stats_barplot(df, sort_by, ascending, ylabel, ylim_min, ylim_max):
@@ -322,7 +350,7 @@ def plot_bars_with_widget(
     :param ylabel: name of the Y-axis graph
     :param ylim_min: lower value on Y-axis graph scale
     :param ylim_max: upper value on Y-axis graph scale
-    :return: barplot with edible model performance statistics.
+    :return: barplot with edible model performance statistics
     """
     _ = widgets.interact(
         plot_stats_barplot,
