@@ -134,7 +134,7 @@ def add_periodical_download_args(
         action="store",
         required=True,
         type=str,
-        help="OHLCV, market_depth or trades data.",
+        help="OHLCV, bid_ask or trades data.",
     )
     return parser
 

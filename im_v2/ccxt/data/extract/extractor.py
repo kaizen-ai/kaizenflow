@@ -188,9 +188,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
-    def _download_market_depth(self, **kwargs) -> pd.DataFrame:
+    def _download_bid_ask(self, **kwargs) -> pd.DataFrame:
         raise NotImplementedError(
-            "Market depth data is not available for CCXT vendor"
+            "Bid_ask data is not available for CCXT vendor"
         )
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:

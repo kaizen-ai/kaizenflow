@@ -41,7 +41,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="OHLCV, market_depth or trades data.",
+        help="OHLCV, bid_ask or trades data.",
     )
     parser = hparser.add_verbosity_arg(parser)
     parser = imvcdeexut.add_exchange_download_args(parser)

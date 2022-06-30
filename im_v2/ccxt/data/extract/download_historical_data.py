@@ -39,7 +39,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="OHLCV, market_depth or trades data.",
+        help="OHLCV, bid_ask or trades data.",
     )
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
