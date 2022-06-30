@@ -33,13 +33,12 @@ class RealTimeDagRunner(dtfcore.DagRunner):
 
     def __init__(
         self,
-        config: cconfig.Config,
-        dag_builder: dtfcore.DagBuilder,
+        dag: dtfcore.DAG,
         fit_state: cconfig.Config,
         execute_rt_loop_kwargs: Dict[str, Any],
         dst_dir: str,
     ) -> None:
-        super().__init__(config, dag_builder)
+        super().__init__(dag)
         # Save input parameters.
         # TODO(gp): Use this for stateful DAGs.
         _ = fit_state

@@ -8,7 +8,6 @@ import logging
 
 import pandas as pd
 
-import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.sink_nodes as dtfsysinod
@@ -22,50 +21,8 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# System config instances
-# #############################################################################
-
-
-# TODO(gp): @paul -> system_builder_utils.py
-# TODO(gp): @all -> get_system_config_template() since this is general and works
-#  for any DAG (e.g., Example1, E8)
-# TODO(gp): @all use this in every System passing the DagBuilder.
-def get_system_config_template_example1(
-    dag_builder: dtfcore.DagBuilder,
-) -> cconfig.Config:
-    system_config = cconfig.Config()
-    # Save the `DagBuilder` and the `DagConfig` in the config object.
-    hdbg.dassert_isinstance(dag_builder, dtfcore.DagBuilder)
-    dag_config = dag_builder.get_config_template()
-    system_config["DAG"] = dag_config
-    # TODO(gp): dag_builder_object
-    system_config["meta", "dag_builder"] = dag_builder
-    return system_config
-
-
-# #############################################################################
 # Market data instances
 # #############################################################################
-
-
-def get_Example1_market_data_example1(
-    system: dtfsyssyst.System,
-) -> mdata.ReplayedMarketData:
-    """
-    Build a replayed MarketData getting data from a df.
-    """
-    # TODO(gp): This should be factored out.
-    event_loop = system.config["event_loop"]
-    initial_replayed_delay = system.config[
-        "market_data", "initial_replayed_delay"
-    ]
-    data = system.config["market_data", "data"]
-    market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
-        event_loop,
-        initial_replayed_delay,
-        data,
-    )
-    return market_data
 
 
 def get_Example1_market_data_example2(
@@ -74,7 +31,7 @@ def get_Example1_market_data_example2(
     """
     Build a replayed MarketData from an ImClient feeding data from a df.
     """
-    asset_ids = system.config["market_data", "asset_ids"]
+    asset_ids = system.config["market_data_config", "asset_ids"]
     # TODO(gp): Specify only the columns that are needed.
     columns = None
     columns_remap = None
@@ -230,9 +187,9 @@ def _build_dag_with_data_source_node(
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     hdbg.dassert_issubclass(data_source_node, dtfcore.DataSource)
     # Prepare the DAG builder.
-    dag_builder = system.config["meta", "dag_builder"]
+    dag_builder = system.config["dag_builder_object"]
     # Build the DAG.
-    dag = dag_builder.get_dag(system.config["DAG"])
+    dag = dag_builder.get_dag(system.config["dag_config"])
     # Add the data source node.
     dag.insert_at_head(data_source_node)
     # Build the DAG.
@@ -264,7 +221,7 @@ def get_Example1_dag_runner_example1(
     sleep_interval_in_secs = 5 * 60
     # Set up the event loop.
     get_wall_clock_time = system.market_data.get_wall_clock_time
-    real_time_loop_time_out_in_secs = system.config["dag_runner"][
+    real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
         "real_time_loop_time_out_in_secs"
     ]
     execute_rt_loop_kwargs = {
@@ -273,9 +230,7 @@ def get_Example1_dag_runner_example1(
         "time_out_in_secs": real_time_loop_time_out_in_secs,
     }
     dag_runner_kwargs = {
-        "config": system.config,
-        # TODO(Danya): Add a more fitting/transparent name.
-        "dag_builder": dag,
+        "dag": dag,
         "fit_state": None,
         "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
         "dst_dir": None,
