@@ -33,7 +33,9 @@ from typing import Any, Callable, List
 
 import ipywidgets as widgets
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import scipy.stats as st
 import seaborn as sns
 import sklearn
 
@@ -91,6 +93,7 @@ def get_notebook_config() -> cconconf.Config:
             # 28500 is the number of 5-minute intervals in ATH in a year.
             "time_scaling": 28500,
             "n_resamples": 1000,
+            "alpha": 0.05,
         },
         "plot_kwargs": {
             "y_min_lim_hit_rate": 0.45,
@@ -250,102 +253,44 @@ def plot_sharpe_ratio(
     plt.show()
 
 
-def plot_sorted_barplot(
-    df: pd.DataFrame,
-    x_column_name: str,
-    y_column_name: str,
-    sort_by: [str, bool],
-    ascending: bool,
-    ylabel: str,
-    ylim_min: float,
-    ylim_max: float,
-) -> None:
+def calculate_hit_rate_with_CI(df, group_by, value_col):
+    hit_df_stacked = df.groupby([group_by])[value_col].apply(
+        lambda data: cstresta.calculate_hit_rate(
+            data, alpha=config["stats_kwargs"]["alpha"]
+        )
+    )
+    hit_df = hit_df_stacked.unstack()
+    hit_df.columns = ["y", "ci_low", "ci_high"]
+    hit_df["errors"] = (hit_df["ci_high"] - hit_df["ci_low"]) / 2
+    return hit_df
+
+
+def calculate_CI_for_PnLs(df, group_by, value_col):
+    grouper = df.groupby([group_by])[value_col]
+    pnl_df = grouper.mean().to_frame()
+    conf_ints = grouper.apply(
+        lambda data: st.t.interval(
+            1 - config["stats_kwargs"]["alpha"],
+            data.size - 1,
+            np.mean(data),
+            st.sem(data),
+        )
+    )
+    pnl_df[["low", "up"]] = pd.DataFrame(conf_ints.tolist(), index=pnl_df.index)
+    pnl_df.columns = ["y", "ci_low", "ci_high"]
+    pnl_df["errors"] = (pnl_df["ci_high"] - pnl_df["ci_low"]) / 2
+    return pnl_df
+
+
+def plot_stats_barplot(df, sort_by, ascending, ylabel, ylim_min, ylim_max):
     """
     :param df: data with prediction statistics
-    :param x: column name for values on X-axis (e.g., `asset_id`)
-    :param y: column name for values on Y-axis (e.g., `hit`)
     :param sort_by: sorting parameter (e.g., by value, by asset, or None)
     :param ylabel: name of the Y-axis graph
     :param ylim_min: lower value on Y-axis graph scale
     :param ylim_max: upper value on Y-axis graph scale
     :return: barplot with model performance statistics
     """
-    if sort_by:
-        stats_srs = df.groupby([x_column_name])[y_column_name].mean()
-        stats_srs_sorted = stats_srs.reset_index().sort_values(
-            by=[sort_by], ascending=ascending
-        )
-        order = stats_srs_sorted[x_column_name]
-    else:
-        order = None
-    sns.barplot(
-        x=x_column_name,
-        y=y_column_name,
-        data=df,
-        order=order,
-        color=color,
-        capsize=capsize,
-    )
-    plt.xticks(rotation=xticks_rotation)
-    plt.ylabel(ylabel)
-    plt.ylim(ylim_min, ylim_max)
-    plt.show()
-
-
-def widget_plot(
-    df: pd.DataFrame,
-    x_column_name: str,
-    y_column_name: str,
-    ylim_min: float,
-    ylim_max: float,
-) -> None:
-    """
-    Add widges to expand the sorting parameters for barplots.
-
-    :param df: data with prediction statistics
-    :param x: values on X-axis (e.g., `asset_id`)
-    :param y: values on Y-axis (e.g., `hit`)
-    :param ylim_min: lower value on Y-axis graph scale
-    :param ylim_max: upper value on Y-axis graph scale
-    :return: barplot with edible model performance statistics.
-    """
-    _ = widgets.interact(
-        plot_sorted_barplot,
-        df=widgets.fixed(df),
-        x_column_name=widgets.fixed(x_column_name),
-        y_column_name=widgets.fixed(y_column_name),
-        sort_by=widgets.ToggleButtons(
-            options=[y_column_name, x_column_name, False], description="Sort by:"
-        ),
-        ascending=widgets.ToggleButtons(
-            options=[True, False], description="Ascending:"
-        ),
-        ylabel=widgets.fixed(f"{y_column_name}_rate"),
-        ylim_min=widgets.FloatText(
-            value=ylim_min,
-            description="Min y-scale:",
-        ),
-        ylim_max=widgets.FloatText(
-            value=ylim_max,
-            description="Max y-scale:",
-        ),
-    )
-
-
-def calculate_hit_rate_with_CI(df, group_by, value_col):
-    hit_df_stacked = df.groupby([group_by])[value_col].apply(
-        lambda data: cstresta.calculate_hit_rate(data)
-    )
-    hit_df = hit_df_stacked.unstack()
-    hit_df.columns = ["y", "ci_low", "ci_high"]
-    hit_df["err1"] = hit_df["y"] - hit_df["ci_low"]
-    hit_df["err2"] = hit_df["ci_high"] - hit_df["y"]
-    hit_df["errors"] = (hit_df["err1"] + hit_df["err2"]) / 2
-    hit_df = hit_df.drop(columns=["err1", "err2"])
-    return hit_df
-
-
-def plot_hit_rates(df, sort_by, ascending, ylim_min, ylim_max):
     if sort_by == "x":
         df_sorted = df.sort_index(ascending=ascending)
     elif not sort_by:
@@ -359,28 +304,28 @@ def plot_hit_rates(df, sort_by, ascending, ylim_min, ylim_max):
         width=0.8,
     )
     plt.xticks(rotation=xticks_rotation)
-    plt.ylabel("hit_rate")
+    plt.ylabel(ylabel)
     plt.ylim(ylim_min, ylim_max)
     plt.show()
 
 
-def widget_plot_hit(
+def plot_bars_with_widget(
     df: pd.DataFrame,
+    ylabel: str,
     ylim_min: float,
     ylim_max: float,
 ) -> None:
     """
-    Add widges to expand the sorting parameters for barplots.
+    Add widgets to expand the sorting parameters for barplots.
 
     :param df: data with prediction statistics
-    :param x: values on X-axis (e.g., `asset_id`)
-    :param y: values on Y-axis (e.g., `hit`)
+    :param ylabel: name of the Y-axis graph
     :param ylim_min: lower value on Y-axis graph scale
     :param ylim_max: upper value on Y-axis graph scale
     :return: barplot with edible model performance statistics.
     """
     _ = widgets.interact(
-        plot_hit_rates,
+        plot_stats_barplot,
         df=widgets.fixed(df),
         sort_by=widgets.ToggleButtons(
             options=["x", "y", "ci_low", "ci_high", False], description="Sort by:"
@@ -388,14 +333,14 @@ def widget_plot_hit(
         ascending=widgets.ToggleButtons(
             options=[True, False], description="Ascending:"
         ),
-        # ylabel=widgets.fixed(f"{y_column_name}_rate"),
+        ylabel=widgets.fixed(ylabel),
         ylim_min=widgets.FloatText(
             value=ylim_min,
-            description="Min y-scale:",
+            description="Min y-value:",
         ),
         ylim_max=widgets.FloatText(
             value=ylim_max,
-            description="Max y-scale:",
+            description="Max y-value:",
         ),
     )
 
@@ -457,7 +402,7 @@ xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
 
 # %%
 hit_by_asset = calculate_hit_rate_with_CI(metrics_df_reset_index, asset_id, hit)
-widget_plot_hit(hit_by_asset, 49, 54)
+plot_bars_with_widget(hit_by_asset, "hit_rate", 49, 54)
 
 # %% [markdown]
 # ### PnL
@@ -467,18 +412,22 @@ widget_plot_hit(hit_by_asset, 49, 54)
 pnl_stats = (
     metrics_df.groupby(asset_id)[trade_pnl].sum().sort_values(ascending=False)
 )
-pnl_stats = pnl_stats.to_frame().reset_index()
-
+pnl_stats = pnl_stats.rename("y").to_frame()
+# Confidence Intervals are currently excluded.
+pnl_stats["errors"] = 0
 # Plot PnL per asset id.
-widget_plot(pnl_stats, "asset_id", trade_pnl, 0, 450)
+plot_bars_with_widget(pnl_stats, "avg_pnl_by_asset", 0, 450)
 
 # %%
 # Plot cumulative PnL over time per asset id.
 _ = metrics_df[trade_pnl].dropna().unstack().cumsum().plot()
 
-# %% run_control={"marked": false}
+# %%
 # Plot average trade PnL per asset id.
-widget_plot(metrics_df_reset_index, asset_id, trade_pnl, 0, 0.005)
+avg_pnl_by_asset = calculate_CI_for_PnLs(
+    metrics_df_reset_index, asset_id, trade_pnl
+)
+plot_bars_with_widget(avg_pnl_by_asset, "avg_pnl_by_asset", 0, 0.005)
 
 # %% [markdown]
 # ### Sharpe Ratio
@@ -505,31 +454,40 @@ metrics_df_reset_index["month"] = metrics_df_reset_index[
 hits_by_time_hour = calculate_hit_rate_with_CI(
     metrics_df_reset_index, "hour", hit
 )
-widget_plot_hit(hits_by_time_hour, 49, 54)
+plot_bars_with_widget(hits_by_time_hour, "avg_hit_rate", 49, 54)
 
 # %%
 hits_by_time_weekday = calculate_hit_rate_with_CI(
     metrics_df_reset_index, "weekday", hit
 )
-widget_plot_hit(hits_by_time_weekday, 49, 54)
+plot_bars_with_widget(hits_by_time_weekday, "avg_hit_rate", 49, 54)
 
 # %%
 hits_by_time_month = calculate_hit_rate_with_CI(
     metrics_df_reset_index, "month", hit
 )
-widget_plot_hit(hits_by_time_month, 49, 54)
+plot_bars_with_widget(hits_by_time_month, "avg_hit_rate", 49, 54)
 
 # %% [markdown]
 # ### PnL
 
 # %%
-widget_plot(metrics_df_reset_index, "hour", trade_pnl, 0, 0.005)
+pnl_by_time_hour = calculate_CI_for_PnLs(
+    metrics_df_reset_index, "hour", trade_pnl
+)
+plot_bars_with_widget(pnl_by_time_hour, "avg_pnl", 0, 0.005)
 
 # %%
-widget_plot(metrics_df_reset_index, "weekday", trade_pnl, 0, 0.004)
+pnl_by_time_weekday = calculate_CI_for_PnLs(
+    metrics_df_reset_index, "weekday", trade_pnl
+)
+plot_bars_with_widget(pnl_by_time_weekday, "avg_pnl", 0, 0.004)
 
 # %%
-widget_plot(metrics_df_reset_index, "month", trade_pnl, 0, 0.0055)
+pnl_by_time_month = calculate_CI_for_PnLs(
+    metrics_df_reset_index, "month", trade_pnl
+)
+plot_bars_with_widget(pnl_by_time_month, "avg_pnl", 0, 0.0055)
 
 # %% [markdown]
 # ### Sharpe Ratio
@@ -559,13 +517,16 @@ metrics_df_reset_index[prediction_magnitude] = pd.qcut(
 hits_by_prediction_magnitude = calculate_hit_rate_with_CI(
     metrics_df_reset_index, prediction_magnitude, hit
 )
-widget_plot_hit(hits_by_prediction_magnitude, 49, 55)
+plot_bars_with_widget(hits_by_prediction_magnitude, "avg_hit_rate", 49, 55)
 
 # %% [markdown]
 # ### PnL
 
 # %%
-widget_plot(metrics_df_reset_index, prediction_magnitude, trade_pnl, 0, 0.01)
+pnl_by_prediction_magnitude = calculate_CI_for_PnLs(
+    metrics_df_reset_index, prediction_magnitude, trade_pnl
+)
+plot_bars_with_widget(pnl_by_prediction_magnitude, "avg_pnl", 0, 0.01)
 
 # %% [markdown]
 # ### Sharpe Ratio
@@ -589,13 +550,16 @@ metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(
 hits_by_volume = calculate_hit_rate_with_CI(
     metrics_df_reset_index, volume_quantile, hit
 )
-widget_plot_hit(hits_by_volume, 49, 55)
+plot_bars_with_widget(hits_by_volume, "avg_hit_rate", 49, 55)
 
 # %% [markdown]
 # ### PnL
 
 # %%
-widget_plot(metrics_df_reset_index, volume_quantile, trade_pnl, 0.0005, 0.0045)
+pnl_by_volume = calculate_CI_for_PnLs(
+    metrics_df_reset_index, volume_quantile, trade_pnl
+)
+plot_bars_with_widget(pnl_by_volume, "avg_pnl", 0.0005, 0.0045)
 
 # %% [markdown]
 # ### Sharpe Ratio
