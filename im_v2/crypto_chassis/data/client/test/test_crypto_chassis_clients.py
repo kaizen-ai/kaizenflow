@@ -25,6 +25,7 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
         self.partition_mode = "by_year_month"
         self.filter_data_mode = "assert"
 
+    @pytest.mark.slow("Slow via GH, fast on the server")
     def test1(self) -> None:
         """
         `dataset = bid_ask`
