@@ -512,16 +512,17 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
                 asset_ids=[101, 202],
             )
             # Build OrderProcessor.
-            get_wall_clock_time = portfolio._get_wall_clock_time
             delay_to_accept_in_secs = 3
             delay_to_fill_in_secs = 10
             broker = portfolio.broker
             termination_condition = 3
+            asset_id_name = "asset_id"
             order_processor = oordproc.OrderProcessor(
                 db_connection,
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
                 broker,
+                asset_id_name
             )
             order_processor_coroutine = order_processor.run_loop(
                 termination_condition
@@ -765,12 +766,13 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         with hasynci.solipsism_context() as event_loop:
             # Build MarketData.
             initial_replayed_delay = 5
-            asset_id_name = "egid"
+            asset_id_name = "asset_id"
             asset_id = [data[asset_id_name][0]]
             market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
                 event_loop,
                 initial_replayed_delay,
                 data,
+                asset_id_col_name=asset_id_name
             )
             # Create a portfolio with one asset (and cash).
             db_connection = self.connection

@@ -254,7 +254,7 @@ class OrderProcessor:
                 row["current_position"] += num_shares
                 # A negative net cost for financing a long position.
                 row["net_cost"] -= cost
-                row["egid"] = int(row["egid"])
+                row[self._asset_id_name] = int(row[self._asset_id_name])
             else:
                 txt = f"""
                 strategyid,SAU1
