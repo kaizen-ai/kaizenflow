@@ -1,8 +1,6 @@
-import os
-
 import pandas as pd
+
 import helpers.hpandas as hpandas
-import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients_example as imvccdcccce
 
@@ -33,7 +31,7 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
             filter_data_mode,
         )
         df = hpandas.df_to_str(df)
-        expected_signature = r"""            
+        expected_signature = r"""
                                 full_symbol             bid_price   bid_size     ask_price  ask_size
         timestamp
         2022-06-15 00:00:00+00:00  binance::BTC_USDT  22112.989064    90.241  22108.061867   149.091
@@ -71,7 +69,7 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
             filter_data_mode,
         )
         df = hpandas.df_to_str(df)
-        expected_signature = r"""                                 
+        expected_signature = r"""
                                         full_symbol      open      high       low
         timestamp
         2022-05-15 12:00:00+00:00  binance::BTC_USDT  30241.46  30293.32  30238.39
@@ -84,8 +82,3 @@ class TestCryptoChassisHistoricalPqByTileClient1(hunitest.TestCase):
         """
 
         self.assert_equal(df, expected_signature, fuzzy_match=True)
-
-
-
-
-

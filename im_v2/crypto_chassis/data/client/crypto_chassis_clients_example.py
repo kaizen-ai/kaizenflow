@@ -28,7 +28,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example1(
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     partition_mode = "by_year_month"
     dataset = "ohlcv"
-    contract_type = "spot",
+    contract_type = ("spot",)
     crypto_chassis_parquet_client = (
         imvccdcccc.CryptoChassisHistoricalPqByTileClient(
             universe_version,
@@ -117,8 +117,8 @@ def get_CryptoChassisHistoricalPqByTileClient_example4(
     resample_1min: bool, contract_type: str, dataset: str, data_snapshot: str
 ) -> imvccdcccc.CryptoChassisHistoricalPqByTileClient:
     """
-    Get `CryptoChassisHistoricalPqByTileClient` object for unit test
-    reading actual futures historical data, which is stored on S3.
+    Get `CryptoChassisHistoricalPqByTileClient` object for unit test reading
+    actual futures historical data, which is stored on S3.
 
     Client is initialized to process CryptoChassis data for:
     - universe version: `v3`
