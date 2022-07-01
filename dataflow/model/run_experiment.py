@@ -63,19 +63,19 @@ def _run_experiment_stub(
     file_name = "run_experiment_stub.py"
     exec_name = hgit.find_file_in_git_tree(file_name, super_module=True)
     #
-    # TODO(gp): Rename id -> idx everywhere with `jackpy "meta" | grep id | grep config`
-    idx = config[("meta", "id")]
+    # TODO(gp): Rename id -> idx everywhere with `jackpy "experiment_config" | grep id | grep config`
+    idx = config[("experiment_config", "id")]
     _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
     _LOG.info("config=\n%s", config)
     #
-    dst_dir = config[("meta", "dst_dir")]
+    dst_dir = config[("experiment_config", "dst_dir")]
     # Prepare the log file.
     # TODO(gp): -> experiment_dst_dir
-    experiment_result_dir = config[("meta", "experiment_result_dir")]
+    experiment_result_dir = config[("experiment_config", "experiment_result_dir")]
     log_file = os.path.join(experiment_result_dir, "run_experiment.%s.log" % idx)
     log_file = os.path.abspath(os.path.abspath(log_file))
-    experiment_builder = config[("meta", "experiment_builder")]
-    config_builder = config[("meta", "config_builder")]
+    experiment_builder = config[("experiment_config", "experiment_builder")]
+    config_builder = config[("experiment_config", "config_builder")]
     cmd = [
         exec_name,
         f"--experiment_builder '{experiment_builder}'",

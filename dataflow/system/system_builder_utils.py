@@ -46,7 +46,7 @@ def get_event_loop_market_data_instance1(
     """
     Build an event loop MarketData with data from a dataframe.
     """
-    event_loop = system.config["event_loop"]
+    event_loop = system.config["event_loop_object"]
     initial_replayed_delay = system.config[
         "market_data_config", "initial_replayed_delay"
     ]

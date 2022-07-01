@@ -75,17 +75,17 @@ def patch_configs(
     for idx, config in enumerate(configs):
         config = config.copy()
         # Add `idx` for book-keeping.
-        config[("meta", "id")] = idx
+        config[("experiment_config", "id")] = idx
         # Inject all the experiment_list_params in the config.
         for key in sorted(experiment_list_params.keys()):
-            config[("meta", key)] = experiment_list_params[key]
+            config[("experiment_config", key)] = experiment_list_params[key]
         # Inject the dst dir of the entire experiment list.
         hdbg.dassert_in("dst_dir", experiment_list_params)
         dst_dir = experiment_list_params["dst_dir"]
         # Add experiment result dir.
         dst_subdir = f"result_{idx}"
         experiment_result_dir = os.path.join(dst_dir, dst_subdir)
-        config[("meta", "experiment_result_dir")] = experiment_result_dir
+        config[("experiment_config", "experiment_result_dir")] = experiment_result_dir
         #
         configs_out.append(config)
     return configs_out
