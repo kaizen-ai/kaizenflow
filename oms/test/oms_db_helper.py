@@ -1,7 +1,7 @@
 import abc
 import logging
 import os
-from typing import Any, Callable
+from typing import Any, Dict, Callable
 
 import helpers.henv as henv
 import helpers.hgit as hgit
@@ -107,6 +107,7 @@ networks:
         self: Any,
         table_name: str,
         create_table_func: Callable,
+        create_table_func_kwargs: Any,
     ) -> None:
         """
         Run sanity check for a DB table.
@@ -127,7 +128,8 @@ networks:
         _LOG.info("get_table_names=%s", db_tables)
         self.assertNotIn(table_name, db_tables)
         # Create the table.
-        _ = create_table_func(self.connection, incremental=False)
+        incremental = False
+        _ = create_table_func(self.connection, incremental, **create_table_func_kwargs),
         # The table should be present.
         db_tables = hsql.get_table_names(self.connection)
         _LOG.info("get_table_names=%s", db_tables)
