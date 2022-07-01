@@ -238,7 +238,9 @@ def has_dind_support() -> bool:
         else:
             if is_mac() or is_dev_ck() or is_inside_ci():
                 # dind is supported on both Mac and GH Actions.
-                assert has_dind, "Expected privileged mode"
+                assert has_dind, ("Expected privileged mode: " +
+                    "has_dind=%s, is_mac=%s, is_dev_ck=%s is_iniside_ci=%s" % (
+                          has_dind, is_mac(), is_dev_ck(), is_inside_ci()))
             elif is_dev4():
                 assert not has_dind, "Not expected privileged mode"
             else:
