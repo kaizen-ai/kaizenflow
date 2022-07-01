@@ -182,7 +182,7 @@ def set_asset_id(
     Assign an `asset_id` to a config.
 
     :param asset_id_key: the key to assign
-        - E.g., `("DAG", "rets/read_data", "asset_id")`
+        - E.g., `("dag_config", "rets/read_data", "asset_id")`
     :param assume_dummy: assume that the value in the config corresponding to
         `asset_id_key` is `DUMMY`, i.e., it's coming from a template. This is
         used to enforce a use patter like "create a template config and then
@@ -307,11 +307,11 @@ def build_configs_varying_tiled_periods(
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         #
         config_tmp = config.copy()
-        config_tmp[("meta", "start_timestamp_with_lookback")] = (
+        config_tmp[("experiment_config", "start_timestamp_with_lookback")] = (
             start_ts - lookback
         )
-        config_tmp[("meta", "start_timestamp")] = start_ts
-        config_tmp[("meta", "end_timestamp")] = end_ts
+        config_tmp[("experiment_config", "start_timestamp")] = start_ts
+        config_tmp[("experiment_config", "end_timestamp")] = end_ts
         #
         _LOG.debug("config_tmp=%s\n", config_tmp)
         #
