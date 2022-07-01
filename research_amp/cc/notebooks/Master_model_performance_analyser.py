@@ -95,8 +95,8 @@ def get_notebook_config() -> cconconf.Config:
             "alpha": 0.05,
         },
         "plot_kwargs": {
-            "y_min_lim_hit_rate": 0.45,
-            "y_max_lim_hit_rate": 0.55,
+            "y_min_lim_hit_rate": 49,
+            "y_max_lim_hit_rate": 54,
             "color": "C0",
             "capsize": 0.2,
             "xticks_rotation": 70,
@@ -175,7 +175,7 @@ def preprocess_predictions_df(
         * metrics_df[config["column_names"]["y_hat"]]
         >= 0
     )
-    # Convert hit rates to the desired format.
+    # Convert hit rates to desired format (`calculate_hit_rate` input).
     metrics_df["hit"] = metrics_df["hit"].replace(True, 1)
     metrics_df["hit"] = metrics_df["hit"].replace(False, -1)
     # Compute trade PnL.
@@ -264,11 +264,13 @@ def calculate_hit_rate_with_CI(
     :param value_col: column name for PnL data
     :return: data with CIs and errors
     """
+    # Calculate mean value of statistics as well as CIs for each entity.
     hit_df_stacked = df.groupby([group_by])[value_col].apply(
         lambda data: cstresta.calculate_hit_rate(
             data, alpha=config["stats_kwargs"]["alpha"]
         )
     )
+    # Process the output and add errors.
     hit_df = hit_df_stacked.unstack()
     hit_errors_df = add_errors_to_ci_data(hit_df)
     return hit_errors_df
@@ -287,7 +289,9 @@ def calculate_CI_for_PnLs(
     :return: data with CIs and errors
     """
     grouper = df.groupby([group_by])[value_col]
+    # Calculate mean value of statistics for each entity.
     pnl_df = grouper.mean().to_frame()
+    # Compute confidence intervals.
     conf_ints = grouper.apply(
         lambda data: st.t.interval(
             1 - config["stats_kwargs"]["alpha"],
@@ -296,7 +300,9 @@ def calculate_CI_for_PnLs(
             st.sem(data),
         )
     )
-    pnl_df[["low", "up"]] = pd.DataFrame(conf_ints.tolist(), index=pnl_df.index)
+    # Attach confidence intervals to the mean value data.
+    pnl_df[["low", "high"]] = pd.DataFrame(conf_ints.tolist(), index=pnl_df.index)
+    # Unify columns and calculate errors (required values for plotting).
     pnl_errors_df = add_errors_to_ci_data(pnl_df)
     return pnl_errors_df
 
@@ -305,12 +311,21 @@ def add_errors_to_ci_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Process CI data and add errors.
     """
+    # Unify columns for all plotting data.
     df.columns = ["y", "ci_low", "ci_high"]
+    # Required values for plotting (`yerr` input).
     df["errors"] = (df["ci_high"] - df["ci_low"]) / 2
     return df
 
 
-def plot_stats_barplot(df, sort_by, ascending, ylabel, ylim_min, ylim_max):
+def plot_stats_barplot(
+    df: pd.DataFrame,
+    sort_by: str,
+    ascending: bool,
+    ylabel: str,
+    ylim_min: str,
+    ylim_max: str,
+) -> None:
     """
     :param df: data with prediction statistics
     :param sort_by: sorting parameter (e.g., by value, by asset, or None)
@@ -319,13 +334,16 @@ def plot_stats_barplot(df, sort_by, ascending, ylabel, ylim_min, ylim_max):
     :param ylim_max: upper value on Y-axis graph scale
     :return: barplot with model performance statistics
     """
+    # Sort data according to the input params.
     if sort_by == "x":
         df_sorted = df.sort_index(ascending=ascending)
     elif not sort_by:
         df_sorted = df.copy()
     else:
         df_sorted = df.sort_values(by=sort_by, ascending=ascending)
+    # Specify errors for plotting.
     errors = df_sorted["errors"]
+    # Plotting params.
     df_sorted["y"].plot.bar(
         yerr=errors,
         capsize=4,
@@ -430,7 +448,9 @@ xticks_rotation = config["plot_kwargs"]["xticks_rotation"]
 
 # %%
 hit_by_asset = calculate_hit_rate_with_CI(metrics_df_reset_index, asset_id, hit)
-plot_bars_with_widget(hit_by_asset, "hit_rate", 49, 54)
+plot_bars_with_widget(
+    hit_by_asset, "hit_rate", y_min_lim_hit_rate, y_max_lim_hit_rate
+)
 
 # %% [markdown]
 # ### PnL
@@ -444,6 +464,7 @@ pnl_stats = pnl_stats.rename("y").to_frame()
 # Confidence Intervals are currently excluded.
 pnl_stats["errors"] = 0
 # Plot PnL per asset id.
+# TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(pnl_stats, "avg_pnl_by_asset", 0, 450)
 
 # %%
@@ -455,6 +476,7 @@ _ = metrics_df[trade_pnl].dropna().unstack().cumsum().plot()
 avg_pnl_by_asset = calculate_CI_for_PnLs(
     metrics_df_reset_index, asset_id, trade_pnl
 )
+# TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(avg_pnl_by_asset, "avg_pnl_by_asset", 0, 0.005)
 
 # %% [markdown]
@@ -482,19 +504,25 @@ metrics_df_reset_index["month"] = metrics_df_reset_index[
 hits_by_time_hour = calculate_hit_rate_with_CI(
     metrics_df_reset_index, "hour", hit
 )
-plot_bars_with_widget(hits_by_time_hour, "avg_hit_rate", 49, 54)
+plot_bars_with_widget(
+    hits_by_time_hour, "avg_hit_rate", y_min_lim_hit_rate, y_max_lim_hit_rate
+)
 
 # %%
 hits_by_time_weekday = calculate_hit_rate_with_CI(
     metrics_df_reset_index, "weekday", hit
 )
-plot_bars_with_widget(hits_by_time_weekday, "avg_hit_rate", 49, 54)
+plot_bars_with_widget(
+    hits_by_time_weekday, "avg_hit_rate", y_min_lim_hit_rate, y_max_lim_hit_rate
+)
 
 # %%
 hits_by_time_month = calculate_hit_rate_with_CI(
     metrics_df_reset_index, "month", hit
 )
-plot_bars_with_widget(hits_by_time_month, "avg_hit_rate", 49, 54)
+plot_bars_with_widget(
+    hits_by_time_month, "avg_hit_rate", y_min_lim_hit_rate, y_max_lim_hit_rate
+)
 
 # %% [markdown]
 # ### PnL
@@ -503,18 +531,21 @@ plot_bars_with_widget(hits_by_time_month, "avg_hit_rate", 49, 54)
 pnl_by_time_hour = calculate_CI_for_PnLs(
     metrics_df_reset_index, "hour", trade_pnl
 )
+# TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(pnl_by_time_hour, "avg_pnl", 0, 0.005)
 
 # %%
 pnl_by_time_weekday = calculate_CI_for_PnLs(
     metrics_df_reset_index, "weekday", trade_pnl
 )
+# TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(pnl_by_time_weekday, "avg_pnl", 0, 0.004)
 
 # %%
 pnl_by_time_month = calculate_CI_for_PnLs(
     metrics_df_reset_index, "month", trade_pnl
 )
+# TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(pnl_by_time_month, "avg_pnl", 0, 0.0055)
 
 # %% [markdown]
@@ -545,7 +576,12 @@ metrics_df_reset_index[prediction_magnitude] = pd.qcut(
 hits_by_prediction_magnitude = calculate_hit_rate_with_CI(
     metrics_df_reset_index, prediction_magnitude, hit
 )
-plot_bars_with_widget(hits_by_prediction_magnitude, "avg_hit_rate", 49, 55)
+plot_bars_with_widget(
+    hits_by_prediction_magnitude,
+    "avg_hit_rate",
+    y_min_lim_hit_rate,
+    y_max_lim_hit_rate,
+)
 
 # %% [markdown]
 # ### PnL
@@ -554,6 +590,7 @@ plot_bars_with_widget(hits_by_prediction_magnitude, "avg_hit_rate", 49, 55)
 pnl_by_prediction_magnitude = calculate_CI_for_PnLs(
     metrics_df_reset_index, prediction_magnitude, trade_pnl
 )
+# TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(pnl_by_prediction_magnitude, "avg_pnl", 0, 0.01)
 
 # %% [markdown]
@@ -578,7 +615,9 @@ metrics_df_reset_index[volume_quantile] = metrics_df_reset_index.groupby(
 hits_by_volume = calculate_hit_rate_with_CI(
     metrics_df_reset_index, volume_quantile, hit
 )
-plot_bars_with_widget(hits_by_volume, "avg_hit_rate", 49, 55)
+plot_bars_with_widget(
+    hits_by_volume, "avg_hit_rate", y_min_lim_hit_rate, y_max_lim_hit_rate
+)
 
 # %% [markdown]
 # ### PnL
@@ -587,6 +626,7 @@ plot_bars_with_widget(hits_by_volume, "avg_hit_rate", 49, 55)
 pnl_by_volume = calculate_CI_for_PnLs(
     metrics_df_reset_index, volume_quantile, trade_pnl
 )
+# TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(pnl_by_volume, "avg_pnl", 0.0005, 0.0045)
 
 # %% [markdown]
