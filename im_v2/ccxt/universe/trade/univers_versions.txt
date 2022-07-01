@@ -1,18 +1,24 @@
+v6
+- 2022-06-27
+- Only `binance` futures
+- Same coins as in `binance` in the `download` universe `v5`
+- `binance::ADA_USDT` was removed due to CmTask2216
+
 coinbase_test
 - 2022-06-15
-- Same as "coinbase_test" download universe
+- Same as `coinbase_test` in the `download` universe
 
 v5
 - 2022-05-25
-- Same as v5 download universe
+- Same as `v5` in the `download` universe
 
 v4
 - 2022-04-23
-- Kucoin, Gateio and FTX full symbols are removed due to CmTask #1866
+- Same as `v4` in the `download` universe
 
 small
 - 2021-11-07
-- Same as "small" download universe
+- Same as `small` in the `download` universe
 
 v3
 - 2021-11-04
@@ -20,8 +26,8 @@ v3
 
 v2
 - 2021-11-03
-- Same as v2 download universe
+- Same as `v2` in the `download` universe
 
 v1
 - 2021-09-25
-- Initial version
+- Same as `v1` in the `download` universe
