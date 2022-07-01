@@ -207,9 +207,8 @@ def _build_dag_with_data_source_node(
 
 # TODO(gp): -> example1_system_example.py
 #
-# TODO(gp): -> get_Example1_dag_runner_example2
+# TODO(gp): -> get_real_time_dag_runner()
 # TODO(gp): Is this the same as get_Example1_dag_runner?
-# TODO(gp): -> example1_system_example.py
 def get_Example1_dag_runner_example1(
     system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:

@@ -24,7 +24,7 @@ def get_system_config_template_instance1(
     dag_builder: dtfcore.DagBuilder,
 ) -> cconfig.Config:
     """
-    Build a systen config from a DAG builder.
+    Build a system config from a DAG builder.
     """
     system_config = cconfig.Config()
     # Save the `DagBuilder` and the `DagConfig` in the config object.
@@ -40,6 +40,7 @@ def get_system_config_template_instance1(
 # #############################################################################
 
 
+# TODO(gp): -> get_event_loop_market_data_from_df
 def get_event_loop_market_data_instance1(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
