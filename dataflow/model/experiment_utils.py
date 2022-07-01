@@ -104,15 +104,15 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     """
     hdbg.dassert_isinstance(config, cconfig.Config)
     # Create subdirectory structure for experiment results.
-    experiment_result_dir = config[("meta", "experiment_result_dir")]
+    experiment_result_dir = config[("experiment_config", "experiment_result_dir")]
     _LOG.info("Creating experiment dir '%s'", experiment_result_dir)
     hio.create_dir(experiment_result_dir, incremental=True)
     # Prepare book-keeping files.
     file_name = os.path.join(experiment_result_dir, "config.pkl")
     _LOG.debug("Saving '%s'", file_name)
-    if "dag_runner" in config:
-        if not hintros.is_pickleable(config["dag_runner"]):
-            config["dag_runner"] = None
+    if "dag_runner_object" in config:
+        if not hintros.is_pickleable(config["dag_runner_object"]):
+            config["dag_runner_object"] = None
     hpickle.to_pickle(config, file_name)
     #
     file_name = os.path.join(experiment_result_dir, "config.txt")
@@ -133,10 +133,10 @@ def skip_configs_already_executed(
     num_skipped = 0
     for config in configs:
         # If there is already a success file in the dir, skip the experiment.
-        experiment_result_dir = config[("meta", "experiment_result_dir")]
+        experiment_result_dir = config[("experiment_config", "experiment_result_dir")]
         file_name = os.path.join(experiment_result_dir, "success.txt")
         if incremental and os.path.exists(file_name):
-            idx = config[("meta", "id")]
+            idx = config[("experiment_config", "id")]
             _LOG.warning("Found file '%s': skipping run %d", file_name, idx)
             num_skipped += 1
         else:
@@ -243,7 +243,7 @@ def report_failed_experiments(
     :return: return code
     """
     # Get the experiment selected_idxs.
-    experiment_ids = [int(config[("meta", "id")]) for config in configs]
+    experiment_ids = [int(config[("experiment_config", "id")]) for config in configs]
     # Match experiment selected_idxs with their return codes.
     failed_experiment_ids = [
         i for i, rc in zip(experiment_ids, rcs) if rc is not None and rc != 0
@@ -276,7 +276,7 @@ def save_experiment_result_bundle(
     Save the `ResultBundle` from running `Config`.
     """
     # TODO(Paul): Consider having the caller provide the dir instead.
-    file_name = os.path.join(config["meta", "experiment_result_dir"], file_name)
+    file_name = os.path.join(config["experiment_config", "experiment_result_dir"], file_name)
     result_bundle.to_pickle(file_name, use_pq=True)
 
 
