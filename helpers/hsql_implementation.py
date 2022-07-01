@@ -769,24 +769,26 @@ def is_row_with_value_present(
 # TODO(gp): Add unit test.
 async def wait_for_change_in_number_of_rows(
     get_wall_clock_time: hdateti.GetWallClockTime,
-    connection: DbConnection,
+    db_connection: DbConnection,
     table_name: str,
+    poll_kwargs: Dict[str, Any],
     *,
-    poll_kwargs: Optional[Dict[str, Any]] = None,
     tag: Optional[str] = None,
 ) -> int:
     """
     Wait until the number of rows in a table changes.
 
     :param get_wall_clock_time: a function to get current time
+    :param db_connection: connection to the target DB
+    :param table_name: name of the table to poll
     :param poll_kwargs: a dictionary with the kwargs for `poll()`
     :param tag: name of the caller function
     :return: number of new rows found
     """
-    num_rows = get_num_rows(connection, table_name)
+    num_rows = get_num_rows(db_connection, table_name)
 
     def _is_number_of_rows_changed() -> hasynci.PollOutput:
-        new_num_rows = get_num_rows(connection, table_name)
+        new_num_rows = get_num_rows(db_connection, table_name)
         _LOG.debug("new_num_rows=%s num_rows=%s", new_num_rows, num_rows)
         success = new_num_rows != num_rows
         diff_num_rows = new_num_rows - num_rows

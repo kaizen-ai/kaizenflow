@@ -125,11 +125,13 @@ class OrderProcessor:
         """
         Poll for submitted orders, accept, and enqueue.
         """
+        poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)
         # Wait for orders to be written in `submitted_orders_table_name`.
         diff_num_rows = await hsql.wait_for_change_in_number_of_rows(
             self._get_wall_clock_time,
             self._db_connection,
             self._submitted_orders_table_name,
+            poll_kwargs
         )
         _LOG.debug("diff_num_rows=%s", diff_num_rows)
         # Extract the latest file_name after order submission is complete.
