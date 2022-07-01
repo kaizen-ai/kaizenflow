@@ -49,7 +49,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="OHLCV, bid_ask or trades data.",
+        help="OHLCV, bid/ask or trades data.",
     )
     parser.add_argument("--incremental", action="store_true")
     parser = hparser.add_verbosity_arg(parser)
