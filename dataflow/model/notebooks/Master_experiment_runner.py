@@ -51,22 +51,22 @@ hprint.config_notebook()
 config = cconfig.get_config_from_env()
 
 # %%
-dag_config = config.pop("DAG")
+dag_config = config.pop("dag_config")
 
 # %%
-dag_runner = cdataf.PredictionDagRunner(dag_config, config["dag_builder"])
+dag_runner = cdataf.PredictionDagRunner(dag_config)
 
 # %%
 cdataf.draw(dag_runner.dag)
 
 # %%
-if "set_fit_intervals" in config["meta"].to_dict():
+if "set_fit_intervals" in config["experiment_config"].to_dict():
     dag_runner.set_fit_intervals(
-        **config["meta", "set_fit_intervals", "func_kwargs"].to_dict()
+        **config["experiment_config", "set_fit_intervals", "func_kwargs"].to_dict()
     )
-if "set_predict_intervals" in config["meta"].to_dict():
+if "set_predict_intervals" in config["experiment_config"].to_dict():
     dag_runner.set_predict_intervals(
-        **config["meta", "set_predict_intervals", "func_kwargs"].to_dict()
+        **config["experiment_config", "set_predict_intervals", "func_kwargs"].to_dict()
     )
 
 # %%
@@ -76,7 +76,7 @@ fit_result_bundle = dag_runner.fit()
 payload = cconfig.get_config_from_nested_dict({"config": config})
 
 # %%
-if "run_oos" in config["meta"].to_dict().keys() and config["meta"]:
+if "run_oos" in config["experiment_config"].to_dict().keys() and config["experiment_config"]:
     result_bundle = dag_runner.predict()
     payload["fit_result_bundle"] = fit_result_bundle.to_config()
 else:
@@ -89,7 +89,7 @@ result_bundle.payload = payload
 # TODO(gp): Use  `cdtfut.save_experiment_result_bundle(config, result_bundle)`
 try:
     path = os.path.join(
-        config["meta", "experiment_result_dir"], "result_bundle.pkl"
+        config["experiment_config", "experiment_result_dir"], "result_bundle.pkl"
     )
     if True:
         hpickle.to_pickle(result_bundle.to_config().to_dict(), path)

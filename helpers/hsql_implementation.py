@@ -18,6 +18,7 @@ import psycopg2.extras as extras
 import psycopg2.sql as psql
 
 import helpers.hasyncio as hasynci
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
@@ -767,7 +768,8 @@ def is_row_with_value_present(
 
 # TODO(gp): Add unit test.
 async def wait_for_change_in_number_of_rows(
-    connection: DbConnection,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+    db_connection: DbConnection,
     table_name: str,
     poll_kwargs: Dict[str, Any],
     *,
@@ -776,13 +778,17 @@ async def wait_for_change_in_number_of_rows(
     """
     Wait until the number of rows in a table changes.
 
-    :param poll_kwargs: a dictionary with the kwargs for `poll()`.
+    :param get_wall_clock_time: a function to get current time
+    :param db_connection: connection to the target DB
+    :param table_name: name of the table to poll
+    :param poll_kwargs: a dictionary with the kwargs for `poll()`
+    :param tag: name of the caller function
     :return: number of new rows found
     """
-    num_rows = get_num_rows(connection, table_name)
+    num_rows = get_num_rows(db_connection, table_name)
 
     def _is_number_of_rows_changed() -> hasynci.PollOutput:
-        new_num_rows = get_num_rows(connection, table_name)
+        new_num_rows = get_num_rows(db_connection, table_name)
         _LOG.debug("new_num_rows=%s num_rows=%s", new_num_rows, num_rows)
         success = new_num_rows != num_rows
         diff_num_rows = new_num_rows - num_rows
@@ -790,8 +796,9 @@ async def wait_for_change_in_number_of_rows(
 
     # Poll.
     if tag is None:
-        # Use name of the caller function.
         tag = hintros.get_function_name(count=0)
+    if poll_kwargs is None:
+        poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
     num_iters, diff_num_rows = await hasynci.poll(
         _is_number_of_rows_changed,
         tag=tag,

@@ -12,7 +12,6 @@ import pandas as pd
 
 import core.config as cconfig
 import dataflow.core.dag as dtfcordag
-import dataflow.core.dag_builder as dtfcodabui
 import dataflow.core.node as dtfcornode
 import dataflow.core.result_bundle as dtfcorebun
 import dataflow.core.utils as dtfcorutil
@@ -42,25 +41,18 @@ class DagRunner(abc.ABC):
     directly.
     """
 
-    def __init__(
-        self,
-        # TODO(Paul): Remove `Config` from the interface and just pass a `Dag`.
-        config: cconfig.Config,
-        # TODO(Paul): Rename `dag`.
-        dag_builder: dtfcordag.DAG,
-    ) -> None:
+    def __init__(self, dag: dtfcordag.DAG) -> None:
         """
         Constructor.
 
         :param config: config for DAG
         :param dag_builder: `DagBuilder` instance to build a DAG from the config
         """
-        # Save input parameters.
-        hdbg.dassert_isinstance(config, cconfig.Config)
-        self.config = config
-        hdbg.dassert_isinstance(dag_builder, dtfcordag.DAG)
-        self.dag = dag_builder
+        # Save dag
+        hdbg.dassert_isinstance(dag, dtfcordag.DAG)
+        self.dag = dag
         # TODO(gp): Not sure what to do here.
+        self.config = cconfig.Config()
         self._column_to_tags_mapping = []
         # Extract the sink node.
         self._result_nid = self.dag.get_unique_sink()
@@ -211,8 +203,7 @@ class RollingFitPredictDagRunner(DagRunner):
 
     def __init__(
         self,
-        config: cconfig.Config,
-        dag_builder: dtfcodabui.DagBuilder,
+        dag: dtfcordag.DAG,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         retraining_freq: str,
@@ -228,7 +219,7 @@ class RollingFitPredictDagRunner(DagRunner):
         :param retraining_lookback: number of periods of past data to include
             in retraining, expressed in integral units of `retraining_freq`
         """
-        super().__init__(config, dag_builder)
+        super().__init__(dag)
         # Save input parameters.
         self._start_timestamp = start_timestamp
         self._end_timestamp = end_timestamp
@@ -379,8 +370,7 @@ class IncrementalDagRunner(DagRunner):
 
     def __init__(
         self,
-        config: cconfig.Config,
-        dag_builder: dtfcodabui.DagBuilder,
+        dag: dtfcordag.DAG,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         freq: str,
@@ -400,7 +390,7 @@ class IncrementalDagRunner(DagRunner):
         :param fit_state: Config containing any learned state required for
             initializing the DAG
         """
-        super().__init__(config, dag_builder)
+        super().__init__(dag)
         self._start_timestamp = start_timestamp
         self._end_timestamp = end_timestamp
         self._freq = freq
