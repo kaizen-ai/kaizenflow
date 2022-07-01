@@ -6,7 +6,7 @@ import oms.order_processor as oordproc
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Union
 
 import pandas as pd
 
@@ -45,12 +45,11 @@ class OrderProcessor:
         delay_to_accept_in_secs: float,
         delay_to_fill_in_secs: float,
         broker: ombroker.Broker,
+        asset_id_name: str,
         *,
         submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
         accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
         current_positions_table_name: str = oomsdb.CURRENT_POSITIONS_TABLE_NAME,
-        # TODO(gp): -> wait_for_order_poll_kwargs?
-        poll_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Constructor.
@@ -59,9 +58,12 @@ class OrderProcessor:
             the accepted orders table
         :param delay_to_fill_in_secs: delay after the order is accepted to update the
             position table with the filled positions
-        :param poll_kwargs: this controls how often and for how long we poll the DB
-            table for new orders. In practice, `poll_kwargs` are used in `poll()` for
-            `hsql.wait_for_change_in_number_of_rows()`
+        :param broker: broker object connected to the market
+        :param asset_id_name: name of the asset IDs column, e.g. "asset_id"
+        :param *_orders_table_name: name of the DB tables to be used to store
+            the various information. Typically we use OrderProcessor in unit
+            tests and so we have control over the DB and we can use names chosen by us,
+            so we use the standard table names as defaults
         """
         self._db_connection = db_connection
         hdbg.dassert_lte(0, delay_to_accept_in_secs)
@@ -69,14 +71,12 @@ class OrderProcessor:
         hdbg.dassert_lte(0, delay_to_fill_in_secs)
         self._delay_to_fill_in_secs = delay_to_fill_in_secs
         self._broker = broker
+        self._asset_id_name = asset_id_name
         self._submitted_orders_table_name = submitted_orders_table_name
         self._accepted_orders_table_name = accepted_orders_table_name
         self._current_positions_table_name = current_positions_table_name
         #
         self._get_wall_clock_time = broker.market_data.get_wall_clock_time
-        self._poll_kwargs = poll_kwargs or hasynci.get_poll_kwargs(
-            self._get_wall_clock_time
-        )
         # NOTE: In our current execution model, at most one order list should be in
         #  this queue at any given time. If we change our execution model, then
         #  we may need to resize the queue.
@@ -125,11 +125,13 @@ class OrderProcessor:
         """
         Poll for submitted orders, accept, and enqueue.
         """
+        poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)
         # Wait for orders to be written in `submitted_orders_table_name`.
         diff_num_rows = await hsql.wait_for_change_in_number_of_rows(
+            self._get_wall_clock_time,
             self._db_connection,
             self._submitted_orders_table_name,
-            self._poll_kwargs,
+            poll_kwargs
         )
         _LOG.debug("diff_num_rows=%s", diff_num_rows)
         # Extract the latest file_name after order submission is complete.
@@ -222,7 +224,7 @@ class OrderProcessor:
             query = []
             query.append(f"SELECT * FROM {self._current_positions_table_name}")
             query.append(
-                f"WHERE account='candidate' AND tradedate='{trade_date}' AND asset_id={asset_id}"
+                f"WHERE account='candidate' AND tradedate='{trade_date}' AND {self._asset_id_name}={asset_id}"
             )
             query = "\n".join(query)
             _LOG.debug("query=%s", query)
@@ -235,7 +237,7 @@ class OrderProcessor:
             query = []
             query.append(f"DELETE FROM {self._current_positions_table_name}")
             query.append(
-                f"WHERE account='candidate' AND tradedate='{trade_date}' AND asset_id={asset_id}"
+                f"WHERE account='candidate' AND tradedate='{trade_date}' AND {self._asset_id_name}={asset_id}"
             )
             query = "\n".join(query)
             _LOG.debug("query=%s", query)
@@ -255,7 +257,7 @@ class OrderProcessor:
                 row["current_position"] += num_shares
                 # A negative net cost for financing a long position.
                 row["net_cost"] -= cost
-                row["asset_id"] = int(row["asset_id"])
+                row[self._asset_id_name] = int(row[self._asset_id_name])
             else:
                 txt = f"""
                 strategyid,SAU1
@@ -263,7 +265,7 @@ class OrderProcessor:
                 id,{id_}
                 tradedate,{trade_date}
                 timestamp_db,{wall_clock_time}
-                asset_id,{asset_id}
+                {self._asset_id_name},{asset_id}
                 target_position,0
                 current_position,{num_shares}
                 open_quantity,0
