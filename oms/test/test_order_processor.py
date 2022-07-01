@@ -34,7 +34,9 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
     def setUp(self) -> None:
         super().setUp()
         # Create OMS tables.
-        oomsdb.create_oms_tables(self.connection, incremental=False)
+        incremental = False
+        self._asset_id_name = "asset_id"
+        oomsdb.create_oms_tables(self.connection, incremental, self._asset_id_name)
 
     def tearDown(self) -> None:
         # Remove the OMS tables.
@@ -63,6 +65,7 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
                 broker,
+                self._asset_id_name
             )
             order_processor_coroutine = order_processor.run_loop(
                 termination_condition
