@@ -76,7 +76,7 @@ _LOG = logging.getLogger(__name__)
 #     - force_free_nodes
 #   - TODO(gp): -> dag_builder_object
 #   - dag_builder_object
-#   - dag_builder_meta
+#   - dag_builder_config
 #     - """information about methods to be called on the DagBuilder"""
 #     - fast_prod_setup
 #   - TODO(gp): -> market_data_object
@@ -252,7 +252,7 @@ class ForecastSystem(System):
     def _get_forecast_dag(self) -> dtfcore.DAG:
         # TODO(gp): -> dag_builder_object
         dag_builder = self.config["dag_builder"]
-        config = self.config["DAG"]
+        config = self.config["dag_config"]
         _LOG.debug("config=\n%s", config)
         dag = dag_builder.get_dag(config)
         return dag

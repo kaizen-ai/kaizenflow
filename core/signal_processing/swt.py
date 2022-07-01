@@ -6,7 +6,7 @@ import core.signal_processing.swt as csiprswt
 
 
 import logging
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -42,7 +42,9 @@ def get_swt(
       daily ~ 10-11
 
     :param sig: input signal
-    :param wavelet: pywt wavelet name, e.g., "db8"
+    :param wavelet: pywt wavelet name, e.g., "db8";
+        see all available names by invoking `pywt.wavelist()`;
+        see all available families by invoking `pywt.families()`.
     :param depth: the number of decomposition steps to perform. Corresponds to
         "level" parameter in `pywt.swt`
     :param timing_mode: supported timing modes are
@@ -177,6 +179,85 @@ def get_swt_level(
     return swt[level]
 
 
+def get_knowledge_time_warmup_lengths(
+    wavelets: List[str],
+    depth: int,
+) -> pd.Series:
+    """
+    Return knowledge-time warm-up lengths required.
+
+    Stratified by wavelet name and level.
+    """
+    hdbg.dassert_container_type(wavelets, list, str)
+    hdbg.dassert_isinstance(depth, int)
+    hdbg.dassert_lt(0, depth)
+    wavelet_warmups = []
+    for wavelet in wavelets:
+        width = len(pywt.Wavelet(wavelet).filter_bank[0])
+        lengths = {}
+        for level in range(1, depth + 1):
+            length = 2 * _get_artifact_length(width, level)
+            lengths[level] = length
+        srs = pd.Series(lengths, name=wavelet)
+        srs.index.name = "level"
+        wavelet_warmups.append(srs)
+    df = pd.concat(wavelet_warmups, axis=1)
+    df.columns.name = "wavelet"
+    return df
+
+
+def summarize_wavelet(wavelet: pywt.Wavelet) -> pd.Series:
+    """
+    Summarize wavelet properties of frequent interest.
+    """
+    _LOG.debug("wavelet=%s", wavelet)
+    dict_ = {
+        "family_name": wavelet.family_name,
+        "short_family_name": wavelet.short_family_name,
+        "family_number": wavelet.family_number,
+        "name": wavelet.name,
+        "number": wavelet.number,
+        "orthogonal": wavelet.orthogonal,
+        "biorthogonal": wavelet.biorthogonal,
+        "symmetry": wavelet.symmetry,
+        "vanishing_moments_phi": wavelet.vanishing_moments_phi,
+        "vanishing_moments_psi": wavelet.vanishing_moments_psi,
+        "width": len(wavelet.filter_bank[0]),
+    }
+    srs = pd.Series(dict_)
+    return srs
+
+
+def summarize_discrete_wavelets() -> pd.DataFrame:
+    """
+    Summarize properties of all available discrete wavelets.
+    """
+    wavelist = pywt.wavelist(kind="discrete")
+    _LOG.debug("discrete wavelist=%s", wavelist)
+    wavelet_summaries = []
+    for wavelet_name in wavelist:
+        wavelet = pywt.Wavelet(wavelet_name)
+        wavelet_summary = summarize_wavelet(wavelet)
+        wavelet_summaries.append(wavelet_summary)
+    df = pd.concat(wavelet_summaries, axis=1).T
+    return df
+
+
+def _get_artifact_length(
+    width: int,
+    level: int,
+) -> int:
+    """
+    Get artifact length based on wavelet width and level.
+
+    :width: width (length of support of mother wavelet)
+    :level: wavelet level
+    :return: length of required warm-up period
+    """
+    length = width * 2 ** (level - 1) - width // 2
+    return length
+
+
 def _pad_to_pow_of_2(arr: np.array) -> np.array:
     """
     Minimally extend `arr` with zeros so that len is a power of 2.
@@ -199,7 +280,8 @@ def _set_warmup_region_to_nan(srs: pd.Series, width: int, level: int) -> None:
     :width: width (length of support of mother wavelet)
     :level: wavelet level
     """
-    srs[: width * 2 ** (level - 1) - width // 2] = np.nan
+    warmup_region = _get_artifact_length(width, level)
+    srs[:warmup_region] = np.nan
 
 
 def _reindex_by_knowledge_time(
@@ -212,7 +294,8 @@ def _reindex_by_knowledge_time(
     :width: width (length of support of mother wavelet)
     :level: wavelet level
     """
-    return srs.shift(width * 2 ** (level - 1) - width // 2)
+    warmup_region = _get_artifact_length(width, level)
+    return srs.shift(warmup_region)
 
 
 def compute_swt_var(
@@ -377,7 +460,7 @@ def _compute_fir_zscore(
     )[dyadic_tau].shift(delay)
     demeaned = signal - mean
     var = get_swt(
-        demeaned**2,
+        demeaned ** 2,
         wavelet=variance_wavelet,
         depth=variance_dyadic_tau,
         output_mode="smooth",

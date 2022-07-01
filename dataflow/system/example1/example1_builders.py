@@ -106,7 +106,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     # How much history is needed for the DAG to compute.
     # TODO(gp): This should be
     # 198     system_config[
-    # 199         "market_data_meta", "history_lookback"
+    # 199         "market_data_config", "history_lookback"
     # 200     ] = market_data_history_lookback
     timedelta = pd.Timedelta("7D")
     asset_id_col = "asset_id"
@@ -159,7 +159,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }
-    system.config["process_forecasts"] = {
+    system.config["process_forecasts_config"] = {
         "prediction_col": prediction_col,
         "volatility_col": volatility_col,
         "spread_col": spread_col,
@@ -171,7 +171,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
     node = dtfsysinod.ProcessForecasts(
-        stage, **system.config["process_forecasts"]
+        stage, **system.config["process_forecasts_config"]
     )
     dag.append_to_tail(node)
     return dag

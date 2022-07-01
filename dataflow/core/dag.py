@@ -317,7 +317,7 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
-    def compose(self, dag: "DAG") -> None:
+    def compose(self, dag: "dag_config") -> None:
         """
         Add `dag` to self.
 
@@ -395,7 +395,7 @@ class DAG:
             return True
         return False
 
-    def insert_at_head(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
+    def insert_at_head(self, obj: Union[dtfcornode.Node, "dag_config"]) -> None:
         """
         Connect a node or single-sink DAG to the head (root) of the DAG.
 
@@ -421,7 +421,7 @@ class DAG:
             return True
         return False
 
-    def append_to_tail(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
+    def append_to_tail(self, obj: Union[dtfcornode.Node, "dag_config"]) -> None:
         """
         Connect a node or single-source DAG to the tail (leaf) of the DAG.
 
