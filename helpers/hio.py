@@ -20,6 +20,7 @@ from typing import Any, List, Optional, Union
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
+import helpers.hversion as hversio
 
 # Avoid dependency from other `helpers` modules to prevent import cycles.
 # Do not import third party libraries, such as `numpy` and `pandas`.
@@ -39,6 +40,7 @@ def purify_file_name(file_name: str) -> str:
     """
     Remove non-Linux friendly characters from the basename.
     """
+    print(hversio._get_container_version())
     basename = os.path.basename(file_name)
     for char in (" ", "_", "'", '"', "`", "/"):
         basename = basename.replace(char, "_")
