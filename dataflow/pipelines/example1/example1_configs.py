@@ -23,8 +23,8 @@ def build_tile_configs(
     Build a tile configs for Example1 pipeline.
     """
     configs = [system_config]
-    universe_str = system_config["backtest"]["universe_str"]
-    time_interval_str = system_config["backtest"]["time_interval_str"]
+    universe_str = system_config["backtest_config"]["universe_str"]
+    time_interval_str = system_config["backtest_config"]["time_interval_str"]
     # # TODO(gp): `trading_period_str` is not used for Example1 pipeline.
     # # Apply specific config.
     # # config = _apply_config(config, trading_period_str)
@@ -35,9 +35,9 @@ def build_tile_configs(
     full_symbols = dtfuniver.get_universe(universe_str)
     im_client = icdc.get_DataFrameImClient_example1()
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
-    system_config["meta", "asset_ids"] = asset_ids
+    system_config["market_data_config", "asset_ids"] = asset_ids
     # Name of the asset_ids to save.
-    system_config["meta", "asset_id_col_name"] = "asset_id"
+    system_config["market_data_config", "asset_id_col_name"] = "asset_id"
     # #
     # config["dag_runner"] = get_dag_runner
     # # Create the list of configs.
@@ -81,7 +81,7 @@ def build_configs_with_tiled_universe(
         universe_tiles = (asset_ids_part1, asset_ids_part2)
     else:
         universe_tiles = (asset_ids,)
-    asset_id_key = ("market_data", "asset_ids")
+    asset_id_key = ("market_data_config", "asset_ids")
     configs = dtfmoexcon.build_configs_varying_universe_tiles(
         config, asset_id_key, universe_tiles
     )

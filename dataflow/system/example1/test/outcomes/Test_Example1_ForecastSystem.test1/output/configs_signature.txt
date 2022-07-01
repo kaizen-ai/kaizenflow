@@ -9,7 +9,7 @@ dag_config:
     in_col_groups: [('close',), ('volume',), ('feature1',)]
     out_col_group: ()
     transformer_kwargs:
-      rule: 1T
+      rule: 5T
       resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'feature1': 'feature1'}, 'mean', {})]
       vwap_groups: [('close', 'volume', 'vwap')]
     reindex_like_input: False
@@ -44,16 +44,19 @@ dag_config:
     col_mapping:
       vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
 dag_builder_object: nid_prefix=
-dag_runner: <bound method Example1_ForecastSystem.get_dag_runner of <dataflow.system.example1.example1_forecast_system.Example1_ForecastSystem object>>
-meta:
+dag_config_config:
+  resample:
+    transformer_kwargs:
+      rule: 1T
+dag_runner_object: <bound method Example1_ForecastSystem.get_dag_runner of <dataflow.system.example1.example1_forecast_system.Example1_ForecastSystem object>>
+market_data_config:
   asset_id_col_name: asset_id
   asset_ids: [3303714233, 1467591036]
-  start_timestamp_with_lookback: 1999-12-22 00:00:00+00:00
-  start_timestamp: 2000-01-01 00:00:00+00:00
-  end_timestamp: 2000-01-31 23:59:59+00:00
-backtest:
+backtest_config:
   universe_str: example1_v1-top2
   trading_period_str: 1T
   time_interval_str: Jan2000
-market_data:
-  asset_ids: [3303714233, 1467591036]
+experiment_config:
+  start_timestamp_with_lookback: 1999-12-22 00:00:00+00:00
+  start_timestamp: 2000-01-01 00:00:00+00:00
+  end_timestamp: 2000-01-31 23:59:59+00:00

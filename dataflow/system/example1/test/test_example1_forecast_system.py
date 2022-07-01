@@ -33,7 +33,7 @@ class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             system = dtfseefosy.Example1_Time_ForecastSystem()
             # Complete system config.
-            system.config["event_loop"] = event_loop
+            system.config["event_loop_object"] = event_loop
             data, _ = cofinanc.get_market_data_df1()
             system.config["market_data_config", "data"] = data
             system.config["market_data_config", "initial_replayed_delay"] = 5
@@ -89,7 +89,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
                 dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
             )
             # Complete system config.
-            system.config["event_loop"] = event_loop
+            system.config["event_loop_object"] = event_loop
             system.config["market_data_config", "data"] = data
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]
@@ -177,7 +177,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
                     dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
                 )
             # Complete system config.
-            system.config["event_loop"] = event_loop
+            system.config["event_loop_object"] = event_loop
             system.config["market_data_config", "data"] = data
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]

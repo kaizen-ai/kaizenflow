@@ -1,5 +1,5 @@
 # 1/1
-DAG:
+dag_config:
   filter_ath:
     col_mode: replace_all
     transformer_kwargs:
@@ -43,9 +43,12 @@ DAG:
     out_col_group: ()
     col_mapping:
       vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
-meta:
-  dag_builder: nid_prefix=
+dag_builder_object: nid_prefix=
+dag_runner_object: <function get_dag_runner>
+market_data_config:
   asset_id_name: asset_id
+  asset_ids: [13684, 10971]
+experiment_config:
   start_timestamp_with_lookback: 2019-12-22 00:00:00+00:00
   start_timestamp: 2020-01-01 00:00:00+00:00
   end_timestamp: 2020-01-31 23:59:59+00:00
@@ -54,6 +57,3 @@ meta:
   dst_dir: ./dst_dir
   experiment_builder: dataflow.model.master_experiment.run_tiled_backtest
   experiment_result_dir: ./dst_dir/result_0
-dag_runner: <function get_dag_runner>
-market_data:
-  asset_ids: [13684, 10971]
