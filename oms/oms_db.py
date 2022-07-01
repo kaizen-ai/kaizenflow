@@ -27,7 +27,6 @@ def create_submitted_orders_table(
     db_connection: hsql.DbConnection,
     incremental: bool,
     table_name: str
-    #: str = SUBMITTED_ORDERS_TABLE_NAME,
 ) -> str:
     """
     Create a table storing the orders submitted to the system.
@@ -70,7 +69,6 @@ def create_accepted_orders_table(
     db_connection: hsql.DbConnection,
     incremental: bool,
     table_name: str
-    #: str = ACCEPTED_ORDERS_TABLE_NAME,
 ) -> str:
     """
     Create a table for acknowledging that orders have been accepted.
@@ -151,10 +149,15 @@ def create_current_positions_table(
     incremental: bool,
     asset_id_name: str,
     table_name: str
-    # = CURRENT_POSITIONS_TABLE_NAME,
 ) -> str:
     """
     Create a table holding the current positions.
+
+    :param db_connection: connection to DB containing order data
+    :param incremental: if True, append to existing table
+    :param asset_id_name: name of the asset id to be used in the DB (e.g., `asset_id`)
+    :param table_name: name of the current positions table
+    :return: name of created table
     """
     query = []
     if not incremental:
@@ -227,10 +230,15 @@ def create_restrictions_table(
     incremental: bool,
     asset_id_name: str,
     table_name: str
-    # = RESTRICTIONS_TABLE_NAME,
 ) -> str:
     """
     Create a table holding restrictions.
+
+    :param db_connection: connection to DB containing order data
+    :param incremental: if True, append to existing table
+    :param asset_id_name: name of the asset id to be used in the DB (e.g., `asset_id`)
+    :param table_name: name of the restrictions table
+    :return: name of created table
     """
     query = []
     if not incremental:
@@ -266,7 +274,6 @@ def create_restrictions_table(
 # the table names to the ones we use. When the DB is external, then the caller
 # needs to specify the names of the tables.
 
-# TODO(gp): Add the restriction tables.
 def create_oms_tables(
     db_connection: hsql.DbConnection, incremental: bool, asset_id_name: str
 ) -> None:

@@ -59,10 +59,11 @@ class OrderProcessor:
         :param delay_to_fill_in_secs: delay after the order is accepted to update the
             position table with the filled positions
         :param broker: broker object connected to the market
-        :param asset_id_name: name of the asset IDs column, e.g. "currency_pair"
-        :param poll_kwargs: this controls how often and for how long we poll the DB
-            table for new orders. In practice, `poll_kwargs` are used in `poll()` for
-            `hsql.wait_for_change_in_number_of_rows()`
+        :param asset_id_name: name of the asset IDs column, e.g. "asset_id"
+        :param *_orders_table_name: name of the DB tables to be used to store
+            the various information. Typically we use OrderProcessor in unit
+            tests and so we have control over the DB and we can use names chosen by us,
+            so we use the standard table names as defaults
         """
         self._db_connection = db_connection
         hdbg.dassert_lte(0, delay_to_accept_in_secs)

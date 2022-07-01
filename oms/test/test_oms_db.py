@@ -153,9 +153,10 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
         """
         Test inserting in the table.
         """
+        incremental = True
         # Create the table.
         table_name = oomsdb.create_accepted_orders_table(
-            self.connection, True, oomsdb.ACCEPTED_ORDERS_TABLE_NAME
+            self.connection, incremental, oomsdb.ACCEPTED_ORDERS_TABLE_NAME
         )
         # Insert a row.
         row = _get_row1()
@@ -197,7 +198,8 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
         """
         Create a clean DB table and run the coroutines.
         """
-        oomsdb.create_accepted_orders_table(self.connection, False, oomsdb.ACCEPTED_ORDERS_TABLE_NAME), 
+        incremental = False
+        oomsdb.create_accepted_orders_table(self.connection, incremental, oomsdb.ACCEPTED_ORDERS_TABLE_NAME), 
         with hasynci.solipsism_context() as event_loop:
             # Run.
             coroutine = hasynci.gather_coroutines_with_wall_clock(

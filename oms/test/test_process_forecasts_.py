@@ -502,8 +502,9 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             db_connection = self.connection
             asset_id_name = "asset_id"
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+            incremental = False
             #
-            oomsdb.create_oms_tables(self.connection, False, asset_id_name)
+            oomsdb.create_oms_tables(self.connection, incremental, asset_id_name)
             #
             portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
@@ -777,7 +778,8 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             # Create a portfolio with one asset (and cash).
             db_connection = self.connection
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
-            oomsdb.create_oms_tables(self.connection, False, asset_id_name)
+            incremental = False
+            oomsdb.create_oms_tables(self.connection, incremental, asset_id_name)
             portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
                 db_connection,

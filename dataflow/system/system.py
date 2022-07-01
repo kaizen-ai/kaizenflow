@@ -449,11 +449,16 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         db_connection: hsql.DbConnection,
         asset_id_name: str
     ):
+        """
+        :param db_connection: connection to DB with order data
+        :param asset_id_name: name of the asset id to be used in the DB (e.g., `asset_id`)
+        """
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
         self._db_connection = db_connection
         self._asset_id_name = asset_id_name
-        oms.create_oms_tables(self._db_connection, False, self._asset_id_name)
+        incremental = False
+        oms.create_oms_tables(self._db_connection, incremental, self._asset_id_name)
 
     def get_order_processor_coroutine(
         self,

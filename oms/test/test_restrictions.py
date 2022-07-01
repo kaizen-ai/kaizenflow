@@ -23,8 +23,9 @@ class TestRestrictions1(omtodh.TestOmsDbHelper):
     def test1(self) -> None:
         table_name = oomsdb.RESTRICTIONS_TABLE_NAME
         asset_id_name = "asset_id"
+        incremental = False
         oomsdb.create_restrictions_table(
-            self.connection, False, asset_id_name,table_name
+            self.connection, incremental, asset_id_name,table_name
         )
         # Populate the Restrictions table with an example row.
         row = _get_row1()
@@ -51,8 +52,9 @@ class TestRestrictions1(omtodh.TestOmsDbHelper):
     def test2(self) -> None:
         table_name = oomsdb.RESTRICTIONS_TABLE_NAME
         asset_id_name = "asset_id"
+        incremental = False
         oomsdb.create_restrictions_table(
-            self.connection, False, asset_id_name,table_name
+            self.connection, incremental, asset_id_name,table_name
         )
         # Populate the Restrictions table with an example row.
         rows = [_get_row1(), _get_row2(), _get_row3()]
