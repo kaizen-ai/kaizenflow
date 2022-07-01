@@ -13,7 +13,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         """
         _ = imvccdexex.CryptoChassisExtractor("spot")
 
-    def test_download_market_depth_data1(
+    def test_download_bid_ask_data1(
         self,
     ) -> None:
         """
@@ -25,7 +25,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         currency_pair = "btc/usdt"
         contract_type = "spot"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        actual = client._download_market_depth(
+        actual = client._download_bid_ask(
             exchange_id, currency_pair, start_timestamp, end_timestamp
         )
         # Verify dataframe length.
@@ -40,7 +40,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
 
-    def test_download_market_depth_data_futures1(
+    def test_download_bid_ask_data_futures1(
         self,
     ) -> None:
         """
@@ -52,7 +52,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         currency_pair = "btc/usdt"
         contract_type = "futures"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        actual = client._download_market_depth(
+        actual = client._download_bid_ask(
             exchange_id, currency_pair, start_timestamp, end_timestamp
         )
         # Verify dataframe length.
@@ -67,7 +67,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
 
-    def test_download_market_depth_invalid_input1(self) -> None:
+    def test_download_bid_ask_invalid_input1(self) -> None:
         """
         Run with invalid start timestamp.
         """
@@ -82,14 +82,14 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 """
         client = imvccdexex.CryptoChassisExtractor(contract_type)
         with self.assertRaises(AssertionError) as cm:
-            client._download_market_depth(
+            client._download_bid_ask(
                 exchange, currency_pair, start_timestamp, end_timestamp
             )
         # Check output for error.
         actual = str(cm.exception)
         self.assertIn(expected, actual)
 
-    def test_download_market_depth_invalid_input2(self) -> None:
+    def test_download_bid_ask_invalid_input2(self) -> None:
         """
         Run with invalid exchange name.
         """
@@ -101,13 +101,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        df = client._download_market_depth(
+        df = client._download_bid_ask(
             exchange, currency_pair, start_timestamp, end_timestamp
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
-    def test_download_market_depth_invalid_input3(self) -> None:
+    def test_download_bid_ask_invalid_input3(self) -> None:
         """
         Run with invalid currency pair.
         """
@@ -120,7 +120,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Empty Dataframe is expected.
         expected = hpandas.convert_df_to_json_string(pd.DataFrame())
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        df = client._download_market_depth(
+        df = client._download_bid_ask(
             exchange, currency_pair, start_timestamp, end_timestamp
         )
         actual = hpandas.convert_df_to_json_string(df)
