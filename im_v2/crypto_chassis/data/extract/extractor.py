@@ -101,7 +101,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         query_url = f"{base_url}?{joined_params}"
         return query_url
 
-    def _download_market_depth(
+    def _download_bid_ask(
         self,
         exchange_id: str,
         currency_pair: str,
@@ -111,7 +111,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         depth: int = 1,
     ) -> pd.DataFrame:
         """
-        Download snapshot data on market depth.
+        Download snapshot data on bid/ask.
 
             timestamp     bid_price     bid_size     ask_price     ask_size
         0     1641686400     41678.35     0.017939     41686.97     1.69712319
@@ -121,7 +121,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :param start_timestamp: start of processing
         :param depth: allowed values: 1 to 10. Defaults to 1.
-        :return: market depth data
+        :return: bid/ask data
         """
         hdbg.dassert_isinstance(
             start_timestamp,
@@ -172,29 +172,29 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
                 # Convert CSV into dataframe.
                 df_csv = pd.read_csv(df_csv, compression="gzip")
             all_days_data.append(df_csv)
-        market_depth = pd.concat(all_days_data)
-        if market_depth.empty:
+        bid_ask = pd.concat(all_days_data)
+        if bid_ask.empty:
             _LOG.warning("No data found for given query parameters.")
             return pd.DataFrame()
         # Separate `bid_price_bid_size` column to `bid_price` and `bid_size`.
-        market_depth["bid_price"], market_depth["bid_size"] = zip(
-            *market_depth["bid_price_bid_size"].apply(lambda x: x.split("_"))
+        bid_ask["bid_price"], bid_ask["bid_size"] = zip(
+            *bid_ask["bid_price_bid_size"].apply(lambda x: x.split("_"))
         )
         # Separate `ask_price_ask_size` column to `ask_price` and `ask_size`.
-        market_depth["ask_price"], market_depth["ask_size"] = zip(
-            *market_depth["ask_price_ask_size"].apply(lambda x: x.split("_"))
+        bid_ask["ask_price"], bid_ask["ask_size"] = zip(
+            *bid_ask["ask_price_ask_size"].apply(lambda x: x.split("_"))
         )
         # Remove deprecated columns.
-        market_depth = market_depth.drop(
+        bid_ask = bid_ask.drop(
             columns=["bid_price_bid_size", "ask_price_ask_size"]
         )
         bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
-        market_depth = self.coerce_to_numeric(
-            market_depth, float_columns=bid_ask_cols
+        bid_ask = self.coerce_to_numeric(
+            bid_ask, float_columns=bid_ask_cols
         )
         # Rename time column.
-        market_depth = market_depth.rename(columns={"time_seconds": "timestamp"})
-        return market_depth
+        bid_ask = bid_ask.rename(columns={"time_seconds": "timestamp"})
+        return bid_ask
 
     def _download_ohlcv(
         self,

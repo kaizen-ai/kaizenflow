@@ -144,9 +144,9 @@ class TalosExtractor(imvcdexex.Extractor):
             bar_per_iteration=bar_per_iteration,
         )
 
-    def _download_market_depth(self, **kwargs) -> pd.DataFrame:
+    def _download_bid_ask(self, **kwargs) -> pd.DataFrame:
         raise NotImplementedError(
-            "Market depth data is not available for Talos vendor"
+            "Bid_ask data is not available for Talos vendor"
         )
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:
