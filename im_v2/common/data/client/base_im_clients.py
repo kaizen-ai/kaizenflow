@@ -66,7 +66,7 @@ class ImClient(abc.ABC):
         universe_version: Optional[str],
         resample_1min: bool,
         *,
-        full_symbol_col_name: Optional[str] = None
+        full_symbol_col_name: Optional[str] = None,
     ) -> None:
         """
         Constructor.

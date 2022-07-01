@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Union
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -7,79 +7,95 @@ import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.swt as csiprswt
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 class Test_get_swt(hunitest.TestCase):
+    def helper(
+        self,
+        *,
+        timing_mode: Optional[str] = None,
+        output_mode: Optional[str] = None,
+    ) -> str:
+        series = self._get_series(seed=1)
+        actual = csiprswt.get_swt(
+            series,
+            timing_mode=timing_mode,
+            output_mode=output_mode,
+        )
+        if isinstance(actual, tuple):
+            smooth_df_string = hpandas.df_to_str(
+                actual[0],
+                num_rows=None,
+            )
+            detail_df_string = hpandas.df_to_str(
+                actual[1],
+                num_rows=None,
+            )
+            output_str = (
+                f"smooth_df:\n{smooth_df_string}\n"
+                f"\ndetail_df\n{detail_df_string}\n"
+            )
+        else:
+            output_str = hpandas.df_to_str(actual, num_rows=None)
+        return output_str
+
     def test_clean1(self) -> None:
         """
         Test for default values.
         """
-        series = self._get_series(seed=1, periods=40)
-        actual = csiprswt.get_swt(series, wavelet="haar")
-        output_str = self._get_tuple_output_txt(actual)
+        output_str = self.helper()
         self.check_string(output_str)
 
     def test_timing_mode1(self) -> None:
         """
         Test for timing_mode="knowledge_time".
         """
-        series = self._get_series(seed=1)
-        actual = csiprswt.get_swt(
-            series, wavelet="haar", timing_mode="knowledge_time"
-        )
-        output_str = self._get_tuple_output_txt(actual)
+        timing_mode = "knowledge_time"
+        output_str = self.helper(timing_mode=timing_mode)
         self.check_string(output_str)
 
     def test_timing_mode2(self) -> None:
         """
         Test for timing_mode="zero_phase".
         """
-        series = self._get_series(seed=1)
-        actual = csiprswt.get_swt(
-            series, wavelet="haar", timing_mode="zero_phase"
-        )
-        output_str = self._get_tuple_output_txt(actual)
+        timing_mode = "zero_phase"
+        output_str = self.helper(timing_mode=timing_mode)
         self.check_string(output_str)
 
     def test_timing_mode3(self) -> None:
         """
         Test for timing_mode="raw".
         """
-        series = self._get_series(seed=1)
-        actual = csiprswt.get_swt(series, wavelet="haar", timing_mode="raw")
-        output_str = self._get_tuple_output_txt(actual)
+        timing_mode = "raw"
+        output_str = self.helper(timing_mode=timing_mode)
         self.check_string(output_str)
 
     def test_output_mode1(self) -> None:
         """
         Test for output_mode="tuple".
         """
-        series = self._get_series(seed=1)
-        actual = csiprswt.get_swt(series, wavelet="haar", output_mode="tuple")
-        output_str = self._get_tuple_output_txt(actual)
+        output_mode = "tuple"
+        output_str = self.helper(output_mode=output_mode)
         self.check_string(output_str)
 
     def test_output_mode2(self) -> None:
         """
         Test for output_mode="smooth".
         """
-        series = self._get_series(seed=1)
-        actual = csiprswt.get_swt(series, wavelet="haar", output_mode="smooth")
-        actual_str = hunitest.convert_df_to_string(actual, index=True)
-        output_str = f"smooth_df:\n{actual_str}\n"
+        output_mode = "smooth"
+        output_str = self.helper(output_mode=output_mode)
         self.check_string(output_str)
 
     def test_output_mode3(self) -> None:
         """
         Test for output_mode="detail".
         """
-        series = self._get_series(seed=1)
-        actual = csiprswt.get_swt(series, wavelet="haar", output_mode="detail")
-        actual_str = hunitest.convert_df_to_string(actual, index=True)
-        output_str = f"detail_df:\n{actual_str}\n"
+        output_mode = "detail"
+        output_str = self.helper(output_mode=output_mode)
         self.check_string(output_str)
 
     def test_depth(self) -> None:
@@ -104,21 +120,6 @@ class Test_get_swt(hunitest.TestCase):
             date_range_kwargs=date_range, scale=0.1, seed=seed
         )
         return series
-
-    @staticmethod
-    def _get_tuple_output_txt(
-        output: Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]
-    ) -> str:
-        """
-        Create string output for a tuple type return.
-        """
-        smooth_df_string = hunitest.convert_df_to_string(output[0], index=True)
-        detail_df_string = hunitest.convert_df_to_string(output[1], index=True)
-        output_str = (
-            f"smooth_df:\n{smooth_df_string}\n"
-            f"\ndetail_df\n{detail_df_string}\n"
-        )
-        return output_str
 
 
 class Test_compute_swt_var(hunitest.TestCase):
@@ -146,3 +147,47 @@ class Test_compute_swt_var(hunitest.TestCase):
             {"start": "2000-01-01", "end": "2005-01-01", "freq": "B"}, seed=seed
         )
         return realization
+
+
+class Test_get_knowledge_time_warmup_lengths(hunitest.TestCase):
+    def helper(self, wavelets, depth, expected) -> None:
+        lengths = csiprswt.get_knowledge_time_warmup_lengths(wavelets, depth)
+        actual = hpandas.df_to_str(
+            lengths,
+            num_rows=None,
+        )
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test1(self) -> None:
+        wavelets = [
+            "bior1.3",
+            "coif1",
+            "db2",
+            "dmey",
+            "haar",
+            "rbio1.3",
+            "sym3",
+        ]
+        depth = 10
+        expected = r"""
+wavelet  bior1.3  coif1   db2   dmey  haar  rbio1.3  sym3
+level
+1              6      6     4     62     2        6     6
+2             18     18    12    186     6       18    18
+3             42     42    28    434    14       42    42
+4             90     90    60    930    30       90    90
+5            186    186   124   1922    62      186   186
+6            378    378   252   3906   126      378   378
+7            762    762   508   7874   254      762   762
+8           1530   1530  1020  15810   510     1530  1530
+9           3066   3066  2044  31682  1022     3066  3066
+10          6138   6138  4092  63426  2046     6138  6138
+"""
+        self.helper(wavelets, depth, expected)
+
+
+class Test_summarize_discrete_wavelets(hunitest.TestCase):
+    def test1(self) -> None:
+        df = csiprswt.summarize_discrete_wavelets()
+        actual = hpandas.df_to_str(df, num_rows=None)
+        self.check_string(actual)

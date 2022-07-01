@@ -22,9 +22,9 @@ def _build_base_config() -> cconfig.Config:
     wrapper = cconfig.Config()
     #
     dag_builder = dtfpexexpi.Example1_DagBuilder()
-    config = dag_builder.get_config_template()
-    wrapper["DAG"] = config
-    wrapper["meta", "dag_builder"] = dag_builder
+    dag_config = dag_builder.get_config_template()
+    wrapper["dag_config"] = dag_config
+    wrapper["dag_builder_object"] = dag_builder
     # wrapper["tags"] = []
     return wrapper
 
@@ -48,7 +48,7 @@ def build_configs_with_tiled_universe(
     """
     asset_ids = _get_universe_tiny()
     universe_tiles = (asset_ids,)
-    egid_key = ("market_data", "asset_ids")
+    egid_key = ("market_data_config", "asset_ids")
     configs = dtfmoexcon.build_configs_varying_universe_tiles(
         config, egid_key, universe_tiles
     )
@@ -60,10 +60,10 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.DAG:
     Build a DAG runner from a config.
     """
     # Build the DAG.
-    dag_builder = config["meta", "dag_builder"]
-    dag = dag_builder.get_dag(config["DAG"])
+    dag_builder = config["dag_builder_object"]
+    dag = dag_builder.get_dag(config["dag_config"])
     # Build the DagRunner.
-    dag_runner = dtfcore.FitPredictDagRunner(config, dag)
+    dag_runner = dtfcore.FitPredictDagRunner(dag)
     return dag_runner
 
 
@@ -78,9 +78,9 @@ def build_tile_configs(
     #
     config = _build_base_config()
     #
-    config["dag_runner"] = get_dag_runner
+    config["dag_runner_object"] = get_dag_runner
     # Name of the asset_ids to save.
-    config["meta", "asset_id_name"] = "asset_id"
+    config["market_data_config", "asset_id_name"] = "asset_id"
     configs = [config]
     # Apply the cross-product by the universe tiles.
     func = lambda cfg: build_configs_with_tiled_universe(cfg, universe_str)
