@@ -137,7 +137,9 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
     def setUp(self) -> None:
         super().setUp()
         # Create OMS tables.
-        oomsdb.create_oms_tables(self.connection, incremental=False)
+        asset_id_name = "asset_id"
+        incremental = False
+        oomsdb.create_oms_tables(self.connection, incremental, asset_id_name)
 
     def tearDown(self) -> None:
         # Remove the OMS tables.
@@ -173,11 +175,13 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
     ) -> None:
         delay_to_accept_in_secs = 2
         delay_to_fill_in_secs = 1
+        asset_id_name = "asset_id"
         order_processor = oordproc.OrderProcessor(
             self.connection,
             delay_to_accept_in_secs,
             delay_to_fill_in_secs,
             broker,
+            asset_id_name
         )
         await order_processor.enqueue_orders()
 
