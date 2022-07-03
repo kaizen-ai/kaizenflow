@@ -13,6 +13,7 @@ import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
+import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data as mdata
@@ -55,7 +56,6 @@ def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     # Create HistoricalDataSource.
     stage = "read_data"
     market_data = system.market_data
-    asset_id_col = "asset_id"
     # TODO(gp): This in the original code was
     #  `ts_col_name = "timestamp_db"`.
     ts_col_name = "end_ts"
@@ -64,12 +64,11 @@ def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     node = dtfsysonod.HistoricalDataSource(
         stage,
         market_data,
-        asset_id_col,
         ts_col_name,
         multiindex_output,
         col_names_to_remove=col_names_to_remove,
     )
-    dag = _build_dag_with_data_source_node(system, node)
+    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
     return dag
 
 
@@ -81,7 +80,6 @@ def get_Example1_dag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     # Create RealTimeDataSource.
     stage = "read_data"
     market_data = system.market_data
-    asset_id_col = "asset_id"
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
     multiindex_output = True
@@ -91,10 +89,9 @@ def get_Example1_dag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
         stage,
         market_data,
         timedelta,
-        asset_id_col,
         multiindex_output,
     )
-    dag = _build_dag_with_data_source_node(system, node)
+    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
     return dag
 
 
@@ -109,7 +106,6 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     # 199         "market_data_config", "history_lookback"
     # 200     ] = market_data_history_lookback
     timedelta = pd.Timedelta("7D")
-    asset_id_col = "asset_id"
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
     multiindex_output = True
@@ -117,10 +113,9 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         stage,
         system.market_data,
         timedelta,
-        asset_id_col,
         multiindex_output,
     )
-    dag = _build_dag_with_data_source_node(system, node)
+    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
     # Copied from E8_system_example.py
     # Configure a `ProcessForecast` node.
     prediction_col = "feature1"
@@ -174,29 +169,6 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         stage, **system.config["process_forecasts_config"]
     )
     dag.append_to_tail(node)
-    return dag
-
-
-def _build_dag_with_data_source_node(
-    system: dtfsyssyst.System,
-    data_source_node: dtfcore.DataSource,
-) -> dtfcore.DAG:
-    """
-    Create a DAG from system's DagBuilder and attach source node.
-    """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    hdbg.dassert_issubclass(data_source_node, dtfcore.DataSource)
-    # Prepare the DAG builder.
-    dag_builder = system.config["dag_builder_object"]
-    # Build the DAG.
-    dag = dag_builder.get_dag(system.config["dag_config"])
-    # Add the data source node.
-    dag.insert_at_head(data_source_node)
-    # Build the DAG.
-    # This is for debugging. It saves the output of each node in a `csv` file.
-    # dag.set_debug_mode("df_as_csv", False, "dst_dir")
-    if False:
-        dag.force_free_nodes = True
     return dag
 
 

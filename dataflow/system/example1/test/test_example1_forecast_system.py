@@ -165,6 +165,8 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         """
         Run a system using the desired portfolio based on DB or dataframe.
         """
+        oms.create_oms_tables(self.connection, incremental=False)
+        #
         with hasynci.solipsism_context() as event_loop:
             coroutines = []
             #
