@@ -344,7 +344,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
 
     def _test1(self, system_builder: Callable, asset_ids: List[int]) -> None:
         # Clean the DB tables.
-        oms.create_oms_tables(self.connection, incremental=False)
+        asset_id_name = "asset_id"
+        incremental = False
+        oms.create_oms_tables(self.connection, incremental, asset_id_name)
         #
         with hasynci.solipsism_context() as event_loop:
             system = system_builder(self.connection)
