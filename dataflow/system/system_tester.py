@@ -368,9 +368,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             dag_runner = system.get_dag_runner()
             # Create the OrderProcessor.
             portfolio = system.portfolio
-            timeout_in_secs = 60 * (10 + 15)
             order_processor = oms.get_order_processor_example1(
-                self.connection, portfolio, timeout_in_secs
+                self.connection, portfolio
             )
             order_processor_coroutine = (
                 oms.get_order_processor_coroutine_example1(

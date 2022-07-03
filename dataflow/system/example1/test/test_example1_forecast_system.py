@@ -195,9 +195,8 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             # Create and add order processor.
             portfolio = system.portfolio
             if is_database_portfolio:
-                timeout_in_secs = 60 * (5 + 15)
                 order_processor = oms.get_order_processor_example1(
-                    self.connection, portfolio, timeout_in_secs
+                    self.connection, portfolio
                 )
                 order_processor_coroutine = (
                     oms.get_order_processor_coroutine_example1(
