@@ -170,6 +170,9 @@ data.head(3)
 data.columns.get_level_values(0).unique()
 
 # %%
+data = data.dropna()
+
+# %%
 
 # %% [markdown]
 # Then we compute some metrics for each coin (@cryptomtc to confirm)
@@ -212,11 +215,6 @@ plt.title("Avg relative bid/ask spread (in bps)")
 plt.show()
 
 # %%
-data["relative_spread_bps"].plot()
-
-# %%
-
-# %%
 
 # %%
 days_21 = 21 * 24 * 60
@@ -224,26 +222,28 @@ days_42 = 42 * 24 * 60
 days_64 = 64 * 24 * 60
 
 # %%
-data["quoted_spread"].rolling(days_21).mean().plot()
+data["quoted_spread"].rolling(days_21, min_periods=1).mean().plot()
 
 # %%
-data["quoted_spread"].rolling(days_21).mean().mean().sort_values(
+data["quoted_spread"].rolling(days_21, min_periods=1).mean().mean().sort_values(
     ascending=False
 ).plot.bar()
 
 # %%
-data["quoted_spread"].rolling(days_42).mean().plot()
+data["quoted_spread"].rolling(days_42, min_periods=1).mean().plot()
 
 # %%
-data["quoted_spread"].rolling(days_42).mean().mean().sort_values(
+data["quoted_spread"].rolling(days_42, min_periods=1).mean().mean().sort_values(
     ascending=False
 ).plot.bar()
 
 # %%
-data["quoted_spread"].rolling(days_64).mean().plot()
+data["quoted_spread"].rolling(days_64, min_periods=1).mean().plot()
 
 # %%
-data["quoted_spread"][["binance::BTC_USDT"]].rolling(days_64).mean().plot()
+data["quoted_spread"][["binance::BTC_USDT"]].rolling(days_21, min_periods=10000).mean().plot()
+plt.ylim(0, 2.5)
+plt.show()
 
 # %%
 dd = data["quoted_spread"]["binance::BTC_USDT"]
@@ -274,4 +274,14 @@ binance_data_bid_ask[binance_data_bid_ask["full_symbol"] == "binance::ADA_USDT"]
 ].plot()
 
 # %% run_control={"marked": false}
+data["quoted_spread"].rolling(10000, min_periods=1).mean().plot()
+plt.ylim(0, 2.5)
+plt.show()
+
+# %%
 data["quoted_spread"].rolling(10000).mean().plot()
+
+# %%
+data["quoted_spread"].rolling(10000).mean().plot()
+
+# %%
