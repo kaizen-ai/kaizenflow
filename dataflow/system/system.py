@@ -473,16 +473,13 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def __init__(
         self,
         db_connection: hsql.DbConnection,
-        asset_id_name: str
     ):
         """
         :param db_connection: connection to DB with order data
-        :param asset_id_name: name of the asset id to be used in the DB (e.g., `asset_id`)
         """
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
         self._db_connection = db_connection
-        self._asset_id_name = asset_id_name
 
     def get_order_processor_coroutine(
         self,
@@ -490,8 +487,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         real_time_loop_time_out_in_secs: int,
     ) -> Coroutine:
         db_connection = self._db_connection
+        timeout_in_secs = 60 * (5 + 15)
         order_processor = oms.get_order_processor_example1(
-            db_connection, portfolio
+            db_connection, portfolio, timeout_in_secs=timeout_in_secs
         )
         #
         order_processor_coroutine = oms.get_order_processor_coroutine_example1(
