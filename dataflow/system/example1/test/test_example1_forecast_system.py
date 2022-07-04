@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 class Test_Example1_ForecastSystem(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Verify the contents of DAG prediction.
+        Test the Example1_ForecastSystem DAG.
         """
         # Create the System.
         backtest_config = "example1_v1-top2.1T.Jan2000"
