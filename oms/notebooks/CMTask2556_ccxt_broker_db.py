@@ -13,7 +13,22 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# # Description
+
+# %% [markdown]
+# This notebook contains examples of CCXT DB Broker functionality.
+
 # %%
+# %load_ext autoreload
+# %autoreload 2
+import logging
+
+import pandas as pd
+
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -21,7 +36,18 @@ import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.oms_db as oomsdb
+import oms.order as omorder
 import oms.order_example as oordexam
+
+# %%
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+_LOG.info("%s", henv.get_system_signature()[0])
+
+hprint.config_notebook()
+
 
 # %% [markdown]
 # ## Functions
@@ -58,6 +84,7 @@ connection = hsql.get_connection(*connection_params)
 # ### Creating tables
 
 # %%
+# Create tables for submitted and accepted orders.
 create_all_tables(connection)
 
 # %% [markdown]
@@ -65,6 +92,7 @@ create_all_tables(connection)
 
 # %%
 # Create an example client connected to DB.
+#  Note: Market data format copies CCXT OHLCV data.
 hsql.remove_table(connection, "example2_marketdata")
 im_client = icdc.get_mock_realtime_client(connection)
 market_data = mdata.get_RealtimeMarketData_example1(im_client)
@@ -82,7 +110,9 @@ raw_data
 # ### Order example
 
 # %%
+# Load an example of CCXT order.
 order = oordexam.get_order_example4()
+print(omorder.orders_to_string([order]))
 
 # %% [markdown]
 # ## Demonstration of main Broker methods
@@ -97,6 +127,7 @@ contract_type = "futures"
 mode = "test"
 
 # %%
+# Initialize CCXT broker with example market data connected to DB.
 broker = occxbrok.CcxtDbBroker(
     exchange_id,
     universe_version,
@@ -118,12 +149,12 @@ await broker._submit_orders([order], pd.Timestamp.utcnow())
 # ### Checking submitted orders
 
 # %%
-# In the DB.
+# Example of data inside the submitted orders in the DB.
 query = f"SELECT * FROM {oomsdb.SUBMITTED_ORDERS_TABLE_NAME} LIMIT 10"
 hsql.execute_query_to_df(connection, query)
 
 # %%
-# On the S3 location.
+# Example of data in the S3 location.
 hs3.listdir(
     "s3://cryptokaizen-data-test/ccxt_db_broker_test/",
     "*",
@@ -134,8 +165,18 @@ hs3.listdir(
 
 # %%
 hs3.from_file(
-    "s3://cryptokaizen-data-test/ccxt_db_broker_test/20220704000000/positions.0.20220704_190819.txt",
+    "s3://cryptokaizen-data-test/ccxt_db_broker_test/20220704000000/positions.0.20220704_231752.txt",
     aws_profile="ck",
 )
+
+# %% [markdown]
+# ## Comment
+
+# %% [markdown]
+# - The submitted order data is uploaded into a submitted orders DB table (as in DatabaseBroker abstract class) and saved to S3 location (as in IgBroker)
+# - IgBroker saved data only to S3 (w/o the DB upload) and it is not clear what should happen to submitted orders and how precisely they are counted as accepted.
+# - One assumption is that there should be an intermediary step to upload the order from DB to the exchange, or the DB itself is hosted by a different entity, e.g. the exchange or an outside broker.
+#    - The situation is compounded by a number of references to Java and code not present in the repository.
+# - All changes to the broker will be reflected in this notebook.
 
 # %%
