@@ -590,15 +590,17 @@ def integrate_files(  # type: ignore
     if mode == "print_dirs":
         files_lst = []
         for file, left_file, right_file in files_to_diff:
-            dirname = os.path.dirname(file)
+            dir_name = os.path.dirname(file)
             # Skip empty dir, e.g., for `pytest.ini`.
-            if dirname != "":
-                files_lst.append(dirname)
+            if dir_name != "":
+                files_lst.append(dir_name)
         files_lst = sorted(list(set(files_lst)))
         print(hprint.frame("Dirs changed"))
         print("\n".join(files_lst))
     else:
         # Build the script with the operations to perform.
+        if mode == "copy" and file_direction == "only_files_in_dst":
+            raise ValueError("Can't copy files from destination")
         script_txt = []
         for file, left_file, right_file in files_to_diff:
             if mode == "copy":
@@ -612,7 +614,7 @@ def integrate_files(  # type: ignore
         script_txt = "\n".join(script_txt)
         # Execute / save the script.
         if mode == "copy":
-            for cmd in script_txt:
+            for cmd in script_txt.split("\n"):
                 hsystem.system(cmd)
         elif mode == "vimdiff":
             # Save the diff script.
