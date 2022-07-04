@@ -167,6 +167,7 @@ class TestGetUniverseFilePath1_TestCase(hunitest.TestCase):
         self.assertEqual(actual, mock_universe)
 
 
+# TODO(gp): -> Remove the prefix Test
 class TestGetUniverse1_TestCase(hunitest.TestCase):
     def _test_get_universe1(self, vendor: str) -> None:
         """
@@ -209,9 +210,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         """
         Helper function to test universe is loaded correctly as dict.
         """
-        universe = imvcounun.get_vendor_universe(
-            vendor, "trade", version="small"
-        )
+        universe = imvcounun.get_vendor_universe(vendor, "trade", version="small")
         self.assertIn(exchange, universe)
         self.assertEqual([currency_pair], universe[exchange])
 

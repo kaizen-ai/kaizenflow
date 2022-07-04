@@ -43,7 +43,9 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_instance1(dag_builder)
+        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+            dag_builder
+        )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
@@ -70,18 +72,19 @@ def get_Example1_ForecastSystem_example1(
     hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
     # TODO(gp): Use a setter.
     system.config[
-        "dag_config", "resample", "transformer_kwargs", "rule"
+        "dag_config_config", "resample", "transformer_kwargs", "rule"
     ] = trading_period_str
     # TODO(gp): We pass dag_runner through the config since somebody
-    #  outside needs this function to run.
-    system.config["dag_runner"] = system.get_dag_runner
+    #  outside needs this function to run. In reality we should build the
+    #  object and not pass a builder.
+    system.config["dag_runner_object"] = system.get_dag_runner
     # Name of the asset_ids to save.
     # TODO(gp): Find a better place in the config, maybe "save_results"?
-    system.config["meta", "asset_id_col_name"] = "egid"
+    system.config["market_data_config", "asset_id_col_name"] = "egid"
     # TODO(gp):
-    system.config["backtest", "universe_str"] = universe_str
-    system.config["backtest", "trading_period_str"] = trading_period_str
-    system.config["backtest", "time_interval_str"] = time_interval_str
+    system.config["backtest_config", "universe_str"] = universe_str
+    system.config["backtest_config", "trading_period_str"] = trading_period_str
+    system.config["backtest_config", "time_interval_str"] = time_interval_str
     return system
 
 
@@ -106,7 +109,9 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_instance1(dag_builder)
+        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+            dag_builder
+        )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
@@ -141,7 +146,9 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_instance1(dag_builder)
+        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+            dag_builder
+        )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
@@ -154,7 +161,7 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
 
     # TODO(gp): Extract this code in Example1_builders.py
     def _get_portfolio(self) -> oms.Portfolio:
-        event_loop = self.config["event_loop"]
+        event_loop = self.config["event_loop_object"]
         market_data = self.market_data
         asset_ids = self.config["market_data_config", "asset_ids"]
         portfolio = oms.get_DataFramePortfolio_example1(
@@ -199,7 +206,9 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_instance1(dag_builder)
+        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+            dag_builder
+        )
         return system_config
 
     def _get_market_data(
@@ -216,7 +225,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_portfolio(
         self,
     ) -> oms.Portfolio:
-        event_loop = self.config["event_loop"]
+        event_loop = self.config["event_loop_object"]
         market_data = self.market_data
         table_name = oms.CURRENT_POSITIONS_TABLE_NAME
         asset_ids = self.config["market_data_config", "asset_ids"]

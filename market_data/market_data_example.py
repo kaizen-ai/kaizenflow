@@ -29,6 +29,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): Create an analogue of this for historical market data.
 # TODO(gp): Return only MarketData since the wall clock is inside it.
 def get_ReplayedTimeMarketData_from_df(
     event_loop: asyncio.AbstractEventLoop,

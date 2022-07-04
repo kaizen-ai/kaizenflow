@@ -10,7 +10,6 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
-import core.config as cconfig
 import core.finance as cofinanc
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -562,15 +561,6 @@ class ForecastEvaluatorFromPrices:
             df, self._volatility_col
         )
         _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
-        # Handle `kwargs` as config params for computing target positions.
-        if kwargs:
-            target_positions_config = cconfig.get_config_from_flattened_dict(
-                kwargs
-            )
-        else:
-            target_positions_config = cconfig.Config()
-        _LOG.debug("target_positions_config=\n%s", target_positions_config)
-        #
         spread_df = None
         if self._spread_col is not None:
             spread_df = ForecastEvaluatorFromPrices._get_df(df, self._spread_col)
@@ -580,15 +570,15 @@ class ForecastEvaluatorFromPrices:
                 cofinanc.compute_target_positions_cross_sectionally(
                     prediction_df,
                     volatility_df,
-                    target_positions_config,
+                    **kwargs,
                 )
             )
         elif style == "longitudinal":
             target_positions = cofinanc.compute_target_positions_longitudinally(
                 prediction_df,
                 volatility_df,
-                target_positions_config,
-                spread_df,
+                spread=spread_df,
+                **kwargs,
             )
         else:
             raise ValueError("Unsupported `style`=%s", style)

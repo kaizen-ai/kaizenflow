@@ -33,7 +33,7 @@ class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             system = dtfseefosy.Example1_Time_ForecastSystem()
             # Complete system config.
-            system.config["event_loop"] = event_loop
+            system.config["event_loop_object"] = event_loop
             data, _ = cofinanc.get_market_data_df1()
             system.config["market_data_config", "data"] = data
             system.config["market_data_config", "initial_replayed_delay"] = 5
@@ -89,7 +89,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
                 dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
             )
             # Complete system config.
-            system.config["event_loop"] = event_loop
+            system.config["event_loop_object"] = event_loop
             system.config["market_data_config", "data"] = data
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]
@@ -165,6 +165,10 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         """
         Run a system using the desired portfolio based on DB or dataframe.
         """
+        asset_id_name = "asset_id"
+        incremental = False
+        oms.create_oms_tables(self.connection, incremental, asset_id_name)
+        #
         with hasynci.solipsism_context() as event_loop:
             coroutines = []
             #
@@ -177,7 +181,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
                     dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
                 )
             # Complete system config.
-            system.config["event_loop"] = event_loop
+            system.config["event_loop_object"] = event_loop
             system.config["market_data_config", "data"] = data
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]
@@ -191,9 +195,8 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             # Create and add order processor.
             portfolio = system.portfolio
             if is_database_portfolio:
-                timeout_in_secs = 60 * (5 + 15)
                 order_processor = oms.get_order_processor_example1(
-                    self.connection, portfolio, timeout_in_secs
+                    self.connection, portfolio
                 )
                 order_processor_coroutine = (
                     oms.get_order_processor_coroutine_example1(
