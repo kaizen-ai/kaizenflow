@@ -427,6 +427,7 @@ class MultiindexSkLearnModel(dtfconobas.FitPredictNode):
                 info_out = csklm.get_info("fit")
                 self._key_fit_state[key] = csklm.get_fit_state()
             else:
+                hdbg.dassert_in(key, self._key_fit_state)
                 csklm.set_fit_state(self._key_fit_state[key])
                 df_out = csklm.predict(df)["df_out"]
                 info_out = csklm.get_info("predict")

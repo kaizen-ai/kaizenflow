@@ -162,6 +162,7 @@ class ReplayedMarketData(mdabmada.MarketData):
 # #############################################################################
 
 
+# TODO(gp): Add an example of how data looks like.
 def save_market_data(
     market_data: mdabmada.MarketData,
     file_name: str,
@@ -188,6 +189,7 @@ def save_market_data(
     _LOG.info("Saving done")
 
 
+# TODO(gp): Add an example of how data looks like.
 def load_market_data(
     file_name: str,
     aws_profile: hs3.AwsProfile = None,
