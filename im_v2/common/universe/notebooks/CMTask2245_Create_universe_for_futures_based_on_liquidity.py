@@ -21,6 +21,7 @@
 
 import logging
 import os
+from datetime import timedelta
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -34,7 +35,6 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.crypto_chassis.data.client as iccdc
 import research_amp.transform as ramptran
-from datetime import timedelta
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -129,11 +129,12 @@ def filter_last_n_days(df, n_days):
     filtered_df = df.loc[start_date:]
     return filtered_df
 
+
 def compute_moving_average_in_multiindex(df, value_col, rolling_window):
     # Compute MA.
     ma = df[value_col].rolling(rolling_window).mean()
     # Attach to Multiindex.
-    ma_converted = pd.concat({f"{value_col}_{rolling_window}": ma},axis=1)
+    ma_converted = pd.concat({f"{value_col}_{rolling_window}": ma}, axis=1)
     return ma_converted
 
 
@@ -190,20 +191,6 @@ display(data.shape)
 data.head(3)
 
 # %% [markdown]
-# Then we compute some metrics for each coin (@cryptomtc to confirm)
-# - spread and spread_bps
-# - mdv and mdv_shares, we assume that mdv is median daily volume
-# - compute all this in a rolling fashion using 3 windows: (21, 42, 64) days
-#
-# Ideally we want to select the universe based on:
-# - average bid/ask spread
-# - daily trading volume in dollar (typically median)
-# - daily market cap
-#
-# Typically trading volume and market cap are highly correlated, so we can just use trading volume.
-# Then we compute some derived metrics (spread_bps, ...), we smooth, and apply a filter every 30 days
-
-# %% [markdown]
 # # Liquidity metrics
 
 # %% [markdown]
@@ -237,11 +224,14 @@ plt.show()
 
 # %%
 # Combine all three windows in one DataFrame.
-spread_bps = pd.concat([
-    compute_moving_average_in_multiindex(data, "relative_spread_bps", "21D"),
-    compute_moving_average_in_multiindex(data, "relative_spread_bps", "42D"),
-    compute_moving_average_in_multiindex(data, "relative_spread_bps", "63D"),
-], axis=1)
+spread_bps = pd.concat(
+    [
+        compute_moving_average_in_multiindex(data, "relative_spread_bps", "21D"),
+        compute_moving_average_in_multiindex(data, "relative_spread_bps", "42D"),
+        compute_moving_average_in_multiindex(data, "relative_spread_bps", "63D"),
+    ],
+    axis=1,
+)
 # Show the window columns and data snippet.
 window_cols = list(spread_bps.columns.get_level_values(0).unique())
 display(window_cols)
@@ -252,9 +242,6 @@ display(spread_bps.head(3))
 for col in window_cols:
     spread_bps[col].plot()
     plt.title(col)
-
-# %% [markdown]
-# ## Volume
 
 # %% [markdown]
 # ## Median daily volume in dollar
@@ -275,22 +262,24 @@ mdv.head(3)
 # %%
 # Then it becomes unclear how to use this data.
 # E.g. we can compute avg median notional volume for the last 30 days.
-mdv.mean().sort_values(ascending=False).plot.bar()
-
-# %% [markdown]
-# ### Smoothing values
+filter_last_n_days(mdv, config["stats"]["n_days"]).mean().sort_values(
+    ascending=False
+).plot.bar()
 
 # %%
-# Or create DataFrame with smoothed MDV.
+# Or create DataFrame with smoothed MDVs.
 # Original MDV.
-mdv_converted = pd.concat({f"mdv": mdv},axis=1)
+mdv_converted = pd.concat({"mdv": mdv}, axis=1)
 # Combine original and all three windows in one DataFrame.
-median_daily_volume = pd.concat([
-    mdv_converted,
-    compute_moving_average_in_multiindex(mdv_converted, "mdv", "21D"),
-    compute_moving_average_in_multiindex(mdv_converted, "mdv", "42D"),
-    compute_moving_average_in_multiindex(mdv_converted, "mdv", "63D"),
-], axis=1)
+median_daily_volume = pd.concat(
+    [
+        mdv_converted,
+        compute_moving_average_in_multiindex(mdv_converted, "mdv", "21D"),
+        compute_moving_average_in_multiindex(mdv_converted, "mdv", "42D"),
+        compute_moving_average_in_multiindex(mdv_converted, "mdv", "63D"),
+    ],
+    axis=1,
+)
 # Show the window columns and data snippet.
 window_cols_mdv = list(median_daily_volume.columns.get_level_values(0).unique())
 display(window_cols_mdv)
