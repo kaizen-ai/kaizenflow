@@ -5,29 +5,22 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 """
 
 import abc
-import collections
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
+import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
-
-# Latest historical data snapshot.
-_LATEST_DATA_SNAPSHOT = "20210924"
-# TODO(gp): @all bump up to the new snapshot.
-# _LATEST_DATA_SNAPSHOT = "20220210"
-
 
 # #############################################################################
 # CcxtCddClient
@@ -269,7 +262,11 @@ class CcxtCddCsvParquetByAssetClient(
             extension,
         )
         self._extension = extension
-        self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        if data_snapshot is None:
+            data_snapshot = imvcdsdsut.get_latest_data_snapshot(
+                root_dir, aws_profile
+            )
+        self._data_snapshot = data_snapshot
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
@@ -360,7 +357,7 @@ class CcxtCddCsvParquetByAssetClient(
 
         The file path is constructed in the following way:
         `<root_dir>/<data_snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`.
-        
+
         E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`.
 
         :param data_snapshot: snapshot of datetime when data was loaded,
