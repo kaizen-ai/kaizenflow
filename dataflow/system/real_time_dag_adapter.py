@@ -23,7 +23,6 @@ def adapt_dag_to_real_time(
     market_data: mdata.MarketData,
     # TODO(gp): This could become a market_data_dict
     market_data_history_lookback: pd.Timedelta,
-    asset_id_col: str,
     process_forecasts_dict: Dict[str, Any],
 ):
     """
@@ -44,7 +43,6 @@ def adapt_dag_to_real_time(
         stage,
         market_data,
         market_data_history_lookback,
-        asset_id_col,
         multiindex_output,
     )
     dag.insert_at_head(node)

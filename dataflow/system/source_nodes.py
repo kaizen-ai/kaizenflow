@@ -413,7 +413,6 @@ class RealTimeDataSource(dtfcore.DataSource):
         market_data: mdata.MarketData,
         # TODO(gp): -> history_lookback
         timedelta: pd.Timedelta,
-        asset_id_col: Union[int, str],
         multiindex_output: bool,
     ) -> None:
         """
@@ -421,20 +420,14 @@ class RealTimeDataSource(dtfcore.DataSource):
 
         :param timedelta: how much history is needed from the real-time node. See
             `MarketData.get_data()` for details.
-        :param asset_id_col: the name of the column from `market_data`
-            containing the asset ids
         """
-        _LOG.debug(
-            hprint.to_str(
-                "nid market_data timedelta asset_id_col, multiindex_output"
-            )
-        )
+        _LOG.debug(hprint.to_str("nid market_data timedelta multiindex_output"))
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.MarketData)
         self._market_data = market_data
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         self._timedelta = timedelta
-        self._asset_id_col = asset_id_col
+        self._asset_id_col = market_data.asset_id_col
         self._multiindex_output = multiindex_output
 
     # TODO(gp): Can we use a run and move it inside fit?
@@ -475,7 +468,6 @@ class HistoricalDataSource(dtfcore.DataSource):
         self,
         nid: dtfcore.NodeId,
         market_data: mdata.MarketData,
-        asset_id_col: Union[int, str],
         ts_col_name: str,
         multiindex_output: bool,
         *,
@@ -485,21 +477,15 @@ class HistoricalDataSource(dtfcore.DataSource):
         """
         Constructor.
 
-        :param asset_id_col: the name of the column from `market_data`
-            containing the asset ids
         :param ts_col_name: the name of the column from `market_data`
             containing the end time stamp of the interval to filter on
         :param col_names_to_remove: name of the columns to remove from the df
         """
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.MarketData)
-        _LOG.debug(
-            hprint.to_str(
-                "market_data asset_id_col ts_col_name multiindex_output"
-            )
-        )
+        _LOG.debug(hprint.to_str("market_data ts_col_name multiindex_output"))
         self._market_data = market_data
-        self._asset_id_col = asset_id_col
+        self._asset_id_col = market_data.asset_id_col
         self._ts_col_name = ts_col_name
         self._multiindex_output = multiindex_output
         self._col_names_to_remove = col_names_to_remove

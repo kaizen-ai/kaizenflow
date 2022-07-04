@@ -28,7 +28,7 @@ class TestArmaReturnsBuilder(hunitest.TestCase):
         config = dag_builder.get_config_template()
         dag = dag_builder.get_dag(config)
         #
-        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag)
+        dag_runner = dtfcodarun.FitPredictDagRunner(dag)
         result_bundle = dag_runner.fit()
         #
         df_out = result_bundle.result_df
@@ -77,7 +77,7 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         )
         dtfcordag.DAG.insert_at_head(dag, node)
         #
-        dag_runner = dtfcodarun.FitPredictDagRunner(config, dag)
+        dag_runner = dtfcodarun.FitPredictDagRunner(dag)
         result_bundle = dag_runner.fit()
         #
         df_out = result_bundle.result_df

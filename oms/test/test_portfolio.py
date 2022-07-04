@@ -313,9 +313,10 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
         with hasynci.solipsism_context() as event_loop:
             # Create current positions in the table.
             row = _get_row1()
+            asset_id_name = "asset_id"
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
             oomsdb.create_current_positions_table(
-                self.connection, incremental=False, table_name=table_name
+                self.connection, False, asset_id_name, table_name
             )
             hsql.execute_insert_query(self.connection, row, table_name)
             if False:
@@ -342,9 +343,10 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
         with hasynci.solipsism_context() as event_loop:
             # Create current positions in the table.
             row = _get_row2()
+            asset_id_name = "asset_id"
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
             oomsdb.create_current_positions_table(
-                self.connection, incremental=False, table_name=table_name
+                self.connection, False, asset_id_name, table_name
             )
             hsql.execute_insert_query(self.connection, row, table_name)
             if False:
@@ -441,9 +443,10 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
         with hasynci.solipsism_context() as event_loop:
             # Create current positions in the table.
             row = _get_row1()
+            asset_id_name = "asset_id"
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
             oomsdb.create_current_positions_table(
-                self.connection, incremental=False, table_name=table_name
+                self.connection, False, asset_id_name, table_name
             )
             hsql.execute_insert_query(self.connection, row, table_name)
             if False:
@@ -515,9 +518,10 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
         with hasynci.solipsism_context() as event_loop:
             # Create current positions in the table.
             row = _get_row3()
+            asset_id_name = "asset_id"
             table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
             oomsdb.create_current_positions_table(
-                self.connection, incremental=False, table_name=table_name
+                self.connection, False, asset_id_name, table_name
             )
             hsql.execute_insert_query(self.connection, row, table_name)
             if False:

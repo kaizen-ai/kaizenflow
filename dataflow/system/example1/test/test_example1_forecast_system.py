@@ -14,7 +14,6 @@ import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> test_example1_system.py
 
 # #############################################################################
 # Test_Example1_ReplayedForecastSystem
@@ -34,13 +33,13 @@ class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             system = dtfseefosy.Example1_Time_ForecastSystem()
             # Complete system config.
-            system.config["event_loop"] = event_loop
+            system.config["event_loop_object"] = event_loop
             data, _ = cofinanc.get_market_data_df1()
-            system.config["market_data", "data"] = data
-            system.config["market_data", "initial_replayed_delay"] = 5
-            system.config["dag_runner", "real_time_loop_time_out_in_secs"] = (
-                60 * 5
-            )
+            system.config["market_data_config", "data"] = data
+            system.config["market_data_config", "initial_replayed_delay"] = 5
+            system.config[
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
+            ] = (60 * 5)
             # Create DAG runner.
             dag_runner = system.get_dag_runner()
             # Run.
@@ -90,13 +89,13 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
                 dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
             )
             # Complete system config.
-            system.config["event_loop"] = event_loop
-            system.config["market_data", "data"] = data
-            system.config["market_data", "initial_replayed_delay"] = 5
-            system.config["market_data", "asset_ids"] = [101]
-            system.config["dag_runner", "sleep_interval_in_secs"] = 60 * 5
+            system.config["event_loop_object"] = event_loop
+            system.config["market_data_config", "data"] = data
+            system.config["market_data_config", "initial_replayed_delay"] = 5
+            system.config["market_data_config", "asset_ids"] = [101]
+            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
             system.config[
-                "dag_runner", "real_time_loop_time_out_in_secs"
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
             # Create DAG runner.
             dag_runner = system.get_dag_runner()
@@ -137,10 +136,12 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 
 
 # #############################################################################
+# Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+# #############################################################################
 
 
 # TODO(gp): This should derive from SystemTester.
-class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio1(
+class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     otodh.TestOmsDbHelper
 ):
     """
@@ -164,11 +165,15 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio1(
         """
         Run a system using the desired portfolio based on DB or dataframe.
         """
+        asset_id_name = "asset_id"
+        incremental = False
+        oms.create_oms_tables(self.connection, incremental, asset_id_name)
+        #
         with hasynci.solipsism_context() as event_loop:
             coroutines = []
             #
             if is_database_portfolio:
-                system = dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio(
+                system = dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
                     db_connection=self.connection
                 )
             else:
@@ -176,13 +181,13 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio1(
                     dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
                 )
             # Complete system config.
-            system.config["event_loop"] = event_loop
-            system.config["market_data", "data"] = data
-            system.config["market_data", "initial_replayed_delay"] = 5
-            system.config["market_data", "asset_ids"] = [101]
-            system.config["dag_runner", "sleep_interval_in_secs"] = 60 * 5
+            system.config["event_loop_object"] = event_loop
+            system.config["market_data_config", "data"] = data
+            system.config["market_data_config", "initial_replayed_delay"] = 5
+            system.config["market_data_config", "asset_ids"] = [101]
+            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
             system.config[
-                "dag_runner", "real_time_loop_time_out_in_secs"
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
             # Create DAG runner.
             dag_runner = system.get_dag_runner()
@@ -190,9 +195,8 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio1(
             # Create and add order processor.
             portfolio = system.portfolio
             if is_database_portfolio:
-                timeout_in_secs = 60 * (5 + 15)
                 order_processor = oms.get_order_processor_example1(
-                    self.connection, portfolio, timeout_in_secs
+                    self.connection, portfolio
                 )
                 order_processor_coroutine = (
                     oms.get_order_processor_coroutine_example1(

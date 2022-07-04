@@ -75,6 +75,10 @@ git config --global --add safe.directory /app
 if [[ -d /app/amp ]]; then
     git config --global --add safe.directory /app/amp
 fi;
+if [[ -d /src/amp ]]; then
+    git config --global --add safe.directory /src/amp
+fi;
+git config --global --add safe.directory /src
 git rev-parse --show-toplevel
 
 # Check set-up.

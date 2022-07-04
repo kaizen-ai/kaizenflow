@@ -63,39 +63,52 @@ _LOG = logging.getLogger(__name__)
 #   - We prefer the stricter types unless linter gets upset
 
 # A SystemConfig has multiple parts, conceptually one for each piece of the system
-#   - DAG
-#     - dag_config
-#       - """information to build the DAG"""
-#       - Invariant: one key per DAG node
-#   - DAG_meta
+#
+# * Invariants:
+# - objects have the `_object` suffix
+# - the parameters used to build objects have suffix `_config` and should be
+#   `Config`
+
+# * Fields:
+#   - dag_config
+#     - """information to build the DAG"""
+#     - Invariant: one key per DAG node
+#     - It is created through `dag_builder.get_config_template()` and updated
+#   - dag_property_config
 #     - """information about methods to be called on the DAG"""
-#     - debug_mode
-#       - save_node_io
-#       - profile_execution
-#       - dst_dir
+#     - debug_mode_config
+#     - save_node_io
+#     - profile_execution
+#     - dst_dir
 #     - force_free_nodes
-#   - dag_builder
-#     - TODO(gp): -> dag_builder_object
-#   - dag_builder_meta
+#
+#   - dag_builder_object
+#   - dag_builder_config
 #     - """information about methods to be called on the DagBuilder"""
 #     - fast_prod_setup
-#   - market_data
-#     - TODO(gp): -> market_data_object
+#
+#   - market_data_object
+#   - market_data_config
 #     - asset_ids
 #     - initial_replayed_delay
-#   - portfolio
+#
+#   - portfolio_object
 #     - ...
 #     ...
+#
 #   - forecast_node
 #     - ...
-#   - dag_runner
-#     - TODO(gp): -> dag_runner_object
+#
+#   - dag_runner_object
 #     - real_time_loop_time_out_in_secs
-#   - backtest
+#
+#   - backtest_config
 #     - """information about back testing"""
 #     - universe_str
 #     - trading_period_str
 #     - time_interval_str
+#
+#   - cf_config
 
 # Inheritance style conventions:
 # - Each class derives only from interfaces (i.e., classes that have all methods
@@ -110,6 +123,21 @@ _LOG = logging.getLogger(__name__)
 #   - As soon as multiple objects need the same code we don't copy-paste or use
 #     inheritance, but refactor the common code into a function and call it from
 #     everywhere
+
+
+# Scattered thoughts:
+# Why can't DagBuilder only appear inside of `_get_dag()`?
+# - Can we get rid of system_config["dag_builder_object"] and its config?
+#   - Claim: we need info from the DagBuilder to tell MarketData how much data to load
+# => if market data needs to know about the dag builder, then either we should pass
+#    one object to the other (e.g., method in DagBuilder to add a node with market data)
+#    or DagBuilder should be a core concept in System
+# Maybe the key objects for a system are:
+#  - market data
+#  - dag builder
+#     - dag builder should support methods for adding a market data
+#     - dag builder should also have a parameter for the type of data source node
+#  - dag runner
 
 
 class System(abc.ABC):
@@ -218,6 +246,15 @@ class ForecastSystem(System):
         return market_data
 
     @property
+    def forecast_dag(
+        self,
+    ) -> dtfcore.DAG:
+        forecast_dag: dtfcore.DAG = self._get_cached_value(
+            "forecast_dag_object", self._get_forecast_dag
+        )
+        return forecast_dag
+
+    @property
     def dag(
         self,
     ) -> dtfcore.DAG:
@@ -238,6 +275,13 @@ class ForecastSystem(System):
         Given a completely filled `system_config` build and return the DAG.
         """
         ...
+
+    def _get_forecast_dag(self) -> dtfcore.DAG:
+        dag_builder = self.config["dag_builder_object"]
+        dag_config = self.config["dag_config"]
+        _LOG.debug("dag_config=\n%s", dag_config)
+        dag = dag_builder.get_dag(dag_config)
+        return dag
 
 
 # #############################################################################
@@ -430,10 +474,12 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         self,
         db_connection: hsql.DbConnection,
     ):
-        super().__init__()
-        #
+        """
+        :param db_connection: connection to DB with order data
+        """
+        _Time_ForecastSystem_Mixin.__init__(self)
+        _ForecastSystem_with_Portfolio.__init__(self)
         self._db_connection = db_connection
-        oms.create_oms_tables(self._db_connection, incremental=False)
 
     def get_order_processor_coroutine(
         self,
@@ -441,9 +487,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         real_time_loop_time_out_in_secs: int,
     ) -> Coroutine:
         db_connection = self._db_connection
-        timeout_in_secs = 60 * (5 + 15)
         order_processor = oms.get_order_processor_example1(
-            db_connection, portfolio, timeout_in_secs=timeout_in_secs
+            db_connection, portfolio
         )
         #
         order_processor_coroutine = oms.get_order_processor_coroutine_example1(
