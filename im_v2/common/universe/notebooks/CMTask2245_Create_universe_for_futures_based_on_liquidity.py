@@ -34,6 +34,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im_v2.crypto_chassis.data.client as iccdc
 import research_amp.transform as ramptran
+from datetime import timedelta
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -104,7 +105,7 @@ def get_cmtask2245_config() -> cconconf.Config:
             "close_price": "close",
         },
         "stats": {
-            "threshold": 30,
+            "n_days": 30,
         },
     }
     config = ccocouti.get_config_from_nested_dict(param_dict)
@@ -113,6 +114,28 @@ def get_cmtask2245_config() -> cconconf.Config:
 
 config = get_cmtask2245_config()
 print(config)
+
+
+# %% [markdown]
+# # Functions
+
+# %%
+def filter_last_n_days(df, n_days):
+    # Specify number of days.
+    period = timedelta(days=n_days)
+    # Set the min date for the desired period.
+    start_date = df.index.max() - period + timedelta(minutes=1)
+    # Filter out the required period.
+    filtered_df = df.loc[start_date:]
+    return filtered_df
+
+def compute_moving_average_in_multiindex(df, value_col, rolling_window):
+    # Compute MA.
+    ma = df[value_col].rolling(rolling_window).mean()
+    # Attach to Multiindex.
+    ma_converted = pd.concat({f"{value_col}_{rolling_window}": ma},axis=1)
+    return ma_converted
+
 
 # %% [markdown]
 # # Load the data
@@ -166,14 +189,6 @@ data = pd.concat([binance_ohlcv_converted, binance_bid_ask_stats], axis=1)
 display(data.shape)
 data.head(3)
 
-# %%
-data.columns.get_level_values(0).unique()
-
-# %%
-data = data.dropna()
-
-# %%
-
 # %% [markdown]
 # Then we compute some metrics for each coin (@cryptomtc to confirm)
 # - spread and spread_bps
@@ -193,6 +208,9 @@ data = data.dropna()
 
 # %% [markdown]
 # ## Spread
+
+# %% [markdown]
+# ### General values for the whole period
 
 # %%
 # Average quoted bid/ask spread.
@@ -214,74 +232,72 @@ avg_relative_spread.plot.bar()
 plt.title("Avg relative bid/ask spread (in bps)")
 plt.show()
 
-# %%
+# %% [markdown]
+# ### Smoothing values
 
 # %%
-days_21 = 21 * 24 * 60
-days_42 = 42 * 24 * 60
-days_64 = 64 * 24 * 60
+# Combine all three windows in one DataFrame.
+spread_bps = pd.concat([
+    compute_moving_average_in_multiindex(data, "relative_spread_bps", "21D"),
+    compute_moving_average_in_multiindex(data, "relative_spread_bps", "42D"),
+    compute_moving_average_in_multiindex(data, "relative_spread_bps", "63D"),
+], axis=1)
+# Show the window columns and data snippet.
+window_cols = list(spread_bps.columns.get_level_values(0).unique())
+display(window_cols)
+display(spread_bps.head(3))
 
 # %%
-data["quoted_spread"].rolling(days_21, min_periods=1).mean().plot()
+# Plot the results.
+for col in window_cols:
+    spread_bps[col].plot()
+    plt.title(col)
+
+# %% [markdown]
+# ## Volume
+
+# %% [markdown]
+# ## Median daily volume in dollar
+
+# %% [markdown]
+# ### General values for the whole period
 
 # %%
-data["quoted_spread"].rolling(days_21, min_periods=1).mean().mean().sort_values(
-    ascending=False
-).plot.bar()
+# Compute notional volume (price*volume).
+notional_volume = data["volume"].mul(data["close"], fill_value=0)
+notional_volume.head(3)
 
 # %%
-data["quoted_spread"].rolling(days_42, min_periods=1).mean().plot()
+# For each day choose median notional volume.
+mdv = notional_volume.resample("1D").median()
+mdv.head(3)
 
 # %%
-data["quoted_spread"].rolling(days_42, min_periods=1).mean().mean().sort_values(
-    ascending=False
-).plot.bar()
+# Then it becomes unclear how to use this data.
+# E.g. we can compute avg median notional volume for the last 30 days.
+mdv.mean().sort_values(ascending=False).plot.bar()
+
+# %% [markdown]
+# ### Smoothing values
 
 # %%
-data["quoted_spread"].rolling(days_64, min_periods=1).mean().plot()
+# Or create DataFrame with smoothed MDV.
+# Original MDV.
+mdv_converted = pd.concat({f"mdv": mdv},axis=1)
+# Combine original and all three windows in one DataFrame.
+median_daily_volume = pd.concat([
+    mdv_converted,
+    compute_moving_average_in_multiindex(mdv_converted, "mdv", "21D"),
+    compute_moving_average_in_multiindex(mdv_converted, "mdv", "42D"),
+    compute_moving_average_in_multiindex(mdv_converted, "mdv", "63D"),
+], axis=1)
+# Show the window columns and data snippet.
+window_cols_mdv = list(median_daily_volume.columns.get_level_values(0).unique())
+display(window_cols_mdv)
+display(median_daily_volume.head(3))
 
 # %%
-data["quoted_spread"][["binance::BTC_USDT"]].rolling(days_21, min_periods=10000).mean().plot()
-plt.ylim(0, 2.5)
-plt.show()
-
-# %%
-dd = data["quoted_spread"]["binance::BTC_USDT"]
-dd = dd[dd.notna()]
-dd
-
-# %%
-dd.loc["2022-05-19"]
-
-# %%
-
-# %%
-
-# %%
-data["quoted_spread"].rolling(days_64).mean().mean().sort_values(
-    ascending=False
-).plot.bar()
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-binance_data_bid_ask[binance_data_bid_ask["full_symbol"] == "binance::ADA_USDT"][
-    "ask_price"
-].plot()
-
-# %% run_control={"marked": false}
-data["quoted_spread"].rolling(10000, min_periods=1).mean().plot()
-plt.ylim(0, 2.5)
-plt.show()
-
-# %%
-data["quoted_spread"].rolling(10000).mean().plot()
-
-# %%
-data["quoted_spread"].rolling(10000).mean().plot()
-
-# %%
+# Plot the results.
+for col in window_cols_mdv:
+    median_daily_volume[col].plot()
+    plt.title(col)
