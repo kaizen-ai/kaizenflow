@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.system.system_builders_utils as dtfssybuut
+import dataflow.system.system_builder_utils as dtfssybuut
 """
 
 import logging
@@ -16,11 +16,11 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# System config instances
+# System config utils
 # #############################################################################
 
 
-def get_system_config_template_instance1(
+def get_system_config_template_from_dag_builder(
     dag_builder: dtfcore.DagBuilder,
 ) -> cconfig.Config:
     """
@@ -36,7 +36,7 @@ def get_system_config_template_instance1(
 
 
 # #############################################################################
-# Market data instances
+# Market data utils
 # #############################################################################
 
 
@@ -57,3 +57,36 @@ def get_event_loop_market_data_instance1(
         data,
     )
     return market_data
+
+
+# #############################################################################
+# Source node instances
+# #############################################################################
+
+
+# #############################################################################
+# DAG building utils
+# #############################################################################
+
+
+def build_dag_with_data_source_node(
+    system: dtfsyssyst.System,
+    data_source_node: dtfcore.DataSource,
+) -> dtfcore.DAG:
+    """
+    Create a DAG from system's DagBuilder and attach source node.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    hdbg.dassert_issubclass(data_source_node, dtfcore.DataSource)
+    # Prepare the DAG builder.
+    dag_builder = system.config["dag_builder_object"]
+    # Build the DAG.
+    dag = dag_builder.get_dag(system.config["dag_config"])
+    # Add the data source node.
+    dag.insert_at_head(data_source_node)
+    # Build the DAG.
+    # This is for debugging. It saves the output of each node in a `csv` file.
+    # dag.set_debug_mode("df_as_csv", False, "dst_dir")
+    if False:
+        dag.force_free_nodes = True
+    return dag

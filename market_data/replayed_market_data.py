@@ -57,6 +57,7 @@ class ReplayedMarketData(mdabmada.MarketData):
         """
         super().__init__(*args, **kwargs)  # type: ignore[arg-type]
         self._df = df
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         self._knowledge_datetime_col_name = knowledge_datetime_col_name
         hdbg.dassert_lte(0, delay_in_secs)
         self._delay_in_secs = delay_in_secs

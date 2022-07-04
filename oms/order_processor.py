@@ -47,6 +47,7 @@ class OrderProcessor:
         broker: ombroker.Broker,
         asset_id_name: str,
         *,
+        # TODO(gp): Expose poll_kwargs.
         submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
         accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
         current_positions_table_name: str = oomsdb.CURRENT_POSITIONS_TABLE_NAME,

@@ -34,6 +34,7 @@ async def process_forecasts(
     prediction_df: pd.DataFrame,
     volatility_df: pd.DataFrame,
     portfolio: omportfo.Portfolio,
+    # TODO(gp): It should be a dict.
     config: cconfig.Config,
     spread_df: Optional[pd.DataFrame],
     restrictions_df: Optional[pd.DataFrame],
@@ -129,7 +130,6 @@ async def process_forecasts(
     _LOG.info("log_dir=%s", log_dir)
     # We should not have anything left in the config that we didn't extract.
     # hdbg.dassert(not config, "config=%s", str(config))
-    #
     _LOG.debug(
         "predictions_df=%s\n%s",
         str(prediction_df.shape),
@@ -193,8 +193,8 @@ async def process_forecasts(
             continue
         # if execution_mode == "batch":
         #     if idx == len(predictions_df) - 1:
-        #         # For the last timestamp we only need to mark to market, but not post
-        #         # any more orders.
+        #         # For the last timestamp we only need to mark to market, but not
+        #         # post any more orders.
         #         continue
         # Wait 1 second to give all open orders sufficient time to close.
         _LOG.debug("Event: awaiting asyncio.sleep()...")
@@ -219,6 +219,15 @@ async def process_forecasts(
 
 
 class ForecastProcessor:
+    """
+    Take forecasts for the most recent bar and submit orders.
+
+    - Retrieve the Portfolio holdings
+    - Perform optimization on the forecasts
+    - Generate orders
+    - Submit orders
+    """
+
     def __init__(
         self,
         portfolio: omportfo.Portfolio,
@@ -446,6 +455,7 @@ class ForecastProcessor:
             self._portfolio.CASH_ID, assets_and_predictions["asset_id"].to_list()
         )
         # Compute the target positions in cash (call the optimizer).
+        # TODO(Paul): Align with ForecastEvaluator and update callers.
         backend = self._optimizer_config["backend"]
         if backend == "pomo":
             bulk_frac_to_remove = cconfig.get_object_from_config(
@@ -459,6 +469,7 @@ class ForecastProcessor:
             )
             df = ocalopti.compute_target_positions_in_cash(
                 assets_and_predictions,
+                style="cross_sectional",
                 bulk_frac_to_remove=bulk_frac_to_remove,
                 bulk_fill_method=bulk_fill_method,
                 target_gmv=target_gmv,

@@ -43,7 +43,9 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_instance1(dag_builder)
+        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+            dag_builder
+        )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
@@ -107,7 +109,9 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_instance1(dag_builder)
+        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+            dag_builder
+        )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
@@ -142,7 +146,9 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_instance1(dag_builder)
+        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+            dag_builder
+        )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
@@ -200,7 +206,9 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_instance1(dag_builder)
+        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+            dag_builder
+        )
         return system_config
 
     def _get_market_data(
