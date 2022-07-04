@@ -15,8 +15,6 @@ import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import market_data.abstract_market_data as mdabmada
-import numpy as np
-import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -312,4 +310,3 @@ class RealTimeMarketData2(mdabmada.MarketData):
         data.index.name = "end_timestamp"
         data = data.reset_index()
         return data
-

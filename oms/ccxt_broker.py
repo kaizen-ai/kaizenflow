@@ -366,7 +366,7 @@ class CcxtDbBroker(oms.DatabaseBroker):
             _LOG.warning("Not submitting orders because of dry_run")
         # Write the row into the DB and save orders on S3.
         else:
-            # 
+            #
             hsql.execute_insert_query(
                 self._db_connection, row, self._submitted_orders_table_name
             )
