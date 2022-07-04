@@ -16,7 +16,31 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Test_Example1_ReplayedForecastSystem
+# Test_Example1_ForecastSystem
+# #############################################################################
+
+
+class Test_Example1_ForecastSystem(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Verify the contents of DAG prediction.
+        """
+        # Create the System.
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+        system.config["market_data_config", "asset_ids"] = [
+            1467591036,
+            3303714233,
+        ]
+        # Create DAG runner.
+        dag_runner = system.get_dag_runner()
+        # Run.
+        fit_result_bundle = dag_runner.fit()
+        self.check_string(str(fit_result_bundle), purify_text=True)
+
+
+# #############################################################################
+# Test_Example1_Time_ForecastSystem1
 # #############################################################################
 
 
@@ -48,7 +72,7 @@ class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             # TODO(gp): Use the signature from system_testing. See below.
-            result_bundles = result_bundles[0][0]
+            result_bundles: str = result_bundles[0][0]
         return result_bundles
 
     def test1(self) -> None:
@@ -116,7 +140,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
             price_col = "vwap"
             volatility_col = "vwap.ret_0.vol"
             prediction_col = "feature1"
-            actual = system_tester.compute_run_signature(
+            actual: str = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
                 result_bundle,
@@ -221,7 +245,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             price_col = "vwap"
             volatility_col = "vwap.ret_0.vol"
             prediction_col = "feature1"
-            actual = system_tester.compute_run_signature(
+            actual: str = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
                 result_bundle,
