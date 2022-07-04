@@ -19,6 +19,7 @@ import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): -> example1_system_builder.py? What's the convention now?
 
 # #############################################################################
 # Market data instances
@@ -205,10 +206,8 @@ def _build_dag_with_data_source_node(
 # #############################################################################
 
 
-# TODO(gp): -> example1_system_example.py
 #
-# TODO(gp): -> get_real_time_dag_runner()
-# TODO(gp): Is this the same as get_Example1_dag_runner?
+# TODO(gp): -> get_real_time_dag_runner_from_system()
 def get_Example1_dag_runner_example1(
     system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:

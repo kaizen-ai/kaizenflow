@@ -15,6 +15,54 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# #################################################################################
+# Test_Time_ForecastSystem_TestCase1
+# #################################################################################
+
+
+class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
+    """
+    Test `Time_ForecastSystem` using a `ReplayedMarketData` streaming data from a df.
+    """
+
+    @staticmethod
+    def run_coroutines(
+            system,
+            market_data: pd.DataFrame,
+            initial_replayed_delay: int,
+            real_time_loop_time_out_in_secs: int,
+            ) -> str:
+        with hasynci.solipsism_context() as event_loop:
+            # Complete system config.
+            system.config["event_loop_object"] = event_loop
+            hdbg.dassert_isinstance(market_data, pd.DataFrame)
+            system.config["market_data_config", "data"] = market_data
+            system.config["market_data_config", "initial_replayed_delay"] =
+            system.config[
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
+            ] = (60 * 5)
+            # Create DAG runner.
+            dag_runner = system.get_dag_runner()
+            # Run.
+            coroutines = [dag_runner.predict()]
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            # TODO(gp): Use the signature from system_testing. See below.
+            result_bundles = result_bundles[0][0]
+        return result_bundles
+
+    def test1(self, system, market_data: pd.DataFrame) -> None:
+        """
+        Verify the contents of DAG prediction.
+        """
+        actual = self.run_coroutines(system, market_data)
+        self.check_string(str(actual), purify_text=True)
+
+
+# #################################################################################
+
+
 # TODO(gp): -> System_TestCase for symmetry with the rest of the objects.
 # TODO(gp): system_tester.py -> system_test_case.py
 class SystemTester:

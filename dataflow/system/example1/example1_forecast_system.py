@@ -67,19 +67,15 @@ def get_Example1_ForecastSystem_example1(
     #
     system = Example1_ForecastSystem()
     # Set the trading period.
-    hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
     # TODO(gp): Use a setter.
+    hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
     system.config[
         "dag_config_config", "resample", "transformer_kwargs", "rule"
     ] = trading_period_str
-    # TODO(gp): We pass dag_runner through the config since somebody
-    #  outside needs this function to run. In reality we should build the
-    #  object and not pass a builder.
     system.config["dag_runner_object"] = system.get_dag_runner
     # Name of the asset_ids to save.
-    # TODO(gp): Find a better place in the config, maybe "save_results"?
     system.config["market_data_config", "asset_id_col_name"] = "egid"
-    # TODO(gp):
+    #
     system.config["backtest_config", "universe_str"] = universe_str
     system.config["backtest_config", "trading_period_str"] = trading_period_str
     system.config["backtest_config", "time_interval_str"] = time_interval_str
