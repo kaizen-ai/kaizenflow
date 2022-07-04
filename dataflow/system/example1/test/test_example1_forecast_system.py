@@ -166,13 +166,16 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         """
         Run a system using the desired portfolio based on DB or dataframe.
         """
+        asset_id_name = "asset_id"
+        incremental = False
+        oms.create_oms_tables(self.connection, incremental, asset_id_name)
+        #
         with hasynci.solipsism_context() as event_loop:
             coroutines = []
             #
             if is_database_portfolio:
                 system = dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
-                    db_connection=self.connection,
-                    asset_id_name="asset_id"
+                    db_connection=self.connection
                 )
             else:
                 system = (

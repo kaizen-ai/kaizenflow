@@ -43,7 +43,6 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         portfolio = oms.get_DataFramePortfolio_example1(event_loop)
         market_data = portfolio.market_data
         market_data_history_lookback = pd.Timedelta("5T")
-        asset_id_col = "asset_id"
         # Get params for ProcessForecasts.
         prediction_col = "close"
         volatility_col = "close"
@@ -62,7 +61,6 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
             dag,
             market_data,
             market_data_history_lookback,
-            asset_id_col,
             process_forecasts_dict,
         )
         # Print the final DAG.
