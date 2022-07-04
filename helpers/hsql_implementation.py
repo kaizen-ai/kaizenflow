@@ -796,6 +796,7 @@ async def wait_for_change_in_number_of_rows(
 
     # Poll.
     if tag is None:
+        # Use name of the caller function.
         tag = hintros.get_function_name(count=0)
     if poll_kwargs is None:
         poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
