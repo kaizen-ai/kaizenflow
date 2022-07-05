@@ -399,7 +399,7 @@ class CcxtDbBroker(oms.DatabaseBroker):
         date_dir += "0" * 6
         # Add a timestamp for readability.
         curr_timestamp_as_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_name = f"positions.{order_id}.{curr_timestamp_as_str}.txt"
+        file_name = f"order_{order_id}.{curr_timestamp_as_str}.txt"
         file_name = os.path.join(dst_dir, date_dir, file_name)
         _LOG.debug("file_name=%s", file_name)
         return file_name
