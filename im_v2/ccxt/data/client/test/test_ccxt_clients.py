@@ -1352,7 +1352,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             s3_bucket_path,
             "unit_test",
             "historical.manual.pq",
-            "latest",
+            "20220705",
             "ohlcv",
             "ccxt",
         )

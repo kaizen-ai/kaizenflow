@@ -25,7 +25,7 @@ def get_latest_data_snapshot(root_dir: str, aws_profile: Optional[str]) -> str:
         aws_profile=aws_profile,
     )
     dirs = [snapshot for snapshot in dirs if snapshot.isnumeric()]
-    hdbg.dassert_lt(1, len(dirs))
+    hdbg.dassert_lte(1, len(dirs))
     data_snapshot = max(dirs)
     return data_snapshot
 
@@ -34,5 +34,5 @@ def is_valid_data_snapshot(data_snapshot: str) -> None:
     """
     Check if data snapshot valid.
     """
-    hdbg.dassert_eq(len(data_snapshot), 8)
     hdbg.dassert_is(data_snapshot.isnumeric(), True)
+    hdbg.dassert_eq(len(data_snapshot), 8)

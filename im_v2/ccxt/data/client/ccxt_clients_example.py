@@ -129,7 +129,7 @@ def get_CcxtHistoricalPqByTileClient_example2(
     partition_mode = "by_year_month"
     dataset = "ohlcv"
     contract_type = "spot"
-    data_snapshot = "latest"
+    data_snapshot = "20220705"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
         resample_1min,
