@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.pipelines.examples.example1_configs as dtfpexexco
+import dataflow.pipelines.example1.example1_configs as dtfpexexco
 """
 
 import logging
@@ -43,7 +43,9 @@ def build_tile_configs(
     # # Create the list of configs.
     # configs = [config]
     # Apply the cross-product by the universe tiles.
-    func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)
+    func = lambda cfg: dtfmoexcon.build_configs_with_tiled_universe(
+        cfg, asset_ids
+    )
     configs = dtfmoexcon.apply_build_configs(func, configs)
     _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
     hdbg.dassert_lte(1, len(configs))
@@ -55,34 +57,7 @@ def build_tile_configs(
     func = lambda cfg: dtfmoexcon.build_configs_varying_tiled_periods(
         cfg, start_timestamp, end_timestamp, freq_as_pd_str, lookback_as_pd_str
     )
-    configs = dtfmoexcon.apply_build_configs(func, configs)
+    configs: List[cconfig.Config] = dtfmoexcon.apply_build_configs(func, configs)
     hdbg.dassert_lte(1, len(configs))
     _LOG.info("After applying time tiles: num_configs=%s", len(configs))
-    return configs
-
-
-# #############################################################################
-
-# TODO(gp): @grisha. Centralize this.
-def build_configs_with_tiled_universe(
-    config: cconfig.Config, asset_ids: List[int]
-) -> List[cconfig.Config]:
-    """
-    Create a list of `Config`s tiled by universe.
-    """
-    if len(asset_ids) > 300:
-        # if len(asset_ids) > 1000:
-        # Split the universe in 2 parts.
-        # TODO(gp): We can generalize this.
-        split_idx = int(len(asset_ids) / 2)
-        asset_ids_part1 = asset_ids[:split_idx]
-        asset_ids_part2 = asset_ids[split_idx:]
-        #
-        universe_tiles = (asset_ids_part1, asset_ids_part2)
-    else:
-        universe_tiles = (asset_ids,)
-    asset_id_key = ("market_data_config", "asset_ids")
-    configs = dtfmoexcon.build_configs_varying_universe_tiles(
-        config, asset_id_key, universe_tiles
-    )
     return configs
