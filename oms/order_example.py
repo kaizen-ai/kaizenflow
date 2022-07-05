@@ -106,6 +106,9 @@ def get_order_example3(
     return order
 
 def get_order_example4() -> omorder.Order:
+    """
+    ...
+    """
     creation_timestamp = pd.Timestamp(
         "2000-01-01 09:30:00-05:00", tz="America/New_York"
     )

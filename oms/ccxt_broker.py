@@ -241,18 +241,21 @@ class CcxtDbBroker(oms.DatabaseBroker):
         """
         Constructor.
 
-        :param exchange: name of the exchange to initialize the broker for
+        :param exchange_id: name of the exchange to initialize the broker for
         :param universe_version: version of the universe to use
-        :param mode: supported values: "test", "prod", if "test", launches the broker
-         in sandbox environment (not supported for every exchange),
-         if "prod" launches with production API.
+        :param mode: supported values: "test", "prod".
+            - If "test", launches the broker in sandbox environment (not
+              supported for every exchange),
+            - If "prod" launches with production API.
         :param contract_type: "spot" or "futures"
         """
-        hdbg.dassert_in(mode, ["prod", "test"])
-        hdbg.dassert_in(contract_type, ["spot", "futures"])
-        self._mode = mode
         self._exchange_id = exchange_id
+        hdbg.dassert_in(mode, ["prod", "test"])
+        self._mode = mode
+        #
+        hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._contract_type = contract_type
+        #
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
         # Enable mapping back from asset ids when placing orders.
@@ -264,7 +267,7 @@ class CcxtDbBroker(oms.DatabaseBroker):
 
     def _log_into_exchange(self) -> ccxt.Exchange:
         """
-        Log into coinbasepro and return the corresponding `ccxt.Exchange`
+        Log into the exchange and return the corresponding `ccxt.Exchange`
         object.
         """
         # Select credentials for provided exchange.
@@ -335,6 +338,9 @@ class CcxtDbBroker(oms.DatabaseBroker):
         }
         return asset_id_to_symbol_mapping
 
+    # TODO(Danya): We can check here that the order was accepted and just don't do
+    # anything in the wait_for_accepted_orders. At this point we even don't have to
+    # write in the DB.
     async def _submit_orders(
         self,
         orders: List[oms.Order],
@@ -343,14 +349,18 @@ class CcxtDbBroker(oms.DatabaseBroker):
         dry_run: bool = False,
     ) -> str:
         """
-        Load orders into a submitted orders table.
+        Submit the orders to the exchange.
 
-        Same as abstract method.
+        In practice we:
+        - place the order to the exchange through the CCXT broker
+        - save orders into the submitted orders DB table (so that we can poll for
+          order acceptance)
 
-        :param orders: orders to be submitted.
+        :param orders: orders to be submitted
         :return: a `file_name` representing the id of the submitted order in the DB
+            TODO(Danya): Return the exchange response.
         """
-        # Add an order in the submitted orders table.
+        # Add an order to the submitted orders table.
         submitted_order_id = self._get_next_submitted_order_id()
         list_of_orders: List[Tuple[str, Any]] = []
         s3_file_name = self._get_file_name(
@@ -372,6 +382,7 @@ class CcxtDbBroker(oms.DatabaseBroker):
             hsql.execute_insert_query(
                 self._db_connection, row, self._submitted_orders_table_name
             )
+            # TODO(Danya): Save order locally, we can use any format.
             hs3.to_file(orders_as_txt, file_name=s3_file_name, aws_profile="ck")
             local_file_name = os.path.basename(s3_file_name)
             hio.to_file(local_file_name, orders_as_txt)
