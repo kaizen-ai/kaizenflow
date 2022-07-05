@@ -1,12 +1,8 @@
-import os
-
 import pandas as pd
 import pytest
 
 import helpers.henv as henv
-import helpers.hs3 as hs3
 import im_v2.common.data.client as icdc
-import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients_example as imvccdcccce
 
 
@@ -54,7 +50,13 @@ class TestCryptoChassisHistoricalPqByTileClient1(icdc.ImClientTestCase):
         dataset = "bid_ask"
         contract_type = "futures"
         data_snapshot = "20220620"
-        columns = ['ask_price', 'ask_size', 'bid_price', 'bid_size', 'full_symbol']
+        columns = [
+            "ask_price",
+            "ask_size",
+            "bid_price",
+            "bid_size",
+            "full_symbol",
+        ]
         expected_signature = r"""# df=
         index=[2022-05-15 13:00:00+00:00, 2022-05-15 16:00:00+00:00]
         columns=full_symbol,bid_price,bid_size,ask_price,ask_size
@@ -83,7 +85,18 @@ class TestCryptoChassisHistoricalPqByTileClient1(icdc.ImClientTestCase):
         dataset = "ohlcv"
         contract_type = "spot"
         data_snapshot = "20220530"
-        columns = ['close', 'full_symbol', 'high', 'knowledge_timestamp', 'low', 'number_of_trades', 'open', 'twap', 'volume', 'vwap']
+        columns = [
+            "close",
+            "full_symbol",
+            "high",
+            "knowledge_timestamp",
+            "low",
+            "number_of_trades",
+            "open",
+            "twap",
+            "volume",
+            "vwap",
+        ]
         expected_signature = r"""# df=
         index=[2022-05-15 13:00:00+00:00, 2022-05-15 16:00:00+00:00]
         columns=full_symbol,open,high,low,close,volume,vwap,number_of_trades,twap,knowledge_timestamp
