@@ -225,7 +225,7 @@ def build_configs_varying_asset_id(
 def build_configs_varying_universe_tiles(
     config: cconfig.Config,
     universe_tile_id: cconfig.Config.Key,
-    universe_tiles: Union[Tuple[List[int], ...], List[List[int]]],
+    universe_tiles: List[List[int]],
 ) -> List[cconfig.Config]:
     """
     Create a list of `Config`s based on `config` using different universe
@@ -334,9 +334,9 @@ def build_configs_with_tiled_universe(
         asset_ids_part1 = asset_ids[:split_idx]
         asset_ids_part2 = asset_ids[split_idx:]
         #
-        universe_tiles: Tuple[List[int], ...] = (asset_ids_part1, asset_ids_part2)
+        universe_tiles: List[List[int]] = [asset_ids_part1, asset_ids_part2]
     else:
-        universe_tiles = (asset_ids,)
+        universe_tiles = [asset_ids]
     asset_id_key = ("market_data_config", "asset_ids")
     configs = build_configs_varying_universe_tiles(
         config, asset_id_key, universe_tiles
