@@ -11,5 +11,4 @@ from oms.order_processor import *  # pylint: disable=unused-import # NOQA
 from oms.order_processor_example import *  # pylint: disable=unused-import # NOQA
 from oms.portfolio import *  # pylint: disable=unused-import # NOQA
 from oms.portfolio_example import *  # pylint: disable=unused-import # NOQA
-from oms.process_forecasts import *  # pylint: disable=unused-import # NOQA
 from oms.restrictions import *  # pylint: disable=unused-import # NOQA
