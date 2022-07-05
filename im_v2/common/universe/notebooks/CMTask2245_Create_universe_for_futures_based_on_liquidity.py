@@ -23,12 +23,12 @@ import logging
 import os
 from datetime import timedelta
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
-import dataflow.system.source_nodes as dtfsysonod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
@@ -106,6 +106,8 @@ def get_cmtask2245_config() -> cconconf.Config:
         },
         "stats": {
             "n_days": 30,
+            "resample_rule_overtime_stats": "10T",
+            "smoothing_window": "42D",
         },
     }
     config = ccocouti.get_config_from_nested_dict(param_dict)
@@ -120,7 +122,7 @@ print(config)
 # # Functions
 
 # %%
-def filter_last_n_days(df, n_days):
+def filter_last_n_days(df: pd.DataFrame, n_days: int) -> pd.DataFrame:
     # Specify number of days.
     period = timedelta(days=n_days)
     # Set the min date for the desired period.
@@ -130,12 +132,38 @@ def filter_last_n_days(df, n_days):
     return filtered_df
 
 
-def compute_moving_average_in_multiindex(df, value_col, rolling_window):
+def compute_moving_average_in_multiindex(
+    df: pd.DataFrame, value_col: str, rolling_window: str
+) -> pd.DataFrame:
     # Compute MA.
     ma = df[value_col].rolling(rolling_window).mean()
     # Attach to Multiindex.
-    ma_converted = pd.concat({f"{value_col}_{rolling_window}": ma}, axis=1)
-    return ma_converted
+    multiindex_df = pd.concat({f"{value_col}_{rolling_window}": ma}, axis=1)
+    return multiindex_df
+
+
+def convert_df_to_same_scale(df: pd.DataFrame, mode: str) -> pd.DataFrame:
+    df_new = df.copy()
+    if mode == "all_thousands":
+        formatter = mpl.ticker.FuncFormatter(
+            lambda x, pos: "{:,.0f}".format(x / 1000) + "K"
+        )
+        for col in df_new.columns:
+            df_new[col] = df_new[col].apply(lambda x: formatter(x))
+    elif mode == "all_millions":
+        formatter = mpl.ticker.FuncFormatter(
+            lambda x, pos: "{:,.0f}".format(x / 1000000) + "M"
+        )
+        for col in df_new.columns:
+            df_new[col] = df_new[col].apply(lambda x: formatter(x))
+    elif mode == "engineering_notation":
+        # Everything is a multiple of 1000s.
+        formatter = mpl.ticker.EngFormatter(
+            sep="\N{NARROW NO-BREAK SPACE}", usetex=True
+        )
+        for col in df_new.columns:
+            df_new[col] = df_new[col].apply(lambda x: formatter(x))
+    return df_new
 
 
 # %% [markdown]
@@ -181,12 +209,17 @@ display(binance_data_bid_ask.head(3))
 binance_bid_ask_stats = ramptran.calculate_bid_ask_statistics(
     binance_data_bid_ask
 )
-# Process OHLCV data.
-binance_ohlcv_converted = dtfsysonod._convert_to_multiindex(
-    binance_data_ohlcv, "full_symbol"
+# Process OHLCV data: add vwap, twap and returns.
+binance_data_ohlcv_vwap_twap = ramptran.calculate_vwap_twap(
+    binance_data_ohlcv, "1T"
+)
+binance_data_ohlcv_vwap_twap_rets = ramptran.calculate_returns(
+    binance_data_ohlcv_vwap_twap, rets_type="pct_change"
 )
 # Combine OHLCV and bid ask data.
-data = pd.concat([binance_ohlcv_converted, binance_bid_ask_stats], axis=1)
+data = pd.concat(
+    [binance_data_ohlcv_vwap_twap_rets, binance_bid_ask_stats], axis=1
+)
 display(data.shape)
 data.head(3)
 
@@ -198,6 +231,15 @@ data.head(3)
 
 # %% [markdown]
 # ### General values for the whole period
+
+# %%
+# One can reuse all the functions for breaking down the stats.
+# E.g., `calculate_overtime_quantities_multiple_symbols`.
+resample_rule_stats = "10T"
+stats_df_mult_symbols = ramptran.calculate_overtime_quantities_multiple_symbols(
+    data, binance_universe, resample_rule_stats
+)
+display(stats_df_mult_symbols.head(3))
 
 # %%
 # Average quoted bid/ask spread.
@@ -223,12 +265,14 @@ plt.show()
 # ### Smoothing values
 
 # %%
-# Combine all three windows in one DataFrame.
+# Combine original spread with smoothing one.
+smoothing_window = config["stats"]["smoothing_window"]
 spread_bps = pd.concat(
     [
-        compute_moving_average_in_multiindex(data, "relative_spread_bps", "21D"),
-        compute_moving_average_in_multiindex(data, "relative_spread_bps", "42D"),
-        compute_moving_average_in_multiindex(data, "relative_spread_bps", "63D"),
+        pd.concat({"relative_spread_bps": data["relative_spread_bps"]}, axis=1),
+        compute_moving_average_in_multiindex(
+            data, "relative_spread_bps", smoothing_window
+        ),
     ],
     axis=1,
 )
@@ -252,41 +296,48 @@ for col in window_cols:
 # %%
 # Compute notional volume (price*volume).
 notional_volume = data["volume"].mul(data["close"], fill_value=0)
-notional_volume.head(3)
+display(convert_df_to_same_scale(notional_volume, "all_thousands").head(3))
 
 # %%
-# For each day choose median notional volume.
-mdv = notional_volume.resample("1D").median()
-mdv.head(3)
+# Mean value for daily total notional volume per day in last N days.
+daily_notional_vol = notional_volume.resample("1D").sum()
+mean_daily_vol = (
+    filter_last_n_days(daily_notional_vol, config["stats"]["n_days"])
+    .mean()
+    .sort_values(ascending=False)
+)
+display(
+    convert_df_to_same_scale(
+        mean_daily_vol.rename("avg_daily_volume").to_frame(), "all_millions"
+    )
+)
+mean_daily_vol.plot.bar()
+
+# %% [markdown]
+# ### Smoothing values
 
 # %%
-# Then it becomes unclear how to use this data.
-# E.g. we can compute avg median notional volume for the last 30 days.
-filter_last_n_days(mdv, config["stats"]["n_days"]).mean().sort_values(
-    ascending=False
-).plot.bar()
-
-# %%
-# Or create DataFrame with smoothed MDVs.
+# Create DataFrame with smoothed MDVs.
 # Original MDV.
-mdv_converted = pd.concat({"mdv": mdv}, axis=1)
+mdv_converted = pd.concat({"daily_notional_vol": daily_notional_vol}, axis=1)
 # Combine original and all three windows in one DataFrame.
-median_daily_volume = pd.concat(
+mean_daily_volume = pd.concat(
     [
         mdv_converted,
-        compute_moving_average_in_multiindex(mdv_converted, "mdv", "21D"),
-        compute_moving_average_in_multiindex(mdv_converted, "mdv", "42D"),
-        compute_moving_average_in_multiindex(mdv_converted, "mdv", "63D"),
+        compute_moving_average_in_multiindex(
+            mdv_converted, "daily_notional_vol", smoothing_window
+        ),
     ],
     axis=1,
 )
 # Show the window columns and data snippet.
-window_cols_mdv = list(median_daily_volume.columns.get_level_values(0).unique())
+window_cols_mdv = list(mean_daily_volume.columns.get_level_values(0).unique())
 display(window_cols_mdv)
-display(median_daily_volume.head(3))
+# display(mean_daily_volume.head(3))
+display(convert_df_to_same_scale(mean_daily_volume, "all_millions").head(3))
 
 # %%
 # Plot the results.
 for col in window_cols_mdv:
-    median_daily_volume[col].plot()
+    mean_daily_volume[col].plot()
     plt.title(col)
