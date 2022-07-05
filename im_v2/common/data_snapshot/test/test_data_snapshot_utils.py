@@ -17,7 +17,7 @@ class TestGetLatestDataSnapshot(hunitest.TestCase):
 
     def test_get_latest_data_snapshot2(self) -> None:
         """
-       `root_dir` contains `latest` data snapshot.
+        `root_dir` contains `latest` data snapshot.
         """
         root_dir = "im_v2/common/data_snapshot/test/test_data_snapshots/alpha_numeric_data_snapshots"
         aws_profile = None
@@ -34,6 +34,4 @@ class TestGetLatestDataSnapshot(hunitest.TestCase):
         root_dir = "im_v2/common/data_snapshot/test/test_data_snapshots"
         aws_profile = None
         with self.assertRaises(AssertionError):
-            imvcdsdsut.get_latest_data_snapshot(
-                root_dir, aws_profile
-            )
+            imvcdsdsut.get_latest_data_snapshot(root_dir, aws_profile)
