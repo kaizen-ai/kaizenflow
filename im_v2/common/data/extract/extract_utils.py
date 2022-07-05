@@ -136,6 +136,14 @@ def add_periodical_download_args(
         type=str,
         help="OHLCV, bid/ask or trades data.",
     )
+    parser.add_argument(
+        "--contract_type",
+        action="store",
+        required=False,
+        default="spot",
+        type=str,
+        help="Type of contract, spot or futures"
+    )
     return parser
 
 
