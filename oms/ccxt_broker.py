@@ -6,11 +6,10 @@ Import as:
 import oms.ccxt_broker as occxbrok
 """
 
-import collections
 import datetime
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import ccxt
 import pandas as pd
@@ -18,9 +17,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
-import helpers.hs3 as hs3
 import helpers.hsecrets as hsecret
-import helpers.hsql as hsql
 import im_v2.common.universe as ivcu
 import oms
 
@@ -227,7 +224,7 @@ class CcxtBroker(oms.Broker):
         return exchange
 
 
-class CcxtDbBroker(oms.DatabaseBroker):
+class CcxtDbBroker(oms.Broker):
     def __init__(
         self,
         exchange_id: str,
@@ -362,31 +359,35 @@ class CcxtDbBroker(oms.DatabaseBroker):
         """
         # Add an order to the submitted orders table.
         submitted_order_id = self._get_next_submitted_order_id()
-        list_of_orders: List[Tuple[str, Any]] = []
-        s3_file_name = self._get_file_name(
+        # Get a name for the file to be saved locally.
+        local_file_name = self._get_file_name(
             wall_clock_timestamp,
             submitted_order_id,
         )
+        order_responses: List[Dict[str]] = []
         # Create a submitted orders row.
-        list_of_orders.append(("filename", s3_file_name))
-        timestamp_db = self._get_wall_clock_time()
-        list_of_orders.append(("timestamp_db", timestamp_db))
         orders_as_txt = oms.orders_to_string(orders)
-        list_of_orders.append(("orders_as_txt", orders_as_txt))
-        row = pd.Series(collections.OrderedDict(list_of_orders))
-        self._submissions[timestamp_db] = row
-        # Write the row into the DB and save orders on S3.
+        # Submit orders to exchange.
         if dry_run:
             _LOG.warning("Not submitting orders because of dry_run")
         else:
-            hsql.execute_insert_query(
-                self._db_connection, row, self._submitted_orders_table_name
-            )
-            # TODO(Danya): Save order locally, we can use any format.
-            hs3.to_file(orders_as_txt, file_name=s3_file_name, aws_profile="ck")
-            local_file_name = os.path.basename(s3_file_name)
-            hio.to_file(local_file_name, orders_as_txt)
-        return s3_file_name
+            for order in orders:
+                symbol = self._asset_id_to_symbol_mapping[order.asset_id]
+                side = "buy" if order.diff_num_shares > 0 else "sell"
+                # Get the order response.
+                order_resp = self._exchange.createOrder(
+                    symbol=symbol,
+                    type=order.type_,
+                    side=side,
+                    amount=abs(order.diff_num_shares),
+                    params={
+                        "client_oid": order.order_id,
+                    },
+                )
+                order_responses.append(order_resp)
+                _LOG.info(order_resp)
+                hio.to_file(local_file_name, orders_as_txt)
+        return order_responses
 
     def _get_file_name(
         self,
@@ -397,15 +398,14 @@ class CcxtDbBroker(oms.DatabaseBroker):
         Get the S3 file name for orders.
 
         The file should look like:
-        cryptokaizen-data-test/ccxt_db_broker_test/20220704000000/positions.0.20220704_190819.txt
+        ccxt_submitted_orders/20220704000000/order.0.20220704_190819.txt
 
         :param curr_timestamp: timestamp for the file name
         :param order_id: internal ID of the order
-        :return: order file name 
+        :return: order file name
         """
-        # TODO(Danya): Change the dst_dir, use hs3 to write.
-        dst_dir = "s3://cryptokaizen-data-test/ccxt_db_broker_test/"
-        # E.g., "targets/YYYYMMDD000000/<filename>.txt"
+        dst_dir = "ccxt_submitted_orders/"
+        # E.g., "ccxt_submitted_orders/YYYYMMDD000000/<filename>.txt"
         date_dir = curr_timestamp.strftime("%Y%m%d")
         date_dir += "0" * 6
         # Add a timestamp for readability.
@@ -414,3 +414,9 @@ class CcxtDbBroker(oms.DatabaseBroker):
         file_name = os.path.join(dst_dir, date_dir, file_name)
         _LOG.debug("file_name=%s", file_name)
         return file_name
+    
+    async def _wait_for_accepted_orders(self, file_name: str) -> None:
+        _ = file_name
+
+    def get_fills(self) -> List[oms.Fill]:
+        return None
