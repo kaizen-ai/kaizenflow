@@ -185,9 +185,7 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
 
 
 class Test_build_configs_with_tiled_universe(hunitest.TestCase):
-    def test1(
-        self,
-    ) -> None:
+    def test1(self) -> None:
         # Prepare inputs.
         config = cconfig.Config()
         asset_ids = [13684, 10971]
