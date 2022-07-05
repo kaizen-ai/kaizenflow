@@ -11,6 +11,9 @@ import helpers.hs3 as hs3
 
 
 def get_latest_data_snapshot(root_dir: str, aws_profile: Optional[str]) -> str:
+    """
+    Get the latest numeric data snapshot.
+    """
     pattern = "*"
     only_files = False
     use_relatives_paths = True
@@ -27,5 +30,8 @@ def get_latest_data_snapshot(root_dir: str, aws_profile: Optional[str]) -> str:
 
 
 def is_valid_data_snapshot(data_snapshot: str) -> None:
+    """
+    Check if data snapshot valid.
+    """
     hdbg.dassert_eq(len(data_snapshot), 8)
     hdbg.dassert_is(data_snapshot.isnumeric(), True)
