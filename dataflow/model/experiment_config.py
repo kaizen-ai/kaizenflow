@@ -36,12 +36,12 @@ def parse_universe_str(universe_str: str) -> Tuple[str, Optional[int]]:
     hdbg.dassert_eq(len(data), 2, "Invalid universe='%s'", universe_str)
     universe_version, top_n = data
     if top_n == "all":
-        top_n = None
+        top_n_ = None
     else:
         prefix = "top"
         hdbg.dassert(top_n.startswith(prefix), "Invalid top_n='%s'", top_n)
-        top_n = int(top_n[len(prefix) :])
-    return universe_version, top_n
+        top_n_ = int(top_n[len(prefix) :])
+    return universe_version, top_n_
 
 
 def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
@@ -104,7 +104,8 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
     Get start and end timestamps from the specified period.
 
-    The interval type is [a, b), i.e. the last day of the interval is excluded.
+    The interval type is [a, b), i.e. the last day of the interval is
+    excluded.
     """
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
@@ -163,7 +164,7 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
         start_datetime = datetime.datetime(2019, 9, 1)
         end_datetime = datetime.datetime(2022, 7, 1)
     else:
-        hdbg.dfatal("Invalid period='%s'" % period)
+        hdbg.dfatal(f"Invalid period='{period}'")
     _LOG.info("start_datetime=%s end_datetime=%s", start_datetime, end_datetime)
     hdbg.dassert_lte(start_datetime, end_datetime)
     start_timestamp = pd.Timestamp(start_datetime, tz="UTC")
@@ -357,6 +358,30 @@ def build_configs_varying_tiled_periods(
         _LOG.debug("config_tmp=%s\n", config_tmp)
         #
         configs.append(config_tmp)
+    return configs
+
+
+def build_configs_with_tiled_universe(
+    config: cconfig.Config, asset_ids: List[int]
+) -> List[cconfig.Config]:
+    """
+    Create a list of `Config`s tiled by universe.
+    """
+    if len(asset_ids) > 300:
+        # if len(asset_ids) > 1000:
+        # Split the universe in 2 parts.
+        # TODO(gp): We can generalize this.
+        split_idx = int(len(asset_ids) / 2)
+        asset_ids_part1 = asset_ids[:split_idx]
+        asset_ids_part2 = asset_ids[split_idx:]
+        #
+        universe_tiles: List[List[int]] = [asset_ids_part1, asset_ids_part2]
+    else:
+        universe_tiles = [asset_ids]
+    asset_id_key = ("market_data_config", "asset_ids")
+    configs = build_configs_varying_universe_tiles(
+        config, asset_id_key, universe_tiles
+    )
     return configs
 
 
