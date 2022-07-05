@@ -4,10 +4,11 @@ Import as:
 import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 """
 
+from typing import Optional
 import helpers.hs3 as hs3
 
 
-def get_latest_data_snapshot(root_dir: str, aws_profile: str) -> str:
+def get_latest_data_snapshot(root_dir: str, aws_profile: Optional[str]) -> str:
     pattern = "*"
     only_files = False
     use_relatives_paths = True
