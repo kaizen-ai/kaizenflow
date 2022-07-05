@@ -380,13 +380,17 @@ class CcxtDbBroker(oms.Broker):
                     type=order.type_,
                     side=side,
                     amount=abs(order.diff_num_shares),
-                    params={
-                        "client_oid": order.order_id,
-                    },
                 )
+                # Add internal order ID to the response.
+                order_resp["client_oid"] = order.order_id
+                # Add symbol id to the response.
+                order_resp["asset_id"] = order.asset_id
                 order_responses.append(order_resp)
                 _LOG.info(order_resp)
                 hio.to_file(local_file_name, orders_as_txt)
+                # Add execution time of the order.
+                execution_ts = int(order_resp["info"]["updateTime"])
+                self.last_order_execution_ts = hdateti.convert_unix_epoch_to_timestamp(execution_ts)
         return order_responses
 
     def _get_file_name(
@@ -418,5 +422,60 @@ class CcxtDbBroker(oms.Broker):
     async def _wait_for_accepted_orders(self, file_name: str) -> None:
         _ = file_name
 
-    def get_fills(self) -> List[oms.Fill]:
-        return None
+    
+    def get_fills(self, orders: List[oms.Order], order_responses: List[Dict[str, str]]) -> List[oms.Fill]:
+        """
+        Return list of fills from the last order execution.
+
+        :param sent_orders: a list of orders submitted by Broker
+        :return: a list of filled orders
+        """
+        filled_orders = []
+        oid_to_clid_mapping = {}
+        for order_response in order_responses:
+            oid_to_clid_mapping[order_response["id"]] = order_response["client_oid"]
+        # Separate orders by asset_id.
+        order_asset_ids = set([resp["asset_id"] for resp in order_responses])
+        for asset_id in order_asset_ids:
+            symbol = self._asset_id_to_symbol_mapping[asset_id]
+            filled_order_responses = self._exchange.fetchClosedOrders(
+                        since=hdateti.convert_timestamp_to_unix_epoch(
+                            self.last_order_execution_ts,
+                        ),
+                        symbol=symbol,
+            )
+            filled_order_ids = [oid_to_clid_mapping[filled_order["id"]] for filled_order in filled_order_responses]
+            filled_orders_tmp = [order for order in orders if order.order_id in filled_order_ids]
+            filled_orders.extend(filled_orders_tmp)
+        fills: List[oms.Fill] = []
+        for order in filled_orders:
+            end_timestamp = order.end_timestamp
+            num_shares = order.diff_num_shares
+            fill = oms.Fill(
+                order,
+                end_timestamp,
+                num_shares,
+                price=order["price"]
+            )
+            fills.append(fill)
+
+                # # Select closed orders.
+                # for order in orders:
+                #     if order["status"] == "closed":
+                #         # Select order matching to CCXT exchange id.
+                #         filled_order = [
+                #             order
+                #             for sent_order in sent_orders
+                #             if sent_order.ccxt_id == order["id"]
+                #         ][0]
+                #         # Create a Fill object.
+                #         fill = oms.Fill(
+                #             filled_order,
+                #             hdateti.convert_unix_epoch_to_timestamp(
+                #                 order["timestamp"]
+                #             ),
+                #             num_shares=order["amount"],
+                #             price=order["price"],
+                #         )
+                #         fills.append(fill)
+        return fills

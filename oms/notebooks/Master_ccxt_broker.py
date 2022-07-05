@@ -24,6 +24,8 @@
 # %autoreload 2
 import logging
 
+import pandas as pd
+
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
@@ -34,6 +36,7 @@ import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
 import oms.order_example as oordexam
+import oms
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -50,12 +53,11 @@ hprint.config_notebook()
 # %% [markdown]
 # Establish a DB connection and example market data.
 #
-# `MarketData` object is required for instantiation of all brokers.
+# `MarketData` object is required for instantiation of all brokers, since it is used in `OrderProcessor` down the pipeline.
 
 # %% [markdown]
 # ### Connection
 
-# %%
 # %%
 # Get environment variables with login info.
 env_file = imvimlita.get_db_env_path("dev")
@@ -81,7 +83,7 @@ print(omorder.orders_to_string([order]))
 # ## Demonstration of main Broker methods
 
 # %% [markdown]
-# ### Init
+# ### `init`
 
 # %%
 exchange_id = "binance"
@@ -100,11 +102,32 @@ broker = occxbrok.CcxtDbBroker(
     strategy_id="SAU1",
 )
 
-# %%
-# Submitting orders to exchange and getting the
-orders = await broker._submit_orders([order], pd.Timestamp.utcnow())
+# %% [markdown]
+# ### `submit_orders`
 
 # %%
-orders
+# Submitting orders to exchange and getting the
+order_resps = await broker._submit_orders([order], pd.Timestamp.utcnow())
+
+# %%
+order_resps
+
+# %%
+order.end_timestamp
+
+# %%
+order.start_timestamp
+
+# %%
+order.
+
+# %% [markdown]
+# ### `get_fills`
+
+# %%
+fills = broker.get_fills([order], order_resps)
+
+# %%
+fills[0].__str__()
 
 # %%

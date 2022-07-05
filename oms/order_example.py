@@ -122,7 +122,7 @@ def get_order_example4() -> omorder.Order:
         "2000-01-01 09:40:00-05:00", tz="America/New_York"
     )
     curr_num_shares = 0
-    diff_num_shares = 1
+    diff_num_shares = 0.01
     order_id = 0
     # Build Order.
     order = omorder.Order(
