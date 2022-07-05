@@ -14,6 +14,10 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
+import im_v2.common.data.client as icdc
+import im_v2.ccxt.data.client as icdcl
+import im_v2.crypto_chassis.data.client as iccdc
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -50,6 +54,43 @@ def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
         universe = universe[:n]
     universe = sorted(universe)
     return universe
+
+
+# #############################################################################
+# ImClient.
+# #############################################################################
+
+
+# TODO(Dan): Consider generalizing with `dtfuniver.get_universe()`.
+def get_im_client(universe_str: str) -> icdc.ImClient:
+    """
+    Get `ImClient` from the specified universe in backtest config.
+    """
+    universe_version, _ = parse_universe_str(universe_str)
+    resample_1min = True
+    if universe_version == "crypto_chassis_v1":
+        im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+    elif universe_version == "crypto_chassis_v2":
+        im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(
+            resample_1min
+        )
+    elif universe_version == "crypto_chassis_v3":
+        im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example3(
+            resample_1min
+        )
+    elif universe_version == "ccxt_v4":
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
+            resample_1min
+        )
+    elif universe_version == "ccxt_v6":
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example3(
+            resample_1min
+        )
+    else:
+        hdbg.dfatal("Invalid universe_version='%s'" % universe_version)
+    return im_client
 
 
 # #############################################################################
