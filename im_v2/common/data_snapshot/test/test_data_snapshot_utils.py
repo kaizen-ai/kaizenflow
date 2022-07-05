@@ -26,3 +26,14 @@ class TestGetLatestDataSnapshot(hunitest.TestCase):
         )
         expected = "20220130"
         self.assert_equal(latest_data_snapshot, expected)
+
+    def test_get_latest_data_snapshot3(self) -> None:
+        """
+        `root_dir` doesn't contain numeric data snapshot.
+        """
+        root_dir = "im_v2/common/data_snapshot/test/test_data_snapshots"
+        aws_profile = None
+        with self.assertRaises(AssertionError):
+            imvcdsdsut.get_latest_data_snapshot(
+                root_dir, aws_profile
+            )
