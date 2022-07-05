@@ -343,8 +343,11 @@ class CcxtDbBroker(oms.DatabaseBroker):
         dry_run: bool = False,
     ) -> str:
         """
+        Load orders into a submitted orders table.
+
         Same as abstract method.
 
+        :param orders: orders to be submitted.
         :return: a `file_name` representing the id of the submitted order in the DB
         """
         # Add an order in the submitted orders table.
@@ -354,19 +357,18 @@ class CcxtDbBroker(oms.DatabaseBroker):
             wall_clock_timestamp,
             submitted_order_id,
         )
+        # Create a submitted orders row.
         list_of_orders.append(("filename", s3_file_name))
         timestamp_db = self._get_wall_clock_time()
-        orders_as_txt = oms.orders_to_string(orders)
         list_of_orders.append(("timestamp_db", timestamp_db))
+        orders_as_txt = oms.orders_to_string(orders)
         list_of_orders.append(("orders_as_txt", orders_as_txt))
         row = pd.Series(collections.OrderedDict(list_of_orders))
-        # Store the order internally.
         self._submissions[timestamp_db] = row
+        # Write the row into the DB and save orders on S3.
         if dry_run:
             _LOG.warning("Not submitting orders because of dry_run")
-        # Write the row into the DB and save orders on S3.
         else:
-            #
             hsql.execute_insert_query(
                 self._db_connection, row, self._submitted_orders_table_name
             )
@@ -381,15 +383,15 @@ class CcxtDbBroker(oms.DatabaseBroker):
         order_id: int,
     ) -> str:
         """
-        The file should look like:
+        Get the S3 file name for orders.
 
-        s3://eglp-core-exch/files/spms/SAU1/cand/targets/YYYYMMDD000000/<filename>.txt
+        The file should look like:
+        cryptokaizen-data-test/ccxt_db_broker_test/20220704000000/positions.0.20220704_190819.txt
+
+        :param curr_timestamp: timestamp for the file name
+        :param order_id: internal ID of the order
+        :return: order file name 
         """
-        # The reference Java CF code looks like:
-        # String timestampStr = DateTime.now().toString("yyyyMMddHHmmssSSS");
-        # String.format("files/%s/%s/%s/targets/%s000000/%s_%s_%s.txt",
-        #       groupPrefix, strategyId, dropId, date.toString("yyyyMMdd"), s3FilePrefix,
-        #       date.toString("yyyyMMdd"), timestampStr);
         # TODO(Danya): Change the dst_dir, use hs3 to write.
         dst_dir = "s3://cryptokaizen-data-test/ccxt_db_broker_test/"
         # E.g., "targets/YYYYMMDD000000/<filename>.txt"
