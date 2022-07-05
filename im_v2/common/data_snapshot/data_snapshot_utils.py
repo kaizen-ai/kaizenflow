@@ -5,6 +5,8 @@ import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 """
 
 from typing import Optional
+
+import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
 
@@ -22,3 +24,8 @@ def get_latest_data_snapshot(root_dir: str, aws_profile: Optional[str]) -> str:
     dirs = [snapshot for snapshot in dirs if snapshot.isnumeric()]
     data_snapshot = max(dirs)
     return data_snapshot
+
+
+def is_valid_data_snapshot(data_snapshot: str) -> None:
+    hdbg.dassert_eq(len(data_snapshot), 8)
+    hdbg.dassert_is(data_snapshot.isnumeric(), True)

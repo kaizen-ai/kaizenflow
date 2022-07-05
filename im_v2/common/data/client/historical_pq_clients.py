@@ -313,8 +313,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             data_snapshot = icdds.get_latest_data_snapshot(
                 root_dir, aws_profile
             )
-            hdbg.dassert_eq(len(data_snapshot), 8)
-            hdbg.dassert_is(data_snapshot.isnumeric(), True)
+        icdds.is_valid_data_snapshot
         self._data_snapshot = data_snapshot
 
     @staticmethod
