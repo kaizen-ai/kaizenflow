@@ -80,7 +80,7 @@ def get_Example1_ForecastSystem_example1(
     system.config["dag_runner_object"] = system.get_dag_runner
     # Name of the asset_ids to save.
     # TODO(gp): Find a better place in the config, maybe "save_results"?
-    system.config["market_data_config", "asset_id_col_name"] = "egid"
+    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     # TODO(gp):
     system.config["backtest_config", "universe_str"] = universe_str
     system.config["backtest_config", "trading_period_str"] = trading_period_str
