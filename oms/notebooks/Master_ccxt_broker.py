@@ -36,7 +36,6 @@ import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
 import oms.order_example as oordexam
-import oms
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -93,7 +92,7 @@ mode = "test"
 
 # %%
 # Initialize CCXT broker with example market data connected to DB.
-broker = occxbrok.CcxtDbBroker(
+broker = occxbrok.CcxtBroker(
     exchange_id,
     universe_version,
     mode,
@@ -106,28 +105,28 @@ broker = occxbrok.CcxtDbBroker(
 # ### `submit_orders`
 
 # %%
+orders = [order, order]
 # Submitting orders to exchange and getting the
-order_resps = await broker._submit_orders([order], pd.Timestamp.utcnow())
+order_resps = await broker._submit_orders(orders, pd.Timestamp.utcnow())
 
 # %%
 order_resps
-
-# %%
-order.end_timestamp
-
-# %%
-order.start_timestamp
-
-# %%
-order.
 
 # %% [markdown]
 # ### `get_fills`
 
 # %%
-fills = broker.get_fills([order], order_resps)
+fills = broker.get_fills(order_resps)
 
 # %%
-fills[0].__str__()
+fills
 
 # %%
+fills[0].to_dict()
+
+# %% [markdown]
+# #### Comment
+
+# %% [markdown]
+# - The Fills are currently filtered by last execution ts; since the orders are executed immediately (at least in the sandbox environment), this means that only the latest order in the session is returning a Fill;
+# - One way to fight this is to remove the filtering by datetime and instead filter by IDs, i.e. get all our orders from the exchange and quickly filter out those we sent during this session by order ID.
