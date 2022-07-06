@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 import core.finance as cofinanc
+import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
@@ -16,29 +17,53 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Test_Example1_ForecastSystem
+# Test_Example1_ForecastSystem_FitPredict
 # #############################################################################
 
 
-class Test_Example1_ForecastSystem(hunitest.TestCase):
-    def test1(self) -> None:
+class Test_Example1_ForecastSystem_FitPredict(
+    dtfsysytes.ForecastSystem_FitPredict_TestCase1
+):
+    def get_system(self) -> dtfsys.System:
         """
-        Test the Example1_ForecastSystem DAG.
+        Create the System for testing.
         """
-        # Create the System.
         backtest_config = "example1_v1-top2.1T.Jan2000"
         system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
-        # TODO(*): Do not hard-wire asset ids; see "Easily switch vendors in the E1 
+        # TODO(*): Do not hard-wire asset ids; see "Easily switch vendors in the E1
         # pipeline" CmTask #2037.
         system.config["market_data_config", "asset_ids"] = [
             1467591036,
             3303714233,
         ]
-        # Create DAG runner.
-        dag_runner = system.get_dag_runner()
-        # Run.
-        fit_result_bundle = dag_runner.fit()
-        self.check_string(str(fit_result_bundle), purify_text=True)
+        system.config[
+            "backtest_config", "start_timestamp_with_lookback"
+        ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        system.config["backtest_config", "end_timestamp"] = pd.Timestamp(
+            "2000-01-31 00:00:00+0000", tz="UTC"
+        )
+        return system
+
+    def test_fit_over_backtest_period1(self) -> None:
+        system = self.get_system()
+        output_col_name = "vwap.ret_0.vol_adj.c"
+        self._test_fit_over_backtest_period1(system, output_col_name)
+
+    def test_fit_over_period1(self) -> None:
+        system = self.get_system()
+        start_timestamp = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
+        output_col_name = "vwap.ret_0.vol_adj.c"
+        self._test_fit_over_period1(
+            system,
+            start_timestamp,
+            end_timestamp,
+            output_col_name=output_col_name,
+        )
+
+    def test_fit_vs_predict1(self) -> None:
+        system = self.get_system()
+        self._test_fit_vs_predict1(system)
 
 
 # #############################################################################
