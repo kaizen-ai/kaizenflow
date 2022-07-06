@@ -123,6 +123,13 @@ print(config)
 
 # %%
 def filter_last_n_days(df: pd.DataFrame, n_days: int) -> pd.DataFrame:
+    """
+    Isolate last N days from a given dataset.
+
+    :param df: data with timestamp as an index
+    :param n_days: number of days from the latest date to starting period
+    :return: data for last N days
+    """
     # Specify number of days.
     period = timedelta(days=n_days)
     # Set the min date for the desired period.
@@ -135,6 +142,14 @@ def filter_last_n_days(df: pd.DataFrame, n_days: int) -> pd.DataFrame:
 def compute_moving_average_in_multiindex(
     df: pd.DataFrame, value_col: str, rolling_window: str
 ) -> pd.DataFrame:
+    """
+    Calculate Moving Average and convert to multiindex.
+
+    :param df: data with values for MA convertation
+    :param value_col: name of the column to compute MA
+    :param rolling_window: size of the moving window
+    :return: multiindex data with computed MA
+    """
     # Compute MA.
     ma = df[value_col].rolling(rolling_window).mean()
     # Attach to Multiindex.
@@ -143,6 +158,13 @@ def compute_moving_average_in_multiindex(
 
 
 def convert_df_to_same_scale(df: pd.DataFrame, mode: str) -> pd.DataFrame:
+    """
+    Present numbers in a different format.
+
+    :param df: data with values for convertation
+    :param mode: i.e., "all_thousands", "all_millions", "engineering_notation"
+    :return: data with converted number scales
+    """
     df_new = df.copy()
     if mode == "all_thousands":
         formatter = mpl.ticker.FuncFormatter(
