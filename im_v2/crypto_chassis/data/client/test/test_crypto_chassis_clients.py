@@ -57,6 +57,7 @@ class TestCryptoChassisHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             expected_column_unique_values=expected_column_unique_values,
         )
 
+    @pytest.mark.slow("Slow via GH, fast on the server")
     def test2(self) -> None:
         """
         `dataset = ohlcv`
