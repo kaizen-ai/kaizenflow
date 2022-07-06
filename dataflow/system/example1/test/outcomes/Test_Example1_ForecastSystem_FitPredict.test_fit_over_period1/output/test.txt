@@ -52,7 +52,7 @@ dag_config_config:
       rule: 1T
 dag_runner_object: <bound method Example1_ForecastSystem.get_dag_runner of <dataflow.system.example1.example1_forecast_system.Example1_ForecastSystem object>>
 market_data_config:
-  asset_id_col_name: egid
+  asset_id_col_name: asset_id
   asset_ids: [1467591036, 3303714233]
 backtest_config:
   universe_str: example1_v1-top2
