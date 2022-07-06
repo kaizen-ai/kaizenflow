@@ -182,3 +182,19 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         self.cover_with_monthly_tiles(
             start_timestamp, end_timestamp, expected_output, expected_num_configs
         )
+
+
+class Test_build_configs_with_tiled_universe(hunitest.TestCase):
+    def test1(self) -> None:
+        # Prepare inputs.
+        config = cconfig.Config()
+        asset_ids = [13684, 10971]
+        # Run.
+        configs = dtfmoexcon.build_configs_with_tiled_universe(config, asset_ids)
+        # Check output.
+        expected_output = r"""
+        # 1/1
+        market_data_config:
+          asset_ids: [13684, 10971]"""
+        actual_output = cconfig.configs_to_str(configs)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
