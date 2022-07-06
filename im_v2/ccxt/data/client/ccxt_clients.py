@@ -17,7 +17,7 @@ import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
+import im_v2.common.data_snapshot as icdds
 import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
@@ -263,9 +263,10 @@ class CcxtCddCsvParquetByAssetClient(
         )
         self._extension = extension
         if data_snapshot is None:
-            data_snapshot = imvcdsdsut.get_latest_data_snapshot(
+            data_snapshot = icdds.get_latest_data_snapshot(
                 root_dir, aws_profile
             )
+        icdds.dassert_is_valid_data_snapshot(data_snapshot)
         self._data_snapshot = data_snapshot
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
