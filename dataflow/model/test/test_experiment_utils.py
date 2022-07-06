@@ -40,21 +40,6 @@ def _get_universe_tiny() -> List[int]:
     return asset_ids
 
 
-def build_configs_with_tiled_universe(
-    config: cconfig.Config, universe_str: str
-) -> List[cconfig.Config]:
-    """
-    Create a list of `Config`s tiled by universe.
-    """
-    asset_ids = _get_universe_tiny()
-    universe_tiles = (asset_ids,)
-    egid_key = ("market_data_config", "asset_ids")
-    configs = dtfmoexcon.build_configs_varying_universe_tiles(
-        config, egid_key, universe_tiles
-    )
-    return configs
-
-
 def get_dag_runner(config: cconfig.Config) -> dtfcore.DAG:
     """
     Build a DAG runner from a config.
@@ -71,8 +56,8 @@ def build_tile_configs(
     experiment_config: str,
 ) -> List[cconfig.Config]:
     (
-        universe_str,
-        trading_period_str,
+        _,
+        _,
         time_interval_str,
     ) = dtfmoexcon.parse_experiment_config(experiment_config)
     #
@@ -83,7 +68,10 @@ def build_tile_configs(
     config["market_data_config", "asset_id_name"] = "asset_id"
     configs = [config]
     # Apply the cross-product by the universe tiles.
-    func = lambda cfg: build_configs_with_tiled_universe(cfg, universe_str)
+    asset_ids = _get_universe_tiny()
+    func = lambda cfg: dtfmoexcon.build_configs_with_tiled_universe(
+        cfg, asset_ids
+    )
     configs = dtfmoexcon.apply_build_configs(func, configs)
     _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
     # Apply the cross-product by the time tiles.
@@ -93,7 +81,7 @@ def build_tile_configs(
     func = lambda cfg: dtfmoexcon.build_configs_varying_tiled_periods(
         cfg, start_timestamp, end_timestamp, freq_as_pd_str, lookback_as_pd_str
     )
-    configs = dtfmoexcon.apply_build_configs(func, configs)
+    configs: List[cconfig.Config] = dtfmoexcon.apply_build_configs(func, configs)
     _LOG.info("After applying time tiles: num_configs=%s", len(configs))
     return configs
 
