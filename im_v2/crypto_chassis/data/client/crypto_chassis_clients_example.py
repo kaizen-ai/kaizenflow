@@ -11,7 +11,11 @@ import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 
 
 def get_CryptoChassisHistoricalPqByTileClient_example1(
-    universe_version: str, resample_1min: bool, dataset: str, contract_type: str, data_snapshot: str,
+    universe_version: str,
+    resample_1min: bool,
+    dataset: str,
+    contract_type: str,
+    data_snapshot: str,
 ) -> imvccdcccc.CryptoChassisHistoricalPqByTileClient:
     """
     Get `CryptoChassisHistoricalPqByTileClient` object for the prod model
