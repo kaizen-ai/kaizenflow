@@ -129,6 +129,7 @@ def get_CcxtHistoricalPqByTileClient_example2(
     partition_mode = "by_year_month"
     dataset = "ohlcv"
     contract_type = "spot"
+    data_snapshot = "20220705"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
         resample_1min,
@@ -136,6 +137,7 @@ def get_CcxtHistoricalPqByTileClient_example2(
         partition_mode,
         dataset,
         contract_type,
+        data_snapshot=data_snapshot,
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client
