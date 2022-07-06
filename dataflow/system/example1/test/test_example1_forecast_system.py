@@ -28,6 +28,8 @@ class Test_Example1_ForecastSystem(hunitest.TestCase):
         # Create the System.
         backtest_config = "example1_v1-top2.1T.Jan2000"
         system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+        # TODO(*): Do not hard-wire asset ids; see "Easily switch vendors in the E1 
+        # pipeline" CmTask #2037.
         system.config["market_data_config", "asset_ids"] = [
             1467591036,
             3303714233,
