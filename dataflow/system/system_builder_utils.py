@@ -40,7 +40,7 @@ def get_system_config_template_from_dag_builder(
 # #############################################################################
 
 
-# TODO(gp): -> get_event_loop_market_data_from_df
+# TODO(gp): @grisha, @danya -> get_event_loop_market_data_from_df
 def get_event_loop_market_data_instance1(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
@@ -52,7 +52,6 @@ def get_event_loop_market_data_instance1(
         "market_data_config", "initial_replayed_delay"
     ]
     data = system.config["market_data_config", "data"]
-
     market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
         event_loop,
         initial_replayed_delay,
