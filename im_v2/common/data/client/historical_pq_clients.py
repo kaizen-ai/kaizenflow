@@ -17,6 +17,7 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
+import im_v2.common.data_snapshot as icdds
 import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
@@ -277,7 +278,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         dataset: str,
         contract_type: str,
         *,
-        data_snapshot: str = "latest",
+        data_snapshot: Optional[str] = None,
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -308,6 +309,11 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             f"Invalid dataset type='{contract_type}'",
         )
         self._contract_type = contract_type
+        if data_snapshot is None:
+            data_snapshot = icdds.get_latest_data_snapshot(
+                root_dir, aws_profile
+            )
+        icdds.dassert_is_valid_data_snapshot(data_snapshot)
         self._data_snapshot = data_snapshot
 
     @staticmethod
