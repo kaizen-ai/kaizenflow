@@ -67,21 +67,19 @@ def get_notebook_config() -> cconconf.Config:
     Get notebook specific config.
     """
     config = cconconf.Config()
-    
     param_dict = {
         "im_client_params": {
             "universe_version": "v2",
             "resample_1min": True,
             "dataset": "ohlcv",
             "contract_type": "spot",
-            "data_snapshot": "20220530"
+            "data_snapshot": "20220530",
         },
         "data": {
             "dir_name": "/shared_data/model/historical/experiment.E1a.crypto_chassis_v2-all.5T.2018_2022/tiled_results/",
             "columns": "volume vwap vwap.ret_0 vwap.ret_0.vol_adj vwap.ret_0.vol_adj.c vwap.ret_0.vol_adj_2 vwap.ret_0.vol_adj_2_hat".split(),
             "start_date": datetime.date(2018, 1, 1),
-            "end_date": datetime.date(2022, 5, 1)
-            
+            "end_date": datetime.date(2022, 5, 1),
         },
         "column_names": {
             "asset_id": "asset_id",
@@ -107,7 +105,7 @@ def get_notebook_config() -> cconconf.Config:
             "xticks_rotation": 70,
         },
     }
-    
+
     config = ccocouti.get_config_from_nested_dict(param_dict)
     return config
 
@@ -192,7 +190,7 @@ def preprocess_predictions_df(
     # TODO(*): Think about avoiding using `ImClient` for mapping.
     # Convert asset ids to full symbols using `ImClient` mapping.
     im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
-                **config["im_client_params"]
+        **config["im_client_params"]
     )
     metrics_df.index = metrics_df.index.set_levels(
         metrics_df.index.levels[1].map(
