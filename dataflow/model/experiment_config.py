@@ -373,9 +373,7 @@ def build_configs_with_tiled_universe_and_periods(
     time_interval_str = system_config["backtest_config"]["time_interval_str"]
     asset_ids = system_config["market_data_config"]["asset_ids"]
     # Apply the cross-product by the universe tiles.
-    func = lambda cfg: build_configs_with_tiled_universe(
-        cfg, asset_ids
-    )
+    func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)
     configs = apply_build_configs(func, configs)
     _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
     hdbg.dassert_lte(1, len(configs))
