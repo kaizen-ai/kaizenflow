@@ -36,7 +36,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.stats as st
-import seaborn as sns
 
 import core.config.config_ as cconconf
 import core.config.config_utils as ccocouti
@@ -225,11 +224,11 @@ def bootstrap(
     return res_list
 
 
-def plot_sharpe_ratio(
+def compute_sharpe_ratio(
     config: cconconf.Config, metrics_df: pd.DataFrame, by_col: str
 ) -> None:
     """
-    Compute and plot Sharpe Ratio by specified column.
+    Compute Sharpe Ratio by specified column.
     """
     res_list = []
     for by, data in metrics_df.groupby(by_col):
@@ -249,15 +248,7 @@ def plot_sharpe_ratio(
         res_list.append(sharpe_ratio_df)
     res_df = pd.concat(res_list)
     #
-    sns.barplot(
-        x=by_col,
-        y="sharpe_ratio",
-        data=res_df,
-        color=config["plot_kwargs"]["color"],
-        capsize=config["plot_kwargs"]["capsize"],
-    )
-    plt.xticks(rotation=config["plot_kwargs"]["xticks_rotation"])
-    plt.show()
+    return res_df
 
 
 def calculate_hit_rate_with_CI(
@@ -284,16 +275,16 @@ def calculate_hit_rate_with_CI(
     return hit_errors_df
 
 
-def calculate_CI_for_PnLs(
+def calculate_CI_for_PnLs_or_SR(
     df: pd.DataFrame, group_by: str, value_col: str
 ) -> pd.DataFrame:
     """
-    Compute mean PnL, confidence intervals and errors relative to the specific
-    entity.
+    Compute mean PnL or Sharpe Ratio, confidence intervals and errors relative
+    to the specific entity.
 
-    :param df: data with PnL values
+    :param df: data with PnL or Sharpe Ratio values
     :param group_by: column name for grouping entity
-    :param value_col: column name for PnL data
+    :param value_col: column name for PnL or Sharpe Ratio data
     :return: data with CIs and errors
     """
     grouper = df.groupby([group_by])[value_col]
@@ -481,7 +472,7 @@ _ = metrics_df[trade_pnl].dropna().unstack().cumsum().plot()
 
 # %%
 # Plot average trade PnL per asset id.
-avg_pnl_by_asset = calculate_CI_for_PnLs(
+avg_pnl_by_asset = calculate_CI_for_PnLs_or_SR(
     metrics_df_reset_index, asset_id, trade_pnl
 )
 # TODO(Max): infer y-limits automatically.
@@ -491,7 +482,14 @@ plot_bars_with_widget(avg_pnl_by_asset, "avg_pnl_by_asset", 0, 0.005)
 # ### Sharpe Ratio
 
 # %%
-plot_sharpe_ratio(config, metrics_df_reset_index, asset_id)
+# Compute bootstrapped Sharpe Ratio.
+sr_by_asset = compute_sharpe_ratio(config, metrics_df_reset_index, asset_id)
+# Add CIs and errors.
+sr_ci_by_asset = calculate_CI_for_PnLs_or_SR(
+    sr_by_asset, asset_id, "sharpe_ratio"
+)
+# Visualize results.
+plot_bars_with_widget(sr_ci_by_asset, "sharpe_ratio", 0, 9)
 
 # %% [markdown]
 # ## By time
@@ -536,21 +534,21 @@ plot_bars_with_widget(
 # ### PnL
 
 # %%
-pnl_by_time_hour = calculate_CI_for_PnLs(
+pnl_by_time_hour = calculate_CI_for_PnLs_or_SR(
     metrics_df_reset_index, "hour", trade_pnl
 )
 # TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(pnl_by_time_hour, "avg_pnl", 0, 0.005)
 
 # %%
-pnl_by_time_weekday = calculate_CI_for_PnLs(
+pnl_by_time_weekday = calculate_CI_for_PnLs_or_SR(
     metrics_df_reset_index, "weekday", trade_pnl
 )
 # TODO(Max): infer y-limits automatically.
 plot_bars_with_widget(pnl_by_time_weekday, "avg_pnl", 0, 0.004)
 
 # %%
-pnl_by_time_month = calculate_CI_for_PnLs(
+pnl_by_time_month = calculate_CI_for_PnLs_or_SR(
     metrics_df_reset_index, "month", trade_pnl
 )
 # TODO(Max): infer y-limits automatically.
@@ -560,13 +558,30 @@ plot_bars_with_widget(pnl_by_time_month, "avg_pnl", 0, 0.0055)
 # ### Sharpe Ratio
 
 # %%
-plot_sharpe_ratio(config, metrics_df_reset_index, "hour")
+# Compute bootstrapped Sharpe Ratio.
+sr_by_hour = compute_sharpe_ratio(config, metrics_df_reset_index, "hour")
+# Add CIs and errors.
+sr_ci_by_hour = calculate_CI_for_PnLs_or_SR(sr_by_hour, "hour", "sharpe_ratio")
+# Visualize results.
+plot_bars_with_widget(sr_ci_by_hour, "sharpe_ratio", 0, 9)
 
 # %%
-plot_sharpe_ratio(config, metrics_df_reset_index, "weekday")
+# Compute bootstrapped Sharpe Ratio.
+sr_by_weekday = compute_sharpe_ratio(config, metrics_df_reset_index, "weekday")
+# Add CIs and errors.
+sr_ci_by_weekday = calculate_CI_for_PnLs_or_SR(
+    sr_by_weekday, "weekday", "sharpe_ratio"
+)
+# Visualize results.
+plot_bars_with_widget(sr_ci_by_weekday, "sharpe_ratio", 0, 7)
 
 # %%
-plot_sharpe_ratio(config, metrics_df_reset_index, "month")
+# Compute bootstrapped Sharpe Ratio.
+sr_by_month = compute_sharpe_ratio(config, metrics_df_reset_index, "month")
+# Add CIs and errors.
+sr_ci_by_month = calculate_CI_for_PnLs_or_SR(sr_by_month, "month", "sharpe_ratio")
+# Visualize results.
+plot_bars_with_widget(sr_ci_by_month, "sharpe_ratio", 0, 9)
 
 # %% [markdown]
 # ## By prediction magnitude
@@ -595,7 +610,7 @@ plot_bars_with_widget(
 # ### PnL
 
 # %%
-pnl_by_prediction_magnitude = calculate_CI_for_PnLs(
+pnl_by_prediction_magnitude = calculate_CI_for_PnLs_or_SR(
     metrics_df_reset_index, prediction_magnitude, trade_pnl
 )
 # TODO(Max): infer y-limits automatically.
@@ -605,7 +620,16 @@ plot_bars_with_widget(pnl_by_prediction_magnitude, "avg_pnl", 0, 0.01)
 # ### Sharpe Ratio
 
 # %%
-plot_sharpe_ratio(config, metrics_df_reset_index, prediction_magnitude)
+# Compute bootstrapped Sharpe Ratio.
+sr_by_prediction_magnitude = compute_sharpe_ratio(
+    config, metrics_df_reset_index, prediction_magnitude
+)
+# Add CIs and errors.
+sr_ci_by_prediction_magnitude = calculate_CI_for_PnLs_or_SR(
+    sr_by_prediction_magnitude, prediction_magnitude, "sharpe_ratio"
+)
+# Visualize results.
+plot_bars_with_widget(sr_ci_by_prediction_magnitude, "sharpe_ratio", -1, 12)
 
 # %% [markdown]
 # ## By volume
@@ -631,7 +655,7 @@ plot_bars_with_widget(
 # ### PnL
 
 # %%
-pnl_by_volume = calculate_CI_for_PnLs(
+pnl_by_volume = calculate_CI_for_PnLs_or_SR(
     metrics_df_reset_index, volume_quantile, trade_pnl
 )
 # TODO(Max): infer y-limits automatically.
@@ -641,4 +665,13 @@ plot_bars_with_widget(pnl_by_volume, "avg_pnl", 0.0005, 0.0045)
 # ### Sharpe Ratio
 
 # %%
-plot_sharpe_ratio(config, metrics_df_reset_index, volume_quantile)
+# Compute bootstrapped Sharpe Ratio.
+sr_by_volume_quantile = compute_sharpe_ratio(
+    config, metrics_df_reset_index, volume_quantile
+)
+# Add CIs and errors.
+sr_ci_by_volume_quantile = calculate_CI_for_PnLs_or_SR(
+    sr_by_volume_quantile, volume_quantile, "sharpe_ratio"
+)
+# Visualize results.
+plot_bars_with_widget(sr_ci_by_volume_quantile, "sharpe_ratio", 0, 9)
