@@ -72,7 +72,7 @@ def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     return dag
 
 
-def get_Example1_dag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Example1_realtime_dag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source.
     """
@@ -177,12 +177,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
 # #############################################################################
 
 
-# TODO(gp): -> example1_system_example.py
-#
-# TODO(gp): -> get_Example1_dag_runner_example2
-# TODO(gp): Is this the same as get_Example1_dag_runner?
-# TODO(gp): -> example1_system_example.py
-def get_Example1_dag_runner_example1(
+def get_realtime_dag_runner_from_system(
     system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:
     """

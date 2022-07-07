@@ -40,7 +40,7 @@ def get_system_config_template_from_dag_builder(
 # #############################################################################
 
 
-def get_event_loop_market_data_instance1(
+def get_event_loop_market_data_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
     """
