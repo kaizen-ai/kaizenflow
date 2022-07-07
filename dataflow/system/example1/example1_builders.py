@@ -9,7 +9,6 @@ import logging
 import pandas as pd
 
 import dataflow.core as dtfcore
-import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
@@ -72,7 +71,7 @@ def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     return dag
 
 
-def get_Example1_dag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source.
     """
@@ -170,42 +169,3 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     )
     dag.append_to_tail(node)
     return dag
-
-
-# #############################################################################
-# DAG runner instances.
-# #############################################################################
-
-
-# TODO(gp): -> example1_system_example.py
-#
-# TODO(gp): -> get_Example1_dag_runner_example2
-# TODO(gp): Is this the same as get_Example1_dag_runner?
-# TODO(gp): -> example1_system_example.py
-def get_Example1_dag_runner_example1(
-    system: dtfsyssyst.System,
-) -> dtfsrtdaru.RealTimeDagRunner:
-    """
-    Build a real-time DAG runner.
-    """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    dag = system.dag
-    sleep_interval_in_secs = 5 * 60
-    # Set up the event loop.
-    get_wall_clock_time = system.market_data.get_wall_clock_time
-    real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
-        "real_time_loop_time_out_in_secs"
-    ]
-    execute_rt_loop_kwargs = {
-        "get_wall_clock_time": get_wall_clock_time,
-        "sleep_interval_in_secs": sleep_interval_in_secs,
-        "time_out_in_secs": real_time_loop_time_out_in_secs,
-    }
-    dag_runner_kwargs = {
-        "dag": dag,
-        "fit_state": None,
-        "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-        "dst_dir": None,
-    }
-    dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
-    return dag_runner
