@@ -1,0 +1,34 @@
+{
+   "CCXT": {
+      "binance": [ 
+        "ETH/USDT",
+        "BTC/USDT",
+        "SAND/USDT",
+        "ETH/BUSD",
+        "BTC/BUSD",
+        "STORJ/USDT",
+        "GMT/USDT",
+        "AVAX/USDT",
+        "BNB/USDT",
+        "APE/USDT",
+        "MATIC/USDT",
+        "DYDX/USDT",
+        "DOT/USDT",
+        "UNFI/USDT",
+        "LINK/USDT",
+        "XRP/USDT",
+        "CRV/USDT",
+        "ADA/USDT",
+        "RUNE/USDT",
+        "BAKE/USDT",
+        "NEAR/USDT",
+        "FTM/USDT",
+        "WAVES/USDT",
+        "AXS/USDT",
+        "OGN/USDT",
+        "DOGE/USDT",
+        "SOL/USDT",
+        "CTK/USDT"
+    ]
+    }
+  }
