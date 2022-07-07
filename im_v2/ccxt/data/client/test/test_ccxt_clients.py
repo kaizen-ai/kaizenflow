@@ -1383,7 +1383,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         resample_1min = False
         dataset = "ohlcv"
         contract_type = "spot"
-        data_snapshot = None
+        data_snapshot = "20220705"
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
             universe_version, resample_1min, dataset, contract_type, data_snapshot
         )
