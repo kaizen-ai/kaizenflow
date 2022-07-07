@@ -1,0 +1,14 @@
+{
+   "crypto_chassis": {
+      "binance": [ 
+        "ETH_USDT",
+        "BTC_USDT",
+        "BNB_USDT",
+        "DOT_USDT",
+        "XRP_USDT",
+        "ADA_USDT",
+        "DOGE_USDT",
+        "SOL_USDT"
+    ]
+    }
+  }
