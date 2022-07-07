@@ -10,7 +10,6 @@ from typing import Any, Callable, Coroutine
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import helpers.hsql as hsql
 import market_data as mdata
 import oms as oms
@@ -301,7 +300,7 @@ class _Time_ForecastSystem_Mixin:
     @abc.abstractmethod
     def get_dag_runner(
         self,
-    ) -> dtfsrtdaru.RealTimeDagRunner:
+    ) -> dtfsys.RealTimeDagRunner:
         ...
 
     @abc.abstractmethod
