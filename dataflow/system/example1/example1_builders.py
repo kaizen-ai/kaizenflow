@@ -26,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 
 def get_Example1_MarketData_example2(
     system: dtfsyssyst.System,
-) -> mdata.ReplayedMarketData:
+) -> mdata.ImClientMarketData:
     """
     Build a replayed MarketData from an ImClient feeding data from a df.
     """

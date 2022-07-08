@@ -50,7 +50,7 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         )
         return system_config
 
-    def _get_market_data(self) -> mdata.ReplayedMarketData:
+    def _get_market_data(self) -> mdata.ImClientMarketData:
         market_data = dtfsexexbu.get_Example1_MarketData_example2(self)
         return market_data
 
