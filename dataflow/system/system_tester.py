@@ -289,13 +289,12 @@ class Time_ForecastSystem_TestCase1(hunitest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
-            #hdbg.dassert_isinstance(market_data, pd.DataFrame)
-            #system.config["market_data_config", "data"] = market_data
             system.config["market_data_config", "initial_replayed_delay"] = initial_replayed_delay
             system.config[
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
             # Create DAG runner.
+            _LOG.debug("final system.config=\n%s", system.config)
             dag_runner = system.get_dag_runner()
             # Run.
             coroutines = [dag_runner.predict()]
