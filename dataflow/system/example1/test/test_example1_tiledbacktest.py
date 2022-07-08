@@ -7,7 +7,9 @@ import dataflow.model.run_prod_model_flow as dtfmrpmofl
 _LOG = logging.getLogger(__name__)
 
 
-class Test_Example1_ForecastSystem(dtfmrpmofl.TiledBacktest_TestCase):
+class Test_Example1_ForecastSystem_TiledBacktest(
+    dtfmrpmofl.TiledBacktest_TestCase
+):
     """
     Run end-to-end backtest for an Example1 pipeline:
 
