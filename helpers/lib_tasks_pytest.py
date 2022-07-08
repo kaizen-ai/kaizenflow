@@ -607,7 +607,12 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
     s3fs_ = hs3.get_s3fs(aws_profile)
-    s3fs_.put(local_coverage_path, s3_html_coverage_path, recursive=True)
+    s3fs_.put(
+        local_coverage_path,
+        s3_html_coverage_path,
+        ContentType="text/html",
+        recursive=True,
+    )
     _LOG.info(
         "HTML coverage report is published on S3: path=`%s`",
         s3_html_coverage_path,
@@ -1080,4 +1085,4 @@ def pytest_compare_logs(  # type: ignore
     script_txt = f"vimdiff {file1_tmp} {file2_tmp}"
     msg = f"To diff run:"
     hio.create_executable_script(script_file_name, script_txt, msg=msg)
-    _run(ctx, script_file_name, dry_run=dry_run, pty=True)
+    hlitauti._run(ctx, script_file_name, dry_run=dry_run, pty=True)
