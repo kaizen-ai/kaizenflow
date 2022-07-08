@@ -122,6 +122,9 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     elif period == "Sep2019_Jul2022":
         start_datetime = datetime.datetime(2019, 9, 1)
         end_datetime = datetime.datetime(2022, 7, 1)
+    elif period == "Jan2022":
+        start_datetime = datetime.datetime(2022, 1, 1)
+        end_datetime = datetime.datetime(2022, 2, 1)
     else:
         hdbg.dfatal(f"Invalid period='{period}'")
     _LOG.info("start_datetime=%s end_datetime=%s", start_datetime, end_datetime)
@@ -358,3 +361,31 @@ def apply_build_configs(
         hdbg.dassert_container_type(configs_tmp, list, cconfig.Config)
         configs_out.extend(configs_tmp)
     return configs_out
+
+
+def build_configs_with_tiled_universe_and_periods(
+    system_config: cconfig.Config,
+) -> List[cconfig.Config]:
+    """
+    Build tile configs for C1b pipeline.
+    """
+    configs = [system_config]
+    time_interval_str = system_config["backtest_config"]["time_interval_str"]
+    asset_ids = system_config["market_data_config"]["asset_ids"]
+    # Apply the cross-product by the universe tiles.
+    func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)
+    configs = apply_build_configs(func, configs)
+    _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
+    hdbg.dassert_lte(1, len(configs))
+    # Apply the cross-product by the time tiles.
+    start_timestamp, end_timestamp = get_period(time_interval_str)
+    freq_as_pd_str = system_config["backtest_config", "freq_as_pd_str"]
+    # Amount of history fed to the DAG.
+    lookback_as_pd_str = system_config["backtest_config", "lookback_as_pd_str"]
+    func = lambda cfg: build_configs_varying_tiled_periods(
+        cfg, start_timestamp, end_timestamp, freq_as_pd_str, lookback_as_pd_str
+    )
+    configs = apply_build_configs(func, configs)
+    hdbg.dassert_lte(1, len(configs))
+    _LOG.info("After applying time tiles: num_configs=%s", len(configs))
+    return configs

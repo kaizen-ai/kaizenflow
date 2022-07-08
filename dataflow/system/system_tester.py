@@ -89,10 +89,11 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
     Test fit() and predict() methods on a System.
     """
 
-    def _test_fit_over_backtest_period1(self,
-                   system: dtfsys.System,
-                    output_col_name: str,
-                                        ) -> None:
+    def _test_fit_over_backtest_period1(
+        self,
+        system: dtfsys.System,
+        output_col_name: str,
+    ) -> None:
         """
         - Fit a System over the backtest_config period
         - Save the signature of the system
@@ -112,11 +113,14 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
-    def _test_fit_over_period1(self,
-                               system: dtfsys.System,
-                   start_timestamp: pd.Timestamp,
-                   end_timestamp: pd.Timestamp,
-                   ) -> None:
+    def _test_fit_over_period1(
+        self,
+        system: dtfsys.System,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
+        *,
+        output_col_name: str = "prediction",
+    ) -> None:
         """
         - Fit a System over the given period
         - Save the signature of the system
@@ -129,12 +133,13 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         # Run.
         result_bundle = dag_runner.fit()
         # Check outcome.
-        actual = get_signature(system.config, result_bundle, "prediction")
+        actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
-    def _test_fit_vs_predict1(self,
-                              system: dtfsys.System,
-                              ) -> None:
+    def _test_fit_vs_predict1(
+                      self,
+        system: dtfsys.System,
+    ) -> None:
         """
         Check that `predict()` matches `fit()` on the same data, when the model
         is frozen.
@@ -210,10 +215,10 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
 
 
 class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
-
-    def _test_fit_run1(self,
-                       system: dtfsys.System,
-                 ) -> None:
+    def _test_fit_run1(
+        self,
+        system: dtfsys.System,
+    ) -> None:
         dag_runner = system.get_dag_runner()
         # Set the time boundaries.
         start_datetime = system.config[
@@ -341,10 +346,12 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
             # Complete system config.
             system.config["event_loop_object"] = event_loop
             system.config["market_data_config", "asset_ids"] = asset_ids
-            system.config["dag_runner_config", "sleep_interval_in_secs"] = sleep_interval_in_secs
-            system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
-                real_time_loop_time_out_in_secs
-            )
+            system.config[
+                "dag_runner_config", "sleep_interval_in_secs"
+            ] = sleep_interval_in_secs
+            system.config[
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
+            ] = real_time_loop_time_out_in_secs
             dag_runner = system.get_dag_runner()
             # Run.
             coroutines = [dag_runner.predict()]
@@ -398,8 +405,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         _LOG.debug("file_name=%s", file_name)
         return file_name
 
-    def _test_save_data(self, market_data: mdata.MarketData, period: pd.Timedelta,
-                       file_name: str) -> None:
+    def _test_save_data(
+        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
+    ) -> None:
         """
         Generate data used in this test.
 
@@ -410,7 +418,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
         """
         # period = "last_day"
-        #period = pd.Timedelta("15D")
+        # period = pd.Timedelta("15D")
         limit = None
         mdata.save_market_data(market_data, file_name, period, limit)
         _LOG.warning("Updated file '%s'", file_name)
@@ -502,7 +510,7 @@ class SystemTester:
                 for event in events
             ]
         )
-        actual.append("events_as_str=\n%s" % events_as_str)
+        actual.append(f"events_as_str=\n{events_as_str}")
         actual = "\n".join(actual)
         return actual
 

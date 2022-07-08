@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 import core.finance as cofinanc
+import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
@@ -17,7 +18,57 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Test_Example1_ReplayedForecastSystem
+# Test_Example1_ForecastSystem_FitPredict
+# #############################################################################
+
+
+class Test_Example1_ForecastSystem_FitPredict(
+    dtfsysytes.ForecastSystem_FitPredict_TestCase1
+):
+    def get_system(self) -> dtfsys.System:
+        """
+        Create the System for testing.
+        """
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+        # TODO(*): Do not hard-wire asset ids; see "Easily switch vendors in the E1
+        # pipeline" CmTask #2037.
+        system.config["market_data_config", "asset_ids"] = [
+            1467591036,
+            3303714233,
+        ]
+        system.config[
+            "backtest_config", "start_timestamp_with_lookback"
+        ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        system.config["backtest_config", "end_timestamp"] = pd.Timestamp(
+            "2000-01-31 00:00:00+0000", tz="UTC"
+        )
+        return system
+
+    def test_fit_over_backtest_period1(self) -> None:
+        system = self.get_system()
+        output_col_name = "vwap.ret_0.vol_adj.c"
+        self._test_fit_over_backtest_period1(system, output_col_name)
+
+    def test_fit_over_period1(self) -> None:
+        system = self.get_system()
+        start_timestamp = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
+        output_col_name = "vwap.ret_0.vol_adj.c"
+        self._test_fit_over_period1(
+            system,
+            start_timestamp,
+            end_timestamp,
+            output_col_name=output_col_name,
+        )
+
+    def test_fit_vs_predict1(self) -> None:
+        system = self.get_system()
+        self._test_fit_vs_predict1(system)
+
+
+# #############################################################################
+# Test_Example1_Time_ForecastSystem1
 # #############################################################################
 
 # TODO(gp): Express in terms of Test_TimeForecastSystem_TestCase1
@@ -49,7 +100,7 @@ class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             # TODO(gp): Use the signature from system_testing. See below.
-            result_bundles = result_bundles[0][0]
+            result_bundles: str = result_bundles[0][0]
         return result_bundles
 
     def test1(self) -> None:
@@ -117,7 +168,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
             price_col = "vwap"
             volatility_col = "vwap.ret_0.vol"
             prediction_col = "feature1"
-            actual = system_tester.compute_run_signature(
+            actual: str = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
                 result_bundle,
@@ -222,7 +273,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             price_col = "vwap"
             volatility_col = "vwap.ret_0.vol"
             prediction_col = "feature1"
-            actual = system_tester.compute_run_signature(
+            actual: str = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
                 result_bundle,
