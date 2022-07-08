@@ -21,6 +21,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): @all -> ..from_DagBuilder
 def get_system_config_template_from_dag_builder(
     dag_builder: dtfcore.DagBuilder,
 ) -> cconfig.Config:
@@ -41,6 +42,7 @@ def get_system_config_template_from_dag_builder(
 # #############################################################################
 
 
+# TODO(gp): @all -> get_EventLoop_MarketData_from_df
 def get_event_loop_MarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
@@ -70,6 +72,7 @@ def get_event_loop_MarketData_from_df(
 # #############################################################################
 
 
+# TODO(gp): build_dag_with_DataSourceNode?
 def build_dag_with_data_source_node(
     system: dtfsyssyst.System,
     data_source_node: dtfcore.DataSource,
@@ -91,11 +94,14 @@ def build_dag_with_data_source_node(
     if False:
         dag.force_free_nodes = True
     return dag
+
+
 # #############################################################################
 # DAG runner instances.
 # #############################################################################
 
 
+# TODO(gp): @all -> get_RealTimeDagRunner_from_system
 def get_realtime_DagRunner_from_system(
     system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:

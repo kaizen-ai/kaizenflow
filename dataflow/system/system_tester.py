@@ -137,7 +137,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
     def _test_fit_vs_predict1(
-                      self,
+        self,
         system: dtfsys.System,
     ) -> None:
         """

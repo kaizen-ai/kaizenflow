@@ -184,8 +184,12 @@ class MarketData(abc.ABC):
         _LOG.verb_debug(hprint.to_str("timedelta"))
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         wall_clock_time = self.get_wall_clock_time()
+        # The current time is `wall_clock_time`. We want to get data for `timedelta`
+        # time before so we need data in `[wall_clock_time - timedelta, wall_clock_time]`.
         start_ts = self._process_period(timedelta, wall_clock_time)
         end_ts = None
+        # TODO(gp): @all
+        # end_ts = wall_clock_time
         if ts_col_name is None:
             # By convention to get the last chunk of data we use the start_time
             #  column.
