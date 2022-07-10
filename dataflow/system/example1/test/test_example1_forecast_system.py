@@ -225,7 +225,6 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             #
             if is_database_portfolio:
                 system = dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
-                    db_connection=self.connection
                 )
             else:
                 system = (
