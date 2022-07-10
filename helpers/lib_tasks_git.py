@@ -81,10 +81,10 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     def _run_all_repos(cmd: str) -> str:
         # Clean current repo.
         cmd = git_clean_cmd
-        hlitauti._run(ctx, cmd)
+        hsystem.system(cmd, abort_on_error=False)
         # Clean submodules.
         cmd = f"git submodule foreach '{git_clean_cmd}'"
-        hlitauti._run(ctx, cmd)
+        hsystem.system(cmd, abort_on_error=False)
 
     # Clean recursively.
     # This cmd is supposed to give errors so we mute them.
