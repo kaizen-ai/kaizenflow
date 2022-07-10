@@ -7,6 +7,7 @@ import dataflow.system.source_nodes as dtfsysonod
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 
 import core.finance as cofinanc
@@ -380,6 +381,7 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     # TODO(Paul): Pass the column name through the constructor, so we can make it
     #  programmable.
     hdbg.dassert_in(asset_id_col, df.columns)
+    hpandas.dassert_series_type_is(df[asset_id_col], np.int64)
     for asset_id, df in df.groupby(asset_id_col):
         dfs[asset_id] = df
     # Reorganize the data into the desired format.

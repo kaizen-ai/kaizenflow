@@ -11,7 +11,6 @@ from typing import Any, Callable, Coroutine
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import helpers.hsql as hsql
 import market_data as mdata
 import oms as oms
 
@@ -157,6 +156,7 @@ class System(abc.ABC):
 
     def __init__(self) -> None:
         self._config = self._get_system_config_template()
+        self._config["system_class"] = self.__class__.__name__
         _LOG.debug("system_config=\n%s", self._config)
 
     @property
@@ -469,29 +469,52 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     interfaces of an OMS system.
     """
 
-    # TODO(gp): Consider moving the db_connection to system_config too.
     def __init__(
         self,
-        db_connection: hsql.DbConnection,
     ):
-        """
-        :param db_connection: connection to DB with order data
-        """
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
-        self._db_connection = db_connection
 
+    # TODO(gp): I've noticed that tests actually create an order processor instead
+    #  of using this. The tests should use this.
     def get_order_processor_coroutine(
         self,
+        # TODO(gp): Remove this param.
         portfolio: oms.Portfolio,
         real_time_loop_time_out_in_secs: int,
     ) -> Coroutine:
-        db_connection = self._db_connection
+        # These information is also in system.config.
+        db_connection = self.portfolio._db_connection
+        asset_id_name = self.market_data.asset_id_col
+        #
         order_processor = oms.get_order_processor_example1(
-            db_connection, portfolio
+            db_connection, portfolio, asset_id_name
         )
         #
         order_processor_coroutine = oms.get_order_processor_coroutine_example1(
             order_processor, portfolio, real_time_loop_time_out_in_secs
         )
         return order_processor_coroutine
+
+
+# #############################################################################
+# Time_ForecastSystem_with_DatabasePortfolio
+# #############################################################################
+
+
+class Time_ForecastSystem_with_DatabasePortfolio(
+    _Time_ForecastSystem_Mixin, _ForecastSystem_with_Portfolio
+):
+    """
+    Same as Time_ForecastSystem_with_DataFramePortfolio but with Database
+    portfolio.
+
+    This configuration corresponds to a production system where we talk
+    to a DB to get both current positions updated based on the fills.
+    """
+
+    @abc.abstractmethod
+    def _get_portfolio(
+        self,
+    ) -> oms.DatabasePortfolio:
+        ...

@@ -46,6 +46,8 @@ dag_config:
     col_mapping:
       vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
 dag_builder_object: nid_prefix=
+dag_builder_class: Example1_DagBuilder
+system_class: Example1_ForecastSystem
 dag_config_config:
   resample:
     transformer_kwargs:

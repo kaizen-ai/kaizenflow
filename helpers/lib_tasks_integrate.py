@@ -132,7 +132,7 @@ _LOG = logging.getLogger(__name__)
 #
 # - Copy a dir
 #   ```
-#   > rsync -r /Users/saggese/src/cmamp1/research_amp/ /Users/saggese/src/amp1/research_amp
+#   > rsync --delete -a -r /Users/saggese/src/cmamp1/research_amp/ /Users/saggese/src/amp1/research_amp
 #   ```
 
 # ## Double check the integration
