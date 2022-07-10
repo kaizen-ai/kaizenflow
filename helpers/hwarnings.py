@@ -6,8 +6,9 @@ Import as:
 import helpers.hwarnings as hwarnin
 """
 
-_WARNING = "\033[33mWARNING\033[0m"
-print(f"{_WARNING}: Disabling annoying warnings")
+if False:
+    _WARNING = "\033[33mWARNING\033[0m"
+    print(f"{_WARNING}: Disabling annoying warnings")
 
 # Avoid dependency from other `helpers` modules, such as `helpers.hprint`, to
 # prevent import cycles.
@@ -19,34 +20,37 @@ import warnings
 # TODO(gp): For some reason "once" doesn't work, so we ignore all of the warnings.
 action = "ignore"
 
-# /venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:1910:
-# InterpolationWarning: The test statistic is outside of the range of p-values
-# available in the look-up table. The actual p-value is greater than the
-# p-value returned.
-from statsmodels.tools.sm_exceptions import InterpolationWarning
+try:
+    # /venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:1910:
+    # InterpolationWarning: The test statistic is outside of the range of p-values
+    # available in the look-up table. The actual p-value is greater than the
+    # p-value returned.
+    from statsmodels.tools.sm_exceptions import InterpolationWarning
 
-# warnings.simplefilter("ignore", category=InterpolationWarning)
+    # warnings.simplefilter("ignore", category=InterpolationWarning)
 
-# /venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:1906:
-# InterpolationWarning: The test statistic is outside of the range of p-values
-# available in the look-up table. The actual p-value is smaller than the
-# p-value returned.
-warnings.filterwarnings(
-    action,
-    category=InterpolationWarning,
-    module=".*statsmodels.*",
-    lineno=1906,
-    append=False,
-)
+    # /venv/lib/python3.8/site-packages/statsmodels/tsa/stattools.py:1906:
+    # InterpolationWarning: The test statistic is outside of the range of p-values
+    # available in the look-up table. The actual p-value is smaller than the
+    # p-value returned.
+    warnings.filterwarnings(
+        action,
+        category=InterpolationWarning,
+        module=".*statsmodels.*",
+        lineno=1906,
+        append=False,
+    )
 
 
-warnings.filterwarnings(
-    action,
-    category=InterpolationWarning,
-    module=".*statsmodels.*",
-    lineno=1910,
-    append=False,
-)
+    warnings.filterwarnings(
+        action,
+        category=InterpolationWarning,
+        module=".*statsmodels.*",
+        lineno=1910,
+        append=False,
+    )
+except ImportError:
+    pass
 
 # /venv/lib/python3.8/site-packages/ipykernel/ipkernel.py:283:
 # DeprecationWarning: `should_run_async` will not call `transform_cell`
@@ -66,6 +70,9 @@ warnings.filterwarnings(
 # only support SQLAlchemy connectable(engine/connection) ordatabase string URI or
 # sqlite3 DBAPI2 connectionother DBAPI2 objects are not tested, please consider
 # using SQLAlchemy
+#
+# This seems a false alarm:
+# https://github.com/pandas-dev/pandas/issues/45660#issuecomment-1077355514
 warnings.filterwarnings(
     action,
     category=UserWarning,
@@ -73,5 +80,6 @@ warnings.filterwarnings(
     lineno=761,
     append=False,
 )
+
 
 # TqdmExperimentalWarning

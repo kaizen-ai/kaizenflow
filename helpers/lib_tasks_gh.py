@@ -126,6 +126,7 @@ def gh_workflow_list(  # type: ignore
     filter_by_branch="current_branch",
     filter_by_status="all",
     report_only_status=True,
+    show_stack_trace=False,
 ):
     """
     Report the status of the GH workflows.
@@ -136,6 +137,8 @@ def gh_workflow_list(  # type: ignore
         - `all` for all branches
     :param filter_by_status: filter table by the status of the workflow
         - E.g., "failure", "success"
+    :param show_stack_trace: in case of error run `pytest_repro` reporting also
+        the stack trace
     """
     hlitauti._report_task(txt=hprint.to_str("filter_by_branch filter_by_status"))
     # Login.
@@ -192,7 +195,10 @@ def gh_workflow_list(  # type: ignore
                 hsystem.system(cmd)
                 print(f"# Log is in '{log_file_name}'")
                 # Run_fast_tests  Run fast tests  2021-12-19T00:19:38.3394316Z FAILED data
-                cmd = rf"grep 'Z FAILED ' {log_file_name}"
+                # cmd = rf"grep 'Z FAILED ' {log_file_name}"
+                cmd = f"invoke pytest_repro -f {log_file_name}"
+                if show_stack_trace:
+                    cmd += " -s"
                 hsystem.system(cmd, suppress_output=False, abort_on_error=False)
                 break
             if status == "":

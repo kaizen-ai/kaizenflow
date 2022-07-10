@@ -4,7 +4,6 @@ Import as:
 import core.signal_processing.swt as csiprswt
 """
 
-
 import logging
 from typing import List, Optional, Tuple, Union
 
@@ -455,12 +454,13 @@ def _compute_fir_zscore(
             signal.shape[1], 1, "Input dataframe must have a single column."
         )
         signal = signal.squeeze()
+    # _LOG.debug("signal=%s", hpandas.df_to_str(signal))
     mean = get_swt(
         signal, wavelet=wavelet, depth=dyadic_tau, output_mode="smooth"
     )[dyadic_tau].shift(delay)
     demeaned = signal - mean
     var = get_swt(
-        demeaned ** 2,
+        demeaned**2,
         wavelet=variance_wavelet,
         depth=variance_dyadic_tau,
         output_mode="smooth",

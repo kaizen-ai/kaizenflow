@@ -25,7 +25,7 @@ def get_system_config_template_from_dag_builder(
     dag_builder: dtfcore.DagBuilder,
 ) -> cconfig.Config:
     """
-    Build a systen config from a DAG builder.
+    Build a system config from a DAG builder.
     """
     system_config = cconfig.Config()
     # Save the `DagBuilder` and the `DagConfig` in the config object.
@@ -33,6 +33,8 @@ def get_system_config_template_from_dag_builder(
     dag_config = dag_builder.get_config_template()
     system_config["dag_config"] = dag_config
     system_config["dag_builder_object"] = dag_builder
+    # Track the name of the builder for book-keeping.
+    system_config["dag_builder_class"] = dag_builder.__class__.__name__
     return system_config
 
 
@@ -91,11 +93,14 @@ def build_dag_with_data_source_node(
     if False:
         dag.force_free_nodes = True
     return dag
+
+
 # #############################################################################
 # DAG runner instances.
 # #############################################################################
 
 
+# TODO(gp): @all -> get_RealtimeDagRunner or get_RealtimeDagRunner_from_system?
 def get_realtime_DagRunner_from_system(
     system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:

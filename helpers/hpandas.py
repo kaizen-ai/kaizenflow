@@ -868,7 +868,7 @@ def _df_to_str(
 
 
 # TODO(gp): Maybe we can have a `_LOG_df_to_str(log_level, *args, **kwargs)` that
-# calls `_LOG.log(log_level, hpandas.df_to_str(*args, **kwargs, log_level=log_level))`.
+#  calls `_LOG.log(log_level, hpandas.df_to_str(*args, **kwargs, log_level=log_level))`.
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,
