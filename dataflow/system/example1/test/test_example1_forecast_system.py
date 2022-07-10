@@ -216,6 +216,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         """
         Run a system using the desired portfolio based on DB or dataframe.
         """
+        # TODO(gp): This might come from market_data.asset_id_col
         asset_id_name = "asset_id"
         incremental = False
         oms.create_oms_tables(self.connection, incremental, asset_id_name)
@@ -224,7 +225,8 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             coroutines = []
             #
             if is_database_portfolio:
-                system = dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
+                system = (
+                    dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
                 )
             else:
                 system = (
@@ -232,10 +234,12 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
                 )
             # Complete system config.
             system.config["event_loop_object"] = event_loop
+            system.config["db_connection_object"] = self.connection
             system.config["market_data_config", "data"] = data
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]
-            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+            # TODO(gp): This needs to go to the config.
+            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 15
             system.config[
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
@@ -246,7 +250,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             portfolio = system.portfolio
             if is_database_portfolio:
                 order_processor = oms.get_order_processor_example1(
-                    self.connection, portfolio
+                    self.connection, portfolio, asset_id_name
                 )
                 order_processor_coroutine = (
                     oms.get_order_processor_coroutine_example1(
