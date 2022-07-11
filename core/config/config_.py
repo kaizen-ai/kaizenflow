@@ -88,8 +88,9 @@ class Config:
                 _LOG.debug(
                     "head_key='%s', self._config=%s", head_key, self._config
                 )
-                subconfig = self.get(head_key, None)
-                if subconfig is None:
+                if head_key in self:
+                    subconfig = self[head_key]
+                else:
                     subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
                 subconfig.__setitem__(tail_key, val)
@@ -98,7 +99,9 @@ class Config:
         hdbg.dassert(self._check_base_case(key))
         self._config[key] = val  # type: ignore
 
-    def __getitem__(self, key: Key) -> Any:
+    def __getitem__(
+        self, key: Key, *, print_config_on_error: bool = False
+    ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist.
 
@@ -111,36 +114,20 @@ class Config:
         (which is also not directly accessible inside the recursion), e.g.,
         `key='nrows_tmp' not in ['nrows', 'nrows2']`
 
+        :param print_config_on_error: if True, print error if the key is not present
+            in the Config
         :raises KeyError: if the (nested) key is not found in the `Config`.
         """
-        _LOG.debug("key=%s, config=%s", key, self)
-        # Check if the key is nested.
-        if hintros.is_iterable(key):
-            head_key, tail_key = self._parse_compound_key(key)
-            if not tail_key:
-                # Tuple of a single element, then return the value.
-                ret = self.__getitem__(head_key)
-            else:
-                # Compound key: recurse on the tail of the key.
-                if head_key not in self._config:
-                    raise KeyError(
-                        f"key='{head_key}' not in '{list(self._config.keys())}'"
-                    )
-                subconfig = self._config[head_key]
-                _LOG.debug("subconfig=%s", self._config)
-                if isinstance(subconfig, Config):
-                    # Recurse.
-                    ret = subconfig.__getitem__(tail_key)
-                else:
-                    # There are more keys to process but we have reached the leaves
-                    # of the config, then we assert.
-                    raise KeyError(f"tail_key='{tail_key}' not in '{subconfig}'")
-            return ret
-        # Base case: key is a string, config is a dict.
-        hdbg.dassert(self._check_base_case(key))
-        if key not in self._config:
-            raise KeyError(f"key='{key}' not in '{list(self._config.keys())}'")
-        ret = self._config[key]  # type: ignore
+        level = 0
+        try:
+            ret = self._get_item(key, level=level)
+        except KeyError as e:
+            # After the recursion is done, in case of error, print information
+            # about the offending config.
+            if print_config_on_error and level == 0:
+                msg = "\n" + hprint.frame(str(e)) + "\nconfig=\n" + str(self)
+                _LOG.error(msg)
+            raise e
         return ret
 
     def __contains__(self, key: Key) -> bool:
@@ -154,7 +141,7 @@ class Config:
         # accessing the key.
         _LOG.debug("key=%s, config=\n%s", key, self)
         try:
-            val = self.__getitem__(key)
+            val = self.__getitem__(key, print_config_on_error=False)
             _LOG.debug("Found val=%s", val)
             found = True
         except KeyError as e:
@@ -238,7 +225,7 @@ class Config:
         `val` if the value corresponding to `key` doesn't exist.
         """
         try:
-            ret = self.__getitem__(key)
+            ret = self.__getitem__(key, print_config_on_error=True)
         except KeyError as e:
             # No key: use the default val if it was passed or asserts.
             _LOG.debug("e=%s", e)
@@ -396,6 +383,37 @@ class Config:
         )
         hdbg.dassert_isinstance(head_key, str, "Keys can only be string")
         return head_key, tail_key
+
+    def _get_item(self, key: Key, *, level: int) -> Any:
+        _LOG.debug("key=%s, config=%s, lev=%s", key, self, level)
+        # Check if the key is nested.
+        if hintros.is_iterable(key):
+            head_key, tail_key = self._parse_compound_key(key)
+            if not tail_key:
+                # Tuple of a single element, then return the value.
+                ret = self._get_item(head_key, level=level + 1)
+            else:
+                # Compound key: recurse on the tail of the key.
+                if head_key not in self._config:
+                    raise KeyError(
+                        f"key='{head_key}' not in '{list(self._config.keys())}'"
+                    )
+                subconfig = self._config[head_key]
+                _LOG.debug("subconfig=%s", self._config)
+                if isinstance(subconfig, Config):
+                    # Recurse.
+                    ret = subconfig._get_item(tail_key, level=level + 1)
+                else:
+                    # There are more keys to process but we have reached the leaves
+                    # of the config, then we assert.
+                    raise KeyError(f"tail_key='{tail_key}' not in '{subconfig}'")
+            return ret
+        # Base case: key is a string, config is a dict.
+        hdbg.dassert(self._check_base_case(key))
+        if key not in self._config:
+            raise KeyError(f"key='{key}' not in '{list(self._config.keys())}'")
+        ret = self._config[key]  # type: ignore
+        return ret
 
     def _check_base_case(self, key: Key) -> bool:
         _LOG.debug("key=%s", key)

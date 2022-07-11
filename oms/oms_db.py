@@ -10,6 +10,7 @@ import logging
 from typing import Any, Dict
 
 import helpers.hasyncio as hasynci
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 
 _LOG = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ def create_submitted_orders_table(
     # - timestamp_db (e.g., 2021-11-12 19:59:23.716732)
     # - order_as_csv
     #     = target order in CSV format
+    _LOG.debug(hprint.to_str("db_connection incremental table_name"))
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -106,6 +108,7 @@ def create_accepted_orders_table(
     # - cancel_count (e.g., 0)
     # - success (e.g., False)
     # - reason (e.g., There were a total of..)
+    _LOG.debug(hprint.to_str("db_connection incremental table_name"))
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -159,6 +162,7 @@ def create_current_positions_table(
     :param table_name: name of the current positions table
     :return: name of created table
     """
+    _LOG.debug(hprint.to_str("db_connection incremental asset_id_name table_name"))
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -240,6 +244,7 @@ def create_restrictions_table(
     :param table_name: name of the restrictions table
     :return: name of created table
     """
+    _LOG.debug(hprint.to_str("db_connection incremental asset_id_name table_name"))
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")

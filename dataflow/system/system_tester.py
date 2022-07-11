@@ -11,11 +11,11 @@ from typing import Callable, List, Tuple, Union
 
 import pandas as pd
 
-import helpers.hasyncio as hasynci
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import dataflow.system as dtfsys
+import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
@@ -30,9 +30,9 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): -> system_test_case.py
 
 
-# ##################################################################################
+# #############################################################################
 # Utils
-# ##################################################################################
+# #############################################################################
 
 
 def get_signature(
@@ -53,9 +53,9 @@ def get_signature(
     return res
 
 
-# ##################################################################################
+# #############################################################################
 # System_CheckConfig_TestCase1
-# ##################################################################################
+# #############################################################################
 
 
 class System_CheckConfig_TestCase1(hunitest.TestCase):
@@ -79,9 +79,9 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         self.check_string(txt, purify_text=True)
 
 
-# ##################################################################################
+# #############################################################################
 # ForecastSystem1_FitPredict_TestCase1
-# ##################################################################################
+# #############################################################################
 
 
 class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
@@ -89,10 +89,11 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
     Test fit() and predict() methods on a System.
     """
 
-    def _test_fit_over_backtest_period1(self,
-                   system: dtfsys.System,
-                    output_col_name: str,
-                                        ) -> None:
+    def _test_fit_over_backtest_period1(
+        self,
+        system: dtfsys.System,
+        output_col_name: str,
+    ) -> None:
         """
         - Fit a System over the backtest_config period
         - Save the signature of the system
@@ -112,11 +113,14 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
-    def _test_fit_over_period1(self,
-                               system: dtfsys.System,
-                   start_timestamp: pd.Timestamp,
-                   end_timestamp: pd.Timestamp,
-                   ) -> None:
+    def _test_fit_over_period1(
+        self,
+        system: dtfsys.System,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
+        *,
+        output_col_name: str = "prediction",
+    ) -> None:
         """
         - Fit a System over the given period
         - Save the signature of the system
@@ -129,16 +133,16 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         # Run.
         result_bundle = dag_runner.fit()
         # Check outcome.
-        actual = get_signature(system.config, result_bundle, "prediction")
+        actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
-    def _test_fit_vs_predict1(self,
-
-                              system: dtfsys.System,
-                              ) -> None:
+    def _test_fit_vs_predict1(
+        self,
+        system: dtfsys.System,
+    ) -> None:
         """
-        Check that `predict()` matches `fit()` on the same data, when the model is
-        frozen.
+        Check that `predict()` matches `fit()` on the same data, when the model
+        is frozen.
         """
         dag_runner = system.get_dag_runner()
         # Get the time boundaries.
@@ -162,9 +166,9 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         self.assert_dfs_close(fit_df, predict_df)
 
 
-# ##################################################################################
+# #############################################################################
 # ForecastSystem_FitInvariance_TestCase1
-# ##################################################################################
+# #############################################################################
 
 
 class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
@@ -205,16 +209,16 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
         self.assert_equal(str(result_df1), str(result_df2), fuzzy_match=True)
 
 
-# ##################################################################################
+# #############################################################################
 # ForecastSystem_CheckPnl_TestCase1
-# ##################################################################################
+# #############################################################################
 
 
 class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
-
-    def _test_fit_run1(self,
-                       system: dtfsys.System,
-                 ) -> None:
+    def _test_fit_run1(
+        self,
+        system: dtfsys.System,
+    ) -> None:
         dag_runner = system.get_dag_runner()
         # Set the time boundaries.
         start_datetime = system.config[
@@ -238,9 +242,9 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         self.check_string(signature, fuzzy_match=True, purify_text=True)
 
 
-# ##################################################################################
+# #############################################################################
 # Time_ForecastSystem_with_DataFramePortfolio1
-# ##################################################################################
+# #############################################################################
 
 
 class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
@@ -251,7 +255,6 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
     - EgReplayedMarketData
     - DataFrame portfolio
     - Simulated broker
-
     """
 
     def helper(
@@ -265,10 +268,12 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
             # Complete system config.
             system.config["event_loop_object"] = event_loop
             system.config["market_data_config", "asset_ids"] = asset_ids
-            system.config["dag_runner_config", "sleep_interval_in_secs"] = sleep_interval_in_secs
-            system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
-                real_time_loop_time_out_in_secs
-            )
+            system.config[
+                "dag_runner_config", "sleep_interval_in_secs"
+            ] = sleep_interval_in_secs
+            system.config[
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
+            ] = real_time_loop_time_out_in_secs
             dag_runner = system.get_dag_runner()
             # Run.
             coroutines = [dag_runner.predict()]
@@ -322,8 +327,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         _LOG.debug("file_name=%s", file_name)
         return file_name
 
-    def _test_save_data(self, market_data: mdata.MarketData, period: pd.Timedelta,
-                       file_name: str) -> None:
+    def _test_save_data(
+        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
+    ) -> None:
         """
         Generate data used in this test.
 
@@ -334,7 +340,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
         """
         # period = "last_day"
-        #period = pd.Timedelta("15D")
+        # period = pd.Timedelta("15D")
         limit = None
         mdata.save_market_data(market_data, file_name, period, limit)
         _LOG.warning("Updated file '%s'", file_name)
@@ -342,35 +348,28 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
 
     # ////////////////////////////////////////////////////////////////////////////
 
-    def _test1(self, system_builder: Callable, asset_ids: List[int]) -> None:
-        # Clean the DB tables.
-        asset_id_name = "asset_id"
-        incremental = False
-        oms.create_oms_tables(self.connection, incremental, asset_id_name)
-        #
+    def _test1(self, system: dtfsys.System) -> None:
+        _LOG.debug("final config=\n%s", str(system.config))
         with hasynci.solipsism_context() as event_loop:
-            system = system_builder(self.connection)
             # Complete system config.
             system.config["event_loop_object"] = event_loop
-            system.config["market_data_config", "asset_ids"] = asset_ids
-            # One trading day:
-            # real_time_loop_time_out_in_secs = 6.5 * 60 * 60 - 1
-            real_time_loop_time_out_in_secs = 60 * 60 + 1
-            # real_time_loop_time_out_in_secs = 60 * 15 + 1
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = real_time_loop_time_out_in_secs
-            sleep_interval_in_secs = 60 * 5
-            system.config[
-                "dag_runner_config", "sleep_interval_in_secs"
-            ] = sleep_interval_in_secs
+            system.config["db_connection_object"] = self.connection
             # Build the System.
             dag_runner = system.get_dag_runner()
             # Create the OrderProcessor.
             portfolio = system.portfolio
+            # Clean the DB tables.
+            asset_id_name = system.market_data.asset_id_col
+            # TODO(gp): Should this be system.get_order_processor_coroutine()?
+            incremental = False
+            oms.create_oms_tables(self.connection, incremental, asset_id_name)
             order_processor = oms.get_order_processor_example1(
-                self.connection, portfolio
+                self.connection, portfolio, asset_id_name
             )
+            real_time_loop_time_out_in_secs = system.config[
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
+            ]
+            _LOG.debug(hprint.to_str("real_time_loop_time_out_in_secs"))
             order_processor_coroutine = (
                 oms.get_order_processor_coroutine_example1(
                     order_processor, portfolio, real_time_loop_time_out_in_secs
@@ -381,16 +380,29 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
+            # Compute signature.
+            txt = []
+            txt.append(hprint.frame("system_config"))
+            txt.append(str(system.config))
             # TODO(gp): This should be factored out.
+            txt.append(hprint.frame("compute_run_signature"))
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
             result_bundle.result_df = result_bundle.result_df.tail(40)
             system_tester = dtfsys.SystemTester()
             # Check output.
-            price_col = "vwap"
-            prediction_col = "prediction"
-            volatility_col = "vwap.ret_0.vol"
-            actual = system_tester.compute_run_signature(
+            price_col = system.config[
+                "process_forecasts_config",
+                "evaluate_forecasts_config",
+                "price_col",
+            ]
+            prediction_col = system.config[
+                "process_forecasts_config", "prediction_col"
+            ]
+            volatility_col = system.config[
+                "process_forecasts_config", "volatility_col"
+            ]
+            txt_tmp = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
                 result_bundle,
@@ -398,14 +410,25 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
                 volatility_col=volatility_col,
                 prediction_col=prediction_col,
             )
-            self.check_string(actual)
+            txt.append(txt_tmp)
+            #
+            actual = "\n".join(txt)
+            # Remove the following line:
+            # ```
+            # db_connection_object: <connection object; dsn: 'user=aljsdalsd
+            #   password=xxx dbname=oms_postgres_db_local
+            #   host=cf-spm-dev4 port=12056', closed: 0>
+            # ```
+            actual = hunitest.filter_text("db_connection_object", actual)
+            actual = hunitest.filter_text("log_dir:", actual)
+            self.check_string(actual, purify_text=True)
 
 
 # TODO(gp): Add a longer test with more assets once things are working.
 
-# ##################################################################################
+# #############################################################################
 # SystemTester
-# ##################################################################################
+# #############################################################################
 
 
 # TODO(gp): These functions should be free-standing.
@@ -439,6 +462,8 @@ class SystemTester:
         _LOG.debug("pnl=\n%s", pnl)
         return actual, pnl
 
+    # TODO(gp): @paul pass dictionaries instead of the values to mimic the
+    #  interface of `ProcessForecasts`.
     def compute_run_signature(
         self,
         dag_runner,
@@ -479,6 +504,8 @@ class SystemTester:
         actual = "\n".join(map(str, actual))
         return actual
 
+    # TODO(gp): @paul pass dictionaries instead of the values to mimic the
+    #  interface of `ProcessForecasts`.
     def get_research_pnl_signature(
         self,
         result_bundle,
@@ -501,6 +528,7 @@ class SystemTester:
         )
         result_df = result_bundle.result_df
         _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
+        #
         signature = forecast_evaluator.to_str(
             result_df,
             bulk_frac_to_remove=bulk_frac_to_remove,
@@ -510,6 +538,7 @@ class SystemTester:
         )
         _LOG.debug("signature=\n%s", signature)
         actual.append(signature)
+        #
         _, _, _, _, stats = forecast_evaluator.compute_portfolio(
             result_df,
             bulk_frac_to_remove=bulk_frac_to_remove,

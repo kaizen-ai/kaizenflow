@@ -705,14 +705,14 @@ def _apply_func_to_data(
                 info=info,
                 **func_kwargs,
             )
-        except exceptions:
-            _LOG.warning("Exception encountered!")
+        except exceptions as e:
+            _LOG.warning("Exception encountered: %s" % str(e))
             return (None, None)
     else:
         try:
             result = func(data, **func_kwargs)
-        except exceptions:
-            _LOG.warning("Exception encountered!")
+        except exceptions as e:
+            _LOG.warning("Exception encountered: %s" % str(e))
             return (None, None)
         info = None
     if reindex_like_input:
