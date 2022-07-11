@@ -134,7 +134,6 @@ def get_DatabasePortfolio_example1(
         broker,
         mark_to_market_col,
         pricing_method,
-        db_connection=db_connection,
         table_name=table_name,
         #
         initial_cash=initial_cash,
@@ -175,7 +174,6 @@ def get_DatabasePortfolio_example2(
         mark_to_market_col,
         pricing_method,
         initial_holdings,
-        db_connection=db_connection,
         table_name=table_name,
         retrieve_initial_holdings_from_db=True,
     )

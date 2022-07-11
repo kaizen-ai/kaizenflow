@@ -49,13 +49,16 @@ dag_config_config:
     transformer_kwargs:
       rule: 1T
 dag_runner_object: <bound method Example1_ForecastSystem.get_dag_runner of <dataflow.system.example1.example1_forecast_system.Example1_ForecastSystem object>>
-market_data_config:
-  asset_id_col_name: asset_id
-  asset_ids: [3303714233, 1467591036]
 backtest_config:
   universe_str: example1_v1-top2
   trading_period_str: 1T
   time_interval_str: Jan2000
+  freq_as_pd_str: M
+  lookback_as_pd_str: 10D
+market_data_config:
+  im_client: <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>
+  asset_ids: [3303714233, 1467591036]
+  asset_id_col_name: asset_id
 experiment_config:
   start_timestamp_with_lookback: 1999-12-22 00:00:00+00:00
   start_timestamp: 2000-01-01 00:00:00+00:00
