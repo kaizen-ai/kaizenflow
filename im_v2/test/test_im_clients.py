@@ -1,10 +1,12 @@
 import pandas as pd
+import pytest
 
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.crypto_chassis.data.client as iccdc
 
 
+@pytest.mark.slow("Slow via GH, fast on server.")
 class TestHistoricalImClients(icdctictc.ImClientTestCase):
     """
     Test existing ImClients with one test for each.
