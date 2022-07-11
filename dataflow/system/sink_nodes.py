@@ -142,6 +142,7 @@ def get_process_forecasts_dict_example1(
     volatility_col: str,
     price_col: str,
     spread_col: Optional[str],
+    order_duration: int,
     *,
     bulk_frac_to_remove: float = 0.0,
     target_gmv: float = 1e5,
@@ -150,6 +151,8 @@ def get_process_forecasts_dict_example1(
     """
     Get the config for `ProcessForecast` node.
     """
+    # TODO(gp): It's unclear if we should be able to enable or not
+    # ForecastEvaluatorFromPrice.
     if log_dir is not None:
         # Params for `ForecastEvaluatorFromPrice`, which computes the pnl with
         # the vectorized PnL that we run in parallel.
@@ -167,8 +170,7 @@ def get_process_forecasts_dict_example1(
         # Params for `ForecastProcessor`.
         "order_config": {
             "order_type": order_type,
-            # TODO(gp): pass this
-            "order_duration": 5,
+            "order_duration": order_duration,
         },
         "optimizer_config": {
             "backend": "pomo",
@@ -209,11 +211,16 @@ def get_process_forecasts_dict_example1(
 
 def get_process_forecasts_dict_example2(
     portfolio: omportfo.Portfolio,
+    order_duration: int,
 ) -> Dict[str, Any]:
+    """
+    Used by E8d.
+    """
     prediction_col = "prediction"
     volatility_col = "vwap.ret_0.vol"
     price_col = "vwap"
     spread_col = "pct_bar_spread"
+    #
     bulk_frac_to_remove = 0.0
     target_gmv = 1e5
     # log_dir = None
@@ -225,6 +232,37 @@ def get_process_forecasts_dict_example2(
         volatility_col,
         price_col,
         spread_col,
+        order_duration,
+        bulk_frac_to_remove=bulk_frac_to_remove,
+        target_gmv=target_gmv,
+        log_dir=log_dir,
+    )
+    return process_forecasts_dict
+
+
+def get_process_forecasts_dict_example3(
+    portfolio: omportfo.Portfolio,
+    order_duration: int,
+) -> Dict[str, Any]:
+    """
+    Used by E8f.
+    """
+    prediction_col = "prediction"
+    volatility_col = "garman_klass_vol"
+    price_col = "close_vwap"
+    spread_col = None
+    #
+    bulk_frac_to_remove = 0.0
+    target_gmv = 1e5
+    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    #
+    process_forecasts_dict = get_process_forecasts_dict_example1(
+        portfolio,
+        prediction_col,
+        volatility_col,
+        price_col,
+        spread_col,
+        order_duration,
         bulk_frac_to_remove=bulk_frac_to_remove,
         target_gmv=target_gmv,
         log_dir=log_dir,

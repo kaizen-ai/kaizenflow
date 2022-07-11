@@ -12,6 +12,7 @@ import datetime
 import functools
 import logging
 import os
+import tempfile
 from typing import List, Optional
 
 import numpy as np
@@ -24,6 +25,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
+import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 import helpers.htqdm as htqdm
 import im_v2.ig.ig_utils as imvigigut
@@ -34,6 +36,58 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 # Historical flow.
 # #############################################################################
+
+# The schema of the historical data is:
+# - vendor_date
+# - interval
+# - start_time
+# - end_time
+# - ticker
+# - currency
+# - open
+# - close
+# - low
+# - high
+# - volume
+# - notional
+# - last_trade_time
+# - all_day_volume
+# - all_day_notional
+# - day_volume
+# - day_notional
+# - day_vol_prc_sqr
+# - day_num_trade
+# - bid
+# - ask
+# - bid_size
+# - ask_size
+# - good_bid
+# - good_ask
+# - good_bid_size
+# - good_ask_size
+# - day_spread
+# - day_num_spread
+# - day_low
+# - day_high
+# - last_trade
+# - last_trade_volume
+# - bid_high
+# - ask_high
+# - bid_low
+# - ask_low
+# - sided_bid_count
+# - sided_bid_shares
+# - sided_bid_notional
+# - day_sided_bid_count
+# - day_sided_bid_shares
+# - day_sided_bid_notional
+# - sided_ask_count
+# - sided_ask_shares
+# - sided_ask_notional
+# - day_sided_ask_count
+# - day_sided_ask_shares
+# - day_sided_ask_notional
+# - igid
 
 
 def date_to_file_path(date: datetime.date, root_data_dir: str) -> str:
@@ -156,7 +210,13 @@ def get_raw_bar_data_from_file(
     asset_id_name: str,
     columns: Optional[List[str]],
     aws_profile: str,
+    *,
+    download_locally: bool = False,
 ) -> pd.DataFrame:
+    """
+    :param download_locally: force to download the file locally from S3 before
+        reading it
+    """
     _LOG.debug(hprint.to_str("path asset_ids asset_id_name columns"))
     # Compute the Parquet filter.
     if asset_ids is None:
@@ -170,14 +230,28 @@ def get_raw_bar_data_from_file(
             filters.append([(asset_id_name, "=", asset_id)])
     # Load the data as a pd.DataFrame.
     # _LOG.debug("filters=%s", filters)
-    filesystem = hs3.get_s3fs(aws_profile) if path.startswith("s3://") else None
+    s3fs_ = hs3.get_s3fs(aws_profile) if path.startswith("s3://") else None
+    if (s3fs_ and download_locally) or aws_profile == "saml-spm-sasm":
+        # For "saml-spm-sasm" we need to cache data locally to work around a
+        # slowdown of accessing the data directly from S3, due to some format
+        # change.
+        #tmp_file_name = tempfile.NamedTemporaryFile().name
+        tmp_file_name = "/tmp/" + "_".join(path.split("/")[-2:])
+        _LOG.info("Downloading %s to %s", path, tmp_file_name)
+        # For some reason downloading with s3fs is 3-5x slower than using the
+        # command directly.
+        #s3fs_.download(path, tmp_file_name)
+        cmd = f"aws s3 cp --profile {aws_profile} {path} {tmp_file_name}"
+        hsystem.system(cmd)
+        path = tmp_file_name
+        s3fs_ = None
     dataset = parquet.ParquetDataset(
         path,
-        filesystem=filesystem,
+        filesystem=s3fs_,
         filters=filters,
         use_legacy_dataset=False,
     )
-    print("columns=%s", columns)
+    _LOG.debug("columns=%s", columns)
     table = dataset.read(columns=columns)
     df = table.to_pandas()
     if df is None:

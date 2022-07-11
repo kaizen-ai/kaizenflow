@@ -712,7 +712,7 @@ def run_coverage_report(  # type: ignore
 
 
 @task
-def traceback(ctx, log_name="tmp.pytest_script.log", purify=True):  # type: ignore
+def traceback(ctx, log_name="tmp.pytest_script.txt", purify=True):  # type: ignore
     """
     Parse the traceback from Pytest and navigate it with vim.
 
