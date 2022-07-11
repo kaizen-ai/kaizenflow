@@ -169,6 +169,30 @@ def parse_experiment_config(backtest_config: str) -> Tuple[str, str, str]:
     return universe_str, trading_period_str, time_interval_str
 
 
+def apply_backtest_config(
+    system: dtfsyssyst.ForecastSystem, backtest_config: str
+) -> dtfsyssyst.ForecastSystem:
+    """
+    Parse backtest config and fill System config for simulation.
+    """
+    # Parse the backtest experiment.
+    (
+        universe_str,
+        trading_period_str,
+        time_interval_str,
+    ) = parse_experiment_config(backtest_config)
+    # Fill system config.
+    hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
+    system.config[
+        "dag_config", "resample", "transformer_kwargs", "rule"
+    ] = trading_period_str
+    system.config["dag_runner_object"] = system.get_dag_runner
+    system.config["backtest_config", "universe_str"] = universe_str
+    system.config["backtest_config", "trading_period_str"] = trading_period_str
+    system.config["backtest_config", "time_interval_str"] = time_interval_str
+    return system
+
+
 # #############################################################################
 # Experiment config processing.
 # #############################################################################
