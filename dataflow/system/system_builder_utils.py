@@ -8,6 +8,7 @@ import logging
 
 import core.config as cconfig
 import dataflow.core as dtfcore
+import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.system as dtfsyssyst
 import helpers.hdbg as hdbg
@@ -36,6 +37,30 @@ def get_system_config_template_from_dag_builder(
     # Track the name of the builder for book-keeping.
     system_config["dag_builder_class"] = dag_builder.__class__.__name__
     return system_config
+
+
+def apply_backtest_config(
+    system: dtfsyssyst.ForecastSystem, backtest_config: str
+) -> dtfsyssyst.ForecastSystem:
+    """
+    Parse backtest config and fill System config for simulation.
+    """
+    # Parse the backtest experiment.
+    (
+        universe_str,
+        trading_period_str,
+        time_interval_str,
+    ) = dtfmoexcon.parse_experiment_config(backtest_config)
+    # Fill system config.
+    hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
+    system.config[
+        "dag_config", "resample", "transformer_kwargs", "rule"
+    ] = trading_period_str
+    system.config["dag_runner_object"] = system.get_dag_runner
+    system.config["backtest_config", "universe_str"] = universe_str
+    system.config["backtest_config", "trading_period_str"] = trading_period_str
+    system.config["backtest_config", "time_interval_str"] = time_interval_str
+    return system
 
 
 # #############################################################################
