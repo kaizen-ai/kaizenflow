@@ -7,7 +7,10 @@ import repo_config as rconf
 # Expose the pytest targets.
 # Extract with:
 # > i print_tasks --as-code
-from helpers.lib_tasks import set_default_params  # This is not an invoke target.
+from helpers.lib_tasks import (  # This is not an invoke target.
+    parse_command_line,
+    set_default_params,
+)
 
 from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
     docker_bash,
@@ -141,3 +144,4 @@ default_params = {
 
 
 set_default_params(default_params)
+parse_command_line()

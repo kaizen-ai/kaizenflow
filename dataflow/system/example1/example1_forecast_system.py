@@ -240,12 +240,13 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         self,
     ) -> oms.Portfolio:
         event_loop = self.config["event_loop_object"]
+        db_connection = self.config["db_connection_object"]
         market_data = self.market_data
         table_name = oms.CURRENT_POSITIONS_TABLE_NAME
         asset_ids = self.config["market_data_config", "asset_ids"]
         portfolio = oms.get_DatabasePortfolio_example1(
             event_loop,
-            self._db_connection,
+            db_connection,
             table_name,
             market_data=market_data,
             mark_to_market_col="close",
