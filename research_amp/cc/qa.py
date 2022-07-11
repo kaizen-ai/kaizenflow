@@ -152,6 +152,80 @@ def get_bad_data_stats(
     return res_stats_df
 
 
+def get_bad_data_stats_bid_ask(
+    data: pd.DataFrame, agg_level: List[str], vendor_name: str
+) -> pd.DataFrame:
+    """
+    Get QA stats per specified groups.
+
+    QA stats include:
+       - `bad data [%]` - sum of the metrics below
+       - `missing bars [%]` - number of missing bars as %
+       - `volume=0 [%]` - number of rows with either `bid_volume` or `ask_volume` = 0 as %
+       - `NaNs in price [%]` - number of rows with either `bid_price` or `ask_price` = NaN as %
+
+    E.g,:
+    ```
+                                bad data [%]  ...  NaNs in price [%]
+      full_symbol  year  month
+    ftx::ADA_USDT  2021     11      3.5      0.0      6.0
+                            12      2.4      0.0      5.1
+    ftx::BTC_USDT  2022      1      1.5      0.0      0.0
+    ```
+
+    :param agg_level: columns to group data by
+    :param vendor_name: vendor to compute stats for
+    :return: bad data stats for each full symbol
+    """
+    hdbg.dassert_lte(1, len(agg_level))
+    # Copy in order not to modify original data.
+    data_copy = data.copy()
+    # Modify data for computing stats.
+    data_copy = _preprocess_data(data_copy)
+    # Check that columns to group by exist.
+    hdbg.dassert_is_subset(agg_level, data_copy.columns)
+    res_stats = []
+    for full_symbol, symbol_data in data_copy.groupby(agg_level):
+        # Compute stats for a full symbol.
+        symbol_stats = pd.Series(dtype="object", name=full_symbol)
+        # Compute NaNs in initially loaded data by counting `np.inf` values
+        # in preprocessed data.
+        symbol_stats["NaNs in price [%]"] = 100 * (
+            symbol_data[
+                (symbol_data["ask_price"] == np.inf)
+                | (symbol_data["bid_price"] == np.inf)
+            ].shape[0]
+            / symbol_data.shape[0]
+        )
+        # Compute missing bars stats by subtracting NaN stats in not-resampled
+        # data from NaN stats in resampled data.
+        symbol_stats["missing bars [%]"] = 100 * (
+            costatis.compute_frac_nan(symbol_data["ask_size"])
+        )
+        symbol_stats["volume=0 [%]"] = 100 * (
+            symbol_data[
+                (symbol_data["bid_size"] == 0) | (symbol_data["ask_size"] == 0)
+            ].shape[0]
+            / symbol_data.shape[0]
+        )
+        symbol_stats["bad data [%]"] = (
+            symbol_stats["NaNs in price [%]"]
+            + symbol_stats["missing bars [%]"]
+            + symbol_stats["volume=0 [%]"]
+        )
+        res_stats.append(symbol_stats)
+    res_stats_df = pd.concat(res_stats, axis=1).T
+    cols = [
+        "bad data [%]",
+        "missing bars [%]",
+        "volume=0 [%]",
+        "NaNs in price [%]",
+    ]
+    res_stats_df = res_stats_df[cols]
+    res_stats_df.name = vendor_name
+    return res_stats_df
+
+
 def get_timestamp_stats(data: pd.DataFrame, vendor_name: str) -> pd.DataFrame:
     """
     Get timestamp stats per full symbol.
