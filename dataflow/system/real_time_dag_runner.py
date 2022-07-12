@@ -54,6 +54,13 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         This adapts the asynchronous generator to a synchronous
         semantic.
         """
+        method = "fit"
+        await self._run_dag(method)
+        _LOG.info("dag after fit=\n%s", str(self.dag))
+        fit_state = self.dag.get_node("predict").get_fit_state()
+        import pprint
+        _LOG.info("state=%s", pprint.pformat(fit_state["_key_fit_state"][1464553467]))
+        #
         result_bundles = [
             result_bundle async for result_bundle in self.predict_at_datetime()
         ]
