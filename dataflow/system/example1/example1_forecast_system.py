@@ -14,7 +14,9 @@ import dataflow.system.example1.example1_builders as dtfsexexbu
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
+import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
+import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms
 
@@ -48,8 +50,8 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         )
         return system_config
 
-    def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfsexexbu.get_Example1_market_data_example2(self)
+    def _get_market_data(self) -> mdata.ImClientMarketData:
+        market_data = dtfsexexbu.get_Example1_MarketData_example2(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
@@ -57,9 +59,13 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         return dag
 
 
+# TODO(Grisha): "Factor out `build_ForecastSystem`" CmTask #2282.
 def get_Example1_ForecastSystem_example1(
     backtest_config: str,
 ) -> dtfsyssyst.ForecastSystem:
+    """
+    Get Example1_ForecastSystem object for backtesting.
+    """
     # Parse the backtest experiment.
     (
         universe_str,
@@ -78,13 +84,21 @@ def get_Example1_ForecastSystem_example1(
     #  outside needs this function to run. In reality we should build the
     #  object and not pass a builder.
     system.config["dag_runner_object"] = system.get_dag_runner
-    # Name of the asset_ids to save.
-    # TODO(gp): Find a better place in the config, maybe "save_results"?
-    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     # TODO(gp):
     system.config["backtest_config", "universe_str"] = universe_str
     system.config["backtest_config", "trading_period_str"] = trading_period_str
     system.config["backtest_config", "time_interval_str"] = time_interval_str
+    #
+    system.config["backtest_config", "freq_as_pd_str"] = "M"
+    system.config["backtest_config", "lookback_as_pd_str"] = "10D"
+    # Use `ImClient` to get asset ids universe.
+    im_client = icdc.get_DataFrameImClient_example1()
+    full_symbols = dtfuniver.get_universe(universe_str)
+    asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
+    system.config["market_data_config", "im_client"] = im_client
+    system.config["market_data_config", "asset_ids"] = asset_ids
+    # TODO(gp): Find a better place in the config, maybe "save_results"?
+    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     return system
 
 
@@ -226,12 +240,13 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         self,
     ) -> oms.Portfolio:
         event_loop = self.config["event_loop_object"]
+        db_connection = self.config["db_connection_object"]
         market_data = self.market_data
         table_name = oms.CURRENT_POSITIONS_TABLE_NAME
         asset_ids = self.config["market_data_config", "asset_ids"]
         portfolio = oms.get_DatabasePortfolio_example1(
             event_loop,
-            self._db_connection,
+            db_connection,
             table_name,
             market_data=market_data,
             mark_to_market_col="close",

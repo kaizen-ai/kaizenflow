@@ -73,15 +73,18 @@ def reset_default_params() -> None:
 # Utils.
 # #############################################################################
 
-# Since it's not easy to add global command line options to invoke, we piggy
-# back the option that already exists.
-# If one uses the debug option for `invoke` we turn off the code debugging.
-# TODO(gp): Check http://docs.pyinvoke.org/en/1.0/concepts/library.html#
-#   modifying-core-parser-arguments
-if ("-d" in sys.argv) or ("--debug" in sys.argv):
-    hdbg.init_logger(verbosity=logging.DEBUG)
-else:
-    hdbg.init_logger(verbosity=logging.INFO)
+
+def parse_command_line() -> None:
+    # Since it's not easy to add global command line options to invoke, we
+    # piggy back the option that already exists.
+    # If one uses the debug option for `invoke` we turn off the code
+    # debugging.
+    # TODO(gp): Check http://docs.pyinvoke.org/en/1.0/concepts/library.html#
+    #   modifying-core-parser-arguments
+    if ("-d" in sys.argv) or ("--debug" in sys.argv):
+        hdbg.init_logger(verbosity=logging.DEBUG)
+    else:
+        hdbg.init_logger(verbosity=logging.INFO)
 
 
 # NOTE: We need to use a `# type: ignore` for all the @task functions because

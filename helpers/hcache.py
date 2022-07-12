@@ -309,7 +309,12 @@ def clear_global_cache(
         hio.delete_dir(cache_path)
     else:
         cache_backend = get_global_cache(cache_type, tag)
-        cache_backend.clear(warn=True)
+        try:
+            cache_backend.clear(warn=True)
+        except FileNotFoundError as e:
+            # A race condition can cause:
+            # FileNotFoundError: [Errno 2] No such file or directory: '/app/tmp.cache.disk/joblib'
+            _LOG.error("Caught %s: continuing", str(e))
     # Report stats before and after.
     try:
         info_after = _get_cache_size(cache_path, description)
