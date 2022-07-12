@@ -20,69 +20,6 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         Test `CcxtHistoricalPqByTileClient`.
 
         - dataset = ohlcv
-        - contract_type = spot
-        """
-        # Initialize the client.
-        universe_version = "v4"
-        resample_1min = False
-        dataset = "ohlcv"
-        contract_type = "spot"
-        data_snapshot = "20220530"
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
-            universe_version,
-            resample_1min,
-            dataset,
-            contract_type,
-            data_snapshot,
-        )
-        # Set expected values.
-        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
-        start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
-        end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
-        expected_length = 12
-        expected_column_names = [
-            "full_symbol",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "knowledge_timestamp"
-        ]
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
-        }
-        expected_signature = r"""# df=
-        index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
-        columns=full_symbol,open,high,low,close,volume,knowledge_timestamp
-        shape=(12, 7)
-                                         full_symbol        open        high         low       close       volume knowledge_timestamp
-        timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731      0.7745      0.7731      0.7741  40082.50000          2022-05-10
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900  37998.2500  37969.9900  37987.2000     14.82533          2022-05-10
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7740      0.7741      0.7732      0.7739  14064.20000          2022-05-10
-        ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8100  37951.8100  37938.4900  37939.3600     10.20479          2022-05-10
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726      0.7731      0.7724      0.7727  42522.60000          2022-05-10
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600  37956.1000  37936.0400  37950.7500     15.30911          2022-05-10
-        """
-        # Check.
-        self._test_read_data5(
-            im_client,
-            full_symbols,
-            start_ts,
-            end_ts,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            expected_signature,
-        )
-
-    def test_CcxtHistoricalPqByTileClient2(self) -> None:
-        """
-        Test `CcxtHistoricalPqByTileClient`.
-
-        - dataset = ohlcv
         - contract_type = futures
         """
         # Initialize the client.
@@ -141,81 +78,20 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    def test_CryptoChassisHistoricalPqByTileClient1(self) -> None:
+    def test_CcxtHistoricalPqByTileClient2(self) -> None:
         """
-        Test `CryptoChassisHistoricalPqByTileClient`.
+        Test `CcxtHistoricalPqByTileClient`.
 
-        - dataset = bid_ask
-        - contract_type = futures
-        """
-        # Initialize the client.
-        universe_version = "v3"
-        resample_1min = True
-        dataset = "bid_ask"
-        contract_type = "futures"
-        data_snapshot = "20220620"
-        im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
-            universe_version,
-            resample_1min,
-            dataset,
-            contract_type,
-            data_snapshot,
-        )
-        # Set expected values.
-        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
-        start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
-        end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
-        expected_length = 12
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
-        }
-        expected_column_names = [
-            "full_symbol",
-            "bid_price",
-            "bid_size",
-            "ask_price",
-            "ask_size"
-        ]
-        expected_signature = r"""# df=
-        index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
-        columns=full_symbol,bid_price,bid_size,ask_price,ask_size
-        shape=(12, 5)
-                                         full_symbol     bid_price     bid_size     ask_price     ask_size
-        timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.773418  1577685.000      0.773433   741874.000
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37973.770035      228.977  37974.633461      175.528
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.773116   599395.000      0.773162  1076322.000
-        ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37925.827424     165.176  37926.802980     192.241
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.772086  852299.000      0.772323  817526.000
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37925.604266     254.863  37925.031683     183.618
-        """
-        # Check.
-        self._test_read_data5(
-            im_client,
-            full_symbols,
-            start_ts,
-            end_ts,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            expected_signature,
-        )
-
-    def test_CryptoChassisHistoricalPqByTileClient2(self) -> None:
-        """
-        Test `CryptoChassisHistoricalPqByTileClient`.
-
-        - dataset = bid_ask
+        - dataset = ohlcv
         - contract_type = spot
         """
         # Initialize the client.
-        universe_version = "v3"
-        resample_1min = True
-        dataset = "bid_ask"
+        universe_version = "v4"
+        resample_1min = False
+        dataset = "ohlcv"
         contract_type = "spot"
         data_snapshot = "20220530"
-        im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
             universe_version,
             resample_1min,
             dataset,
@@ -227,30 +103,31 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
         expected_length = 12
+        expected_column_names = [
+            "full_symbol",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "knowledge_timestamp"
+        ]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
         }
-        expected_column_names = [
-            "full_symbol",
-            "bid_price",
-            "bid_size",
-            "ask_price",
-            "ask_size",
-            "knowledge_timestamp"
-        ]
         expected_signature = r"""# df=
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
-        columns=full_symbol,bid_price,bid_size,ask_price,ask_size,knowledge_timestamp
-        shape=(12, 6)
-                                         full_symbol   bid_price     bid_size   ask_price   ask_size              knowledge_timestamp
+        columns=full_symbol,open,high,low,close,volume,knowledge_timestamp
+        shape=(12, 7)
+                                         full_symbol        open        high         low       close       volume knowledge_timestamp
         timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731  22296.50000      0.7732  404.60000 2022-05-24 15:04:20.110341+00:00
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900      4.10126  37970.0000    0.16837 2022-05-24 15:58:40.729661+00:00
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7740  11602.90000      0.7741  455.40000 2022-05-24 15:04:20.110341+00:00
+        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731      0.7745      0.7731      0.7741  40082.50000          2022-05-10
+        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900  37998.2500  37969.9900  37987.2000     14.82533          2022-05-10
+        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7740      0.7741      0.7732      0.7739  14064.20000          2022-05-10
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8000   5.38906  37951.8100      2.46727 2022-05-24 15:58:40.729661+00:00
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726  51.70000      0.7727  20467.60000 2022-05-24 15:04:20.110341+00:00
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600   5.72901  37939.3700      4.35547 2022-05-24 15:58:40.729661+00:00
+        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8100  37951.8100  37938.4900  37939.3600     10.20479          2022-05-10
+        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726      0.7731      0.7724      0.7727  42522.60000          2022-05-10
+        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600  37956.1000  37936.0400  37950.7500     15.30911          2022-05-10
         """
         # Check.
         self._test_read_data5(
@@ -264,7 +141,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    def test_CryptoChassisHistoricalPqByTileClient3(self) -> None:
+    def test_CryptoChassisHistoricalPqByTileClient1(self) -> None:
         """
         Test `CryptoChassisHistoricalPqByTileClient`.
 
@@ -330,7 +207,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
-    def test_CryptoChassisHistoricalPqByTileClient4(self) -> None:
+    def test_CryptoChassisHistoricalPqByTileClient2(self) -> None:
         """
         Test `CryptoChassisHistoricalPqByTileClient`.
 
@@ -383,6 +260,129 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8100  37951.8100  37938.4900  37939.3600     10.20479  37946.983900               405  37944.26480 2022-05-18 10:06:14.692939+00:00
         2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726      0.7731      0.7724      0.7727  42522.60000      0.772769                40      0.77277 2022-05-18 10:05:55.699321+00:00
         2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600  37956.1000  37936.0400  37950.7500     15.30911  37943.278000               557  37942.54040 2022-05-18 10:06:14.692939+00:00
+        """
+        # Check.
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_CryptoChassisHistoricalPqByTileClient3(self) -> None:
+        """
+        Test `CryptoChassisHistoricalPqByTileClient`.
+
+        - dataset = bid_ask
+        - contract_type = futures
+        """
+        # Initialize the client.
+        universe_version = "v3"
+        resample_1min = True
+        dataset = "bid_ask"
+        contract_type = "futures"
+        data_snapshot = "20220620"
+        im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+            universe_version,
+            resample_1min,
+            dataset,
+            contract_type,
+            data_snapshot,
+        )
+        # Set expected values.
+        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+        start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
+        end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
+        expected_length = 12
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
+        }
+        expected_column_names = [
+            "full_symbol",
+            "bid_price",
+            "bid_size",
+            "ask_price",
+            "ask_size"
+        ]
+        expected_signature = r"""# df=
+        index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
+        columns=full_symbol,bid_price,bid_size,ask_price,ask_size
+        shape=(12, 5)
+                                         full_symbol     bid_price     bid_size     ask_price     ask_size
+        timestamp
+        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.773418  1577685.000      0.773433   741874.000
+        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37973.770035      228.977  37974.633461      175.528
+        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.773116   599395.000      0.773162  1076322.000
+        ...
+        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37925.827424     165.176  37926.802980     192.241
+        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.772086  852299.000      0.772323  817526.000
+        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37925.604266     254.863  37925.031683     183.618
+        """
+        # Check.
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_CryptoChassisHistoricalPqByTileClient4(self) -> None:
+        """
+        Test `CryptoChassisHistoricalPqByTileClient`.
+
+        - dataset = bid_ask
+        - contract_type = spot
+        """
+        # Initialize the client.
+        universe_version = "v3"
+        resample_1min = True
+        dataset = "bid_ask"
+        contract_type = "spot"
+        data_snapshot = "20220530"
+        im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+            universe_version,
+            resample_1min,
+            dataset,
+            contract_type,
+            data_snapshot,
+        )
+        # Set expected values.
+        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+        start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
+        end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
+        expected_length = 12
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
+        }
+        expected_column_names = [
+            "full_symbol",
+            "bid_price",
+            "bid_size",
+            "ask_price",
+            "ask_size",
+            "knowledge_timestamp"
+        ]
+        expected_signature = r"""# df=
+        index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
+        columns=full_symbol,bid_price,bid_size,ask_price,ask_size,knowledge_timestamp
+        shape=(12, 6)
+                                         full_symbol   bid_price     bid_size   ask_price   ask_size              knowledge_timestamp
+        timestamp
+        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731  22296.50000      0.7732  404.60000 2022-05-24 15:04:20.110341+00:00
+        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900      4.10126  37970.0000    0.16837 2022-05-24 15:58:40.729661+00:00
+        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7740  11602.90000      0.7741  455.40000 2022-05-24 15:04:20.110341+00:00
+        ...
+        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8000   5.38906  37951.8100      2.46727 2022-05-24 15:58:40.729661+00:00
+        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726  51.70000      0.7727  20467.60000 2022-05-24 15:04:20.110341+00:00
+        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600   5.72901  37939.3700      4.35547 2022-05-24 15:58:40.729661+00:00
         """
         # Check.
         self._test_read_data5(
