@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
 
-import im_v2.common.data.client as icdc
 import im_v2.ccxt.data.client as icdcl
+import im_v2.common.data.client as icdc
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.crypto_chassis.data.client as iccdc
 
