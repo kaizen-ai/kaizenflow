@@ -833,8 +833,15 @@ def list_and_merge_pq_files(
         # Read all files in target folder.
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
         data = data.to_pandas()
+        # Drop duplicates on all non-metadata columns.
+        if drop_duplicates_mode is None:
+            duplicate_columns = data.columns.to_list()
+            for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
+                if col_name in duplicate_columns:
+                    duplicate_columns.remove(col_name)
+            control_column = None
         # Drop duplicates on timestamp index.
-        if drop_duplicates_mode == "bid_ask":
+        elif drop_duplicates_mode == "bid_ask":
             duplicate_columns = ["timestamp", "exchange_id"]
             control_column = None
         # Drop duplicates on timestamp and keep one with largest volume.
