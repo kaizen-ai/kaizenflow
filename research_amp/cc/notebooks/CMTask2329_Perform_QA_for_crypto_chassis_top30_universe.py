@@ -67,7 +67,7 @@ def get_cmtask2329_config() -> cconconf.Config:
                 "partition_mode": "by_year_month",
                 "dataset": "ohlcv",
                 "contract_type": "futures",
-                "data_snapshot": "20220620",
+                "data_snapshot": "20220707",
                 "aws_profile": "ck",
             },
             # Parameters for data query.
