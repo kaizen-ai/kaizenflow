@@ -424,12 +424,9 @@ def save_parquet(
         partition_filename=None,
         aws_profile=aws_profile,
     )
-    mode = None
-    if data_type == "ohlcv":
-        mode = "ohlcv"
     # Merge all new parquet into a single `data.parquet`.
     hparque.list_and_merge_pq_files(
-        path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=mode
+        path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=data_type
     )
 
 

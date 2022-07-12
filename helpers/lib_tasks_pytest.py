@@ -920,10 +920,10 @@ def pytest_repro(  # type: ignore
                 # Get the stacktrace for the individual test failure.
                 # Its start is marked with the name of the test, e.g.
                 # "___________________ TestSmaModel.test5 ___________________".
-                start_block = "________ " + name + " ________"
+                start_block = "__ " + name + " __"
                 traceback_block = txt.rsplit(start_block, maxsplit=1)[-1]
                 end_block_options = [
-                    "________ " + n + " ________"
+                    "__ " + n + " __"
                     for n in failed_test_names
                     if n != name
                 ]
