@@ -323,7 +323,7 @@ class Time_ForecastSystem_TestCase1(hunitest.TestCase):
 # #############################################################################
 
 # TODO(gp): -> Time_ForecastSystem_with_DataFramePortfolio_TestCase1
-class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
+class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 
@@ -333,7 +333,7 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
     - Simulated broker
     """
 
-    def helper(
+    def _test1(
         self,
         system: dtfsys.System,
         asset_ids: List[int],

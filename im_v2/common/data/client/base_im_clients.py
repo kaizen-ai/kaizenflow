@@ -724,6 +724,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         data = self._apply_normalization(
             data, full_symbol_col_name=full_symbol_col_name
         )
+        assert 0
         if columns is None:
             columns = data.columns
         hdbg.dassert_is_subset(columns, data.columns.to_list())

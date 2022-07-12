@@ -198,6 +198,7 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
             ]
             # Concatenate two lists of columns.
             ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
+            assert 0
         else:
             hdbg.dfatal(
                 "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
