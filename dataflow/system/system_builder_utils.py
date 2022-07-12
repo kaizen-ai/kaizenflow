@@ -5,13 +5,16 @@ import dataflow.system.system_builder_utils as dtfssybuut
 """
 
 import logging
+from typing import Callable
 
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.system as dtfsyssyst
+import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
+import im_v2.common.data.client as icdc
 import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
@@ -61,6 +64,35 @@ def apply_backtest_config(
     system.config["backtest_config", "trading_period_str"] = trading_period_str
     system.config["backtest_config", "time_interval_str"] = time_interval_str
     return system
+
+
+def apply_market_data_config(
+    system: dtfsyssyst.ForecastSystem
+) -> dtfsyssyst.ForecastSystem:
+    """
+    Convert full symbol universe to asset ids and fill market data config.
+    """
+    im_client = _build_im_client_from_config(system)
+    universe_str = system.config["backtest_config", "universe_str"]
+    full_symbols = dtfuniver.get_universe(universe_str)
+    asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
+    #
+    system.config["market_data_config", "im_client"] = im_client
+    system.config["market_data_config", "asset_ids"] = asset_ids
+    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
+    return system
+
+
+def _build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
+    """
+    Build an IM client from params in the system config.
+    """
+    ctor = system.config["market_data_config", "im_client_ctor"]
+    hdbg.dassert_isinstance(ctor, Callable)
+    params = system.config["market_data_config", "im_client_config"]
+    im_client = ctor(**params)
+    hdbg.dassert_isinstance(im_client, icdc.ImClient)
+    return im_client
 
 
 # #############################################################################
