@@ -619,6 +619,11 @@ def _generate_docker_compose_file(
     # Save file.
     txt_str: str = "\n".join(txt)
     if file_name:
+        if os.path.exists(file_name):
+            # Permission error is raised if we try to overwrite existing file.
+            # See CmTask #2321 for detailed info.
+            compose_directory = os.path.dirname(file_name)
+            hsystem.system(f"sudo rm -rf {compose_directory}")
         hio.to_file(file_name, txt_str)
     # Sanity check of the YAML file.
     stream = io.StringIO(txt_str)
