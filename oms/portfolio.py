@@ -14,7 +14,6 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import core.key_sorted_ordered_dict as cksoordi
-import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
@@ -1039,26 +1038,19 @@ class DatabasePortfolio(Portfolio):
     def __init__(
         self,
         *args: Any,
-        db_connection: hsql.DbConnection,
         table_name: str,
-        # TODO(gp): This seems dead.
-        poll_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ):
         """
         Constructor.
 
-        :param db_connection, table_name: information about the DB table to use
-        :param poll_kwargs: param
+        :param table_name: current positions table name
         """
         super().__init__(*args, **kwargs)
         #
-        self._db_connection = db_connection
+        self._db_connection = self.broker._db_connection
         self._table_name = table_name
         #
-        if poll_kwargs is None:
-            poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)
-        self._poll_kwargs = poll_kwargs
         # wall clock timestamp -> snapshot_df (i.e., the image of the holdings in
         # the account, without cash).
         self._timestamp_to_snapshot_df = collections.OrderedDict()
