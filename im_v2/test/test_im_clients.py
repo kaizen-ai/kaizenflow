@@ -10,15 +10,11 @@ import im_v2.crypto_chassis.data.client as iccdc
 @pytest.mark.slow("Slow via GH, fast on server.")
 class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
     """
-    Test `HistoricalPqByTileClient` clients.
-
     The purpose is to demonstrate possible output formats.
     """
 
     def test_CcxtHistoricalPqByTileClient1(self) -> None:
         """
-        Test `CcxtHistoricalPqByTileClient`.
-
         - dataset = ohlcv
         - contract_type = futures
         """
@@ -80,8 +76,6 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
 
     def test_CcxtHistoricalPqByTileClient2(self) -> None:
         """
-        Test `CcxtHistoricalPqByTileClient`.
-
         - dataset = ohlcv
         - contract_type = spot
         """
@@ -143,8 +137,6 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
 
     def test_CryptoChassisHistoricalPqByTileClient1(self) -> None:
         """
-        Test `CryptoChassisHistoricalPqByTileClient`.
-
         - dataset = ohlcv
         - contract_type = futures
         """
@@ -209,8 +201,6 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
 
     def test_CryptoChassisHistoricalPqByTileClient2(self) -> None:
         """
-        Test `CryptoChassisHistoricalPqByTileClient`.
-
         - dataset = ohlcv
         - contract_type = spot
         """
@@ -275,8 +265,6 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
 
     def test_CryptoChassisHistoricalPqByTileClient3(self) -> None:
         """
-        Test `CryptoChassisHistoricalPqByTileClient`.
-
         - dataset = bid_ask
         - contract_type = futures
         """
@@ -336,8 +324,6 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
 
     def test_CryptoChassisHistoricalPqByTileClient4(self) -> None:
         """
-        Test `CryptoChassisHistoricalPqByTileClient`.
-
         - dataset = bid_ask
         - contract_type = spot
         """
@@ -399,8 +385,6 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
 
 class TestDataFrameImClients1(icdctictc.ImClientTestCase):
     """
-    Test `DataFrameImClient` clients.
-
     The purpose is to demonstrate possible output formats.
     """
 
