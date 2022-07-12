@@ -144,9 +144,11 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
                 exchange_id, "binance", msg="Only binance futures are supported"
             )
             if currency_pair.endswith("usd"):
+                # Change exchange and currency format to COIN-M futures.
                 currency_pair = currency_pair+"_perp"
                 exchange_id = "binance-coin-futures"
             else:
+                # Change exchange ID to USDS futures.
                 exchange_id = "binance-usds-futures"
         # Build base URL.
         core_url = self._build_base_url(

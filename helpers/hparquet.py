@@ -833,16 +833,16 @@ def list_and_merge_pq_files(
         # Read all files in target folder.
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
         data = data.to_pandas()
-        # Drop duplicates on non-metadata columns.
+        # Drop duplicates on timestamp index.
         if drop_duplicates_mode == "bid_ask":
             duplicate_columns = ["timestamp", "exchange_id"]
             control_column = None
-        # Drop duplicates on timestamp index.
+        # Drop duplicates on timestamp and keep one with largest volume.
         elif drop_duplicates_mode == "ohlcv":
             duplicate_columns = ["timestamp", "exchange_id"]
             control_column = "volume"
         else:
-            hdbg.dfatal("Supported drop duplicates modes: ohlcv")
+            hdbg.dfatal("Supported drop duplicates modes: ohlcv, bid_ask")
         data = hdatafr.remove_duplicates(data, duplicate_columns, control_column)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
