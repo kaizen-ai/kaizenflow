@@ -254,8 +254,12 @@ class RealTimeMarketData2(mdabmada.MarketData):
     """
     Interface for real-time market data accessed through a realtime SQL client.
     """
+
+    # TODO(gp): @all: client -> im_client
     def __init__(self, client: icdc.SqlRealTimeImClient, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        # TODO(gp): @all How come _mode is still here if obsolete? Is there a test
+        #  for this?
         hdbg.dassert_eq(
             client._mode,
             "market_data",
