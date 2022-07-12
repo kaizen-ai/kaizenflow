@@ -424,12 +424,9 @@ def save_parquet(
         partition_filename=None,
         aws_profile=aws_profile,
     )
-    mode = None
-    if data_type == "ohlcv":
-        mode = "ohlcv"
     # Merge all new parquet into a single `data.parquet`.
     hparque.list_and_merge_pq_files(
-        path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=mode
+        path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=data_type
     )
 
 
@@ -444,7 +441,7 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
+    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"]) + "/"
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])

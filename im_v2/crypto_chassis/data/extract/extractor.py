@@ -136,14 +136,18 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         if depth:
             hdbg.dassert_lgt(1, depth, 10, True, True)
             depth = str(depth)
+        # Convert currency pair to CryptoChassis supported format.
+        currency_pair = self.convert_currency_pair(currency_pair)
         # Set an exchange ID for futures, if applicable.
         if self.contract_type == "futures":
             hdbg.dassert_eq(
                 exchange_id, "binance", msg="Only binance futures are supported"
             )
-            exchange_id = "binance-usds-futures"
-        # Convert currency pair to CryptoChassis supported format.
-        currency_pair = self.convert_currency_pair(currency_pair)
+            if currency_pair.endswith("usd"):
+                currency_pair = currency_pair+"_perp"
+                exchange_id = "binance-coin-futures"
+            else:
+                exchange_id = "binance-usds-futures"
         # Build base URL.
         core_url = self._build_base_url(
             data_type="market-depth",
@@ -249,13 +253,19 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             hdbg.dassert_eq(
                 exchange_id, "binance", msg="Only binance futures are supported"
             )
-            exchange_id = "binance-usds-futures"
+            if currency_pair.endswith("usd"):
+                currency_pair = currency_pair+"_perp"
+                exchange_id = "binance-coin-futures"
+            else:
+                exchange_id = "binance-usds-futures"
+            _LOG.info("currency pair %s", currency_pair)
         # Build base URL.
         core_url = self._build_base_url(
             data_type="ohlc",
             exchange=exchange_id,
             currency_pair=currency_pair,
         )
+        _LOG.info("core_url %s", core_url)
         # Build URL with specified parameters.
         query_url = self._build_query_url(
             core_url,

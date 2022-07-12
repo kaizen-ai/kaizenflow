@@ -1,14 +1,17 @@
 {
    "crypto_chassis": {
       "binance": [ 
-        "ETH_USDT",
-        "BTC_USDT",
+        "ADA_USDT",
         "BNB_USDT",
+        "BTC_USDT",
+        "DOGE_USDT",
+        "EOS_USDT",
+        "ETH_USDT",
+        "SOL_USDT",
         "DOT_USDT",
         "XRP_USDT",
-        "ADA_USDT",
-        "DOGE_USDT",
-        "SOL_USDT"
+        "BTC_USD",
+        "ETH_USD"
     ]
     }
   }
