@@ -45,6 +45,20 @@ class Test_Example1_ForecastSystem_CheckPnl(
 
 
 # #############################################################################
+# Test_Example1_System_CheckConfig
+# #############################################################################
+
+
+class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
+    def test_freeze_config1(self) -> None:
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system_builder = dtfseefosy.get_Example1_ForecastSystem_example1(
+            backtest_config
+        )
+        self._test_freeze_config1(system_builder)
+
+
+# #############################################################################
 # Test_Example1_ForecastSystem_FitInvariance
 # #############################################################################
 
