@@ -67,12 +67,12 @@ def apply_backtest_config(
 
 
 def apply_market_data_config(
-    system: dtfsyssyst.ForecastSystem
+    system: dtfsyssyst.ForecastSystem,
 ) -> dtfsyssyst.ForecastSystem:
     """
     Convert full symbol universe to asset ids and fill market data config.
     """
-    im_client = _build_im_client_from_config(system)
+    im_client = build_im_client_from_config(system)
     universe_str = system.config["backtest_config", "universe_str"]
     full_symbols = dtfuniver.get_universe(universe_str)
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
@@ -83,7 +83,7 @@ def apply_market_data_config(
     return system
 
 
-def _build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
+def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
     """
     Build an IM client from params in the system config.
     """
