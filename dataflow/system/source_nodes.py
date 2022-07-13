@@ -432,7 +432,7 @@ class RealTimeDataSource(dtfcore.DataSource):
         self._timedelta = timedelta
         self._asset_id_col = market_data.asset_id_col
         self._multiindex_output = multiindex_output
-        self._ts_col_name = str
+        self._ts_col_name = ts_col_name
 
     # TODO(gp): Can we use a run and move it inside fit?
     async def wait_for_latest_data(

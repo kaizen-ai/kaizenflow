@@ -159,7 +159,7 @@ class MarketData(abc.ABC):
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
-        ts_col_name: Optional[str] = None,
+        ts_col_name: str,
         *,
         # TODO(gp): @Grisha not sure limit is really needed. We could move it
         #  to the DB implementation.
@@ -189,7 +189,6 @@ class MarketData(abc.ABC):
         if ts_col_name is None:
             # By convention to get the last chunk of data we use the start_time
             #  column.
-            # TODO(Danya): Make passing of ts_col_name mandatory.
             ts_col_name = self._start_time_col_name
         asset_ids = self._asset_ids
         # Get the data.

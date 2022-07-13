@@ -83,10 +83,12 @@ def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG
     multiindex_output = True
     # How much history is needed for the DAG to compute.
     timedelta = pd.Timedelta("20T")
+    ts_col_name = "timestamp"
     node = dtfsysonod.RealTimeDataSource(
         stage,
         market_data,
         timedelta,
+        ts_col_name,
         multiindex_output,
     )
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
@@ -104,6 +106,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     # 199         "market_data_config", "history_lookback"
     # 200     ] = market_data_history_lookback
     timedelta = pd.Timedelta("7D")
+    ts_col_name = "timestamp"
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
     multiindex_output = True
@@ -111,6 +114,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         stage,
         system.market_data,
         timedelta,
+        ts_col_name,
         multiindex_output,
     )
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
