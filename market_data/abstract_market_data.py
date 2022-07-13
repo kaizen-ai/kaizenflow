@@ -380,7 +380,7 @@ class MarketData(abc.ABC):
         we compute TWAP for (9:30, 9:35].
         """
         dassert_valid_asset_ids(asset_ids)
-        last_end_time = self.get_last_end_time()
+        last_end_time = self.get_last_end_time(ts_col_name)
         _LOG.debug("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
         first_end_time = last_end_time - offset
@@ -399,7 +399,7 @@ class MarketData(abc.ABC):
     # Methods for handling real-time behaviors.
     # /////////////////////////////////////////////////////////////////////////////
 
-    def get_last_end_time(self) -> Optional[pd.Timestamp]:
+    def get_last_end_time(self, ts_col_name: str) -> Optional[pd.Timestamp]:
         """
         Return the last `end_time` present in the RT DB.
 
@@ -407,7 +407,7 @@ class MarketData(abc.ABC):
         timestamp. We return `None` only for replayed time when there is
         no time (e.g., before the market opens).
         """
-        ret = self._get_last_end_time()
+        ret = self._get_last_end_time(ts_col_name)
         if ret is not None:
             # Convert to ET.
             # TODO(Dan): Pass timezone from ctor in CmTask1000.
