@@ -51,7 +51,8 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         # Run.
-        actual = market_data.is_online()
+        ts_col_name = "start_ts"
+        actual = market_data.is_online(ts_col_name)
         self.assertTrue(actual)
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -172,6 +173,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 2
         expected_column_names = self.get_expected_column_names()
@@ -194,6 +196,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         self._test_get_data_at_timestamp1(
             market_data,
             ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -216,6 +219,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 8
         expected_column_names = self.get_expected_column_names()
@@ -244,6 +248,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             expected_length,
             expected_column_names,
             expected_column_unique_values,
@@ -262,6 +267,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 8
         expected_column_names = self.get_expected_column_names()
@@ -290,6 +296,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -309,6 +316,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 10
         expected_column_names = self.get_expected_column_names()
@@ -337,6 +345,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -356,6 +365,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 8
         expected_column_names = self.get_expected_column_names()
@@ -384,6 +394,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -403,6 +414,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 6
         expected_column_names = self.get_expected_column_names()
@@ -430,6 +442,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -451,6 +464,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 2
         expected_unique_values = None
@@ -465,6 +479,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_unique_values,
@@ -484,8 +499,9 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         exp_last_end_time = pd.Timestamp("2018-08-17T01:39:00+00:00")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_last_end_time1(market_data, exp_last_end_time)
+        self._test_get_last_end_time1(market_data, exp_last_end_time, ts_col_name)
 
     def test_get_last_price1(self) -> None:
         # Prepare inputs.
@@ -498,6 +514,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         #
+        ts_col_name = "start_ts"
         expected_length = 2
         expected_unique_values = None
         exp_srs_as_str = r"""
@@ -510,6 +527,7 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         self._test_get_last_price1(
             market_data,
             asset_ids,
+            ts_col_name,
             expected_length,
             expected_unique_values,
             exp_srs_as_str,
@@ -572,8 +590,9 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns=columns, column_remap=column_remap
         )
+        ts_col_name = "start_ts"
         # Run.
-        actual = market_data.is_online()
+        actual = market_data.is_online(ts_col_name)
         self.assertTrue(actual)
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -686,6 +705,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 2
         expected_column_names = self.get_expected_column_names()
@@ -708,6 +728,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         self._test_get_data_at_timestamp1(
             market_data,
             ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -774,6 +795,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 14
         expected_column_names = self.get_expected_column_names()
@@ -802,6 +824,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -820,6 +843,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 16
         expected_column_names = self.get_expected_column_names()
@@ -848,6 +872,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -866,6 +891,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 14
         expected_column_names = self.get_expected_column_names()
@@ -894,6 +920,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -912,6 +939,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 12
         expected_column_names = self.get_expected_column_names()
@@ -940,6 +968,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,
@@ -960,6 +989,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2000-01-01T09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 2
         expected_unique_values = None
@@ -974,6 +1004,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_unique_values,
@@ -992,8 +1023,9 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         exp_last_end_time = pd.Timestamp("2000-01-01T10:10:00-05:00")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_last_end_time1(market_data, exp_last_end_time)
+        self._test_get_last_end_time1(market_data, exp_last_end_time, ts_col_name)
 
     def test_get_last_price1(self) -> None:
         # Prepare inputs.
@@ -1005,6 +1037,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         #
+        ts_col_name = "start_ts"
         expected_length = 2
         expected_unique_values = None
         exp_srs_as_str = r"""
@@ -1017,6 +1050,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         self._test_get_last_price1(
             market_data,
             asset_ids,
+            ts_col_name,
             expected_length,
             expected_unique_values,
             exp_srs_as_str,
@@ -1090,8 +1124,9 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
             column_remap,
             filter_data_mode=filter_data_mode,
         )
+        ts_col_name = "start_ts"
         # Run.
-        actual = market_data.is_online()
+        actual = market_data.is_online(ts_col_name)
         self.assertTrue(actual)
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -1113,6 +1148,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
         )
         start_ts = pd.Timestamp("2018-08-17T00:01:00+00:00")
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
+        ts_col_name = "start_ts"
         #
         expected_length = 6
         expected_column_names = self.get_expected_column_names()
@@ -1140,6 +1176,7 @@ class TestImClientMarketData3(mdtmdtca.MarketData_get_data_TestCase):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             expected_length,
             expected_column_names,

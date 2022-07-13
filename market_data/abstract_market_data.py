@@ -380,7 +380,7 @@ class MarketData(abc.ABC):
         we compute TWAP for (9:30, 9:35].
         """
         dassert_valid_asset_ids(asset_ids)
-        last_end_time = self.get_last_end_time(ts_col_name)
+        last_end_time = self.get_last_end_time()
         _LOG.debug("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
         first_end_time = last_end_time - offset
@@ -413,19 +413,21 @@ class MarketData(abc.ABC):
             # TODO(Dan): Pass timezone from ctor in CmTask1000.
             ret = ret.tz_convert("America/New_York")
         _LOG.verb_debug("-> ret=%s", ret)
+
         return ret
 
     def get_last_price(
         self,
         col_name: str,
         asset_ids: List[int],
+        ts_col_name: str,
     ) -> pd.Series:
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close")
         """
         dassert_valid_asset_ids(asset_ids)
         # TODO(Paul): Use a to-be-written `get_last_start_time()` instead.
-        last_end_time = self.get_last_end_time()
+        last_end_time = self.get_last_end_time(ts_col_name)
         _LOG.info("last_end_time=%s", last_end_time)
         # Get the data.
         # TODO(Paul): Remove the hard-coded 1-minute.
@@ -454,7 +456,7 @@ class MarketData(abc.ABC):
         """
         ...
 
-    def is_online(self) -> bool:
+    def is_online(self, ts_col_name: str) -> bool:
         """
         Return whether the DB is on-line at the current time.
 
@@ -464,7 +466,7 @@ class MarketData(abc.ABC):
         # Check if the data in the last minute is empty.
         _LOG.verb_debug("")
         # The DB is online if there was data within the last minute.
-        last_db_end_time = self.get_last_end_time()
+        last_db_end_time = self.get_last_end_time(ts_col_name)
         if last_db_end_time is None:
             ret = False
         else:

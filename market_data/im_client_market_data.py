@@ -38,6 +38,7 @@ class ImClientMarketData(mdabmada.MarketData):
         self,
         col_name: str,
         asset_ids: List[int],
+        ts_col_name: str,
     ) -> pd.Series:
         """
         This method overrides parent method in `MarketData`.
@@ -46,7 +47,7 @@ class ImClientMarketData(mdabmada.MarketData):
         `ImClientMarketData` uses the end of interval for date
         filtering.
         """
-        last_end_time = self.get_last_end_time()
+        last_end_time = self.get_last_end_time(ts_col_name)
         _LOG.info("last_end_time=%s", last_end_time)
         # Get the data.
         df = self.get_data_at_timestamp(

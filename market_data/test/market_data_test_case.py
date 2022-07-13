@@ -50,7 +50,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         real-time method and we can't easily check the content of its
         output.
         """
-        if skip_test_since_not_online(market_data):
+        if skip_test_since_not_online(market_data, ts_col_name):
             pytest.skip("Market not on-line")
         hprint.log_frame(
             _LOG,
@@ -65,6 +65,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         self,
         market_data: mdata.MarketData,
         ts: pd.Timestamp,
+        ts_col_name: str,
         asset_ids: Optional[List[int]],
         *args: Any,
         **kwargs: Any,
@@ -72,10 +73,9 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         """
         Call `get_data_at_timestamp()` for specified parameters.
         """
-        if skip_test_since_not_online(market_data):
+        if skip_test_since_not_online(market_data, ts_col_name):
             pytest.skip("Market not on-line")
         # Prepare inputs.
-        ts_col_name = "end_ts"
         hprint.log_frame(
             _LOG,
             "get_data_at_timestamp:" + hprint.to_str("ts ts_col_name asset_ids"),
@@ -92,6 +92,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
+        ts_col_name: str,
         asset_ids: Optional[List[int]],
         left_close: bool,
         right_close: bool,
@@ -101,7 +102,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         """
         Call `get_data_for_interval()` for specified parameters.
         """
-        if skip_test_since_not_online(market_data):
+        if skip_test_since_not_online(market_data, ts_col_name):
             pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
@@ -129,6 +130,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
+        ts_col_name: str,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -147,6 +149,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             left_close,
             right_close,
@@ -159,6 +162,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
+        ts_col_name: str,
         asset_ids: List[int],
         *args: Any,
         **kwargs: Any,
@@ -177,6 +181,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             left_close,
             right_close,
@@ -189,6 +194,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
+        ts_col_name: str,
         asset_ids: List[int],
         *args: Any,
         **kwargs: Any,
@@ -207,6 +213,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             left_close,
             right_close,
@@ -219,6 +226,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
+        ts_col_name: str,
         asset_ids: List[int],
         *args: Any,
         **kwargs: Any,
@@ -237,6 +245,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             left_close,
             right_close,
@@ -249,6 +258,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
+        ts_col_name: str,
         asset_ids: List[int],
         *args: Any,
         **kwargs: Any,
@@ -267,6 +277,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             market_data,
             start_ts,
             end_ts,
+            ts_col_name,
             asset_ids,
             left_close,
             right_close,
@@ -374,6 +385,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         market_data: mdata.MarketData,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
+        ts_col_name: str,
         asset_ids: Optional[List[int]],
         *args: Any,
         **kwargs: Any,
@@ -381,7 +393,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         """
         Call `get_twap_price()` for specified parameters.
         """
-        if skip_test_since_not_online(market_data):
+        if skip_test_since_not_online(market_data, ts_col_name):
             pytest.skip("Market not on-line")
         # Prepare inputs.
         ts_col_name = "end_ts"
@@ -404,12 +416,13 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         self,
         market_data: mdata.MarketData,
         exp_last_end_time: pd.Timestamp,
+        ts_col_name: str
     ) -> None:
         """
         Test that last end time is computed correctly.
         """
         # Run.
-        act_last_end_time = market_data.get_last_end_time()
+        act_last_end_time = market_data.get_last_end_time(ts_col_name)
         # Check output.
         self.assertEqual(act_last_end_time, exp_last_end_time)
 
@@ -417,13 +430,14 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
         self,
         market_data: mdata.MarketData,
         asset_ids: Optional[List[int]],
+        ts_col_name: str,
         *args: Any,
         **kwargs: Any,
     ) -> None:
         """
         Call `get_last_price()` for specified parameters.
         """
-        if skip_test_since_not_online(market_data):
+        if skip_test_since_not_online(market_data, ts_col_name):
             pytest.skip("Market not on-line")
         # Prepare inputs.
         col_name = "close"
@@ -432,7 +446,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             "get_last_price:" + hprint.to_str("col_name asset_ids"),
         )
         # Run.
-        srs = market_data.get_last_price(col_name, asset_ids).round(2)
+        srs = market_data.get_last_price(col_name, asset_ids, ts_col_name).round(2)
         # Check output.
         self.check_srs_output(srs, *args, **kwargs)
 
@@ -452,12 +466,12 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     # TODO(GP): Implement test for `wait_for_latest_data()`.
 
 
-def skip_test_since_not_online(market_data: mdata.MarketData) -> bool:
+def skip_test_since_not_online(market_data: mdata.MarketData, ts_col_name: str) -> bool:
     """
     Return true if a test should be skipped since `market_data` is not on-line.
     """
     ret = False
-    if not market_data.is_online():
+    if not market_data.is_online(ts_col_name):
         current_time = hdateti.get_current_time(tz="ET")
         _LOG.warning(
             "Skipping this test since DB is not on-line at %s", current_time
