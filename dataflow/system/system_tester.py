@@ -361,9 +361,10 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             system_tester = dtfsys.SystemTester()
             # Check output.
             portfolio = system.portfolio
+            # TODO(Grisha): pass column names as params.
             price_col = "vwap"
             volatility_col = "vwap.ret_0.vol"
-            prediction_col = "prediction"
+            prediction_col = "vwap.ret_0.vol_adj_2_hat"
             actual = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
