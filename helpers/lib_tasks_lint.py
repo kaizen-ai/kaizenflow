@@ -8,6 +8,7 @@ import datetime
 import logging
 import os
 import re
+import sys
 from typing import List, Optional
 
 from invoke import task
@@ -211,6 +212,13 @@ def lint_detect_cycles(  # type: ignore
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
     hlitauti._run(ctx, cmd)
+    # Obtain `rc` from output file.
+    lint_detect_cycles_output = (
+        hio.from_file(out_file_name).strip(os.linesep).split(os.linesep)
+    )
+    rc = int(lint_detect_cycles_output[-1])
+    # Trigger `SystemExit` in cycle detector.
+    sys.exit(rc)
 
 
 # pylint: disable=line-too-long
