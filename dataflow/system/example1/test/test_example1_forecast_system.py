@@ -17,6 +17,48 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
+# Test_Example1_System_CheckConfig
+# #############################################################################
+
+
+class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
+    def test_freeze_config1(self) -> None:
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system_builder = dtfseefosy.get_Example1_ForecastSystem_example1(
+            backtest_config
+        )
+        self._test_freeze_config1(system_builder)
+
+
+# #############################################################################
+# Test_Example1_ForecastSystem_FitInvariance
+# #############################################################################
+
+
+class Test_Example1_ForecastSystem_FitInvariance(
+    dtfsysytes.ForecastSystem_FitInvariance_TestCase1
+):
+    def test_test_invariance1(self) -> None:
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_example1(
+            backtest_config
+        )
+        start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        start_timestamp2 = pd.Timestamp("2000-01-01 09:40:00+0000", tz="UTC")
+        end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
+        compare_start_timestamp = pd.Timestamp(
+            "2000-01-01 09:50:00+0000", tz="UTC"
+        )
+        self._test_invariance1(
+            system_builder,
+            start_timestamp1,
+            start_timestamp2,
+            end_timestamp,
+            compare_start_timestamp,
+        )
+
+
+# #############################################################################
 # Test_Example1_ForecastSystem_FitPredict
 # #############################################################################
 
@@ -30,12 +72,6 @@ class Test_Example1_ForecastSystem_FitPredict(
         """
         backtest_config = "example1_v1-top2.1T.Jan2000"
         system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
-        # TODO(*): Do not hard-wire asset ids; see "Easily switch vendors in the E1
-        # pipeline" CmTask #2037.
-        system.config["market_data_config", "asset_ids"] = [
-            1467591036,
-            3303714233,
-        ]
         system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
