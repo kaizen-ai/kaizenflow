@@ -127,10 +127,6 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         *,
         mode: str = "data_client",
     ) -> None:
-        """
-
-        :param mode: ???
-        """
         super().__init__(resample_1min, db_connection, table_name, vendor="ccxt")
         hdbg.dassert_in(mode, ("market_data", "data_client"))
         self._mode = mode

@@ -487,9 +487,7 @@ class MarketData(abc.ABC):
 
     async def wait_for_latest_data(
         self,
-        *,
-        ts_col_name: Optional[str] = None,
-    ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
+        ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
         Wait until the bar with `end_time` == `wall_clock_time` is present in
         the RT DB.
@@ -507,7 +505,7 @@ class MarketData(abc.ABC):
         num_iter = 0
         while True:
             wall_clock_time = self.get_wall_clock_time()
-            last_db_end_time = self.get_last_end_time(ts_col_name=ts_col_name)
+            last_db_end_time = self.get_last_end_time()
             # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(
                 "\n### waiting on last bar: "
