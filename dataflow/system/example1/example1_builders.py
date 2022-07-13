@@ -104,6 +104,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     # 199         "market_data_config", "history_lookback"
     # 200     ] = market_data_history_lookback
     timedelta = pd.Timedelta("7D")
+    ts_col_name = "end_ts"
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
     multiindex_output = True
@@ -111,6 +112,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         stage,
         system.market_data,
         timedelta,
+        ts_col_name,
         multiindex_output,
     )
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
