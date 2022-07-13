@@ -43,7 +43,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "low",
             "close",
             "volume",
-            "knowledge_timestamp"
+            "knowledge_timestamp",
         ]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
@@ -104,7 +104,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "low",
             "close",
             "volume",
-            "knowledge_timestamp"
+            "knowledge_timestamp",
         ]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
@@ -162,18 +162,18 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
         }
         expected_column_names = [
-            'close',
-            'full_symbol',
-            'high',
-            'knowledge_timestamp',
-            'low',
-            'number_of_trades',
-            'open',
-            'twap',
-            'volume',
-            'vwap'
+            "close",
+            "full_symbol",
+            "high",
+            "knowledge_timestamp",
+            "low",
+            "number_of_trades",
+            "open",
+            "twap",
+            "volume",
+            "vwap",
         ]
-        expected_signature =  r"""# df=
+        expected_signature = r"""# df=
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
         columns=full_symbol,open,high,low,close,volume,vwap,number_of_trades,twap,knowledge_timestamp
         shape=(12, 10)
@@ -226,18 +226,18 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
         }
         expected_column_names = [
-            'close',
-            'full_symbol',
-            'high',
-            'knowledge_timestamp',
-            'low',
-            'number_of_trades',
-            'open',
-            'twap',
-            'volume',
-            'vwap'
+            "close",
+            "full_symbol",
+            "high",
+            "knowledge_timestamp",
+            "low",
+            "number_of_trades",
+            "open",
+            "twap",
+            "volume",
+            "vwap",
         ]
-        expected_signature =  r"""# df=
+        expected_signature = r"""# df=
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
         columns=full_symbol,open,high,low,close,volume,vwap,number_of_trades,twap,knowledge_timestamp
         shape=(12, 10)
@@ -294,7 +294,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "bid_price",
             "bid_size",
             "ask_price",
-            "ask_size"
+            "ask_size",
         ]
         expected_signature = r"""# df=
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
@@ -354,7 +354,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "bid_size",
             "ask_price",
             "ask_size",
-            "knowledge_timestamp"
+            "knowledge_timestamp",
         ]
         expected_signature = r"""# df=
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
@@ -403,7 +403,7 @@ class TestDataFrameImClients1(icdctictc.ImClientTestCase):
             "low",
             "close",
             "volume",
-            "feature1"
+            "feature1",
         ]
         expected_column_unique_values = {
             "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
