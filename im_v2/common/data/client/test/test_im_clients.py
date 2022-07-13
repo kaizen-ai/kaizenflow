@@ -7,6 +7,7 @@ import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.crypto_chassis.data.client as iccdc
 
 
+# TODO(Grisha): factor out `ImClient` calls in a helper function.
 @pytest.mark.slow("Slow via GH, fast on server.")
 class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
     """

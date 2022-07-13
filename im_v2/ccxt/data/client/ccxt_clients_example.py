@@ -81,7 +81,6 @@ def get_CcxtParquetByAssetClient_example1(
     return ccxt_client
 
 
-# TODO(Grisha): Factor out to centralize the calls to change the stuff in one place only.
 def get_CcxtHistoricalPqByTileClient_example1(
     universe_version: str,
     resample_1min: bool,
