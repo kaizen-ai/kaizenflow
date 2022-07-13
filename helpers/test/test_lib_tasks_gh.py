@@ -20,11 +20,11 @@ class TestLibTasks1(hunitest.TestCase):
     def test_get_gh_issue_title1(self) -> None:
         httestlib._gh_login()
         issue_id = 1
-        repo = "amp"
+        repo = "cm"
         act = hlitagh._get_gh_issue_title(issue_id, repo)
         exp = (
-            "AmpTask1_Bridge_Python_and_R",
-            "https://github.com/alphamatic/amp/issues/1",
+            "CmTask1_fix_amp_tmux_session_script",
+            "https://github.com/cryptokaizen/cmamp/issues/1",
         )
         self.assert_equal(str(act), str(exp))
 
