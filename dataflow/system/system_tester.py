@@ -176,7 +176,7 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
     Check the behavior of a System for different amount of passed data history.
     """
 
-    def invariance_helper(
+    def _test_invariance1(
         self,
         system_builder: Callable,
         start_timestamp1: pd.Timestamp,
