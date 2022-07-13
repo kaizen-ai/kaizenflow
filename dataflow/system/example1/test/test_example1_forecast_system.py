@@ -17,6 +17,34 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
+# Test_Example1_ForecastSystem_CheckPnl
+# #############################################################################
+
+
+class Test_Example1_ForecastSystem_CheckPnl(
+    dtfsysytes.ForecastSystem_CheckPnl_TestCase1
+):
+    def test_test_fit_run1(self) -> None:
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+        start_ts = pd.Timestamp("2000-01-10 00:00:00+0000", tz="UTC")
+        end_ts = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
+        lookback = "10D"
+        price_col_name = "vwap"
+        volatility_col_name = "vwap.ret_0.vol"
+        prediction_col_name = "vwap.ret_0.vol_adj.c"
+        self._test_fit_run1(
+            system,
+            start_ts,
+            end_ts,
+            lookback,
+            price_col_name,
+            volatility_col_name,
+            prediction_col_name,
+        )
+
+
+# #############################################################################
 # Test_Example1_ForecastSystem_FitInvariance
 # #############################################################################
 

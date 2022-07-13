@@ -218,15 +218,18 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
     def _test_fit_run1(
         self,
         system: dtfsys.System,
+        start_timestamp: pd.Timestamp,
+        end_timestamp: pd.Timestamp,
+        lookback: str,
+        price_col_name: str,
+        volatility_col_name: str,
+        prediction_col_name: str,
     ) -> None:
         dag_runner = system.get_dag_runner()
         # Set the time boundaries.
-        start_datetime = system.config[
-            "backtest_config", "start_timestamp_with_lookback"
-        ]
-        end_datetime = system.config["backtest_config", "end_timestamp"]
+        start_timestamp_with_lookback = start_timestamp - pd.Timedelta(lookback)
         dag_runner.set_fit_intervals(
-            [(start_datetime, end_datetime)],
+            [(start_timestamp_with_lookback, end_timestamp)],
         )
         # Run.
         result_bundle = dag_runner.fit()
@@ -235,9 +238,9 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         # TODO(gp): Factor out these params somehow.
         signature, _ = system_tester.get_research_pnl_signature(
             result_bundle,
-            price_col="vwap",
-            volatility_col="vwap.ret_0.vol",
-            prediction_col="prediction",
+            price_col=price_col_name,
+            volatility_col=volatility_col_name,
+            prediction_col=prediction_col_name,
         )
         self.check_string(signature, fuzzy_match=True, purify_text=True)
 
