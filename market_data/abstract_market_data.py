@@ -159,8 +159,8 @@ class MarketData(abc.ABC):
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
-        ts_col_name: Optional[str] = None,
         *,
+        ts_col_name: Optional[str] = None,
         # TODO(gp): @Grisha not sure limit is really needed. We could move it
         #  to the DB implementation.
         limit: Optional[int] = None,
@@ -189,7 +189,6 @@ class MarketData(abc.ABC):
         if ts_col_name is None:
             # By convention to get the last chunk of data we use the start_time
             #  column.
-            # TODO(Danya): Make passing of ts_col_name mandatory.
             ts_col_name = self._start_time_col_name
         asset_ids = self._asset_ids
         # Get the data.
@@ -488,6 +487,8 @@ class MarketData(abc.ABC):
 
     async def wait_for_latest_data(
         self,
+        *,
+        ts_col_name: Optional[str] = None,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
         Wait until the bar with `end_time` == `wall_clock_time` is present in
@@ -506,7 +507,7 @@ class MarketData(abc.ABC):
         num_iter = 0
         while True:
             wall_clock_time = self.get_wall_clock_time()
-            last_db_end_time = self.get_last_end_time()
+            last_db_end_time = self.get_last_end_time(ts_col_name=ts_col_name)
             # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(
                 "\n### waiting on last bar: "

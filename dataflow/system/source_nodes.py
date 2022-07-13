@@ -430,13 +430,14 @@ class RealTimeDataSource(dtfcore.DataSource):
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         self._timedelta = timedelta
         self._asset_id_col = market_data.asset_id_col
+        self._ts_col_name = ts_col_name
         self._multiindex_output = multiindex_output
 
     # TODO(gp): Can we use a run and move it inside fit?
     async def wait_for_latest_data(
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
-        ret = await self._market_data.wait_for_latest_data()
+        ret = await self._market_data.wait_for_latest_data(ts_col_name=self._ts_col_name)
         return ret  # type: ignore[no-any-return]
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:

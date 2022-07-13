@@ -603,7 +603,7 @@ class RealTimeImClient(ImClient):
 
 # TODO(gp): @all cleanup resample_1min should go last and probably have a default
 #  value of False.
-class SqlRealTimeImClient(RealTimeImClient):
+class SqlRealTimeImClient(RealTimeImClient, abc.ABC):
     def __init__(
         self,
         resample_1min: bool,
