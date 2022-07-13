@@ -67,8 +67,9 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1D")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta, ts_col_name)
 
     def test_get_data_for_last_period2(self) -> None:
         # Prepare inputs.
@@ -81,8 +82,9 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("2D")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta, ts_col_name)
 
     def test_get_data_for_last_period3(self) -> None:
         # Prepare inputs.
@@ -95,8 +97,9 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1W")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta, ts_col_name)
 
     def test_get_data_for_last_period4(self) -> None:
         # Prepare inputs.
@@ -109,8 +112,9 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("10T")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta, ts_col_name)
 
     def test_get_data_for_last_period5(self) -> None:
         # Prepare inputs.
@@ -123,8 +127,9 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("5T")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta, ts_col_name)
 
     def test_get_data_for_last_period6(self) -> None:
         # Prepare inputs.
@@ -137,8 +142,9 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("1T")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta, ts_col_name)
 
     def test_get_data_for_last_period7(self) -> None:
         # Prepare inputs.
@@ -151,8 +157,9 @@ class TestImClientMarketData1(mdtmdtca.MarketData_get_data_TestCase):
             im_client, asset_ids, columns, column_remap
         )
         timedelta = pd.Timedelta("365D")
+        ts_col_name = "start_ts"
         # Run.
-        self._test_get_data_for_last_period(market_data, timedelta)
+        self._test_get_data_for_last_period(market_data, timedelta, ts_col_name)
 
     def test_get_data_at_timestamp1(self) -> None:
         # Prepare inputs.

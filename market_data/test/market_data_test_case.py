@@ -41,6 +41,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
     def _test_get_data_for_last_period(
         market_data: mdata.MarketData,
         timedelta: pd.Timestamp,
+        ts_col_name: str
     ) -> None:
         """
         Call `get_data_for_last_period()` all conditional periods.
@@ -56,7 +57,7 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             "get_data_for_last_period:" + hprint.to_str("timedelta"),
         )
         # Run.
-        _ = market_data.get_data_for_last_period(timedelta)
+        _ = market_data.get_data_for_last_period(timedelta, ts_col_name)
 
     # //////////////////////////////////////////////////////////////////////////////
 

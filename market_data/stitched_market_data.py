@@ -111,6 +111,7 @@ class IgStitchedMarketData(mdata.MarketData):
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
+        ts_col_name: str,
         *,
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
@@ -135,7 +136,7 @@ class IgStitchedMarketData(mdata.MarketData):
         rt_timedelta = wall_clock_time - historical_market_data_end_ts
         _LOG.debug("rt_timedelta=%s", rt_timedelta)
         rt_market_data_df = self._ig_rt_market_data.get_data_for_last_period(
-            rt_timedelta,
+            rt_timedelta, ts_col_name
         )
         _LOG.debug(
             hpandas.df_to_str(
