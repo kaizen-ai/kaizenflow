@@ -73,18 +73,23 @@ jobs:
       # TODO(Nikola): Investigate ways to only notify on build status change, CmTask #2202.
       #   https://github.community/t/send-notification-when-build-status-changes/18490
       #   https://github.com/MercymeIlya/last-workflow-status
-#      - name: Send Telegram notification for success
-#        if: ${{ success() && ??? }}
-#        uses: appleboy/telegram-action@master
-#        with:
-#          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
-#          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
-#          message: |
-#            🎉 Test coverage run was successful.
-#            s3://cryptokaizen-html/html_coverage/runner_master/index.html
+      #- name: Send Telegram notification for success
+      #  if: ${{ success() && ??? }}
+      #  uses: appleboy/telegram-action@master
+      #  with:
+      #    to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+      #    token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+      #    message: |
+      #      🎉 Test coverage run was successful.
+      #      s3://cryptokaizen-html/html_coverage/runner_master/index.html
 
+      # Notify the team via Telegram in case of failure.
       - name: Send Telegram notification for failure
-        if: ${{ failure() && github.ref_name == 'master'}}
+        # Need to use ref_name as it contains the branch that triggered the
+        # workflow run.
+        # Alternative, head_ref is only available when the event that triggers a
+        # workflow run is either pull_request or pull_request_target.
+        if: ${{ failure() && github.ref_name == 'master' }}
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
