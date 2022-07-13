@@ -24,6 +24,7 @@ def adapt_dag_to_real_time(
     # TODO(gp): This could become a market_data_dict
     market_data_history_lookback: pd.Timedelta,
     process_forecasts_dict: Dict[str, Any],
+    ts_col_name: str
 ):
     """
     Insert a `RealTimeDataSource` node at the beginning of a DAG and a
@@ -42,6 +43,7 @@ def adapt_dag_to_real_time(
     node = dtfsysonod.RealTimeDataSource(
         stage,
         market_data,
+        ts_col_name,
         market_data_history_lookback,
         multiindex_output,
     )

@@ -438,7 +438,7 @@ class RealTimeDataSource(dtfcore.DataSource):
     async def wait_for_latest_data(
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
-        ret = await self._market_data.wait_for_latest_data(ts_col_name=self._ts_col_name)
+        ret = await self._market_data.wait_for_latest_data()
         return ret  # type: ignore[no-any-return]
 
     def fit(self) -> Optional[Dict[str, pd.DataFrame]]:

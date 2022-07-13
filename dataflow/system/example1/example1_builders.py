@@ -87,8 +87,8 @@ def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG
     node = dtfsysonod.RealTimeDataSource(
         stage,
         market_data,
-        timedelta,
         ts_col_name,
+        timedelta,
         multiindex_output,
     )
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
