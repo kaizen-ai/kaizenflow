@@ -105,6 +105,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.flaky(reruns=2)
 class TestRunExperimentFail2(hunitest.TestCase):
     """
     Run experiments that fail.
