@@ -12,7 +12,8 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         Smoke test that the class is being initialized correctly.
         """
         _ = imvccdexex.CryptoChassisExtractor("spot")
-
+    
+    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     def test_download_bid_ask_data1(
         self,
     ) -> None:
@@ -39,7 +40,8 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         actual = actual.reset_index(drop=True)
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
-
+    
+    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     def test_download_bid_ask_data_futures1(
         self,
     ) -> None:
@@ -260,7 +262,8 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         # Check output for error.
         actual = str(cm.exception)
         self.assertIn(expected, actual)
-
+    
+    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     def test_download_trade1(
         self,
     ) -> None:
@@ -286,7 +289,8 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = actual.reset_index(drop=True)
         actual = hpandas.convert_df_to_json_string(actual)
         self.check_string(actual)
-
+    
+    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     def test_download_trade_futures1(
         self,
     ) -> None:
