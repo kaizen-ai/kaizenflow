@@ -312,6 +312,8 @@ class RealTimeMarketData2(mdabmada.MarketData):
             limit=limit,
         )
         # Rename the index to fit the MarketData format.
+        # TODO(Grisha): factor out and keep in sync with `_convert_data_for_normalization`
+        # in `ImClientMarketData`.
         data.index.name = self._end_time_col_name
         data = data.reset_index()
         data[self._start_time_col_name] = data[
