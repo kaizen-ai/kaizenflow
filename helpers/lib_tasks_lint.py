@@ -216,7 +216,11 @@ def lint_detect_cycles(  # type: ignore
     lint_detect_cycles_output = (
         hio.from_file(out_file_name).strip(os.linesep).split(os.linesep)
     )
-    rc = int(lint_detect_cycles_output[-1])
+    last_line = lint_detect_cycles_output[-1]
+    rc = 0
+    if last_line.isdigit():
+        # If run is successful, there will be no `rc` at the end of file.
+        rc = int(last_line)
     # Trigger `SystemExit` in cycle detector.
     sys.exit(rc)
 
