@@ -12,9 +12,11 @@ import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
+
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.flaky(reruns=2)
 class TestRunNotebook1(hunitest.TestCase):
     """
     Run notebooks without failures.
@@ -68,6 +70,7 @@ class TestRunNotebook1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.flaky(reruns=2)
 class TestRunNotebook2(hunitest.TestCase):
     """
     Run experiments that fail.

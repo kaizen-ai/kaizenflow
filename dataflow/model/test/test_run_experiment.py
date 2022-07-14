@@ -45,6 +45,7 @@ def _run_experiment_helper(
 
 # TODO(gp): We could factor out more common code between here and the corresponding
 #  unit tests in TestRunNotebook*. The difference is only in the command lines.
+@pytest.mark.flaky(reruns=2)
 class TestRunExperimentSuccess1(hunitest.TestCase):
     """
     Run an experiment list of two experiment that both succeed.
@@ -104,6 +105,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
 # #############################################################################
 
 
+@pytest.mark.flaky(reruns=2)
 class TestRunExperimentFail2(hunitest.TestCase):
     """
     Run experiments that fail.
