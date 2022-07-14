@@ -8,7 +8,6 @@ import datetime
 import logging
 import os
 import re
-import sys
 from typing import List, Optional
 
 from invoke import task
@@ -212,9 +211,7 @@ def lint_detect_cycles(  # type: ignore
     # Use `PIPESTATUS` otherwise the exit status of the pipe is always 0 because writing to a file succeeds.
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}; exit $PIPESTATUS"
     # Run.
-    rc = hlitauti._run(ctx, cmd)
-    # Trigger `SystemExit` in cycle detector.
-    sys.exit(rc)
+    hlitauti._run(ctx, cmd)
 
 
 # pylint: disable=line-too-long
