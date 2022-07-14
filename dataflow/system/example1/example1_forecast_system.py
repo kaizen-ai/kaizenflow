@@ -8,14 +8,11 @@ import logging
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.pipelines.example1.example1_pipeline as dtfpexexpi
 import dataflow.system.example1.example1_builders as dtfsexexbu
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
-import dataflow.universe as dtfuniver
-import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms
@@ -59,50 +56,27 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         return dag
 
 
-# TODO(Grisha): "Factor out `build_ForecastSystem`" CmTask #2282.
-def get_Example1_ForecastSystem_example1(
+def get_Example1_ForecastSystem_for_simulation_example1(
     backtest_config: str,
 ) -> dtfsyssyst.ForecastSystem:
     """
-    Get Example1_ForecastSystem object for backtesting.
+    Get Example1_ForecastSystem object for backtest simulation.
     """
-    # Parse the backtest experiment.
-    (
-        universe_str,
-        trading_period_str,
-        time_interval_str,
-    ) = dtfmoexcon.parse_experiment_config(backtest_config)
-    #
     system = Example1_ForecastSystem()
-    # Set the trading period.
-    hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
-    # TODO(gp): Use a setter.
-    system.config[
-        "dag_config_config", "resample", "transformer_kwargs", "rule"
-    ] = trading_period_str
-    # TODO(gp): We pass dag_runner through the config since somebody
-    #  outside needs this function to run. In reality we should build the
-    #  object and not pass a builder.
-    system.config["dag_runner_object"] = system.get_dag_runner
-    # TODO(gp):
-    system.config["backtest_config", "universe_str"] = universe_str
-    system.config["backtest_config", "trading_period_str"] = trading_period_str
-    system.config["backtest_config", "time_interval_str"] = time_interval_str
-    #
+    system = dtfssybuut.apply_backtest_config(system, backtest_config)
+    # Fill pipeline-specific backtest config parameters.
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "10D"
-    # Use `ImClient` to get asset ids universe.
-    im_client = icdc.get_DataFrameImClient_example1()
-    full_symbols = dtfuniver.get_universe(universe_str)
-    asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
-    system.config["market_data_config", "im_client"] = im_client
-    system.config["market_data_config", "asset_ids"] = asset_ids
-    # TODO(gp): Find a better place in the config, maybe "save_results"?
-    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
+    # Fill `MarketData` related config.
+    system.config[
+        "market_data_config", "im_client_ctor"
+    ] = icdc.get_DataFrameImClient_example1
+    system.config["market_data_config", "im_client_config"] = {}
     # Set the research PNL parameters.
     system.config["research_pnl", "price_col"] = "vwap"
     system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
     system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
+    system = dtfssybuut.apply_market_data_config(system)
     return system
 
 
@@ -231,7 +205,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
 
     def _get_market_data(
         self,
-    ):
+    ) -> mdata.ReplayedMarketData:
         market_data = dtfssybuut.get_event_loop_MarketData_from_df(self)
         return market_data
 
