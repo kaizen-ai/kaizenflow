@@ -435,7 +435,7 @@ def save_parquet(
     # Drop DB metadata columns.
     data = data.drop(["end_download_timestamp"], axis=1, errors="ignore")
     # Verify the schema of Dataframe.
-    verify_schema(data)
+    data = verify_schema(data)
     # Save filename as `uuid`, e.g.
     #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
     hparque.to_partitioned_parquet(
@@ -518,18 +518,30 @@ def download_historical_data(
             hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
 
 
-def verify_schema(data: pd.DataFrame) -> None:
+def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
     """
     Validate the columns types in the extracted data.
 
     :param data: the dataframe to verify
     """
     error_msg = []
+    hdbg.dassert_eq(
+        data.isnull().values.any(),
+        False,
+        "Dataframe contains NaNs, unable to merge.",
+    )
     for column in data.columns:
-        # Get the actual data type of the column.
-        actual_type = str(data[column].dtype)
         # Extract the expected type of the column from the schema.
         expected_type = TYPE_SCHEMA[column]
+        if expected_type == "float64" and pd.api.types.is_numeric_dtype(
+            data[column].dtype
+        ):
+            # Sometimes float with no numbers after the decimal point is considered an int
+            # and fails to be merged.
+            # Wherefore force column type into float if float is expected and the column is numeric.
+            data[column] = data[column].astype("float64")
+        # Get the actual data type of the column.
+        actual_type = str(data[column].dtype)
         # Compare types.
         if actual_type != expected_type:
             # Log the error.
@@ -538,3 +550,4 @@ def verify_schema(data: pd.DataFrame) -> None:
             )
     if error_msg:
         hdbg.dfatal(msg="\n".join())
+    return data
