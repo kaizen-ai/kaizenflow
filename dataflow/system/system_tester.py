@@ -176,7 +176,7 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
     Check the behavior of a System for different amount of passed data history.
     """
 
-    def invariance_helper(
+    def _test_invariance1(
         self,
         system_builder: Callable,
         start_timestamp1: pd.Timestamp,
@@ -233,11 +233,14 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         # Check.
         system_tester = dtfsys.SystemTester()
         # TODO(gp): Factor out these params somehow.
+        price_col = system.config["research_pnl", "price_col"]
+        volatility_col = system.config["research_pnl", "volatility_col"]
+        prediction_col = system.config["research_pnl", "prediction_col"]
         signature, _ = system_tester.get_research_pnl_signature(
             result_bundle,
-            price_col="vwap",
-            volatility_col="vwap.ret_0.vol",
-            prediction_col="prediction",
+            price_col=price_col,
+            volatility_col=volatility_col,
+            prediction_col=prediction_col,
         )
         self.check_string(signature, fuzzy_match=True, purify_text=True)
 
