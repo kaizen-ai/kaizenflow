@@ -126,6 +126,10 @@ class Test_Example1_ForecastSystem_CheckPnl(
         system.config["backtest_config", "end_timestamp"] = pd.Timestamp(
             "2000-01-31 00:00:00+0000", tz="UTC"
         )
+        # Set the research PNL parameters.
+        system.config["research_pnl", "price_col"] = "vwap"
+        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+        system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
         self._test_fit_run1(system)
 
 
