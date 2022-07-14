@@ -17,6 +17,7 @@ class TestLibTasks1(hunitest.TestCase):
     Test some auxiliary functions, e.g., `_get_gh_issue_title()`.
     """
 
+    @pytest.mark.skip("CmTask #2362.")
     def test_get_gh_issue_title1(self) -> None:
         httestlib._gh_login()
         issue_id = 1
