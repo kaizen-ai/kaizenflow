@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
         backtest_config = "example1_v1-top2.1T.Jan2000"
-        system_builder = dtfseefosy.get_Example1_ForecastSystem_example1(
+        system_builder = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
             backtest_config
         )
         self._test_freeze_config1(system_builder)
@@ -40,7 +40,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
 ):
     def test_test_invariance1(self) -> None:
         backtest_config = "example1_v1-top2.1T.Jan2000"
-        system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_example1(
+        system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
             backtest_config
         )
         start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
@@ -71,7 +71,7 @@ class Test_Example1_ForecastSystem_FitPredict(
         Create the System for testing.
         """
         backtest_config = "example1_v1-top2.1T.Jan2000"
-        system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+        system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(backtest_config)
         system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
