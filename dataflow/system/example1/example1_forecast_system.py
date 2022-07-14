@@ -99,6 +99,10 @@ def get_Example1_ForecastSystem_example1(
     system.config["market_data_config", "asset_ids"] = asset_ids
     # TODO(gp): Find a better place in the config, maybe "save_results"?
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
+    # Set the research PNL parameters.
+    system.config["research_pnl", "price_col"] = "vwap"
+    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
     return system
 
 
