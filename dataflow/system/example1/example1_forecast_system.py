@@ -72,6 +72,10 @@ def get_Example1_ForecastSystem_for_simulation_example1(
         "market_data_config", "im_client_ctor"
     ] = icdc.get_DataFrameImClient_example1
     system.config["market_data_config", "im_client_config"] = {}
+    # Set the research PNL parameters.
+    system.config["research_pnl", "price_col"] = "vwap"
+    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
     system = dtfssybuut.apply_market_data_config(system)
     return system
 
