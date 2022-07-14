@@ -209,12 +209,9 @@ def lint_detect_cycles(  # type: ignore
     )
     # Execute command line.
     cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
-    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}; exit $PIPESTATUS"
     # Run.
-    hlitauti._run(ctx, cmd)
-    # Obtain `rc` from output file.
-    lint_detect_cycles_output = hio.from_file(out_file_name).strip(os.linesep).split(os.linesep)
-    rc = int(lint_detect_cycles_output[-1])
+    rc = hlitauti._run(ctx, cmd)
     sys.exit(rc)
 
 
