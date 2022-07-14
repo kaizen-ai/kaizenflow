@@ -21,41 +21,16 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Grisha): factor out the backtest config and use `5T` as resampling frequency CmTask #2367.
 class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
         backtest_config = "example1_v1-top2.1T.Jan2000"
-        system_builder = dtfseefosy.get_Example1_ForecastSystem_example1(
-            backtest_config
+        system_builder = (
+            dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
+                backtest_config
+            )
         )
         self._test_freeze_config1(system_builder)
-
-
-# #############################################################################
-# Test_Example1_ForecastSystem_FitInvariance
-# #############################################################################
-
-
-class Test_Example1_ForecastSystem_FitInvariance(
-    dtfsysytes.ForecastSystem_FitInvariance_TestCase1
-):
-    def test_test_invariance1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
-        system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_example1(
-            backtest_config
-        )
-        start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
-        start_timestamp2 = pd.Timestamp("2000-01-01 09:40:00+0000", tz="UTC")
-        end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
-        compare_start_timestamp = pd.Timestamp(
-            "2000-01-01 09:50:00+0000", tz="UTC"
-        )
-        self._test_invariance1(
-            system_builder,
-            start_timestamp1,
-            start_timestamp2,
-            end_timestamp,
-            compare_start_timestamp,
-        )
 
 
 # #############################################################################
@@ -71,7 +46,9 @@ class Test_Example1_ForecastSystem_FitPredict(
         Create the System for testing.
         """
         backtest_config = "example1_v1-top2.1T.Jan2000"
-        system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+        system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
+            backtest_config
+        )
         system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
@@ -100,6 +77,57 @@ class Test_Example1_ForecastSystem_FitPredict(
     def test_fit_vs_predict1(self) -> None:
         system = self.get_system()
         self._test_fit_vs_predict1(system)
+
+
+# #############################################################################
+# Test_Example1_ForecastSystem_FitInvariance
+# #############################################################################
+
+
+class Test_Example1_ForecastSystem_FitInvariance(
+    dtfsysytes.ForecastSystem_FitInvariance_TestCase1
+):
+    def test_test_invariance1(self) -> None:
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
+            backtest_config
+        )
+        start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        start_timestamp2 = pd.Timestamp("2000-01-01 09:40:00+0000", tz="UTC")
+        end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
+        compare_start_timestamp = pd.Timestamp(
+            "2000-01-01 09:50:00+0000", tz="UTC"
+        )
+        self._test_invariance1(
+            system_builder,
+            start_timestamp1,
+            start_timestamp2,
+            end_timestamp,
+            compare_start_timestamp,
+        )
+
+
+# #############################################################################
+# Test_Example1_ForecastSystem_CheckPnl
+# #############################################################################
+
+
+class Test_Example1_ForecastSystem_CheckPnl(
+    dtfsysytes.ForecastSystem_CheckPnl_TestCase1
+):
+    # TODO(*): Add more data to Example1, otherwise the outcome is an empty dataframe.
+    def test_test_fit_run1(self) -> None:
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
+            backtest_config
+        )
+        system.config[
+            "backtest_config", "start_timestamp_with_lookback"
+        ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        system.config["backtest_config", "end_timestamp"] = pd.Timestamp(
+            "2000-01-31 00:00:00+0000", tz="UTC"
+        )
+        self._test_fit_run1(system)
 
 
 # #############################################################################
