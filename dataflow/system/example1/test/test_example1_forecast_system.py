@@ -117,7 +117,9 @@ class Test_Example1_ForecastSystem_CheckPnl(
     # TODO(*): Add more data to Example1, otherwise the outcome is an empty dataframe.
     def test_test_fit_run1(self) -> None:
         backtest_config = "example1_v1-top2.1T.Jan2000"
-        system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+        system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
+            backtest_config
+        )
         system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")

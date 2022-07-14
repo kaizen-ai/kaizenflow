@@ -61,10 +61,6 @@ market_data_config:
   im_client: <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>
   asset_ids: [3303714233, 1467591036]
   asset_id_col_name: asset_id
-research_pnl:
-  price_col: vwap
-  volatility_col: vwap.ret_0.vol
-  prediction_col: vwap.ret_0.vol_adj.c
 market_object: <market_data.im_client_market_data.ImClientMarketData object>
 dag_object: name=None
 mode=strict
