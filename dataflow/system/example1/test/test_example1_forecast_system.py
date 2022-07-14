@@ -21,6 +21,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Grisha): factor out the backtest config and use `5T` as resampling frequency CmTask #2367.
 class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
         backtest_config = "example1_v1-top2.1T.Jan2000"
