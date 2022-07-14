@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def build_Example1_tile_configs(backtest_config: str) -> List[cconfig.Config]:
-    system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+    system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(backtest_config)
     system_configs = dtfmoexcon.build_configs_with_tiled_universe_and_periods(
         system.config
     )
