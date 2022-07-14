@@ -212,7 +212,7 @@ def lint_detect_cycles(  # type: ignore
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}; exit $PIPESTATUS"
     # Run.
     rc = hlitauti._run(ctx, cmd)
-    sys.exit(rc)
+    # sys.exit(rc)
 
 
 # pylint: disable=line-too-long
