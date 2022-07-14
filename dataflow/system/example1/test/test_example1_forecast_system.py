@@ -110,6 +110,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
 class Test_Example1_ForecastSystem_CheckPnl(
     dtfsysytes.ForecastSystem_CheckPnl_TestCase1
 ):
+    # TODO(*): Add more data to Example1, otherwise the outcome is an empty dataframe.
     def test_test_fit_run1(self) -> None:
         backtest_config = "example1_v1-top2.1T.Jan2000"
         system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
@@ -119,9 +120,6 @@ class Test_Example1_ForecastSystem_CheckPnl(
         system.config["backtest_config", "end_timestamp"] = pd.Timestamp(
             "2000-01-31 00:00:00+0000", tz="UTC"
         )
-        system.config["research_pnl", "price_col"] = "vwap"
-        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-        system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
         self._test_fit_run1(system)
 
 
