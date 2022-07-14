@@ -1,0 +1,23 @@
+
+# forecast_evaluator_from_prices signature=
+
+# holdings=
+Empty DataFrame
+Columns: [1467591036, 3303714233]
+Index: []
+# holdings marked to market=
+Empty DataFrame
+Columns: [1467591036, 3303714233]
+Index: []
+# flows=
+Empty DataFrame
+Columns: [1467591036, 3303714233]
+Index: []
+# pnl=
+Empty DataFrame
+Columns: [1467591036, 3303714233]
+Index: []
+# statistics=
+Empty DataFrame
+Columns: [pnl, gross_volume, net_volume, gmv, nmv]
+Index: []
