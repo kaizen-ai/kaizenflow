@@ -56,7 +56,6 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         return dag
 
 
-# TODO(Grisha): "Factor out `build_ForecastSystem`" CmTask #2282.
 def get_Example1_ForecastSystem_for_simulation_example1(
     backtest_config: str,
 ) -> dtfsyssyst.ForecastSystem:
