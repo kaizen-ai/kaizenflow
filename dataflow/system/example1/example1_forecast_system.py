@@ -71,15 +71,10 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     # Fill `MarketData` related config.
     system.config[
         "market_data_config", "im_client_ctor"
-    ] = icdc.get_DataFrameImClient_example1()
+    ] = icdc.get_DataFrameImClient_example1
     system.config[
         "market_data_config", "im_client_config"
-    ] = cconfig.get_config_from_nested_dict(
-        {
-            "universe_version": "v1",
-            "resample_1min": False,
-        }
-    )
+    ] = {}
     system = dtfssybuut.apply_market_data_config(system)
     return system
 

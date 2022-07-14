@@ -11,7 +11,7 @@ dag_config:
     in_col_groups: [('close',), ('volume',), ('feature1',)]
     out_col_group: ()
     transformer_kwargs:
-      rule: 5T
+      rule: 1T
       resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'feature1': 'feature1'}, 'mean', {})]
       vwap_groups: [('close', 'volume', 'vwap')]
     reindex_like_input: False
@@ -48,10 +48,6 @@ dag_config:
 dag_builder_object: nid_prefix=
 dag_builder_class: Example1_DagBuilder
 system_class: Example1_ForecastSystem
-dag_config_config:
-  resample:
-    transformer_kwargs:
-      rule: 1T
 dag_runner_object: <bound method Example1_ForecastSystem.get_dag_runner of <dataflow.system.example1.example1_forecast_system.Example1_ForecastSystem object>>
 backtest_config:
   universe_str: example1_v1-top2
@@ -62,6 +58,8 @@ backtest_config:
   start_timestamp_with_lookback: 2000-01-01 00:00:00+00:00
   end_timestamp: 2000-01-31 00:00:00+00:00
 market_data_config:
+  im_client_ctor: <function get_DataFrameImClient_example1>
+  im_client_config: {}
   im_client: <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>
   asset_ids: [3303714233, 1467591036]
   asset_id_col_name: asset_id
@@ -75,6 +73,23 @@ vwap.ret_0.vol_adj.c
 ################################################################################
                            1467591036  3303714233
 end_ts                                           
-2000-01-01 10:00:00-05:00       -0.98       -0.98
-2000-01-01 10:05:00-05:00        0.98        0.98
-2000-01-01 10:10:00-05:00       -0.98       -0.98
+2000-01-01 09:38:00-05:00         0.0         0.0
+2000-01-01 09:39:00-05:00         0.0         0.0
+2000-01-01 09:41:00-05:00         4.0         4.0
+2000-01-01 09:43:00-05:00         0.0         0.0
+2000-01-01 09:44:00-05:00         0.0         0.0
+2000-01-01 09:46:00-05:00        -4.0        -4.0
+2000-01-01 09:48:00-05:00         0.0         0.0
+2000-01-01 09:49:00-05:00         0.0         0.0
+2000-01-01 09:51:00-05:00         4.0         4.0
+2000-01-01 09:53:00-05:00         0.0         0.0
+2000-01-01 09:54:00-05:00         0.0         0.0
+2000-01-01 09:56:00-05:00        -4.0        -4.0
+2000-01-01 09:58:00-05:00         0.0         0.0
+2000-01-01 09:59:00-05:00         0.0         0.0
+2000-01-01 10:01:00-05:00         4.0         4.0
+2000-01-01 10:03:00-05:00         0.0         0.0
+2000-01-01 10:04:00-05:00         0.0         0.0
+2000-01-01 10:06:00-05:00        -4.0        -4.0
+2000-01-01 10:08:00-05:00         0.0         0.0
+2000-01-01 10:09:00-05:00         0.0         0.0
