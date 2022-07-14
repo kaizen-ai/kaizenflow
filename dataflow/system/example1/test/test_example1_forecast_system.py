@@ -17,34 +17,6 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Test_Example1_ForecastSystem_CheckPnl
-# #############################################################################
-
-
-class Test_Example1_ForecastSystem_CheckPnl(
-    dtfsysytes.ForecastSystem_CheckPnl_TestCase1
-):
-    def test_test_fit_run1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
-        system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
-        start_ts = pd.Timestamp("2000-01-10 00:00:00+0000", tz="UTC")
-        end_ts = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
-        lookback = "10D"
-        price_col_name = "vwap"
-        volatility_col_name = "vwap.ret_0.vol"
-        prediction_col_name = "vwap.ret_0.vol_adj.c"
-        self._test_fit_run1(
-            system,
-            start_ts,
-            end_ts,
-            lookback,
-            price_col_name,
-            volatility_col_name,
-            prediction_col_name,
-        )
-
-
-# #############################################################################
 # Test_Example1_System_CheckConfig
 # #############################################################################
 
@@ -56,34 +28,6 @@ class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
             backtest_config
         )
         self._test_freeze_config1(system_builder)
-
-
-# #############################################################################
-# Test_Example1_ForecastSystem_FitInvariance
-# #############################################################################
-
-
-class Test_Example1_ForecastSystem_FitInvariance(
-    dtfsysytes.ForecastSystem_FitInvariance_TestCase1
-):
-    def test_test_invariance1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
-        system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_example1(
-            backtest_config
-        )
-        start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
-        start_timestamp2 = pd.Timestamp("2000-01-01 09:40:00+0000", tz="UTC")
-        end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
-        compare_start_timestamp = pd.Timestamp(
-            "2000-01-01 09:50:00+0000", tz="UTC"
-        )
-        self._test_invariance1(
-            system_builder,
-            start_timestamp1,
-            start_timestamp2,
-            end_timestamp,
-            compare_start_timestamp,
-        )
 
 
 # #############################################################################
@@ -128,6 +72,59 @@ class Test_Example1_ForecastSystem_FitPredict(
     def test_fit_vs_predict1(self) -> None:
         system = self.get_system()
         self._test_fit_vs_predict1(system)
+
+
+# #############################################################################
+# Test_Example1_ForecastSystem_FitInvariance
+# #############################################################################
+
+
+class Test_Example1_ForecastSystem_FitInvariance(
+    dtfsysytes.ForecastSystem_FitInvariance_TestCase1
+):
+    def test_test_invariance1(self) -> None:
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_example1(
+            backtest_config
+        )
+        start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        start_timestamp2 = pd.Timestamp("2000-01-01 09:40:00+0000", tz="UTC")
+        end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
+        compare_start_timestamp = pd.Timestamp(
+            "2000-01-01 09:50:00+0000", tz="UTC"
+        )
+        self._test_invariance1(
+            system_builder,
+            start_timestamp1,
+            start_timestamp2,
+            end_timestamp,
+            compare_start_timestamp,
+        )
+
+
+# #############################################################################
+# Test_Example1_ForecastSystem_CheckPnl
+# #############################################################################
+
+
+class Test_Example1_ForecastSystem_CheckPnl(
+    dtfsysytes.ForecastSystem_CheckPnl_TestCase1
+):
+    def test_test_fit_run1(self) -> None:
+        backtest_config = "example1_v1-top2.1T.Jan2000"
+        system = dtfseefosy.get_Example1_ForecastSystem_example1(backtest_config)
+        system.config[
+            "backtest_config", "start_timestamp_with_lookback"
+        ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
+        system.config["backtest_config", "end_timestamp"] = pd.Timestamp(
+            "2000-01-31 00:00:00+0000", tz="UTC"
+        )
+        system.config["research_pnl", "price_col"] = "vwap"
+        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+        system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
+        self._test_fit_run1(
+            system,
+        )
 
 
 # #############################################################################
