@@ -17,7 +17,7 @@ import oms.oms_db as oomsdb
 import oms.order_processor as oordproc
 import oms.portfolio as omportfo
 import oms.portfolio_example as oporexam
-import oms.process_forecasts_ as oprofore
+import oms.process_forecasts as oprofore
 import oms.test.oms_db_helper as omtodh
 
 # TODO(gp): Why does this file ends with _.py?
