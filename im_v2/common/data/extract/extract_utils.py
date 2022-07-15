@@ -151,7 +151,7 @@ def add_periodical_download_args(
 TIMEOUT_SEC = 60
 
 # Define the validation schema of the data.
-TYPE_SCHEMA = {
+DATASET_SCHEMA = {
     "ask_price": "float64",
     "ask_size": "float64",
     "bid_price": "float64",
@@ -525,14 +525,11 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
     :param data: the dataframe to verify
     """
     error_msg = []
-    hdbg.dassert_eq(
-        data.isnull().values.any(),
-        False,
-        "Dataframe contains NaNs, unable to merge.",
-    )
+    if data.isnull().values.any():
+        _LOG.warning("Extracted Dataframe contains NaNs")
     for column in data.columns:
         # Extract the expected type of the column from the schema.
-        expected_type = TYPE_SCHEMA[column]
+        expected_type = DATASET_SCHEMA[column]
         if expected_type == "float64" and pd.api.types.is_numeric_dtype(
             data[column].dtype
         ):
@@ -549,5 +546,5 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
                 f"Invalid dtype of `{column}` column: expected type `{expected_type}`, found `{actual_type}`"
             )
     if error_msg:
-        hdbg.dfatal(msg="\n".join())
+        hdbg.dfatal(msg="\n".join(error_msg))
     return data
