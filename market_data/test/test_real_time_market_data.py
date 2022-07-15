@@ -16,6 +16,7 @@ import market_data.test.market_data_test_case as mdtmdtca
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Dan): Replace with refactored `TestRealTimeMarketData2`.
 class TestRealTimeMarketData2_0(hunitest.TestCase):
 
     def _helper(self) -> mdrtmada.RealTimeMarketData2:

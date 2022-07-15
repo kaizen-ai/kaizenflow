@@ -615,6 +615,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
+# TODO(Dan): Replace with refactored `CcxtSqlRealTimeImClient1`.
 class CcxtSqlRealTimeImClient0(icdctictc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
