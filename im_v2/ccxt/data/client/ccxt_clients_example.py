@@ -27,6 +27,10 @@ def get_test_data_dir() -> str:
     hdbg.dassert_dir_exists(test_data_dir)
     return test_data_dir
 
+# ################################################################################
+# CcxtCsvClient
+# ################################################################################
+
 
 def get_CcxtCsvClient_example1(
     resample_1min: bool,
@@ -63,6 +67,11 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     return ccxt_file_client
 
 
+# ################################################################################
+# CcxtParquetByAssetClient
+# ################################################################################
+
+
 def get_CcxtParquetByAssetClient_example1(
     resample_1min: bool,
 ) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
@@ -80,6 +89,10 @@ def get_CcxtParquetByAssetClient_example1(
     )
     return ccxt_client
 
+
+# ################################################################################
+# CcxtHistoricalPqByTileClient
+# ################################################################################
 
 def get_CcxtHistoricalPqByTileClient_example1(
     universe_version: str,
@@ -120,6 +133,8 @@ def get_CcxtHistoricalPqByTileClient_example2(
     - universe version: "small"
     - contract type: "spot"
     """
+    # TODO(gp): express this guy in terms of get_CcxtHistoricalPqByTileClient_example1
+    #  but the problem is that this uses "unit_test" instead of "reorg".
     universe_version = "small"
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
@@ -139,3 +154,28 @@ def get_CcxtHistoricalPqByTileClient_example2(
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client
+
+
+def get_CcxtHistoricalPqByTileClient_example3(
+    resample_1min: bool,
+) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+    """
+    Get `CryptoChassisHistoricalPqByTileClient` object for the prod model
+    reading actual futures historical data, which is stored on S3.
+    Client is initialized to process CryptoChassis data for:
+
+    - universe version: "v3"
+    - contract type: "futures"
+    - data snapshot: "20220620"
+    """
+    universe_version = "v3"
+    dataset = "ohlcv"
+    contract_type = "futures"
+    data_snapshot = "20220620"
+    return get_CcxtHistoricalPqByTileClient_example1(
+            universe_version,
+            resample_1min,
+            dataset,
+            contract_type,
+            data_snapshot
+    )

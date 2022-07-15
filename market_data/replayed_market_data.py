@@ -55,9 +55,10 @@ class ReplayedMarketData(mdabmada.MarketData):
         :param delay_in_secs: how many seconds to wait beyond the timestamp in
             `knowledge_datetime_col_name`
         """
+        _LOG.debug(hprint.to_str("knowledge_datetime_col_name delay_in_secs"))
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         super().__init__(*args, **kwargs)  # type: ignore[arg-type]
         self._df = df
-        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         self._knowledge_datetime_col_name = knowledge_datetime_col_name
         hdbg.dassert_lte(0, delay_in_secs)
         self._delay_in_secs = delay_in_secs
@@ -162,6 +163,7 @@ class ReplayedMarketData(mdabmada.MarketData):
 # #############################################################################
 
 
+# TODO(gp): Add an example of how data looks like.
 def save_market_data(
     market_data: mdabmada.MarketData,
     file_name: str,
@@ -188,6 +190,7 @@ def save_market_data(
     _LOG.info("Saving done")
 
 
+# TODO(gp): Add an example of how data looks like.
 def load_market_data(
     file_name: str,
     aws_profile: hs3.AwsProfile = None,

@@ -247,8 +247,8 @@ class ResultBundle(abc.ABC):
         serialized_bundle["result_df"] = self._result_df
         serialized_bundle["column_to_tags"] = self._column_to_tags
         info = self._info
-        if info is not None:
-            info = cconfig.get_config_from_nested_dict(info)
+        # if info is not None:
+        #     info = cconfig.get_config_from_nested_dict(info)
         serialized_bundle["info"] = info
         serialized_bundle["payload"] = self._payload
         serialized_bundle["class"] = self.__class__.__name__

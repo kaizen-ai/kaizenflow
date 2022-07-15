@@ -15,6 +15,7 @@ import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import market_data.im_client_market_data as mdimcmada
@@ -38,8 +39,8 @@ def get_ReplayedTimeMarketData_from_df(
     *,
     knowledge_datetime_col_name: str = "timestamp_db",
     asset_id_col_name: str = "asset_id",
-    start_time_col_name: str = "start_datetime",
-    end_time_col_name: str = "end_datetime",
+    start_time_col_name: str = "start_ts",
+    end_time_col_name: str = "end_ts",
     delay_in_secs: int = 0,
     sleep_in_secs: float = 1.0,
     time_out_in_secs: int = 60 * 2,
@@ -64,9 +65,13 @@ def get_ReplayedTimeMarketData_from_df(
     tz = "ET"
     # Find the initial timestamp of the data and shift by
     # `initial_replayed_delay`.
-    initial_replayed_dt = df[start_time_col_name].min() + pd.Timedelta(
+    min_start_time_col_name = df[start_time_col_name].min()
+    initial_replayed_dt = min_start_time_col_name + pd.Timedelta(
         minutes=initial_replayed_delay
     )
+    _LOG.debug(hprint.to_str("min_start_time_col_name initial_replayed_delay initial_replayed_dt"))
+    # The initial replayed datetime should be before the end of the data.
+    hdbg.dassert_lte(initial_replayed_dt, df[start_time_col_name].max())
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
         tz,

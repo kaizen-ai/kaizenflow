@@ -246,11 +246,86 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# Time_ForecastSystem_with_DataFramePortfolio1
+# Time_ForecastSystem_TestCase1
 # #############################################################################
 
 
-class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
+class Time_ForecastSystem_TestCase1(hunitest.TestCase):
+    """
+    Test `Time_ForecastSystem` using a `ReplayedMarketData` streaming data from
+    a df.
+    """
+
+    def get_file_name(self) -> str:
+        dir_name = self.get_input_dir(use_only_test_class=True)
+        hio.create_dir(dir_name, incremental=True)
+        file_name = os.path.join(dir_name, "real_time_bar_data.csv")
+        _LOG.debug("file_name=%s", file_name)
+        return file_name
+
+    def _test_save_data(self, market_data: mdata.MarketData, period: pd.Timedelta,
+                        file_name: str) -> None:
+        """
+        Generate data used in this test.
+
+        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
+        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
+        """
+        # period = "last_day"
+        #period = pd.Timedelta("15D")
+        limit = None
+        mdata.save_market_data(market_data, file_name, period, limit)
+        _LOG.warning("Updated file '%s'", file_name)
+        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
+
+    @staticmethod
+    def run_coroutines(
+            system,
+            #market_data: pd.DataFrame,
+            initial_replayed_delay: int,
+            real_time_loop_time_out_in_secs: int,
+            ) -> str:
+        with hasynci.solipsism_context() as event_loop:
+            # Complete system config.
+            system.config["event_loop_object"] = event_loop
+            system.config["market_data_config", "initial_replayed_delay"] = initial_replayed_delay
+            system.config[
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
+            ] = real_time_loop_time_out_in_secs
+            # Create DAG runner.
+            _LOG.debug("final system.config=\n%s", system.config)
+            dag_runner = system.get_dag_runner()
+            # Run.
+            coroutines = [dag_runner.predict()]
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            # TODO(gp): Use the signature from system_testing. See below.
+            result_bundles = result_bundles[0][0]
+        return result_bundles
+
+    def _test1(self, system,
+              #market_data: pd.DataFrame,
+              initial_replayed_delay: int,
+              real_time_loop_time_out_in_secs: int,
+              ) -> None:
+        """
+        Verify the contents of DAG prediction.
+        """
+        actual = self.run_coroutines(system,
+                                     #market_data,
+                                     initial_replayed_delay, real_time_loop_time_out_in_secs)
+        self.check_string(str(actual), purify_text=True)
+
+
+# #############################################################################
+# Time_ForecastSystem_with_DataFramePortfolio_TestCase1
+# #############################################################################
+
+class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 
@@ -260,7 +335,7 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
     - Simulated broker
     """
 
-    def helper(
+    def _test1(
         self,
         system: dtfsys.System,
         asset_ids: List[int],
@@ -288,9 +363,10 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
             system_tester = dtfsys.SystemTester()
             # Check output.
             portfolio = system.portfolio
+            # TODO(Grisha): pass column names as params.
             price_col = "vwap"
             volatility_col = "vwap.ret_0.vol"
-            prediction_col = "prediction"
+            prediction_col = "vwap.ret_0.vol_adj_2_hat"
             actual = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,

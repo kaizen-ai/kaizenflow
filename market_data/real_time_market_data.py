@@ -254,8 +254,12 @@ class RealTimeMarketData2(mdabmada.MarketData):
     """
     Interface for real-time market data accessed through a realtime SQL client.
     """
+
+    # TODO(gp): @all: client -> im_client
     def __init__(self, client: icdc.SqlRealTimeImClient, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        # TODO(gp): @all How come _mode is still here if obsolete? Is there a test
+        #  for this?
         hdbg.dassert_eq(
             client._mode,
             "market_data",
@@ -301,12 +305,27 @@ class RealTimeMarketData2(mdabmada.MarketData):
             end_ts,
             columns,
             self._filter_data_mode,
-            ts_col_name=ts_col_name,
+            # TODO(Grisha): we should not propagate it to `ImClient`.
+            #ts_col_name=ts_col_name,
             left_close=left_close,
             right_close=right_close,
             limit=limit,
         )
         # Rename the index to fit the MarketData format.
-        data.index.name = "end_timestamp"
+        # TODO(Grisha): factor out and keep in sync with `_convert_data_for_normalization`
+        # in `ImClientMarketData`.
+        data.index.name = self._end_time_col_name
         data = data.reset_index()
+        data[self._start_time_col_name] = data[
+            self._end_time_col_name
+        ] - pd.Timedelta(minutes=1)
+        full_symbol_col_name = self._client._get_full_symbol_col_name(None)
+
+
+        import im_v2.common.universe as ivcu
+
+
+        data[self._asset_id_col] = data[full_symbol_col_name].apply(
+            ivcu.string_to_numerical_id
+        )
         return data

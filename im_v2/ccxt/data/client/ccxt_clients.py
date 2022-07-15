@@ -124,6 +124,7 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        # TODO(Grisha): remove `mode`.
         mode: str = "data_client",
     ) -> None:
         super().__init__(resample_1min, db_connection, table_name, vendor="ccxt")
@@ -136,6 +137,7 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         """
         return True
 
+    # TODO(Grisha): maybe move to the base class since the code is common?
     def _apply_normalization(
         self,
         data: pd.DataFrame,
@@ -176,33 +178,25 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
             "close",
             "volume",
         ]
-        if self._mode == "data_client":
-            pass
-        elif self._mode == "market_data":
-            # TODO(Danya): Move this transformation to MarketData.
-            # Add `asset_id` column using mapping on `full_symbol` column.
-            data["asset_id"] = data[full_symbol_col_name].apply(
-                ivcu.string_to_numerical_id
-            )
-            # Convert to int64 to keep NaNs alongside with int values.
-            data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
-            # Generate `start_timestamp` from `end_timestamp` by substracting delta.
-            delta = pd.Timedelta("1M")
-            data["start_timestamp"] = data["timestamp"].apply(
-                lambda pd_timestamp: (pd_timestamp - delta)
-            )
-            # Columns that should left in the table.
-            market_data_ohlcv_columns = [
-                "start_timestamp",
-                "asset_id",
-            ]
-            # Concatenate two lists of columns.
-            ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
-        else:
-            hdbg.dfatal(
-                "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
-                % self._mode
-            )
+        # TODO(Danya): Move this transformation to MarketData.
+        # # Add `asset_id` column using mapping on `full_symbol` column.
+        # data["asset_id"] = data[full_symbol_col_name].apply(
+        #     ivcu.string_to_numerical_id
+        # )
+        # # Convert to int64 to keep NaNs alongside with int values.
+        # data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
+        # # Generate `start_timestamp` from `end_timestamp` by substracting delta.
+        # delta = pd.Timedelta("1M")
+        # data["start_timestamp"] = data["timestamp"].apply(
+        #     lambda pd_timestamp: (pd_timestamp - delta)
+        # )
+        # # Columns that should left in the table.
+        # market_data_ohlcv_columns = [
+        #     "start_timestamp",
+        #     "asset_id",
+        # ]
+        # # Concatenate two lists of columns.
+        # ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
         data = data.set_index("timestamp")
         # Verify that dataframe contains OHLCV columns.
         hdbg.dassert_is_subset(ohlcv_columns, data.columns)
