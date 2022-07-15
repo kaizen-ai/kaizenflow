@@ -631,9 +631,7 @@ class CcxtSqlRealTimeImClient0(icdctictc.ImClientTestCase):
         expected_length = 10
         expected_column_names = [
             "close",
-            "currency_pair",
             "end_download_timestamp",
-            "exchange_id",
             "full_symbol",
             "high",
             "id",
@@ -649,17 +647,17 @@ class CcxtSqlRealTimeImClient0(icdctictc.ImClientTestCase):
         expected_signature = r"""
         # df=
         index=[2022-07-14 06:00:00+00:00, 2022-07-14 06:04:00+00:00]
-        columns=knowledge_timestamp,open,high,low,close,volume,end_download_timestamp,id,currency_pair,exchange_id,full_symbol
-        shape=(10, 11)
-                                               knowledge_timestamp      open      high       low     close     volume           end_download_timestamp        id currency_pair exchange_id        full_symbol
+        columns=knowledge_timestamp,open,high,low,close,volume,end_download_timestamp,id,full_symbol
+        shape=(10, 9)
+                                               knowledge_timestamp      open      high       low     close     volume           end_download_timestamp        id        full_symbol
         timestamp
-        2022-07-14 06:00:00+00:00 2022-07-14 06:04:39.452706+00:00  20116.44  20119.68  20090.25  20095.01   88.03180 2022-07-14 06:04:38.450701+00:00  11763344      BTC_USDT     binance  binance::BTC_USDT
-        2022-07-14 06:00:00+00:00 2022-07-14 06:04:50.515951+00:00   1106.15   1106.16   1105.01   1105.32  322.69540 2022-07-14 06:04:49.512995+00:00  11763359      ETH_USDT     binance  binance::ETH_USDT
-        2022-07-14 06:01:00+00:00 2022-07-14 06:05:54.188012+00:00  20093.64  20098.29  20085.17  20089.25   47.86836 2022-07-14 06:05:53.185511+00:00  11763398      BTC_USDT     binance  binance::BTC_USDT
+        2022-07-14 06:00:00+00:00 2022-07-14 06:04:39.452706+00:00  20116.44  20119.68  20090.25  20095.01   88.03180 2022-07-14 06:04:38.450701+00:00  11763344  binance::BTC_USDT
+        2022-07-14 06:00:00+00:00 2022-07-14 06:04:50.515951+00:00   1106.15   1106.16   1105.01   1105.32  322.69540 2022-07-14 06:04:49.512995+00:00  11763359  binance::ETH_USDT
+        2022-07-14 06:01:00+00:00 2022-07-14 06:05:54.188012+00:00  20093.64  20098.29  20085.17  20089.25   47.86836 2022-07-14 06:05:53.185511+00:00  11763398  binance::BTC_USDT
         ...
-        2022-07-14 06:03:00+00:00 2022-07-14 06:04:50.515951+00:00   1104.57   1105.40   1104.56   1105.14  358.18060 2022-07-14 06:04:49.512995+00:00  11763362      ETH_USDT     binance  binance::ETH_USDT
-        2022-07-14 06:04:00+00:00 2022-07-14 06:07:43.799602+00:00  20084.64  20095.00  20080.36  20093.23   47.89719 2022-07-14 06:07:42.796783+00:00  11763440      BTC_USDT     binance  binance::BTC_USDT
-        2022-07-14 06:04:00+00:00 2022-07-14 06:04:50.515951+00:00   1105.15   1105.29   1105.13   1105.14  201.94570 2022-07-14 06:04:49.512995+00:00  11763363      ETH_USDT     binance  binance::ETH_USDT
+        2022-07-14 06:03:00+00:00 2022-07-14 06:04:50.515951+00:00   1104.57   1105.40   1104.56   1105.14  358.18060 2022-07-14 06:04:49.512995+00:00  11763362  binance::ETH_USDT
+        2022-07-14 06:04:00+00:00 2022-07-14 06:07:43.799602+00:00  20084.64  20095.00  20080.36  20093.23   47.89719 2022-07-14 06:07:42.796783+00:00  11763440  binance::BTC_USDT
+        2022-07-14 06:04:00+00:00 2022-07-14 06:04:50.515951+00:00   1105.15   1105.29   1105.13   1105.14  201.94570 2022-07-14 06:04:49.512995+00:00  11763363  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data5(

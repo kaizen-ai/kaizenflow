@@ -712,6 +712,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         data[full_symbol_col_name] = ivcu.build_full_symbol(
             data["exchange_id"], data["currency_pair"]
         )
+        data = data.drop(["exchange_id", "currency_pair"], axis=1)
         # Convert timestamp column with Unix epoch to timestamp format.
         data["timestamp"] = data["timestamp"].apply(
             hdateti.convert_unix_epoch_to_timestamp
