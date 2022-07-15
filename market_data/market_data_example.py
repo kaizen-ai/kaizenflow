@@ -39,7 +39,6 @@ def get_ReplayedTimeMarketData_from_df(
     *,
     knowledge_datetime_col_name: str = "timestamp_db",
     asset_id_col_name: str = "asset_id",
-    start_time_col_name: str = "start_ts",
     start_time_col_name: str = "start_datetime",
     end_time_col_name: str = "end_datetime",
     delay_in_secs: int = 0,
