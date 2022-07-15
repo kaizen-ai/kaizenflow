@@ -26,8 +26,8 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): At hindsight a `DagRunner` just calls methods on a DAG so we could
-# merge the code into the DAG to simplify the class system. If we wanted to
-# keep the behaviors separated, we could use mixins like `FitPredictDag`.
+#  merge the code into the DAG to simplify the class system. If we wanted to
+#  keep the behaviors separated, we could use mixins like `FitPredictDag`.
 class DagRunner(abc.ABC):
     """
     Abstract class with the common code to all `DagRunner`s.

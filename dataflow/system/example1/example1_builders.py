@@ -18,7 +18,6 @@ import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hdbg as hdbg
-import im_v2.common.data.client as icdc
 import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
@@ -30,17 +29,17 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def get_Example1_market_data_example2(
+def get_Example1_MarketData_example2(
     system: dtfsyssyst.System,
-) -> mdata.ReplayedMarketData:
+) -> mdata.ImClientMarketData:
     """
     Build a replayed MarketData from an ImClient feeding data from a df.
     """
+    im_client = system.config["market_data_config", "im_client"]
     asset_ids = system.config["market_data_config", "asset_ids"]
     # TODO(gp): Specify only the columns that are needed.
     columns = None
     columns_remap = None
-    im_client = icdc.get_DataFrameImClient_example1()
     market_data = mdata.get_HistoricalImClientMarketData_example1(
         im_client, asset_ids, columns, columns_remap
     )

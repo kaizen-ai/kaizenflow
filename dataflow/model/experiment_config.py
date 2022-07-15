@@ -119,9 +119,15 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     elif period == "Aug2021_Jul2022":
         start_datetime = datetime.datetime(2021, 8, 1)
         end_datetime = datetime.datetime(2022, 7, 1)
+    elif period == "Aug2021_Aug2022":
+        start_datetime = datetime.datetime(2021, 8, 1)
+        end_datetime = datetime.datetime(2022, 8, 1)
     elif period == "Sep2019_Jul2022":
         start_datetime = datetime.datetime(2019, 9, 1)
         end_datetime = datetime.datetime(2022, 7, 1)
+    elif period == "Sep2019_Aug2022":
+        start_datetime = datetime.datetime(2019, 9, 1)
+        end_datetime = datetime.datetime(2022, 8, 1)
     elif period == "Jan2022":
         start_datetime = datetime.datetime(2022, 1, 1)
         end_datetime = datetime.datetime(2022, 2, 1)
@@ -202,6 +208,9 @@ def set_asset_id(
     return config
 
 
+# #############################################################################
+
+
 def build_configs_varying_asset_id(
     config: cconfig.Config,
     asset_id_key: cconfig.Config.Key,
@@ -222,12 +231,11 @@ def build_configs_varying_asset_id(
     return configs
 
 
-# TODO(gp): -> asset_tiles
-
-
+# TODO(gp): -> ...varying_asset_tiles
 def build_configs_varying_universe_tiles(
     config: cconfig.Config,
     universe_tile_id: cconfig.Config.Key,
+    # TODO(gp): -> asset_tiles
     universe_tiles: List[List[int]],
 ) -> List[cconfig.Config]:
     """
@@ -249,6 +257,7 @@ def build_configs_varying_universe_tiles(
     return configs
 
 
+# TODO(gp): -> ...varying_period_tiles
 def build_configs_varying_tiled_periods(
     config: cconfig.Config,
     start_timestamp: pd.Timestamp,
@@ -323,11 +332,15 @@ def build_configs_varying_tiled_periods(
     return configs
 
 
+# #############################################################################
+
+
+# TODO(gp): -> build_configs_using_equal_asset_tiles
 def build_configs_with_tiled_universe(
     config: cconfig.Config, asset_ids: List[int]
 ) -> List[cconfig.Config]:
     """
-    Create a list of `Config`s tiled by universe.
+    Create a list of `Config`s using asset tiles of the same size.
     """
     if len(asset_ids) > 300:
         # if len(asset_ids) > 1000:
@@ -363,11 +376,12 @@ def apply_build_configs(
     return configs_out
 
 
+# TODO(gp): -> build_configs_using_equal_asset_and_period_tiles
 def build_configs_with_tiled_universe_and_periods(
     system_config: cconfig.Config,
 ) -> List[cconfig.Config]:
     """
-    Build tile configs for C1b pipeline.
+    Create a list of `Config`s using asset and period tiles of the same size.
     """
     configs = [system_config]
     time_interval_str = system_config["backtest_config"]["time_interval_str"]

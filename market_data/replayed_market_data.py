@@ -173,7 +173,7 @@ def save_market_data(
     """
     Save data from a `MarketData` to a CSV file.
     """
-    hdbg.dassert(market_data.is_online())
+    #hdbg.dassert(market_data.is_online())
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
     _LOG.debug(

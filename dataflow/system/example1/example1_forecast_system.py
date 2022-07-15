@@ -8,13 +8,12 @@ import logging
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.pipelines.example1.example1_pipeline as dtfpexexpi
 import dataflow.system.example1.example1_builders as dtfsexexbu
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
-import helpers.hdbg as hdbg
+import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms
 
@@ -48,8 +47,8 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         )
         return system_config
 
-    def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfsexexbu.get_Example1_market_data_example2(self)
+    def _get_market_data(self) -> mdata.ImClientMarketData:
+        market_data = dtfsexexbu.get_Example1_MarketData_example2(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
@@ -57,30 +56,27 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         return dag
 
 
-def get_Example1_ForecastSystem_example1(
+def get_Example1_ForecastSystem_for_simulation_example1(
     backtest_config: str,
 ) -> dtfsyssyst.ForecastSystem:
-    # Parse the backtest experiment.
-    (
-        universe_str,
-        trading_period_str,
-        time_interval_str,
-    ) = dtfmoexcon.parse_experiment_config(backtest_config)
-    #
+    """
+    Get Example1_ForecastSystem object for backtest simulation.
+    """
     system = Example1_ForecastSystem()
-    # Set the trading period.
-    # TODO(gp): Use a setter.
-    hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
+    system = dtfssybuut.apply_backtest_config(system, backtest_config)
+    # Fill pipeline-specific backtest config parameters.
+    system.config["backtest_config", "freq_as_pd_str"] = "M"
+    system.config["backtest_config", "lookback_as_pd_str"] = "10D"
+    # Fill `MarketData` related config.
     system.config[
-        "dag_config_config", "resample", "transformer_kwargs", "rule"
-    ] = trading_period_str
-    system.config["dag_runner_object"] = system.get_dag_runner
-    # Name of the asset_ids to save.
-    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
-    #
-    system.config["backtest_config", "universe_str"] = universe_str
-    system.config["backtest_config", "trading_period_str"] = trading_period_str
-    system.config["backtest_config", "time_interval_str"] = time_interval_str
+        "market_data_config", "im_client_ctor"
+    ] = icdc.get_DataFrameImClient_example1
+    system.config["market_data_config", "im_client_config"] = {}
+    # Set the research PNL parameters.
+    system.config["research_pnl", "price_col"] = "vwap"
+    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
+    system = dtfssybuut.apply_market_data_config(system)
     return system
 
 
@@ -209,7 +205,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
 
     def _get_market_data(
         self,
-    ):
+    ) -> mdata.ReplayedMarketData:
         market_data = dtfssybuut.get_event_loop_MarketData_from_df(self)
         return market_data
 
@@ -222,12 +218,13 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         self,
     ) -> oms.Portfolio:
         event_loop = self.config["event_loop_object"]
+        db_connection = self.config["db_connection_object"]
         market_data = self.market_data
         table_name = oms.CURRENT_POSITIONS_TABLE_NAME
         asset_ids = self.config["market_data_config", "asset_ids"]
         portfolio = oms.get_DatabasePortfolio_example1(
             event_loop,
-            self._db_connection,
+            db_connection,
             table_name,
             market_data=market_data,
             mark_to_market_col="close",
