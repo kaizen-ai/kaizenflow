@@ -14,7 +14,6 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.universe as ivcu
-import im_v2.im_lib_tasks as imvimlita
 
 
 def get_expected_column_names() -> List[str]:
