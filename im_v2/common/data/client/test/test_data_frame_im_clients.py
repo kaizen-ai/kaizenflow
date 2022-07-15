@@ -73,13 +73,13 @@ class TestDataFrameImClient1(icdctictc.ImClientTestCase):
         shape=(320, 7)
                                          full_symbol  open  high  low  close  volume  feature1
         timestamp
-        2000-01-01 14:31:00+00:00  binance::ADA_USDT   100   101   99   101.0      0       1.0
-        2000-01-01 14:31:00+00:00  binance::BTC_USDT   100   101   99   101.0      0       1.0
-        2000-01-01 14:32:00+00:00  binance::ADA_USDT   100   101   99   101.0      1       1.0
+        2000-01-01 14:31:00+00:00  binance::ADA_USDT   100   101   99  101.0       0       1.0
+        2000-01-01 14:31:00+00:00  binance::BTC_USDT   100   101   99  101.0       0       1.0
+        2000-01-01 14:32:00+00:00  binance::ADA_USDT   100   101   99  101.0       1       1.0
         ...
-        2000-01-01 17:09:00+00:00  binance::BTC_USDT   100   101   99   100.0    158      -1.0
-        2000-01-01 17:10:00+00:00  binance::ADA_USDT   100   101   99   100.0    159      -1.0
-        2000-01-01 17:10:00+00:00  binance::BTC_USDT   100   101   99   100.0    159      -1.0"""
+        2000-01-01 17:09:00+00:00  binance::BTC_USDT   100   101   99  100.0     158      -1.0
+        2000-01-01 17:10:00+00:00  binance::ADA_USDT   100   101   99  100.0     159      -1.0
+        2000-01-01 17:10:00+00:00  binance::BTC_USDT   100   101   99  100.0     159      -1.0"""
         # Run test.
         full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
         self._test_read_data2(
