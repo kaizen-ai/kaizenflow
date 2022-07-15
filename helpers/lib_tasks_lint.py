@@ -208,7 +208,8 @@ def lint_detect_cycles(  # type: ignore
     )
     # Execute command line.
     cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
-    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
+    # Use `PIPESTATUS` otherwise the exit status of the pipe is always 0 because writing to a file succeeds.
+    cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}; exit $PIPESTATUS"
     # Run.
     hlitauti._run(ctx, cmd)
 
