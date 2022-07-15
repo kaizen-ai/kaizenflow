@@ -4,93 +4,11 @@ import pandas as pd
 
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
-import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
-import im_v2.im_lib_tasks as imvimlita
 import market_data.market_data_example as mdmadaex
-import market_data.real_time_market_data as mdrtmada
 
 _LOG = logging.getLogger(__name__)
-
-
-# TODO(Dan): Replace with refactored `TestRealTimeMarketData2`.
-class TestRealTimeMarketData2_0(hunitest.TestCase):
-    def test_get_data_for_interval3(self) -> None:
-        # Prepare inputs.
-        market_data = self._helper()
-        asset_ids = [1464553467, 1467591036]
-        start_ts = pd.Timestamp("2022-07-14T01:00:00-05:00")
-        end_ts = pd.Timestamp("2022-07-14T01:04:00-05:00")
-        ts_col_name = "timestamp"
-        left_close = True
-        right_close = True
-        # Run.
-        df = market_data.get_data_for_interval(
-            start_ts,
-            end_ts,
-            ts_col_name,
-            asset_ids,
-            left_close=left_close,
-            right_close=right_close,
-        )
-        #
-        expected_length = 10
-        expected_column_names = [
-            "asset_id",
-            "close",
-            "end_download_timestamp",
-            "full_symbol",
-            "high",
-            "id",
-            "knowledge_timestamp",
-            "low",
-            "open",
-            "start_timestamp",
-            "volume",
-        ]
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
-        }
-        # pylint: disable=line-too-long
-        exp_df_as_str = r"""
-        # df=
-        index=[2022-07-14 02:00:00-04:00, 2022-07-14 02:04:00-04:00]
-        columns=asset_id,knowledge_timestamp,open,high,low,close,volume,end_download_timestamp,id,full_symbol,start_timestamp
-        shape=(10, 11)
-                                    asset_id              knowledge_timestamp      open      high       low     close      volume            end_download_timestamp        id        full_symbol           start_timestamp
-        end_timestamp
-        2022-07-14 02:00:00-04:00  1464553467 2022-07-14 06:04:50.515951+00:00   1106.15   1106.16   1105.01   1105.32   322.6954  2022-07-14 06:04:49.512995+00:00  11763359  binance::ETH_USDT 2022-07-14 01:59:00-04:00
-        2022-07-14 02:00:00-04:00  1467591036 2022-07-14 06:04:39.452706+00:00  20116.44  20119.68  20090.25  20095.01    88.0318  2022-07-14 06:04:38.450701+00:00  11763344  binance::BTC_USDT 2022-07-14 01:59:00-04:00
-        2022-07-14 02:01:00-04:00  1464553467 2022-07-14 06:04:50.515951+00:00   1105.31   1105.32   1104.66   1104.70   287.9683  2022-07-14 06:04:49.512995+00:00  11763360  binance::ETH_USDT 2022-07-14 02:00:00-04:00
-        ...
-        2022-07-14 02:03:00-04:00  1467591036 2022-07-14 06:07:43.799602+00:00  20084.81  20101.94  20081.04  20084.64  132.53170  2022-07-14 06:07:42.796783+00:00  11763439  binance::BTC_USDT 2022-07-14 02:02:00-04:00
-        2022-07-14 02:04:00-04:00  1464553467 2022-07-14 06:04:50.515951+00:00   1105.15   1105.29   1105.13   1105.14  201.94570  2022-07-14 06:04:49.512995+00:00  11763363  binance::ETH_USDT 2022-07-14 02:03:00-04:00
-        2022-07-14 02:04:00-04:00  1467591036 2022-07-14 06:07:43.799602+00:00  20084.64  20095.00  20080.36  20093.23   47.89719  2022-07-14 06:07:42.796783+00:00  11763440  binance::BTC_USDT 2022-07-14 02:03:00-04:00
-        """
-        # pylint: enable=line-too-long
-        # Check output.
-        self.check_df_output(
-            df,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            exp_df_as_str,
-        )
-
-    def _helper(self) -> mdrtmada.RealTimeMarketData2:
-        env_file = imvimlita.get_db_env_path("dev")
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        db_connection = hsql.get_connection(*connection_params)
-        table_name = "ccxt_ohlcv"
-        resample_1min = True
-        im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, db_connection, table_name
-        )
-        #
-        market_data = mdmadaex.get_RealtimeMarketData_example1(im_client)
-        return market_data
 
 
 class TestRealTimeMarketData2(
@@ -126,19 +44,21 @@ class TestRealTimeMarketData2(
             ts_column_name,
         )
         # pylint: disable=line-too-long
-        expected_df_as_str = r"""# df=
+        expected_df_as_str = r"""
+        # df=
         index=[2022-04-22 10:30:00-04:00, 2022-04-22 12:30:00-04:00]
-        columns=asset_id,close,full_symbol,high,low,open,start_timestamp,volume
-        shape=(121, 8)
-        asset_id close full_symbol high low open start_timestamp volume
+        columns=asset_id,close,end_download_timestamp,full_symbol,high,id,knowledge_timestamp,low,open,start_timestamp,ticks,volume
+        shape=(121, 12)
+                                    asset_id  close end_download_timestamp        full_symbol  high   id knowledge_timestamp   low  open           start_timestamp  ticks  volume
         end_timestamp
-        2022-04-22 10:30:00-04:00 1464553467 60.0 binance::ETH_USDT 40.0 50.0 30.0 2022-04-22 10:29:00-04:00 70.0
-        2022-04-22 10:31:00-04:00 <NA> NaN binance::ETH_USDT NaN NaN NaN NaT NaN
-        2022-04-22 10:32:00-04:00 <NA> NaN binance::ETH_USDT NaN NaN NaN NaT NaN
+        2022-04-22 10:30:00-04:00  1464553467   60.0             2022-04-22  binance::ETH_USDT  40.0  0.0          2022-04-22  50.0  30.0 2022-04-22 10:29:00-04:00   80.0    70.0
+        2022-04-22 10:31:00-04:00  1464553467    NaN                    NaT  binance::ETH_USDT   NaN  NaN                 NaT   NaN   NaN 2022-04-22 10:30:00-04:00    NaN     NaN
+        2022-04-22 10:32:00-04:00  1464553467    NaN                    NaT  binance::ETH_USDT   NaN  NaN                 NaT   NaN   NaN 2022-04-22 10:31:00-04:00    NaN     NaN
         ...
-        2022-04-22 12:28:00-04:00 <NA> NaN binance::ETH_USDT NaN NaN NaN NaT NaN
-        2022-04-22 12:29:00-04:00 <NA> NaN binance::ETH_USDT NaN NaN NaN NaT NaN
-        2022-04-22 12:30:00-04:00 1464553467 65.0 binance::ETH_USDT 45.0 55.0 35.0 2022-04-22 12:29:00-04:00 75.0"""
+        2022-04-22 12:28:00-04:00  1464553467    NaN                    NaT  binance::ETH_USDT   NaN  NaN                 NaT   NaN   NaN 2022-04-22 12:27:00-04:00    NaN     NaN
+        2022-04-22 12:29:00-04:00  1464553467    NaN                    NaT  binance::ETH_USDT   NaN  NaN                 NaT   NaN   NaN 2022-04-22 12:28:00-04:00    NaN     NaN
+        2022-04-22 12:30:00-04:00  1464553467   65.0             2022-04-22  binance::ETH_USDT  45.0  4.0          2022-04-22  55.0  35.0 2022-04-22 12:29:00-04:00   75.0    75.0
+        """
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
 
@@ -155,13 +75,15 @@ class TestRealTimeMarketData2(
             start_ts, end_ts, ts_col_name, asset_ids
         )
         # pylint: disable=line-too-long
-        expected_df_as_str = r"""# df=
+        expected_df_as_str = r"""
+        # df=
         index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
-        columns=asset_id,close,full_symbol,high,low,open,start_timestamp,volume
-        shape=(1, 8)
-        asset_id close full_symbol high low open start_timestamp volume
+        columns=asset_id,close,end_download_timestamp,full_symbol,high,id,knowledge_timestamp,low,open,start_timestamp,ticks,volume
+        shape=(1, 12)
+                                    asset_id  close end_download_timestamp        full_symbol  high  id knowledge_timestamp   low  open           start_timestamp  ticks  volume
         end_timestamp
-        2022-04-22 10:30:00-04:00 1464553467 60.0 binance::ETH_USDT 40.0 50.0 30.0 2022-04-22 10:29:00-04:00 70.0"""
+        2022-04-22 10:30:00-04:00  1464553467   60.0             2022-04-22  binance::ETH_USDT  40.0   0          2022-04-22  50.0  30.0 2022-04-22 10:29:00-04:00   80.0    70.0
+        """
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
 
@@ -178,13 +100,15 @@ class TestRealTimeMarketData2(
             start_ts, end_ts, ts_col_name, asset_ids
         )
         # pylint: disable=line-too-long
-        expected_df_as_str = r"""# df=
+        expected_df_as_str = r"""
+        # df=
         index=[2022-04-22 12:30:00-04:00, 2022-04-22 12:30:00-04:00]
-        columns=asset_id,close,full_symbol,high,low,open,start_timestamp,volume
-        shape=(1, 8)
-        asset_id close full_symbol high low open start_timestamp volume
+        columns=asset_id,close,end_download_timestamp,full_symbol,high,id,knowledge_timestamp,low,open,start_timestamp,ticks,volume
+        shape=(1, 12)
+                                    asset_id  close end_download_timestamp        full_symbol  high  id knowledge_timestamp   low  open           start_timestamp  ticks  volume
         end_timestamp
-        2022-04-22 12:30:00-04:00 1464553467 65.0 binance::ETH_USDT 45.0 55.0 35.0 2022-04-22 12:29:00-04:00 75.0"""
+        2022-04-22 12:30:00-04:00  1464553467   65.0             2022-04-22  binance::ETH_USDT  45.0   4          2022-04-22  55.0  35.0 2022-04-22 12:29:00-04:00   75.0    75.0
+        """
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
 
@@ -201,13 +125,15 @@ class TestRealTimeMarketData2(
             ts, ts_col_name, asset_ids
         )
         # pylint: disable=line-too-long
-        expected_df_as_str = r"""# df=
+        expected_df_as_str = r"""
+        # df=
         index=[2022-04-22 10:30:00-04:00, 2022-04-22 10:30:00-04:00]
-        columns=asset_id,close,full_symbol,high,low,open,start_timestamp,volume
-        shape=(1, 8)
-        asset_id close full_symbol high low open start_timestamp volume
+        columns=asset_id,close,end_download_timestamp,full_symbol,high,id,knowledge_timestamp,low,open,start_timestamp,ticks,volume
+        shape=(1, 12)
+                                    asset_id  close end_download_timestamp        full_symbol  high  id knowledge_timestamp   low  open           start_timestamp  ticks  volume
         end_timestamp
-        2022-04-22 10:30:00-04:00 1464553467 60.0 binance::ETH_USDT 40.0 50.0 30.0 2022-04-22 10:29:00-04:00 70.0"""
+        2022-04-22 10:30:00-04:00  1464553467   60.0             2022-04-22  binance::ETH_USDT  40.0   0          2022-04-22  50.0  30.0 2022-04-22 10:29:00-04:00   80.0    70.0
+        """
         # pylint: enable=line-too-long
         self._check_dataframe(actual, expected_df_as_str)
 
