@@ -977,7 +977,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
-        exp_last_end_time = pd.Timestamp("2000-01-01T10:10:00-05:00")
+        exp_last_end_time = pd.Timestamp("2000-01-01T12:10:00-05:00")
         # Run.
         self._test_get_last_end_time1(market_data, exp_last_end_time)
 
