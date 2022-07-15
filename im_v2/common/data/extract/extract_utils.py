@@ -79,7 +79,7 @@ def add_exchange_download_args(
         required=False,
         default="spot",
         type=str,
-        help="Type of contract, spot or futures"
+        help="Type of contract, spot or futures",
     )
     parser.add_argument(
         "--incremental",
@@ -142,13 +142,32 @@ def add_periodical_download_args(
         required=False,
         default="spot",
         type=str,
-        help="Type of contract, spot or futures"
+        help="Type of contract, spot or futures",
     )
     return parser
 
 
 # Time limit for each download execution.
 TIMEOUT_SEC = 60
+
+# Define the validation schema of the data.
+DATASET_SCHEMA = {
+    "ask_price": "float64",
+    "ask_size": "float64",
+    "bid_price": "float64",
+    "bid_size": "float64",
+    "close": "float64",
+    "currency_pair": "object",
+    "exchange_id": "object",
+    "high": "float64",
+    "knowledge_timestamp": "datetime64[ns, UTC]",
+    "low": "float64",
+    "month": "int32",
+    "open": "float64",
+    "timestamp": "int64",
+    "volume": "float64",
+    "year": "int32",
+}
 
 
 def download_realtime_for_one_exchange(
@@ -162,7 +181,9 @@ def download_realtime_for_one_exchange(
     """
     # Load currency pairs.
     mode = "download"
-    universe = ivcu.get_vendor_universe(exchange.vendor, mode, version=args["universe"])
+    universe = ivcu.get_vendor_universe(
+        exchange.vendor, mode, version=args["universe"]
+    )
     currency_pairs = universe[args["exchange_id"]]
     # Connect to database.
     env_file = imvimlita.get_db_env_path(args["db_stage"])
@@ -412,9 +433,9 @@ def save_parquet(
         data, "by_year_month"
     )
     # Drop DB metadata columns.
-    data = data.drop(
-        ["end_download_timestamp"], axis=1, errors="ignore"
-    )
+    data = data.drop(["end_download_timestamp"], axis=1, errors="ignore")
+    # Verify the schema of Dataframe.
+    data = verify_schema(data)
     # Save filename as `uuid`, e.g.
     #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
     hparque.to_partitioned_parquet(
@@ -449,7 +470,9 @@ def download_historical_data(
         hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
     # Load currency pairs.
     mode = "download"
-    universe = ivcu.get_vendor_universe(exchange.vendor, mode, version=args["universe"])
+    universe = ivcu.get_vendor_universe(
+        exchange.vendor, mode, version=args["universe"]
+    )
     currency_pairs = universe[args["exchange_id"]]
     # Convert timestamps.
     start_timestamp = pd.Timestamp(args["start_timestamp"])
@@ -493,3 +516,35 @@ def download_historical_data(
             )
         else:
             hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
+
+
+def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Validate the columns types in the extracted data.
+
+    :param data: the dataframe to verify
+    """
+    error_msg = []
+    if data.isnull().values.any():
+        _LOG.warning("Extracted Dataframe contains NaNs")
+    for column in data.columns:
+        # Extract the expected type of the column from the schema.
+        expected_type = DATASET_SCHEMA[column]
+        if expected_type == "float64" and pd.api.types.is_numeric_dtype(
+            data[column].dtype
+        ):
+            # Sometimes float with no numbers after the decimal point is considered an int
+            # and fails to be merged.
+            # Wherefore force column type into float if float is expected and the column is numeric.
+            data[column] = data[column].astype("float64")
+        # Get the actual data type of the column.
+        actual_type = str(data[column].dtype)
+        # Compare types.
+        if actual_type != expected_type:
+            # Log the error.
+            error_msg.append(
+                f"Invalid dtype of `{column}` column: expected type `{expected_type}`, found `{actual_type}`"
+            )
+    if error_msg:
+        hdbg.dfatal(msg="\n".join(error_msg))
+    return data
