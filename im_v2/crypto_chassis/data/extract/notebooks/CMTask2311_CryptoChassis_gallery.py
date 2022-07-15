@@ -49,16 +49,23 @@ response = requests.get(example_url)
 response.json()
 
 # %% [markdown]
-# ### Methods for building an URL
+# ### Types of extractor
 
 # %%
-extractor = imvccdexex.CryptoChassisExtractor("spot")
+extractor_spot = imvccdexex.CryptoChassisExtractor("spot")
+
+# %%
+# Only binance futures are supported.
+extractor_futures = imvccdexex.CryptoChassisExtractor("futures")
+
+# %% [markdown]
+# ### Methods for building an URL
 
 # %% [markdown]
 # #### Building an URL
 
 # %%
-base_url = extractor._build_base_url("ohlc", "binance", "btc-usdt")
+base_url = extractor_spot._build_base_url("ohlc", "binance-usds-futures", "btc-usdt")
 base_url
 
 # %%
@@ -72,7 +79,7 @@ response.json()
 startTime = "2019-12-26T00:00:00.000Z"
 endTime = "2019-12-27T00:00:00.000Z"
 interval = "1m"
-query_url = extractor._build_query_url(base_url, startTime=startTime, endTime=endTime, interval=interval)
+query_url = extractor_spot._build_query_url(base_url, startTime=startTime, endTime=endTime, interval=interval)
 query_url
 
 # %%
@@ -111,7 +118,10 @@ supported_exchanges
 # ## OHLCV
 
 # %% [markdown]
-# ### Raw data example (using `requests`)
+# ### Spot
+
+# %% [markdown]
+# #### Raw data example (using `requests`)
 
 # %%
 url = f"https://api.cryptochassis.com/v1/ohlc/ftx/btc-usdt?startTime=1657778400&endTime=1657789200"
@@ -120,50 +130,123 @@ print(url)
 print(response.json())
 
 # %% [markdown]
-# ### DataFrame example using Extractor class
+# #### DataFrame example using Extractor class
 
 # %%
 start_timestamp = pd.Timestamp("2022-06-14T10:00:00", tz="UTC")
 end_timestamp = pd.Timestamp("2022-06-14T12:59:00", tz="UTC")
-extractor._download_ohlcv("ftx", "btc-usdt", start_timestamp=start_timestamp, end_timestamp=end_timestamp)
+extractor_spot._download_ohlcv("ftx", "btc-usdt", start_timestamp=start_timestamp, end_timestamp=end_timestamp)
+
+# %% [markdown]
+# ### Futures
+
+# %% [markdown]
+# #### Raw data example (using `requests`)
+
+# %%
+url = f"https://api.cryptochassis.com/v1/ohlc/binance-usds-futures/btcusdt?startTime=1654718400&endTime=1654740000"
+response = requests.get(url)
+print(url)
+# The raw data is in the value of the `urls.url` field zipped into the csv.gz archive,
+# which contains dataframe which is unpacked by the extractor.
+print(response.json())
+
+# %% [markdown]
+# #### DataFrame example using Extractor class
+
+# %%
+start_timestamp = pd.Timestamp("2022-06-09T00:00:00", tz="UTC")
+end_timestamp = pd.Timestamp("2022-06-10T00:00:00", tz="UTC")
+extractor_futures._download_ohlcv("binance", "btc/usdt", start_timestamp=start_timestamp, end_timestamp=end_timestamp) 
 
 # %% [markdown]
 # ## Bid/ask
 
 # %% [markdown]
-# ### Raw data example (using `requests`)
+# ### Spot
+
+# %% [markdown]
+# #### Raw data example (using `requests`)
 
 # %%
 url = f"https://api.cryptochassis.com/v1/market-depth/ftx/btc-usdt?startTime=1655204609&endTime=1655206609"
 response = requests.get(url)
-# The raw data is in the value of the `urls.url` field zipped into the csv.gz archive.
+# The raw data is in the value of the `urls.url` field zipped into the csv.gz archive,
+# which contains dataframe which is unpacked by the extractor.
 response.json()
 
 # %% [markdown]
-# ### DataFrame example using Extractor class
+# #### DataFrame example using Extractor class
 
 # %%
 start_timestamp = pd.Timestamp("2022-06-14T10:00:00", tz="UTC")
 end_timestamp = pd.Timestamp("2022-06-14T12:59:00", tz="UTC")
-extractor._download_bid_ask("ftx", "btc-usdt", start_timestamp=start_timestamp, end_timestamp=end_timestamp)
+extractor_spot._download_bid_ask("ftx", "btc-usdt", start_timestamp=start_timestamp, end_timestamp=end_timestamp)
+
+# %% [markdown]
+# ### Futures
+
+# %% [markdown]
+# #### Raw data example (using `requests`)
+
+# %%
+url = f"https://api.cryptochassis.com/v1/market-depth/binance-usds-futures/btcusdt?startTime=1654718400&endTime=1654740000"
+response = requests.get(url)
+print(url)
+# The raw data is in the value of the `urls.url` field zipped into the csv.gz archive,
+# which contains dataframe which is unpacked by the extractor.
+print(response.json())
+
+# %% [markdown]
+# #### DataFrame example using Extractor class
+
+# %%
+start_timestamp = pd.Timestamp("2022-06-09T00:00:00", tz="UTC")
+end_timestamp = pd.Timestamp("2022-06-09T07:00:00", tz="UTC")
+extractor_futures._download_bid_ask("binance", "btc/usdt", start_timestamp=start_timestamp, end_timestamp=end_timestamp) 
 
 # %% [markdown]
 # ## Trade
 
 # %% [markdown]
-# ### Raw data example (using `requests`)
+# ### Spot
+
+# %% [markdown]
+# #### Raw data example (using `requests`)
 
 # %%
 url = f"https://api.cryptochassis.com/v1/trade/ftx/btc-usdt?startTime=1655204609"
 response = requests.get(url)
-# The raw data is in the value of the `urls.url` field zipped into the csv.gz archive.
+# The raw data is in the value of the `urls.url` field zipped into the csv.gz archive, 
+# which contains dataframe which is unpacked by the extractor.
 response.json()
 
 # %% [markdown]
-# ### DataFrame example using Extractor class
+# #### DataFrame example using Extractor class
 
 # %%
 start_timestamp = pd.Timestamp("2022-07-10T10:00:00", tz="UTC")
-extractor._download_trades("ftx", "btc-usdt", start_timestamp=start_timestamp)
+extractor_spot._download_trades("ftx", "btc-usdt", start_timestamp=start_timestamp)
+
+# %% [markdown]
+# ### Futures
+
+# %% [markdown]
+# #### Raw data example (using `requests`)
+
+# %%
+url = f"https://api.cryptochassis.com/v1/trade/binance-usds-futures/btcusdt?startTime=1654718400"
+response = requests.get(url)
+print(url)
+# The raw data is in the value of the `urls.url` field zipped into the csv.gz archive,
+# which contains dataframe which is unpacked by the extractor.
+print(response.json())
+
+# %% [markdown]
+# #### DataFrame example using Extractor class
+
+# %%
+start_timestamp = pd.Timestamp("2022-07-15T14:00:00", tz="UTC")
+extractor_futures._download_trades("binance", "btc/usdt", start_timestamp=start_timestamp)
 
 # %%
