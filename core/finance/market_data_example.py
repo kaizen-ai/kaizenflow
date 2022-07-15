@@ -679,18 +679,27 @@ def get_im_client_market_data_df1(full_symbols: List[str]) -> pd.DataFrame:
     # Pass timestamps within the U.S. active trading hours.
     idx = pd.date_range(
         start=pd.Timestamp("2000-01-01 14:31:00+00:00", tz="utc"),
-        end=pd.Timestamp("2000-01-01 15:10:00+00:00", tz="utc"),
+        end=pd.Timestamp("2000-01-01 17:10:00+00:00", tz="utc"),
         freq="T",
     )
     # Set price and feature patterns for data alternating.
     # Data alternates every 5 minutes so we keep the same value for 5 minutes.
-    # 10 minute patterns then are multiplied by 4 to match index length.
+    # 10 minute patterns then are multiplied by `len_factor` to match index length.
+    hdbg.dassert_eq(
+        len(idx) % 10,
+        0,
+        msg=(
+            "The date range is invalid: it must have a number of time periods "
+            f"that is a multiple of 10; current number of time periods: {len(idx)}"
+        ),
+    )
+    len_factor = int(len(idx) / 10)
     price_pattern = [101.0] * 5 + [100.0] * 5
-    price = price_pattern * 4
+    price = price_pattern * len_factor
     feature_pattern = [1.0] * 5 + [-1.0] * 5
-    feature = feature_pattern * 4
+    feature = feature_pattern * len_factor
     # Generate unique volume values to avoid dropping rows as duplicates.
-    volume = list(range(40))
+    volume = list(range(len(idx)))
     # Generate data for each symbol.
     all_data_list: List = []
     for full_symbol in full_symbols:
