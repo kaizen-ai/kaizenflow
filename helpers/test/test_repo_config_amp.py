@@ -103,6 +103,17 @@ def is_mac() -> bool:
     return is_mac_
 
 
+def get_repo_short_name() -> str:
+    dir_name = "."
+    include_host_name = False
+    repo_name = hgit.get_repo_full_name_from_dirname(dir_name, include_host_name)
+    _LOG.debug("repo_name=%s", repo_name)
+    # ck/cmamp
+    short_repo_name = repo_name.split("/")[1]
+    _LOG.debug("short_repo_name=%s", short_repo_name)
+    return short_repo_name
+
+
 # End copy.
 
 
@@ -114,13 +125,16 @@ def _check(self: Any, exp: str) -> None:
     self.assert_equal(act, exp, fuzzy_match=True)
 
 
-class TestRepoConfig_Amp_signature1(hunitest.TestCase):
+class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
 
     def test_dev1_server(self) -> None:
-        is_dev_ck_ = is_dev_ck()
+        if get_repo_short_name() == "cmamp":
+            pytest.skip("Only run on cmamp")
         #
+        is_dev_ck_ = is_dev_ck()
         if not is_dev_ck_:
             pytest.skip("Only run on Dev CK")
+        #
         exp = r"""
         # Repo config:
           enable_privileged_mode='False'
@@ -129,16 +143,16 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           get_docker_user=''
           get_host_name='github.com'
           get_invalid_words='[]'
-          get_shared_data_dirs='None'
+          get_shared_data_dirs='{'/data/shared': '/shared_data'}'
           has_dind_support='False'
           has_docker_sudo='True'
           is_AM_S3_available='True'
-          is_CK_S3_available='False'
+          is_CK_S3_available='True'
           is_dev4='False'
-          is_dev_ck='False'
+          is_dev_ck='True'
           is_inside_ci='False'
           is_inside_docker='True'
-          is_mac='True'
+          is_mac='False'
           run_docker_as_root='False'
           skip_submodules_test='True'
           use_docker_network_mode_host='True'
@@ -152,8 +166,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
           AM_ENABLE_DIND='0'
           AM_FORCE_TEST_FAIL=''
-          AM_HOST_NAME='gpmac.fios-router.home'
-          AM_HOST_OS_NAME='Darwin'
+          AM_HOST_OS_NAME='Linux'
           AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
           AM_REPO_CONFIG_CHECK='True'
           AM_REPO_CONFIG_PATH=''
@@ -164,10 +177,13 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
         _check(self, exp)
 
     def test_mac(self) -> None:
-        is_mac_ = is_mac()
+        if get_repo_short_name() == "cmamp":
+            pytest.skip("Only run on cmamp")
         #
+        is_mac_ = is_mac()
         if not is_mac_:
             pytest.skip("Only run on Mac")
+        #
         exp = r"""
         # Repo config:
           enable_privileged_mode='False'
