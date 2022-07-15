@@ -611,83 +611,8 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 
 
 # #############################################################################
-# CcxtSqlRealTimeImClient1
+# TestCcxtSqlRealTimeImClient1
 # #############################################################################
-
-
-# TODO(Dan): Replace with refactored `CcxtSqlRealTimeImClient1`.
-class CcxtSqlRealTimeImClient0(icdctictc.ImClientTestCase):
-    """
-    For all the test methods see description of corresponding private method in
-    the parent class.
-    """
-
-    def test_read_data5(self) -> None:
-        im_client = self._helper()
-        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
-        start_ts = pd.Timestamp("2022-07-14T01:00:00-05:00")
-        end_ts = pd.Timestamp("2022-07-14T01:04:00-05:00")
-        #
-        expected_length = 10
-        expected_column_names = [
-            "close",
-            "end_download_timestamp",
-            "full_symbol",
-            "high",
-            "id",
-            "knowledge_timestamp",
-            "low",
-            "open",
-            "volume",
-        ]
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
-        }
-        # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
-        index=[2022-07-14 06:00:00+00:00, 2022-07-14 06:04:00+00:00]
-        columns=knowledge_timestamp,open,high,low,close,volume,end_download_timestamp,id,full_symbol
-        shape=(10, 9)
-                                               knowledge_timestamp      open      high       low     close     volume           end_download_timestamp        id        full_symbol
-        timestamp
-        2022-07-14 06:00:00+00:00 2022-07-14 06:04:39.452706+00:00  20116.44  20119.68  20090.25  20095.01   88.03180 2022-07-14 06:04:38.450701+00:00  11763344  binance::BTC_USDT
-        2022-07-14 06:00:00+00:00 2022-07-14 06:04:50.515951+00:00   1106.15   1106.16   1105.01   1105.32  322.69540 2022-07-14 06:04:49.512995+00:00  11763359  binance::ETH_USDT
-        2022-07-14 06:01:00+00:00 2022-07-14 06:05:54.188012+00:00  20093.64  20098.29  20085.17  20089.25   47.86836 2022-07-14 06:05:53.185511+00:00  11763398  binance::BTC_USDT
-        ...
-        2022-07-14 06:03:00+00:00 2022-07-14 06:04:50.515951+00:00   1104.57   1105.40   1104.56   1105.14  358.18060 2022-07-14 06:04:49.512995+00:00  11763362  binance::ETH_USDT
-        2022-07-14 06:04:00+00:00 2022-07-14 06:07:43.799602+00:00  20084.64  20095.00  20080.36  20093.23   47.89719 2022-07-14 06:07:42.796783+00:00  11763440  binance::BTC_USDT
-        2022-07-14 06:04:00+00:00 2022-07-14 06:04:50.515951+00:00   1105.15   1105.29   1105.13   1105.14  201.94570 2022-07-14 06:04:49.512995+00:00  11763363  binance::ETH_USDT
-        """
-        # pylint: enable=line-too-long
-        self._test_read_data5(
-            im_client,
-            full_symbols,
-            start_ts,
-            end_ts,
-            expected_length,
-            expected_column_names,
-            expected_column_unique_values,
-            expected_signature,
-        )
-
-    @pytest.mark.slow
-    def test_filter_columns1(self) -> None:
-        im_client = self._helper()
-        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
-        columns = ["full_symbol", "open", "high", "low", "close", "volume"]
-        self._test_filter_columns1(im_client, full_symbols, columns)
-
-    def _helper(self) -> icdcl.CcxtSqlRealTimeImClient:
-        env_file = imvimlita.get_db_env_path("dev")
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        db_connection = hsql.get_connection(*connection_params)
-        table_name = "ccxt_ohlcv"
-        resample_1min = True
-        im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, db_connection, table_name
-        )
-        return im_client
 
 
 # TODO(Danya): add example client for `CcxtSqlRealTimeImClient`.
@@ -703,6 +628,23 @@ class TestCcxtSqlRealTimeImClient1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
+    def get_expected_column_names(self) -> List[str]:
+        """
+        Return a list of expected column names.
+        """
+        expected_column_names = [
+            "id",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "end_download_timestamp",
+            "knowledge_timestamp",
+            "full_symbol",
+        ]
+        return expected_column_names
+
     def test_read_data1(self) -> None:
         resample_1min = True
         im_client = icdcl.CcxtSqlRealTimeImClient(
@@ -711,21 +653,21 @@ class TestCcxtSqlRealTimeImClient1(
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 5
-        expected_column_names = None
-        expected_column_unique_values = None
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
-        columns=full_symbol,open,high,low,close,volume
-        shape=(5, 6)
-                                         full_symbol  open  high   low  close  volume
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(5, 9)
+                                    id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0
-        2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0
-        2021-09-09 00:02:00+00:00  binance::BTC_USDT   NaN   NaN   NaN    NaN     NaN
-        2021-09-09 00:03:00+00:00  binance::BTC_USDT   NaN   NaN   NaN    NaN     NaN
-        2021-09-09 00:04:00+00:00  binance::BTC_USDT  34.0  44.0  54.0   64.0    74.0
+        2021-09-09 00:00:00+00:00  1.0  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:01:00+00:00  2.0  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:02:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::BTC_USDT
+        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::BTC_USDT
+        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
@@ -745,23 +687,25 @@ class TestCcxtSqlRealTimeImClient1(
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 8
-        expected_column_names = None
-        expected_column_unique_values = None
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
-        columns=full_symbol,open,high,low,close,volume
-        shape=(8, 6)
-                                         full_symbol  open  high   low  close  volume
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(8, 9)
+                                    id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0
-        2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0
-        2021-09-09 00:02:00+00:00  binance::BTC_USDT   NaN   NaN   NaN    NaN     NaN
+        2021-09-09 00:00:00+00:00  1.0  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:01:00+00:00  2.0  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:02:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::BTC_USDT
         ...
-        2021-09-09 00:03:00+00:00  binance::ETH_USDT   NaN   NaN   NaN    NaN     NaN
-        2021-09-09 00:04:00+00:00  binance::BTC_USDT  34.0  44.0  54.0   64.0    74.0
-        2021-09-09 00:04:00+00:00  binance::ETH_USDT  34.0  44.0  54.0   64.0    74.0
+        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::ETH_USDT
+        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:04:00+00:00  5.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -782,20 +726,22 @@ class TestCcxtSqlRealTimeImClient1(
         start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 4
-        expected_column_names = None
-        expected_column_unique_values = None
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:02:00+00:00, 2021-09-09 00:04:00+00:00]
-        columns=full_symbol,open,high,low,close,volume
-        shape=(4, 6)
-                                         full_symbol  open  high   low  close  volume
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(4, 9)
+                                    id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0
-        2021-09-09 00:03:00+00:00  binance::ETH_USDT   NaN   NaN   NaN    NaN     NaN
-        2021-09-09 00:04:00+00:00  binance::BTC_USDT  34.0  44.0  54.0   64.0    74.0
-        2021-09-09 00:04:00+00:00  binance::ETH_USDT  34.0  44.0  54.0   64.0    74.0
+        2021-09-09 00:02:00+00:00  3.0  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
+        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::ETH_USDT
+        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:04:00+00:00  5.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data3(
@@ -817,19 +763,21 @@ class TestCcxtSqlRealTimeImClient1(
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 3
-        expected_column_names = None
-        expected_column_unique_values = None
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:02:00+00:00]
-        columns=full_symbol,open,high,low,close,volume
-        shape=(3, 6)
-                                         full_symbol  open  high   low  close  volume
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(3, 9)
+                                id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0
-        2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0
-        2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0
+        2021-09-09 00:00:00+00:00   1  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data4(
@@ -852,18 +800,20 @@ class TestCcxtSqlRealTimeImClient1(
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 2
-        expected_column_names = None
-        expected_column_unique_values = None
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
         index=[2021-09-09 00:01:00+00:00, 2021-09-09 00:02:00+00:00]
-        columns=full_symbol,open,high,low,close,volume
-        shape=(2, 6)
-                                         full_symbol  open  high   low  close  volume
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(2, 9)
+                                id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0
-        2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0
+        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -893,21 +843,22 @@ class TestCcxtSqlRealTimeImClient1(
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 5
-        expected_column_names = None
-        expected_column_unique_values = None
+        expected_column_names = self.get_expected_column_names()
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
         # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
+        expected_signature = r"""# df=
         index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
-        columns=full_symbol,open,high,low,close,volume
-        shape=(5, 6)
-                                         full_symbol  open  high   low  close  volume
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(5, 9)
+                                id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:00:00+00:00  binance::BTC_USDT  30.0  40.0  50.0   60.0    70.0
-        2021-09-09 00:01:00+00:00  binance::BTC_USDT  31.0  41.0  51.0   61.0    71.0
-        2021-09-09 00:02:00+00:00  binance::ETH_USDT  32.0  42.0  52.0   62.0    72.0
-        2021-09-09 00:04:00+00:00  binance::BTC_USDT  34.0  44.0  54.0   64.0    74.0
-        2021-09-09 00:04:00+00:00  binance::ETH_USDT  34.0  44.0  54.0   64.0    74.0
+        2021-09-09 00:00:00+00:00   1  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
+        2021-09-09 00:04:00+00:00   4  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:04:00+00:00   5  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data7(
