@@ -331,9 +331,6 @@ class RealTimeMarketData2(mdabmada.MarketData):
             columns,
             self._filter_data_mode,
             ts_col_name=ts_col_name,
-            left_close=left_close,
-            right_close=right_close,
-            limit=limit,
         )
         # Add `asset_id` column.
         _LOG.debug("asset_id_col=%s", self._asset_id_col)
