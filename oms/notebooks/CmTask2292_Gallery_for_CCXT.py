@@ -143,3 +143,65 @@ exchange.commonCurrencies
 
 # %%
 print(dir(ccxt.binance()))
+
+# %% [markdown]
+# # Unified API
+
+# %%
+exchange.fetchMarkets()
+
+# %%
+exchange.fetchCurrencies()
+
+# %%
+symbol = "BTC/USDT"
+exchange.fetchOrderBook(symbol)
+
+# %%
+# Not supported for Binance
+#exchange.fetchStatus()
+
+# %%
+exchange.fetchL2OrderBook(symbol)
+
+# %%
+exchange.fetchTrades(symbol)
+
+# %%
+exchange.fetchTicker(symbol)
+
+# %%
+exchange.fetchBalance()
+
+# %%
+## Order book
+
+# %%
+exchange.fetch_order_book(symbol)
+
+# %% [markdown]
+# ## Market price
+
+# %%
+# Python
+orderbook = exchange.fetch_order_book (exchange.symbols[0])
+bid = orderbook['bids'][0][0] if len (orderbook['bids']) > 0 else None
+ask = orderbook['asks'][0][0] if len (orderbook['asks']) > 0 else None
+spread = (ask - bid) if (bid and ask) else None
+print (exchange.id, 'market price', { 'bid': bid, 'ask': ask, 'spread': spread })
+
+# %% [markdown]
+# # Private API
+
+# %%
+#exchange.fetchAccounts()
+
+# %%
+balance = exchange.fetchBalance()
+
+balance
+
+# %%
+balance.keys()
+
+# %%
