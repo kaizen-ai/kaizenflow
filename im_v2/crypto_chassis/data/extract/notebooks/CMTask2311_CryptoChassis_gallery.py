@@ -65,7 +65,7 @@ extractor_futures = imvccdexex.CryptoChassisExtractor("futures")
 # #### Building an URL
 
 # %%
-base_url = extractor_spot._build_base_url("ohlc", "binance-usds-futures", "btc-usdt")
+base_url = extractor_spot._build_base_url("ohlc", "binance", "btc-usdt")
 base_url
 
 # %%
