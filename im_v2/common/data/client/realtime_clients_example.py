@@ -11,10 +11,8 @@ import pandas as pd
 
 import core.finance as cofinanc
 import helpers.hdatetime as hdateti
-import helpers.hdbg as hdbg
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.universe as ivcu
 
 # #############################################################################
 # TestSqlRealTimeImClient
@@ -116,64 +114,15 @@ class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
-        *,
-        mode: Optional[str] = "market_data",
     ):
         vendor = "mock"
         super().__init__(
             resample_1min, db_connection, table_name=table_name, vendor=vendor
         )
-        self._mode = mode
 
     @staticmethod
     def should_be_online() -> bool:
         return True
-
-    def _apply_normalization(
-        self,
-        data: pd.DataFrame,
-        *,
-        full_symbol_col_name: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        Apply vendor-specific normalization.
-
-        `market_data` mode:
-            - Add `start_timestamp` column in UTC timestamp format.
-            - Set `timestamp` as index
-            - Add `asset_id` column which is result of mapping full_symbol to integer.
-            - The output looks like:
-        ```
-        timestamp                 open ... volume  start_timestamp           asset_id
-        2000-01-01 09:30:00-05:00 101.5    100     2000-01-01 09:29:00-05:00 3303714233
-        2000-01-01 09:31:00-05:00 101.5    100     2000-01-01 09:30:00-05:00 3303714233
-        ```
-        """
-        # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
-            hdateti.convert_unix_epoch_to_timestamp
-        )
-        full_symbol_col_name = self._get_full_symbol_col_name(
-            full_symbol_col_name
-        )
-        if self._mode == "market_data":
-            data["asset_id"] = data[full_symbol_col_name].apply(
-                ivcu.string_to_numerical_id
-            )
-            # Convert to int64 to keep NaNs alongside with int values.
-            data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
-            # Generate `start_timestamp` from `end_timestamp` by substracting delta.
-            delta = pd.Timedelta("1M")
-            data["start_timestamp"] = data["timestamp"].apply(
-                lambda pd_timestamp: (pd_timestamp - delta)
-            )
-            data = data.set_index("timestamp")
-        else:
-            # TODO(Danya): Put a `data_client` mode for uses in testing.
-            hdbg.dfatal(
-                "Invalid mode='%s'. Correct modes: 'market_data'" % self._mode
-            )
-        return data
 
 
 def get_example1_realtime_client(
@@ -287,7 +236,6 @@ class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         super().__init__(
             resample_1min, db_connection, table_name=table_name, vendor=vendor
         )
-        self._mode = "market_data"
 
     @staticmethod
     def should_be_online() -> bool:
@@ -295,53 +243,6 @@ class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         The real-time system for Talos should always be online.
         """
         return True
-
-    def _apply_normalization(
-        self, data: pd.DataFrame, *, full_symbol_col_name: Optional[str] = None
-    ) -> pd.DataFrame:
-        """
-        Apply OHLCV normalization.
-
-        - Add `start_timestamp` column in UTC timestamp format.
-        - Add `end_timestamp` column in UTC timestamp format.
-        - Add `asset_id` column which is result of mapping full_symbol to integer.
-        - Drop extra columns.
-        - The output looks like:
-        ```
-        open  high  low   close volume  start_timestamp          end_timestamp            asset_id
-        0.825 0.826 0.825 0.825 18427.9 2022-03-16 2:46:00+00:00 2022-03-16 2:47:00+00:00 3303714233
-        0.825 0.826 0.825 0.825 52798.5 2022-03-16 2:47:00+00:00 2022-03-16 2:48:00+00:00 3303714233
-        ```
-        """
-        # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
-            hdateti.convert_unix_epoch_to_timestamp
-        )
-        ohlcv_columns = [
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            full_symbol_col_name,
-            "start_timestamp",
-            "asset_id",
-        ]
-        # Add `asset_id` column using mapping on `full_symbol` column.
-        data["asset_id"] = data[full_symbol_col_name].apply(
-            ivcu.string_to_numerical_id
-        )
-        # Convert to int64 to keep NaNs alongside with int values.
-        data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
-        # Generate `start_timestamp` from `end_timestamp` by substracting delta.
-        delta = pd.Timedelta("1M")
-        data["start_timestamp"] = data["timestamp"].apply(
-            lambda pd_timestamp: (pd_timestamp - delta)
-        )
-        data = data.set_index("timestamp")
-        # Rearrange the columns.
-        data = data.loc[:, ohlcv_columns]
-        return data
 
 
 def get_mock_realtime_client(
