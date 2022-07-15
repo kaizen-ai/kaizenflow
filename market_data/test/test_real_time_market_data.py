@@ -11,27 +11,12 @@ import im_v2.common.db.db_utils as imvcddbut
 import im_v2.im_lib_tasks as imvimlita
 import market_data.market_data_example as mdmadaex
 import market_data.real_time_market_data as mdrtmada
-import market_data.test.market_data_test_case as mdtmdtca
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(Dan): Replace with refactored `TestRealTimeMarketData2`.
 class TestRealTimeMarketData2_0(hunitest.TestCase):
-
-    def _helper(self) -> mdrtmada.RealTimeMarketData2:
-        env_file = imvimlita.get_db_env_path("dev")
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        db_connection = hsql.get_connection(*connection_params)
-        table_name = "ccxt_ohlcv"
-        resample_1min = True
-        im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, db_connection, table_name
-        )
-        #
-        market_data = mdmadaex.get_RealtimeMarketData_example1(im_client)
-        return market_data
-
     def test_get_data_for_interval3(self) -> None:
         # Prepare inputs.
         market_data = self._helper()
@@ -96,6 +81,19 @@ class TestRealTimeMarketData2_0(hunitest.TestCase):
             exp_df_as_str,
         )
 
+    def _helper(self) -> mdrtmada.RealTimeMarketData2:
+        env_file = imvimlita.get_db_env_path("dev")
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        db_connection = hsql.get_connection(*connection_params)
+        table_name = "ccxt_ohlcv"
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, db_connection, table_name
+        )
+        #
+        market_data = mdmadaex.get_RealtimeMarketData_example1(im_client)
+        return market_data
+
 
 class TestRealTimeMarketData2(
     imvcddbut.TestImDbHelper,
@@ -111,9 +109,7 @@ class TestRealTimeMarketData2(
             self.connection, resample_1min=True
         )
         # Set up market data client.
-        self.market_data = mdmadaex.get_RealtimeMarketData_example1(
-            im_client
-        )
+        self.market_data = mdmadaex.get_RealtimeMarketData_example1(im_client)
 
     def tearDown(self) -> None:
         # Delete the table.

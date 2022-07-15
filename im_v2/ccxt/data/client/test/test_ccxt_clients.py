@@ -622,17 +622,6 @@ class CcxtSqlRealTimeImClient0(icdctictc.ImClientTestCase):
     the parent class.
     """
 
-    def _helper(self) -> icdcl.CcxtSqlRealTimeImClient:
-        env_file = imvimlita.get_db_env_path("dev")
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        db_connection = hsql.get_connection(*connection_params)
-        table_name = "ccxt_ohlcv"
-        resample_1min = True
-        im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, db_connection, table_name
-        )
-        return im_client
-
     def test_read_data5(self) -> None:
         im_client = self._helper()
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -690,6 +679,17 @@ class CcxtSqlRealTimeImClient0(icdctictc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         columns = ["full_symbol", "open", "high", "low", "close", "volume"]
         self._test_filter_columns1(im_client, full_symbols, columns)
+
+    def _helper(self) -> icdcl.CcxtSqlRealTimeImClient:
+        env_file = imvimlita.get_db_env_path("dev")
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        db_connection = hsql.get_connection(*connection_params)
+        table_name = "ccxt_ohlcv"
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, db_connection, table_name
+        )
+        return im_client
 
 
 # TODO(Danya): add example client for `CcxtSqlRealTimeImClient`.

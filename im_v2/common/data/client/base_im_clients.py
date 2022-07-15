@@ -717,6 +717,7 @@ class SqlRealTimeImClient(RealTimeImClient):
             hdateti.convert_unix_epoch_to_timestamp
         )
         data = data.set_index("timestamp")
+        # TODO(Dan): Move column filtering to the SQL query.
         if columns is None:
             columns = data.columns
         hdbg.dassert_is_subset(columns, data.columns.to_list())

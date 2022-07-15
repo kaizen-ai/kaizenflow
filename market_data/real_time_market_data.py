@@ -42,7 +42,7 @@ class RealTimeMarketData(mdabmada.MarketData):
         # Params from abstract `MarketData`.
         *args: Any,
         **kwargs: Any,
-    ):
+    ) -> None:
         """
         Constructor.
 
@@ -255,6 +255,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
     """
     Interface for real-time market data accessed through a realtime SQL client.
     """
+
     def __init__(self, client: icdc.SqlRealTimeImClient, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._im_client = client
@@ -277,7 +278,7 @@ class RealTimeMarketData2(mdabmada.MarketData):
         right_close: bool,
         limit: Optional[int],
         *,
-        columns: Optional[List[str]] = None
+        columns: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """
         Build a query and load SQL data in MarketData format.
@@ -354,9 +355,9 @@ class RealTimeMarketData2(mdabmada.MarketData):
                 transformed_asset_ids,
             )
         # Convert to int64 to keep NaNs alongside with int values.
-        market_data[self._asset_id_col] = market_data[
-            self._asset_id_col
-        ].astype(pd.Int64Dtype())
+        market_data[self._asset_id_col] = market_data[self._asset_id_col].astype(
+            pd.Int64Dtype()
+        )
         #
         if self._columns is not None:
             # Drop full symbol column if it was not in the sepcified columns.
