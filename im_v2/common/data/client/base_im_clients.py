@@ -652,18 +652,6 @@ class SqlRealTimeImClient(RealTimeImClient):
         full_symbols = full_symbols.to_list()
         return full_symbols
 
-    # TODO(Dan): Consider removing or refactoring.
-    # @abc.abstractmethod
-    # def _apply_normalization(
-    #     self,
-    #     data: pd.DataFrame,
-    #     *,
-    #     full_symbol_col_name: Optional[str] = None,
-    # ) -> pd.DataFrame:
-    #     """
-    #     Apply vendor-specific normalization.
-    #     """
-
     # TODO(Danya): Propagate usage of `columns` parameter here and in descendant
     #  classes.
     def _read_data(
