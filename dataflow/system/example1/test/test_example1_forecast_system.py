@@ -24,7 +24,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(Grisha): factor out the backtest config and use `5T` as resampling frequency CmTask #2367.
 class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
+        backtest_config = "example1_v1-top2.5T.Jan2000"
         system_builder = (
             dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
                 backtest_config
@@ -45,7 +45,7 @@ class Test_Example1_ForecastSystem_FitPredict(
         """
         Create the System for testing.
         """
-        backtest_config = "example1_v1-top2.1T.Jan2000"
+        backtest_config = "example1_v1-top2.5T.Jan2000"
         system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
             backtest_config
         )
@@ -88,7 +88,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
     dtfsysytes.ForecastSystem_FitInvariance_TestCase1
 ):
     def test_test_invariance1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
+        backtest_config = "example1_v1-top2.5T.Jan2000"
         system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
             backtest_config
         )
@@ -117,7 +117,7 @@ class Test_Example1_ForecastSystem_CheckPnl(
 ):
     # TODO(*): Add more data to Example1, otherwise the outcome is an empty dataframe.
     def test_test_fit_run1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
+        backtest_config = "example1_v1-top2.5T.Jan2000"
         system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
             backtest_config
         )
