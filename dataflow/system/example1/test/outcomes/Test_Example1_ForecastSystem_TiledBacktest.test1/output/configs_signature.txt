@@ -9,7 +9,7 @@ dag_config:
     in_col_groups: [('close',), ('volume',), ('feature1',)]
     out_col_group: ()
     transformer_kwargs:
-      rule: 5T
+      rule: 1T
       resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'feature1': 'feature1'}, 'mean', {})]
       vwap_groups: [('close', 'volume', 'vwap')]
     reindex_like_input: False
