@@ -314,8 +314,6 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "ccxt_v7":
         version = "v7" 
         ret = _get_ccxt_universe(version, top_n)
-        # See CMTask2375 - Current exclusion of `binance::ADA_USDT` from universe `v7`.
-        ret.remove("binance::ADA_USDT")
     elif universe_version == "crypto_chassis_v1":
         version = "v1"
         ret = _get_crypto_chassis_universe(version, top_n)
