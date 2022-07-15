@@ -106,13 +106,10 @@ def get_order_example3(
     return order
 
 def get_order_example4() -> omorder.Order:
-    """
-    ...
-    """
     creation_timestamp = pd.Timestamp(
         "2000-01-01 09:30:00-05:00", tz="America/New_York"
     )
-    # Corresponds to binance::BTC_USD.
+    # Corresponds to coinbasepro::BTC_USD.
     asset_id = 1467591036
     type_ = "market"
     start_timestamp = pd.Timestamp(
@@ -122,7 +119,7 @@ def get_order_example4() -> omorder.Order:
         "2000-01-01 09:40:00-05:00", tz="America/New_York"
     )
     curr_num_shares = 0
-    diff_num_shares = 0.01
+    diff_num_shares = 0.001
     order_id = 0
     # Build Order.
     order = omorder.Order(
