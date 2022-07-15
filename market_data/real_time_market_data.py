@@ -14,6 +14,7 @@ import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
@@ -256,21 +257,15 @@ class RealTimeMarketData2(mdabmada.MarketData):
     """
     def __init__(self, client: icdc.SqlRealTimeImClient, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        hdbg.dassert_eq(
-            client._mode,
-            "market_data",
-            msg="Requires a SqlRealTimeImClient in 'market_data' mode.",
-        )
-        self._client = client
+        self._im_client = client
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
-        return self._client.should_be_online()
+        return self._im_client.should_be_online()
 
-    #
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         # Note: Getting the end time for one symbol as a placeholder.
         # TODO(Danya): CMTask1622: "Return `last_end_time` for all symbols".
-        return self._client.get_end_ts_for_symbol("binance::BTC_USDT")
+        return self._im_client.get_end_ts_for_symbol("binance::BTC_USDT")
 
     def _get_data(
         self,
@@ -287,15 +282,48 @@ class RealTimeMarketData2(mdabmada.MarketData):
         """
         Build a query and load SQL data in MarketData format.
         """
-        # Convert asset ids to full symbols for passing to the DB.
-        if asset_ids:
-            full_symbols = [
-                self._client._asset_id_to_full_symbol_mapping[asset_id]
-                for asset_id in asset_ids
-            ]
+        if not left_close:
+            if start_ts is not None:
+                # Add one millisecond to not include the left boundary.
+                start_ts += pd.Timedelta(1, "ms")
+        if not right_close:
+            if end_ts is not None:
+                # Subtract one millisecond not to include the right boundary.
+                end_ts -= pd.Timedelta(1, "ms")
+        if asset_ids is None:
+            # If asset ids are not provided, get universe as full symbols.
+            full_symbols = self._im_client.get_universe()
         else:
-            full_symbols = None
-        data = self._client.read_data(
+            # Convert asset ids to full symbols to read `im` data.
+            full_symbols = self._im_client.get_full_symbols_from_asset_ids(
+                asset_ids
+            )
+        # Load the data using `im_client`.
+        ivcu.dassert_valid_full_symbols(full_symbols)
+        # TODO(gp): im_client should always return the name of the column storing
+        #  the asset_id as "full_symbol" instead we access the class to see what
+        #  is the name of that column.
+        full_symbol_col_name = self._im_client._get_full_symbol_col_name(None)
+        if self._columns is not None:
+            # Exlcude columns specific of `MarketData` when querying `ImClient`.
+            columns_to_exclude_in_im = [
+                self._asset_id_col,
+                self._start_time_col_name,
+                self._end_time_col_name,
+            ]
+            query_columns = [
+                col
+                for col in self._columns
+                if col not in columns_to_exclude_in_im
+            ]
+            if full_symbol_col_name not in query_columns:
+                # Add full symbol column to the query if its name wasn't passed
+                # since it is necessary for asset id column generation.
+                query_columns.insert(0, full_symbol_col_name)
+        else:
+            query_columns = self._columns
+        # Read data.
+        market_data = self._im_client.read_data(
             full_symbols,
             start_ts,
             end_ts,
@@ -306,7 +334,73 @@ class RealTimeMarketData2(mdabmada.MarketData):
             right_close=right_close,
             limit=limit,
         )
-        # Rename the index to fit the MarketData format.
-        data.index.name = "end_timestamp"
-        data = data.reset_index()
-        return data
+        # Add `asset_id` column.
+        _LOG.debug("asset_id_col=%s", self._asset_id_col)
+        _LOG.debug("full_symbol_col_name=%s", full_symbol_col_name)
+        _LOG.debug("market_data.columns=%s", sorted(list(market_data.columns)))
+        hdbg.dassert_in(full_symbol_col_name, market_data.columns)
+        transformed_asset_ids = self._im_client.get_asset_ids_from_full_symbols(
+            market_data[full_symbol_col_name].tolist()
+        )
+        if self._asset_id_col in market_data.columns:
+            _LOG.debug(
+                "Overwriting column '%s' with asset_ids", self._asset_id_col
+            )
+            market_data[self._asset_id_col] = transformed_asset_ids
+        else:
+            market_data.insert(
+                0,
+                self._asset_id_col,
+                transformed_asset_ids,
+            )
+        # Convert to int64 to keep NaNs alongside with int values.
+        market_data[self._asset_id_col] = market_data[
+            self._asset_id_col
+        ].astype(pd.Int64Dtype())
+        #
+        if self._columns is not None:
+            # Drop full symbol column if it was not in the sepcified columns.
+            if full_symbol_col_name not in self._columns:
+                market_data = market_data.drop(full_symbol_col_name, axis=1)
+        hdbg.dassert_in(self._asset_id_col, market_data.columns)
+        if limit:
+            # Keep only top N records.
+            hdbg.dassert_lte(1, limit)
+            market_data = market_data.head(limit)
+        # Prepare data for normalization by the parent class.
+        market_data = self._convert_data_for_normalization(market_data)
+        return market_data
+
+    def _convert_data_for_normalization(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert data to format required by normalization in parent class.
+
+        :param df: IM data to transform
+        ```
+                                  full_symbol     close     volume
+                      index
+        2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690
+        2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946
+        2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098
+        ```
+        :return: transformed data
+        ```
+                        end_ts       full_symbol     close     volume             start_ts
+        idx
+        0  2021-07-26 13:42:00  binance:BTC_USDT  47063.51  29.403690  2021-07-26 13:41:00
+        1  2021-07-26 13:43:00  binance:BTC_USDT  46946.30  58.246946  2021-07-26 13:42:00
+        2  2021-07-26 13:44:00  binance:BTC_USDT  46895.39  81.264098  2021-07-26 13:43:00
+        ```
+        """
+        # Move the index to the end ts column.
+        df.index.name = "index"
+        df = df.reset_index()
+        hdbg.dassert_not_in(self._end_time_col_name, df.columns)
+        df = df.rename(columns={"index": self._end_time_col_name})
+        # `IM` data is assumed to have 1 minute frequency.
+        hdbg.dassert_not_in(self._start_time_col_name, df.columns)
+        # hdbg.dassert_eq(df.index.freq, "1T")
+        df[self._start_time_col_name] = df[
+            self._end_time_col_name
+        ] - pd.Timedelta(minutes=1)
+        return df

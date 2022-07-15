@@ -14,6 +14,7 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.universe as ivcu
+import im_v2.im_lib_tasks as imvimlita
 
 
 def get_expected_column_names() -> List[str]:
@@ -612,6 +613,82 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 # CcxtSqlRealTimeImClient1
 # #############################################################################
+
+
+class CcxtSqlRealTimeImClient0(icdctictc.ImClientTestCase):
+    """
+    For all the test methods see description of corresponding private method in
+    the parent class.
+    """
+
+    def _helper(self) -> icdcl.CcxtSqlRealTimeImClient:
+        env_file = imvimlita.get_db_env_path("dev")
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        db_connection = hsql.get_connection(*connection_params)
+        table_name = "ccxt_ohlcv"
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, db_connection, table_name
+        )
+        return im_client
+
+    def test_read_data5(self) -> None:
+        im_client = self._helper()
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        start_ts = pd.Timestamp("2022-07-14T01:00:00-05:00")
+        end_ts = pd.Timestamp("2022-07-14T01:04:00-05:00")
+        #
+        expected_length = 10
+        expected_column_names = [
+            "close",
+            "currency_pair",
+            "end_download_timestamp",
+            "exchange_id",
+            "full_symbol",
+            "high",
+            "id",
+            "knowledge_timestamp",
+            "low",
+            "open",
+            "volume",
+        ]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[2022-07-14 06:00:00+00:00, 2022-07-14 06:04:00+00:00]
+        columns=knowledge_timestamp,open,high,low,close,volume,end_download_timestamp,id,currency_pair,exchange_id,full_symbol
+        shape=(10, 11)
+                                               knowledge_timestamp      open      high       low     close     volume           end_download_timestamp        id currency_pair exchange_id        full_symbol
+        timestamp
+        2022-07-14 06:00:00+00:00 2022-07-14 06:04:39.452706+00:00  20116.44  20119.68  20090.25  20095.01   88.03180 2022-07-14 06:04:38.450701+00:00  11763344      BTC_USDT     binance  binance::BTC_USDT
+        2022-07-14 06:00:00+00:00 2022-07-14 06:04:50.515951+00:00   1106.15   1106.16   1105.01   1105.32  322.69540 2022-07-14 06:04:49.512995+00:00  11763359      ETH_USDT     binance  binance::ETH_USDT
+        2022-07-14 06:01:00+00:00 2022-07-14 06:05:54.188012+00:00  20093.64  20098.29  20085.17  20089.25   47.86836 2022-07-14 06:05:53.185511+00:00  11763398      BTC_USDT     binance  binance::BTC_USDT
+        ...
+        2022-07-14 06:03:00+00:00 2022-07-14 06:04:50.515951+00:00   1104.57   1105.40   1104.56   1105.14  358.18060 2022-07-14 06:04:49.512995+00:00  11763362      ETH_USDT     binance  binance::ETH_USDT
+        2022-07-14 06:04:00+00:00 2022-07-14 06:07:43.799602+00:00  20084.64  20095.00  20080.36  20093.23   47.89719 2022-07-14 06:07:42.796783+00:00  11763440      BTC_USDT     binance  binance::BTC_USDT
+        2022-07-14 06:04:00+00:00 2022-07-14 06:04:50.515951+00:00   1105.15   1105.29   1105.13   1105.14  201.94570 2022-07-14 06:04:49.512995+00:00  11763363      ETH_USDT     binance  binance::ETH_USDT
+        """
+        # pylint: enable=line-too-long
+        self._test_read_data5(
+            im_client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    @pytest.mark.slow
+    def test_filter_columns1(self) -> None:
+        im_client = self._helper()
+        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        columns = ["full_symbol", "open", "high", "low", "close", "volume"]
+        self._test_filter_columns1(im_client, full_symbols, columns)
 
 
 # TODO(Danya): add example client for `CcxtSqlRealTimeImClient`.

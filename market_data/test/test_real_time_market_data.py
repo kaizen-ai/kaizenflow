@@ -4,11 +4,96 @@ import pandas as pd
 
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
+import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
+import im_v2.im_lib_tasks as imvimlita
 import market_data.market_data_example as mdmadaex
+import market_data.real_time_market_data as mdrtmada
+import market_data.test.market_data_test_case as mdtmdtca
 
 _LOG = logging.getLogger(__name__)
+
+
+class TestRealTimeMarketData2_0(hunitest.TestCase):
+
+    def _helper(self) -> mdrtmada.RealTimeMarketData2:
+        env_file = imvimlita.get_db_env_path("dev")
+        connection_params = hsql.get_connection_info_from_env_file(env_file)
+        db_connection = hsql.get_connection(*connection_params)
+        table_name = "ccxt_ohlcv"
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, db_connection, table_name
+        )
+        #
+        market_data = mdmadaex.get_RealtimeMarketData_example1(im_client)
+        return market_data
+
+    def test_get_data_for_interval3(self) -> None:
+        # Prepare inputs.
+        market_data = self._helper()
+        asset_ids = [1464553467, 1467591036]
+        start_ts = pd.Timestamp("2022-07-14T01:00:00-05:00")
+        end_ts = pd.Timestamp("2022-07-14T01:04:00-05:00")
+        ts_col_name = "timestamp"
+        left_close = True
+        right_close = True
+        # Run.
+        df = market_data.get_data_for_interval(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close=left_close,
+            right_close=right_close,
+        )
+        #
+        expected_length = 10
+        expected_column_names = expected_column_names = [
+            "asset_id",
+            "close",
+            "currency_pair",
+            "end_download_timestamp",
+            "exchange_id",
+            "full_symbol",
+            "high",
+            "id",
+            "knowledge_timestamp",
+            "low",
+            "open",
+            "start_timestamp",
+            "volume",
+        ]
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+        }
+        # pylint: disable=line-too-long
+        exp_df_as_str = r"""
+        # df=
+        index=[2022-07-14 02:00:00-04:00, 2022-07-14 02:04:00-04:00]
+        columns=asset_id,knowledge_timestamp,open,high,low,close,volume,end_download_timestamp,id,currency_pair,exchange_id,full_symbol,start_timestamp
+        shape=(10, 13)
+                                    asset_id              knowledge_timestamp      open      high       low     close    volume           end_download_timestamp        id currency_pair exchange_id        full_symbol           start_timestamp
+        end_timestamp
+        2022-07-14 02:00:00-04:00  1464553467 2022-07-14 06:04:50.515951+00:00   1106.15   1106.16   1105.01   1105.32  322.6954 2022-07-14 06:04:49.512995+00:00  11763359      ETH_USDT     binance  binance::ETH_USDT 2022-07-14 01:59:00-04:00
+        2022-07-14 02:00:00-04:00  1467591036 2022-07-14 06:04:39.452706+00:00  20116.44  20119.68  20090.25  20095.01   88.0318 2022-07-14 06:04:38.450701+00:00  11763344      BTC_USDT     binance  binance::BTC_USDT 2022-07-14 01:59:00-04:00
+        2022-07-14 02:01:00-04:00  1464553467 2022-07-14 06:04:50.515951+00:00   1105.31   1105.32   1104.66   1104.70  287.9683 2022-07-14 06:04:49.512995+00:00  11763360      ETH_USDT     binance  binance::ETH_USDT 2022-07-14 02:00:00-04:00
+        ...
+        2022-07-14 02:03:00-04:00  1467591036 2022-07-14 06:07:43.799602+00:00  20084.81  20101.94  20081.04  20084.64  132.53170 2022-07-14 06:07:42.796783+00:00  11763439      BTC_USDT     binance  binance::BTC_USDT 2022-07-14 02:02:00-04:00
+        2022-07-14 02:04:00-04:00  1464553467 2022-07-14 06:04:50.515951+00:00   1105.15   1105.29   1105.13   1105.14  201.94570 2022-07-14 06:04:49.512995+00:00  11763363      ETH_USDT     binance  binance::ETH_USDT 2022-07-14 02:03:00-04:00
+        2022-07-14 02:04:00-04:00  1467591036 2022-07-14 06:07:43.799602+00:00  20084.64  20095.00  20080.36  20093.23   47.89719 2022-07-14 06:07:42.796783+00:00  11763440      BTC_USDT     binance  binance::BTC_USDT 2022-07-14 02:03:00-04:00
+        """
+        # pylint: enable=line-too-long
+        # Check output.
+        self.check_df_output(
+            df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            exp_df_as_str,
+        )
 
 
 class TestRealTimeMarketData2(
