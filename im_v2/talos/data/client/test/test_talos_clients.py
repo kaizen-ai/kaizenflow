@@ -666,7 +666,6 @@ class TestTalosHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
-@pytest.mark.skip("Fail due to refactoring in CmTask2343.")
 class TestTalosSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
@@ -903,16 +902,15 @@ class TestTalosSqlRealTimeImClient1(
         expected_column_names = self._get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["binance::ETH_USDT"]}
         # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
+        expected_signature = r"""# df=
         index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
-        columns=open,high,low,close,volume,full_symbol
-        shape=(3, 6)
-                                   open  high   low  close  volume        full_symbol
+        columns=id,open,high,low,close,volume,ticks,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(3, 10)
+                                id  open  high   low  close  volume  ticks    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
-        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
+        2022-03-24 16:21:00+00:00   0  30.0  40.0  50.0   60.0    70.0   80.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00   2  32.0  42.0  52.0   62.0    72.0   73.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00   4  35.0  45.0  55.0   65.0    75.0   75.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
@@ -934,19 +932,18 @@ class TestTalosSqlRealTimeImClient1(
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
         # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
+        expected_signature = r"""# df=
         index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
-        columns=open,high,low,close,volume,full_symbol
-        shape=(6, 6)
-                                   open  high   low  close  volume        full_symbol
+        columns=id,open,high,low,close,volume,ticks,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(6, 10)
+                                id  open  high   low  close  volume  ticks    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
-        2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
-        2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
-        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT
-        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
+        2022-03-24 16:21:00+00:00   1  31.0  41.0  51.0   61.0    71.0   72.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:21:00+00:00   0  30.0  40.0  50.0   60.0    70.0   80.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00   3  34.0  44.0  54.0   64.0    74.0   74.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:22:00+00:00   2  32.0  42.0  52.0   62.0    72.0   73.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00   5  36.0  46.0  56.0   66.0    76.0   76.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:23:00+00:00   4  35.0  45.0  55.0   65.0    75.0   75.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -969,19 +966,18 @@ class TestTalosSqlRealTimeImClient1(
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
         # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
+        expected_signature = r"""# df=
         index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
-        columns=open,high,low,close,volume,full_symbol
-        shape=(6, 6)
-                                   open  high   low  close  volume        full_symbol
+        columns=id,open,high,low,close,volume,ticks,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(6, 10)
+                                id  open  high   low  close  volume  ticks    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
-        2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
-        2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
-        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT
-        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
+        2022-03-24 16:21:00+00:00   1  31.0  41.0  51.0   61.0    71.0   72.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:21:00+00:00   0  30.0  40.0  50.0   60.0    70.0   80.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00   3  34.0  44.0  54.0   64.0    74.0   74.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:22:00+00:00   2  32.0  42.0  52.0   62.0    72.0   73.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00   5  36.0  46.0  56.0   66.0    76.0   76.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:23:00+00:00   4  35.0  45.0  55.0   65.0    75.0   75.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data3(
@@ -1005,19 +1001,18 @@ class TestTalosSqlRealTimeImClient1(
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
         # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
+        expected_signature = r"""# df=
         index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
-        columns=open,high,low,close,volume,full_symbol
-        shape=(6, 6)
-                                   open  high   low  close  volume        full_symbol
+        columns=id,open,high,low,close,volume,ticks,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(6, 10)
+                                id  open  high   low  close  volume  ticks    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
-        2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
-        2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
-        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT
-        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
+        2022-03-24 16:21:00+00:00   1  31.0  41.0  51.0   61.0    71.0   72.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:21:00+00:00   0  30.0  40.0  50.0   60.0    70.0   80.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00   3  34.0  44.0  54.0   64.0    74.0   74.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:22:00+00:00   2  32.0  42.0  52.0   62.0    72.0   73.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00   5  36.0  46.0  56.0   66.0    76.0   76.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:23:00+00:00   4  35.0  45.0  55.0   65.0    75.0   75.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data4(
@@ -1042,19 +1037,18 @@ class TestTalosSqlRealTimeImClient1(
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
         # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
+        expected_signature = r"""# df=
         index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
-        columns=open,high,low,close,volume,full_symbol
-        shape=(6, 6)
-                                   open  high   low  close  volume        full_symbol
+        columns=id,open,high,low,close,volume,ticks,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(6, 10)
+                                id  open  high   low  close  volume  ticks    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
-        2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
-        2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
-        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT
-        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
+        2022-03-24 16:21:00+00:00   1  31.0  41.0  51.0   61.0    71.0   72.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:21:00+00:00   0  30.0  40.0  50.0   60.0    70.0   80.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00   3  34.0  44.0  54.0   64.0    74.0   74.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:22:00+00:00   2  32.0  42.0  52.0   62.0    72.0   73.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00   5  36.0  46.0  56.0   66.0    76.0   76.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:23:00+00:00   4  35.0  45.0  55.0   65.0    75.0   75.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -1083,19 +1077,18 @@ class TestTalosSqlRealTimeImClient1(
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
         }
         # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
+        expected_signature = r"""# df=
         index=[2022-03-24 16:21:00+00:00, 2022-03-24 16:23:00+00:00]
-        columns=open,high,low,close,volume,full_symbol
-        shape=(6, 6)
-                                   open  high   low  close  volume        full_symbol
+        columns=id,open,high,low,close,volume,ticks,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(6, 10)
+                                id  open  high   low  close  volume  ticks    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2022-03-24 16:21:00+00:00  31.0  41.0  51.0   61.0    71.0  binance::BTC_USDT
-        2022-03-24 16:21:00+00:00  30.0  40.0  50.0   60.0    70.0  binance::ETH_USDT
-        2022-03-24 16:22:00+00:00  34.0  44.0  54.0   64.0    74.0  binance::BTC_USDT
-        2022-03-24 16:22:00+00:00  32.0  42.0  52.0   62.0    72.0  binance::ETH_USDT
-        2022-03-24 16:23:00+00:00  36.0  46.0  56.0   66.0    76.0  binance::BTC_USDT
-        2022-03-24 16:23:00+00:00  35.0  45.0  55.0   65.0    75.0  binance::ETH_USDT
+        2022-03-24 16:21:00+00:00   1  31.0  41.0  51.0   61.0    71.0   72.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:21:00+00:00   0  30.0  40.0  50.0   60.0    70.0   80.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:22:00+00:00   3  34.0  44.0  54.0   64.0    74.0   74.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:22:00+00:00   2  32.0  42.0  52.0   62.0    72.0   73.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
+        2022-03-24 16:23:00+00:00   5  36.0  46.0  56.0   66.0    76.0   76.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::BTC_USDT
+        2022-03-24 16:23:00+00:00   4  35.0  45.0  55.0   65.0    75.0   75.0 2022-03-26 00:00:00+00:00 2022-03-26 00:00:00+00:00  binance::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data7(
@@ -1324,12 +1317,16 @@ class TestTalosSqlRealTimeImClient1(
         Return a list of expected column names.
         """
         expected_column_names = [
-            "open",
-            "high",
-            "low",
             "close",
-            "volume",
+            "end_download_timestamp",
             "full_symbol",
+            "high",
+            "id",
+            "knowledge_timestamp",
+            "low",
+            "open",
+            "ticks",
+            "volume",
         ]
         return expected_column_names
 
