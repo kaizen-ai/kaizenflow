@@ -128,12 +128,10 @@ def _check(self: Any, exp: str) -> None:
 class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
 
     def test_dev1_server(self) -> None:
-        if get_repo_short_name() == "cmamp":
-            pytest.skip("Only run on cmamp")
+        target_name = "cmamp"
+        _execute_only_target_repo(target_name)
         #
-        is_dev_ck_ = is_dev_ck()
-        if not is_dev_ck_:
-            pytest.skip("Only run on Dev CK")
+        _execute_only_on_dev_ck() 
         #
         exp = r"""
         # Repo config:
@@ -177,12 +175,10 @@ class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
         _check(self, exp)
 
     def test_mac(self) -> None:
-        if get_repo_short_name() == "cmamp":
-            pytest.skip("Only run on cmamp")
+        target_name = "cmamp"
+        _execute_only_target_repo(target_name)
         #
-        is_mac_ = is_mac()
-        if not is_mac_:
-            pytest.skip("Only run on Mac")
+        _execute_only_on_mac()
         #
         exp = r"""
         # Repo config:
