@@ -691,7 +691,7 @@ class CcxtSqlRealTimeImClient0(icdctictc.ImClientTestCase):
 
 
 # TODO(Danya): add example client for `CcxtSqlRealTimeImClient`.
-class CcxtSqlRealTimeImClient1(
+class TestCcxtSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
     """
@@ -711,8 +711,8 @@ class CcxtSqlRealTimeImClient1(
         full_symbol = "binance::BTC_USDT"
         #
         expected_length = 5
-        expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        expected_column_names = None
+        expected_column_unique_values = None
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -745,10 +745,8 @@ class CcxtSqlRealTimeImClient1(
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 8
-        expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
-        }
+        expected_column_names = None
+        expected_column_unique_values = None
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -784,10 +782,8 @@ class CcxtSqlRealTimeImClient1(
         start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 4
-        expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
-        }
+        expected_column_names = None
+        expected_column_unique_values = None
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -821,10 +817,8 @@ class CcxtSqlRealTimeImClient1(
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 3
-        expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
-        }
+        expected_column_names = None
+        expected_column_unique_values = None
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -858,10 +852,8 @@ class CcxtSqlRealTimeImClient1(
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 2
-        expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
-        }
+        expected_column_names = None
+        expected_column_unique_values = None
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -901,10 +893,8 @@ class CcxtSqlRealTimeImClient1(
         full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
         #
         expected_length = 5
-        expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
-        }
+        expected_column_names = None
+        expected_column_unique_values = None
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
