@@ -115,7 +115,6 @@ class Test_Example1_ForecastSystem_FitInvariance(
 class Test_Example1_ForecastSystem_CheckPnl(
     dtfsysytes.ForecastSystem_CheckPnl_TestCase1
 ):
-    # TODO(*): Add more data to Example1, otherwise the outcome is an empty dataframe.
     def test_test_fit_run1(self) -> None:
         backtest_config = "example1_v1-top2.1T.Jan2000"
         system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
