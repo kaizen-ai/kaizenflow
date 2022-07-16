@@ -7,6 +7,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 import logging
 from typing import Callable
 
+import helpers.hprint as hprint
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model.experiment_config as dtfmoexcon
@@ -25,6 +26,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): @all -> ..from_DagBuilder
 def get_system_config_template_from_dag_builder(
     dag_builder: dtfcore.DagBuilder,
 ) -> cconfig.Config:
@@ -100,6 +102,7 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
 # #############################################################################
 
 
+# TODO(gp): @all -> get_EventLoop_MarketData_from_df
 def get_event_loop_MarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
@@ -129,6 +132,42 @@ def get_event_loop_MarketData_from_df(
 # #############################################################################
 
 
+def apply_dag_property(dag: dtfcore.DAG, system: dtfsyssyst.System) -> dtfsyssyst.System:
+    """
+    Apply DAG properties (e.g., `dag_builder_config`, `dag_property_config`).
+
+    We need to pass `dag` since we can't do `system.dag` given that we are in the
+    process of building it and it will cause infinite recursion.
+    """
+    dag_builder = system.config["dag_builder_object"]
+    fast_prod_setup = system.config.get(
+        ["dag_builder_config", "fast_prod_setup"], False
+    )
+    _LOG.debug(hprint.to_str("fast_prod_setup"))
+    if fast_prod_setup:
+        _LOG.warning("Setting fast prod setup")
+        system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
+            system.config["dag_config"]
+        )
+    # Set DAG properties.
+    debug_mode_config = system.config.get(
+        ["dag_property_config", "debug_mode_config"], None
+    )
+    _LOG.debug(hprint.to_str("debug_mode_config"))
+    if debug_mode_config:
+        _LOG.warning("Setting debug mode")
+        dag.set_debug_mode(**debug_mode_config)
+    force_free_nodes = system.config.get(
+        ["dag_property_config", "force_free_nodes"], False
+    )
+    _LOG.debug(hprint.to_str("force_free_nodes"))
+    if force_free_nodes:
+        _LOG.warning("Setting force free nodes")
+        dag.force_free_nodes = force_free_nodes
+    return system
+
+
+# TODO(gp): build_dag_with_DataSourceNode?
 def build_dag_with_data_source_node(
     system: dtfsyssyst.System,
     data_source_node: dtfcore.DataSource,
@@ -145,10 +184,8 @@ def build_dag_with_data_source_node(
     # Add the data source node.
     dag.insert_at_head(data_source_node)
     # Build the DAG.
-    # This is for debugging. It saves the output of each node in a `csv` file.
-    # dag.set_debug_mode("df_as_csv", False, "dst_dir")
-    if False:
-        dag.force_free_nodes = True
+    system = apply_dag_property(dag, system)
+    _ = system
     return dag
 
 

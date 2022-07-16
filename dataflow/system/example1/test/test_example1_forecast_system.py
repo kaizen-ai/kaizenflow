@@ -10,6 +10,7 @@ import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 import oms as oms
 import oms.test.oms_db_helper as otodh
@@ -135,7 +136,7 @@ class Test_Example1_ForecastSystem_CheckPnl(
 # Test_Example1_Time_ForecastSystem1
 # #############################################################################
 
-
+# TODO(gp): Express in terms of Test_Time_ForecastSystem_TestCase1
 class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
     """
     Test a System composed of:
@@ -179,7 +180,7 @@ class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
 # Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1
 # #############################################################################
 
-# TODO(gp): This should derive from SystemTester.
+# TODO(gp): @all express in terms of Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     hunitest.TestCase
 ):
@@ -256,7 +257,9 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 # #############################################################################
 
 
-# TODO(gp): This should derive from SystemTester.
+# TODO(gp): @all This should become a TestCase in system_tester.py where we compare
+#  2 systems (one with DatabasePortfolio and one with DataFramePortfolio) to make
+#  sure they are the same.
 class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     otodh.TestOmsDbHelper
 ):
