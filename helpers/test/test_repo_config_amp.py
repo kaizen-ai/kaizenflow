@@ -242,3 +242,101 @@ class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
           GH_ACTION_ACCESS_TOKEN=empty
         """
         _check(self, exp)
+
+
+class TestRepoConfig_Amp_signature1(hunitest.TestCase):
+
+    def test_dev1_server(self) -> None:
+        target_name = "amp"
+        _execute_only_in_target_repo(target_name)
+        #
+        _execute_only_on_dev_ck() 
+        #
+        exp = r"""
+        # Repo config:
+          enable_privileged_mode='False'
+          get_docker_base_image_name='cmamp'
+          get_docker_shared_group=''
+          get_docker_user=''
+          get_host_name='github.com'
+          get_invalid_words='[]'
+          get_shared_data_dirs='{'/data/shared': '/shared_data'}'
+          has_dind_support='False'
+          has_docker_sudo='True'
+          is_AM_S3_available='True'
+          is_CK_S3_available='True'
+          is_dev4='False'
+          is_dev_ck='True'
+          is_inside_ci='False'
+          is_inside_docker='True'
+          is_mac='False'
+          run_docker_as_root='False'
+          skip_submodules_test='True'
+          use_docker_network_mode_host='True'
+          use_docker_sibling_containers='False'
+        # Env vars:
+          AM_AWS_ACCESS_KEY_ID=undef
+          AM_AWS_DEFAULT_REGION=undef
+          AM_AWS_PROFILE='am'
+          AM_AWS_S3_BUCKET='alphamatic-data'
+          AM_AWS_SECRET_ACCESS_KEY=undef
+          AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
+          AM_ENABLE_DIND='0'
+          AM_FORCE_TEST_FAIL=''
+          AM_HOST_OS_NAME='Linux'
+          AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
+          AM_REPO_CONFIG_CHECK='True'
+          AM_REPO_CONFIG_PATH=''
+          AM_TELEGRAM_TOKEN=***
+          CI=''
+          GH_ACTION_ACCESS_TOKEN=empty
+        """
+        _check(self, exp)
+
+    def test_mac(self) -> None:
+        target_name = "amp"
+        _execute_only_in_target_repo(target_name)
+        #
+        _execute_only_on_mac()
+        #
+        exp = r"""
+        # Repo config:
+          enable_privileged_mode='True'
+          get_docker_base_image_name='cmamp'
+          get_docker_shared_group=''
+          get_docker_user=''
+          get_host_name='github.com'
+          get_invalid_words='[]'
+          get_shared_data_dirs='None'
+          has_dind_support='True'
+          has_docker_sudo='True'
+          is_AM_S3_available='True'
+          is_CK_S3_available='True'
+          is_dev4='False'
+          is_dev_ck='False'
+          is_inside_ci='False'
+          is_inside_docker='True'
+          is_mac='True'
+          run_docker_as_root='False'
+          skip_submodules_test='True'
+          use_docker_network_mode_host='True'
+          use_docker_sibling_containers='False'
+          use_main_network='False'
+        # Env vars:
+          AM_AWS_ACCESS_KEY_ID=undef
+          AM_AWS_DEFAULT_REGION=undef
+          AM_AWS_PROFILE='am'
+          AM_AWS_S3_BUCKET='alphamatic-data'
+          AM_AWS_SECRET_ACCESS_KEY=undef
+          AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
+          AM_ENABLE_DIND='1'
+          AM_FORCE_TEST_FAIL=''
+          AM_HOST_OS_NAME='Darwin'
+          AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
+          AM_REPO_CONFIG_CHECK='True'
+          AM_REPO_CONFIG_PATH=''
+          AM_TELEGRAM_TOKEN=***
+          CI=''
+          GH_ACTION_ACCESS_TOKEN=empty
+        """
+        _check(self, exp)

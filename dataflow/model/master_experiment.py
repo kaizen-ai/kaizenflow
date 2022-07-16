@@ -33,22 +33,7 @@ def run_experiment(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     config = config.copy()
-    # dag_config = config.pop("dag_config")
-    # dag_runner = dtfcore.PredictionDagRunner(
-    #    dag_config, config["dag_builder"]
-    # )
-    dag_runner = config["dag_runner_object"](config)
-    # TODO(gp): Maybe save the drawing to file?
-    # dtfcore.draw(dag_runner.dag)
-    # TODO(gp): Why passing function instead of the values directly?
-    # if "set_fit_intervals" in config["experiment_config"].to_dict():
-    #     dag_runner.set_fit_intervals(
-    #         **config["experiment_config", "set_fit_intervals", "func_kwargs"].to_dict()
-    #     )
-    # if "set_predict_intervals" in config["experiment_config"].to_dict():
-    #     dag_runner.set_predict_intervals(
-    #         **config["experiment_config", "set_predict_intervals", "func_kwargs"].to_dict()
-    #     )
+    dag_runner = config["dag_runner_builder"](config)
     fit_result_bundle = dag_runner.fit()
     # Maybe run OOS.
     if "run_oos" in config["experiment_config"].to_dict().keys() and config["experiment_config"]:
@@ -137,7 +122,7 @@ def run_tiled_backtest(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     # Create the DAG runner.
-    dag_runner = config["dag_runner_object"]()
+    dag_runner = config["dag_runner_builder"]()
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
