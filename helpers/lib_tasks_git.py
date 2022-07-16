@@ -597,8 +597,13 @@ def _git_diff_with_branch(
     diff_type: str,
     subdir: str,
     extensions: str,
+    file_name: str,
     dry_run: bool,
 ) -> None:
+    """
+    Diff files from this client against files in a branch using vimdiff.
+
+    """
     _LOG.debug(
         hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
     )
@@ -616,6 +621,15 @@ def _git_diff_with_branch(
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
     # Filter the files, if needed.
+    if file_name:
+        files_tmp = []
+        for f in files:
+            if f == file_name:
+                files_tmp.append(f)
+        hdbg.dassert_eq(1, len(files_tmp), "Can't find file_name='%s' in\n%s",
+                        file_name, "\n".join(files))
+        files = files_tmp
+        print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
     if extensions:
         extensions_lst = extensions.split(",")
         _LOG.warning(
@@ -694,7 +708,7 @@ def _git_diff_with_branch(
 
 @task
 def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", extensions="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", file_name="", dry_run=False
 ):
     """
     Diff files of the current branch with master at the branching point.
@@ -711,13 +725,14 @@ def git_branch_diff_with_base(  # type: ignore
     #
     tag = "base"
     _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, file_name,
+        dry_run
     )
 
 
 @task
 def git_branch_diff_with_master(  # type: ignore
-    ctx, diff_type="", subdir="", extensions="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", file_name="", dry_run=False
 ):
     """
     Diff files of the current branch with origin/master.
@@ -726,13 +741,15 @@ def git_branch_diff_with_master(  # type: ignore
     :param subdir: subdir to consider for diffing, instead of `.`
     :param extensions: a comma-separated list of extensions to check, e.g.,
         'csv,py'. An empty string means all the files
+    :param file_name: a specific file name to diff
     :param dry_run: execute diffing script or not
     """
     dir_name = "."
     hash_ = "origin/master"
     tag = "origin_master"
     _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, file_name,
+        dry_run
     )
 
 

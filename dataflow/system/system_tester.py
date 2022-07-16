@@ -102,6 +102,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         """
         # Force building the DAG runner.
         dag_runner = system.dag_runner
+        hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
         # Set the time boundaries.
         start_datetime = system.config[
             "backtest_config", "start_timestamp_with_lookback"

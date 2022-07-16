@@ -18,6 +18,7 @@ import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import market_data as mdata
 
@@ -65,7 +66,6 @@ def apply_backtest_config(
     system.config[
         "dag_config", "resample", "transformer_kwargs", "rule"
     ] = trading_period_str
-    system.config["dag_runner_object"] = system.get_dag_runner
     system.config["backtest_config", "universe_str"] = universe_str
     system.config["backtest_config", "trading_period_str"] = trading_period_str
     system.config["backtest_config", "time_interval_str"] = time_interval_str

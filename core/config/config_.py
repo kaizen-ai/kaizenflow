@@ -136,7 +136,7 @@ class Config:
         except KeyError as e:
             # After the recursion is done, in case of error, print information
             # about the offending config.
-            if False and print_config_on_error and level == 0:
+            if print_config_on_error and level == 0:
                 msg = "\n" + hprint.frame(str(e)) + "\nconfig=\n" + str(self)
                 _LOG.error(msg)
             raise e
@@ -367,6 +367,7 @@ class Config:
                 str(self),
             )
             _LOG.error(msg)
+            # TODO(gp): This should be KeyError
             raise ValueError(msg)
 
     # TODO(*): Standardize/allow to be configurable what to return if a value is

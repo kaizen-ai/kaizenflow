@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Callable
 
 import pandas as pd
 import pytest
@@ -14,6 +15,31 @@ import oms as oms
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
+
+
+def _get_test_system_builder_func() -> Callable:
+    """
+    Get System builder function for unit testing.
+    """
+    backtest_config = "example1_v1-top2.5T.Jan2000"
+    system_builder_func = (
+        lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
+            backtest_config
+        )
+    )
+    return system_builder_func
+
+
+# #############################################################################
+# Test_Example1_System_CheckConfig
+# #############################################################################
+
+
+class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
+    def test_freeze_config1(self) -> None:
+        system_builder_func = _get_test_system_builder_func()
+        system_builder = system_builder_func()
+        self._test_freeze_config1(system_builder)
 
 
 # #############################################################################
