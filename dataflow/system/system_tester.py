@@ -68,14 +68,16 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         Freeze config.
         """
         hdbg.dassert_isinstance(system, dtfsys.System)
-        #
-        _ = system.get_dag_runner()
+        # Force building the DAG runner.
+        _ = system.dag_runner
         #
         txt = []
         txt.append(hprint.frame("system_config"))
         txt.append(str(system.config))
         # Check.
         txt = "\n".join(txt)
+        txt = hunitest.filter_text("trade_date:", txt)
+        txt = hunitest.filter_text("log_dir:", txt)
         self.check_string(txt, purify_text=True)
 
 
@@ -98,7 +100,8 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the backtest_config period
         - Save the signature of the system
         """
-        dag_runner = system.get_dag_runner()
+        # Force building the DAG runner.
+        dag_runner = system.dag_runner
         # Set the time boundaries.
         start_datetime = system.config[
             "backtest_config", "start_timestamp_with_lookback"
@@ -125,7 +128,8 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the given period
         - Save the signature of the system
         """
-        dag_runner = system.get_dag_runner()
+        # Force building the DAG runner.
+        dag_runner = system.dag_runner
         # Set the time boundaries.
         dag_runner.set_fit_intervals(
             [(start_timestamp, end_timestamp)],
@@ -144,7 +148,8 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         Check that `predict()` matches `fit()` on the same data, when the model
         is frozen.
         """
-        dag_runner = system.get_dag_runner()
+        # Force building the DAG runner.
+        dag_runner = system.dag_runner
         # Get the time boundaries.
         start_datetime = system.config[
             "backtest_config", "start_timestamp_with_lookback"
@@ -189,7 +194,7 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
         """
         # Run dag_runner1.
         system = system_builder()
-        dag_runner1 = system.get_dag_runner()
+        dag_runner1 = system.dag_runner
         dag_runner1.set_fit_intervals(
             [(start_timestamp1, end_timestamp)],
         )
@@ -197,7 +202,7 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
         result_df1 = result_bundle1.result_df
         # Run dag_runner2.
         system = system_builder()
-        dag_runner2 = system.get_dag_runner()
+        dag_runner2 = system.dag_runner
         dag_runner2.set_fit_intervals(
             [(start_timestamp2, end_timestamp)],
         )
@@ -219,7 +224,7 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         self,
         system: dtfsys.System,
     ) -> None:
-        dag_runner = system.get_dag_runner()
+        dag_runner = system.dag_runner
         # Set the time boundaries.
         start_datetime = system.config[
             "backtest_config", "start_timestamp_with_lookback"
@@ -277,7 +282,7 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
             system.config[
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
-            dag_runner = system.get_dag_runner()
+            dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
@@ -352,13 +357,12 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     # ////////////////////////////////////////////////////////////////////////////
 
     def _test1(self, system: dtfsys.System) -> None:
-        _LOG.debug("final config=\n%s", str(system.config))
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
             # Build the System.
-            dag_runner = system.get_dag_runner()
+            dag_runner = system.dag_runner
             # Create the OrderProcessor.
             portfolio = system.portfolio
             # Clean the DB tables.
@@ -366,8 +370,13 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             # TODO(gp): Should this be system.get_order_processor_coroutine()?
             incremental = False
             oms.create_oms_tables(self.connection, incremental, asset_id_name)
+            # TODO(gp): sleep_interval_in_secs -> grid_time_in_secs
+            max_wait_time_for_order_in_secs = system.config[
+                "dag_runner_config", "sleep_interval_in_secs"
+            ]
             order_processor = oms.get_order_processor_example1(
-                self.connection, portfolio, asset_id_name
+                self.connection, portfolio, asset_id_name,
+                max_wait_time_for_order_in_secs
             )
             real_time_loop_time_out_in_secs = system.config[
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
@@ -424,6 +433,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             # ```
             actual = hunitest.filter_text("db_connection_object", actual)
             actual = hunitest.filter_text("log_dir:", actual)
+            actual = hunitest.filter_text("trade_date:", actual)
             self.check_string(actual, purify_text=True)
 
 

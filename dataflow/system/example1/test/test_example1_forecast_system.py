@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import Callable
 
 import pandas as pd
 import pytest
@@ -10,37 +9,11 @@ import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
-import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 import oms as oms
 import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
-
-
-def _get_test_system_builder_func() -> Callable:
-    """
-    Get System builder function for unit testing.
-    """
-    backtest_config = "example1_v1-top2.5T.Jan2000"
-    system_builder_func = (
-        lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
-            backtest_config
-        )
-    )
-    return system_builder_func
-
-
-# #############################################################################
-# Test_Example1_System_CheckConfig
-# #############################################################################
-
-
-class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
-    def test_freeze_config1(self) -> None:
-        system_builder_func = _get_test_system_builder_func()
-        system_builder = system_builder_func()
-        self._test_freeze_config1(system_builder)
 
 
 # #############################################################################
@@ -158,7 +131,7 @@ class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = (60 * 5)
             # Create DAG runner.
-            dag_runner = system.get_dag_runner()
+            dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
@@ -215,7 +188,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
             # Create DAG runner.
-            dag_runner = system.get_dag_runner()
+            dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
@@ -312,13 +285,15 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
             # Create DAG runner.
-            dag_runner = system.get_dag_runner()
+            dag_runner = system.dag_runner
             coroutines.append(dag_runner.predict())
             # Create and add order processor.
             portfolio = system.portfolio
             if is_database_portfolio:
+                max_wait_time_for_order_in_secs = 10
                 order_processor = oms.get_order_processor_example1(
-                    self.connection, portfolio, asset_id_name
+                    self.connection, portfolio, asset_id_name,
+                    max_wait_time_for_order_in_secs
                 )
                 order_processor_coroutine = (
                     oms.get_order_processor_coroutine_example1(

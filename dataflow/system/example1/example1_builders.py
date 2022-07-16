@@ -142,9 +142,14 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         },
         "optimizer_config": {
             "backend": "pomo",
-            "bulk_frac_to_remove": bulk_frac_to_remove,
-            "bulk_fill_method": "zero",
-            "target_gmv": target_gmv,
+            "params": {
+                "style": "cross_sectional",
+                "kwargs": {
+                    "bulk_frac_to_remove": bulk_frac_to_remove,
+                    "bulk_fill_method": "zero",
+                    "target_gmv": target_gmv,
+                },
+            },
         },
         # TODO(gp): Use datetime.time()
         "ath_start_time": pd.Timestamp(
