@@ -118,8 +118,9 @@ def get_repo_short_name() -> str:
 
 
 def _execute_only_in_target_repo(target_name: str) -> None:
-    if get_repo_short_name() == target_name:
-        pytest.skip(f"Only run on {target_name}")
+    repo_short_name = get_repo_short_name()
+    if repo_short_name != target_name:
+        pytest.skip(f"Only run on {target_name} (and not {repo_short_name})")
 
 
 def _execute_only_on_dev_ck() -> None:
