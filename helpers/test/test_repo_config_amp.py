@@ -117,6 +117,23 @@ def get_repo_short_name() -> str:
 # End copy.
 
 
+def _execute_only_in_target_repo(target_name: str) -> None:
+    if get_repo_short_name() == target_name:
+        pytest.skip(f"Only run on {target_name}")
+
+
+def _execute_only_on_dev_ck() -> None:
+    is_dev_ck_ = is_dev_ck()
+    if not is_dev_ck_:
+        pytest.skip("Only run on dev CK")
+
+
+def _execute_only_on_mac() -> None:
+    is_mac_ = is_mac()
+    if not is_mac_:
+        pytest.skip("Only run on Mac")
+
+
 def _check(self: Any, exp: str) -> None:
     act = henv.env_to_str(add_system_signature=False)
     act = hunitest.filter_text("get_name", act)
@@ -125,11 +142,14 @@ def _check(self: Any, exp: str) -> None:
     self.assert_equal(act, exp, fuzzy_match=True)
 
 
+# > pytest ./amp/helpers/test/test_repo_config_amp.py
+
+
 class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
 
     def test_dev1_server(self) -> None:
         target_name = "cmamp"
-        _execute_only_target_repo(target_name)
+        _execute_only_in_target_repo(target_name)
         #
         _execute_only_on_dev_ck() 
         #
@@ -176,23 +196,23 @@ class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
 
     def test_mac(self) -> None:
         target_name = "cmamp"
-        _execute_only_target_repo(target_name)
+        _execute_only_in_target_repo(target_name)
         #
         _execute_only_on_mac()
         #
         exp = r"""
         # Repo config:
-          enable_privileged_mode='False'
+          enable_privileged_mode='True'
           get_docker_base_image_name='cmamp'
           get_docker_shared_group=''
           get_docker_user=''
           get_host_name='github.com'
           get_invalid_words='[]'
           get_shared_data_dirs='None'
-          has_dind_support='False'
+          has_dind_support='True'
           has_docker_sudo='True'
           is_AM_S3_available='True'
-          is_CK_S3_available='False'
+          is_CK_S3_available='True'
           is_dev4='False'
           is_dev_ck='False'
           is_inside_ci='False'
@@ -202,6 +222,7 @@ class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
           skip_submodules_test='True'
           use_docker_network_mode_host='True'
           use_docker_sibling_containers='False'
+          use_main_network='False'
         # Env vars:
           AM_AWS_ACCESS_KEY_ID=undef
           AM_AWS_DEFAULT_REGION=undef
@@ -209,7 +230,7 @@ class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
           AM_AWS_S3_BUCKET='alphamatic-data'
           AM_AWS_SECRET_ACCESS_KEY=undef
           AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
-          AM_ENABLE_DIND='0'
+          AM_ENABLE_DIND='1'
           AM_FORCE_TEST_FAIL=''
           AM_HOST_OS_NAME='Darwin'
           AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
