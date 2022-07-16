@@ -60,6 +60,17 @@ async def process_forecasts(
                mode)
             - `real_time`: place the trades only for the last prediction as in a
         - `log_dir`: directory for logging state
+        - {
+            "order_dict": dict,
+            "optimizer_dict": dict,
+            "ath_start_time": datetime.time,
+            "trading_start_time": datetime.time,
+            "ath_end_time": datetime.time,
+            "trading_end_time": datetime.time,
+            "execution_mode": str ["real_time", "batch"],
+            "remove_weekends": Optional[bool],
+            "log_dir": Optional[None],
+        }
     """
     # Check `predictions_df`.
     hpandas.dassert_time_indexed_df(
@@ -142,7 +153,7 @@ async def process_forecasts(
     get_wall_clock_time = portfolio.market_data.get_wall_clock_time
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     iter_ = enumerate(prediction_df.iterrows())
-    offset_min = pd.DateOffset(minutes=order_config["order_duration"])
+    offset_min = pd.DateOffset(minutes=order_config["order_duration_in_mins"])
     # Initialize a `ForecastProcessor` object to perform the heavy lifting.
     forecast_processor = ForecastProcessor(
         portfolio,
@@ -242,7 +253,9 @@ class ForecastProcessor:
         # TODO(Paul): process config with checks.
         _validate_order_config(order_config)
         self._order_config = order_config
-        self._offset_min = pd.DateOffset(minutes=order_config["order_duration"])
+        self._offset_min = pd.DateOffset(
+            minutes=order_config["order_duration_in_mins"]
+        )
         # Process optimizer config.
         _validate_optimizer_config(optimizer_config)
         self._optimizer_config = optimizer_config
@@ -398,7 +411,7 @@ class ForecastProcessor:
                 char1="#",
             ),
         )
-        # Enter position between now and the next `order_duration` minutes.
+        # Enter position between now and the next `order_duration_in_mins` minutes.
         # Create a config for `Order`.
         timestamp_start = wall_clock_timestamp
         timestamp_end = wall_clock_timestamp + self._offset_min
@@ -456,24 +469,16 @@ class ForecastProcessor:
         )
         # Compute the target positions in cash (call the optimizer).
         # TODO(Paul): Align with ForecastEvaluator and update callers.
+        # compute_target_positions_func
+        # compute_target_positions_kwargs
         backend = self._optimizer_config["backend"]
         if backend == "pomo":
-            bulk_frac_to_remove = cconfig.get_object_from_config(
-                self._optimizer_config, "bulk_frac_to_remove", float, None
-            )
-            bulk_fill_method = cconfig.get_object_from_config(
-                self._optimizer_config, "bulk_fill_method", str, None
-            )
-            target_gmv = cconfig.get_object_from_config(
-                self._optimizer_config, "target_gmv", float, None
-            )
+            style = self._optimizer_config["params"]["style"]
+            kwargs = self._optimizer_config["params"]["kwargs"]
             df = ocalopti.compute_target_positions_in_cash(
                 assets_and_predictions,
-                style="cross_sectional",
-                bulk_frac_to_remove=bulk_frac_to_remove,
-                bulk_fill_method=bulk_fill_method,
-                target_gmv=target_gmv,
-                volatility_lower_bound=1e-5,
+                style=style,
+                **kwargs,
             )
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
@@ -767,11 +772,11 @@ def _validate_order_config(config: cconfig.Config) -> None:
         config, "order_type", order_type_type, None
     )
     hdbg.dassert_isinstance(order_type, order_type_type)
-    order_duration_type = int
-    order_duration = cconfig.get_object_from_config(
-        config, "order_duration", order_duration_type, None
+    order_duration_in_mins_type = int
+    order_duration_in_mins = cconfig.get_object_from_config(
+        config, "order_duration_in_mins", order_duration_in_mins_type, None
     )
-    hdbg.dassert_issubclass(order_duration, order_duration_type)
+    hdbg.dassert_issubclass(order_duration_in_mins, order_duration_in_mins_type)
 
 
 def _validate_optimizer_config(config: cconfig.Config) -> None:
@@ -781,8 +786,8 @@ def _validate_optimizer_config(config: cconfig.Config) -> None:
         config, "backend", backend_type, None
     )
     hdbg.dassert_issubclass(backend, backend_type)
-    target_gmv_type = float
-    target_gmv = cconfig.get_object_from_config(
-        config, "target_gmv", target_gmv_type, None
-    )
-    hdbg.dassert_issubclass(target_gmv, target_gmv_type)
+    # target_gmv_type = float
+    # target_gmv = cconfig.get_object_from_config(
+    #     config, "target_gmv", target_gmv_type, None
+    # )
+    # hdbg.dassert_issubclass(target_gmv, target_gmv_type)

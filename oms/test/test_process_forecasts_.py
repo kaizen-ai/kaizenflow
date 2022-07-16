@@ -45,13 +45,18 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",
-                "order_duration": 5,
+                "order_duration_in_mins": 5,
             },
             "optimizer_config": {
                 "backend": "pomo",
-                "bulk_frac_to_remove": 0.0,
-                "bulk_fill_method": "zero",
-                "target_gmv": 1e5,
+                "params": {
+                    "style": "cross_sectional",
+                    "kwargs": {
+                        "bulk_frac_to_remove": 0.0,
+                        "bulk_fill_method": "zero",
+                        "target_gmv": 1e5,
+                    },
+                },
             },
             "execution_mode": "batch",
             "ath_start_time": datetime.time(9, 30),
@@ -176,13 +181,18 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",
-                "order_duration": 5,
+                "order_duration_in_mins": 5,
             },
             "optimizer_config": {
                 "backend": "pomo",
-                "bulk_frac_to_remove": 0.0,
-                "bulk_fill_method": "zero",
-                "target_gmv": 1e5,
+                "params": {
+                    "style": "cross_sectional",
+                    "kwargs": {
+                        "bulk_frac_to_remove": 0.0,
+                        "bulk_fill_method": "zero",
+                        "target_gmv": 1e5,
+                    },
+                },
             },
             "execution_mode": "batch",
             "ath_start_time": datetime.time(9, 30),
@@ -398,13 +408,18 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         dict_ = {
             "order_config": {
                 "order_type": "partial_spread_0.25@twap",
-                "order_duration": 5,
+                "order_duration_in_mins": 5,
             },
             "optimizer_config": {
                 "backend": "pomo",
-                "bulk_frac_to_remove": 0.0,
-                "bulk_fill_method": "zero",
-                "target_gmv": 1e5,
+                "params": {
+                    "style": "cross_sectional",
+                    "kwargs": {
+                        "bulk_frac_to_remove": 0.0,
+                        "bulk_fill_method": "zero",
+                        "target_gmv": 1e5,
+                    },
+                },
             },
             "execution_mode": "batch",
             "ath_start_time": datetime.time(9, 30),
@@ -515,15 +530,17 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             # Build OrderProcessor.
             delay_to_accept_in_secs = 3
             delay_to_fill_in_secs = 10
+            max_wait_time_for_order_in_secs = 10
             broker = portfolio.broker
             termination_condition = 3
             asset_id_name = "asset_id"
             order_processor = oordproc.OrderProcessor(
                 db_connection,
+                max_wait_time_for_order_in_secs,
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
                 broker,
-                asset_id_name
+                asset_id_name,
             )
             order_processor_coroutine = order_processor.run_loop(
                 termination_condition
@@ -565,13 +582,18 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",
-                "order_duration": 5,
+                "order_duration_in_mins": 5,
             },
             "optimizer_config": {
                 "backend": "pomo",
-                "bulk_frac_to_remove": 0.0,
-                "bulk_fill_method": "zero",
-                "target_gmv": 1e5,
+                "params": {
+                    "style": "cross_sectional",
+                    "kwargs": {
+                        "bulk_frac_to_remove": 0.0,
+                        "bulk_fill_method": "zero",
+                        "target_gmv": 1e5,
+                    },
+                },
             },
             "execution_mode": "batch",
             "ath_start_time": datetime.time(9, 30),
@@ -773,7 +795,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
                 event_loop,
                 initial_replayed_delay,
                 data,
-                asset_id_col_name=asset_id_name
+                asset_id_col_name=asset_id_name,
             )
             # Create a portfolio with one asset (and cash).
             db_connection = self.connection
@@ -790,9 +812,11 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             # Build OrderProcessor.
             delay_to_accept_in_secs = 3
             delay_to_fill_in_secs = 10
+            max_wait_time_for_order_in_secs = 10
             broker = portfolio.broker
             order_processor = oordproc.OrderProcessor(
                 db_connection,
+                max_wait_time_for_order_in_secs,
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
                 broker,
@@ -822,13 +846,18 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",
-                "order_duration": 5,
+                "order_duration_in_mins": 5,
             },
             "optimizer_config": {
                 "backend": "pomo",
-                "bulk_frac_to_remove": 0.0,
-                "bulk_fill_method": "zero",
-                "target_gmv": 1e5,
+                "params": {
+                    "style": "cross_sectional",
+                    "kwargs": {
+                        "bulk_frac_to_remove": 0.0,
+                        "bulk_fill_method": "zero",
+                        "target_gmv": 1e5,
+                    },
+                },
             },
             "execution_mode": "batch",
             "ath_start_time": datetime.time(9, 30),
