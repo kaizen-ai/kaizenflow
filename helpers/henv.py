@@ -183,16 +183,17 @@ def env_vars_to_string() -> str:
     return msg
 
 
-def env_to_str() -> str:
+def env_to_str(add_system_signature: bool = True) -> str:
     msg = ""
     #
     msg += "# Repo config:\n"
     msg += hprint.indent(execute_repo_config_code("config_func_to_str()"))
     msg += "\n"
     # System signature.
-    msg += "# System signature:\n"
-    msg += hprint.indent(get_system_signature()[0])
-    msg += "\n"
+    if add_system_signature:
+        msg += "# System signature:\n"
+        msg += hprint.indent(get_system_signature()[0])
+        msg += "\n"
     # Check which env vars are defined.
     msg += "# Env vars:\n"
     msg += hprint.indent(env_vars_to_string())

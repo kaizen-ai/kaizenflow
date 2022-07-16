@@ -15,7 +15,9 @@ _WARNING = "\033[33mWARNING\033[0m"
 
 def _print(msg: str) -> None:
     # _LOG.info(msg)
-    print(msg)
+    if False:
+        print(msg)
+    pass
 
 
 # We can't use `__file__` since this file is imported with an exec.
@@ -156,7 +158,7 @@ def enable_privileged_mode() -> bool:
     """
     Return whether an host supports privileged mode for its containers.
     """
-    if get_name() == "//dev_tools":
+    if get_name() in ("//dev_tools", ):
         val = False
     else:
         if is_mac():
@@ -201,8 +203,10 @@ def has_dind_support() -> bool:
 
     This is need to use Docker-in-Docker.
     """
+    _print("is_inside_docker()=%s" % is_inside_docker())
     if not is_inside_docker():
         # Outside Docker there is no privileged mode.
+        _print("-> ret = False")
         return False
     # TODO(gp): This part is not multi-process friendly. When multiple
     # processes try to run this code they interfere. A solution is to run `ip
@@ -215,25 +219,28 @@ def has_dind_support() -> bool:
     # TODO(gp): use `has_docker_sudo`.
     if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
-    os.system(cmd)
+    rc = os.system(cmd)
+    _print("cmd=%s -> rc=%s" % (cmd, rc))
     #
     cmd = "ip link add dummy0 type dummy >/dev/null 2>&1"
     if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
+    _print("cmd=%s -> rc=%s" % (cmd, rc))
     has_dind = rc == 0
     # Clean up, after the fact.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
     if is_mac() or is_dev_ck():
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
+    _print("cmd=%s -> rc=%s" % (cmd, rc))
     # dind is supported on both Mac and GH Actions.
     am_repo_config = os.environ.get("AM_REPO_CONFIG_CHECK", False)
     check = am_repo_config != ""
     if check:
         if is_cmamp_prod():
             assert not has_dind, "Not expected privileged mode"
-        elif get_name() == "//dev_tools":
+        elif get_name() in ("//dev_tools", ):
             assert not has_dind, "Not expected privileged mode"
         else:
             if is_mac() or is_dev_ck() or is_inside_ci():
@@ -367,8 +374,8 @@ def skip_submodules_test() -> bool:
 
     E.g. while running `i run_fast_tests`.
     """
-    if get_name() == "//dev_tools":
-        # Skip running `amp` tests from `dev_tools`.
+    if get_name() in ("//dev_tools", "//orange"):
+        # Skip running `amp` tests from `dev_tools` and `orange`.
         return True
     return False
 
