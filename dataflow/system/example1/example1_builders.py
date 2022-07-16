@@ -138,7 +138,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     process_forecasts_config_dict = {
         "order_config": {
             "order_type": order_type,
-            "order_duration": 5,
+            "order_duration_in_mins": 5,
         },
         "optimizer_config": {
             "backend": "pomo",

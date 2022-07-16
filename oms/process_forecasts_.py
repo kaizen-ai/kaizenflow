@@ -776,6 +776,7 @@ def _validate_order_config(config: cconfig.Config) -> None:
     order_duration_in_mins = cconfig.get_object_from_config(
         config, "order_duration_in_mins", order_duration_in_mins_type, None
     )
+    # TODO(gp): is_subclass because it can be a float or int?
     hdbg.dassert_issubclass(order_duration_in_mins, order_duration_in_mins_type)
 
 
