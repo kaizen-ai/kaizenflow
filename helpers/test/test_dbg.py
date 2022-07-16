@@ -560,3 +560,87 @@ class Test_dassert_callable1(hunitest.TestCase):
         Obj '4' of type '<class 'int'>' is not callable
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_related_params1(hunitest.TestCase):
+    def test1(self) -> None:
+        obj = {
+            "val1": 1,
+            "val2": 1,
+            "val3": "hello"
+        }
+        mode = "all_or_none_non_null"
+        hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+
+    def test2(self) -> None:
+        obj = {
+            "val1": 0,
+            "val2": None,
+            "val3": ""
+        }
+        mode = "all_or_none_non_null"
+        hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+
+    def test3(self) -> None:
+        obj = {
+            "val1": 1,
+            "val2": 0,
+            "val3": "hello"
+        }
+        with self.assertRaises(Exception) as cm:
+            mode = "all_or_none_non_null"
+            hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        All or none parameter should be non-null:
+        val2=0
+        params={'val1': 1, 'val2': 0, 'val3': 'hello'}
+        message 'hello world'
+        """
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_related_params2(hunitest.TestCase):
+    def test1(self) -> None:
+        obj = {
+            "val1": 1,
+            "val2": 1,
+            "val3": "hello"
+        }
+        mode = "all_or_none_non_None"
+        hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+
+    def test2(self) -> None:
+        obj = {
+            "val1": None,
+            "val2": None,
+            "val3": None,
+        }
+        mode = "all_or_none_non_None"
+        hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+
+    def test3(self) -> None:
+        obj = {
+            "val1": None,
+            "val2": None,
+            "val3": "hello"
+        }
+        with self.assertRaises(Exception) as cm:
+            mode = "all_or_none_non_None"
+            hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        All or none parameter should be non-None:
+        val1=None
+        params={'val1': None, 'val2': None, 'val3': 'hello'}
+        message 'hello world'
+        """
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
