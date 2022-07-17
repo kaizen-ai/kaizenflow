@@ -70,7 +70,12 @@ jobs:
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
         run: invoke lint_detect_cycles
 
+      # Notify the team via Telegram in case of failure.
       - name: Send Telegram notification for failure
+        # Need to use ref_name as it contains the branch that triggered the
+        # workflow run.
+        # Alternative, head_ref is only available when the event that triggers a
+        # workflow run is either pull_request or pull_request_target.
         if: ${{ failure() && github.ref_name == 'master'}}
         uses: appleboy/telegram-action@master
         with:

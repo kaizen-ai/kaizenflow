@@ -105,6 +105,9 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         for nid in sources:
             node = self.dag.get_node(nid)
             _LOG.debug("nid=%s node=%s type=%s", nid, str(node), str(type(node)))
+            if isinstance(node, dtfsysonod.HistoricalDataSource):
+                raise ValueError(f"HistoricalDataSource node {node} not allowed "
+                    "in RealTimeDagRunner")
             if isinstance(node, dtfsysonod.RealTimeDataSource):
                 _LOG.debug("Waiting on node '%s' ...", str(nid))
                 await node.wait_for_latest_data()

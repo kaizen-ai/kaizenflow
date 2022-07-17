@@ -2,6 +2,7 @@ v7
 - 2022-07-14
 - Only `binance` futures
 - Same coins as in `binance` in the `download` universe `top30_20220706`
+- `binance::ADA_USDT` was removed due to CmTask2375
 
 v6
 - 2022-06-27
