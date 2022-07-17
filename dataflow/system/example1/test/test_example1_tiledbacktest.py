@@ -24,10 +24,10 @@ class Test_Example1_ForecastSystem_TiledBacktest(
 
         The output is a single tile with both asset_ids.
         """
-        backtest_config = "example1_v1-top2.1T.Jan2000"
+        backtest_config = "example1_v1-top2.5T.Jan2000"
         config_builder = (
-            "dataflow.system.example1.example1_tile_config_builders."
-            + f'build_Example1_tile_configs("{backtest_config}")'
+                "dataflow.system.example1.example1_tile_config_builders."
+                + f'build_Example1_tile_configs("{backtest_config}")'
         )
         experiment_builder = (
             # "amp.dataflow.model.master_experiment.run_tiled_backtest"

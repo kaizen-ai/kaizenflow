@@ -28,8 +28,13 @@ def get_test_data_dir() -> str:
     return test_data_dir
 
 
+# ################################################################################
+# CcxtCsvClient
+# ################################################################################
+
+
 def get_CcxtCsvClient_example1(
-    resample_1min: bool,
+        resample_1min: bool,
 ) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     Get `CcxtCddCsvParquetByAssetClient` object for the tests.
@@ -63,8 +68,13 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     return ccxt_file_client
 
 
+# ################################################################################
+# CcxtParquetByAssetClient
+# ################################################################################
+
+
 def get_CcxtParquetByAssetClient_example1(
-    resample_1min: bool,
+        resample_1min: bool,
 ) -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     """
     Get `CcxtCddCsvParquetByAssetClient` object for the tests.
@@ -81,12 +91,16 @@ def get_CcxtParquetByAssetClient_example1(
     return ccxt_client
 
 
+# ################################################################################
+# CcxtHistoricalPqByTileClient
+# ################################################################################
+
 def get_CcxtHistoricalPqByTileClient_example1(
-    universe_version: str,
-    resample_1min: bool,
-    dataset: str,
-    contract_type: str,
-    data_snapshot: str,
+        universe_version: str,
+        resample_1min: bool,
+        dataset: str,
+        contract_type: str,
+        data_snapshot: str,
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the prod model reading actual
@@ -120,6 +134,8 @@ def get_CcxtHistoricalPqByTileClient_example2(
     - universe version: "small"
     - contract type: "spot"
     """
+    # TODO(gp): express this guy in terms of get_CcxtHistoricalPqByTileClient_example1
+    #  but the problem is that this uses "unit_test" instead of "reorg".
     universe_version = "small"
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)

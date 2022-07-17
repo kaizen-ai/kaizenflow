@@ -604,12 +604,18 @@ class RealTimeImClient(ImClient):
 # TODO(gp): @all cleanup resample_1min should go last and probably have a default
 #  value of False.
 class SqlRealTimeImClient(RealTimeImClient, abc.ABC):
+    """
+    Read data from a table of an SQL DB.
+    """
+
     def __init__(
-        self,
-        resample_1min: bool,
-        db_connection: hsql.DbConnection,
-        table_name: str,
-        vendor: str,
+            self,
+            resample_1min: bool,
+            db_connection: hsql.DbConnection,
+            table_name: str,
+            # TODO(gp): @all should vendor be first? The params that correponds to the
+            #  innermost classes should go first.
+            vendor: str,
     ) -> None:
         # Real-time implementation has a different mechanism for getting universe.
         # Passing to make the parent class happy.
@@ -680,12 +686,12 @@ class SqlRealTimeImClient(RealTimeImClient, abc.ABC):
         Create a select query and load data from database.
 
         Extra parameters for building a query can also be passed,
-        see keyword args for `_build_select_query`
+        see keyword args for `_build_select_query`.
 
-        :param full_symbols: a list of full symbols, e.g. ["ftx::BTC_USDT"]
+        :param full_symbols: a list of full symbols, e.g., `["ftx::BTC_USDT"]`
         :param start_ts: beginning of the time interval
         :param end_ts: end of the time interval
-        :param full_symbol_col_name: name of column containg full symbols
+        :param full_symbol_col_name: name of column containing full symbols
         :return:
         """
         # Parse symbols into exchange and currency pair.

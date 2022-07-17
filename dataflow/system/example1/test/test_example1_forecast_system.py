@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Callable
 
 import pandas as pd
 import pytest
@@ -9,6 +10,7 @@ import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
+import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 import oms as oms
 import oms.test.oms_db_helper as otodh
@@ -16,20 +18,28 @@ import oms.test.oms_db_helper as otodh
 _LOG = logging.getLogger(__name__)
 
 
+def _get_test_system_builder_func() -> Callable:
+    """
+    Get System builder function for unit testing.
+    """
+    backtest_config = "example1_v1-top2.5T.Jan2000"
+    system_builder_func = (
+        lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
+            backtest_config
+        )
+    )
+    return system_builder_func
+
+
 # #############################################################################
 # Test_Example1_System_CheckConfig
 # #############################################################################
 
 
-# TODO(Grisha): factor out the backtest config and use `5T` as resampling frequency CmTask #2367.
 class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
-        system_builder = (
-            dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
-                backtest_config
-            )
-        )
+        system_builder_func = _get_test_system_builder_func()
+        system_builder = system_builder_func()
         self._test_freeze_config1(system_builder)
 
 
@@ -45,10 +55,8 @@ class Test_Example1_ForecastSystem_FitPredict(
         """
         Create the System for testing.
         """
-        backtest_config = "example1_v1-top2.1T.Jan2000"
-        system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
-            backtest_config
-        )
+        system_builder_func = _get_test_system_builder_func()
+        system = system_builder_func()
         system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
@@ -88,10 +96,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
     dtfsysytes.ForecastSystem_FitInvariance_TestCase1
 ):
     def test_test_invariance1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
-        system_builder = lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
-            backtest_config
-        )
+        system_builder_func = _get_test_system_builder_func()
         start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
         start_timestamp2 = pd.Timestamp("2000-01-01 09:40:00+0000", tz="UTC")
         end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
@@ -99,7 +104,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
             "2000-01-01 09:50:00+0000", tz="UTC"
         )
         self._test_invariance1(
-            system_builder,
+            system_builder_func,
             start_timestamp1,
             start_timestamp2,
             end_timestamp,
@@ -115,12 +120,9 @@ class Test_Example1_ForecastSystem_FitInvariance(
 class Test_Example1_ForecastSystem_CheckPnl(
     dtfsysytes.ForecastSystem_CheckPnl_TestCase1
 ):
-    # TODO(*): Add more data to Example1, otherwise the outcome is an empty dataframe.
     def test_test_fit_run1(self) -> None:
-        backtest_config = "example1_v1-top2.1T.Jan2000"
-        system = dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
-            backtest_config
-        )
+        system_builder_func = _get_test_system_builder_func()
+        system = system_builder_func()
         system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
@@ -134,7 +136,7 @@ class Test_Example1_ForecastSystem_CheckPnl(
 # Test_Example1_Time_ForecastSystem1
 # #############################################################################
 
-
+# TODO(gp): Express in terms of Test_Time_ForecastSystem_TestCase1
 class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
     """
     Test a System composed of:
@@ -178,7 +180,7 @@ class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
 # Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1
 # #############################################################################
 
-# TODO(gp): This should derive from SystemTester.
+# TODO(gp): @all express in terms of Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     hunitest.TestCase
 ):
@@ -255,7 +257,9 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 # #############################################################################
 
 
-# TODO(gp): This should derive from SystemTester.
+# TODO(gp): @all This should become a TestCase in system_tester.py where we compare
+#  2 systems (one with DatabasePortfolio and one with DataFramePortfolio) to make
+#  sure they are the same.
 class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     otodh.TestOmsDbHelper
 ):

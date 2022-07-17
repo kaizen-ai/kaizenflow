@@ -9,6 +9,10 @@ import logging
 import pandas as pd
 
 import dataflow.core as dtfcore
+# TODO(gp): We can't use dtfsys because we are inside dataflow/system.
+#  Consider moving out Example1 from this dir somehow so that we can use dtfsys
+#  like we do for other systems.
+import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
@@ -18,6 +22,8 @@ import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
 
+
+# TODO(gp): -> example1_system_builder.py? What's the convention now?
 
 # #############################################################################
 # Market data instances
@@ -46,6 +52,7 @@ def get_Example1_MarketData_example2(
 # #############################################################################
 
 
+# TODO(gp): @all -> get_Example1_HistoricalDag_example1
 def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a historical data source for simulation.
@@ -70,6 +77,7 @@ def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     return dag
 
 
+# TODO(gp): @all -> get_Example1_RealtimeDag_example2
 def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source.
@@ -95,6 +103,7 @@ def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG
     return dag
 
 
+# TODO(gp): @all -> get_Example1_RealtimeDag_example3
 def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source and forecast processor.
@@ -120,6 +129,8 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
     # Copied from E8_system_example.py
     # Configure a `ProcessForecast` node.
+    # TODO(gp): @all we should use get_process_forecasts_dict_example1 or a similar
+    #  function.
     prediction_col = "feature1"
     volatility_col = "vwap.ret_0.vol"
     spread_col = None
