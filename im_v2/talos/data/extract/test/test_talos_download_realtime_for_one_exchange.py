@@ -1,17 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
+
 import pandas as pd
-
 import pytest
-import im_v2.talos.utils as imv2tauti
-
 
 import helpers.henv as henv
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
-
-import logging
-
-_LOG = logging.getLogger()
+import im_v2.talos.utils as imv2tauti
 
 
 @pytest.mark.skipif(
@@ -34,15 +29,18 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         --s3_path 's3://cryptokaizen-data-test/realtime/' \
         --interval_min '1' \
         --start_time '{start_time}' \
-        --stop_time '{stop_time}'\
-        -v DEBUG"
+        --stop_time '{stop_time}'"
         start_delay = 0
         stop_delay = 1
         download_finished_marker = "Starting data download"
         # Amount of downloads depends on the start time and stop time.
         expected_downloads_amount = stop_delay - start_delay
-        start_time = pd.Timestamp.now(tz="UTC") + timedelta(minutes=start_delay, seconds=5)
-        stop_time = pd.Timestamp.now(tz="UTC") + timedelta(minutes=stop_delay, seconds=5)
+        start_time = pd.Timestamp.now(tz="UTC") + timedelta(
+            minutes=start_delay, seconds=5
+        )
+        stop_time = pd.Timestamp.now(tz="UTC") + timedelta(
+            minutes=stop_delay, seconds=5
+        )
         # Call Python script in order to get output.
         cmd = cmd.format(
             start_time=imv2tauti.timestamp_to_talos_iso_8601(start_time),
