@@ -53,7 +53,7 @@ def get_process_forecasts_config() -> cconfig.Config:
     dict_ = {
         "order_config": {
             "order_type": "price@twap",
-            "order_duration": 5,
+            "order_duration_in_mins": 5,
         },
         "optimizer_config": {
             "backend": "batch_optimizer",
