@@ -20,7 +20,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         cmd = "im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py \
         --data_type 'ohlcv' \
         --exchange_id 'binance' \
-        --universe 'v3' \
+        --universe 'small' \
         --db_stage 'dev' \
         --db_table 'ccxt_ohlcv_test' \
         --aws_profile 'ck' \
@@ -32,7 +32,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         stop_delay = 1
         download_started_marker = "Starting data download"
         # Amount of downloads depends on the start time and stop time.
-        expected_downloads_amount = stop_delay - start_delay
+        expected_downloads_amount = 1
         start_time = datetime.now() + timedelta(minutes=start_delay, seconds=5)
         stop_time = datetime.now() + timedelta(minutes=stop_delay, seconds=5)
         # Call Python script in order to get output.

@@ -19,7 +19,6 @@ import market_data.abstract_market_data as mdabmada
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Grisha): "Factor out common code for RealTimeMarketData2 and ImClientMarketData`" CmTask #2382.
 class ImClientMarketData(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
