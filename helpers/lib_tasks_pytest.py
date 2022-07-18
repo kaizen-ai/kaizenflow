@@ -613,9 +613,23 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     local_coverage_path = "./htmlcov"
     # TODO(Nikola): Revert to `s3fs_.put` after `s3fs` is updated to latest version.
     #   See CmTask #2400.
+    profile = aws_profile
+    if hsystem.is_inside_ci():
+        # There is no aws config in GH action,
+        # thus create default one from chosen profile.
+        profile = "default"
+        AWS_ACCESS_KEY_ID = f"aws_access_key_id ${aws_profile.upper()}_AWS_ACCESS_KEY_ID"
+        AWS_SECRET_ACCESS_KEY = f"aws_secret_access_key ${aws_profile.upper()}_AWS_SECRET_ACCESS_KEY"
+        REGION = f"region ${aws_profile.upper()}_AWS_DEFAULT_REGION"
+        configure_cmd = (
+            f"aws configure set {AWS_ACCESS_KEY_ID};"
+            f"aws configure set {AWS_SECRET_ACCESS_KEY};"
+            f"aws configure set {REGION};"
+        )
+        hsystem.system(configure_cmd)
     cp_cmd = (
         f"aws s3 cp {local_coverage_path} {s3_html_coverage_path} "
-        f"--recursive --profile {aws_profile}"
+        f"--recursive --profile {profile}"
     )
     _LOG.info(
         "HTML coverage report is published on S3: path=`%s`",
