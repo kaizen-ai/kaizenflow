@@ -1,7 +1,7 @@
 import unittest.mock as umock
 
-import pytest
 import pandas as pd
+import pytest
 
 import helpers.henv as henv
 import helpers.hmoto as hmoto
@@ -318,58 +318,67 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
 class TestVerifySchema(hunitest.TestCase):
     def test_valid_df(self):
         """
-        
+        Check if valid Dataframe schema is not fixed.
         """
-        #
-        test_data = {'timestamp': [1636539120000, 1636539180000, 1636539240000],
-            'open': [2.226, 2.228, 2.23],
-            'high': [2.228, 2.232, 2.233],
-            'low': [2.225, 2.227, 2.23],
-            'close': [2.0, 2.0, 2.0],
-            'volume': [64687.0, 59076.3, 58236.2],
-            'currency_pair': ['ADA/USDT', 'ADA/USDT', 'ADA/USDT'],
-            'exchange_id': ['binance', 'binance', 'binance']}
-        #
+        # Define test Dataframe.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "close": [2.0, 2.0, 2.0],
+            "volume": [64687.0, 59076.3, 58236.2],
+            "currency_pair": ["ADA/USDT", "ADA/USDT", "ADA/USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
         test_df = pd.DataFrame(data=test_data)
+        # Function should not change the schema of the dataframe.
         actual_df = imvcdeexut.verify_schema(test_df)
+        # Check the result.
         hunitest.compare_df(test_df, actual_df)
-        
 
     def test_fix_int_column(self):
         """
+        Test if int column if forced to float.
         """
-        #
-        test_data = {'timestamp': [1636539120000, 1636539180000, 1636539240000],
-            'open': [2.226, 2.228, 2.23],
-            'high': [2.228, 2.232, 2.233],
-            'low': [2.225, 2.227, 2.23],
-            'close': [2, 2, 2],
-            'volume': [64687.0, 59076.3, 58236.2],
-            'currency_pair': ['ADA/USDT', 'ADA/USDT', 'ADA/USDT'],
-            'exchange_id': ['binance', 'binance', 'binance']}
-        #
+        # Define test Dataframe data with `close` column with type `int`.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "close": [2, 2, 2],
+            "volume": [64687.0, 59076.3, 58236.2],
+            "currency_pair": ["ADA/USDT", "ADA/USDT", "ADA/USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
         test_df = pd.DataFrame(data=test_data)
-        #
         expected_df = test_df.copy()
-        # Fix the type of the `close` column to `float`.
+        # Fix the type of the `close` column to `float64`.
         expected_df["close"] = expected_df["close"].astype("float64")
+        # Function should fix the type of `close` column to `int`.
         actual_df = imvcdeexut.verify_schema(test_df)
+        # Check the result.
         hunitest.compare_df(expected_df, actual_df)
-        
 
-    def test_non_numerical(self):
+    def test_non_numerical_column(self):
         """
+        Test if invalid Dataframe schema produces an error.
         """
-        #
-        test_data = {'timestamp': [1636539120000, 1636539180000, 1636539240000],
-            'open': [2.226, 2.228, 2.23],
-            'high': [2.228, 2.232, 2.233],
-            'low': [2.225, 2.227, 2.23],
-            'close': ["2", "2", "2"],
-            'volume': [64687.0, 59076.3, 58236.2],
-            'currency_pair': ['ADA/USDT', 'ADA/USDT', 'ADA/USDT'],
-            'exchange_id': ['binance', 'binance', 'binance']}
-        #
+        # Define test Dataframe data with non-numerical `close` column.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "close": ["2", "2", "2"],
+            "volume": [64687.0, 59076.3, 58236.2],
+            "currency_pair": ["ADA/USDT", "ADA/USDT", "ADA/USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
         test_df = pd.DataFrame(data=test_data)
         # Make sure function raises an error.
         with self.assertRaises(AssertionError) as cm:
