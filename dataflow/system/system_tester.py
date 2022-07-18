@@ -272,7 +272,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         real_time_loop_time_out_in_secs: int,
         *,
         output_col_name: str = "prediction",
-    ) -> str:
+    ) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
@@ -291,9 +291,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
                 asyncio.gather(*coroutines), event_loop=event_loop
             )[0]
             result_bundle = result_bundles[-1]
-            actual = get_signature(
-                system.config, result_bundle, output_col_name
-            )
+            actual = get_signature(system.config, result_bundle, output_col_name)
             self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
