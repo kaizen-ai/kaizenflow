@@ -1,12 +1,14 @@
 import unittest.mock as umock
 
 import pytest
+import pandas as pd
 
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
@@ -311,3 +313,66 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         self.assertIn(
             "S3 path 's3://mock_bucket/binance' doesn't exist!", str(fail.value)
         )
+
+
+class TestVerifySchema(hunitest.TestCase):
+    def test_valid_df(self):
+        """
+        
+        """
+        #
+        test_data = {'timestamp': [1636539120000, 1636539180000, 1636539240000],
+            'open': [2.226, 2.228, 2.23],
+            'high': [2.228, 2.232, 2.233],
+            'low': [2.225, 2.227, 2.23],
+            'close': [2.0, 2.0, 2.0],
+            'volume': [64687.0, 59076.3, 58236.2],
+            'currency_pair': ['ADA/USDT', 'ADA/USDT', 'ADA/USDT'],
+            'exchange_id': ['binance', 'binance', 'binance']}
+        #
+        test_df = pd.DataFrame(data=test_data)
+        actual_df = imvcdeexut.verify_schema(test_df)
+        hunitest.compare_df(test_df, actual_df)
+        
+
+    def test_fix_int_column(self):
+        """
+        """
+        #
+        test_data = {'timestamp': [1636539120000, 1636539180000, 1636539240000],
+            'open': [2.226, 2.228, 2.23],
+            'high': [2.228, 2.232, 2.233],
+            'low': [2.225, 2.227, 2.23],
+            'close': [2, 2, 2],
+            'volume': [64687.0, 59076.3, 58236.2],
+            'currency_pair': ['ADA/USDT', 'ADA/USDT', 'ADA/USDT'],
+            'exchange_id': ['binance', 'binance', 'binance']}
+        #
+        test_df = pd.DataFrame(data=test_data)
+        #
+        expected_df = test_df.copy()
+        # Fix the type of the `close` column to `float`.
+        expected_df["close"] = expected_df["close"].astype("float64")
+        actual_df = imvcdeexut.verify_schema(test_df)
+        hunitest.compare_df(expected_df, actual_df)
+        
+
+    def test_non_numerical(self):
+        """
+        """
+        #
+        test_data = {'timestamp': [1636539120000, 1636539180000, 1636539240000],
+            'open': [2.226, 2.228, 2.23],
+            'high': [2.228, 2.232, 2.233],
+            'low': [2.225, 2.227, 2.23],
+            'close': ["2", "2", "2"],
+            'volume': [64687.0, 59076.3, 58236.2],
+            'currency_pair': ['ADA/USDT', 'ADA/USDT', 'ADA/USDT'],
+            'exchange_id': ['binance', 'binance', 'binance']}
+        #
+        test_df = pd.DataFrame(data=test_data)
+        # Make sure function raises an error.
+        with self.assertRaises(AssertionError) as cm:
+            imvcdeexut.verify_schema(test_df)
+        act = str(cm.exception)
+        self.check_string(act, fuzzy_match=True)
