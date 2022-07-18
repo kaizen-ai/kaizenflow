@@ -328,7 +328,7 @@ class TestVerifySchema(hunitest.TestCase):
             "low": [2.225, 2.227, 2.23],
             "close": [2.0, 2.0, 2.0],
             "volume": [64687.0, 59076.3, 58236.2],
-            "currency_pair": ["ADA/USDT", "ADA/USDT", "ADA/USDT"],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
             "exchange_id": ["binance", "binance", "binance"],
         }
         # Create Dataframe.
@@ -350,7 +350,7 @@ class TestVerifySchema(hunitest.TestCase):
             "low": [2.225, 2.227, 2.23],
             "close": [2, 2, 2],
             "volume": [64687.0, 59076.3, 58236.2],
-            "currency_pair": ["ADA/USDT", "ADA/USDT", "ADA/USDT"],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
             "exchange_id": ["binance", "binance", "binance"],
         }
         # Create Dataframe.
@@ -375,7 +375,7 @@ class TestVerifySchema(hunitest.TestCase):
             "low": [2.225, 2.227, 2.23],
             "close": ["2", "2", "2"],
             "volume": [64687.0, 59076.3, 58236.2],
-            "currency_pair": ["ADA/USDT", "ADA/USDT", "ADA/USDT"],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
             "exchange_id": ["binance", "binance", "binance"],
         }
         # Create Dataframe.
@@ -383,5 +383,10 @@ class TestVerifySchema(hunitest.TestCase):
         # Make sure function raises an error.
         with self.assertRaises(AssertionError) as cm:
             imvcdeexut.verify_schema(test_df)
-        act = str(cm.exception)
-        self.check_string(act, fuzzy_match=True)
+        actual = str(cm.exception)
+        expected = """
+################################################################################
+Invalid dtype of `close` column: expected type `float64`, found `object`
+################################################################################
+"""
+        self.assertEqual(actual, expected)
