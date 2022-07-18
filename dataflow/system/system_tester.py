@@ -270,6 +270,8 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         market_data: pd.DataFrame,
         initial_replayed_delay: int,
         real_time_loop_time_out_in_secs: int,
+        *,
+        output_col_name: str = "prediction",
     ) -> str:
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
@@ -287,10 +289,12 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
+            )[0]
+            result_bundle = result_bundles[-1]
+            actual = get_signature(
+                system.config, result_bundle, output_col_name
             )
-            # TODO(gp): Use the signature from system_testing. See below.
-            result_bundles: str = result_bundles[0][0]
-            self.check_string(str(result_bundles), purify_text=True)
+            self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
 # #############################################################################

@@ -148,11 +148,13 @@ class Test_Example1_Time_ForecastSystem1(
         initial_replayed_delay = 5
         # Exercise the system for multiple 5 minute intervals.
         real_time_loop_time_out_in_secs = 60 * 5 * 3
+        output_col_name = "vwap.ret_0.vol_adj.c"
         self._test1(
             system,
             market_data,
             initial_replayed_delay,
             real_time_loop_time_out_in_secs,
+            output_col_name=output_col_name,
         )
 
 
