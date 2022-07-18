@@ -289,8 +289,8 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
-            )[0]
-            result_bundle = result_bundles[-1]
+            )
+            result_bundle = result_bundles[0][0]
             actual = get_signature(system.config, result_bundle, output_col_name)
             self.check_string(actual, fuzzy_match=True, purify_text=True)
 
