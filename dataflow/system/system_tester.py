@@ -261,7 +261,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     Test a System composed of:
 
     - a `ReplayedMarketData` (providing fake data and features)
-    - a DAG
+    - a time DAG
     """
 
     def _test1(
