@@ -138,13 +138,18 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     process_forecasts_config_dict = {
         "order_config": {
             "order_type": order_type,
-            "order_duration": 5,
+            "order_duration_in_mins": 5,
         },
         "optimizer_config": {
             "backend": "pomo",
-            "bulk_frac_to_remove": bulk_frac_to_remove,
-            "bulk_fill_method": "zero",
-            "target_gmv": target_gmv,
+            "params": {
+                "style": "cross_sectional",
+                "kwargs": {
+                    "bulk_frac_to_remove": bulk_frac_to_remove,
+                    "bulk_fill_method": "zero",
+                    "target_gmv": target_gmv,
+                },
+            },
         },
         # TODO(gp): Use datetime.time()
         "ath_start_time": pd.Timestamp(

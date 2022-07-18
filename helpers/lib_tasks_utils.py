@@ -109,6 +109,7 @@ def parse_command_line() -> None:
 _WAS_FIRST_CALL_DONE = False
 
 
+# TODO(gp): Make it public.
 def _report_task(txt: str = "", container_dir_name: str = ".") -> None:
     # On the first invocation report the version.
     global _WAS_FIRST_CALL_DONE
@@ -376,6 +377,7 @@ def _filter_existing_paths(paths_from_user: List[str]) -> List[str]:
 # Copied from helpers.datetime_ to avoid dependency from pandas.
 
 
+# TODO(gp): Make it public.
 def _get_ET_timestamp() -> str:
     # The timezone depends on how the shell is configured.
     timestamp = datetime.datetime.now()

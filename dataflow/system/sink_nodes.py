@@ -142,7 +142,7 @@ def get_process_forecasts_dict_example1(
     volatility_col: str,
     price_col: str,
     spread_col: Optional[str],
-    order_duration: int,
+    order_duration_in_mins: int,
     *,
     bulk_frac_to_remove: float = 0.0,
     target_gmv: float = 1e5,
@@ -170,13 +170,18 @@ def get_process_forecasts_dict_example1(
         # Params for `ForecastProcessor`.
         "order_config": {
             "order_type": order_type,
-            "order_duration": order_duration,
+            "order_duration_in_mins": order_duration_in_mins,
         },
         "optimizer_config": {
             "backend": "pomo",
-            "bulk_frac_to_remove": bulk_frac_to_remove,
-            "bulk_fill_method": "zero",
-            "target_gmv": target_gmv,
+            "params": {
+                "style": "cross_sectional",
+                "kwargs": {
+                    "bulk_frac_to_remove": bulk_frac_to_remove,
+                    "bulk_fill_method": "zero",
+                    "target_gmv": target_gmv,
+                },
+            },
         },
         # Params for `process_forecasts()`.
         # TODO(gp): Use datetime.time()
@@ -211,7 +216,7 @@ def get_process_forecasts_dict_example1(
 
 def get_process_forecasts_dict_example2(
     portfolio: omportfo.Portfolio,
-    order_duration: int,
+    order_duration_in_mins: int,
 ) -> Dict[str, Any]:
     """
     Used by E8d.
@@ -232,7 +237,7 @@ def get_process_forecasts_dict_example2(
         volatility_col,
         price_col,
         spread_col,
-        order_duration,
+        order_duration_in_mins,
         bulk_frac_to_remove=bulk_frac_to_remove,
         target_gmv=target_gmv,
         log_dir=log_dir,
@@ -242,7 +247,7 @@ def get_process_forecasts_dict_example2(
 
 def get_process_forecasts_dict_example3(
     portfolio: omportfo.Portfolio,
-    order_duration: int,
+    order_duration_in_mins: int,
 ) -> Dict[str, Any]:
     """
     Used by E8f.
@@ -262,7 +267,7 @@ def get_process_forecasts_dict_example3(
         volatility_col,
         price_col,
         spread_col,
-        order_duration,
+        order_duration_in_mins,
         bulk_frac_to_remove=bulk_frac_to_remove,
         target_gmv=target_gmv,
         log_dir=log_dir,
