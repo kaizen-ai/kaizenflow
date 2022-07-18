@@ -285,19 +285,19 @@ def docker_login(ctx):  # type: ignore
     region = "us-east-1"
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
-    else:
+    elif major_version == 2:
         ecr_base_path = hlitauti.get_default_param("AM_ECR_BASE_PATH")
         cmd = (
-            f"docker login -u AWS -p $(aws ecr get-login --region {region}) "
-            + f"https://{ecr_base_path}"
+            f"docker login -u AWS -p "
+            f"$(aws ecr get-login-password --profile am) "
+            f"https://{ecr_base_path}"
         )
-    # cmd = ("aws ecr get-login-password" +
-    #       " | docker login --username AWS --password-stdin "
+    else:
+        NotImplementedError(f"Docker login for awscli v{major_version} is not implemented!")
     # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
     #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
     #  with `@task` decorator) do not work.
     hlitauti._run(ctx, cmd, use_system=True)
-
 
 # ////////////////////////////////////////////////////////////////////////////////
 # Compose files.
