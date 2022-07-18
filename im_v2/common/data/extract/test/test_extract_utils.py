@@ -318,7 +318,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
 class TestVerifySchema(hunitest.TestCase):
     def test_valid_df(self):
         """
-        Check if valid Dataframe schema is not fixed.
+        Check if valid Dataframe schema is not changed.
         """
         # Define test Dataframe.
         test_data = {
