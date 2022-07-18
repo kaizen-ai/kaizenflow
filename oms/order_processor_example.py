@@ -22,6 +22,7 @@ def get_order_processor_example1(
     db_connection: hsql.DbConnection,
     portfolio: omportfo.Portfolio,
     asset_id_name: str,
+    max_wait_time_for_order_in_secs: int
 ) -> oordproc.OrderProcessor:
     """
     Build an order processor.
@@ -35,10 +36,11 @@ def get_order_processor_example1(
     broker = portfolio.broker
     order_processor = oordproc.OrderProcessor(
         db_connection,
+        max_wait_time_for_order_in_secs,
         delay_to_accept_in_secs,
         delay_to_fill_in_secs,
         broker,
-        asset_id_name
+        asset_id_name,
         # poll_kwargs=order_processor_poll_kwargs,
     )
     return order_processor

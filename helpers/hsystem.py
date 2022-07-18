@@ -158,10 +158,11 @@ def _system(
     :param output_file: redirect stdout and stderr to this file
     :param num_error_lines: number of lines of the output to display when
         raising `RuntimeError`
-    :param tee: if True, tee stdout and stderr to output_file
-    :param dry_run: just print the final command but not execute it
+    :param tee: if True, tee append (i.e., `tee -a`) stdout and stderr to
+        `output_file`
+    :param dry_run: print the final command but not execute it
     :param log_level: print the command to execute at level "log_level".
-        - If "echo" then print the command line to screen as print and not
+        - If `echo` then print the command line to screen as print and not
           logging
     :return: return code (int), output of the command (str)
     """
@@ -173,6 +174,7 @@ def _system(
         )
     )
     orig_cmd = cmd[:]
+    _LOG.debug("orig_cmd=%s", orig_cmd)
     # Handle `suppress_output`.
     hdbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
     if suppress_output == "ON_DEBUG_LEVEL":
@@ -189,12 +191,14 @@ def _system(
     if output_file is not None:
         # Redirect to a file.
         dir_name = os.path.dirname(output_file)
+        if not dir_name:
+            dir_name = "."
         if not os.path.exists(dir_name):
             _LOG.debug("Dir '%s' doesn't exist: creating", dir_name)
             hdbg.dassert(bool(dir_name), "dir_name='%s'", dir_name)
             os.makedirs(dir_name)
         if tee:
-            cmd += f" 2>&1 | tee {output_file}"
+            cmd += f" 2>&1 | tee -a {output_file}"
         else:
             cmd += f" 2>&1 >{output_file}"
     else:
@@ -204,11 +208,15 @@ def _system(
     if wrapper:
         cmd = wrapper + " && " + cmd
     # Handle `log_level`.
-    # TODO(gp): Add a check for the valid values.
-    # TODO(gp): Make it "ECHO".
+    # TODO(gp): Make it "ECHO" or "PRINT".
     if isinstance(log_level, str):
-        hdbg.dassert_eq(log_level, "echo")
-        print(f"> {orig_cmd}")
+        hdbg.dassert_in(log_level, ("echo", "echo_frame"))
+        if log_level == "echo_frame":
+            print(hprint.frame(f"> {cmd}"))
+        elif log_level == "echo":
+            print(f"> {cmd}")
+        else:
+            raise ValueError(f"Invalid log_level='{log_level}'")
         _LOG.debug("> %s", cmd)
     else:
         _LOG.log(log_level, "> %s", cmd)
@@ -235,7 +243,8 @@ def _system(
                     if not line:
                         break
                     if not suppress_output:
-                        print("  ==> %s" % line.rstrip("\n"))
+                        # print("  ==> %s" % line.rstrip("\n"))
+                        print("  ... %s" % line.rstrip("\n"))
                     output += line
                 p.stdout.close()  # type: ignore
                 rc = p.wait()

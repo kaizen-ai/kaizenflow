@@ -223,6 +223,7 @@ async def poll(
 def get_poll_kwargs(
     get_wall_clock_time: hdateti.GetWallClockTime,
     *,
+    # TODO(gp): Avoid using defaults.
     sleep_in_secs: float = 1.0,
     timeout_in_secs: float = 10.0,
 ) -> Dict[str, Any]:
@@ -296,16 +297,22 @@ async def sleep(
 
 
 def get_seconds_to_align_to_grid(
-    grid_time_in_secs: float, get_wall_clock_time: hdateti.GetWallClockTime
+    grid_time_in_secs: float, get_wall_clock_time: hdateti.GetWallClockTime,
+    *,
+    add_buffer_in_secs: int = 0
 ) -> Tuple[pd.Timestamp, int]:
     """
     Given the current time return the amount of seconds to wait to align on a
     grid with period `grid_time_in_secs`.
 
     E.g., current_time=9:31:02am, grid_time_in_secs=120 -> return 58
+
+    :param add_buffer_in_secs: number of seconds to add to make sure we are right
+        after the grid time
     """
+    hdbg.dassert_lte(0, add_buffer_in_secs)
     current_time = get_wall_clock_time()
-    _LOG.debug("Aligning at wall_clock=%s ...", current_time)
+    _LOG.debug("current_time=%s ...", current_time)
     # Align on the time grid.
     hdbg.dassert_lt(0, grid_time_in_secs)
     freq = f"{grid_time_in_secs}S"
@@ -313,6 +320,12 @@ def get_seconds_to_align_to_grid(
     hdbg.dassert_lte(current_time, target_time)
     _LOG.debug("target_time=%s", target_time)
     secs_to_wait = (target_time - current_time).total_seconds()
+    # E.g., for
+    #   target_time=2022-07-11 11:30:00-04:00
+    #   curr_time=2022-07-11 11:29:15.129365-04:00
+    # The difference is 44secs, so we need to add 1 sec to make sure we pass
+    # the target time.
+    secs_to_wait += add_buffer_in_secs
     return target_time, secs_to_wait
 
 
