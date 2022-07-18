@@ -204,15 +204,15 @@ def download_realtime_for_one_exchange(
         connection = hsql.get_connection(*connection_params)
     # Load DB table to work with
     db_table = args["db_table"]
-    # Generate a query to remove duplicates.
-    dup_query = hsql.get_remove_duplicates_query(
-        table_name=db_table,
-        id_col_name="id",
-        column_names=["timestamp", "exchange_id", "currency_pair"],
-    )
     # Convert timestamps.
     start_timestamp = pd.Timestamp(args["start_timestamp"])
+    start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
+        start_timestamp
+    )
     end_timestamp = pd.Timestamp(args["end_timestamp"])
+    end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+    data_type = args["data_type"]
+    exchange_id = args["exchange_id"]
     # Download data for specified time period.
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
@@ -220,25 +220,36 @@ def download_realtime_for_one_exchange(
         currency_pair_for_download = exchange.convert_currency_pair(currency_pair)
         # Download data.
         data = exchange.download_data(
-            data_type=args["data_type"],
+            data_type=data_type,
             currency_pair=currency_pair_for_download,
-            exchange_id=args["exchange_id"],
+            exchange_id=exchange_id,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
         )
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
-        data["exchange_id"] = args["exchange_id"]
+        data["exchange_id"] = exchange_id
         # Get timestamp of insertion in UTC.
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
+        # Get duplicated rows from the DB.
+        dup_query = f"SELECT * FROM {db_table} WHERE timestamp \
+                    BETWEEN {start_timestamp_as_unix} \
+                    AND {end_timestamp_as_unix} \
+                    AND exchange_id='{exchange_id} \
+                    AND currency_pair='{currency_pair}'"
+        existing_data = hsql.execute_query_to_df(connection, dup_query)
+        # Remove data that has been already been downloaded.
+        data = data.loc[~data.timestamp.isin(existing_data.timestamp)]
+        # Remove final unfinished tick.
+        #  E.g. at 19:02:11 the candle will have a smaller volume than at 19:02:59.
+        if (end_timestamp_as_unix - data.timestamp.max()) < 60000:
+            data = data.loc[data.timestamp == data.timestamp.max()]
         # Insert data into the DB.
         hsql.execute_insert_query(
             connection=connection,
             obj=data,
             table_name=db_table,
         )
-        # Remove duplicated entries.
-        connection.cursor().execute(dup_query)
         # Save data to S3 bucket.
         if args["s3_path"]:
             # Connect to S3 filesystem.
