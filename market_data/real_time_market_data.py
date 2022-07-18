@@ -251,6 +251,8 @@ class RealTimeMarketData(mdabmada.MarketData):
         return query
 
 
+# TODO(Dan): decide whether we need a separate class, maybe use `ImClientMarketData` for both
+# historical and real-time runs.
 class RealTimeMarketData2(mdimcmada.ImClientMarketData):
     """
     Interface for real-time market data accessed through a realtime SQL client.
