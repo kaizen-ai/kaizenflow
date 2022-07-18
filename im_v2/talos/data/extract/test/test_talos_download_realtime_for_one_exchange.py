@@ -32,7 +32,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         --stop_time '{stop_time}'"
         start_delay = 0
         stop_delay = 1
-        download_finished_marker = "Starting data download"
+        download_started_marker = "Starting data download"
         # Amount of downloads depends on the start time and stop time.
         expected_downloads_amount = stop_delay - start_delay
         start_time = pd.Timestamp.now(tz="UTC") + timedelta(
@@ -51,5 +51,5 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         self.assertEqual(return_code, 0)
         # Check amount of downloads by parsing output.
         self.assertEqual(
-            output.count(download_finished_marker), expected_downloads_amount
+            output.count(download_started_marker), expected_downloads_amount
         )
