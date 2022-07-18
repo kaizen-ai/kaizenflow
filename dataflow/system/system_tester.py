@@ -290,7 +290,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            result_bundle = result_bundles[-1]
+            result_bundle = result_bundles[0][-1]
             # TODO(Dan): Consider using `get_signature()`.
             self.check_string(
                 str(result_bundle), fuzzy_match=True, purify_text=True
