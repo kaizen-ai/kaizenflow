@@ -235,7 +235,7 @@ def download_realtime_for_one_exchange(
         dup_query = f"SELECT * FROM {db_table} WHERE timestamp \
                     BETWEEN {start_timestamp_as_unix} \
                     AND {end_timestamp_as_unix} \
-                    AND exchange_id='{exchange_id} \
+                    AND exchange_id='{exchange_id}' \
                     AND currency_pair='{currency_pair}'"
         existing_data = hsql.execute_query_to_df(connection, dup_query)
         # Remove data that has been already been downloaded.
