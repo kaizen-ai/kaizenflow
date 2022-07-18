@@ -19,6 +19,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hlogging as hloggin
+import helpers.hintrospection as hintro
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.htimer as htimer
@@ -58,6 +59,7 @@ class DAG:
             - "loose": deletes old node (also removes edges) and adds new node. This
               is useful for interactive notebooks and debugging
         """
+        _LOG.debug(hprint.to_str("name mode"))
         self._nx_dag = networ.DiGraph()
         # Store the DAG name.
         if name is not None:
@@ -87,14 +89,25 @@ class DAG:
         mode=strict
         nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
         edges=[]
+        save_node_io=
+        profile_execution=False
+        dst_dir=None
+        force_free_nodes=False
         ```
         """
+        res = ""
+        res += "dag=" + hintro.to_object_pointer(self) + "\n"
         txt = []
         txt.append(f"name={self._name}")
         txt.append(f"mode={self._mode}")
         txt.append("nodes=" + str(self.nx_dag.nodes(data=True)))
         txt.append("edges=" + str(self.nx_dag.edges(data=True)))
-        return "\n".join(txt)
+        txt.append("save_node_io=" + str(self._save_node_io))
+        txt.append(f"profile_execution={self._profile_execution}")
+        txt.append(f"dst_dir={self._dst_dir}")
+        txt.append(f"force_free_nodes={self.force_free_nodes}")
+        res += hprint.indent("\n".join(txt))
+        return res
 
     def __repr__(self) -> str:
         """
@@ -149,6 +162,7 @@ class DAG:
         :param dst_dir: directory to save node interface and execution profiling info
         """
         hdbg.dassert_in(save_node_io, ("", "stats", "df_as_csv", "df_as_parquet"))
+        _LOG.debug(hprint.to_str("save_node_io profile_execution dst_dir"))
         self._save_node_io = save_node_io
         # To process the profiling info in a human consumable form:
         # ```

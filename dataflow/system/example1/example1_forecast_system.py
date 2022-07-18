@@ -35,10 +35,6 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
     This is used to run an historical simulation of an Example1 system.
     """
 
-    def get_dag_runner(self) -> dtfcore.DagRunner:
-        dag_runner = dtfcore.FitPredictDagRunner(self.dag)
-        return dag_runner
-
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
@@ -54,6 +50,10 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
     def _get_dag(self) -> dtfcore.DAG:
         dag = dtfsexexbu.get_Example1_dag_example1(self)
         return dag
+
+    def _get_dag_runner(self) -> dtfcore.DagRunner:
+        dag_runner = dtfcore.FitPredictDagRunner(self.dag)
+        return dag_runner
 
 
 def get_Example1_ForecastSystem_for_simulation_example1(
@@ -94,10 +94,6 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
     - a RealTimeDagRunner
     """
 
-    def get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
-        return dag_runner
-
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
@@ -113,6 +109,10 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
     def _get_dag(self) -> dtfcore.DAG:
         dag = dtfsexexbu.get_Example1_realtime_dag_example1(self)
         return dag
+
+    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
+        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
+        return dag_runner
 
 
 # #############################################################################
@@ -130,10 +130,6 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
     - a time Example1 DAG
     - a DataFramePortfolio
     """
-
-    def get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
-        return dag_runner
 
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
@@ -173,6 +169,10 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
         }
         return portfolio
 
+    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
+        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
+        return dag_runner
+
 
 # #############################################################################
 # Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
@@ -190,10 +190,6 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     - a `DatabasePortfolio` (which includes a `DatabaseBroker`)
     - an `OrderProcessor`
     """
-
-    def get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
-        return dag_runner
 
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
@@ -238,3 +234,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
             "price": "close",
         }
         return portfolio
+
+    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
+        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
+        return dag_runner

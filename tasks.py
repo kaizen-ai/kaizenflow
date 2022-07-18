@@ -102,6 +102,14 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     traceback,
 )
 
+try:
+    from helpers.lib_tasks import (
+        pytest_buildmeister,
+        pytest_buildmeister_check,
+    )  # isort: skip # noqa: F401  # pylint: disable=unused-import
+except ImportError:
+    pass
+
 
 _LOG = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
 import os
 
+import helpers.hgit as hgit
 import helpers.hunit_test as hunitest
 import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 
@@ -7,7 +8,9 @@ import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 class TestGetLatestDataSnapshot(hunitest.TestCase):
     @staticmethod
     def get_base_test_dir() -> str:
-        base_dir = "im_v2/common/data_snapshot/test/test_data_snapshots"
+        base_dir = os.path.join(
+            hgit.get_amp_abs_path(),
+            "im_v2/common/data_snapshot/test/test_data_snapshots")
         return base_dir
 
     def test_get_latest_data_snapshot1(self) -> None:
