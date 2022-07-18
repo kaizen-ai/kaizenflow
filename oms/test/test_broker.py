@@ -175,9 +175,11 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
     ) -> None:
         delay_to_accept_in_secs = 2
         delay_to_fill_in_secs = 1
+        max_wait_time_for_order_in_secs = 10
         asset_id_name = "asset_id"
         order_processor = oordproc.OrderProcessor(
             self.connection,
+            max_wait_time_for_order_in_secs,
             delay_to_accept_in_secs,
             delay_to_fill_in_secs,
             broker,

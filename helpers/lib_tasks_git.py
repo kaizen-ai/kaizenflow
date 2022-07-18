@@ -26,6 +26,14 @@ _LOG = logging.getLogger(__name__)
 # pylint: disable=protected-access
 
 
+def run_git_recursively(ctx: Any, cmd_: str) -> None:
+    cmd = cmd_
+    hlitauti._run(ctx, cmd)
+    #
+    cmd = f"git submodule foreach '{cmd_}'"
+    hlitauti._run(ctx, cmd)
+
+
 @task
 def git_pull(ctx):  # type: ignore
     """
@@ -34,10 +42,7 @@ def git_pull(ctx):  # type: ignore
     hlitauti._report_task()
     #
     cmd = "git pull --autostash"
-    hlitauti._run(ctx, cmd)
-    #
-    cmd = "git submodule foreach 'git pull --autostash'"
-    hlitauti._run(ctx, cmd)
+    run_git_recursively(ctx, cmd)
 
 
 @task
@@ -48,7 +53,7 @@ def git_fetch_master(ctx):  # type: ignore
     hlitauti._report_task()
     #
     cmd = "git fetch origin master:master"
-    hlitauti._run(ctx, cmd)
+    run_git_recursively(ctx, cmd)
 
 
 @task
@@ -78,7 +83,7 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     Run `git status --ignored` to see what it's skipped.
     """
     hlitauti._report_task(txt=hprint.to_str("dry_run"))
-    def _run_all_repos(cmd: str) -> str:
+    def _run_all_repos(cmd: str) -> None:
         hsystem.system(cmd, abort_on_error=False)
         # Clean submodules.
         cmd = f"git submodule foreach '{cmd}'"
@@ -551,6 +556,11 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
     """
     hdbg.dassert(not use_patch, "Patch flow not implemented yet")
     #
+    cmd = "invoke fix_perms"
+    hlitauti._run(ctx, cmd)
+    cmd = "git clean -fd"
+    hlitauti._run(ctx, cmd)
+    #
     curr_branch_name = hgit.get_branch_name()
     hdbg.dassert_ne(curr_branch_name, "master")
     # Make sure `old_branch_name` doesn't need to have `master` merged.
@@ -587,8 +597,13 @@ def _git_diff_with_branch(
     diff_type: str,
     subdir: str,
     extensions: str,
+    file_name: str,
     dry_run: bool,
 ) -> None:
+    """
+    Diff files from this client against files in a branch using vimdiff.
+
+    """
     _LOG.debug(
         hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
     )
@@ -606,6 +621,15 @@ def _git_diff_with_branch(
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
     # Filter the files, if needed.
+    if file_name:
+        files_tmp = []
+        for f in files:
+            if f == file_name:
+                files_tmp.append(f)
+        hdbg.dassert_eq(1, len(files_tmp), "Can't find file_name='%s' in\n%s",
+                        file_name, "\n".join(files))
+        files = files_tmp
+        print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
     if extensions:
         extensions_lst = extensions.split(",")
         _LOG.warning(
@@ -684,7 +708,7 @@ def _git_diff_with_branch(
 
 @task
 def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", extensions="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", file_name="", dry_run=False
 ):
     """
     Diff files of the current branch with master at the branching point.
@@ -701,13 +725,14 @@ def git_branch_diff_with_base(  # type: ignore
     #
     tag = "base"
     _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, file_name,
+        dry_run
     )
 
 
 @task
 def git_branch_diff_with_master(  # type: ignore
-    ctx, diff_type="", subdir="", extensions="", dry_run=False
+    ctx, diff_type="", subdir="", extensions="", file_name="", dry_run=False
 ):
     """
     Diff files of the current branch with origin/master.
@@ -716,13 +741,15 @@ def git_branch_diff_with_master(  # type: ignore
     :param subdir: subdir to consider for diffing, instead of `.`
     :param extensions: a comma-separated list of extensions to check, e.g.,
         'csv,py'. An empty string means all the files
+    :param file_name: a specific file name to diff
     :param dry_run: execute diffing script or not
     """
     dir_name = "."
     hash_ = "origin/master"
     tag = "origin_master"
     _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, dry_run
+        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, file_name,
+        dry_run
     )
 
 

@@ -60,8 +60,10 @@ class TestOrderProcessor1(omtodh.TestOmsDbHelper):
             # Build an OrderProcessor.
             delay_to_accept_in_secs = 3
             delay_to_fill_in_secs = 10
+            max_wait_time_for_order_in_secs = 10
             order_processor = oordproc.OrderProcessor(
                 self.connection,
+                max_wait_time_for_order_in_secs,
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
                 broker,

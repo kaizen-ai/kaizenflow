@@ -110,9 +110,11 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     # Prepare book-keeping files.
     file_name = os.path.join(experiment_result_dir, "config.pkl")
     _LOG.debug("Saving '%s'", file_name)
-    if "dag_runner_object" in config:
-        if not hintros.is_pickleable(config["dag_runner_object"]):
-            config["dag_runner_object"] = None
+    # Remove un-pickleable pieces.
+    for key in ("dag_runner_object", "dag_runner_builder"):
+        if key in config:
+            if not hintros.is_pickleable(config[key]):
+                config[key] = None
     hpickle.to_pickle(config, file_name)
     #
     file_name = os.path.join(experiment_result_dir, "config.txt")

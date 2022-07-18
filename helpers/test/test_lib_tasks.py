@@ -176,14 +176,19 @@ class TestDryRunTasks1(hunitest.TestCase):
     #     target = "print_setup"
     #     self.dry_run(target)
 
+    # The problem is that we use system and not ctx to execute the command, so that
+    # --dry-run doesn't work.
+    @pytest.mark.skip(reason="This is actually run")
     def test_git_pull(self) -> None:
         target = "git_pull"
         self.dry_run(target)
 
+    @pytest.mark.skip(reason="This is actually run")
     def test_git_fetch_master(self) -> None:
         target = "git_fetch_master"
         self.dry_run(target)
 
+    @pytest.mark.skip(reason="This is actually run deleting files")
     def test_git_clean(self) -> None:
         target = "git_clean"
         self.dry_run(target)

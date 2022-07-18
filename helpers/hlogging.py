@@ -629,6 +629,14 @@ class CustomFormatter(logging.Formatter):
         # Use white as default.
         prefix = "\033["
         suffix = "\033[0m"
+        # Print stacktrace to debug.
+        if False:
+            import traceback
+
+            txt = traceback.format_stack()
+            txt = "".join(txt)
+            print(txt)
+
         assert level_name in self._COLOR_MAPPING, "Can't find info '%s'"
         color_code, tag = self._COLOR_MAPPING[level_name]
         colored_level_name = f"{prefix}{color_code}m{tag}{suffix}"

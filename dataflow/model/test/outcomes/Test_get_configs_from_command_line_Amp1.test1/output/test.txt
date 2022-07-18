@@ -44,7 +44,7 @@ dag_config:
     col_mapping:
       vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
 dag_builder_object: nid_prefix=
-dag_runner_object: <function get_dag_runner>
+dag_runner_builder: <function get_dag_runner>
 market_data_config:
   asset_id_name: asset_id
   asset_ids: [13684, 10971]
