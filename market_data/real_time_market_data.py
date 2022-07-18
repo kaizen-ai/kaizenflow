@@ -14,7 +14,6 @@ import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.universe as ivcu
 import market_data.abstract_market_data as mdabmada
 import market_data.im_client_market_data as mdimcmada
 
@@ -252,11 +251,12 @@ class RealTimeMarketData(mdabmada.MarketData):
         return query
 
 
-# TODO(Grisha): "Factor out common code for RealTimeMarketData2 and ImClientMarketData`" CmTask #2382.
 class RealTimeMarketData2(mdimcmada.ImClientMarketData):
     """
     Interface for real-time market data accessed through a realtime SQL client.
     """
 
-    def __init__(self, im_client: icdc.SqlRealTimeImClient, *args, **kwargs) -> None:
+    def __init__(
+        self, im_client: icdc.SqlRealTimeImClient, *args, **kwargs
+    ) -> None:
         super().__init__(*args, im_client=im_client, **kwargs)
