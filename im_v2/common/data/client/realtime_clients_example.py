@@ -108,6 +108,7 @@ def _create_example1_sql_data() -> pd.DataFrame:
 # #############################################################################
 
 
+# TODO(Dan): Consider joining `Example1SqlRealTimeImClient` and `MockSqlRealTimeImClient`.
 class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(
         self,
@@ -221,6 +222,7 @@ def _create_example2_sql_data() -> pd.DataFrame:
     return test_data
 
 
+# TODO(Dan): Consider joining `Example1SqlRealTimeImClient` and `MockSqlRealTimeImClient`.
 class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     """
     Vendor-agnostic client to be used in tests.

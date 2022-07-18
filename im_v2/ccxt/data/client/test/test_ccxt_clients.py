@@ -614,7 +614,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
-# TODO(Danya): add example client for `CcxtSqlRealTimeImClient`.
+# TODO(Dan): add example client for `CcxtSqlRealTimeImClient`.
 class TestCcxtSqlRealTimeImClient1(
     icdctictc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
@@ -947,6 +947,7 @@ class TestCcxtSqlRealTimeImClient1(
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
 
+    # TODO(Nina): Move setUp and tearDown methods on top of the class.
     def setUp(self) -> None:
         super().setUp()
         self._create_test_table()

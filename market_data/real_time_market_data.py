@@ -251,6 +251,7 @@ class RealTimeMarketData(mdabmada.MarketData):
         return query
 
 
+# TODO(Grisha): "Factor out common code for RealTimeMarketData2 and ImClientMarketData`" CmTask #2382.
 class RealTimeMarketData2(mdabmada.MarketData):
     """
     Interface for real-time market data accessed through a realtime SQL client.
@@ -351,16 +352,12 @@ class RealTimeMarketData2(mdabmada.MarketData):
                 self._asset_id_col,
                 transformed_asset_ids,
             )
-        # Convert to int64 to keep NaNs alongside with int values.
-        market_data[self._asset_id_col] = market_data[self._asset_id_col].astype(
-            pd.Int64Dtype()
-        )
-        #
         if self._columns is not None:
             # Drop full symbol column if it was not in the sepcified columns.
             if full_symbol_col_name not in self._columns:
                 market_data = market_data.drop(full_symbol_col_name, axis=1)
         hdbg.dassert_in(self._asset_id_col, market_data.columns)
+        # TODO(Dan): Propagate `limit` parameter to SQL query.
         if limit:
             # Keep only top N records.
             hdbg.dassert_lte(1, limit)
