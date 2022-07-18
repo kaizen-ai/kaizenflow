@@ -48,7 +48,7 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         volatility_col = "close"
         price_col = "close"
         spread_col = None
-        order_duration = 5
+        order_duration_in_mins = 5
         #
         process_forecasts_dict = dtfsysinod.get_process_forecasts_dict_example1(
             portfolio,
@@ -56,7 +56,7 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
             volatility_col,
             price_col,
             spread_col,
-            order_duration,
+            order_duration_in_mins,
         )
         # Adapt DAG to real-time.
         dag = dtfsrtdaad.adapt_dag_to_real_time(

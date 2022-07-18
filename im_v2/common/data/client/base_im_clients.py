@@ -658,17 +658,6 @@ class SqlRealTimeImClient(RealTimeImClient):
         full_symbols = full_symbols.to_list()
         return full_symbols
 
-    @abc.abstractmethod
-    def _apply_normalization(
-        self,
-        data: pd.DataFrame,
-        *,
-        full_symbol_col_name: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        Apply vendor-specific normalization.
-        """
-
     # TODO(Danya): Propagate usage of `columns` parameter here and in descendant
     #  classes.
     def _read_data(
@@ -717,10 +706,13 @@ class SqlRealTimeImClient(RealTimeImClient):
         data[full_symbol_col_name] = ivcu.build_full_symbol(
             data["exchange_id"], data["currency_pair"]
         )
-        # Remove extra columns and create a timestamp index.
-        data = self._apply_normalization(
-            data, full_symbol_col_name=full_symbol_col_name
+        data = data.drop(["exchange_id", "currency_pair"], axis=1)
+        # Convert timestamp column with Unix epoch to timestamp format.
+        data["timestamp"] = data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
         )
+        data = data.set_index("timestamp")
+        # TODO(Dan): Move column filtering to the SQL query.
         if columns is None:
             columns = data.columns
         hdbg.dassert_is_subset(columns, data.columns.to_list())
