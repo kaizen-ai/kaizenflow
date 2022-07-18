@@ -12,7 +12,7 @@ import helpers.hunit_test as hunitest
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
-    @pytest.mark.slow
+    @pytest.mark.superslow("~40 seconds")
     def test_amount_of_downloads(self) -> None:
         """
         Test Python script call, check return value and amount of downloads.
