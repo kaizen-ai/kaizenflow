@@ -290,9 +290,10 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            result_bundle = result_bundles[0][0]
-            actual = get_signature(system.config, result_bundle, output_col_name)
-            self.check_string(actual, fuzzy_match=True, purify_text=True)
+            # TODO(Dan): Consider using `get_signature()`.
+            self.check_string(
+                str(result_bundles), fuzzy_match=True, purify_text=True
+            )
 
 
 # #############################################################################
