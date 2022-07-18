@@ -144,6 +144,7 @@ class Test_Example1_Time_ForecastSystem1(
         Verify the contents of DAG prediction.
         """
         system = dtfseefosy.Example1_Time_ForecastSystem()
+        # TODO(Dan): Add more data, otherwise volatility is NaN.
         market_data, _ = cofinanc.get_market_data_df1()
         initial_replayed_delay = 5
         # Exercise the system for multiple 5 minute intervals.

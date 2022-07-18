@@ -1,4 +1,4 @@
-[[config:
+[config:
 
 result_nid: compress_rets
 method: predict
@@ -388,4 +388,4 @@ info:
        4   (volume, 101)          15 non-null     int64                           
       dtypes: datetime64[ns, America/New_York](2), float64(2), int64(1)
 payload: None
-class: ResultBundle]]
+class: ResultBundle]
