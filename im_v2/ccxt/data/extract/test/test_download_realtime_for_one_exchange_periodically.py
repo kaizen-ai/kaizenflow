@@ -6,6 +6,9 @@ import helpers.henv as henv
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
+import logging
+_LOG = logging.getLogger(__name__)
+
 
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
@@ -38,9 +41,9 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         # Call Python script in order to get output.
         cmd = cmd.format(
             start_time=start_time.strftime("%Y-%m-%d %H:%M:%S"),
-            stop_time=stop_time.strftime("%Y-%m-%d %H:%M:%S"),
-        )
+            stop_time=stop_time.strftime("%Y-%m-%d %H:%M:%S"))
         return_code, output = hsystem.system_to_string(cmd)
+        _LOG.warning(output)
         # Check return value.
         self.assertEqual(return_code, 0)
         # Check amount of downloads by parsing output.
