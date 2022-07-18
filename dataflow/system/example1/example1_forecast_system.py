@@ -64,6 +64,7 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     """
     system = Example1_ForecastSystem()
     system = dtfssybuut.apply_backtest_config(system, backtest_config)
+    system.config["dag_runner_builder"] = system._get_dag_runner
     # Fill pipeline-specific backtest config parameters.
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "10D"
