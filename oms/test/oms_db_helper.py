@@ -1,8 +1,9 @@
 import abc
 import logging
 import os
-from typing import Any, Callable
+from typing import Any, Dict, Callable
 
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
@@ -32,7 +33,7 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
         docker_compose_path = os.path.join(
             dir_name, "oms/devops/compose/docker-compose.yml"
         )
-        docker_compose_path_idx: str = hio.add_idx_to_filename(
+        docker_compose_path_idx: str = hio.add_suffix_to_filename(
             docker_compose_path, idx
         )
         return docker_compose_path_idx
@@ -89,7 +90,7 @@ networks:
         hio.to_file(compose_file_name, txt)
         # Create env file.
         txt = []
-        if hgit.execute_repo_config_code("use_main_network()"):
+        if henv.execute_repo_config_code("use_main_network()"):
             host = "cf-spm-dev4"
         else:
             host = "localhost"
@@ -106,6 +107,7 @@ networks:
         self: Any,
         table_name: str,
         create_table_func: Callable,
+        create_table_func_kwargs: Any,
     ) -> None:
         """
         Run sanity check for a DB table.
@@ -126,7 +128,8 @@ networks:
         _LOG.info("get_table_names=%s", db_tables)
         self.assertNotIn(table_name, db_tables)
         # Create the table.
-        _ = create_table_func(self.connection, incremental=False)
+        incremental = False
+        _ = create_table_func(self.connection, incremental, **create_table_func_kwargs),
         # The table should be present.
         db_tables = hsql.get_table_names(self.connection)
         _LOG.info("get_table_names=%s", db_tables)

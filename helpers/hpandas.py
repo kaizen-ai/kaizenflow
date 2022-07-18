@@ -302,6 +302,17 @@ def dassert_columns_equal(
     )
 
 
+def dassert_axes_equal(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+) -> None:
+    """
+    Ensure that `df1` and `df2` have the same index and same columns.
+    """
+    dassert_indices_equal(df1, df2)
+    dassert_columns_equal(df1, df2)
+
+
 # #############################################################################
 
 
@@ -857,7 +868,7 @@ def _df_to_str(
 
 
 # TODO(gp): Maybe we can have a `_LOG_df_to_str(log_level, *args, **kwargs)` that
-# calls `_LOG.log(log_level, hpandas.df_to_str(*args, **kwargs, log_level=log_level))`.
+#  calls `_LOG.log(log_level, hpandas.df_to_str(*args, **kwargs, log_level=log_level))`.
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,

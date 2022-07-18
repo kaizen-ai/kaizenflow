@@ -15,9 +15,12 @@ from invoke import task
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_docker as hlitadoc
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
+
+# pylint: disable=protected-access
 
 
 def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
@@ -34,7 +37,7 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     # Get the file name depending on the stage.
     env_file_name = f"{stage}.im_db_config.env"
     if idx is not None:
-        env_file_name = hio.add_idx_to_filename(env_file_name, idx)
+        env_file_name = hio.add_suffix_to_filename(env_file_name, idx)
     # Get file path.
     amp_path = hgit.get_amp_abs_path()
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)
@@ -67,7 +70,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    docker_compose_file_path = hlitadoc.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `env file` path.
     env_file = get_db_env_path(stage)
@@ -77,7 +80,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     cmd.append(f"run --rm {service_name}")
     cmd.append(docker_cmd)
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+    multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
 
@@ -93,7 +96,7 @@ def im_docker_cmd(ctx, stage, cmd):  # type: ignore
     # Get docker cmd.
     docker_cmd = _get_docker_cmd(stage, cmd)
     # Execute the command.
-    hlibtask._run(ctx, docker_cmd, pty=True)
+    hlitauti._run(ctx, docker_cmd, pty=True)
 
 
 # #############################################################################
@@ -117,7 +120,7 @@ def _get_docker_up_cmd(stage: str, detach: bool) -> str:
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    docker_compose_file_path = hlitadoc.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `env file` path.
     env_file = get_db_env_path(stage)
@@ -129,7 +132,7 @@ def _get_docker_up_cmd(stage: str, detach: bool) -> str:
         cmd.append("-d")
     service = "im_postgres"
     cmd.append(service)
-    cmd = hlibtask._to_multi_line_cmd(cmd)
+    cmd = hlitauti._to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
 
 
@@ -145,7 +148,7 @@ def im_docker_up(ctx, stage, detach=False):  # type: ignore
     # Get docker down command.
     docker_clean_up_cmd = _get_docker_up_cmd(stage, detach)
     # Execute the command.
-    hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
+    hlitauti._run(ctx, docker_clean_up_cmd, pty=True)
 
 
 # #############################################################################
@@ -169,7 +172,7 @@ def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
     """
     cmd = ["docker-compose"]
     # Add `docker-compose` file path.
-    docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+    docker_compose_file_path = hlitadoc.get_base_docker_compose_path()
     cmd.append(f"--file {docker_compose_file_path}")
     # Add `env file` path.
     env_file = get_db_env_path(stage)
@@ -182,7 +185,7 @@ def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
             "Removing the attached volumes resetting the state of the DB"
         )
         cmd.append("-v")
-    cmd = hlibtask._to_multi_line_cmd(cmd)
+    cmd = hlitauti._to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
 
 
@@ -201,7 +204,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     # Get docker down command.
     cmd = _get_docker_down_cmd(stage, volumes_remove)
     # Execute the command.
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)
 
 
 # #############################################################################
@@ -232,7 +235,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #         - from a `JSON` file, pass a path to a `JSON` file
 #     """
 #     cmd = ["docker-compose"]
-#     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+#     docker_compose_file_path = hlitadoc.get_base_docker_compose_path()
 #     cmd.append(f"--file {docker_compose_file_path}")
 #     cmd.append("run --rm im_postgres")
 #     cmd.append("im_v2/common/db/create_db.py")
@@ -241,7 +244,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #         cmd.append("--overwrite")
 #     # Add quotes so that credentials as string are handled properly by invoke.
 #     cmd.append(f"--credentials '\"{credentials}\"'")
-#     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+#     multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
 #     return multiline_docker_cmd  # type: ignore[no-any-return]
 #
 #
@@ -271,7 +274,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     # Get docker cmd.
 #     docker_cmd = _get_create_db_cmd(dbname, overwrite, credentials)
 #     # Execute the command.
-#     hlibtask._run(ctx, docker_cmd, pty=True)
+#     hlitauti._run(ctx, docker_cmd, pty=True)
 #
 #
 # # #############################################################################
@@ -299,14 +302,14 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #         - from a `JSON` file, pass a path to a `JSON` file
 #     """
 #     cmd = ["docker-compose"]
-#     docker_compose_file_path = hlibtask.get_base_docker_compose_path()
+#     docker_compose_file_path = hlitadoc.get_base_docker_compose_path()
 #     cmd.append(f"--file {docker_compose_file_path}")
 #     cmd.append("run --rm im_postgres")
 #     cmd.append("im_v2/common/db/remove_db.py")
 #     cmd.append(f"--db-name '{dbname}'")
 #     # Add quotes so that credentials as string are handled properly by invoke.
 #     cmd.append(f"--credentials '\"{credentials}\"'")
-#     multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+#     multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
 #     return multiline_docker_cmd  # type: ignore[no-any-return]
 #
 #
@@ -334,4 +337,4 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     # Get docker cmd.
 #     docker_cmd = _get_remove_db_cmd(dbname, credentials)
 #     # Execute the command.
-#     hlibtask._run(ctx, docker_cmd, pty=True)
+#     hlitauti._run(ctx, docker_cmd, pty=True)

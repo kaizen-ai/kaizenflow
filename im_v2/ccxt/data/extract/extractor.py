@@ -29,13 +29,16 @@ class CcxtExtractor(imvcdexex.Extractor):
     - retrieves data in multiple chunks to avoid throttling
     """
 
-    def __init__(self, exchange_id: str) -> None:
+    def __init__(self, exchange_id: str, contract_type: str) -> None:
         """
         Construct CCXT extractor.
 
-        :param: exchange_id: CCXT exchange id to log into (e.g., `binance`)
+        :param exchange_id: CCXT exchange id to log into (e.g., 'binance')
+        :param contract_type: spot or futures contracts to extract
         """
         super().__init__()
+        hdbg.dassert_in(contract_type, ["futures", "spot"], msg="Supported contract types: spot, futures")
+        self.contract_type = contract_type
         self.exchange_id = exchange_id
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
@@ -53,13 +56,17 @@ class CcxtExtractor(imvcdexex.Extractor):
         Log into an exchange via CCXT and return the corresponding
         `ccxt.Exchange` object.
         """
+        # Add 
+        exchange_params: Dict[str, Any] = {}
         # Select credentials for provided exchange.
         credentials = hsecret.get_secret(self.exchange_id)
+        exchange_params.update(credentials)
         # Enable rate limit.
-        credentials["rateLimit"] = True
+        exchange_params["rateLimit"] = True
+        if self.contract_type == "futures":
+            exchange_params["options"] = { 'defaultType': 'future' }
         exchange_class = getattr(ccxt, self.exchange_id)
-        # Create a CCXT Exchange class object.
-        exchange = exchange_class(credentials)
+        exchange = exchange_class(exchange_params)
         hdbg.dassert(
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
@@ -181,9 +188,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
-    def _download_market_depth(self, **kwargs) -> pd.DataFrame:
+    def _download_bid_ask(self, **kwargs) -> pd.DataFrame:
         raise NotImplementedError(
-            "Market depth data is not available for CCXT vendor"
+            "Bid_ask data is not available for CCXT vendor"
         )
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:

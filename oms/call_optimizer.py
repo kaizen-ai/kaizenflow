@@ -26,10 +26,8 @@ _LOG = logging.getLogger(__name__)
 def compute_target_positions_in_cash(
     df: pd.DataFrame,
     *,
-    bulk_frac_to_remove: float,
-    bulk_fill_method: str,
-    target_gmv: float = 100000,
-    volatility_lower_bound: float = 1e-5,
+    style: str,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Compute target trades from holdings (dollar-valued) and predictions.
@@ -60,17 +58,21 @@ def compute_target_positions_in_cash(
     #
     predictions = df["prediction"].rename(0).to_frame().T
     volatility = df["volatility"].rename(0).to_frame().T
-    target_positions_config = cconfig.get_config_from_flattened_dict(
-        {
-            "bulk_frac_to_remove": bulk_frac_to_remove,
-            "bulk_fill_method": bulk_fill_method,
-            "target_gmv": target_gmv,
-            "volatility_lower_bound": volatility_lower_bound,
-        }
-    )
-    target_positions = cofinanc.compute_target_positions_cross_sectionally(
-        predictions, volatility, target_positions_config
-    )
+    if style == "cross_sectional":
+        target_positions = cofinanc.compute_target_positions_cross_sectionally(
+            predictions,
+            volatility,
+            **kwargs,
+        )
+    elif style == "longitudinal":
+        target_positions = cofinanc.compute_target_positions_longitudinally(
+            predictions,
+            volatility,
+            spread=None,
+            **kwargs,
+        )
+    else:
+        raise ValueError("Unsupported `style`=%s", style)
     hdbg.dassert_eq(target_positions.shape[0], 1)
     target_positions = pd.Series(
         target_positions.values[0],
@@ -78,10 +80,6 @@ def compute_target_positions_in_cash(
         name="target_position",
         dtype="float",
     )
-    if bulk_fill_method == "zero":
-        target_positions = target_positions.fillna(0)
-    else:
-        raise ValueError("`bulk_fill_method`=%s not supported", bulk_fill_method)
     _LOG.debug(
         "`target_positions`=\n%s",
         hpandas.df_to_str(
@@ -124,10 +122,10 @@ def run_optimizer(
     # TODO(Grisha): Move this inside the `opt_docker_cmd`.
     # TODO(Grisha): maybe move `docker_login` to the entrypoint?
     # To avoid to call init_logger overwriting the call to it from `main`.
-    import helpers.lib_tasks as hlibtask
+    import helpers.lib_tasks_docker as hlitadoc
 
     ctx = invoke.context.Context()
-    hlibtask.docker_login(ctx)
+    hlitadoc.docker_login(ctx)
     # Serialize the inputs in `tmp_dir`.
     hio.create_dir(tmp_dir, incremental=True)
     input_obj = {"config": config, "df": df}

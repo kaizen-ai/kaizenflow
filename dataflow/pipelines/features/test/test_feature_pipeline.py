@@ -54,8 +54,9 @@ class TestFeaturePipeline(hunitest.TestCase):
         }
         #
         _LOG.debug("config after patching=%s", config)
+        dag = dag_builder.get_dag(config)
         # Initialize DAG runner.
-        dag_runner = dtfcore.FitPredictDagRunner(config, dag_builder)
+        dag_runner = dtfcore.FitPredictDagRunner(dag)
         result_bundle = dag_runner.fit()
         df_out = result_bundle.result_df
         df_str = hunitest.convert_df_to_string(

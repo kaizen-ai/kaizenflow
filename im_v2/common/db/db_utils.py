@@ -13,6 +13,7 @@ from typing import Optional
 
 import psycopg2 as psycop
 
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
@@ -171,7 +172,7 @@ class TestImDbHelper(hsqltest.TestDbHelper, abc.ABC):
         docker_compose_path = os.path.join(
             dir_name, "im_v2/devops/compose/docker-compose.yml"
         )
-        docker_compose_path_idx: str = hio.add_idx_to_filename(
+        docker_compose_path_idx: str = hio.add_suffix_to_filename(
             docker_compose_path, idx
         )
         return docker_compose_path_idx
@@ -228,7 +229,7 @@ networks:
         hio.to_file(compose_file_name, txt)
         # Create env file.
         txt = []
-        if hgit.execute_repo_config_code("use_main_network()"):
+        if henv.execute_repo_config_code("use_main_network()"):
             host = "cf-spm-dev4"
         else:
             host = "localhost"

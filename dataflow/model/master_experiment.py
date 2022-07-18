@@ -33,25 +33,25 @@ def run_experiment(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     config = config.copy()
-    # dag_config = config.pop("DAG")
+    # dag_config = config.pop("dag_config")
     # dag_runner = dtfcore.PredictionDagRunner(
     #    dag_config, config["dag_builder"]
     # )
-    dag_runner = config["dag_runner"](config)
+    dag_runner = config["dag_runner_object"](config)
     # TODO(gp): Maybe save the drawing to file?
     # dtfcore.draw(dag_runner.dag)
     # TODO(gp): Why passing function instead of the values directly?
-    # if "set_fit_intervals" in config["meta"].to_dict():
+    # if "set_fit_intervals" in config["experiment_config"].to_dict():
     #     dag_runner.set_fit_intervals(
-    #         **config["meta", "set_fit_intervals", "func_kwargs"].to_dict()
+    #         **config["experiment_config", "set_fit_intervals", "func_kwargs"].to_dict()
     #     )
-    # if "set_predict_intervals" in config["meta"].to_dict():
+    # if "set_predict_intervals" in config["experiment_config"].to_dict():
     #     dag_runner.set_predict_intervals(
-    #         **config["meta", "set_predict_intervals", "func_kwargs"].to_dict()
+    #         **config["experiment_config", "set_predict_intervals", "func_kwargs"].to_dict()
     #     )
     fit_result_bundle = dag_runner.fit()
     # Maybe run OOS.
-    if "run_oos" in config["meta"].to_dict().keys() and config["meta"]:
+    if "run_oos" in config["experiment_config"].to_dict().keys() and config["experiment_config"]:
         result_bundle = dag_runner.predict()
     else:
         result_bundle = fit_result_bundle
@@ -67,14 +67,14 @@ def run_experiment(config: cconfig.Config) -> None:
 # TODO(gp): -> run_rolling_backtest
 def run_rolling_experiment(config: cconfig.Config) -> None:
     _LOG.debug("config=\n%s", config)
-    dag_config = config.pop("DAG")
+    dag_config = config.pop("dag_config")
     dag_runner = dtfcore.RollingFitPredictDagRunner(
         dag_config,
         config["dag_builder"],
-        config["meta"]["start"],
-        config["meta"]["end"],
-        config["meta"]["retraining_freq"],
-        config["meta"]["retraining_lookback"],
+        config["experiment_config"]["start"],
+        config["experiment_config"]["end"],
+        config["experiment_config"]["retraining_freq"],
+        config["experiment_config"]["retraining_lookback"],
     )
     for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
         payload = cconfig.get_config_from_nested_dict({"config": config})
@@ -108,17 +108,17 @@ def _save_tiled_output(
     # end_timestamp]) discarding the warm up period (i.e., the data in
     # [start_timestamp_with_lookback, start_timestamp]).
     result_df = result_bundle.result_df.loc[
-        config["meta", "start_timestamp"] : config["meta", "end_timestamp"]
+        config["experiment_config", "start_timestamp"] : config["experiment_config", "end_timestamp"]
     ]
     # Convert the result into Parquet.
     df = result_df.stack()
-    asset_id_col_name = config["meta", "asset_id_col_name"]
+    asset_id_col_name = config["market_data_config", "asset_id_col_name"]
     df.index.names = ["end_ts", asset_id_col_name]
     df = df.reset_index(level=1)
     df["year"] = df.index.year
     df["month"] = df.index.month
     # The results are saved in the subdir `tiled_results` of the experiment list.
-    tiled_dst_dir = os.path.join(config["meta", "dst_dir"], "tiled_results")
+    tiled_dst_dir = os.path.join(config["experiment_config", "dst_dir"], "tiled_results")
     hparque.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir=tiled_dst_dir
     )
@@ -137,14 +137,14 @@ def run_tiled_backtest(config: cconfig.Config) -> None:
     """
     _LOG.debug("config=\n%s", config)
     # Create the DAG runner.
-    dag_runner = config["dag_runner"](config)
+    dag_runner = config["dag_runner_object"]()
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
         [
             (
-                config["meta", "start_timestamp_with_lookback"],
-                config["meta", "end_timestamp"],
+                config["experiment_config", "start_timestamp_with_lookback"],
+                config["experiment_config", "end_timestamp"],
             )
         ],
     )

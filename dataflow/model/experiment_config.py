@@ -5,7 +5,7 @@ import dataflow.model.experiment_config as dtfmoexcon
 """
 import datetime
 import logging
-from typing import Any, Callable, Iterable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -32,12 +32,12 @@ def parse_universe_str(universe_str: str) -> Tuple[str, Optional[int]]:
     hdbg.dassert_eq(len(data), 2, "Invalid universe='%s'", universe_str)
     universe_version, top_n = data
     if top_n == "all":
-        top_n = None
+        top_n_ = None
     else:
         prefix = "top"
         hdbg.dassert(top_n.startswith(prefix), "Invalid top_n='%s'", top_n)
-        top_n = int(top_n[len(prefix) :])
-    return universe_version, top_n
+        top_n_ = int(top_n[len(prefix) :])
+    return universe_version, top_n_
 
 
 def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
@@ -63,7 +63,8 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
     Get start and end timestamps from the specified period.
 
-    The interval type is [a, b), i.e. the last day of the interval is excluded.
+    The interval type is [a, b), i.e. the last day of the interval is
+    excluded.
     """
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
@@ -115,8 +116,23 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     elif period == "2019_2022":
         start_datetime = datetime.datetime(2019, 1, 1)
         end_datetime = datetime.datetime(2022, 3, 1)
+    elif period == "Aug2021_Jul2022":
+        start_datetime = datetime.datetime(2021, 8, 1)
+        end_datetime = datetime.datetime(2022, 7, 1)
+    elif period == "Aug2021_Aug2022":
+        start_datetime = datetime.datetime(2021, 8, 1)
+        end_datetime = datetime.datetime(2022, 8, 1)
+    elif period == "Sep2019_Jul2022":
+        start_datetime = datetime.datetime(2019, 9, 1)
+        end_datetime = datetime.datetime(2022, 7, 1)
+    elif period == "Sep2019_Aug2022":
+        start_datetime = datetime.datetime(2019, 9, 1)
+        end_datetime = datetime.datetime(2022, 8, 1)
+    elif period == "Jan2022":
+        start_datetime = datetime.datetime(2022, 1, 1)
+        end_datetime = datetime.datetime(2022, 2, 1)
     else:
-        hdbg.dfatal("Invalid period='%s'" % period)
+        hdbg.dfatal(f"Invalid period='{period}'")
     _LOG.info("start_datetime=%s end_datetime=%s", start_datetime, end_datetime)
     hdbg.dassert_lte(start_datetime, end_datetime)
     start_timestamp = pd.Timestamp(start_datetime, tz="UTC")
@@ -167,16 +183,16 @@ def parse_experiment_config(backtest_config: str) -> Tuple[str, str, str]:
 def set_asset_id(
     config: cconfig.Config,
     asset_id_key: cconfig.Config.Key,
-    asset_id: int,
+    asset_id: Union[List[int], int],
     *,
     allow_new_key: bool = True,
     assume_dummy: bool = True,
-) -> None:
+) -> cconfig.Config:
     """
     Assign an `asset_id` to a config.
 
     :param asset_id_key: the key to assign
-        - E.g., `("DAG", "rets/read_data", "asset_id")`
+        - E.g., `("dag_config", "rets/read_data", "asset_id")`
     :param assume_dummy: assume that the value in the config corresponding to
         `asset_id_key` is `DUMMY`, i.e., it's coming from a template. This is
         used to enforce a use patter like "create a template config and then
@@ -190,6 +206,9 @@ def set_asset_id(
             hdbg.dassert_eq(config.get(asset_id_key), cconfig.DUMMY)
     config[asset_id_key] = asset_id
     return config
+
+
+# #############################################################################
 
 
 def build_configs_varying_asset_id(
@@ -212,13 +231,12 @@ def build_configs_varying_asset_id(
     return configs
 
 
-# TODO(gp): -> asset_tiles
-
-
+# TODO(gp): -> ...varying_asset_tiles
 def build_configs_varying_universe_tiles(
     config: cconfig.Config,
     universe_tile_id: cconfig.Config.Key,
-    universe_tiles: Iterable[List[int]],
+    # TODO(gp): -> asset_tiles
+    universe_tiles: List[List[int]],
 ) -> List[cconfig.Config]:
     """
     Create a list of `Config`s based on `config` using different universe
@@ -239,6 +257,7 @@ def build_configs_varying_universe_tiles(
     return configs
 
 
+# TODO(gp): -> ...varying_period_tiles
 def build_configs_varying_tiled_periods(
     config: cconfig.Config,
     start_timestamp: pd.Timestamp,
@@ -301,15 +320,43 @@ def build_configs_varying_tiled_periods(
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         #
         config_tmp = config.copy()
-        config_tmp[("meta", "start_timestamp_with_lookback")] = (
+        config_tmp[("experiment_config", "start_timestamp_with_lookback")] = (
             start_ts - lookback
         )
-        config_tmp[("meta", "start_timestamp")] = start_ts
-        config_tmp[("meta", "end_timestamp")] = end_ts
+        config_tmp[("experiment_config", "start_timestamp")] = start_ts
+        config_tmp[("experiment_config", "end_timestamp")] = end_ts
         #
         _LOG.debug("config_tmp=%s\n", config_tmp)
         #
         configs.append(config_tmp)
+    return configs
+
+
+# #############################################################################
+
+
+# TODO(gp): -> build_configs_using_equal_asset_tiles
+def build_configs_with_tiled_universe(
+    config: cconfig.Config, asset_ids: List[int]
+) -> List[cconfig.Config]:
+    """
+    Create a list of `Config`s using asset tiles of the same size.
+    """
+    if len(asset_ids) > 300:
+        # if len(asset_ids) > 1000:
+        # Split the universe in 2 parts.
+        # TODO(gp): We can generalize this.
+        split_idx = int(len(asset_ids) / 2)
+        asset_ids_part1 = asset_ids[:split_idx]
+        asset_ids_part2 = asset_ids[split_idx:]
+        #
+        universe_tiles: List[List[int]] = [asset_ids_part1, asset_ids_part2]
+    else:
+        universe_tiles = [asset_ids]
+    asset_id_key = ("market_data_config", "asset_ids")
+    configs = build_configs_varying_universe_tiles(
+        config, asset_id_key, universe_tiles
+    )
     return configs
 
 
@@ -327,3 +374,32 @@ def apply_build_configs(
         hdbg.dassert_container_type(configs_tmp, list, cconfig.Config)
         configs_out.extend(configs_tmp)
     return configs_out
+
+
+# TODO(gp): -> build_configs_using_equal_asset_and_period_tiles
+def build_configs_with_tiled_universe_and_periods(
+    system_config: cconfig.Config,
+) -> List[cconfig.Config]:
+    """
+    Create a list of `Config`s using asset and period tiles of the same size.
+    """
+    configs = [system_config]
+    time_interval_str = system_config["backtest_config"]["time_interval_str"]
+    asset_ids = system_config["market_data_config"]["asset_ids"]
+    # Apply the cross-product by the universe tiles.
+    func = lambda cfg: build_configs_with_tiled_universe(cfg, asset_ids)
+    configs = apply_build_configs(func, configs)
+    _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
+    hdbg.dassert_lte(1, len(configs))
+    # Apply the cross-product by the time tiles.
+    start_timestamp, end_timestamp = get_period(time_interval_str)
+    freq_as_pd_str = system_config["backtest_config", "freq_as_pd_str"]
+    # Amount of history fed to the DAG.
+    lookback_as_pd_str = system_config["backtest_config", "lookback_as_pd_str"]
+    func = lambda cfg: build_configs_varying_tiled_periods(
+        cfg, start_timestamp, end_timestamp, freq_as_pd_str, lookback_as_pd_str
+    )
+    configs = apply_build_configs(func, configs)
+    hdbg.dassert_lte(1, len(configs))
+    _LOG.info("After applying time tiles: num_configs=%s", len(configs))
+    return configs

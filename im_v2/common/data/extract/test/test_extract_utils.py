@@ -2,7 +2,7 @@ import unittest.mock as umock
 
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
@@ -14,7 +14,7 @@ import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchange1(
@@ -47,6 +47,7 @@ class TestDownloadRealtimeForOneExchange1(
             "exchange_id": "binance",
             "universe": "v3",
             "data_type": "ohlcv",
+            "contract_type": "spot",
             "db_stage": "local",
             "db_table": "ccxt_ohlcv",
             "incremental": False,
@@ -55,7 +56,9 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(kwargs["exchange_id"])
+        extractor = ivcdexex.CcxtExtractor(
+            kwargs["exchange_id"], kwargs["contract_type"]
+        )
         if use_s3:
             # Update kwargs.
             kwargs.update(
@@ -104,12 +107,14 @@ class TestDownloadRealtimeForOneExchange1(
 
         Run without saving to s3.
         """
+        # Set mock return values.
         mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
+        # Run.
         use_s3 = False
         self.call_download_realtime_for_one_exchange(use_s3)
-        # Check number of calls and args for current time.
+        # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 0)
@@ -131,12 +136,14 @@ class TestDownloadRealtimeForOneExchange1(
 
         Run and save to s3.
         """
+        # Set mock return values.
         mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
+        # Run.
         use_s3 = True
         self.call_download_realtime_for_one_exchange(use_s3)
-        # Check number of calls and args for current time.
+        # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 9)
@@ -172,7 +179,7 @@ class TestDownloadRealtimeForOneExchange1(
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
@@ -186,6 +193,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "end_timestamp": "2022-01-01 01:00:00",
             "exchange_id": "binance",
             "data_type": "ohlcv",
+            "contract_type": "spot",
             "universe": "v3",
             "incremental": incremental,
             "aws_profile": self.mock_aws_profile,
@@ -194,7 +202,9 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "file_format": "parquet",
             "unit": "ms",
         }
-        exchange = ivcdexex.CcxtExtractor(args["exchange_id"])
+        exchange = ivcdexex.CcxtExtractor(
+            args["exchange_id"], args["contract_type"]
+        )
         imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.skip(reason="CMTask2089")
@@ -212,24 +222,23 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         line arguments and comparing function output with predefined directory
         structure and file contents.
         """
+        # Set mock return values.
         mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
         mock_get_secret.return_value = self.binance_secret
-        # TODO(Nikola): Remove comments below and use it in docs, CMTask #1349.
+        # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
             f.write("test")
+        # Run.
         incremental = True
         self.call_download_historical_data(incremental)
-        # Check number of calls and args for current time.
+        # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
-        # Check args/kwargs that were used for function call.
         expected_args = mock_list_and_merge.call_args.args
         expected_kwargs = mock_list_and_merge.call_args.kwargs
         self.assertEqual(len(expected_args), 1)
-        # Check first argument, `root_dir`.
         self.assertEqual(expected_args[0], "s3://mock_bucket/binance")
-        # Check keyword arguments. In this case only `aws_profile`.
         self.assertDictEqual(
             expected_kwargs,
             {

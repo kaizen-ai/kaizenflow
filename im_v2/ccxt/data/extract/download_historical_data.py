@@ -10,6 +10,8 @@ Use as:
      --end_timestamp '2022-02-09' \
      --start_timestamp '2022-02-08' \
      --exchange_id 'binance' \
+     --data_type 'ohlcv' \
+     --contract_type 'spot' \
      --universe 'v3' \
      --aws_profile 'ck' \
      --s3_path 's3://<ck-data>/historical/'
@@ -37,7 +39,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="OHLCV, market_depth or trades data.",
+        help="OHLCV, bid/ask or trades data.",
     )
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
@@ -49,7 +51,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
-    exchange = ivcdexex.CcxtExtractor(args.exchange_id)
+    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type)
     # Assign extractor-specific variables.
     args = vars(args)
     args["unit"] = "ms"

@@ -24,17 +24,17 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
     Access exchange data from Crypto-Chassis through REST API.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, contract_type: str) -> None:
+        """
+        Construct CrytoChassis extractor.
+
+        :param contract_type: spot or futures contracts to extract
+        """
         super().__init__()
+        hdbg.dassert_in(contract_type, ["spot", "futures"])
+        self.contract_type = contract_type
         self._endpoint = "https://api.cryptochassis.com/v1"
         self.vendor = "crypto_chassis"
-
-    @staticmethod
-    def convert_currency_pair(currency_pair: str) -> str:
-        """
-        Convert currency pair used for getting data from exchange.
-        """
-        return currency_pair.replace("_", "/").lower()
 
     @staticmethod
     def coerce_to_numeric(
@@ -53,6 +53,27 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         if float_columns:
             data[float_columns] = data[float_columns].astype(float)
         return data
+
+    def convert_currency_pair(self, currency_pair: str) -> str:
+        """
+        Convert currency pair used for getting data from exchange.
+
+        The transformation is dependent on the provided contract type.
+
+        :param currency_pair: extracted asset, e.g. "BTC_USDT"
+        :return: currency pair in CryptoChassis format.
+        """
+        if self.contract_type == "futures":
+            # Remove separator for futures contracts, e.g.
+            #  'BTC/USDT' -> 'btcusdt'
+            replace = [("/", ""), ("_", "")]
+        elif self.contract_type == "spot":
+            # Replace separators with '-', e.g.
+            # 'BTC/USDT' -> 'btc-usdt'.
+            replace = [("/", "-"), ("_", "-")]
+        for old, new in replace:
+            currency_pair = currency_pair.replace(old, new).lower()
+        return currency_pair
 
     @staticmethod
     def _build_query_url(base_url: str, **kwargs: Any) -> str:
@@ -80,7 +101,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         query_url = f"{base_url}?{joined_params}"
         return query_url
 
-    def _download_market_depth(
+    def _download_bid_ask(
         self,
         exchange_id: str,
         currency_pair: str,
@@ -90,17 +111,17 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         depth: int = 1,
     ) -> pd.DataFrame:
         """
-        Download snapshot data on market depth.
+        Download snapshot data on bid/ask.
 
             timestamp     bid_price     bid_size     ask_price     ask_size
         0     1641686400     41678.35     0.017939     41686.97     1.69712319
         1     1641686401     41678.35     0.017939     41690.58     0.04
 
-        :param exchange: the name of exchange, e.g. `binance`, `coinbase`
+        :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :param start_timestamp: start of processing
         :param depth: allowed values: 1 to 10. Defaults to 1.
-        :return: market depth data
+        :return: bid/ask data
         """
         hdbg.dassert_isinstance(
             start_timestamp,
@@ -115,10 +136,20 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         if depth:
             hdbg.dassert_lgt(1, depth, 10, True, True)
             depth = str(depth)
-        # Currency pairs in market data are stored in `cur1/cur2` format,
-        # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
-        # convert the specified pair to this view.
-        currency_pair = currency_pair.replace("/", "-")
+        # Convert currency pair to CryptoChassis supported format.
+        currency_pair = self.convert_currency_pair(currency_pair)
+        # Set an exchange ID for futures, if applicable.
+        if self.contract_type == "futures":
+            hdbg.dassert_eq(
+                exchange_id, "binance", msg="Only binance futures are supported"
+            )
+            if currency_pair.endswith("usd"):
+                # Change exchange and currency format to COIN-M futures.
+                currency_pair = currency_pair+"_perp"
+                exchange_id = "binance-coin-futures"
+            else:
+                # Change exchange ID to USDS futures.
+                exchange_id = "binance-usds-futures"
         # Build base URL.
         core_url = self._build_base_url(
             data_type="market-depth",
@@ -147,29 +178,29 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
                 # Convert CSV into dataframe.
                 df_csv = pd.read_csv(df_csv, compression="gzip")
             all_days_data.append(df_csv)
-        market_depth = pd.concat(all_days_data)
-        if market_depth.empty:
+        bid_ask = pd.concat(all_days_data)
+        if bid_ask.empty:
             _LOG.warning("No data found for given query parameters.")
             return pd.DataFrame()
         # Separate `bid_price_bid_size` column to `bid_price` and `bid_size`.
-        market_depth["bid_price"], market_depth["bid_size"] = zip(
-            *market_depth["bid_price_bid_size"].apply(lambda x: x.split("_"))
+        bid_ask["bid_price"], bid_ask["bid_size"] = zip(
+            *bid_ask["bid_price_bid_size"].apply(lambda x: x.split("_"))
         )
         # Separate `ask_price_ask_size` column to `ask_price` and `ask_size`.
-        market_depth["ask_price"], market_depth["ask_size"] = zip(
-            *market_depth["ask_price_ask_size"].apply(lambda x: x.split("_"))
+        bid_ask["ask_price"], bid_ask["ask_size"] = zip(
+            *bid_ask["ask_price_ask_size"].apply(lambda x: x.split("_"))
         )
         # Remove deprecated columns.
-        market_depth = market_depth.drop(
+        bid_ask = bid_ask.drop(
             columns=["bid_price_bid_size", "ask_price_ask_size"]
         )
         bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
-        market_depth = self.coerce_to_numeric(
-            market_depth, float_columns=bid_ask_cols
+        bid_ask = self.coerce_to_numeric(
+            bid_ask, float_columns=bid_ask_cols
         )
         # Rename time column.
-        market_depth = market_depth.rename(columns={"time_seconds": "timestamp"})
-        return market_depth
+        bid_ask = bid_ask.rename(columns={"time_seconds": "timestamp"})
+        return bid_ask
 
     def _download_ohlcv(
         self,
@@ -218,13 +249,25 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         # Currency pairs in market data are stored in `cur1/cur2` format,
         # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
         # convert the specified pair to this view.
-        currency_pair = currency_pair.replace("/", "-")
+        currency_pair = self.convert_currency_pair(currency_pair)
+        # Set an exchange ID for futures, if applicable.
+        if self.contract_type == "futures":
+            hdbg.dassert_eq(
+                exchange_id, "binance", msg="Only binance futures are supported"
+            )
+            if currency_pair.endswith("usd"):
+                currency_pair = currency_pair+"_perp"
+                exchange_id = "binance-coin-futures"
+            else:
+                exchange_id = "binance-usds-futures"
+            _LOG.info("currency pair %s", currency_pair)
         # Build base URL.
         core_url = self._build_base_url(
             data_type="ohlc",
             exchange=exchange_id,
             currency_pair=currency_pair,
         )
+        _LOG.info("core_url %s", core_url)
         # Build URL with specified parameters.
         query_url = self._build_query_url(
             core_url,
@@ -298,10 +341,13 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
                 pd.Timestamp,
             )
             start_timestamp = start_timestamp.strftime("%Y-%m-%dT%XZ")
-        # Currency pairs in market data are stored in `cur1/cur2` format,
-        # Crypto Chassis API processes currencies in `cur1-cur2` format, therefore
-        # convert the specified pair to this view.
-        currency_pair = currency_pair.replace("/", "-")
+        currency_pair = self.convert_currency_pair(currency_pair)
+        # Set an exchange ID for futures, if applicable.
+        if self.contract_type == "futures":
+            hdbg.dassert_eq(
+                exchange_id, "binance", msg="Only binance futures are supported"
+            )
+            exchange_id = "binance-usds-futures"
         # Build base URL.
         core_url = self._build_base_url(
             data_type="trade",

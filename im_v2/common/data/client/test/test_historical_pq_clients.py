@@ -273,6 +273,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_columns = ["full_symbol", "whatever"]
         self._test_filter_columns2(im_client, full_symbol, expected_columns)
 
+    @pytest.mark.skip(reason="Enable after Lime477")
     def test_filter_columns3(self) -> None:
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
@@ -282,6 +283,7 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         expected_columns = ["close"]
         self._test_filter_columns3(im_client, full_symbol, expected_columns)
 
+    @pytest.mark.skip(reason="Enable after Lime477")
     def test_filter_columns4(self) -> None:
         full_symbol = "binance::BTC_USDT"
         resample_1min = True
@@ -438,6 +440,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, fast on server.")
     def test_one_month1(self) -> None:
         """
         Interval of 1 month length capturing data for 1 month strictly.
@@ -479,6 +482,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, fast on server.")
     def test_one_month2(self) -> None:
         """
         Interval of 1 month length capturing data for 2 month.
@@ -645,6 +649,7 @@ class TestHistoricalPqByTileClient2(icdctictc.ImClientTestCase):
             expected_signature,
         )
 
+    @pytest.mark.slow("Slow via GH, fast on server.")
     def test_new_year1(self) -> None:
         """
         Interval of the last minute of a year and the first of the next one.

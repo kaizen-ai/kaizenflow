@@ -10,6 +10,7 @@ import pyarrow.parquet as parquet
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
@@ -837,7 +838,7 @@ class TestToPartitionedDataset(hunitest.TestCase):
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
@@ -946,3 +947,108 @@ class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):
         hparque.list_and_merge_pq_files(self.bucket_name, aws_profile=s3fs_)
         df = hparque.from_parquet(original_sample_path, aws_profile=s3fs_)
         self.assertEqual(len(df), 1)
+
+
+# #############################################################################
+
+
+class TestYieldParquetTiles(hunitest.TestCase):
+    def generate_test_data(self) -> None:
+        """
+        Generate test data and write it to a scratch dir.
+
+        Data has the following structure:
+
+        ```
+                    asset_id  ...  year  month
+        end_ts
+        2021-11-01       100       2021     11
+        2021-11-01       200       2021     11
+        2021-11-01       300       2021     11
+        ...
+        2022-02-01       200       2022      2
+        2022-02-01       300       2022      2
+        2022-02-01       400       2022      2
+        ```
+        """
+        # Generate synthetic data.
+        asset_ids = [100, 200, 300, 400]
+        prices = list(range(1, 17))
+        volatility = list(range(17, 33))
+        dates = ["2021-11-01", "2021-12-01", "2022-01-01", "2022-02-01"]
+        dates = map(pd.Timestamp, dates)
+        index_ = [dates, asset_ids]
+        multi_index = pd.MultiIndex.from_product(
+            index_, names=["end_ts", "asset_id"]
+        )
+        df = pd.DataFrame(
+            {"price": prices, "volatility": volatility}, index=multi_index
+        )
+        df["year"] = df.index.get_level_values(0).year
+        df["month"] = df.index.get_level_values(0).month
+        df = df.reset_index(level=1)
+        _LOG.debug("Test data: df=\n%s", hpandas.df_to_str(df))
+        # Write the data to a scratch dir.
+        partition_columns = ["asset_id", "year", "month"]
+        dst_dir = self.get_scratch_space()
+        hparque.to_partitioned_parquet(df, partition_columns, dst_dir)
+
+    def test_yield_tiles_by_asset(self) -> None:
+        """
+        Test reading only certain asset ids.
+        """
+        self.generate_test_data()
+        # Read data.
+        file_name = self.get_scratch_space()
+        asset_ids = [100, 200]
+        asset_id_col = "asset_id"
+        asset_batch_size = 1
+        columns = [asset_id_col, "price"]
+        generator_ = hparque.yield_parquet_tiles_by_assets(
+            file_name, asset_ids, asset_id_col, asset_batch_size, columns
+        )
+        df = pd.concat(generator_)
+        _LOG.debug("Filtered data: df=\n%s", hpandas.df_to_str(df))
+        # Check asset ids filtering.
+        actual = str(asset_ids)
+        expected = str(df[asset_id_col].unique().tolist())
+        self.assert_equal(actual, expected)
+
+    def test_yield_tiles_by_year(self) -> None:
+        """
+        Test reading only certain asset ids and dates.
+        """
+        self.generate_test_data()
+        # Read data.
+        file_name = self.get_scratch_space()
+        start_year = 2021
+        start_month = 12
+        start_date = datetime.date(start_year, start_month, 1)
+        end_year = 2022
+        end_month = 1
+        end_date = datetime.date(end_year, end_month, 2)
+        asset_ids = [300, 400]
+        asset_id_col = "asset_id"
+        columns = [asset_id_col, "price"]
+        generator_ = hparque.yield_parquet_tiles_by_year(
+            file_name,
+            start_date,
+            end_date,
+            columns,
+            asset_ids=asset_ids,
+            asset_id_col=asset_id_col,
+        )
+        df = pd.concat(generator_)
+        _LOG.debug("Filtered data: df=\n%s", hpandas.df_to_str(df))
+        # Check asset ids filtering.
+        actual = str(asset_ids)
+        expected = str(df[asset_id_col].unique().tolist())
+        self.assert_equal(actual, expected)
+        # Check start date filtering.
+        min_date = df.index.min()
+        self.assertEqual(min_date.month, start_month)
+        self.assertEqual(min_date.year, start_year)
+        # Check end date filtering.
+        max_date = df.index.max()
+        self.assertEqual(max_date.month, end_month)
+        self.assertEqual(max_date.year, end_year)

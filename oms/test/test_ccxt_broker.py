@@ -16,14 +16,13 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         market_data, _ = mdata.get_ReplayedTimeMarketData_example3(None)
         strategy = "SAU1"
-        # Instantiante a broker with specified exchange.
-        exchange = self._log_into_coinbasepro_exchange()
         # TODO(Juraj) mock the API calls.
         broker = occxbrok.CcxtBroker(
-            exchange,
-            "v5",
-            "prod",
+            "coinbasepro",
+            "coinbase_test",
+            "test",
             "c27158ee-ac73-49bb-a1f3-ec022cac33c2",
+            "spot",
             strategy_id=strategy,
             market_data=market_data,
         )
@@ -48,7 +47,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         event_loop = None
         hasynci.run(self.run_coroutine1(event_loop), event_loop=event_loop)
 
-    # @pytest.mark.skip(reason="Code in development.")
+    @pytest.mark.skip(reason="Code in development.")
     def test_unsupported_exchange1(self) -> None:
         """
         Verify that CcxtBroker is not instantiated for exchanges without
@@ -62,6 +61,7 @@ class TestCcxtBroker1(hunitest.TestCase):
                 "v3",
                 "test",
                 "c27158ee-ac73-49bb-a1f3-ec022cac33c2",
+                "spot",
                 strategy_id=strategy,
                 market_data=market_data,
             )

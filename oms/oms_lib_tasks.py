@@ -15,9 +15,11 @@ from invoke import task
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
+
+# pylint: disable=protected-access
 
 
 # TODO(gp): This was branched from im/im_lib_tasks.py. We should factor out the
@@ -38,7 +40,7 @@ def get_db_env_path(stage: str, *, idx: Optional[int] = None) -> str:
     # Get the file name depending on the stage.
     env_file_name = f"{stage}.oms_db_config.env"
     if idx is not None:
-        env_file_name = hio.add_idx_to_filename(env_file_name, idx)
+        env_file_name = hio.add_suffix_to_filename(env_file_name, idx)
     # Get file path.
     amp_path = hgit.get_amp_abs_path()
     env_file_path = os.path.join(amp_path, env_dir, env_file_name)
@@ -103,7 +105,7 @@ def _get_docker_cmd(stage: str, docker_cmd: str) -> str:
     cmd.append(f"run --rm {service_name}")
     cmd.append(docker_cmd)
     # Convert the list to a multiline command.
-    multiline_docker_cmd = hlibtask._to_multi_line_cmd(cmd)
+    multiline_docker_cmd = hlitauti._to_multi_line_cmd(cmd)
     return multiline_docker_cmd  # type: ignore[no-any-return]
 
 
@@ -119,7 +121,7 @@ def oms_docker_cmd(ctx, stage, cmd):  # type: ignore
     # Get docker cmd.
     docker_cmd = _get_docker_cmd(stage, cmd)
     # Execute the command.
-    hlibtask._run(ctx, docker_cmd, pty=True)
+    hlitauti._run(ctx, docker_cmd, pty=True)
 
 
 # #############################################################################
@@ -155,7 +157,7 @@ def _get_docker_up_cmd(stage: str, detach: bool) -> str:
         cmd.append("-d")
     service = "oms_postgres"
     cmd.append(service)
-    cmd = hlibtask._to_multi_line_cmd(cmd)
+    cmd = hlitauti._to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
 
 
@@ -171,7 +173,7 @@ def oms_docker_up(ctx, stage, detach=False):  # type: ignore
     # Get docker down command.
     docker_clean_up_cmd = _get_docker_up_cmd(stage, detach)
     # Execute the command.
-    hlibtask._run(ctx, docker_clean_up_cmd, pty=True)
+    hlitauti._run(ctx, docker_clean_up_cmd, pty=True)
 
 
 # #############################################################################
@@ -208,7 +210,7 @@ def _get_docker_down_cmd(stage: str, volumes_remove: bool) -> str:
             "Removing the attached volumes resetting the state of the DB"
         )
         cmd.append("-v")
-    cmd = hlibtask._to_multi_line_cmd(cmd)
+    cmd = hlitauti._to_multi_line_cmd(cmd)
     return cmd  # type: ignore[no-any-return]
 
 
@@ -227,4 +229,4 @@ def oms_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     # Get docker down command.
     cmd = _get_docker_down_cmd(stage, volumes_remove)
     # Execute the command.
-    hlibtask._run(ctx, cmd, pty=True)
+    hlitauti._run(ctx, cmd, pty=True)

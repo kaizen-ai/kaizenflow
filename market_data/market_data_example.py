@@ -15,6 +15,7 @@ import core.real_time as creatime
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import market_data.im_client_market_data as mdimcmada
@@ -29,6 +30,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): Create an analogue of this for historical market data.
 # TODO(gp): Return only MarketData since the wall clock is inside it.
 def get_ReplayedTimeMarketData_from_df(
     event_loop: asyncio.AbstractEventLoop,
@@ -63,9 +65,17 @@ def get_ReplayedTimeMarketData_from_df(
     tz = "ET"
     # Find the initial timestamp of the data and shift by
     # `initial_replayed_delay`.
-    initial_replayed_dt = df[start_time_col_name].min() + pd.Timedelta(
+    min_start_time_col_name = df[start_time_col_name].min()
+    initial_replayed_dt = min_start_time_col_name + pd.Timedelta(
         minutes=initial_replayed_delay
     )
+    _LOG.debug(hprint.to_str(
+        "min_start_time_col_name initial_replayed_delay initial_replayed_dt"))
+    # The initial replayed datetime should be before the end of the data.
+    end_of_data_dt = df[start_time_col_name].max()
+    if initial_replayed_dt > end_of_data_dt:
+        _LOG.warning(f"The initial replayed datetime '{initial_replayed_dt}' "
+            "should be before the end of the data '{end_of_data_dt}'")
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
         tz,

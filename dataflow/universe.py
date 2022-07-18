@@ -242,8 +242,9 @@ def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
     Create universe for Example1 DAG.
     """
     vendor = "example1"
+    mode = "trade"
     full_symbols = ivcu.get_vendor_universe(
-        vendor, version="v1", as_full_symbol=True
+        vendor, mode, version="v1", as_full_symbol=True
     )
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
@@ -259,8 +260,9 @@ def _get_crypto_chassis_universe(version: str, n: Optional[int]) -> List[Amid]:
     Create universe for `CryptoChassis`.
     """
     vendor = "crypto_chassis"
+    mode = "trade"
     full_symbols = ivcu.get_vendor_universe(
-        vendor, version=version, as_full_symbol=True
+        vendor, mode, version=version, as_full_symbol=True
     )
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
@@ -276,8 +278,9 @@ def _get_ccxt_universe(version: str, n: Optional[int]) -> List[Amid]:
     Create universe for `CCXT`.
     """
     vendor = "CCXT"
+    mode = "trade"
     full_symbols = ivcu.get_vendor_universe(
-        vendor, version=version, as_full_symbol=True
+        vendor, mode, version=version, as_full_symbol=True
     )
     full_symbols = _get_top_n(full_symbols, n)
     return full_symbols
@@ -302,29 +305,27 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "ccxt_v3":
         version = "v3"
         ret = _get_ccxt_universe(version, top_n)
-        # Remove Kucoin data due to its bad quality.
-        ret = [
-            full_symbol
-            for full_symbol in ret
-            if not full_symbol.startswith("kucoin")
-        ]
     elif universe_version == "ccxt_v4":
         version = "v4"
         ret = _get_ccxt_universe(version, top_n)
-        # As the other data is of bad quality we keep Binance data only.
-        ret = [
-            full_symbol
-            for full_symbol in ret
-            if full_symbol.startswith("binance")
-        ]
+    elif universe_version == "ccxt_v6":
+        version = "v6"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v7":
+        version = "v7" 
+        ret = _get_ccxt_universe(version, top_n)
     elif universe_version == "crypto_chassis_v1":
         version = "v1"
         ret = _get_crypto_chassis_universe(version, top_n)
     elif universe_version == "crypto_chassis_v2":
         version = "v2"
         ret = _get_crypto_chassis_universe(version, top_n)
-        # Remove DOGE data due to its bad quality CmTask2052.
-        ret.remove("coinbase::DOGE_USDT")
+    elif universe_version == "crypto_chassis_v3":
+        version = "v3"
+        ret = _get_crypto_chassis_universe(version, top_n)
+    elif universe_version == "crypto_chassis_v4":
+        version = "v4"
+        ret = _get_crypto_chassis_universe(version, top_n)
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret

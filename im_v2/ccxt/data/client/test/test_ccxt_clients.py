@@ -4,7 +4,7 @@ from typing import List
 import pandas as pd
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
@@ -991,7 +991,7 @@ class CcxtSqlRealTimeImClient1(
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
@@ -1352,7 +1352,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
             s3_bucket_path,
             "unit_test",
             "historical.manual.pq",
-            "latest",
+            "20220705",
             "ohlcv",
             "ccxt",
         )
@@ -1379,9 +1379,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
 
         return: data to be loaded to S3
         """
+        universe_version = "v4"
         resample_1min = False
+        dataset = "ohlcv"
+        contract_type = "spot"
+        data_snapshot = "20220705"
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
-            resample_1min
+            universe_version, resample_1min, dataset, contract_type, data_snapshot
         )
         full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
         start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)

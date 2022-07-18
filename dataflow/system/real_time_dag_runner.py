@@ -33,13 +33,12 @@ class RealTimeDagRunner(dtfcore.DagRunner):
 
     def __init__(
         self,
-        config: cconfig.Config,
-        dag_builder: dtfcore.DagBuilder,
+        dag: dtfcore.DAG,
         fit_state: cconfig.Config,
         execute_rt_loop_kwargs: Dict[str, Any],
         dst_dir: str,
     ) -> None:
-        super().__init__(config, dag_builder)
+        super().__init__(dag)
         # Save input parameters.
         # TODO(gp): Use this for stateful DAGs.
         _ = fit_state
@@ -106,6 +105,9 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         for nid in sources:
             node = self.dag.get_node(nid)
             _LOG.debug("nid=%s node=%s type=%s", nid, str(node), str(type(node)))
+            if isinstance(node, dtfsysonod.HistoricalDataSource):
+                raise ValueError(f"HistoricalDataSource node {node} not allowed "
+                    "in RealTimeDagRunner")
             if isinstance(node, dtfsysonod.RealTimeDataSource):
                 _LOG.debug("Waiting on node '%s' ...", str(nid))
                 await node.wait_for_latest_data()

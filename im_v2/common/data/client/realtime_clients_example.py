@@ -16,6 +16,10 @@ import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
 
+# #############################################################################
+# TestSqlRealTimeImClient
+# #############################################################################
+
 
 def _get_example1_create_table_query() -> str:
     """
@@ -45,12 +49,12 @@ def _create_example1_sql_data() -> pd.DataFrame:
     Generate a dataframe with price features and fixed currency_pair and
     exchange_id.
 
-    This imulates contents of DBs with crypto data, e.g. from Talos and CCXT.
+    This simulates contents of DBs with crypto data, e.g. from Talos and CCXT.
 
     Output example:
 
     ```
-    timestamp  close  volume  feature1 currency_pair exchange_id              timestamp_db
+       timestamp  close  volume  feature1 currency_pair exchange_id              timestamp_db
     946737060000  101.0     100       1.0      BTC_USDT     binance 2000-01-01 09:31:00-05:00
     946737120000  101.0     100       1.0      BTC_USDT     binance 2000-01-01 09:32:00-05:00
     946737180000  101.0     100       1.0      BTC_USDT     binance 2000-01-01 09:33:00-05:00
@@ -99,6 +103,11 @@ def _create_example1_sql_data() -> pd.DataFrame:
         ]
     ]
     return data
+
+
+# #############################################################################
+# Example1SqlRealTimeImClient
+# #############################################################################
 
 
 class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):

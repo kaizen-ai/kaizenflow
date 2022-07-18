@@ -7,6 +7,7 @@ import dataflow.system.source_nodes as dtfsysonod
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 
 import core.finance as cofinanc
@@ -380,6 +381,7 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
     # TODO(Paul): Pass the column name through the constructor, so we can make it
     #  programmable.
     hdbg.dassert_in(asset_id_col, df.columns)
+    hpandas.dassert_series_type_is(df[asset_id_col], np.int64)
     for asset_id, df in df.groupby(asset_id_col):
         dfs[asset_id] = df
     # Reorganize the data into the desired format.
@@ -413,7 +415,6 @@ class RealTimeDataSource(dtfcore.DataSource):
         market_data: mdata.MarketData,
         # TODO(gp): -> history_lookback
         timedelta: pd.Timedelta,
-        asset_id_col: Union[int, str],
         multiindex_output: bool,
     ) -> None:
         """
@@ -421,15 +422,14 @@ class RealTimeDataSource(dtfcore.DataSource):
 
         :param timedelta: how much history is needed from the real-time node. See
             `MarketData.get_data()` for details.
-        :param asset_id_col: the name of the column from `market_data`
-            containing the asset ids
         """
+        _LOG.debug(hprint.to_str("nid market_data timedelta multiindex_output"))
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.MarketData)
         self._market_data = market_data
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         self._timedelta = timedelta
-        self._asset_id_col = asset_id_col
+        self._asset_id_col = market_data.asset_id_col
         self._multiindex_output = multiindex_output
 
     # TODO(gp): Can we use a run and move it inside fit?
@@ -450,6 +450,7 @@ class RealTimeDataSource(dtfcore.DataSource):
     def _get_data(self) -> None:
         # TODO(gp): This approach of communicating params through the state
         #  makes the code difficult to understand.
+        _LOG.debug("timedelta=%s", self._timedelta)
         self.df = self._market_data.get_data_for_last_period(self._timedelta)
         if self._multiindex_output:
             self.df = _convert_to_multiindex(self.df, self._asset_id_col)
@@ -469,7 +470,6 @@ class HistoricalDataSource(dtfcore.DataSource):
         self,
         nid: dtfcore.NodeId,
         market_data: mdata.MarketData,
-        asset_id_col: Union[int, str],
         ts_col_name: str,
         multiindex_output: bool,
         *,
@@ -479,16 +479,15 @@ class HistoricalDataSource(dtfcore.DataSource):
         """
         Constructor.
 
-        :param asset_id_col: the name of the column from `market_data`
-            containing the asset ids
         :param ts_col_name: the name of the column from `market_data`
             containing the end time stamp of the interval to filter on
         :param col_names_to_remove: name of the columns to remove from the df
         """
         super().__init__(nid)
         hdbg.dassert_isinstance(market_data, mdata.MarketData)
+        _LOG.debug(hprint.to_str("market_data ts_col_name multiindex_output"))
         self._market_data = market_data
-        self._asset_id_col = asset_id_col
+        self._asset_id_col = market_data.asset_id_col
         self._ts_col_name = ts_col_name
         self._multiindex_output = multiindex_output
         self._col_names_to_remove = col_names_to_remove

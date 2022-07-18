@@ -5,6 +5,7 @@ import pandas as pd
 
 import dataflow.core as dtfcobuexa
 import dataflow.system.real_time_dag_adapter as dtfsrtdaad
+import dataflow.system.sink_nodes as dtfsysinod
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import oms
@@ -12,10 +13,9 @@ import oms
 _LOG = logging.getLogger(__name__)
 
 
-class TestRealtimeDagAdapter1(hunitest.TestCase):
-    """
-    Test RealTimeDagAdapter building various DAGs.
-    """
+class Test_adapt_dag_to_real_time1(hunitest.TestCase):
+
+    # TODO(gp): Add a test for Example1 and factor out the code below.
 
     def testMvnReturnsBuilder1(self) -> None:
         """
@@ -27,36 +27,48 @@ class TestRealtimeDagAdapter1(hunitest.TestCase):
         dag_builder = dtfcobuexa.ReturnsBuilder()
         txt.append(hprint.frame("dag_builder"))
         txt.append(hprint.indent(str(dag_builder)))
-        # Build a Portfolio.
+        # Build initial DAG.
+        config = dag_builder.get_config_template()
+        _LOG.debug("config=\n%s", config)
+        dag = dag_builder.get_dag(config)
+        # Print the initial DAG.
+        file_name = os.path.join(self.get_scratch_space(), "initial_dag.png")
+        dtfcobuexa.draw_to_file(dag, file_name)
+        #
+        txt.append(hprint.frame("initial dag"))
+        txt.append(hprint.indent(str(dag)))
+        # Build a MarketData.
         # TODO(Paul): Use a nontrivial event loop.
         event_loop = None
         portfolio = oms.get_DataFramePortfolio_example1(event_loop)
-        # Build a DagAdapter.
+        market_data = portfolio.market_data
+        market_data_history_lookback = pd.Timedelta("5T")
+        # Get params for ProcessForecasts.
         prediction_col = "close"
         volatility_col = "close"
         price_col = "close"
         spread_col = None
-        timedelta = pd.Timedelta("5T")
-        asset_id_col = "asset_id"
-        dag_adapter = dtfsrtdaad.RealTimeDagAdapter(
-            dag_builder,
+        order_duration = 5
+        #
+        process_forecasts_dict = dtfsysinod.get_process_forecasts_dict_example1(
             portfolio,
             prediction_col,
             volatility_col,
             price_col,
             spread_col,
-            timedelta,
-            asset_id_col,
+            order_duration,
         )
-        txt.append(hprint.frame("dag_adapter"))
-        txt.append(hprint.indent(str(dag_adapter)))
-        # Compute the final DAG.
-        config = dag_adapter.get_config_template()
-        _LOG.debug("config=\n%s", config)
-        dag = dag_adapter.get_dag(config)
-        #
-        file_name = os.path.join(self.get_scratch_space(), "dag.png")
+        # Adapt DAG to real-time.
+        dag = dtfsrtdaad.adapt_dag_to_real_time(
+            dag,
+            market_data,
+            market_data_history_lookback,
+            process_forecasts_dict,
+        )
+        # Print the final DAG.
+        file_name = os.path.join(self.get_scratch_space(), "final_dag.png")
         dtfcobuexa.draw_to_file(dag, file_name)
+        #
         txt.append(hprint.frame("final dag"))
         txt.append(str(dag))
         # Check.

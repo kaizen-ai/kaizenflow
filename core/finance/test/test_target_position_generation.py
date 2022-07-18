@@ -3,7 +3,6 @@ from typing import List
 
 import pandas as pd
 
-import core.config as cconfig
 import core.finance.target_position_generation as cftapoge
 import core.finance_data_example as cfidaexa
 import helpers.hpandas as hpandas
@@ -56,46 +55,35 @@ class Test_compute_target_positions_cross_sectionally1(hunitest.TestCase):
         data = get_data_1asset()
         prediction = data["prediction"]
         volatility = data["volatility"]
-        config = cconfig.Config()
         target_positions = cftapoge.compute_target_positions_cross_sectionally(
-            prediction, volatility, config
+            prediction, volatility
         )
-        precision = 2
-        actual = hpandas.df_to_str(
-            target_positions.round(precision),
-            num_rows=None,
-            precision=precision,
-        )
+        actual = convert_df_to_str(target_positions)
         expected = r"""
-                                 101
-2022-01-10 09:35:00-05:00 -1000000.0
-2022-01-10 09:40:00-05:00 -1000000.0
-2022-01-10 09:45:00-05:00 -1000000.0
-2022-01-10 09:50:00-05:00  1000000.0
-2022-01-10 09:55:00-05:00 -1000000.0
-2022-01-10 10:00:00-05:00  1000000.0
-2022-01-10 10:05:00-05:00  1000000.0
-2022-01-10 10:10:00-05:00  1000000.0
-2022-01-10 10:15:00-05:00  1000000.0
-2022-01-10 10:20:00-05:00 -1000000.0
-2022-01-10 10:25:00-05:00 -1000000.0
-2022-01-10 10:30:00-05:00 -1000000.0"""
+                                  101
+2022-01-10 09:35:00-05:00 -1000000.00
+2022-01-10 09:40:00-05:00 -1000000.00
+2022-01-10 09:45:00-05:00 -1000000.00
+2022-01-10 09:50:00-05:00  1000000.00
+2022-01-10 09:55:00-05:00 -1000000.00
+2022-01-10 10:00:00-05:00  1000000.00
+2022-01-10 10:05:00-05:00  1000000.00
+2022-01-10 10:10:00-05:00  1000000.00
+2022-01-10 10:15:00-05:00  1000000.00
+2022-01-10 10:20:00-05:00 -1000000.00
+2022-01-10 10:25:00-05:00 -1000000.00
+2022-01-10 10:30:00-05:00 -1000000.00
+"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_4assets_with_defaults(self):
         data = get_data_4assets()
         prediction = data["prediction"]
         volatility = data["volatility"]
-        config = cconfig.Config()
         target_positions = cftapoge.compute_target_positions_cross_sectionally(
-            prediction, volatility, config
+            prediction, volatility
         )
-        precision = 2
-        actual = hpandas.df_to_str(
-            target_positions.round(precision),
-            num_rows=None,
-            precision=precision,
-        )
+        actual = convert_df_to_str(target_positions)
         expected = r"""
                                  101        201        301        401
 2022-01-10 09:35:00-05:00 -674028.57  217098.53  -78675.28   30197.62
@@ -116,23 +104,15 @@ class Test_compute_target_positions_cross_sectionally1(hunitest.TestCase):
         data = get_data_4assets()
         prediction = data["prediction"]
         volatility = data["volatility"]
-        config = cconfig.get_config_from_nested_dict(
-            {
-                "bulk_frac_to_remove": 0.5,
-                "bulk_fill_method": "zero",
-                "target_gmv": 1e5,
-                "volatility_lower_bound": 1e-4,
-            }
-        )
         target_positions = cftapoge.compute_target_positions_cross_sectionally(
-            prediction, volatility, config
+            prediction,
+            volatility,
+            bulk_frac_to_remove=0.5,
+            bulk_fill_method="zero",
+            target_gmv=1e5,
+            volatility_lower_bound=1e-4,
         )
-        precision = 2
-        actual = hpandas.df_to_str(
-            target_positions.round(precision),
-            num_rows=None,
-            precision=precision,
-        )
+        actual = convert_df_to_str(target_positions)
         expected = r"""
                                 101       201       301       401
 2022-01-10 09:35:00-05:00 -75637.76  24362.24      0.00      0.00
@@ -155,17 +135,11 @@ class Test_compute_target_positions_longitudinally1(hunitest.TestCase):
         data = get_data_1asset()
         prediction = data["prediction"]
         volatility = data["volatility"]
-        config = cconfig.Config()
-        spread = None
         target_positions = cftapoge.compute_target_positions_longitudinally(
-            prediction, volatility, config, spread
+            prediction,
+            volatility,
         )
-        precision = 2
-        actual = hpandas.df_to_str(
-            target_positions.round(precision),
-            num_rows=None,
-            precision=precision,
-        )
+        actual = convert_df_to_str(target_positions)
         expected = r"""
                                   101
 2022-01-10 09:35:00-05:00  -290820.38
@@ -182,30 +156,22 @@ class Test_compute_target_positions_longitudinally1(hunitest.TestCase):
 2022-01-10 10:30:00-05:00  -154315.13"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test_1asset_with_custom_config(self):
+    def test_1asset_with_params(self):
         data = get_data_1asset()
         prediction = data["prediction"]
         volatility = data["volatility"]
-        config = cconfig.get_config_from_nested_dict(
-            {
-                "prediction_abs_threshold": 3e-4,
-                "volatility_to_spread_threshold": 2.0,
-                "gamma": 1e-5,
-                "target_dollar_risk_per_name": 100.0,
-                "volatility_lower_bound": 2e-4,
-                "spread_lower_bound": 1e-5,
-            }
-        )
-        spread = data["spread"]
         target_positions = cftapoge.compute_target_positions_longitudinally(
-            prediction, volatility, config, spread
+            prediction,
+            volatility,
+            prediction_abs_threshold=3e-4,
+            volatility_to_spread_threshold=2.0,
+            volatility_lower_bound=2e-4,
+            gamma=1e-5,
+            target_dollar_risk_per_name=1e2,
+            spread_lower_bound=1e-5,
+            spread=data["spread"],
         )
-        precision = 2
-        actual = hpandas.df_to_str(
-            target_positions.round(precision),
-            num_rows=None,
-            precision=precision,
-        )
+        actual = convert_df_to_str(target_positions)
         expected = r"""
                                  101
 2022-01-10 09:35:00-05:00 -290820.38
@@ -226,17 +192,10 @@ class Test_compute_target_positions_longitudinally1(hunitest.TestCase):
         data = get_data_4assets()
         prediction = data["prediction"]
         volatility = data["volatility"]
-        config = cconfig.Config()
-        spread = None
         target_positions = cftapoge.compute_target_positions_longitudinally(
-            prediction, volatility, config, spread
+            prediction, volatility
         )
-        precision = 2
-        actual = hpandas.df_to_str(
-            target_positions.round(precision),
-            num_rows=None,
-            precision=precision,
-        )
+        actual = convert_df_to_str(target_positions)
         expected = r"""
                                   101        201         301         401
 2022-01-10 09:35:00-05:00  -290820.38  165049.47   -99358.45   -61556.24
@@ -252,3 +211,20 @@ class Test_compute_target_positions_longitudinally1(hunitest.TestCase):
 2022-01-10 10:25:00-05:00  -131470.65  401342.77  -773895.71    59447.14
 2022-01-10 10:30:00-05:00  -154315.13 -150351.68  -211149.00   -55290.71"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+def convert_df_to_str(df: pd.DataFrame) -> str:
+    precision = 2
+    # TODO(Paul): Factor out this option context into `df_to_str()`.
+    # TODO(Paul): Consider "{:,.2f}" so that commas are inserted (for human
+    #  readability).
+    with pd.option_context(
+        "display.float_format",
+        "{:.2f}".format,
+    ):
+        df_str = hpandas.df_to_str(
+            df.round(precision),
+            num_rows=None,
+            precision=precision,
+        )
+    return df_str

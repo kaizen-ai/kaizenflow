@@ -216,6 +216,13 @@ class Broker(abc.ABC):
             )
         return file_name
 
+    @abc.abstractmethod
+    def get_fills(self) -> List[Fill]:
+        """
+        Get any new fills filled since last execution.
+        """
+        ...
+
     @staticmethod
     def _get_next_submitted_order_id() -> int:
         submitted_order_id = Broker._submitted_order_id
@@ -244,13 +251,6 @@ class Broker(abc.ABC):
     ) -> None:
         """
         Wait until orders are accepted.
-        """
-        ...
-
-    @abc.abstractmethod
-    def get_fills(self) -> List[Fill]:
-        """
-        Get any new fills filled since last execution.
         """
         ...
 
@@ -347,13 +347,13 @@ class Broker(abc.ABC):
 
 class SimulatedBroker(Broker):
     """
-    Represent a broker to which we place orders and receive fills back
+    Represent a broker to which we place orders and receive back fills:
     1) completely
     2) as soon as their deadline comes
     3) at the price from the Market
 
-    There is no interaction with  an OMS (e.g., no need to waiting for acceptance
-    and execution).
+    There is no interaction with an OMS (e.g., no need to waiting for
+    acceptance and execution).
     """
 
     def __init__(
@@ -402,8 +402,9 @@ class SimulatedBroker(Broker):
 
 class DatabaseBroker(Broker):
     """
-    An object that mocks a real broker backed by a DB with asynchronous updates
-    to the state representing the placed orders.
+    An object that represents a broker backed by a DB with asynchronous updates
+    to the state by an OMS handling the orders placed and then filled in the
+    market place.
 
     The DB contains the following tables:
     - `submitted_orders`: store information about orders placed by strategies

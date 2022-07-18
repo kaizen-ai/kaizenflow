@@ -68,9 +68,6 @@ parquet_tile_analyzer.compute_universe_size_by_time(parquet_tile_metadata)
 
 # %%
 asset_ids = parquet_tile_metadata.index.levels[0].to_list()
-# TODO(Grisha): CmTask #1817 "Save asset_ids from the tiled backtest as integers".
-# NOTE(Paul): The flow requires that the asset_ids be integers.
-# asset_ids = list(map(str, asset_ids))
 display(asset_ids)
 
 # %% [markdown]
@@ -106,12 +103,13 @@ fep_dict = {
     "price_col": "vwap",
     "volatility_col": "vwap.ret_0.vol",
     "prediction_col": "vwap.ret_0.vol_adj_2_hat",
-    "bulk_frac_to_remove": 0.0,
-    "bulk_fill_method": "zero",
-    "target_gmv": 1e6,
-    "dollar_neutrality": "gaussian_rank",
+    # "bulk_frac_to_remove": 0.0,
+    # "bulk_fill_method": "zero",
+    # "target_gmv": 1e6,
+    # "dollar_neutrality": "gaussian_rank",
     "quantization": "nearest_share",
     "burn_in_bars": 3,
+    "style": "longitudinal"
 }
 fep_config = cconfig.get_config_from_nested_dict(fep_dict)
 
@@ -138,11 +136,12 @@ bar_metrics = []
 for df in backtest_df_iter:
     _, bar_metrics_slice = fep.annotate_forecasts(
         df,
-        bulk_frac_to_remove=fep_config["bulk_frac_to_remove"],
-        bulk_fill_method=fep_config["bulk_fill_method"],
-        target_gmv=fep_config["target_gmv"],
+        # bulk_frac_to_remove=fep_config["bulk_frac_to_remove"],
+        # bulk_fill_method=fep_config["bulk_fill_method"],
+        # target_gmv=fep_config["target_gmv"],
         quantization=fep_config["quantization"],
         burn_in_bars=fep_config["burn_in_bars"],
+        style=fep_config["style"],
     )
     bar_metrics.append(bar_metrics_slice)
 bar_metrics = pd.concat(bar_metrics)

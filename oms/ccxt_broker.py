@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 import ccxt
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
@@ -30,6 +31,7 @@ class CcxtBroker(ombroker.Broker):
         universe_version: str,
         mode: str,
         portfolio_id: str,
+        contract_type: str,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -42,10 +44,13 @@ class CcxtBroker(ombroker.Broker):
         :param mode: supported values: "test", "prod", if "test", launches the broker
          in sandbox environment (not supported for every exchange),
          if "prod" launches with production API.
+        :param contract_type: "spot" or "futures"
         """
         hdbg.dassert_in(mode, ["prod", "test"])
+        hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._mode = mode
         self._exchange_id = exchange_id
+        self._contract_type = contract_type
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
         # Enable mapping back from asset ids when placing orders.
@@ -57,20 +62,51 @@ class CcxtBroker(ombroker.Broker):
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
 
-    def get_fills(self) -> List[ombroker.Fill]:
+    def get_fills(
+        self, sent_orders: List[omorder.Order] = None
+    ) -> List[ombroker.Fill]:
         """
         Return list of fills from the last order execution.
+
+        :param sent_orders: a list of orders submitted by Broker
+        :return: a list of filled orders
         """
         fills: List[ombroker.Fill] = []
+        order_symbols = set(
+            [
+                self._asset_id_to_symbol_mapping[order.asset_id]
+                for order in sent_orders
+            ]
+        )
         if self.last_order_execution_ts:
-            _LOG.info("Inside get_fills")
-            orders = self._exchange.fetch_orders(
-                since=self.last_order_execution_ts
-            )
-            for order in orders:
-                if order["status"] == "closed":
-                    # TODO(Danya): Transform filled order to a `Fill` object.
-                    fills.append(order["id"])
+            # Load orders for each given symbol.
+            for symbol in order_symbols:
+                _LOG.info("Inside get_fills")
+                orders = self._exchange.fetch_orders(
+                    since=hdateti.convert_timestamp_to_unix_epoch(
+                        self.last_order_execution_ts,
+                    ),
+                    symbol=symbol,
+                )
+                # Select closed orders.
+                for order in orders:
+                    if order["status"] == "closed":
+                        # Select order matching to CCXT exchange id.
+                        filled_order = [
+                            order
+                            for sent_order in sent_orders
+                            if sent_order.ccxt_id == order["id"]
+                        ][0]
+                        # Create a Fill object.
+                        fill = ombroker.Fill(
+                            filled_order,
+                            hdateti.convert_unix_epoch_to_timestamp(
+                                order["timestamp"]
+                            ),
+                            num_shares=order["amount"],
+                            price=order["price"],
+                        )
+                        fills.append(fill)
         return fills
 
     def _assert_order_methods_presence(self) -> None:
@@ -97,11 +133,12 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> str:
+    ) -> List[omorder.Order]:
         """
         Submit orders.
         """
         self.last_order_execution_ts = pd.Timestamp.now()
+        sent_orders: List[str] = []
         for order in orders:
             # TODO(Juraj): perform bunch of assertions for order attributes.
             symbol = self._asset_id_to_symbol_mapping[order.asset_id]
@@ -110,17 +147,21 @@ class CcxtBroker(ombroker.Broker):
                 symbol=symbol,
                 type=order.type_,
                 side=side,
-                amount=order.diff_num_shares,
+                amount=abs(order.diff_num_shares),
+                # id = order.order_id,
                 # id=order.order_id,
                 # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
                 # but most likely the method will need to be overriden per each exchange
                 # to accomodate endpoint specific behavior.
                 params={
                     "portfolio_id": self._portfolio_id,
-                    "client_order_id": order.order_id,
+                    "client_oid": order.order_id,
                 },
             )
+            order.ccxt_id = order_resp["id"]
+            sent_orders.append(order)
             _LOG.info(order_resp)
+        return sent_orders
 
     def _build_asset_id_to_symbol_mapping(
         self, universe_version: str
@@ -129,8 +170,9 @@ class CcxtBroker(ombroker.Broker):
         Build asset id to full symbol mapping.
         """
         # Get full symbol universe.
+        # TODO(Danya): Change mode to "trade".
         full_symbol_universe = imvcounun.get_vendor_universe(
-            "CCXT", version=universe_version, as_full_symbol=True
+            "CCXT", "trade", version=universe_version, as_full_symbol=True
         )
         # Filter symbols of the exchange corresponding to this instance.
         full_symbol_universe = list(
@@ -165,12 +207,15 @@ class CcxtBroker(ombroker.Broker):
             secrets_id = self._exchange_id + "_sandbox"
         else:
             secrets_id = self._exchange_id
-        credentials = hsecret.get_secret(secrets_id)
+        exchange_params = hsecret.get_secret(secrets_id)
         # Enable rate limit.
-        credentials["rateLimit"] = True
+        exchange_params["rateLimit"] = True
+        # Log into futures/spot market.
+        if self._contract_type == "futures":
+            exchange_params["options"] = {"defaultType": "future"}
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
-        exchange = ccxt_exchange(credentials)
+        exchange = ccxt_exchange(exchange_params)
         if self._mode == "test":
             exchange.set_sandbox_mode(True)
             _LOG.warning("Running in sandbox mode")

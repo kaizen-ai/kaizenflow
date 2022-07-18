@@ -28,7 +28,7 @@ class Extractor(abc.ABC):
         """
         Download exchange data.
 
-        :param data_type: the type of data, e.g. `market_depth`
+        :param data_type: the type of data, e.g. `bid_ask`
         :return: exchange data
         """
         if data_type == "ohlcv":
@@ -37,15 +37,15 @@ class Extractor(abc.ABC):
                 currency_pair,
                 **kwargs,
             )
-        elif data_type == "market_depth":
-            data = self._download_market_depth(
+        elif data_type == "bid_ask":
+            data = self._download_bid_ask(
                 exchange_id, currency_pair, **kwargs
             )
         elif data_type == "trades":
             data = self._download_trades(exchange_id, currency_pair, **kwargs)
         else:
             hdbg.dfatal(
-                f"Unknown data type {data_type}. Possible data types: ohlcv, market_depth, trades"
+                f"Unknown data type {data_type}. Possible data types: ohlcv, bid_ask, trades"
             )
         return data
 
@@ -56,7 +56,7 @@ class Extractor(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def _download_market_depth(
+    def _download_bid_ask(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> pd.DataFrame:
         ...

@@ -21,6 +21,7 @@ if _HAS_MOTO:
     import botocore
     import pytest
 
+    import helpers.henv as henv
     import helpers.hgit as hgit
     import helpers.hsecrets as hsecret
     import helpers.hunit_test as hunitest
@@ -31,19 +32,21 @@ if _HAS_MOTO:
     # mocked.
 
     @pytest.mark.skipif(
-        not hgit.execute_repo_config_code("is_CK_S3_available()"),
-        reason="Run only if CK S3 is available")
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
+        reason="Run only if CK S3 is available",
+    )
     class TestCreateClient(hunitest.TestCase):
         def test_create_client1(self) -> None:
             """
             Simple smoke test to verify connection to AWS.
             """
-            client = hsecret.get_secrets_client(aws_profile='ck')
+            client = hsecret.get_secrets_client(aws_profile="ck")
             self.assertIsInstance(client, botocore.client.BaseClient)
 
     @pytest.mark.skipif(
-        not hgit.execute_repo_config_code("is_CK_S3_available()"),
-        reason="Run only if CK S3 is available")
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
+        reason="Run only if CK S3 is available",
+    )
     class TestGetSecret(hunitest.TestCase):
         @moto.mock_secretsmanager
         def test_get_secret(self) -> None:
@@ -60,8 +63,9 @@ if _HAS_MOTO:
             self.assertDictEqual(hsecret.get_secret(secret_name), secret)
 
     @pytest.mark.skipif(
-        not hgit.execute_repo_config_code("is_CK_S3_available()"),
-        reason="Run only if CK S3 is available")
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
+        reason="Run only if CK S3 is available",
+    )
     class TestStoreSecret(hunitest.TestCase):
         @moto.mock_secretsmanager
         def test_store_secret1(self) -> None:

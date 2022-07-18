@@ -14,6 +14,8 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
 _LOG = logging.getLogger(__name__)
 
+import helpers.hwarnings as hwarnin
+
 
 # TODO(gp): Make these generate from MAPPING below.
 INFO = "\033[36mINFO\033[0m"
@@ -421,13 +423,18 @@ def _set_to_str(set_: Set[Any], thr: Optional[int] = 20) -> str:
     self.assert_equal(act, exp, fuzzy_match=True)
     ```
     """
-    list_ = sorted(list(set_))
-    # If sets have less than `thr` elements print them as well, otherwise
-    # print the beginning / end.
-    if thr is not None and len(list_) > thr:
-        txt = f"{len(list_)} [{min(list_)}, ... {max(list_)}]"
-    else:
-        txt = str(list_)
+    try:
+        list_ = sorted(list(set_))
+        # If sets have less than `thr` elements print them as well, otherwise
+        # print the beginning / end.
+        if thr is not None and len(list_) > thr:
+            txt = f"{len(list_)} [{min(list_)}, ... {max(list_)}]"
+        else:
+            txt = str(list_)
+    except TypeError as e:
+        # Sometimes the set has elements of different types and we can't easily
+        # sort them. In these cases we just skip the sorting.
+        txt = str(list(set_))
     return txt
 
 

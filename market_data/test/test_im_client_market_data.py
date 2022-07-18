@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 import pytest
 
-import helpers.hgit as hgit
+import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
 import market_data as mdata
@@ -977,7 +977,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         market_data = mdata.get_HistoricalImClientMarketData_example1(
             im_client, asset_ids, columns, column_remap
         )
-        exp_last_end_time = pd.Timestamp("2000-01-01T10:10:00-05:00")
+        exp_last_end_time = pd.Timestamp("2000-01-01T12:10:00-05:00")
         # Run.
         self._test_get_last_end_time1(market_data, exp_last_end_time)
 
@@ -1032,7 +1032,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
 # TODO(Dan): Replace `TestImClientMarketData1` on this one when extended.
 # TODO(Dan): use local data instead of S3.
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 @pytest.mark.slow("~8 seconds by GH actions.")

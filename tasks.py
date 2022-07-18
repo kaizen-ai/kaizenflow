@@ -7,13 +7,17 @@ import repo_config as rconf
 # Expose the pytest targets.
 # Extract with:
 # > i print_tasks --as-code
-from helpers.lib_tasks import set_default_params  # This is not an invoke target.
+from helpers.lib_tasks import (  # This is not an invoke target.
+    parse_command_line,
+    set_default_params,
+)
 
 from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
     docker_bash,
     docker_build_local_image,
     docker_build_prod_image,
     docker_cmd,
+    docker_create_candidate_image,
     docker_images_ls_repo,
     docker_jupyter,
     docker_kill,
@@ -43,38 +47,6 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     gh_login,
     gh_workflow_list,
     gh_workflow_run,
-    integrate_create_branch,
-    integrate_diff_dirs,
-    integrate_diff_overlapping_files,
-    integrate_files,
-    integrate_find_files,
-    integrate_find_files_touched_since_last_integration,
-    lint,
-    lint_check_python_files,
-    lint_check_python_files_in_docker,
-    lint_create_branch,
-    lint_detect_cycles,
-    print_env,
-    print_setup,
-    print_tasks,
-    pytest_clean,
-    pytest_compare,
-    pytest_find_unused_goldens,
-    pytest_rename_test,
-    pytest_repro,
-    run_blank_tests,
-    run_coverage_report,
-    run_fast_slow_superslow_tests,
-    run_fast_slow_tests,
-    run_fast_tests,
-    run_qa_tests,
-    run_slow_tests,
-    run_superslow_tests,
-    run_tests,
-    traceback,
-)
-
-from helpers.lib_tasks_git import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
     git_add_all_untracked,
     git_branch_copy,
     git_branch_diff_with_base,
@@ -99,6 +71,35 @@ from helpers.lib_tasks_git import (  # isort: skip # noqa: F401  # pylint: disab
     # TODO(gp): -> git_branch_rename
     git_rename_branch,
     git_roll_amp_forward,
+    integrate_create_branch,
+    integrate_diff_dirs,
+    integrate_diff_overlapping_files,
+    integrate_files,
+    integrate_find_files,
+    integrate_find_files_touched_since_last_integration,
+    lint,
+    lint_check_python_files,
+    lint_check_python_files_in_docker,
+    lint_create_branch,
+    lint_detect_cycles,
+    print_env,
+    print_setup,
+    print_tasks,
+    pytest_clean,
+    pytest_compare_logs,
+    pytest_find_unused_goldens,
+    pytest_rename_test,
+    pytest_repro,
+    run_blank_tests,
+    run_coverage_report,
+    run_fast_slow_superslow_tests,
+    run_fast_slow_tests,
+    run_fast_tests,
+    run_qa_tests,
+    run_slow_tests,
+    run_superslow_tests,
+    run_tests,
+    traceback,
 )
 
 
@@ -144,3 +145,4 @@ default_params = {
 
 
 set_default_params(default_params)
+parse_command_line()

@@ -50,7 +50,7 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         # Expected output.
         expected_output = r"""
         # 1/1
-        meta:
+        experiment_config:
           start_timestamp_with_lookback: 2019-12-22 00:00:00+00:00
           start_timestamp: 2020-01-01 00:00:00+00:00
           end_timestamp: 2020-01-31 23:59:59+00:00"""
@@ -70,7 +70,7 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         # Expected output.
         expected_output = r"""
         # 1/1
-        meta:
+        experiment_config:
           start_timestamp_with_lookback: 2019-12-22 00:00:00+00:00
           start_timestamp: 2020-01-01 00:00:00+00:00
           end_timestamp: 2020-01-31 23:59:59+00:00"""
@@ -90,7 +90,7 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         # Expected output.
         expected_output = r"""
         # 1/1
-        meta:
+        experiment_config:
           start_timestamp_with_lookback: 2019-12-22 00:00:00+00:00
           start_timestamp: 2020-01-01 00:00:00+00:00
           end_timestamp: 2020-01-31 23:59:59+00:00"""
@@ -111,12 +111,12 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2020-02-01 00:00:00+0000", tz="UTC")
         # Expected output.
         expected_output = r"""# 1/2
-        meta:
+        experiment_config:
         start_timestamp_with_lookback: 2019-12-22 00:00:00+00:00
         start_timestamp: 2020-01-01 00:00:00+00:00
         end_timestamp: 2020-01-31 23:59:59+00:00
         # 2/2
-        meta:
+        experiment_config:
         start_timestamp_with_lookback: 2020-01-22 00:00:00+00:00
         start_timestamp: 2020-02-01 00:00:00+00:00
         end_timestamp: 2020-02-29 23:59:59+00:00"""
@@ -136,12 +136,12 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         # Expected output.
         expected_output = r"""
         # 1/2
-        meta:
+        experiment_config:
         start_timestamp_with_lookback: 2019-12-22 00:00:00+00:00
         start_timestamp: 2020-01-01 00:00:00+00:00
         end_timestamp: 2020-01-31 23:59:59+00:00
         # 2/2
-        meta:
+        experiment_config:
         start_timestamp_with_lookback: 2020-01-22 00:00:00+00:00
         start_timestamp: 2020-02-01 00:00:00+00:00
         end_timestamp: 2020-02-29 23:59:59+00:00"""
@@ -163,17 +163,17 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         # Expected output.
         expected_output = r"""
         # 1/3
-        meta:
+        experiment_config:
           start_timestamp_with_lookback: 2019-12-22 00:00:00+00:00
           start_timestamp: 2020-01-01 00:00:00+00:00
           end_timestamp: 2020-01-31 23:59:59+00:00
         # 2/3
-        meta:
+        experiment_config:
           start_timestamp_with_lookback: 2020-01-22 00:00:00+00:00
           start_timestamp: 2020-02-01 00:00:00+00:00
           end_timestamp: 2020-02-29 23:59:59+00:00
         # 3/3
-        meta:
+        experiment_config:
           start_timestamp_with_lookback: 2020-02-20 00:00:00+00:00
           start_timestamp: 2020-03-01 00:00:00+00:00
           end_timestamp: 2020-03-31 23:59:59+00:00"""
@@ -182,3 +182,60 @@ class Test_build_configs_varying_tiled_periods1(hunitest.TestCase):
         self.cover_with_monthly_tiles(
             start_timestamp, end_timestamp, expected_output, expected_num_configs
         )
+
+
+class Test_build_configs_with_tiled_universe(hunitest.TestCase):
+    def test1(self) -> None:
+        # Prepare inputs.
+        config = cconfig.Config()
+        asset_ids = [13684, 10971]
+        # Run.
+        configs = dtfmoexcon.build_configs_with_tiled_universe(config, asset_ids)
+        # Check output.
+        expected_output = r"""
+        # 1/1
+        market_data_config:
+          asset_ids: [13684, 10971]"""
+        actual_output = cconfig.configs_to_str(configs)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+
+
+class Test_build_configs_with_tiled_universe_and_periods(hunitest.TestCase):
+    def test1(self) -> None:
+        # Prepare inputs.
+        system_config = cconfig.Config()
+        system_config["backtest_config", "time_interval_str"] = "JanFeb2020"
+        system_config["backtest_config", "freq_as_pd_str"] = "M"
+        system_config["backtest_config", "lookback_as_pd_str"] = "90D"
+        system_config["market_data_config", "asset_ids"] = [13684, 10971]
+        # Run.
+        configs = dtfmoexcon.build_configs_with_tiled_universe_and_periods(
+            system_config
+        )
+        # Check output.
+        expected_output = r"""
+        # 1/2
+        backtest_config:
+            time_interval_str: JanFeb2020
+            freq_as_pd_str: M
+            lookback_as_pd_str: 90D
+        market_data_config:
+            asset_ids: [13684, 10971]
+            experiment_config:
+            start_timestamp_with_lookback: 2019-10-03 00:00:00+00:00
+            start_timestamp: 2020-01-01 00:00:00+00:00
+            end_timestamp: 2020-01-31 23:59:59+00:00
+        # 2/2
+        backtest_config:
+            time_interval_str: JanFeb2020
+            freq_as_pd_str: M
+            lookback_as_pd_str: 90D
+        market_data_config:
+            asset_ids: [13684, 10971]
+            experiment_config:
+            start_timestamp_with_lookback: 2019-11-03 00:00:00+00:00
+            start_timestamp: 2020-02-01 00:00:00+00:00
+            end_timestamp: 2020-02-29 23:59:59+00:00
+        """
+        actual_output = cconfig.configs_to_str(configs)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)

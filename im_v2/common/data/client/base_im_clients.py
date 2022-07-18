@@ -125,8 +125,11 @@ class ImClient(abc.ABC):
         """
         Return the entire universe of valid full symbols.
         """
+        # We use only `trade` universe for `ImClient`.
+        universe_mode = "trade"
         universe = ivcu.get_vendor_universe(
             self._vendor,
+            universe_mode,
             version=self._universe_version,
             as_full_symbol=True,
         )
@@ -598,12 +601,20 @@ class RealTimeImClient(ImClient):
     """
 
 
+# TODO(gp): @all cleanup resample_1min should go last and probably have a default
+#  value of False.
 class SqlRealTimeImClient(RealTimeImClient):
+    """
+    Read data from a table of an SQL DB.
+    """
+
     def __init__(
         self,
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        # TODO(gp): @all should vendor be first? The params that correponds to the
+        #  innermost classes should go first.
         vendor: str,
     ) -> None:
         # Real-time implementation has a different mechanism for getting universe.
@@ -630,7 +641,8 @@ class SqlRealTimeImClient(RealTimeImClient):
         """
         See description in the parent class.
         """
-        # Extract DataFrame with unique combinations of `exchange_id`, `currency_pair`.
+        # Extract DataFrame with unique combinations of `exchange_id`,
+        # `currency_pair`.
         query = (
             f"SELECT DISTINCT exchange_id, currency_pair FROM {self._table_name}"
         )
@@ -657,7 +669,8 @@ class SqlRealTimeImClient(RealTimeImClient):
         Apply vendor-specific normalization.
         """
 
-    # TODO(Danya): Propagate usage of `columns` parameter here and in descendant classes.
+    # TODO(Danya): Propagate usage of `columns` parameter here and in descendant
+    #  classes.
     def _read_data(
         self,
         full_symbols: List[ivcu.FullSymbol],
@@ -673,12 +686,12 @@ class SqlRealTimeImClient(RealTimeImClient):
         Create a select query and load data from database.
 
         Extra parameters for building a query can also be passed,
-        see keyword args for `_build_select_query`
+        see keyword args for `_build_select_query`.
 
-        :param full_symbols: a list of full symbols, e.g. ["ftx::BTC_USDT"]
+        :param full_symbols: a list of full symbols, e.g., `["ftx::BTC_USDT"]`
         :param start_ts: beginning of the time interval
         :param end_ts: end of the time interval
-        :param full_symbol_col_name: name of column containg full symbols
+        :param full_symbol_col_name: name of column containing full symbols
         :return:
         """
         # Parse symbols into exchange and currency pair.

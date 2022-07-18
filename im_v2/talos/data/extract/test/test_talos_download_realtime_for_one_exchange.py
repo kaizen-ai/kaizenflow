@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 
 import pytest
 
-import helpers.hgit as hgit
-import helpers.hunit_test as hunitest
+import helpers.henv as henv
 import helpers.hsystem as hsystem
+import helpers.hunit_test as hunitest
 
 
 @pytest.mark.skipif(
-    not hgit.execute_repo_config_code("is_CK_S3_available()"),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
