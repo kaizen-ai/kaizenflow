@@ -6,6 +6,7 @@ import helpers.hdbg as hdbg
 
 # This module should not depend on anything else than Python standard modules.
 
+import functools
 import logging
 import os
 import pprint
@@ -192,7 +193,9 @@ def dassert_imply(
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # Comparison related.
+# #############################################################################
 
 
 def dassert_lt(
@@ -269,7 +272,9 @@ def dassert_is_proportion(
     )
 
 
+# #############################################################################
 # Membership.
+# #############################################################################
 
 
 def dassert_in(
@@ -298,7 +303,9 @@ def dassert_not_in(
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # Type related.
+# #############################################################################
 
 
 def dassert_is(
@@ -403,7 +410,9 @@ def dassert_callable(
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # Set related.
+# #############################################################################
 
 
 # TODO(gp): A more general solution is to have a function that traverses an obj
@@ -507,7 +516,9 @@ def dassert_not_intersection(
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # Array related.
+# #############################################################################
 
 
 def dassert_no_duplicates(
@@ -657,7 +668,9 @@ def dassert_list_of_strings(
         dassert_isinstance(elem, str, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # File related.
+# #############################################################################
 
 
 def dassert_path_exists(
@@ -757,6 +770,45 @@ def dassert_file_extension(
         file_name,
         only_warning=only_warning,
     )
+
+
+def dassert_related_params(
+    params: Dict[str, Any],
+    mode: str,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    """
+    Check whether `params` have a certain relationship.
+
+    :params params: dictionary of parameter name, value
+    :params mode:
+        - `all_or_none_non_null`: either all params are null (i.e., `bool` evaluate
+          to false) or are non-null
+        - `all_or_none_non_None`: either all params are None or all params are not
+          None. This is useful when passing set of params that are optional
+    """
+    # TODO(gp): Allow iterable?
+    dassert_isinstance(params, dict, msg, *args, only_warning=only_warning)
+    if mode == "all_or_none_non_null":
+        # Find out if at least one value is set.
+        is_non_null = map(bool, params.values())
+        one_is_non_null = functools.reduce(lambda x, y: x or y, is_non_null)
+        for k, v in params.items():
+            if bool(v) != one_is_non_null:
+                txt = "All or none parameter should be non-null:\n%s=%s\nparams=%s\n" % (k, v, pprint.pformat(params))
+                _dfatal(txt, msg, *args, only_warning=only_warning)
+    elif mode == "all_or_none_non_None":
+        # Find out if at least one value is not None.
+        is_non_None = map(lambda x: x is not None, params.values())
+        one_is_non_None = functools.reduce(lambda x, y: x or y, is_non_None)
+        for k, v in params.items():
+            if (v is not None) != one_is_non_None:
+                txt = "All or none parameter should be non-None:\n%s=%s\nparams=%s\n" % (k, v, pprint.pformat(params))
+                _dfatal(txt, msg, *args, only_warning=only_warning)
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
 
 
 # #############################################################################

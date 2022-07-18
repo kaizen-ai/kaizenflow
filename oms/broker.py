@@ -187,12 +187,12 @@ class Broker(abc.ABC):
         _LOG.debug("Submitting %d orders", len(orders))
         for order in orders:
             _LOG.debug("Submitting order %s", order.order_id)
-            hdbg.dassert_lte(
-                order.start_timestamp,
-                wall_clock_timestamp,
-                "The order '%s' can only be executed in the future",
-                order,
-            )
+            #hdbg.dassert_lte(
+            #    order.start_timestamp,
+            #    wall_clock_timestamp,
+            #    "An order can only be executed in the future: order=",
+            #    order,
+            #)
             self._deadline_timestamp_to_orders[order.end_timestamp].append(order)
         # Submit the orders to the actual OMS.
         _LOG.debug("Submitting orders=\n%s", omorder.orders_to_string(orders))
@@ -417,9 +417,17 @@ class DatabaseBroker(Broker):
         db_connection: hsql.DbConnection,
         submitted_orders_table_name: str,
         accepted_orders_table_name: str,
+        # TODO(gp): This doesn't work for some reason.
+        # *,
         poll_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ):
+        """
+        Construct object.
+
+        :param poll_kwargs: polling instruction when waiting for acceptance of an
+            order
+        """
         super().__init__(*args, **kwargs)
         self._db_connection = db_connection
         self._submitted_orders_table_name = submitted_orders_table_name
