@@ -277,7 +277,7 @@ def _download_realtime_for_one_exchange_with_timeout(
         start_timestamp,
         end_timestamp,
     )
-    _LOG.info(
+    _LOG.warning(
         "Starting data download from: %s, till: %s",
         start_timestamp,
         end_timestamp,
