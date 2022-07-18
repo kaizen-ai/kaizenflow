@@ -33,9 +33,9 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         --stop_time '{stop_time}'"
         start_delay = 0
         stop_delay = 1
-        download_finished_marker = "100%"
+        download_finished_marker = "Starting data download"
         # Amount of downloads depends on the start time and stop time.
-        expected_downloads_amount = 2
+        expected_downloads_amount = 1
         start_time = datetime.now() + timedelta(minutes=start_delay, seconds=5)
         stop_time = datetime.now() + timedelta(minutes=stop_delay, seconds=5)
         # Call Python script in order to get output.

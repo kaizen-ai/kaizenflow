@@ -1,10 +1,17 @@
 from datetime import datetime, timedelta
+import pandas as pd
 
 import pytest
+import im_v2.talos.utils as imv2tauti
+
 
 import helpers.henv as henv
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
+
+import logging
+
+_LOG = logging.getLogger()
 
 
 @pytest.mark.skipif(
@@ -27,23 +34,24 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         --s3_path 's3://cryptokaizen-data-test/realtime/' \
         --interval_min '1' \
         --start_time '{start_time}' \
-        --stop_time '{stop_time}'"
+        --stop_time '{stop_time}'\
+        -v DEBUG"
         start_delay = 0
         stop_delay = 1
-        download_started_marker = "Starting data download"
+        download_finished_marker = "Starting data download"
         # Amount of downloads depends on the start time and stop time.
         expected_downloads_amount = stop_delay - start_delay
-        start_time = datetime.now() + timedelta(minutes=start_delay, seconds=5)
-        stop_time = datetime.now() + timedelta(minutes=stop_delay, seconds=5)
+        start_time = pd.Timestamp.now(tz="UTC") + timedelta(minutes=start_delay, seconds=5)
+        stop_time = pd.Timestamp.now(tz="UTC") + timedelta(minutes=stop_delay, seconds=5)
         # Call Python script in order to get output.
         cmd = cmd.format(
-            start_time=start_time.strftime("%Y-%m-%d %H:%M:%S"),
-            stop_time=stop_time.strftime("%Y-%m-%d %H:%M:%S"),
+            start_time=imv2tauti.timestamp_to_talos_iso_8601(start_time),
+            stop_time=imv2tauti.timestamp_to_talos_iso_8601(stop_time),
         )
         return_code, output = hsystem.system_to_string(cmd)
         # Check return value.
         self.assertEqual(return_code, 0)
         # Check amount of downloads by parsing output.
         self.assertEqual(
-            output.count(download_started_marker), expected_downloads_amount
+            output.count(download_finished_marker), expected_downloads_amount
         )
