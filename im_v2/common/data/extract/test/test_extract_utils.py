@@ -316,7 +316,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
 
 
 class TestVerifySchema(hunitest.TestCase):
-    def test_valid_df(self):
+    def test_valid_df(self) -> None:
         """
         Check if valid Dataframe schema is not changed.
         """
@@ -338,7 +338,7 @@ class TestVerifySchema(hunitest.TestCase):
         # Check the result.
         hunitest.compare_df(test_df, actual_df)
 
-    def test_fix_int_column(self):
+    def test_fix_int_column(self) -> None:
         """
         Test if int column if forced to float.
         """
@@ -363,7 +363,7 @@ class TestVerifySchema(hunitest.TestCase):
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
-    def test_non_numerical_column(self):
+    def test_non_numerical_column(self) -> None:
         """
         Test if invalid Dataframe schema produces an error.
         """
