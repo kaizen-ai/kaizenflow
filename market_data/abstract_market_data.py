@@ -486,8 +486,8 @@ class MarketData(abc.ABC):
         return ret
 
     async def wait_for_latest_data(
-        self,
-        ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
+            self,
+    ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
         Wait until the bar with `end_time` == `wall_clock_time` is present in
         the RT DB.
