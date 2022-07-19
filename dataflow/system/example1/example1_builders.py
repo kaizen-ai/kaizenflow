@@ -9,10 +9,10 @@ import logging
 import pandas as pd
 
 import dataflow.core as dtfcore
+
 # TODO(gp): We can't use dtfsys because we are inside dataflow/system.
 #  Consider moving out Example1 from this dir somehow so that we can use dtfsys
 #  like we do for other systems.
-import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
@@ -51,8 +51,7 @@ def get_Example1_MarketData_example2(
 # #############################################################################
 
 
-# TODO(gp): @all -> get_Example1_HistoricalDag_example1
-def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Example1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a historical data source for simulation.
     """
@@ -76,8 +75,7 @@ def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     return dag
 
 
-# TODO(gp): @all -> get_Example1_RealtimeDag_example2
-def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source.
     """
@@ -100,8 +98,7 @@ def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG
     return dag
 
 
-# TODO(gp): @all -> get_Example1_RealtimeDag_example3
-def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source and forecast processor.
     """
