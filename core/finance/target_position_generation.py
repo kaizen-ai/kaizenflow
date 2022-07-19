@@ -120,15 +120,16 @@ def _apply_gmv_scaling(
 
 
 def compute_target_positions_longitudinally(
-    prediction: pd.DataFrame,
-    volatility: pd.DataFrame,
-    prediction_abs_threshold: float = 0.0,
-    volatility_to_spread_threshold: float = 0.0,
-    volatility_lower_bound: float = 1e-4,
-    gamma: float = 0.0,
-    target_dollar_risk_per_name: float = 1e2,
-    spread_lower_bound: float = 1e-4,
-    spread: Optional[pd.DataFrame] = None,
+        prediction: pd.DataFrame,
+        volatility: pd.DataFrame,
+        *,
+        prediction_abs_threshold: float = 0.0,
+        volatility_to_spread_threshold: float = 0.0,
+        volatility_lower_bound: float = 1e-4,
+        gamma: float = 0.0,
+        target_dollar_risk_per_name: float = 1e2,
+        spread_lower_bound: float = 1e-4,
+        spread: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """
     Compute target dollar positions based on forecasts, basic constraints.
@@ -148,12 +149,15 @@ def compute_target_positions_longitudinally(
     :param spread: optional dataframe of spread forecasts; if `None`, then
         impute `spread_lower_bound`.
     """
-    hpandas.dassert_time_indexed_df(
-        prediction, allow_empty=True, strictly_increasing=True
-    )
-    hpandas.dassert_time_indexed_df(
-        volatility, allow_empty=True, strictly_increasing=True
-    )
+    # TODO(Paul): Some callers compute at a single time step with an
+    # integer-indexed dataframe. Either update the callers to use a timestamp
+    # or relax constraints uniformly in this file.
+    # hpandas.dassert_time_indexed_df(
+    #     prediction, allow_empty=True, strictly_increasing=True
+    # )
+    # hpandas.dassert_time_indexed_df(
+    #     volatility, allow_empty=True, strictly_increasing=True
+    # )
     hpandas.dassert_axes_equal(prediction, volatility)
     #
     dassert_is_nonnegative_float(prediction_abs_threshold)

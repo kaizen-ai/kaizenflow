@@ -11,6 +11,7 @@ from typing import Any, Callable, Coroutine
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
+import helpers.hprint as hprint
 import market_data as mdata
 import oms as oms
 
@@ -44,7 +45,7 @@ _LOG = logging.getLogger(__name__)
 #     system.config[...] = ...
 #     ...
 #     # Once the system config is complete, build the system.
-#     dag_runner = system.get_dag_runner()
+#     dag_runner = system.dag_runner
 #     # Run the system.
 #     dag_runner.set_fit_intervals(...)
 #     dag_runner.fit()
@@ -163,20 +164,31 @@ class System(abc.ABC):
     def config(self) -> cconfig.Config:
         return self._config
 
-    # TODO(gp): -> _get_dag_runner and use a property dag_runner
-    # TODO(gp): Now a DagRunner runs a System which is a little weird, but maybe ok.
-    @abc.abstractmethod
-    def get_dag_runner(
-        self,
+    @property
+    def dag_runner(
+            self,
     ) -> dtfcore.DagRunner:
-        """
-        Create a DAG runner from a fully specified system config.
-        """
-        ...
+        _LOG.info(
+            "\n" +
+            hprint.frame("Building dag_runner with final config") + "\n" +
+            str(self.config) +
+            "\n" + hprint.frame("End config"))
+        #
+        key = "dag_runner_object"
+        dag_runner: dtfcore.DagRunner = self._get_cached_value(
+            key, self._get_dag_runner
+        )
+        # After everything is built, mark the config as read-only to avoid
+        # further modifications.
+        self._config.mark_read_only()
+        if False:
+            import helpers.hio as hio
+            hio.to_file("system_config.txt", str(self.config))
+        return dag_runner
 
     @abc.abstractmethod
     def _get_system_config_template(
-        self,
+            self,
     ) -> cconfig.Config:
         """
         Create a System config with the basic information (e.g., DAG config and
@@ -186,15 +198,25 @@ class System(abc.ABC):
         """
         ...
 
+    # TODO(gp): Now a DagRunner runs a System which is a little weird, but maybe ok.
+    @abc.abstractmethod
+    def _get_dag_runner(
+            self,
+    ) -> dtfcore.DagRunner:
+        """
+        Create a DAG runner from a fully specified system config.
+        """
+        ...
+
     # Caching invariants:
     # - Objects (e.g., DAG, Portfolio) are built as on the first call and cached
     # - To access the objects (e.g., for checking the output of a test) one uses the
     #   public properties
 
     def _get_cached_value(
-        self,
-        key: str,
-        builder_func: Callable,
+            self,
+            key: str,
+            builder_func: Callable,
     ) -> Any:
         """
         Retrieve the object corresponding to `key` if already built, or call
@@ -246,15 +268,6 @@ class ForecastSystem(System):
         return market_data
 
     @property
-    def forecast_dag(
-        self,
-    ) -> dtfcore.DAG:
-        forecast_dag: dtfcore.DAG = self._get_cached_value(
-            "forecast_dag_object", self._get_forecast_dag
-        )
-        return forecast_dag
-
-    @property
     def dag(
         self,
     ) -> dtfcore.DAG:
@@ -276,13 +289,6 @@ class ForecastSystem(System):
         """
         ...
 
-    def _get_forecast_dag(self) -> dtfcore.DAG:
-        dag_builder = self.config["dag_builder_object"]
-        dag_config = self.config["dag_config"]
-        _LOG.debug("dag_config=\n%s", dag_config)
-        dag = dag_builder.get_dag(dag_config)
-        return dag
-
 
 # #############################################################################
 # _Time_ForecastSystem_Mixin
@@ -299,17 +305,16 @@ class _Time_ForecastSystem_Mixin:
     """
 
     @abc.abstractmethod
-    def get_dag_runner(
-        self,
-    ) -> dtfsys.RealTimeDagRunner:
-        ...
-
-    @abc.abstractmethod
     def _get_market_data(
-        self,
+            self,
     ) -> mdata.RealTimeMarketData:
         ...
 
+    @abc.abstractmethod
+    def _get_dag_runner(
+            self,
+    ) -> dtfsys.RealTimeDagRunner:
+        ...
 
 # #############################################################################
 # _ForecastSystem_with_Portfolio
@@ -470,8 +475,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     """
 
     def __init__(
-        self,
-    ):
+            self,
+    ) -> None:
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
 
@@ -487,8 +492,10 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         db_connection = self.portfolio._db_connection
         asset_id_name = self.market_data.asset_id_col
         #
+        max_wait_time_for_order_in_secs = 10
         order_processor = oms.get_order_processor_example1(
-            db_connection, portfolio, asset_id_name
+            db_connection, portfolio, asset_id_name,
+            max_wait_time_for_order_in_secs
         )
         #
         order_processor_coroutine = oms.get_order_processor_coroutine_example1(

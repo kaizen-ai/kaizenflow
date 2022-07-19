@@ -40,21 +40,24 @@ class OrderProcessor:
     """
 
     def __init__(
-        self,
-        db_connection: hsql.DbConnection,
-        delay_to_accept_in_secs: float,
-        delay_to_fill_in_secs: float,
-        broker: ombroker.Broker,
-        asset_id_name: str,
-        *,
-        # TODO(gp): Expose poll_kwargs.
-        submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
-        accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
-        current_positions_table_name: str = oomsdb.CURRENT_POSITIONS_TABLE_NAME,
+            self,
+            db_connection: hsql.DbConnection,
+            max_wait_time_for_order_in_secs: float,
+            delay_to_accept_in_secs: float,
+            delay_to_fill_in_secs: float,
+            broker: ombroker.Broker,
+            asset_id_name: str,
+            *,
+            # TODO(gp): Expose poll_kwargs.
+            submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
+            accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
+            current_positions_table_name: str = oomsdb.CURRENT_POSITIONS_TABLE_NAME,
     ) -> None:
         """
         Constructor.
 
+        :param max_wait_time_for_order_in_secs: how long to wait for an order to be
+            received, once this object starts waiting
         :param delay_to_accept_in_secs: delay after the order is submitted to update
             the accepted orders table
         :param delay_to_fill_in_secs: delay after the order is accepted to update the
@@ -67,10 +70,16 @@ class OrderProcessor:
             so we use the standard table names as defaults
         """
         self._db_connection = db_connection
+        #
+        hdbg.dassert_lte(0, max_wait_time_for_order_in_secs)
+        self.max_wait_time_for_order_in_secs = max_wait_time_for_order_in_secs
+        #
         hdbg.dassert_lte(0, delay_to_accept_in_secs)
         self._delay_to_accept_in_secs = delay_to_accept_in_secs
+        #
         hdbg.dassert_lte(0, delay_to_fill_in_secs)
         self._delay_to_fill_in_secs = delay_to_fill_in_secs
+        #
         self._broker = broker
         self._asset_id_name = asset_id_name
         self._submitted_orders_table_name = submitted_orders_table_name
@@ -86,6 +95,7 @@ class OrderProcessor:
 
     async def run_loop(
         self,
+            # TODO(gp): Move it to the constructor so we set in one step.
         termination_condition: Union[pd.Timestamp, int],
     ) -> None:
         """
@@ -126,7 +136,9 @@ class OrderProcessor:
         """
         Poll for submitted orders, accept, and enqueue.
         """
-        poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)
+        poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time,
+                                              timeout_in_secs=self.max_wait_time_for_order_in_secs
+                                              )
         # Wait for orders to be written in `submitted_orders_table_name`.
         diff_num_rows = await hsql.wait_for_change_in_number_of_rows(
             self._get_wall_clock_time,

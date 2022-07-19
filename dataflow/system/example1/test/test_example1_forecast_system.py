@@ -10,7 +10,6 @@ import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
 import dataflow.system.system_tester as dtfsysytes
 import helpers.hasyncio as hasynci
-import helpers.hdbg as hdbg
 import helpers.hunit_test as hunitest
 import oms as oms
 import oms.test.oms_db_helper as otodh
@@ -136,44 +135,28 @@ class Test_Example1_ForecastSystem_CheckPnl(
 # Test_Example1_Time_ForecastSystem1
 # #############################################################################
 
-# TODO(gp): Express in terms of Test_Time_ForecastSystem_TestCase1
-class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
-    """
-    Test a System composed of:
 
-    - a `ReplayedMarketData` (providing fake data and features)
-    - an `Example1` DAG
-    """
-
-    @staticmethod
-    def run_coroutines() -> str:
-        with hasynci.solipsism_context() as event_loop:
-            system = dtfseefosy.Example1_Time_ForecastSystem()
-            # Complete system config.
-            system.config["event_loop_object"] = event_loop
-            data, _ = cofinanc.get_market_data_df1()
-            system.config["market_data_config", "data"] = data
-            system.config["market_data_config", "initial_replayed_delay"] = 5
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = (60 * 5)
-            # Create DAG runner.
-            dag_runner = system.get_dag_runner()
-            # Run.
-            coroutines = [dag_runner.predict()]
-            result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-            # TODO(gp): Use the signature from system_testing. See below.
-            result_bundles: str = result_bundles[0][0]
-        return result_bundles
-
+class Test_Example1_Time_ForecastSystem1(
+    dtfsysytes.Test_Time_ForecastSystem_TestCase1
+):
     def test1(self) -> None:
         """
         Verify the contents of DAG prediction.
         """
-        actual = self.run_coroutines()
-        self.check_string(str(actual), purify_text=True)
+        system = dtfseefosy.Example1_Time_ForecastSystem()
+        # TODO(Dan): Add more data, otherwise volatility is NaN.
+        market_data, _ = cofinanc.get_market_data_df1()
+        initial_replayed_delay = 5
+        # Exercise the system for multiple 5 minute intervals.
+        real_time_loop_time_out_in_secs = 60 * 5 * 3
+        output_col_name = "vwap.ret_0.vol_adj.c"
+        self._test1(
+            system,
+            market_data,
+            initial_replayed_delay,
+            real_time_loop_time_out_in_secs,
+            output_col_name=output_col_name,
+        )
 
 
 # #############################################################################
@@ -215,7 +198,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
             # Create DAG runner.
-            dag_runner = system.get_dag_runner()
+            dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
@@ -312,13 +295,17 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
             # Create DAG runner.
-            dag_runner = system.get_dag_runner()
+            dag_runner = system.dag_runner
             coroutines.append(dag_runner.predict())
             # Create and add order processor.
             portfolio = system.portfolio
             if is_database_portfolio:
+                max_wait_time_for_order_in_secs = 10
                 order_processor = oms.get_order_processor_example1(
-                    self.connection, portfolio, asset_id_name
+                    self.connection,
+                    portfolio,
+                    asset_id_name,
+                    max_wait_time_for_order_in_secs,
                 )
                 order_processor_coroutine = (
                     oms.get_order_processor_coroutine_example1(

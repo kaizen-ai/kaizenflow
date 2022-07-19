@@ -80,7 +80,7 @@ class TalosExtractor(imvcdexex.Extractor):
         return currency_pair.replace("_", "-")
 
     def build_url(
-        self, currency_pair: str, exchange: str, *, resolution: str = "1m"
+            self, exchange: str, currency_pair: str, *, resolution: str = "1m"
     ) -> str:
         """
         Get url for given symbol and exchange.
@@ -93,13 +93,13 @@ class TalosExtractor(imvcdexex.Extractor):
         return url
 
     def _download_ohlcv(
-        self,
-        currency_pair: str,
-        exchange_id: str,
-        start_timestamp: pd.Timestamp,
-        end_timestamp: pd.Timestamp,
-        *,
-        bar_per_iteration: int = 10000,
+            self,
+            exchange_id: str,
+            currency_pair: str,
+            start_timestamp: pd.Timestamp,
+            end_timestamp: pd.Timestamp,
+            *,
+            bar_per_iteration: int = 10000,
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars for given currency pair for given crypto
@@ -137,8 +137,8 @@ class TalosExtractor(imvcdexex.Extractor):
             end_timestamp = end_timestamp + pd.Timedelta("1sec")
         #
         return self._fetch_ohlcv(
-            currency_pair,
             exchange_id,
+            currency_pair,
             start_timestamp,
             end_timestamp,
             bar_per_iteration=bar_per_iteration,
@@ -153,13 +153,13 @@ class TalosExtractor(imvcdexex.Extractor):
         raise NotImplementedError("Trades data is not available for Talos vendor")
 
     def _fetch_ohlcv(
-        self,
-        currency_pair: str,
-        exchange: str,
-        start_timestamp: pd.Timestamp,
-        end_timestamp: pd.Timestamp,
-        *,
-        bar_per_iteration: int = 10000,
+            self,
+            exchange: str,
+            currency_pair: str,
+            start_timestamp: pd.Timestamp,
+            end_timestamp: pd.Timestamp,
+            *,
+            bar_per_iteration: int = 10000,
     ) -> pd.DataFrame:
         """
         Fetch OHLCV data for given currency and time.
@@ -189,7 +189,7 @@ class TalosExtractor(imvcdexex.Extractor):
         params = self.build_talos_query_params(
             start_timestamp, end_timestamp, limit=bar_per_iteration
         )
-        url = self.build_url(currency_pair, exchange)
+        url = self.build_url(exchange, currency_pair)
         has_next = True
         dfs = []
         while has_next:

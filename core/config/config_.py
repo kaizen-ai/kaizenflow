@@ -69,6 +69,8 @@ class Config:
             for k, v in array:
                 hdbg.dassert_isinstance(k, str)
                 self._config[k] = v
+        # Control whether a config can be modified or not.
+        self._read_only = False
 
     def __setitem__(self, key: Key, val: Any) -> None:
         """
@@ -78,6 +80,16 @@ class Config:
         navigated/created and the leaf value added/updated with `val`.
         """
         _LOG.debug("key=%s, config=%s", key, self)
+        if False:
+            # To debug who sets a certain key.
+            _LOG.info("key.set=%s", str(key))
+            if key == ("dag_runner_config", "wake_up_timestamp"):
+                assert 0
+        if self._read_only:
+            raise RuntimeError(
+                f"Trying to set key='{key}' to val='{val}' in "
+                f"read-only config\n'{str(self)}'"
+            )
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
@@ -255,6 +267,13 @@ class Config:
         """
         return copy.deepcopy(self)
 
+    def mark_read_only(self) -> None:
+        """
+        Force a Config object to become read-only.
+        """
+        _LOG.debug("")
+        self._read_only = True
+
     @classmethod
     def from_python(cls, code: str) -> Optional["Config"]:
         """
@@ -348,6 +367,7 @@ class Config:
                 str(self),
             )
             _LOG.error(msg)
+            # TODO(gp): This should be KeyError
             raise ValueError(msg)
 
     # TODO(*): Standardize/allow to be configurable what to return if a value is

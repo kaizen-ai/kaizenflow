@@ -35,14 +35,10 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
     This is used to run an historical simulation of an Example1 system.
     """
 
-    def get_dag_runner(self) -> dtfcore.DagRunner:
-        dag_runner = dtfcore.FitPredictDagRunner(self.dag)
-        return dag_runner
-
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
@@ -52,18 +48,23 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfsexexbu.get_Example1_dag_example1(self)
+        dag = dtfsexexbu.get_Example1_HistoricalDag_example1(self)
         return dag
+
+    def _get_dag_runner(self) -> dtfcore.DagRunner:
+        dag_runner = dtfcore.FitPredictDagRunner(self.dag)
+        return dag_runner
 
 
 def get_Example1_ForecastSystem_for_simulation_example1(
-    backtest_config: str,
+        backtest_config: str,
 ) -> dtfsyssyst.ForecastSystem:
     """
     Get Example1_ForecastSystem object for backtest simulation.
     """
     system = Example1_ForecastSystem()
     system = dtfssybuut.apply_backtest_config(system, backtest_config)
+    system.config["dag_runner_builder"] = system._get_dag_runner
     # Fill pipeline-specific backtest config parameters.
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "10D"
@@ -94,25 +95,25 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
     - a RealTimeDagRunner
     """
 
-    def get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
-        return dag_runner
-
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_event_loop_MarketData_from_df(self)
+        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfsexexbu.get_Example1_realtime_dag_example1(self)
+        dag = dtfsexexbu.get_Example1_RealtimeDag_example2(self)
         return dag
+
+    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
+        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
+        return dag_runner
 
 
 # #############################################################################
@@ -131,24 +132,20 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
     - a DataFramePortfolio
     """
 
-    def get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
-        return dag_runner
-
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_event_loop_MarketData_from_df(self)
+        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfsexexbu.get_Example1_dag_example3(self)
+        dag = dtfsexexbu.get_Example1_RealtimeDag_example3(self)
         return dag
 
     # TODO(gp): Extract this code in Example1_builders.py
@@ -173,6 +170,10 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
         }
         return portfolio
 
+    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
+        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
+        return dag_runner
+
 
 # #############################################################################
 # Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
@@ -191,14 +192,10 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     - an `OrderProcessor`
     """
 
-    def get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
-        return dag_runner
-
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
@@ -206,11 +203,11 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_market_data(
         self,
     ) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_event_loop_MarketData_from_df(self)
+        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfsexexbu.get_Example1_dag_example3(self)
+        dag = dtfsexexbu.get_Example1_RealtimeDag_example3(self)
         return dag
 
     # TODO(gp): Extract this code in Example1_builders.py
@@ -238,3 +235,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
             "price": "close",
         }
         return portfolio
+
+    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
+        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
+        return dag_runner

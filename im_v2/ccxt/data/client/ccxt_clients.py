@@ -128,8 +128,6 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         mode: str = "data_client",
     ) -> None:
         super().__init__(resample_1min, db_connection, table_name, vendor="ccxt")
-        hdbg.dassert_in(mode, ("market_data", "data_client"))
-        self._mode = mode
 
     @staticmethod
     def should_be_online() -> bool:  # pylint: disable=arguments-differ'
@@ -137,80 +135,6 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         The real-time system for CCXT should always be online.
         """
         return True
-
-    def _apply_normalization(
-        self,
-        data: pd.DataFrame,
-        *,
-        full_symbol_col_name: Optional[str] = None,
-    ) -> pd.DataFrame:
-        """
-        Apply Talos-specific normalization.
-
-         `data_client` mode:
-        - Convert `timestamp` column to a UTC timestamp and set index.
-        - Keep `open`, `high`, `low`, `close`, `volume` columns.
-
-        `market_data` mode:
-        - Add `start_timestamp` column in UTC timestamp format.
-        - Add `end_timestamp` column in UTC timestamp format.
-        - Add `asset_id` column which is result of mapping full_symbol to integer.
-        - Drop extra columns.
-        - The output looks like:
-        ```
-        open  high  low   close volume  start_timestamp          end_timestamp            asset_id
-        0.825 0.826 0.825 0.825 18427.9 2022-03-16 2:46:00+00:00 2022-03-16 2:47:00+00:00 3303714233
-        0.825 0.826 0.825 0.825 52798.5 2022-03-16 2:47:00+00:00 2022-03-16 2:48:00+00:00 3303714233
-        ```
-        """
-        # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
-            hdateti.convert_unix_epoch_to_timestamp
-        )
-        full_symbol_col_name = self._get_full_symbol_col_name(
-            full_symbol_col_name
-        )
-        ohlcv_columns = [
-            full_symbol_col_name,
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-        ]
-        if self._mode == "data_client":
-            pass
-        elif self._mode == "market_data":
-            # TODO(Danya): Move this transformation to MarketData.
-            # Add `asset_id` column using mapping on `full_symbol` column.
-            data["asset_id"] = data[full_symbol_col_name].apply(
-                ivcu.string_to_numerical_id
-            )
-            # Convert to int64 to keep NaNs alongside with int values.
-            data["asset_id"] = data["asset_id"].astype(pd.Int64Dtype())
-            # Generate `start_timestamp` from `end_timestamp` by substracting delta.
-            delta = pd.Timedelta("1M")
-            data["start_timestamp"] = data["timestamp"].apply(
-                lambda pd_timestamp: (pd_timestamp - delta)
-            )
-            # Columns that should left in the table.
-            market_data_ohlcv_columns = [
-                "start_timestamp",
-                "asset_id",
-            ]
-            # Concatenate two lists of columns.
-            ohlcv_columns = ohlcv_columns + market_data_ohlcv_columns
-        else:
-            hdbg.dfatal(
-                "Invalid mode='%s'. Correct modes: 'market_data', 'data_client'"
-                % self._mode
-            )
-        data = data.set_index("timestamp")
-        # Verify that dataframe contains OHLCV columns.
-        hdbg.dassert_is_subset(ohlcv_columns, data.columns)
-        # Rearrange the columns.
-        data = data.loc[:, ohlcv_columns]
-        return data
 
 
 # #############################################################################
@@ -265,9 +189,7 @@ class CcxtCddCsvParquetByAssetClient(
         )
         self._extension = extension
         if data_snapshot is None:
-            data_snapshot = icdds.get_latest_data_snapshot(
-                root_dir, aws_profile
-            )
+            data_snapshot = icdds.get_latest_data_snapshot(root_dir, aws_profile)
         icdds.dassert_is_valid_data_snapshot(data_snapshot)
         self._data_snapshot = data_snapshot
         # Set s3fs parameter value if aws profile parameter is specified.

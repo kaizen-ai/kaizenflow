@@ -203,12 +203,13 @@ def lint_detect_cycles(  # type: ignore
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
     docker_cmd_ = (
-        "/app/import_check/detect_import_cycles.py "
-        + hlitauti._to_single_line_cmd(docker_cmd_opts)
+            "/app/import_check/detect_import_cycles.py "
+            + hlitauti._to_single_line_cmd(docker_cmd_opts)
     )
     # Execute command line.
     cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
-    # Use `PIPESTATUS` otherwise the exit status of the pipe is always 0 because writing to a file succeeds.
+    # Use `PIPESTATUS` otherwise the exit status of the pipe is always 0
+    # because writing to a file succeeds.
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}; exit $PIPESTATUS"
     # Run.
     hlitauti._run(ctx, cmd)

@@ -174,8 +174,8 @@ class TestTalosExtractor1(hunitest.TestCase):
         # Run with invalid input.
         with pytest.raises(raises) as fail:
             exchange_class._download_ohlcv(
-                currency_pair=currency_pair,
                 exchange_id=exchange,
+                currency_pair=currency_pair,
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
             )
@@ -197,8 +197,8 @@ class TestTalosExtractor1(hunitest.TestCase):
         exchange_class = imvtdexex.TalosExtractor("sandbox")
         # Extract data.
         actual = exchange_class._download_ohlcv(
-            currency_pair="BTC_USDT",
             exchange_id="binance",
+            currency_pair="BTC_USDT",
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
             bar_per_iteration=1000,

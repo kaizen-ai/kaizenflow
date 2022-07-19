@@ -21,6 +21,7 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hs3 as hs3
+import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
@@ -294,8 +295,8 @@ def _run_tests(
     return rc
 
 
-@task
 # TODO(Grisha): "Unit tests run_*_tests invokes" CmTask #1652.
+@task
 def run_tests(  # type: ignore
     ctx,
     test_lists,
@@ -586,6 +587,11 @@ def run_qa_tests(  # type: ignore
         raise RuntimeError(msg)
 
 
+# #############################################################################
+# Coverage report
+# #############################################################################
+
+
 def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     """
     Publish HTML coverage report on S3 so that it can be accessed via browser.
@@ -704,7 +710,7 @@ def run_coverage_report(  # type: ignore
 
 
 # #############################################################################
-# Pytest helpers.
+# Traceback.
 # #############################################################################
 
 
@@ -752,6 +758,11 @@ def traceback(ctx, log_name="tmp.pytest_script.txt", purify=True):  # type: igno
         _LOG.warning("Can't find %s", dst_cfile)
 
 
+# #############################################################################
+# pytest_clean
+# #############################################################################
+
+
 @task
 def pytest_clean(ctx):  # type: ignore
     """
@@ -762,6 +773,11 @@ def pytest_clean(ctx):  # type: ignore
     import helpers.hpytest as hpytest
 
     hpytest.pytest_clean(".")
+
+
+# #############################################################################
+# pytest_repro
+# #############################################################################
 
 
 def _get_failed_tests_from_file(file_name: str) -> List[str]:
@@ -955,6 +971,8 @@ def pytest_repro(  # type: ignore
 
 
 # #############################################################################
+# pytest_rename_test
+# #############################################################################
 
 
 @task
@@ -978,15 +996,17 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
 
 
 # #############################################################################
+# pytest_find_ununsed_goldens
+# #############################################################################
 
 
 @task
 def pytest_find_unused_goldens(  # type: ignore
-    ctx,
-    dir_name=".",
-    stage="prod",
-    version="",
-    out_file_name="pytest_find_unused_goldens.output.txt",
+        ctx,
+        dir_name=".",
+        stage="prod",
+        version="",
+        out_file_name="pytest_find_unused_goldens.output.txt",
 ):
     """
     Detect mismatches between tests and their golden outcome files.
@@ -1023,10 +1043,12 @@ def pytest_find_unused_goldens(  # type: ignore
 
 
 # #############################################################################
+# pytest_compare_logs
+# #############################################################################
 
 
 def _purify_log_file(
-    file_name: str, remove_line_numbers: bool, grep_regex: str
+        file_name: str, remove_line_numbers: bool, grep_regex: str
 ) -> str:
     txt = hio.from_file(file_name)
     # Remove leading `16:34:27`.
@@ -1081,8 +1103,150 @@ def pytest_compare_logs(  # type: ignore
     file2_tmp = hio.add_suffix_to_filename(file2, suffix)
     hio.to_file(file2_tmp, txt)
     # Save the script to compare.
-    script_file_name = f"./tmp.vimdiff_log.sh"
+    script_file_name = "./tmp.vimdiff_log.sh"
     script_txt = f"vimdiff {file1_tmp} {file2_tmp}"
-    msg = f"To diff run:"
+    msg = "To diff run:"
     hio.create_executable_script(script_file_name, script_txt, msg=msg)
     hlitauti._run(ctx, script_file_name, dry_run=dry_run, pty=True)
+
+
+# #############################################################################
+# pytest_buildmeister
+# #############################################################################
+
+def _run(
+        cmd: str,
+        *,
+        abort_on_error: bool = False,
+        output_file: Optional[str] = None,
+        tee: bool = False,
+) -> int:
+    rc = hsystem.system(
+        cmd,
+        abort_on_error=abort_on_error,
+        suppress_output=False,
+        log_level="echo_frame",
+        output_file=output_file,
+        tee=tee,
+    )
+    return rc
+
+
+def _get_invoke_cmd_line(target: str, opts: str, pytest_opts: str) -> str:
+    cmd = ["invoke"]
+    cmd.append(target)
+    if opts:
+        cmd.append(opts)
+    if pytest_opts:
+        cmd.append("--pytest-opts %s" % pytest_opts)
+    cmd.append("2>&1")
+    return " ".join(cmd)
+
+
+def _run_cmd_and_tg(cmd: str, *args: Any, **kwargs: Any) -> None:
+    rc = _run(cmd, *args, **kwargs)
+    if rc != 0:
+        # pytest returns 5, if there are no tests to run.
+        # On error, send Telegram message.
+        cmd = "tg.py"
+        _run(cmd, abort_on_error=False)
+
+
+@task
+def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
+    """
+
+    :param print_output: print content of the file with the output of the buildmeister
+        run
+    """
+    _ = ctx
+    # Concat the files.
+    log_file = "bm.log.txt"
+    if os.path.exists(log_file):
+        cmd = f"rm -rf {log_file}"
+        _run(cmd)
+    log_file = "bm.log.txt"
+    cmd = 'cat $(find . -name "bm.log*.txt" | sort) >%s' % log_file
+    _run(cmd)
+    #
+    if print_output:
+        print(hprint.frame("Print output"))
+        cmd = f'cat {log_file}'
+        _run(cmd)
+    #
+    print(hprint.frame("Failures"))
+    # "> sudo -u spm-sasm rm ./tmp.pytest_repro.sh; i pytest_repro -f {log_file}"
+    if os.path.exists("./tmp.pytest_repro.sh"):
+        cmd = "sudo -u spm-sasm rm ./tmp.pytest_repro.sh"
+        _run(cmd)
+    #
+    cmd = f"invoke pytest_repro -f {log_file}"
+    _run(cmd)
+    #
+    print(hprint.frame("grep Failures"))
+    cmd = f"grep '^FAILED' {log_file}"
+    _run(cmd)
+
+
+@task
+def pytest_buildmeister(ctx, opts="", docker_clean=False, test=False):  # type: ignore
+    """
+    Run the regression tests.
+
+    :param docker_clean: remove all dead Docker instances
+    :param test: just run a single quick test to verify functionality of this
+        script
+    """
+    _ = ctx
+    pytest_opts = ""
+    if test:
+        # For testing.
+        pytest_opts = "amp/dataflow/model/test/test_experiment_utils.py::Test_get_configs_from_command_line_Amp1::test1"
+    if docker_clean:
+        cmd = "dev_scripts_lime/docker_clean.sh"
+        _run(cmd)
+    # Clean and sync.
+    cmd = "invoke git_clean -f"
+    _run(cmd)
+    #
+    cmd = "invoke git_pull"
+    _run(cmd)
+    #
+    log_file = "bm.log*txt"
+    if os.path.exists(log_file):
+        cmd = f"rm -rf {log_file}"
+        _run(cmd)
+    #
+    files_to_merge = []
+    #
+    target = "run_fast_tests"
+    cmd = _get_invoke_cmd_line(target, opts, pytest_opts)
+    log_file = f"bm.log.{target}.txt"
+    files_to_merge.append(log_file)
+    cmd = f"({cmd} | tee {log_file};" + " exit ${PIPESTATUS[0]})"
+    cmd = f"bash -c '{cmd}'"
+    _run_cmd_and_tg(cmd)
+    #
+    cmd = "invoke fix_perms"
+    hsystem.system(cmd)
+    #
+    target = "run_slow_tests"
+    cmd = _get_invoke_cmd_line(target, opts, pytest_opts)
+    log_file = f"bm.log.{target}.txt"
+    files_to_merge.append(log_file)
+    cmd = f"({cmd} | tee {log_file};" + " exit ${PIPESTATUS[0]})"
+    cmd = f"bash -c '{cmd}'"
+    _run_cmd_and_tg(cmd)
+    #
+    cmd = "invoke fix_perms"
+    _run(cmd)
+    #
+    target = "run_superslow_tests"
+    log_file = f"bm.log.{target}.txt"
+    files_to_merge.append(log_file)
+    cmd = _get_invoke_cmd_line(target, opts, pytest_opts)
+    cmd = f"({cmd} | tee {log_file};" + " exit ${PIPESTATUS[0]})"
+    cmd = f"bash -c '{cmd}'"
+    _run_cmd_and_tg(cmd)
+    #
+    pytest_buildmeister_check(ctx)

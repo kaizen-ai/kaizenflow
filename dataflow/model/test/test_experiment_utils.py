@@ -62,8 +62,8 @@ def build_tile_configs(
     ) = dtfmoexcon.parse_experiment_config(experiment_config)
     #
     config = _build_base_config()
-    #
-    config["dag_runner_object"] = get_dag_runner
+    # TODO(gp): We should build Systems and not return a builder.
+    config["dag_runner_builder"] = get_dag_runner
     # Name of the asset_ids to save.
     config["market_data_config", "asset_id_name"] = "asset_id"
     configs = [config]
@@ -86,7 +86,7 @@ def build_tile_configs(
     return configs
 
 
-class Test_get_configs_from_command_line1(hunitest.TestCase):
+class Test_get_configs_from_command_line_Amp1(hunitest.TestCase):
     """
     Test building (but not running) the configs for backtest.
     """
@@ -96,7 +96,7 @@ class Test_get_configs_from_command_line1(hunitest.TestCase):
         class Args:
             experiment_list_config = "universe_v2_0-top2.5T.JanFeb2020"
             config_builder = (
-                "dataflow.model.test.test_experiment_utils.build_tile_configs"
+                    "dataflow.model.test.test_experiment_utils.build_tile_configs"
                 + f'("{experiment_list_config}")'
             )
             dst_dir = "./dst_dir"

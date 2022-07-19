@@ -43,6 +43,7 @@ def compute_stochastic(
         hlc = np.log(hlc)
     high = hlc[high_col]
     low = hlc[low_col]
-    stochastic = (2 * df["close"] - high - low) / (high - low)
+    close = hlc[close_col]
+    stochastic = (2 * close - high - low) / (high - low)
     stochastic.name = "stochastic"
     return stochastic.to_frame()

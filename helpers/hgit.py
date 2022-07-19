@@ -1212,7 +1212,7 @@ def is_client_clean(
 
 @functools.lru_cache()
 def _get_gh_pr_list() -> str:
-    cmd = "gh pr list -s all --limit 10000"
+    cmd = "gh pr list -s all --limit 1000"
     rc, txt = hsystem.system_to_string(cmd)
     _ = rc
     txt = cast(str, txt)
