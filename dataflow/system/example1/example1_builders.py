@@ -61,7 +61,7 @@ def get_Example1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DA
     market_data = system.market_data
     # TODO(gp): This in the original code was
     #  `ts_col_name = "timestamp_db"`.
-    ts_col_name = "end_ts"
+    ts_col_name = "end_datetime"
     multiindex_output = True
     col_names_to_remove = ["start_ts"]
     node = dtfsysonod.HistoricalDataSource(
@@ -86,12 +86,14 @@ def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
     multiindex_output = True
+    ts_col_name = "end_ts"
     # How much history is needed for the DAG to compute.
     timedelta = pd.Timedelta("20T")
     node = dtfsysonod.RealTimeDataSource(
         stage,
         market_data,
         timedelta,
+        ts_col_name,
         multiindex_output,
     )
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
@@ -109,6 +111,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     # 199         "market_data_config", "history_lookback"
     # 200     ] = market_data_history_lookback
     timedelta = pd.Timedelta("7D")
+    ts_col_name = "end_datetime"
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
     multiindex_output = True
@@ -116,6 +119,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         stage,
         system.market_data,
         timedelta,
+        ts_col_name,
         multiindex_output,
     )
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
