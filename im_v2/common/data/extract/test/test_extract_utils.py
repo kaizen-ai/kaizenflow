@@ -1,5 +1,6 @@
 import unittest.mock as umock
 
+import pandas as pd
 import pytest
 
 import helpers.henv as henv
@@ -7,6 +8,7 @@ import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
@@ -311,3 +313,66 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         self.assertIn(
             "S3 path 's3://mock_bucket/binance' doesn't exist!", str(fail.value)
         )
+
+
+class TestRemoveDuplicates(hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper):
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Initialize database.
+        ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
+        hsql.execute_query(self.connection, ccxt_ohlcv_table_query)
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        # Drop table used in tests.
+        ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv;"
+        hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
+
+    def test_remove_duplicates(self) -> None:
+        """
+        Test if the duplicates are removed from the extracted Dataframe.
+        """
+        # Define the data to process.
+        ccxt_ohlcv = pd.DataFrame(
+            data={
+                "timestamp": [1636539060000, 1636539120000, 1636569000000],
+                "open": [2.227, 2.226, 2.244],
+                "high": [2.228, 2.228, 2.245],
+                "low": [2.225, 2.225, 2.241],
+                "close": [2.225, 2.227, 2.241],
+                "volume": [71884.5, 64687.0, 93899.7],
+                "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+                "exchange_id": ["binance", "binance", "binance"],
+            }
+        )
+        # Remove duplicate entities.
+        actual_df = imvcdeexut.remove_duplicates(
+            data=ccxt_ohlcv,
+            db_table="ccxt_ohlcv",
+            start_timestamp_as_unix=1636539060000,
+            end_timestamp_as_unix=1636539120000,
+            exchange_id="binance",
+            currency_pair="ADA_USDT",
+            connection=self.connection,
+        )
+        # Reset index to make expected and actual Dataframes comparable.
+        actual_df = actual_df.reset_index(drop=True)
+        # Define the Dataframe with duplicates removed.
+        expected_df = pd.DataFrame(
+            data={
+                "timestamp": [1636569000000],
+                "open": [2.244],
+                "high": [2.245],
+                "low": [2.241],
+                "close": [2.241],
+                "volume": [93899.7],
+                "currency_pair": ["ADA_USDT"],
+                "exchange_id": ["binance"],
+            }
+        )
+        # Check the result.
+        hunitest.compare_df(expected_df, actual_df)

@@ -233,13 +233,14 @@ def download_realtime_for_one_exchange(
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Remove duplicated entries.
         data = remove_duplicates(
-            data, 
+            data,
             db_table,
             start_timestamp_as_unix,
             end_timestamp_as_unix,
             exchange_id,
             currency_pair,
-            connection)
+            connection,
+        )
         # Insert data into the DB.
         hsql.execute_insert_query(
             connection=connection,
@@ -526,14 +527,14 @@ def download_historical_data(
 
 
 def remove_duplicates(
-        data: pd.DataFrame, 
-        db_table: str,
-        start_timestamp_as_unix: int,
-        end_timestamp_as_unix: int,
-        exchange_id: str,
-        currency_pair: str,
-        connection: hdbg.DbConnection
-        ) -> pd.DataFrame:
+    data: pd.DataFrame,
+    db_table: str,
+    start_timestamp_as_unix: int,
+    end_timestamp_as_unix: int,
+    exchange_id: str,
+    currency_pair: str,
+    connection: Any,
+) -> pd.DataFrame:
     """
     Remove duplicated entities from data.
 
