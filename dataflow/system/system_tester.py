@@ -252,6 +252,50 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_Time_ForecastSystem_TestCase1
+# #############################################################################
+
+
+class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
+    """
+    Test a System composed of:
+
+    - a `ReplayedMarketData` (providing fake data and features)
+    - a time DAG
+    """
+
+    def _test1(
+        self,
+        system: dtfsys.System,
+        market_data: pd.DataFrame,
+        initial_replayed_delay: int,
+        real_time_loop_time_out_in_secs: int,
+        *,
+        output_col_name: str = "prediction",
+    ) -> None:
+        with hasynci.solipsism_context() as event_loop:
+            # Complete system config.
+            system.config["event_loop_object"] = event_loop
+            system.config["market_data_config", "data"] = market_data
+            system.config[
+                "market_data_config", "initial_replayed_delay"
+            ] = initial_replayed_delay
+            system.config[
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
+            ] = real_time_loop_time_out_in_secs
+            # Create DAG runner.
+            dag_runner = system.dag_runner
+            # Run.
+            coroutines = [dag_runner.predict()]
+            result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            result_bundle = result_bundles[0][-1]
+            actual = get_signature(system.config, result_bundle, output_col_name)
+            self.check_string(actual, fuzzy_match=True, purify_text=True)
+
+
+# #############################################################################
 # Time_ForecastSystem_with_DataFramePortfolio1
 # #############################################################################
 
@@ -376,8 +420,10 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
                 "dag_runner_config", "sleep_interval_in_secs"
             ]
             order_processor = oms.get_order_processor_example1(
-                self.connection, portfolio, asset_id_name,
-                max_wait_time_for_order_in_secs
+                self.connection,
+                portfolio,
+                asset_id_name,
+                max_wait_time_for_order_in_secs,
             )
             real_time_loop_time_out_in_secs = system.config[
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
