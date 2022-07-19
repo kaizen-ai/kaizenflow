@@ -30,9 +30,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): -> get_SystemConfig_for_DagBuilder
-# TODO(gp): @all -> ..from_DagBuilder
-def get_system_config_template_from_dag_builder(
+def get_SystemConfig_template_from_DagBuilder(
     dag_builder: dtfcore.DagBuilder,
 ) -> cconfig.Config:
     """
@@ -106,8 +104,7 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
 # #############################################################################
 
 
-# TODO(gp): @all -> get_EventLoop_MarketData_from_df?
-def get_event_loop_MarketData_from_df(
+def get_EventLoop_MarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
     """
