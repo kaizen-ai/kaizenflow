@@ -118,7 +118,7 @@ class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
     ):
         vendor = "mock"
         super().__init__(
-            resample_1min, db_connection, table_name=table_name, vendor=vendor
+            vendor, resample_1min, db_connection, table_name=table_name
         )
 
     @staticmethod
