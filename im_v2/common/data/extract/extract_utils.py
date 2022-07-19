@@ -538,14 +538,14 @@ def remove_duplicates(
     """
     Remove duplicated entities from data.
 
-    :param data:
-    :param db_table:
-    :param start_timestamp_as_unix:
-    :param end_timestamp_as_unix:
-    :param exchange_id:
-    :param currency_pair:
-    :param connection:
-    :return: data
+    :param data: Dataframe to remove duplicates from
+    :param db_table: the name of the DB, e.g. `ccxt_ohlcv`
+    :param start_timestamp_as_unix: start timestamp
+    :param end_timestamp_as_unix: end timestamp
+    :param exchange_id: exchange ID, e.g. `binance`
+    :param currency_pair: e.g. ADA_USDT
+    :param connection: connection to the database
+    :return: Dataframe with duplicates removed
     """
     # Get duplicated rows from the DB.
     dup_query = f"SELECT * FROM {db_table} WHERE timestamp \
