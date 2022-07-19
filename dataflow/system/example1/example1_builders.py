@@ -71,7 +71,7 @@ def get_Example1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DA
         multiindex_output,
         col_names_to_remove=col_names_to_remove,
     )
-    dag = dtfssybuut.build_dag_with_DataSourceNode(system, node)
+    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
     return dag
 
 
@@ -94,7 +94,7 @@ def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
         timedelta,
         multiindex_output,
     )
-    dag = dtfssybuut.build_dag_with_DataSourceNode(system, node)
+    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
     return dag
 
 
@@ -118,7 +118,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         timedelta,
         multiindex_output,
     )
-    dag = dtfssybuut.build_dag_with_DataSourceNode(system, node)
+    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
     # Copied from E8_system_example.py
     # Configure a `ProcessForecast` node.
     # TODO(gp): @all we should use get_process_forecasts_dict_example1 or a similar
