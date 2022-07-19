@@ -69,13 +69,18 @@ def get_ReplayedTimeMarketData_from_df(
     initial_replayed_dt = min_start_time_col_name + pd.Timedelta(
         minutes=initial_replayed_delay
     )
-    _LOG.debug(hprint.to_str(
-        "min_start_time_col_name initial_replayed_delay initial_replayed_dt"))
+    _LOG.debug(
+        hprint.to_str(
+            "min_start_time_col_name initial_replayed_delay initial_replayed_dt"
+        )
+    )
     # The initial replayed datetime should be before the end of the data.
     end_of_data_dt = df[start_time_col_name].max()
     if initial_replayed_dt > end_of_data_dt:
-        _LOG.warning(f"The initial replayed datetime '{initial_replayed_dt}' "
-                     "should be before the end of the data '{end_of_data_dt}'")
+        _LOG.warning(
+            f"The initial replayed datetime '{initial_replayed_dt}' "
+            "should be before the end of the data '{end_of_data_dt}'"
+        )
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
         tz,

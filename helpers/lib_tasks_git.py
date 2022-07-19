@@ -604,7 +604,6 @@ def _git_diff_with_branch(
 ) -> None:
     """
     Diff files from this client against files in a branch using vimdiff.
-
     """
     _LOG.debug(
         hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
@@ -628,8 +627,13 @@ def _git_diff_with_branch(
         for f in files:
             if f == file_name:
                 files_tmp.append(f)
-        hdbg.dassert_eq(1, len(files_tmp), "Can't find file_name='%s' in\n%s",
-                        file_name, "\n".join(files))
+        hdbg.dassert_eq(
+            1,
+            len(files_tmp),
+            "Can't find file_name='%s' in\n%s",
+            file_name,
+            "\n".join(files),
+        )
         files = files_tmp
         print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
     if extensions:
@@ -727,8 +731,15 @@ def git_branch_diff_with_base(  # type: ignore
     #
     tag = "base"
     _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, file_name,
-        dry_run
+        ctx,
+        hash_,
+        tag,
+        dir_name,
+        diff_type,
+        subdir,
+        extensions,
+        file_name,
+        dry_run,
     )
 
 
@@ -750,8 +761,15 @@ def git_branch_diff_with_master(  # type: ignore
     hash_ = "origin/master"
     tag = "origin_master"
     _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, file_name,
-        dry_run
+        ctx,
+        hash_,
+        tag,
+        dir_name,
+        diff_type,
+        subdir,
+        extensions,
+        file_name,
+        dry_run,
     )
 
 

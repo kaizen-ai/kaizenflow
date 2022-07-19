@@ -169,10 +169,13 @@ class System(abc.ABC):
             self,
     ) -> dtfcore.DagRunner:
         _LOG.info(
-            "\n" +
-            hprint.frame("Building dag_runner with final config") + "\n" +
-            str(self.config) +
-            "\n" + hprint.frame("End config"))
+            "\n"
+            + hprint.frame("Building dag_runner with final config")
+            + "\n"
+            + str(self.config)
+            + "\n"
+            + hprint.frame("End config")
+        )
         #
         key = "dag_runner_object"
         dag_runner: dtfcore.DagRunner = self._get_cached_value(
@@ -183,6 +186,7 @@ class System(abc.ABC):
         self._config.mark_read_only()
         if False:
             import helpers.hio as hio
+
             hio.to_file("system_config.txt", str(self.config))
         return dag_runner
 
@@ -315,6 +319,7 @@ class _Time_ForecastSystem_Mixin:
             self,
     ) -> dtfsys.RealTimeDagRunner:
         ...
+
 
 # #############################################################################
 # _ForecastSystem_with_Portfolio
@@ -494,8 +499,10 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         #
         max_wait_time_for_order_in_secs = 10
         order_processor = oms.get_order_processor_example1(
-            db_connection, portfolio, asset_id_name,
-            max_wait_time_for_order_in_secs
+            db_connection,
+            portfolio,
+            asset_id_name,
+            max_wait_time_for_order_in_secs,
         )
         #
         order_processor_coroutine = oms.get_order_processor_coroutine_example1(

@@ -20,8 +20,8 @@ import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlist as hlist
-import helpers.hs3 as hs3
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
@@ -939,9 +939,7 @@ def pytest_repro(  # type: ignore
                 start_block = "__ " + name + " __"
                 traceback_block = txt.rsplit(start_block, maxsplit=1)[-1]
                 end_block_options = [
-                    "__ " + n + " __"
-                    for n in failed_test_names
-                    if n != name
+                    "__ " + n + " __" for n in failed_test_names if n != name
                 ]
                 for end_block in end_block_options:
                     # The end of the traceback for the current failed test is the
@@ -1114,6 +1112,7 @@ def pytest_compare_logs(  # type: ignore
 # pytest_buildmeister
 # #############################################################################
 
+
 def _run(
         cmd: str,
         *,
@@ -1171,7 +1170,7 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
     #
     if print_output:
         print(hprint.frame("Print output"))
-        cmd = f'cat {log_file}'
+        cmd = f"cat {log_file}"
         _run(cmd)
     #
     print(hprint.frame("Failures"))
