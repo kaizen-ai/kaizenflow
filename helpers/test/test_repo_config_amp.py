@@ -1,6 +1,5 @@
-import os
-
 import logging
+import os
 from typing import Any
 
 import pytest
@@ -64,6 +63,7 @@ class TestRepoConfig_Amp(hunitest.TestCase):
 
 
 # Copied from repo_config.py
+
 
 def is_dev_ck() -> bool:
     # sysname='Darwin'
@@ -146,7 +146,6 @@ def _check(self: Any, exp: str) -> None:
 
 
 class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
-
     def test_dev1_server(self) -> None:
         target_name = "cmamp"
         _execute_only_in_target_repo(target_name)
@@ -244,7 +243,6 @@ class TestRepoConfig_Cmamp_signature1(hunitest.TestCase):
 
 
 class TestRepoConfig_Amp_signature1(hunitest.TestCase):
-
     def test_dev1_server(self) -> None:
         target_name = "amp"
         _execute_only_in_target_repo(target_name)
