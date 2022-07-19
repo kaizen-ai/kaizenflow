@@ -38,7 +38,7 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
@@ -48,7 +48,7 @@ class Example1_ForecastSystem(dtfsyssyst.ForecastSystem):
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfsexexbu.get_Example1_dag_example1(self)
+        dag = dtfsexexbu.get_Example1_HistoricalDag_example1(self)
         return dag
 
     def _get_dag_runner(self) -> dtfcore.DagRunner:
@@ -98,17 +98,17 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_event_loop_MarketData_from_df(self)
+        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfsexexbu.get_Example1_realtime_dag_example1(self)
+        dag = dtfsexexbu.get_Example1_RealtimeDag_example2(self)
         return dag
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
@@ -135,17 +135,17 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_event_loop_MarketData_from_df(self)
+        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfsexexbu.get_Example1_dag_example3(self)
+        dag = dtfsexexbu.get_Example1_RealtimeDag_example3(self)
         return dag
 
     # TODO(gp): Extract this code in Example1_builders.py
@@ -195,7 +195,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfpexexpi.Example1_DagBuilder()
-        system_config = dtfssybuut.get_system_config_template_from_dag_builder(
+        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
@@ -203,11 +203,11 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_market_data(
         self,
     ) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_event_loop_MarketData_from_df(self)
+        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
-        dag = dtfsexexbu.get_Example1_dag_example3(self)
+        dag = dtfsexexbu.get_Example1_RealtimeDag_example3(self)
         return dag
 
     # TODO(gp): Extract this code in Example1_builders.py
