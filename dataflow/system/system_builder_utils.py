@@ -152,7 +152,6 @@ def adapt_dag_to_real_time_from_config(
     _LOG.debug("dag=\n%s", dag)
 
 
-# TODO(gp): -> ...from_System
 def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with an historical data source for simulation.
@@ -322,8 +321,7 @@ def apply_dag_property(
     return system
 
 
-# TODO(gp): build_dag_with_DataSourceNode?
-def build_dag_with_data_source_node(
+def build_dag_with_DataSourceNode(
     system: dtfsyssyst.System,
     data_source_node: dtfcore.DataSource,
 ) -> dtfcore.DAG:
