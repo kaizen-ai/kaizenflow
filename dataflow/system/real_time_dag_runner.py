@@ -99,6 +99,12 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         This adapts the asynchronous generator to a synchronous
         semantic.
         """
+        method = "fit"
+        await self._run_dag(method)
+        _LOG.info("dag after fit=\n%s", str(self.dag))
+        fit_state = self.dag.get_node("predict").get_fit_state()
+        import pprint
+        _LOG.info("state=%s", pprint.pformat(fit_state["_key_fit_state"][1467591036]))
         # Align on the bar.
         if self._wake_up_timestamp is not None:
             # TODO(gp): Add a check to make sure that all the params
