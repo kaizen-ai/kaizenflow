@@ -267,7 +267,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     def get_file_path(self) -> str:
         dir_name = self.get_input_dir(use_only_test_class=True)
         hio.create_dir(dir_name, incremental=True)
-        file_name = "real_time_bar_data.csv.gz"
+        file_name = "real_time_bar_data.parquet"
         file_path = os.path.join(dir_name, file_name)
         _LOG.debug("file_path=%s", file_path)
         return file_path
