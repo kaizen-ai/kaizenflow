@@ -410,13 +410,13 @@ class RealTimeDataSource(dtfcore.DataSource):
     """
 
     def __init__(
-            self,
-            nid: dtfcore.NodeId,
-            market_data: mdata.MarketData,
-            # TODO(gp): -> history_lookback
-            timedelta: pd.Timedelta,
-            ts_col_name: str,
-            multiindex_output: bool,
+        self,
+        nid: dtfcore.NodeId,
+        market_data: mdata.MarketData,
+        # TODO(gp): -> history_lookback
+        timedelta: pd.Timedelta,
+        ts_col_name: str,
+        multiindex_output: bool,
     ) -> None:
         """
         Constructor.

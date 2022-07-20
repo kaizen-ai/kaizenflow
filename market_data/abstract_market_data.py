@@ -157,13 +157,13 @@ class MarketData(abc.ABC):
     # /////////////////////////////////////////////////////////////////////////////
 
     def get_data_for_last_period(
-            self,
-            timedelta: pd.Timedelta,
-            *,
-            ts_col_name: Optional[str] = None,
-            # TODO(gp): @Grisha not sure limit is really needed. We could move it
-            #  to the DB implementation.
-            limit: Optional[int] = None,
+        self,
+        timedelta: pd.Timedelta,
+        *,
+        ts_col_name: Optional[str] = None,
+        # TODO(gp): @Grisha not sure limit is really needed. We could move it
+        #  to the DB implementation.
+        limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
         Get an amount of data `timedelta` in the past before the current
