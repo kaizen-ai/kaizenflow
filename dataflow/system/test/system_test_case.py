@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.system.system_tester as dtfsysytes
+import dataflow.system.test.system_test_case as dtfsytsytc
 """
 
 import asyncio
