@@ -21,6 +21,7 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 import helpers.hunit_test_utils as hunteuti
@@ -613,32 +614,40 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     local_coverage_path = "./htmlcov"
     # TODO(Nikola): Revert to `s3fs_.put` after `s3fs` is updated to latest version.
     #   See CmTask #2400.
-    sudo_prefix = ""
-    profile = aws_profile
-    if hsystem.is_inside_ci():
-        # There is no aws config in GH action,
-        # thus create default one from chosen profile.
-        # To bypass permission errors, `sudo` is used.
-        sudo_prefix = "sudo "
-        profile = "default"
-        AWS_ACCESS_KEY_ID = f"aws_access_key_id ${aws_profile.upper()}_AWS_ACCESS_KEY_ID"
-        AWS_SECRET_ACCESS_KEY = f"aws_secret_access_key ${aws_profile.upper()}_AWS_SECRET_ACCESS_KEY"
-        REGION = f"region ${aws_profile.upper()}_AWS_DEFAULT_REGION"
-        configure_cmd = (
-            f"sudo aws configure set {AWS_ACCESS_KEY_ID};"
-            f"sudo aws configure set {AWS_SECRET_ACCESS_KEY};"
-            f"sudo aws configure set {REGION};"
+    use_aws_copy = True
+    if use_aws_copy:
+        sudo_prefix = ""
+        if hsystem.is_inside_ci():
+            # There is no AWS config in GH action, thus create default one from chosen profile.
+            # To bypass permission errors, `sudo` is used.
+            sudo_prefix = "sudo "
+            aws_set_param_cmd = "sudo aws configure set"
+            aws_set_value_pairs = [
+                f"aws_access_key_id ${aws_profile.upper()}_AWS_ACCESS_KEY_ID",
+                f"aws_secret_access_key ${aws_profile.upper()}_AWS_SECRET_ACCESS_KEY",
+                f"region ${aws_profile.upper()}_AWS_DEFAULT_REGION",
+            ]
+            aws_config_cmds = [
+                f"{aws_set_param_cmd} {aws_set_value_pair}"
+                for aws_set_value_pair in aws_set_value_pairs
+            ]
+            aws_config_pipe_cmd = " && ".join(aws_config_cmds)
+            hsystem.system(aws_config_pipe_cmd)
+            # Command `aws configure set` is saving config for `default` profile.
+            aws_profile = "default"
+        cp_cmd = (
+            f"{sudo_prefix}aws s3 cp {local_coverage_path} {s3_html_coverage_path} "
+            f"--recursive --profile {aws_profile}"
         )
-        hsystem.system(configure_cmd)
-    cp_cmd = (
-        f"{sudo_prefix}aws s3 cp {local_coverage_path} {s3_html_coverage_path} "
-        f"--recursive --profile {profile}"
-    )
+        hsystem.system(cp_cmd)
+    else:
+        # Use `s3fs` to copy data to AWS S3.
+        s3fs_ = hs3.get_s3fs(aws_profile)
+        s3fs_.put(local_coverage_path, s3_html_coverage_path, recursive=True)
     _LOG.info(
         "HTML coverage report is published on S3: path=`%s`",
         s3_html_coverage_path,
     )
-    hsystem.system(cp_cmd)
 
 
 @task
@@ -955,9 +964,7 @@ def pytest_repro(  # type: ignore
                 start_block = "__ " + name + " __"
                 traceback_block = txt.rsplit(start_block, maxsplit=1)[-1]
                 end_block_options = [
-                    "__ " + n + " __"
-                    for n in failed_test_names
-                    if n != name
+                    "__ " + n + " __" for n in failed_test_names if n != name
                 ]
                 for end_block in end_block_options:
                     # The end of the traceback for the current failed test is the
@@ -1130,12 +1137,13 @@ def pytest_compare_logs(  # type: ignore
 # pytest_buildmeister
 # #############################################################################
 
+
 def _run(
-        cmd: str,
-        *,
-        abort_on_error: bool = False,
-        output_file: Optional[str] = None,
-        tee: bool = False,
+    cmd: str,
+    *,
+    abort_on_error: bool = False,
+    output_file: Optional[str] = None,
+    tee: bool = False,
 ) -> int:
     rc = hsystem.system(
         cmd,
@@ -1187,7 +1195,7 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
     #
     if print_output:
         print(hprint.frame("Print output"))
-        cmd = f'cat {log_file}'
+        cmd = f"cat {log_file}"
         _run(cmd)
     #
     print(hprint.frame("Failures"))
@@ -1202,7 +1210,7 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
     print(hprint.frame("grep Failures"))
     cmd = f"grep '^FAILED' {log_file}"
     _run(cmd)
-    
+
 
 @task
 def pytest_buildmeister(ctx, opts="", docker_clean=False, test=False):  # type: ignore
