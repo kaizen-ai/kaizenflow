@@ -10,4 +10,4 @@ from dataflow.system.sink_nodes import *  # pylint: disable=unused-import # NOQA
 from dataflow.system.source_nodes import *  # pylint: disable=unused-import # NOQA
 from dataflow.system.system import *  # pylint: disable=unused-import # NOQA
 from dataflow.system.system_builder_utils import *  # pylint: disable=unused-import # NOQA
-from dataflow.system.system_tester import *  # pylint: disable=unused-import # NOQA
+from dataflow.system.test.system_test_case import *  # pylint: disable=unused-import # NOQA

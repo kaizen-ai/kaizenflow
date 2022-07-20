@@ -8,7 +8,6 @@ import pytest
 import core.finance as cofinanc
 import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
-import dataflow.system.test.system_test_case as dtfsytsytc
 import helpers.hasyncio as hasynci
 import helpers.hunit_test as hunitest
 import oms as oms
