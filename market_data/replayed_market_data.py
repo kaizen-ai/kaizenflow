@@ -186,7 +186,8 @@ def save_market_data(
     compression = None
     if file_name.endswith(".gz"):
         compression = "gzip"
-    rt_df.to_csv(file_name, compression=compression, index=True)
+    rt_df.to_parquet(path=file_name, index=False)
+    # rt_df.to_csv(file_name, compression=compression, index=True)
     _LOG.info("Saving done")
 
 
