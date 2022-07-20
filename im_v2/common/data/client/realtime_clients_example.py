@@ -5,7 +5,6 @@ Import as:
 
 import im_v2.common.data.client.realtime_clients_example as imvcdcrcex
 """
-from typing import Optional
 
 import pandas as pd
 
@@ -118,7 +117,7 @@ class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
     ):
         vendor = "mock"
         super().__init__(
-            resample_1min, db_connection, table_name=table_name, vendor=vendor
+            vendor, resample_1min, db_connection, table_name
         )
 
     @staticmethod
@@ -236,7 +235,7 @@ class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     ):
         vendor = "mock"
         super().__init__(
-            resample_1min, db_connection, table_name=table_name, vendor=vendor
+            vendor, resample_1min, db_connection, table_name
         )
 
     @staticmethod
