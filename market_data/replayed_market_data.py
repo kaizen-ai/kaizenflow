@@ -176,6 +176,11 @@ def save_market_data(
     #hdbg.dassert(market_data.is_online())
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
+    #
+    rt_df["timestamp_db"] = rt_df.index
+    rt_df["end_datetime"] = rt_df.index
+    rt_df["start_datetime"] = rt_df["start_ts"]
+    #
     _LOG.debug(
         hpandas.df_to_str(
             rt_df, print_dtypes=True, print_shape_info=True, tag="rt_df"
@@ -184,7 +189,6 @@ def save_market_data(
     #
     _LOG.info("Saving ...")
     #
-    rt_df = rt_df.reset_index()
     rt_df.to_parquet(path=file_name)
     _LOG.info("Saving done")
 
