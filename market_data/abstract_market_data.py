@@ -159,8 +159,8 @@ class MarketData(abc.ABC):
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
-        ts_col_name: Optional[str] = None,
         *,
+        ts_col_name: Optional[str] = None,
         # TODO(gp): @Grisha not sure limit is really needed. We could move it
         #  to the DB implementation.
         limit: Optional[int] = None,
