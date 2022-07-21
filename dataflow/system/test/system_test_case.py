@@ -269,7 +269,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         system: dtfsys.System,
         market_data: pd.DataFrame,
         initial_replayed_delay: int,
-        delay_in_secs: int,
+        sleep_interval_in_secs: int,
         real_time_loop_time_out_in_secs: int,
         *,
         output_col_name: str = "prediction",
@@ -290,7 +290,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
             ] = real_time_loop_time_out_in_secs
             system.config[
                 "dag_runner_config", "sleep_interval_in_secs"
-            ] = 60 * 5
+            ] = sleep_interval_in_secs
             # Create DAG runner.
             dag_runner = system.dag_runner
             # Run.
