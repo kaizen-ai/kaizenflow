@@ -186,66 +186,9 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
         system.config["market_data_config", "asset_ids"] = [101]
         system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
-        self._test1(system, data, real_time_loop_time_out_in_secs)
-
-    # TODO(gp): This was copied.
-    def run_coroutines(
-        self,
-        data: pd.DataFrame,
-        real_time_loop_time_out_in_secs: int,
-    ) -> str:
-        """
-        Run a system using the desired portfolio based on DB or dataframe.
-        """
-        with hasynci.solipsism_context() as event_loop:
-            system = (
-                dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
-            )
-            # Complete system config.
-            system.config["event_loop_object"] = event_loop
-            system.config["market_data_config", "data"] = data
-            system.config["market_data_config", "initial_replayed_delay"] = 5
-            system.config["market_data_config", "asset_ids"] = [101]
-            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = real_time_loop_time_out_in_secs
-            # Create DAG runner.
-            dag_runner = system.dag_runner
-            # Run.
-            coroutines = [dag_runner.predict()]
-            result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-            # Compute output.
-            # TODO(gp): Factor this out to SystemTester.
-            system_tester = dtfsytsytc.SystemTester()
-            result_bundles = result_bundles[0]
-            result_bundle = result_bundles[-1]
-            _LOG.debug("result_bundle=\n%s", result_bundle)
-            # TODO(gp): Extract all of this from System.
-            portfolio = system.portfolio
-            _LOG.debug("portfolio=\n%s", portfolio)
-            price_col = "vwap"
-            volatility_col = "vwap.ret_0.vol"
-            prediction_col = "feature1"
-            actual: str = system_tester.compute_run_signature(
-                dag_runner,
-                portfolio,
-                result_bundle,
-                price_col=price_col,
-                volatility_col=volatility_col,
-                prediction_col=prediction_col,
-            )
-        return actual
-
-    def test_market_data1_dataframe_portfolio1(self) -> None:
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
-        actual = self.run_coroutines(
-            data,
-            real_time_loop_time_out_in_secs,
-        )
-        self.check_string(str(actual))
+        system.config["dag_runner_config"]["real_time_loop_time_out_in_secs"] = real_time_loop_time_out_in_secs
+        system.config["market_data_config"]["data"] = data
+        self._test1(system)
 
 
 # #############################################################################

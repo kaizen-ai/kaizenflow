@@ -304,8 +304,8 @@ class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 
-    - DAG
-    - EgReplayedMarketData
+    - a time DAG
+    - ReplayedMarketData
     - DataFrame portfolio
     - Simulated broker
     """
@@ -313,20 +313,10 @@ class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
     def _test1(
         self,
         system: dtfsys.System,
-        asset_ids: List[int],
-        sleep_interval_in_secs: int,
-        real_time_loop_time_out_in_secs: int,
     ) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
-            system.config["market_data_config", "asset_ids"] = asset_ids
-            system.config[
-                "dag_runner_config", "sleep_interval_in_secs"
-            ] = sleep_interval_in_secs
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = real_time_loop_time_out_in_secs
             dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
@@ -335,7 +325,7 @@ class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
             )
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
-            system_tester = dtfsys.SystemTester()
+            system_tester = SystemTester()
             # Check output.
             portfolio = system.portfolio
             price_col = system.config["research_pnl", "price_col"]
