@@ -146,6 +146,8 @@ class Test_Example1_Time_ForecastSystem1(
         # TODO(Dan): Add more data, otherwise volatility is NaN.
         market_data, _ = cofinanc.get_market_data_df1()
         initial_replayed_delay = 5
+        #
+        sleep_interval_in_secs = 60 * 5
         # Exercise the system for multiple 5 minute intervals.
         real_time_loop_time_out_in_secs = 60 * 5 * 3
         output_col_name = "vwap.ret_0.vol_adj.c"
@@ -153,6 +155,7 @@ class Test_Example1_Time_ForecastSystem1(
             system,
             market_data,
             initial_replayed_delay,
+            sleep_interval_in_secs,
             real_time_loop_time_out_in_secs,
             output_col_name=output_col_name,
         )

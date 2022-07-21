@@ -50,6 +50,7 @@ dag_builder_class: Example1_DagBuilder
 system_class: Example1_Time_ForecastSystem
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_data_config:
+  delay_in_secs: 0
   data: 
     index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:10:00-05:00]
     columns=start_datetime,end_datetime,timestamp_db,close,asset_id,volume,feature1
@@ -65,6 +66,7 @@ market_data_config:
   initial_replayed_delay: 5
 dag_runner_config:
   real_time_loop_time_out_in_secs: 900
+  sleep_interval_in_secs: 300
 market_object: <market_data.replayed_market_data.ReplayedMarketData object>
 dag_object: dag=<dataflow.core.dag.DAG object>
   name=None

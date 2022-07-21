@@ -112,7 +112,7 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
         return dag
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_realtime_DagRunner_from_system(self)
+        dag_runner = dtfssybuut.get_dag_runner_instance1(self)
         return dag_runner
 
 
