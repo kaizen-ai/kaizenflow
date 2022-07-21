@@ -145,18 +145,28 @@ class Test_Example1_Time_ForecastSystem1(
         system = dtfseefosy.Example1_Time_ForecastSystem()
         # TODO(Dan): Add more data, otherwise volatility is NaN.
         market_data, _ = cofinanc.get_market_data_df1()
-        initial_replayed_delay = 5
-        #
-        sleep_interval_in_secs = 60 * 5
+        # Since we are reading from a df there is no delay.
+        system.config[
+            "market_data_config", "delay_in_secs"
+        ] = 0
+        system.config["market_data_config", "data"] = market_data
+        system.config[
+            "market_data_config", "initial_replayed_delay"
+        ] = 5
+        system.config[
+            "market_data_config", "data"
+        ] = market_data
         # Exercise the system for multiple 5 minute intervals.
-        real_time_loop_time_out_in_secs = 60 * 5 * 3
+        system.config[
+            "dag_runner_config", "real_time_loop_time_out_in_secs"
+        ] = 60 * 5 * 3
+        system.config[
+            "dag_runner_config", "sleep_interval_in_secs"
+        ] = 60 * 5
+        #
         output_col_name = "vwap.ret_0.vol_adj.c"
         self._test1(
             system,
-            market_data,
-            initial_replayed_delay,
-            sleep_interval_in_secs,
-            real_time_loop_time_out_in_secs,
             output_col_name=output_col_name,
         )
 

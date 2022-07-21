@@ -267,30 +267,12 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     def _test1(
         self,
         system: dtfsys.System,
-        market_data: pd.DataFrame,
-        initial_replayed_delay: int,
-        sleep_interval_in_secs: int,
-        real_time_loop_time_out_in_secs: int,
         *,
         output_col_name: str = "prediction",
     ) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
-            # Since we are reading from a df there is no delay.
-            system.config[
-                "market_data_config", "delay_in_secs"
-            ] = 0
-            system.config["market_data_config", "data"] = market_data
-            system.config[
-                "market_data_config", "initial_replayed_delay"
-            ] = initial_replayed_delay
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = real_time_loop_time_out_in_secs
-            system.config[
-                "dag_runner_config", "sleep_interval_in_secs"
-            ] = sleep_interval_in_secs
             # Create DAG runner.
             dag_runner = system.dag_runner
             # Run.
