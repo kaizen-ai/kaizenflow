@@ -622,19 +622,18 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
             # To bypass permission errors, `sudo` is used.
             sudo_prefix = "sudo "
             aws_set_param_cmd = "sudo aws configure set"
+            aws_set_profile_cmd = f"--profile {aws_profile}"
             aws_set_value_pairs = [
                 f"aws_access_key_id ${aws_profile.upper()}_AWS_ACCESS_KEY_ID",
                 f"aws_secret_access_key ${aws_profile.upper()}_AWS_SECRET_ACCESS_KEY",
                 f"region ${aws_profile.upper()}_AWS_DEFAULT_REGION",
             ]
             aws_config_cmds = [
-                f"{aws_set_param_cmd} {aws_set_value_pair}"
+                f"{aws_set_param_cmd} {aws_set_value_pair} {aws_set_profile_cmd}"
                 for aws_set_value_pair in aws_set_value_pairs
             ]
             aws_config_pipe_cmd = " && ".join(aws_config_cmds)
             hsystem.system(aws_config_pipe_cmd)
-            # Command `aws configure set` is saving config for `default` profile.
-            aws_profile = "default"
         cp_cmd = (
             f"{sudo_prefix}aws s3 cp {local_coverage_path} {s3_html_coverage_path} "
             f"--recursive --profile {aws_profile}"
