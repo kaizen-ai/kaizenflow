@@ -347,13 +347,13 @@ class TestRemoveDuplicates(hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper):
         )
         # Remove duplicate entities.
         actual_df = imvcdeexut.remove_duplicates(
+            db_connection=self.connection,
             data=ccxt_ohlcv,
             db_table="ccxt_ohlcv",
             start_timestamp_as_unix=1636539060000,
             end_timestamp_as_unix=1636539120000,
             exchange_id="binance",
             currency_pair="ADA_USDT",
-            connection=self.connection,
         )
         # Reset index to make expected and actual Dataframes comparable.
         actual_df = actual_df.reset_index(drop=True)
