@@ -527,7 +527,7 @@ def download_historical_data(
 
 
 def remove_duplicates(
-    db_connection: Any,
+    db_connection: hsql.DbConnection,
     data: pd.DataFrame,
     db_table: str,
     start_timestamp_as_unix: int,
@@ -536,15 +536,15 @@ def remove_duplicates(
     currency_pair: str,
 ) -> pd.DataFrame:
     """
-    Remove duplicated entities from data.
+    Remove duplicated entities from realtime data.
 
     :param db_connection: connection to the database
     :param data: Dataframe to remove duplicates from
     :param db_table: the name of the DB, e.g. `ccxt_ohlcv`
-    :param start_timestamp_as_unix: start timestamp
-    :param end_timestamp_as_unix: end timestamp
+    :param start_timestamp_as_unix: start timestamp as int
+    :param end_timestamp_as_unix: end timestamp as int
     :param exchange_id: exchange ID, e.g. `binance`
-    :param currency_pair: e.g. ADA_USDT
+    :param currency_pair: e.g. `ADA_USDT`
     :return: Dataframe with duplicates removed
     """
     # Get duplicated rows from the DB.
