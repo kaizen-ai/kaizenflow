@@ -296,11 +296,11 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# Time_ForecastSystem_with_DataFramePortfolio1
+# Time_ForecastSystem_with_DataFramePortfolio1_TestCase1
 # #############################################################################
 
 
-class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
+class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 
@@ -310,7 +310,7 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
     - Simulated broker
     """
 
-    def helper(
+    def _test1(
         self,
         system: dtfsys.System,
         asset_ids: List[int],
@@ -338,9 +338,9 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
             system_tester = dtfsys.SystemTester()
             # Check output.
             portfolio = system.portfolio
-            price_col = "vwap"
-            volatility_col = "vwap.ret_0.vol"
-            prediction_col = "prediction"
+            price_col = system.config["research_pnl", "price_col"]
+            volatility_col = system.config["research_pnl", "volatility_col"]
+            prediction_col = system.config["research_pnl", "prediction_col"]
             actual = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,

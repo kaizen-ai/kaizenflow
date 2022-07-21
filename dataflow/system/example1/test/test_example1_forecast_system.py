@@ -163,9 +163,9 @@ class Test_Example1_Time_ForecastSystem1(
 # Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1
 # #############################################################################
 
-# TODO(gp): @all express in terms of Time_ForecastSystem_with_DataFramePortfolio_TestCase1
+
 class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
-    hunitest.TestCase
+    dtfsytsytc.Time_ForecastSystem_with_DataFramePortfolio1_TestCase1
 ):
     """
     Test an end-to-end `System`, containing:
@@ -174,6 +174,19 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     - a Example1 pipeline
     - a `Portfolio` backed by a dataframe
     """
+
+    def test1(self) -> None:
+        system = (
+            dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
+        )
+        system.config["research_pnl", "price_col"] = "vwap"
+        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+        system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
+        system.config["market_data_config", "initial_replayed_delay"] = 5
+        system.config["market_data_config", "asset_ids"] = [101]
+        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        self._test1(system, data, real_time_loop_time_out_in_secs)
 
     # TODO(gp): This was copied.
     def run_coroutines(
