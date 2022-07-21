@@ -190,7 +190,7 @@ def download_realtime_for_one_exchange(
     try:
         # Connect with the parameters from the env file.
         connection_params = hsql.get_connection_info_from_env_file(env_file)
-        connection = hsql.get_connection(*connection_params)
+        db_connection = hsql.get_connection(*connection_params)
     except psycopg2.OperationalError:
         # Connect with the dynamic parameters (usually during tests).
         actual_details = hsql.db_connection_to_tuple(args["connection"])._asdict()
@@ -201,7 +201,7 @@ def download_realtime_for_one_exchange(
             user=actual_details["user"],
             password=actual_details["password"],
         )
-        connection = hsql.get_connection(*connection_params)
+        db_connection = hsql.get_connection(*connection_params)
     # Load DB table to work with
     db_table = args["db_table"]
     # Convert timestamps.
@@ -233,17 +233,17 @@ def download_realtime_for_one_exchange(
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Remove duplicated entries.
         data = remove_duplicates(
+            db_connection,
             data,
             db_table,
             start_timestamp_as_unix,
             end_timestamp_as_unix,
             exchange_id,
             currency_pair,
-            connection,
         )
         # Insert data into the DB.
         hsql.execute_insert_query(
-            connection=connection,
+            connection=db_connection,
             obj=data,
             table_name=db_table,
         )
@@ -527,24 +527,24 @@ def download_historical_data(
 
 
 def remove_duplicates(
+    db_connection: Any,
     data: pd.DataFrame,
     db_table: str,
     start_timestamp_as_unix: int,
     end_timestamp_as_unix: int,
     exchange_id: str,
     currency_pair: str,
-    connection: Any,
 ) -> pd.DataFrame:
     """
     Remove duplicated entities from data.
 
+    :param db_connection: connection to the database
     :param data: Dataframe to remove duplicates from
     :param db_table: the name of the DB, e.g. `ccxt_ohlcv`
     :param start_timestamp_as_unix: start timestamp
     :param end_timestamp_as_unix: end timestamp
     :param exchange_id: exchange ID, e.g. `binance`
     :param currency_pair: e.g. ADA_USDT
-    :param connection: connection to the database
     :return: Dataframe with duplicates removed
     """
     # Get duplicated rows from the DB.
@@ -553,7 +553,7 @@ def remove_duplicates(
                 AND {end_timestamp_as_unix} \
                 AND exchange_id='{exchange_id}' \
                 AND currency_pair='{currency_pair}'"
-    existing_data = hsql.execute_query_to_df(connection, dup_query)
+    existing_data = hsql.execute_query_to_df(db_connection, dup_query)
     # Remove data that has been already been downloaded.
     data = data.loc[~data.timestamp.isin(existing_data.timestamp)]
     # Remove final unfinished tick.
