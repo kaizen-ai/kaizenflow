@@ -106,11 +106,6 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
 
 def get_EventLoop_MarketData_from_df(
     system: dtfsyssyst.System,
-    *,
-    knowledge_datetime_col_name: str = "timestamp_db",
-    asset_id_col_name: str = "asset_id",
-    start_time_col_name: str = "start_datetime",
-    end_time_col_name: str = "end_datetime",
 ) -> mdata.ReplayedMarketData:
     """
     Build an event loop MarketData with data from a dataframe.
@@ -124,10 +119,6 @@ def get_EventLoop_MarketData_from_df(
         event_loop,
         initial_replayed_delay,
         data,
-        knowledge_datetime_col_name=knowledge_datetime_col_name,
-        asset_id_col_name=asset_id_col_name,
-        start_time_col_name=start_time_col_name,
-        end_time_col_name=end_time_col_name,
     )
     return market_data
 

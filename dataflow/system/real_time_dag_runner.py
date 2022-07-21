@@ -9,13 +9,13 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import helpers.hasyncio as hasynci
-import helpers.hdatetime as hdateti
 import core.config as cconfig
 import core.real_time as creatime
 import dataflow.core as dtfcore
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
+import helpers.hasyncio as hasynci
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
@@ -67,7 +67,9 @@ class RealTimeDagRunner(dtfcore.DagRunner):
 
     async def wait_for_start_trading(self) -> None:
         """
-        Wait until `wake_up_timestamp` in config. E.g., 9:45am.
+        Wait until `wake_up_timestamp` in config.
+
+        E.g., 9:45am.
         """
         get_wall_clock_time = self._get_wall_clock_time
         # The system should come up sometime before the first bar (e.g., around
@@ -86,8 +88,9 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         # Add one second to make sure we are after the start trading time.
         add_buffer_in_secs = 1
         target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
-            grid_time_in_secs, get_wall_clock_time,
-            add_buffer_in_secs=add_buffer_in_secs
+            grid_time_in_secs,
+            get_wall_clock_time,
+            add_buffer_in_secs=add_buffer_in_secs,
         )
         await hasynci.async_wait_until(target_time, get_wall_clock_time)
         _LOG.debug("Aligning ... done")
@@ -102,9 +105,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         method = "fit"
         await self._run_dag(method)
         _LOG.info("dag after fit=\n%s", str(self.dag))
-        fit_state = self.dag.get_node("predict").get_fit_state()
-        import pprint
-        _LOG.info("state=%s", pprint.pformat(fit_state["_key_fit_state"][1467591036]))
+        self.dag.get_node("predict").get_fit_state()
         # Align on the bar.
         if self._wake_up_timestamp is not None:
             # TODO(gp): Add a check to make sure that all the params
@@ -163,8 +164,10 @@ class RealTimeDagRunner(dtfcore.DagRunner):
             node = self.dag.get_node(nid)
             _LOG.debug("nid=%s node=%s type=%s", nid, str(node), str(type(node)))
             if isinstance(node, dtfsysonod.HistoricalDataSource):
-                raise ValueError(f"HistoricalDataSource node {node} not allowed "
-                    "in RealTimeDagRunner")
+                raise ValueError(
+                    f"HistoricalDataSource node {node} not allowed "
+                    "in RealTimeDagRunner"
+                )
             if isinstance(node, dtfsysonod.RealTimeDataSource):
                 _LOG.debug("Waiting on node '%s' ...", str(nid))
                 await node.wait_for_latest_data()
