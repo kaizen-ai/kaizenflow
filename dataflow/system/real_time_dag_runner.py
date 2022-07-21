@@ -41,33 +41,37 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         fit_state: cconfig.Config,
         execute_rt_loop_kwargs: Dict[str, Any],
         dst_dir: str,
-        #
         *,
+        fit_at_beginning: bool = False,
         get_wall_clock_time: Optional[hdateti.GetWallClockTime] = None,
         wake_up_timestamp: Optional[pd.Timestamp] = None,
         grid_time_in_secs: Optional[int] = None,
     ) -> None:
         """
+        Build object.
 
-        :param get_wall_clock_time: wall clock to use to
-        :param wake_up_timestamp: timestamp to wait to start the execution
-        :param grid_time_in_secs:
+        :param fit_at_beginning: force the system to fit before making predictions
+        :param get_wall_clock_time: wall clock to use
+        :param wake_up_timestamp: timestamp to wait to start the execution (e.g.,
+            9:30am)
+        :param grid_time_in_secs: duration of a bar (e.g., 5 mins = 300 secs)
         """
         super().__init__(dag)
         # Save input parameters.
         # TODO(gp): Use this for stateful DAGs.
         _ = fit_state
+        self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
+        self._dst_dir = dst_dir
+        self._fit_at_beginning = fit_at_beginning
         self._get_wall_clock_time = get_wall_clock_time
         self._wake_up_timestamp = wake_up_timestamp
         self._grid_time_in_secs = grid_time_in_secs
-        self._execute_rt_loop_kwargs = execute_rt_loop_kwargs
-        self._dst_dir = dst_dir
         # Store information about the real-time execution.
         self._events: creatime.Events = []
 
     async def wait_for_start_trading(self) -> None:
         """
-        Wait until `wake_up_timestamp` in config. E.g., 9:45am.
+        Wait until `wake_up_timestamp` in config (e.g., 9:45am).
         """
         get_wall_clock_time = self._get_wall_clock_time
         # The system should come up sometime before the first bar (e.g., around
@@ -77,6 +81,11 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         wake_up_timestamp = self._wake_up_timestamp
         _LOG.info("Waiting until session start at %s ...", wake_up_timestamp)
         await hasynci.async_wait_until(wake_up_timestamp, get_wall_clock_time)
+        curr_timestamp = get_wall_clock_time()
+        _LOG.info("Current time=%s: session started at %s", curr_timestamp, wake_up_timestamp)
+
+    async def align_on_grid(self) -> None:
+        get_wall_clock_time = self._get_wall_clock_time
         # If the system comes up in the middle of the day then we need to wait to
         # align to a bar.
         # Align on the trading grid (e.g., 1, 5, 15 minutes).
@@ -99,11 +108,23 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         This adapts the asynchronous generator to a synchronous
         semantic.
         """
-        # Align on the bar.
+        if self._fit_at_beginning:
+            _LOG.info("Fitting model")
+            # TODO(gp): For now we assume that the ML node is called "predict",
+            #  we should check that there is a node that has state.
+            hdbg.dassert(self.dag._nx_dag.has_node("predict"))
+            method = "fit"
+            await self._run_dag(method)
+            _LOG.info("dag after fit=\n%s", str(self.dag))
+            fit_state = self.dag.get_node("predict").get_fit_state()
+            _LOG.info("fit_state=\n%s", str(fit_state))
+        # Wait until time to start trading.
         if self._wake_up_timestamp is not None:
             # TODO(gp): Add a check to make sure that all the params
             # are set up consistently.
             await self.wait_for_start_trading()
+        # Align on the bar.
+        await self.align_on_grid()
         # Start loop.
         result_bundles = [
             result_bundle async for result_bundle in self.predict_at_datetime()
