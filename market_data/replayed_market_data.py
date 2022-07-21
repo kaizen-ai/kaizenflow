@@ -176,6 +176,9 @@ def save_market_data(
     # hdbg.dassert(market_data.is_online())
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
+    # TODO(Nina): "Cut off loaded historical market data by wall clock time" CmTask #2424.
+    wall_clock_time = market_data.get_wall_clock_time()
+    rt_df = rt_df[rt_df.index < wall_clock_time]
     # Adjust column names to the processable format.
     if "timestamp_db" not in rt_df.columns:
         rt_df["timestamp_db"] = rt_df.index
