@@ -59,22 +59,26 @@ asset_id                      101
 # forecast_evaluator_from_prices signature=
 
 # holdings=
-Empty DataFrame
-Columns: [101]
-Index: []
+                              101
+end_datetime                     
+2000-01-01 10:05:00-05:00 -1000.0
 # holdings marked to market=
-Empty DataFrame
-Columns: [101]
-Index: []
+                                101
+end_datetime                       
+2000-01-01 10:05:00-05:00 -101000.0
 # flows=
-Empty DataFrame
-Columns: [101]
-Index: []
+                                101
+end_datetime                       
+2000-01-01 10:05:00-05:00  201000.0
 # pnl=
-Empty DataFrame
-Columns: [101]
-Index: []
+                             101
+end_datetime                    
+2000-01-01 10:05:00-05:00  990.1
 # statistics=
-Empty DataFrame
-Columns: [pnl, gross_volume, net_volume, gmv, nmv]
-Index: []
+                             pnl  gross_volume  net_volume       gmv       nmv
+end_datetime                                                                  
+2000-01-01 10:05:00-05:00  990.1      201000.0   -201000.0  101000.0 -101000.0
+
+# pnl agreement with research pnl
+
+corr = 1.000

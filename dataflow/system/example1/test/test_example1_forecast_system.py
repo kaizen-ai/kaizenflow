@@ -184,7 +184,9 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
         #
         system.config["research_pnl", "price_col"] = "vwap"
         system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-        system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
+        # TODO(Grisha): decide which column to use for `Example1`. Maybe even
+        # add a toy `prediction` stage.
+        system.config["research_pnl", "prediction_col"] = "feature1"
         # Check the results.
         asset_ids = [101]
         sleep_interval_in_secs = 60 * 5
