@@ -179,15 +179,19 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
         system = (
             dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
         )
+        #
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        #
+        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = real_time_loop_time_out_in_secs
+        #
+        system.config["market_data_config", "asset_ids"] = [101]
+        system.config["market_data_config", "data"] = data
+        system.config["market_data_config", "initial_replayed_delay"] = 5
+        # 
         system.config["research_pnl", "price_col"] = "vwap"
         system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
         system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
-        system.config["market_data_config", "initial_replayed_delay"] = 5
-        system.config["market_data_config", "asset_ids"] = [101]
-        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
-        system.config["dag_runner_config"]["real_time_loop_time_out_in_secs"] = real_time_loop_time_out_in_secs
-        system.config["market_data_config"]["data"] = data
         self._test1(system)
 
 
