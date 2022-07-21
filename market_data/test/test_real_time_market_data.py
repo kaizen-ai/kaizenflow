@@ -38,10 +38,10 @@ class TestRealTimeMarketData2(
         """
         # Set up processing parameters.
         timedelta = pd.Timedelta("1D")
-        ts_column_name = "timestamp"
+        ts_col_name = "timestamp"
         actual = self.market_data.get_data_for_last_period(
             timedelta,
-            ts_column_name,
+            ts_col_name=ts_col_name,
         )
         # pylint: disable=line-too-long
         expected_df_as_str = r"""

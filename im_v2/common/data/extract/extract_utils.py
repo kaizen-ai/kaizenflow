@@ -591,5 +591,5 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
                 f"Invalid dtype of `{column}` column: expected type `{expected_type}`, found `{actual_type}`"
             )
     if error_msg:
-        hdbg.dfatal(msg="\n".join(error_msg))
+        hdbg.dfatal(message="\n".join(error_msg))
     return data

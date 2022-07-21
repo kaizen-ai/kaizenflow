@@ -610,12 +610,10 @@ class SqlRealTimeImClient(RealTimeImClient):
 
     def __init__(
         self,
+        vendor: str,
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
-        # TODO(gp): @all should vendor be first? The params that correponds to the
-        #  innermost classes should go first.
-        vendor: str,
     ) -> None:
         # Real-time implementation has a different mechanism for getting universe.
         # Passing to make the parent class happy.
