@@ -8,7 +8,7 @@ import pytest
 import core.finance as cofinanc
 import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
-import dataflow.system.system_tester as dtfsysytes
+import dataflow.system.test.system_test_case as dtfsytsytc
 import helpers.hasyncio as hasynci
 import helpers.hunit_test as hunitest
 import oms as oms
@@ -35,7 +35,7 @@ def _get_test_system_builder_func() -> Callable:
 # #############################################################################
 
 
-class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
+class Test_Example1_System_CheckConfig(dtfsytsytc.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
         system_builder = system_builder_func()
@@ -48,7 +48,7 @@ class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
 
 
 class Test_Example1_ForecastSystem_FitPredict(
-    dtfsysytes.ForecastSystem_FitPredict_TestCase1
+    dtfsytsytc.ForecastSystem_FitPredict_TestCase1
 ):
     def get_system(self) -> dtfsys.System:
         """
@@ -92,7 +92,7 @@ class Test_Example1_ForecastSystem_FitPredict(
 
 
 class Test_Example1_ForecastSystem_FitInvariance(
-    dtfsysytes.ForecastSystem_FitInvariance_TestCase1
+    dtfsytsytc.ForecastSystem_FitInvariance_TestCase1
 ):
     def test_test_invariance1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
@@ -117,7 +117,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
 
 
 class Test_Example1_ForecastSystem_CheckPnl(
-    dtfsysytes.ForecastSystem_CheckPnl_TestCase1
+    dtfsytsytc.ForecastSystem_CheckPnl_TestCase1
 ):
     def test_test_fit_run1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
@@ -137,7 +137,7 @@ class Test_Example1_ForecastSystem_CheckPnl(
 
 
 class Test_Example1_Time_ForecastSystem1(
-    dtfsysytes.Test_Time_ForecastSystem_TestCase1
+    dtfsytsytc.Test_Time_ForecastSystem_TestCase1
 ):
     def test1(self) -> None:
         """
@@ -206,7 +206,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
             )
             # Compute output.
             # TODO(gp): Factor this out to SystemTester.
-            system_tester = dtfsysytes.SystemTester()
+            system_tester = dtfsytsytc.SystemTester()
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
             _LOG.debug("result_bundle=\n%s", result_bundle)
@@ -320,7 +320,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             # Compute output.
-            system_tester = dtfsysytes.SystemTester()
+            system_tester = dtfsytsytc.SystemTester()
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
             _LOG.debug("result_bundle=\n%s", result_bundle)
