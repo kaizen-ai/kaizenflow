@@ -176,10 +176,13 @@ def save_market_data(
     #hdbg.dassert(market_data.is_online())
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
-    #
-    rt_df["timestamp_db"] = rt_df.index
-    rt_df["end_datetime"] = rt_df.index
-    rt_df["start_datetime"] = rt_df["start_ts"]
+    # Adjust column names to the processable format.
+    if "timestamp_db" not in rt_df.columns:
+        rt_df["timestamp_db"] = rt_df.index
+    if "end_datetime" not in rt_df.columns:
+        rt_df["end_datetime"] = rt_df.index
+    if "start_ts" in rt_df.columns:
+        rt_df = rt_df.rename(columns={"start_ts":"start_datetime"})
     #
     _LOG.debug(
         hpandas.df_to_str(
@@ -188,8 +191,10 @@ def save_market_data(
     )
     #
     _LOG.info("Saving ...")
-    #
-    rt_df.to_parquet(path=file_name)
+    compression = None
+    if file_name.endswith(".gz"):
+        compression = "gzip"
+    rt_df.to_csv(file_name, compression=compression, index=True)
     _LOG.info("Saving done")
 
 
@@ -209,7 +214,7 @@ def load_market_data(
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
     df = hpandas.read_csv_to_df(stream, **kwargs)
-    for col_name in ("start_time", "end_time", "timestamp_db"):
+    for col_name in ("start_time", "start_datetime", "end_time", "end_datetime", "timestamp_db"):
         if col_name in df.columns:
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
     df.reset_index(inplace=True)
