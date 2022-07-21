@@ -313,9 +313,20 @@ class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
     def _test1(
         self,
         system: dtfsys.System,
+        asset_ids: List[int],
+        sleep_interval_in_secs: int,
+        real_time_loop_time_out_in_secs: int,
     ) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
+            system.config["market_data_config", "asset_ids"] = asset_ids
+            system.config[
+                "dag_runner_config", "sleep_interval_in_secs"
+            ] = sleep_interval_in_secs
+            system.config[
+                "dag_runner_config", "real_time_loop_time_out_in_secs"
+            ] = real_time_loop_time_out_in_secs
+            #
             system.config["event_loop_object"] = event_loop
             dag_runner = system.dag_runner
             # Run.
