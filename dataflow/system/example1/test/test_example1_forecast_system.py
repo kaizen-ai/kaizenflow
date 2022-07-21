@@ -174,6 +174,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     - a `Portfolio` backed by a dataframe
     """
 
+    @pytest.mark.slow("~7 seconds.")
     def test1(self) -> None:
         system = dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
         # Fill the config.
