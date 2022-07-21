@@ -296,21 +296,21 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# Time_ForecastSystem_with_DataFramePortfolio1
+# Time_ForecastSystem_with_DataFramePortfolio1_TestCase1
 # #############################################################################
 
 
-class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
+class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 
-    - DAG
-    - EgReplayedMarketData
+    - a time DAG
+    - ReplayedMarketData
     - DataFrame portfolio
     - Simulated broker
     """
 
-    def helper(
+    def _test1(
         self,
         system: dtfsys.System,
         asset_ids: List[int],
@@ -319,7 +319,6 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
     ) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
-            system.config["event_loop_object"] = event_loop
             system.config["market_data_config", "asset_ids"] = asset_ids
             system.config[
                 "dag_runner_config", "sleep_interval_in_secs"
@@ -327,6 +326,8 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
             system.config[
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
+            #
+            system.config["event_loop_object"] = event_loop
             dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
@@ -335,12 +336,12 @@ class Time_ForecastSystem_with_DataFramePortfolio1(hunitest.TestCase):
             )
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
-            system_tester = dtfsys.SystemTester()
+            system_tester = SystemTester()
             # Check output.
             portfolio = system.portfolio
-            price_col = "vwap"
-            volatility_col = "vwap.ret_0.vol"
-            prediction_col = "prediction"
+            price_col = system.config["research_pnl", "price_col"]
+            volatility_col = system.config["research_pnl", "volatility_col"]
+            prediction_col = system.config["research_pnl", "prediction_col"]
             actual = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
