@@ -58,12 +58,14 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
             spread_col,
             order_duration_in_mins,
         )
+        ts_col_name = "end_datetime"
         # Adapt DAG to real-time.
         dag = dtfsrtdaad.adapt_dag_to_real_time(
             dag,
             market_data,
             market_data_history_lookback,
             process_forecasts_dict,
+            ts_col_name
         )
         # Print the final DAG.
         file_name = os.path.join(self.get_scratch_space(), "final_dag.png")
