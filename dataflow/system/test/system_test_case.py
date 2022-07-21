@@ -237,7 +237,7 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         # Run.
         result_bundle = dag_runner.fit()
         # Check.
-        system_tester = dtfsys.SystemTester()
+        system_tester = SystemTester()
         # TODO(gp): Factor out these params somehow.
         price_col = system.config["research_pnl", "price_col"]
         volatility_col = system.config["research_pnl", "volatility_col"]
