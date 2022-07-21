@@ -240,7 +240,6 @@ def download_realtime_for_one_exchange(
             exchange_id,
             currency_pair,
             connection,
-        )
         # Insert data into the DB.
         hsql.execute_insert_query(
             connection=connection,
