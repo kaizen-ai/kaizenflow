@@ -64,12 +64,6 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
                 sleep_interval_in_secs, event_loop=event_loop
             )
         )
-        dag_runner_kwargs = {
-            "dag": dag,
-            "fit_state": None,
-            "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-            "dst_dir": None,
-        }
         # Align on a second boundary.
         get_wall_clock_time = lambda: hdateti.get_current_time(
             tz="ET", event_loop=event_loop
@@ -78,6 +72,14 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         creatime.align_on_time_grid(
             get_wall_clock_time, grid_time_in_secs, event_loop=event_loop
         )
+        dag_runner_kwargs = {
+            "dag": dag,
+            "fit_state": None,
+            "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
+            "dst_dir": None,
+            "get_wall_clock_time": get_wall_clock_time,
+            "grid_time_in_secs": grid_time_in_secs,
+        }
         # Run.
         dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
         result_bundles = hasynci.run(dag_runner.predict(), event_loop=event_loop)
