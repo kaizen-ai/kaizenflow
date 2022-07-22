@@ -185,8 +185,7 @@ class MarketData(abc.ABC):
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         wall_clock_time = self.get_wall_clock_time()
         start_ts = self._process_period(timedelta, wall_clock_time)
-        # TODO(Nina): "Cut off loaded historical market data by wall clock time" CmTask #2424.
-        end_ts = None
+        end_ts = wall_clock_time
         if ts_col_name is None:
             # By convention to get the last chunk of data we use the start_time
             #  column.
