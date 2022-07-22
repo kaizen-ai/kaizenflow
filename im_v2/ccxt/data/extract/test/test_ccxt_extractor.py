@@ -65,20 +65,22 @@ class TestCcxtExtractor1(hunitest.TestCase):
     @umock.patch.object(ivcdexex.hsecret, "get_secret")
     @umock.patch.object(ivcdexex, "ccxt", spec=ivcdexex.ccxt)
     @umock.patch.object(ivcdexex.CcxtExtractor, "_fetch_ohlcv", spec=ivcdexex.CcxtExtractor._fetch_ohlcv)
-    def test__download_ohlcv(self, fetch_ohlcv_mock: umock.MagicMock,  _, __):
+    def test__download_ohlcv(self, fetch_ohlcv_mock: umock.MagicMock,  ccxt_mock: umock.MagicMock, __):
         """
         TODO(Nikola): ... We will just gonna check what was passed to `fetch_ohlcv_mock`...
-            and check if is properly converted to dataframe.
+            and check if it is properly converted to dataframe.
 
             Same pattern for testing `_fetch_ohlcv` from `ccxt` and `download_order_book`.
         """
-        fetch_ohlcv_mock.return_value = [
-            [1645660800000, 37250.02, 37267.8, 37205.4, 37218.81, 59.1615],
-            [1645660860000, 37218.8, 37234.26, 37213.2, 37214.46, 23.41537],
-            [1645660920000, 37214.47, 37224.2, 37138.58, 37138.58, 48.11884],
-            [1645660980000, 37138.59, 37216.5, 37100.17, 37216.49, 53.65817],
-            [1645661040000, 37216.49, 37302.46, 37213.66, 37270.45, 36.44746]
-        ]
+        # fetch_ohlcv_mock.return_value = [
+        #     [1645660800000, 37250.02, 37267.8, 37205.4, 37218.81, 59.1615],
+        #     [1645660860000, 37218.8, 37234.26, 37213.2, 37214.46, 23.41537],
+        #     [1645660920000, 37214.47, 37224.2, 37138.58, 37138.58, 48.11884],
+        #     [1645660980000, 37138.59, 37216.5, 37100.17, 37216.49, 53.65817],
+        #     [1645661040000, 37216.49, 37302.46, 37213.66, 37270.45, 36.44746]
+        # ]
+        exchange = ccxt_mock.binance
+        fetch_ohlcv_mock.return_value = "put small dataframe sample"
         exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
         pass
 
