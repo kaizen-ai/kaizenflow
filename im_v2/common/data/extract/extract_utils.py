@@ -190,7 +190,7 @@ def download_realtime_for_one_exchange(
     try:
         # Connect with the parameters from the env file.
         connection_params = hsql.get_connection_info_from_env_file(env_file)
-        connection = hsql.get_connection(*connection_params)
+        db_connection = hsql.get_connection(*connection_params)
     except psycopg2.OperationalError:
         # Connect with the dynamic parameters (usually during tests).
         actual_details = hsql.db_connection_to_tuple(args["connection"])._asdict()
@@ -201,7 +201,7 @@ def download_realtime_for_one_exchange(
             user=actual_details["user"],
             password=actual_details["password"],
         )
-        connection = hsql.get_connection(*connection_params)
+        db_connection = hsql.get_connection(*connection_params)
     # Load DB table to work with
     db_table = args["db_table"]
     # Convert timestamps.
@@ -231,22 +231,19 @@ def download_realtime_for_one_exchange(
         data["exchange_id"] = exchange_id
         # Get timestamp of insertion in UTC.
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
-        # Get duplicated rows from the DB.
-        dup_query = f"SELECT * FROM {db_table} WHERE timestamp \
-                    BETWEEN {start_timestamp_as_unix} \
-                    AND {end_timestamp_as_unix} \
-                    AND exchange_id='{exchange_id}' \
-                    AND currency_pair='{currency_pair}'"
-        existing_data = hsql.execute_query_to_df(connection, dup_query)
-        # Remove data that has been already been downloaded.
-        data = data.loc[~data.timestamp.isin(existing_data.timestamp)]
-        # Remove final unfinished tick.
-        #  E.g. at 19:02:11 the candle will have a smaller volume than at 19:02:59.
-        if (end_timestamp_as_unix - data.timestamp.max()) < 60000:
-            data = data.loc[data.timestamp == data.timestamp.max()]
+        # Remove duplicated entries.
+        data = remove_duplicates(
+            db_connection,
+            data,
+            db_table,
+            start_timestamp_as_unix,
+            end_timestamp_as_unix,
+            exchange_id,
+            currency_pair,
+        )
         # Insert data into the DB.
         hsql.execute_insert_query(
-            connection=connection,
+            connection=db_connection,
             obj=data,
             table_name=db_table,
         )
@@ -527,6 +524,43 @@ def download_historical_data(
             )
         else:
             hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
+
+
+def remove_duplicates(
+    db_connection: hsql.DbConnection,
+    data: pd.DataFrame,
+    db_table: str,
+    start_timestamp_as_unix: int,
+    end_timestamp_as_unix: int,
+    exchange_id: str,
+    currency_pair: str,
+) -> pd.DataFrame:
+    """
+    Remove duplicated entities from realtime data.
+
+    :param db_connection: connection to the database
+    :param data: Dataframe to remove duplicates from
+    :param db_table: the name of the DB, e.g. `ccxt_ohlcv`
+    :param start_timestamp_as_unix: start timestamp as int
+    :param end_timestamp_as_unix: end timestamp as int
+    :param exchange_id: exchange ID, e.g. `binance`
+    :param currency_pair: e.g. `ADA_USDT`
+    :return: Dataframe with duplicates removed
+    """
+    # Get duplicated rows from the DB.
+    dup_query = f"SELECT * FROM {db_table} WHERE timestamp \
+                BETWEEN {start_timestamp_as_unix} \
+                AND {end_timestamp_as_unix} \
+                AND exchange_id='{exchange_id}' \
+                AND currency_pair='{currency_pair}'"
+    existing_data = hsql.execute_query_to_df(db_connection, dup_query)
+    # Remove data that has been already been downloaded.
+    data = data.loc[~data.timestamp.isin(existing_data.timestamp)]
+    # Remove final unfinished tick.
+    #  E.g. at 19:02:11 the candle will have a smaller volume than at 19:02:59.
+    if (end_timestamp_as_unix - data.timestamp.max()) < 60000:
+        data = data.loc[data.timestamp == data.timestamp.max()]
+    return data
 
 
 def verify_schema(data: pd.DataFrame) -> pd.DataFrame:

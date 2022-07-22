@@ -41,7 +41,6 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         fit_state: cconfig.Config,
         execute_rt_loop_kwargs: Dict[str, Any],
         dst_dir: str,
-        #
         *,
         fit_at_beginning: bool = False,
         get_wall_clock_time: Optional[hdateti.GetWallClockTime] = None,
@@ -83,8 +82,16 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         _LOG.info("Waiting until session start at %s ...", wake_up_timestamp)
         await hasynci.async_wait_until(wake_up_timestamp, get_wall_clock_time)
         curr_timestamp = get_wall_clock_time()
+<<<<<<< HEAD
         _LOG.info("Current time=%s: session started at %s", curr_timestamp,
             wake_up_timestamp)
+=======
+        _LOG.info(
+            "Current time=%s: session started at %s",
+            curr_timestamp,
+            wake_up_timestamp,
+        )
+>>>>>>> master
 
     async def align_on_grid(self) -> None:
         get_wall_clock_time = self._get_wall_clock_time
