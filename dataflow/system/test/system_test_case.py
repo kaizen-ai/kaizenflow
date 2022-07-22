@@ -264,14 +264,6 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     - a time DAG
     """
 
-    def get_file_path(self) -> str:
-        dir_name = self.get_input_dir(use_only_test_class=True)
-        hio.create_dir(dir_name, incremental=True)
-        file_name = "real_time_bar_data.csv"
-        file_path = os.path.join(dir_name, file_name)
-        _LOG.debug("file_path=%s", file_path)
-        return file_path
-
     def _test_save_data(
         self,
         market_data: mdata.MarketData,
@@ -279,13 +271,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         file_path: str,
     ) -> None:
         """
-        Generate data used in this test.
-
-        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
-        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
+        Generate test data and store it.
         """
         limit = None
         mdata.save_market_data(market_data, file_path, period, limit)

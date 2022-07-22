@@ -179,13 +179,6 @@ def save_market_data(
     # TODO(Nina): "Cut off loaded historical market data by wall clock time" CmTask #2424.
     wall_clock_time = market_data.get_wall_clock_time()
     rt_df = rt_df[rt_df.index < wall_clock_time]
-    # Adjust column names to the processable format.
-    if "timestamp_db" not in rt_df.columns:
-        rt_df["timestamp_db"] = rt_df.index
-    if "end_datetime" not in rt_df.columns:
-        rt_df["end_datetime"] = rt_df.index
-    if "start_ts" in rt_df.columns:
-        rt_df = rt_df.rename(columns={"start_ts": "start_datetime"})
     #
     _LOG.debug(
         hpandas.df_to_str(
@@ -217,6 +210,14 @@ def load_market_data(
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
     df = hpandas.read_csv_to_df(stream, **kwargs)
+    # Adjust column names to the processable format.
+    if "start_ts" in df.columns:
+        df = df.rename(columns={"start_ts": "start_datetime"})
+    if "end_ts" in df.columns:
+        df = df.rename(columns={"end_ts": "end_datetime"})
+    if "timestamp_db" not in df.columns:
+        df["timestamp_db"] = df["end_datetime"]
+    #
     for col_name in (
         "start_time",
         "start_datetime",
