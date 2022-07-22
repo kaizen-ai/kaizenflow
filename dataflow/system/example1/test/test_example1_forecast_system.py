@@ -149,7 +149,6 @@ class Test_Example1_Time_ForecastSystem1(
         system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
         system.config["market_data_config", "initial_replayed_delay"] = 5
-        system.config["market_data_config", "data"] = market_data
         # Exercise the system for multiple 5 minute intervals.
         system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
             60 * 5 * 3
