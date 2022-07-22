@@ -258,3 +258,4 @@ end_datetime
 # pnl agreement with research pnl
 
 corr = 0.997
+corr_samples = 10

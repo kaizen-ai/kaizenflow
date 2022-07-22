@@ -7,6 +7,7 @@ import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
+import helpers.hserver as hserver
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as ivcdexex
@@ -16,7 +17,7 @@ import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    not hserver.is_CK_S3_available(),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchange1(
@@ -177,7 +178,7 @@ class TestDownloadRealtimeForOneExchange1(
 
 
 @pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    not hserver.is_CK_S3_available(),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):

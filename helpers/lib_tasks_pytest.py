@@ -24,7 +24,6 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
-import helpers.hunit_test_utils as hunteuti
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_utils as hlitauti
 
@@ -1011,6 +1010,11 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     hlitauti._report_task()
     _ = ctx
     root_dir = os.getcwd()
+    # `lib_tasks` is used from outside the Docker container in the thin dev
+    # environment and we want to avoid pulling in too many dependencies, unless necessary,
+    # so we import dynamically.
+    import helpers.hunit_test_utils as hunteuti
+
     renamer = hunteuti.UnitTestRenamer(
         old_test_class_name, new_test_class_name, root_dir
     )
