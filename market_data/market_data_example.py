@@ -310,8 +310,7 @@ def get_HistoricalImClientMarketData_example1(
 
 
 def get_RealTimeImClientMarketData_example1(
-    # TODO(Danya): Initialize im_client from outside the method.
-    im_client: hsql.DbConnection,
+    im_client: icdc.ImClient,
     event_loop: asyncio.AbstractEventLoop,
     asset_ids: List[int],
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
@@ -324,8 +323,9 @@ def get_RealTimeImClientMarketData_example1(
     columns = None
     # Build a `ReplayedMarketData`.
     tz = "ET"
+    # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
     initial_replayed_dt = pd.Timestamp(
-        "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        "2022-07-21 09:30:00-04:00", tz="America/New_York"
     )
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
@@ -335,8 +335,6 @@ def get_RealTimeImClientMarketData_example1(
         speed_up_factor=speed_up_factor,
     )
     # Build a `ReplayedMarketData`.
-    sleep_in_secs = 1.0
-    time_out_in_secs = 60 * 2
     market_data = mdrtmada.RealTimeMarketData2(
         im_client,
         #
@@ -346,12 +344,11 @@ def get_RealTimeImClientMarketData_example1(
         end_time_col_name,
         columns,
         get_wall_clock_time,
-        sleep_in_secs=sleep_in_secs,
-        time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
 
+# TODO(Grisha): @Dan -> `get_RealTimeImClientMarketData_example2`.
 def get_RealtimeMarketData_example1(
     im_client: icdc.RealTimeImClient,
 ) -> mdrtmada.RealTimeMarketData2:
