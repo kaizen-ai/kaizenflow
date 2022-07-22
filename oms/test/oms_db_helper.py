@@ -13,8 +13,12 @@ import oms.oms_lib_tasks as oomlitas
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Share code with TestImDbHelper.
-class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
+# #############################################################################
+# TestOmsDbHelper
+# #############################################################################
+
+
+class TestOmsDbHelper(hsqltest.TestImOmsDbHelper, abc.ABC):
     """
     Configure the helper to build an OMS test DB.
     """
@@ -55,53 +59,8 @@ class TestOmsDbHelper(hsqltest.TestDbHelper, abc.ABC):
         return env_file_path  # type: ignore[no-any-return]
 
     @classmethod
-    def _create_docker_files(cls) -> None:
-        # Create compose file.
-        service_name = cls._get_service_name()
-        idx = cls.get_id()
-        host_port = 5432 + idx
-        txt = f"""version: '3.5'
-
-services:
-  # Docker container running Postgres DB.
-  {service_name}:
-    image: postgres:13
-    restart: "no"
-    environment:
-      - POSTGRES_HOST=${{POSTGRES_HOST}}
-      - POSTGRES_DB=${{POSTGRES_DB}}
-      - POSTGRES_PORT=${{POSTGRES_PORT}}
-      - POSTGRES_USER=${{POSTGRES_USER}}
-      - POSTGRES_PASSWORD=${{POSTGRES_PASSWORD}}
-    volumes:
-      - {service_name}_data:/var/lib/postgresql/data
-    ports:
-      - {host_port}:5432
-
-volumes:
-  {service_name}_data: {{}}
-
-networks:
-  default:
-    #name: {service_name}_network
-    name: main_network
-"""
-        compose_file_name = cls._get_compose_file()
-        hio.to_file(compose_file_name, txt)
-        # Create env file.
-        txt = []
-        if henv.execute_repo_config_code("use_main_network()"):
-            host = "cf-spm-dev4"
-        else:
-            host = "localhost"
-        txt.append(f"POSTGRES_HOST={host}")
-        txt.append("POSTGRES_DB=oms_postgres_db_local")
-        txt.append(f"POSTGRES_PORT={host_port}")
-        txt.append("POSTGRES_USER=aljsdalsd")
-        txt.append("POSTGRES_PASSWORD=alsdkqoen")
-        txt = "\n".join(txt)
-        env_file_name = cls._get_db_env_path()
-        hio.to_file(env_file_name, txt)
+    def _get_postgres_db(cls) -> str:
+        return "oms_postgres_db_local"
 
     def _test_create_table_helper(
         self: Any,
@@ -129,7 +88,11 @@ networks:
         self.assertNotIn(table_name, db_tables)
         # Create the table.
         incremental = False
-        _ = create_table_func(self.connection, incremental, **create_table_func_kwargs),
+        _ = (
+            create_table_func(
+                self.connection, incremental, **create_table_func_kwargs
+            ),
+        )
         # The table should be present.
         db_tables = hsql.get_table_names(self.connection)
         _LOG.info("get_table_names=%s", db_tables)

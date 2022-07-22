@@ -105,20 +105,26 @@ def get_connection_info_from_env_file(env_file_path: str) -> DbConnectionInfo:
     """
     Get connection parameters from environment file.
 
-    :param env_file_path: path to an environment file that contains db connection parameters
+    :param env_file_path: path to an environment file that contains db connection
+        parameters
     """
     import dotenv
 
     db_config = dotenv.dotenv_values(env_file_path)
+    params = {
+        "host": db_config["POSTGRES_HOST"],
+        "dbname": db_config["POSTGRES_DB"],
+        "user": db_config["POSTGRES_USER"],
+        "password": db_config["POSTGRES_PASSWORD"]
+    }
+    key = "POSTGRES_PORT"
+    if key in db_config:
+        params["port"] = int(db_config[key])
+    else:
+        params["port"] = 5432
     # The parameters' names are fixed and cannot be changed, see
     # `https:://hub.docker.com/_/postgres`.
-    connection_parameters = DbConnectionInfo(
-        host=db_config["POSTGRES_HOST"],
-        dbname=db_config["POSTGRES_DB"],
-        port=int(db_config["POSTGRES_PORT"]),
-        user=db_config["POSTGRES_USER"],
-        password=db_config["POSTGRES_PASSWORD"],
-    )
+    connection_parameters = DbConnectionInfo(**params)
     return connection_parameters
 
 

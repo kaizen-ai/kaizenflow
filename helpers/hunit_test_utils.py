@@ -8,12 +8,18 @@ import glob
 import logging
 import os
 import re
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+import pytest
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hserver as hserver
 import helpers.hstring as hstring
 import helpers.hsystem as hsystem
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -366,3 +372,55 @@ def get_test_directories(root_dir: str) -> List[str]:
             paths.append(path)
     hdbg.dassert_lte(1, len(paths))
     return paths
+
+
+ #############################################################################
+
+
+def _get_repo_short_name() -> str:
+    dir_name = "."
+    include_host_name = False
+    repo_name = hgit.get_repo_full_name_from_dirname(dir_name, include_host_name)
+    _LOG.debug("repo_name=%s", repo_name)
+    # ck/cmamp
+    short_repo_name = repo_name.split("/")[1]
+    _LOG.debug("short_repo_name=%s", short_repo_name)
+    return short_repo_name
+
+
+def execute_only_in_target_repo(target_name: str) -> None:
+    repo_short_name = _get_repo_short_name()
+    if repo_short_name != target_name:
+        pytest.skip(f"Only run on {target_name} and not {repo_short_name}")
+
+
+def execute_only_on_ci() -> None:
+    is_inside_ci_ = hserver.is_inside_ci()
+    if not is_inside_ci_:
+        pytest.skip("Only run in CI")
+
+
+def execute_only_on_dev4() -> None:
+    is_dev4_ = hserver.is_dev4()
+    if not is_dev4_:
+        pytest.skip("Only run on dev4")
+
+
+def execute_only_on_dev_ck() -> None:
+    is_dev_ck_ = hserver.is_dev_ck()
+    if not is_dev_ck_:
+        pytest.skip("Only run on dev CK")
+
+
+def execute_only_on_mac(*, version: Optional[str] = None) -> None:
+    is_mac_ = hserver.is_mac(version=version)
+    if not is_mac_:
+        pytest.skip(f"Only run on Mac with version={version}")
+
+
+def check_env_to_str(self_: Any, exp: str) -> None:
+    act = henv.env_to_str(add_system_signature=False)
+    act = hunitest.filter_text("get_name", act)
+    act = hunitest.filter_text("get_repo_map", act)
+    act = hunitest.filter_text("AM_HOST_", act)
+    self_.assert_equal(act, exp, fuzzy_match=True)

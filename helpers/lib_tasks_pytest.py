@@ -611,14 +611,15 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     )
     # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
-    # TODO(Nikola): Revert to `s3fs_.put` after `s3fs` is updated to latest version.
+    # TODO(Nikola): Revert to `s3fs_.put` after `s3fs` is updated to latest
+    # version.
     #   See CmTask #2400.
     use_aws_copy = True
     if use_aws_copy:
         sudo_prefix = ""
         if hsystem.is_inside_ci():
-            # There is no AWS config in GH action, thus create default one from chosen profile.
-            # To bypass permission errors, `sudo` is used.
+            # There is no AWS config in GH action, thus create default one from
+            # chosen profile. To bypass permission errors, `sudo` is used.
             sudo_prefix = "sudo "
             aws_set_param_cmd = "sudo aws configure set"
             aws_set_profile_cmd = f"--profile {aws_profile}"
@@ -1011,8 +1012,8 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     _ = ctx
     root_dir = os.getcwd()
     # `lib_tasks` is used from outside the Docker container in the thin dev
-    # environment and we want to avoid pulling in too many dependencies, unless necessary,
-    # so we import dynamically.
+    # environment and we want to avoid pulling in too many dependencies, unless
+    # necessary, so we import dynamically.
     import helpers.hunit_test_utils as hunteuti
 
     renamer = hunteuti.UnitTestRenamer(

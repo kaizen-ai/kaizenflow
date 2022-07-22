@@ -15,8 +15,9 @@ from typing import Any, Callable, List, Optional, cast
 
 import helpers.hdbg as hdbg
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
-
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 _LOG = logging.getLogger(__name__)
 
@@ -213,7 +214,8 @@ def get_function_from_string(func_as_str: str) -> Callable:
 
 
 def to_object_pointer(obj: Any) -> str:
-    return '<%s.%s object at %s>' % (
+    return "<%s.%s object at %s>" % (
         obj.__class__.__module__,
         obj.__class__.__name__,
-        hex(id(obj)))
+        hex(id(obj)),
+    )

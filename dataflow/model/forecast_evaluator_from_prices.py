@@ -218,6 +218,18 @@ class ForecastEvaluatorFromPrices:
         """
         Log portfolio state to the file system.
 
+        The dir structure of the data output is:
+        ```
+        - flow
+        - holdings
+        - pnl
+        - position
+        - prediction
+        - price
+        - statistics
+        - volatility
+        ```
+
         :param df: as in `compute_portfolio()`
         :param log_dir: directory for writing log files of portfolio state
         :param kwargs: forwarded to `compute_portfolio()`

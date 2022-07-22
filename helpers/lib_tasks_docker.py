@@ -5,6 +5,7 @@ import helpers.lib_tasks_docker as hlitadoc
 """
 
 import functools
+import getpass
 import io
 import logging
 import os
@@ -21,6 +22,7 @@ import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.hversion as hversio
 import helpers.lib_tasks_utils as hlitauti
@@ -272,7 +274,7 @@ def docker_login(ctx):  # type: ignore
     Log in the AM Docker repo_short_name on AWS.
     """
     hlitauti._report_task()
-    if hsystem.is_inside_ci():
+    if hserver.is_inside_ci():
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
     major_version = _get_aws_cli_version()
@@ -411,6 +413,8 @@ def _generate_docker_compose_file(
     # machine='x86_64'
     am_host_os_name = os.uname()[0]
     am_host_name = os.uname()[1]
+    am_host_version = os.uname()[2]
+    am_host_user_name = getpass.getuser()
     # We could do the same also with IMAGE for symmetry.
     # Keep the env vars in sync with what we print in `henv.get_env_vars()`.
     txt_tmp = f"""
@@ -431,6 +435,8 @@ def _generate_docker_compose_file(
           - AM_FORCE_TEST_FAIL=$AM_FORCE_TEST_FAIL
           - AM_HOST_NAME={am_host_name}
           - AM_HOST_OS_NAME={am_host_os_name}
+          - AM_HOST_USER_NAME={am_host_user_name}
+          - AM_HOST_VERSION={am_host_version}
           - AM_REPO_CONFIG_CHECK=True
           # Use inferred path for `repo_config.py`.
           - AM_REPO_CONFIG_PATH=
@@ -619,7 +625,7 @@ def _generate_docker_compose_file(
     # Save file.
     txt_str: str = "\n".join(txt)
     if file_name:
-        if os.path.exists(file_name) and hsystem.is_inside_ci():
+        if os.path.exists(file_name) and hserver.is_inside_ci():
             # Permission error is raised if we try to overwrite existing file.
             # See CmTask #2321 for detailed info.
             compose_directory = os.path.dirname(file_name)

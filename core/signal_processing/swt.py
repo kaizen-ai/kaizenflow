@@ -209,6 +209,7 @@ def summarize_wavelet(wavelet: pywt.Wavelet) -> pd.Series:
     """
     Summarize wavelet properties of frequent interest.
     """
+    hdbg.dassert_isinstance(wavelet, pywt.Wavelet)
     _LOG.debug("wavelet=%s", wavelet)
     dict_ = {
         "family_name": wavelet.family_name,
@@ -349,6 +350,7 @@ def compute_swt_covar(
             timing_mode=timing_mode,
             output_mode="detail",
         )
+    # Take the level-wise product.
     prod = dfs[col1].multiply(dfs[col2])
     fvi = prod.first_valid_index()
     col1_df = dfs[col1].loc[fvi:]
@@ -359,18 +361,25 @@ def compute_swt_covar(
         col2_df = col2_df.dropna()
     results = []
     covar_name = "swt_covar" if col1 != col2 else "swt_var"
-    results.append(prod.sum(axis=axis, skipna=False).rename(covar_name))
+    covar = prod.sum(axis=axis, skipna=False).rename(covar_name)
+    results.append(covar)
     if col1 != col2:
-        results.append(
+        col1_var = (
             np.square(col1_df)
             .sum(axis=axis, skipna=False)
             .rename(str(col1) + "_swt_var")
         )
-        results.append(
+        results.append(col1_var)
+        col2_var = (
             np.square(col2_df)
             .sum(axis=axis, skipna=False)
             .rename(str(col2) + "_swt_var")
         )
+        results.append(col2_var)
+        corr = covar.divide(np.sqrt(col1_var.multiply(col2_var))).rename(
+            "swt_corr"
+        )
+        results.append(corr)
     return pd.concat(results, axis=1)
 
 
@@ -455,10 +464,12 @@ def _compute_fir_zscore(
         )
         signal = signal.squeeze()
     # _LOG.debug("signal=%s", hpandas.df_to_str(signal))
+    # TODO(Paul): Add an swt high-pass filter function.
     mean = get_swt(
         signal, wavelet=wavelet, depth=dyadic_tau, output_mode="smooth"
     )[dyadic_tau].shift(delay)
     demeaned = signal - mean
+    # TODO(Paul): Replace with a call to `compute_swt_var()`.
     var = get_swt(
         demeaned**2,
         wavelet=variance_wavelet,
@@ -487,10 +498,13 @@ def compute_swt_var_summary(
         sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0
     )
     hdbg.dassert_in("swt_var", swt_var.columns)
+    # Use the "cross-sectional" var calculation to determine the first index
+    # valid for all levels up to `depth`.
     srs = compute_swt_var(
         sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1
     )
     fvi = srs.first_valid_index()
+    # Normalize by the number of non-NaN observations.
     decomp = swt_var / srs.loc[fvi:].count()
     decomp["cum_swt_var"] = decomp["swt_var"].cumsum()
     decomp["perc"] = decomp["swt_var"] / sig.loc[fvi:].var()

@@ -122,31 +122,61 @@ class Test_get_swt(hunitest.TestCase):
         return series
 
 
+def get_daily_gaussian(seed: int) -> pd.Series:
+    process = carsigen.ArmaProcess([], [])
+    realization = process.generate_sample(
+        {"start": "2000-01-01", "end": "2005-01-01", "freq": "B"}, seed=seed
+    )
+    return realization
+
+
 class Test_compute_swt_var(hunitest.TestCase):
-    def test1(self) -> None:
-        srs = self._get_data(seed=0)
+    def test_num_non_nan(self) -> None:
+        """
+        Verify the number of non-NaN data points to be used for the variance.
+        """
+        srs = get_daily_gaussian(seed=0)
         swt_var = csiprswt.compute_swt_var(srs, depth=6)
         actual = swt_var.count().values[0]
         np.testing.assert_equal(actual, 1179)
 
-    def test2(self) -> None:
-        srs = self._get_data(seed=0)
+    def test_variance_preservation1(self) -> None:
+        """
+        Verify variance is preserved across time.
+        """
+        srs = get_daily_gaussian(seed=0)
         swt_var = csiprswt.compute_swt_var(srs, depth=6)
         actual = swt_var.sum()
         np.testing.assert_allclose(actual, [1102.66], atol=0.01)
 
-    def test3(self) -> None:
-        srs = self._get_data(seed=0)
+    def test_variance_preservation2(self) -> None:
+        """
+        Verify level variance is preserved in sum.
+        """
+        srs = get_daily_gaussian(seed=0)
         swt_var = csiprswt.compute_swt_var(srs, depth=6, axis=1)
         actual = swt_var.sum()
         np.testing.assert_allclose(actual, [1102.66], atol=0.01)
 
-    def _get_data(self, seed: int) -> pd.Series:
-        process = carsigen.ArmaProcess([], [])
-        realization = process.generate_sample(
-            {"start": "2000-01-01", "end": "2005-01-01", "freq": "B"}, seed=seed
+
+class Test_compute_swt_var_summary(hunitest.TestCase):
+    def test1(self) -> None:
+        srs = get_daily_gaussian(seed=0)
+        swt_var_summary = csiprswt.compute_swt_var_summary(srs, depth=6)
+        actual = hpandas.df_to_str(
+            swt_var_summary,
+            num_rows=None,
         )
-        return realization
+        expected = r"""
+    swt_var  cum_swt_var      perc  cum_perc
+1  0.492558     0.492558  0.517159  0.517159
+2  0.234882     0.727440  0.246613  0.763773
+3  0.116992     0.844432  0.122835  0.886608
+4  0.049948     0.894380  0.052443  0.939051
+5  0.024626     0.919006  0.025856  0.964907
+6  0.016248     0.935254  0.017060  0.981966
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 class Test_get_knowledge_time_warmup_lengths(hunitest.TestCase):
