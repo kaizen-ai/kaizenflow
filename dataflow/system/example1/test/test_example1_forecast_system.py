@@ -146,23 +146,15 @@ class Test_Example1_Time_ForecastSystem1(
         # TODO(Dan): Add more data, otherwise volatility is NaN.
         market_data, _ = cofinanc.get_market_data_df1()
         # Since we are reading from a df there is no delay.
-        system.config[
-            "market_data_config", "delay_in_secs"
-        ] = 0
+        system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
-        system.config[
-            "market_data_config", "initial_replayed_delay"
-        ] = 5
-        system.config[
-            "market_data_config", "data"
-        ] = market_data
+        system.config["market_data_config", "initial_replayed_delay"] = 5
+        system.config["market_data_config", "data"] = market_data
         # Exercise the system for multiple 5 minute intervals.
-        system.config[
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
-        ] = 60 * 5 * 3
-        system.config[
-            "dag_runner_config", "sleep_interval_in_secs"
-        ] = 60 * 5
+        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
+            60 * 5 * 3
+        )
+        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
         #
         output_col_name = "vwap.ret_0.vol_adj.c"
         self._test1(
@@ -207,8 +199,8 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
         asset_ids = [101]
         sleep_interval_in_secs = 60 * 5
         self._test1(
-            system, 
-            asset_ids, 
+            system,
+            asset_ids,
             sleep_interval_in_secs,
             real_time_loop_time_out_in_secs,
         )
@@ -267,9 +259,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             system.config["db_connection_object"] = self.connection
             system.config["market_data_config", "data"] = data
             # Wait a few seconds because there is delay while reading from a DB.
-            system.config[
-                "market_data_config", "delay_in_secs"
-            ] = 0
+            system.config["market_data_config", "delay_in_secs"] = 0
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]
             # TODO(gp): This needs to go to the config.
