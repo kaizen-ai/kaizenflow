@@ -415,6 +415,9 @@ def get_dag_runner_instance1(
             "dag_runner_config", "real_time_loop_time_out_in_secs"
         ],
     }
+    fit_at_beginning = system.config.get(
+        ("dag_runner_config", "fit_at_beginning"), None
+    )
     dag_runner_kwargs = {
         "dag": dag,
         "fit_state": None,
@@ -423,6 +426,7 @@ def get_dag_runner_instance1(
         "grid_time_in_secs": grid_time_in_secs,
         "execute_rt_loop_kwargs": execute_rt_loop_config,
         "dst_dir": None,
+        "fit_at_beginning": fit_at_beginning
     }
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
