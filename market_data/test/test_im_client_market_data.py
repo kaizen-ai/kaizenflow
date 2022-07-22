@@ -578,7 +578,7 @@ class TestImClientMarketData2(mdtmdtca.MarketData_get_data_TestCase):
         column_remap = None
         im_client = icdc.get_DataFrameImClient_example1()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
-            im_client, asset_ids, columns, column_remap
+            im_client, asset_ids, columns, column_remap,
         )
         timedelta = pd.Timedelta("1D")
         # Run.
