@@ -273,7 +273,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]
             # TODO(gp): This needs to go to the config.
-            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 15
+            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
             system.config[
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
