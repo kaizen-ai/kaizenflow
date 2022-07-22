@@ -351,36 +351,36 @@ def build_dag_with_data_source_node(
 # #############################################################################
 
 
-# # TODO(gp): @all -> get_RealtimeDagRunner or get_RealtimeDagRunner_from_system?
-# # TODO(gp): This seems less general than the one below.
-# def get_realtime_DagRunner_from_system(
-#     system: dtfsyssyst.System,
-# ) -> dtfsrtdaru.RealTimeDagRunner:
-#     """
-#     Build a real-time DAG runner.
-#     """
-#     hdbg.dassert_isinstance(system, dtfsyssyst.System)
-#     dag = system.dag
-#     # TODO(gp): This should come from the config.
-#     sleep_interval_in_secs = 5 * 60
-#     # Set up the event loop.
-#     get_wall_clock_time = system.market_data.get_wall_clock_time
-#     real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
-#         "real_time_loop_time_out_in_secs"
-#     ]
-#     execute_rt_loop_kwargs = {
-#         "get_wall_clock_time": get_wall_clock_time,
-#         "sleep_interval_in_secs": sleep_interval_in_secs,
-#         "time_out_in_secs": real_time_loop_time_out_in_secs,
-#     }
-#     dag_runner_kwargs = {
-#         "dag": dag,
-#         "fit_state": None,
-#         "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-#         "dst_dir": None,
-#     }
-#     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
-#     return dag_runner
+# TODO(gp): @all -> get_RealtimeDagRunner or get_RealtimeDagRunner_from_system?
+# TODO(gp): This seems less general than the one below.
+def get_realtime_DagRunner_from_system(
+    system: dtfsyssyst.System,
+) -> dtfsrtdaru.RealTimeDagRunner:
+    """
+    Build a real-time DAG runner.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    dag = system.dag
+    # TODO(gp): This should come from the config.
+    sleep_interval_in_secs = 5 * 60
+    # Set up the event loop.
+    get_wall_clock_time = system.market_data.get_wall_clock_time
+    real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
+        "real_time_loop_time_out_in_secs"
+    ]
+    execute_rt_loop_kwargs = {
+        "get_wall_clock_time": get_wall_clock_time,
+        "sleep_interval_in_secs": sleep_interval_in_secs,
+        "time_out_in_secs": real_time_loop_time_out_in_secs,
+    }
+    dag_runner_kwargs = {
+        "dag": dag,
+        "fit_state": None,
+        "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
+        "dst_dir": None,
+    }
+    dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
+    return dag_runner
 
 
 # TODO(gp): -> get_RealTimeDagRunner_from_System
