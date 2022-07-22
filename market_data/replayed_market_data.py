@@ -178,6 +178,7 @@ def save_market_data(
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
     # TODO(Nina): "Cut off loaded historical market data by wall clock time" CmTask #2424.
     wall_clock_time = market_data.get_wall_clock_time()
+    # TODO(gp): Use trim_df to avoid a linear scan.
     rt_df = rt_df[rt_df.index < wall_clock_time]
     #
     _LOG.debug(
