@@ -419,9 +419,6 @@ def get_dag_runner_instance1(
             "dag_runner_config", "real_time_loop_time_out_in_secs"
         ],
     }
-    fit_at_beginning = system.config.get(
-        ("dag_runner_config", "fit_at_beginning"), None
-    )
     dag_runner_kwargs = {
         "dag": dag,
         "fit_state": None,
