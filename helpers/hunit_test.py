@@ -497,6 +497,7 @@ def purify_object_reference(txt: str) -> str:
     Remove references like `at 0x7f43493442e0`.
     """
     txt = re.sub(r"at 0x\S{12}", "at 0x", txt, flags=re.MULTILINE)
+    txt = re.sub(r"at 0x\S{10}", "at 0x", txt, flags=re.MULTILINE)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
