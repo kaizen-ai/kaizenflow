@@ -19,11 +19,69 @@ _LOG = logging.getLogger(__name__)
     reason="Run only if CK S3 is available",
 )
 class TestCcxtExtractor1(hunitest.TestCase):
-    def test_initialize_class(self) -> None:
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex, "ccxt", spec=ivcdexex.ccxt)
+    def test_initialize_class(self, _, __) -> None:
         """
         Smoke test that the class is being initialized correctly.
         """
+        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        self.assertEqual(exchange_class.exchange_id, "binance")
+        self.assertEqual(exchange_class.contract_type, "spot")
+        self.assertEqual(exchange_class.vendor, "CCXT")
+        self.assertEqual(exchange_class._exchange._extract_mock_name(), "ccxt.binance()")
+        actual_method_calls = str(exchange_class._exchange.method_calls)
+        expected_method_calls = "[call.checkRequiredCredentials(), call.load_markets()]"
+        self.assertEqual(actual_method_calls, expected_method_calls)
+
+
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex, "ccxt", spec=ivcdexex.ccxt)
+    def test_log_into_exchange(self, ccxt_mock: umock.MagicMock, get_secret_mock: umock.MagicMock) -> None:
+        """
+        TODO(Nikola): Docs, invalid contract type ... list of markets, etc.
+        """
+        get_secret_mock.return_value = {"apiKey": "test", "secret": "test"}
+        # Verify with `spot` contract type.
         _ = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_mock = ccxt_mock.binance
+        actual_args = exchange_mock.call_args.args
+        actual_kwargs = exchange_mock.call_args.kwargs
+        expected_args = ({'apiKey': 'test', 'rateLimit': True, 'secret': 'test'},)
+        expected_kwargs = {}
+        self.assertEqual(actual_args, expected_args)
+        self.assertEqual(actual_kwargs, expected_kwargs)
+        # Verify with `futures` contract type.
+        _ = ivcdexex.CcxtExtractor("binance", "futures")
+        actual_args = exchange_mock.call_args.args
+        actual_kwargs = exchange_mock.call_args.kwargs
+        expected_args = ({'apiKey': 'test', 'options': {'defaultType': 'future'}, 'rateLimit': True, 'secret': 'test'},)
+        expected_kwargs = {}
+        self.assertEqual(actual_args, expected_args)
+        self.assertEqual(actual_kwargs, expected_kwargs)
+        # Check overall exchange initialization.
+        self.assertEqual(exchange_mock.call_count, 2)
+
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex, "ccxt", spec=ivcdexex.ccxt)
+    @umock.patch.object(ivcdexex.CcxtExtractor, "_fetch_ohlcv", spec=ivcdexex.CcxtExtractor._fetch_ohlcv)
+    def test__download_ohlcv(self, fetch_ohlcv_mock: umock.MagicMock,  _, __):
+        """
+        TODO(Nikola): ... We will just gonna check what was passed to `fetch_ohlcv_mock`...
+            and check if is properly converted to dataframe.
+
+            Same pattern for testing `_fetch_ohlcv` from `ccxt` and `download_order_book`.
+        """
+        fetch_ohlcv_mock.return_value = [
+            [1645660800000, 37250.02, 37267.8, 37205.4, 37218.81, 59.1615],
+            [1645660860000, 37218.8, 37234.26, 37213.2, 37214.46, 23.41537],
+            [1645660920000, 37214.47, 37224.2, 37138.58, 37138.58, 48.11884],
+            [1645660980000, 37138.59, 37216.5, 37100.17, 37216.49, 53.65817],
+            [1645661040000, 37216.49, 37302.46, 37213.66, 37270.45, 36.44746]
+        ]
+        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        pass
+
 
     def test_get_exchange_currency_pairs(self) -> None:
         """
