@@ -338,7 +338,7 @@ def get_docker_shared_group() -> str:
     """
     Return the group of the user running Docker, if any.
     """
-    if is_dev4():
+    if hserver.is_dev4():
         val = "spm-sasm-fileshare"
     else:
         val = ""
