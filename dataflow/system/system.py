@@ -180,7 +180,7 @@ class System(abc.ABC):
         )
         # After everything is built, mark the config as read-only to avoid
         # further modifications.
-        self._config.mark_read_only()
+        #self._config.mark_read_only()
         if False:
             import helpers.hio as hio
             hio.to_file("system_config.txt", str(self.config))
