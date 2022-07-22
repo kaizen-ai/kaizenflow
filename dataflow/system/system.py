@@ -180,7 +180,11 @@ class System(abc.ABC):
         )
         # After everything is built, mark the config as read-only to avoid
         # further modifications.
-        #self._config.mark_read_only()
+        # TODO(Grisha): this prevents from writing any object in a config, after we do
+        # `system.dag_runner`. E.g., after `dag_runner` is built one wants to do 
+        # `system.portfolio` while `portfolio` is not in a config yet, but since a config
+        # is already marked as read-only execution fails.
+        self._config.mark_read_only()
         if False:
             import helpers.hio as hio
             hio.to_file("system_config.txt", str(self.config))

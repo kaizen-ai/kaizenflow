@@ -333,6 +333,7 @@ class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
             ] = real_time_loop_time_out_in_secs
             #
             system.config["event_loop_object"] = event_loop
+            portfolio = system.portfolio
             dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
@@ -343,7 +344,6 @@ class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
             result_bundle = result_bundles[-1]
             system_tester = SystemTester()
             # Check output.
-            portfolio = system.portfolio
             price_col = system.config["research_pnl", "price_col"]
             volatility_col = system.config["research_pnl", "volatility_col"]
             prediction_col = system.config["research_pnl", "prediction_col"]
