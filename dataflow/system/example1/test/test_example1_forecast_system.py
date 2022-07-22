@@ -194,6 +194,8 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
         system.config["market_data_config", "data"] = data
+        # Since we are reading from a df there is no delay.
+        system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "initial_replayed_delay"] = 5
         #
         system.config["research_pnl", "price_col"] = "vwap"
@@ -264,6 +266,10 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
             system.config["market_data_config", "data"] = data
+            # Wait a few seconds because there is delay while reading from a DB.
+            system.config[
+                "market_data_config", "delay_in_secs"
+            ] = 0
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]
             # TODO(gp): This needs to go to the config.
