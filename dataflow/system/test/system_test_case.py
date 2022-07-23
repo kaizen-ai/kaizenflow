@@ -299,11 +299,11 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# Time_ForecastSystem_with_DataFramePortfolio1_TestCase1
+# Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 # #############################################################################
 
 
-class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
+class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 

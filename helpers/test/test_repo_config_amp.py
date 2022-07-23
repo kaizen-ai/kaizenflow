@@ -183,7 +183,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             get_shared_data_dirs='None'
             has_dind_support='True'
             has_docker_sudo='False'
-            run_docker_as_root='True'
+            run_docker_as_$USER_NAME='True'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='False'
             use_docker_network_mode_host='False'
@@ -198,19 +198,15 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
               is_mac(version='Catalina')='False'
               is_mac(version='Monterey')='False'
         # Env vars:
-          AM_AWS_ACCESS_KEY_ID=***
-          AM_AWS_DEFAULT_REGION='***'
-          AM_AWS_PROFILE=''
-          AM_AWS_S3_BUCKET='***'
-          AM_AWS_SECRET_ACCESS_KEY=***
-          AM_ECR_BASE_PATH='***'
+          AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
           AM_ENABLE_DIND='1'
           AM_FORCE_TEST_FAIL=''
           AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
           AM_REPO_CONFIG_CHECK='True'
           AM_REPO_CONFIG_PATH=''
-          AM_TELEGRAM_TOKEN=***
           CI='true'
-          GH_ACTION_ACCESS_TOKEN=***
         """
-        hunteuti.check_env_to_str(self, exp)
+        # We ignore the AWS vars, since GH Actions does some replacement to mask
+        # the env vars coming from secrets.
+        skip_secrets_vars = True
+        hunteuti.check_env_to_str(self, exp, skip_secrets_vars=skip_secrets_vars)

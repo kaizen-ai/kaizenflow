@@ -168,7 +168,7 @@ class Test_Example1_Time_ForecastSystem1(
 
 
 class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
-    dtfsytsytc.Time_ForecastSystem_with_DataFramePortfolio1_TestCase1
+    dtfsytsytc.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 ):
     """
     Test an end-to-end `System`, containing:
@@ -210,9 +210,9 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 # #############################################################################
 
 
-# TODO(gp): @all This should become a TestCase in system_tester.py where we compare
-#  2 systems (one with DatabasePortfolio and one with DataFramePortfolio) to make
-#  sure they are the same.
+# TODO(gp): @all This should become a TestCase in system_test_case.py where we
+#  compare 2 systems (one with DatabasePortfolio and one with
+#  DataFramePortfolio) to make sure they are the same.
 class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     otodh.TestOmsDbHelper
 ):

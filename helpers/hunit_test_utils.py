@@ -418,9 +418,12 @@ def execute_only_on_mac(*, version: Optional[str] = None) -> None:
         pytest.skip(f"Only run on Mac with version={version}")
 
 
-def check_env_to_str(self_: Any, exp: str) -> None:
+def check_env_to_str(self_: Any, exp: str, *,
+                     skip_secrets_vars: bool = False) -> None:
     act = henv.env_to_str(add_system_signature=False)
     act = hunitest.filter_text("get_name", act)
     act = hunitest.filter_text("get_repo_map", act)
     act = hunitest.filter_text("AM_HOST_", act)
-    self_.assert_equal(act, exp, fuzzy_match=True)
+    if skip_secrets_vars:
+        act = hunitest.filter_text("AM_AWS_|AM_TELEGRAM_TOKEN|GH_ACTION_ACCESS_TOKEN", act)
+    self_.assert_equal(act, exp, fuzzy_match=True, purify_text=True)
