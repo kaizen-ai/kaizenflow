@@ -49,14 +49,23 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         price_col = "close"
         spread_col = None
         order_duration_in_mins = 5
+        style = "cross_sectional"
+        compute_target_positions_kwargs = {
+            "bulk_frac_to_remove": 0.0,
+            "target_gmv": 1e5,
+        }
+        log_dir = None
         #
         process_forecasts_dict = dtfsysinod.get_process_forecasts_dict_example1(
             portfolio,
-            prediction_col,
             volatility_col,
+            prediction_col,
             price_col,
             spread_col,
             order_duration_in_mins,
+            style,
+            compute_target_positions_kwargs,
+            log_dir,
         )
         ts_col_name = "end_datetime"
         # Adapt DAG to real-time.

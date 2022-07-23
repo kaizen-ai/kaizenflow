@@ -15,9 +15,12 @@ from typing import Dict, List, Match, Optional, Tuple, cast
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 
 _LOG = logging.getLogger(__name__)
@@ -1165,7 +1168,7 @@ def fetch_origin_master_if_needed() -> None:
     When testing a branch, `master` is not always fetched, but it might
     be needed by tests.
     """
-    if hsystem.is_inside_ci():
+    if hserver.is_inside_ci():
         _LOG.warning("Running inside CI so fetching master")
         cmd = "git branch -a"
         _, txt = hsystem.system_to_string(cmd)

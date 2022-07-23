@@ -21,8 +21,9 @@ import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
-# Do not import third party libraries, such as `numpy` and `pandas`.
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 
 _LOG = logging.getLogger(__name__)

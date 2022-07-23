@@ -299,12 +299,11 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# Time_ForecastSystem_with_DataFramePortfolio1_TestCase1
+# Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 # #############################################################################
 
 
-# TODO(Grisha): @Dan `Portfolio1` -> `Portfolio`.
-class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
+class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 
@@ -344,6 +343,7 @@ class Time_ForecastSystem_with_DataFramePortfolio1_TestCase1(hunitest.TestCase):
             result_bundle = result_bundles[-1]
             system_tester = SystemTester()
             # Check output.
+            portfolio = system.portfolio
             price_col = system.config["research_pnl", "price_col"]
             volatility_col = system.config["research_pnl", "volatility_col"]
             prediction_col = system.config["research_pnl", "prediction_col"]
@@ -458,7 +458,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             # Check output.
             price_col = system.config[
                 "process_forecasts_config",
-                "evaluate_forecasts_config",
+                "forecast_evaluator_from_prices_dict",
+                "init",
                 "price_col",
             ]
             prediction_col = system.config[
@@ -562,11 +563,13 @@ class SystemTester:
             # disaligned from the research bar times.
             pnl1 = pd.Series(pnl.tail(tail).values)
             _LOG.debug("portfolio pnl=\n%s", pnl1)
-            pnl2 = pd.Series(research_pnl.tail(min(tail, pnl1.size)).values)
+            corr_samples = min(tail, pnl1.size)
+            pnl2 = pd.Series(research_pnl.tail(corr_samples).values)
             _LOG.debug("research pnl=\n%s", pnl2)
             correlation = pnl1.corr(pnl2)
             actual.append("\n# pnl agreement with research pnl\n")
             actual.append(f"corr = {correlation:.3f}")
+            actual.append(f"corr_samples = {corr_samples}")
         actual = "\n".join(map(str, actual))
         return actual
 

@@ -2,6 +2,7 @@ import logging
 
 import pytest
 
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.im_lib_tasks as imvimlita  # pylint: disable=no-name-in-module
@@ -235,7 +236,7 @@ class TestGetRemoveDbCmd(hunitest.TestCase):
 
 
 # TODO(Grisha): add more tests and enable this one having `dind`.
-@pytest.mark.skipif(hsystem.is_inside_docker(), reason="amp #1189")
+@pytest.mark.skipif(hserver.is_inside_docker(), reason="amp #1189")
 class TestImDockerCmd(hunitest.TestCase):
     def test1(self) -> None:
         """

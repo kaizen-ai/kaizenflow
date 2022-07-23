@@ -103,6 +103,7 @@ def get_DataFramePortfolio_example2(
 # #############################################################################
 
 
+# TODO(gp): Remove the repeatition across these functions.
 def get_DatabasePortfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
@@ -209,6 +210,43 @@ def get_DatabasePortfolio_example3(
         market_data=market_data,
         mark_to_market_col="close",
         pricing_method="twap.5T",
+        timestamp_col=timestamp_col,
+        asset_ids=asset_ids,
+    )
+    portfolio.broker._column_remap = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
+    return portfolio
+
+
+# TODO(gp): This is more general than ..._example4.
+def get_DatabasePortfolio_example4(
+    db_connection: hsql.DbConnection,
+    event_loop: asyncio.AbstractEventLoop,
+    market_data: mdata.MarketData,
+    asset_ids: List[int],
+    pricing_method: str,
+) -> omportfo.DatabasePortfolio:
+    """
+    This is used to simulated a E8 prod system.
+
+    Contain:
+    - a DatabaseBroker
+    - a DatabasePortfolio
+    """
+    table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+    timestamp_col = "end_time"
+    portfolio = get_DatabasePortfolio_example1(
+        event_loop,
+        db_connection,
+        table_name,
+        market_data=market_data,
+        mark_to_market_col="close",
+        #pricing_method="twap.5T",
+        pricing_method=pricing_method,
         timestamp_col=timestamp_col,
         asset_ids=asset_ids,
     )

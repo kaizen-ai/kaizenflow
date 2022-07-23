@@ -24,6 +24,7 @@ import oms.process_forecasts_ as oprofore
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> ProcessForecastsNode to distinguish from process_forecasts?
 class ProcessForecasts(dtfcore.FitPredictNode):
     """
     Place trades from a model.
@@ -38,13 +39,13 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         portfolio: omportfo.Portfolio,
         process_forecasts_config: Dict[str, Any],
         *,
-        evaluate_forecasts_config: Optional[Dict[str, Any]] = None,
+        forecast_evaluator_from_prices_dict: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Parameters have the same meaning as in `process_forecasts()`.
 
         :param process_forecasts_config: configures `process_forecasts()`
-        :param evaluate_forecasts_config: if not None, it configures
+        :param forecast_evaluator_from_prices_dict: if not None, it configures
             `ForecastEvaluatorFromPrices` which computes the vectorized shadow
             PnL
         """
@@ -58,7 +59,9 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         )
         hdbg.dassert_isinstance(process_forecasts_config, cconfig.Config)
         self._process_forecasts_config = process_forecasts_config
-        self._evaluate_forecasts_config = evaluate_forecasts_config
+        self._forecast_evaluator_from_prices_dict = (
+            forecast_evaluator_from_prices_dict
+        )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._compute_forecasts(df_in, fit=True)
@@ -81,7 +84,7 @@ class ProcessForecasts(dtfcore.FitPredictNode):
     def _compute_forecasts(
         self, df: pd.DataFrame, fit: bool = True
     ) -> Dict[str, pd.DataFrame]:
-        if self._evaluate_forecasts_config is not None:
+        if self._forecast_evaluator_from_prices_dict is not None:
             self._evaluate_forecasts(df)
         hdbg.dassert_in(self._prediction_col, df.columns)
         # Make sure it's multi-index.
@@ -113,21 +116,16 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         return {"df_out": df}
 
     def _evaluate_forecasts(self, df: pd.DataFrame) -> None:
-        # TODO(gp): We should pass a single dict.
-        target_gmv = self._evaluate_forecasts_config["target_gmv"]
-        price_col = self._evaluate_forecasts_config["price_col"]
         forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
-            price_col=price_col,
-            volatility_col=self._volatility_col,
-            prediction_col=self._prediction_col,
+            **self._forecast_evaluator_from_prices_dict["init"]
         )
         #
-        log_dir = self._evaluate_forecasts_config["log_dir"]
+        log_dir = self._forecast_evaluator_from_prices_dict["log_dir"]
         _LOG.info("log_dir=%s", log_dir)
         forecast_evaluator.log_portfolio(
             df,
             log_dir,
-            target_gmv=target_gmv,
+            **self._forecast_evaluator_from_prices_dict["kwargs"],
         )
 
 
@@ -143,27 +141,31 @@ def get_process_forecasts_dict_example1(
     price_col: str,
     spread_col: Optional[str],
     order_duration_in_mins: int,
-    *,
-    bulk_frac_to_remove: float = 0.0,
-    target_gmv: float = 1e5,
-    log_dir: Optional[str] = None,
+    style: str,
+    compute_target_positions_kwargs: Dict[str, Any],
+    log_dir: str,
 ) -> Dict[str, Any]:
     """
     Get the config for `ProcessForecast` node.
     """
+    hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     # TODO(gp): It's unclear if we should be able to enable or not
     # ForecastEvaluatorFromPrice.
     if log_dir is not None:
         # Params for `ForecastEvaluatorFromPrice`, which computes the pnl with
         # the vectorized PnL that we run in parallel.
-        evaluate_forecasts_config_dict = {
+        forecast_evaluator_from_prices_dict = {
+            "init": {
+                "price_col": price_col,
+                "volatility_col": volatility_col,
+                "prediction_col": prediction_col,
+                "spread_col": spread_col,
+            },
             "log_dir": os.path.join(log_dir, "evaluate_forecasts"),
-            "bulk_frac_to_remove": bulk_frac_to_remove,
-            "target_gmv": target_gmv,
-            "price_col": price_col,
+            "kwargs": compute_target_positions_kwargs,
         }
     else:
-        evaluate_forecasts_config_dict = None
+        forecast_evaluator_from_prices_dict = None
     #
     order_type = "price@twap"
     process_forecasts_config_dict = {
@@ -175,28 +177,15 @@ def get_process_forecasts_dict_example1(
         "optimizer_config": {
             "backend": "pomo",
             "params": {
-                "style": "cross_sectional",
-                "kwargs": {
-                    "bulk_frac_to_remove": bulk_frac_to_remove,
-                    "bulk_fill_method": "zero",
-                    "target_gmv": target_gmv,
-                },
+                "style": style,
+                "kwargs": compute_target_positions_kwargs,
             },
         },
         # Params for `process_forecasts()`.
-        # TODO(gp): Use datetime.time()
-        "ath_start_time": pd.Timestamp(
-            "2000-01-01 09:30:00-05:00", tz="America/New_York"
-        ).time(),
-        "trading_start_time": pd.Timestamp(
-            "2000-01-01 09:30:00-05:00", tz="America/New_York"
-        ).time(),
-        "ath_end_time": pd.Timestamp(
-            "2000-01-01 16:40:00-05:00", tz="America/New_York"
-        ).time(),
-        "trading_end_time": pd.Timestamp(
-            "2000-01-01 16:40:00-05:00", tz="America/New_York"
-        ).time(),
+        "ath_start_time": datetime.time(9, 30),
+        "trading_start_time": datetime.time(9, 30),
+        "ath_end_time": datetime.time(16, 40),
+        "trading_end_time": datetime.time(16, 40),
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }
@@ -209,7 +198,7 @@ def get_process_forecasts_dict_example1(
         # This configures `process_forecasts()`.
         "process_forecasts_config": process_forecasts_config_dict,
         # This configures `ForecastEvaluatorFromPrices`.
-        "evaluate_forecasts_config": evaluate_forecasts_config_dict,
+        "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
     }
     return process_forecasts_dict
 
@@ -225,10 +214,12 @@ def get_process_forecasts_dict_example2(
     volatility_col = "vwap.ret_0.vol"
     price_col = "vwap"
     spread_col = "pct_bar_spread"
+    style = "cross_sectional"
     #
-    bulk_frac_to_remove = 0.0
-    target_gmv = 1e5
-    # log_dir = None
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "target_gmv": 1e5,
+    }
     log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     #
     process_forecasts_dict = get_process_forecasts_dict_example1(
@@ -238,8 +229,8 @@ def get_process_forecasts_dict_example2(
         price_col,
         spread_col,
         order_duration_in_mins,
-        bulk_frac_to_remove=bulk_frac_to_remove,
-        target_gmv=target_gmv,
+        style,
+        compute_target_positions_kwargs,
         log_dir=log_dir,
     )
     return process_forecasts_dict
@@ -256,9 +247,12 @@ def get_process_forecasts_dict_example3(
     volatility_col = "garman_klass_vol"
     price_col = "close_vwap"
     spread_col = None
+    style = "cross_sectional"
     #
-    bulk_frac_to_remove = 0.0
-    target_gmv = 1e5
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "target_gmv": 1e5,
+    }
     log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     #
     process_forecasts_dict = get_process_forecasts_dict_example1(
@@ -268,8 +262,8 @@ def get_process_forecasts_dict_example3(
         price_col,
         spread_col,
         order_duration_in_mins,
-        bulk_frac_to_remove=bulk_frac_to_remove,
-        target_gmv=target_gmv,
+        style,
+        compute_target_positions_kwargs,
         log_dir=log_dir,
     )
     return process_forecasts_dict

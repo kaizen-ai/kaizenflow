@@ -34,6 +34,7 @@ import helpers.henv as henv  # noqa: E402 module level import not at top of file
 import helpers.hintrospection as hintros  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hio as hio  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
+import helpers.hserver as hserver  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.hsystem as hsystem  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 import helpers.htimer as htimer  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
@@ -569,13 +570,13 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
     """
     # TODO(gp): Make this more robust.
     is_prod_machine = not (
-        henv.execute_repo_config_code("is_dev4()")
-        or henv.execute_repo_config_code("is_dev_ck()")
-        or henv.execute_repo_config_code("is_mac()")
-        or henv.execute_repo_config_code("is_inside_ci()")
+        hserver.is_dev4()
+        or hserver.is_dev_ck()
+        or hserver.is_mac()
+        or hserver.is_inside_ci()
         # Note(Juraj): cmamp prod container is an exception since we
         # actually want to acces creds from ~/.aws.
-        or henv.execute_repo_config_code("is_cmamp_prod()")
+        or hserver.is_cmamp_prod()
     )
     if is_prod_machine:
         # On prod machines we let the Docker container infer the right AWS

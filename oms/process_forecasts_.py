@@ -248,6 +248,19 @@ class ForecastProcessor:
         *,
         log_dir: Optional[str] = None,
     ) -> None:
+        """
+
+        :param log_dir: directory to log different stages of computation
+
+        ```
+        - Saved by `ForecastEvaluatorFromPrices`
+            - evaluate_forecasts
+        - Saved by `ForecastProcessor`
+            - orders
+            - portfolio
+            - target_positions
+        ```
+        """
         self._portfolio = portfolio
         self._get_wall_clock_time = portfolio.market_data.get_wall_clock_time
         # TODO(Paul): process config with checks.
@@ -365,7 +378,7 @@ class ForecastProcessor:
         wall_clock_time = self._get_wall_clock_time()
         wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
         filename = f"{wall_clock_time_str}.csv"
-        #
+        # Log the target position.
         if self._target_positions:
             last_key, last_target_positions = self._target_positions.peek()
             last_target_positions_filename = os.path.join(
@@ -375,6 +388,7 @@ class ForecastProcessor:
                 last_target_positions_filename, incremental=True
             )
             last_target_positions.to_csv(last_target_positions_filename)
+        # Log the orders.
         if self._orders:
             last_key, last_orders = self._orders.peek()
             last_orders_filename = os.path.join(self._log_dir, "orders", filename)
@@ -444,6 +458,7 @@ class ForecastProcessor:
             _LOG.debug("Event: awaiting broker.submit_orders() done.")
         else:
             _LOG.debug("No orders to submit to broker.")
+        # Log the state of Portfolio.
         if self._log_dir:
             self.log_state()
             self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))

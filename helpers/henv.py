@@ -15,7 +15,10 @@ import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hversion as hversio
 
-# This module should not depend on any other helper or 3rd party modules.
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -86,18 +89,30 @@ def get_env_vars() -> List[str]:
     """
     # Keep in sync with `lib_tasks.py:_generate_compose_file()`.
     env_var_names = [
+        # AM AWS credentials.
         "AM_AWS_ACCESS_KEY_ID",
         "AM_AWS_DEFAULT_REGION",
+        # AWS profile to use for AM.
         "AM_AWS_PROFILE",
+        # S3 bucket to use for AM.
         "AM_AWS_S3_BUCKET",
+        # AM AWS credentials.
         "AM_AWS_SECRET_ACCESS_KEY",
+        # Path to the ECR for the Docker images.
         "AM_ECR_BASE_PATH",
+        # Force enabling Docker-in-Docker.
         "AM_ENABLE_DIND",
+        # Enable forcing certain unit tests to fail to check that unit test
+        # failures are caught.
         "AM_FORCE_TEST_FAIL",
         # The name of the host running Docker.
         "AM_HOST_NAME",
         # The OS of the host running Docker.
         "AM_HOST_OS_NAME",
+        # The name of the user running the host.
+        "AM_HOST_USER_NAME",
+        # The version of the host running Docker.
+        "AM_HOST_VERSION",
         "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
         # Whether to check if certain property of the repo are as expected or not.
         "AM_REPO_CONFIG_CHECK",
@@ -107,6 +122,7 @@ def get_env_vars() -> List[str]:
         "AM_REPO_CONFIG_PATH",
         "AM_TELEGRAM_TOKEN",
         "GH_ACTION_ACCESS_TOKEN",
+        # Whether we are running inside GH Actions.
         "CI",
     ]
     # No duplicates.
@@ -220,7 +236,7 @@ def _get_library_version(lib_name: str) -> str:
 
 
 def _append(
-    txt: List[str], to_add: List[str], num_spaces: int = 4
+    txt: List[str], to_add: List[str], num_spaces: int = 2
 ) -> Tuple[List[str], List[str]]:
     txt.extend(
         [
@@ -361,6 +377,7 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
 # Execute code from the `repo_config.py` in the super module.
 # #############################################################################
 
+
 # Copied from helpers.hgit to avoid circular dependencies.
 
 
@@ -468,9 +485,11 @@ def execute_repo_config_code(code_to_execute: str) -> Any:
         ret = eval(code_to_execute)
     except NameError as e:
         _LOG.error(
-            "While executing %s caught error:\n%s\nTrying to continue",
+            "While executing '%s' caught error:\n%s\nTrying to continue",
             code_to_execute,
             e,
         )
         ret = None
+        _ = e
+        # raise e
     return ret

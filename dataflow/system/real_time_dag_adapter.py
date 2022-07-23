@@ -24,6 +24,7 @@ def adapt_dag_to_real_time(
     # TODO(gp): This could become a market_data_dict
     market_data_history_lookback: pd.Timedelta,
     process_forecasts_dict: Dict[str, Any],
+    # TODO(gp): Move after market_data_history_lookback.
     ts_col_name: str
 ):
     """

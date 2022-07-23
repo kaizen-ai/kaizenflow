@@ -12,12 +12,18 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsql as hsql
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
+
+# #############################################################################
+# TestDbHelper
+# #############################################################################
 
 
 @pytest.mark.skipif(
@@ -173,7 +179,94 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         raise NotImplementedError
 
+    @classmethod
+    @abc.abstractmethod
+    def _get_postgres_db(cls) -> str:
+        """
+        Return the name of the postgres DB to use (e.g., im_postgres_db_local).
+        """
+        raise NotImplementedError
 
-# TODO(gp): @all Create a class sharing some common code from TestOmsDbHelper
-#  and TestImDbHelper.
-# class TestImOmsDbHelper(hunitest.TestCase, abc.ABC):
+
+# #############################################################################
+# TestImOmsDbHelper
+# #############################################################################
+
+
+class TestImOmsDbHelper(TestDbHelper, abc.ABC):
+
+    # TODO(gp): Rewrite building a YAML with a package.
+    @classmethod
+    def _create_docker_files(cls) -> None:
+        # Create compose file.
+        service_name = cls._get_service_name()
+        idx = cls.get_id()
+        host_port = 5432 + idx
+        txt = f"""version: '3.5'
+
+services:
+  # Docker container running Postgres DB.
+  {service_name}:
+    image: postgres:13
+    restart: "no"
+    environment:"""
+        #
+        if not henv.execute_repo_config_code(
+            "use_docker_db_container_name_to_connect()"
+        ):
+            # Use the port to connect.
+            txt += f"""
+      - POSTGRES_HOST=${{POSTGRES_HOST}}
+      - POSTGRES_DB=${{POSTGRES_DB}}
+      - POSTGRES_PORT=${{POSTGRES_PORT}}
+      - POSTGRES_USER=${{POSTGRES_USER}}
+      - POSTGRES_PASSWORD=${{POSTGRES_PASSWORD}}
+    volumes:
+      - {service_name}_data:/var/lib/postgresql/data
+    ports:
+      - {host_port}:5432"""
+        else:
+            # Do not use the port to connect.
+            txt += f"""
+      - POSTGRES_HOST=${{POSTGRES_HOST}}
+      - POSTGRES_DB=${{POSTGRES_DB}}
+      - POSTGRES_USER=${{POSTGRES_USER}}
+      - POSTGRES_PASSWORD=${{POSTGRES_PASSWORD}}
+    volumes:
+      - {service_name}_data:/var/lib/postgresql/data"""
+        #
+        txt += f"""
+volumes:
+  {service_name}_data: {{}}
+
+networks:
+  default:
+    #name: {service_name}_network
+    name: main_network"""
+        compose_file_name = cls._get_compose_file()
+        hio.to_file(compose_file_name, txt)
+        # Create env file.
+        txt = []
+        if not henv.execute_repo_config_code(
+            "use_docker_db_container_name_to_connect()"
+        ):
+            if hserver.is_dev4():
+                host = "cf-spm-dev4"
+            else:
+                # host = os.environ["AM_HOST_NAME"]
+                host = "localhost"
+        else:
+            # Use the service name, e.g., `im_postgres...`.
+            host = service_name
+        postgres_db = cls._get_postgres_db()
+        txt.append(f"POSTGRES_HOST={host}")
+        txt.append(f"POSTGRES_DB={postgres_db}")
+        if not henv.execute_repo_config_code(
+            "use_docker_db_container_name_to_connect()"
+        ):
+            txt.append(f"POSTGRES_PORT={host_port}")
+        txt.append("POSTGRES_USER=aljsdalsd")
+        txt.append("POSTGRES_PASSWORD=alsdkqoen")
+        txt = "\n".join(txt)
+        env_file_name = cls._get_db_env_path()
+        hio.to_file(env_file_name, txt)
