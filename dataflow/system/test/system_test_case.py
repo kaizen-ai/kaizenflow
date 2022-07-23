@@ -332,6 +332,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             ] = real_time_loop_time_out_in_secs
             #
             system.config["event_loop_object"] = event_loop
+            portfolio = system.portfolio
             dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
