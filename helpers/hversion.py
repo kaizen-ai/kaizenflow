@@ -6,14 +6,11 @@ import helpers.hversion as hversio
 
 # This code implements version control for code
 # The code version is used in two circumstances:
-# 1) when any code using dbg.py (which is included everywhere) starts in order to
-#    verify that the running code and the container in which the code is running
-#    are compatible
+# 1) when any code using `hdbg.py` (which is included everywhere) starts in
+#    order to verify that the running code and the container in which the code
+#    is running are compatible
 # 2) when a container is built to know what version of the code was used to build
 #    it
-
-# This file should depend only on Python standard package since it's used by
-# helpers/dbg.py, which is used everywhere.
 
 import functools
 import logging
@@ -21,11 +18,14 @@ import os
 import re
 from typing import Optional, cast
 
-# Avoid dependency from other `helpers` modules, such as `helpers.henv`, to prevent
-# import cycles.
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
+
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 _LOG = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ def _get_container_version() -> Optional[str]:
     :return: container code version from the env var
     """
     container_version: Optional[str] = None
-    if hsystem.is_inside_docker():
+    if hserver.is_inside_docker():
         env_var = "AM_CONTAINER_VERSION"
         if env_var not in os.environ:
             # This can happen when GH Actions pull the image using invoke

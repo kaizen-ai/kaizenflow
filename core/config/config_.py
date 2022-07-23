@@ -37,7 +37,7 @@ class Config:
     """
     A nested ordered dictionary storing configuration information.
 
-    Keys can only be strings.
+    Keys can only be strings or ints.
     Values can be a Python type or another `Config`.
 
     We refer to configs as:
@@ -48,7 +48,7 @@ class Config:
     """
 
     # A simple or compound key that can be used to access a Config.
-    Key = Union[str, Iterable[str]]
+    Key = Union[str, Iterable[str], int, Iterable[int]]
 
     def __init__(
         self,
@@ -401,7 +401,7 @@ class Config:
         _LOG.debug(
             "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
         )
-        hdbg.dassert_isinstance(head_key, str, "Keys can only be string")
+        hdbg.dassert_isinstance(head_key, (int, str), "Keys can only be string or int")
         return head_key, tail_key
 
     def _get_item(self, key: Key, *, level: int) -> Any:
@@ -437,7 +437,7 @@ class Config:
 
     def _check_base_case(self, key: Key) -> bool:
         _LOG.debug("key=%s", key)
-        hdbg.dassert_isinstance(key, str, "Keys can only be string")
+        hdbg.dassert_isinstance(key, (int, str), "Keys can only be string or int")
         hdbg.dassert_isinstance(self._config, dict)
         return True
 

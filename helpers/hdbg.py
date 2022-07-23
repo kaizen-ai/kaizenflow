@@ -4,8 +4,6 @@ Import as:
 import helpers.hdbg as hdbg
 """
 
-# This module should not depend on anything else than Python standard modules.
-
 import functools
 import logging
 import os
@@ -13,9 +11,16 @@ import pprint
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
+# This module can depend only on:
+# - Python standard modules
+# - `helpers/hserver.py`
+# See `helpers/dependencies.txt` for more details
+
 _LOG = logging.getLogger(__name__)
 
-import helpers.hwarnings as hwarnin
+
+# Enforce that certain warnings are disabled.
+import helpers.hwarnings as hwarnin  # # isort:skip  # noqa: F401,F403 # pylint: disable=unused-import
 
 
 # TODO(gp): Make these generate from MAPPING below.
@@ -440,7 +445,7 @@ def _set_to_str(set_: Set[Any], thr: Optional[int] = 20) -> str:
             txt = f"{len(list_)} [{min(list_)}, ... {max(list_)}]"
         else:
             txt = str(list_)
-    except TypeError as e:
+    except TypeError:
         # Sometimes the set has elements of different types and we can't easily
         # sort them. In these cases we just skip the sorting.
         txt = str(list(set_))
@@ -797,7 +802,10 @@ def dassert_related_params(
         one_is_non_null = functools.reduce(lambda x, y: x or y, is_non_null)
         for k, v in params.items():
             if bool(v) != one_is_non_null:
-                txt = "All or none parameter should be non-null:\n%s=%s\nparams=%s\n" % (k, v, pprint.pformat(params))
+                txt = (
+                    "All or none parameter should be non-null:\n%s=%s\nparams=%s\n"
+                    % (k, v, pprint.pformat(params))
+                )
                 _dfatal(txt, msg, *args, only_warning=only_warning)
     elif mode == "all_or_none_non_None":
         # Find out if at least one value is not None.
@@ -805,7 +813,10 @@ def dassert_related_params(
         one_is_non_None = functools.reduce(lambda x, y: x or y, is_non_None)
         for k, v in params.items():
             if (v is not None) != one_is_non_None:
-                txt = "All or none parameter should be non-None:\n%s=%s\nparams=%s\n" % (k, v, pprint.pformat(params))
+                txt = (
+                    "All or none parameter should be non-None:\n%s=%s\nparams=%s\n"
+                    % (k, v, pprint.pformat(params))
+                )
                 _dfatal(txt, msg, *args, only_warning=only_warning)
     else:
         raise ValueError(f"Invalid mode='{mode}'")

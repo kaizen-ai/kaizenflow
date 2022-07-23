@@ -4,13 +4,14 @@ import pandas as pd
 import pytest
 
 import helpers.henv as henv
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.talos.utils as imv2tauti
 
 
 @pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    not hserver.is_CK_S3_available(),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):

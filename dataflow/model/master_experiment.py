@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): -> run_ins_oos_backtest
-def run_experiment(config: cconfig.Config) -> None:
+def run_experiment(system_config: cconfig.Config) -> None:
     """
     Implement an experiment to:
 
@@ -31,19 +31,19 @@ def run_experiment(config: cconfig.Config) -> None:
 
     All parameters are passed through a `Config`.
     """
-    _LOG.debug("config=\n%s", config)
-    config = config.copy()
-    dag_runner = config["dag_runner_builder"](config)
+    _LOG.debug("system_config=\n%s", system_config)
+    system_config = system_config.copy()
+    dag_runner = system_config["dag_runner_builder"]()
     fit_result_bundle = dag_runner.fit()
     # Maybe run OOS.
-    if "run_oos" in config["experiment_config"].to_dict().keys() and config["experiment_config"]:
+    if "run_oos" in system_config["experiment_config"].to_dict().keys() and system_config["experiment_config"]:
         result_bundle = dag_runner.predict()
     else:
         result_bundle = fit_result_bundle
     # Save results.
     # TODO(gp): We could return a `ResultBundle` and have
     #  `run_experiment_stub.py` save it.
-    dtfmoexuti.save_experiment_result_bundle(config, result_bundle)
+    dtfmoexuti.save_experiment_result_bundle(system_config, result_bundle)
 
 
 # #############################################################################
@@ -82,7 +82,7 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
 
 # TODO(gp): move to experiment_utils.py?
 def _save_tiled_output(
-    config: cconfig.Config, result_bundle: dtfcore.ResultBundle
+    system_config: cconfig.Config, result_bundle: dtfcore.ResultBundle
 ) -> None:
     """
     Serialize the results of a tiled experiment.
@@ -93,24 +93,24 @@ def _save_tiled_output(
     # end_timestamp]) discarding the warm up period (i.e., the data in
     # [start_timestamp_with_lookback, start_timestamp]).
     result_df = result_bundle.result_df.loc[
-        config["experiment_config", "start_timestamp"] : config["experiment_config", "end_timestamp"]
+        system_config["experiment_config", "start_timestamp"] : system_config["experiment_config", "end_timestamp"]
     ]
     # Convert the result into Parquet.
     df = result_df.stack()
-    asset_id_col_name = config["market_data_config", "asset_id_col_name"]
+    asset_id_col_name = system_config["market_data_config", "asset_id_col_name"]
     df.index.names = ["end_ts", asset_id_col_name]
     df = df.reset_index(level=1)
     df["year"] = df.index.year
     df["month"] = df.index.month
     # The results are saved in the subdir `tiled_results` of the experiment list.
-    tiled_dst_dir = os.path.join(config["experiment_config", "dst_dir"], "tiled_results")
+    tiled_dst_dir = os.path.join(system_config["experiment_config", "dst_dir"], "tiled_results")
     hparque.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir=tiled_dst_dir
     )
     _LOG.info("Tiled results written in '%s'", tiled_dst_dir)
 
 
-def run_tiled_backtest(config: cconfig.Config) -> None:
+def run_tiled_backtest(system_config: cconfig.Config) -> None:
     """
     Run a backtest by:
 
@@ -120,19 +120,19 @@ def run_tiled_backtest(config: cconfig.Config) -> None:
 
     All parameters are passed through a `Config`.
     """
-    _LOG.debug("config=\n%s", config)
+    _LOG.debug("system_config=\n%s", system_config)
     # Create the DAG runner.
-    dag_runner = config["dag_runner_builder"]()
+    dag_runner = system_config["dag_runner_builder"]()
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
         [
             (
-                config["experiment_config", "start_timestamp_with_lookback"],
-                config["experiment_config", "end_timestamp"],
+                system_config["experiment_config", "start_timestamp_with_lookback"],
+                system_config["experiment_config", "end_timestamp"],
             )
         ],
     )
     fit_result_bundle = dag_runner.fit()
     # Save results.
-    _save_tiled_output(config, fit_result_bundle)
+    _save_tiled_output(system_config, fit_result_bundle)

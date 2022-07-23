@@ -12,7 +12,9 @@ from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.hdbg as hdbg
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 
 _LOG = logging.getLogger(__name__)

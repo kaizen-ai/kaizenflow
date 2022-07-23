@@ -52,7 +52,8 @@ class Test_generate_compose_file1(hunitest.TestCase):
             use_main_network,
             file_name,
         )
-        txt_tmp = hunitest.filter_text("AM_HOST_NAME|AM_HOST_OS_NAME", txt_tmp)
+        # Remove all the env variables that are function of the host.
+        txt_tmp = hunitest.filter_text("AM_HOST_", txt_tmp)
         txt.append(txt_tmp)
         #
         txt = "\n".join(txt)

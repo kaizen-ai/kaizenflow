@@ -2,10 +2,14 @@
 Contain info specific of `//cmamp` repo.
 """
 
+# TODO(gp): Consider centralizing all the common functions under hserver.py.
+
 import functools
 import logging
 import os
 from typing import Dict, List, Optional
+
+import helpers.hserver as hserver
 
 _LOG = logging.getLogger(__name__)
 
@@ -17,7 +21,6 @@ def _print(msg: str) -> None:
     # _LOG.info(msg)
     if False:
         print(msg)
-    pass
 
 
 # We can't use `__file__` since this file is imported with an exec.
@@ -78,76 +81,13 @@ def get_docker_base_image_name() -> str:
 #   - A different user and group is used inside the container
 
 
-# Copied from `system_interaction.py` to avoid circular imports.
-def is_inside_ci() -> bool:
-    """
-    Return whether we are running inside the Continuous Integration flow.
-    """
-    if "CI" not in os.environ:
-        ret = False
-    else:
-        ret = os.environ["CI"] != ""
-    return ret
-
-
-def is_inside_docker() -> bool:
-    """
-    Return whether we are inside a container or not.
-    """
-    # From https://stackoverflow.com/questions/23513045
-    return os.path.exists("/.dockerenv")
-
-
-# End copy.
-
-# We can't rely only on the name of the host to infer where we are running,
-# since inside Docker the name of the host is like `01a7e34a82a5`. Of course,
-# there is no way to know anything about the host for security reason, so we
-# pass this value from the external environment to the container, through env
-# vars (e.g., `AM_HOST_NAME`, `AM_HOST_OS_NAME`).
-
-
-# pylint: disable=line-too-long
-def is_dev_ck() -> bool:
-    # sysname='Darwin'
-    # nodename='gpmac.lan'
-    # release='19.6.0'
-    # version='Darwin Kernel Version 19.6.0: Mon Aug 31 22:12:52 PDT 2020;
-    #   root:xnu-6153.141.2~1/RELEASE_X86_64'
-    # machine='x86_64'
-    host_name = os.uname()[1]
-    host_names = ("dev1", "dev2")
-    am_host_name = os.environ.get("AM_HOST_NAME")
-    _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
-    is_dev_ck_ = host_name in host_names or am_host_name in host_names
-    return is_dev_ck_
-
-
-def is_dev4() -> bool:
-    """
-    Return whether it's running on dev4.
-    """
-    host_name = os.uname()[1]
-    dev4 = "cf-spm-dev4"
-    am_host_name = os.environ.get("AM_HOST_NAME")
-    _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
-    is_dev4_ = dev4 in (host_name, am_host_name)
-    return is_dev4_
-
-
-def is_mac() -> bool:
-    host_os_name = os.uname()[0]
-    am_host_os_name = os.environ.get("AM_HOST_OS_NAME")
-    _LOG.debug(
-        "host_os_name=%s am_host_os_name=%s", host_os_name, am_host_os_name
-    )
-    is_mac_ = host_os_name == "Darwin" or am_host_os_name == "Darwin"
-    return is_mac_
+#_MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Catalina"
+_MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Monterey"
 
 
 def _raise_invalid_host() -> None:
     host_os_name = os.uname()[0]
-    am_host_os_name = os.environ.get("AM_HOST_OS_NAME")
+    am_host_os_name = os.environ.get("AM_HOST_OS_NAME", None)
     raise ValueError(
         f"Don't recognize host: host_os_name={host_os_name}, "
         f"am_host_os_name={am_host_os_name}"
@@ -158,18 +98,21 @@ def enable_privileged_mode() -> bool:
     """
     Return whether an host supports privileged mode for its containers.
     """
-    if get_name() in ("//dev_tools", ):
+    if get_name() in ("//dev_tools",):
         val = False
     else:
-        if is_mac():
-            val = True
-        elif is_cmamp_prod():
+        # TODO(gp): Keep this in alphabetical order.
+        if hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
             val = False
-        elif is_dev_ck():
+        elif hserver.is_mac(version="Catalina"):
             val = True
-        elif is_dev4():
+        elif hserver.is_cmamp_prod():
             val = False
-        elif is_inside_ci():
+        elif hserver.is_dev_ck():
+            val = True
+        elif hserver.is_dev4():
+            val = False
+        elif hserver.is_inside_ci():
             val = True
         else:
             _raise_invalid_host()
@@ -180,15 +123,17 @@ def has_docker_sudo() -> bool:
     """
     Return whether commands should be run with sudo or not.
     """
-    if is_dev_ck():
+    # TODO(gp): Keep this in alphabetical order.
+    if hserver.is_dev_ck():
         val = True
-    elif is_dev4():
+    elif hserver.is_dev4():
         val = False
-    elif is_inside_ci():
+    elif hserver.is_inside_ci():
         val = False
-    elif is_mac():
+    elif hserver.is_mac():
+        # macOS runs Docker with sudo by default.
         val = True
-    elif is_cmamp_prod():
+    elif hserver.is_cmamp_prod():
         val = False
     else:
         _raise_invalid_host()
@@ -203,10 +148,14 @@ def has_dind_support() -> bool:
 
     This is need to use Docker-in-Docker.
     """
-    _print("is_inside_docker()=%s" % is_inside_docker())
-    if not is_inside_docker():
+    _print("is_inside_docker()=%s" % hserver.is_inside_docker())
+    if not hserver.is_inside_docker():
         # Outside Docker there is no privileged mode.
         _print("-> ret = False")
+        return False
+    # TODO(gp): Not sure this is really needed since we do this check
+    # after enable_privileged_mode controls if we have dind or not.
+    if hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
         return False
     # TODO(gp): This part is not multi-process friendly. When multiple
     # processes try to run this code they interfere. A solution is to run `ip
@@ -217,42 +166,49 @@ def has_dind_support() -> bool:
     # Sometimes there is some state left, so we need to clean it up.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
     # TODO(gp): use `has_docker_sudo`.
-    if is_mac() or is_dev_ck():
+    if hserver.is_mac() or hserver.is_dev_ck():
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
     _print("cmd=%s -> rc=%s" % (cmd, rc))
     #
     cmd = "ip link add dummy0 type dummy >/dev/null 2>&1"
-    if is_mac() or is_dev_ck():
+    if hserver.is_mac() or hserver.is_dev_ck():
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
     _print("cmd=%s -> rc=%s" % (cmd, rc))
     has_dind = rc == 0
     # Clean up, after the fact.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
-    if is_mac() or is_dev_ck():
+    if hserver.is_mac() or hserver.is_dev_ck():
         cmd = f"sudo {cmd}"
     rc = os.system(cmd)
     _print("cmd=%s -> rc=%s" % (cmd, rc))
     # dind is supported on both Mac and GH Actions.
-    am_repo_config = os.environ.get("AM_REPO_CONFIG_CHECK", False)
-    check = am_repo_config != ""
-    if check:
-        if is_cmamp_prod():
+    check_repo = os.environ.get("AM_REPO_CONFIG_CHECK", "True") != "False"
+    if check_repo:
+        if hserver.is_cmamp_prod():
             assert not has_dind, "Not expected privileged mode"
-        elif get_name() in ("//dev_tools", ):
+        elif get_name() in ("//dev_tools",):
             assert not has_dind, "Not expected privileged mode"
         else:
-            if is_mac() or is_dev_ck() or is_inside_ci():
-                # dind is supported on both Mac and GH Actions.
-                assert has_dind, ("Expected privileged mode: " +
-                    "has_dind=%s, is_mac=%s, is_dev_ck=%s is_iniside_ci=%s" % (
-                          has_dind, is_mac(), is_dev_ck(), is_inside_ci()))
-            elif is_dev4():
+            if hserver.is_mac() or hserver.is_dev_ck() or hserver.is_inside_ci():
+                # dind should be supported on Mac, dev_ck, and GH Actions.
+                assert has_dind, (
+                    "Expected privileged mode: "
+                    + "has_dind=%s, is_mac=%s, is_dev_ck=%s is_inside_ci=%s"
+                    % (
+                        has_dind,
+                        hserver.is_mac(),
+                        hserver.is_dev_ck(),
+                        hserver.is_inside_ci(),
+                    )
+                )
+            elif hserver.is_dev4():
                 assert not has_dind, "Not expected privileged mode"
             else:
                 _raise_invalid_host()
     else:
+        am_repo_config = os.environ.get("AM_REPO_CONFIG_CHECK", "True")
         print(
             _WARNING
             + ": Skip checking since AM_REPO_CONFIG_CHECK="
@@ -264,9 +220,17 @@ def has_dind_support() -> bool:
 def use_docker_sibling_containers() -> bool:
     """
     Return whether to use Docker sibling containers.
+
+    Using sibling containers requires that all Docker containers in the same
+    network so that they can communicate with each other.
     """
-    val = bool(is_dev4())
+    val = hserver.is_dev4() or hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS)
     return val
+
+
+def use_main_network():
+    # TODO(gp): Replace this.
+    return use_docker_sibling_containers()
 
 
 def get_shared_data_dirs() -> Optional[Dict[str, str]]:
@@ -277,11 +241,13 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
     E.g., one can mount a central dir `/data/shared`, shared by multiple
     users, on a dir `/shared_data` in Docker.
     """
-    if is_dev4():
+    # TODO(gp): Keep this in alphabetical order.
+    shared_data_dirs: Optional[Dict[str, str]] = None
+    if hserver.is_dev4():
         shared_data_dirs = {"/local/home/share/cache": "/cache"}
-    elif is_dev_ck():
+    elif hserver.is_dev_ck():
         shared_data_dirs = {"/data/shared": "/shared_data"}
-    elif is_mac() or is_inside_ci() or is_cmamp_prod():
+    elif hserver.is_mac() or hserver.is_inside_ci() or hserver.is_cmamp_prod():
         shared_data_dirs = None
     else:
         _raise_invalid_host()
@@ -289,19 +255,29 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
 
 
 def use_docker_network_mode_host() -> bool:
-    ret = bool(is_mac() or is_dev_ck())
+    # TODO(gp): Not sure this is needed any more, since we typically run in bridge
+    # mode.
+    ret = hserver.is_mac() or hserver.is_dev_ck()
+    ret = False
+    if ret:
+        assert use_docker_sibling_containers()
     return ret
 
 
-def use_main_network() -> bool:
+def use_docker_db_container_name_to_connect() -> bool:
     """
-    Run all Docker containers in the same network so that they can communicate
-    with each other.
+    Connect to containers running DBs just using the container name, instead of
+    using port and localhost / hostname.
     """
-    if is_dev4():
+    if hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
+        # New Macs don't seem to see containers unless we connect with them
+        # directly with their name.
         val = True
     else:
         val = False
+    if val:
+        # This implies that we are using Docker sibling containers.
+        assert use_docker_sibling_containers()
     return val
 
 
@@ -311,7 +287,8 @@ def run_docker_as_root() -> bool:
 
     I.e., adding `--user $(id -u):$(id -g)` to docker compose or not.
     """
-    if is_inside_ci():
+    # TODO(gp): Keep this in alphabetical order.
+    if hserver.is_inside_ci():
         # When running as user in GH action we get an error:
         # ```
         # /home/.config/gh/config.yml: permission denied
@@ -319,17 +296,17 @@ def run_docker_as_root() -> bool:
         # see https://github.com/alphamatic/amp/issues/1864
         # So we run as root in GH actions.
         res = True
-    elif is_dev4():
+    elif hserver.is_dev4():
         # //lime runs on a system with Docker remap which assumes we don't
         # specify user credentials.
         res = True
-    elif is_dev_ck():
+    elif hserver.is_dev_ck():
         # On dev1 / dev2 we run as users specifying the user / group id as
         # outside.
         res = False
-    elif is_mac():
+    elif hserver.is_mac():
         res = False
-    elif is_cmamp_prod():
+    elif hserver.is_cmamp_prod():
         res = False
     else:
         _raise_invalid_host()
@@ -340,7 +317,7 @@ def get_docker_user() -> str:
     """
     Return the user that runs Docker, if any.
     """
-    if is_dev4():
+    if hserver.is_dev4():
         val = "spm-sasm"
     else:
         val = ""
@@ -361,7 +338,7 @@ def get_docker_shared_group() -> str:
     """
     Return the group of the user running Docker, if any.
     """
-    if is_dev4():
+    if hserver.is_dev4():
         val = "spm-sasm-fileshare"
     else:
         val = ""
@@ -381,42 +358,27 @@ def skip_submodules_test() -> bool:
 
 
 # #############################################################################
-# S3 buckets.
-# #############################################################################
 
+# Copied from hprint to avoid import cycles.
 
-def is_AM_S3_available() -> bool:
-    # AM bucket is always available.
-    val = True
-    _LOG.debug("val=%s", val)
-    return val
-
-
-def is_CK_S3_available() -> bool:
-    # CK bucket is not available for `//lemonade` and `//amp` unless it's on
-    # `dev_ck`.
-    val = True
-    if is_mac() or is_inside_ci():
-        if get_name() in ("//amp", "//dev_tools", "//lemonade"):
-            # No CK bucket.
-            val = False
-    elif is_dev4():
-        # CK bucket is not available on dev4.
-        val = False
-    _LOG.debug("val=%s", val)
-    return val
-
-
-def is_cmamp_prod() -> bool:
+# TODO(gp): It should use *.
+def indent(txt: str, num_spaces: int = 2) -> str:
     """
-    Detect whether this is a production container.
-
-    This env var is set inside devops/docker_build/prod.Dockerfile.
+    Add `num_spaces` spaces before each line of the passed string.
     """
-    return os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False)
+    spaces = " " * num_spaces
+    txt_out = []
+    for curr_line in txt.split("\n"):
+        if curr_line.lstrip().rstrip() == "":
+            # Do not prepend any space to a line with only white characters.
+            txt_out.append("")
+            continue
+        txt_out.append(spaces + curr_line)
+    res = "\n".join(txt_out)
+    return res
 
 
-# #############################################################################
+# End copy.
 
 
 def config_func_to_str() -> str:
@@ -424,43 +386,41 @@ def config_func_to_str() -> str:
     Print the value of all the config functions.
     """
     ret: List[str] = []
-    for func_name in sorted(
-        [
-            "enable_privileged_mode",
-            "get_docker_base_image_name",
-            "get_docker_user",
-            "get_docker_shared_group",
-            # "get_extra_amp_repo_sym_name",
-            "get_host_name",
-            "get_invalid_words",
-            "get_name",
-            "get_repo_map",
-            "get_shared_data_dirs",
-            "has_dind_support",
-            "has_docker_sudo",
-            "is_AM_S3_available",
-            "is_CK_S3_available",
-            "is_dev_ck",
-            "is_dev4",
-            "is_inside_ci",
-            "is_inside_docker",
-            "is_mac",
-            "run_docker_as_root",
-            "skip_submodules_test",
-            "use_docker_sibling_containers",
-            "use_docker_network_mode_host",
-            "use_main_network",
-        ]
-    ):
+    #
+    function_names = [
+        "enable_privileged_mode",
+        "get_docker_base_image_name",
+        "get_docker_user",
+        "get_docker_shared_group",
+        # "get_extra_amp_repo_sym_name",
+        "get_host_name",
+        "get_invalid_words",
+        "get_name",
+        "get_repo_map",
+        "get_shared_data_dirs",
+        "has_dind_support",
+        "has_docker_sudo",
+        "run_docker_as_root",
+        "skip_submodules_test",
+        "use_docker_sibling_containers",
+        "use_docker_network_mode_host",
+        "use_docker_db_container_name_to_connect",
+    ]
+    for func_name in sorted(function_names):
         try:
             _LOG.debug("func_name=%s", func_name)
             func_value = eval(f"{func_name}()")
-        except NameError:
+        except NameError as e:
             func_value = "*undef*"
+            _ = e
+            # raise e
         msg = f"{func_name}='{func_value}'"
         ret.append(msg)
         # _print(msg)
-    ret = "\n".join(ret)
+    # Package.
+    ret = "# repo_config.config\n" + indent("\n".join(ret))
+    # Add the signature from hserver.
+    ret += "\n" + indent(hserver.config_func_to_str())
     return ret
 
 

@@ -21,7 +21,9 @@ import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 
 _LOG = logging.getLogger(__name__)
@@ -32,26 +34,7 @@ _LOG.setLevel(logging.INFO)
 # #############################################################################
 
 
-# TODO(gp): Maybe move to henv.py
-def is_inside_docker() -> bool:
-    """
-    Return whether we are inside a container or not.
-    """
-    # From https://stackoverflow.com/questions/23513045
-    return os.path.exists("/.dockerenv")
-
-
-def is_inside_ci() -> bool:
-    """
-    Return whether we are running inside the Continuous Integration flow.
-    """
-    if "CI" not in os.environ:
-        ret = False
-    else:
-        ret = os.environ["CI"] != ""
-    return ret
-
-
+# TODO(gp): Maybe move to hserver.py
 def is_running_in_ipynb() -> bool:
     # From https://stackoverflow.com/questions/15411967
     try:
@@ -62,7 +45,7 @@ def is_running_in_ipynb() -> bool:
     return res
 
 
-# TODO(gp): Use this everywhere in the code base.
+# TODO(gp): Use is_mac()
 def is_running_on_macos() -> bool:
     return get_os_name() == "Darwin"
 

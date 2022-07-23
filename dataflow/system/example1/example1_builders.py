@@ -4,6 +4,7 @@ Import as:
 import dataflow.system.example1.example1_builders as dtfsexexbu
 """
 
+import datetime
 import logging
 
 import pandas as pd
@@ -135,7 +136,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     log_dir = None
     # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     order_type = "price@twap"
-    evaluate_forecasts_config = None
+    forecast_evaluator_from_prices_dict = None
     process_forecasts_config_dict = {
         "order_config": {
             "order_type": order_type,
@@ -152,19 +153,10 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
                 },
             },
         },
-        # TODO(gp): Use datetime.time()
-        "ath_start_time": pd.Timestamp(
-            "2000-01-01 09:30:00-05:00", tz="America/New_York"
-        ).time(),
-        "trading_start_time": pd.Timestamp(
-            "2000-01-01 09:30:00-05:00", tz="America/New_York"
-        ).time(),
-        "ath_end_time": pd.Timestamp(
-            "2000-01-01 16:40:00-05:00", tz="America/New_York"
-        ).time(),
-        "trading_end_time": pd.Timestamp(
-            "2000-01-01 16:40:00-05:00", tz="America/New_York"
-        ).time(),
+        "ath_start_time": datetime.time(9, 30),
+        "trading_start_time": datetime.time(9, 30),
+        "ath_end_time": datetime.time(16, 40),
+        "trading_end_time": datetime.time(16, 40),
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }
@@ -174,7 +166,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "spread_col": spread_col,
         "portfolio": system.portfolio,
         "process_forecasts_config": process_forecasts_config_dict,
-        "evaluate_forecasts_config": evaluate_forecasts_config,
+        "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
     }
     # Append the ProcessForecast node.
     stage = "process_forecasts"

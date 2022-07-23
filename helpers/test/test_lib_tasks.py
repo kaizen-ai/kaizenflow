@@ -11,6 +11,7 @@ import pytest
 
 import helpers.hgit as hgit
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import helpers.lib_tasks as hlibtask
@@ -197,7 +198,7 @@ class TestDryRunTasks1(hunitest.TestCase):
     # TODO(gp): -> TestDockerCommands1
 
     @pytest.mark.skipif(
-        hsystem.is_inside_ci(), reason="In CI the output is different"
+        hserver.is_inside_ci(), reason="In CI the output is different"
     )
     def test_docker_images_ls_repo(self) -> None:
         target = "docker_images_ls_repo"
@@ -437,7 +438,7 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
     # #########################################################################
 
     @pytest.mark.skipif(
-        hsystem.is_inside_ci(), reason="In CI the output is different"
+        hserver.is_inside_ci(), reason="In CI the output is different"
     )
     def test_docker_login(self) -> None:
         """
