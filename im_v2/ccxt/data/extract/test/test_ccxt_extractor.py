@@ -4,7 +4,6 @@ import unittest.mock as umock
 import pandas as pd
 import pytest
 
-import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
@@ -19,11 +18,10 @@ _LOG = logging.getLogger(__name__)
 )
 class TestCcxtExtractor1(hunitest.TestCase):
     # Mock calls to external providers.
-    # TODO(Nikola): Although this code belongs to `setUp`, when this code is
-    #   moved there patch is created for each test separately. We want to avoid
-    #   that and only start/stop same patch for each test.
     get_secret_patch = umock.patch.object(ivcdexex.hsecret, "get_secret")
     ccxt_patch = umock.patch.object(ivcdexex, "ccxt", spec=ivcdexex.ccxt)
+    # Placeholder variables for mocks that are created from patches above.
+    # On test run, brand new mocks are created from patch's `.start()` method.
     get_secret_mock = None
     ccxt_mock = None
 
@@ -50,10 +48,13 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self.assertEqual(exchange_class.exchange_id, "binance")
         self.assertEqual(exchange_class.contract_type, "spot")
         self.assertEqual(exchange_class.vendor, "CCXT")
+        # Check if `exchange_class._exchange` was created from `ccxt.binance()` call.
+        # Mock memorizes calls that lead to creation of it.
         self.assertEqual(
             exchange_class._exchange._extract_mock_name(), "ccxt.binance()"
         )
         actual_method_calls = str(exchange_class._exchange.method_calls)
+        # Check calls against `exchange_class._exchange`.
         expected_method_calls = (
             "[call.checkRequiredCredentials(), call.load_markets()]"
         )
@@ -70,8 +71,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
     def test_log_into_exchange(self) -> None:
         """
-        Verify that login to `ccxt` is done with proper params for different
-        contracts.
+        Verify that login is done correctly based on the contract type.
         """
         exchange_mock = self.ccxt_mock.binance
         # Verify with `spot` contract type.
@@ -105,7 +105,10 @@ class TestCcxtExtractor1(hunitest.TestCase):
         "_fetch_ohlcv",
         spec=ivcdexex.CcxtExtractor._fetch_ohlcv,
     )
-    def test_download_ohlcv1(self, fetch_ohlcv_mock: umock.MagicMock):
+    @umock.patch.object(ivcdexex.time, "sleep")
+    def test_download_ohlcv1(
+        self, sleep_mock: umock.MagicMock, fetch_ohlcv_mock: umock.MagicMock
+    ) -> None:
         """
         Verify that wrapper around `ccxt.binance` download is properly called.
         """
@@ -115,13 +118,10 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class.currency_pairs = ["BTC/USDT"]
         start_timestamp = pd.Timestamp("2022-02-24T00:00:00Z")
         end_timestamp = pd.Timestamp("2022-02-25T00:00:00Z")
-        # As this is mock without spec `create=True` is used to create function that does not exist.
-        # At the end of `with` statement change will be reverted.
+        # Mock a call to ccxt's `parse_timeframe method` called inside `_fetch_ohlcv`.
         with umock.patch.object(
             exchange_class._exchange, "parse_timeframe", create=True
-        ) as parse_timeframe_mock, umock.patch.object(
-            ivcdexex.time, "sleep"
-        ) as sleep_mock:
+        ) as parse_timeframe_mock:
             parse_timeframe_mock.return_value = 60
             # Run.
             ohlcv_data = exchange_class._download_ohlcv(
@@ -135,8 +135,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
             actual_args = tuple(parse_timeframe_mock.call_args)
             expected_args = (("1m",), {})
             self.assertEqual(actual_args, expected_args)
-            #
-            self.assertEqual(sleep_mock.call_count, 3)
+        #
+        self.assertEqual(sleep_mock.call_count, 3)
         # Check output.
         self.assertEqual(fetch_ohlcv_mock.call_count, 3)
         actual_args = str(fetch_ohlcv_mock.call_args_list)
@@ -146,19 +146,18 @@ class TestCcxtExtractor1(hunitest.TestCase):
          call('BTC/USDT', since=1645720800000, bar_per_iteration=500)]
         """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
-        actual_ohlcv = hpandas.df_to_str(ohlcv_data)
-        expected_ohlcv = r"""dummy
+        actual_output = hpandas.df_to_str(ohlcv_data)
+        expected_output = r"""dummy
         0  dummy
         0  dummy
         0  dummy
         """
-        self.assert_equal(actual_ohlcv, expected_ohlcv, fuzzy_match=True)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
 
     @umock.patch.object(ivcdexex.hdateti, "get_current_time")
-    def test_fetch_ohlcv1(self, mock_get_current_time: umock.MagicMock):
+    def test_fetch_ohlcv1(self, mock_get_current_time: umock.MagicMock) -> None:
         """
-        Verify if download from `ccxt.binance` is properly requested and parsed
-        upon retrieval.
+        Verify if download is properly requested and parsed upon retrieval.
         """
         # Prepare test data.
         current_time = "2022-02-24 00:00:00.000000+00:00"
@@ -177,8 +176,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Initialize class.
         exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
         exchange_class.currency_pairs = ["BTC/USDT"]
-        # As this is mock without spec `create=True` is used to create function that does not exist.
-        # At the end of `with` statement change will be reverted.
+        # Mock a call to ccxt's `fetch_ohlcv` method called inside `_fetch_ohlcv`.
         with umock.patch.object(
             exchange_class._exchange, "fetch_ohlcv", create=True
         ) as fetch_ohlcv_mock:
@@ -209,8 +207,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         Test that a non-empty list of exchange currencies is loaded.
         """
-        # Extract a list of currencies.
         exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        # Mock a call to ccxt's `load_markets` method called inside `get_exchange_currency_pairs`.
         with umock.patch.object(
             exchange_class._exchange, "load_markets", create=True
         ) as load_markets_mock:
@@ -219,7 +217,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
             actual = exchange_class.get_exchange_currency_pairs()
             #
             self.assertEqual(load_markets_mock.call_count, 1)
-        # Verify that the output is a non-empty list with only string values.
+        # Check output.
         expected = ["BTC/USDT"]
         self.assertEqual(actual, expected)
 
@@ -325,7 +323,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self.assertEqual(
             exchange_class._exchange._extract_mock_name(), "ccxt.gateio()"
         )
-        #
+        # Mock a call to ccxt's `fetch_order_book` method called inside `download_order_book`.
         with umock.patch.object(
             exchange_class._exchange, "fetch_order_book", create=True
         ) as fetch_order_book_mock:
@@ -354,46 +352,3 @@ class TestCcxtExtractor1(hunitest.TestCase):
         actual = str(fail.value)
         expected = "Currency pair is not present in exchange"
         self.assertIn(expected, actual)
-
-
-class TestCcxtAPI1(hunitest.TestCase):
-    def test_ccxt_api_call(self) -> None:
-        """
-        Verify that our api call to `ccxt` is not broken.
-        """
-        # Initiate class and set date parameters.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
-        # Extract data.
-        actual = exchange_class._download_ohlcv(
-            currency_pair="BTC/USDT",
-            exchange_id="binance",
-            start_timestamp=None,
-            end_timestamp=None,
-        )
-        # Verify that the output is a dataframe.
-        hdbg.dassert_isinstance(actual, pd.DataFrame)
-        # Verify column names.
-        exp_col_names = [
-            "timestamp",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
-            "end_download_timestamp",
-        ]
-        self.assertEqual(exp_col_names, actual.columns.to_list())
-        # Verify types inside each column.
-        col_types = [col_type.name for col_type in actual.dtypes]
-        exp_col_types = [
-            "int64",
-            "float64",
-            "float64",
-            "float64",
-            "float64",
-            "float64",
-            "object",
-        ]
-        self.assertListEqual(exp_col_types, col_types)
-        # Verify dataframe length. Only one bar is obtained.
-        self.assertEqual(500, actual.shape[0])
