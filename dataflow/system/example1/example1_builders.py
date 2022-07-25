@@ -4,15 +4,16 @@ Import as:
 import dataflow.system.example1.example1_builders as dtfsexexbu
 """
 
+import datetime
 import logging
 
 import pandas as pd
 
 import dataflow.core as dtfcore
+
 # TODO(gp): We can't use dtfsys because we are inside dataflow/system.
 #  Consider moving out Example1 from this dir somehow so that we can use dtfsys
 #  like we do for other systems.
-import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
@@ -51,8 +52,7 @@ def get_Example1_MarketData_example2(
 # #############################################################################
 
 
-# TODO(gp): @all -> get_Example1_HistoricalDag_example1
-def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Example1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a historical data source for simulation.
     """
@@ -62,7 +62,7 @@ def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     market_data = system.market_data
     # TODO(gp): This in the original code was
     #  `ts_col_name = "timestamp_db"`.
-    ts_col_name = "end_ts"
+    ts_col_name = "end_datetime"
     multiindex_output = True
     col_names_to_remove = ["start_ts"]
     node = dtfsysonod.HistoricalDataSource(
@@ -76,8 +76,7 @@ def get_Example1_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     return dag
 
 
-# TODO(gp): @all -> get_Example1_RealtimeDag_example2
-def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source.
     """
@@ -88,20 +87,21 @@ def get_Example1_realtime_dag_example1(system: dtfsyssyst.System) -> dtfcore.DAG
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
     multiindex_output = True
+    ts_col_name = "end_datetime"
     # How much history is needed for the DAG to compute.
     timedelta = pd.Timedelta("20T")
     node = dtfsysonod.RealTimeDataSource(
         stage,
         market_data,
         timedelta,
+        ts_col_name,
         multiindex_output,
     )
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
     return dag
 
 
-# TODO(gp): @all -> get_Example1_RealtimeDag_example3
-def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source and forecast processor.
     """
@@ -112,6 +112,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     # 199         "market_data_config", "history_lookback"
     # 200     ] = market_data_history_lookback
     timedelta = pd.Timedelta("7D")
+    ts_col_name = "end_datetime"
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
     multiindex_output = True
@@ -119,6 +120,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         stage,
         system.market_data,
         timedelta,
+        ts_col_name,
         multiindex_output,
     )
     dag = dtfssybuut.build_dag_with_data_source_node(system, node)
@@ -134,7 +136,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     log_dir = None
     # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     order_type = "price@twap"
-    evaluate_forecasts_config = None
+    forecast_evaluator_from_prices_dict = None
     process_forecasts_config_dict = {
         "order_config": {
             "order_type": order_type,
@@ -151,19 +153,10 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
                 },
             },
         },
-        # TODO(gp): Use datetime.time()
-        "ath_start_time": pd.Timestamp(
-            "2000-01-01 09:30:00-05:00", tz="America/New_York"
-        ).time(),
-        "trading_start_time": pd.Timestamp(
-            "2000-01-01 09:30:00-05:00", tz="America/New_York"
-        ).time(),
-        "ath_end_time": pd.Timestamp(
-            "2000-01-01 16:40:00-05:00", tz="America/New_York"
-        ).time(),
-        "trading_end_time": pd.Timestamp(
-            "2000-01-01 16:40:00-05:00", tz="America/New_York"
-        ).time(),
+        "ath_start_time": datetime.time(9, 30),
+        "trading_start_time": datetime.time(9, 30),
+        "ath_end_time": datetime.time(16, 40),
+        "trading_end_time": datetime.time(16, 40),
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }
@@ -173,7 +166,7 @@ def get_Example1_dag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "spread_col": spread_col,
         "portfolio": system.portfolio,
         "process_forecasts_config": process_forecasts_config_dict,
-        "evaluate_forecasts_config": evaluate_forecasts_config,
+        "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
     }
     # Append the ProcessForecast node.
     stage = "process_forecasts"

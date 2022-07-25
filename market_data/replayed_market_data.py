@@ -173,9 +173,10 @@ def save_market_data(
     """
     Save data from a `MarketData` to a CSV file.
     """
-    #hdbg.dassert(market_data.is_online())
+    # hdbg.dassert(market_data.is_online())
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
+    #
     _LOG.debug(
         hpandas.df_to_str(
             rt_df, print_dtypes=True, print_shape_info=True, tag="rt_df"
@@ -206,7 +207,21 @@ def load_market_data(
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
     df = hpandas.read_csv_to_df(stream, **kwargs)
-    for col_name in ("start_time", "end_time", "timestamp_db"):
+    # Adjust column names to the processable format.
+    if "start_ts" in df.columns:
+        df = df.rename(columns={"start_ts": "start_datetime"})
+    if "end_ts" in df.columns:
+        df = df.rename(columns={"end_ts": "end_datetime"})
+    if "timestamp_db" not in df.columns:
+        df["timestamp_db"] = df["end_datetime"]
+    #
+    for col_name in (
+        "start_time",
+        "start_datetime",
+        "end_time",
+        "end_datetime",
+        "timestamp_db",
+    ):
         if col_name in df.columns:
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
     df.reset_index(inplace=True)

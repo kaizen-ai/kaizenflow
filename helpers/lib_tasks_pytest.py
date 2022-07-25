@@ -20,11 +20,11 @@ import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlist as hlist
-import helpers.hs3 as hs3
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
-import helpers.hunit_test_utils as hunteuti
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_utils as hlitauti
 
@@ -612,13 +612,38 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     )
     # Copy HTML coverage data from the local dir to S3.
     local_coverage_path = "./htmlcov"
-    s3fs_ = hs3.get_s3fs(aws_profile)
-    s3fs_.put(
-        local_coverage_path,
-        s3_html_coverage_path,
-        ContentType="text/html",
-        recursive=True,
-    )
+    # TODO(Nikola): Revert to `s3fs_.put` after `s3fs` is updated to latest
+    # version.
+    #   See CmTask #2400.
+    use_aws_copy = True
+    if use_aws_copy:
+        sudo_prefix = ""
+        if hserver.is_inside_ci():
+            # There is no AWS config in GH action, thus create default one from
+            # chosen profile. To bypass permission errors, `sudo` is used.
+            sudo_prefix = "sudo "
+            aws_set_param_cmd = "sudo aws configure set"
+            aws_set_profile_cmd = f"--profile {aws_profile}"
+            aws_set_value_pairs = [
+                f"aws_access_key_id ${aws_profile.upper()}_AWS_ACCESS_KEY_ID",
+                f"aws_secret_access_key ${aws_profile.upper()}_AWS_SECRET_ACCESS_KEY",
+                f"region ${aws_profile.upper()}_AWS_DEFAULT_REGION",
+            ]
+            aws_config_cmds = [
+                f"{aws_set_param_cmd} {aws_set_value_pair} {aws_set_profile_cmd}"
+                for aws_set_value_pair in aws_set_value_pairs
+            ]
+            aws_config_pipe_cmd = " && ".join(aws_config_cmds)
+            hsystem.system(aws_config_pipe_cmd)
+        cp_cmd = (
+            f"{sudo_prefix}aws s3 cp {local_coverage_path} {s3_html_coverage_path} "
+            f"--recursive --profile {aws_profile}"
+        )
+        hsystem.system(cp_cmd)
+    else:
+        # Use `s3fs` to copy data to AWS S3.
+        s3fs_ = hs3.get_s3fs(aws_profile)
+        s3fs_.put(local_coverage_path, s3_html_coverage_path, recursive=True)
     _LOG.info(
         "HTML coverage report is published on S3: path=`%s`",
         s3_html_coverage_path,
@@ -939,9 +964,7 @@ def pytest_repro(  # type: ignore
                 start_block = "__ " + name + " __"
                 traceback_block = txt.rsplit(start_block, maxsplit=1)[-1]
                 end_block_options = [
-                    "__ " + n + " __"
-                    for n in failed_test_names
-                    if n != name
+                    "__ " + n + " __" for n in failed_test_names if n != name
                 ]
                 for end_block in end_block_options:
                     # The end of the traceback for the current failed test is the
@@ -989,6 +1012,11 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     hlitauti._report_task()
     _ = ctx
     root_dir = os.getcwd()
+    # `lib_tasks` is used from outside the Docker container in the thin dev
+    # environment and we want to avoid pulling in too many dependencies, unless
+    # necessary, so we import dynamically.
+    import helpers.hunit_test_utils as hunteuti
+
     renamer = hunteuti.UnitTestRenamer(
         old_test_class_name, new_test_class_name, root_dir
     )
@@ -1114,12 +1142,13 @@ def pytest_compare_logs(  # type: ignore
 # pytest_buildmeister
 # #############################################################################
 
+
 def _run(
-        cmd: str,
-        *,
-        abort_on_error: bool = False,
-        output_file: Optional[str] = None,
-        tee: bool = False,
+    cmd: str,
+    *,
+    abort_on_error: bool = False,
+    output_file: Optional[str] = None,
+    tee: bool = False,
 ) -> int:
     rc = hsystem.system(
         cmd,
@@ -1171,7 +1200,7 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
     #
     if print_output:
         print(hprint.frame("Print output"))
-        cmd = f'cat {log_file}'
+        cmd = f"cat {log_file}"
         _run(cmd)
     #
     print(hprint.frame("Failures"))
@@ -1186,7 +1215,7 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
     print(hprint.frame("grep Failures"))
     cmd = f"grep '^FAILED' {log_file}"
     _run(cmd)
-    
+
 
 @task
 def pytest_buildmeister(ctx, opts="", docker_clean=False, test=False):  # type: ignore

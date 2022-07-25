@@ -65,20 +65,21 @@ end_datetime
 # holdings marked to market=
                                 101
 end_datetime                       
-2000-01-01 10:05:00-05:00  98821.22
+2000-01-01 10:05:00-05:00  98722.99
 # flows=
                                  101
 end_datetime                        
-2000-01-01 10:05:00-05:00 -198821.22
+2000-01-01 10:05:00-05:00 -198623.58
 # pnl=
                                101
 end_datetime                      
-2000-01-01 10:05:00-05:00  1192.84
+2000-01-01 10:05:00-05:00  1292.25
 # statistics=
                                pnl  gross_volume  net_volume       gmv       nmv
 end_datetime                                                                    
-2000-01-01 10:05:00-05:00  1192.84     198821.22   198821.22  98821.22  98821.22
+2000-01-01 10:05:00-05:00  1292.25     198623.58   198623.58  98722.99  98722.99
 
 # pnl agreement with research pnl
 
 corr = 1.000
+corr_samples = 2

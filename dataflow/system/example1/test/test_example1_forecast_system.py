@@ -8,9 +8,8 @@ import pytest
 import core.finance as cofinanc
 import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
-import dataflow.system.system_tester as dtfsysytes
+import dataflow.system.test.system_test_case as dtfsytsytc
 import helpers.hasyncio as hasynci
-import helpers.hunit_test as hunitest
 import oms as oms
 import oms.test.oms_db_helper as otodh
 
@@ -35,7 +34,7 @@ def _get_test_system_builder_func() -> Callable:
 # #############################################################################
 
 
-class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
+class Test_Example1_System_CheckConfig(dtfsytsytc.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
         system_builder = system_builder_func()
@@ -48,7 +47,7 @@ class Test_Example1_System_CheckConfig(dtfsysytes.System_CheckConfig_TestCase1):
 
 
 class Test_Example1_ForecastSystem_FitPredict(
-    dtfsysytes.ForecastSystem_FitPredict_TestCase1
+    dtfsytsytc.ForecastSystem_FitPredict_TestCase1
 ):
     def get_system(self) -> dtfsys.System:
         """
@@ -92,7 +91,7 @@ class Test_Example1_ForecastSystem_FitPredict(
 
 
 class Test_Example1_ForecastSystem_FitInvariance(
-    dtfsysytes.ForecastSystem_FitInvariance_TestCase1
+    dtfsytsytc.ForecastSystem_FitInvariance_TestCase1
 ):
     def test_test_invariance1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
@@ -117,7 +116,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
 
 
 class Test_Example1_ForecastSystem_CheckPnl(
-    dtfsysytes.ForecastSystem_CheckPnl_TestCase1
+    dtfsytsytc.ForecastSystem_CheckPnl_TestCase1
 ):
     def test_test_fit_run1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
@@ -135,53 +134,41 @@ class Test_Example1_ForecastSystem_CheckPnl(
 # Test_Example1_Time_ForecastSystem1
 # #############################################################################
 
-# TODO(gp): Express in terms of Test_Time_ForecastSystem_TestCase1
-class Test_Example1_Time_ForecastSystem1(hunitest.TestCase):
-    """
-    Test a System composed of:
 
-    - a `ReplayedMarketData` (providing fake data and features)
-    - an `Example1` DAG
-    """
-
-    @staticmethod
-    def run_coroutines() -> str:
-        with hasynci.solipsism_context() as event_loop:
-            system = dtfseefosy.Example1_Time_ForecastSystem()
-            # Complete system config.
-            system.config["event_loop_object"] = event_loop
-            data, _ = cofinanc.get_market_data_df1()
-            system.config["market_data_config", "data"] = data
-            system.config["market_data_config", "initial_replayed_delay"] = 5
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = (60 * 5)
-            # Create DAG runner.
-            dag_runner = system.dag_runner
-            # Run.
-            coroutines = [dag_runner.predict()]
-            result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-            # TODO(gp): Use the signature from system_testing. See below.
-            result_bundles: str = result_bundles[0][0]
-        return result_bundles
-
+class Test_Example1_Time_ForecastSystem1(
+    dtfsytsytc.Test_Time_ForecastSystem_TestCase1
+):
     def test1(self) -> None:
         """
         Verify the contents of DAG prediction.
         """
-        actual = self.run_coroutines()
-        self.check_string(str(actual), purify_text=True)
+        system = dtfseefosy.Example1_Time_ForecastSystem()
+        # TODO(Dan): Add more data, otherwise volatility is NaN.
+        market_data, _ = cofinanc.get_market_data_df1()
+        # Since we are reading from a df there is no delay.
+        system.config["market_data_config", "delay_in_secs"] = 0
+        system.config["market_data_config", "data"] = market_data
+        system.config["market_data_config", "initial_replayed_delay"] = 5
+        # Exercise the system for multiple 5 minute intervals.
+        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
+            60 * 5 * 3
+        )
+        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+        #
+        output_col_name = "vwap.ret_0.vol_adj.c"
+        self._test1(
+            system,
+            output_col_name=output_col_name,
+        )
 
 
 # #############################################################################
 # Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1
 # #############################################################################
 
-# TODO(gp): @all express in terms of Time_ForecastSystem_with_DataFramePortfolio_TestCase1
+
 class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
-    hunitest.TestCase
+    dtfsytsytc.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 ):
     """
     Test an end-to-end `System`, containing:
@@ -191,64 +178,31 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     - a `Portfolio` backed by a dataframe
     """
 
-    # TODO(gp): This was copied.
-    def run_coroutines(
-        self,
-        data: pd.DataFrame,
-        real_time_loop_time_out_in_secs: int,
-    ) -> str:
-        """
-        Run a system using the desired portfolio based on DB or dataframe.
-        """
-        with hasynci.solipsism_context() as event_loop:
-            system = (
-                dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
-            )
-            # Complete system config.
-            system.config["event_loop_object"] = event_loop
-            system.config["market_data_config", "data"] = data
-            system.config["market_data_config", "initial_replayed_delay"] = 5
-            system.config["market_data_config", "asset_ids"] = [101]
-            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = real_time_loop_time_out_in_secs
-            # Create DAG runner.
-            dag_runner = system.dag_runner
-            # Run.
-            coroutines = [dag_runner.predict()]
-            result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-            # Compute output.
-            # TODO(gp): Factor this out to SystemTester.
-            system_tester = dtfsysytes.SystemTester()
-            result_bundles = result_bundles[0]
-            result_bundle = result_bundles[-1]
-            _LOG.debug("result_bundle=\n%s", result_bundle)
-            # TODO(gp): Extract all of this from System.
-            portfolio = system.portfolio
-            _LOG.debug("portfolio=\n%s", portfolio)
-            price_col = "vwap"
-            volatility_col = "vwap.ret_0.vol"
-            prediction_col = "feature1"
-            actual: str = system_tester.compute_run_signature(
-                dag_runner,
-                portfolio,
-                result_bundle,
-                price_col=price_col,
-                volatility_col=volatility_col,
-                prediction_col=prediction_col,
-            )
-        return actual
-
-    def test_market_data1_dataframe_portfolio1(self) -> None:
+    @pytest.mark.slow("~7 seconds.")
+    def test1(self) -> None:
+        system = dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
+        # Fill the config.
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
-        actual = self.run_coroutines(
-            data,
+        #
+        system.config["market_data_config", "data"] = data
+        # Since we are reading from a df there is no delay.
+        system.config["market_data_config", "delay_in_secs"] = 0
+        system.config["market_data_config", "initial_replayed_delay"] = 5
+        #
+        system.config["research_pnl", "price_col"] = "vwap"
+        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+        # TODO(Grisha): decide which column to use for `Example1`. Maybe even
+        # add a toy `prediction` stage.
+        system.config["research_pnl", "prediction_col"] = "feature1"
+        # Check the results.
+        asset_ids = [101]
+        sleep_interval_in_secs = 60 * 5
+        self._test1(
+            system,
+            asset_ids,
+            sleep_interval_in_secs,
             real_time_loop_time_out_in_secs,
         )
-        self.check_string(str(actual))
 
 
 # #############################################################################
@@ -256,9 +210,9 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 # #############################################################################
 
 
-# TODO(gp): @all This should become a TestCase in system_tester.py where we compare
-#  2 systems (one with DatabasePortfolio and one with DataFramePortfolio) to make
-#  sure they are the same.
+# TODO(gp): @all This should become a TestCase in system_test_case.py where we
+#  compare 2 systems (one with DatabasePortfolio and one with
+#  DataFramePortfolio) to make sure they are the same.
 class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     otodh.TestOmsDbHelper
 ):
@@ -303,10 +257,12 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
             system.config["market_data_config", "data"] = data
+            # Wait a few seconds because there is delay while reading from a DB.
+            system.config["market_data_config", "delay_in_secs"] = 0
             system.config["market_data_config", "initial_replayed_delay"] = 5
             system.config["market_data_config", "asset_ids"] = [101]
             # TODO(gp): This needs to go to the config.
-            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 15
+            system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
             system.config[
                 "dag_runner_config", "real_time_loop_time_out_in_secs"
             ] = real_time_loop_time_out_in_secs
@@ -318,8 +274,10 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             if is_database_portfolio:
                 max_wait_time_for_order_in_secs = 10
                 order_processor = oms.get_order_processor_example1(
-                    self.connection, portfolio, asset_id_name,
-                    max_wait_time_for_order_in_secs
+                    self.connection,
+                    portfolio,
+                    asset_id_name,
+                    max_wait_time_for_order_in_secs,
                 )
                 order_processor_coroutine = (
                     oms.get_order_processor_coroutine_example1(
@@ -334,7 +292,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             # Compute output.
-            system_tester = dtfsysytes.SystemTester()
+            system_tester = dtfsytsytc.SystemTester()
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
             _LOG.debug("result_bundle=\n%s", result_bundle)

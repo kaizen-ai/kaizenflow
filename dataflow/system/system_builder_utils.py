@@ -30,9 +30,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): -> get_SystemConfig_for_DagBuilder
-# TODO(gp): @all -> ..from_DagBuilder
-def get_system_config_template_from_dag_builder(
+def get_SystemConfig_template_from_DagBuilder(
     dag_builder: dtfcore.DagBuilder,
 ) -> cconfig.Config:
     """
@@ -106,8 +104,7 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
 # #############################################################################
 
 
-# TODO(gp): @all -> get_EventLoop_MarketData_from_df?
-def get_event_loop_MarketData_from_df(
+def get_EventLoop_MarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
     """
@@ -118,10 +115,12 @@ def get_event_loop_MarketData_from_df(
         "market_data_config", "initial_replayed_delay"
     ]
     data = system.config["market_data_config", "data"]
+    delay_in_secs = system.config["market_data_config", "delay_in_secs"]
     market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
         event_loop,
         initial_replayed_delay,
         data,
+        delay_in_secs=delay_in_secs,
     )
     return market_data
 
@@ -362,6 +361,7 @@ def get_realtime_DagRunner_from_system(
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     dag = system.dag
+    # TODO(gp): This should come from the config.
     sleep_interval_in_secs = 5 * 60
     # Set up the event loop.
     get_wall_clock_time = system.market_data.get_wall_clock_time
@@ -397,6 +397,9 @@ def get_dag_runner_instance1(
     dag = system.dag
     market_data = system.market_data
     hdbg.dassert_isinstance(market_data, mdata.MarketData)
+    fit_at_beginning = system.config.get(
+        ("dag_runner_config", "fit_at_beginning"), False
+    )
     get_wall_clock_time = market_data.get_wall_clock_time
     # TODO(gp): This should become a builder method injecting values inside the
     #  config.
@@ -419,11 +422,12 @@ def get_dag_runner_instance1(
     dag_runner_kwargs = {
         "dag": dag,
         "fit_state": None,
+        "execute_rt_loop_kwargs": execute_rt_loop_config,
+        "dst_dir": None,
+        "fit_at_beginning": fit_at_beginning,
         "get_wall_clock_time": get_wall_clock_time,
         "wake_up_timestamp": wake_up_timestamp,
         "grid_time_in_secs": grid_time_in_secs,
-        "execute_rt_loop_kwargs": execute_rt_loop_config,
-        "dst_dir": None,
     }
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)

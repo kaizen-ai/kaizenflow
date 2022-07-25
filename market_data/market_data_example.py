@@ -16,7 +16,6 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import market_data.im_client_market_data as mdimcmada
 import market_data.real_time_market_data as mdrtmada
@@ -69,13 +68,18 @@ def get_ReplayedTimeMarketData_from_df(
     initial_replayed_dt = min_start_time_col_name + pd.Timedelta(
         minutes=initial_replayed_delay
     )
-    _LOG.debug(hprint.to_str(
-        "min_start_time_col_name initial_replayed_delay initial_replayed_dt"))
+    _LOG.debug(
+        hprint.to_str(
+            "min_start_time_col_name initial_replayed_delay initial_replayed_dt"
+        )
+    )
     # The initial replayed datetime should be before the end of the data.
     end_of_data_dt = df[start_time_col_name].max()
     if initial_replayed_dt > end_of_data_dt:
-        _LOG.warning(f"The initial replayed datetime '{initial_replayed_dt}' "
-            "should be before the end of the data '{end_of_data_dt}'")
+        _LOG.warning(
+            f"The initial replayed datetime '{initial_replayed_dt}' "
+            "should be before the end of the data '{end_of_data_dt}'"
+        )
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
         tz,
@@ -310,8 +314,7 @@ def get_HistoricalImClientMarketData_example1(
 
 
 def get_RealTimeImClientMarketData_example1(
-    # TODO(Danya): Initialize im_client from outside the method.
-    im_client: hsql.DbConnection,
+    im_client: icdc.ImClient,
     event_loop: asyncio.AbstractEventLoop,
     asset_ids: List[int],
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
@@ -324,8 +327,9 @@ def get_RealTimeImClientMarketData_example1(
     columns = None
     # Build a `ReplayedMarketData`.
     tz = "ET"
+    # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
     initial_replayed_dt = pd.Timestamp(
-        "2000-01-01 09:30:00-05:00", tz="America/New_York"
+        "2022-07-21 09:30:00-04:00", tz="America/New_York"
     )
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
@@ -335,8 +339,6 @@ def get_RealTimeImClientMarketData_example1(
         speed_up_factor=speed_up_factor,
     )
     # Build a `ReplayedMarketData`.
-    sleep_in_secs = 1.0
-    time_out_in_secs = 60 * 2
     market_data = mdrtmada.RealTimeMarketData2(
         im_client,
         #
@@ -346,12 +348,11 @@ def get_RealTimeImClientMarketData_example1(
         end_time_col_name,
         columns,
         get_wall_clock_time,
-        sleep_in_secs=sleep_in_secs,
-        time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
 
+# TODO(Grisha): @Dan -> `get_RealTimeImClientMarketData_example2`.
 def get_RealtimeMarketData_example1(
     im_client: icdc.RealTimeImClient,
 ) -> mdrtmada.RealTimeMarketData2:
@@ -366,7 +367,7 @@ def get_RealtimeMarketData_example1(
     end_time_col_name = "end_timestamp"
     columns = None
     get_wall_clock_time = lambda: pd.Timestamp(
-        "2022-04-22", tz="America/New_York"
+        "2022-04-23", tz="America/New_York"
     )
     market_data = mdrtmada.RealTimeMarketData2(
         im_client,

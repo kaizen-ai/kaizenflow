@@ -23,6 +23,7 @@ import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
@@ -496,7 +497,7 @@ def purify_object_reference(txt: str) -> str:
     """
     Remove references like `at 0x7f43493442e0`.
     """
-    txt = re.sub(r"at 0x\S{12}", "at 0x", txt, flags=re.MULTILINE)
+    txt = re.sub(r"at 0x[0-9A-Fa-f]+", "at 0x", txt, flags=re.MULTILINE)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -796,7 +797,7 @@ def assert_equal(
     # Dedent expected, if needed.
     if dedent:
         _LOG.debug("# Dedent expected")
-        #actual = hprint.dedent(actual)
+        # actual = hprint.dedent(actual)
         expected = hprint.dedent(expected)
         _LOG.debug("exp='\n%s'", expected)
     # Purify actual text, if needed.
@@ -1187,7 +1188,9 @@ class TestCase(unittest.TestCase):
         if not np.allclose(actual, expected, **kwargs):
             import helpers.hpandas as hpandas
 
-            self.assert_equal(hpandas.df_to_str(actual), hpandas.df_to_str(expected))
+            self.assert_equal(
+                hpandas.df_to_str(actual), hpandas.df_to_str(expected)
+            )
         np.testing.assert_allclose(actual, expected, **kwargs)
 
     # TODO(gp): There is a lot of similarity between `check_string()` and
@@ -1692,7 +1695,7 @@ class TestCase(unittest.TestCase):
 
 @pytest.mark.qa
 @pytest.mark.skipif(
-    hsystem.is_inside_docker(), reason="Test needs to be run outside Docker"
+    hserver.is_inside_docker(), reason="Test needs to be run outside Docker"
 )
 class QaTestCase(TestCase, abc.ABC):
     """

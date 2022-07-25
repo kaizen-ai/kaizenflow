@@ -1,12 +1,15 @@
 import unittest.mock as umock
 
+import pandas as pd
 import pytest
 
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
+import helpers.hserver as hserver
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
@@ -14,7 +17,7 @@ import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    not hserver.is_CK_S3_available(),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchange1(
@@ -73,22 +76,18 @@ class TestDownloadRealtimeForOneExchange1(
         select_all_query = "SELECT * FROM ccxt_ohlcv;"
         actual_df = hsql.execute_query_to_df(self.connection, select_all_query)
         # Check data output.
-        actual = hpandas.df_to_str(actual_df, num_rows=5000)
+        actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
         # pylint: disable=line-too-long
-        expected = r"""        id      timestamp     open     high      low    close    volume currency_pair exchange_id end_download_timestamp knowledge_timestamp
-        0        1  1636539060000    2.227    2.228    2.225    2.225  71884.50      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        1        2  1636539120000    2.226    2.228    2.225    2.227  64687.00      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        2        3  1636539180000    2.228    2.232    2.227    2.230  59076.30      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        3        4  1636539240000    2.230    2.233    2.230    2.231  58236.20      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        4        5  1636539300000    2.232    2.232    2.228    2.232  62120.70      ADA_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        ...    ...            ...      ...      ...      ...      ...       ...           ...         ...                    ...                 ...
-        4495  4496  1636568760000  240.930  241.090  240.850  240.990    507.21      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        4496  4497  1636568820000  240.990  241.010  240.800  241.010    623.65      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        4497  4498  1636568880000  241.010  241.420  241.010  241.300    705.84      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        4498  4499  1636568940000  241.300  241.680  241.240  241.660    864.55      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-        4499  4500  1636569000000  241.660  241.670  241.410  241.430    762.90      SOL_USDT     binance    2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-
-        [4500 rows x 11 columns]"""
+        expected = r"""id timestamp open high low close volume currency_pair exchange_id end_download_timestamp knowledge_timestamp
+                        0 1 1636569000000 2.2440 2.2450 2.2410 2.2410 9.389970e+04 ADA_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+                        1 2 1636569000000 90.3800 90.4400 90.2800 90.2800 4.519300e+02 AVAX_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+                        2 3 1636569000000 643.5000 643.7000 643.1000 643.2000 3.907190e+02 BNB_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+                        3 4 1636569000000 68225.0400 68238.7900 68160.4100 68171.3100 1.118236e+01 BTC_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+                        4 5 1636569000000 0.2697 0.2697 0.2694 0.2696 1.239735e+06 DOGE_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+                        5 6 1636569000000 5.2640 5.2670 5.2600 5.2620 1.260730e+04 EOS_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+                        6 7 1636569000000 4812.1100 4812.8200 4806.6000 4806.6000 9.595610e+01 ETH_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+                        7 8 1636569000000 37.1600 37.2100 37.1400 37.1400 4.097370e+03 LINK_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
+                        8 9 1636569000000 241.6600 241.6700 241.4100 241.4300 7.629000e+02 SOL_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
@@ -179,7 +178,7 @@ class TestDownloadRealtimeForOneExchange1(
 
 
 @pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    not hserver.is_CK_S3_available(),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
@@ -311,3 +310,143 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         self.assertIn(
             "S3 path 's3://mock_bucket/binance' doesn't exist!", str(fail.value)
         )
+
+
+class TestRemoveDuplicates(hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper):
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
+    def setUp(self) -> None:
+        super().setUp()
+        # Initialize database.
+        ccxt_ohlcv_table_query = imvccdbut.get_ccxt_ohlcv_create_table_query()
+        hsql.execute_query(self.connection, ccxt_ohlcv_table_query)
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        # Drop table used in tests.
+        ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv;"
+        hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
+
+    def test_remove_duplicates(self) -> None:
+        """
+        Test if the duplicates are removed from the extracted Dataframe.
+        """
+        # Define the data to process.
+        ccxt_ohlcv = pd.DataFrame(
+            data={
+                "timestamp": [1636539060000, 1636539120000, 1636569000000],
+                "open": [2.227, 2.226, 2.244],
+                "high": [2.228, 2.228, 2.245],
+                "low": [2.225, 2.225, 2.241],
+                "close": [2.225, 2.227, 2.241],
+                "volume": [71884.5, 64687.0, 93899.7],
+                "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+                "exchange_id": ["binance", "binance", "binance"],
+            }
+        )
+        # Remove duplicate entities.
+        actual_df = imvcdeexut.remove_duplicates(
+            db_connection=self.connection,
+            data=ccxt_ohlcv,
+            db_table="ccxt_ohlcv",
+            start_timestamp_as_unix=1636539060000,
+            end_timestamp_as_unix=1636539120000,
+            exchange_id="binance",
+            currency_pair="ADA_USDT",
+        )
+        # Reset index to make expected and actual Dataframes comparable.
+        actual_df = actual_df.reset_index(drop=True)
+        # Define the Dataframe with duplicates removed.
+        expected_df = pd.DataFrame(
+            data={
+                "timestamp": [1636569000000],
+                "open": [2.244],
+                "high": [2.245],
+                "low": [2.241],
+                "close": [2.241],
+                "volume": [93899.7],
+                "currency_pair": ["ADA_USDT"],
+                "exchange_id": ["binance"],
+            }
+        )
+        # Check the result.
+        hunitest.compare_df(expected_df, actual_df)
+
+
+class TestVerifySchema(hunitest.TestCase):
+    def test_valid_df(self) -> None:
+        """
+        Check if valid Dataframe schema is not changed.
+        """
+        # Define test Dataframe.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "close": [2.0, 2.0, 2.0],
+            "volume": [64687.0, 59076.3, 58236.2],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
+        test_df = pd.DataFrame(data=test_data)
+        # Function should not change the schema of the dataframe.
+        actual_df = imvcdeexut.verify_schema(test_df)
+        # Check the result.
+        hunitest.compare_df(test_df, actual_df)
+
+    def test_fix_int_column(self) -> None:
+        """
+        Test if int column if forced to float.
+        """
+        # Define test Dataframe data with `close` column with type `int`.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "close": [2, 2, 2],
+            "volume": [64687.0, 59076.3, 58236.2],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
+        test_df = pd.DataFrame(data=test_data)
+        expected_df = test_df.copy()
+        # Fix the type of the `close` column to `float64`.
+        expected_df["close"] = expected_df["close"].astype("float64")
+        # Function should fix the type of `close` column to `int`.
+        actual_df = imvcdeexut.verify_schema(test_df)
+        # Check the result.
+        hunitest.compare_df(expected_df, actual_df)
+
+    def test_non_numerical_column(self) -> None:
+        """
+        Test if invalid Dataframe schema produces an error.
+        """
+        # Define test Dataframe data with non-numerical `close` column.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "close": ["2", "2", "2"],
+            "volume": [64687.0, 59076.3, 58236.2],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
+        test_df = pd.DataFrame(data=test_data)
+        # Make sure function raises an error.
+        with self.assertRaises(AssertionError) as cm:
+            imvcdeexut.verify_schema(test_df)
+        actual = str(cm.exception)
+        expected = """
+################################################################################
+Invalid dtype of `close` column: expected type `float64`, found `object`
+################################################################################
+"""
+        self.assertEqual(actual, expected)

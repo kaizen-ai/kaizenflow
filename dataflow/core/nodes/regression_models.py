@@ -6,7 +6,7 @@ import dataflow.core.nodes.regression_models as dtfcnoremo
 
 import collections
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -189,3 +189,108 @@ class LinearRegression(dtfconobas.FitPredictNode, dtfconobas.ColModeMixin):
             pass
         else:
             raise ValueError(f"Unrecognized nan_mode `{self._nan_mode}`")
+
+
+class MultiindexLinearRegression(dtfconobas.FitPredictNode):
+    """
+    Fit and predict multiple linear regression models.
+    """
+
+    def __init__(
+        self,
+        nid: dtfcornode.NodeId,
+        in_col_groups: List[Tuple[dtfcorutil.NodeColumn]],
+        out_col_group: Tuple[dtfcorutil.NodeColumn],
+        x_vars: List[dtfcorutil.NodeColumn],
+        y_vars: List[dtfcorutil.NodeColumn],
+        steps_ahead: int,
+        smoothing: float = 0.0,
+        p_val_threshold: float = 1.0,
+        nan_mode: Optional[str] = None,
+        sample_weight_col: Optional[dtfcorutil.NodeColumnList] = None,
+        feature_weights: Optional[List[float]] = None,
+    ) -> None:
+        """
+        Params not listed are as in `ContinuousSkLearnModel`.
+
+        :param in_col_groups: list of tuples, each having length
+            `df_in.columns.nlevels - 1`. Leaf values become keys (e.g., they
+            may be symbols), and the next-to-leaf level provides column names
+            of the dataframe with the `x_vars` and `y_vars`.
+        :param out_col_group: column level prefix of length
+            `df_in.columns.nlevels - 2`. It may be an empty tuple.
+        """
+        super().__init__(nid)
+        hdbg.dassert_isinstance(in_col_groups, list)
+        self._in_col_groups = in_col_groups
+        self._out_col_group = out_col_group
+        #
+        self._x_vars = x_vars
+        self._y_vars = y_vars
+        self._steps_ahead = steps_ahead
+        self._smoothing = smoothing
+        self._p_val_threshold = p_val_threshold
+        self._nan_mode = nan_mode
+        self._sample_weight_col = sample_weight_col
+        self._feature_weights = feature_weights
+        #
+        self._key_fit_state: Dict[str, Any] = {}
+
+    def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=True)
+
+    def predict(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+        return self._fit_predict_helper(df_in, fit=False)
+
+    def get_fit_state(self) -> Dict[str, Any]:
+        fit_state = {
+            "_key_fit_state": self._key_fit_state,
+            "_info['fit']": self._info["fit"],
+        }
+        return fit_state
+
+    def set_fit_state(self, fit_state: Dict[str, Any]) -> None:
+        self._key_fit_state = fit_state["_key_fit_state"]
+        self._info["fit"] = fit_state["_info['fit']"]
+
+    def _fit_predict_helper(
+        self, df_in: pd.DataFrame, fit: bool
+    ) -> Dict[str, pd.DataFrame]:
+        dtfcorutil.validate_df_indices(df_in)
+        dfs = dtfconobas.GroupedColDfToDfColProcessor.preprocess(
+            df_in, self._in_col_groups
+        )
+        results = {}
+        info = collections.OrderedDict()
+        for key, df in dfs.items():
+            lr = LinearRegression(
+                "linear_regression",
+                x_vars=self._x_vars,
+                y_vars=self._y_vars,
+                steps_ahead=self._steps_ahead,
+                smoothing=self._smoothing,
+                p_val_threshold=self._p_val_threshold,
+                col_mode="replace_all",
+                nan_mode=self._nan_mode,
+                sample_weight_col=self._sample_weight_col,
+                feature_weights=self._feature_weights,
+            )
+            if fit:
+                df_out = lr.fit(df)["df_out"]
+                info_out = lr.get_info("fit")
+                self._key_fit_state[key] = lr.get_fit_state()
+            else:
+                hdbg.dassert_in(key, self._key_fit_state)
+                lr.set_fit_state(self._key_fit_state[key])
+                df_out = lr.predict(df)["df_out"]
+                info_out = lr.get_info("predict")
+            results[key] = df_out
+            info[key] = info_out
+        df_out = dtfconobas.GroupedColDfToDfColProcessor.postprocess(
+            results, self._out_col_group
+        )
+        df_out = df_out.reindex(df_in.index)
+        df_out = dtfcorutil.merge_dataframes(df_in, df_out)
+        method = "fit" if fit else "predict"
+        self._set_info(method, info)
+        return {"df_out": df_out}

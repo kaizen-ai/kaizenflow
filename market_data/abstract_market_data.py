@@ -159,8 +159,8 @@ class MarketData(abc.ABC):
     def get_data_for_last_period(
         self,
         timedelta: pd.Timedelta,
-        ts_col_name: Optional[str] = None,
         *,
+        ts_col_name: Optional[str] = None,
         # TODO(gp): @Grisha not sure limit is really needed. We could move it
         #  to the DB implementation.
         limit: Optional[int] = None,
@@ -185,7 +185,7 @@ class MarketData(abc.ABC):
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         wall_clock_time = self.get_wall_clock_time()
         start_ts = self._process_period(timedelta, wall_clock_time)
-        end_ts = None
+        end_ts = wall_clock_time
         if ts_col_name is None:
             # By convention to get the last chunk of data we use the start_time
             #  column.

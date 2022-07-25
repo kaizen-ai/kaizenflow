@@ -20,6 +20,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.lib_tasks_utils as hlitauti
 
@@ -339,7 +340,7 @@ def fix_perms(  # type: ignore
     _ = ctx
     hlitauti._report_task()
     #
-    if henv.execute_repo_config_code("is_dev4()"):
+    if hserver.is_dev4():
         if action == "all":
             action = ["fix_invalid_owner", "fix_group", "fix_group_permissions"]
         else:
@@ -364,12 +365,15 @@ def fix_perms(  # type: ignore
         #
         cmd = f"To compare run:\n> vimdiff {file_name1} {file_name2}"
         print(cmd)
-    elif henv.execute_repo_config_code("is_dev_ck()"):
+    elif hserver.is_dev_ck():
         user = hsystem.get_user_name()
         group = user
         cmd = f"sudo chown -R {user}:{group} *"
         hsystem.system(cmd)
         cmd = f"sudo chown -R {user}:{group} .pytest_cache"
         hsystem.system(cmd, abort_on_error=False)
+    elif hserver.is_mac():
+        # Nothing to do.
+        pass
     else:
         raise ValueError(f"Invalid machine {os.uname()[1]}")

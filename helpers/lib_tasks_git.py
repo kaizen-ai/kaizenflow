@@ -550,9 +550,11 @@ def git_branch_next_name(ctx):  # type: ignore
 
 
 @task
-def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
+def git_branch_copy(ctx, new_branch_name="", skip_git_merge_master=False, use_patch=False):  # type: ignore
     """
     Create a new branch with the same content of the current branch.
+
+    :param skip_git_merge_master
     """
     hdbg.dassert(not use_patch, "Patch flow not implemented yet")
     #
@@ -561,11 +563,14 @@ def git_branch_copy(ctx, new_branch_name="", use_patch=False):  # type: ignore
     cmd = "git clean -fd"
     hlitauti._run(ctx, cmd)
     #
-    curr_branch_name = hgit.get_branch_name()
-    hdbg.dassert_ne(curr_branch_name, "master")
-    # Make sure `old_branch_name` doesn't need to have `master` merged.
-    cmd = "invoke git_merge_master --ff-only"
-    hlitauti._run(ctx, cmd)
+    if not skip_git_merge_master:
+        curr_branch_name = hgit.get_branch_name()
+        hdbg.dassert_ne(curr_branch_name, "master")
+        # Make sure `old_branch_name` doesn't need to have `master` merged.
+        cmd = "invoke git_merge_master --ff-only"
+        hlitauti._run(ctx, cmd)
+    else:
+        _LOG.warning("Skipping git_merge_master as requested")
     if use_patch:
         # TODO(gp): Create a patch or do a `git merge`.
         pass
