@@ -44,6 +44,13 @@ class CcxtExtractor(imvcdexex.Extractor):
         self.currency_pairs = self.get_exchange_currency_pairs()
         self.vendor = "CCXT"
 
+    @staticmethod
+    def convert_currency_pair(currency_pair: str) -> str:
+        """
+        Convert currency pair used for getting data from exchange.
+        """
+        return currency_pair.replace("_", "/")
+
     def log_into_exchange(self) -> ccxt.Exchange:
         """
         Log into an exchange via CCXT and return the corresponding
