@@ -22,6 +22,7 @@ import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.htraceback as htraceb
 import helpers.lib_tasks_docker as hlitadoc
@@ -617,7 +618,7 @@ def _publish_html_coverage_report_on_s3(aws_profile: str) -> None:
     use_aws_copy = True
     if use_aws_copy:
         sudo_prefix = ""
-        if hsystem.is_inside_ci():
+        if hserver.is_inside_ci():
             # There is no AWS config in GH action, thus create default one from
             # chosen profile. To bypass permission errors, `sudo` is used.
             sudo_prefix = "sudo "
