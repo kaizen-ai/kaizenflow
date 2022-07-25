@@ -289,6 +289,8 @@ def docker_login(ctx):  # type: ignore
         cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
     elif major_version == 2:
         ecr_base_path = hlitauti.get_default_param("AM_ECR_BASE_PATH")
+        # TODO(Nikola): Remove `_get_aws_cli_version()` and use only `aws ecr get-login-password`
+        #  as it is present in both versions of `awscli`.
         cmd = (
             f"docker login -u AWS -p "
             f"$(aws ecr get-login-password --profile am) "
