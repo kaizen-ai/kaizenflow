@@ -378,97 +378,49 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-
-    def get_file_name(self) -> str:
-        dir_name = self.get_input_dir(use_only_test_class=True)
-        hio.create_dir(dir_name, incremental=True)
-        file_name = os.path.join(dir_name, "real_time_bar_data.csv")
-        _LOG.debug("file_name=%s", file_name)
-        return file_name
-
-    def _test_save_data(
-        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
-    ) -> None:
+        
+    def _test1(
+        self,
+        system
+    ) -> str:
         """
-        Generate data used in this test.
-
-        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
-        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
+        Run a system using the desired portfolio based on DB or dataframe.
         """
-        # period = "last_day"
-        # period = pd.Timedelta("15D")
-        limit = None
-        mdata.save_market_data(market_data, file_name, period, limit)
-        _LOG.warning("Updated file '%s'", file_name)
-        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
-
-    # ////////////////////////////////////////////////////////////////////////////
-
-    def _test1(self, system: dtfsys.System) -> None:
+        asset_id_name = system.config["market_data_config", "asset_id_col_name"]
+        incremental = False
+        oms.create_oms_tables(self.connection, incremental, asset_id_name)
+        #
         with hasynci.solipsism_context() as event_loop:
+            coroutines = []
             # Complete system config.
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
-            # Build the System.
+            # Create DAG runner.
             dag_runner = system.dag_runner
-            # Create the OrderProcessor.
+            coroutines.append(dag_runner.predict())
+            # Create and add order processor.
             portfolio = system.portfolio
-            # Clean the DB tables.
-            asset_id_name = system.market_data.asset_id_col
-            # TODO(gp): Should this be system.get_order_processor_coroutine()?
-            incremental = False
-            oms.create_oms_tables(self.connection, incremental, asset_id_name)
-            # TODO(gp): sleep_interval_in_secs -> grid_time_in_secs
-            max_wait_time_for_order_in_secs = system.config[
-                "dag_runner_config", "sleep_interval_in_secs"
-            ]
-            order_processor = oms.get_order_processor_example1(
-                self.connection,
+            order_processor_coroutine = system.get_order_processor_coroutine(
                 portfolio,
-                asset_id_name,
-                max_wait_time_for_order_in_secs,
+                system.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
             )
-            real_time_loop_time_out_in_secs = system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ]
-            _LOG.debug(hprint.to_str("real_time_loop_time_out_in_secs"))
-            order_processor_coroutine = (
-                oms.get_order_processor_coroutine_example1(
-                    order_processor, portfolio, real_time_loop_time_out_in_secs
-                )
-            )
-            # Run.
-            coroutines = [dag_runner.predict(), order_processor_coroutine]
+            coroutines.append(order_processor_coroutine)
+            #
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            # Compute signature.
-            txt = []
-            txt.append(hprint.frame("system_config"))
-            txt.append(str(system.config))
-            # TODO(gp): This should be factored out.
-            txt.append(hprint.frame("compute_run_signature"))
+            # Compute output.
+            system_tester = SystemTester()
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
-            result_bundle.result_df = result_bundle.result_df.tail(40)
-            system_tester = dtfsys.SystemTester()
-            # Check output.
-            price_col = system.config[
-                "process_forecasts_config",
-                "forecast_evaluator_from_prices_dict",
-                "init",
-                "price_col",
-            ]
-            prediction_col = system.config[
-                "process_forecasts_config", "prediction_col"
-            ]
-            volatility_col = system.config[
-                "process_forecasts_config", "volatility_col"
-            ]
-            txt_tmp = system_tester.compute_run_signature(
+            _LOG.debug("result_bundle=\n%s", result_bundle)
+            # TODO(gp): Extract all of this from System.
+            portfolio = system.portfolio
+            _LOG.debug("portfolio=\n%s", portfolio)
+            price_col = system.config["research_pnl", "price_col"]
+            volatility_col = system.config["research_pnl", "volatility_col"]
+            prediction_col = system.config["research_pnl", "prediction_col"]
+            actual: str = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
                 result_bundle,
@@ -476,19 +428,119 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
                 volatility_col=volatility_col,
                 prediction_col=prediction_col,
             )
-            txt.append(txt_tmp)
-            #
-            actual = "\n".join(txt)
-            # Remove the following line:
-            # ```
-            # db_connection_object: <connection object; dsn: 'user=aljsdalsd
-            #   password=xxx dbname=oms_postgres_db_local
-            #   host=cf-spm-dev4 port=12056', closed: 0>
-            # ```
-            actual = hunitest.filter_text("db_connection_object", actual)
-            actual = hunitest.filter_text("log_dir:", actual)
-            actual = hunitest.filter_text("trade_date:", actual)
-            self.check_string(actual, purify_text=True)
+            self.check_string(actual, fuzzy_match=True)
+
+
+    # def get_file_name(self) -> str:
+    #     dir_name = self.get_input_dir(use_only_test_class=True)
+    #     hio.create_dir(dir_name, incremental=True)
+    #     file_name = os.path.join(dir_name, "real_time_bar_data.csv")
+    #     _LOG.debug("file_name=%s", file_name)
+    #     return file_name
+
+    # def _test_save_data(
+    #     self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
+    # ) -> None:
+    #     """
+    #     Generate data used in this test.
+
+    #     end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
+    #     2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
+    #     2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
+    #     2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
+    #     2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
+    #     """
+    #     # period = "last_day"
+    #     # period = pd.Timedelta("15D")
+    #     limit = None
+    #     mdata.save_market_data(market_data, file_name, period, limit)
+    #     _LOG.warning("Updated file '%s'", file_name)
+    #     # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
+
+    # # ////////////////////////////////////////////////////////////////////////////
+
+    # def _test1(self, system: dtfsys.System) -> None:
+    #     with hasynci.solipsism_context() as event_loop:
+    #         # Complete system config.
+    #         system.config["event_loop_object"] = event_loop
+    #         system.config["db_connection_object"] = self.connection
+    #         # Build the System.
+    #         dag_runner = system.dag_runner
+    #         # Create the OrderProcessor.
+    #         portfolio = system.portfolio
+    #         # Clean the DB tables.
+    #         asset_id_name = system.market_data.asset_id_col
+    #         # TODO(gp): Should this be system.get_order_processor_coroutine()?
+    #         incremental = False
+    #         oms.create_oms_tables(self.connection, incremental, asset_id_name)
+    #         # TODO(gp): sleep_interval_in_secs -> grid_time_in_secs
+    #         max_wait_time_for_order_in_secs = system.config[
+    #             "dag_runner_config", "sleep_interval_in_secs"
+    #         ]
+    #         order_processor = oms.get_order_processor_example1(
+    #             self.connection,
+    #             portfolio,
+    #             asset_id_name,
+    #             max_wait_time_for_order_in_secs,
+    #         )
+    #         real_time_loop_time_out_in_secs = system.config[
+    #             "dag_runner_config", "real_time_loop_time_out_in_secs"
+    #         ]
+    #         _LOG.debug(hprint.to_str("real_time_loop_time_out_in_secs"))
+    #         order_processor_coroutine = (
+    #             oms.get_order_processor_coroutine_example1(
+    #                 order_processor, portfolio, real_time_loop_time_out_in_secs
+    #             )
+    #         )
+    #         # Run.
+    #         coroutines = [dag_runner.predict(), order_processor_coroutine]
+    #         result_bundles = hasynci.run(
+    #             asyncio.gather(*coroutines), event_loop=event_loop
+    #         )
+    #         # Compute signature.
+    #         txt = []
+    #         txt.append(hprint.frame("system_config"))
+    #         txt.append(str(system.config))
+    #         # TODO(gp): This should be factored out.
+    #         txt.append(hprint.frame("compute_run_signature"))
+    #         result_bundles = result_bundles[0]
+    #         result_bundle = result_bundles[-1]
+    #         result_bundle.result_df = result_bundle.result_df.tail(40)
+    #         system_tester = dtfsys.SystemTester()
+    #         # Check output.
+    #         price_col = system.config[
+    #             "process_forecasts_config",
+    #             "forecast_evaluator_from_prices_dict",
+    #             "init",
+    #             "price_col",
+    #         ]
+    #         prediction_col = system.config[
+    #             "process_forecasts_config", "prediction_col"
+    #         ]
+    #         volatility_col = system.config[
+    #             "process_forecasts_config", "volatility_col"
+    #         ]
+    #         txt_tmp = system_tester.compute_run_signature(
+    #             dag_runner,
+    #             portfolio,
+    #             result_bundle,
+    #             price_col=price_col,
+    #             volatility_col=volatility_col,
+    #             prediction_col=prediction_col,
+    #         )
+    #         txt.append(txt_tmp)
+    #         #
+    #         actual = "\n".join(txt)
+    #         # Remove the following line:
+    #         # ```
+    #         # db_connection_object: <connection object; dsn: 'user=aljsdalsd
+    #         #   password=xxx dbname=oms_postgres_db_local
+    #         #   host=cf-spm-dev4 port=12056', closed: 0>
+    #         # ```
+    #         actual = hunitest.filter_text("db_connection_object", actual)
+    #         actual = hunitest.filter_text("log_dir:", actual)
+    #         actual = hunitest.filter_text("trade_date:", actual)
+    #         self.check_string(actual, purify_text=True)
 
 
 # TODO(gp): Add a longer test with more assets once things are working.
