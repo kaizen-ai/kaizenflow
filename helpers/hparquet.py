@@ -766,6 +766,10 @@ def to_partitioned_parquet(
         # TODO(gp): add this logic to hparquet.to_parquet as a possible option.
         _LOG.debug(hprint.to_str("partition_columns dst_dir"))
         hdbg.dassert_is_subset(partition_columns, df.columns)
+        # TODO(gp): We would like to avoid overriding existing tiles. It's not clear
+        #  how to do it. Either setting permissions to read-only before writing.
+        #  Or having a list of files that will be written and ensure that none of
+        #  those files already existing.
         pq.write_to_dataset(
             table,
             dst_dir,
