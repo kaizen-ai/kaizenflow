@@ -569,20 +569,20 @@ def get_market_data_df1() -> pd.DataFrame:
     ```
     """
     idx = pd.date_range(
-        start=pd.Timestamp("2000-01-01 03:31:00-05:00", tz="America/New_York"),
-        end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
+        start=pd.Timestamp("1999-12-01 00:01:00-05:00", tz="America/New_York"),
+        end=pd.Timestamp("2000-01-01 10:30:00-05:00", tz="America/New_York"),
         freq="T",
     )
     bar_duration = "1T"
     bar_delay = "0T"
     data = build_timestamp_df(idx, bar_duration, bar_delay)
     price_pattern = [101.0] * 5 + [100.0] * 5
-    price = price_pattern * 40
+    price = price_pattern * 4527
     data["close"] = price
     data["asset_id"] = 101
     data["volume"] = 100
     feature_pattern = [1.0] * 5 + [-1.0] * 5
-    feature = feature_pattern * 40
+    feature = feature_pattern * 4527
     data["feature1"] = feature
     real_time_loop_time_out_in_secs = 35 * 60
     return data, real_time_loop_time_out_in_secs
@@ -603,22 +603,22 @@ def get_market_data_df2() -> pd.DataFrame:
     ```
     """
     idx = pd.date_range(
-        start=pd.Timestamp("2000-01-01 03:31:00-05:00", tz="America/New_York"),
-        end=pd.Timestamp("2000-01-01 10:10:00-05:00", tz="America/New_York"),
+        start=pd.Timestamp("1999-12-01 00:01:00-05:00", tz="America/New_York"),
+        end=pd.Timestamp("2000-01-01 10:30:00-05:00", tz="America/New_York"),
         freq="T",
     )
     bar_duration = "1T"
     bar_delay = "0T"
     data = build_timestamp_df(idx, bar_duration, bar_delay)
     price_pattern = [101.0] * 2 + [100.0] * 2 + [101.0] * 2 + [102.0] * 4
-    price = price_pattern * 40
+    price = price_pattern * 4527
     data["close"] = price
     data["asset_id"] = 101
     data["volume"] = 100
     feature_pattern = [-1.0] * 5 + [1.0] * 5
-    feature = feature_pattern * 40
+    feature = feature_pattern * 4527
     data["feature1"] = feature
-    real_time_loop_time_out_in_secs = 35 * 600
+    real_time_loop_time_out_in_secs = 35 * 60
     return data, real_time_loop_time_out_in_secs
 
 
