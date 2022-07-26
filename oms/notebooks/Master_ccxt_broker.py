@@ -89,6 +89,7 @@ exchange_id = "binance"
 universe_version = "v5"
 contract_type = "futures"
 mode = "test"
+portfolio_id = "ck_portfolio_id"
 
 # %%
 # Initialize CCXT broker with example market data connected to DB.
@@ -96,6 +97,7 @@ broker = occxbrok.CcxtBroker(
     exchange_id,
     universe_version,
     mode,
+    portfolio_id,
     contract_type,
     market_data=market_data,
     strategy_id="SAU1",
@@ -105,12 +107,9 @@ broker = occxbrok.CcxtBroker(
 # ### `submit_orders`
 
 # %%
-orders = [order, order]
+orders = [order]
 # Submitting orders to exchange and getting the
-order_resps = await broker._submit_orders(orders, pd.Timestamp.utcnow())
-
-# %%
-order_resps
+order_resps = await broker._submit_orders(orders, pd.Timestamp.utcnow(), dry_run=False)
 
 # %% [markdown]
 # ### `get_fills`
@@ -122,6 +121,7 @@ fills = broker.get_fills(order_resps)
 fills
 
 # %%
+# This fails at this stage.
 fills[0].to_dict()
 
 # %% [markdown]
@@ -130,3 +130,9 @@ fills[0].to_dict()
 # %% [markdown]
 # - The Fills are currently filtered by last execution ts; since the orders are executed immediately (at least in the sandbox environment), this means that only the latest order in the session is returning a Fill;
 # - One way to fight this is to remove the filtering by datetime and instead filter by IDs, i.e. get all our orders from the exchange and quickly filter out those we sent during this session by order ID.
+#     - see oms/ccxt_broker.py::82
+# - Another point to consider: we get fills from CCXT via the `fetch_orders` CCXT method, which returns a dictionary. We use this dictionary to create a `Fill` object since this dictionary contains more complete data on the order status.
+#    - This makes the `to_dict()` method unusable. We can create a new Order object from the one returned by CCXT, or we can use the original Order object.
+#    - This looks like the DatabaseBroker's `submitted_orders`/`filled_orders` distinction. We don't use the database in CCXT broker since all data is stored in the exchange. Also, CCXT (at least binance implementation) does not support the user ID assignment. 
+
+# %%

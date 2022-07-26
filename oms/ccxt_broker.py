@@ -72,16 +72,12 @@ class CcxtBroker(ombroker.Broker):
         :return: a list of filled orders
         """
         fills: List[ombroker.Fill] = []
-        order_symbols = set(
-            [
-                self._asset_id_to_symbol_mapping[order.asset_id]
-                for order in sent_orders
-            ]
-        )
+        _LOG.info("Inside asset_ids")
+        asset_ids = [sent_order.asset_id for sent_order in sent_orders]
         if self.last_order_execution_ts:
             # Load orders for each given symbol.
-            for symbol in order_symbols:
-                _LOG.info("Inside get_fills")
+            for asset_id in asset_ids:
+                symbol = self._asset_id_to_symbol_mapping[asset_id]            
                 orders = self._exchange.fetch_orders(
                     since=hdateti.convert_timestamp_to_unix_epoch(
                         self.last_order_execution_ts,
@@ -97,6 +93,8 @@ class CcxtBroker(ombroker.Broker):
                             for sent_order in sent_orders
                             if sent_order.ccxt_id == order["id"]
                         ][0]
+                        # Assign an `asset_id` to the filled order.
+                        filled_order["asset_id"] = asset_id
                         # Create a Fill object.
                         fill = ombroker.Fill(
                             filled_order,
