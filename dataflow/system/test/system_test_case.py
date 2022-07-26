@@ -400,10 +400,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             coroutines.append(dag_runner.predict())
             # Create and add order processor.
             portfolio = system.portfolio
-            order_processor_coroutine = system.get_order_processor_coroutine(
-                portfolio,
-                system.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
-            )
+            order_processor_coroutine = system.get_order_processor_coroutine()
             coroutines.append(order_processor_coroutine)
             #
             result_bundles = hasynci.run(

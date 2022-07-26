@@ -484,26 +484,20 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
 
-    # TODO(gp): I've noticed that tests actually create an order processor instead
-    #  of using this. The tests should use this.
-    def get_order_processor_coroutine(
-        self,
-        # TODO(gp): Remove this param.
-        portfolio: oms.Portfolio,
-        real_time_loop_time_out_in_secs: int,
-    ) -> Coroutine:
+    def get_order_processor_coroutine(self) -> Coroutine:
         # These information is also in system.config.
         db_connection = self.portfolio._db_connection
         asset_id_name = self.market_data.asset_id_col
         #
         max_wait_time_for_order_in_secs = 10
         order_processor = oms.get_order_processor_example1(
-            db_connection, portfolio, asset_id_name,
+            db_connection, self.portfolio, asset_id_name,
             max_wait_time_for_order_in_secs
         )
         #
+        real_time_loop_time_out_in_secs = self.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
         order_processor_coroutine = oms.get_order_processor_coroutine_example1(
-            order_processor, portfolio, real_time_loop_time_out_in_secs
+            order_processor, self.portfolio, real_time_loop_time_out_in_secs
         )
         return order_processor_coroutine
 
