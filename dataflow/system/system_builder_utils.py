@@ -6,7 +6,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 
 import datetime
 import logging
-from typing import Callable, Optional
+from typing import Callable
 
 import pandas as pd
 
@@ -149,6 +149,8 @@ def adapt_dag_to_real_time_from_config(
         dag,
         market_data,
         market_data_history_lookback,
+        # TODO(Nina): @all missed 1 positional argument `ts_col_name`,
+        #  undefined `process_forecasts_dict`
         process_forecasts_dict,
     )
     _LOG.debug("dag=\n%s", dag)
@@ -435,8 +437,8 @@ def get_dag_runner_instance1(
 
 
 def add_real_time_data_source(
-        system: dtfsyssyst.System,
-        history_lookback: pd.Timedelta,
+    system: dtfsyssyst.System,
+    history_lookback: pd.Timedelta,
 ) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source.
