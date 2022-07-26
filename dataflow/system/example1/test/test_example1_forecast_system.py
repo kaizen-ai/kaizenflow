@@ -408,6 +408,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
     See description in the parent class.
     """
 
+    @pytest.mark.slow("~6 seconds.")
     def test_market_data1_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
@@ -417,6 +418,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         #
         self._test1(system)
 
+    @pytest.mark.slow("~6 seconds.")
     def test_market_data2_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         #
@@ -426,6 +428,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         #
         self._test1(system)
 
+    @pytest.mark.slow("~15 seconds.")
     def test_market_data3_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         #
