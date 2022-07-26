@@ -12,6 +12,7 @@ import collections
 import copy
 import logging
 import os
+import pprint
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -80,6 +81,8 @@ class Config:
         navigated/created and the leaf value added/updated with `val`.
         """
         _LOG.debug("key=%s, config=%s", key, self)
+        if isinstance(val, dict):
+            hdbg.dfatal(f"val='{val}' can't be a dict")
         if False:
             # To debug who sets a certain key.
             _LOG.info("key.set=%s", str(key))
@@ -273,6 +276,11 @@ class Config:
         """
         _LOG.debug("")
         self._read_only = True
+        # TODO(gp): Make read_only recursive. Add unit tests.
+        for v in self._config.values():
+            if isinstance(v, Config):
+                v.mark_read_only()
+                #assert 0
 
     @classmethod
     def from_python(cls, code: str) -> Optional["Config"]:
