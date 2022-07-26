@@ -369,53 +369,21 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     """
     Test end-to-end system with:
 
-    - `ReplayedMarketData` using synthetic bar data
+    - `RealTimeDagRunner`
+    - `ReplayedMarketData`
     - `DatabasePortfolio` and `OrderProcessor`
-    - a single asset
-    - an entire trading day
     """
 
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-
-    @staticmethod
-    def fill_system_config(
-        system: dtfsys.System,
-        *,
-        asset_id_col_name: str,
-        delay_in_secs: int,
-        initial_replayed_delay: int, 
-        asset_ids: List[int],
-        market_data: pd.DataFrame,
-        sleep_interval_in_secs: int,
-        real_time_loop_time_out_in_secs: int,
-        price_col: str,
-        volatility_col: str,
-        prediction_col: str,
-    ) -> None:
-        # Market data config.
-        system.config["market_data_config", "asset_id_col_name"] = asset_id_col_name
-        system.config["market_data_config", "delay_in_secs"] = delay_in_secs
-        system.config["market_data_config", "initial_replayed_delay"] = initial_replayed_delay
-        system.config["market_data_config", "asset_ids"] = asset_ids
-        system.config["market_data_config", "data"] = market_data
-        # Dag runner config.
-        system.config["dag_runner_config", "sleep_interval_in_secs"] = sleep_interval_in_secs
-        system.config[
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
-        ] = real_time_loop_time_out_in_secs
-        # PnL config.
-        system.config["research_pnl", "price_col"] = price_col
-        system.config["research_pnl", "volatility_col"] = volatility_col
-        system.config["research_pnl", "prediction_col"] = prediction_col
         
     def _test1(
         self,
         system: dtfsys.System,
     ) -> None:
         """
-        Run a system using the desired portfolio based on DB or dataframe.
+        Run a system using the desired DB portfolio and freeze the output.
         """
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
@@ -442,7 +410,6 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
             _LOG.debug("result_bundle=\n%s", result_bundle)
-            # TODO(gp): Extract all of this from System.
             portfolio = system.portfolio
             _LOG.debug("portfolio=\n%s", portfolio)
             price_col = system.config["research_pnl", "price_col"]

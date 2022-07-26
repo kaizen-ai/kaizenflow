@@ -213,6 +213,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 # TODO(gp): @all This should become a TestCase in system_test_case.py where we
 #  compare 2 systems (one with DatabasePortfolio and one with
 #  DataFramePortfolio) to make sure they are the same.
+# TODO(Grisha): remove the class once the refactoring is finished in CmTask #2451.
 class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     otodh.TestOmsDbHelper,
 ):
@@ -400,72 +401,36 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
 # #############################################################################
 
 
+# TODO(Grisha): -> `Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1`.
 class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2(
     dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
 ):
     """
     See description in the parent class.
     """
-    def get_test_system(
-        self,
-        market_data: pd.DataFrame,
-        real_time_loop_time_out_in_secs: int,
-    ) -> dtfsys.System:
-        system = (
-            dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
-        )
-        #
-        asset_id_col_name = "asset_id"
-        delay_in_secs = 0
-        initial_replayed_delay = 5
-        asset_ids = [101]
-        sleep_interval_in_secs = 60 * 5
-        price_col = "vwap"
-        volatility_col = "vwap.ret_0.vol"
-        prediction_col = "feature1"
-        #
-        self.fill_system_config(
-            system,
-            asset_id_col_name=asset_id_col_name,
-            delay_in_secs=delay_in_secs,
-            initial_replayed_delay=initial_replayed_delay,
-            asset_ids=asset_ids,
-            market_data=market_data,
-            real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
-            sleep_interval_in_secs=sleep_interval_in_secs,
-            price_col=price_col,
-            volatility_col=volatility_col,
-            prediction_col=prediction_col,
-        )
-        return system
-
     def test_market_data1_database_portfolio(self) -> None:
-        """
-        Test a database-based Portfolio against the expected behavior.
-        """
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
-        system = self.get_test_system(data, real_time_loop_time_out_in_secs)
+        system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
         #
         self._test1(system)
 
-
     def test_market_data2_database_portfolio(self) -> None:
-        """
-        Test a database-based Portfolio against the expected behavior.
-        """
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         #
-        system = self.get_test_system(data, real_time_loop_time_out_in_secs)
+        system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
         #
         self._test1(system)
 
     def test_market_data3_database_portfolio(self) -> None:
-        """
-        Test a database-based Portfolio against the expected behavior.
-        """
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         #
-        system = self.get_test_system(data, real_time_loop_time_out_in_secs)
+        system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
         #
         self._test1(system)
