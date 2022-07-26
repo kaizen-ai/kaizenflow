@@ -485,9 +485,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         _ForecastSystem_with_Portfolio.__init__(self)
 
     def get_order_processor_coroutine(self) -> Coroutine:
-        # These information is also in system.config.
-        db_connection = self.portfolio._db_connection
-        asset_id_name = self.market_data.asset_id_col
+        db_connection = self.config["db_connection_object"]
+        asset_id_name = self.config["market_data_config", "asset_id_col_name"]
         #
         max_wait_time_for_order_in_secs = 10
         order_processor = oms.get_order_processor_example1(

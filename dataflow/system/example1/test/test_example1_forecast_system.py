@@ -406,29 +406,47 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
     """
     See description in the parent class.
     """
+    def get_test_system(
+        self,
+        market_data: pd.DataFrame,
+        real_time_loop_time_out_in_secs: int,
+    ) -> dtfsys.System:
+        system = (
+            dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
+        )
+        #
+        asset_id_col_name = "asset_id"
+        delay_in_secs = 0
+        initial_replayed_delay = 5
+        asset_ids = [101]
+        sleep_interval_in_secs = 60 * 5
+        price_col = "vwap"
+        volatility_col = "vwap.ret_0.vol"
+        prediction_col = "feature1"
+        #
+        self.fill_system_config(
+            system,
+            asset_id_col_name=asset_id_col_name,
+            delay_in_secs=delay_in_secs,
+            initial_replayed_delay=initial_replayed_delay,
+            asset_ids=asset_ids,
+            market_data=market_data,
+            real_time_loop_time_out_in_secs=real_time_loop_time_out_in_secs,
+            sleep_interval_in_secs=sleep_interval_in_secs,
+            price_col=price_col,
+            volatility_col=volatility_col,
+            prediction_col=prediction_col,
+        )
+        return system
+
     def test_market_data1_database_portfolio(self) -> None:
         """
         Test a database-based Portfolio against the expected behavior.
         """
-        system = (
-            dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
-        )
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
-        system.config["market_data_config", "asset_id_col_name"] = "asset_id"
-        system.config["market_data_config", "data"] = data
-        # Wait a few seconds because there is delay while reading from a DB.
-        system.config["market_data_config", "delay_in_secs"] = 0
-        system.config["market_data_config", "initial_replayed_delay"] = 5
-        system.config["market_data_config", "asset_ids"] = [101]
-        # TODO(gp): This needs to go to the config.
-        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
-        system.config[
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
-        ] = real_time_loop_time_out_in_secs
         #
-        system.config["research_pnl", "price_col"] = "vwap"
-        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-        system.config["research_pnl", "prediction_col"] = "feature1"
+        system = self.get_test_system(data, real_time_loop_time_out_in_secs)
+        #
         self._test1(system)
 
 
@@ -436,48 +454,18 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         """
         Test a database-based Portfolio against the expected behavior.
         """
-        system = (
-            dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
-        )
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
-        system.config["market_data_config", "asset_id_col_name"] = "asset_id"
-        system.config["market_data_config", "data"] = data
-        # Wait a few seconds because there is delay while reading from a DB.
-        system.config["market_data_config", "delay_in_secs"] = 0
-        system.config["market_data_config", "initial_replayed_delay"] = 5
-        system.config["market_data_config", "asset_ids"] = [101]
-        # TODO(gp): This needs to go to the config.
-        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
-        system.config[
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
-        ] = real_time_loop_time_out_in_secs
         #
-        system.config["research_pnl", "price_col"] = "vwap"
-        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-        system.config["research_pnl", "prediction_col"] = "feature1"
+        system = self.get_test_system(data, real_time_loop_time_out_in_secs)
+        #
         self._test1(system)
 
     def test_market_data3_database_portfolio(self) -> None:
         """
         Test a database-based Portfolio against the expected behavior.
         """
-        system = (
-            dtfseefosy.Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
-        )
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
-        system.config["market_data_config", "asset_id_col_name"] = "asset_id"
-        system.config["market_data_config", "data"] = data
-        # Wait a few seconds because there is delay while reading from a DB.
-        system.config["market_data_config", "delay_in_secs"] = 0
-        system.config["market_data_config", "initial_replayed_delay"] = 5
-        system.config["market_data_config", "asset_ids"] = [101]
-        # TODO(gp): This needs to go to the config.
-        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
-        system.config[
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
-        ] = real_time_loop_time_out_in_secs
         #
-        system.config["research_pnl", "price_col"] = "vwap"
-        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-        system.config["research_pnl", "prediction_col"] = "feature1"
+        system = self.get_test_system(data, real_time_loop_time_out_in_secs)
+        #
         self._test1(system)
