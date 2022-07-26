@@ -1,10 +1,5 @@
 # 1/1
 dag_config:
-  filter_ath:
-    col_mode: replace_all
-    transformer_kwargs:
-      start_time: 09:30:00
-      end_time: 16:00:00
   resample:
     in_col_groups: [('close',), ('volume',), ('feature1',)]
     out_col_group: ()
