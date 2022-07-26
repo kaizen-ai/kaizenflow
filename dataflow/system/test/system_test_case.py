@@ -14,7 +14,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model as dtfmod
-import dataflow.system as dtfsys
+import dataflow.system.system as dtfsyssyst
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
@@ -63,11 +63,11 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
     Check the config.
     """
 
-    def _test_freeze_config1(self, system: dtfsys.System) -> None:
+    def _test_freeze_config1(self, system: dtfsyssyst.System) -> None:
         """
         Freeze config.
         """
-        hdbg.dassert_isinstance(system, dtfsys.System)
+        hdbg.dassert_isinstance(system, dtfsyssyst.System)
         # Force building the DAG runner.
         _ = system.dag_runner
         #
@@ -93,7 +93,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
 
     def _test_fit_over_backtest_period1(
         self,
-        system: dtfsys.System,
+        system: dtfsyssyst.System,
         output_col_name: str,
     ) -> None:
         """
@@ -119,7 +119,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
 
     def _test_fit_over_period1(
         self,
-        system: dtfsys.System,
+        system: dtfsyssyst.System,
         start_timestamp: pd.Timestamp,
         end_timestamp: pd.Timestamp,
         *,
@@ -143,7 +143,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
 
     def _test_fit_vs_predict1(
         self,
-        system: dtfsys.System,
+        system: dtfsyssyst.System,
     ) -> None:
         """
         Check that `predict()` matches `fit()` on the same data, when the model
@@ -223,7 +223,7 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
 class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
     def _test_fit_run1(
         self,
-        system: dtfsys.System,
+        system: dtfsyssyst.System,
     ) -> None:
         dag_runner = system.dag_runner
         # Set the time boundaries.
@@ -279,7 +279,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
 
     def _test1(
         self,
-        system: dtfsys.System,
+        system: dtfsyssyst.System,
         *,
         output_col_name: str = "prediction",
     ) -> None:
@@ -315,7 +315,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
 
     def _test1(
         self,
-        system: dtfsys.System,
+        system: dtfsyssyst.System,
         # TODO(Grisha): @Dan pass all params via `system.config`.
         asset_ids: List[int],
         sleep_interval_in_secs: int,
@@ -407,7 +407,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
 
     # ////////////////////////////////////////////////////////////////////////////
 
-    def _test1(self, system: dtfsys.System) -> None:
+    def _test1(self, system: dtfsyssyst.System) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
@@ -454,7 +454,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
             result_bundle.result_df = result_bundle.result_df.tail(40)
-            system_tester = dtfsys.SystemTester()
+            system_tester = dtfsyssyst.SystemTester()
             # Check output.
             price_col = system.config[
                 "process_forecasts_config",
