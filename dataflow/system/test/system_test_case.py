@@ -6,7 +6,6 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 
 import asyncio
 import logging
-import os
 from typing import Callable, List, Tuple, Union
 
 import pandas as pd
@@ -17,7 +16,6 @@ import dataflow.model as dtfmod
 import dataflow.system.system as dtfsyssyst
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
-import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
@@ -377,7 +375,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-        
+
     def _test1(
         self,
         system: dtfsys.System,
