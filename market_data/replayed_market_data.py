@@ -5,7 +5,7 @@ import market_data.replayed_market_data as mdremada
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -172,6 +172,8 @@ def save_market_data(
 ) -> None:
     """
     Save data from a `MarketData` to a CSV file.
+
+    The data is not processed but saved exactly as it is.
     """
     # hdbg.dassert(market_data.is_online())
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
@@ -194,36 +196,85 @@ def save_market_data(
 # TODO(gp): Add an example of how data looks like.
 def load_market_data(
     file_name: str,
+    *,
     aws_profile: hs3.AwsProfile = None,
-    **kwargs: Any,
+    column_remap: Optional[Dict[str, str]] = None,
+    timestamp_db_column: Optional[str] = None,
+    datetime_columns: Optional[List[str]] = None,
+    read_csv_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     Load some example data from the RT DB.
+
+    :param column_remap: mapping for columns to remap
+    :param timestamp_db_column: column name (after remapping) to use as
+        `timestamp_db` if it doesn't exist (e.g., we can use `end_datatime` to
+        `timestamp_db`)
+    :param datetime_columns: names (after remapping) of the columns to convert
+        to datetime
     """
-    kwargs_tmp = {}
+    # Build options.
+    if read_csv_kwargs is None:
+        read_csv_kwargs = {}
+    read_csv_kwargs_tmp = read_csv_kwargs.copy()
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
-        kwargs_tmp["s3fs"] = s3fs_
-    kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
-    stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
-    df = hpandas.read_csv_to_df(stream, **kwargs)
+        read_csv_kwargs_tmp["s3fs"] = s3fs_
+    stream, read_csv_kwargs = hs3.get_local_or_s3_stream(file_name, **read_csv_kwargs_tmp)
+    # Read data.
+    df = hpandas.read_csv_to_df(stream, **read_csv_kwargs)
+    _LOG.debug("before conversion: df=\n%s", hpandas.df_to_str(df))
     # Adjust column names to the processable format.
-    if "start_ts" in df.columns:
-        df = df.rename(columns={"start_ts": "start_datetime"})
-    if "end_ts" in df.columns:
-        df = df.rename(columns={"end_ts": "end_datetime"})
-    if "timestamp_db" not in df.columns:
-        df["timestamp_db"] = df["end_datetime"]
+    if column_remap:
+        hpandas.dassert_valid_remap(df.columns, column_remap)
+        df = df.rename(columns=column_remap)
     #
-    for col_name in (
-        "start_time",
-        "start_datetime",
-        "end_time",
-        "end_datetime",
-        "timestamp_db",
-    ):
-        if col_name in df.columns:
-            df[col_name] = pd.to_datetime(df[col_name], utc=True)
+    if timestamp_db_column:
+        hdbg.dassert_not_in("timestamp_db", df.columns)
+        hdbg.dassert_in(timestamp_db_column, df.columns)
+        df["timestamp_db"] = df[timestamp_db_column]
+    #
+    for col_name in datetime_columns:
+        hdbg.dassert_in(col_name, df.columns)
+        df[col_name] = pd.to_datetime(df[col_name], utc=True)
+
+
+    # if "start_ts" in df.columns:
+    #     df = df.rename(columns={"start_ts": "start_datetime"})
+    # if "end_ts" in df.columns:
+    #     df = df.rename(columns={"end_ts": "end_datetime"})
+    # if "timestamp_db" not in df.columns:
+    #     df["timestamp_db"] = df["end_datetime"]
+    # #
+    # for col_name in (
+    #     "start_time",
+    #     "start_datetime",
+    #     "end_time",
+    #     "end_datetime",
+    #     "timestamp_db",
+    # ):
+    #     if col_name in df.columns:
+    #         df[col_name] = pd.to_datetime(df[col_name], utc=True)
+
+    #  Typically
+    # no rename: col_name in ("start_time", "end_time", "timestamp_db"):
+
+    #
+    #     df = df.rename(columns={"start_ts": "start_datetime"})
+    #     df = df.rename(columns={"end_ts": "end_datetime"})
+
+    # timestamp_db_
+    # if "timestamp_db" not in df.columns:
+    #     df["timestamp_db"] = df["end_datetime"]
+    # #
+    # for col_name in (
+    #     "start_time",
+    #     "start_datetime",
+    #     "end_time",
+    #     "end_datetime",
+    #     "timestamp_db",
+    # ):
+
     df.reset_index(inplace=True)
     _LOG.debug(
         hpandas.df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
