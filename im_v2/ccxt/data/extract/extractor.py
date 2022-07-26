@@ -221,7 +221,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         # Change currency pair to CCXT format.
         currency_pair = currency_pair.replace("_", "/")
-        # Fetch the data through CCX.
+        # Fetch the data through CCXT.
         bars = self._exchange.fetch_ohlcv(
             currency_pair,
             timeframe=timeframe,
