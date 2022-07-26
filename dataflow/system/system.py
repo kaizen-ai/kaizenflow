@@ -10,7 +10,7 @@ from typing import Any, Callable, Coroutine
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow.system as dtfsys
+import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import helpers.hprint as hprint
 import market_data as mdata
 import oms as oms
@@ -169,10 +169,13 @@ class System(abc.ABC):
         self,
     ) -> dtfcore.DagRunner:
         _LOG.info(
-            "\n" +
-            hprint.frame("Building dag_runner with final config") + "\n" +
-            str(self.config) +
-            "\n" + hprint.frame("End config"))
+            "\n"
+            + hprint.frame("Building dag_runner with final config")
+            + "\n"
+            + str(self.config)
+            + "\n"
+            + hprint.frame("End config")
+        )
         #
         key = "dag_runner_object"
         dag_runner: dtfcore.DagRunner = self._get_cached_value(
@@ -181,12 +184,13 @@ class System(abc.ABC):
         # After everything is built, mark the config as read-only to avoid
         # further modifications.
         # TODO(Grisha): this prevents from writing any object in a config, after we do
-        # `system.dag_runner`. E.g., after `dag_runner` is built one wants to do 
+        # `system.dag_runner`. E.g., after `dag_runner` is built one wants to do
         # `system.portfolio` while `portfolio` is not in a config yet, but since a config
         # is already marked as read-only execution fails.
         self._config.mark_read_only()
         if False:
             import helpers.hio as hio
+
             hio.to_file("system_config.txt", str(self.config))
         return dag_runner
 
@@ -317,8 +321,9 @@ class _Time_ForecastSystem_Mixin:
     @abc.abstractmethod
     def _get_dag_runner(
         self,
-    ) -> dtfsys.RealTimeDagRunner:
+    ) -> dtfsrtdaru.RealTimeDagRunner:
         ...
+
 
 # #############################################################################
 # _ForecastSystem_with_Portfolio

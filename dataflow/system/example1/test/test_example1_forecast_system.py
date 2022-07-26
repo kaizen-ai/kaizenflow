@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 import core.finance as cofinanc
-import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
+import dataflow.system.system as dtfsyssyst
 import dataflow.system.test.system_test_case as dtfsytsytc
 import helpers.hasyncio as hasynci
 import oms as oms
@@ -49,7 +49,7 @@ class Test_Example1_System_CheckConfig(dtfsytsytc.System_CheckConfig_TestCase1):
 class Test_Example1_ForecastSystem_FitPredict(
     dtfsytsytc.ForecastSystem_FitPredict_TestCase1
 ):
-    def get_system(self) -> dtfsys.System:
+    def get_system(self) -> dtfsyssyst.System:
         """
         Create the System for testing.
         """

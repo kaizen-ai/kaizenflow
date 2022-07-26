@@ -13,7 +13,7 @@ import core.finance as cofinanc
 import core.finance.bid_ask as cfibiask
 import core.finance.resampling as cfinresa
 import dataflow.core as dtfcore
-import dataflow.system.source_nodes as dtfsysonod
+import dataflow.system as dtfsys
 
 
 def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
@@ -58,7 +58,7 @@ def calculate_vwap_twap(df: pd.DataFrame, resampling_rule: str) -> pd.DataFrame:
         "join_output_with_input": False,
     }
     # Put the data in the DataFlow format (which is multi-index).
-    converted_data = dtfsysonod._convert_to_multiindex(df, "full_symbol")
+    converted_data = dtfsys._convert_to_multiindex(df, "full_symbol")
     # Create the node.
     nid = "resample"
     node = dtfcore.GroupedColDfToDfTransformer(
@@ -103,7 +103,7 @@ def calculate_returns(
     }
     # Multiindex transformation.
     if convert_to_multiindex:
-        df = dtfsysonod._convert_to_multiindex(df, "full_symbol")
+        df = dtfsys._convert_to_multiindex(df, "full_symbol")
     # Create the node that computes ret_0.
     nid = "ret0"
     node = dtfcore.GroupedColDfToDfTransformer(
@@ -126,7 +126,7 @@ def calculate_bid_ask_statistics(df: pd.DataFrame) -> pd.DataFrame:
     :return: bid-ask data with additional stats
     """
     # Convert to multiindex.
-    converted_df = dtfsysonod._convert_to_multiindex(df, "full_symbol")
+    converted_df = dtfsys._convert_to_multiindex(df, "full_symbol")
     # Configure the node to calculate the returns.
     node_bid_ask_config = {
         "in_col_groups": [
@@ -168,8 +168,9 @@ def calculate_overtime_quantities(
     df_sample: pd.DataFrame,
     full_symbol: str,
     resampling_rule: str,
-    num_stds=1,
-    plot_results=True,
+    *,
+    num_stds: int = 1,
+    plot_results: bool = True,
 ) -> pd.DataFrame:
     """
     Calculate the following statistics over time:
@@ -246,7 +247,8 @@ def calculate_overtime_quantities_multiple_symbols(
     df_sample: pd.DataFrame,
     full_symbols: List[str],
     resampling_rule: str,
-    plot_results=True,
+    *,
+    plot_results: bool = True,
 ) -> pd.DataFrame:
     """
     For each `full_symbol` calculate the statistics described in
@@ -269,7 +271,7 @@ def calculate_overtime_quantities_multiple_symbols(
         result.append(df)
     mult_stats_df = pd.concat(result)
     # Convert to multiindex.
-    mult_stats_df_conv = dtfsysonod._convert_to_multiindex(
+    mult_stats_df_conv = dtfsys._convert_to_multiindex(
         mult_stats_df, "full_symbol"
     )
     # Integrate time inside the day.
