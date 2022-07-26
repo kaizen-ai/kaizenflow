@@ -637,22 +637,22 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
     ```
     """
     idx = pd.date_range(
-        start=pd.Timestamp("1999-12-31 15:31:00-05:00", tz="America/New_York"),
-        end=pd.Timestamp("2000-01-01 11:30:00-05:00", tz="America/New_York"),
+        start=pd.Timestamp("1999-12-01 00:01:00-05:00", tz="America/New_York"),
+        end=pd.Timestamp("2000-01-01 10:30:00-05:00", tz="America/New_York"),
         freq="T",
     )
     bar_duration = "1T"
     bar_delay = "0T"
     data = build_timestamp_df(idx, bar_duration, bar_delay)
     price_pattern = [101.0] * 3 + [100.0] * 3 + [101.0] * 3 + [102.0] * 6
-    price = price_pattern * 80
+    price = price_pattern * 3018
     data["close"] = price
     data["asset_id"] = 101
     data["volume"] = 100
     feature_pattern = [-1.0] * 5 + [1.0] * 5
-    feature = feature_pattern * 120
+    feature = feature_pattern * 4527
     data["feature1"] = feature
-    real_time_loop_time_out_in_secs = 1195 * 60
+    real_time_loop_time_out_in_secs = 35 * 60
     return data, real_time_loop_time_out_in_secs
 
 
