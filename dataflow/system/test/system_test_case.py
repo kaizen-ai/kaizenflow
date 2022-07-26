@@ -378,7 +378,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
 
     def _test1(
         self,
-        system: dtfsys.System,
+        system: dtfsyssyst.System,
     ) -> None:
         """
         Run a system using the desired DB portfolio and freeze the output.
