@@ -6,7 +6,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 
 import datetime
 import logging
-from typing import Callable
+from typing import Callable, Optional
 
 import pandas as pd
 
@@ -436,8 +436,7 @@ def get_dag_runner_instance1(
 
 def add_real_time_data_source(
         system: dtfsyssyst.System,
-        *,
-        history_lookback: pd.Timedelta = None,
+        history_lookback: pd.Timedelta,
 ) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source.
