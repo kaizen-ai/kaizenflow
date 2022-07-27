@@ -145,11 +145,14 @@ def adapt_dag_to_real_time_from_config(
     market_data_history_lookback = system.config[
         "market_data_config", "history_lookback"
     ]
+    process_forecasts_dict = {}
+    ts_col_name = "end_datetime"
     dag = dtfsyssyst.adapt_dag_to_real_time(
         dag,
         market_data,
         market_data_history_lookback,
         process_forecasts_dict,
+        ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
 
@@ -343,6 +346,34 @@ def build_dag_with_data_source_node(
     # Build the DAG.
     system = apply_dag_property(dag, system)
     _ = system
+    return dag
+
+
+# TODO(Grisha): -> `add_RealTimeDataSource`?
+def add_real_time_data_source(
+    system: dtfsyssyst.System,
+) -> dtfcore.DAG:
+    """
+    Build a DAG with a real time data source.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    stage = "read_data"
+    market_data = system.market_data
+    market_data_history_lookback = system.config[
+        "market_data_config", "history_lookback"
+    ]
+    ts_col_name = "end_datetime"
+    # The DAG works on multi-index dataframe containing multiple
+    # features for multiple assets.
+    multiindex_output = True
+    node = dtfsysonod.RealTimeDataSource(
+        stage,
+        market_data,
+        market_data_history_lookback,
+        ts_col_name,
+        multiindex_output,
+    )
+    dag = build_dag_with_data_source_node(system, node)
     return dag
 
 
