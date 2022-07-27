@@ -12,6 +12,8 @@ import dataflow.core as dtfcore
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import market_data as mdata
+import core.config.config_utils as ccocouti
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,6 +54,7 @@ def adapt_dag_to_real_time(
     # Create and append the ProcessForecast node.
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
+    process_forecasts_dict = ccocouti.get_config_from_nested_dict(process_forecasts_dict)
     node = dtfsysinod.ProcessForecasts(stage, **process_forecasts_dict)
     dag.append_to_tail(node)
     return dag
