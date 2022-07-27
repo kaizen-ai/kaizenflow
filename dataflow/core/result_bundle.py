@@ -20,6 +20,7 @@ import helpers.hio as hio
 import helpers.hparquet as hparque
 import helpers.hpickle as hpickle
 import helpers.htimer as htimer
+import core.config.config_utils as ccocouti
 
 _LOG = logging.getLogger(__name__)
 
@@ -241,11 +242,12 @@ class ResultBundle(abc.ABC):
         :param commit_hash: whether to include current commit hash
         """
         serialized_bundle = cconfig.Config()
+        # serialized_bundle["config"] = ccocouti.get_config_from_nested_dict(self._config)
         serialized_bundle["config"] = self._config
         serialized_bundle["result_nid"] = self._result_nid
         serialized_bundle["method"] = self._method
         serialized_bundle["result_df"] = self._result_df
-        serialized_bundle["column_to_tags"] = self._column_to_tags
+        serialized_bundle["column_to_tags"] = ccocouti.get_config_from_nested_dict(self._column_to_tags)
         info = self._info
         if info is not None:
             info = cconfig.get_config_from_nested_dict(info)
