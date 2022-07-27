@@ -9,9 +9,9 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-import oms.broker as ombroker
 
 import helpers.hdbg as hdbg
+import oms.broker as ombroker
 
 _LOG = logging.getLogger(__name__)
 
@@ -79,12 +79,17 @@ def _append_accounting_df(
 
 def flatten_ccxt_account(broker: ombroker.Broker, dry_run: bool):
 
-    _ = broker, dry_run 
+    _ = broker, dry_run
     # Verify that the broker is in test mode.
+    hdbg.dassert_eq(
+        broker._mode,
+        "test",
+        msg="Account flattening is supported only for test accounts.",
+    )
 
     # Fetch balance.
 
     # Create orders.
 
-    # Place orders. 
+    # Place orders.
     return _
