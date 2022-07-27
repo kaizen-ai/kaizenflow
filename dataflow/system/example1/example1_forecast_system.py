@@ -180,7 +180,7 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
 
 
 def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
-    market_data: pd.DataFrame,
+    market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
 ) -> dtfsyssyst.System:
     """
@@ -194,7 +194,7 @@ def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     system.config["market_data_config", "delay_in_secs"] = 0
     system.config["market_data_config", "initial_replayed_delay"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
-    system.config["market_data_config", "data"] = market_data
+    system.config["market_data_config", "data"] = market_data_df
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
@@ -273,8 +273,9 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         return dag_runner
 
 
+# TODO(Grisha): @Dan move all examples to a `_example.py` file.
 def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
-    market_data: pd.DataFrame,
+    market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
 ) -> dtfsyssyst.System:
     """
@@ -288,7 +289,7 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
     system.config["market_data_config", "delay_in_secs"] = 0
     system.config["market_data_config", "initial_replayed_delay"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
-    system.config["market_data_config", "data"] = market_data
+    system.config["market_data_config", "data"] = market_data_df
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
