@@ -145,13 +145,14 @@ def adapt_dag_to_real_time_from_config(
     market_data_history_lookback = system.config[
         "market_data_config", "history_lookback"
     ]
+    process_forecasts_dict = {}
+    ts_col_name = "end_datetime"
     dag = dtfsyssyst.adapt_dag_to_real_time(
         dag,
         market_data,
         market_data_history_lookback,
-        # TODO(Nina): @all missed 1 positional argument `ts_col_name`,
-        #  undefined `process_forecasts_dict`
         process_forecasts_dict,
+        ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
 
@@ -348,6 +349,33 @@ def build_dag_with_data_source_node(
     return dag
 
 
+def add_real_time_data_source(
+    system: dtfsyssyst.System,
+) -> dtfcore.DAG:
+    """
+    Build a DAG with a real time data source.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    stage = "read_data"
+    market_data = system.market_data
+    # The DAG works on multi-index dataframe containing multiple
+    # features for multiple assets.
+    market_data_history_lookback = system.config[
+        "market_data_config", "history_lookback"
+    ]
+    ts_col_name = "end_datetime"
+    multiindex_output = True
+    node = dtfsysonod.RealTimeDataSource(
+        stage,
+        market_data,
+        market_data_history_lookback,
+        ts_col_name,
+        multiindex_output,
+    )
+    dag = build_dag_with_data_source_node(system, node)
+    return dag
+
+
 # #############################################################################
 # DAG runner instances.
 # #############################################################################
@@ -434,30 +462,3 @@ def get_dag_runner_instance1(
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
     return dag_runner
-
-
-def add_real_time_data_source(
-    system: dtfsyssyst.System,
-    history_lookback: pd.Timedelta,
-) -> dtfcore.DAG:
-    """
-    Build a DAG with a real time data source.
-    """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    # Create RealTimeDataSource.
-    stage = "read_data"
-    market_data = system.market_data
-    # The DAG works on multi-index dataframe containing multiple
-    # features for multiple assets.
-    multiindex_output = True
-    ts_col_name = "end_datetime"
-    # How much history is needed for the DAG to compute.
-    node = dtfsysonod.RealTimeDataSource(
-        stage,
-        market_data,
-        history_lookback,
-        ts_col_name,
-        multiindex_output,
-    )
-    dag = build_dag_with_data_source_node(system, node)
-    return dag
