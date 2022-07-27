@@ -94,6 +94,7 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
     ctor = system.config["market_data_config", "im_client_ctor"]
     hdbg.dassert_isinstance(ctor, Callable)
     params = system.config["market_data_config", "im_client_config"]
+    params = params if params is not None else {}
     im_client = ctor(**params)
     hdbg.dassert_isinstance(im_client, icdc.ImClient)
     return im_client

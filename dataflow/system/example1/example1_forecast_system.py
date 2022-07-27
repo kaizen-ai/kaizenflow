@@ -76,7 +76,8 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     system.config[
         "market_data_config", "im_client_ctor"
     ] = icdc.get_DataFrameImClient_example1
-    system.config["market_data_config", "im_client_config"] = {}
+    import core.config.config_utils as ccocouti
+    system.config["market_data_config", "im_client_config"] = None
     # Set the research PNL parameters.
     system.config["research_pnl", "price_col"] = "vwap"
     system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
