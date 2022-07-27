@@ -6,6 +6,8 @@ import dataflow.system.example1.example1_forecast_system as dtfseefosy
 
 import logging
 
+import pandas as pd
+
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.pipelines.example1.example1_pipeline as dtfpexexpi
@@ -241,3 +243,31 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
         dag_runner = dtfssybuut.get_dag_runner_instance1(self)
         return dag_runner
+
+
+def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+    market_data: pd.DataFrame,
+    real_time_loop_time_out_in_secs: int,
+) -> dtfsyssyst.System:
+    """
+    The System is used for the corresponding unit tests.
+    """
+    system = (
+        Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
+    )
+    # Market data config.
+    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
+    system.config["market_data_config", "delay_in_secs"] = 0
+    system.config["market_data_config", "initial_replayed_delay"] = 5
+    system.config["market_data_config", "asset_ids"] = [101]
+    system.config["market_data_config", "data"] = market_data
+    # Dag runner config.
+    system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+    system.config[
+        "dag_runner_config", "real_time_loop_time_out_in_secs"
+    ] = real_time_loop_time_out_in_secs
+    # PnL config.
+    system.config["research_pnl", "price_col"] = "vwap"
+    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+    system.config["research_pnl", "prediction_col"] = "feature1"
+    return system

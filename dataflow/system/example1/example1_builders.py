@@ -81,23 +81,11 @@ def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     Build a DAG with a real time data source.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    # Create RealTimeDataSource.
-    stage = "read_data"
-    market_data = system.market_data
-    # The DAG works on multi-index dataframe containing multiple
-    # features for multiple assets.
-    multiindex_output = True
-    ts_col_name = "end_datetime"
     # How much history is needed for the DAG to compute.
-    timedelta = pd.Timedelta("20T")
-    node = dtfsysonod.RealTimeDataSource(
-        stage,
-        market_data,
-        timedelta,
-        ts_col_name,
-        multiindex_output,
-    )
-    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
+    # TODO(Grisha): Create `apply_market_lookback()` CmTask #2475
+    history_lookback = pd.Timedelta("20T")
+    system.config["market_data_config", "history_lookback"] = history_lookback
+    dag = dtfssybuut.add_real_time_data_source(system)
     return dag
 
 
