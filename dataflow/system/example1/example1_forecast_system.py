@@ -214,31 +214,6 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         dag = dtfsexexbu.get_Example1_RealtimeDag_example3(self)
         return dag
 
-    # TODO(gp): Extract this code in Example1_builders.py
-    def _get_portfolio(
-        self,
-    ) -> oms.Portfolio:
-        event_loop = self.config["event_loop_object"]
-        db_connection = self.config["db_connection_object"]
-        market_data = self.market_data
-        table_name = oms.CURRENT_POSITIONS_TABLE_NAME
-        asset_ids = self.config["market_data_config", "asset_ids"]
-        portfolio = oms.get_DatabasePortfolio_example1(
-            event_loop,
-            db_connection,
-            table_name,
-            market_data=market_data,
-            mark_to_market_col="close",
-            pricing_method="twap.5T",
-            asset_ids=asset_ids,
-        )
-        portfolio.broker._column_remap = {
-            "bid": "bid",
-            "ask": "ask",
-            "midpoint": "midpoint",
-            "price": "close",
-        }
-        return portfolio
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
         dag_runner = dtfssybuut.get_dag_runner_instance1(self)

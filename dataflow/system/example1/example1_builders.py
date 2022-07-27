@@ -20,6 +20,7 @@ import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hdbg as hdbg
 import market_data as mdata
+import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -176,3 +177,32 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     )
     dag.append_to_tail(node)
     return dag
+
+
+# #############################################################################
+# Portfolio instances.
+# #############################################################################
+
+
+def get_Example1_Portfolio_example1(system: dtfsyssyst.System) -> oms.Portfolio:
+    event_loop = system.config["event_loop_object"]
+    db_connection = system.config["db_connection_object"]
+    market_data = system.market_data
+    table_name = oms.CURRENT_POSITIONS_TABLE_NAME
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    portfolio = oms.get_DatabasePortfolio_example1(
+        event_loop,
+        db_connection,
+        table_name,
+        market_data=market_data,
+        mark_to_market_col="close",
+        pricing_method="twap.5T",
+        asset_ids=asset_ids,
+    )
+    portfolio.broker._column_remap = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
+    return portfolio
