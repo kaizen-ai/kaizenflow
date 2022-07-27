@@ -301,7 +301,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
 # #############################################################################
 
 
-# TODO(Grisha): @Dan we should also freeze the config for all the tests 
+# TODO(Grisha): @Dan we should also freeze the config for all the tests
 # with a Portfolio.
 class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     """
@@ -352,7 +352,8 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
 
     def _test1(self, system):
         """
-        Run a system using the desired DataFramePortfolio and freeze the output.
+        Run a system using the desired DataFramePortfolio and freeze the
+        output.
         """
         actual = self._test_dataframe_portfolio_helper(system)
         self.check_string(actual, fuzzy_match=True)
@@ -433,26 +434,30 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         self.check_string(actual, fuzzy_match=True)
 
 
-
-# #############################################################################################
+# #############################################################################
 # Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
-# #############################################################################################
+# #############################################################################
+
 
 class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1(
-    Time_ForecastSystem_with_DataFramePortfolio_TestCase1, 
+    Time_ForecastSystem_with_DataFramePortfolio_TestCase1,
     Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1,
 ):
     def _test1(
-        self, 
-        system_with_dataframe_portfolio: dtfsyssyst.System, 
+        self,
+        system_with_dataframe_portfolio: dtfsyssyst.System,
         system_with_database_portfolio: dtfsyssyst.System,
     ) -> None:
         """
-        Test that the outcome is the same when running a System with a 
-        DataFramePortfolio vs running one with a DatabasePortfolio. 
+        Test that the outcome is the same when running a System with a
+        DataFramePortfolio vs running one with a DatabasePortfolio.
         """
-        actual = self._test_dataframe_portfolio_helper(system_with_dataframe_portfolio)
-        expected = self._test_database_portfolio_helper(system_with_database_portfolio)
+        actual = self._test_dataframe_portfolio_helper(
+            system_with_dataframe_portfolio
+        )
+        expected = self._test_database_portfolio_helper(
+            system_with_database_portfolio
+        )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 

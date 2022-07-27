@@ -186,9 +186,7 @@ def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     """
     The System is used for the corresponding unit tests.
     """
-    system = (
-        Example1_Time_ForecastSystem_with_DataFramePortfolio()
-    )
+    system = Example1_Time_ForecastSystem_with_DataFramePortfolio()
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 0

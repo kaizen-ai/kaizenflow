@@ -1,5 +1,3 @@
-import asyncio
-from distutils.command.sdist import sdist
 import logging
 from typing import Callable
 
@@ -10,9 +8,6 @@ import core.finance as cofinanc
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
 import dataflow.system.system as dtfsyssyst
 import dataflow.system.test.system_test_case as dtfsytsytc
-import helpers.hasyncio as hasynci
-import oms as oms
-import oms.test.oms_db_helper as otodh
 
 _LOG = logging.getLogger(__name__)
 
@@ -196,7 +191,9 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     def test1(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
-        system = _get_test_System_with_DataFramePortfolio(data, real_time_loop_time_out_in_secs)
+        system = _get_test_System_with_DataFramePortfolio(
+            data, real_time_loop_time_out_in_secs
+        )
         #
         self._test1(system)
 
@@ -230,7 +227,9 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
     def test_market_data1_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
-        system = _get_test_System_with_DatabasePortfolio(data, real_time_loop_time_out_in_secs)
+        system = _get_test_System_with_DatabasePortfolio(
+            data, real_time_loop_time_out_in_secs
+        )
         #
         self._test1(system)
 
@@ -238,7 +237,9 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
     def test_market_data2_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         #
-        system = _get_test_System_with_DatabasePortfolio(data, real_time_loop_time_out_in_secs)
+        system = _get_test_System_with_DatabasePortfolio(
+            data, real_time_loop_time_out_in_secs
+        )
         #
         self._test1(system)
 
@@ -246,14 +247,16 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
     def test_market_data3_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         #
-        system = _get_test_System_with_DatabasePortfolio(data, real_time_loop_time_out_in_secs)
+        system = _get_test_System_with_DatabasePortfolio(
+            data, real_time_loop_time_out_in_secs
+        )
         #
         self._test1(system)
 
 
-# #########################################################################################
+# #############################################################################
 # Test_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio1
-# #########################################################################################
+# #############################################################################
 
 
 class Test_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio1(
@@ -262,41 +265,54 @@ class Test_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_Data
     """
     See description in the parent class.
     """
+
     @pytest.mark.slow("~10 seconds.")
     def test1(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
-        system_with_dataframe_portfolio = _get_test_System_with_DataFramePortfolio(
-            data, real_time_loop_time_out_in_secs
+        system_with_dataframe_portfolio = (
+            _get_test_System_with_DataFramePortfolio(
+                data, real_time_loop_time_out_in_secs
+            )
         )
         system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         #
-        self._test1(system_with_dataframe_portfolio, system_with_database_portfolio)
+        self._test1(
+            system_with_dataframe_portfolio, system_with_database_portfolio
+        )
 
     @pytest.mark.slow("~10 seconds.")
     def test2(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         #
-        system_with_dataframe_portfolio = _get_test_System_with_DataFramePortfolio(
-            data, real_time_loop_time_out_in_secs
+        system_with_dataframe_portfolio = (
+            _get_test_System_with_DataFramePortfolio(
+                data, real_time_loop_time_out_in_secs
+            )
         )
         system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         #
-        self._test1(system_with_dataframe_portfolio, system_with_database_portfolio)
+        self._test1(
+            system_with_dataframe_portfolio, system_with_database_portfolio
+        )
 
     @pytest.mark.superslow("~30 seconds.")
     def test3(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         #
-        system_with_dataframe_portfolio = _get_test_System_with_DataFramePortfolio(
-            data, real_time_loop_time_out_in_secs
+        system_with_dataframe_portfolio = (
+            _get_test_System_with_DataFramePortfolio(
+                data, real_time_loop_time_out_in_secs
+            )
         )
         system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         #
-        self._test1(system_with_dataframe_portfolio, system_with_database_portfolio)
+        self._test1(
+            system_with_dataframe_portfolio, system_with_database_portfolio
+        )
