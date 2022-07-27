@@ -589,7 +589,7 @@ def docker_create_candidate_image(ctx, task_definition, include_user_tag=""):  #
         # Add user name to the candidate tag.
         tag = f"{include_user_tag}-{tag}"
     # Push candidate image.
-    docker_push_prod_candidate_image(ctx, candidate=tag)
+    docker_push_prod_candidate_image(ctx, tag)
     # Register new task definition revision with updated image URL. 
     cmd = f'invoke docker_cmd -c "im_v2/aws/aws_update_task_definition.py -t {task_definition} -i {tag}"'
     hlitauti._run(ctx, cmd)
