@@ -168,6 +168,21 @@ class Test_Example1_Time_ForecastSystem1(
 # #############################################################################
 
 
+def _get_test_System_with_DataFramePortfolio(
+    market_data_df: pd.DataFrame,
+    real_time_loop_time_out_in_secs: int,
+) -> Callable:
+    """
+    Get a System object with a DataFramePortfolio for unit testing.
+    """
+    system_builder_func = (
+        lambda: dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+            market_data_df, real_time_loop_time_out_in_secs
+        )
+    )
+    return system_builder_func
+
+
 class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     dtfsytsytc.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 ):
@@ -183,38 +198,12 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     def test1(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
-        system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system = _get_test_System_with_DataFramePortfolio(
             data,
             real_time_loop_time_out_in_secs
         )
         #
         self._test1(system)
-
-
-def _get_test_system_with_portfolio(
-    market_data_df: pd.DataFrame,
-    real_time_loop_time_out_in_secs: int,
-    is_database_portfolio: bool,
-) -> Callable:
-    """
-    Get a System object with Portfolio for unit testing.
-
-    :param is_database_portfolio: use DatabasePortfolio if True, use DataFramePortfolio otherwise
-    """
-    if is_database_portfolio:
-        system_builder_func = (
-            lambda: dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
-                market_data_df, real_time_loop_time_out_in_secs
-            )
-        )
-    else: 
-        system_builder_func = (
-            lambda: dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
-                market_data_df, real_time_loop_time_out_in_secs
-            )
-        )
-    return system_builder_func
-
 
 
 # #############################################################################
@@ -412,6 +401,21 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
 # #############################################################################
 
 
+def _get_test_System_with_DatabasePortfolio(
+    market_data_df: pd.DataFrame,
+    real_time_loop_time_out_in_secs: int,
+) -> Callable:
+    """
+    Get a System object with a DatabasePortfolio for unit testing.
+    """
+    system_builder_func = (
+        lambda: dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            market_data_df, real_time_loop_time_out_in_secs
+        )
+    )
+    return system_builder_func
+
+
 # TODO(Grisha): -> `Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1`.
 class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2(
     dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
@@ -424,7 +428,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
     def test_market_data1_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
-        system = dtfseefosy._get_test_system_with_portfolio(
+        system = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         #
@@ -434,7 +438,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
     def test_market_data2_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
         #
-        system = _get_test_system_with_portfolio(
+        system = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         #
@@ -444,7 +448,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
     def test_market_data3_database_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         #
-        system = _get_test_system_with_portfolio(
+        system = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         #
@@ -463,30 +467,30 @@ class Test_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_Data
     """
     def test1(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
-        system_with_dataframe_portfolio = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system_with_dataframe_portfolio = _get_test_System_with_DataFramePortfolio(
             data, real_time_loop_time_out_in_secs
         )
-        system_with_database_portfolio = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+        system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         self._test_vs_database_portfolio1(system_with_dataframe_portfolio, system_with_database_portfolio)
 
     def test2(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
-        system_with_dataframe_portfolio = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system_with_dataframe_portfolio = _get_test_System_with_DataFramePortfolio(
             data, real_time_loop_time_out_in_secs
         )
-        system_with_database_portfolio = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+        system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         self._test_vs_database_portfolio1(system_with_dataframe_portfolio, system_with_database_portfolio)
 
     def test3(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
-        system_with_dataframe_portfolio = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+        system_with_dataframe_portfolio = _get_test_System_with_DataFramePortfolio(
             data, real_time_loop_time_out_in_secs
         )
-        system_with_database_portfolio = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+        system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
             data, real_time_loop_time_out_in_secs
         )
         self._test_vs_database_portfolio1(system_with_dataframe_portfolio, system_with_database_portfolio)
