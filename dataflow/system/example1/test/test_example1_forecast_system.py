@@ -166,7 +166,7 @@ class Test_Example1_Time_ForecastSystem1(
 def _get_test_System_with_DataFramePortfolio(
     market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
-) -> Callable:
+) -> dtfsyssyst.System:
     """
     Get a System object with a DataFramePortfolio for unit testing.
     """
@@ -180,11 +180,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     dtfsytsytc.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 ):
     """
-    Test an end-to-end `System`, containing:
-
-    - a `MarketData` using fake data and features
-    - a Example1 pipeline
-    - a `Portfolio` backed by a dataframe
+    See description in the parent class.
     """
 
     @pytest.mark.slow("~7 seconds.")
@@ -206,7 +202,7 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 def _get_test_System_with_DatabasePortfolio(
     market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
-) -> Callable:
+) -> dtfsyssyst.System:
     """
     Get a System object with a DatabasePortfolio for unit testing.
     """

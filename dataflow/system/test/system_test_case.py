@@ -301,8 +301,6 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
 # #############################################################################
 
 
-# TODO(Grisha): @Dan we should also freeze the config for all the tests
-# with a Portfolio.
 class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
@@ -356,6 +354,8 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         output.
         """
         actual = self._test_dataframe_portfolio_helper(system)
+        # TODO(Grisha): @Dan we should also freeze the config for all the tests
+        # with a Portfolio.
         self.check_string(actual, fuzzy_match=True)
 
 
