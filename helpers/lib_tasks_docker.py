@@ -815,8 +815,9 @@ def _dassert_is_image_name_valid(image: str) -> None:
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
     - `prod` candidate image has a 9 character hash identifier from the
-        corresponding Git commit
+        corresponding Git commit or a user name and hash identifier
         - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
+        - and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-saggese-4rf74b83a`
 
     An image should look like:
 
