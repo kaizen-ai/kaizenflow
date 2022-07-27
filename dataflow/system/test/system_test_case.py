@@ -305,29 +305,22 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 
-    - a time DAG
+    - a timed DAG
     - ReplayedMarketData
     - DataFrame portfolio
     - Simulated broker
     """
 
-    def _test1(
+    # TODO(Grisha): there is some code that is common for `Time_ForecastSystem_with_DataFramePortfolio_TestCase1`
+    # and `Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1` that we should factor out.
+    def _test_dataframe_portfolio_helper(
         self,
         system: dtfsyssyst.System,
-        # TODO(Grisha): @Dan pass all params via `system.config`.
-        asset_ids: List[int],
-        sleep_interval_in_secs: int,
-        real_time_loop_time_out_in_secs: int,
     ) -> None:
+        """
+        Run a System with a DataframePortfolio.
+        """
         with hasynci.solipsism_context() as event_loop:
-            # Complete system config.
-            system.config["market_data_config", "asset_ids"] = asset_ids
-            system.config[
-                "dag_runner_config", "sleep_interval_in_secs"
-            ] = sleep_interval_in_secs
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = real_time_loop_time_out_in_secs
             #
             system.config["event_loop_object"] = event_loop
             portfolio = system.portfolio
@@ -353,7 +346,17 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
                 volatility_col=volatility_col,
                 prediction_col=prediction_col,
             )
-            self.check_string(actual)
+            return actual
+
+    def _test1(self, system):
+        """
+        Run a system using the desired DataFramePortfolio and freeze the
+        output.
+        """
+        actual = self._test_dataframe_portfolio_helper(system)
+        # TODO(Grisha): @Dan we should also freeze the config for all the tests
+        # with a Portfolio.
+        self.check_string(actual, fuzzy_match=True)
 
 
 # #############################################################################
@@ -376,12 +379,12 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def _test1(
+    def _test_database_portfolio_helper(
         self,
         system: dtfsyssyst.System,
     ) -> None:
         """
-        Run a system using the desired DB portfolio and freeze the output.
+        Run a System with a DatabasePortfolio.
         """
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
@@ -421,9 +424,41 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
                 volatility_col=volatility_col,
                 prediction_col=prediction_col,
             )
-            # TODO(Grisha): maybe just return `actual` so that we can compare the output
-            # of the test with DataFramePortfolio with that with DataBasePortfolio.
-            self.check_string(actual, fuzzy_match=True)
+            return actual
+
+    def _test1(self, system: dtfsyssyst.System) -> None:
+        """
+        Run a system using the desired DB portfolio and freeze the output.
+        """
+        actual = self._test_database_portfolio_helper(system)
+        self.check_string(actual, fuzzy_match=True)
+
+
+# #############################################################################
+# Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
+# #############################################################################
+
+
+class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1(
+    Time_ForecastSystem_with_DataFramePortfolio_TestCase1,
+    Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1,
+):
+    def _test1(
+        self,
+        system_with_dataframe_portfolio: dtfsyssyst.System,
+        system_with_database_portfolio: dtfsyssyst.System,
+    ) -> None:
+        """
+        Test that the outcome is the same when running a System with a
+        DataFramePortfolio vs running one with a DatabasePortfolio.
+        """
+        actual = self._test_dataframe_portfolio_helper(
+            system_with_dataframe_portfolio
+        )
+        expected = self._test_database_portfolio_helper(
+            system_with_database_portfolio
+        )
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 # TODO(gp): Add a longer test with more assets once things are working.
