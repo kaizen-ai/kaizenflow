@@ -438,3 +438,24 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         )
         #
         self._test1(system)
+
+
+# ########################################################################################
+# Test_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio
+# ########################################################################################
+
+class Test_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio(
+    dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
+):
+    """
+    See description in the parent class.
+    """
+    def test1(self) -> None:
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
+        system1 = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        system2 = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        self._test_vs_database_portfolio1(system1, system2)
