@@ -349,6 +349,7 @@ def build_dag_with_data_source_node(
     return dag
 
 
+# TODO(Grisha): -> `add_RealTimeDataSource`?
 def add_real_time_data_source(
     system: dtfsyssyst.System,
 ) -> dtfcore.DAG:
@@ -358,12 +359,12 @@ def add_real_time_data_source(
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     stage = "read_data"
     market_data = system.market_data
-    # The DAG works on multi-index dataframe containing multiple
-    # features for multiple assets.
     market_data_history_lookback = system.config[
         "market_data_config", "history_lookback"
     ]
     ts_col_name = "end_datetime"
+    # The DAG works on multi-index dataframe containing multiple
+    # features for multiple assets.
     multiindex_output = True
     node = dtfsysonod.RealTimeDataSource(
         stage,
