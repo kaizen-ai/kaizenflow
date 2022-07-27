@@ -311,23 +311,13 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     - Simulated broker
     """
 
-    def _test1(
+    # TODO(Grisha): there is some code that is common for `Time_ForecastSystem_with_DataFramePortfolio_TestCase1`
+    # and `Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1` that we should factor out.
+    def _test_dataframe_portfolio1(
         self,
         system: dtfsyssyst.System,
-        # TODO(Grisha): @Dan pass all params via `system.config`.
-        asset_ids: List[int],
-        sleep_interval_in_secs: int,
-        real_time_loop_time_out_in_secs: int,
     ) -> None:
         with hasynci.solipsism_context() as event_loop:
-            # Complete system config.
-            system.config["market_data_config", "asset_ids"] = asset_ids
-            system.config[
-                "dag_runner_config", "sleep_interval_in_secs"
-            ] = sleep_interval_in_secs
-            system.config[
-                "dag_runner_config", "real_time_loop_time_out_in_secs"
-            ] = real_time_loop_time_out_in_secs
             #
             system.config["event_loop_object"] = event_loop
             portfolio = system.portfolio
@@ -353,7 +343,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
                 volatility_col=volatility_col,
                 prediction_col=prediction_col,
             )
-            self.check_string(actual)
+            return actual
 
 
 # #############################################################################
@@ -376,7 +366,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def _test1(
+    def _test_database_portfolio1(
         self,
         system: dtfsyssyst.System,
     ) -> None:
@@ -421,9 +411,22 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
                 volatility_col=volatility_col,
                 prediction_col=prediction_col,
             )
-            # TODO(Grisha): maybe just return `actual` so that we can compare the output
-            # of the test with DataFramePortfolio with that with DataBasePortfolio.
-            self.check_string(actual, fuzzy_match=True)
+            return actual
+
+
+# #############################################################################################
+# Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
+# #############################################################################################
+
+class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1(
+    Time_ForecastSystem_with_DataFramePortfolio_TestCase1, 
+    Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1,
+):
+    def _test_vs_database_portfolio1(self, system1, system2) -> None:
+        actual = self._test_dataframe_portfolio1(system1)
+        expected = self._test_database_portfolio1(system2)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
 
 
 # TODO(gp): Add a longer test with more assets once things are working.
