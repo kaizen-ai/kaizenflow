@@ -34,10 +34,10 @@ class TestFeaturePipeline(hunitest.TestCase):
                 },
             }
         )
-        config["perform_col_arithmetic", "func_kwargs"] = {"col_groups": []}
+        config["perform_col_arithmetic", "func_kwargs"] = cconfig.get_config_from_nested_dict({"col_groups": []})
         config["zscore", "transformer_kwargs", "dyadic_tau"] = 5
         config["compress_tails", "transformer_kwargs", "scale"] = 6
-        config["cross_feature_pairs", "func_kwargs"] = {
+        config["cross_feature_pairs", "func_kwargs"] = cconfig.get_config_from_nested_dict({
             "feature_groups": [
                 (
                     "bid_size",
@@ -51,7 +51,7 @@ class TestFeaturePipeline(hunitest.TestCase):
                 )
             ],
             "join_output_with_input": False,
-        }
+        })
         #
         _LOG.debug("config after patching=%s", config)
         dag = dag_builder.get_dag(config)
