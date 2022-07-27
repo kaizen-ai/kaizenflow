@@ -20,6 +20,8 @@ def _get_test_system_builder_func() -> Callable:
     """
     Get System builder function for unit testing.
     """
+    # TODO: In the current system, the time periods are set manually,
+    # so the value of `time_interval_str` doesn't affect tests. 
     backtest_config = "example1_v1-top2.5T.Jan2000"
     system_builder_func = (
         lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
@@ -382,7 +384,7 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
         )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    @pytest.mark.superslow("Times out in GH Actions.")
+    #@pytest.mark.superslow("Times out in GH Actions.")
     def test_market_data3_database_vs_dataframe_portfolio(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         expected = self.run_coroutines(
