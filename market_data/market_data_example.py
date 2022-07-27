@@ -328,6 +328,7 @@ def get_RealTimeImClientMarketData_example1(
     # Build a `ReplayedMarketData`.
     tz = "ET"
     # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
+    # TODO(Grisha): @Dan Do not hard-code `initial_replayed_dt`.
     initial_replayed_dt = pd.Timestamp(
         "2022-07-21 09:30:00-04:00", tz="America/New_York"
     )
