@@ -62,14 +62,20 @@ def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
 def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
     Get start and end timestamps from the specified period.
+    
+    The usual period pattern looks the following: e.g., `2022-01-01_2022-02-01`.
 
     The interval type is [a, b), i.e. the last day of the interval is
     excluded.
     """
+    # E.g., `2022-01-01`.
+    date_pattern = "\d{4}[-]\d{2}[-]\d{2}"
+    # E.g., `2022-01-01_2022-02-01`.
+    period_pattern = rf"{date_pattern}[_]{date_pattern}$"
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
         end_datetime = datetime.datetime(2020, 1, 7)
-    elif bool(re.match("\d{4}[-]\d{2}[-]\d{2}[_]\d{4}[-]\d{2}[-]\d{2}", period)):
+    elif bool(re.match(period_pattern, period)):
         start_date, end_date = period.split("_")
         start_datetime = datetime.datetime.strptime(start_date, "%Y-%m-%d")
         end_datetime = datetime.datetime.strptime(end_date, "%Y-%m-%d")
