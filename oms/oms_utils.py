@@ -9,6 +9,7 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
+import oms.broker as ombroker
 
 import helpers.hdbg as hdbg
 
@@ -74,3 +75,16 @@ def _append_accounting_df(
     # Concat all the data together with the input.
     df_out = pd.concat([df] + dfs, axis=1)
     return df_out
+
+
+def flatten_ccxt_account(broker: ombroker.Broker, dry_run: bool):
+
+    _ = broker, dry_run 
+    # Verify that the broker is in test mode.
+
+    # Fetch balance.
+
+    # Create orders.
+
+    # Place orders. 
+    return _
