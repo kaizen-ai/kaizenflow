@@ -1,31 +1,27 @@
 """
 Import as:
 
-import oms_lime.eg_portfolio as oliegpor
+import oms.ck_portfolio as oliegpor
 """
 
-import logging
-from typing import Any
-
-import helpers.hdbg as hdbg
 import asyncio
+import logging
 from typing import Any, List, Optional, Dict
 
 import numpy as np
 import pandas as pd
 
+import helpers.hdbg as hdbg
 import market_data as mdata
+import oms.portfolio as omportfo
 import oms.ck_credentials as omsckc
-import oms_lime.eg_broker_example as olegbrex
-import oms_lime.eg_portfolio as oliegpor
-import vendors_lime.eg_credentials as vliegcre
 
 
 
 _LOG = logging.getLogger(__name__)
 
 
-class CkPortfolio(oms.DatabasePortfolio):
+class CkPortfolio(omportfo.DatabasePortfolio):
     """
     Portfolio class connected to CK OMS.
 
@@ -59,28 +55,29 @@ class CkPortfolio(oms.DatabasePortfolio):
 
 # TODO(gp): Factor out common code.
 def get_CkPortfolio_prod_instance(
-        strategy_id: str,
-        liveness: str,
-        instance_type: str,
-        retrieve_initial_holdings_from_db: bool,
-        market_data: mdata.MarketData,
-        asset_ids: Optional[List[int]],
-        order_duration_in_mins: int,
-        order_extra_params: Optional[Dict[str, Any]],
-        pricing_method: str,
-) -> oliegpor.CkPortfolio:
+    strategy_id: str,
+    liveness: str,
+    instance_type: str,
+    retrieve_initial_holdings_from_db: bool,
+    market_data: mdata.MarketData,
+    asset_ids: Optional[List[int]],
+    order_duration_in_mins: int,
+    order_extra_params: Optional[Dict[str, Any]],
+    pricing_method: str,
+) -> CkPortfolio:
     """
     Build an CK Portfolio retrieving its state from the DB.
     """
     # Build CkBroker.
-    broker = olegbrex.get_CcxtBroker_prod_instance1(
-        market_data,
-        strategy_id,
-        liveness,
-        instance_type,
-        order_duration_in_mins,
-        order_extra_params,
-    )
+    #    broker = olegbrex.get_CcxtBroker_prod_instance1(
+    #        market_data,
+    #        strategy_id,
+    #        liveness,
+    #        instance_type,
+    #        order_duration_in_mins,
+    #        order_extra_params,
+    #    )
+    broker = None
     # Build CkPortfolio.
     mark_to_market_col = "close"
     # timestamp_col = "end_time"
@@ -99,7 +96,7 @@ def get_CkPortfolio_prod_instance(
     table_name = omsckc.get_core_db_view(
         "current_positions", liveness, instance_type
     )
-    portfolio = oliegpor.CkPortfolio(
+    portfolio = CkPortfolio(
         broker,
         mark_to_market_col,
         pricing_method,
