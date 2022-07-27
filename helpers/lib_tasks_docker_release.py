@@ -326,8 +326,11 @@ def docker_build_prod_image(  # type: ignore
             base_image, "prod", latest_version
         )
         head_hash = hgit.get_head_hash(short_hash=True)
-        # Add username and head hash to the prod image name.
-        image_versioned_prod += f"{user_tag}-{head_hash}"
+        # Add user name to the prod image name.
+        if user_tag:
+            image_versioned_prod += f"-{user_tag}"
+        # Add head hash to the prod image name.
+        image_versioned_prod += f"-{head_hash}"
     else:
         image_versioned_prod = hlitadoc.get_image(base_image, "prod", version)
     hlitadoc._dassert_is_image_name_valid(image_versioned_prod)
@@ -398,7 +401,6 @@ def docker_push_prod_image(  # type: ignore
 def docker_push_prod_candidate_image(  # type: ignore
     ctx,
     candidate,
-    user_tag,
     base_image="",
     container_dir_name=".",
 ):
@@ -406,7 +408,6 @@ def docker_push_prod_candidate_image(  # type: ignore
     (ONLY CI/CD) Push the "prod" candidate image to ECR.
 
     :param candidate: hash tag of the candidate prod image to push
-    :user_tag:
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
@@ -414,7 +415,7 @@ def docker_push_prod_candidate_image(  # type: ignore
     hlitadoc.docker_login(ctx)
     # Push image with tagged with a hash ID.
     image_versioned_prod = hlitadoc.get_image(base_image, "prod", None)
-    cmd = f"docker push {image_versioned_prod}-{user_tag}-{candidate}"
+    cmd = f"docker push {image_versioned_prod}-{candidate}"
     hlitauti._run(ctx, cmd, pty=True)
 
 
@@ -563,29 +564,45 @@ def docker_rollback_prod_image(  # type: ignore
 
 
 @task
-def docker_create_candidate_image(ctx, task_definition, user_tag):  # type: ignore
+def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: ignore
     """
     Create new prod candidate image and update the specified ECS task definition such that
     the Image URL specified in container definition points to the new candidate image.
 
     :param task_definition: the name of the ECS task definition for which an update 
     to container image URL is made, e.g. cmamp-test
-    :param user_tag:
+    :param user_tag: the name of the user creating the image, empty parameter means 
+    the command was ran via gh actions
     """
     # Get latest version.
     last_version = hversio.get_changelog_version(".")
     # Create new prod image.
     docker_build_prod_image(
         ctx,
-        last_version,
+        version=last_version,
         candidate=True, 
         user_tag=user_tag
     )
     # Get the hash of the image.
     tag = hgit.get_head_hash(".", short_hash=True)
+    if user_tag:
+        # Add user name to the candidate tag.
+        tag = f"{user_tag}-{tag}"
     # Push candidate image.
-    docker_push_prod_candidate_image(ctx, candidate=tag, user_tag=user_tag)
+    docker_push_prod_candidate_image(ctx, candidate=tag)
     # Register new task definition revision with updated image URL. 
-    cmd = f'invoke docker_cmd -c "im_v2/aws/aws_update_task_definition.py -t {task_definition} -i {user_tag}-{tag}"'
+    cmd = f'invoke docker_cmd -c "im_v2/aws/aws_update_task_definition.py -t {task_definition} -i {tag}"'
     hlitauti._run(ctx, cmd)
     return
+
+
+def get_image_versioned_prod(image_prod: str, user_tag: str, head_hash: str) -> str:
+    """
+
+    """
+    # Add user name to the prod image name.
+    if user_tag:
+        image_prod += f"-{user_tag}"
+    # Add head hash to the prod image name.
+    image_prod += f"-{head_hash}"
+    return image_prod
