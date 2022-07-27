@@ -307,7 +307,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     """
     Run for an extended period of time a system containing:
 
-    - a time DAG
+    - a timed DAG
     - ReplayedMarketData
     - DataFrame portfolio
     - Simulated broker
@@ -442,10 +442,10 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
     Time_ForecastSystem_with_DataFramePortfolio_TestCase1, 
     Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1,
 ):
-    def _test_vs_database_portfolio1(
+    def _test1(
         self, 
         system_with_dataframe_portfolio: dtfsyssyst.System, 
-        system_with_database_portfolio:dtfsyssyst.System,
+        system_with_database_portfolio: dtfsyssyst.System,
     ) -> None:
         """
         Test that the outcome is the same when running a System with a 
