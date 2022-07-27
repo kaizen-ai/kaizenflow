@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 import core.finance as cofinanc
-import dataflow.system as dtfsys
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
+import dataflow.system.system as dtfsyssyst
 import dataflow.system.test.system_test_case as dtfsytsytc
 import helpers.hasyncio as hasynci
 import oms as oms
@@ -49,7 +49,7 @@ class Test_Example1_System_CheckConfig(dtfsytsytc.System_CheckConfig_TestCase1):
 class Test_Example1_ForecastSystem_FitPredict(
     dtfsytsytc.ForecastSystem_FitPredict_TestCase1
 ):
-    def get_system(self) -> dtfsys.System:
+    def get_system(self) -> dtfsyssyst.System:
         """
         Create the System for testing.
         """
@@ -206,15 +206,16 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 
 
 # #############################################################################
-# Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+# Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1
 # #############################################################################
 
 
 # TODO(gp): @all This should become a TestCase in system_test_case.py where we
 #  compare 2 systems (one with DatabasePortfolio and one with
 #  DataFramePortfolio) to make sure they are the same.
+# TODO(Grisha): remove the class once the refactoring is finished in CmTask #2451.
 class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
-    otodh.TestOmsDbHelper
+    otodh.TestOmsDbHelper,
 ):
     """
     Test an end-to-end `System`, containing:
@@ -392,3 +393,47 @@ class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
             data, real_time_loop_time_out_in_secs, is_database_portfolio=False
         )
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2
+# #############################################################################
+
+
+# TODO(Grisha): -> `Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1`.
+class Test_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2(
+    dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
+):
+    """
+    See description in the parent class.
+    """
+
+    @pytest.mark.slow("~6 seconds.")
+    def test_market_data1_database_portfolio(self) -> None:
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        #
+        system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        #
+        self._test1(system)
+
+    @pytest.mark.slow("~6 seconds.")
+    def test_market_data2_database_portfolio(self) -> None:
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
+        #
+        system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        #
+        self._test1(system)
+
+    @pytest.mark.slow("~15 seconds.")
+    def test_market_data3_database_portfolio(self) -> None:
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
+        #
+        system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        #
+        self._test1(system)

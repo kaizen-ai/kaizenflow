@@ -22,9 +22,6 @@ import helpers.hunit_test as hunitest  # noqa: E402 module level import not at t
 
 class S3Mock_TestCase(hunitest.TestCase):
     # Mocked AWS credentials.
-    # TODO(Nikola): Although this code belongs to `setUp`, when this code is
-    #   moved there patch is created for each test separately. We want to avoid
-    #   that and only start/stop same patch for each test.
     mock_aws_credentials_patch = umock.patch.dict(
         hs3.os.environ,
         {
