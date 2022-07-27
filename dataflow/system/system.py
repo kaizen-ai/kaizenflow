@@ -515,7 +515,7 @@ class Time_ForecastSystem_with_DatabasePortfolio(
     _Time_ForecastSystem_Mixin, _ForecastSystem_with_Portfolio
 ):
     """
-    Same as Time_ForecastSystem_with_DataFramePortfolio but with Database
+    Same as `Time_ForecastSystem_with_DataFramePortfolio` but with Database
     portfolio.
 
     This configuration corresponds to a production system where we talk
