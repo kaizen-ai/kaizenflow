@@ -89,7 +89,7 @@ def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     multiindex_output = True
     ts_col_name = "end_datetime"
     # How much history is needed for the DAG to compute.
-    timedelta = pd.Timedelta("20T")
+    timedelta = pd.Timedelta("7D")
     node = dtfsysonod.RealTimeDataSource(
         stage,
         market_data,
