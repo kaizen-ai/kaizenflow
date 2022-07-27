@@ -77,8 +77,12 @@ def _append_accounting_df(
     return df_out
 
 
-def flatten_ccxt_account(broker: ombroker.Broker, dry_run: bool):
-
+def flatten_ccxt_account(
+    broker: ombroker.Broker, dry_run: bool, *, balance_currency: str = "USDT"
+):
+    """
+    Sell all crypto-assets associated with the account.
+    """
     _ = broker, dry_run
     # Verify that the broker is in test mode.
     hdbg.dassert_eq(
@@ -88,8 +92,9 @@ def flatten_ccxt_account(broker: ombroker.Broker, dry_run: bool):
     )
 
     # Fetch balance.
+    balance = broker.get_total_balance()
 
     # Create orders.
 
     # Place orders.
-    return _
+    return balance

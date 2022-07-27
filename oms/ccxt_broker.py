@@ -222,3 +222,20 @@ class CcxtBroker(ombroker.Broker):
             msg="Required credentials not passed",
         )
         return exchange
+    
+    def get_total_balance(self) -> Dict[str, float]:
+        """
+        Fetch total available balance via CCXT.
+
+        Example of total balance output:
+
+        {'BNB': 0.0, 'USDT': 5026.22494667, 'BUSD': 1000.10001}
+
+        :return: total balance
+        """
+        hdbg.dassert(self._exchange.has["fetchBalance"], msg="")
+        # Fetch all balance data.
+        balance = self._exchange.fetchBalance()
+        # Select total balance.
+        total_balance = balance["total"]
+        return total_balance
