@@ -661,12 +661,14 @@ def get_market_data_df4() -> pd.DataFrame:
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
 
-    Output example: ```
-    start_datetime ... volume  feature1 2000-01-01 09:31:00-05:00
-    2000-01-01 09:30:00-05:00        100      -1.0 2000-01-01
-    09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
-    2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100
-    -1.0 ```
+    Output example:
+
+    ```
+                                          start_datetime ... volume  feature1
+    2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
+    2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
+    2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
+    ```
     """
     idx = pd.date_range(
         start=pd.Timestamp("1999-12-01 00:01:00-05:00", tz="America/New_York"),

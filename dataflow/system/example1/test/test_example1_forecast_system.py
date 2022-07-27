@@ -143,13 +143,13 @@ class Test_Example1_Time_ForecastSystem1(
         Verify the contents of DAG prediction.
         """
         system = dtfseefosy.Example1_Time_ForecastSystem()
-        # TODO(Dan): Add more data, otherwise volatility is NaN.
         market_data, _ = cofinanc.get_market_data_df4()
         # Since we are reading from a df there is no delay.
         system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
+        # Start calculations with lookback in order to catch ATH.
         system.config["market_data_config", "initial_replayed_delay"] = (
-            60 * 24 * 30 + 60 * 15
+            60 * 24 * 31 + 62 * 10
         )
         # Exercise the system for multiple 5 minute intervals.
         system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
