@@ -205,13 +205,6 @@ class TestPredictionResultBundle(hunitest.TestCase):
         init_config["method"] = "fit"
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
         init_config["result_df"] = df
-        # init_config["column_to_tags"] = {
-        #     "col0": ["feature_col"],
-        #     "col1": ["target_col", "step_0"],
-        #     "col2": ["target_col", "step_1"],
-        #     "col3": ["prediction_col", "step_0"],
-        #     "col4": ["prediction_col", "step_1"],
-        # }
         column_to_tags = {
             "col0": ["feature_col"],
             "col1": ["target_col", "step_0"],
@@ -220,9 +213,6 @@ class TestPredictionResultBundle(hunitest.TestCase):
             "col4": ["prediction_col", "step_1"],
         }
         init_config["column_to_tags"] = ccocouti.get_config_from_nested_dict(column_to_tags)
-        # init_config["info"] = collections.OrderedDict(
-        #     {"df_info": dtfcorutil.get_df_info_as_string(df)}
-        # )
         info_ordered_dict = collections.OrderedDict(
             {"df_info": dtfcorutil.get_df_info_as_string(df)}
         )
