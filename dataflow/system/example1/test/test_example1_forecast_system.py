@@ -148,7 +148,9 @@ class Test_Example1_Time_ForecastSystem1(
         # Since we are reading from a df there is no delay.
         system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
-        system.config["market_data_config", "initial_replayed_delay"] = 60 * 24 * 30 + 60 * 15
+        system.config["market_data_config", "initial_replayed_delay"] = (
+            60 * 24 * 30 + 60 * 15
+        )
         # Exercise the system for multiple 5 minute intervals.
         system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
             60 * 5 * 3
@@ -182,15 +184,12 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
     def test1(self) -> None:
         system = dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
         # Fill the config.
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df4()
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
         system.config["market_data_config", "data"] = data
         # Since we are reading from a df there is no delay.
         system.config["market_data_config", "delay_in_secs"] = 0
-        system.config["market_data_config", "initial_replayed_delay"] = 60 * 24 * 30 + 60 * 15
-        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
-                60 * 5 * 3
-        )
+        system.config["market_data_config", "initial_replayed_delay"] = 5
         #
         system.config["research_pnl", "price_col"] = "vwap"
         system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
