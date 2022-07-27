@@ -5,6 +5,7 @@ import dataflow.model.experiment_config as dtfmoexcon
 """
 import datetime
 import logging
+import re
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -58,79 +59,26 @@ def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
 
 
 # TODO(gp): -> get_time_interval
-# TODO(Grisha): "Refactor or remove `get_period()`" CmTask #1723.
 def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
     Get start and end timestamps from the specified period.
+    
+    The usual period pattern looks the following: e.g., `2022-01-01_2022-02-01`.
 
     The interval type is [a, b), i.e. the last day of the interval is
     excluded.
     """
+    # E.g., `2022-01-01`.
+    date_pattern = "\d{4}[-]\d{2}[-]\d{2}"
+    # E.g., `2022-01-01_2022-02-01`.
+    period_pattern = rf"{date_pattern}[_]{date_pattern}$"
     if period == "2days":
         start_datetime = datetime.datetime(2020, 1, 6)
         end_datetime = datetime.datetime(2020, 1, 7)
-    elif period == "Jan2000":
-        # Jan and Feb of 2000.
-        start_datetime = datetime.datetime(2000, 1, 1)
-        end_datetime = datetime.datetime(2000, 2, 1)
-    elif period == "Jan2020":
-        # Jan in 2020.
-        start_datetime = datetime.datetime(2020, 1, 1)
-        end_datetime = datetime.datetime(2020, 2, 1)
-    elif period == "JanFeb2020":
-        # Jan and Feb of 2020.
-        start_datetime = datetime.datetime(2020, 1, 1)
-        end_datetime = datetime.datetime(2020, 3, 1)
-    elif period == "FebMar2020":
-        # Feb and March of 2020.
-        start_datetime = datetime.datetime(2020, 2, 1)
-        end_datetime = datetime.datetime(2020, 4, 1)
-    elif period == "NovDec2020":
-        # Nov and Dec of 2020.
-        start_datetime = datetime.datetime(2020, 9, 1)
-        end_datetime = datetime.datetime(2021, 1, 1)
-    elif period == "2018":
-        # 2018.
-        start_datetime = datetime.datetime(2018, 1, 1)
-        end_datetime = datetime.datetime(2019, 1, 1)
-    elif period == "2018_2019":
-        # 2018.
-        start_datetime = datetime.datetime(2018, 1, 1)
-        end_datetime = datetime.datetime(2020, 1, 1)
-    elif period == "2009_2019":
-        # Entire 2009-2018 period.
-        start_datetime = datetime.datetime(2009, 1, 1)
-        end_datetime = datetime.datetime(2019, 1, 1)
-    elif period == "2015_2022":
-        # Entire 2015-2021 period.
-        start_datetime = datetime.datetime(2015, 1, 1)
-        end_datetime = datetime.datetime(2022, 1, 1)
-    elif period == "2012_2022":
-        # Entire 2012-2021 period.
-        start_datetime = datetime.datetime(2012, 1, 1)
-        end_datetime = datetime.datetime(2022, 1, 1)
-    elif period == "2018_2022":
-        start_datetime = datetime.datetime(2018, 1, 1)
-        # TODO(Dan): "Duplicated indices for different data rows CmTask #2062."
-        end_datetime = datetime.datetime(2022, 5, 1)
-    elif period == "2019_2022":
-        start_datetime = datetime.datetime(2019, 1, 1)
-        end_datetime = datetime.datetime(2022, 3, 1)
-    elif period == "Aug2021_Jul2022":
-        start_datetime = datetime.datetime(2021, 8, 1)
-        end_datetime = datetime.datetime(2022, 7, 1)
-    elif period == "Aug2021_Aug2022":
-        start_datetime = datetime.datetime(2021, 8, 1)
-        end_datetime = datetime.datetime(2022, 8, 1)
-    elif period == "Sep2019_Jul2022":
-        start_datetime = datetime.datetime(2019, 9, 1)
-        end_datetime = datetime.datetime(2022, 7, 1)
-    elif period == "Sep2019_Aug2022":
-        start_datetime = datetime.datetime(2019, 9, 1)
-        end_datetime = datetime.datetime(2022, 8, 1)
-    elif period == "Jan2022":
-        start_datetime = datetime.datetime(2022, 1, 1)
-        end_datetime = datetime.datetime(2022, 2, 1)
+    elif bool(re.match(period_pattern, period)):
+        start_date, end_date = period.split("_")
+        start_datetime = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+        end_datetime = datetime.datetime.strptime(end_date, "%Y-%m-%d")
     else:
         hdbg.dfatal(f"Invalid period='{period}'")
     _LOG.info("start_datetime=%s end_datetime=%s", start_datetime, end_datetime)
