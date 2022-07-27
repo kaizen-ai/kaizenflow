@@ -799,7 +799,7 @@ _IMAGE_USER_RE = r"[a-z0-9_-]+"
 # For candidate prod images which have added hash for easy identification.
 _IMAGE_HASH_RE = r"[a-z0-9]{9}"
 _IMAGE_STAGE_RE = (
-    rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_HASH_RE})?)"
+    rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_USER_RE})(?:-{_IMAGE_HASH_RE})?|prod(?:-{_IMAGE_HASH_RE})?)"
 )
 
 
@@ -815,8 +815,9 @@ def _dassert_is_image_name_valid(image: str) -> None:
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
     - `prod` candidate image has a 9 character hash identifier from the
-        corresponding Git commit
+        corresponding Git commit or a user name and hash identifier
         - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
+        - and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-saggese-4rf74b83a`
 
     An image should look like:
 
