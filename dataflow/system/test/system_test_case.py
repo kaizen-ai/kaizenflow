@@ -315,10 +315,13 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
 
     # TODO(Grisha): there is some code that is common for `Time_ForecastSystem_with_DataFramePortfolio_TestCase1`
     # and `Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1` that we should factor out.
-    def _test_dataframe_portfolio1(
+    def _test_dataframe_portfolio_helper(
         self,
         system: dtfsyssyst.System,
     ) -> None:
+        """
+        Run a System with a DataframePortfolio.
+        """
         with hasynci.solipsism_context() as event_loop:
             #
             system.config["event_loop_object"] = event_loop
@@ -347,6 +350,13 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             )
             return actual
 
+    def _test1(self, system):
+        """
+        Run a system using the desired DataFramePortfolio and freeze the output.
+        """
+        actual = self._test_dataframe_portfolio_helper(system)
+        self.check_string(actual, fuzzy_match=True)
+
 
 # #############################################################################
 # Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
@@ -368,12 +378,12 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def _test_database_portfolio1(
+    def _test_database_portfolio_helper(
         self,
         system: dtfsyssyst.System,
     ) -> None:
         """
-        Run a system using the desired DB portfolio and freeze the output.
+        Run a System with a DatabasePortfolio.
         """
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
@@ -415,6 +425,14 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             )
             return actual
 
+    def _test1(self, system: dtfsyssyst.System) -> None:
+        """
+        Run a system using the desired DB portfolio and freeze the output.
+        """
+        actual = self._test_database_portfolio_helper(system)
+        self.check_string(actual, fuzzy_match=True)
+
+
 
 # #############################################################################################
 # Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
@@ -424,11 +442,18 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
     Time_ForecastSystem_with_DataFramePortfolio_TestCase1, 
     Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1,
 ):
-    def _test_vs_database_portfolio1(self, system1, system2) -> None:
-        actual = self._test_dataframe_portfolio1(system1)
-        expected = self._test_database_portfolio1(system2)
+    def _test_vs_database_portfolio1(
+        self, 
+        system_with_dataframe_portfolio: dtfsyssyst.System, 
+        system_with_database_portfolio:dtfsyssyst.System,
+    ) -> None:
+        """
+        Test that the outcome is the same when running a System with a 
+        DataFramePortfolio vs running one with a DatabasePortfolio. 
+        """
+        actual = self._test_dataframe_portfolio_helper(system_with_dataframe_portfolio)
+        expected = self._test_database_portfolio_helper(system_with_database_portfolio)
         self.assert_equal(actual, expected, fuzzy_match=True)
-
 
 
 # TODO(gp): Add a longer test with more assets once things are working.

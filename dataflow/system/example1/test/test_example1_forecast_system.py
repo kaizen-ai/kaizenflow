@@ -180,29 +180,13 @@ class Test_Example1_Time_ForecastSystem_with_DataFramePortfolio1(
 
     @pytest.mark.slow("~7 seconds.")
     def test1(self) -> None:
-        system = dtfseefosy.Example1_Time_ForecastSystem_with_DataFramePortfolio()
-        # Fill the config.
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
         #
-        system.config["market_data_config", "data"] = data
-        # Since we are reading from a df there is no delay.
-        system.config["market_data_config", "delay_in_secs"] = 0
-        system.config["market_data_config", "initial_replayed_delay"] = 5
+        system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+            data,
+            real_time_loop_time_out_in_secs
+        )
         #
-        system.config["research_pnl", "price_col"] = "vwap"
-        system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-        # TODO(Grisha): decide which column to use for `Example1`. Maybe even
-        # add a toy `prediction` stage.
-        system.config["research_pnl", "prediction_col"] = "feature1"
-        # Check the results.
-        system.config["market_data_config", "asset_ids"] = [101]
-        asset_ids = [101]
-        system.config[
-            "dag_runner_config", "sleep_interval_in_secs"
-        ] = 60 * 5
-        system.config[
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
-        ] = real_time_loop_time_out_in_secs
         self._test1(system)
 
 
@@ -451,6 +435,26 @@ class Test_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_Data
     See description in the parent class.
     """
     def test1(self) -> None:
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        system1 = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        system2 = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        self._test_vs_database_portfolio1(system1, system2)
+
+    def test2(self) -> None:
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
+        system1 = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        system2 = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, real_time_loop_time_out_in_secs
+        )
+        self._test_vs_database_portfolio1(system1, system2)
+
+    def test3(self) -> None:
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
         system1 = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, real_time_loop_time_out_in_secs
