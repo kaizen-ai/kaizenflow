@@ -12,12 +12,14 @@ from typing import Any, Dict, List, Optional
 import ccxt
 import pandas as pd
 
+import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
+import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
 
@@ -25,6 +27,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class CcxtBroker(ombroker.Broker):
+#class CcxtBroker(ombroker.DatabaseBroker):
     def __init__(
         self,
         exchange_id: str,
@@ -46,6 +49,7 @@ class CcxtBroker(ombroker.Broker):
          if "prod" launches with production API.
         :param contract_type: "spot" or "futures"
         """
+        super().__init__(*args, **kwargs)
         hdbg.dassert_in(mode, ["prod", "test"])
         hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._mode = mode
@@ -224,16 +228,16 @@ class CcxtBroker(ombroker.Broker):
         return exchange
 
 
-def get_CkBroker_prod_instance1(
+def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
     strategy_id: str,
     liveness: str,
     instance_type: str,
     order_duration_in_mins: int,
     order_extra_params: Optional[Dict[str, Any]],
-) -> oliegbro.EgBroker:
+) -> CcxtBroker:
     """
-    Build an `EgBroker` for production.
+    Build an `CcxtBroker` for production.
     """
     # TODO(gp): This is function of liveness.
     exchange_id = "binance"
@@ -255,10 +259,11 @@ def get_CkBroker_prod_instance1(
         market_data=market_data,
         #liveness=liveness,
         #instance_type=instance_type,
-        order_duration_in_mins=order_duration_in_mins,
-        order_extra_params=order_extra_params,
-        poll_kwargs=poll_kwargs,
-        timestamp_col=timestamp_col,
+        # TODO(gp): This param should be moved from Ig to the base class Broker.
+        #order_duration_in_mins=order_duration_in_mins,
+        #order_extra_params=order_extra_params,
+        #poll_kwargs=poll_kwargs,
+        #timestamp_col=timestamp_col,
     )
     return broker
 

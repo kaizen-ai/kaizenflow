@@ -15,13 +15,45 @@ import helpers.hdbg as hdbg
 import market_data as mdata
 import oms.portfolio as omportfo
 import oms.ck_credentials as omsckc
-
+import oms.ccxt_broker as occxbrok
 
 
 _LOG = logging.getLogger(__name__)
 
 
-class CkPortfolio(omportfo.DatabasePortfolio):
+# class CkPortfolio(omportfo.DatabasePortfolio):
+#     """
+#     Portfolio class connected to CK OMS.
+#
+#     Invariant: this class should have minimal state, but always query the DB.
+#     """
+#
+#     def __init__(
+#         self,
+#         *args: Any,
+#         table_name: str,
+#         **kwargs: Any,
+#     ):
+#         """
+#         Constructor.
+#         """
+#         # In `CkPortfolio` the name of the table depends on the type of account,
+#         # which depends on the Broker. Thus, we need to initialize the parent class
+#         # with Broker and then overwrite the name of the table.
+#         super().__init__(
+#             *args,
+#             table_name=table_name,
+#             **kwargs,
+#         )
+#         # TODO(gp): @all use oms.CURRENT_POSITIONS_TABLE_NAME
+#         #table_name = "current_positions"
+#         table_name = omsckc.get_core_db_view(
+#             "current_positions", liveness, instance_type
+#         )
+#         hdbg.dassert_eq(table_name, self._table_name)
+
+
+class CkPortfolio(omportfo.DataFramePortfolio):
     """
     Portfolio class connected to CK OMS.
 
@@ -42,15 +74,9 @@ class CkPortfolio(omportfo.DatabasePortfolio):
         # with Broker and then overwrite the name of the table.
         super().__init__(
             *args,
-            table_name=table_name,
             **kwargs,
         )
-        # TODO(gp): @all use oms.CURRENT_POSITIONS_TABLE_NAME
-        #table_name = "current_positions"
-        table_name = omsckc.get_core_db_view(
-            "current_positions", liveness, instance_type
-        )
-        hdbg.dassert_eq(table_name, self._table_name)
+
 
 
 def get_CcxtPortfolio_prod_instance(
@@ -68,7 +94,7 @@ def get_CcxtPortfolio_prod_instance(
     Build an CK Portfolio retrieving its state from the DB.
     """
     # Build CkBroker.
-    broker = olegbrex.get_CcxtBroker_prod_instance1(
+    broker = occxbrok.get_CcxtBroker_prod_instance1(
            market_data,
            strategy_id,
            liveness,
