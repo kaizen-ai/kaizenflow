@@ -137,7 +137,7 @@ def is_cmamp_prod() -> bool:
 
     This env var is set inside `devops/docker_build/prod.Dockerfile`.
     """
-    return os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False)
+    return bool(os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False))
 
 
 def _dassert_setup_consistency() -> None:
@@ -148,8 +148,9 @@ def _dassert_setup_consistency() -> None:
     is_dev_ck_ = is_dev_ck()
     is_inside_ci_ = is_inside_ci()
     is_mac_ = is_mac()
+    is_cmamp_prod_ = is_cmamp_prod()
     # One and only one set-up should be true.
-    sum_ = is_dev4_ + is_dev_ck_ + is_inside_ci_ + is_mac_
+    sum_ = is_dev4_ + is_dev_ck_ + is_inside_ci_ + is_mac_ + is_cmamp_prod_
     if sum_ != 1:
         msg = (
             "One and only one set-up config should be true: "
@@ -157,6 +158,7 @@ def _dassert_setup_consistency() -> None:
             + f"is_dev_ck={is_dev_ck_}"
             + f"is_inside={is_inside_ci_}"
             + f"is_mac={is_mac_}"
+            + f"is_cmamp_prod={is_cmamp_prod_}"
         )
         raise ValueError(msg)
 
