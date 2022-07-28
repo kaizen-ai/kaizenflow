@@ -2,6 +2,11 @@
 system_config
 ################################################################################
 dag_config:
+  filter_ath:
+    col_mode: replace_all
+    transformer_kwargs:
+      start_time: 09:30:00
+      end_time: 16:00:00
   resample:
     in_col_groups: [('close',), ('volume',), ('feature1',)]
     out_col_group: ()
@@ -51,23 +56,27 @@ backtest_config:
   lookback_as_pd_str: 10D
   start_timestamp_with_lookback: 2000-01-01 00:00:00+00:00
   end_timestamp: 2000-01-31 00:00:00+00:00
-dag_runner_builder: <bound method Example1_ForecastSystem._get_dag_runner of <dataflow.system.example1.example1_forecast_system.Example1_ForecastSystem object>>
 market_data_config:
   im_client_ctor: <function get_DataFrameImClient_example1>
   im_client_config: {}
   im_client: <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>
   asset_ids: [3303714233, 1467591036]
   asset_id_col_name: asset_id
-research_pnl:
-  price_col: vwap
-  volatility_col: vwap.ret_0.vol
-  prediction_col: vwap.ret_0.vol_adj.c
+research_forecast_evaluator_from_prices:
+  style: cross_sectional
+  init:
+    price_col: vwap
+    volatility_col: vwap.ret_0.vol
+    prediction_col: vwap.ret_0.vol_adj.c
+  kwargs:
+    target_gmv: 100000.0
+    liquidate_at_end_of_day: False
 market_object: <market_data.im_client_market_data.ImClientMarketData object>
 dag_object: dag=<dataflow.core.dag.DAG object>
   name=None
   mode=strict
-  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.HistoricalDataSource object>})]
-  edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
+  nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.HistoricalDataSource object>})]
+  edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
   save_node_io=
   profile_execution=False
   dst_dir=None
@@ -77,7 +86,7 @@ dag_runner_object: <dataflow.core.dag_runner.FitPredictDagRunner object>
 vwap.ret_0.vol_adj.c
 ################################################################################
                            1467591036  3303714233
-end_ts                                           
+end_ts
 2000-01-01 10:00:00-05:00       -0.98       -0.98
 2000-01-01 10:05:00-05:00        0.98        0.98
 2000-01-01 10:10:00-05:00       -0.98       -0.98

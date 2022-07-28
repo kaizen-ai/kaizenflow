@@ -199,9 +199,21 @@ def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
         "dag_runner_config", "real_time_loop_time_out_in_secs"
     ] = real_time_loop_time_out_in_secs
     # PnL config.
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "feature1"
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "feature1",
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
     return system
 
 
@@ -294,7 +306,19 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
         "dag_runner_config", "real_time_loop_time_out_in_secs"
     ] = real_time_loop_time_out_in_secs
     # PnL config.
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "feature1"
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "feature1",
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
     return system

@@ -78,8 +78,3 @@ end_datetime
                                pnl  gross_volume  net_volume       gmv       nmv
 end_datetime                                                                    
 2000-01-01 10:05:00-05:00  1292.25     198623.58   198623.58  98722.99  98722.99
-
-# pnl agreement with research pnl
-
-corr = 1.000
-corr_samples = 2

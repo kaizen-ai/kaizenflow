@@ -6,6 +6,7 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 
 import asyncio
 import logging
+import os
 from typing import Callable, List, Tuple, Union
 
 import pandas as pd
@@ -16,6 +17,7 @@ import dataflow.model as dtfmod
 import dataflow.system.system as dtfsyssyst
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
@@ -236,15 +238,11 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         result_bundle = dag_runner.fit()
         # Check.
         system_tester = SystemTester()
-        # TODO(gp): Factor out these params somehow.
-        price_col = system.config["research_pnl", "price_col"]
-        volatility_col = system.config["research_pnl", "volatility_col"]
-        prediction_col = system.config["research_pnl", "prediction_col"]
+        forecast_evaluator_from_prices_dict = system.config[
+            "research_forecast_evaluator_from_prices"
+        ].to_dict()
         signature, _ = system_tester.get_research_pnl_signature(
-            result_bundle,
-            price_col=price_col,
-            volatility_col=volatility_col,
-            prediction_col=prediction_col,
+            result_bundle, forecast_evaluator_from_prices_dict
         )
         self.check_string(signature, fuzzy_match=True, purify_text=True)
 
@@ -335,16 +333,14 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             system_tester = SystemTester()
             # Check output.
             portfolio = system.portfolio
-            price_col = system.config["research_pnl", "price_col"]
-            volatility_col = system.config["research_pnl", "volatility_col"]
-            prediction_col = system.config["research_pnl", "prediction_col"]
+            forecast_evaluator_from_prices_dict = system.config[
+                "research_forecast_evaluator_from_prices"
+            ].to_dict()
             actual = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
                 result_bundle,
-                price_col=price_col,
-                volatility_col=volatility_col,
-                prediction_col=prediction_col,
+                forecast_evaluator_from_prices_dict,
             )
             return actual
 
@@ -410,55 +406,52 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             system_tester = SystemTester()
             result_bundles = result_bundles[0]
             result_bundle = result_bundles[-1]
-            _LOG.debug("result_bundle=\n%s", result_bundle)
-            portfolio = system.portfolio
-            _LOG.debug("portfolio=\n%s", portfolio)
-            price_col = system.config["research_pnl", "price_col"]
-            volatility_col = system.config["research_pnl", "volatility_col"]
-            prediction_col = system.config["research_pnl", "prediction_col"]
-            actual: str = system_tester.compute_run_signature(
+            result_bundle.result_df = result_bundle.result_df.tail(40)
+            system_tester = SystemTester()
+            # Check output.
+            price_col = system.config[
+                "process_forecasts_config",
+                "forecast_evaluator_from_prices_dict",
+                "init",
+                "price_col",
+            ]
+            prediction_col = system.config[
+                "process_forecasts_config", "prediction_col"
+            ]
+            volatility_col = system.config[
+                "process_forecasts_config", "volatility_col"
+            ]
+            forecast_evaluator_from_prices_dict = {
+                "style": "cross_sectional",
+                "init": {
+                    "price_col": price_col,
+                    "volatility_col": volatility_col,
+                    "prediction_col": prediction_col,
+                },
+                "kwargs": {
+                    "target_gmv": 1e5,
+                    "liquidate_at_end_of_day": False,
+                }
+            }
+            txt_tmp = system_tester.compute_run_signature(
                 dag_runner,
                 portfolio,
                 result_bundle,
-                price_col=price_col,
-                volatility_col=volatility_col,
-                prediction_col=prediction_col,
+                forecast_evaluator_from_prices_dict,
             )
-            return actual
-
-    def _test1(self, system: dtfsyssyst.System) -> None:
-        """
-        Run a system using the desired DB portfolio and freeze the output.
-        """
-        actual = self._test_database_portfolio_helper(system)
-        self.check_string(actual, fuzzy_match=True)
-
-
-# #############################################################################
-# Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
-# #############################################################################
-
-
-class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1(
-    Time_ForecastSystem_with_DataFramePortfolio_TestCase1,
-    Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1,
-):
-    def _test1(
-        self,
-        system_with_dataframe_portfolio: dtfsyssyst.System,
-        system_with_database_portfolio: dtfsyssyst.System,
-    ) -> None:
-        """
-        Test that the outcome is the same when running a System with a
-        DataFramePortfolio vs running one with a DatabasePortfolio.
-        """
-        actual = self._test_dataframe_portfolio_helper(
-            system_with_dataframe_portfolio
-        )
-        expected = self._test_database_portfolio_helper(
-            system_with_database_portfolio
-        )
-        self.assert_equal(actual, expected, fuzzy_match=True)
+            txt.append(txt_tmp)
+            #
+            actual = "\n".join(txt)
+            # Remove the following line:
+            # ```
+            # db_connection_object: <connection object; dsn: 'user=aljsdalsd
+            #   password=xxx dbname=oms_postgres_db_local
+            #   host=cf-spm-dev4 port=12056', closed: 0>
+            # ```
+            actual = hunitest.filter_text("db_connection_object", actual)
+            actual = hunitest.filter_text("log_dir:", actual)
+            actual = hunitest.filter_text("trade_date:", actual)
+            self.check_string(actual, purify_text=True)
 
 
 # TODO(gp): Add a longer test with more assets once things are working.
@@ -499,17 +492,12 @@ class SystemTester:
         _LOG.debug("pnl=\n%s", pnl)
         return actual, pnl
 
-    # TODO(gp): @paul pass dictionaries instead of the values to mimic the
-    #  interface of `ProcessForecasts`.
     def compute_run_signature(
         self,
         dag_runner,
         portfolio,
         result_bundle,
-        *,
-        price_col: str,
-        volatility_col: str,
-        prediction_col: str,
+        forecast_evaluator_from_prices_dict,
     ) -> str:
         # Check output.
         actual = []
@@ -520,9 +508,7 @@ class SystemTester:
         actual.append(signature)
         signature, research_pnl = self.get_research_pnl_signature(
             result_bundle,
-            price_col=price_col,
-            volatility_col=volatility_col,
-            prediction_col=prediction_col,
+            forecast_evaluator_from_prices_dict,
         )
         actual.append(signature)
         if min(pnl.count(), research_pnl.count()) > 1:
@@ -543,49 +529,36 @@ class SystemTester:
         actual = "\n".join(map(str, actual))
         return actual
 
-    # TODO(gp): @paul pass dictionaries instead of the values to mimic the
-    #  interface of `ProcessForecasts`.
     def get_research_pnl_signature(
         self,
         result_bundle,
-        *,
-        price_col: str,
-        volatility_col: str,
-        prediction_col: str,
-        bulk_frac_to_remove: float = 0.0,
-        bulk_fill_method: str = "zero",
-        target_gmv: float = 1e5,
-        liquidate_at_end_of_day: bool = False,
+        forecast_evaluator_from_prices_dict,
     ) -> Tuple[str, pd.Series]:
         # TODO(gp): @all use actual.append(hprint.frame("system_config"))
         #  to separate the sections of the output.
         actual = ["\n# forecast_evaluator_from_prices signature=\n"]
+        hdbg.dassert(
+            forecast_evaluator_from_prices_dict,
+            "`forecast_evaluator_from_prices_dict` must be nontrivial",
+        )
         forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
-            price_col=price_col,
-            volatility_col=volatility_col,
-            prediction_col=prediction_col,
+            **forecast_evaluator_from_prices_dict["init"],
         )
         result_df = result_bundle.result_df
         _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
         #
         signature = forecast_evaluator.to_str(
             result_df,
-            bulk_frac_to_remove=bulk_frac_to_remove,
-            bulk_fill_method=bulk_fill_method,
-            liquidate_at_end_of_day=liquidate_at_end_of_day,
-            target_gmv=target_gmv,
+            style=forecast_evaluator_from_prices_dict["style"],
+            **forecast_evaluator_from_prices_dict["kwargs"],
         )
         _LOG.debug("signature=\n%s", signature)
         actual.append(signature)
         #
         _, _, _, _, stats = forecast_evaluator.compute_portfolio(
             result_df,
-            bulk_frac_to_remove=bulk_frac_to_remove,
-            bulk_fill_method=bulk_fill_method,
-            target_gmv=target_gmv,
-            liquidate_at_end_of_day=liquidate_at_end_of_day,
-            reindex_like_input=True,
-            burn_in_bars=0,
+            style=forecast_evaluator_from_prices_dict["style"],
+            **forecast_evaluator_from_prices_dict["kwargs"],
         )
         research_pnl = stats["pnl"]
         actual = "\n".join(map(str, actual))
