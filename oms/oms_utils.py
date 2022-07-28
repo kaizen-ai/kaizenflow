@@ -12,6 +12,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import oms.broker as ombroker
+import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
@@ -78,24 +79,52 @@ def _append_accounting_df(
 
 
 def flatten_ccxt_account(
-    broker: ombroker.Broker, dry_run: bool, *, balance_currency: str = "USDT"
+    broker: ombroker.Broker, dry_run: bool,
 ):
     """
     Sell all crypto-assets associated with the account.
     """
-    _ = broker, dry_run
     # Verify that the broker is in test mode.
     hdbg.dassert_eq(
         broker._mode,
         "test",
         msg="Account flattening is supported only for test accounts.",
     )
-    # Fetch balance.
-    balance = broker.get_total_balance()
-    # Select crypto assets.
-    assets = [asset for asset in balance.keys() if asset != balance_currency]
-    # Create orders.
-    orders = []
+    # Fetch all positions.
+    positions = broker._exchange.fetchPositions()
+    open_positions = []
+    for position in positions:
+        position_amount = float(position["info"]["positionAmt"])
+        if position_amount != 0:
+            open_positions.append(position)
+    if open_positions:
+        # Create orders.
+        orders = []
+        for position in open_positions:
+            type_ = "market"
+            curr_num_shares = float(position["info"]["positionAmt"])
+            diff_num_shares = -curr_num_shares
+            full_symbol = position["symbol"].replace("/", "_")
+            asset_id = broker._asset_id_to_symbol_mapping[full_symbol]
+            curr_timestamp = pd.Timestamp.now(tz="UTC")
+            start_timestamp = curr_timestamp
+            end_timestamp = pd.DateOffset(minutes=1)
+            order_id = 0
+            order = omorder.Order(
+                curr_timestamp,
+                asset_id,
+                type_,
+                start_timestamp,
+                end_timestamp,
+                curr_num_shares,
+                diff_num_shares,
+                order_id=order_id,
+            )
+            orders.append(order)
+    else:
+        _LOG.info("No open positions found.")
+    _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
+    return orders
 
     # Place orders.
     return balance
