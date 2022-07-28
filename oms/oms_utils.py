@@ -82,7 +82,7 @@ def flatten_ccxt_account(
     broker: ombroker.Broker, dry_run: bool,
 ):
     """
-    Sell all crypto-assets associated with the account.
+    Close all futures positions associated with the sandbox account.
     """
     # Verify that the broker is in test mode.
     hdbg.dassert_eq(
@@ -121,10 +121,7 @@ def flatten_ccxt_account(
                 order_id=order_id,
             )
             orders.append(order)
+        broker._submit_orders(orders, curr_timestamp, dry_run)
     else:
-        _LOG.info("No open positions found.")
+        _LOG.warning("No open positions found.")
     _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
-    return orders
-
-    # Place orders.
-    return balance
