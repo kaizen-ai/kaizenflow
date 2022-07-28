@@ -83,6 +83,7 @@ def git_clean(ctx, fix_perms_=False, dry_run=False):  # type: ignore
     Run `git status --ignored` to see what it's skipped.
     """
     hlitauti._report_task(txt=hprint.to_str("dry_run"))
+
     def _run_all_repos(cmd: str) -> None:
         hsystem.system(cmd, abort_on_error=False)
         # Clean submodules.
@@ -536,16 +537,18 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 
 
 @task
-def git_branch_next_name(ctx):  # type: ignore
+def git_branch_next_name(ctx, branch_name=None):  # type: ignore
     """
-    Return a name derived from the branch so that the branch doesn't exist.
+    Return a name derived from the current branch so that the branch doesn't exist.
+
+    :param branch_name: if `None` use the current branch name, otherwise specify it
 
     E.g., `AmpTask1903_Implemented_system_Portfolio` ->
-    `AmpTask1903_Implemented_system_Portfolio_3`
+        `AmpTask1903_Implemented_system_Portfolio_3`
     """
     hlitauti._report_task()
     _ = ctx
-    branch_next_name = hgit.get_branch_next_name(log_verb=logging.INFO)
+    branch_next_name = hgit.get_branch_next_name(curr_branch_name=branch_name, log_verb=logging.INFO)
     print(f"branch_next_name='{branch_next_name}'")
 
 
@@ -563,9 +566,9 @@ def git_branch_copy(ctx, new_branch_name="", skip_git_merge_master=False, use_pa
     cmd = "git clean -fd"
     hlitauti._run(ctx, cmd)
     #
+    curr_branch_name = hgit.get_branch_name()
+    hdbg.dassert_ne(curr_branch_name, "master")
     if not skip_git_merge_master:
-        curr_branch_name = hgit.get_branch_name()
-        hdbg.dassert_ne(curr_branch_name, "master")
         # Make sure `old_branch_name` doesn't need to have `master` merged.
         cmd = "invoke git_merge_master --ff-only"
         hlitauti._run(ctx, cmd)
@@ -607,7 +610,6 @@ def _git_diff_with_branch(
 ) -> None:
     """
     Diff files from this client against files in a branch using vimdiff.
-
     """
     _LOG.debug(
         hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
@@ -631,8 +633,13 @@ def _git_diff_with_branch(
         for f in files:
             if f == file_name:
                 files_tmp.append(f)
-        hdbg.dassert_eq(1, len(files_tmp), "Can't find file_name='%s' in\n%s",
-                        file_name, "\n".join(files))
+        hdbg.dassert_eq(
+            1,
+            len(files_tmp),
+            "Can't find file_name='%s' in\n%s",
+            file_name,
+            "\n".join(files),
+        )
         files = files_tmp
         print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
     if extensions:
@@ -652,7 +659,9 @@ def _git_diff_with_branch(
         _LOG.warning("Nothing to diff: exiting")
         return
     # Create the dir storing all the files to compare.
-    dst_dir = f"./tmp.{tag}"
+    root_dir = hgit.get_repo_full_name_from_client(super_module=True)
+    # TODO(gp): We should get a temp dir.
+    dst_dir = f"/tmp/{root_dir}/tmp.{tag}"
     hio.create_dir(dst_dir, incremental=False)
     # Retrieve the original file and create the diff command.
     script_txt = []
@@ -730,8 +739,15 @@ def git_branch_diff_with_base(  # type: ignore
     #
     tag = "base"
     _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, file_name,
-        dry_run
+        ctx,
+        hash_,
+        tag,
+        dir_name,
+        diff_type,
+        subdir,
+        extensions,
+        file_name,
+        dry_run,
     )
 
 
@@ -753,8 +769,15 @@ def git_branch_diff_with_master(  # type: ignore
     hash_ = "origin/master"
     tag = "origin_master"
     _git_diff_with_branch(
-        ctx, hash_, tag, dir_name, diff_type, subdir, extensions, file_name,
-        dry_run
+        ctx,
+        hash_,
+        tag,
+        dir_name,
+        diff_type,
+        subdir,
+        extensions,
+        file_name,
+        dry_run,
     )
 
 

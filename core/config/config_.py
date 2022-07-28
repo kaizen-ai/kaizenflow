@@ -12,6 +12,7 @@ import collections
 import copy
 import logging
 import os
+import pprint
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -426,6 +427,9 @@ class Config:
                 else:
                     # There are more keys to process but we have reached the leaves
                     # of the config, then we assert.
+                    subconfig_as_str = pprint.pformat(subconfig)
+                    msg = f"\ntail_key='{tail_key}'\nnot in\n'{subconfig_as_str}'"
+                    _LOG.error(msg)
                     raise KeyError(f"tail_key='{tail_key}' not in '{subconfig}'")
             return ret
         # Base case: key is a string, config is a dict.
