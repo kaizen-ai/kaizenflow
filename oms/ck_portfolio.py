@@ -78,7 +78,6 @@ class CkPortfolio(omportfo.DataFramePortfolio):
         )
 
 
-
 def get_CcxtPortfolio_prod_instance(
     strategy_id: str,
     liveness: str,
@@ -120,6 +119,7 @@ def get_CcxtPortfolio_prod_instance(
     table_name = omsckc.get_core_db_view(
         "current_positions", liveness, instance_type
     )
+    initial_cash = 1e6
     portfolio = CkPortfolio(
         broker,
         mark_to_market_col,
@@ -127,6 +127,6 @@ def get_CcxtPortfolio_prod_instance(
         initial_holdings=initial_holdings,
         retrieve_initial_holdings_from_db=retrieve_initial_holdings_from_db,
         table_name=table_name,
+        initial_cash=initial_cash
     )
     return portfolio
-
