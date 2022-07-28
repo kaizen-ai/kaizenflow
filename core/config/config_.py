@@ -91,8 +91,9 @@ class Config:
                 f"Trying to set key='{key}' to val='{val}' in "
                 f"read-only config\n'{str(self)}'"
             )
+        # TODO(gp): Enable this.
         # if isinstance(val, dict):
-        #     raise ValueError("val='%s' is dict")
+        #     raise ValueError(f"val='{val}' is dict")
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
