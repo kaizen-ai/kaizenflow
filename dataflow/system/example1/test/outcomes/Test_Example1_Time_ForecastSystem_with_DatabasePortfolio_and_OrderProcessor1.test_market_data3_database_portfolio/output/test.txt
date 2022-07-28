@@ -48,7 +48,7 @@ market_data_config:
   delay_in_secs: 0
   initial_replayed_delay: 5
   asset_ids: [101]
-  data: 
+  data:
     index=[2000-01-01 09:31:00-05:00, 2000-01-01 11:30:00-05:00]
     columns=start_datetime,end_datetime,timestamp_db,close,asset_id,volume,feature1
     shape=(120, 7)
@@ -75,7 +75,7 @@ research_forecast_evaluator_from_prices:
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_object: <market_data.replayed_market_data.ReplayedMarketData object>
 portfolio_object: # historical holdings=
-asset_id                      101      -1  
+asset_id                      101      -1
 2000-01-01 09:35:01-05:00    0.00  1.00e+06
 2000-01-01 09:40:01-05:00 -994.04  1.10e+06
 2000-01-01 09:45:01-05:00  991.74  8.98e+05
@@ -100,7 +100,7 @@ asset_id                      101      -1
 2000-01-01 11:20:01-05:00 -980.39  1.10e+06
 2000-01-01 11:25:01-05:00  991.74  8.97e+05
 # historical holdings marked to market=
-asset_id                         101      -1  
+asset_id                         101      -1
 2000-01-01 09:35:01-05:00       0.00  1.00e+06
 2000-01-01 09:40:01-05:00 -100231.94  1.10e+06
 2000-01-01 09:45:01-05:00  101157.02  8.98e+05
@@ -203,7 +203,7 @@ process_forecasts_config:
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio: # historical holdings=
-  asset_id                      101      -1  
+  asset_id                      101      -1
   2000-01-01 09:35:01-05:00    0.00  1.00e+06
   2000-01-01 09:40:01-05:00 -994.04  1.10e+06
   2000-01-01 09:45:01-05:00  991.74  8.98e+05
@@ -228,7 +228,7 @@ process_forecasts_config:
   2000-01-01 11:20:01-05:00 -980.39  1.10e+06
   2000-01-01 11:25:01-05:00  991.74  8.97e+05
   # historical holdings marked to market=
-  asset_id                         101      -1  
+  asset_id                         101      -1
   2000-01-01 09:35:01-05:00       0.00  1.00e+06
   2000-01-01 09:40:01-05:00 -100231.94  1.10e+06
   2000-01-01 09:45:01-05:00  101157.02  8.98e+05
@@ -347,7 +347,7 @@ process_forecasts_config:
 dag_object: dag=<dataflow.core.dag.DAG object>
   name=None
   mode=strict
-  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x7f7140afa970>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x7f7140afa220>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x7f7140afa4f0>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x7f7140afae80>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x7f7140afa550>}), ('load_prices', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object at 0x7f715c731310>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecasts object>})]
+  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('load_prices', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object at 0x>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecasts object>})]
   edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('load_prices', 'resample', {'df_in': 'df_out'})]
   save_node_io=
   profile_execution=False
@@ -387,7 +387,7 @@ num_it=23 current_time='2000-01-01 11:25:00-05:00'
 # portfolio signature=
 
 # historical holdings=
-asset_id                      101      -1  
+asset_id                      101      -1
 2000-01-01 09:35:01-05:00    0.00  1.00e+06
 2000-01-01 09:40:01-05:00 -994.04  1.10e+06
 2000-01-01 09:45:01-05:00  991.74  8.98e+05
@@ -412,7 +412,7 @@ asset_id                      101      -1
 2000-01-01 11:20:01-05:00 -980.39  1.10e+06
 2000-01-01 11:25:01-05:00  991.74  8.97e+05
 # historical holdings marked to market=
-asset_id                         101      -1  
+asset_id                         101      -1
 2000-01-01 09:35:01-05:00       0.00  1.00e+06
 2000-01-01 09:40:01-05:00 -100231.94  1.10e+06
 2000-01-01 09:45:01-05:00  101157.02  8.98e+05
@@ -515,7 +515,7 @@ asset_id                       101
 
 # holdings=
                               101
-end_datetime                     
+end_datetime
 2000-01-01 10:05:00-05:00  980.39
 2000-01-01 10:10:00-05:00 -994.04
 2000-01-01 10:15:00-05:00  990.10
@@ -535,7 +535,7 @@ end_datetime
 2000-01-01 11:25:00-05:00  994.04
 # holdings marked to market=
                                  101
-end_datetime                        
+end_datetime
 2000-01-01 10:05:00-05:00   98627.45
 2000-01-01 10:10:00-05:00 -100397.61
 2000-01-01 10:15:00-05:00  100990.10
@@ -555,7 +555,7 @@ end_datetime
 2000-01-01 11:25:00-05:00  100149.11
 # flows=
                                  101
-end_datetime                        
+end_datetime
 2000-01-01 10:05:00-05:00 -198231.41
 2000-01-01 10:10:00-05:00  199417.22
 2000-01-01 10:15:00-05:00 -202381.75
@@ -575,7 +575,7 @@ end_datetime
 2000-01-01 11:25:00-05:00 -198923.62
 # pnl=
                                101
-end_datetime                      
+end_datetime
 2000-01-01 10:05:00-05:00  1386.14
 2000-01-01 10:10:00-05:00   392.16
 2000-01-01 10:15:00-05:00  -994.04
@@ -595,7 +595,7 @@ end_datetime
 2000-01-01 11:25:00-05:00  -147.06
 # statistics=
                                pnl  gross_volume  net_volume        gmv        nmv
-end_datetime                                                                      
+end_datetime
 2000-01-01 10:05:00-05:00  1386.14     198231.41   198231.41   98627.45   98627.45
 2000-01-01 10:10:00-05:00   392.16     199417.22  -199417.22  100397.61 -100397.61
 2000-01-01 10:15:00-05:00  -994.04     202381.75   202381.75  100990.10  100990.10
