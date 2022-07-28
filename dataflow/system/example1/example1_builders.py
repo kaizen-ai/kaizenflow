@@ -184,7 +184,9 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
 # #############################################################################
 
 
-def get_Example1_DatabasePortfolio_example1(system: dtfsyssyst.System) -> oms.Portfolio:
+def get_Example1_DatabasePortfolio_example1(
+    system: dtfsyssyst.System,
+) -> oms.Portfolio:
     event_loop = system.config["event_loop_object"]
     db_connection = system.config["db_connection_object"]
     market_data = system.market_data
