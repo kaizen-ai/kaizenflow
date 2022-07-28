@@ -2,11 +2,6 @@
 system_config
 ################################################################################
 dag_config:
-  filter_ath:
-    col_mode: replace_all
-    transformer_kwargs:
-      start_time: 09:30:00
-      end_time: 16:00:00
   resample:
     in_col_groups: [('close',), ('volume',), ('feature1',)]
     out_col_group: ()
@@ -50,7 +45,7 @@ dag_builder_class: Example1_DagBuilder
 system_class: Example1_Time_ForecastSystem
 market_data_config:
   delay_in_secs: 0
-  data: 
+  data:
     index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:10:00-05:00]
     columns=start_datetime,end_datetime,timestamp_db,close,asset_id,volume,feature1
     shape=(40, 7)
@@ -63,6 +58,7 @@ market_data_config:
     2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
     2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
   initial_replayed_delay: 5
+  history_lookback: 0 days 00:20:00
 dag_runner_config:
   real_time_loop_time_out_in_secs: 900
   sleep_interval_in_secs: 300
@@ -71,8 +67,8 @@ market_object: <market_data.replayed_market_data.ReplayedMarketData object>
 dag_object: dag=<dataflow.core.dag.DAG object>
   name=None
   mode=strict
-  nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>})]
-  edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
+  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>})]
+  edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
   save_node_io=
   profile_execution=False
   dst_dir=None
