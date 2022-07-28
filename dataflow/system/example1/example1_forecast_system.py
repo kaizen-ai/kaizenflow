@@ -152,7 +152,6 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
         dag = dtfsexexbu.get_Example1_RealtimeDag_example3(self)
         return dag
 
-    # TODO(gp): Extract this code in Example1_builders.py
     def _get_portfolio(self) -> oms.Portfolio:
         event_loop = self.config["event_loop_object"]
         market_data = self.market_data
@@ -214,6 +213,11 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         dag = dtfsexexbu.get_Example1_RealtimeDag_example3(self)
         return dag
 
+    def _get_portfolio(
+        self,
+    ) -> oms.Portfolio:
+        portfolio = dtfsexexbu.get_Example1_DatabasePortfolio_example1(self)
+        return portfolio
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
         dag_runner = dtfssybuut.get_dag_runner_instance1(self)
