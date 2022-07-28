@@ -429,7 +429,7 @@ def get_dag_runner_instance1(
     market_data = system.market_data
     hdbg.dassert_isinstance(market_data, mdata.MarketData)
     fit_at_beginning = system.config.get(
-        ("dag_runner_config", "fit_at_beginning"), False
+        ("dag_runner_config", "fit_at_beginning"), True
     )
     get_wall_clock_time = market_data.get_wall_clock_time
     # TODO(gp): This should become a builder method injecting values inside the

@@ -210,10 +210,12 @@ def get_process_forecasts_dict_example2(
     """
     Used by E8d.
     """
-    prediction_col = "prediction"
+    #prediction_col = "prediction"
+    prediction_col = "vwap.ret_0.vol_adj_2_hat"
     volatility_col = "vwap.ret_0.vol"
     price_col = "vwap"
-    spread_col = "pct_bar_spread"
+    #spread_col = "pct_bar_spread"
+    spread_col = None
     style = "cross_sectional"
     #
     compute_target_positions_kwargs = {

@@ -325,18 +325,23 @@ def get_RealTimeImClientMarketData_example1(
     start_time_col_name = "start_timestamp"
     end_time_col_name = "end_timestamp"
     columns = None
-    # Build a `ReplayedMarketData`.
-    tz = "ET"
-    # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
-    initial_replayed_dt = pd.Timestamp(
-        "2022-07-21 09:30:00-04:00", tz="America/New_York"
-    )
-    speed_up_factor = 1.0
-    get_wall_clock_time = creatime.get_replayed_wall_clock_time(
-        tz,
-        initial_replayed_dt,
-        event_loop=event_loop,
-        speed_up_factor=speed_up_factor,
+    # # Build a `ReplayedMarketData`.
+    # tz = "ET"
+    # # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
+    # initial_replayed_dt = pd.Timestamp(
+    #     "2022-07-21 09:30:00-04:00", tz="America/New_York"
+    # )
+    # speed_up_factor = 1.0
+    # get_wall_clock_time = creatime.get_replayed_wall_clock_time(
+    #     tz,
+    #     initial_replayed_dt,
+    #     event_loop=event_loop,
+    #     speed_up_factor=speed_up_factor,
+    # )
+    # We use a real time clock since there is RT market data.
+    event_loop = None
+    get_wall_clock_time = lambda: hdateti.get_current_time(
+        tz="ET", event_loop=event_loop
     )
     # Build a `ReplayedMarketData`.
     market_data = mdrtmada.RealTimeMarketData2(
