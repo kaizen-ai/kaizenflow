@@ -3,7 +3,7 @@ Run a backtest for a DAG model.
 
 Import as:
 
-import dataflow.model.run_prod_model_flow as dtfmrpmofl
+import dataflow.backtest.backtest_test_case as dtfbrpmofl
 """
 
 import abc
@@ -32,21 +32,20 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
     """
 
     @staticmethod
-    def get_configs_signature(config_builder: str) -> str:
+    def get_config_list_signature(config_builder: str) -> str:
         """
         Compute a test signature from a `config_builder`.
         """
         # Create the configs.
-        configs = cconfig.get_configs_from_builder(config_builder)
+        config_list = cconfig.get_config_list_from_builder(config_builder)
         # Create a signature.
-        txt = cconfig.configs_to_str(configs)
-        return txt
+        return str(config_list)
 
     @staticmethod
     def get_dir_signature(dir_name: str) -> str:
         include_file_content = False
         remove_dir_name = True
-        txt = hunitest.get_dir_signature(
+        txt: str = hunitest.get_dir_signature(
             dir_name, include_file_content, remove_dir_name=remove_dir_name
         )
         return txt
@@ -60,15 +59,15 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         dst_dir: str,
     ) -> None:
         """
-        Invoke run_experiment.py on a config.
+        Invoke run_config_list.py on a config.
         """
         # Execute a command line like:
         # ```
-        # > /app/amp/core/dataflow_model/run_experiment.py \
+        # > /app/amp/core/dataflow/backtest/run_config_list.py \
         #       --experiment_builder \
-        #           amp.dataflow_model.master_experiment.run_experiment \
+        #           amp.dataflow.backtest.master_backtest.run_experiment \
         #       --config_builder \
-        #           'dataflow....build_model_configs("kibot_v1-top1.5T")' \
+        #           'dataflow....build_model_config_list("kibot_v1-top1.5T")' \
         #       --dst_dir .../run_model/oos_experiment.RH1E.kibot_v1-top1.5T \
         #       --clean_dst_dir \
         #       --no_confirm \
@@ -86,22 +85,22 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         opts = " ".join(opts)
         #
         amp_dir = hgit.get_amp_abs_path()
-        exec_filename = os.path.join(amp_dir, "dataflow/model/run_experiment.py")
+        exec_filename = os.path.join(amp_dir, "dataflow/backtest/run_config_list.py")
         hdbg.dassert_path_exists(exec_filename)
         #
         cmd = []
         cmd.append(exec_filename)
         # Experiment builder.
-        # E.g., "amp.dataflow_model.master_experiment.run_experiment"
+        # E.g., "amp.dataflow.backtest.master_backtest.run_experiment"
         cmd.append(f"--experiment_builder {experiment_builder}")
         # Config builder.
         # E.g.,
-        # builder = f'build_model_configs("{backtest_config}", 1)'
-        # config_builder = f'dataflow_lemonade.RH1E.RH1E_configs.{builder}'
+        # builder = f'build_model_config_list("{backtest_config}", 1)'
+        # config_builder = f'dataflow_lemonade.RH1E.RH1E_config_list.{builder}'
         cmd.append(f"--config_builder '{config_builder}'")
         #
         cmd.append(f"--dst_dir {dst_dir}")
-        cmd.append(f"--aws_profile am")
+        cmd.append("--aws_profile am")
         if _LOG.getEffectiveLevel() >= logging.DEBUG:
             cmd.append("-v DEBUG")
         cmd.append(opts)
@@ -188,9 +187,10 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         """
         scratch_dir = self.get_scratch_space()
         # 1) Check the configs against frozen representation.
-        configs_signature = self.get_configs_signature(config_builder)
+        configs_signature = self.get_config_list_signature(config_builder)
         tag = "configs_signature"
-        self.check_string(configs_signature, fuzzy_match=True, tag=tag)
+        self.check_string(configs_signature, fuzzy_match=True, purify_text=True,
+                tag=tag)
         # 2) Run the model using tiled backtest.
         run_model_dir = os.path.join(scratch_dir, "run_model")
         if hunitest.get_incremental_tests() and os.path.exists(run_model_dir):
@@ -210,11 +210,15 @@ class TiledBacktest_TestCase(Backtest_TestCase):
         output_signature = self.get_dir_signature(run_model_dir)
         # Remove lines like 'log.20220304-200306.txt'.
         output_signature = hprint.filter_text(r"log\..*\.txt", output_signature)
-        self.check_string(output_signature, fuzzy_match=True, tag=tag)
+        self.check_string(
+            output_signature, fuzzy_match=True, purify_text=True, tag=tag
+        )
         # 4) Check that the output is a valid tiled results.
         tile_output_dir = os.path.join(run_model_dir, "tiled_results")
         tile_output_signature = self.compute_tile_output_signature(
             tile_output_dir
         )
         tag = "tile_output_signature"
-        self.check_string(tile_output_signature, fuzzy_match=True, tag=tag)
+        self.check_string(
+            tile_output_signature, fuzzy_match=True, purify_text=True, tag=tag
+        )

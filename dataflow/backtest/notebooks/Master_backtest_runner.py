@@ -16,7 +16,7 @@
 # # Description
 #
 # This notebook is the entry point for `run_notebook.py`
-# It is conceptually equivalent to `core/dataflow_model/master_experiment.py` for the `run_experiment.py` flow
+# It is conceptually equivalent to `core/dataflow/backtest/master_backtest.py` for the `run_config_list.py` flow
 #
 # This notebook:
 # - get a config from the environment
@@ -62,11 +62,15 @@ cdataf.draw(dag_runner.dag)
 # %%
 if "set_fit_intervals" in config["experiment_config"].to_dict():
     dag_runner.set_fit_intervals(
-        **config["experiment_config", "set_fit_intervals", "func_kwargs"].to_dict()
+        **config[
+            "experiment_config", "set_fit_intervals", "func_kwargs"
+        ].to_dict()
     )
 if "set_predict_intervals" in config["experiment_config"].to_dict():
     dag_runner.set_predict_intervals(
-        **config["experiment_config", "set_predict_intervals", "func_kwargs"].to_dict()
+        **config[
+            "experiment_config", "set_predict_intervals", "func_kwargs"
+        ].to_dict()
     )
 
 # %%
@@ -76,7 +80,10 @@ fit_result_bundle = dag_runner.fit()
 payload = cconfig.get_config_from_nested_dict({"config": config})
 
 # %%
-if "run_oos" in config["experiment_config"].to_dict().keys() and config["experiment_config"]:
+if (
+    "run_oos" in config["experiment_config"].to_dict().keys()
+    and config["experiment_config"]
+):
     result_bundle = dag_runner.predict()
     payload["fit_result_bundle"] = fit_result_bundle.to_config()
 else:
