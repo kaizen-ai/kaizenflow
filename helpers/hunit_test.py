@@ -775,6 +775,7 @@ def assert_equal(
     check_string: bool = False,
     dedent: bool = False,
     purify_text: bool = False,
+    purify_expected_text: bool = False,
     fuzzy_match: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
@@ -810,6 +811,10 @@ def assert_equal(
         _LOG.debug("# Purify actual")
         actual = purify_txt_from_client(actual)
         _LOG.debug("act='\n%s'", actual)
+        if purify_expected_text:
+            _LOG.debug("# Purify expected")
+            expected = purify_txt_from_client(expected)
+            _LOG.debug("exp='\n%s'", expected)
     # Ensure that there is a single `\n` at the end of the strings.
     actual = actual.rstrip("\n") + "\n"
     expected = expected.rstrip("\n") + "\n"
@@ -1140,6 +1145,7 @@ class TestCase(unittest.TestCase):
         *,
         dedent: bool = False,
         purify_text: bool = False,
+        purify_expected_text: bool = False,
         fuzzy_match: bool = False,
         abort_on_error: bool = True,
         dst_dir: str = ".",
@@ -1183,6 +1189,7 @@ class TestCase(unittest.TestCase):
             check_string=False,
             dedent=dedent,
             purify_text=purify_text,
+            purify_expected_text=purify_expected_text,
             fuzzy_match=fuzzy_match,
             abort_on_error=abort_on_error,
             dst_dir=dst_dir,

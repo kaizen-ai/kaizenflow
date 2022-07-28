@@ -73,7 +73,7 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     system.config[
         "market_data_config", "im_client_ctor"
     ] = icdc.get_DataFrameImClient_example1
-    system.config["market_data_config", "im_client_config"] = {}
+    system.config["market_data_config", "im_client_config"] = cconfig.Config()
     # Set the research PNL parameters.
     forecast_evaluator_from_prices_dict = {
         "style": "cross_sectional",

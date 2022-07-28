@@ -1,3 +1,202 @@
+################################################################################
+system_config
+################################################################################
+dag_config:
+  resample:
+    in_col_groups: [('close',), ('volume',), ('feature1',)]
+    out_col_group: ()
+    transformer_kwargs:
+      rule: 5T
+      resampling_groups: [({'close': 'close'}, 'last', {}), ({'close': 'twap', 'feature1': 'feature1'}, 'mean', {})]
+      vwap_groups: [('close', 'volume', 'vwap')]
+    reindex_like_input: False
+    join_output_with_input: False
+  compute_ret_0:
+    in_col_groups: [('close',), ('vwap',), ('twap',)]
+    out_col_group: ()
+    transformer_kwargs:
+      mode: log_rets
+    col_mapping:
+      close: close.ret_0
+      vwap: vwap.ret_0
+      twap: twap.ret_0
+  compute_vol:
+    in_col_group: ('vwap.ret_0',)
+    out_col_group: ('vwap.ret_0.vol',)
+    drop_nans: True
+    permitted_exceptions: (<class 'ValueError'>,)
+  adjust_rets:
+    in_col_groups: [('vwap.ret_0',), ('vwap.ret_0.vol',)]
+    out_col_group: ()
+    transformer_kwargs:
+      term1_col: vwap.ret_0
+      term2_col: vwap.ret_0.vol
+      out_col: vwap.ret_0.vol_adj
+      term2_delay: 2
+      operation: div
+    drop_nans: True
+  compress_rets:
+    in_col_groups: [('vwap.ret_0.vol_adj',)]
+    out_col_group: ()
+    col_mapping:
+      vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
+dag_builder_object: nid_prefix=
+dag_builder_class: Example1_DagBuilder
+system_class: Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+market_data_config:
+  asset_id_col_name: asset_id
+  delay_in_secs: 0
+  initial_replayed_delay: 5
+  asset_ids: [101]
+  data: 
+    index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:10:00-05:00]
+    columns=start_datetime,end_datetime,timestamp_db,close,asset_id,volume,feature1
+    shape=(40, 7)
+                                         start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+    2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100       1.0
+    2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100       1.0
+    2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100       1.0
+    ...
+    2000-01-01 10:08:00-05:00 2000-01-01 10:07:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:08:00-05:00  100.0       101     100      -1.0
+    2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
+    2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
+dag_runner_config:
+  sleep_interval_in_secs: 300
+  real_time_loop_time_out_in_secs: 2100
+research_forecast_evaluator_from_prices:
+  style: cross_sectional
+  init:
+    price_col: vwap
+    volatility_col: vwap.ret_0.vol
+    prediction_col: feature1
+  kwargs:
+    target_gmv: 100000.0
+    liquidate_at_end_of_day: False
+event_loop_object: <_EventLoop running=False closed=True debug=False>
+market_object: <market_data.replayed_market_data.ReplayedMarketData object>
+portfolio_object: # historical holdings=
+asset_id                      101      -1  
+2000-01-01 09:35:01-05:00    0.00  1.00e+06
+2000-01-01 09:40:01-05:00  990.10  9.01e+05
+2000-01-01 09:45:01-05:00 -998.34  1.10e+06
+2000-01-01 09:50:01-05:00  991.74  9.03e+05
+2000-01-01 09:55:01-05:00 -998.34  1.10e+06
+2000-01-01 10:00:01-05:00  991.74  9.05e+05
+2000-01-01 10:05:01-05:00 -998.34  1.11e+06
+# historical holdings marked to market=
+asset_id                         101      -1  
+2000-01-01 09:35:01-05:00       0.00  1.00e+06
+2000-01-01 09:40:01-05:00   99174.92  9.01e+05
+2000-01-01 09:45:01-05:00 -100665.56  1.10e+06
+2000-01-01 09:50:01-05:00   99338.84  9.03e+05
+2000-01-01 09:55:01-05:00 -100665.56  1.10e+06
+2000-01-01 10:00:01-05:00   99338.84  9.05e+05
+2000-01-01 10:05:01-05:00 -100665.56  1.11e+06
+# historical flows=
+asset_id                         101
+2000-01-01 09:40:01-05:00  -99009.90
+2000-01-01 09:45:01-05:00  200831.95
+2000-01-01 09:50:01-05:00 -199007.16
+2000-01-01 09:55:01-05:00  200997.24
+2000-01-01 10:00:01-05:00 -199007.16
+2000-01-01 10:05:01-05:00  200997.24
+# historical pnl=
+asset_id                      101
+2000-01-01 09:35:01-05:00     NaN
+2000-01-01 09:40:01-05:00  165.02
+2000-01-01 09:45:01-05:00  991.47
+2000-01-01 09:50:01-05:00  997.24
+2000-01-01 09:55:01-05:00  992.84
+2000-01-01 10:00:01-05:00  997.24
+2000-01-01 10:05:01-05:00  992.84
+# historical statistics=
+                              pnl  gross_volume  net_volume        gmv        nmv      cash  net_wealth  leverage
+2000-01-01 09:35:01-05:00     NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
+2000-01-01 09:40:01-05:00  165.02      99009.90    99009.90   99174.92   99174.92  9.01e+05    1.00e+06       0.1
+2000-01-01 09:45:01-05:00  991.47     200831.95  -200831.95  100665.56 -100665.56  1.10e+06    1.00e+06       0.1
+2000-01-01 09:50:01-05:00  997.24     199007.16   199007.16   99338.84   99338.84  9.03e+05    1.00e+06       0.1
+2000-01-01 09:55:01-05:00  992.84     200997.24  -200997.24  100665.56 -100665.56  1.10e+06    1.00e+06       0.1
+2000-01-01 10:00:01-05:00  997.24     199007.16   199007.16   99338.84   99338.84  9.05e+05    1.00e+06       0.1
+2000-01-01 10:05:01-05:00  992.84     200997.24  -200997.24  100665.56 -100665.56  1.11e+06    1.01e+06       0.1
+process_forecasts_config:
+  prediction_col: feature1
+  volatility_col: vwap.ret_0.vol
+  spread_col: None
+  portfolio: # historical holdings=
+  asset_id                      101      -1  
+  2000-01-01 09:35:01-05:00    0.00  1.00e+06
+  2000-01-01 09:40:01-05:00  990.10  9.01e+05
+  2000-01-01 09:45:01-05:00 -998.34  1.10e+06
+  2000-01-01 09:50:01-05:00  991.74  9.03e+05
+  2000-01-01 09:55:01-05:00 -998.34  1.10e+06
+  2000-01-01 10:00:01-05:00  991.74  9.05e+05
+  2000-01-01 10:05:01-05:00 -998.34  1.11e+06
+  # historical holdings marked to market=
+  asset_id                         101      -1  
+  2000-01-01 09:35:01-05:00       0.00  1.00e+06
+  2000-01-01 09:40:01-05:00   99174.92  9.01e+05
+  2000-01-01 09:45:01-05:00 -100665.56  1.10e+06
+  2000-01-01 09:50:01-05:00   99338.84  9.03e+05
+  2000-01-01 09:55:01-05:00 -100665.56  1.10e+06
+  2000-01-01 10:00:01-05:00   99338.84  9.05e+05
+  2000-01-01 10:05:01-05:00 -100665.56  1.11e+06
+  # historical flows=
+  asset_id                         101
+  2000-01-01 09:40:01-05:00  -99009.90
+  2000-01-01 09:45:01-05:00  200831.95
+  2000-01-01 09:50:01-05:00 -199007.16
+  2000-01-01 09:55:01-05:00  200997.24
+  2000-01-01 10:00:01-05:00 -199007.16
+  2000-01-01 10:05:01-05:00  200997.24
+  # historical pnl=
+  asset_id                      101
+  2000-01-01 09:35:01-05:00     NaN
+  2000-01-01 09:40:01-05:00  165.02
+  2000-01-01 09:45:01-05:00  991.47
+  2000-01-01 09:50:01-05:00  997.24
+  2000-01-01 09:55:01-05:00  992.84
+  2000-01-01 10:00:01-05:00  997.24
+  2000-01-01 10:05:01-05:00  992.84
+  # historical statistics=
+                                pnl  gross_volume  net_volume        gmv        nmv      cash  net_wealth  leverage
+  2000-01-01 09:35:01-05:00     NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
+  2000-01-01 09:40:01-05:00  165.02      99009.90    99009.90   99174.92   99174.92  9.01e+05    1.00e+06       0.1
+  2000-01-01 09:45:01-05:00  991.47     200831.95  -200831.95  100665.56 -100665.56  1.10e+06    1.00e+06       0.1
+  2000-01-01 09:50:01-05:00  997.24     199007.16   199007.16   99338.84   99338.84  9.03e+05    1.00e+06       0.1
+  2000-01-01 09:55:01-05:00  992.84     200997.24  -200997.24  100665.56 -100665.56  1.10e+06    1.00e+06       0.1
+  2000-01-01 10:00:01-05:00  997.24     199007.16   199007.16   99338.84   99338.84  9.05e+05    1.00e+06       0.1
+  2000-01-01 10:05:01-05:00  992.84     200997.24  -200997.24  100665.56 -100665.56  1.11e+06    1.01e+06       0.1
+  process_forecasts_config:
+    order_config:
+      order_type: price@twap
+      order_duration_in_mins: 5
+    optimizer_config:
+      backend: pomo
+      params:
+        style: cross_sectional
+        kwargs:
+          bulk_frac_to_remove: 0.0
+          bulk_fill_method: zero
+          target_gmv: 100000.0
+    ath_start_time: 09:30:00
+    trading_start_time: 09:30:00
+    ath_end_time: 16:40:00
+    trading_end_time: 16:40:00
+    execution_mode: real_time
+  forecast_evaluator_from_prices_dict: None
+dag_object: dag=<dataflow.core.dag.DAG object>
+  name=None
+  mode=strict
+  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x7f715c8cf3d0>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x7f715c8cf820>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x7f715c8cfc70>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x7f715c8cf460>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x7f715c8cf250>}), ('load_prices', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object at 0x7f715c8cfca0>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecasts object>})]
+  edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('load_prices', 'resample', {'df_in': 'df_out'})]
+  save_node_io=
+  profile_execution=False
+  dst_dir=None
+  force_free_nodes=False
+dag_runner_object: <dataflow.system.real_time_dag_runner.RealTimeDagRunner object>
+################################################################################
+compute_run_signature
+################################################################################
 # event signature=
 
 events_as_str=

@@ -51,7 +51,8 @@ backtest_config:
   lookback_as_pd_str: 10D
 market_data_config:
   im_client_ctor: <function get_DataFrameImClient_example1>
-  im_client_config: {}
+  im_client_config:
+
   im_client: <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>
   asset_ids: [3303714233, 1467591036]
   asset_id_col_name: asset_id
