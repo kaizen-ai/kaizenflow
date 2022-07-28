@@ -53,8 +53,7 @@ class CkPortfolio(omportfo.DatabasePortfolio):
         hdbg.dassert_eq(table_name, self._table_name)
 
 
-# TODO(gp): Factor out common code.
-def get_CkPortfolio_prod_instance(
+def get_CcxtPortfolio_prod_instance(
     strategy_id: str,
     liveness: str,
     instance_type: str,
@@ -69,15 +68,14 @@ def get_CkPortfolio_prod_instance(
     Build an CK Portfolio retrieving its state from the DB.
     """
     # Build CkBroker.
-    #    broker = olegbrex.get_CcxtBroker_prod_instance1(
-    #        market_data,
-    #        strategy_id,
-    #        liveness,
-    #        instance_type,
-    #        order_duration_in_mins,
-    #        order_extra_params,
-    #    )
-    broker = None
+    broker = olegbrex.get_CcxtBroker_prod_instance1(
+           market_data,
+           strategy_id,
+           liveness,
+           instance_type,
+           order_duration_in_mins,
+           order_extra_params,
+       )
     # Build CkPortfolio.
     mark_to_market_col = "close"
     # timestamp_col = "end_time"

@@ -1,3 +1,5 @@
+import helpers.hdbg as hdbg
+
 # Liveness = real trading (=LIVE) or paper trading (=CANDIDATE)
 # Instance_type = CF framework QA / prod
 #
