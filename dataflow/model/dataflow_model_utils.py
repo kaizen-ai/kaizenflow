@@ -46,7 +46,7 @@ def save_experiment_result_bundle(
     """
     # TODO(Paul): Consider having the caller provide the dir instead.
     file_name = os.path.join(
-        config["experiment_config", "experiment_result_dir"], file_name
+        config["backtest_config", "experiment_result_dir"], file_name
     )
     result_bundle.to_pickle(file_name, use_pq=True)
 

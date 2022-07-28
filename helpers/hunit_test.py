@@ -1180,7 +1180,7 @@ class TestCase(unittest.TestCase):
             expected,
             test_name,
             dir_name,
-            check_string=True,
+            check_string=False,
             dedent=dedent,
             purify_text=purify_text,
             fuzzy_match=fuzzy_match,

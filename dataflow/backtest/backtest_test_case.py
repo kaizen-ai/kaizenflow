@@ -23,7 +23,9 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> backtest_test_case.py
+# #############################################################################
+# Backtest_TestCase
+# #############################################################################
 
 
 class Backtest_TestCase(abc.ABC, hunitest.TestCase):
@@ -116,6 +118,8 @@ class Backtest_TestCase(abc.ABC, hunitest.TestCase):
         """
 
 
+# #############################################################################
+# TiledBacktest_TestCase
 # #############################################################################
 
 

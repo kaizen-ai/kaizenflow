@@ -15,8 +15,6 @@ import dataflow.backtest.run_config_stub as dtfmruexst
 """
 
 
-# TODO(gp): -> run_config_stub.py
-
 import argparse
 import importlib
 import logging

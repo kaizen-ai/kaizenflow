@@ -52,13 +52,13 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.DAG:
 
 
 def build_tile_config_list(
-    experiment_config: str,
+    backtest_config: str,
 ) -> cconfig.ConfigList:
     (
         _,
         _,
         time_interval_str,
-    ) = cconfig.parse_experiment_config(experiment_config)
+    ) = cconfig.parse_backtest_config(backtest_config)
     #
     config = _build_base_config()
     # Name of the asset_ids to save.

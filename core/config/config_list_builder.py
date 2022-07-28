@@ -150,11 +150,8 @@ def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
 # Experiment config.
 # #############################################################################
 
-# TODO(gp): backtest_config -> experiment_config
-# TODO(gp): build_model_config -> build_experiment_config
 
-
-def parse_experiment_config(backtest_config: str) -> Tuple[str, str, str]:
+def parse_backtest_config(backtest_config: str) -> Tuple[str, str, str]:
     """
     Parse a string representing an experiment in the format:
     `<universe>.<trading_period>.<time_interval>`, e.g., "top100.15T.all".
@@ -335,11 +332,11 @@ def build_config_list_varying_tiled_periods(
         _LOG.debug(hprint.to_str("start_ts end_ts"))
         #
         config_tmp = config.copy()
-        config_tmp[("experiment_config", "start_timestamp_with_lookback")] = (
+        config_tmp[("backtest_config", "start_timestamp_with_lookback")] = (
             start_ts - lookback
         )
-        config_tmp[("experiment_config", "start_timestamp")] = start_ts
-        config_tmp[("experiment_config", "end_timestamp")] = end_ts
+        config_tmp[("backtest_config", "start_timestamp")] = start_ts
+        config_tmp[("backtest_config", "end_timestamp")] = end_ts
         #
         _LOG.debug("config_tmp=%s\n", config_tmp)
         #

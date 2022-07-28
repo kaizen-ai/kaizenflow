@@ -37,8 +37,8 @@ def run_experiment(system_config: cconfig.Config) -> None:
     fit_result_bundle = dag_runner.fit()
     # Maybe run OOS.
     if (
-        "run_oos" in system_config["experiment_config"].to_dict().keys()
-        and system_config["experiment_config"]
+        "run_oos" in system_config["backtest_config"].to_dict().keys()
+        and system_config["backtest_config"]
     ):
         result_bundle = dag_runner.predict()
     else:
@@ -59,10 +59,10 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
     dag_runner = dtfcore.RollingFitPredictDagRunner(
         dag_config,
         config["dag_builder"],
-        config["experiment_config"]["start"],
-        config["experiment_config"]["end"],
-        config["experiment_config"]["retraining_freq"],
-        config["experiment_config"]["retraining_lookback"],
+        config["backtest_config"]["start"],
+        config["backtest_config"]["end"],
+        config["backtest_config"]["retraining_freq"],
+        config["backtest_config"]["retraining_lookback"],
     )
     for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
         payload = cconfig.get_config_from_nested_dict({"config": config})
@@ -95,8 +95,8 @@ def _save_tiled_output(
     # end_timestamp]) discarding the warm up period (i.e., the data in
     # [start_timestamp_with_lookback, start_timestamp]).
     result_df = result_bundle.result_df.loc[
-        system_config["experiment_config", "start_timestamp"] : system_config[
-            "experiment_config", "end_timestamp"
+        system_config["backtest_config", "start_timestamp"] : system_config[
+            "backtest_config", "end_timestamp"
         ]
     ]
     # Convert the result into Parquet.
@@ -108,7 +108,7 @@ def _save_tiled_output(
     df["month"] = df.index.month
     # The results are saved in the subdir `tiled_results` of the experiment list.
     tiled_dst_dir = os.path.join(
-        system_config["experiment_config", "dst_dir"], "tiled_results"
+        system_config["backtest_config", "dst_dir"], "tiled_results"
     )
     hparque.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir=tiled_dst_dir
@@ -141,9 +141,9 @@ def run_tiled_backtest(
         [
             (
                 system_config[
-                    "experiment_config", "start_timestamp_with_lookback"
+                    "backtest_config", "start_timestamp_with_lookback"
                 ],
-                system_config["experiment_config", "end_timestamp"],
+                system_config["backtest_config", "end_timestamp"],
             )
         ],
     )

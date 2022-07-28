@@ -57,8 +57,8 @@ def _run_notebook(
     _ = incremental
     dtfbaexuti.setup_experiment_dir(config)
     # Prepare the destination file.
-    idx = config[("experiment_config", "id")]
-    experiment_result_dir = config[("experiment_config", "experiment_result_dir")]
+    idx = config[("backtest_config", "id")]
+    experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
     dst_file = os.path.join(
         experiment_result_dir,
         os.path.basename(notebook_file).replace(".ipynb", ".%s.ipynb" % idx),
@@ -66,8 +66,8 @@ def _run_notebook(
     _LOG.info("dst_file=%s", dst_file)
     dst_file = os.path.abspath(dst_file)
     # Export config function and its `id` to the notebook.
-    config_builder = config[("experiment_config", "config_builder")]
-    dst_dir = config[("experiment_config", "dst_dir")]
+    config_builder = config[("backtest_config", "config_builder")]
+    dst_dir = config[("backtest_config", "dst_dir")]
     cmd = [
         f'export __CONFIG_BUILDER__="{config_builder}";',
         f'export __CONFIG_IDX__="{idx}";',

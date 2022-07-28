@@ -60,7 +60,7 @@ def apply_backtest_config(
         universe_str,
         trading_period_str,
         time_interval_str,
-    ) = cconfig.parse_experiment_config(backtest_config)
+    ) = cconfig.parse_backtest_config(backtest_config)
     # Fill system config.
     hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
     system.config[

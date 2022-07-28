@@ -16,7 +16,6 @@ Import as:
 import dataflow.backtest.run_config_list as dtfmoruexp
 """
 
-# TODO(gp): -> run_config_listt.py?
 
 import argparse
 import logging
@@ -62,19 +61,19 @@ def _run_config_stub(
     file_name = "run_config_stub.py"
     exec_name = hgit.find_file_in_git_tree(file_name, super_module=True)
     #
-    # TODO(gp): Rename id -> idx everywhere with `jackpy "experiment_config" | grep id | grep config`
-    idx = config[("experiment_config", "id")]
+    # TODO(gp): Rename id -> idx everywhere with `jackpy "backtest_config" | grep id | grep config`
+    idx = config[("backtest_config", "id")]
     _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
     _LOG.info("config=\n%s", config)
     #
-    dst_dir = config[("experiment_config", "dst_dir")]
+    dst_dir = config[("backtest_config", "dst_dir")]
     # Prepare the log file.
     # TODO(gp): -> experiment_dst_dir
-    experiment_result_dir = config[("experiment_config", "experiment_result_dir")]
+    experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
     log_file = os.path.join(experiment_result_dir, "run_config_list.%s.log" % idx)
     log_file = os.path.abspath(os.path.abspath(log_file))
-    experiment_builder = config[("experiment_config", "experiment_builder")]
-    config_builder = config[("experiment_config", "config_builder")]
+    experiment_builder = config[("backtest_config", "experiment_builder")]
+    config_builder = config[("backtest_config", "config_builder")]
     cmd = [
         exec_name,
         f"--experiment_builder '{experiment_builder}'",

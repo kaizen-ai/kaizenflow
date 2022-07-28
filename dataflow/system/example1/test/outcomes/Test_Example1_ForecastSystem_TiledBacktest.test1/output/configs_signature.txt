@@ -123,6 +123,9 @@
         time_interval_str: Jan2000
         freq_as_pd_str: M
         lookback_as_pd_str: 10D
+        start_timestamp_with_lookback: 1999-12-22 00:00:00+00:00
+        start_timestamp: 2000-01-01 00:00:00+00:00
+        end_timestamp: 2000-01-31 23:59:59+00:00
       market_data_config:
         im_client_ctor: <function get_DataFrameImClient_example1>
         im_client_config: {}
@@ -138,7 +141,3 @@
         kwargs:
           target_gmv: 100000.0
           liquidate_at_end_of_day: False
-      experiment_config:
-        start_timestamp_with_lookback: 1999-12-22 00:00:00+00:00
-        start_timestamp: 2000-01-01 00:00:00+00:00
-        end_timestamp: 2000-01-31 23:59:59+00:00

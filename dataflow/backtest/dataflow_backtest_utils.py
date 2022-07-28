@@ -68,7 +68,7 @@ def add_run_experiment_args(
     return parser  # type: ignore
 
 
-# /////////////////////////////////////////////////////////////////////////////////
+# ###########################################################################
 
 
 # TODO(gp): There is overlap between the concept of hjoblib.workload and experiment
@@ -93,7 +93,7 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     """
     hdbg.dassert_isinstance(config, cconfig.Config)
     # Create subdirectory structure for experiment results.
-    experiment_result_dir = config[("experiment_config", "experiment_result_dir")]
+    experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
     _LOG.info("Creating experiment dir '%s'", experiment_result_dir)
     hio.create_dir(experiment_result_dir, incremental=True)
     # Prepare book-keeping files.
@@ -125,11 +125,11 @@ def skip_configs_already_executed(
     for config in config_list.configs:
         # If there is already a success file in the dir, skip the experiment.
         experiment_result_dir = config[
-            ("experiment_config", "experiment_result_dir")
+            ("backtest_config", "experiment_result_dir")
         ]
         file_name = os.path.join(experiment_result_dir, "success.txt")
         if incremental and os.path.exists(file_name):
-            idx = config[("experiment_config", "id")]
+            idx = config[("backtest_config", "id")]
             _LOG.warning("Found file '%s': skipping run %d", file_name, idx)
             num_skipped += 1
         else:
@@ -227,7 +227,7 @@ def get_config_list_from_command_line(
     return config_list
 
 
-# /////////////////////////////////////////////////////////////////////////////////
+# ###########################################################################
 
 
 def mark_config_as_success(experiment_result_dir: str) -> None:
@@ -249,7 +249,7 @@ def report_failed_experiments(
     """
     # Get the experiment selected_idxs.
     experiment_ids = [
-        int(config[("experiment_config", "id")]) for config in config_list
+        int(config[("backtest_config", "id")]) for config in config_list
     ]
     # Match experiment selected_idxs with their return codes.
     failed_experiment_ids = [

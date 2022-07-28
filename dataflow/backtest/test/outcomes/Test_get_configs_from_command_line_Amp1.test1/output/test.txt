@@ -1,11 +1,6 @@
 # <core.config.config_list.ConfigList object at 0x>
   # 1/1
     dag_config:
-      filter_ath:
-        col_mode: replace_all
-        transformer_kwargs:
-          start_time: 09:30:00
-          end_time: 16:00:00
       resample:
         in_col_groups: [('close',), ('volume',), ('feature1',)]
         out_col_group: ()
@@ -48,7 +43,7 @@
     market_data_config:
       asset_id_name: asset_id
       asset_ids: [13684, 10971]
-    experiment_config:
+    backtest_config:
       start_timestamp_with_lookback: 2019-12-22 00:00:00+00:00
       start_timestamp: 2020-01-01 00:00:00+00:00
       end_timestamp: 2020-01-31 23:59:59+00:00
