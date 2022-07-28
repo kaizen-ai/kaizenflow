@@ -414,8 +414,7 @@ def get_realtime_DagRunner_from_system(
     return dag_runner
 
 
-# TODO(gp): -> get_RealTimeDagRunner_from_System
-def get_dag_runner_instance1(
+def get_RealTimeDagRunner_from_System(
     system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:
     """
