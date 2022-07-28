@@ -90,11 +90,12 @@ def flatten_ccxt_account(
         "test",
         msg="Account flattening is supported only for test accounts.",
     )
-
     # Fetch balance.
     balance = broker.get_total_balance()
-
+    # Select crypto assets.
+    assets = [asset for asset in balance.keys() if asset != balance_currency]
     # Create orders.
+    orders = []
 
     # Place orders.
     return balance
