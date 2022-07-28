@@ -430,6 +430,7 @@ def docker_release_prod_image(  # type: ignore
     superslow_tests=False,
     push_to_repo=True,
     container_dir_name=".",
+    candidate=False
 ):
     """
     (ONLY CI/CD) Build, test, and release to ECR the prod image.
@@ -445,6 +446,7 @@ def docker_release_prod_image(  # type: ignore
     :param slow_tests: run slow tests, unless all tests skipped
     :param superslow_tests: run superslow tests, unless all tests skipped
     :param push_to_repo: push the image to the repo_short_name
+    :param candidate: release the image as a prod candidate
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
     version = hlitadoc._resolve_version_value(
@@ -452,7 +454,7 @@ def docker_release_prod_image(  # type: ignore
     )
     # 1) Build prod image.
     docker_build_prod_image(
-        ctx, cache=cache, version=version, container_dir_name=container_dir_name
+        ctx, cache=cache, version=version, container_dir_name=container_dir_name, candidate=candidate,
     )
     # 2) Run tests.
     if skip_tests:
@@ -467,9 +469,16 @@ def docker_release_prod_image(  # type: ignore
         hlitapyt.run_superslow_tests(ctx, stage=stage, version=version)
     # 3) Push prod image.
     if push_to_repo:
-        docker_push_prod_image(
-            ctx, version=version, container_dir_name=container_dir_name
-        )
+        # Candidate image is IDed with a hash.
+        if candidate:
+            tag = hgit.get_head_hash(".", short_hash=True)
+            docker_push_prod_candidate_image(
+                ctx, candidate=tag, container_dir_name=container_dir_name
+            )
+        else:
+            docker_push_prod_image(
+                ctx, version=version, container_dir_name=container_dir_name
+            )
     else:
         _LOG.warning("Skipping pushing image to repo_short_name as requested")
     _LOG.info("==> SUCCESS <==")
