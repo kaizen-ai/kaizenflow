@@ -81,18 +81,12 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
         imvcdedhda._main(mock_argument_parser)
-        # Check calls.
-        self.assertEqual(len(download_historical_mock.call_args), 2)
         # Check args.
+        self.assertEqual(len(download_historical_mock.call_args), 2)
         actual_args = download_historical_mock.call_args.args
         self.assertDictEqual(actual_args[0], {**kwargs, **{"unit": "ms"}})
-        # Extractor instance is checked separately because `id` of the mock
-        # is dynamic and different for each test run.
+        # Verify that `CcxtExtractor` instance is passed.
         self.assertEqual(actual_args[1]._extract_mock_name(), "CcxtExtractor()")
-        # Check kwargs. More of a precaution if we add them.
-        actual_kwargs = download_historical_mock.call_args.kwargs
-        expected_kwargs = {}
-        self.assertEqual(actual_kwargs, expected_kwargs)
         # Verify that `CcxtExtractor` instance creation is properly called.
         self.assertEqual(ccxt_extractor_mock.call_count, 1)
         actual_args = tuple(ccxt_extractor_mock.call_args)
