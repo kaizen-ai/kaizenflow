@@ -91,14 +91,31 @@ def _save_tiled_output(
 
     :param result_bundle: DAG results to save
     """
+    start_timestamp = system_config["backtest_config", "start_timestamp"]
+    end_timestamp = system_config["backtest_config", "end_timestamp"]
+    # Sanity check for the tile borders.
+    hdbg.dassert_lte(start_timestamp, end_timestamp)
+    hdateti.dassert_has_tz(start_timestamp)
+    hdateti.dassert_has_tz(end_timestamp)
+    hdbg.dassert_eq(
+        start_timestamp.tzinfo,
+        end_timestamp.tzinfo,
+        "start_timestamp=%s end_timestamp=%s",
+        start_timestamp,
+        end_timestamp,
+    )
     # Extract the part of the simulation for this tile (i.e., [start_timestamp,
     # end_timestamp]) discarding the warm up period (i.e., the data in
     # [start_timestamp_with_lookback, start_timestamp]).
-    result_df = result_bundle.result_df.loc[
-        system_config["backtest_config", "start_timestamp"] : system_config[
-            "backtest_config", "end_timestamp"
-        ]
-    ]
+    # Note that we need to save the resulting data with the same timezone as the
+    # tile boundaries to ensure that there is no overlap.
+    # E.g., assume that the resulting data for a tile falls into
+    # `[2022-06-01 00:00:00-00:00, 2022-06-30 23:55:00-00:00]`
+    # If it's saved in ET timezone it's going to become
+    # `[2022-05-31 20:00:00-04:00, 2022-06-30 19:55:00-04:00]` so it's going to
+    # span two months potentially overwriting some other tile.
+    result_df = result_bundle.result_df.loc[start_timestamp:end_timestamp]
+    result_df.index = result_df.index.tz_convert(start_timestamp.tzinfo)
     # Convert the result into Parquet.
     df = result_df.stack()
     asset_id_col_name = system_config["market_data_config", "asset_id_col_name"]
