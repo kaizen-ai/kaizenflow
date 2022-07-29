@@ -162,24 +162,7 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
         return dag
 
     def _get_portfolio(self) -> oms.Portfolio:
-        event_loop = self.config["event_loop_object"]
-        market_data = self.market_data
-        asset_ids = self.config["market_data_config", "asset_ids"]
-        portfolio = oms.get_DataFramePortfolio_example1(
-            event_loop,
-            market_data=market_data,
-            # TODO(gp): These should go in the config.
-            mark_to_market_col="close",
-            pricing_method="twap.5T",
-            asset_ids=asset_ids,
-        )
-        # TODO(gp): These should go in the config?
-        portfolio.broker._column_remap = {
-            "bid": "bid",
-            "ask": "ask",
-            "midpoint": "midpoint",
-            "price": "close",
-        }
+        portfolio = dtfsexexbu.get_Example1_DataFramePortfolio_example1(self)
         return portfolio
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
@@ -260,9 +243,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         dag = dtfsexexbu.get_Example1_RealtimeDag_example3(self)
         return dag
 
-    def _get_portfolio(
-        self,
-    ) -> oms.Portfolio:
+    def _get_portfolio(self) -> oms.Portfolio:
         portfolio = dtfsexexbu.get_Example1_DatabasePortfolio_example1(self)
         return portfolio
 

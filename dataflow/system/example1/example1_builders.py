@@ -9,9 +9,9 @@ import logging
 
 import pandas as pd
 
+import core.config as cconfig
 import dataflow.core as dtfcore
 
-import core.config as cconfig
 # TODO(gp): We can't use dtfsys because we are inside dataflow/system.
 #  Consider moving out Example1 from this dir somehow so that we can use dtfsys
 #  like we do for other systems.
@@ -158,8 +158,9 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "process_forecasts_config": process_forecasts_config_dict,
         "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
     }
-    system.config["process_forecasts_config"] = cconfig.get_config_from_nested_dict(
-            process_forecasts_config)
+    system.config[
+        "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
     # Append the ProcessForecast node.
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
@@ -192,6 +193,30 @@ def get_Example1_DatabasePortfolio_example1(
         pricing_method="twap.5T",
         asset_ids=asset_ids,
     )
+    portfolio.broker._column_remap = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
+    return portfolio
+
+
+def get_Example1_DataFramePortfolio_example1(
+    system: dtfsyssyst.System,
+) -> oms.Portfolio:
+    event_loop = system.config["event_loop_object"]
+    market_data = system.market_data
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    portfolio = oms.get_DataFramePortfolio_example1(
+        event_loop,
+        market_data=market_data,
+        # TODO(gp): These should go in the config.
+        mark_to_market_col="close",
+        pricing_method="twap.5T",
+        asset_ids=asset_ids,
+    )
+    # TODO(gp): These should go in the config?
     portfolio.broker._column_remap = {
         "bid": "bid",
         "ask": "ask",
