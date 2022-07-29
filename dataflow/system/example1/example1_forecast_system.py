@@ -305,7 +305,7 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
     )
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
-    system.config["market_data_config", "delay_in_secs"] = 0
+    system.config["market_data_config", "delay_in_secs"] = 5
     system.config["market_data_config", "initial_replayed_delay"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
