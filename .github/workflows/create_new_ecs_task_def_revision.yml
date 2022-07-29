@@ -1,4 +1,4 @@
-name: Create new ECS Task definition revision with container pointing to the image with the latest master
+name: Update ECS Task definition to the latest master
 on:
   # Run for every change in master.
   push:
