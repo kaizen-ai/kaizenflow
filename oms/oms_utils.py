@@ -7,11 +7,12 @@ import collections
 import logging
 from typing import Dict, List
 
+import async
 import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import oms.broker as ombroker
+import oms.ccxt_broker as occxbrok
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
@@ -79,10 +80,17 @@ def _append_accounting_df(
 
 
 def flatten_ccxt_account(
-    broker: ombroker.Broker, dry_run: bool,
+    broker: occxbrok.CcxtBroker,
+    dry_run: bool,
 ):
     """
-    Close all futures positions associated with the sandbox account.
+    Remove all crypto assets/positions from the test accound.
+
+    Note: currently optimized for futures, removing all long/short positions
+
+    :param broker: a CCXT broker object
+    :param dry_run: whether to avoid actual execution
+    :return:
     """
     # Verify that the broker is in test mode.
     hdbg.dassert_eq(
@@ -90,10 +98,11 @@ def flatten_ccxt_account(
         "test",
         msg="Account flattening is supported only for test accounts.",
     )
-    # Fetch all positions.
+    # Fetch all open positions.
     positions = broker._exchange.fetchPositions()
     open_positions = []
     for position in positions:
+        # Get the quantity of assets on short/long positions.
         position_amount = float(position["info"]["positionAmt"])
         if position_amount != 0:
             open_positions.append(position)
@@ -101,14 +110,15 @@ def flatten_ccxt_account(
         # Create orders.
         orders = []
         for position in open_positions:
+            # Build an order to flatten the account.
             type_ = "market"
             curr_num_shares = float(position["info"]["positionAmt"])
             diff_num_shares = -curr_num_shares
             full_symbol = position["symbol"].replace("/", "_")
-            asset_id = broker._asset_id_to_symbol_mapping[full_symbol]
+            asset_id = broker._symbol_to_asset_id_mapping[full_symbol]
             curr_timestamp = pd.Timestamp.now(tz="UTC")
             start_timestamp = curr_timestamp
-            end_timestamp = pd.DateOffset(minutes=1)
+            end_timestamp = start_timestamp + pd.DateOffset(minutes=1)
             order_id = 0
             order = omorder.Order(
                 curr_timestamp,
@@ -121,7 +131,7 @@ def flatten_ccxt_account(
                 order_id=order_id,
             )
             orders.append(order)
-        broker._submit_orders(orders, curr_timestamp, dry_run)
+        broker.submit_orders(orders, dry_run=dry_run)
     else:
         _LOG.warning("No open positions found.")
     _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
