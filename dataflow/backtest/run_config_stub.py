@@ -67,7 +67,7 @@ def _parse() -> argparse.ArgumentParser:
 # ```
 # > /app/amp/dataflow/backtest/run_config_list.py \
 #   --experiment_builder 'amp.dataflow.backtest.master_backtest.run_tiled_backtest' \
-#   --config_builder 'dataflow_lime.system.E8.E8_tile_config_builders.build_E8e_tile_configs("eg_v2_0-top1.5T.JanFeb2020")' --dst_dir /app/dataflow_lime/system/E8/test/outcomes/Test_E8e_TiledBacktest1.test_top1_JanFeb2020/tmp.scratch/run_model \
+#   --config_builder 'dataflow_lime.system.E8.E8_tile_config_builders.build_E8e_tile_configs("eg_v2_0-top1.5T.2020-01-01_2020-03-01")' --dst_dir /app/dataflow_lime/system/E8/test/outcomes/Test_E8e_TiledBacktest1.test_top1_JanFeb2020/tmp.scratch/run_model \
 #   --aws_profile am \
 #   --clean_dst_dir --no_confirm --num_threads serial \
 #   -v DEBUG \
@@ -76,7 +76,7 @@ def _parse() -> argparse.ArgumentParser:
 # ```
 # /app/amp/dataflow/backtest/run_config_stub.py \
 #   --experiment_builder 'amp.dataflow.backtest.master_backtest.run_tiled_backtest' \
-#   --config_builder 'dataflow_lime.system.E8.E8_tile_config_builders.build_E8e_tile_configs("eg_v2_0-top1.5T.JanFeb2020")' \
+#   --config_builder 'dataflow_lime.system.E8.E8_tile_config_builders.build_E8e_tile_configs("eg_v2_0-top1.5T.2020-01-01_2020-03-01")' \
 #   --config_idx 0 \
 #   --dst_dir /app/dataflow_lime/system/E8/test/outcomes/Test_E8e_TiledBacktest1.test_top1_JanFeb2020/tmp.scratch/run_model \
 #   -v INFO
@@ -126,7 +126,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # eval.
     _ = imp
     python_code = "imp.%s(%s)" % (function, args)
-    # E.g., `imp.build_E8e_tile_configs("eg_v2_0-top1.5T.JanFeb2020")`
+    # E.g., `imp.build_E8e_tile_configs("eg_v2_0-top1.5T.2020-01-01_2020-03-01")`
     _LOG.debug("executing '%s'", python_code)
     exec(python_code)  # pylint: disable=exec-used
 

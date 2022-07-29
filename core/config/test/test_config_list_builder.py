@@ -233,7 +233,7 @@ class Test_build_configs_with_tiled_universe_and_periods(hunitest.TestCase):
     def test1(self) -> None:
         # Prepare inputs.
         system_config = cconfig.Config()
-        system_config["backtest_config", "time_interval_str"] = "JanFeb2020"
+        system_config["backtest_config", "time_interval_str"] = "2020-01-01_2020-03-01"
         system_config["backtest_config", "freq_as_pd_str"] = "M"
         system_config["backtest_config", "lookback_as_pd_str"] = "90D"
         system_config["market_data_config", "asset_ids"] = [13684, 10971]
@@ -247,7 +247,7 @@ class Test_build_configs_with_tiled_universe_and_periods(hunitest.TestCase):
         # <core.config.config_list.ConfigList object at 0x>
           # 1/2
             backtest_config:
-              time_interval_str: JanFeb2020
+              time_interval_str: 2020-01-01_2020-03-01
               freq_as_pd_str: M
               lookback_as_pd_str: 90D
               start_timestamp_with_lookback: 2019-10-03 00:00:00+00:00
@@ -257,7 +257,7 @@ class Test_build_configs_with_tiled_universe_and_periods(hunitest.TestCase):
               asset_ids: [13684, 10971]
           # 2/2
             backtest_config:
-              time_interval_str: JanFeb2020
+              time_interval_str: 2020-01-01_2020-03-01
               freq_as_pd_str: M
               lookback_as_pd_str: 90D
               start_timestamp_with_lookback: 2019-11-03 00:00:00+00:00

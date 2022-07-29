@@ -178,7 +178,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
         # Repo config:
           # repo_config.config
             enable_privileged_mode='True'
-            get_docker_base_image_name='amp'
+            get_docker_base_image_name='cmamp'
             get_docker_shared_group=''
             get_docker_user=''
             get_host_name='github.com'
@@ -193,7 +193,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             use_docker_sibling_containers='False'
             # hserver.config
               is_AM_S3_available()='True'
-              is_CK_S3_available()='False'
+              is_CK_S3_available()='True'
               is_dev4()='False'
               is_dev_ck()='False'
               is_inside_ci()='True'
