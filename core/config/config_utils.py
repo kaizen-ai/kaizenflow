@@ -18,6 +18,34 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+
+
+def validate_configs(configs: List[cconconf.Config]) -> None:
+    """
+    Assert if the list of configs contains duplicates.
+    """
+    hdbg.dassert_container_type(configs, List, cconconf.Config)
+    hdbg.dassert_no_duplicates(
+        list(map(str, configs)), "There are duplicate configs in passed list"
+    )
+
+
+def configs_to_str(configs: List[cconconf.Config]) -> str:
+    """
+    Print a list of configs into a readable string.
+    """
+    txt = []
+    for i, config in enumerate(configs):
+        txt.append("# %s/%s" % (i + 1, len(configs)))
+        txt.append(hprint.indent(str(config)))
+    res = "\n".join(txt)
+    return res
+
+
+# #############################################################################
+
+
 def check_no_dummy_values(config: cconconf.Config) -> bool:
     """
     Assert if there are no `cconconf.DUMMY` values.
@@ -42,28 +70,6 @@ def check_no_dummy_values(config: cconconf.Config) -> bool:
                 str(key),
             )
     return True
-
-
-def validate_configs(configs: List[cconconf.Config]) -> None:
-    """
-    Assert if the list of configs contains duplicates.
-    """
-    hdbg.dassert_container_type(configs, List, cconconf.Config)
-    hdbg.dassert_no_duplicates(
-        list(map(str, configs)), "There are duplicate configs in passed list"
-    )
-
-
-def configs_to_str(configs: List[cconconf.Config]) -> str:
-    """
-    Print a list of configs into a readable string.
-    """
-    txt = []
-    for i, config in enumerate(configs):
-        txt.append("# %s/%s" % (i + 1, len(configs)))
-        txt.append(str(config))
-    res = "\n".join(txt)
-    return res
 
 
 # TODO(gp): This should be a private method of the method below.
@@ -189,7 +195,7 @@ def diff_configs(configs: Iterable[cconconf.Config]) -> List[cconconf.Config]:
     return config_diffs
 
 
-# # #############################################################################
+# #############################################################################
 
 
 def convert_to_series(config: cconconf.Config) -> pd.Series:
@@ -259,6 +265,8 @@ def build_config_diff_dataframe(
     return config_diffs
 
 
+# TODO(gp): This is almost equivalent to a get(..., default_value). The only
+#  difference is the type check.
 def get_object_from_config(
     config: cconconf.Config,
     key: str,

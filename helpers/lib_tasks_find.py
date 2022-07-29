@@ -51,6 +51,8 @@ def _find_test_files(
     for file_name in file_names:
         if "/old/" in file_name:
             continue
+        if "/compute/" in file_name:
+            continue
         hdbg.dassert_eq(
             os.path.basename(os.path.dirname(file_name)),
             "test",
@@ -426,3 +428,174 @@ def find_check_string_output(  # type: ignore
     # Print or copy to clipboard.
     hlitauti._to_pbcopy(output, pbcopy)
     return output
+
+
+# #############################################################################
+# Find module dependencies.
+# #############################################################################
+
+
+standard_libs = [
+    "abc",
+    "argparse",
+    "datetime",
+    "importlib",
+    "logging",
+    "os",
+    "pandas",
+    "pytest",
+    "re",
+    "unittest",
+]
+
+
+@task
+def find_dependency(  # type: ignore
+    ctx,
+    module_name,
+    mode="print_deps",
+    only_module="",
+    ignore_standard_libs=True,
+    ignore_helpers=True,
+    remove_dups=True,
+):
+    """
+    E.g., ```
+
+    # Find all the dependency of a module from itself
+    > i find_dependency --module-name "amp.dataflow.model" --mode "find_lev2_deps" --ignore-helpers --only-module dataflow
+    amp/dataflow/model/stats_computer.py:16 dataflow.core
+    amp/dataflow/model/model_plotter.py:4   dataflow.model
+    ```
+
+    :param module_name: the module path to analyze (e.g., `amp.dataflow.model`)
+    :param mode:
+        - `print_deps`: print the result of grepping for imports
+        - `find_deps`: find all the dependencies
+        - `find_lev1_deps`, `find_lev2_deps`: find all the dependencies
+    :param only_module: keep only imports containing a certain module (e.g., `dataflow`)
+    :param ignore_standard_libs: ignore the Python standard libs (e.g., `os`, `...`)
+    :param ignore_helpers: ignore the `helper` lib
+    :param remove_dups: remove the duplicated imports
+    """
+    _ = ctx
+    # (cd amp/dataflow/model/; jackpy "import ") | grep -v notebooks | grep -v test | grep -v __init__ | grep "import dataflow"
+    src_dir = module_name.replace(".", "/")
+    hdbg.dassert_dir_exists(src_dir)
+    # Find all the imports.
+    cmd = f'find {src_dir} -name "*.py" | xargs grep -n -r "^import "'
+    _, txt = hsystem.system_to_string(cmd)
+    #
+    if mode == "print_deps":
+        print(txt)
+        return
+    # Parse the output.
+    _LOG.debug("\n" + hprint.frame("Parse"))
+    lines = txt.split("\n")
+    lines_out = []
+    for line in lines:
+        # ./forecast_evaluator_from_prices.py:16:import helpers.hpandas as hpandas
+        # import helpers.hunit_test as hunitest  # pylint: disable=no-name-in-module'
+        data = line.split(":")
+        hdbg.dassert_lte(3, len(data), "Invalid line='%s'", line)
+        file, line_num, import_code = data[:3]
+        _LOG.debug(hprint.to_str("file line_num import_code"))
+        lines_out.append((file, line_num, import_code))
+    lines = lines_out
+    _LOG.debug("Found %d imports", len(lines))
+    # Remove irrelevant files and imports.
+    _LOG.debug("\n" + hprint.frame("Remove irrelevant entries"))
+    lines_out = []
+    for line in lines:
+        file, line_num, import_code = line
+        _LOG.debug("# " + hprint.to_str("file line_num import_code"))
+        if "__init__.py" in file:
+            _LOG.debug("Remove because init")
+            continue
+        if "/test/" in file:
+            _LOG.debug("Remove because test")
+            continue
+        if "notebooks/" in file:
+            _LOG.debug("Remove because notebook")
+            continue
+        if "from typing import" in import_code:
+            _LOG.debug("Remove because typing")
+            continue
+        lines_out.append(line)
+    lines = lines_out
+    _LOG.debug("After removal %d imports", len(lines))
+    # Process.
+    _LOG.debug("\n" + hprint.frame("Process entries"))
+    lines_out = []
+    for line in lines:
+        # ./forecast_evaluator_from_prices.py:16:import helpers.hpandas as hpandas
+        file, line_num, import_code = line
+        _LOG.debug("# " + hprint.to_str("file line_num import_code"))
+        # Parse import code.
+        m = re.match("^import\s+(\S+)(\s+as)?", import_code)
+        hdbg.dassert(m, "Can't parse line='%s'", import_code)
+        #
+        import_name = m.group(1)
+        _LOG.debug("import_name='%s'", import_name)
+        lev1_import = import_name.split(".")[0]
+        if ignore_standard_libs:
+            if lev1_import in standard_libs:
+                _LOG.debug("Ignoring standard lib '%s'", lev1_import)
+                continue
+        if ignore_helpers:
+            if lev1_import.startswith("helpers"):
+                _LOG.debug("Ignoring helpers '%s'", lev1_import)
+                continue
+        if only_module:
+            if only_module not in import_name:
+                _LOG.debug(
+                    "Ignoring '%s' since it doesn't contain %s",
+                    import_name,
+                    only_module,
+                )
+                continue
+        #
+        if mode == "find_deps":
+            dep = import_name
+        elif mode == "find_lev1_deps":
+            deps = import_name.split(".")
+            if len(deps) > 1:
+                dep = deps[0]
+            else:
+                dep = import_name
+        elif mode == "find_lev2_deps":
+            deps = import_name.split(".")
+            if len(deps) > 1:
+                dep = ".".join(deps[:2])
+            else:
+                dep = import_name
+        else:
+            raise ValueError(f"Invalid mode='{mode}'")
+        lines_out.append((file, line_num, dep))
+    lines = lines_out
+    # Remove repeated tuples.
+    if remove_dups:
+        _LOG.debug("\n" + hprint.frame("Remove repeated tuples"))
+        import_names = set()
+        lines_out = []
+        for line in lines:
+            if line[2] in import_names:
+                continue
+            lines_out.append(line)
+            import_names.add(line[2])
+        lines = lines_out
+    else:
+        _LOG.warning("Remove dups skipped")
+    # Sort.
+    _LOG.debug("\n" + hprint.frame("Sort tuples"))
+    lines = sorted(lines, key=lambda x: x[2])
+    # Print and save.
+    print(hprint.frame("Results"))
+    _LOG.debug("\n" + hprint.frame("Print"))
+    txt = "\n".join([":".join(line) for line in lines])
+    file_name = "cfile"
+    hio.to_file(file_name, txt)
+    _LOG.info("%s saved", file_name)
+    #
+    txt = "\n".join(["%s:%s\t\t\t%s" % line for line in lines])
+    print(txt)
