@@ -66,9 +66,6 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     """
     system = Example1_ForecastSystem()
     system = dtfssybuut.apply_backtest_config(system, backtest_config)
-    # When we run a simulation we only have available configs, not System, so we
-    # pass the function that creates the DagRunner from the config.
-    system.config["dag_runner_builder"] = system._get_dag_runner
     # Fill pipeline-specific backtest config parameters.
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "10D"
@@ -76,11 +73,23 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     system.config[
         "market_data_config", "im_client_ctor"
     ] = icdc.get_DataFrameImClient_example1
-    system.config["market_data_config", "im_client_config"] = {}
+    system.config["market_data_config", "im_client_config"] = cconfig.Config()
     # Set the research PNL parameters.
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "vwap.ret_0.vol_adj.c",
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
     system = dtfssybuut.apply_market_data_config(system)
     return system
 
@@ -198,9 +207,21 @@ def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
         "dag_runner_config", "real_time_loop_time_out_in_secs"
     ] = real_time_loop_time_out_in_secs
     # PnL config.
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "feature1"
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "feature1",
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
     return system
 
 
@@ -273,7 +294,19 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
         "dag_runner_config", "real_time_loop_time_out_in_secs"
     ] = real_time_loop_time_out_in_secs
     # PnL config.
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "feature1"
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "feature1",
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
     return system
