@@ -12,6 +12,9 @@ import core.features as cofeatur
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import dataflow.core as dtfcore
+
+# TODO(gp): This dependency is not legal according to code_organization.md.
+#  It should go into dataflow/system
 import dataflow.system as dtfsys
 
 _LOG = logging.getLogger(__name__)

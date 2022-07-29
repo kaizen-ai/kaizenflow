@@ -1,39 +1,35 @@
 """
 Import as:
 
-import core.config.builder as cconbuil
+import core.config.config_builder as ccocobui
 """
 
+import copy
 import importlib
 import logging
 import os
 import re
-from typing import Dict, List, Optional, cast
+from typing import Dict, Optional, cast
 
 import core.config.config_ as cconconf
-import core.config.config_utils as ccocouti
+import core.config.config_list as ccocolis
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
 
-# #############################################################################
-# Experiment builders.
-# #############################################################################
-
-
-def get_configs_from_builder(config_builder: str) -> List[cconconf.Config]:
+def get_config_list_from_builder(config_builder: str) -> ccocolis.ConfigList:
     """
-    Execute Python code `config_builder` to build configs.
+    Execute Python code `config_builder()` to build configs.
 
     :param config_builder: full Python command to create the configs.
-        E.g., `nlp.build_configs.build_PTask1088_configs()`
+        E.g., `nlp.build_config_list.build_PTask1088_config_list()`
     """
     _LOG.info("Executing function '%s'", config_builder)
     # `config_builder` looks like:
-    #   `nlp.build_configs.build_PTask1088_configs()`
+    #   `nlp.build_config_list.build_PTask1088_config_list()`
     # or
-    #   `dataflow.pipelines.E8.E8d_configs.build_rc1_configs("eg_v2_0-all.5T.2015_2022")`
+    #   `dataflow.pipelines.E8.E8d_configs.build_rc1_config_list("eg_v2_0-all.5T.2015_2022")`
     m = re.match(r"^(\S+)\.(\S+)\((.*)\)$", config_builder)
     hdbg.dassert(m, "config_builder='%s'", config_builder)
     # TODO(gp): Fix this.
@@ -49,76 +45,81 @@ def get_configs_from_builder(config_builder: str) -> List[cconconf.Config]:
     _ = imp
     python_code = "imp.%s(%s)" % (function, args)
     _LOG.debug("executing '%s'", python_code)
-    configs: List[cconconf.Config] = eval(python_code)
-    hdbg.dassert_is_not(configs, None)
-    # Cast to the right type.
-    # TODO(gp): Is this needed?
-    # configs = cast(List[cconconf.Config], configs)
-    ccocouti.validate_configs(configs)
-    return configs
+    config_list = eval(python_code)
+    _LOG.debug("type(config_list)=%s", str(type(config_list)))
+    hdbg.dassert_isinstance(config_list, ccocolis.ConfigList)
+    config_list.validate_config_list()
+    return config_list
 
 
-# /////////////////////////////////////////////////////////////////////////////////
+# #############################################################################
 
 
-def patch_configs(
-    configs: List[cconconf.Config], experiment_list_params: Dict[str, str]
-) -> List[cconconf.Config]:
+def patch_config_list(
+    config_list: ccocolis.ConfigList, experiment_list_params: Dict[str, str]
+) -> ccocolis.ConfigList:
     """
     Patch the configs with information needed to run.
 
-    This function is used by `run_notebook.py` and `run_experiment.py`
+    This function is used by `run_notebook.py` and `run_config_list.py`
     to pass information through the `Config` to the process running the
     experiment.
     """
+    hdbg.dassert_isinstance(config_list, ccocolis.ConfigList)
+    # Transform all the configs inside the config_list.
     configs_out = []
-    for idx, config in enumerate(configs):
+    for idx, config in enumerate(config_list.configs):
         config = config.copy()
         # Add `idx` for book-keeping.
-        config[("experiment_config", "id")] = idx
+        config[("backtest_config", "id")] = idx
         # Inject all the experiment_list_params in the config.
         for key in sorted(experiment_list_params.keys()):
-            config[("experiment_config", key)] = experiment_list_params[key]
+            config[("backtest_config", key)] = experiment_list_params[key]
         # Inject the dst dir of the entire experiment list.
         hdbg.dassert_in("dst_dir", experiment_list_params)
         dst_dir = experiment_list_params["dst_dir"]
         # Add experiment result dir.
         dst_subdir = f"result_{idx}"
         experiment_result_dir = os.path.join(dst_dir, dst_subdir)
-        config[("experiment_config", "experiment_result_dir")] = experiment_result_dir
+        config[
+            ("backtest_config", "experiment_result_dir")
+        ] = experiment_result_dir
         #
         configs_out.append(config)
-    return configs_out
+    # Create a copy of the ConfigList and update the internal `configs`.
+    config_list_out = copy.deepcopy(config_list)
+    config_list_out.configs = configs_out
+    hdbg.dassert_isinstance(config_list_out, ccocolis.ConfigList)
+    return config_list_out
 
 
 def get_config_from_experiment_list_params(
     idx: int, experiment_list_params: Dict[str, str]
-) -> cconconf.Config:
+) -> ccocolis.ConfigList:
     """
-    Get the `idx`-th config built from the experiment list params, which
-    includes `config_builder`
+    Get the `idx`-th config (stored as a `ConfigList`) built from the
+    experiment list params, which includes `config_builder`
 
-    E.g., `dataflow.pipelines.E8d.E8d_configs.build_rc1_configs("eg_v2_0-all.5T.2015_2022")`
+    E.g., `dataflow.pipelines.E8d.E8d_configs.build_rc1_config_list("eg_v2_0-all.5T.2015_2022")`
 
-    This is used by `run_experiment_stub.py` using the params from command line.
+    This is used by `run_config_stub.py` using the params from command line.
 
-    :param experiment_list_params: parameters from `run_experiment_stub.py`, e.g.,
+    :param experiment_list_params: parameters from `run_config_stub.py`, e.g.,
         `config_builder`, `experiment_builder`, `dst_dir`.
     """
     config_builder = experiment_list_params["config_builder"]
     # Build all the configs.
-    configs = get_configs_from_builder(config_builder)
+    config_list = get_config_list_from_builder(config_builder)
     # Patch the configs with experiment metadata.
-    configs = patch_configs(configs, experiment_list_params)
-    # Pick the config.
-    hdbg.dassert_lte(0, idx)
-    hdbg.dassert_lt(idx, len(configs))
-    config = configs[idx]
-    config = config.copy()
-    return config
+    config_list = patch_config_list(config_list, experiment_list_params)
+    # Create a config_list with a single config corresponding to the selected one.
+    config_list_out = config_list.copy()
+    config = config_list.configs[idx]
+    config_list_out.configs = [config]
+    return config_list_out
 
 
-# /////////////////////////////////////////////////////////////////////////////////
+# #############################################################################
 
 
 def get_config_from_env() -> Optional[cconconf.Config]:
@@ -152,6 +153,6 @@ def get_config_from_env() -> Optional[cconconf.Config]:
     _LOG.info("dst_dir=%s", dst_dir)
     params["dst_dir"] = dst_dir
     #
-    config = get_config_from_experiment_list_params(config_idx, params)
-    #
+    config_list = get_config_from_experiment_list_params(config_idx, params)
+    config = config_list.get_only_config()
     return config

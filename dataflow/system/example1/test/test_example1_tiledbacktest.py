@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-import dataflow.model.run_prod_model_flow as dtfmrpmofl
+import dataflow.backtest as dtfmrpmofl
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,11 +28,10 @@ class Test_Example1_ForecastSystem_TiledBacktest(
         backtest_config = "example1_v1-top2.5T.2000-01-01_2000-02-01"
         config_builder = (
             "dataflow.system.example1.example1_tile_config_builders."
-            + f'build_Example1_tile_configs("{backtest_config}")'
+            + f'build_Example1_tile_config_list("{backtest_config}")'
         )
         experiment_builder = (
-            # "amp.dataflow.model.master_experiment.run_tiled_backtest"
-            "dataflow.model.master_experiment.run_tiled_backtest"
+            "dataflow.backtest.master_backtest.run_tiled_backtest"
         )
         # We abort on error since we don't expect failures.
         run_model_extra_opts = ""

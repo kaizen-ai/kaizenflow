@@ -2,9 +2,8 @@ import logging
 from typing import List
 
 import core.config as cconfig
+import dataflow.backtest.dataflow_backtest_utils as dtfbaexcon
 import dataflow.core as dtfcore
-import dataflow.model.experiment_config as dtfmoexcon
-import dataflow.model.experiment_utils as dtfmoexuti
 import dataflow.pipelines.example1.example1_pipeline as dtfpexexpi
 import helpers.hunit_test as hunitest
 
@@ -15,7 +14,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider calling that code directly if it doesn't violate the
 #  dependencies.
 
-# TODO(gp): Port to new System style (see E8_config.py).
+# TODO(gp): @all Port to new System style (see E8_config.py).
 
 
 def _build_base_config() -> cconfig.Config:
@@ -52,40 +51,41 @@ def get_dag_runner(config: cconfig.Config) -> dtfcore.DAG:
     return dag_runner
 
 
-def build_tile_configs(
-    experiment_config: str,
-) -> List[cconfig.Config]:
+def build_tile_config_list(
+    backtest_config: str,
+) -> cconfig.ConfigList:
     (
         _,
         _,
         time_interval_str,
-    ) = dtfmoexcon.parse_experiment_config(experiment_config)
+    ) = cconfig.parse_backtest_config(backtest_config)
     #
     config = _build_base_config()
-    # TODO(gp): We should build Systems and not return a builder.
-    config["dag_runner_builder"] = get_dag_runner
     # Name of the asset_ids to save.
     config["market_data_config", "asset_id_name"] = "asset_id"
-    configs = [config]
+    config_list = cconfig.ConfigList([config])
     # Apply the cross-product by the universe tiles.
     asset_ids = _get_universe_tiny()
-    func = lambda cfg: dtfmoexcon.build_configs_with_tiled_universe(
+    func = lambda cfg: cconfig.build_config_list_with_tiled_universe(
         cfg, asset_ids
     )
-    configs = dtfmoexcon.apply_build_configs(func, configs)
-    _LOG.info("After applying universe tiles: num_configs=%s", len(configs))
+    config_list = cconfig.apply_build_config_list(func, config_list)
+    _LOG.info(
+        "After applying universe tiles: num_config_list=%s", len(config_list)
+    )
     # Apply the cross-product by the time tiles.
-    start_timestamp, end_timestamp = dtfmoexcon.get_period(time_interval_str)
+    start_timestamp, end_timestamp = cconfig.get_period(time_interval_str)
     freq_as_pd_str = "M"
     lookback_as_pd_str = "10D"
-    func = lambda cfg: dtfmoexcon.build_configs_varying_tiled_periods(
+    func = lambda cfg: cconfig.build_config_list_varying_tiled_periods(
         cfg, start_timestamp, end_timestamp, freq_as_pd_str, lookback_as_pd_str
     )
-    configs: List[cconfig.Config] = dtfmoexcon.apply_build_configs(func, configs)
-    _LOG.info("After applying time tiles: num_configs=%s", len(configs))
-    return configs
+    config_list = cconfig.apply_build_config_list(func, config_list)
+    _LOG.info("After applying time tiles: num_config_list=%s", len(config_list))
+    return config_list
 
 
+# TODO(gp): -> ..._get_config_list_
 class Test_get_configs_from_command_line_Amp1(hunitest.TestCase):
     """
     Test building (but not running) the configs for backtest.
@@ -96,12 +96,12 @@ class Test_get_configs_from_command_line_Amp1(hunitest.TestCase):
         class Args:
             experiment_list_config = "universe_v2_0-top2.5T.2020-01-01_2020-03-01"
             config_builder = (
-                "dataflow.model.test.test_experiment_utils.build_tile_configs"
+                "dataflow.backtest.test.test_dataflow_backtest_utils.build_tile_config_list"
                 + f'("{experiment_list_config}")'
             )
             dst_dir = "./dst_dir"
             experiment_builder = (
-                "dataflow.model.master_experiment.run_tiled_backtest"
+                "dataflow.backtest.master_backtest.run_tiled_backtest"
             )
             index = 0
             start_from_index = 0
@@ -109,7 +109,7 @@ class Test_get_configs_from_command_line_Amp1(hunitest.TestCase):
 
         args = Args()
         # Run.
-        configs = dtfmoexuti.get_configs_from_command_line(args)
+        config_list = dtfbaexcon.get_config_list_from_command_line(args)
         # Check.
-        txt = cconfig.configs_to_str(configs)
+        txt = str(config_list)
         self.check_string(txt, purify_text=True)

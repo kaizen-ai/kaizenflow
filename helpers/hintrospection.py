@@ -211,11 +211,3 @@ def get_function_from_string(func_as_str: str) -> Callable:
     func: Callable = eval(python_code)
     _LOG.debug("{txt} -> func=%s", func)
     return func
-
-
-def to_object_pointer(obj: Any) -> str:
-    return "<%s.%s object at %s>" % (
-        obj.__class__.__module__,
-        obj.__class__.__name__,
-        hex(id(obj)),
-    )

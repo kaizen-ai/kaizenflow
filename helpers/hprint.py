@@ -233,6 +233,14 @@ def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str
 # #############################################################################
 
 
+def to_object_pointer(obj: Any) -> str:
+    return "<%s.%s object at %s>" % (
+        obj.__class__.__module__,
+        obj.__class__.__name__,
+        hex(id(obj)),
+    )
+
+
 def thousand_separator(v: float) -> str:
     v = "{0:,}".format(v)
     return v

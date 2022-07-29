@@ -54,6 +54,8 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         self._volatility_col = volatility_col
         self._spread_col = spread_col
         self._portfolio = portfolio
+        # TODO(gp): Why does it need to be a Config? Inside Python code we want
+        #  to use only dict.
         process_forecasts_config = cconfig.get_config_from_nested_dict(
             process_forecasts_config
         )

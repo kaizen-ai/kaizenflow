@@ -39,7 +39,8 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-date = "2022-07-18"
+date = "2022-07-22"
+date2 = "20220722"
 start_timestamp = pd.Timestamp(date + " 09:30:00", tz="America/New_York")
 end_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
 
@@ -47,7 +48,8 @@ end_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
 # !ls /cache/production/process_forecasts.20220718/
 
 # %%
-root_dir = "/cache/production/process_forecasts.20220718/"
+#root_dir = "/cache/production/process_forecasts.20220718/"
+root_dir = f"/cache/production/process_forecast.20220725/process_forecasts"
 
 hdbg.dassert_dir_exists(root_dir)
 dict_ = {
@@ -181,7 +183,9 @@ pnl = bar_stats_df.T.xs("pnl", level=1).T
 display(pnl.head())
 
 # %%
-pnl.corr()
+#pnl.corr()
+pnl[4:].corr()
 
 # %%
+#coplotti.plot_portfolio_stats(bar_stats_df[4:])
 coplotti.plot_portfolio_stats(bar_stats_df)
