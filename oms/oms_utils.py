@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import oms.order as omorder
 import oms.ccxt_broker as occxbrok
+import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
@@ -106,11 +106,13 @@ def flatten_ccxt_account(
             type_ = "market"
             curr_num_shares = float(position["info"]["positionAmt"])
             diff_num_shares = -curr_num_shares
-            full_symbol = position["symbol"].replace("/", "_")
+            full_symbol = position["symbol"]
             asset_id = broker._symbol_to_asset_id_mapping[full_symbol]
             curr_timestamp = pd.Timestamp.now(tz="UTC")
             start_timestamp = curr_timestamp
-            end_timestamp = start_timestamp + pd.DateOffset(seconds=deadline_in_secs)
+            end_timestamp = start_timestamp + pd.DateOffset(
+                seconds=deadline_in_secs
+            )
             order_id = 0
             order = omorder.Order(
                 curr_timestamp,
