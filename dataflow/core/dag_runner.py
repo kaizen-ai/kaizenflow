@@ -53,7 +53,9 @@ class DagRunner(abc.ABC):
         self.dag = dag
         # TODO(gp): Not sure what to do here.
         self.config = cconfig.Config()
-        self._column_to_tags_mapping = []
+        # We should pass None to `ResultBundle` in order not to rely
+        # on the default value in `ResultBundle`.
+        self._column_to_tags_mapping = None
         # Extract the sink node.
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)

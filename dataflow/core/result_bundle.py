@@ -250,11 +250,26 @@ class ResultBundle(abc.ABC):
         serialized_bundle["result_nid"] = self._result_nid
         serialized_bundle["method"] = self._method
         serialized_bundle["result_df"] = self._result_df
-        serialized_bundle["column_to_tags"] = ccocouti.get_config_from_nested_dict(self._column_to_tags)
+        if self._column_to_tags is not None:
+            serialized_bundle["column_to_tags"] = ccocouti.get_config_from_nested_dict(self._column_to_tags)
         info = self._info
         if info is not None:
-            info = cconfig.get_config_from_nested_dict(info)
-        serialized_bundle["info"] = info
+            for key, value in info.items():
+                if not isinstance(value, dict):
+                    serialized_bundle["info", key] = value
+                else:
+                    for key1, value1 in value.items():
+                        if not isinstance(value1, dict):
+                            serialized_bundle["info", key, key1] = value1
+                        else:
+                            for key2, value2 in value1.items():
+                                if not isinstance(value2, dict):
+                                    serialized_bundle["info", key, key1, key2] = value2
+                                else:
+                                    for key3, value3 in value2.items():
+                                        serialized_bundle["info", key, key1, key2, key3] = value3
+        else:
+            serialized_bundle["info"] = cconfig.config()
         serialized_bundle["payload"] = self._payload
         serialized_bundle["class"] = self.__class__.__name__
         if commit_hash:
