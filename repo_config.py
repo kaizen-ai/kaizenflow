@@ -381,6 +381,25 @@ def indent(txt: str, num_spaces: int = 2) -> str:
 # End copy.
 
 
+# Copied back from `helpers.hserver` to avoid circular import.
+def is_CK_S3_available() -> bool:
+    val = True
+    if hserver.is_inside_ci():
+        repo_name = get_name()
+        if repo_name in ("//amp", "//dev_tools"):
+            # No CK bucket.
+            val = False
+        # TODO(gp): We might want to enable CK tests also on lemonade.
+        if repo_name in ("//lemonade",):
+            # No CK bucket.
+            val = False
+    elif hserver.is_dev4():
+        # CK bucket is not available on dev4.
+        val = False
+    _LOG.debug("val=%s", val)
+    return val
+
+
 def config_func_to_str() -> str:
     """
     Print the value of all the config functions.
@@ -400,6 +419,7 @@ def config_func_to_str() -> str:
         "get_shared_data_dirs",
         "has_dind_support",
         "has_docker_sudo",
+        "is_CK_S3_available",
         "run_docker_as_root",
         "skip_submodules_test",
         "use_docker_sibling_containers",
@@ -418,7 +438,7 @@ def config_func_to_str() -> str:
         ret.append(msg)
         # _print(msg)
     # Package.
-    ret = "# repo_config.config\n" + indent("\n".join(ret))
+    ret: str = "# repo_config.config\n" + indent("\n".join(ret))
     # Add the signature from hserver.
     ret += "\n" + indent(hserver.config_func_to_str())
     return ret

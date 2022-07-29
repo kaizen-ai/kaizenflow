@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 
 import helpers.hpandas as hpandas
-import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 
@@ -13,7 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not hserver.is_CK_S3_available(),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestCcxtExtractor1(hunitest.TestCase):
