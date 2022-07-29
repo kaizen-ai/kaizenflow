@@ -149,7 +149,7 @@ class Test_Example1_Time_ForecastSystem1(
         # The data inside the market data starts at 1999-12-25 9:31:00-0500.
         # We want to have 1 day of burn in for the model and start at ATH.
         system.config["market_data_config", "initial_replayed_delay"] = (
-            60 * 24 * 1 + 62 * 10
+            60 * 24 + 62 * 10
         )
         # Exercise the system for multiple 5 minute intervals.
         system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
