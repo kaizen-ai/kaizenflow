@@ -17,7 +17,7 @@ def _get_test_system_builder_func() -> Callable:
     Get System builder function for unit testing.
     """
     # TODO(Max): In the current system, the time periods are set manually,
-    # so the value of `time_interval_str` doesn't affect tests. 
+    # so the value of `time_interval_str` doesn't affect tests.
     backtest_config = "example1_v1-top2.5T.Jan2000"
     system_builder_func = (
         lambda: dtfseefosy.get_Example1_ForecastSystem_for_simulation_example1(
@@ -141,16 +141,16 @@ class Test_Example1_Time_ForecastSystem1(
         Verify the contents of DAG prediction.
         """
         system = dtfseefosy.Example1_Time_ForecastSystem()
-        market_data, _ = cofinanc.get_market_data_df4()
+        market_data, real_time_loop_time_out = cofinanc.get_market_data_df4()
         # Since we are reading from a df there is no delay.
         system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
         # We need at least 7 bars to compute volatility.
         system.config["market_data_config", "initial_replayed_delay"] = 35
         # Exercise the system for multiple 5 minute intervals.
-        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] = (
-            60 * 5 * 3
-        )
+        system.config[
+            "dag_runner_config", "real_time_loop_time_out_in_secs"
+        ] = real_time_loop_time_out
         system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
         #
         output_col_name = "vwap.ret_0.vol_adj.c"
