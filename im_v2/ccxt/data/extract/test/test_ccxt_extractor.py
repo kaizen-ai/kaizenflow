@@ -4,6 +4,7 @@ import unittest.mock as umock
 import pandas as pd
 import pytest
 
+import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as ivcdexex
