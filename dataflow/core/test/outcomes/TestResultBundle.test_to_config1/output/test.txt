@@ -1,6 +1,5 @@
 config without 'commit_hash' field:
-config:
-  key: val
+config: {key: val}
 result_nid: leaf_node
 method: fit
 result_df: 

@@ -88,10 +88,11 @@ class TestResultBundle(hunitest.TestCase):
     def _get_init_config() -> cconfig.Config:
         # TODO(gp): Factor out common part.
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
+        config_ = cconfig.get_config_from_nested_dict({"key": "val"})
         init_config = cconfig.get_config_from_nested_dict(
             {
                 "config": {
-                    "key": "val",
+                    config_
                 },
                 "result_nid": "leaf_node",
                 "method": "fit",
