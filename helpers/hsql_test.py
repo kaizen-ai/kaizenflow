@@ -10,6 +10,7 @@ import os
 
 import pytest
 
+import helpers.hdocker as hdocker
 import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
@@ -110,23 +111,29 @@ class TestDbHelper(hunitest.TestCase, abc.ABC):
         """
         _LOG.info("\n%s", hprint.frame("tearDown"))
         docker_compose_cleanup = cls.bring_down_db
-        if henv.execute_repo_config_code("use_main_network()"):
-            # TODO(gp): When using sibling containers `docker-compose down` tries to
-            #  shut down also the `main_network`, while it is attached to the Docker
-            #  container running the tests.
-            #  > docker network inspect main_network
-            #  We should clean up the containers and volumes directly. We can put
-            #  this in a invoke target.
-            docker_compose_cleanup = False
         if docker_compose_cleanup:
-            # TODO(Grisha): use invoke task CMTask #547.
-            cmd = (
-                "sudo docker-compose "
-                f"--file {cls.docker_compose_file_path} "
-                f"--env-file {cls.db_env_file} "
-                "down -v"
-            )
-            hsystem.system(cmd, suppress_output=False)
+            if henv.execute_repo_config_code("use_main_network()"):
+                # When using sibling containers `docker-compose down` tries to shut
+                # down also the `main_network`, while it is attached to the Docker
+                # container running the tests
+                # So we clean up the containers and volumes directly.
+                # TODO(gp): This could become an invoke target.
+                # Remove the container, e.g., `compose-oms_postgres7482-1`.
+                service_name = cls._get_service_name()
+                container_name = f"compose-{service_name}-1"
+                hdocker.container_rm(container_name)
+                # Remove the volume, e.g., `compose_oms_postgres7482_data`.
+                volume_name = f"compose_{service_name}_data"
+                hdocker.volume_rm(volume_name)
+            else:
+                # TODO(Grisha): use invoke task CMTask #547.
+                cmd = (
+                    "sudo docker-compose "
+                    f"--file {cls.docker_compose_file_path} "
+                    f"--env-file {cls.db_env_file} "
+                    "down -v"
+                )
+                hsystem.system(cmd, suppress_output=False)
         else:
             _LOG.warning("Leaving DB up")
         if not hunitest.get_incremental_tests():

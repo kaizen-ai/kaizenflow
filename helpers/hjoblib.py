@@ -505,7 +505,7 @@ def _parallel_execute_decorator(
 
 
 # TODO(gp): Pass a `task_dst_dir` to each task so it can write there.
-#  This is a generalization of `experiment_result_dir` for `run_experiment` and
+#  This is a generalization of `experiment_result_dir` for `run_config_list` and
 #  `run_notebook`.
 def parallel_execute(
     workload: Workload,
