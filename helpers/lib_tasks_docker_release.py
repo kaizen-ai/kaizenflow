@@ -291,7 +291,7 @@ def docker_build_prod_image(  # type: ignore
     cache=True,
     base_image="",
     candidate=False,
-    include_user_tag="",
+    user_tag="",
     container_dir_name=".",
 ):
     """
@@ -306,7 +306,7 @@ def docker_build_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     :param candidate: build a prod image with a tag format: prod-{hash}
         where hash is the output of hgit.get_head_hash
-    :param include_user_tag: the name of the user building the candidate image
+    :param user_tag: the name of the user building the candidate image
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
     version = hlitadoc._resolve_version_value(
@@ -327,8 +327,8 @@ def docker_build_prod_image(  # type: ignore
         )
         head_hash = hgit.get_head_hash(short_hash=True)
         # Add user name to the prod image name.
-        if include_user_tag:
-            image_versioned_prod += f"-{include_user_tag}"
+        if user_tag:
+            image_versioned_prod += f"-{user_tag}"
         # Add head hash to the prod image name.
         image_versioned_prod += f"-{head_hash}"
     else:
@@ -564,15 +564,15 @@ def docker_rollback_prod_image(  # type: ignore
 
 
 @task
-def docker_create_candidate_image(ctx, task_definition, include_user_tag=""):  # type: ignore
+def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: ignore
     """
     Create new prod candidate image and update the specified ECS task definition such that
     the Image URL specified in container definition points to the new candidate image.
 
     :param task_definition: the name of the ECS task definition for which an update 
-    to container image URL is made, e.g. cmamp-test
-    :param include_user_tag: the name of the user creating the image, empty parameter means 
-    the command was ran via gh actions
+      to container image URL is made, e.g. cmamp-test
+    :param user_tag: the name of the user creating the image, empty parameter means 
+      the command was ran via gh actions
     """
     # Get latest version.
     last_version = hversio.get_changelog_version(".")
@@ -581,13 +581,13 @@ def docker_create_candidate_image(ctx, task_definition, include_user_tag=""):  #
         ctx,
         version=last_version,
         candidate=True, 
-        include_user_tag=include_user_tag
+        user_tag=user_tag
     )
     # Get the hash of the image.
     tag = hgit.get_head_hash(".", short_hash=True)
-    if include_user_tag:
+    if user_tag:
         # Add user name to the candidate tag.
-        tag = f"{include_user_tag}-{tag}"
+        tag = f"{user_tag}-{tag}"
     # Push candidate image.
     docker_push_prod_candidate_image(ctx, tag)
     # Register new task definition revision with updated image URL. 
