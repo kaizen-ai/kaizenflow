@@ -244,7 +244,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         return dag
 
     def _get_portfolio(self) -> oms.Portfolio:
-        portfolio = dtfsexexbu.get_DatabasePortfolio_from_System(self)
+        portfolio = dtfssybuut.get_DatabasePortfolio_from_System(self)
         return portfolio
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
