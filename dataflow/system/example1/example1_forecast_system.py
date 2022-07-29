@@ -125,7 +125,7 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
         return dag
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_dag_runner_instance1(self)
+        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
         return dag_runner
 
 
@@ -184,7 +184,7 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
         return portfolio
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_dag_runner_instance1(self)
+        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
         return dag_runner
 
 
@@ -288,7 +288,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         return portfolio
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_dag_runner_instance1(self)
+        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
         return dag_runner
 
 
