@@ -1,10 +1,14 @@
 """
 Identify on which server we are running.
+
+Import as:
+
+import helpers.hserver as hserver
 """
 
 import logging
 import os
-from typing import Optional, List
+from typing import List, Optional
 
 # This module should depend only on:
 # - Python standard modules

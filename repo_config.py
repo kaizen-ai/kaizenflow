@@ -81,7 +81,7 @@ def get_docker_base_image_name() -> str:
 #   - A different user and group is used inside the container
 
 
-#_MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Catalina"
+# _MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Catalina"
 _MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Monterey"
 
 
@@ -221,14 +221,16 @@ def use_docker_sibling_containers() -> bool:
     """
     Return whether to use Docker sibling containers.
 
-    Using sibling containers requires that all Docker containers in the same
-    network so that they can communicate with each other.
+    Using sibling containers requires that all Docker containers in the
+    same network so that they can communicate with each other.
     """
-    val = hserver.is_dev4() or hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS)
+    val = hserver.is_dev4() or hserver.is_mac(
+        version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS
+    )
     return val
 
 
-def use_main_network():
+def use_main_network() -> bool:
     # TODO(gp): Replace this.
     return use_docker_sibling_containers()
 
