@@ -382,8 +382,8 @@ def indent(txt: str, num_spaces: int = 2) -> str:
 
 # End copy.
 
-
-# Copied back from `helpers.hserver` to avoid circular import.
+# This function can't be in `helpers.hserver` since it creates circular import
+# and `helpers.hserver` should not depend on anything.
 def is_CK_S3_available() -> bool:
     val = True
     if hserver.is_inside_ci():
