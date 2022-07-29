@@ -225,6 +225,7 @@ def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
 
+# TODO(gp): @all move to hpandas
 def compare_df(df1: "pd.DataFrame", df2: "pd.DataFrame") -> None:
     """
     Compare two dfs including their metadata.
@@ -502,6 +503,15 @@ def purify_object_reference(txt: str) -> str:
     return txt
 
 
+def purify_white_spaces(txt: str) -> str:
+    txt_new = []
+    for line in txt.split("\n"):
+        line = line.rstrip()
+        txt_new.append(line)
+    txt = "\n".join(txt_new)
+    return txt
+
+
 def purify_txt_from_client(txt: str) -> str:
     """
     Remove from a string all the information specific of a git client.
@@ -511,15 +521,7 @@ def purify_txt_from_client(txt: str) -> str:
     txt = purify_amp_references(txt)
     txt = purify_from_env_vars(txt)
     txt = purify_object_reference(txt)
-    return txt
-
-
-def purify_white_spaces(txt: str) -> str:
-    txt_new = []
-    for line in txt.split("\n"):
-        line = line.rstrip()
-        txt_new.append(line)
-    txt = "\n".join(txt_new)
+    txt = purify_white_spaces(txt)
     return txt
 
 
@@ -770,8 +772,10 @@ def assert_equal(
     full_test_name: str,
     test_dir: str,
     *,
+    check_string: bool = False,
     dedent: bool = False,
     purify_text: bool = False,
+    purify_expected_text: bool = False,
     fuzzy_match: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
@@ -781,10 +785,12 @@ def assert_equal(
     See interface in `TestCase.assert_equal()`.
 
     :param full_test_name: e.g., `TestRunNotebook1.test2`
+    :param check_string: if it was invoked by `check_string()` or directly
     """
     _LOG.debug(
         hprint.to_str(
-            "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
+            "full_test_name test_dir dedent purify_text fuzzy_match abort_on_error "
+            "dst_dir"
         )
     )
     #
@@ -805,6 +811,10 @@ def assert_equal(
         _LOG.debug("# Purify actual")
         actual = purify_txt_from_client(actual)
         _LOG.debug("act='\n%s'", actual)
+        if purify_expected_text:
+            _LOG.debug("# Purify expected")
+            expected = purify_txt_from_client(expected)
+            _LOG.debug("exp='\n%s'", expected)
     # Ensure that there is a single `\n` at the end of the strings.
     actual = actual.rstrip("\n") + "\n"
     expected = expected.rstrip("\n") + "\n"
@@ -828,36 +838,45 @@ def assert_equal(
                 f"Test '{full_test_name}' failed", char1="=", num_chars=80
             ),
         )
-        # Print the correct output, like:
-        #   exp = r'""""
-        #   2021-02-17 09:30:00-05:00
-        #   2021-02-17 10:00:00-05:00
-        #   2021-02-17 11:00:00-05:00
-        #   """
-        txt = []
-        txt.append(
-            hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", char1="-")
-        )
-        # We always return the variable exactly as this should be, even if we could
-        # make it look better through indentation in case of fuzzy match.
-        if actual_orig.startswith('"'):
-            # TODO(gp): Switch to expected or expected_result.
-            # txt.append(f"expected = r'''{actual_orig}'''")
-            exp_var = f"exp = r'''{actual_orig}'''"
-        else:
-            # txt.append(f"expected = r'''{actual_orig}'''")
-            exp_var = f'exp = r"""{actual_orig}"""'
-        # Save the expected variable to files.
-        exp_var_file_name = f"{test_dir}/tmp.exp_var.txt"
-        hio.to_file(exp_var_file_name, exp_var)
-        #
-        exp_var_file_name = "tmp.exp_var.txt"
-        hio.to_file(exp_var_file_name, exp_var)
-        _LOG.info("Saved exp_var in %s", exp_var_file_name)
-        #
-        txt.append(exp_var)
-        txt = "\n".join(txt)
-        error_msg += txt
+        if not check_string:
+            # Print the correct output, like:
+            #   exp = r'""""
+            #   2021-02-17 09:30:00-05:00
+            #   2021-02-17 10:00:00-05:00
+            #   2021-02-17 11:00:00-05:00
+            #   """
+            txt = []
+            txt.append(
+                hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", char1="-")
+            )
+            # We always return the variable exactly as this should be, even if we
+            # could make it look better through indentation in case of fuzzy match.
+            if actual_orig.startswith('"'):
+                # TODO(gp): Switch to expected or expected_result.
+                # txt.append(f"expected = r'''{actual_orig}'''")
+                if fuzzy_match:
+                    # We can print in a more readable way since spaces don't matter.
+                    exp_var = f"exp = r'''\n{actual_orig}'''"
+                else:
+                    exp_var = f"exp = r'''{actual_orig}'''"
+            else:
+                # txt.append(f"expected = r'''{actual_orig}'''")
+                if fuzzy_match:
+                    # We can print in a more readable way since spaces don't matter.
+                    exp_var = f'exp = r""""\n{actual_orig}"""'
+                else:
+                    exp_var = f'exp = r"""{actual_orig}"""'
+            # Save the expected variable to files.
+            exp_var_file_name = f"{test_dir}/tmp.exp_var.txt"
+            hio.to_file(exp_var_file_name, exp_var)
+            #
+            exp_var_file_name = "tmp.exp_var.txt"
+            hio.to_file(exp_var_file_name, exp_var)
+            _LOG.info("Saved exp_var in %s", exp_var_file_name)
+            #
+            txt.append(exp_var)
+            txt = "\n".join(txt)
+            error_msg += txt
         # Select what to save.
         compare_orig = False
         if compare_orig:
@@ -870,12 +889,18 @@ def assert_equal(
             else:
                 tag = "ACTUAL vs EXPECTED"
         tag += f": {full_test_name}"
-        # Save the actual and expected strings to files.
+        # Save actual and expected strings to files (before or after fuzzy_clean).
+        # TODO(gp): It might be useful to save also the files without any
+        #  purification.
         act_file_name = f"{test_dir}/tmp.actual.txt"
-        hio.to_file(act_file_name, actual)
-        #
         exp_file_name = f"{test_dir}/tmp.expected.txt"
-        hio.to_file(exp_file_name, expected)
+        save_with_fuzzy_clean = True
+        if save_with_fuzzy_clean:
+            hio.to_file(act_file_name, actual_orig)
+            hio.to_file(exp_file_name, expected_orig)
+        else:
+            hio.to_file(act_file_name, actual)
+            hio.to_file(exp_file_name, expected)
         #
         _LOG.debug("Actual:\n'%s'", actual)
         _LOG.debug("Expected:\n'%s'", expected)
@@ -1120,6 +1145,7 @@ class TestCase(unittest.TestCase):
         *,
         dedent: bool = False,
         purify_text: bool = False,
+        purify_expected_text: bool = False,
         fuzzy_match: bool = False,
         abort_on_error: bool = True,
         dst_dir: str = ".",
@@ -1160,8 +1186,10 @@ class TestCase(unittest.TestCase):
             expected,
             test_name,
             dir_name,
+            check_string=False,
             dedent=dedent,
             purify_text=purify_text,
+            purify_expected_text=purify_expected_text,
             fuzzy_match=fuzzy_match,
             abort_on_error=abort_on_error,
             dst_dir=dst_dir,
@@ -1271,6 +1299,7 @@ class TestCase(unittest.TestCase):
                     expected,
                     test_name,
                     dir_name,
+                    check_string=True,
                     dedent=dedent,
                     # We have handled the purification of the output earlier.
                     purify_text=False,
@@ -1362,6 +1391,7 @@ class TestCase(unittest.TestCase):
                         str(expected),
                         test_name,
                         dir_name,
+                        check_string=True,
                         dedent=dedent,
                         purify_text=False,
                         fuzzy_match=False,
