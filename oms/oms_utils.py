@@ -7,13 +7,12 @@ import collections
 import logging
 from typing import Dict, List
 
-import async
 import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import oms.ccxt_broker as occxbrok
 import oms.order as omorder
+import oms.ccxt_broker as occxbrok
 
 _LOG = logging.getLogger(__name__)
 
@@ -80,8 +79,7 @@ def _append_accounting_df(
 
 
 def flatten_ccxt_account(
-    broker: occxbrok.CcxtBroker,
-    dry_run: bool,
+    broker: occxbrok.CcxtBroker, dry_run: bool,
 ):
     """
     Remove all crypto assets/positions from the test accound.
@@ -99,13 +97,7 @@ def flatten_ccxt_account(
         msg="Account flattening is supported only for test accounts.",
     )
     # Fetch all open positions.
-    positions = broker._exchange.fetchPositions()
-    open_positions = []
-    for position in positions:
-        # Get the quantity of assets on short/long positions.
-        position_amount = float(position["info"]["positionAmt"])
-        if position_amount != 0:
-            open_positions.append(position)
+    open_positions = broker.get_open_positions()
     if open_positions:
         # Create orders.
         orders = []
@@ -134,4 +126,8 @@ def flatten_ccxt_account(
         broker.submit_orders(orders, dry_run=dry_run)
     else:
         _LOG.warning("No open positions found.")
+    # Check that all positions are closed.
+    open_positions = broker.get_open_positions()
+    if len(open_positions) != 0:
+        _LOG.warning("Some positions failed to close: %s", open_positions)
     _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
