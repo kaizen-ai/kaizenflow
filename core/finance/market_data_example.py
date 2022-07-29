@@ -671,7 +671,7 @@ def get_market_data_df4() -> pd.DataFrame:
     ```
     """
     idx = pd.date_range(
-        start=pd.Timestamp("1999-12-25 09:31:00-05:00", tz="America/New_York"),
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
         end=pd.Timestamp("2000-01-01 10:30:00-05:00", tz="America/New_York"),
         freq="T",
     )
@@ -679,14 +679,14 @@ def get_market_data_df4() -> pd.DataFrame:
     bar_delay = "0T"
     data = build_timestamp_df(idx, bar_duration, bar_delay)
     price_pattern = [101.0] * 5 + [100.0] * 5
-    price = price_pattern * 1014
+    price = price_pattern * 6
     data["close"] = price
     data["asset_id"] = 101
     data["volume"] = 100
     feature_pattern = [1.0] * 5 + [-1.0] * 5
-    feature = feature_pattern * 1014
+    feature = feature_pattern * 6
     data["feature1"] = feature
-    real_time_loop_time_out_in_secs = 35 * 60
+    real_time_loop_time_out_in_secs = 3 * 5 * 60
     return data, real_time_loop_time_out_in_secs
 
 
