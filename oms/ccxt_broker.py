@@ -187,6 +187,14 @@ class CcxtBroker(ombroker.Broker):
     ) -> Dict[int, str]:
         """
         Build asset id to full symbol mapping.
+
+        Example:
+
+        { 
+            1528092593: 'BAKE/USDT',
+            8968126878: 'BNB/USDT',
+            1182743717: 'BTC/BUSD',
+        }
         """
         # Get full symbol universe.
         full_symbol_universe = imvcounun.get_vendor_universe(
@@ -203,7 +211,8 @@ class CcxtBroker(ombroker.Broker):
             imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
         # Change mapped values to be symbol only with '/' separator.
-        #  Note: this conforms the currency pair to CCXT preferred format.
+        #  Note: this conforms the currency pair to CCXT preferred format,
+        #  e.g. BTC_USDT -> BTC/USDT.
         asset_id_to_symbol_mapping = {
             id_: imvcufusy.parse_full_symbol(fs)[1].replace("_", "/")
             for id_, fs in asset_id_to_full_symbol_mapping.items()

@@ -79,8 +79,8 @@ def _append_accounting_df(
 
 
 def flatten_ccxt_account(
-    broker: occxbrok.CcxtBroker, dry_run: bool,
-):
+    broker: occxbrok.CcxtBroker, dry_run: bool, *, deadline_in_secs: int = 60
+) -> None:
     """
     Remove all crypto assets/positions from the test accound.
 
@@ -88,7 +88,7 @@ def flatten_ccxt_account(
 
     :param broker: a CCXT broker object
     :param dry_run: whether to avoid actual execution
-    :return:
+    :param deadline_in_secs: deadline for order to be executed, 60 by default
     """
     # Verify that the broker is in test mode.
     hdbg.dassert_eq(
@@ -110,7 +110,7 @@ def flatten_ccxt_account(
             asset_id = broker._symbol_to_asset_id_mapping[full_symbol]
             curr_timestamp = pd.Timestamp.now(tz="UTC")
             start_timestamp = curr_timestamp
-            end_timestamp = start_timestamp + pd.DateOffset(minutes=1)
+            end_timestamp = start_timestamp + pd.DateOffset(seconds=deadline_in_secs)
             order_id = 0
             order = omorder.Order(
                 curr_timestamp,
