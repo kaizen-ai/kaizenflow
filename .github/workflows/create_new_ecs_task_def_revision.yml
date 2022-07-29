@@ -54,7 +54,7 @@ jobs:
 
       # TODO(Juraj): We need to fill with prod credentials
       - name: Create AWS credentials file
-        env:
+        # env:
         # needed for a command in prod.Dockerfile
         run: |
           mkdir aws
