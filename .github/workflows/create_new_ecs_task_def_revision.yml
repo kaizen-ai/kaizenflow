@@ -1,0 +1,78 @@
+name: Update ECS Task definition to the latest master
+on:
+  # Run for every change in master.
+  push:
+    branches:
+      # Comment this out to run when committing on the branch.
+      - master
+  # Run manually.
+  workflow_dispatch:
+  schedule:
+    # Run this once a day even if there are no commit.
+    - cron:  '0 0 */1 * *'
+
+jobs:
+  create_new_ecs_task_def_revision:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.CK_AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Cleanup
+        run: sudo chmod 777 -R .
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
+
+      - name: Authenticate GH
+        run: |
+          echo "${{ secrets.GH_ACTION_ACCESS_TOKEN }}" | gh auth login --hostname github.com --with-token
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/gh_requirements.txt
+
+      - name: Pull image
+        env:
+          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
+          # For now, we always get Docker images from AM account, so we don't need `CK_ECR_BASE_PATH`.
+          # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
+        run: invoke docker_pull
+
+      # TODO(Juraj): We need to fill with prod credentials
+      - name: Create AWS credentials file
+        env:
+        # needed for a command in prod.Dockerfile
+        run: |
+          mkdir aws
+        shell: bash
+
+      - name: Run 'docker_create_candidate_image' workflow
+        env:
+          GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
+          AM_AWS_ACCESS_KEY_ID: ${{ secrets.AM_AWS_ACCESS_KEY_ID }}
+          AM_AWS_SECRET_ACCESS_KEY: ${{ secrets.AM_AWS_SECRET_ACCESS_KEY }}
+          AM_AWS_DEFAULT_REGION: ${{ secrets.AM_AWS_DEFAULT_REGION }}
+          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
+          AM_AWS_S3_BUCKET: ${{ secrets.AM_AWS_S3_BUCKET }}
+          AM_TELEGRAM_TOKEN: ${{ secrets.AM_TELEGRAM_TOKEN }}
+          CK_AWS_ACCESS_KEY_ID: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
+          CK_AWS_SECRET_ACCESS_KEY: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
+          CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
+          CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
+          CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
+        # TODO(Juraj): change task definition once the action is ready
+        run: invoke docker_create_candidate_image --task-definition "cmamp-test-juraj"
