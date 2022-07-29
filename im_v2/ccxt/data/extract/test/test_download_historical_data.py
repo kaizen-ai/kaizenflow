@@ -46,9 +46,17 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         }
         self.assertDictEqual(actual, expected)
 
-    @pytest.mark.slow
-    @umock.patch.object(imvcdeexut, "download_historical_data")
-    def test_main(self, mock_download_historical: umock.MagicMock) -> None:
+    @umock.patch.object(
+        imvcdedhda.ivcdexex, "CcxtExtractor", autospec=True, spec_set=True
+    )
+    @umock.patch.object(
+        imvcdeexut, "download_historical_data", autospec=True, spec_set=True
+    )
+    def test_main(
+        self,
+        download_historical_mock: umock.MagicMock,
+        ccxt_extractor_mock: umock.MagicMock,
+    ) -> None:
         """
         Smoke test to directly run `_main` function for coverage increase.
         """
@@ -73,8 +81,20 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
         imvcdedhda._main(mock_argument_parser)
-        # Check call.
-        self.assertEqual(len(mock_download_historical.call_args), 2)
-        self.assertEqual(
-            mock_download_historical.call_args.args[1].exchange_id, "binance"
-        )
+        # Check calls.
+        self.assertEqual(len(download_historical_mock.call_args), 2)
+        # Check args.
+        actual_args = download_historical_mock.call_args.args
+        self.assertDictEqual(actual_args[0], {**kwargs, **{"unit": "ms"}})
+        # Extractor instance is checked separately because `id` of the mock
+        # is dynamic and different for each test run.
+        self.assertEqual(actual_args[1]._extract_mock_name(), "CcxtExtractor()")
+        # Check kwargs. More of a precaution if we add them.
+        actual_kwargs = download_historical_mock.call_args.kwargs
+        expected_kwargs = {}
+        self.assertEqual(actual_kwargs, expected_kwargs)
+        # Verify that `CcxtExtractor` instance creation is properly called.
+        self.assertEqual(ccxt_extractor_mock.call_count, 1)
+        actual_args = tuple(ccxt_extractor_mock.call_args)
+        expected_args = (("binance", "spot"), {})
+        self.assertEqual(actual_args, expected_args)
