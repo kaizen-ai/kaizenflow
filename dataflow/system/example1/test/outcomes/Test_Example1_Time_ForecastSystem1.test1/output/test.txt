@@ -45,7 +45,7 @@ dag_builder_class: Example1_DagBuilder
 system_class: Example1_Time_ForecastSystem
 market_data_config:
   delay_in_secs: 0
-  data: 
+  data:
     index=[1999-12-25 09:31:00-05:00, 2000-01-01 10:30:00-05:00]
     columns=start_datetime,end_datetime,timestamp_db,close,asset_id,volume,feature1
     shape=(10140, 7)
@@ -78,7 +78,7 @@ dag_runner_object: <dataflow.system.real_time_dag_runner.RealTimeDagRunner objec
 vwap.ret_0.vol_adj.c
 ################################################################################
                             101
-end_datetime                   
+end_datetime
 1999-12-25 20:25:00-05:00  0.98
 1999-12-25 20:30:00-05:00 -0.98
 1999-12-25 20:35:00-05:00  0.98
