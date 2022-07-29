@@ -18,21 +18,21 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _run_experiment_helper(
+def _run_config_list_helper(
     self: Any, cmd_opts: List[str], exp_pass: bool, exp: str
 ) -> None:
     """
-    Build, run, and check a `run_experiment` command line.
+    Build, run, and check a `run_config_list` command line.
     """
     amp_path = hgit.get_amp_abs_path()
     # Get the executable.
-    exec_file = os.path.join(amp_path, "dataflow/model/run_experiment.py")
+    exec_file = os.path.join(amp_path, "dataflow/backtest/run_config_list.py")
     hdbg.dassert_file_exists(exec_file)
     # Build command line.
     dst_dir = self.get_scratch_space()
     cmd = [
         f"{exec_file}",
-        "--experiment_builder dataflow.model.test.simple_experiment.run_experiment",
+        "--experiment_builder dataflow.backtest.test.simple_experiment.run_experiment",
         f"--dst_dir {dst_dir}",
     ]
     trnot.run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)
@@ -51,7 +51,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
     Run an experiment list of two experiment that both succeed.
 
     These tests are equivalent to `TestRunNotebook1` but using the
-    `run_experiment.py` flow instead of `run_notebook.py`.
+    `run_config_list.py` flow instead of `run_notebook.py`.
     """
 
     EXPECTED_OUTCOME = r"""# Dir structure
@@ -59,12 +59,12 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         $SCRATCH_SPACE/result_0
         $SCRATCH_SPACE/result_0/config.pkl
         $SCRATCH_SPACE/result_0/config.txt
-        $SCRATCH_SPACE/result_0/run_experiment.0.log
+        $SCRATCH_SPACE/result_0/run_config_list.0.log
         $SCRATCH_SPACE/result_0/success.txt
         $SCRATCH_SPACE/result_1
         $SCRATCH_SPACE/result_1/config.pkl
         $SCRATCH_SPACE/result_1/config.txt
-        $SCRATCH_SPACE/result_1/run_experiment.1.log
+        $SCRATCH_SPACE/result_1/run_config_list.1.log
         $SCRATCH_SPACE/result_1/success.txt"""
 
     @pytest.mark.slow
@@ -75,13 +75,13 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         - serially
         """
         cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list1()'",
             "--num_threads 'serial'",
             "--aws_profile 'am'",
         ]
         #
         exp_pass = True
-        _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+        _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.slow
     def test_parallel1(self) -> None:
@@ -91,13 +91,13 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         - with 2 threads
         """
         cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list1()'",
             "--num_threads 2",
             "--aws_profile 'am'",
         ]
         #
         exp_pass = True
-        _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+        _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
 
 # #############################################################################
@@ -116,17 +116,17 @@ class TestRunExperimentFail2(hunitest.TestCase):
         $SCRATCH_SPACE/result_0
         $SCRATCH_SPACE/result_0/config.pkl
         $SCRATCH_SPACE/result_0/config.txt
-        $SCRATCH_SPACE/result_0/run_experiment.0.log
+        $SCRATCH_SPACE/result_0/run_config_list.0.log
         $SCRATCH_SPACE/result_0/success.txt
         $SCRATCH_SPACE/result_1
         $SCRATCH_SPACE/result_1/config.pkl
         $SCRATCH_SPACE/result_1/config.txt
-        $SCRATCH_SPACE/result_1/run_experiment.1.log
+        $SCRATCH_SPACE/result_1/run_config_list.1.log
         $SCRATCH_SPACE/result_1/success.txt
         $SCRATCH_SPACE/result_2
         $SCRATCH_SPACE/result_2/config.pkl
         $SCRATCH_SPACE/result_2/config.txt
-        $SCRATCH_SPACE/result_2/run_experiment.2.log"""
+        $SCRATCH_SPACE/result_2/run_config_list.2.log"""
 
     @pytest.mark.slow
     def test_serial1(self) -> None:
@@ -137,14 +137,14 @@ class TestRunExperimentFail2(hunitest.TestCase):
         - aborting on error
         """
         cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
             "--num_threads serial",
             "--aws_profile 'am'",
         ]
         #
         exp_pass = False
         _LOG.warning("This command is supposed to fail")
-        _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+        _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.slow
     def test_serial2(self) -> None:
@@ -155,14 +155,14 @@ class TestRunExperimentFail2(hunitest.TestCase):
         - skipping on error
         """
         cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
             "--skip_on_error",
             "--num_threads serial",
             "--aws_profile 'am'",
         ]
         #
         exp_pass = True
-        _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+        _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.slow
     def test_parallel1(self) -> None:
@@ -175,14 +175,14 @@ class TestRunExperimentFail2(hunitest.TestCase):
         Same as `test_serial1` but using 2 threads.
         """
         cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
             "--num_threads 2",
             "--aws_profile 'am'",
         ]
         #
         exp_pass = False
         _LOG.warning("This command is supposed to fail")
-        _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+        _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
     @pytest.mark.slow
     def test_parallel2(self) -> None:
@@ -195,14 +195,14 @@ class TestRunExperimentFail2(hunitest.TestCase):
         Same as `test_serial1` but using 2 threads.
         """
         cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
             "--skip_on_error",
             "--num_threads 2",
             "--aws_profile 'am'",
         ]
         #
         exp_pass = True
-        _run_experiment_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+        _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
 
 # #############################################################################
@@ -221,7 +221,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
         $SCRATCH_SPACE/result_0
         $SCRATCH_SPACE/result_0/config.pkl
         $SCRATCH_SPACE/result_0/config.txt
-        $SCRATCH_SPACE/result_0/run_experiment.0.log
+        $SCRATCH_SPACE/result_0/run_config_list.0.log
         $SCRATCH_SPACE/result_0/success.txt"""
 
     # TODO(gp): This test needs write access to S3 for `infra` user. For now we
@@ -246,7 +246,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
             output_metadata_file = f"{scratch_dir}/output_metadata.json"
             s3_tmp_path = self.get_s3_scratch_dir()
             cmd_opts = [
-                "--config_builder 'dev_scripts.test.test_run_notebook.build_configs3()'",
+                "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list3()'",
                 "--num_threads 'serial'",
                 f"--aws_profile '{aws_profile}'",
                 f"--s3_path {s3_tmp_path}",
@@ -256,7 +256,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
             ]
             #
             exp_pass = True
-            _run_experiment_helper(
+            _run_config_list_helper(
                 self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME
             )
             # Read the metadata back.
@@ -278,7 +278,7 @@ class TestRunExperimentArchiveOnS3(hunitest.TestCase):
             #     $SCRATCH_SPACE/result_0
             #     $SCRATCH_SPACE/result_0/config.pkl
             #     $SCRATCH_SPACE/result_0/config.txt
-            #     $SCRATCH_SPACE/result_0/run_experiment.0.log
+            #     $SCRATCH_SPACE/result_0/run_config_list.0.log
             #     $SCRATCH_SPACE/result_0/success.txt"""
         if clean_up_s3_archive:
             # Clean up S3.

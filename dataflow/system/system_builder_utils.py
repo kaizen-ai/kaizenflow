@@ -11,8 +11,9 @@ from typing import Callable
 import pandas as pd
 
 import core.config as cconfig
+
 import dataflow.core as dtfcore
-import dataflow.model.experiment_config as dtfmoexcon
+import core.config as cconfig
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
@@ -47,6 +48,7 @@ def get_SystemConfig_template_from_DagBuilder(
     return system_config
 
 
+# TODO(gp): Move to dataflow/backtest
 def apply_backtest_config(
     system: dtfsyssyst.ForecastSystem, backtest_config: str
 ) -> dtfsyssyst.ForecastSystem:
@@ -58,7 +60,7 @@ def apply_backtest_config(
         universe_str,
         trading_period_str,
         time_interval_str,
-    ) = dtfmoexcon.parse_experiment_config(backtest_config)
+    ) = cconfig.parse_backtest_config(backtest_config)
     # Fill system config.
     hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
     system.config[

@@ -8,7 +8,7 @@ import itertools
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import networkx as networ
 import pandas as pd
@@ -19,7 +19,6 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hlogging as hloggin
-import helpers.hintrospection as hintro
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.htimer as htimer
@@ -72,7 +71,7 @@ class DAG:
         # Set default debug/logging parameters.
         self._save_node_io = ""
         self._profile_execution = False
-        self._dst_dir = None
+        self._dst_dir: Optional[str] = None
         self.force_free_nodes = False
         self.set_debug_mode(
             self._save_node_io, self._profile_execution, self._dst_dir
@@ -96,7 +95,7 @@ class DAG:
         ```
         """
         res = ""
-        res += "dag=" + hintro.to_object_pointer(self) + "\n"
+        res += "dag=" + hprint.to_object_pointer(self) + "\n"
         txt = []
         txt.append(f"name={self._name}")
         txt.append(f"mode={self._mode}")
@@ -331,12 +330,12 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
-    def compose(self, dag: "dag_config") -> None:
+    def compose(self, dag: "DAG") -> None:
         """
         Add `dag` to self.
 
-        Node sets of `self` and `dag` must be disjoint.
-        The composition is the union of nodes and edges of `self` and `dag`.
+        Node sets of `self` and `dag` must be disjoint. The composition
+        is the union of nodes and edges of `self` and `dag`.
         """
         hdbg.dassert_isinstance(dag, DAG)
         if self.mode == "loose":
@@ -409,7 +408,7 @@ class DAG:
             return True
         return False
 
-    def insert_at_head(self, obj: Union[dtfcornode.Node, "dag_config"]) -> None:
+    def insert_at_head(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
         """
         Connect a node or single-sink DAG to the head (root) of the DAG.
 
@@ -435,7 +434,7 @@ class DAG:
             return True
         return False
 
-    def append_to_tail(self, obj: Union[dtfcornode.Node, "dag_config"]) -> None:
+    def append_to_tail(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
         """
         Connect a node or single-source DAG to the tail (leaf) of the DAG.
 
@@ -571,7 +570,8 @@ class DAG:
         )
         # Save information to file.
         basename = f"{method}.{topological_id}.{nid}.{file_tag}.txt"
-        file_name = os.path.join(self._dst_dir, basename)
+        dst_dir = cast(str, self._dst_dir)
+        file_name = os.path.join(dst_dir, basename)
         hio.to_file(file_name, txt)
 
     def _write_node_interface_to_dst_dir(
@@ -590,7 +590,8 @@ class DAG:
         `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
         """
         basename = f"{method}.{topological_id}.{nid}.{output_name}"
-        file_name = os.path.join(self._dst_dir, basename)
+        dst_dir = cast(str, self._dst_dir)
+        file_name = os.path.join(dst_dir, basename)
         #
         if isinstance(obj, pd.Series):
             obj = pd.DataFrame(obj)
