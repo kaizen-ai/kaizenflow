@@ -5,13 +5,14 @@ import market_data.im_client_market_data as mdimcmada
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
 import market_data.abstract_market_data as mdabmada
@@ -28,7 +29,7 @@ class ImClientMarketData(mdabmada.MarketData):
         self, *args: Any, im_client: icdc.ImClient, **kwargs: Any
     ) -> None:
         """
-        Constructor.
+        Build object.
         """
         super().__init__(*args, **kwargs)
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
@@ -40,7 +41,7 @@ class ImClientMarketData(mdabmada.MarketData):
         asset_ids: List[int],
     ) -> pd.Series:
         """
-        This method overrides parent method in `MarketData`.
+        Override parent method in `MarketData`.
 
         In contrast with specific `MarketData` backends,
         `ImClientMarketData` uses the end of interval for date
@@ -86,6 +87,11 @@ class ImClientMarketData(mdabmada.MarketData):
         """
         See the parent class.
         """
+        _LOG.debug(
+            hprint.to_str(
+                "start_ts end_ts ts_col_name asset_ids left_close right_close limit"
+            )
+        )
         if not left_close:
             if start_ts is not None:
                 # Add one millisecond to not include the left boundary.
@@ -110,7 +116,7 @@ class ImClientMarketData(mdabmada.MarketData):
         #  is the name of that column.
         full_symbol_col_name = self._im_client._get_full_symbol_col_name(None)
         if self._columns is not None:
-            # Exlcude columns specific of `MarketData` when querying `ImClient`.
+            # Exclude columns specific of `MarketData` when querying `ImClient`.
             columns_to_exclude_in_im = [
                 self._asset_id_col,
                 self._start_time_col_name,
@@ -126,7 +132,7 @@ class ImClientMarketData(mdabmada.MarketData):
                 # since it is necessary for asset id column generation.
                 query_columns.insert(0, full_symbol_col_name)
         else:
-            query_columns = self._columns
+            query_columns = cast(List[str], self._columns)
         # Read data.
         market_data = self._im_client.read_data(
             full_symbols,

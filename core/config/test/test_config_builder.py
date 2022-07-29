@@ -1,13 +1,12 @@
-import pprint
 from typing import List, Optional, cast
 
 import core.config as cconfig
 import helpers.hunit_test as hunitest
 
 
-def _build_test_configs(
+def _build_test_config_list(
     symbols: Optional[List[str]] = None,
-) -> List[cconfig.Config]:
+) -> cconfig.ConfigList:
     config_template = cconfig.Config()
     config_tmp = config_template.add_subconfig("read_data")
     config_tmp["symbol"] = None
@@ -22,28 +21,32 @@ def _build_test_configs(
         config = config_template.copy()
         config[("read_data", "symbol")] = symbol
         configs.append(config)
-    return configs
+    #
+    config_list = cconfig.ConfigList(configs)
+    return config_list
 
 
 # #############################################################################
 
 
+# TODO(gp): -> Test_get_config_list_from_builder1
 class TestGetConfigsFromBuilder1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Build a config from.
         """
         config_builder = (
-            "core.config.test.test_config_builders._build_test_configs()"
+            "core.config.test.test_config_builder._build_test_config_list()"
         )
-        configs = cconfig.get_configs_from_builder(config_builder)
-        txt = pprint.pformat(configs)
-        self.check_string(txt)
+        configs = cconfig.get_config_list_from_builder(config_builder)
+        txt = str(configs)
+        self.check_string(txt, purify_text=True)
 
 
 # #############################################################################
 
 
+# TODO(gp): -> Test_get_config_from_env1
 class TestGetConfigFromEnv(hunitest.TestCase):
     def test_no_env_variables(self) -> None:
         """
