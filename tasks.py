@@ -104,6 +104,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
 
 try:
     from helpers.lib_tasks import (
+        find_dependency,
         pytest_buildmeister,
         pytest_buildmeister_check,
     )  # isort: skip # noqa: F401  # pylint: disable=unused-import

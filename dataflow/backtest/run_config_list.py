@@ -5,18 +5,17 @@ Run a list of experiments consisting of multiple model runs based on the passed:
 - `experiment_builder`, which describes the model driver
 
 # Run an RH1E pipeline using 2 threads:
-> run_experiment.py \
-    --experiment_builder "dataflow_model.master_experiment.run_experiment" \
+> run_config_list.py \
+    --experiment_builder "dataflow.backtest.master_backtest.run_experiment" \
     --config_builder "dataflow_lm.RH1E.config.build_15min_model_configs()" \
     --dst_dir experiment1 \
     --num_threads 2
 
 Import as:
 
-import dataflow.model.run_experiment as dtfmoruexp
+import dataflow.backtest.run_config_list as dtfmoruexp
 """
 
-# TODO(gp): -> run_configs.py?
 
 import argparse
 import logging
@@ -24,7 +23,7 @@ import os
 from typing import cast
 
 import core.config as cconfig
-import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -40,15 +39,14 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): _run_configs_stub
-def _run_experiment_stub(
+def _run_config_stub(
     config: cconfig.Config,
     #
     incremental: bool,
     num_attempts: int,
 ) -> int:
     """
-    Run a pipeline for a specific `Config` calling `run_experiment_stub.py`.
+    Run a pipeline for a specific `Config` calling `run_config_stub.py`.
 
     :param config: config for the experiment
     :param num_attempts: maximum number of times to attempt running the
@@ -58,24 +56,24 @@ def _run_experiment_stub(
     hdbg.dassert_eq(1, num_attempts, "Multiple attempts not supported yet")
     _ = incremental
     #
-    dtfmoexuti.setup_experiment_dir(config)
+    dtfbaexuti.setup_experiment_dir(config)
     # Prepare command line to execute the experiment.
-    file_name = "run_experiment_stub.py"
+    file_name = "run_config_stub.py"
     exec_name = hgit.find_file_in_git_tree(file_name, super_module=True)
     #
-    # TODO(gp): Rename id -> idx everywhere with `jackpy "experiment_config" | grep id | grep config`
-    idx = config[("experiment_config", "id")]
+    # TODO(gp): Rename id -> idx everywhere with `jackpy "backtest_config" | grep id | grep config`
+    idx = config[("backtest_config", "id")]
     _LOG.info("\n%s", hprint.frame(f"Executing experiment for config {idx}"))
     _LOG.info("config=\n%s", config)
     #
-    dst_dir = config[("experiment_config", "dst_dir")]
+    dst_dir = config[("backtest_config", "dst_dir")]
     # Prepare the log file.
     # TODO(gp): -> experiment_dst_dir
-    experiment_result_dir = config[("experiment_config", "experiment_result_dir")]
-    log_file = os.path.join(experiment_result_dir, "run_experiment.%s.log" % idx)
+    experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
+    log_file = os.path.join(experiment_result_dir, "run_config_list.%s.log" % idx)
     log_file = os.path.abspath(os.path.abspath(log_file))
-    experiment_builder = config[("experiment_config", "experiment_builder")]
-    config_builder = config[("experiment_config", "config_builder")]
+    experiment_builder = config[("backtest_config", "experiment_builder")]
+    config_builder = config[("backtest_config", "config_builder")]
     cmd = [
         exec_name,
         f"--experiment_builder '{experiment_builder}'",
@@ -100,7 +98,7 @@ def _run_experiment_stub(
         raise RuntimeError(msg)
     # Mark as success.
     # if rc == 0:
-    dtfmoexuti.mark_config_as_success(experiment_result_dir)
+    dtfbaexuti.mark_config_as_success(experiment_result_dir)
     rc = cast(int, rc)
     return rc
 
@@ -111,10 +109,10 @@ def _get_joblib_workload(args: argparse.Namespace) -> hjoblib.Workload:
     parameters from command line.
     """
     # Get the configs to run.
-    configs = dtfmoexuti.get_configs_from_command_line(args)
+    config_list = dtfbaexuti.get_config_list_from_command_line(args)
     # Prepare one task per config to run.
     tasks = []
-    for config in configs:
+    for config in config_list.configs:
         task: hjoblib.Task = (
             # args.
             (config,),
@@ -123,8 +121,8 @@ def _get_joblib_workload(args: argparse.Namespace) -> hjoblib.Workload:
         )
         tasks.append(task)
     #
-    func_name = "_run_experiment_stub"
-    workload = (_run_experiment_stub, func_name, tasks)
+    func_name = "_run_config_stub"
+    workload = (_run_config_stub, func_name, tasks)
     hjoblib.validate_workload(workload)
     return workload
 
@@ -138,7 +136,7 @@ def _parse() -> argparse.ArgumentParser:
     )
     # Add common experiment options related to configs to execute (e.g.,
     # --config_builder, --start_from_index).
-    parser = dtfmoexuti.add_run_experiment_args(parser, dst_dir_required=True)
+    parser = dtfbaexuti.add_run_experiment_args(parser, dst_dir_required=True)
     # Add more options to control the set of experiment.
     parser.add_argument(
         "--experiment_builder",
@@ -161,7 +159,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # TODO(gp): Pass this param through command line and / or propagate it to
-    #  run_experiment_stub.
+    #  run_config_stub.
     hdbg.init_logger(
         verbosity=args.log_level,
         use_exec_path=True,

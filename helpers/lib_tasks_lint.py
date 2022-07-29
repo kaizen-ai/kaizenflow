@@ -185,6 +185,7 @@ def lint_detect_cycles(  # type: ignore
     stage="prod",
     version="",
     out_file_name="lint_detect_cycles.output.txt",
+    debug_tool=False,
 ):
     """
     Detect cyclic imports in the directory files.
@@ -194,6 +195,7 @@ def lint_detect_cycles(  # type: ignore
     :param dir_name: the name of the dir to detect cyclic imports in
         - By default, the check will be carried out in the dir from where
           the task is run
+    :param debug_tool: print the output of the cycle detector
     """
     hlitauti._report_task()
     # Remove the log file.
@@ -202,6 +204,8 @@ def lint_detect_cycles(  # type: ignore
         hlitauti._run(ctx, cmd)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
+    if debug_tool:
+        docker_cmd_opts.append("-v DEBUG")
     docker_cmd_ = (
         "/app/import_check/detect_import_cycles.py "
         + hlitauti._to_single_line_cmd(docker_cmd_opts)
