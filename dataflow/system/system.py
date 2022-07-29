@@ -160,9 +160,26 @@ class System(abc.ABC):
         self._config["system_class"] = self.__class__.__name__
         _LOG.debug("system_config=\n%s", self._config)
 
+    def __str__(self) -> str:
+        txt = []
+        txt.append("# %s" % hprint.to_object_pointer(self))
+        txt.append(hprint.indent(str(self._config)))
+        txt = "\n".join(txt)
+        return txt
+
     @property
     def config(self) -> cconfig.Config:
         return self._config
+
+    def set_config(self, config: cconfig.Config) -> None:
+        """
+        Set the config for a System.
+
+        This is used in the tile backtesting flow to create multiple
+        configs and then inject one at a time into a `System` in order
+        to simulate the `System` for a specific tile.
+        """
+        self._config = config
 
     @property
     def dag_runner(
@@ -170,11 +187,11 @@ class System(abc.ABC):
     ) -> dtfcore.DagRunner:
         _LOG.info(
             "\n"
-            + hprint.frame("Building dag_runner with final config")
+            + hprint.frame("# Before building dag_runner, config=")
             + "\n"
             + str(self.config)
             + "\n"
-            + hprint.frame("End config")
+            + hprint.frame("End config before dag_runner")
         )
         #
         key = "dag_runner_object"
@@ -188,6 +205,15 @@ class System(abc.ABC):
         # `system.portfolio` while `portfolio` is not in a config yet, but since a config
         # is already marked as read-only execution fails.
         self._config.mark_read_only()
+        #
+        _LOG.info(
+            "\n"
+            + hprint.frame("# After building dag_runner, config=")
+            + "\n"
+            + str(self.config)
+            + "\n"
+            + hprint.frame("End config after dag_runner")
+        )
         if False:
             import helpers.hio as hio
 
@@ -489,6 +515,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
 
+    # TODO(gp): I've noticed that tests actually create an order processor instead
+    #  of using this. The tests should use this.
     def get_order_processor_coroutine(self) -> Coroutine:
         db_connection = self.config["db_connection_object"]
         asset_id_name = self.config["market_data_config", "asset_id_col_name"]

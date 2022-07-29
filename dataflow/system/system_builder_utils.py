@@ -11,8 +11,9 @@ from typing import Callable
 import pandas as pd
 
 import core.config as cconfig
+
 import dataflow.core as dtfcore
-import dataflow.model.experiment_config as dtfmoexcon
+import core.config as cconfig
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
@@ -47,6 +48,7 @@ def get_SystemConfig_template_from_DagBuilder(
     return system_config
 
 
+# TODO(gp): Move to dataflow/backtest
 def apply_backtest_config(
     system: dtfsyssyst.ForecastSystem, backtest_config: str
 ) -> dtfsyssyst.ForecastSystem:
@@ -58,7 +60,7 @@ def apply_backtest_config(
         universe_str,
         trading_period_str,
         time_interval_str,
-    ) = dtfmoexcon.parse_experiment_config(backtest_config)
+    ) = cconfig.parse_backtest_config(backtest_config)
     # Fill system config.
     hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
     system.config[
@@ -146,11 +148,14 @@ def adapt_dag_to_real_time_from_config(
     market_data_history_lookback = system.config[
         "market_data_config", "history_lookback"
     ]
+    process_forecasts_dict = {}
+    ts_col_name = "end_datetime"
     dag = dtfsyssyst.adapt_dag_to_real_time(
         dag,
         market_data,
         market_data_history_lookback,
         process_forecasts_dict,
+        ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
 
@@ -347,6 +352,34 @@ def build_dag_with_data_source_node(
     return dag
 
 
+# TODO(Grisha): -> `add_RealTimeDataSource`?
+def add_real_time_data_source(
+    system: dtfsyssyst.System,
+) -> dtfcore.DAG:
+    """
+    Build a DAG with a real time data source.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    stage = "read_data"
+    market_data = system.market_data
+    market_data_history_lookback = system.config[
+        "market_data_config", "history_lookback"
+    ]
+    ts_col_name = "end_datetime"
+    # The DAG works on multi-index dataframe containing multiple
+    # features for multiple assets.
+    multiindex_output = True
+    node = dtfsysonod.RealTimeDataSource(
+        stage,
+        market_data,
+        market_data_history_lookback,
+        ts_col_name,
+        multiindex_output,
+    )
+    dag = build_dag_with_data_source_node(system, node)
+    return dag
+
+
 # #############################################################################
 # DAG runner instances.
 # #############################################################################
@@ -384,8 +417,7 @@ def get_realtime_DagRunner_from_system(
     return dag_runner
 
 
-# TODO(gp): -> get_RealTimeDagRunner_from_System
-def get_dag_runner_instance1(
+def get_RealTimeDagRunner_from_System(
     system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:
     """

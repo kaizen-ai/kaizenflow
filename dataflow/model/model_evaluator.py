@@ -17,8 +17,8 @@ from tqdm.auto import tqdm
 import core.config as cconfig
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import dataflow as cdataf
-import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.core.result_bundle as dtfcorebun
+import dataflow.model.dataflow_model_utils as dtfmdtfmout
 import dataflow.model.stats_computer as dtfmostcom
 import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
@@ -53,7 +53,7 @@ class ModelEvaluator:
         oos_start: Optional[pd.Timestamp],
     ) -> None:
         """
-        Constructor.
+        Construct object.
 
         The `prediction_col` and `target_col` should be aligned, i.e., the
         prediction at a given index location should be a prediction for the
@@ -98,7 +98,7 @@ class ModelEvaluator:
     @classmethod
     def from_result_bundle_dict(
         cls,
-        result_bundle_dict: Dict[Key, cdataf.ResultBundle],
+        result_bundle_dict: Dict[Key, dtfcorebun.ResultBundle],
         predictions_col: str,
         target_col: str,
         oos_start: Optional[pd.Timestamp],
@@ -176,7 +176,7 @@ class ModelEvaluator:
                 eval_config["model_evaluator_kwargs"]["predictions_col"],
             ]
         }
-        result_bundle_dict = dtfmoexuti.load_experiment_artifacts(**load_config)
+        result_bundle_dict = dtfmdtfmout.load_experiment_artifacts(**load_config)
         # Build the ModelEvaluator.
         evaluator = ModelEvaluator.from_result_bundle_dict(
             result_bundle_dict,
@@ -337,7 +337,7 @@ class ModelEvaluator:
         mode: Optional[str] = None,
     ) -> Dict[Any, pd.DataFrame]:
         """
-        Helper for calculating positions and PnL from returns and predictions.
+        Calculate positions and PnL from returns and predictions.
 
         :param keys: use all available models if `None`
         :param position_method: as in `PositionComputer.compute_positions()`

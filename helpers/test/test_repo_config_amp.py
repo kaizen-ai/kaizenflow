@@ -76,34 +76,37 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
         #
         exp = r"""
         # Repo config:
-          enable_privileged_mode='True'
-          get_docker_base_image_name='amp'
-          get_docker_shared_group=''
-          get_docker_user=''
-          get_host_name='github.com'
-          get_invalid_words='[]'
-          get_shared_data_dirs='{'/data/shared': '/shared_data'}'
-          has_dind_support='True'
-          has_docker_sudo='True'
-          is_CK_S3_available='True'
-          is_dev4='False'
-          is_dev_ck='True'
-          is_inside_ci='False'
-          is_inside_docker='True'
-          is_mac='False'
-          run_docker_as_root='False'
-          skip_submodules_test='False'
-          use_docker_network_mode_host='True'
-          use_docker_sibling_containers='False'
-          use_main_network='False'
-          is_AM_S3_available='True'
+          # repo_config.config
+            enable_privileged_mode='True'
+            get_docker_base_image_name='amp'
+            get_docker_shared_group=''
+            get_docker_user=''
+            get_host_name='github.com'
+            get_invalid_words='[]'
+            get_shared_data_dirs='{'/data/shared': '/shared_data'}'
+            has_dind_support='True'
+            has_docker_sudo='True'
+            run_docker_as_root='False'
+            skip_submodules_test='False'
+            use_docker_db_container_name_to_connect='False'
+            use_docker_network_mode_host='False'
+            use_docker_sibling_containers='False'
+            # hserver.config
+              is_AM_S3_available()='True'
+              is_CK_S3_available()='True'
+              is_dev4()='False'
+              is_dev_ck()='True'
+              is_inside_ci()='False'
+              is_inside_docker()='True'
+              is_mac(version='Catalina')='False'
+              is_mac(version='Monterey')='False'
         # Env vars:
-          AM_AWS_ACCESS_KEY_ID=undef
-          AM_AWS_DEFAULT_REGION=undef
+          AM_AWS_ACCESS_KEY_ID=empty
+          AM_AWS_DEFAULT_REGION=''
           AM_AWS_PROFILE='am'
-          AM_AWS_S3_BUCKET='alphamatic-data'
-          AM_AWS_SECRET_ACCESS_KEY=undef
-          AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
+          AM_AWS_S3_BUCKET='$AM_AWS_S3_BUCKET'
+          AM_AWS_SECRET_ACCESS_KEY=empty
+          AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
           AM_ENABLE_DIND='1'
           AM_FORCE_TEST_FAIL=''
           AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''

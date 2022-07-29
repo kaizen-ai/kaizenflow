@@ -44,7 +44,7 @@ class TestResultBundle(hunitest.TestCase):
         # Initialize a `ResultBundle` from a config.
         init_config = self._get_init_config()
         result_bundle = dtfcorebun.ResultBundle.from_config(init_config)
-        # This pattern is used in `master_experiment.py` before pickling.
+        # This pattern is used in `master_backtest.py` before pickling.
         rb_as_dict = result_bundle.to_config().to_dict()
         # After unpickling, we convert to a `Config`, then to a `ResultBundle`.
         result_bundle_2 = dtfcorebun.ResultBundle.from_config(

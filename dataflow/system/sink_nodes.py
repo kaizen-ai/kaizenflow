@@ -55,9 +55,11 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         self._volatility_col = volatility_col
         self._spread_col = spread_col
         self._portfolio = portfolio
-        # process_forecasts_config = cconfig.get_config_from_nested_dict(
-        #     process_forecasts_config
-        # )
+        # TODO(gp): Why does it need to be a Config? Inside Python code we want
+        #  to use only dict.
+        process_forecasts_config = cconfig.get_config_from_nested_dict(
+            process_forecasts_config
+        )
         hdbg.dassert_isinstance(process_forecasts_config, cconfig.Config)
         self._process_forecasts_config = process_forecasts_config
         self._forecast_evaluator_from_prices_dict = (

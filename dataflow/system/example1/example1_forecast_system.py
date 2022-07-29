@@ -66,9 +66,6 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     """
     system = Example1_ForecastSystem()
     system = dtfssybuut.apply_backtest_config(system, backtest_config)
-    # When we run a simulation we only have available configs, not System, so we
-    # pass the function that creates the DagRunner from the config.
-    system.config["dag_runner_builder"] = system._get_dag_runner
     # Fill pipeline-specific backtest config parameters.
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "10D"
@@ -76,11 +73,23 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     system.config[
         "market_data_config", "im_client_ctor"
     ] = icdc.get_DataFrameImClient_example1
-    system.config["market_data_config", "im_client_config"] = None
+    system.config["market_data_config", "im_client_config"] = cconfig.Config()
     # Set the research PNL parameters.
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj.c"
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "vwap.ret_0.vol_adj.c",
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
     system = dtfssybuut.apply_market_data_config(system)
     return system
 
@@ -116,7 +125,7 @@ class Example1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
         return dag
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_dag_runner_instance1(self)
+        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
         return dag_runner
 
 
@@ -175,8 +184,46 @@ class Example1_Time_ForecastSystem_with_DataFramePortfolio(
         return portfolio
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_dag_runner_instance1(self)
+        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
         return dag_runner
+
+
+def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+    market_data_df: pd.DataFrame,
+    real_time_loop_time_out_in_secs: int,
+) -> dtfsyssyst.System:
+    """
+    The System is used for the corresponding unit tests.
+    """
+    system = Example1_Time_ForecastSystem_with_DataFramePortfolio()
+    # Market data config.
+    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
+    system.config["market_data_config", "delay_in_secs"] = 0
+    system.config["market_data_config", "initial_replayed_delay"] = 5
+    system.config["market_data_config", "asset_ids"] = [101]
+    system.config["market_data_config", "data"] = market_data_df
+    # Dag runner config.
+    system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+    system.config[
+        "dag_runner_config", "real_time_loop_time_out_in_secs"
+    ] = real_time_loop_time_out_in_secs
+    # PnL config.
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "feature1",
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
+    return system
 
 
 # #############################################################################
@@ -241,12 +288,13 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         return portfolio
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_dag_runner_instance1(self)
+        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
         return dag_runner
 
 
+# TODO(Grisha): @Dan move all examples to a `_example.py` file.
 def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
-    market_data: pd.DataFrame,
+    market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
 ) -> dtfsyssyst.System:
     """
@@ -260,14 +308,26 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
     system.config["market_data_config", "delay_in_secs"] = 0
     system.config["market_data_config", "initial_replayed_delay"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
-    system.config["market_data_config", "data"] = market_data
+    system.config["market_data_config", "data"] = market_data_df
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
         "dag_runner_config", "real_time_loop_time_out_in_secs"
     ] = real_time_loop_time_out_in_secs
     # PnL config.
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "feature1"
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": "vwap",
+            "volatility_col": "vwap.ret_0.vol",
+            "prediction_col": "feature1",
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
     return system
