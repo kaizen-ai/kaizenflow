@@ -167,6 +167,7 @@ class FitPredictDagRunner(DagRunner):
 # #############################################################################
 
 
+# TODO(gp): This is obsolete.
 class PredictionDagRunner(FitPredictDagRunner):
     """
     Run prediction DAGs.

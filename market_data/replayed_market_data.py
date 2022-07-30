@@ -207,6 +207,7 @@ def load_market_data(
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
     df = hpandas.read_csv_to_df(stream, **kwargs)
+    # TODO(gp): Difference btw amp and cmamp.
     # Adjust column names to the processable format.
     if "start_ts" in df.columns:
         df = df.rename(columns={"start_ts": "start_datetime"})
