@@ -22,6 +22,24 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+# Copied from `hstring` to avoid import cycles.
+
+
+def remove_prefix(string: str, prefix: str, assert_on_error: bool = True) -> str:
+    if string.startswith(prefix):
+        res = string[len(prefix):]
+    else:
+        if assert_on_error:
+            raise RuntimeError(
+                f"string='{string}' doesn't start with prefix ='{prefix}'"
+            )
+    return res
+
+
+# End copy.
+
+# TODO(gp): object -> Any?
+
 def is_iterable(obj: object) -> bool:
     """
     Return whether obj can be iterated upon or not.
@@ -46,6 +64,20 @@ def get_function_name(count: int = 0) -> str:
         ptr = ptr.f_back  # type: ignore
     func_name = ptr.f_code.co_name  # type: ignore
     return func_name
+
+
+def get_name_from_function(func: callable) -> str:
+    """
+    Return the name of the passed function.
+
+    E.g., amp.helpers.test.test_hintrospection.test_function
+    """
+    func_name = func.__name__
+    module = inspect.getmodule(func)
+    module_name = module.__name__
+    if module_name.startswith("app."):
+        module_name = remove_prefix(module_name, prefix)
+    return f"{module_name}.{func_name}"
 
 
 # From https://stackoverflow.com/questions/53225

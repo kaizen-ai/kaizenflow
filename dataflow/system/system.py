@@ -267,8 +267,13 @@ class System(abc.ABC):
                 builder_func.__name__,
             )
             obj = builder_func()
-            # Build.
+            # Build the object.
+            hdbg.dassert_not_in(key, obj)
             self.config[key] = obj
+            #
+            key_tmp = f"{key}.builder"
+            hdbg.dassert_not_in(key, obj)
+            self.config[key_tmp] =
         _LOG.debug("Object for %s=\n%s", key, obj)
         return obj
 
