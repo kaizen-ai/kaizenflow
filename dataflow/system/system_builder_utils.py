@@ -470,6 +470,30 @@ def get_RealTimeDagRunner_from_System(
 # #############################################################################
 
 
+def get_DataFramePortfolio_from_System(
+    system: dtfsyssyst.System,
+) -> oms.Portfolio:
+    event_loop = system.config["event_loop_object"]
+    market_data = system.market_data
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    portfolio = oms.get_DataFramePortfolio_example1(
+        event_loop,
+        market_data=market_data,
+        # TODO(gp): These should go in the config.
+        mark_to_market_col="close",
+        pricing_method="twap.5T",
+        asset_ids=asset_ids,
+    )
+    # TODO(gp): These should go in the config?
+    portfolio.broker._column_remap = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
+    return portfolio
+
+
 # TODO(Grisha): Generalize `get_DatabasePortfolio_from_System` and
 #  `get_DataFramePortfolio_from_System`.
 def get_DatabasePortfolio_from_System(
@@ -490,30 +514,6 @@ def get_DatabasePortfolio_from_System(
         pricing_method="twap.5T",
         asset_ids=asset_ids,
     )
-    portfolio.broker._column_remap = {
-        "bid": "bid",
-        "ask": "ask",
-        "midpoint": "midpoint",
-        "price": "close",
-    }
-    return portfolio
-
-
-def get_DataFramePortfolio_from_System(
-    system: dtfsyssyst.System,
-) -> oms.Portfolio:
-    event_loop = system.config["event_loop_object"]
-    market_data = system.market_data
-    asset_ids = system.config["market_data_config", "asset_ids"]
-    portfolio = oms.get_DataFramePortfolio_example1(
-        event_loop,
-        market_data=market_data,
-        # TODO(gp): These should go in the config.
-        mark_to_market_col="close",
-        pricing_method="twap.5T",
-        asset_ids=asset_ids,
-    )
-    # TODO(gp): These should go in the config?
     portfolio.broker._column_remap = {
         "bid": "bid",
         "ask": "ask",
