@@ -62,7 +62,7 @@ class Test_obj_to_str1(hunitest.TestCase):
 
     def test1(self) -> None:
         exp = r"""
-        _Object:
+        <helpers.test.test_hprint._Object object at 0x>:
           a='False'
           b='hello'
           c='3.14'
@@ -71,7 +71,7 @@ class Test_obj_to_str1(hunitest.TestCase):
 
     def test2(self) -> None:
         exp = r"""
-        _Object:
+        <helpers.test.test_hprint._Object object at 0x>:
           a='False'
           b='hello'
           c='3.14'
@@ -80,7 +80,7 @@ class Test_obj_to_str1(hunitest.TestCase):
 
     def test3(self) -> None:
         exp = r"""
-        _Object:
+        <helpers.test.test_hprint._Object object at 0x>:
           a='False' (<class 'bool'>)
           b='hello' (<class 'str'>)
           c='3.14' (<class 'float'>)
@@ -89,7 +89,7 @@ class Test_obj_to_str1(hunitest.TestCase):
 
     def test4(self) -> None:
         exp = r"""
-        _Object:
+        <helpers.test.test_hprint._Object object at 0x>:
           a='False'
           b='hello'
           c='3.14'
@@ -99,7 +99,7 @@ class Test_obj_to_str1(hunitest.TestCase):
 
     def test5(self) -> None:
         exp = r"""
-        _Object:
+        <helpers.test.test_hprint._Object object at 0x>:
           a='False'
           b='hello'
           c='3.14'
@@ -109,7 +109,7 @@ class Test_obj_to_str1(hunitest.TestCase):
 
     def test6(self) -> None:
         exp = r"""
-        _Object:
+        <helpers.test.test_hprint._Object object at 0x>:
           a='False'
           b='hello'
           c='3.14'
@@ -136,7 +136,7 @@ class Test_obj_to_str2(hunitest.TestCase):
 
     def test1(self) -> None:
         exp = r"""
-        _Object2:
+        <helpers.test.test_hprint._Object2 object at 0x>:
           x='True'
           y='world'
           z='6.28'
@@ -158,11 +158,11 @@ class Test_obj_to_str3(hunitest.TestCase):
 
     def test1(self) -> None:
         exp = r"""
-        _Object3:
+        <helpers.test.test_hprint._Object3 object at 0x>:
           p='p'
           q='q'
           object2=
-            _Object2:
+            <helpers.test.test_hprint._Object2 object at 0x>:
               x='True'
               y='world'
               z='6.28'

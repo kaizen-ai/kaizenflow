@@ -843,7 +843,8 @@ def obj_to_str(
         hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
     #
     txt = []
-    txt.append(obj.__class__.__name__ + ":")
+    #txt.append(obj.__class__.__name__ + ":")
+    txt.append(to_object_pointer(obj) + ":")
     txt.append(indent("\n".join(ret)))
     return "\n".join(txt)
 

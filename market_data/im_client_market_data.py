@@ -20,7 +20,6 @@ import market_data.abstract_market_data as mdabmada
 _LOG = logging.getLogger(__name__)
 
 
-
 class ImClientMarketData(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
