@@ -162,12 +162,12 @@ class Test_is_pickleable1(hunitest.TestCase):
 # Test_get_function_name1
 # #############################################################################
 
+
 def test_function() -> None:
     pass
 
 
 class Test_get_function_name1(hunitest.TestCase):
-
     def test1(self) -> None:
         act = hintros.get_function_name()
         exp = ""
@@ -175,7 +175,6 @@ class Test_get_function_name1(hunitest.TestCase):
 
 
 class Test_get_name_from_function1(hunitest.TestCase):
-
     def test1(self) -> None:
         act = hintros.get_name_from_function(test_function)
         exp = "amp.helpers.test.test_hintrospection.test_function"

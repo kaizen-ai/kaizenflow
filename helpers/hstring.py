@@ -16,7 +16,7 @@ _LOG = logging.getLogger(__name__)
 
 def remove_prefix(string: str, prefix: str, assert_on_error: bool = True) -> str:
     if string.startswith(prefix):
-        res = string[len(prefix):]
+        res = string[len(prefix) :]
     else:
         if assert_on_error:
             raise RuntimeError(

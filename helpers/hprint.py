@@ -20,7 +20,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
-#_LOG.setLevel(logging.INFO)
+# _LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -680,7 +680,7 @@ def set_diff_to_str(
     return res
 
 
-# ###############################################################################
+# #############################################################################
 
 
 def _to_skip(is_: bool, mode: str) -> bool:
@@ -709,7 +709,9 @@ def _to_skip_callable_attribute(attr_name: Any, mode: str) -> bool:
 
 
 def _to_skip_private_attribute(attr_name: str, mode: str) -> bool:
-    is_dunder = attr_name.startswith("__") and attr_name.endswith("__")
+    # _Object__hello
+    # TODO(gp): This can be improved by passing the name of the object.
+    is_dunder = attr_name.startswith("_") and "__" in attr_name
     is_private = not is_dunder and attr_name.startswith("_")
     skip = _to_skip(is_private, mode)
     return skip
@@ -717,12 +719,18 @@ def _to_skip_private_attribute(attr_name: str, mode: str) -> bool:
 
 def _to_skip_dunder_attribute(attr_name: str, mode: str) -> bool:
     # Is it a double under method, aka dunder?
-    is_dunder = attr_name.startswith("__") and attr_name.endswith("__")
+    is_dunder = attr_name.startswith("_") and "__" in attr_name
     skip = _to_skip(is_dunder, mode)
     return skip
 
 
-def _to_skip_attribute(attr_name: Any, attr_value: Any, callable_mode: str, private_mode: str, dunder_mode: str) -> None:
+def _to_skip_attribute(
+    attr_name: Any,
+    attr_value: Any,
+    callable_mode: str,
+    private_mode: str,
+    dunder_mode: str,
+) -> None:
     # Handle callable methods.
     skip = _to_skip_callable_attribute(attr_value, callable_mode)
     if skip:
@@ -738,11 +746,11 @@ def _to_skip_attribute(attr_name: Any, attr_value: Any, callable_mode: str, priv
     if skip:
         _LOG.debug("Skip dunder")
         return skip
-    return True
+    return False
 
 
 def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
-    out = f"{attr_name}={str(attr_value)}"
+    out = f"{attr_name}='{str(attr_value)}'"
     if print_type:
         out += f" ({type(attr_value)})"
     return out
@@ -752,6 +760,7 @@ def obj_to_str(
     obj: Any,
     *,
     attr_mode: str = "__dict__",
+    sort: bool = False,
     print_type: bool = False,
     callable_mode: str = "skip",
     private_mode: str = "skip",
@@ -775,33 +784,41 @@ def obj_to_str(
     """
     ret = []
     if attr_mode == "__dict__":
-        for attr_name in sorted(obj.__dict__):
+        values = obj.__dict__
+        if sort:
+            values = sorted(values)
+        for attr_name in values:
             attr_value = obj.__dict__[attr_name]
             _LOG.debug("attr_name=%s attr_value=%s", attr_name, attr_value)
-            skip = _to_skip_attribute(attr_name, attr_value, callable_mode, private_mode,
-                                      dunder_mode)
+            skip = _to_skip_attribute(
+                attr_name, attr_value, callable_mode, private_mode, dunder_mode
+            )
             if skip:
                 continue
             #
-            out = _to_attr_str(attr_name, attr_value, print_type)
+            out = _attr_to_str(attr_name, attr_value, print_type)
             ret.append(out)
     elif attr_mode == "dir":
-        for attr_name in dir(obj):
+        values = dir(obj)
+        if sort:
+            values = sorted(values)
+        for attr_name in values:
             attr_value = getattr(obj, attr_name)
             _LOG.debug("attr_name=%s attr_value=%s", attr_name, attr_value)
-            skip = _to_skip_attribute(attr_name, attr_value, callable_mode, private_mode,
-                                      dunder_mode)
+            skip = _to_skip_attribute(
+                attr_name, attr_value, callable_mode, private_mode, dunder_mode
+            )
             if skip:
                 continue
             #
-            out = _to_attr_str(attr_name, attr_value, print_type)
+            out = _attr_to_str(attr_name, attr_value, print_type)
             ret.append(out)
     else:
         hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
     return "\n".join(ret)
 
 
-# ###############################################################################
+# #############################################################################
 
 
 def remove_non_printable_chars(txt: str) -> str:

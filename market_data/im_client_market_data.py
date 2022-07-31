@@ -21,23 +21,6 @@ _LOG = logging.getLogger(__name__)
 
 
 
-def repr(self_: Any, sort_attributes: bool = False, skip_dunder) -> str:
-    """
-    Print an object as string in a format like:
-
-    ```
-    <object type>
-        key: value
-    ```
-    """
-    txt = []
-    # <market_data.im_client_market_data.ImClientMarketData object at 0x...>
-    txt.append(hpkrint.to_object_pointer(self))
-    for k, v in vars(self).items():
-        txt.append(f"{k}: {v}")
-    return "\n".join(txt)
-
-
 class ImClientMarketData(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
