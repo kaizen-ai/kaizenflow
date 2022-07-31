@@ -20,7 +20,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
-_LOG.setLevel(logging.INFO)
+#_LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
@@ -680,92 +680,128 @@ def set_diff_to_str(
     return res
 
 
+# ###############################################################################
+
+
+def _to_skip(is_: bool, mode: str) -> bool:
+    hdbg.dassert_in(mode, ("skip", "only", "all"))
+    skip = False
+    if mode == "skip":
+        if is_:
+            # Skip all the callables.
+            skip = True
+    elif mode == "only":
+        if not is_:
+            # Keep only the callables.
+            skip = True
+    elif mode == "all":
+        # Keep everything.
+        skip = False
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
+    return skip
+
+
+def _to_skip_callable_attribute(attr_name: Any, mode: str) -> bool:
+    is_callable = callable(attr_name)
+    skip = _to_skip(is_callable, mode)
+    return skip
+
+
+def _to_skip_private_attribute(attr_name: str, mode: str) -> bool:
+    is_dunder = attr_name.startswith("__") and attr_name.endswith("__")
+    is_private = not is_dunder and attr_name.startswith("_")
+    skip = _to_skip(is_private, mode)
+    return skip
+
+
+def _to_skip_dunder_attribute(attr_name: str, mode: str) -> bool:
+    # Is it a double under method, aka dunder?
+    is_dunder = attr_name.startswith("__") and attr_name.endswith("__")
+    skip = _to_skip(is_dunder, mode)
+    return skip
+
+
+def _to_skip_attribute(attr_name: Any, attr_value: Any, callable_mode: str, private_mode: str, dunder_mode: str) -> None:
+    # Handle callable methods.
+    skip = _to_skip_callable_attribute(attr_value, callable_mode)
+    if skip:
+        _LOG.debug("Skip callable")
+        return skip
+    # Handle private methods.
+    skip = _to_skip_private_attribute(attr_name, private_mode)
+    if skip:
+        _LOG.debug("Skip private")
+        return skip
+    # Handle dunder methods.
+    skip = _to_skip_dunder_attribute(attr_name, dunder_mode)
+    if skip:
+        _LOG.debug("Skip dunder")
+        return skip
+    return True
+
+
+def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
+    out = f"{attr_name}={str(attr_value)}"
+    if print_type:
+        out += f" ({type(attr_value)})"
+    return out
+
+
 def obj_to_str(
     obj: Any,
+    *,
     attr_mode: str = "__dict__",
     print_type: bool = False,
     callable_mode: str = "skip",
-    private_mode: str = "skip_dunder",
+    private_mode: str = "skip",
+    dunder_mode: str = "skip",
 ) -> str:
     """
     Print attributes of an object.
 
     :param attr_mode: use `__dict__` or `dir()`
+        - It doesn't seem to make much difference
     :param print_type: print the type of the attribute
     :param callable_mode: how to handle attributes that are callable (i.e.,
         methods)
-        - skip: skip the methods
-        - only: print only the methods
-        - all: print variables and callable
+        - `skip`: skip the callable methods
+        - `only`: print only the callable methods
+        - `all`: always print
+    :param private_mode: how to handle private attributes. Same params as
+        `callable_mode`
+    :param dunder_mode: how to handle double under attributes. Same params as
+        `callable_mode`
     """
-
-    def _to_skip_callable(attr: Any, callable_mode: str) -> bool:
-        hdbg.dassert_in(callable_mode, ("skip", "only", "all"))
-        is_callable = callable(attr)
-        skip = False
-        if callable_mode == "skip" and is_callable:
-            skip = True
-        if callable_mode == "only" and not is_callable:
-            skip = True
-        return skip
-
-    def _to_skip_private(name: str, private_mode: str) -> bool:
-        hdbg.dassert_in(
-            private_mode,
-            ("skip_dunder", "only_dunder", "skip_private", "only_private", "all"),
-        )
-        is_dunder = name.startswith("__") and name.endswith("__")
-        is_private = not is_dunder and name.startswith("_")
-        skip = False
-        if private_mode == "skip_dunder" and is_dunder:
-            skip = True
-        if private_mode == "only_dunder" and not is_dunder:
-            skip = True
-        if private_mode == "skip_private" and is_private:
-            skip = True
-        if private_mode == "only_private" and not is_private:
-            skip = True
-        return skip
-
-    def _to_str(attr: Any, print_type: bool) -> str:
-        if print_type:
-            out = f"{v}= ({type(attr)}) {str(attr)}"
-        else:
-            out = f"{v}= {str(attr)}"
-        return out
-
     ret = []
     if attr_mode == "__dict__":
-        for v in sorted(obj.__dict__):
-            attr = obj.__dict__[v]
-            # Handle dunder / private methods.
-            skip = _to_skip_private(v, private_mode)
-            if skip:
-                continue
-            # Handle callable methods.
-            skip = _to_skip_callable(attr, callable_mode)
+        for attr_name in sorted(obj.__dict__):
+            attr_value = obj.__dict__[attr_name]
+            _LOG.debug("attr_name=%s attr_value=%s", attr_name, attr_value)
+            skip = _to_skip_attribute(attr_name, attr_value, callable_mode, private_mode,
+                                      dunder_mode)
             if skip:
                 continue
             #
-            out = _to_str(attr, print_type)
+            out = _to_attr_str(attr_name, attr_value, print_type)
             ret.append(out)
     elif attr_mode == "dir":
-        for v in dir(obj):
-            attr = getattr(obj, v)
-            # Handle dunder / private methods.
-            skip = _to_skip_private(v, private_mode)
-            if skip:
-                continue
-            # Handle callable methods.
-            skip = _to_skip_callable(attr, callable_mode)
+        for attr_name in dir(obj):
+            attr_value = getattr(obj, attr_name)
+            _LOG.debug("attr_name=%s attr_value=%s", attr_name, attr_value)
+            skip = _to_skip_attribute(attr_name, attr_value, callable_mode, private_mode,
+                                      dunder_mode)
             if skip:
                 continue
             #
-            out = _to_str(attr, print_type)
+            out = _to_attr_str(attr_name, attr_value, print_type)
             ret.append(out)
     else:
         hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
     return "\n".join(ret)
+
+
+# ###############################################################################
 
 
 def remove_non_printable_chars(txt: str) -> str:
