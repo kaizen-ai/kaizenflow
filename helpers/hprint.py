@@ -730,7 +730,7 @@ def _to_skip_attribute(
     callable_mode: str,
     private_mode: str,
     dunder_mode: str,
-) -> None:
+) -> bool:
     # Handle callable methods.
     skip = _to_skip_callable_attribute(attr_value, callable_mode)
     if skip:
@@ -750,9 +750,27 @@ def _to_skip_attribute(
 
 
 def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
-    out = f"{attr_name}='{str(attr_value)}'"
-    if print_type:
-        out += f" ({type(attr_value)})"
+    attr_value_as_str = str(attr_value)
+    if len(attr_value_as_str.split("\n")) > 1:
+        # The string representing the attribute value spans multiple lines, so print
+        # like:
+        # ```
+        # attr_name= (type)
+        #   attr_value
+        # ```
+        out = f"{attr_name}="
+        if print_type:
+            out += f" ({type(attr_value)})"
+        out += "\n" + indent(attr_value_as_str)
+    else:
+        # The string representing the attribute value is a single line, so print
+        # like:
+        # ```
+        # attr_name='attr_value' (type)
+        # ```
+        out = f"{attr_name}='{str(attr_value)}'"
+        if print_type:
+            out += f" ({type(attr_value)})"
     return out
 
 
@@ -768,6 +786,14 @@ def obj_to_str(
 ) -> str:
     """
     Print attributes of an object.
+
+    An object is printed as name of the class and the attributes, e.g.,
+    ```
+    _Object:
+      a='False'
+      b='hello'
+      c='3.14'
+    ```
 
     :param attr_mode: use `__dict__` or `dir()`
         - It doesn't seem to make much difference
@@ -815,7 +841,11 @@ def obj_to_str(
             ret.append(out)
     else:
         hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
-    return "\n".join(ret)
+    #
+    txt = []
+    txt.append(obj.__class__.__name__ + ":")
+    txt.append(indent("\n".join(ret)))
+    return "\n".join(txt)
 
 
 # #############################################################################
