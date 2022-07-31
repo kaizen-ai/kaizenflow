@@ -750,6 +750,10 @@ def _to_skip_attribute(
 
 
 def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
+    import pandas as pd
+
+    if isinstance(attr_value, pd.DataFrame):
+
     attr_value_as_str = str(attr_value)
     if len(attr_value_as_str.split("\n")) > 1:
         # The string representing the attribute value spans multiple lines, so print
@@ -843,10 +847,18 @@ def obj_to_str(
         hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
     #
     txt = []
-    #txt.append(obj.__class__.__name__ + ":")
     txt.append(to_object_pointer(obj) + ":")
     txt.append(indent("\n".join(ret)))
     return "\n".join(txt)
+
+
+class PrintableMixin:
+
+    def __str__(self) -> str:
+        return to_object_pointer(self)
+
+    def __repr__(self) -> str:
+        return obj_to_str(self)
 
 
 # #############################################################################

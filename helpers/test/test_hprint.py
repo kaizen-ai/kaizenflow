@@ -34,7 +34,7 @@ class _Object2:
         self.__hello = "double_dunder"
         self.hello = lambda x: x + 1
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return hprint.obj_to_str(self)
 
 

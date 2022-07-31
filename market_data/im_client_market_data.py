@@ -35,16 +35,6 @@ class ImClientMarketData(mdabmada.MarketData):
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
         self._im_client = im_client
 
-    def __str__(self) -> str:
-        return hprint.to_object_pointer(self)
-
-    def __repr__(self) -> str:
-        txt = []
-        txt.append(hprint.to_object_pointer(self))
-        for k, v in vars(self).items():
-            txt.append(f"{k}: {v}")
-        return "\n".join(txt)
-
     def get_last_price(
         self,
         col_name: str,

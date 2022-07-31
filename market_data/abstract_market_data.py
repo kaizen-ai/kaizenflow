@@ -41,7 +41,7 @@ def dassert_valid_asset_ids(asset_ids: Optional[Iterable[AssetId]]) -> None:
 # #############################################################################
 
 
-class MarketData(abc.ABC):
+class MarketData(abc.ABC, hprint.PrintableMixin):
     """
     Implement an interface to an historical / real-time source of price data.
 
