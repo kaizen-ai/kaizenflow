@@ -690,7 +690,7 @@ def obj_to_str(
     """
     Print attributes of an object.
 
-    :param using_dict: use `__dict__` instead of `dir`
+    :param attr_mode: use `__dict__` or `dir()`
     :param print_type: print the type of the attribute
     :param callable_mode: how to handle attributes that are callable (i.e.,
         methods)

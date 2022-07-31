@@ -20,6 +20,24 @@ import market_data.abstract_market_data as mdabmada
 _LOG = logging.getLogger(__name__)
 
 
+
+def repr(self_: Any, sort_attributes: bool = False, skip_dunder) -> str:
+    """
+    Print an object as string in a format like:
+
+    ```
+    <object type>
+        key: value
+    ```
+    """
+    txt = []
+    # <market_data.im_client_market_data.ImClientMarketData object at 0x...>
+    txt.append(hpkrint.to_object_pointer(self))
+    for k, v in vars(self).items():
+        txt.append(f"{k}: {v}")
+    return "\n".join(txt)
+
+
 class ImClientMarketData(mdabmada.MarketData):
     """
     Implement a `MarketData` that uses a `ImClient` as backend.
@@ -34,6 +52,16 @@ class ImClientMarketData(mdabmada.MarketData):
         super().__init__(*args, **kwargs)
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
         self._im_client = im_client
+
+    def __str__(self) -> str:
+        return hprint.to_object_pointer(self)
+
+    def __repr__(self) -> str:
+        txt = []
+        txt.append(hprint.to_object_pointer(self))
+        for k, v in vars(self).items():
+            txt.append(f"{k}: {v}")
+        return "\n".join(txt)
 
     def get_last_price(
         self,

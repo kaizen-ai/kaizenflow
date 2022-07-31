@@ -154,6 +154,45 @@ class MarketData(abc.ABC):
         hdbg.dassert_lte(1, max_iterations)
         self._max_iterations = max_iterations
 
+    def __repr__(self) -> str:
+        txt = []
+        txt.append(hprint.to_object_pointer(self))
+        for k, v in vars(self).items():
+            txt.append(f"{k}: {v}")
+        return "\n".join(txt)
+        # for var_name in [
+        #     "asset_id_col",
+        #     "asset_ids",
+        #     "start_time_col_name",
+        #     "end_time_col_name",
+        #     "columns",
+        #     "get_wall_clock_time",
+        #     "timezone",
+        #     "sleep_in_secs",
+        #     "time_out_in_secs",
+        #     column_remap filter_data_mode"
+        #     asset_id_col: str,
+        #                   # TODO(gp): This should be first and also potentially be None.
+        #                   asset_ids: List[int],
+        # # TODO(gp): -> start_timestamp_col
+        # start_time_col_name: str,
+        # end_time_col_name: str,
+        # columns: Optional[List[str]],
+        # get_wall_clock_time: hdateti.GetWallClockTime,
+        # *,
+        # # TODO(Dan): Converge on timezone `America/New_York` vs `US/Eastern` (see
+        # #  CMTask217).
+        # timezone: str = "America/New_York",
+        #                 sleep_in_secs: float = 1.0,
+        #                                        time_out_in_secs: int = 60 * 2,
+        #                                                                column_remap: Optional[Dict[str, str]] = None,
+        #                                                                                                         filter_data_mode: str = "assert",
+        #
+        # _LOG.debug(
+        #     hprint.to_str(
+        #     )
+        # )
+
     # /////////////////////////////////////////////////////////////////////////////
 
     def get_data_for_last_period(

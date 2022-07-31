@@ -73,9 +73,12 @@ def get_name_from_function(func: callable) -> str:
     E.g., amp.helpers.test.test_hintrospection.test_function
     """
     func_name = func.__name__
+    #
     module = inspect.getmodule(func)
     module_name = module.__name__
-    if module_name.startswith("app."):
+    # Remove `app.` if needed.
+    prefix = "app."
+    if module_name.startswith(prefix):
         module_name = remove_prefix(module_name, prefix)
     return f"{module_name}.{func_name}"
 
