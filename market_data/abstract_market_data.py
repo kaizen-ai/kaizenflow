@@ -16,6 +16,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hobject as hobject
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def dassert_valid_asset_ids(asset_ids: Optional[Iterable[AssetId]]) -> None:
 # #############################################################################
 
 
-class MarketData(abc.ABC, hprint.PrintableMixin):
+class MarketData(abc.ABC, hobject.PrintableMixin):
     """
     Implement an interface to an historical / real-time source of price data.
 
