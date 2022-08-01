@@ -179,6 +179,26 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp, fuzzy_match=False)
 
+    def test3(self) -> None:
+        nested = {
+            "key1": "val1",
+            "key2": {
+                "key3": {
+                    "key4": {}
+                }
+            },
+        }
+        config = cconfig.get_config_from_nested_dict(nested)
+        act = str(config)
+        exp = r"""
+        key1: val1
+        key2:
+          key3:
+            key4:
+        """
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+
 
 # #############################################################################
 

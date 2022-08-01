@@ -86,6 +86,8 @@ def get_config_from_flattened_dict(
     hdbg.dassert(flattened)
     config = cconconf.Config()
     for k, v in flattened.items():
+        if isinstance(v, dict) and not v:
+            v = cconconf.Config()
         config[k] = v
     return config
 

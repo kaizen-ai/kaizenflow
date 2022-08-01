@@ -54,6 +54,8 @@ info:
       dtypes: float64(8)
   resample:
     predict:
+      func_info:
+
       df_transformed_info: <class 'pandas.core.frame.DataFrame'>
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
@@ -79,6 +81,8 @@ info:
       dtypes: float64(16)
   compute_ret_0:
     predict:
+      func_info:
+
       df_transformed_info: <class 'pandas.core.frame.DataFrame'>
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
@@ -188,6 +192,8 @@ info:
       dtypes: float64(8)
   resample:
     predict:
+      func_info:
+
       df_transformed_info: <class 'pandas.core.frame.DataFrame'>
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
@@ -213,6 +219,8 @@ info:
       dtypes: float64(16)
   compute_ret_0:
     predict:
+      func_info:
+
       df_transformed_info: <class 'pandas.core.frame.DataFrame'>
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
@@ -322,6 +330,8 @@ info:
       dtypes: float64(8)
   resample:
     predict:
+      func_info:
+
       df_transformed_info: <class 'pandas.core.frame.DataFrame'>
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
@@ -347,6 +357,8 @@ info:
       dtypes: float64(16)
   compute_ret_0:
     predict:
+      func_info:
+
       df_transformed_info: <class 'pandas.core.frame.DataFrame'>
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
