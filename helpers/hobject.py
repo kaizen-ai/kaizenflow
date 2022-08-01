@@ -58,11 +58,11 @@ def _to_skip_dunder_attribute(attr_name: str, mode: str) -> bool:
 
 
 def _to_skip_attribute(
-        attr_name: Any,
-        attr_value: Any,
-        callable_mode: str,
-        private_mode: str,
-        dunder_mode: str,
+    attr_name: Any,
+    attr_value: Any,
+    callable_mode: str,
+    private_mode: str,
+    dunder_mode: str,
 ) -> bool:
     # Handle callable methods.
     skip = _to_skip_callable_attribute(attr_value, callable_mode)

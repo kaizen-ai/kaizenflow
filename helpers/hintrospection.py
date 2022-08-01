@@ -77,7 +77,8 @@ def get_name_from_function(func: callable) -> str:
     #
     module = inspect.getmodule(func)
     module_name = module.__name__
-    # Remove `app.` if needed.
+    # Remove `app.` if needed from the module name, e.g.,
+    # `app.amp.helpers.test.test_hintrospection`.
     prefix = "app."
     if module_name.startswith(prefix):
         module_name = remove_prefix(module_name, prefix)
