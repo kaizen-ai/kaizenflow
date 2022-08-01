@@ -201,7 +201,7 @@ def load_market_data(
     column_remap: Optional[Dict[str, str]] = None,
     timestamp_db_column: Optional[str] = None,
     datetime_columns: Optional[List[str]] = None,
-    read_csv_kwargs: Optional[Dict[str, Any]] = None,
+    kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     Load some example data from the RT DB.
@@ -214,9 +214,9 @@ def load_market_data(
         to datetime
     """
     # Build options.
-    if read_csv_kwargs is None:
-        read_csv_kwargs = {}
-    kwargs_tmp = read_csv_kwargs.copy()
+    if kwargs is None:
+        kwargs = {}
+    kwargs_tmp = kwargs.copy()
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
         kwargs_tmp["s3fs"] = s3fs_
@@ -226,7 +226,7 @@ def load_market_data(
     # TODO(gp): Difference btw amp and cmamp.
     # Adjust column names to the processable format.
     if column_remap:
-        hpandas.dassert_valid_remap(df.columns, column_remap)
+        hpandas.dassert_valid_remap(list(df.columns), column_remap)
         df = df.rename(columns=column_remap)
     #
     if timestamp_db_column:
@@ -234,9 +234,10 @@ def load_market_data(
         hdbg.dassert_in(timestamp_db_column, df.columns)
         df["timestamp_db"] = df[timestamp_db_column]
     #
-    for col_name in datetime_columns:
-        hdbg.dassert_in(col_name, df.columns)
-        df[col_name] = pd.to_datetime(df[col_name], utc=True)
+    if datetime_columns:
+        for col_name in datetime_columns:
+            hdbg.dassert_in(col_name, df.columns)
+            df[col_name] = pd.to_datetime(df[col_name], utc=True)
 
 
     # if "start_ts" in df.columns:
