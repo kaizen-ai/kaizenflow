@@ -152,14 +152,15 @@ class CcxtBroker(ombroker.Broker):
             side = "buy" if order.diff_num_shares > 0 else "sell"
             order_resp = self._exchange.createOrder(
                 symbol=symbol,
-                type=order.type_,
+                #type=order.type_,
+                type="market",
                 side=side,
                 amount=abs(order.diff_num_shares),
                 # id = order.order_id,
                 # id=order.order_id,
                 # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
                 # but most likely the method will need to be overriden per each exchange
-                # to accomodate endpoint specific behavior.
+                # to accommodate endpoint specific behavior.
                 params={
                     "portfolio_id": self._portfolio_id,
                     "client_oid": order.order_id,
