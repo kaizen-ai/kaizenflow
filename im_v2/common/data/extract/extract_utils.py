@@ -29,6 +29,7 @@ import im_v2.im_lib_tasks as imvimlita
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
+_LOG.setLevel(logging.INFO)
 
 
 def add_exchange_download_args(
@@ -285,7 +286,7 @@ def _download_realtime_for_one_exchange_with_timeout(
         start_timestamp,
         end_timestamp,
     )
-    _LOG.warning(
+    _LOG.info(
         "Starting data download from: %s, till: %s",
         start_timestamp,
         end_timestamp,
