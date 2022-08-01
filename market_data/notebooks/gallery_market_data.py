@@ -21,6 +21,7 @@
 import datetime
 import logging
 
+import dataflow.system as dtfsys
 import market_data as mdata
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -77,14 +78,12 @@ actual_df = im_client.read_data(
 )
 
 # %%
-symbols = im_client.get_universe()[:2]
+symbols = im_client.get_universe()[3:6]
+display(symbols)
 
 # %%
 asset_ids = im_client.get_asset_ids_from_full_symbols(symbols)
 print(asset_ids)
-
-# %%
-actual_df
 
 # %%
 import market_data.market_data_example as mdmadaex
@@ -93,7 +92,7 @@ import market_data.market_data_example as mdmadaex
 columns = None
 column_remap = None
 
-mdata = mdmadaex.get_HistoricalImClientMarketData_example1(
+market_data = mdmadaex.get_HistoricalImClientMarketData_example1(
     im_client,
     asset_ids,
     columns,
@@ -105,7 +104,7 @@ start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
 end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
 ts_col_name = "knowledge_timestamp"
         
-df = mdata.get_data_for_interval(
+df = market_data.get_data_for_interval(
     start_ts,
     end_ts,
     ts_col_name,
@@ -113,4 +112,21 @@ df = mdata.get_data_for_interval(
 )
 
 # %%
-df
+df.tail()
+
+# %%
+data_source_node = dtfsys.HistoricalDataSource(
+    "load_prices",
+    market_data,
+    "end_ts",
+    True,
+    col_names_to_remove=["knowledge_timestamp", "start_ts", "full_symbol"],
+)
+
+# %%
+data = data_source_node.fit()["df_out"]
+
+# %%
+data.tail()
+
+# %%
