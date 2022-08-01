@@ -216,28 +216,14 @@ def load_market_data(
     # Build options.
     if read_csv_kwargs is None:
         read_csv_kwargs = {}
-    read_csv_kwargs_tmp = read_csv_kwargs.copy()
+    kwargs_tmp = read_csv_kwargs.copy()
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
-<<<<<<< HEAD
-<<<<<<< HEAD
-        read_csv_kwargs_tmp["s3fs"] = s3fs_
-    stream, read_csv_kwargs = hs3.get_local_or_s3_stream(file_name, **read_csv_kwargs_tmp)
-    # Read data.
-    df = hpandas.read_csv_to_df(stream, **read_csv_kwargs)
-    _LOG.debug("before conversion: df=\n%s", hpandas.df_to_str(df))
-=======
-=======
->>>>>>> 9e1496642acda7970cea39517212d13611b5a758
         kwargs_tmp["s3fs"] = s3fs_
     kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
     stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
     df = hpandas.read_csv_to_df(stream, **kwargs)
     # TODO(gp): Difference btw amp and cmamp.
-<<<<<<< HEAD
->>>>>>> master
-=======
->>>>>>> 9e1496642acda7970cea39517212d13611b5a758
     # Adjust column names to the processable format.
     if column_remap:
         hpandas.dassert_valid_remap(df.columns, column_remap)
