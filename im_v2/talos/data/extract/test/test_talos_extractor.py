@@ -8,7 +8,6 @@ import pytest
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
-import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import im_v2.talos.data.extract.extractor as imvtdexex
 
@@ -16,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skipif(
-    not hserver.is_CK_S3_available(),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestTalosExtractor1(hunitest.TestCase):
