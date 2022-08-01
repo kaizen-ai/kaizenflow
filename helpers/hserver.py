@@ -1,10 +1,14 @@
 """
 Identify on which server we are running.
+
+Import as:
+
+import helpers.hserver as hserver
 """
 
 import logging
 import os
-from typing import Optional
+from typing import List, Optional
 
 # This module should depend only on:
 # - Python standard modules
@@ -137,7 +141,7 @@ def is_cmamp_prod() -> bool:
 
     This env var is set inside `devops/docker_build/prod.Dockerfile`.
     """
-    return os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False)
+    return bool(os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False))
 
 
 def _dassert_setup_consistency() -> None:
@@ -148,8 +152,9 @@ def _dassert_setup_consistency() -> None:
     is_dev_ck_ = is_dev_ck()
     is_inside_ci_ = is_inside_ci()
     is_mac_ = is_mac()
+    is_cmamp_prod_ = is_cmamp_prod()
     # One and only one set-up should be true.
-    sum_ = is_dev4_ + is_dev_ck_ + is_inside_ci_ + is_mac_
+    sum_ = is_dev4_ + is_dev_ck_ + is_inside_ci_ + is_mac_ + is_cmamp_prod_
     if sum_ != 1:
         msg = (
             "One and only one set-up config should be true: "
@@ -157,6 +162,7 @@ def _dassert_setup_consistency() -> None:
             + f"is_dev_ck={is_dev_ck_}"
             + f"is_inside={is_inside_ci_}"
             + f"is_mac={is_mac_}"
+            + f"is_cmamp_prod={is_cmamp_prod_}"
         )
         raise ValueError(msg)
 
@@ -181,26 +187,6 @@ else:
 def is_AM_S3_available() -> bool:
     # AM bucket is always available.
     val = True
-    _LOG.debug("val=%s", val)
-    return val
-
-
-def is_CK_S3_available() -> bool:
-    val = True
-    if is_inside_ci():
-        import helpers.henv as henv
-
-        repo_name = henv.execute_repo_config_code("get_name()")
-        if repo_name in ("//amp", "//dev_tools"):
-            # No CK bucket.
-            val = False
-        # TODO(gp): We might want to enable CK tests also on lemonade.
-        if repo_name in ("//lemonade"):
-            # No CK bucket.
-            val = False
-    elif is_dev4():
-        # CK bucket is not available on dev4.
-        val = False
     _LOG.debug("val=%s", val)
     return val
 
@@ -245,7 +231,6 @@ def config_func_to_str() -> str:
     #
     function_names = [
         "is_AM_S3_available()",
-        "is_CK_S3_available()",
         "is_dev_ck()",
         "is_dev4()",
         "is_inside_ci()",
@@ -263,5 +248,5 @@ def config_func_to_str() -> str:
         ret.append(msg)
         # _print(msg)
     # Package.
-    ret = "# hserver.config\n" + indent("\n".join(ret))
+    ret: str = "# hserver.config\n" + indent("\n".join(ret))
     return ret

@@ -41,7 +41,8 @@ hprint.config_notebook()
 # %%
 import oms
 
-log_dir = "/app/process_forecasts/2022-07-20/portfolio"
+#log_dir = "/app/process_forecasts/2022-07-22/portfolio"
+log_dir = "/app/simulation/2022-07-22/portfolio"
 portfolio_df, stats_df = oms.Portfolio.read_state(log_dir)
 
 # %%
@@ -50,7 +51,7 @@ portfolio_df, stats_df = oms.Portfolio.read_state(log_dir)
 stats_df
 
 # %%
-log_dir = "/cache/production/process_forecasts.20220718/2022-07-18/portfolio"
+log_dir = "/cache/production/process_forecast.20220725/process_forecasts/2022-07-22/portfolio"
 portfolio_df2, stats_df2 = oms.Portfolio.read_state(log_dir)
 
 # %%

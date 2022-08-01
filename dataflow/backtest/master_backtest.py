@@ -1,19 +1,18 @@
 """
-Entry point for `run_experiment.py`.
+Entry point for `run_config_list.py`.
 
 Import as:
 
-import dataflow.model.master_experiment as dtfmomaexp
+import dataflow.backtest.master_backtest as dtfbamaexp
 """
-
-# TODO(gp): master_run_backtest.py
 
 import logging
 import os
 
 import core.config as cconfig
+import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
 import dataflow.core as dtfcore
-import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.system as dtfsys
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
@@ -22,6 +21,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): -> run_ins_oos_backtest
+# TODO(gp): It should accept system_config_list: cconfig.ConfigList
 def run_experiment(system_config: cconfig.Config) -> None:
     """
     Implement an experiment to:
@@ -34,20 +34,20 @@ def run_experiment(system_config: cconfig.Config) -> None:
     """
     _LOG.debug("system_config=\n%s", system_config)
     system_config = system_config.copy()
-    dag_runner = system_config["dag_runner_builder"]()
+    #dag_runner = system_config["dag_runner_builder"]()
     fit_result_bundle = dag_runner.fit()
     # Maybe run OOS.
     if (
-        "run_oos" in system_config["experiment_config"].to_dict().keys()
-        and system_config["experiment_config"]
+        "run_oos" in system_config["backtest_config"].to_dict().keys()
+        and system_config["backtest_config"]
     ):
         result_bundle = dag_runner.predict()
     else:
         result_bundle = fit_result_bundle
     # Save results.
     # TODO(gp): We could return a `ResultBundle` and have
-    #  `run_experiment_stub.py` save it.
-    dtfmoexuti.save_experiment_result_bundle(system_config, result_bundle)
+    #  `run_config_stub.py` save it.
+    dtfbaexuti.save_experiment_result_bundle(system_config, result_bundle)
 
 
 # #############################################################################
@@ -60,21 +60,21 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
     dag_runner = dtfcore.RollingFitPredictDagRunner(
         dag_config,
         config["dag_builder"],
-        config["experiment_config"]["start"],
-        config["experiment_config"]["end"],
-        config["experiment_config"]["retraining_freq"],
-        config["experiment_config"]["retraining_lookback"],
+        config["backtest_config"]["start"],
+        config["backtest_config"]["end"],
+        config["backtest_config"]["retraining_freq"],
+        config["backtest_config"]["retraining_lookback"],
     )
     for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
         payload = cconfig.get_config_from_nested_dict({"config": config})
         fit_rb.payload = payload
-        dtfmoexuti.save_experiment_result_bundle(
+        dtfbaexuti.save_experiment_result_bundle(
             config,
             fit_rb,
             file_name="fit_result_bundle_" + training_datetime_str + ".pkl",
         )
         pred_rb.payload = payload
-        dtfmoexuti.save_experiment_result_bundle(
+        dtfbaexuti.save_experiment_result_bundle(
             config,
             pred_rb,
             file_name="predict_result_bundle_" + training_datetime_str + ".pkl",
@@ -84,7 +84,6 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
 # #############################################################################
 
 
-# TODO(gp): move to experiment_utils.py?
 def _save_tiled_output(
     system_config: cconfig.Config, result_bundle: dtfcore.ResultBundle
 ) -> None:
@@ -93,8 +92,8 @@ def _save_tiled_output(
 
     :param result_bundle: DAG results to save
     """
-    start_timestamp = system_config["experiment_config", "start_timestamp"]
-    end_timestamp = system_config["experiment_config", "end_timestamp"]
+    start_timestamp = system_config["backtest_config", "start_timestamp"]
+    end_timestamp = system_config["backtest_config", "end_timestamp"]
     # Sanity check for the tile borders.
     hdbg.dassert_lte(start_timestamp, end_timestamp)
     hdateti.dassert_has_tz(start_timestamp)
@@ -127,7 +126,7 @@ def _save_tiled_output(
     df["month"] = df.index.month
     # The results are saved in the subdir `tiled_results` of the experiment list.
     tiled_dst_dir = os.path.join(
-        system_config["experiment_config", "dst_dir"], "tiled_results"
+        system_config["backtest_config", "dst_dir"], "tiled_results"
     )
     hparque.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir=tiled_dst_dir
@@ -135,7 +134,9 @@ def _save_tiled_output(
     _LOG.info("Tiled results written in '%s'", tiled_dst_dir)
 
 
-def run_tiled_backtest(system_config: cconfig.Config) -> None:
+def run_tiled_backtest(
+    system_config_list: dtfsys.SystemConfigList,
+) -> None:
     """
     Run a backtest by:
 
@@ -145,18 +146,22 @@ def run_tiled_backtest(system_config: cconfig.Config) -> None:
 
     All parameters are passed through a `Config`.
     """
-    _LOG.debug("system_config=\n%s", system_config)
-    # Create the DAG runner.
-    dag_runner = system_config["dag_runner_builder"]()
+    # Create the DAG runner customizing the System with the specific config.
+    hdbg.dassert_isinstance(system_config_list, dtfsys.SystemConfigList)
+    _LOG.debug("system_config_list=\n%s", system_config_list)
+    system = system_config_list.system
+    system_config = system_config_list.get_only_config()
+    system.set_config(system_config)
+    dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
         [
             (
                 system_config[
-                    "experiment_config", "start_timestamp_with_lookback"
+                    "backtest_config", "start_timestamp_with_lookback"
                 ],
-                system_config["experiment_config", "end_timestamp"],
+                system_config["backtest_config", "end_timestamp"],
             )
         ],
     )

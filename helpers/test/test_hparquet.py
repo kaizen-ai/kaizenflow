@@ -17,7 +17,6 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
@@ -839,7 +838,7 @@ class TestToPartitionedDataset(hunitest.TestCase):
 
 
 @pytest.mark.skipif(
-    not hserver.is_CK_S3_available(),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestListAndMergePqFiles(hmoto.S3Mock_TestCase):

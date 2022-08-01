@@ -1230,7 +1230,7 @@ def pytest_buildmeister(ctx, opts="", docker_clean=False, test=False):  # type: 
     pytest_opts = ""
     if test:
         # For testing.
-        pytest_opts = "amp/dataflow/model/test/test_experiment_utils.py::Test_get_configs_from_command_line_Amp1::test1"
+        pytest_opts = "amp/dataflow/backtest/test/test_dataflow_backtest_utils.py::Test_get_configs_from_command_line_Amp1::test1"
     if docker_clean:
         cmd = "dev_scripts_lime/docker_clean.sh"
         _run(cmd)
