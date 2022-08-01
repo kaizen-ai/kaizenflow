@@ -14,6 +14,8 @@ import helpers.hprint as hprint
 
 
 # #############################################################################
+# obj_to_str
+# #############################################################################
 
 
 def _to_skip(is_: bool, mode: str) -> bool:
@@ -113,14 +115,14 @@ def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
 
 
 def obj_to_str(
-        obj: Any,
-        *,
-        attr_mode: str = "__dict__",
-        sort: bool = False,
-        print_type: bool = False,
-        callable_mode: str = "skip",
-        private_mode: str = "skip",
-        dunder_mode: str = "skip",
+    obj: Any,
+    *,
+    attr_mode: str = "__dict__",
+    sort: bool = False,
+    print_type: bool = False,
+    callable_mode: str = "skip",
+    private_mode: str = "skip",
+    dunder_mode: str = "skip",
 ) -> str:
     """
     Print attributes of an object.
@@ -187,6 +189,11 @@ def obj_to_str(
 
 
 class PrintableMixin:
+    """
+    Implement default `__str__()` and `__repr__()` printing the state of an object.
+
+    These methods can be overridden with more specific methods, if needed.
+    """
 
     def __str__(self) -> str:
         return hprint.to_object_pointer(self)

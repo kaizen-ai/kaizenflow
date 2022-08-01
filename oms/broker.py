@@ -102,7 +102,7 @@ class Fill:
 # #############################################################################
 
 
-class Broker(abc.ABC):
+class Broker(abc.ABC, h):
     """
     Represent a broker to which we can place orders and receive fills back.
 
@@ -134,6 +134,7 @@ class Broker(abc.ABC):
             `MarketData` to retrieve execution prices. The required columns
             are "bid", "ask", "price", and "midpoint".
         """
+        _LOG.
         self._strategy_id = strategy_id
         self._account = account
         #
