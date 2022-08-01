@@ -213,6 +213,9 @@ def get_process_forecasts_dict_example2(
     Used by E8d.
     """
     #prediction_col = "prediction"
+    # TODO(Grisha): We want to call the output "prediction". It's not clear if
+    # we want to rename the DAG or we want to add a renaming stage after the
+    # DAG.
     prediction_col = "vwap.ret_0.vol_adj_2_hat"
     volatility_col = "vwap.ret_0.vol"
     price_col = "vwap"

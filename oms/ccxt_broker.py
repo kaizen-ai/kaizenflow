@@ -65,9 +65,11 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
+        self._sent_orders = None
 
     def get_fills(
-        self, sent_orders: List[omorder.Order] = None
+        self, 
+        #sent_orders: List[omorder.Order] = None
     ) -> List[ombroker.Fill]:
         """
         Return list of fills from the last order execution.
@@ -75,7 +77,10 @@ class CcxtBroker(ombroker.Broker):
         :param sent_orders: a list of orders submitted by Broker
         :return: a list of filled orders
         """
+        sent_orders = self._sent_orders
         fills: List[ombroker.Fill] = []
+        if sent_orders is None:
+            return fills
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
         if self.last_order_execution_ts:
@@ -135,7 +140,7 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> List[omorder.Order]:
+    ) -> str: # List[omorder.Order]:
         """
         Submit orders.
         """
@@ -163,7 +168,8 @@ class CcxtBroker(ombroker.Broker):
             order.ccxt_id = order_resp["id"]
             sent_orders.append(order)
             _LOG.info(order_resp)
-        return sent_orders
+        self._sent_orders = sent_orders
+        return None
 
     def _build_asset_id_to_symbol_mapping(
         self, universe_version: str

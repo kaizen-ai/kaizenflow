@@ -428,6 +428,9 @@ def get_RealTimeDagRunner_from_System(
     dag = system.dag
     market_data = system.market_data
     hdbg.dassert_isinstance(market_data, mdata.MarketData)
+    # TODO(gp): For now this is a hack to get the system to run, but in prod we
+    #  want to compute the weights off-line and then load them up.
+    #  We want to remove fit_at_beginning.
     fit_at_beginning = system.config.get(
         ("dag_runner_config", "fit_at_beginning"), True
     )
