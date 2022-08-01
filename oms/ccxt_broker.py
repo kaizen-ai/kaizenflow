@@ -189,6 +189,16 @@ class CcxtBroker(ombroker.Broker):
                 open_positions.append(position)
             return open_positions
 
+    @staticmethod
+    def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
+        """
+        Convert full symbol to CCXT format.
+
+        Example: "BTC_USDT" -> "BTC/USDT"
+        """
+        currency_pair = currency_pair.replace("_", "/")
+        return currency_pair
+
     def _assert_order_methods_presence(self) -> None:
         """
         Assert that the requested exchange supports all methods necessary to
@@ -271,11 +281,15 @@ class CcxtBroker(ombroker.Broker):
         asset_id_to_full_symbol_mapping = (
             imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
-        # Change mapped values to be symbol only with '/' separator.
-        asset_id_to_symbol_mapping = {
-            id_: imvcufusy.parse_full_symbol(fs)[1].replace("_", "/")
-            for id_, fs in asset_id_to_full_symbol_mapping.items()
-        }
+        asset_id_to_symbol_mapping: Dict[int, str] = {}
+        for asset_id, symbol in asset_id_to_full_symbol_mapping.items():
+            # Select currency pair.
+            currency_pair = imvcufusy.parse_full_symbol(symbol)[1]
+            # Transform to CCXT format, e.g. 'BTC_USDT' -> 'BTC/USDT'.
+            ccxt_symbol = self._convert_currency_pair_to_ccxt_format(
+                currency_pair
+            )
+            asset_id_to_symbol_mapping[asset_id] = ccxt_symbol
         return asset_id_to_symbol_mapping
 
     async def _wait_for_accepted_orders(
@@ -311,13 +325,3 @@ class CcxtBroker(ombroker.Broker):
             msg="Required credentials not passed",
         )
         return exchange
-    
-    @staticmethod
-    def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
-        """
-        Convert full symbol to CCXT format
-        
-        Example: "BTC_USDT" -> "BTC/USDT"
-        """
-        currency_pair = currency_pair.replace("_", "/")
-        return currency_pair
