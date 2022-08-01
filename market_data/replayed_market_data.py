@@ -208,7 +208,7 @@ def load_market_data(
 
     :param column_remap: mapping for columns to remap
     :param timestamp_db_column: column name (after remapping) to use as
-        `timestamp_db` if it doesn't exist (e.g., we can use `end_datatime` to
+        `timestamp_db` if it doesn't exist (e.g., we can use `end_datetime` to
         `timestamp_db`)
     :param datetime_columns: names (after remapping) of the columns to convert
         to datetime
@@ -238,44 +238,6 @@ def load_market_data(
         for col_name in datetime_columns:
             hdbg.dassert_in(col_name, df.columns)
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
-
-
-    # if "start_ts" in df.columns:
-    #     df = df.rename(columns={"start_ts": "start_datetime"})
-    # if "end_ts" in df.columns:
-    #     df = df.rename(columns={"end_ts": "end_datetime"})
-    # if "timestamp_db" not in df.columns:
-    #     df["timestamp_db"] = df["end_datetime"]
-    # #
-    # for col_name in (
-    #     "start_time",
-    #     "start_datetime",
-    #     "end_time",
-    #     "end_datetime",
-    #     "timestamp_db",
-    # ):
-    #     if col_name in df.columns:
-    #         df[col_name] = pd.to_datetime(df[col_name], utc=True)
-
-    #  Typically
-    # no rename: col_name in ("start_time", "end_time", "timestamp_db"):
-
-    #
-    #     df = df.rename(columns={"start_ts": "start_datetime"})
-    #     df = df.rename(columns={"end_ts": "end_datetime"})
-
-    # timestamp_db_
-    # if "timestamp_db" not in df.columns:
-    #     df["timestamp_db"] = df["end_datetime"]
-    # #
-    # for col_name in (
-    #     "start_time",
-    #     "start_datetime",
-    #     "end_time",
-    #     "end_datetime",
-    #     "timestamp_db",
-    # ):
-
     df.reset_index(inplace=True)
     _LOG.debug(
         hpandas.df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
