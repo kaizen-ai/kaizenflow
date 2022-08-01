@@ -120,7 +120,6 @@ def get_order_example4() -> omorder.Order:
     )
     curr_num_shares = 0
     diff_num_shares = 0.001
-    order_id = 0
     # Build Order.
     order = omorder.Order(
         creation_timestamp,
@@ -130,6 +129,5 @@ def get_order_example4() -> omorder.Order:
         end_timestamp,
         curr_num_shares,
         diff_num_shares,
-        order_id=order_id,
     )
     return order
