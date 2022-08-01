@@ -14,6 +14,7 @@ import pandas as pd
 
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hsql as hsql
 import market_data as mdata
@@ -56,6 +57,7 @@ class Fill:
         :param num_shares: it's the number of shares that are filled, with
             respect to `diff_num_shares` in Order
         """
+        _LOG.debug(hprint.to_str("order timestamp num_shares price"))
         self._fill_id = self._get_next_fill_id()
         # Pointer to the order.
         self.order = order
@@ -102,7 +104,7 @@ class Fill:
 # #############################################################################
 
 
-class Broker(abc.ABC, h):
+class Broker(abc.ABC, hobject.PrintableMixin):
     """
     Represent a broker to which we can place orders and receive fills back.
 
@@ -134,7 +136,7 @@ class Broker(abc.ABC, h):
             `MarketData` to retrieve execution prices. The required columns
             are "bid", "ask", "price", and "midpoint".
         """
-        _LOG.
+        _LOG.debug(hprint.to_str("strategy_id market_data account timestamp column_remap"))
         self._strategy_id = strategy_id
         self._account = account
         #
@@ -154,6 +156,8 @@ class Broker(abc.ABC, h):
         ] = collections.defaultdict(list)
         # Track the fills for internal accounting.
         self._fills: List[Fill] = []
+        #
+        _LOG.debug("After initialization:\n%s", repr(self))
 
     @property
     def strategy_id(self) -> str:
@@ -334,8 +338,7 @@ class Broker(abc.ABC, h):
         """
         hdbg.dassert_container_type(orders, list, omorder.Order)
         wall_clock_timestamp = self._get_wall_clock_time()
-        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
-        if self._orders:
+        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp) if self._orders:
             last_timestamp = next(reversed(self._orders))
             hdbg.dassert_lt(last_timestamp, wall_clock_timestamp)
         self._orders[wall_clock_timestamp] = orders
@@ -357,6 +360,7 @@ class SimulatedBroker(Broker):
     acceptance and execution).
     """
 
+    # TODO(gp): Not sure this is needed.
     def __init__(
         self,
         *args: Any,
@@ -429,6 +433,11 @@ class DatabaseBroker(Broker):
         :param poll_kwargs: polling instruction when waiting for acceptance of an
             order
         """
+        _LOG.debug(
+                hprint.to_str(
+                    "db_connection submitted_orders_table_name "
+                    "accepted_orders_table_name poll_kwargs"
+        ))
         super().__init__(*args, **kwargs)
         self._db_connection = db_connection
         self._submitted_orders_table_name = submitted_orders_table_name
@@ -440,6 +449,8 @@ class DatabaseBroker(Broker):
         self._submissions: Dict[
             pd.Timestamp, pd.Series
         ] = collections.OrderedDict()
+        #
+        _LOG.debug("After initialization:\n%s", repr(self))
 
     def get_fills(self) -> List[Fill]:
         return self._get_fills_helper()

@@ -192,6 +192,13 @@ class PrintableMixin:
     """
     Implement default `__str__()` and `__repr__()` printing the state of an object.
 
+    - `str()` is:
+        - to be readable
+        - used for creating output for end user
+    - `repr()` is
+        - to be unambiguous
+        - used for debugging and development.
+
     These methods can be overridden with more specific methods, if needed.
     """
 
