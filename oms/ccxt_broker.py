@@ -266,4 +266,3 @@ def get_CcxtBroker_prod_instance1(
         #timestamp_col=timestamp_col,
     )
     return broker
-
