@@ -21,8 +21,7 @@ from typing import Optional
 
 import core.config as cconfig
 
-# TODO(gp): Remove this dependency!
-import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hjoblib as hjoblib
@@ -51,16 +50,15 @@ def _run_notebook(
     :param notebook_file: path to file with experiment template
     :param num_attempts: maximum number of times to attempt running the
         notebook
-    :param abort_on_error: if `True`, raise an error
     :param publish: publish notebook if `True`
     :return: if notebook is skipped ("success.txt" file already exists), return
         `None`; otherwise, return `rc`
     """
     _ = incremental
-    dtfmoexuti.setup_experiment_dir(config)
+    dtfbaexuti.setup_experiment_dir(config)
     # Prepare the destination file.
-    idx = config[("experiment_config", "id")]
-    experiment_result_dir = config[("experiment_config", "experiment_result_dir")]
+    idx = config[("backtest_config", "id")]
+    experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
     dst_file = os.path.join(
         experiment_result_dir,
         os.path.basename(notebook_file).replace(".ipynb", ".%s.ipynb" % idx),
@@ -68,8 +66,8 @@ def _run_notebook(
     _LOG.info("dst_file=%s", dst_file)
     dst_file = os.path.abspath(dst_file)
     # Export config function and its `id` to the notebook.
-    config_builder = config[("experiment_config", "config_builder")]
-    dst_dir = config[("experiment_config", "dst_dir")]
+    config_builder = config[("backtest_config", "config_builder")]
+    dst_dir = config[("backtest_config", "dst_dir")]
     cmd = [
         f'export __CONFIG_BUILDER__="{config_builder}";',
         f'export __CONFIG_IDX__="{idx}";',
@@ -126,7 +124,7 @@ def _run_notebook(
             log_file = log_file.replace(".log", ".html.log")
             hsystem.system(cmd, output_file=log_file)
         # Mark as success.
-        dtfmoexuti.mark_config_as_success(experiment_result_dir)
+        dtfbaexuti.mark_config_as_success(experiment_result_dir)
     return rc
 
 
@@ -135,7 +133,7 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     Prepare the workload using the parameters from command line.
     """
     # Get the configs to run.
-    configs = dtfmoexuti.get_configs_from_command_line(args)
+    config_list = dtfbaexuti.get_config_list_from_command_line(args)
     # Get the notebook file.
     notebook_file = os.path.abspath(args.notebook)
     hdbg.dassert_path_exists(notebook_file)
@@ -143,7 +141,7 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     publish = args.publish_notebook
     # Prepare the tasks.
     tasks = []
-    for config in configs:
+    for config in config_list:
         task: hjoblib.Task = (
             # args.
             (config, notebook_file, publish),
@@ -166,7 +164,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = dtfmoexuti.add_run_experiment_args(parser, dst_dir_required=True)
+    parser = dtfbaexuti.add_run_experiment_args(parser, dst_dir_required=True)
     # Add notebook options.
     parser.add_argument(
         "--notebook",

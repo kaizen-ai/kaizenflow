@@ -11,7 +11,7 @@ from typing import List, Optional, Union
 
 import pandas as pd
 
-import dataflow.model as dtfmod
+import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import im_v2.common.universe as ivcu
@@ -293,7 +293,7 @@ def _get_ccxt_universe(version: str, n: Optional[int]) -> List[Amid]:
 
 def get_universe(universe_str: str) -> List[Amid]:
     # E.g., universe_str == "v1_0-top100"
-    universe_version, top_n = dtfmod.parse_universe_str(universe_str)
+    universe_version, top_n = cconfig.parse_universe_str(universe_str)
     if universe_version == "kibot_v1":
         ret = _get_kibot_universe_v1(top_n)
     elif universe_version == "kibot_v2":

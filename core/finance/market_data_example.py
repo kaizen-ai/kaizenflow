@@ -656,6 +656,40 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
     return data, real_time_loop_time_out_in_secs
 
 
+def get_market_data_df4() -> pd.DataFrame:
+    """
+    Generate price series with a price pattern and a real-time loop timeout in
+    seconds to test model.
+
+    Output example:
+
+    ```
+                                          start_datetime ... volume  feature1
+    2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
+    2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
+    2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
+    ```
+    """
+    idx = pd.date_range(
+        start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
+        end=pd.Timestamp("2000-01-01 10:30:00-05:00", tz="America/New_York"),
+        freq="T",
+    )
+    bar_duration = "1T"
+    bar_delay = "0T"
+    data = build_timestamp_df(idx, bar_duration, bar_delay)
+    price_pattern = [101.0] * 5 + [100.0] * 5
+    price = price_pattern * 6
+    data["close"] = price
+    data["asset_id"] = 101
+    data["volume"] = 100
+    feature_pattern = [1.0] * 5 + [-1.0] * 5
+    feature = feature_pattern * 6
+    data["feature1"] = feature
+    real_time_loop_time_out_in_secs = 3 * 5 * 60
+    return data, real_time_loop_time_out_in_secs
+
+
 # #############################################################################
 
 

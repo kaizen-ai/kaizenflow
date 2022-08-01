@@ -57,6 +57,10 @@ class CcxtBroker(ombroker.Broker):
         self._asset_id_to_symbol_mapping = self._build_asset_id_to_symbol_mapping(
             universe_version
         )
+        self._symbol_to_asset_id_mapping = {
+            symbol: asset
+            for asset, symbol in self._asset_id_to_symbol_mapping.items()
+        }
         # Will be used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
@@ -77,7 +81,7 @@ class CcxtBroker(ombroker.Broker):
         if self.last_order_execution_ts:
             # Load orders for each given symbol.
             for asset_id in asset_ids:
-                symbol = self._asset_id_to_symbol_mapping[asset_id]            
+                symbol = self._asset_id_to_symbol_mapping[asset_id]
                 orders = self._exchange.fetch_orders(
                     since=hdateti.convert_timestamp_to_unix_epoch(
                         self.last_order_execution_ts,
@@ -106,6 +110,94 @@ class CcxtBroker(ombroker.Broker):
                         )
                         fills.append(fill)
         return fills
+
+    def get_total_balance(self) -> Dict[str, float]:
+        """
+        Fetch total available balance via CCXT.
+
+        Example of total balance output:
+
+        {'BNB': 0.0, 'USDT': 5026.22494667, 'BUSD': 1000.10001}
+
+        :return: total balance
+        """
+        hdbg.dassert(self._exchange.has["fetchBalance"], msg="")
+        # Fetch all balance data.
+        balance = self._exchange.fetchBalance()
+        # Select total balance.
+        total_balance = balance["total"]
+        return total_balance
+
+    def get_open_positions(self) -> List[Dict[Any, Any]]:
+        """
+        Select all open futures positions.
+
+        Selects all possible positions and filters out those
+        with a non-0 amount.
+        Example of an output:
+
+        [{'info': {'symbol': 'BTCUSDT',
+            'positionAmt': '-0.200',
+            'entryPrice': '23590.549',
+            'markPrice': '23988.40000000',
+            'unRealizedProfit': '-79.57020000',
+            'liquidationPrice': '68370.47429432',
+            'leverage': '20',
+            'maxNotionalValue': '250000',
+            'marginType': 'cross',
+            'isolatedMargin': '0.00000000',
+            'isAutoAddMargin': 'false',
+            'positionSide': 'BOTH',
+            'notional': '-4797.68000000',
+            'isolatedWallet': '0',
+            'updateTime': '1659028521933'},
+            'symbol': 'BTC/USDT',
+            'contracts': 0.2,
+            'contractSize': 1.0,
+            'unrealizedPnl': -79.5702,
+            'leverage': 20.0,
+            'liquidationPrice': 68370.47429432,
+            'collateral': 9092.72600745,
+            'notional': 4797.68,
+            'markPrice': 23988.4,
+            'entryPrice': 23590.549,
+            'timestamp': 1659028521933,
+            'initialMargin': 239.884,
+            'initialMarginPercentage': 0.05,
+            'maintenanceMargin': 47.9768,
+            'maintenanceMarginPercentage': 0.01,
+            'marginRatio': 0.0053,
+            'datetime': '2022-07-28T17:15:21.933Z',
+            'marginType': 'cross',
+            'side': 'short',
+            'hedged': False,
+            'percentage': -33.17}]
+
+        :return: open positions at the exchange.
+        """
+        hdbg.dassert(
+            self._contract_type == "futures",
+            "Open positions can be fetched only for futures contracts.",
+        )
+        # Fetch all open positions.
+        positions = self._exchange.fetchPositions()
+        open_positions = []
+        for position in positions:
+            # Get the quantity of assets on short/long positions.
+            position_amount = float(position["info"]["positionAmt"])
+            if position_amount != 0:
+                open_positions.append(position)
+            return open_positions
+
+    @staticmethod
+    def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
+        """
+        Convert full symbol to CCXT format.
+
+        Example: "BTC_USDT" -> "BTC/USDT"
+        """
+        currency_pair = currency_pair.replace("_", "/")
+        return currency_pair
 
     def _assert_order_methods_presence(self) -> None:
         """
@@ -166,9 +258,16 @@ class CcxtBroker(ombroker.Broker):
     ) -> Dict[int, str]:
         """
         Build asset id to full symbol mapping.
+
+        Example:
+
+        {
+            1528092593: 'BAKE/USDT',
+            8968126878: 'BNB/USDT',
+            1182743717: 'BTC/BUSD',
+        }
         """
         # Get full symbol universe.
-        # TODO(Danya): Change mode to "trade".
         full_symbol_universe = imvcounun.get_vendor_universe(
             "CCXT", "trade", version=universe_version, as_full_symbol=True
         )
@@ -182,11 +281,15 @@ class CcxtBroker(ombroker.Broker):
         asset_id_to_full_symbol_mapping = (
             imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
-        # Change mapped values to be symbol only (more convevient when placing orders)
-        asset_id_to_symbol_mapping = {
-            id_: imvcufusy.parse_full_symbol(fs)[1].replace("_", "/")
-            for id_, fs in asset_id_to_full_symbol_mapping.items()
-        }
+        asset_id_to_symbol_mapping: Dict[int, str] = {}
+        for asset_id, symbol in asset_id_to_full_symbol_mapping.items():
+            # Select currency pair.
+            currency_pair = imvcufusy.parse_full_symbol(symbol)[1]
+            # Transform to CCXT format, e.g. 'BTC_USDT' -> 'BTC/USDT'.
+            ccxt_symbol = self._convert_currency_pair_to_ccxt_format(
+                currency_pair
+            )
+            asset_id_to_symbol_mapping[asset_id] = ccxt_symbol
         return asset_id_to_symbol_mapping
 
     async def _wait_for_accepted_orders(
