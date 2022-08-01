@@ -1,11 +1,6 @@
 # <dataflow.system.system_config_list.SystemConfigList object at 0x>
   # <dataflow.system.example1.example1_forecast_system.Example1_ForecastSystem object at 0x>
     dag_config:
-      filter_ath:
-        col_mode: replace_all
-        transformer_kwargs:
-          start_time: 09:30:00
-          end_time: 16:00:00
       resample:
         in_col_groups: [('close',), ('volume',), ('feature1',)]
         out_col_group: ()
@@ -50,12 +45,13 @@
     backtest_config:
       universe_str: example1_v1-top2
       trading_period_str: 5T
-      time_interval_str: Jan2000
+      time_interval_str: 2000-01-01_2000-02-01
       freq_as_pd_str: M
       lookback_as_pd_str: 10D
     market_data_config:
       im_client_ctor: <function get_DataFrameImClient_example1>
-      im_client_config: {}
+      im_client_config:
+
       im_client: <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>
       asset_ids: [3303714233, 1467591036]
       asset_id_col_name: asset_id
@@ -71,11 +67,6 @@
   # <dataflow.system.system_config_list.SystemConfigList object at 0x>
     # 1/1
       dag_config:
-        filter_ath:
-          col_mode: replace_all
-          transformer_kwargs:
-            start_time: 09:30:00
-            end_time: 16:00:00
         resample:
           in_col_groups: [('close',), ('volume',), ('feature1',)]
           out_col_group: ()
@@ -120,7 +111,7 @@
       backtest_config:
         universe_str: example1_v1-top2
         trading_period_str: 5T
-        time_interval_str: Jan2000
+        time_interval_str: 2000-01-01_2000-02-01
         freq_as_pd_str: M
         lookback_as_pd_str: 10D
         start_timestamp_with_lookback: 1999-12-22 00:00:00+00:00
@@ -128,7 +119,8 @@
         end_timestamp: 2000-01-31 23:59:59+00:00
       market_data_config:
         im_client_ctor: <function get_DataFrameImClient_example1>
-        im_client_config: {}
+        im_client_config:
+
         im_client: <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>
         asset_ids: [3303714233, 1467591036]
         asset_id_col_name: asset_id

@@ -2,13 +2,12 @@ import pandas as pd
 import pytest
 
 import helpers.henv as henv
-import helpers.hserver as hserver
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients_example as imvccdcccce
 
 
 @pytest.mark.skipif(
-    not hserver.is_CK_S3_available(),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestCryptoChassisHistoricalPqByTileClient1(icdctictc.ImClientTestCase):

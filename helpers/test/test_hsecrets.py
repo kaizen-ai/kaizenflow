@@ -24,7 +24,6 @@ if _HAS_MOTO:
     import helpers.henv as henv
     import helpers.hgit as hgit
     import helpers.hsecrets as hsecret
-    import helpers.hserver as hserver
     import helpers.hunit_test as hunitest
 
     _LOG = logging.getLogger(__name__)
@@ -33,7 +32,7 @@ if _HAS_MOTO:
     # mocked.
 
     @pytest.mark.skipif(
-        not hserver.is_CK_S3_available(),
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
         reason="Run only if CK S3 is available",
     )
     class TestCreateClient(hunitest.TestCase):
@@ -45,7 +44,7 @@ if _HAS_MOTO:
             self.assertIsInstance(client, botocore.client.BaseClient)
 
     @pytest.mark.skipif(
-        not hserver.is_CK_S3_available(),
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
         reason="Run only if CK S3 is available",
     )
     class TestGetSecret(hunitest.TestCase):
@@ -64,7 +63,7 @@ if _HAS_MOTO:
             self.assertDictEqual(hsecret.get_secret(secret_name), secret)
 
     @pytest.mark.skipif(
-        not hserver.is_CK_S3_available(),
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
         reason="Run only if CK S3 is available",
     )
     class TestStoreSecret(hunitest.TestCase):
