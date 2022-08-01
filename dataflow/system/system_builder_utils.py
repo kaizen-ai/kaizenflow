@@ -12,7 +12,6 @@ import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow.model.experiment_config as dtfmoexcon
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
@@ -21,6 +20,7 @@ import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import market_data as mdata
+import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -47,6 +47,7 @@ def get_SystemConfig_template_from_DagBuilder(
     return system_config
 
 
+# TODO(gp): Move to dataflow/backtest
 def apply_backtest_config(
     system: dtfsyssyst.ForecastSystem, backtest_config: str
 ) -> dtfsyssyst.ForecastSystem:
@@ -58,7 +59,7 @@ def apply_backtest_config(
         universe_str,
         trading_period_str,
         time_interval_str,
-    ) = dtfmoexcon.parse_experiment_config(backtest_config)
+    ) = cconfig.parse_backtest_config(backtest_config)
     # Fill system config.
     hdbg.dassert_in(trading_period_str, ("1T", "5T", "15T"))
     system.config[
@@ -414,8 +415,7 @@ def get_realtime_DagRunner_from_system(
     return dag_runner
 
 
-# TODO(gp): -> get_RealTimeDagRunner_from_System
-def get_dag_runner_instance1(
+def get_RealTimeDagRunner_from_System(
     system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:
     """
@@ -463,3 +463,61 @@ def get_dag_runner_instance1(
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
     return dag_runner
+
+
+# #############################################################################
+# Portfolio instances.
+# #############################################################################
+
+
+def get_DataFramePortfolio_from_System(
+    system: dtfsyssyst.System,
+) -> oms.Portfolio:
+    event_loop = system.config["event_loop_object"]
+    market_data = system.market_data
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    portfolio = oms.get_DataFramePortfolio_example1(
+        event_loop,
+        market_data=market_data,
+        # TODO(gp): These should go in the config.
+        mark_to_market_col="close",
+        pricing_method="twap.5T",
+        asset_ids=asset_ids,
+    )
+    # TODO(gp): These should go in the config?
+    portfolio.broker._column_remap = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
+    return portfolio
+
+
+# TODO(Grisha): Generalize `get_DatabasePortfolio_from_System` and
+#  `get_DataFramePortfolio_from_System`.
+def get_DatabasePortfolio_from_System(
+    system: dtfsyssyst.System,
+) -> oms.Portfolio:
+    event_loop = system.config["event_loop_object"]
+    db_connection = system.config["db_connection_object"]
+    market_data = system.market_data
+    table_name = oms.CURRENT_POSITIONS_TABLE_NAME
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    portfolio = oms.get_DatabasePortfolio_example1(
+        event_loop,
+        db_connection,
+        table_name,
+        market_data=market_data,
+        # TODO(Grisha): These should go in the config as well as `_column_remap`.
+        mark_to_market_col="close",
+        pricing_method="twap.5T",
+        asset_ids=asset_ids,
+    )
+    portfolio.broker._column_remap = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
+    return portfolio

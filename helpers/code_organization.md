@@ -4,11 +4,13 @@
 
 
 <!--te-->
+
 - See
   [Python - Imports and packages](https://docs.google.com/document/d/1-HGV7o546BwNIH7ekdi0yZ4lT3CBSL1Thht9QmjhIv8/edit)
   for more details
 
 - In `helpers` the following hierarchy should be respected:
+  - `repo_config.py`
   - `hwarnings`, `hserver`, `hlogging`
   - `hdbg`
   - `hintrospection`, `hprint`

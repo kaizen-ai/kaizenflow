@@ -4,7 +4,6 @@ import unittest.mock as umock
 import pytest
 
 import helpers.henv as henv
-import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
 import im_v2.ccxt.data.extract.extractor as ivcdexex
@@ -12,7 +11,7 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
 @pytest.mark.skipif(
-    not hserver.is_CK_S3_available(),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):

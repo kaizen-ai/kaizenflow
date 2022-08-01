@@ -9,6 +9,7 @@ import logging
 
 import pandas as pd
 
+import core.config as cconfig
 import dataflow.core as dtfcore
 
 # TODO(gp): We can't use dtfsys because we are inside dataflow/system.
@@ -20,6 +21,7 @@ import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hdbg as hdbg
 import market_data as mdata
+import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -82,8 +84,9 @@ def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     # How much history is needed for the DAG to compute.
-    # TODO(Grisha): Create `apply_market_lookback()` CmTask #2475
-    history_lookback = pd.Timedelta("20T")
+    # Set lookback to `1D` in order to get data for a day.
+    # TODO(Grisha): Create `apply_market_lookback()` CmTask #2475.
+    history_lookback = pd.Timedelta("1D")
     system.config["market_data_config", "history_lookback"] = history_lookback
     dag = dtfssybuut.add_real_time_data_source(system)
     return dag
@@ -148,7 +151,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }
-    system.config["process_forecasts_config"] = {
+    process_forecasts_config = {
         "prediction_col": prediction_col,
         "volatility_col": volatility_col,
         "spread_col": spread_col,
@@ -156,11 +159,14 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "process_forecasts_config": process_forecasts_config_dict,
         "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
     }
+    system.config[
+        "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
     # Append the ProcessForecast node.
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
     node = dtfsysinod.ProcessForecasts(
-        stage, **system.config["process_forecasts_config"]
+        stage, **system.config["process_forecasts_config"].to_dict()
     )
     dag.append_to_tail(node)
     return dag

@@ -25,8 +25,10 @@ def _get_test_config1() -> cconfig.Config:
 
 def _get_test_config2() -> cconfig.Config:
     """
-    Same as `_get_test_config1()` but with "Gold" instead of "Crude Oil" for
-    target asset.
+    Build a test config.
+
+    Same as `_get_test_config1()` but with "Gold" instead of "Crude Oil"
+    for target asset.
     """
     config = _get_test_config1().copy()
     config[("build_targets", "target_asset")] = "Gold"
@@ -35,7 +37,7 @@ def _get_test_config2() -> cconfig.Config:
 
 def _get_test_config3() -> cconfig.Config:
     """
-    :return: Test config.
+    Build a test config.
     """
     config = _get_test_config1().copy()
     config["hello"] = "world"
@@ -45,6 +47,7 @@ def _get_test_config3() -> cconfig.Config:
 # #############################################################################
 
 
+# TODO(gp): -> validate_config_list
 class Test_validate_configs1(hunitest.TestCase):
     def test_check_same_configs_error(self) -> None:
         """
@@ -56,9 +59,10 @@ class Test_validate_configs1(hunitest.TestCase):
             _get_test_config1(),
             _get_test_config2(),
         ]
+        config_list = cconfig.ConfigList()
         # Make sure function raises an error.
         with self.assertRaises(AssertionError) as cm:
-            cconfig.validate_configs(configs)
+            config_list.configs = configs
         act = str(cm.exception)
         self.check_string(act, fuzzy_match=True)
 
@@ -71,7 +75,9 @@ class Test_validate_configs1(hunitest.TestCase):
             _get_test_config2(),
             _get_test_config3(),
         ]
-        cconfig.validate_configs(configs)
+        config_list = cconfig.ConfigList()
+        config_list.configs = configs
+        config_list.validate_config_list()
 
 
 # #############################################################################

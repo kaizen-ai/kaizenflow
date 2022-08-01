@@ -251,6 +251,7 @@ def _replace(
     :param backup: make a backup of the file before the replacement
     :param mode: `replace_with_perl` or `replace_with_python`
     """
+    hdbg.dassert_ne(old_regex, new_regex)
     _LOG.info(
         "Found %s files:\n%s",
         len(file_names_to_process),
