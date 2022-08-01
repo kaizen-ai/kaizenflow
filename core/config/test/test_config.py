@@ -1086,4 +1086,25 @@ class Test_make_read_only1(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
+# #############################################################################
+# TestConfigToDict
+# #############################################################################
+
+
+class TestConfigToDict(hunitest.TestCase):
+    def helper(param1, param2, param3):
+        sum = param1 + param2 + param3
+        return sum
+
+    def test1(self) -> None:
+        config_as_dict = {
+            "param1": 1,
+            "param2": 2,
+            "param3": 3,
+        }
+        config = cconfig.get_config_from_nested_dict(config_as_dict)
+        sum = self.helper(**config.to_dict())
+        self.assertEqual(sum, 6)
+
+
 # TODO(gp): Unit tests all the functions.

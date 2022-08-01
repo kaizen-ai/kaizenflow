@@ -156,7 +156,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "volatility_col": volatility_col,
         "spread_col": spread_col,
         "portfolio": system.portfolio,
-        "process_forecasts_config": process_forecasts_config_dict,
+        "process_forecasts_config": cconfig.get_config_from_nested_dict(process_forecasts_config_dict),
         "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
     }
     system.config[
@@ -167,6 +167,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     _LOG.debug("stage=%s", stage)
     node = dtfsysinod.ProcessForecasts(
         stage, **system.config["process_forecasts_config"].to_dict()
+        #stage, **process_forecasts_config
     )
     dag.append_to_tail(node)
     return dag

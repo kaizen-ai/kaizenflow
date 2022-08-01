@@ -343,6 +343,7 @@ class Config:
                 dict_[k] = v.to_dict()
             else:
                 dict_[k] = v
+            #dict_[k] = v
         return dict_
 
     def is_serializable(self) -> bool:

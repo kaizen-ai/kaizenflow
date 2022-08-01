@@ -55,6 +55,9 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         self._volatility_col = volatility_col
         self._spread_col = spread_col
         self._portfolio = portfolio
+        if isinstance(process_forecasts_config, dict):
+            process_forecasts_config = cconfig.get_config_from_nested_dict(process_forecasts_config)
+        print("process_forecasts_config", process_forecasts_config)
         self._process_forecasts_config = process_forecasts_config
         self._forecast_evaluator_from_prices_dict = (
             forecast_evaluator_from_prices_dict
