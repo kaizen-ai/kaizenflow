@@ -4,13 +4,18 @@ Import as:
 import helpers.hprint as hprint
 """
 
+import logging
 import pprint
 from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
 
 import pandas as pd
 
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+
+
+_LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
@@ -101,7 +106,7 @@ def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
         out = f"{attr_name}="
         if print_type:
             out += f" ({type(attr_value)})"
-        out += "\n" + indent(attr_value_as_str)
+        out += "\n" + hprint.indent(attr_value_as_str)
     else:
         # The string representing the attribute value is a single line, so print
         # like:
