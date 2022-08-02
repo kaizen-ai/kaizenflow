@@ -163,7 +163,6 @@ class ReplayedMarketData(mdabmada.MarketData):
 # #############################################################################
 
 
-# TODO(gp): Add an example of how data looks like.
 def save_market_data(
     market_data: mdabmada.MarketData,
     file_name: str,
@@ -172,6 +171,15 @@ def save_market_data(
 ) -> None:
     """
     Save data from a `MarketData` to a CSV file.
+
+    index              end_datetime    asset_id        full_symbol      open      high       low     close   volume               knowledge_timestamp            start_datetime              timestamp_db            
+    0      0 2021-12-20 00:00:00+00:00  1467591036  binance::BTC_USDT  46668.65  46677.22  46575.00  46670.34  620.659  2022-07-09 12:07:51.240219+00:00 2021-12-19 23:59:00+00:00 2021-12-20 00:00:00+00:00                
+    1      1 2021-12-20 00:01:00+00:00  1467591036  binance::BTC_USDT  46670.34  46670.84  46550.00  46567.11  237.931  2022-06-24 05:47:16.075108+00:00 2021-12-20 00:00:00+00:00 2021-12-20 00:01:00+00:00                    
+    2      2 2021-12-20 00:02:00+00:00  1467591036  binance::BTC_USDT  46567.12  46590.60  46489.61  46513.85  612.955  2022-06-24 05:47:16.075108+00:00 2021-12-20 00:01:00+00:00 2021-12-20 00:02:00+00:00                       
+    ...                                                     
+    21597  21597 2022-01-03 23:57:00+00:00  1467591036  binance::BTC_USDT  46433.67  46438.58  46408.49  46420.41   88.300  2022-07-09 12:07:51.240219+00:00 2022-01-03 23:56:00+00:00 2022-01-03 23:57:00+00:00                     
+    21598  21598 2022-01-03 23:58:00+00:00  1467591036  binance::BTC_USDT  46420.41  46429.74  46414.12  46423.15   57.357  2022-06-24 05:47:16.075108+00:00 2022-01-03 23:57:00+00:00 2022-01-03 23:58:00+00:00                     
+    21599  21599 2022-01-03 23:59:00+00:00  1467591036  binance::BTC_USDT  46423.15  46445.81  46408.49  46445.81  170.341  2022-07-09 12:07:51.240219+00:00 2022-01-03 23:58:00+00:00 2022-01-03 23:59:00+00:00
 
     The data is not processed but saved exactly as it is.
     """
@@ -193,7 +201,6 @@ def save_market_data(
     _LOG.info("Saving done")
 
 
-# TODO(gp): Add an example of how data looks like.
 def load_market_data(
     file_name: str,
     *,
