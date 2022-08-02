@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import oms.ccxt_broker as occxbrok
+import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
@@ -74,3 +76,60 @@ def _append_accounting_df(
     # Concat all the data together with the input.
     df_out = pd.concat([df] + dfs, axis=1)
     return df_out
+
+
+def flatten_ccxt_account(
+    broker: occxbrok.CcxtBroker, dry_run: bool, *, deadline_in_secs: int = 60
+) -> None:
+    """
+    Remove all crypto assets/positions from the test accound.
+
+    Note: currently optimized for futures, removing all long/short positions
+
+    :param broker: a CCXT broker object
+    :param dry_run: whether to avoid actual execution
+    :param deadline_in_secs: deadline for order to be executed, 60 by default
+    """
+    # Verify that the broker is in test mode.
+    hdbg.dassert_eq(
+        broker._mode,
+        "test",
+        msg="Account flattening is supported only for test accounts.",
+    )
+    # Fetch all open positions.
+    open_positions = broker.get_open_positions()
+    if open_positions:
+        # Create orders.
+        orders = []
+        for position in open_positions:
+            # Build an order to flatten the account.
+            type_ = "market"
+            curr_num_shares = float(position["info"]["positionAmt"])
+            diff_num_shares = -curr_num_shares
+            full_symbol = position["symbol"]
+            asset_id = broker._symbol_to_asset_id_mapping[full_symbol]
+            curr_timestamp = pd.Timestamp.now(tz="UTC")
+            start_timestamp = curr_timestamp
+            end_timestamp = start_timestamp + pd.DateOffset(
+                seconds=deadline_in_secs
+            )
+            order_id = 0
+            order = omorder.Order(
+                curr_timestamp,
+                asset_id,
+                type_,
+                start_timestamp,
+                end_timestamp,
+                curr_num_shares,
+                diff_num_shares,
+                order_id=order_id,
+            )
+            orders.append(order)
+        broker.submit_orders(orders, dry_run=dry_run)
+    else:
+        _LOG.warning("No open positions found.")
+    # Check that all positions are closed.
+    open_positions = broker.get_open_positions()
+    if len(open_positions) != 0:
+        _LOG.warning("Some positions failed to close: %s", open_positions)
+    _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
