@@ -56,7 +56,7 @@ def get_Example1_MarketData_example2(
 
 def get_Example1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
-    Build a DAG with a historical data source for simulation.
+    Build a DAG with `HistoricalDataSource` for simulation.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     # Create HistoricalDataSource.
@@ -80,7 +80,7 @@ def get_Example1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DA
 
 def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
-    Build a DAG with a real time data source.
+    Build a DAG with `RealTimeDataSource`.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     # How much history is needed for the DAG to compute.
@@ -92,7 +92,7 @@ def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
 
 def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
-    Build a DAG with a real time data source and forecast processor.
+    Build a DAG with `RealTimeDataSource` and `ForecastProcessor`.
     """
     # How much history is needed for the DAG to compute.
     lookback_in_days = 7
