@@ -534,7 +534,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
             asset_id_name,
             max_wait_time_for_order_in_secs,
         )
-        # We add extra 5 seconds for the `OrderProcessor`` to account for
+        # We add extra 5 seconds for the `OrderProcessor` to account for
         # the first bar that the DAG spends in fit mode.
         real_time_loop_time_out_in_secs = (
             self.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
