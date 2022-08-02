@@ -237,12 +237,13 @@ class CcxtBroker(ombroker.Broker):
         )
         return exchange
     
+    @staticmethod
     def convert_ccxt_order_to_oms_order(ccxt_order: Dict[Any, Any]) -> omorder.Order:
         asset_id = ccxt_order["asset_id"]
         type_ = "market"
         creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(ccxt_order["timestamp"])
         start_timestamp = creation_timestamp
-        end_timestamp = hdateti.convert_timestamp_to_unix_epoch(int(ccxt_order["info"]["updateTime"]))
+        end_timestamp = hdateti.convert_unix_epoch_to_timestamp(int(ccxt_order["info"]["updateTime"]))
         curr_num_shares = int(ccxt_order["info"]["origQty"])
         diff_num_shares = ccxt_order["filled"]
         oms_order = omorder.Order(

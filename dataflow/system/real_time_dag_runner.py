@@ -79,7 +79,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         curr_timestamp = get_wall_clock_time()
         _LOG.info("Current time=%s", curr_timestamp)
         wake_up_timestamp = self._wake_up_timestamp
-        wake_up_timestamp = curr_timestamp + pd.DateOffset(minutes=5)
+        #wake_up_timestamp = curr_timestamp + pd.DateOffset(minutes=5)
         _LOG.info("Waiting until session start at %s ...", wake_up_timestamp)
         await hasynci.async_wait_until(wake_up_timestamp, get_wall_clock_time)
         curr_timestamp = get_wall_clock_time()
