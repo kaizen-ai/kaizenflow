@@ -20,10 +20,6 @@ import oms as oms
 _LOG = logging.getLogger(__name__)
 
 
-# Enable this to debug which function creates which object.
-_DEBUG_SYSTEM = True
-
-
 # #############################################################################
 # System
 # #############################################################################
@@ -276,23 +272,17 @@ class System(abc.ABC):
             # Build the object.
             hdbg.dassert_not_in(key, self.config)
             self.config[key] = obj
-            # Add the object representation.
-            key_tmp = f"{key}.str"
+            # Add the object representation after it's built.
+            key_tmp = ("object.str", key)
             hdbg.dassert_not_in(key_tmp, self.config)
-            # `str()` is:
-            # - to be readable
-            # - used for creating output for end user
-            # `repr()` is
-            # - to be unambiguous
-            # - used for debugging and development.
+            # Use the unambiguous object representation `__repr__()`.
             self.config[key_tmp] = repr(obj)
             # Add information about who created that object, if needed.
-            if _DEBUG_SYSTEM:
-                key_tmp = f"{key}.builder_function"
-                hdbg.dassert_not_in(key_tmp, self.config)
-                self.config[key_tmp] = hintros.get_name_from_function(
-                    builder_func
-                )
+            key_tmp = ("object.builder_function", key)
+            hdbg.dassert_not_in(key_tmp, self.config)
+            self.config[key_tmp] = hintros.get_name_from_function(
+                builder_func
+            )
         _LOG.debug("Object for %s=\n%s", key, obj)
         return obj
 
