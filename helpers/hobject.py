@@ -13,6 +13,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hstring as hstring
 
 
 _LOG = logging.getLogger(__name__)
@@ -89,7 +90,16 @@ def _to_skip_attribute(
     return False
 
 
+def _type_to_str(attr_value: str) -> str:
+    type_as_str = str(type(attr_value))
+    type_as_str = hstring.remove_prefix(type_as_str, "<class '")
+    type_as_str = hstring.remove_suffix(type_as_str, "'>")
+    type_as_str = f"<{type_as_str}>"
+    return type_as_str
+
+
 def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
+    _LOG.debug("type(attr_value)=%s", type(attr_value))
     if isinstance(attr_value, (pd.DataFrame, pd.Series)):
         attr_value_as_str = hpandas.df_to_str(attr_value)
     elif isinstance(attr_value, dict):
@@ -105,7 +115,7 @@ def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
         # ```
         out = f"{attr_name}="
         if print_type:
-            out += f" ({type(attr_value)})"
+            out += " " + _type_to_str(attr_value)
         out += "\n" + hprint.indent(attr_value_as_str)
     else:
         # The string representing the attribute value is a single line, so print
@@ -115,7 +125,7 @@ def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
         # ```
         out = f"{attr_name}='{str(attr_value)}'"
         if print_type:
-            out += f" ({type(attr_value)})"
+            out += " " + _type_to_str(attr_value)
     return out
 
 
@@ -211,4 +221,5 @@ class PrintableMixin:
         return hprint.to_object_pointer(self)
 
     def __repr__(self) -> str:
-        return obj_to_str(self)
+        return obj_to_str(self, print_type=True,
+                          private_mode="all")
