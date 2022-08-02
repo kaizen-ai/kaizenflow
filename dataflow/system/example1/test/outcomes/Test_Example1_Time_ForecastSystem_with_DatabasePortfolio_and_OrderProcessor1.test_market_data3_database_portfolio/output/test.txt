@@ -60,6 +60,7 @@ market_data_config:
     2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
     2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
     2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+  history_lookback: 7 days 00:00:00
 dag_runner_config:
   sleep_interval_in_secs: 300
   real_time_loop_time_out_in_secs: 6900
@@ -347,8 +348,8 @@ process_forecasts_config:
 dag_object: dag=<dataflow.core.dag.DAG object>
   name=None
   mode=strict
-  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('load_prices', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object at 0x>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecasts object>})]
-  edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('load_prices', 'resample', {'df_in': 'df_out'})]
+  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object at 0x>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecasts object>})]
+  edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
   save_node_io=
   profile_execution=False
   dst_dir=None
