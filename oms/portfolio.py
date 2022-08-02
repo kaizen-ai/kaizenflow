@@ -16,6 +16,7 @@ from tqdm.autonotebook import tqdm
 import core.key_sorted_ordered_dict as cksoordi
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsql as hsql
@@ -29,7 +30,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class Portfolio(abc.ABC):
+class Portfolio(abc.ABC, hobject.PrintableMixin):
     """
     Store holdings over time, e.g., how many shares of each asset are owned at
     any time. Cash is treated as just another asset to keep code uniform.

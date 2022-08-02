@@ -16,6 +16,7 @@ import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import market_data as mdata
 import oms.oms_db as oomsdb
@@ -136,7 +137,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
             `MarketData` to retrieve execution prices. The required columns
             are "bid", "ask", "price", and "midpoint".
         """
-        _LOG.debug(hprint.to_str("strategy_id market_data account timestamp column_remap"))
+        _LOG.debug(hprint.to_str("strategy_id market_data account timestamp_col column_remap"))
         self._strategy_id = strategy_id
         self._account = account
         #

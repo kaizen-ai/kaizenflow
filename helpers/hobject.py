@@ -105,7 +105,7 @@ def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
     elif isinstance(attr_value, dict):
         attr_value_as_str = pprint.pformat(attr_value)
     else:
-        attr_value_as_str = str(attr_value)
+        attr_value_as_str = repr(attr_value)
     if len(attr_value_as_str.split("\n")) > 1:
         # The string representing the attribute value spans multiple lines, so print
         # like:
