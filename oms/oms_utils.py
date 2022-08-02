@@ -12,6 +12,7 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import oms.ccxt_broker as occxbrok
+import asyncio
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
@@ -125,7 +126,7 @@ def flatten_ccxt_account(
                 order_id=order_id,
             )
             orders.append(order)
-        broker.submit_orders(orders, dry_run=dry_run)
+        asyncio.run(broker.submit_orders(orders, dry_run=dry_run))
     else:
         _LOG.warning("No open positions found.")
     # Check that all positions are closed.

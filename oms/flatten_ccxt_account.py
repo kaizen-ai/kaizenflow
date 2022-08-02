@@ -15,7 +15,11 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import oms.ccxt_broker as occxbrok
+import market_data as mdata
 import oms.oms_utils as oomsutil
+import helpers.hsql as hsql
+import im_v2.common.data.client as icdc
+import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
@@ -53,14 +57,24 @@ def _main(parser: argparse.ArgumentParser) -> None:
     universe = "v7"
     mode = "test"
     portfolio_id = "ck_portfolio_id"
+    strategy_id = "SAU1"
+    # Get environment variables with login info.
+    env_file = imvimlita.get_db_env_path("dev")
+    # Get login info.
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    # Login.
+    connection = hsql.get_connection(*connection_params)
+    hsql.remove_table(connection, "example2_marketdata")
+    im_client = icdc.get_mock_realtime_client(connection)
+    market_data = mdata.get_RealtimeMarketData_example1(im_client)
     broker = occxbrok.CcxtBroker(
-        exchange_id, universe, mode, portfolio_id, contract_type
+        exchange_id, universe, mode, portfolio_id, contract_type, market_data=market_data, strategy_id=strategy_id
     )
     _LOG.info(
         "Flattening the %s account for %s exchange.", contract_type, exchange_id
     )
     # Close all open positions.
-    oomsutil.flatten_ccxt_account(broker)
+    oomsutil.flatten_ccxt_account(broker, dry_run=False)
 
 
 if __name__ == "__main__":
