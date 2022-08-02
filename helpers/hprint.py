@@ -6,9 +6,11 @@ import helpers.hprint as hprint
 
 import inspect
 import logging
+import pprint
 import re
 import sys
 from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
+
 
 import helpers.hdbg as hdbg
 
@@ -680,92 +682,7 @@ def set_diff_to_str(
     return res
 
 
-def obj_to_str(
-    obj: Any,
-    attr_mode: str = "__dict__",
-    print_type: bool = False,
-    callable_mode: str = "skip",
-    private_mode: str = "skip_dunder",
-) -> str:
-    """
-    Print attributes of an object.
-
-    :param using_dict: use `__dict__` instead of `dir`
-    :param print_type: print the type of the attribute
-    :param callable_mode: how to handle attributes that are callable (i.e.,
-        methods)
-        - skip: skip the methods
-        - only: print only the methods
-        - all: print variables and callable
-    """
-
-    def _to_skip_callable(attr: Any, callable_mode: str) -> bool:
-        hdbg.dassert_in(callable_mode, ("skip", "only", "all"))
-        is_callable = callable(attr)
-        skip = False
-        if callable_mode == "skip" and is_callable:
-            skip = True
-        if callable_mode == "only" and not is_callable:
-            skip = True
-        return skip
-
-    def _to_skip_private(name: str, private_mode: str) -> bool:
-        hdbg.dassert_in(
-            private_mode,
-            ("skip_dunder", "only_dunder", "skip_private", "only_private", "all"),
-        )
-        is_dunder = name.startswith("__") and name.endswith("__")
-        is_private = not is_dunder and name.startswith("_")
-        skip = False
-        if private_mode == "skip_dunder" and is_dunder:
-            skip = True
-        if private_mode == "only_dunder" and not is_dunder:
-            skip = True
-        if private_mode == "skip_private" and is_private:
-            skip = True
-        if private_mode == "only_private" and not is_private:
-            skip = True
-        return skip
-
-    def _to_str(attr: Any, print_type: bool) -> str:
-        if print_type:
-            out = f"{v}= ({type(attr)}) {str(attr)}"
-        else:
-            out = f"{v}= {str(attr)}"
-        return out
-
-    ret = []
-    if attr_mode == "__dict__":
-        for v in sorted(obj.__dict__):
-            attr = obj.__dict__[v]
-            # Handle dunder / private methods.
-            skip = _to_skip_private(v, private_mode)
-            if skip:
-                continue
-            # Handle callable methods.
-            skip = _to_skip_callable(attr, callable_mode)
-            if skip:
-                continue
-            #
-            out = _to_str(attr, print_type)
-            ret.append(out)
-    elif attr_mode == "dir":
-        for v in dir(obj):
-            attr = getattr(obj, v)
-            # Handle dunder / private methods.
-            skip = _to_skip_private(v, private_mode)
-            if skip:
-                continue
-            # Handle callable methods.
-            skip = _to_skip_callable(attr, callable_mode)
-            if skip:
-                continue
-            #
-            out = _to_str(attr, print_type)
-            ret.append(out)
-    else:
-        hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
-    return "\n".join(ret)
+# #############################################################################
 
 
 def remove_non_printable_chars(txt: str) -> str:

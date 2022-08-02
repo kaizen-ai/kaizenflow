@@ -4,9 +4,16 @@ import pandas as pd
 
 import core.finance.market_data_example as cfmadaex
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
+import market_data.market_data_example as mdmadaex
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# Test_generate_random_bars
+# #############################################################################
 
 
 class Test_generate_random_bars(hunitest.TestCase):
@@ -45,6 +52,11 @@ class Test_generate_random_bars(hunitest.TestCase):
 19 2000-01-03 09:39:00-05:00 2000-01-03 09:40:00-05:00 2000-01-03 09:40:10-05:00  1000.696466     997  1904  1972  19.52   94       200
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_generate_random_ohlcv_bars
+# #############################################################################
 
 
 class Test_generate_random_ohlcv_bars(hunitest.TestCase):
