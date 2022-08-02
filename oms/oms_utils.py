@@ -3,6 +3,7 @@ Import as:
 
 import oms.oms_utils as oomsutil
 """
+import asyncio
 import collections
 import logging
 from typing import Dict, List
@@ -12,7 +13,6 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import oms.ccxt_broker as occxbrok
-import asyncio
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)

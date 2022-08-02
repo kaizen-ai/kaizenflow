@@ -14,12 +14,12 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import oms.ccxt_broker as occxbrok
-import market_data as mdata
-import oms.oms_utils as oomsutil
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
+import market_data as mdata
+import oms.ccxt_broker as occxbrok
+import oms.oms_utils as oomsutil
 
 _LOG = logging.getLogger(__name__)
 
@@ -68,7 +68,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     im_client = icdc.get_mock_realtime_client(connection)
     market_data = mdata.get_RealtimeMarketData_example1(im_client)
     broker = occxbrok.CcxtBroker(
-        exchange_id, universe, mode, portfolio_id, contract_type, market_data=market_data, strategy_id=strategy_id
+        exchange_id,
+        universe,
+        mode,
+        portfolio_id,
+        contract_type,
+        market_data=market_data,
+        strategy_id=strategy_id,
     )
     _LOG.info(
         "Flattening the %s account for %s exchange.", contract_type, exchange_id
