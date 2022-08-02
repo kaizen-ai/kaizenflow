@@ -14,10 +14,23 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
+def remove_prefix(string: str, prefix: str, assert_on_error: bool = True) -> str:
+    if string.startswith(prefix):
+        res = string[len(prefix) :]
+    else:
+        res = string
+        if assert_on_error:
+            raise RuntimeError(
+                f"string='{string}' doesn't start with prefix ='{prefix}'"
+            )
+    return res
+
+
 def remove_suffix(string: str, suffix: str, assert_on_error: bool = True) -> str:
     if string.endswith(suffix):
         res = string[: -len(suffix)]
     else:
+        res = string
         if assert_on_error:
             raise RuntimeError(
                 f"string='{string}' doesn't end with suffix='{suffix}'"
