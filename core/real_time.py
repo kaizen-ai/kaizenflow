@@ -213,6 +213,8 @@ def get_data_as_of_datetime(
         end_ts = datetime_eff
         left_close = True
         right_close = True
+        # TODO(Grisha): decide if we should do either `[start_ts, end_ts)` or
+        #  `[start_ts, end_ts]`.
         df = hpandas.trim_df(
             df,
             knowledge_datetime_col_name,
