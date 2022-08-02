@@ -96,11 +96,8 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     stage = "load_prices"
     # How much history is needed for the DAG to compute.
-    # TODO(gp): This should be
-    # 198     system_config[
-    # 199         "market_data_config", "history_lookback"
-    # 200     ] = market_data_history_lookback
-    timedelta = pd.Timedelta("7D")
+    lookback_in_days = 7
+    system = dtfssybuut.apply_history_lookback(system, days=lookback_in_days)
     ts_col_name = "end_datetime"
     # The DAG works on multi-index dataframe containing multiple
     # features for multiple assets.
@@ -108,7 +105,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     node = dtfsysonod.RealTimeDataSource(
         stage,
         system.market_data,
-        timedelta,
+        system.config["market_data_config", "history_lookback"],
         ts_col_name,
         multiindex_output,
     )
