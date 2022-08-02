@@ -244,7 +244,7 @@ class CcxtBroker(ombroker.Broker):
         creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(ccxt_order["timestamp"])
         start_timestamp = creation_timestamp
         end_timestamp = hdateti.convert_unix_epoch_to_timestamp(int(ccxt_order["info"]["updateTime"]))
-        curr_num_shares = int(ccxt_order["info"]["origQty"])
+        curr_num_shares = float(ccxt_order["info"]["origQty"])
         diff_num_shares = ccxt_order["filled"]
         oms_order = omorder.Order(
             creation_timestamp,
