@@ -213,6 +213,8 @@ def get_data_as_of_datetime(
         end_ts = datetime_eff
         left_close = True
         right_close = True
+        # TODO(Grisha): Investigate if right close border should be True, i.e.,
+        #  whether wall clock time should be included in calculations.
         df = hpandas.trim_df(
             df,
             knowledge_datetime_col_name,
