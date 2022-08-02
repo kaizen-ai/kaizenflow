@@ -9,6 +9,11 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# Test_is_pickleable
+# #############################################################################
+
+
 def hello() -> bool:
     return False
 
@@ -151,3 +156,26 @@ class Test_is_pickleable1(hunitest.TestCase):
         exp_lambda = False
         exp_pickled = True
         self.helper(func, exp_str, exp_bound, exp_lambda, exp_pickled)
+
+
+# #############################################################################
+# Test_get_function_name1
+# #############################################################################
+
+
+def test_function() -> None:
+    pass
+
+
+class Test_get_function_name1(hunitest.TestCase):
+    def test1(self) -> None:
+        act = hintros.get_function_name()
+        exp = ""
+        self.assert_equal(act, exp)
+
+
+class Test_get_name_from_function1(hunitest.TestCase):
+    def test1(self) -> None:
+        act = hintros.get_name_from_function(test_function)
+        exp = "amp.helpers.test.test_hintrospection.test_function"
+        self.assert_equal(act, exp)
