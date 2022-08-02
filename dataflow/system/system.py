@@ -521,6 +521,10 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         db_connection = self.config["db_connection_object"]
         asset_id_name = self.config["market_data_config", "asset_id_col_name"]
         #
+        # If an order is not placed within a bar, then there is a timeout,
+        # so we add extra 5 seconds to `sleep_interval_in_secs` (which
+        # represents the length of a trading bar) to make sure that
+        # the `OrderProcessor` waits long enough before timing out.
         max_wait_time_for_order_in_secs = (
             self.config["dag_runner_config", "sleep_interval_in_secs"] + 5
         )
@@ -530,8 +534,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
             asset_id_name,
             max_wait_time_for_order_in_secs,
         )
-        # We need extra time for the OrderProcessor to account for the first bar
-        # that the Dag spends in fit mode.
+        # We add extra 5 seconds for the `OrderProcessor`` to account for
+        # the first bar that the DAG spends in fit mode.
         real_time_loop_time_out_in_secs = (
             self.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
             + 5
