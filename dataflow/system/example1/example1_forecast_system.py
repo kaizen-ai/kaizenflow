@@ -184,6 +184,15 @@ def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     system.config["market_data_config", "initial_replayed_delay"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
+    # Portfolio config.
+    system.config["portfolio_config", "mark_to_market_col"] = "close"
+    system.config["portfolio_config", "pricing_method"] = "twap.5T"
+    system.config["portfolio_config", "column_remap"] = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
@@ -269,6 +278,15 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
     system.config["market_data_config", "initial_replayed_delay"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
+    # Portfolio config.
+    system.config["portfolio_config", "mark_to_market_col"] = "close"
+    system.config["portfolio_config", "pricing_method"] = "twap.5T"
+    system.config["portfolio_config", "column_remap"] = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
