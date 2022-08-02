@@ -88,8 +88,6 @@ async def process_forecasts(
     hpandas.dassert_axes_equal(prediction_df, spread_df)
     # Check `portfolio`.
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
-    print("config", config)
-    print("config", type(config))
     hdbg.dassert_isinstance(config, cconfig.Config)
     #
     if restrictions_df is None:
