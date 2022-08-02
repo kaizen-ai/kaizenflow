@@ -94,22 +94,10 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source and forecast processor.
     """
-    stage = "load_prices"
     # How much history is needed for the DAG to compute.
     lookback_in_days = 7
     system = dtfssybuut.apply_history_lookback(system, days=lookback_in_days)
-    ts_col_name = "end_datetime"
-    # The DAG works on multi-index dataframe containing multiple
-    # features for multiple assets.
-    multiindex_output = True
-    node = dtfsysonod.RealTimeDataSource(
-        stage,
-        system.market_data,
-        system.config["market_data_config", "history_lookback"],
-        ts_col_name,
-        multiindex_output,
-    )
-    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
+    dag = dtfssybuut.add_real_time_data_source(system)
     # Copied from E8_system_example.py
     # Configure a `ProcessForecast` node.
     # TODO(gp): @all we should use get_process_forecasts_dict_example1 or a similar
