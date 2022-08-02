@@ -1,10 +1,14 @@
 """
 Identify on which server we are running.
+
+Import as:
+
+import helpers.hserver as hserver
 """
 
 import logging
 import os
-from typing import Optional
+from typing import List, Optional
 
 # This module should depend only on:
 # - Python standard modules
@@ -187,26 +191,6 @@ def is_AM_S3_available() -> bool:
     return val
 
 
-def is_CK_S3_available() -> bool:
-    val = True
-    if is_inside_ci():
-        import helpers.henv as henv
-
-        repo_name = henv.execute_repo_config_code("get_name()")
-        if repo_name in ("//amp", "//dev_tools"):
-            # No CK bucket.
-            val = False
-        # TODO(gp): We might want to enable CK tests also on lemonade.
-        if repo_name in ("//lemonade"):
-            # No CK bucket.
-            val = False
-    elif is_dev4():
-        # CK bucket is not available on dev4.
-        val = False
-    _LOG.debug("val=%s", val)
-    return val
-
-
 def get_host_user_name() -> Optional[str]:
     return os.environ.get("AM_HOST_USER_NAME", None)
 
@@ -247,7 +231,6 @@ def config_func_to_str() -> str:
     #
     function_names = [
         "is_AM_S3_available()",
-        "is_CK_S3_available()",
         "is_dev_ck()",
         "is_dev4()",
         "is_inside_ci()",
@@ -265,5 +248,5 @@ def config_func_to_str() -> str:
         ret.append(msg)
         # _print(msg)
     # Package.
-    ret = "# hserver.config\n" + indent("\n".join(ret))
+    ret: str = "# hserver.config\n" + indent("\n".join(ret))
     return ret
