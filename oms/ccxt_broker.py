@@ -6,7 +6,6 @@ Import as:
 import oms.ccxt_broker as occxbrok
 """
 
-from lib2to3.pytree import convert
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -16,7 +15,6 @@ import pandas as pd
 import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-from helpers.hpandas import convert_col_to_int
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
@@ -29,7 +27,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class CcxtBroker(ombroker.Broker):
-#class CcxtBroker(ombroker.DatabaseBroker):
+    # class CcxtBroker(ombroker.DatabaseBroker):
     def __init__(
         self,
         exchange_id: str,
@@ -69,9 +67,36 @@ class CcxtBroker(ombroker.Broker):
         self._portfolio_id = portfolio_id
         self._sent_orders = None
 
+    @staticmethod
+    def convert_ccxt_order_to_oms_order(
+        ccxt_order: Dict[Any, Any]
+    ) -> omorder.Order:
+        """ """
+        asset_id = ccxt_order["asset_id"]
+        type_ = "market"
+        creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(
+            ccxt_order["timestamp"]
+        )
+        start_timestamp = creation_timestamp
+        end_timestamp = hdateti.convert_unix_epoch_to_timestamp(
+            int(ccxt_order["info"]["updateTime"])
+        ) + pd.DateOffset(minutes=1)
+        curr_num_shares = float(ccxt_order["info"]["origQty"])
+        diff_num_shares = ccxt_order["filled"]
+        oms_order = omorder.Order(
+            creation_timestamp,
+            asset_id,
+            type_,
+            start_timestamp,
+            end_timestamp,
+            curr_num_shares,
+            diff_num_shares,
+        )
+        return oms_order
+
     def get_fills(
-        self, 
-        #sent_orders: List[omorder.Order] = None
+        self,
+        # sent_orders: List[omorder.Order] = None
     ) -> List[ombroker.Fill]:
         """
         Return list of fills from the last order execution.
@@ -88,7 +113,7 @@ class CcxtBroker(ombroker.Broker):
         if self.last_order_execution_ts:
             # Load orders for each given symbol.
             for asset_id in asset_ids:
-                symbol = self._asset_id_to_symbol_mapping[asset_id]            
+                symbol = self._asset_id_to_symbol_mapping[asset_id]
                 orders = self._exchange.fetch_orders(
                     since=hdateti.convert_timestamp_to_unix_epoch(
                         self.last_order_execution_ts,
@@ -106,7 +131,9 @@ class CcxtBroker(ombroker.Broker):
                         ][0]
                         # Assign an `asset_id` to the filled order.
                         filled_order["asset_id"] = asset_id
-                        filled_order = self.convert_ccxt_order_to_oms_order(filled_order)
+                        filled_order = self.convert_ccxt_order_to_oms_order(
+                            filled_order
+                        )
                         # Create a Fill object.
                         fill = ombroker.Fill(
                             filled_order,
@@ -143,7 +170,7 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> str: # List[omorder.Order]:
+    ) -> str:  # List[omorder.Order]:
         """
         Submit orders.
         """
@@ -155,7 +182,7 @@ class CcxtBroker(ombroker.Broker):
             side = "buy" if order.diff_num_shares > 0 else "sell"
             order_resp = self._exchange.createOrder(
                 symbol=symbol,
-                #type=order.type_,
+                # type=order.type_,
                 type="market",
                 side=side,
                 amount=abs(order.diff_num_shares),
@@ -236,29 +263,6 @@ class CcxtBroker(ombroker.Broker):
             msg="Required credentials not passed",
         )
         return exchange
-    
-    @staticmethod
-    def convert_ccxt_order_to_oms_order(ccxt_order: Dict[Any, Any]) -> omorder.Order:
-        """
-        
-        """
-        asset_id = ccxt_order["asset_id"]
-        type_ = "market"
-        creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(ccxt_order["timestamp"])
-        start_timestamp = creation_timestamp
-        end_timestamp = hdateti.convert_unix_epoch_to_timestamp(int(ccxt_order["info"]["updateTime"])) + pd.DateOffset(minutes=1)
-        curr_num_shares = float(ccxt_order["info"]["origQty"])
-        diff_num_shares = ccxt_order["filled"]
-        oms_order = omorder.Order(
-            creation_timestamp,
-            asset_id,
-            type_,
-            start_timestamp,
-            end_timestamp,
-            curr_num_shares,
-            diff_num_shares
-        )
-        return oms_order
 
 
 def get_CcxtBroker_prod_instance1(
@@ -281,21 +285,20 @@ def get_CcxtBroker_prod_instance1(
     # Build CkBroker.
     get_wall_clock_time = market_data.get_wall_clock_time
     poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time, timeout_in_secs=60)
-    timestamp_col = "end_time"
     broker = CcxtBroker(
-        exchange_id ,
+        exchange_id,
         universe_version,
         mode,
         portfolio_id,
         contract_type,
         strategy_id=strategy_id,
         market_data=market_data,
-        #liveness=liveness,
-        #instance_type=instance_type,
+        # liveness=liveness,
+        # instance_type=instance_type,
         # TODO(gp): This param should be moved from Ig to the base class Broker.
-        #order_duration_in_mins=order_duration_in_mins,
-        #order_extra_params=order_extra_params,
-        #poll_kwargs=poll_kwargs,
-        #timestamp_col=timestamp_col,
+        # order_duration_in_mins=order_duration_in_mins,
+        # order_extra_params=order_extra_params,
+        # poll_kwargs=poll_kwargs,
+        # timestamp_col=timestamp_col,
     )
     return broker
