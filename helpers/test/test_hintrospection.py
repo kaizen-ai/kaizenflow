@@ -4,6 +4,7 @@ from typing import Any
 
 import helpers.hintrospection as hintros
 import helpers.hpickle as hpickle
+import helpers.hstring as hstring
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -170,12 +171,13 @@ def test_function() -> None:
 class Test_get_function_name1(hunitest.TestCase):
     def test1(self) -> None:
         act = hintros.get_function_name()
-        exp = ""
+        exp = "test1"
         self.assert_equal(act, exp)
 
 
 class Test_get_name_from_function1(hunitest.TestCase):
     def test1(self) -> None:
         act = hintros.get_name_from_function(test_function)
-        exp = "amp.helpers.test.test_hintrospection.test_function"
+        hstring.remove_prefix(act, "amp.", assert_on_error=False)
+        exp = "helpers.test.test_hintrospection.test_function"
         self.assert_equal(act, exp)
