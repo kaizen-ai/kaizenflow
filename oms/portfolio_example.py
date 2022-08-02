@@ -245,7 +245,7 @@ def get_DatabasePortfolio_example4(
         table_name,
         market_data=market_data,
         mark_to_market_col="close",
-        #pricing_method="twap.5T",
+        # pricing_method="twap.5T",
         pricing_method=pricing_method,
         timestamp_col=timestamp_col,
         asset_ids=asset_ids,

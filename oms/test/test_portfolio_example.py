@@ -5,14 +5,12 @@ import oms.oms_db as oomsdb
 import oms.portfolio_example as oporexam
 import oms.test.oms_db_helper as omtodh
 
-
 # #############################################################################
 # Test_Portfolio_builders1
 # #############################################################################
 
 
 class Test_Portfolio_builders1(hunitest.TestCase):
-
     def test1(self) -> None:
         event_loop = None
         portfolio = oporexam.get_DataFramePortfolio_example1(event_loop)
@@ -26,7 +24,6 @@ class Test_Portfolio_builders1(hunitest.TestCase):
 
 
 class Test_Portfolio_builders2(omtodh.TestOmsDbHelper):
-
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000

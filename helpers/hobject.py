@@ -6,7 +6,7 @@ import helpers.hprint as hprint
 
 import logging
 import pprint
-from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
+from typing import Any
 
 import pandas as pd
 
@@ -14,7 +14,6 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hstring as hstring
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -205,7 +204,8 @@ def obj_to_str(
 
 class PrintableMixin:
     """
-    Implement default `__str__()` and `__repr__()` printing the state of an object.
+    Implement default `__str__()` and `__repr__()` printing the state of an
+    object.
 
     - `str()` is:
         - to be readable
@@ -221,11 +221,10 @@ class PrintableMixin:
         return hprint.to_object_pointer(self)
 
     def __repr__(self) -> str:
-        return obj_to_str(self, print_type=True,
-                          private_mode="all")
+        return obj_to_str(self, print_type=True, private_mode="all")
 
 
-# #######################################################
+# #############################################################################
 
 
 def test_object_signature(self_: Any, obj: Any) -> None:

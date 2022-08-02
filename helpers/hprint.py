@@ -6,11 +6,9 @@ import helpers.hprint as hprint
 
 import inspect
 import logging
-import pprint
 import re
 import sys
 from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
-
 
 import helpers.hdbg as hdbg
 

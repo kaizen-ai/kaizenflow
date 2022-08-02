@@ -5,7 +5,6 @@ import pandas as pd
 import core.finance.market_data_example as cfmadaex
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
-import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import market_data.market_data_example as mdmadaex
 
@@ -109,7 +108,6 @@ class Test_generate_random_ohlcv_bars(hunitest.TestCase):
 
 
 class Test_MarketData_builders1(hunitest.TestCase):
-
     def test1(self) -> None:
         event_loop = None
         market_data, _ = mdmadaex.get_ReplayedTimeMarketData_example3(event_loop)

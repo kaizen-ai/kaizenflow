@@ -28,7 +28,6 @@ _5mins = pd.DateOffset(minutes=5)
 
 
 class TestDataFramePortfolio1(hunitest.TestCase):
-
     @staticmethod
     def get_portfolio1(self):
         """
@@ -310,11 +309,10 @@ def _get_row3() -> pd.Series:
 
 
 class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
-    
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-    
+
     def test1(self) -> None:
         """
         Test that the update of Portfolio works.
@@ -373,10 +371,7 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
             coroutines = [self._coroutine2(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
 
-    async def _coroutine1(
-        self,
-        portfolio: omportfo.Portfolio
-    ):
+    async def _coroutine1(self, portfolio: omportfo.Portfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
@@ -404,10 +399,7 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
         2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    async def _coroutine2(
-        self,
-        portfolio: omportfo.Portfolio
-    ):
+    async def _coroutine2(self, portfolio: omportfo.Portfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
@@ -442,11 +434,10 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
 
 
 class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
-    
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-    
+
     def test1(self) -> None:
         """
         Test the `log_state()`/`read_state()` round trip.
@@ -476,10 +467,7 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
             coroutines = [self._coroutine1(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
 
-    async def _coroutine1(
-        self,
-        portfolio: omportfo.Portfolio
-    ):
+    async def _coroutine1(self, portfolio: omportfo.Portfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
@@ -521,11 +509,10 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
 
 
 class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
-    
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-    
+
     def test1(self) -> None:
         """
         Test initialization from db.
@@ -555,10 +542,7 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
             coroutines = [self._coroutine1(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
 
-    async def _coroutine1(
-        self,
-        portfolio: omportfo.Portfolio
-    ):
+    async def _coroutine1(self, portfolio: omportfo.Portfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()

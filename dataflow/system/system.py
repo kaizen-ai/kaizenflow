@@ -280,9 +280,7 @@ class System(abc.ABC):
             # Add information about who created that object, if needed.
             key_tmp = ("object.builder_function", key)
             hdbg.dassert_not_in(key_tmp, self.config)
-            self.config[key_tmp] = hintros.get_name_from_function(
-                builder_func
-            )
+            self.config[key_tmp] = hintros.get_name_from_function(builder_func)
         _LOG.debug("Object for %s=\n%s", key, obj)
         return obj
 

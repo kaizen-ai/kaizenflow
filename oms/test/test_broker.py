@@ -144,7 +144,6 @@ class TestSimulatedBroker2(hunitest.TestCase):
 
 
 class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
-
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
@@ -198,7 +197,7 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
             delay_to_accept_in_secs,
             delay_to_fill_in_secs,
             broker,
-            asset_id_name
+            asset_id_name,
         )
         await order_processor.enqueue_orders()
 

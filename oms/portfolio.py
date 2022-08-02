@@ -95,7 +95,8 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             hprint.to_str(
                 "broker mark_to_market_col pricing_method initial_holdings "
                 "retrieve_initial_holdings_from_db max_num_bars"
-            ))
+            )
+        )
         # Set and unpack broker.
         hdbg.dassert_issubclass(broker, ombroker.Broker)
         self.broker = broker

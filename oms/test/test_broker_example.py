@@ -2,9 +2,7 @@ import helpers.hasyncio as hasynci
 import helpers.hobject as hobject
 import helpers.hunit_test as hunitest
 import oms.broker_example as obroexam
-import oms.oms_db as oomsdb
 import oms.test.oms_db_helper as omtodh
-
 
 # #############################################################################
 # Test_Broker_builders1
@@ -12,7 +10,6 @@ import oms.test.oms_db_helper as omtodh
 
 
 class Test_Broker_builders1(hunitest.TestCase):
-
     def test1(self) -> None:
         event_loop = None
         broker = obroexam.get_SimulatedBroker_example1(event_loop)
@@ -26,7 +23,6 @@ class Test_Broker_builders1(hunitest.TestCase):
 
 
 class Test_Broker_builders2(omtodh.TestOmsDbHelper):
-
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
