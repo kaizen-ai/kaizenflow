@@ -3,6 +3,7 @@ import logging
 import pandas as pd
 
 import core.finance.market_data_example as cfmadaex
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
@@ -113,10 +114,4 @@ class Test_MarketData_builders1(hunitest.TestCase):
         event_loop = None
         market_data, _ = mdmadaex.get_ReplayedTimeMarketData_example3(event_loop)
         #
-        txt = []
-        txt.append(hprint.frame("str:"))
-        txt.append(str(market_data))
-        txt.append(hprint.frame("repr:"))
-        txt.append(repr(market_data))
-        txt = "\n".join(txt)
-        self.check_string(txt)
+        hobject.test_object_signature(market_data)

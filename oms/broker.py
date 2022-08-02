@@ -338,7 +338,8 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         """
         hdbg.dassert_container_type(orders, list, omorder.Order)
         wall_clock_timestamp = self._get_wall_clock_time()
-        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp) if self._orders:
+        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
+        if self._orders:
             last_timestamp = next(reversed(self._orders))
             hdbg.dassert_lt(last_timestamp, wall_clock_timestamp)
         self._orders[wall_clock_timestamp] = orders

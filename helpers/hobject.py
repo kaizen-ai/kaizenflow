@@ -223,3 +223,17 @@ class PrintableMixin:
     def __repr__(self) -> str:
         return obj_to_str(self, print_type=True,
                           private_mode="all")
+
+
+# #######################################################
+
+
+def test_object_signature(self_: Any, obj: Any) -> None:
+    txt = []
+    txt.append(hprint.frame("str:"))
+    txt.append(str(obj))
+    txt.append(hprint.frame("repr:"))
+    txt.append(repr(obj))
+    txt = "\n".join(txt)
+    #
+    self_.check_string(txt, purify_text=True)
