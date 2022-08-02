@@ -283,9 +283,10 @@ def apply_history_lookback(
 ) -> dtfsyssyst.System:
     dag_builder = system.config["dag_builder_object"]
     dag_config = system.config["dag_config"]
-    days = days or (
-        dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
-    )
+    if days is None:
+        days = (
+            dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+        )
     market_data_history_lookback = pd.Timedelta(days=days)
     system.config[
         "market_data_config", "history_lookback"
