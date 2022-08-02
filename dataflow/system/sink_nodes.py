@@ -58,6 +58,7 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         # if isinstance(process_forecasts_config, dict):
         #     process_forecasts_config = cconfig.get_config_from_nested_dict(process_forecasts_config)
         print("process_forecasts_config", process_forecasts_config)
+        print("process_forecasts_config_type", type(process_forecasts_config))
         self._process_forecasts_config = process_forecasts_config
         self._forecast_evaluator_from_prices_dict = (
             forecast_evaluator_from_prices_dict

@@ -1092,19 +1092,22 @@ class Test_make_read_only1(hunitest.TestCase):
 
 
 class TestConfigToDict(hunitest.TestCase):
-    def helper(param1, param2, param3):
-        sum = param1 + param2 + param3
-        return sum
-
     def test1(self) -> None:
+        sub_config_dict = {
+            "sub_key1": "sub_value1", 
+            "sub_key2": "sub_value2",
+        }
+        sub_config = cconfig.get_config_from_nested_dict(sub_config_dict)
         config_as_dict = {
             "param1": 1,
             "param2": 2,
-            "param3": 3,
+            "param3_as_config": sub_config,
         }
         config = cconfig.get_config_from_nested_dict(config_as_dict)
-        sum = self.helper(**config.to_dict())
-        self.assertEqual(sum, 6)
+        config_to_dict = config.to_dict()
+        check = isinstance(config_to_dict["param3_as_config"], cconfig.Config)
+        print("check", check)
+        self.assertTrue(check)
 
 
 # TODO(gp): Unit tests all the functions.

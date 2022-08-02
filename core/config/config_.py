@@ -339,11 +339,11 @@ class Config:
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
-            if isinstance(v, Config):
-                dict_[k] = v.to_dict()
-            else:
-                dict_[k] = v
-            #dict_[k] = v
+            # if isinstance(v, Config):
+            #     dict_[k] = v.to_dict()
+            # else:
+            #     dict_[k] = v
+            dict_[k] = v
         return dict_
 
     def is_serializable(self) -> bool:

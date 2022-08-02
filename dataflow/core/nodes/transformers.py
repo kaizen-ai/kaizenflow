@@ -362,7 +362,10 @@ class GroupedColDfToDfTransformer(dtfconobas.Transformer):
             if key_info is not None:
                 func_info[key] = key_info
             if self._col_mapping:
-                df_out = df_out.rename(columns=self._col_mapping)
+                print("COLUMNS", df_out.columns)
+                print("COL_MAPPING", self._col_mapping)
+                print("COL_MAPPING", type(self._col_mapping))
+                df_out = df_out.rename(columns=self._col_mapping.to_dict())
             out_dfs[key] = df_out
         info["func_info"] = func_info
         df = dtfconobas.GroupedColDfToDfColProcessor.postprocess(
