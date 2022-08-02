@@ -521,7 +521,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         db_connection = self.config["db_connection_object"]
         asset_id_name = self.config["market_data_config", "asset_id_col_name"]
         #
-        max_wait_time_for_order_in_secs = self.config["dag_runner_config", "sleep_interval_in_secs"] + 5
+        max_wait_time_for_order_in_secs = (
+            self.config["dag_runner_config", "sleep_interval_in_secs"] + 5
+        )
         order_processor = oms.get_order_processor_example1(
             db_connection,
             self.portfolio,
@@ -530,7 +532,10 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         )
         # We need extra time for the OrderProcessor to account for the first bar
         # that the Dag spends in fit mode.
-        real_time_loop_time_out_in_secs = self.config["dag_runner_config", "real_time_loop_time_out_in_secs"] + 5
+        real_time_loop_time_out_in_secs = (
+            self.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
+            + 5
+        )
         order_processor_coroutine = oms.get_order_processor_coroutine_example1(
             order_processor, self.portfolio, real_time_loop_time_out_in_secs
         )
