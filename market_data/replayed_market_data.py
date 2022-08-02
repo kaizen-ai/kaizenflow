@@ -173,7 +173,7 @@ def save_market_data(
     Save data from a `MarketData` to a CSV file.
 
     ```
-                                asset_id       full_symbol     open     high     low     close  volume              knowledge_timestamp            start_ts
+                                asset_id       full_symbol     open     high     low     close  volume              knowledge_timestamp                  start_ts
     end_ts
     2021-12-19 19:00:00-05:00 1467591036 binance::BTC_USDT 46668.65 46677.22 46575.00 46670.34 620.659 2022-07-09 12:07:51.240219+00:00 2021-12-19 18:59:00-05:00
     2021-12-19 19:01:00-05:00 1467591036 binance::BTC_USDT 46670.34 46670.84 46550.00 46567.11 237.931 2022-06-24 05:47:16.075108+00:00 2021-12-19 19:00:00-05:00
@@ -211,7 +211,7 @@ def load_market_data(
 ) -> pd.DataFrame:
     """
     Load some example market data from a CSV file.
-    
+
     ```
                    end_datetime    asset_id        full_symbol      open      high       low     close   volume               knowledge_timestamp            start_datetime              timestamp_db
     index
