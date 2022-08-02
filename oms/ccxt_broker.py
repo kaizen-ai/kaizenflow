@@ -6,6 +6,7 @@ Import as:
 import oms.ccxt_broker as occxbrok
 """
 
+from lib2to3.pytree import convert
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -15,6 +16,7 @@ import pandas as pd
 import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+from helpers.hpandas import convert_col_to_int
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
@@ -104,6 +106,7 @@ class CcxtBroker(ombroker.Broker):
                         ][0]
                         # Assign an `asset_id` to the filled order.
                         filled_order["asset_id"] = asset_id
+                        filled_order = self.convert_ccxt_order_to_oms_order(filled_order)
                         # Create a Fill object.
                         fill = ombroker.Fill(
                             filled_order,
@@ -233,6 +236,25 @@ class CcxtBroker(ombroker.Broker):
             msg="Required credentials not passed",
         )
         return exchange
+    
+    def convert_ccxt_order_to_oms_order(ccxt_order: Dict[Any, Any]) -> omorder.Order:
+        asset_id = ccxt_order["asset_id"]
+        type_ = "market"
+        creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(ccxt_order["timestamp"])
+        start_timestamp = creation_timestamp
+        end_timestamp = hdateti.convert_timestamp_to_unix_epoch(int(ccxt_order["info"]["updateTime"]))
+        curr_num_shares = int(ccxt_order["info"]["origQty"])
+        diff_num_shares = ccxt_order["filled"]
+        oms_order = omorder.Order(
+            creation_timestamp,
+            asset_id,
+            type_,
+            start_timestamp,
+            end_timestamp,
+            curr_num_shares,
+            diff_num_shares
+        )
+        return oms_order
 
 
 def get_CcxtBroker_prod_instance1(
