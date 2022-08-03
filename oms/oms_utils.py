@@ -3,6 +3,7 @@ Import as:
 
 import oms.oms_utils as oomsutil
 """
+import asyncio
 import collections
 import logging
 from typing import Dict, List
@@ -125,7 +126,7 @@ def flatten_ccxt_account(
                 order_id=order_id,
             )
             orders.append(order)
-        broker.submit_orders(orders, dry_run=dry_run)
+        asyncio.run(broker.submit_orders(orders, dry_run=dry_run))
     else:
         _LOG.warning("No open positions found.")
     # Check that all positions are closed.
