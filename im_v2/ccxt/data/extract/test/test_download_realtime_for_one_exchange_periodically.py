@@ -30,10 +30,11 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         --stop_time '{stop_time}'"
         start_delay = 0
         stop_delay = 1
+        download_started_marker = "Starting data download"
         # Amount of downloads depends on the start time and stop time.
-        current_time = datetime.now()
-        start_time = current_time + timedelta(minutes=start_delay, seconds=30)
-        stop_time = current_time + timedelta(minutes=stop_delay, seconds=30)
+        expected_downloads_amount = 1
+        start_time = datetime.now() + timedelta(minutes=start_delay, seconds=5)
+        stop_time = datetime.now() + timedelta(minutes=stop_delay, seconds=5)
         # Call Python script in order to get output.
         cmd = cmd.format(
             start_time=start_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -43,7 +44,6 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         # Check return value.
         self.assertEqual(return_code, 0)
         # Check amount of downloads by parsing output.
-        download_started_marker = "Starting data download from"
-        self.assertEqual(output.count(download_started_marker), 1)
-        download_completed_marker = "Successfully completed, iteration took"
-        self.assertEqual(output.count(download_completed_marker), 1)
+        self.assertEqual(
+            output.count(download_started_marker), expected_downloads_amount
+        )

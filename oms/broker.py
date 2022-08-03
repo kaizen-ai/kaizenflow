@@ -14,7 +14,9 @@ import pandas as pd
 
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import market_data as mdata
 import oms.oms_db as oomsdb
@@ -56,6 +58,7 @@ class Fill:
         :param num_shares: it's the number of shares that are filled, with
             respect to `diff_num_shares` in Order
         """
+        _LOG.debug(hprint.to_str("order timestamp num_shares price"))
         self._fill_id = self._get_next_fill_id()
         # Pointer to the order.
         self.order = order
@@ -102,17 +105,16 @@ class Fill:
 # #############################################################################
 
 
-class Broker(abc.ABC):
+class Broker(abc.ABC, hobject.PrintableMixin):
     """
     Represent a broker to which we can place orders and receive fills back.
 
-    The broker:
-    1) keeps an internal book keeping of orders submitted and deadlines when they
-       are supposed to be executed
-    2) passes the orders to the actual Order Management System (OMS) through an
-       interface (e.g., DB, file system)
-    3) waits for an acknowledgement of orders being submitted successfully by the OMS
-    4) reports the order fills from the market
+    The broker: 1) keeps an internal book keeping of orders submitted
+    and deadlines when they    are supposed to be executed 2) passes the
+    orders to the actual Order Management System (OMS) through an
+    interface (e.g., DB, file system) 3) waits for an acknowledgement of
+    orders being submitted successfully by the OMS 4) reports the order
+    fills from the market
     """
 
     _submitted_order_id: int = 0
@@ -134,6 +136,11 @@ class Broker(abc.ABC):
             `MarketData` to retrieve execution prices. The required columns
             are "bid", "ask", "price", and "midpoint".
         """
+        _LOG.debug(
+            hprint.to_str(
+                "strategy_id market_data account timestamp_col column_remap"
+            )
+        )
         self._strategy_id = strategy_id
         self._account = account
         #
@@ -153,6 +160,8 @@ class Broker(abc.ABC):
         ] = collections.defaultdict(list)
         # Track the fills for internal accounting.
         self._fills: List[Fill] = []
+        #
+        _LOG.debug("After initialization:\n%s", repr(self))
 
     @property
     def strategy_id(self) -> str:
@@ -187,12 +196,12 @@ class Broker(abc.ABC):
         _LOG.debug("Submitting %d orders", len(orders))
         for order in orders:
             _LOG.debug("Submitting order %s", order.order_id)
-            #hdbg.dassert_lte(
+            # hdbg.dassert_lte(
             #    order.start_timestamp,
             #    wall_clock_timestamp,
             #    "An order can only be executed in the future: order=",
             #    order,
-            #)
+            # )
             self._deadline_timestamp_to_orders[order.end_timestamp].append(order)
         # Submit the orders to the actual OMS.
         _LOG.debug("Submitting orders=\n%s", omorder.orders_to_string(orders))
@@ -347,15 +356,15 @@ class Broker(abc.ABC):
 
 class SimulatedBroker(Broker):
     """
-    Represent a broker to which we place orders and receive back fills:
-    1) completely
-    2) as soon as their deadline comes
-    3) at the price from the Market
+    Represent a broker to which we place orders and receive back fills: 1)
+    completely 2) as soon as their deadline comes 3) at the price from the
+    Market.
 
     There is no interaction with an OMS (e.g., no need to waiting for
     acceptance and execution).
     """
 
+    # TODO(gp): Not sure this is needed.
     def __init__(
         self,
         *args: Any,
@@ -428,6 +437,12 @@ class DatabaseBroker(Broker):
         :param poll_kwargs: polling instruction when waiting for acceptance of an
             order
         """
+        _LOG.debug(
+            hprint.to_str(
+                "db_connection submitted_orders_table_name "
+                "accepted_orders_table_name poll_kwargs"
+            )
+        )
         super().__init__(*args, **kwargs)
         self._db_connection = db_connection
         self._submitted_orders_table_name = submitted_orders_table_name
@@ -439,6 +454,8 @@ class DatabaseBroker(Broker):
         self._submissions: Dict[
             pd.Timestamp, pd.Series
         ] = collections.OrderedDict()
+        #
+        _LOG.debug("After initialization:\n%s", repr(self))
 
     def get_fills(self) -> List[Fill]:
         return self._get_fills_helper()

@@ -5,7 +5,7 @@ import market_data.replayed_market_data as mdremada
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
@@ -163,6 +163,7 @@ class ReplayedMarketData(mdabmada.MarketData):
 # #############################################################################
 
 
+# TODO(gp): Add an example of how data looks like.
 def save_market_data(
     market_data: mdabmada.MarketData,
     file_name: str,
@@ -171,16 +172,6 @@ def save_market_data(
 ) -> None:
     """
     Save data from a `MarketData` to a CSV file.
-
-    ```
-                                asset_id       full_symbol     open     high     low     close  volume              knowledge_timestamp                  start_ts
-    end_ts
-    2021-12-19 19:00:00-05:00 1467591036 binance::BTC_USDT 46668.65 46677.22 46575.00 46670.34 620.659 2022-07-09 12:07:51.240219+00:00 2021-12-19 18:59:00-05:00
-    2021-12-19 19:01:00-05:00 1467591036 binance::BTC_USDT 46670.34 46670.84 46550.00 46567.11 237.931 2022-06-24 05:47:16.075108+00:00 2021-12-19 19:00:00-05:00
-    2021-12-19 19:02:00-05:00 1467591036 binance::BTC_USDT 46567.12 46590.60 46489.61 46513.85 612.955 2022-06-24 05:47:16.075108+00:00 2021-12-19 19:01:00-05:00
-    ```
-
-    The data is not processed but saved exactly as it is.
     """
     # hdbg.dassert(market_data.is_online())
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
@@ -200,37 +191,16 @@ def save_market_data(
     _LOG.info("Saving done")
 
 
+# TODO(gp): Add an example of how data looks like.
 def load_market_data(
     file_name: str,
-    *,
     aws_profile: hs3.AwsProfile = None,
-    column_remap: Optional[Dict[str, str]] = None,
-    timestamp_db_column: Optional[str] = None,
-    datetime_columns: Optional[List[str]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    **kwargs: Any,
 ) -> pd.DataFrame:
     """
-    Load some example market data from a CSV file.
-
-    ```
-                   end_datetime    asset_id        full_symbol      open      high       low     close   volume               knowledge_timestamp            start_datetime              timestamp_db
-    index
-    0 2021-12-20 00:00:00+00:00  1467591036  binance::BTC_USDT  46668.65  46677.22  46575.00  46670.34  620.659  2022-07-09 12:07:51.240219+00:00 2021-12-19 23:59:00+00:00 2021-12-20 00:00:00+00:00
-    1 2021-12-20 00:01:00+00:00  1467591036  binance::BTC_USDT  46670.34  46670.84  46550.00  46567.11  237.931  2022-06-24 05:47:16.075108+00:00 2021-12-20 00:00:00+00:00 2021-12-20 00:01:00+00:00
-    2 2021-12-20 00:02:00+00:00  1467591036  binance::BTC_USDT  46567.12  46590.60  46489.61  46513.85  612.955  2022-06-24 05:47:16.075108+00:00 2021-12-20 00:01:00+00:00 2021-12-20 00:02:00+00:00
-    ```
-
-    :param column_remap: mapping for columns to remap
-    :param timestamp_db_column: column name (after remapping) to use as
-        `timestamp_db` if it doesn't exist (e.g., we can use `end_datetime` as
-        `timestamp_db`)
-    :param datetime_columns: names (after remapping) of the columns to convert
-        to datetime
+    Load some example data from the RT DB.
     """
-    # Build options.
-    if kwargs is None:
-        kwargs = {}
-    kwargs_tmp = kwargs.copy()
+    kwargs_tmp = {}
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
         kwargs_tmp["s3fs"] = s3fs_
@@ -239,19 +209,21 @@ def load_market_data(
     df = hpandas.read_csv_to_df(stream, **kwargs)
     # TODO(gp): Difference btw amp and cmamp.
     # Adjust column names to the processable format.
-    if column_remap:
-        hpandas.dassert_valid_remap(list(df.columns), column_remap)
-        df = df.rename(columns=column_remap)
+    if "start_ts" in df.columns:
+        df = df.rename(columns={"start_ts": "start_datetime"})
+    if "end_ts" in df.columns:
+        df = df.rename(columns={"end_ts": "end_datetime"})
+    if "timestamp_db" not in df.columns:
+        df["timestamp_db"] = df["end_datetime"]
     #
-    if timestamp_db_column:
-        hdbg.dassert_not_in("timestamp_db", df.columns)
-        hdbg.dassert_in(timestamp_db_column, df.columns)
-        df["timestamp_db"] = df[timestamp_db_column]
-    # Typically datetime columns are received as strings, while the pipeline
-    # requires datetime type for further computations.
-    if datetime_columns:
-        for col_name in datetime_columns:
-            hdbg.dassert_in(col_name, df.columns)
+    for col_name in (
+        "start_time",
+        "start_datetime",
+        "end_time",
+        "end_datetime",
+        "timestamp_db",
+    ):
+        if col_name in df.columns:
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
     df.reset_index(inplace=True)
     _LOG.debug(

@@ -47,9 +47,9 @@ class CcxtBroker(ombroker.Broker):
         :param contract_type: "spot" or "futures"
         """
         hdbg.dassert_in(mode, ["prod", "test"])
+        hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._mode = mode
         self._exchange_id = exchange_id
-        hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._contract_type = contract_type
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()

@@ -26,6 +26,11 @@ import oms.test.oms_db_helper as omtodh
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# TestSimulatedProcessForecasts1
+# #############################################################################
+
+
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
     @staticmethod
     def get_portfolio(
@@ -377,6 +382,11 @@ asset_id                      100     200
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+# #############################################################################
+# TestSimulatedProcessForecasts3
+# #############################################################################
+
+
 class TestSimulatedProcessForecasts3(hunitest.TestCase):
     @staticmethod
     def get_portfolio(
@@ -504,6 +514,11 @@ asset_id                      101    202
 2000-01-01 09:40:01-05:00  -67.12     100061.30      -79.26  100036.08 -146.38  1.00e+06    1.00e+06       0.1
 2000-01-01 09:45:01-05:00  226.12        146.31      146.31   99935.34  226.05  1.00e+06    1.00e+06       0.1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# TestMockedProcessForecasts1
+# #############################################################################
 
 
 class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
@@ -641,6 +656,11 @@ asset_id                     101    202
 2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
 2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# TestMockedProcessForecasts2
+# #############################################################################
 
 
 class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):

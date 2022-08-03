@@ -19,6 +19,7 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hlogging as hloggin
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.htimer as htimer
@@ -32,7 +33,7 @@ DagOutput = Dict[dtfcornode.NodeId, dtfcornode.NodeOutput]
 
 # TODO(gp): Consider calling it `Dag` given our convention of snake case
 #  abbreviations in the code (but not in comments).
-class DAG:
+class DAG(hobject.PrintableMixin):
     """
     Class for creating and executing a DAG of `Node`s.
 
@@ -77,37 +78,37 @@ class DAG:
             self._save_node_io, self._profile_execution, self._dst_dir
         )
 
-    def __str__(self) -> str:
-        """
-        Return a short representation of the DAG for user.
-
-        E.g.,
-
-        ```
-        name=None
-        mode=strict
-        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
-        edges=[]
-        save_node_io=
-        profile_execution=False
-        dst_dir=None
-        force_free_nodes=False
-        ```
-        """
-        res = ""
-        res += "dag=" + hprint.to_object_pointer(self) + "\n"
-        txt = []
-        txt.append(f"name={self._name}")
-        txt.append(f"mode={self._mode}")
-        txt.append("nodes=" + str(self.nx_dag.nodes(data=True)))
-        txt.append("edges=" + str(self.nx_dag.edges(data=True)))
-        txt.append("save_node_io=" + str(self._save_node_io))
-        txt.append(f"profile_execution={self._profile_execution}")
-        txt.append(f"dst_dir={self._dst_dir}")
-        txt.append(f"force_free_nodes={self.force_free_nodes}")
-        res += hprint.indent("\n".join(txt))
-        return res
-
+    # def __str__(self) -> str:
+    #     """
+    #     Return a short representation of the DAG for user.
+    #
+    #     E.g.,
+    #
+    #     ```
+    #     name=None
+    #     mode=strict
+    #     nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
+    #     edges=[]
+    #     save_node_io=
+    #     profile_execution=False
+    #     dst_dir=None
+    #     force_free_nodes=False
+    #     ```
+    #     """
+    #     res = ""
+    #     res += "dag=" + hprint.to_object_pointer(self) + "\n"
+    #     txt = []
+    #     txt.append(f"name={self._name}")
+    #     txt.append(f"mode={self._mode}")
+    #     txt.append("nodes=" + str(self.nx_dag.nodes(data=True)))
+    #     txt.append("edges=" + str(self.nx_dag.edges(data=True)))
+    #     txt.append("save_node_io=" + str(self._save_node_io))
+    #     txt.append(f"profile_execution={self._profile_execution}")
+    #     txt.append(f"dst_dir={self._dst_dir}")
+    #     txt.append(f"force_free_nodes={self.force_free_nodes}")
+    #     res += hprint.indent("\n".join(txt))
+    #     return res
+    #
     def __repr__(self) -> str:
         """
         Return a detailed representation for debugging.
@@ -130,10 +131,13 @@ class DAG:
         ```
         """
         txt = []
-        txt.append(f"name={self._name}")
-        txt.append(f"mode={self._mode}")
-        txt.append("json=")
-        txt.append(hprint.indent(self._to_json(), 2))
+        txt.append(super().__repr__())
+        #
+        res = []
+        res.append("nodes=" + str(self.nx_dag.nodes(data=True)))
+        res.append("edges=" + str(self.nx_dag.edges(data=True)))
+        res.append("json=\n" + self._to_json())
+        txt.append(hprint.indent(res), 2)
         return "\n".join(txt)
 
     def set_debug_mode(

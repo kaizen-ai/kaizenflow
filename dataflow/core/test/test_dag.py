@@ -10,6 +10,11 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+#
+# #############################################################################
+
+
 class _TestDataflowHelper(hunitest.TestCase):
     def _check(self, dag: dtfcordag.DAG) -> None:
         """
@@ -30,6 +35,11 @@ class _TestDataflowHelper(hunitest.TestCase):
         file_name = os.path.join(dir_name, "graph.png")
         dtfcorvisu.draw_to_file(dag, file_name)
         _LOG.debug("Saved plot to %s", file_name)
+
+
+# #############################################################################
+#
+# #############################################################################
 
 
 class Test_dataflow_core_DAG1(_TestDataflowHelper):
@@ -104,6 +114,11 @@ class Test_dataflow_core_DAG1(_TestDataflowHelper):
         dag.connect("n2", "n3")
         dag.add_node(n1)
         self._check(dag)
+
+
+# #############################################################################
+#
+# #############################################################################
 
 
 class Test_dataflow_core_DAG2(_TestDataflowHelper):
@@ -280,6 +295,11 @@ class Test_dataflow_core_DAG2(_TestDataflowHelper):
         return dag
 
 
+# #############################################################################
+#
+# #############################################################################
+
+
 class Test_dataflow_core_DAG3(_TestDataflowHelper):
     def test_sources_sinks1(self) -> None:
         """
@@ -331,6 +351,11 @@ class Test_dataflow_core_DAG3(_TestDataflowHelper):
         sinks = dag.get_sinks()
         sinks.sort()
         self.assertListEqual(sinks, ["snk1", "snk2"])
+
+
+# #############################################################################
+#
+# #############################################################################
 
 
 class Test_dataflow_core_DAG4(_TestDataflowHelper):
@@ -457,6 +482,11 @@ class Test_dataflow_core_DAG4(_TestDataflowHelper):
         # Append `dag2` to tail of `dag1`.
         dag1.append_to_tail(dag2)
         self._check(dag1)
+
+
+# #############################################################################
+#
+# #############################################################################
 
 
 class Test_dataflow_core_DAG5(_TestDataflowHelper):
