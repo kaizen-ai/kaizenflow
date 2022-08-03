@@ -1,19 +1,11 @@
-import datetime
 import logging
-import os
 
 import pandas as pd
-import pytest
 
-import helpers.hdbg as hdbg
-import helpers.hio as hio
-import helpers.hpandas as hpandas
-import helpers.hsystem as hsystem
-import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client as icdcl
-import market_data.stitched_market_data as mdstmada
 import market_data.market_data_example as mdmadaex
 import market_data.test.market_data_test_case as mdtmdtca
+
 # import market_data_lime.eg_market_data_example as mdlemdaex
 # import market_data_lime.eg_stitched_market_data as mdlesmada
 
@@ -72,7 +64,21 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         #
         expected_length = 25916
         expected_column_names = [
-            "asset_id", "close_1", "close_2", "full_symbol", "high_1", "high_2", "knowledge_timestamp_1", "knowledge_timestamp_2", "low_1", "low_2", "open_1", "open_2", "start_ts", "volume_1", "volume_2"
+            "asset_id",
+            "close_1",
+            "close_2",
+            "full_symbol",
+            "high_1",
+            "high_2",
+            "knowledge_timestamp_1",
+            "knowledge_timestamp_2",
+            "low_1",
+            "low_2",
+            "open_1",
+            "open_2",
+            "start_ts",
+            "volume_1",
+            "volume_2",
         ]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -108,6 +114,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
 
     def test_is_online1(self) -> None:
         self.assertTrue(True)
+
 
 # class TestIgStitchedMarketData1(hunitest.TestCase):
 #     def df_stats_to_str(self, df: pd.DataFrame) -> str:

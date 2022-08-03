@@ -1,7 +1,7 @@
 """
 Import as:
 
-import market_data_lime.eg_stitched_market_data as mdlesmada
+import market_data.stitched_market_data as mdstmada
 """
 
 import logging
@@ -13,8 +13,10 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+
 # import im_lime.eg as imlimeg
 import market_data as mdata
+
 # import market_data_lime.eg_real_time_market_data as mdlertmda
 
 _LOG = logging.getLogger(__name__)
@@ -52,16 +54,16 @@ def normalize_historical_df(df: pd.DataFrame) -> pd.DataFrame:
 # TODO(gp): Add tests using MarketData_TestCase.
 class IgStitchedMarketData(mdata.MarketData):
     """
-    Accept a RealTimeImClient and an historical ImClient, and
-
+    Accept a RealTimeImClient and an historical ImClient, and.
     """
+
     def __init__(
         self,
         asset_ids: List[Any],
         get_wall_clock_time: hdateti.GetWallClockTime,
         # TODO(gp): Can we accept two ImClient?
-        eg_rt_market_data, #: mdlertmda.IgRealTimeMarketData,
-        eg_historical_im_client, #: imlimeg.IgHistoricalPqByDateTaqBarClient,
+        eg_rt_market_data,  #: mdlertmda.IgRealTimeMarketData,
+        eg_historical_im_client,  #: imlimeg.IgHistoricalPqByDateTaqBarClient,
         # TODO(gp): It should accept two column remapping and then support another
         #  remapping after the merge?
         **kwargs: Any,
@@ -212,17 +214,17 @@ class IgStitchedMarketData(mdata.MarketData):
         # )
         df = pd.concat([rt_market_data_df, historical_market_data_df], axis=0)
         df.sort_index(ascending=True, inplace=True)
-        #_LOG.debug(
+        # _LOG.debug(
         #    hpandas.df_to_str(
         #        df, print_shape_info=True, print_dtypes=True, tag="==> df"
         #    )
-        #)
-        #df["asset_id"] = df["asset_id"].astype(int)
-        #_LOG.debug(
+        # )
+        # df["asset_id"] = df["asset_id"].astype(int)
+        # _LOG.debug(
         #    hpandas.df_to_str(
         #        df, print_shape_info=True, print_dtypes=True, tag="==> df"
         #    )
-        #)
+        # )
         # TODO(gp): There should be a single row for each (timestamp, EG id).
         # hpandas.dassert_strictly_increasing_index(df)
         return df
@@ -245,7 +247,6 @@ class IgStitchedMarketData(mdata.MarketData):
 
 # TODO(Grisha): @Dan Solve problem with getting data for last period in historical mode.
 class HorizontalStitchedMarketData(mdata.MarketData):
-
     def __init__(self, *args, im_client1, im_client2, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._im_client_market_data1 = mdata.ImClientMarketData(
@@ -254,6 +255,13 @@ class HorizontalStitchedMarketData(mdata.MarketData):
         self._im_client_market_data2 = mdata.ImClientMarketData(
             *args, im_client=im_client2, **kwargs
         )
+
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        """
+        See the parent class.
+        """
+        # TODO(gp): It should delegate to the ImClient.
+        return True
 
     def _get_data(
         self,
@@ -269,10 +277,22 @@ class HorizontalStitchedMarketData(mdata.MarketData):
         See the parent class.
         """
         market_data1 = self._im_client_market_data1._get_data(
-            start_ts, end_ts, ts_col_name, asset_ids, left_close, right_close, limit
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close,
+            right_close,
+            limit,
         )
         market_data2 = self._im_client_market_data2._get_data(
-            start_ts, end_ts, ts_col_name, asset_ids, left_close, right_close, limit
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close,
+            right_close,
+            limit,
         )
         #
         cols_to_merge_on = [
@@ -292,13 +312,6 @@ class HorizontalStitchedMarketData(mdata.MarketData):
             suffixes=("_1", "_2"),
         )
         return market_data
-
-    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
-        """
-        See the parent class.
-        """
-        # TODO(gp): It should delegate to the ImClient.
-        return True
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         last_end_time1 = self._im_client_market_data1.get_last_end_time()

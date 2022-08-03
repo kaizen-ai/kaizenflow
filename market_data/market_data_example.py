@@ -399,7 +399,8 @@ def get_HorizontalStitchedMarketData_example1(
     filter_data_mode: str = "assert",
 ) -> mdstmada.HorizontalStitchedMarketData:
     """
-    Build a `HorizontalStitchedMarketData` backed with the data defined by `ImClient`s.
+    Build a `HorizontalStitchedMarketData` backed with the data defined by
+    `ImClient`s.
     """
     # Build a function that returns a wall clock to initialise `MarketData`.
     if wall_clock_time is None:
@@ -408,6 +409,7 @@ def get_HorizontalStitchedMarketData_example1(
         wall_clock_time1 = _get_last_timestamp(im_client1, asset_ids)
         wall_clock_time2 = _get_last_timestamp(im_client2, asset_ids)
         wall_clock_time = max(wall_clock_time1, wall_clock_time2)
+
     def get_wall_clock_time() -> pd.Timestamp:
         return wall_clock_time
 
