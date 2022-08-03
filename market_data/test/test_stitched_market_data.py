@@ -1,6 +1,7 @@
 import logging
 
 import pandas as pd
+import pytest
 
 import im_v2.ccxt.data.client as icdcl
 import market_data.market_data_example as mdmadaex
@@ -18,6 +19,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     the parent class.
     """
 
+    @pytest.mark.slow("~16 seconds by GH actions.")
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         resample_1min = True
