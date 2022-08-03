@@ -20,6 +20,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import oms.portfolio as omportfo
 import oms.process_forecasts_ as oprofore
+import dataflow.system.system as dtfsyssyst
 
 _LOG = logging.getLogger(__name__)
 
@@ -269,3 +270,50 @@ def get_process_forecasts_dict_example3(
         log_dir=log_dir,
     )
     return process_forecasts_dict
+
+
+    def get_process_forecasts_dict_example4(system: dtfsyssyst.System) -> Dict[str, Any]:
+        """
+        Get the dictionary with config params for `get_Example1_RealtimeDag_example3`.
+        """
+        prediction_col = "feature1"
+        volatility_col = "vwap.ret_0.vol"
+        spread_col = None
+        bulk_frac_to_remove = 0.0
+        target_gmv = 1e5
+        log_dir = None
+        # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+        order_type = "price@twap"
+        forecast_evaluator_from_prices_dict = None
+        process_forecasts_config_dict = {
+            "order_config": {
+                "order_type": order_type,
+                "order_duration_in_mins": 5,
+            },
+            "optimizer_config": {
+                "backend": "pomo",
+                "params": {
+                    "style": "cross_sectional",
+                    "kwargs": {
+                        "bulk_frac_to_remove": bulk_frac_to_remove,
+                        "bulk_fill_method": "zero",
+                        "target_gmv": target_gmv,
+                    },
+                },
+            },
+            "ath_start_time": datetime.time(9, 30),
+            "trading_start_time": datetime.time(9, 30),
+            "ath_end_time": datetime.time(16, 40),
+            "trading_end_time": datetime.time(16, 40),
+            "execution_mode": "real_time",
+            "log_dir": log_dir,
+        }
+        process_forecasts_config = {
+            "prediction_col": prediction_col,
+            "volatility_col": volatility_col,
+            "spread_col": spread_col,
+            "portfolio": system.portfolio,
+            "process_forecasts_config": process_forecasts_config_dict,
+            "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
+        }
+        return process_forecasts_config
