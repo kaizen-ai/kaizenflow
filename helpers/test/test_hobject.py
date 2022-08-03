@@ -1,6 +1,8 @@
+import abc
 import logging
 from typing import Any
 
+import helpers.hdbg as hdbg
 import helpers.hobject as hobject
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
@@ -19,28 +21,15 @@ def _to_signature(self_: Any, obj: Any, **kwargs: Any) -> None:
     self_.check_string(txt, purify_text=True)
 
 
-# #############################################################################
-# Test_obj_to_str1
-# #############################################################################
+class _Obj_to_str_TestCase(abc.ABC):
 
-class _Object:
-    """
-    Object storing only scalar members but not other objects.
-    """
-
-    def __init__(self) -> None:
-        self.a = False
-        self.b = "hello"
-        self.c = 3.14
-        self._hello = "under"
-        self.__hello = "double_dunder"
-        self.hello = lambda x: x + 1
-
-
-class Test_obj_to_str1(hunitest.TestCase):
+    @abc.abstractmethod
+    def get_object(self) -> Any:
+        ...
 
     def helper(self, **kwargs: Any) -> None:
-        obj = _Object()
+        obj = self.get_object()
+        hdbg.dassert_is_not(obj, None)
         _to_signature(self, obj, **kwargs)
 
     def test1(self) -> None:
@@ -60,6 +49,31 @@ class Test_obj_to_str1(hunitest.TestCase):
 
     def test6(self) -> None:
         self.helper(dunder_mode="all")
+
+
+# #############################################################################
+# Test_obj_to_str1
+# #############################################################################
+
+class _Object1:
+    """
+    Object storing only scalar members but not other objects.
+    """
+
+    def __init__(self) -> None:
+        self.a = False
+        self.b = "hello"
+        self.c = 3.14
+        self._hello = "under"
+        self.__hello = "double_dunder"
+        self.hello = lambda x: x + 1
+
+
+class Test_obj_to_str1(hunitest.TestCase, _Obj_to_str_TestCase):
+
+    def get_object(self) -> Any:
+        obj = _Object1()
+        return obj
 
 
 # #############################################################################
@@ -95,11 +109,8 @@ class _Object3:
         self.object2 = _Object2()
 
 
-class Test_obj_to_str2(hunitest.TestCase):
+class Test_obj_to_str2(hunitest.TestCase, _Obj_to_str_TestCase):
 
-    def helper(self, **kwargs: Any) -> None:
+    def get_object(self) -> Any:
         obj = _Object3()
-        _to_signature(self, obj, **kwargs)
-
-    def test1(self) -> None:
-        self.helper()
+        return obj

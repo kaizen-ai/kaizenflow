@@ -102,14 +102,16 @@ def _type_to_str(attr_value: str) -> str:
 
 def _attr_to_str(attr_value: Any, print_type: bool) -> str:
     _LOG.debug("type(attr_value)=%s", type(attr_value))
-    if isinstance(attr_value, (pd.DataFrame, pd.Series)):
+    if isinstance(attr_value, pd.DataFrame):
         res = f"pd.df({attr_value.shape}"
+    elif isinstance(attr_value, pd.Series):
+        res = f"pd.srs({attr_value.shape}"
     elif isinstance(attr_value, dict):
         res = str(attr_value)
     else:
         res = str(attr_value)
     if print_type:
-        res += " <" + _type_to_str(attr_value) + ">"
+        res += " " + _type_to_str(attr_value)
     return res
 
 
@@ -181,7 +183,7 @@ def obj_to_str(
     else:
         hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
     #
-    txt = hprint.to_object_pointer(obj) + "="
+    txt = hprint.to_object_str(obj) + "="
     txt += "(" + ", ".join(ret) + ")"
     return txt
 
@@ -289,7 +291,7 @@ def obj_to_repr(
         hdbg.dassert(f"Invalid attr_mode='{attr_mode}'")
     #
     txt = []
-    txt.append(hprint.to_object_pointer(obj) + ":")
+    txt.append(hprint.to_object_repr(obj) + ":")
     txt.append(hprint.indent("\n".join(ret)))
     return "\n".join(txt)
 

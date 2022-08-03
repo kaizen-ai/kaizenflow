@@ -233,8 +233,15 @@ def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str
 # #############################################################################
 
 
-def to_object_pointer(obj: Any) -> str:
-    return "<%s.%s object at %s>" % (
+def to_object_str(obj: Any) -> str:
+    return "%s at %s" % (
+        obj.__class__.__name__,
+        hex(id(obj)),
+    )
+
+
+def to_object_repr(obj: Any) -> str:
+    return "<%s.%s at %s>" % (
         obj.__class__.__module__,
         obj.__class__.__name__,
         hex(id(obj)),
