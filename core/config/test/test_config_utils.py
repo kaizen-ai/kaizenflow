@@ -3,6 +3,7 @@ import collections
 import pandas as pd
 
 import core.config as cconfig
+import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -182,11 +183,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
     def test3(self) -> None:
         nested = {
             "key1": "val1",
-            "key2": {
-                "key3": {
-                    "key4": {}
-                }
-            },
+            "key2": {"key3": {"key4": {}}},
         }
         config = cconfig.get_config_from_nested_dict(nested)
         act = str(config)
@@ -198,6 +195,16 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
         """
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp, fuzzy_match=False)
+
+    def test4(self) -> None:
+        """
+        - Create a dictionary with another dictionary as a value
+        - Convert it to config
+        - Test whether the value is now `Config` type
+        """
+        test_dict = {"key1": "value1", "key2": {"key3": "value2"}}
+        test_config = cconfig.get_config_from_nested_dict(test_dict)
+        hdbg.dassert_type_is(test_config["key2"], cconfig.config_.Config)
 
 
 # #############################################################################
