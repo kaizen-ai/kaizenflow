@@ -103,5 +103,5 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
     # Append the ProcessForecast node.
-    dtfssybuut.add_process_forecasts_node(system, dag)
+    dag = dtfssybuut.add_process_forecasts_node(system, dag)
     return dag

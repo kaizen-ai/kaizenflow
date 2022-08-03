@@ -385,7 +385,7 @@ def add_real_time_data_source(
 
 def add_process_forecasts_node(
     system: dtfsyssyst.System, dag: dtfcore.DAG
-) -> None:
+) -> dtfcore.DAG:
     """
     Append `ProcessForecasts` node to a DAG.
     """
@@ -396,6 +396,7 @@ def add_process_forecasts_node(
         stage, **system.config["process_forecasts_config"].to_dict()
     )
     dag.append_to_tail(node)
+    return dag
 
 
 # #############################################################################
