@@ -243,39 +243,70 @@ class IgStitchedMarketData(mdata.MarketData):
         return self._ig_rt_market_data._get_last_end_time()
 
 
-class HorizontalStitchedMarketData:
-    def __init__(
-        self, spot_im_client: icdc.ImClient, futures_im_client: icdc.ImClient
-    ) -> None:
-        hdbg.dassert_isinstance(spot_im_client, icdc.ImClient)
-        hdbg.dassert_is("spot", spot_im_client._contract_type)
-        self._spot_im_client = spot_im_client
-        #
-        hdbg.dassert_isinstance(futures_im_client, icdc.ImClient)
-        hdbg.dassert_is("futures", futures_im_client._contract_type)
-        self._futures_im_client = futures_im_client
-        
-    def read_data(
+class HorizontalStitchedMarketData(mdata.MarketData):
+
+    def __init__(self, *args, im_client1, im_client2, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._im_client_market_data1 = mdata.ImClientMarketData(
+            *args, im_client=im_client1, **kwargs
+        )
+        self._im_client_market_data2 = mdata.ImClientMarketData(
+            *args, im_client=im_client2, **kwargs
+        )
+
+    def _get_data(
         self,
-        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        columns: Optional[List[str]],
-        filter_data_mode: str,
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        limit: Optional[int],
     ) -> pd.DataFrame:
-        spot_df = self._spot_im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        """
+        See the parent class.
+        """
+        market_data1 = self._im_client_market_data1._get_data(
+            start_ts, end_ts, ts_col_name, asset_ids, left_close, right_close, limit
         )
-        futures_df = self._futures_im_client.read_data(
-            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        market_data2 = self._im_client_market_data2._get_data(
+            start_ts, end_ts, ts_col_name, asset_ids, left_close, right_close, limit
         )
-        spot_df = spot_df.reset_index()
-        futures_df = futures_df.reset_index()
         #
-        all_df = spot_df.merge(
-            futures_df,
+        cols_to_merge_on = [
+            self._end_time_col_name,
+            self._asset_id_col,
+            "full_symbol",
+            self._start_time_col_name,
+        ]
+        if self._columns is not None:
+            if "full_symbol" not in self._columns:
+                cols_to_merge_on.remove("full_symbol")
+        #
+        market_data = market_data1.merge(
+            market_data2,
             how="outer",
-            on=["timestamp", "full_symbol"],
-            suffixes=("_spot", "_futures"),
-        ).set_index("timestamp")
-        return all_df
+            on=cols_to_merge_on,
+            suffixes=("_1", "_2"),
+        )
+        return market_data
+
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        """
+        See the parent class.
+        """
+        # TODO(gp): It should delegate to the ImClient.
+        return True
+
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        last_end_time1 = self._im_client_market_data1.get_last_end_time()
+        last_end_time2 = self._im_client_market_data2.get_last_end_time()
+        #
+        if last_end_time1 is None:
+            ret = last_end_time2
+        elif last_end_time2 is None:
+            ret = last_end_time1
+        else:
+            ret = max(last_end_time1, last_end_time2)
+        return ret
