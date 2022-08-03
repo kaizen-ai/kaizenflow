@@ -19,6 +19,7 @@ Use as:
 
 import argparse
 
+import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.extractor as imvcdeex
@@ -40,6 +41,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
     exchange = imvcdeex.CcxtExtractor(args.exchange_id, args.contract_type)
     args = vars(args)
