@@ -56,7 +56,7 @@ def get_Example1_MarketData_example2(
 
 def get_Example1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
-    Build a DAG with a historical data source for simulation.
+    Build a DAG with `HistoricalDataSource` for simulation.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     # Create HistoricalDataSource.
@@ -80,41 +80,24 @@ def get_Example1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DA
 
 def get_Example1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
-    Build a DAG with a real time data source.
+    Build a DAG with `RealTimeDataSource`.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     # How much history is needed for the DAG to compute.
-    # Set lookback to `1D` in order to get data for a day.
-    # TODO(Grisha): Create `apply_market_lookback()` CmTask #2475.
-    history_lookback = pd.Timedelta("1D")
-    system.config["market_data_config", "history_lookback"] = history_lookback
+    lookback_in_days = 1
+    system = dtfssybuut.apply_history_lookback(system, days=lookback_in_days)
     dag = dtfssybuut.add_real_time_data_source(system)
     return dag
 
 
 def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
-    Build a DAG with a real time data source and forecast processor.
+    Build a DAG with `RealTimeDataSource` and `ForecastProcessor`.
     """
-    stage = "load_prices"
     # How much history is needed for the DAG to compute.
-    # TODO(gp): This should be
-    # 198     system_config[
-    # 199         "market_data_config", "history_lookback"
-    # 200     ] = market_data_history_lookback
-    timedelta = pd.Timedelta("7D")
-    ts_col_name = "end_datetime"
-    # The DAG works on multi-index dataframe containing multiple
-    # features for multiple assets.
-    multiindex_output = True
-    node = dtfsysonod.RealTimeDataSource(
-        stage,
-        system.market_data,
-        timedelta,
-        ts_col_name,
-        multiindex_output,
-    )
-    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
+    lookback_in_days = 7
+    system = dtfssybuut.apply_history_lookback(system, days=lookback_in_days)
+    dag = dtfssybuut.add_real_time_data_source(system)
     # Copied from E8_system_example.py
     # Configure a `ProcessForecast` node.
     # TODO(gp): @all we should use get_process_forecasts_dict_example1 or a similar
