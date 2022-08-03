@@ -13,9 +13,9 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import im_lime.eg as imlimeg
+# import im_lime.eg as imlimeg
 import market_data as mdata
-import market_data_lime.eg_real_time_market_data as mdlertmda
+# import market_data_lime.eg_real_time_market_data as mdlertmda
 
 _LOG = logging.getLogger(__name__)
 
@@ -60,8 +60,8 @@ class IgStitchedMarketData(mdata.MarketData):
         asset_ids: List[Any],
         get_wall_clock_time: hdateti.GetWallClockTime,
         # TODO(gp): Can we accept two ImClient?
-        eg_rt_market_data: mdlertmda.IgRealTimeMarketData,
-        eg_historical_im_client: imlimeg.IgHistoricalPqByDateTaqBarClient,
+        eg_rt_market_data, #: mdlertmda.IgRealTimeMarketData,
+        eg_historical_im_client, #: imlimeg.IgHistoricalPqByDateTaqBarClient,
         # TODO(gp): It should accept two column remapping and then support another
         #  remapping after the merge?
         **kwargs: Any,
@@ -243,6 +243,7 @@ class IgStitchedMarketData(mdata.MarketData):
         return self._ig_rt_market_data._get_last_end_time()
 
 
+# TODO(Grisha): @Dan Solve problem with getting data for last period in historical mode.
 class HorizontalStitchedMarketData(mdata.MarketData):
 
     def __init__(self, *args, im_client1, im_client2, **kwargs) -> None:

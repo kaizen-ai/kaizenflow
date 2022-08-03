@@ -20,6 +20,7 @@ import im_v2.common.data.client as icdc
 import market_data.im_client_market_data as mdimcmada
 import market_data.real_time_market_data as mdrtmada
 import market_data.replayed_market_data as mdremada
+import market_data.stitched_market_data as mdstmada
 
 _LOG = logging.getLogger(__name__)
 
@@ -378,5 +379,52 @@ def get_RealtimeMarketData_example1(
         end_time_col_name,
         columns,
         get_wall_clock_time,
+    )
+    return market_data
+
+
+# #############################################################################
+# StitchedMarketData examples
+# #############################################################################
+
+
+def get_HorizontalStitchedMarketData_example1(
+    im_client1: icdc.ImClient,
+    im_client2: icdc.ImClient,
+    asset_ids: Optional[List[int]],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+    *,
+    wall_clock_time: Optional[pd.Timestamp] = None,
+    filter_data_mode: str = "assert",
+) -> mdstmada.HorizontalStitchedMarketData:
+    """
+    Build a `HorizontalStitchedMarketData` backed with the data defined by `ImClient`s.
+    """
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    if wall_clock_time is None:
+        # The maximum timestamp is set from the data except for the cases when
+        # it's too computationally expensive to read all of the data on the fly.
+        wall_clock_time1 = _get_last_timestamp(im_client1, asset_ids)
+        wall_clock_time2 = _get_last_timestamp(im_client2, asset_ids)
+        wall_clock_time = max(wall_clock_time1, wall_clock_time2)
+    def get_wall_clock_time() -> pd.Timestamp:
+        return wall_clock_time
+
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    market_data = mdstmada.HorizontalStitchedMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client1=im_client1,
+        im_client2=im_client2,
+        column_remap=column_remap,
+        filter_data_mode=filter_data_mode,
     )
     return market_data
