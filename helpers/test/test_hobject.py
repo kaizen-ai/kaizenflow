@@ -2,10 +2,26 @@ import logging
 from typing import Any
 
 import helpers.hobject as hobject
+import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
+
+def _to_signature(self_: Any, obj: Any, **kwargs: Any) -> None:
+    txt = []
+    txt.append(hprint.frame("str:"))
+    txt.append(hobject.obj_to_str(obj, **kwargs))
+    txt.append(hprint.frame("repr:"))
+    txt.append(hobject.obj_to_repr(obj, **kwargs))
+    txt = "\n".join(txt)
+    #
+    self_.check_string(txt, purify_text=True)
+
+
+# #############################################################################
+# Test_obj_to_str1
+# #############################################################################
 
 class _Object:
     """
@@ -19,6 +35,36 @@ class _Object:
         self._hello = "under"
         self.__hello = "double_dunder"
         self.hello = lambda x: x + 1
+
+
+class Test_obj_to_str1(hunitest.TestCase):
+
+    def helper(self, **kwargs: Any) -> None:
+        obj = _Object()
+        _to_signature(self, obj, **kwargs)
+
+    def test1(self) -> None:
+        self.helper(attr_mode="__dict__")
+
+    def test2(self) -> None:
+        self.helper(attr_mode="dir")
+
+    def test3(self) -> None:
+        self.helper(print_type=True)
+
+    def test4(self) -> None:
+        self.helper(callable_mode="all")
+
+    def test5(self) -> None:
+        self.helper(private_mode="all")
+
+    def test6(self) -> None:
+        self.helper(dunder_mode="all")
+
+
+# #############################################################################
+# Test_obj_to_str2
+# #############################################################################
 
 
 class _Object2:
@@ -49,122 +95,11 @@ class _Object3:
         self.object2 = _Object2()
 
 
-# #############################################################################
-# Test_obj_to_str1
-# #############################################################################
-
-class Test_obj_to_str1(hunitest.TestCase):
-
-    def helper(self, exp: str, **kwargs: Any) -> None:
-        obj = _Object()
-        act = hobject.obj_to_str(obj, **kwargs)
-        self.assert_equal(act, exp, dedent=True, purify_text=True)
-
-    def test1(self) -> None:
-        exp = r"""
-        <helpers.test.test_hobject._Object object at 0x>:
-          a='False'
-          b='hello'
-          c='3.14'
-        """
-        self.helper(exp, attr_mode="__dict__")
-
-    def test2(self) -> None:
-        exp = r"""
-        <helpers.test.test_hobject._Object object at 0x>:
-          a='False'
-          b='hello'
-          c='3.14'
-        """
-        self.helper(exp, attr_mode="dir")
-
-    def test3(self) -> None:
-        exp = r"""
-        <helpers.test.test_hobject._Object object at 0x>:
-          a='False' (<class 'bool'>)
-          b='hello' (<class 'str'>)
-          c='3.14' (<class 'float'>)
-        """
-        self.helper(exp, print_type=True)
-
-    def test4(self) -> None:
-        exp = r"""
-        <helpers.test.test_hobject._Object object at 0x>:
-          a='False'
-          b='hello'
-          c='3.14'
-          hello='<function _Object.__init__.<locals>.<lambda> at 0x>'
-        """
-        self.helper(exp, callable_mode="all")
-
-    def test5(self) -> None:
-        exp = r"""
-        <helpers.test.test_hobject._Object object at 0x>:
-          a='False'
-          b='hello'
-          c='3.14'
-          _hello='under'
-        """
-        self.helper(exp, private_mode="all")
-
-    def test6(self) -> None:
-        exp = r"""
-        <helpers.test.test_hobject._Object object at 0x>:
-          a='False'
-          b='hello'
-          c='3.14'
-          _Object__hello='double_dunder'
-        """
-        self.helper(exp, dunder_mode="all")
-
-
-# #############################################################################
-# Test_obj_to_str2
-# #############################################################################
-
-
 class Test_obj_to_str2(hunitest.TestCase):
-    """
-    Print an object using
 
-    """
-
-    def helper(self, exp: str, **kwargs: Any) -> None:
-        obj = _Object2()
-        act = hobject.obj_to_str(obj, **kwargs)
-        self.assert_equal(act, exp, dedent=True, purify_text=True)
-
-    def test1(self) -> None:
-        exp = r"""
-        <helpers.test.test_hobject._Object2 object at 0x>:
-          x='True'
-          y='world'
-          z='6.28'
-        """
-        self.helper(exp)
-
-
-# #############################################################################
-# Test_obj_to_str3
-# #############################################################################
-
-
-class Test_obj_to_str3(hunitest.TestCase):
-
-    def helper(self, exp: str, **kwargs: Any) -> None:
+    def helper(self, **kwargs: Any) -> None:
         obj = _Object3()
-        act = hobject.obj_to_str(obj, **kwargs)
-        self.assert_equal(act, exp, dedent=True, purify_text=True)
+        _to_signature(self, obj, **kwargs)
 
     def test1(self) -> None:
-        exp = r"""
-        <helpers.test.test_hobject._Object3 object at 0x>:
-          p='p'
-          q='q'
-          object2=
-            <helpers.test.test_hobject._Object2 object at 0x>:
-              x='True'
-              y='world'
-              z='6.28'
-            """
-        self.helper(exp)
+        self.helper()
