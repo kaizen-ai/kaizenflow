@@ -15,6 +15,7 @@ import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 # import im_lime.eg as imlimeg
+import im_v2.common.data.client as icdc
 import market_data as mdata
 
 # import market_data_lime.eg_real_time_market_data as mdlertmda
@@ -247,7 +248,13 @@ class IgStitchedMarketData(mdata.MarketData):
 
 # TODO(Grisha): @Dan Solve problem with getting data for last period in historical mode.
 class HorizontalStitchedMarketData(mdata.MarketData):
-    def __init__(self, *args, im_client1, im_client2, **kwargs) -> None:
+    def __init__(
+        self,
+        *args: Any,
+        im_client1: icdc.ImClient,
+        im_client2: icdc.ImClient,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self._im_client_market_data1 = mdata.ImClientMarketData(
             *args, im_client=im_client1, **kwargs
