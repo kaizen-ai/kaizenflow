@@ -385,9 +385,11 @@ def add_real_time_data_source(
 
 def add_process_forecasts_node(
     system: dtfsyssyst.System,
-) -> dtfcore.DAG:
+    dag
+    # ) -> dtfcore.DAG:
+) -> None:
     """
-    Build a node with `process_forecasts` params.
+    Append `ProcessForecasts` node to a DAG.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     stage = "process_forecasts"
@@ -395,7 +397,8 @@ def add_process_forecasts_node(
     node = dtfsysinod.ProcessForecasts(
         stage, **system.config["process_forecasts_config"].to_dict()
     )
-    return node
+    dag.append_to_tail(node)
+    # return node
 
 
 # #############################################################################

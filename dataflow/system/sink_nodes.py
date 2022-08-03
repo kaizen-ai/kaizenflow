@@ -276,8 +276,8 @@ def get_process_forecasts_dict_example4(
     system: dtfsyssyst.System,
 ) -> Dict[str, Any]:
     """
-    Get the dictionary with process_forecasts config params for
-    `get_Example1_RealtimeDag_example3`.
+    Get the dictionary with process_forecasts config params for Example1
+    pipeline.
     """
     prediction_col = "feature1"
     volatility_col = "vwap.ret_0.vol"
@@ -285,7 +285,6 @@ def get_process_forecasts_dict_example4(
     bulk_frac_to_remove = 0.0
     target_gmv = 1e5
     log_dir = None
-    # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     order_type = "price@twap"
     forecast_evaluator_from_prices_dict = None
     process_forecasts_config_dict = {
