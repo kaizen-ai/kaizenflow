@@ -137,6 +137,7 @@ class DAG(hobject.PrintableMixin):
         res.append("nodes=" + str(self.nx_dag.nodes(data=True)))
         res.append("edges=" + str(self.nx_dag.edges(data=True)))
         res.append("json=\n" + self._to_json())
+        # TODO(Gipi): `hprint.indent` accepts `str` only not `list`.
         txt.append(hprint.indent(res), 2)
         return "\n".join(txt)
 
