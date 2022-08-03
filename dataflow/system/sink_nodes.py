@@ -16,11 +16,11 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model as dtfmod
+import dataflow.system.system as dtfsyssyst
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import oms.portfolio as omportfo
 import oms.process_forecasts_ as oprofore
-import dataflow.system.system as dtfsyssyst
 
 _LOG = logging.getLogger(__name__)
 
@@ -272,9 +272,12 @@ def get_process_forecasts_dict_example3(
     return process_forecasts_dict
 
 
-def get_process_forecasts_dict_example4(system: dtfsyssyst.System) -> Dict[str, Any]:
+def get_process_forecasts_dict_example4(
+    system: dtfsyssyst.System,
+) -> Dict[str, Any]:
     """
-    Get the dictionary with process_forecasts config params for `get_Example1_RealtimeDag_example3`.
+    Get the dictionary with process_forecasts config params for
+    `get_Example1_RealtimeDag_example3`.
     """
     prediction_col = "feature1"
     volatility_col = "vwap.ret_0.vol"

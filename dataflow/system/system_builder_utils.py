@@ -13,6 +13,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
+import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.universe as dtfuniver
@@ -21,7 +22,6 @@ import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms
-import dataflow.system.sink_nodes as dtfsysinod
 
 _LOG = logging.getLogger(__name__)
 
@@ -383,7 +383,8 @@ def add_real_time_data_source(
     return dag
 
 
-def add_process_forecasts_node(system: dtfsyssyst.System,
+def add_process_forecasts_node(
+    system: dtfsyssyst.System,
 ) -> dtfcore.DAG:
     """
     Build a node with `process_forecasts` params.
@@ -393,7 +394,7 @@ def add_process_forecasts_node(system: dtfsyssyst.System,
     _LOG.debug("stage=%s", stage)
     node = dtfsysinod.ProcessForecasts(
         stage, **system.config["process_forecasts_config"].to_dict()
-     )
+    )
     return node
 
 

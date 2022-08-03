@@ -4,10 +4,7 @@ Import as:
 import dataflow.system.example1.example1_builders as dtfsexexbu
 """
 
-import datetime
 import logging
-
-import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
@@ -21,7 +18,6 @@ import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hdbg as hdbg
 import market_data as mdata
-import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -100,7 +96,9 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     dag = dtfssybuut.add_real_time_data_source(system)
     # Copied from E8_system_example.py
     # Configure a `ProcessForecast` node.
-    process_forecasts_config = dtfsysinod.get_process_forecasts_dict_example4(system)
+    process_forecasts_config = dtfsysinod.get_process_forecasts_dict_example4(
+        system
+    )
     system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
