@@ -11,8 +11,6 @@ from typing import Any, Callable, Coroutine
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
-import helpers.hdbg as hdbg
-import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 import market_data as mdata
 import oms as oms
@@ -142,7 +140,6 @@ _LOG = logging.getLogger(__name__)
 #  - dag runner
 
 
-# TODO(gp): Add PrintableMixin
 class System(abc.ABC):
     """
     The simplest possible DataFlow-based system, including:
@@ -165,7 +162,7 @@ class System(abc.ABC):
 
     def __str__(self) -> str:
         txt = []
-        txt.append("# %s" % hprint.to_object_str(self))
+        txt.append("# %s" % hprint.to_object_pointer(self))
         txt.append(hprint.indent(str(self._config)))
         txt = "\n".join(txt)
         return txt
@@ -270,18 +267,8 @@ class System(abc.ABC):
                 builder_func.__name__,
             )
             obj = builder_func()
-            # Build the object.
-            hdbg.dassert_not_in(key, self.config)
+            # Build.
             self.config[key] = obj
-            # Add the object representation after it's built.
-            key_tmp = ("object.str", key)
-            hdbg.dassert_not_in(key_tmp, self.config)
-            # Use the unambiguous object representation `__repr__()`.
-            self.config[key_tmp] = repr(obj)
-            # Add information about who created that object, if needed.
-            key_tmp = ("object.builder_function", key)
-            hdbg.dassert_not_in(key_tmp, self.config)
-            self.config[key_tmp] = hintros.get_name_from_function(builder_func)
         _LOG.debug("Object for %s=\n%s", key, obj)
         return obj
 
