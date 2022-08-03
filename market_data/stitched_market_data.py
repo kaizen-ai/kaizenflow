@@ -241,3 +241,41 @@ class IgStitchedMarketData(mdata.MarketData):
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         return self._ig_rt_market_data._get_last_end_time()
+
+
+class HorizontalStitchedMarketData:
+    def __init__(
+        self, spot_im_client: icdc.ImClient, futures_im_client: icdc.ImClient
+    ) -> None:
+        hdbg.dassert_isinstance(spot_im_client, icdc.ImClient)
+        hdbg.dassert_is("spot", spot_im_client._contract_type)
+        self._spot_im_client = spot_im_client
+        #
+        hdbg.dassert_isinstance(futures_im_client, icdc.ImClient)
+        hdbg.dassert_is("futures", futures_im_client._contract_type)
+        self._futures_im_client = futures_im_client
+        
+    def read_data(
+        self,
+        full_symbols: List[ivcu.FullSymbol],
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        columns: Optional[List[str]],
+        filter_data_mode: str,
+    ) -> pd.DataFrame:
+        spot_df = self._spot_im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
+        futures_df = self._futures_im_client.read_data(
+            full_symbols, start_ts, end_ts, columns, filter_data_mode
+        )
+        spot_df = spot_df.reset_index()
+        futures_df = futures_df.reset_index()
+        #
+        all_df = spot_df.merge(
+            futures_df,
+            how="outer",
+            on=["timestamp", "full_symbol"],
+            suffixes=("_spot", "_futures"),
+        ).set_index("timestamp")
+        return all_df
