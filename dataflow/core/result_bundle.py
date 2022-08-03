@@ -58,6 +58,7 @@ class ResultBundle(abc.ABC):
         :param info: DAG execution info
         :param payload: config with additional information, e.g., meta config
         """
+        hdbg.dassert_isinstance(config, cconfig.Config)
         self._config = config
         self._result_nid = result_nid
         hdbg.dassert_isinstance(method, dtfcornode.Method)
@@ -242,11 +243,7 @@ class ResultBundle(abc.ABC):
         :param commit_hash: whether to include current commit hash
         """
         serialized_bundle = cconfig.Config()
-        if isinstance(self._config, dict):
-            serialized_bundle["config"] = ccocouti.get_config_from_nested_dict(self._config)
-        else:
-            serialized_bundle["config"] = self._config
-        #serialized_bundle["config"] = self._config
+        serialized_bundle["config"] = self._config
         serialized_bundle["result_nid"] = self._result_nid
         serialized_bundle["method"] = self._method
         serialized_bundle["result_df"] = self._result_df

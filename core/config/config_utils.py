@@ -86,8 +86,16 @@ def get_config_from_flattened_dict(
     hdbg.dassert(flattened)
     config = cconconf.Config()
     for k, v in flattened.items():
-        if isinstance(v, dict) and not v:
-            v = cconconf.Config()
+        if isinstance(v, dict):
+            if v:
+                # Convert each dict-value to `Config` recursively because we
+                # cannot use dict as value in a `Config`.
+                v = get_config_from_nested_dict(v)
+            else:
+                # If dictionary is empty convert to an empty `Config`.
+                v = cconconf.Config()
+        # if isinstance(v, dict) and not v:
+        #     v = cconconf.Config()
         config[k] = v
     return config
 

@@ -180,6 +180,9 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=False)
 
     def test3(self) -> None:
+        """
+        Empty dict.
+        """
         nested = {
             "key1": "val1",
             "key2": {"key3": {"key4": {}}},
@@ -194,6 +197,12 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
         """
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp, fuzzy_match=False)
+        # Check the the value type.
+        check = isinstance(config["key2", "key3", "key4"], cconfig.Config)
+        self.assertTrue(check)
+        # Check length.
+        length = len(config["key2", "key3", "key4"])
+        self.assertEqual(length, 0)
 
     def test4(self) -> None:
         """
