@@ -199,7 +199,7 @@ class ResultBundle(abc.ABC):
         if self._column_to_tags is not None:
             # TODO(gp): Cache it or compute it the first time.
             tag_to_columns: Dict[Any, List[Any]] = {}
-            for column, tags in self._column_to_tags.items():
+            for column, tags in self._column_to_tags.to_dict().items():
                 for tag in tags:
                     tag_to_columns.setdefault(tag, []).append(column)
             return tag_to_columns

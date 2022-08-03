@@ -125,34 +125,34 @@ class TestResultBundle(hunitest.TestCase):
 class TestPredictionResultBundle(hunitest.TestCase):
     def test_to_config1(self) -> None:
         init_config = self._get_init_config()
-        prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())
+        prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual_config = prb.to_config(commit_hash=False)
         self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
 
     def test_feature_col_names1(self) -> None:
         init_config = self._get_init_config()
-        prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())
+        prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.feature_col_names
         expected = ["col0"]
         self.assertListEqual(actual, expected)
 
     def test_target_col_names1(self) -> None:
         init_config = self._get_init_config()
-        prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())
+        prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.target_col_names
         expected = ["col1", "col2"]
         self.assertListEqual(actual, expected)
 
     def test_prediction_col_names1(self) -> None:
         init_config = self._get_init_config()
-        prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())
+        prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.prediction_col_names
         expected = ["col3", "col4"]
         self.assertListEqual(actual, expected)
 
     def test_get_target_and_prediction_col_names_for_tags1(self) -> None:
         init_config = self._get_init_config()
-        prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())
+        prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.get_target_and_prediction_col_names_for_tags(
             tags=["step_0", "step_1"]
         )
@@ -165,7 +165,7 @@ class TestPredictionResultBundle(hunitest.TestCase):
         """
         init_config = self._get_init_config()
         init_config["column_to_tags"].pop("col1")
-        prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())
+        prb = dtfcorebun.PredictionResultBundle(**init_config)
         with self.assertRaises(AssertionError):
             prb.get_target_and_prediction_col_names_for_tags(tags=["step_0"])
 
@@ -175,14 +175,14 @@ class TestPredictionResultBundle(hunitest.TestCase):
         """
         init_config = self._get_init_config()
         init_config["column_to_tags"].pop("col1")
-        prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())
+        prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.get_target_and_prediction_col_names_for_tags(tags=["step_1"])
         expected = {"step_1": ("col2", "col4")}
         self.assertDictEqual(actual, expected)
 
     def test_get_targets_and_predictions_for_tags1(self) -> None:
         init_config = self._get_init_config()
-        prb = dtfcorebun.PredictionResultBundle(**init_config.to_dict())
+        prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.get_targets_and_predictions_for_tags(
             tags=["step_0", "step_1"]
         )
