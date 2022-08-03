@@ -6,14 +6,14 @@ import helpers.hprint as hprint
 
 import logging
 import pprint
-from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
+from typing import Any
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-
+import helpers.hstring as hstring
 
 _LOG = logging.getLogger(__name__)
 
@@ -89,13 +89,22 @@ def _to_skip_attribute(
     return False
 
 
+def _type_to_str(attr_value: str) -> str:
+    type_as_str = str(type(attr_value))
+    type_as_str = hstring.remove_prefix(type_as_str, "<class '")
+    type_as_str = hstring.remove_suffix(type_as_str, "'>")
+    type_as_str = f"<{type_as_str}>"
+    return type_as_str
+
+
 def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
+    _LOG.debug("type(attr_value)=%s", type(attr_value))
     if isinstance(attr_value, (pd.DataFrame, pd.Series)):
         attr_value_as_str = hpandas.df_to_str(attr_value)
     elif isinstance(attr_value, dict):
         attr_value_as_str = pprint.pformat(attr_value)
     else:
-        attr_value_as_str = str(attr_value)
+        attr_value_as_str = repr(attr_value)
     if len(attr_value_as_str.split("\n")) > 1:
         # The string representing the attribute value spans multiple lines, so print
         # like:
@@ -105,7 +114,7 @@ def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
         # ```
         out = f"{attr_name}="
         if print_type:
-            out += f" ({type(attr_value)})"
+            out += " " + _type_to_str(attr_value)
         out += "\n" + hprint.indent(attr_value_as_str)
     else:
         # The string representing the attribute value is a single line, so print
@@ -115,7 +124,7 @@ def _attr_to_str(attr_name: Any, attr_value: Any, print_type: bool) -> str:
         # ```
         out = f"{attr_name}='{str(attr_value)}'"
         if print_type:
-            out += f" ({type(attr_value)})"
+            out += " " + _type_to_str(attr_value)
     return out
 
 
@@ -195,7 +204,8 @@ def obj_to_str(
 
 class PrintableMixin:
     """
-    Implement default `__str__()` and `__repr__()` printing the state of an object.
+    Implement default `__str__()` and `__repr__()` printing the state of an
+    object.
 
     - `str()` is:
         - to be readable
@@ -211,4 +221,18 @@ class PrintableMixin:
         return hprint.to_object_pointer(self)
 
     def __repr__(self) -> str:
-        return obj_to_str(self)
+        return obj_to_str(self, print_type=True, private_mode="all")
+
+
+# #############################################################################
+
+
+def test_object_signature(self_: Any, obj: Any) -> None:
+    txt = []
+    txt.append(hprint.frame("str:"))
+    txt.append(str(obj))
+    txt.append(hprint.frame("repr:"))
+    txt.append(repr(obj))
+    txt = "\n".join(txt)
+    #
+    self_.check_string(txt, purify_text=True)
