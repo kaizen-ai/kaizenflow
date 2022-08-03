@@ -101,14 +101,10 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     # Copied from E8_system_example.py
     # Configure a `ProcessForecast` node.
     process_forecasts_config = dtfsysinod.get_process_forecasts_dict_example4(system)
-    process_forecasts_config = system.config[
+    system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
     # Append the ProcessForecast node.
-    stage = "process_forecasts"
-    _LOG.debug("stage=%s", stage)
-    node = dtfsysinod.ProcessForecasts(
-        stage, **system.config["process_forecasts_config"].to_dict()
-    )
-    dag.append_to_tail(node)
+    process_forecasts_node = dtfssybuut.add_process_forecasts_node(system)
+    dag.append_to_tail(process_forecasts_node)
     return dag

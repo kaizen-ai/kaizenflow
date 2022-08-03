@@ -21,6 +21,7 @@ import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms
+import dataflow.system.sink_nodes as dtfsysinod
 
 _LOG = logging.getLogger(__name__)
 
@@ -380,6 +381,20 @@ def add_real_time_data_source(
     )
     dag = build_dag_with_data_source_node(system, node)
     return dag
+
+
+def add_process_forecasts_node(system: dtfsyssyst.System,
+) -> dtfcore.DAG:
+    """
+    Build a node with `process_forecasts` params.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    stage = "process_forecasts"
+    _LOG.debug("stage=%s", stage)
+    node = dtfsysinod.ProcessForecasts(
+        stage, **system.config["process_forecasts_config"].to_dict()
+     )
+    return node
 
 
 # #############################################################################

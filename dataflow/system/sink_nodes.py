@@ -274,7 +274,7 @@ def get_process_forecasts_dict_example3(
 
 def get_process_forecasts_dict_example4(system: dtfsyssyst.System) -> Dict[str, Any]:
     """
-    Get the dictionary with config params for `get_Example1_RealtimeDag_example3`.
+    Get the dictionary with process_forecasts config params for `get_Example1_RealtimeDag_example3`.
     """
     prediction_col = "feature1"
     volatility_col = "vwap.ret_0.vol"
