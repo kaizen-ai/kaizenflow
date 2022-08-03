@@ -160,9 +160,10 @@ class System(abc.ABC):
         self._config["system_class"] = self.__class__.__name__
         _LOG.debug("system_config=\n%s", self._config)
 
+    # TODO(gp): Improve str if needed.
     def __str__(self) -> str:
         txt = []
-        txt.append("# %s" % hprint.to_object_pointer(self))
+        txt.append("# %s" % hprint.to_object_str(self))
         txt.append(hprint.indent(str(self._config)))
         txt = "\n".join(txt)
         return txt

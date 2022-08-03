@@ -108,7 +108,7 @@ class DAG(hobject.PrintableMixin):
         res.append("edges=" + str(self.nx_dag.edges(data=True)))
         res.append("json=\n" + self._to_json())
         res = "\n".join(res)
-        txt.append(hprint.indent(res), 2)
+        txt.append(hprint.indent(res, 2))
         # Assemble return value.
         txt = "\n".join(txt)
         return txt

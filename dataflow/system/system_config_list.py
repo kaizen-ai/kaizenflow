@@ -14,6 +14,7 @@ import helpers.hprint as hprint
 
 
 # TODO(gp): @all add unit tests for this.
+# TODO(gp): Improve str if needed.
 class SystemConfigList(cconfig.ConfigList):
     """
     Store a list of configs corresponding to a given System.
@@ -28,7 +29,7 @@ class SystemConfigList(cconfig.ConfigList):
         Print a list of configs into a readable string.
         """
         txt = []
-        txt.append("# %s" % hprint.to_object_pointer(self))
+        txt.append("# %s" % hprint.to_object_str(self))
         txt.append(hprint.indent(str(self._system)))
         txt.append(hprint.indent(super().__str__()))
         txt = "\n".join(txt)

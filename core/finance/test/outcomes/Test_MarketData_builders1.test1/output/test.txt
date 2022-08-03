@@ -1,11 +1,11 @@
 ################################################################################
 str:
 ################################################################################
-<market_data.replayed_market_data.ReplayedMarketData object at 0x7f968cbb4b20>
+ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101, 202] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=30 <int>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=10 <int>, _df=pd.df((122, 5) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=0 <int>)
 ################################################################################
 repr:
 ################################################################################
-<market_data.replayed_market_data.ReplayedMarketData object at 0x7f968cbb4b20>:
+<market_data.replayed_market_data.ReplayedMarketData at 0x>:
   _asset_id_col='asset_id' <str>
   _asset_ids='[101, 202]' <list>
   _start_time_col_name='start_datetime' <str>

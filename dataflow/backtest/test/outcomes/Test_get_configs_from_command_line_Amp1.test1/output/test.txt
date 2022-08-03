@@ -1,4 +1,4 @@
-# <core.config.config_list.ConfigList object at 0x>
+# ConfigList at 0x
   # 1/1
     dag_config:
       resample:
