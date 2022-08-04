@@ -52,6 +52,50 @@ def get_signature(
     return res
 
 
+def _get_signature_from_result_bundle(
+        system: dtfsyssyst.System,
+        result_bundles: List[dtfcore.ResultBundle],
+                                      add_system_config: bool,
+                                      add_run_signature: bool) -> str:
+    portfolio = system.portfolio
+    dag_runner = system.dag_runner
+    # Compute signature.
+    txt = []
+    if add_system_config:
+        txt.append(hprint.frame("system_config"))
+        txt.append(str(system.config))
+    if add_run_signature:
+        # TODO(gp): This should be factored out.
+        txt.append(hprint.frame("compute_run_signature"))
+        result_bundles = result_bundles[0]
+        result_bundle = result_bundles[-1]
+        #result_bundle.result_df = result_bundle.result_df.tail(40)
+        system_tester = SystemTester()
+        # Check output.
+        forecast_evaluator_from_prices_dict = system.config[
+            "research_forecast_evaluator_from_prices"
+        ].to_dict()
+        txt_tmp = system_tester.compute_run_signature(
+            dag_runner,
+            portfolio,
+            result_bundle,
+            forecast_evaluator_from_prices_dict,
+        )
+        txt.append(txt_tmp)
+    #
+    actual = "\n".join(txt)
+    # Remove the following line:
+    # ```
+    # db_connection_object: <connection object; dsn: 'user=aljsdalsd
+    #   password=xxx dbname=oms_postgres_db_local
+    #   host=cf-spm-dev4 port=12056', closed: 0>
+    # ```
+    actual = hunitest.filter_text("db_connection_object", actual)
+    actual = hunitest.filter_text("log_dir:", actual)
+    actual = hunitest.filter_text("trade_date:", actual)
+    return actual
+
+
 # #############################################################################
 # System_CheckConfig_TestCase1
 # #############################################################################
@@ -335,6 +379,9 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     @staticmethod
     def _test_dataframe_portfolio_helper(
         system: dtfsyssyst.System,
+        *,
+        add_system_config: bool = True,
+        add_run_signature: bool = True,
     ) -> str:
         """
         Run a System with a DataframePortfolio.
@@ -342,45 +389,49 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             #
             system.config["event_loop_object"] = event_loop
-            portfolio = system.portfolio
             dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            # Compute signature.
-            txt = []
-            txt.append(hprint.frame("system_config"))
-            txt.append(str(system.config))
-            # TODO(gp): This should be factored out.
-            txt.append(hprint.frame("compute_run_signature"))
-            result_bundles = result_bundles[0]
-            result_bundle = result_bundles[-1]
-            #result_bundle.result_df = result_bundle.result_df.tail(40)
-            system_tester = SystemTester()
-            # Check output.
-            forecast_evaluator_from_prices_dict = system.config[
-                "research_forecast_evaluator_from_prices"
-            ].to_dict()
-            txt_tmp = system_tester.compute_run_signature(
-                dag_runner,
-                portfolio,
-                result_bundle,
-                forecast_evaluator_from_prices_dict,
-            )
-            txt.append(txt_tmp)
-            #
-            actual = "\n".join(txt)
-            # Remove the following line:
-            # ```
-            # db_connection_object: <connection object; dsn: 'user=aljsdalsd
-            #   password=xxx dbname=oms_postgres_db_local
-            #   host=cf-spm-dev4 port=12056', closed: 0>
-            # ```
-            actual = hunitest.filter_text("db_connection_object", actual)
-            actual = hunitest.filter_text("log_dir:", actual)
-            actual = hunitest.filter_text("trade_date:", actual)
+            # # Compute signature.
+            # txt = []
+            # txt.append(hprint.frame("system_config"))
+            # txt.append(str(system.config))
+            # # TODO(gp): This should be factored out.
+            # txt.append(hprint.frame("compute_run_signature"))
+            # result_bundles = result_bundles[0]
+            # result_bundle = result_bundles[-1]
+            # #result_bundle.result_df = result_bundle.result_df.tail(40)
+            # system_tester = SystemTester()
+            # # Check output.
+            # forecast_evaluator_from_prices_dict = system.config[
+            #     "research_forecast_evaluator_from_prices"
+            # ].to_dict()
+            # txt_tmp = system_tester.compute_run_signature(
+            #     dag_runner,
+            #     portfolio,
+            #     result_bundle,
+            #     forecast_evaluator_from_prices_dict,
+            # )
+            # txt.append(txt_tmp)
+            # #
+            # actual = "\n".join(txt)
+            # # Remove the following line:
+            # # ```
+            # # db_connection_object: <connection object; dsn: 'user=aljsdalsd
+            # #   password=xxx dbname=oms_postgres_db_local
+            # #   host=cf-spm-dev4 port=12056', closed: 0>
+            # # ```
+            # actual = hunitest.filter_text("db_connection_object", actual)
+            # actual = hunitest.filter_text("log_dir:", actual)
+            # actual = hunitest.filter_text("trade_date:", actual)
+            # return actual
+            actual = _get_signature_from_result_bundle(system,
+                                                       result_bundles,
+                                                       add_system_config,
+                                                       add_run_signature)
             return actual
 
     def _test1(self, system: dtfsyssyst.System) -> None:
@@ -456,7 +507,6 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
             # Create DAG runner.
-            portfolio = system.portfolio
             dag_runner = system.dag_runner
             coroutines.append(dag_runner.predict())
             # Create and add order processor.
@@ -466,40 +516,45 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            # Compute signature.
-            txt = []
-            if add_system_config:
-                txt.append(hprint.frame("system_config"))
-                txt.append(str(system.config))
-            if add_run_signature:
-                # TODO(gp): This should be factored out.
-                txt.append(hprint.frame("compute_run_signature"))
-                result_bundles = result_bundles[0]
-                result_bundle = result_bundles[-1]
-                #result_bundle.result_df = result_bundle.result_df.tail(40)
-                system_tester = SystemTester()
-                # Check output.
-                forecast_evaluator_from_prices_dict = system.config[
-                    "research_forecast_evaluator_from_prices"
-                ].to_dict()
-                txt_tmp = system_tester.compute_run_signature(
-                    dag_runner,
-                    portfolio,
-                    result_bundle,
-                    forecast_evaluator_from_prices_dict,
-                )
-                txt.append(txt_tmp)
-            #
-            actual = "\n".join(txt)
-            # Remove the following line:
-            # ```
-            # db_connection_object: <connection object; dsn: 'user=aljsdalsd
-            #   password=xxx dbname=oms_postgres_db_local
-            #   host=cf-spm-dev4 port=12056', closed: 0>
-            # ```
-            actual = hunitest.filter_text("db_connection_object", actual)
-            actual = hunitest.filter_text("log_dir:", actual)
-            actual = hunitest.filter_text("trade_date:", actual)
+            # Check.
+            actual = _get_signature_from_result_bundle(system,
+                                                       result_bundles,
+                                                       add_system_config,
+                                                       add_run_signature)
+            # # Compute signature.
+            # txt = []
+            # if add_system_config:
+            #     txt.append(hprint.frame("system_config"))
+            #     txt.append(str(system.config))
+            # if add_run_signature:
+            #     # TODO(gp): This should be factored out.
+            #     txt.append(hprint.frame("compute_run_signature"))
+            #     result_bundles = result_bundles[0]
+            #     result_bundle = result_bundles[-1]
+            #     #result_bundle.result_df = result_bundle.result_df.tail(40)
+            #     system_tester = SystemTester()
+            #     # Check output.
+            #     forecast_evaluator_from_prices_dict = system.config[
+            #         "research_forecast_evaluator_from_prices"
+            #     ].to_dict()
+            #     txt_tmp = system_tester.compute_run_signature(
+            #         dag_runner,
+            #         portfolio,
+            #         result_bundle,
+            #         forecast_evaluator_from_prices_dict,
+            #     )
+            #     txt.append(txt_tmp)
+            # #
+            # actual = "\n".join(txt)
+            # # Remove the following line:
+            # # ```
+            # # db_connection_object: <connection object; dsn: 'user=aljsdalsd
+            # #   password=xxx dbname=oms_postgres_db_local
+            # #   host=cf-spm-dev4 port=12056', closed: 0>
+            # # ```
+            # actual = hunitest.filter_text("db_connection_object", actual)
+            # actual = hunitest.filter_text("log_dir:", actual)
+            # actual = hunitest.filter_text("trade_date:", actual)
             return actual
 
     def _test1(self, system: dtfsyssyst.System) -> None:
