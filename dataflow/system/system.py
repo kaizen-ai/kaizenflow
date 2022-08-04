@@ -164,7 +164,7 @@ class System(abc.ABC):
         self._config["system_class"] = self.__class__.__name__
         _LOG.debug("system_config=\n%s", self._config)
         # Default log dir.
-        self._config["root_log_dir"] = "./system_log_dir"
+        self._config["log_dir"] = "./system_log_dir"
 
     # TODO(gp): Improve str if needed.
     def __str__(self) -> str:
@@ -201,10 +201,10 @@ class System(abc.ABC):
             + hprint.frame("End config before dag_runner")
         )
         #
-        root_log_dir = self.config["root_log_dir"]
-        hio.create_dir(root_log_dir, incremental=False)
+        log_dir = self.config["log_dir"]
+        hio.create_dir(log_dir, incremental=False)
         #
-        file_name = os.path.join(root_log_dir, "system_config.input.txt")
+        file_name = os.path.join(log_dir, "system_config.input.txt")
         hio.to_file(file_name, repr(self.config))
         #
         key = "dag_runner_object"
@@ -228,7 +228,7 @@ class System(abc.ABC):
             + hprint.frame("End config after dag_runner")
         )
         #
-        file_name = os.path.join(root_log_dir, "system_config.output.txt")
+        file_name = os.path.join(log_dir, "system_config.output.txt")
         hio.to_file(file_name, repr(self.config))
         return dag_runner
 

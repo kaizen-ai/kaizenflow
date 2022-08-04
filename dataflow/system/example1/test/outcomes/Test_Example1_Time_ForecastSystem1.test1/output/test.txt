@@ -43,7 +43,7 @@ dag_config:
 dag_builder_object: nid_prefix=
 dag_builder_class: Example1_DagBuilder
 system_class: Example1_Time_ForecastSystem
-root_log_dir: ./system_log_dir
+log_dir: ./system_log_dir
 market_data_config:
   delay_in_secs: 0
   data:
