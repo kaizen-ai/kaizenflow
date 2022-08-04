@@ -1,5 +1,7 @@
 #!/bin/bash -xe
 
+# From https://stackoverflow.com/questions/34658836/docker-is-in-volume-in-use-but-there-arent-any-docker-containers
+
 docker stop $(docker ps -aq)
 docker rm $(docker ps -aq)
 docker network prune -f
