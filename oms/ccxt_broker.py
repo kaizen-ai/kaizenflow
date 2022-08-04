@@ -47,9 +47,9 @@ class CcxtBroker(ombroker.Broker):
         :param contract_type: "spot" or "futures"
         """
         hdbg.dassert_in(mode, ["prod", "test"])
-        hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._mode = mode
         self._exchange_id = exchange_id
+        hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._contract_type = contract_type
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
@@ -187,7 +187,7 @@ class CcxtBroker(ombroker.Broker):
             position_amount = float(position["info"]["positionAmt"])
             if position_amount != 0:
                 open_positions.append(position)
-            return open_positions
+        return open_positions
 
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:

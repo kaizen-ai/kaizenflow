@@ -18,6 +18,7 @@ Use as:
 
 import argparse
 
+import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.common.data.extract.extract_utils as imvcdeexut
@@ -47,6 +48,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
+    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the Talos Extractor class.
     exchange = imvtdeexcl.TalosExtractor(args.api_stage)
     args = vars(args)
