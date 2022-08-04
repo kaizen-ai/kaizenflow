@@ -22,7 +22,6 @@ def _to_signature(self_: Any, obj: Any, **kwargs: Any) -> None:
 
 
 class _Obj_to_str_TestCase(abc.ABC):
-
     @abc.abstractmethod
     def get_object(self) -> Any:
         ...
@@ -55,6 +54,7 @@ class _Obj_to_str_TestCase(abc.ABC):
 # Test_obj_to_str1
 # #############################################################################
 
+
 class _Object1:
     """
     Object storing only scalar members but not other objects.
@@ -70,7 +70,6 @@ class _Object1:
 
 
 class Test_obj_to_str1(hunitest.TestCase, _Obj_to_str_TestCase):
-
     def get_object(self) -> Any:
         obj = _Object1()
         return obj
@@ -110,7 +109,6 @@ class _Object3:
 
 
 class Test_obj_to_str2(hunitest.TestCase, _Obj_to_str_TestCase):
-
     def get_object(self) -> Any:
         obj = _Object3()
         return obj

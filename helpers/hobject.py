@@ -6,7 +6,7 @@ import helpers.hprint as hprint
 
 import logging
 import pprint
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -16,7 +16,8 @@ import helpers.hprint as hprint
 import helpers.hstring as hstring
 
 _LOG = logging.getLogger(__name__)
-
+# Mute this module unless we want to debug it.
+_LOG.setLevel(logging.INFO)
 
 # #############################################################################
 # obj_to_str
@@ -321,12 +322,17 @@ class PrintableMixin:
 # #############################################################################
 
 
-def test_object_signature(self_: Any, obj: Any) -> None:
+def test_object_signature(
+    self_: Any, obj: Any, *, remove_lines_regex: Optional[str] = None
+) -> None:
     txt = []
     txt.append(hprint.frame("str:"))
     txt.append(str(obj))
     txt.append(hprint.frame("repr:"))
     txt.append(repr(obj))
     txt = "\n".join(txt)
+    # Remove certain lines, if needed.
+    if remove_lines_regex:
+        txt = hprint.filter_text(remove_lines_regex, txt)
     #
     self_.check_string(txt, purify_text=True)

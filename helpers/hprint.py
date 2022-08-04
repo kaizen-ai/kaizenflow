@@ -739,6 +739,7 @@ def to_pretty_str(obj: Any) -> str:
     return res
 
 
+# TODO(gp): -> remove_lines?
 def filter_text(regex: str, txt: str) -> str:
     """
     Remove lines in `txt` that match the regex `regex`.

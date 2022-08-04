@@ -112,4 +112,4 @@ class Test_MarketData_builders1(hunitest.TestCase):
         event_loop = None
         market_data, _ = mdmadaex.get_ReplayedTimeMarketData_example3(event_loop)
         #
-        hobject.test_object_signature(market_data)
+        hobject.test_object_signature(self, market_data)

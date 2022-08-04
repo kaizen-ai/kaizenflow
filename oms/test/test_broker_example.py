@@ -1,8 +1,18 @@
+from typing import Any
+
 import helpers.hasyncio as hasynci
 import helpers.hobject as hobject
 import helpers.hunit_test as hunitest
 import oms.broker_example as obroexam
 import oms.test.oms_db_helper as omtodh
+
+
+def _test_object_signature(self_: Any, obj: Any) -> None:
+    remove_lines_regex = "_db_connection|DatabaseBroker"
+    hobject.test_object_signature(
+        self_, obj, remove_lines_regex=remove_lines_regex
+    )
+
 
 # #############################################################################
 # Test_Broker_builders1
@@ -13,8 +23,8 @@ class Test_Broker_builders1(hunitest.TestCase):
     def test1(self) -> None:
         event_loop = None
         broker = obroexam.get_SimulatedBroker_example1(event_loop)
-        #
-        hobject.test_object_signature(self, broker)
+        # Check.
+        _test_object_signature(self, broker)
 
 
 # #############################################################################
@@ -32,4 +42,5 @@ class Test_Broker_builders2(omtodh.TestOmsDbHelper):
             broker = obroexam.get_DatabaseBroker_example1(
                 event_loop, self.connection
             )
-            hobject.test_object_signature(self, broker)
+            # Check.
+            _test_object_signature(self, broker)

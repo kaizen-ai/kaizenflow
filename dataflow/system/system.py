@@ -165,9 +165,10 @@ class System(abc.ABC):
         # Default log dir.
         self._config["root_log_dir"] = "./system_log_dir"
 
+    # TODO(gp): Improve str if needed.
     def __str__(self) -> str:
         txt = []
-        txt.append("# %s" % hprint.to_object_pointer(self))
+        txt.append("# %s" % hprint.to_object_str(self))
         txt.append(hprint.indent(str(self._config)))
         txt = "\n".join(txt)
         return txt

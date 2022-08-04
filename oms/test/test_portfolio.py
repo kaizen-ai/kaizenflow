@@ -8,6 +8,7 @@ import pandas as pd
 import core.real_time as creatime
 import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import market_data as mdata
@@ -29,7 +30,7 @@ _5mins = pd.DateOffset(minutes=5)
 
 class TestDataFramePortfolio1(hunitest.TestCase):
     @staticmethod
-    def get_portfolio1(self):
+    def get_portfolio1():
         """
         Return a freshly minted Portfolio with only cash.
         """
@@ -205,7 +206,7 @@ class TestDataFramePortfolio2(hunitest.TestCase):
             2000-01-01 09:30:00-05:00,2000-01-01 09:35:00-05:00,100,100.34
             """
             price_df = pd.read_csv(
-                io.StringIO(price_txt),
+                io.StringIO(hprint.dedent(price_txt)),
                 parse_dates=["start_datetime", "end_datetime"],
             )
             start_time_col_name = "start_datetime"
