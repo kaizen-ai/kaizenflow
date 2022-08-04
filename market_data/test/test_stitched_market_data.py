@@ -52,11 +52,25 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         wall_clock_time = None
         filter_data_mode = "assert"
         #
-        im_client_market_data1 = mdmadaex.get_HistoricalImClientMarketData_example1(
-            im_client1, asset_ids, columns, column_remap, wall_clock_time=wall_clock_time, filter_data_mode=filter_data_mode
+        im_client_market_data1 = (
+            mdmadaex.get_HistoricalImClientMarketData_example1(
+                im_client1,
+                asset_ids,
+                columns,
+                column_remap,
+                wall_clock_time=wall_clock_time,
+                filter_data_mode=filter_data_mode,
+            )
         )
-        im_client_market_data2 = mdmadaex.get_HistoricalImClientMarketData_example1(
-            im_client2, asset_ids, columns, column_remap, wall_clock_time=wall_clock_time, filter_data_mode=filter_data_mode
+        im_client_market_data2 = (
+            mdmadaex.get_HistoricalImClientMarketData_example1(
+                im_client2,
+                asset_ids,
+                columns,
+                column_remap,
+                wall_clock_time=wall_clock_time,
+                filter_data_mode=filter_data_mode,
+            )
         )
         market_data = mdmadaex.get_HorizontalStitchedMarketData_example1(
             im_client_market_data1,
