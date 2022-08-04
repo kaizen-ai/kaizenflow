@@ -319,7 +319,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
             set(market_data_df_index2)
         )
         hdbg.dassert_lte(
-            1, common_index, "No common data in the specified time interval."
+            1, len(common_index), "No common data in the specified time interval."
         )
         # TODO(Grisha): @Dan Move to `hpandas` if needed.
         # TODO(Grisha): @Dan Decide what to do with shared columns and what columns to merge on.
