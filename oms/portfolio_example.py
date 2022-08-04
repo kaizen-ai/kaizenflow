@@ -103,7 +103,7 @@ def get_DataFramePortfolio_example2(
 # #############################################################################
 
 
-# TODO(gp): Remove the repeatition across these functions.
+# TODO(gp): Remove the repetition across these functions.
 def get_DatabasePortfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
@@ -245,7 +245,7 @@ def get_DatabasePortfolio_example4(
         table_name,
         market_data=market_data,
         mark_to_market_col="close",
-        #pricing_method="twap.5T",
+        # pricing_method="twap.5T",
         pricing_method=pricing_method,
         timestamp_col=timestamp_col,
         asset_ids=asset_ids,

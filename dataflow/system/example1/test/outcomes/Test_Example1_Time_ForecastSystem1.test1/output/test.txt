@@ -63,16 +63,8 @@ dag_runner_config:
   real_time_loop_time_out_in_secs: 900
   sleep_interval_in_secs: 300
 event_loop_object: <_EventLoop running=False closed=True debug=False>
-market_object: <market_data.replayed_market_data.ReplayedMarketData object>
-dag_object: dag=<dataflow.core.dag.DAG object>
-  name=None
-  mode=strict
-  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>})]
-  edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
-  save_node_io=
-  profile_execution=False
-  dst_dir=None
-  force_free_nodes=False
+market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((60, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=0 <int>)
+dag_object: DAG at 0x=(_nx_dag=DiGraph with 6 nodes and 5 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object: <dataflow.system.real_time_dag_runner.RealTimeDagRunner object>
 ################################################################################
 vwap.ret_0.vol_adj.c

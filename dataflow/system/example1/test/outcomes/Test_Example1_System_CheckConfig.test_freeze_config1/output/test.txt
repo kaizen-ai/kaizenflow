@@ -65,14 +65,6 @@ research_forecast_evaluator_from_prices:
   kwargs:
     target_gmv: 100000.0
     liquidate_at_end_of_day: False
-market_object: <market_data.im_client_market_data.ImClientMarketData object>
-dag_object: dag=<dataflow.core.dag.DAG object>
-  name=None
-  mode=strict
-  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.HistoricalDataSource object>})]
-  edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
-  save_node_io=
-  profile_execution=False
-  dst_dir=None
-  force_free_nodes=False
+market_object: ImClientMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[3303714233, 1467591036] <list>, _start_time_col_name=start_ts <str>, _end_time_col_name=end_ts <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _im_client=<im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object> <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient>)
+dag_object: DAG at 0x=(_nx_dag=DiGraph with 6 nodes and 5 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object: <dataflow.core.dag_runner.FitPredictDagRunner object>

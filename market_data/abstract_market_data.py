@@ -14,6 +14,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
@@ -41,7 +42,7 @@ def dassert_valid_asset_ids(asset_ids: Optional[Iterable[AssetId]]) -> None:
 # #############################################################################
 
 
-class MarketData(abc.ABC):
+class MarketData(abc.ABC, hobject.PrintableMixin):
     """
     Implement an interface to an historical / real-time source of price data.
 

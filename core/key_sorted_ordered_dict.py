@@ -9,11 +9,12 @@ import logging
 from typing import Any, Optional, Tuple, Type
 
 import helpers.hdbg as hdbg
+import helpers.hobject as hobject
 
 _LOG = logging.getLogger(__name__)
 
 
-class KeySortedOrderedDict:
+class KeySortedOrderedDict(hobject.PrintableMixin):
     """
     Key-value pairs where insertion order respects key order.
     """
