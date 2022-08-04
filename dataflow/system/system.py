@@ -181,9 +181,9 @@ class System(abc.ABC):
         """
         Set the config for a System.
 
-        This is used in the tile backtesting flow to create multiple
-        configs and then inject one at a time into a `System` in order
-        to simulate the `System` for a specific tile.
+        This is used in the tile backtesting flow to create multiple configs and
+        then inject one at a time into a `System` in order to simulate the `System`
+        for a specific tile.
         """
         self._config = config
 

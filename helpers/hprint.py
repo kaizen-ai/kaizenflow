@@ -20,7 +20,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
-# _LOG.setLevel(logging.INFO)
+_LOG.setLevel(logging.INFO)
 
 
 # #############################################################################
