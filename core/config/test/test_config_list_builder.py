@@ -12,11 +12,11 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
-def _check_config_list(self_: Any, config_list: cconfig.ConfigList, expected_num_configs: int) -> None:
+def _check_config_list(
+    self_: Any, config_list: cconfig.ConfigList, expected_num_configs: int
+) -> None:
     actual_output = str(config_list)
-    self_.check_string(
-        actual_output, fuzzy_match=True, purify_text=True
-    )
+    self_.check_string(actual_output, fuzzy_match=True, purify_text=True)
     self_.assertEqual(len(config_list.configs), expected_num_configs)
 
 
@@ -173,7 +173,9 @@ class Test_build_config_list_with_tiled_universe_and_periods(hunitest.TestCase):
     def test1(self) -> None:
         # Prepare inputs.
         system_config = cconfig.Config()
-        system_config["backtest_config", "time_interval_str"] = "2020-01-01_2020-03-01"
+        system_config[
+            "backtest_config", "time_interval_str"
+        ] = "2020-01-01_2020-03-01"
         system_config["backtest_config", "freq_as_pd_str"] = "M"
         system_config["backtest_config", "lookback_as_pd_str"] = "90D"
         system_config["market_data_config", "asset_ids"] = [13684, 10971]

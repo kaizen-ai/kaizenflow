@@ -12,7 +12,6 @@ import dataflow.system.system as dtfsyssyst
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
-
 # TODO(gp): @all add unit tests for this.
 # TODO(gp): Improve str if needed.
 class SystemConfigList(cconfig.ConfigList):
