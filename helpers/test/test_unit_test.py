@@ -979,10 +979,10 @@ class Test_purify_txt_from_client1(hunitest.TestCase):
 # #############################################################################
 
 
-class Test_purify_object_reference1(hunitest.TestCase):
+class Test_purify_object_representation1(hunitest.TestCase):
     def helper(self, txt: str, exp: str) -> None:
         txt = hprint.dedent(txt)
-        act = hunitest.purify_object_reference(txt)
+        act = hunitest.purify_object_representation(txt)
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp)
 

@@ -75,6 +75,351 @@ research_forecast_evaluator_from_prices:
     liquidate_at_end_of_day: False
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((120, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
+object.str:
+  market_object: <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+    _asset_id_col='asset_id' <str>
+    _asset_ids='[101]' <list>
+    _start_time_col_name='start_datetime' <str>
+    _end_time_col_name='end_datetime' <str>
+    _columns='None' <NoneType>
+    _sleep_in_secs='1.0' <float>
+    _timezone='America/New_York' <str>
+    _column_remap='None' <NoneType>
+    _filter_data_mode='assert' <str>
+    _max_iterations='120' <int>
+    _df= <pandas.core.frame.DataFrame>
+                                           start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+      2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+      2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+      2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+      ...
+      2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+      2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+      2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+    _knowledge_datetime_col_name='timestamp_db' <str>
+    _delay_in_secs='5' <int>
+  portfolio_object: <oms.portfolio.DatabasePortfolio at 0x>:
+    broker= <oms.broker.DatabaseBroker>
+      <oms.broker.DatabaseBroker at 0x>:
+        _strategy_id='SAU1' <str>
+        _account='candidate' <str>
+        market_data= <market_data.replayed_market_data.ReplayedMarketData>
+          <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+            _asset_id_col='asset_id' <str>
+            _asset_ids='[101]' <list>
+            _start_time_col_name='start_datetime' <str>
+            _end_time_col_name='end_datetime' <str>
+            _columns='None' <NoneType>
+            _sleep_in_secs='1.0' <float>
+            _timezone='America/New_York' <str>
+            _column_remap='None' <NoneType>
+            _filter_data_mode='assert' <str>
+            _max_iterations='120' <int>
+            _df= <pandas.core.frame.DataFrame>
+                                                   start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+              2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+              2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+              2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+              ...
+              2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+              2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+              2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+            _knowledge_datetime_col_name='timestamp_db' <str>
+            _delay_in_secs='5' <int>
+        _timestamp_col='end_datetime' <str>
+        _column_remap='{'bid': 'bid', 'ask': 'ask', 'midpoint': 'midpoint', 'price': 'close'}' <dict>
+        _orders='OrderedDict()' <collections.OrderedDict>
+        _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
+        _fills='[]' <list>
+        _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=6338', closed: 0>' <psycopg2.extensions.connection>
+        _submitted_orders_table_name='submitted_orders' <str>
+        _accepted_orders_table_name='accepted_orders' <str>
+        _poll_kwargs= <dict>
+          {'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+            _asset_id_col='asset_id' <str>
+            _asset_ids='[101]' <list>
+            _start_time_col_name='start_datetime' <str>
+            _end_time_col_name='end_datetime' <str>
+            _columns='None' <NoneType>
+            _sleep_in_secs='1.0' <float>
+            _timezone='America/New_York' <str>
+            _column_remap='None' <NoneType>
+            _filter_data_mode='assert' <str>
+            _max_iterations='120' <int>
+            _df= <pandas.core.frame.DataFrame>
+                                                   start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+              2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+              2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+              2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+              ...
+              2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+              2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+              2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+            _knowledge_datetime_col_name='timestamp_db' <str>
+            _delay_in_secs='5' <int>>,
+           'sleep_in_secs': 1.0,
+           'timeout_in_secs': 10.0}
+        _submissions='OrderedDict()' <collections.OrderedDict>
+    _account='candidate' <str>
+    _timestamp_col='end_datetime' <str>
+    market_data= <market_data.replayed_market_data.ReplayedMarketData>
+      <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+        _asset_id_col='asset_id' <str>
+        _asset_ids='[101]' <list>
+        _start_time_col_name='start_datetime' <str>
+        _end_time_col_name='end_datetime' <str>
+        _columns='None' <NoneType>
+        _sleep_in_secs='1.0' <float>
+        _timezone='America/New_York' <str>
+        _column_remap='None' <NoneType>
+        _filter_data_mode='assert' <str>
+        _max_iterations='120' <int>
+        _df= <pandas.core.frame.DataFrame>
+                                               start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+          2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+          2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+          2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+          ...
+          2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+          2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+          2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+        _knowledge_datetime_col_name='timestamp_db' <str>
+        _delay_in_secs='5' <int>
+    _asset_id_col='asset_id' <str>
+    _mark_to_market_col='close' <str>
+    _pricing_type='twap' <str>
+    _bar_duration='5T' <str>
+    _max_num_bars='100' <int>
+    _asset_holdings= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _cash= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _assets_marked_to_market= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _flows= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _statistics= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _retrieve_initial_holdings_from_db='False' <bool>
+    _initial_holdings= <pandas.core.series.Series>
+                curr_num_shares
+      asset_id
+       101                  0.0
+      -1              1000000.0
+    _initial_universe='Int64Index([101], dtype='int64', name='asset_id')' <pandas.core.indexes.numeric.Int64Index>
+    _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=6338', closed: 0>' <psycopg2.extensions.connection>
+    _table_name='current_positions' <str>
+    _timestamp_to_snapshot_df='OrderedDict()' <collections.OrderedDict>
+    _net_cost= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='None' <NoneType>
+        _odict='OrderedDict()' <collections.OrderedDict>
+  dag_object: <dataflow.core.dag.DAG at 0x>:
+    _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
+    _name='None' <NoneType>
+    _mode='strict' <str>
+    _save_node_io='' <str>
+    _profile_execution='False' <bool>
+    _dst_dir='None' <NoneType>
+    force_free_nodes='False' <bool>
+    nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecasts object>})]
+    edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
+    json=
+    {
+        "directed": true,
+        "graph": {},
+        "links": [
+            {
+                "df_in": "df_out",
+                "source": "resample",
+                "target": "compute_ret_0"
+            },
+            {
+                "df_in": "df_out",
+                "source": "compute_ret_0",
+                "target": "compute_vol"
+            },
+            {
+                "df_in": "df_out",
+                "source": "compute_vol",
+                "target": "adjust_rets"
+            },
+            {
+                "df_in": "df_out",
+                "source": "adjust_rets",
+                "target": "compress_rets"
+            },
+            {
+                "df_in": "df_out",
+                "source": "compress_rets",
+                "target": "process_forecasts"
+            },
+            {
+                "df_in": "df_out",
+                "source": "read_data",
+                "target": "resample"
+            }
+        ],
+        "multigraph": false,
+        "nodes": [
+            {
+                "id": "resample",
+                "stage": "GroupedColDfToDfTransformer"
+            },
+            {
+                "id": "compute_ret_0",
+                "stage": "GroupedColDfToDfTransformer"
+            },
+            {
+                "id": "compute_vol",
+                "stage": "SeriesToSeriesTransformer"
+            },
+            {
+                "id": "adjust_rets",
+                "stage": "GroupedColDfToDfTransformer"
+            },
+            {
+                "id": "compress_rets",
+                "stage": "GroupedColDfToDfTransformer"
+            },
+            {
+                "id": "read_data",
+                "stage": "RealTimeDataSource"
+            },
+            {
+                "id": "process_forecasts",
+                "stage": "ProcessForecasts"
+            }
+        ]
+    }
+  dag_runner_object: <dataflow.system.real_time_dag_runner.RealTimeDagRunner at 0x>:
+    dag= <dataflow.core.dag.DAG>
+      <dataflow.core.dag.DAG at 0x>:
+        _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
+        _name='None' <NoneType>
+        _mode='strict' <str>
+        _save_node_io='' <str>
+        _profile_execution='False' <bool>
+        _dst_dir='None' <NoneType>
+        force_free_nodes='False' <bool>
+        nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecasts object>})]
+        edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
+        json=
+        {
+            "directed": true,
+            "graph": {},
+            "links": [
+                {
+                    "df_in": "df_out",
+                    "source": "resample",
+                    "target": "compute_ret_0"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "compute_ret_0",
+                    "target": "compute_vol"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "compute_vol",
+                    "target": "adjust_rets"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "adjust_rets",
+                    "target": "compress_rets"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "compress_rets",
+                    "target": "process_forecasts"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "read_data",
+                    "target": "resample"
+                }
+            ],
+            "multigraph": false,
+            "nodes": [
+                {
+                    "id": "resample",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compute_ret_0",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compute_vol",
+                    "stage": "SeriesToSeriesTransformer"
+                },
+                {
+                    "id": "adjust_rets",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compress_rets",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "read_data",
+                    "stage": "RealTimeDataSource"
+                },
+                {
+                    "id": "process_forecasts",
+                    "stage": "ProcessForecasts"
+                }
+            ]
+        }
+    config='' <core.config.config_.Config>
+    _column_to_tags_mapping='[]' <list>
+    _result_nid='process_forecasts' <str>
+    _execute_rt_loop_kwargs= <dict>
+      {'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+        _asset_id_col='asset_id' <str>
+        _asset_ids='[101]' <list>
+        _start_time_col_name='start_datetime' <str>
+        _end_time_col_name='end_datetime' <str>
+        _columns='None' <NoneType>
+        _sleep_in_secs='1.0' <float>
+        _timezone='America/New_York' <str>
+        _column_remap='None' <NoneType>
+        _filter_data_mode='assert' <str>
+        _max_iterations='120' <int>
+        _df= <pandas.core.frame.DataFrame>
+                                               start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+          2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+          2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+          2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+          ...
+          2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+          2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+          2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+        _knowledge_datetime_col_name='timestamp_db' <str>
+        _delay_in_secs='5' <int>>,
+       'sleep_interval_in_secs': 300,
+       'time_out_in_secs': 6900}
+    _dst_dir='None' <NoneType>
+    _fit_at_beginning='False' <bool>
+    _wake_up_timestamp='None' <NoneType>
+    _grid_time_in_secs='300' <int>
+    _events='[]' <list>
+object.builder_function:
+  market_object: dataflow.system.example1.example1_forecast_system._get_market_data
+  portfolio_object: dataflow.system.example1.example1_forecast_system._get_portfolio
+  dag_object: dataflow.system.example1.example1_forecast_system._get_dag
+  dag_runner_object: dataflow.system.example1.example1_forecast_system._get_dag_runner
 portfolio_object: # historical holdings=
 asset_id                      101      -1
 2000-01-01 09:35:06-05:00    0.00  1.00e+06
@@ -346,7 +691,28 @@ process_forecasts_config:
     execution_mode: real_time
   forecast_evaluator_from_prices_dict: None
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
-dag_runner_object: <dataflow.system.real_time_dag_runner.RealTimeDagRunner object>
+dag_runner_object: RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=[] <list>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+  _asset_id_col='asset_id' <str>
+  _asset_ids='[101]' <list>
+  _start_time_col_name='start_datetime' <str>
+  _end_time_col_name='end_datetime' <str>
+  _columns='None' <NoneType>
+  _sleep_in_secs='1.0' <float>
+  _timezone='America/New_York' <str>
+  _column_remap='None' <NoneType>
+  _filter_data_mode='assert' <str>
+  _max_iterations='120' <int>
+  _df= <pandas.core.frame.DataFrame>
+                                         start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+    2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+    2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+    2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+    ...
+    2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+    2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+    2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+  _knowledge_datetime_col_name='timestamp_db' <str>
+  _delay_in_secs='5' <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 6900} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:46.693635-0400', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:47.307541-0400', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:48.480651-0400', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:49.323798-0400', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:51.238357-0400', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:52.308615-0400', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:53.374400-0400', tz='America/New_York')), Event(num_it=8, current_time=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:54.142756-0400', tz='America/New_York')), Event(num_it=9, current_time=Timestamp('2000-01-01 10:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:54.914186-0400', tz='America/New_York')), Event(num_it=10, current_time=Timestamp('2000-01-01 10:20:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:55.675440-0400', tz='America/New_York')), Event(num_it=11, current_time=Timestamp('2000-01-01 10:25:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:56.401437-0400', tz='America/New_York')), Event(num_it=12, current_time=Timestamp('2000-01-01 10:30:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:57.133649-0400', tz='America/New_York')), Event(num_it=13, current_time=Timestamp('2000-01-01 10:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:58.133188-0400', tz='America/New_York')), Event(num_it=14, current_time=Timestamp('2000-01-01 10:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:58.882471-0400', tz='America/New_York')), Event(num_it=15, current_time=Timestamp('2000-01-01 10:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:59.708108-0400', tz='America/New_York')), Event(num_it=16, current_time=Timestamp('2000-01-01 10:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:03:00.530573-0400', tz='America/New_York')), Event(num_it=17, current_time=Timestamp('2000-01-01 10:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:03:01.329347-0400', tz='America/New_York')), Event(num_it=18, current_time=Timestamp('2000-01-01 11:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:03:02.059188-0400', tz='America/New_York')), Event(num_it=19, current_time=Timestamp('2000-01-01 11:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:03:02.929398-0400', tz='America/New_York')), Event(num_it=20, current_time=Timestamp('2000-01-01 11:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:03:03.730173-0400', tz='America/New_York')), Event(num_it=21, current_time=Timestamp('2000-01-01 11:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:03:04.886735-0400', tz='America/New_York')), Event(num_it=22, current_time=Timestamp('2000-01-01 11:20:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:03:05.774325-0400', tz='America/New_York')), Event(num_it=23, current_time=Timestamp('2000-01-01 11:25:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:03:06.829054-0400', tz='America/New_York'))] <list>)
 ################################################################################
 compute_run_signature
 ################################################################################
