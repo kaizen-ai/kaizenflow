@@ -115,6 +115,10 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_TELEGRAM_TOKEN=***
           CI=''
           GH_ACTION_ACCESS_TOKEN=empty
+          CK_AWS_ACCESS_KEY_ID=***    
+          CK_AWS_DEFAULT_REGION=***
+          CK_AWS_S3_BUCKET=***
+          CK_AWS_SECRET_ACCESS_KEY=***
         """
         hunteuti.check_env_to_str(self, exp)
 
