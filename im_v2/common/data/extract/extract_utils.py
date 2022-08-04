@@ -582,6 +582,11 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
             # and fails to be merged.
             # Wherefore force column type into float if float is expected and the column is numeric.
             data[column] = data[column].astype("float64")
+        if expected_type == "int32" and pd.api.types.is_integer_dtype(
+            data[column].dtype
+        ):
+            # Force all `int` columns into `int32` type.
+            data[column] = data[column].astype("int32")
         # Get the actual data type of the column.
         actual_type = str(data[column].dtype)
         # Compare types.
