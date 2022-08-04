@@ -6,11 +6,9 @@ import helpers.hprint as hprint
 
 import inspect
 import logging
-import pprint
 import re
 import sys
 from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
-
 
 import helpers.hdbg as hdbg
 
@@ -235,8 +233,15 @@ def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str
 # #############################################################################
 
 
-def to_object_pointer(obj: Any) -> str:
-    return "<%s.%s object at %s>" % (
+def to_object_str(obj: Any) -> str:
+    return "%s at %s" % (
+        obj.__class__.__name__,
+        hex(id(obj)),
+    )
+
+
+def to_object_repr(obj: Any) -> str:
+    return "<%s.%s at %s>" % (
         obj.__class__.__module__,
         obj.__class__.__name__,
         hex(id(obj)),
@@ -734,6 +739,7 @@ def to_pretty_str(obj: Any) -> str:
     return res
 
 
+# TODO(gp): -> remove_lines?
 def filter_text(regex: str, txt: str) -> str:
     """
     Remove lines in `txt` that match the regex `regex`.
