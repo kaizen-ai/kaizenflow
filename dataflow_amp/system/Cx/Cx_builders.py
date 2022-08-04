@@ -34,6 +34,7 @@ def get_Cx_HistoricalMarketData_example1(
     asset_ids = system.config["market_data_config", "asset_ids"]
     columns = None
     columns_remap = None
+    # TODO(gp): Document why this is the wall clock time.
     wall_clock_time = pd.Timestamp("2100-01-01T00:00:00+00:00")
     market_data = mdata.get_HistoricalImClientMarketData_example1(
         im_client,
@@ -46,7 +47,7 @@ def get_Cx_HistoricalMarketData_example1(
 
 
 def get_Cx_RealTimeMarketData_example1(
-        system: dtfsys.System,
+    system: dtfsys.System,
 ) -> mdata.MarketData:
     """
     Build a MarketData backed with RealTimeImClient.
@@ -121,6 +122,7 @@ def get_Cx_RealTimeDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     return dag
 
 
+# TODO(Paul): Refactor this.
 def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     """
     Build a DAG with a real time data source and forecast processor.
@@ -140,7 +142,6 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     log_dir = None
     # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     order_type = "price@twap"
-    forecast_evaluator_from_prices_dict = None
     process_forecasts_config_dict = {
         "order_config": {
             "order_type": order_type,
@@ -170,7 +171,6 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
         "spread_col": spread_col,
         "portfolio": system.portfolio,
         "process_forecasts_config": process_forecasts_config_dict,
-        "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
     }
     # Append the ProcessForecast node.
     stage = "process_forecasts"
