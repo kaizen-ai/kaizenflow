@@ -294,6 +294,12 @@ def apply_history_lookback(
     return system
 
 
+# TODO(gp): It's not clear if the `apply_...` functions should return System or
+#  just implicitly update System in place.
+#  - The explicit approach of assigning System as return value adds more code
+#    and creates ambiguity, since it works even if one doesn't assign it.
+#  - The implicit approach allows less code variation, requires less code, but
+#    it relies on a side effect.
 def apply_dag_property(
     dag: dtfcore.DAG, system: dtfsyssyst.System
 ) -> dtfsyssyst.System:
@@ -322,6 +328,13 @@ def apply_dag_property(
     _LOG.debug(hprint.to_str("debug_mode_config"))
     if debug_mode_config:
         _LOG.warning("Setting debug mode")
+        if "dst_dir" not in debug_mode_config:
+            # Infer the dst dir based on the `log_dir`.
+            log_dir = system.config["log_dir"]
+            dst_dir = os.path.join(log_dir, "dag/node_io")
+            _LOG.info("Inferring dst_dir for dag as '%s'", dst_dir)
+            debug_mode_config["dst_dir"] = dst_dir
+            system.config["dag_property_config", "dst_dir"] = dst_dir
         dag.set_debug_mode(**debug_mode_config)
     #
     force_free_nodes = system.config.get(
