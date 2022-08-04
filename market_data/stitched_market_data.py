@@ -1,7 +1,7 @@
 """
 Import as:
 
-import market_data_lime.eg_stitched_market_data as mdlesmada
+import market_data.stitched_market_data as mdstmada
 """
 
 import logging
@@ -13,9 +13,12 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import im_lime.eg as imlimeg
-import market_data as mdata
-import market_data_lime.eg_real_time_market_data as mdlertmda
+
+# import im_lime.eg as imlimeg
+import market_data.abstract_market_data as mdabmada
+import market_data.im_client_market_data as mdimcmada
+
+# import market_data_lime.eg_real_time_market_data as mdlertmda
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,22 +49,27 @@ def normalize_historical_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# #############################################################################
+# IgStitchedMarketData
+# #############################################################################
+
+
 # TODO(gp): Create a general StitchedMarketData class that accepts an Historical and
 #  a RealTime ImClient. Then derive IgStitchedMarketData from it customizing the
 #  columns to read from each ImClient.
 # TODO(gp): Add tests using MarketData_TestCase.
-class IgStitchedMarketData(mdata.MarketData):
+class IgStitchedMarketData(mdabmada.MarketData):
     """
-    Accept a RealTimeImClient and an historical ImClient, and
+    Accept a RealTimeImClient and an historical ImClient, and.
+    """
 
-    """
     def __init__(
         self,
         asset_ids: List[Any],
         get_wall_clock_time: hdateti.GetWallClockTime,
         # TODO(gp): Can we accept two ImClient?
-        eg_rt_market_data: mdlertmda.IgRealTimeMarketData,
-        eg_historical_im_client: imlimeg.IgHistoricalPqByDateTaqBarClient,
+        eg_rt_market_data,  #: mdlertmda.IgRealTimeMarketData,
+        eg_historical_im_client,  #: imlimeg.IgHistoricalPqByDateTaqBarClient,
         # TODO(gp): It should accept two column remapping and then support another
         #  remapping after the merge?
         **kwargs: Any,
@@ -212,17 +220,17 @@ class IgStitchedMarketData(mdata.MarketData):
         # )
         df = pd.concat([rt_market_data_df, historical_market_data_df], axis=0)
         df.sort_index(ascending=True, inplace=True)
-        #_LOG.debug(
+        # _LOG.debug(
         #    hpandas.df_to_str(
         #        df, print_shape_info=True, print_dtypes=True, tag="==> df"
         #    )
-        #)
-        #df["asset_id"] = df["asset_id"].astype(int)
-        #_LOG.debug(
+        # )
+        # df["asset_id"] = df["asset_id"].astype(int)
+        # _LOG.debug(
         #    hpandas.df_to_str(
         #        df, print_shape_info=True, print_dtypes=True, tag="==> df"
         #    )
-        #)
+        # )
         # TODO(gp): There should be a single row for each (timestamp, EG id).
         # hpandas.dassert_strictly_increasing_index(df)
         return df
@@ -241,3 +249,107 @@ class IgStitchedMarketData(mdata.MarketData):
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         return self._ig_rt_market_data._get_last_end_time()
+
+
+# #############################################################################
+# HorizontalStitchedMarketData
+# #############################################################################
+
+
+class HorizontalStitchedMarketData(mdabmada.MarketData):
+    def __init__(
+        self,
+        *args: Any,
+        im_client_market_data1: mdimcmada.ImClientMarketData,
+        im_client_market_data2: mdimcmada.ImClientMarketData,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        hdbg.dassert_isinstance(
+            im_client_market_data1, mdimcmada.ImClientMarketData
+        )
+        hdbg.dassert_isinstance(
+            im_client_market_data2, mdimcmada.ImClientMarketData
+        )
+        self._im_client_market_data1 = im_client_market_data1
+        self._im_client_market_data2 = im_client_market_data2
+
+    def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
+        """
+        See the parent class.
+        """
+        # TODO(gp): It should delegate to the ImClient.
+        return True
+
+    def _get_data(
+        self,
+        start_ts: Optional[pd.Timestamp],
+        end_ts: Optional[pd.Timestamp],
+        ts_col_name: str,
+        asset_ids: Optional[List[int]],
+        left_close: bool,
+        right_close: bool,
+        limit: Optional[int],
+    ) -> pd.DataFrame:
+        """
+        See the parent class.
+        """
+        market_data_df1 = self._im_client_market_data1._get_data(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close,
+            right_close,
+            limit,
+        )
+        market_data_df2 = self._im_client_market_data2._get_data(
+            start_ts,
+            end_ts,
+            ts_col_name,
+            asset_ids,
+            left_close,
+            right_close,
+            limit,
+        )
+        # Data indices should be of the same type and should have at least 1
+        # value in common.
+        market_data_df_index1 = market_data_df1.index
+        market_data_df_index2 = market_data_df2.index
+        hdbg.dassert_array_has_same_type_element(
+            market_data_df_index1, market_data_df_index2, False
+        )
+        # TODO(Grisha): @Dan Use an overlap threshold (~90%) to decide whether
+        # to merge data or warn/trim about insufficient overlap.
+        common_index = market_data_df_index1.intersection(
+            market_data_df_index2
+        )
+        hdbg.dassert_lte(
+            1, len(common_index), "No common data in the specified time interval."
+        )
+        # TODO(Grisha): @Dan Move to `hpandas` if needed.
+        # TODO(Grisha): @Dan Decide what to do with shared columns and what columns to merge on.
+        cols_to_merge_on = [
+            self._end_time_col_name,
+            self._asset_id_col,
+            "full_symbol",
+            self._start_time_col_name,
+        ]
+        market_data_df = market_data_df1.merge(
+            market_data_df2,
+            how="outer",
+            on=cols_to_merge_on,
+        )
+        return market_data_df
+
+    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
+        last_end_time1 = self._im_client_market_data1.get_last_end_time()
+        last_end_time2 = self._im_client_market_data2.get_last_end_time()
+        #
+        if last_end_time1 is None:
+            ret = last_end_time2
+        elif last_end_time2 is None:
+            ret = last_end_time1
+        else:
+            ret = max(last_end_time1, last_end_time2)
+        return ret
