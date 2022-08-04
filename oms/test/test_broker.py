@@ -18,6 +18,11 @@ import oms.test.oms_db_helper as omtodh
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# TestSimulatedBroker1
+# #############################################################################
+
+
 class TestSimulatedBroker1(hunitest.TestCase):
     def test_submit_and_fill1(self) -> None:
         event_loop = None
@@ -42,6 +47,11 @@ class TestSimulatedBroker1(hunitest.TestCase):
         expected = r"""Fill: asset_id=101 fill_id=0 timestamp=2000-01-01 09:35:00-05:00 num_shares=100.0 price=1000.3449750508295
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# TestSimulatedBroker2
+# #############################################################################
 
 
 class TestSimulatedBroker2(hunitest.TestCase):
@@ -128,8 +138,12 @@ class TestSimulatedBroker2(hunitest.TestCase):
         return fills
 
 
-class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
+# #############################################################################
+# TestDatabaseBroker1
+# #############################################################################
 
+
+class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
@@ -183,7 +197,7 @@ class TestDatabaseBroker1(omtodh.TestOmsDbHelper):
             delay_to_accept_in_secs,
             delay_to_fill_in_secs,
             broker,
-            asset_id_name
+            asset_id_name,
         )
         await order_processor.enqueue_orders()
 
