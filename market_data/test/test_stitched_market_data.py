@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 import pytest
 
-import im_v2.ccxt.data.client as icdcl
+import im_v2.crypto_chassis.data.client as iccdc
 import market_data.market_data_example as mdmadaex
 import market_data.test.market_data_test_case as mdtmdtca
 
@@ -19,68 +19,74 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     the parent class.
     """
 
-    @pytest.mark.superslow("~30 seconds by GH actions.")
+    @pytest.mark.slow("~30 seconds by GH actions.")
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
+        universe_version = "v4"
         resample_1min = True
-        dataset = "ohlcv"
+        contract_type = "futures"
+        data_snapshot = "20220707"
         #
-        universe_version1 = "v7"
-        contract_type1 = "futures"
-        data_snapshot1 = "20220707"
-        im_client1 = icdcl.get_CcxtHistoricalPqByTileClient_example1(
-            universe_version1,
+        dataset1 = "ohlcv"
+        im_client1 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+            universe_version,
             resample_1min,
-            dataset,
-            contract_type1,
-            data_snapshot1,
+            dataset1,
+            contract_type,
+            data_snapshot,
         )
         #
-        universe_version2 = "v4"
-        contract_type2 = "spot"
-        data_snapshot2 = "20220530"
-        im_client2 = icdcl.get_CcxtHistoricalPqByTileClient_example1(
-            universe_version2,
+        dataset2 = "bid_ask"
+        im_client2 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+            universe_version,
             resample_1min,
-            dataset,
-            contract_type2,
-            data_snapshot2,
+            dataset2,
+            contract_type,
+            data_snapshot,
         )
         #
         asset_ids = [1467591036, 1464553467]
         columns = None
         column_remap = None
-        wall_clock_time = pd.Timestamp("2022-05-10T00:00:01+00:00")
+        wall_clock_time = pd.Timestamp("2022-05-1T23:00:00+00:00")
         filter_data_mode = "assert"
+        #
+        im_client_market_data1 = mdmadaex.get_HistoricalImClientMarketData_example1(
+            im_client1, asset_ids, columns, column_remap, wall_clock_time=wall_clock_time, filter_data_mode=filter_data_mode
+        )
+        im_client_market_data2 = mdmadaex.get_HistoricalImClientMarketData_example1(
+            im_client2, asset_ids, columns, column_remap, wall_clock_time=wall_clock_time, filter_data_mode=filter_data_mode
+        )
         market_data = mdmadaex.get_HorizontalStitchedMarketData_example1(
-            im_client1,
-            im_client2,
+            im_client_market_data1,
+            im_client_market_data2,
             asset_ids,
             columns,
             column_remap,
             wall_clock_time=wall_clock_time,
             filter_data_mode=filter_data_mode,
         )
-        start_ts = pd.Timestamp("2022-05-01T00:01:00+00:00")
-        end_ts = pd.Timestamp("2022-05-10T00:00:00+00:00")
+        start_ts = pd.Timestamp("2022-05-01T00:00:00+00:00")
+        end_ts = pd.Timestamp("2022-05-01T00:30:00+00:00")
         #
-        expected_length = 25916
+        expected_length = 58
         expected_column_names = [
+            "ask_price",
+            "ask_size",
             "asset_id",
-            "close_1",
-            "close_2",
+            "bid_price",
+            "bid_size",
+            "close",
             "full_symbol",
-            "high_1",
-            "high_2",
-            "knowledge_timestamp_1",
-            "knowledge_timestamp_2",
-            "low_1",
-            "low_2",
-            "open_1",
-            "open_2",
+            "high",
+            "knowledge_timestamp",
+            "low",
+            "number_of_trades",
+            "open",
             "start_ts",
-            "volume_1",
-            "volume_2",
+            "twap",
+            "volume",
+            "vwap",
         ]
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
@@ -88,18 +94,18 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         # pylint: disable=line-too-long
         exp_df_as_str = r"""
         # df=
-        index=[2022-04-30 20:02:00-04:00, 2022-05-09 19:59:00-04:00]
-        columns=asset_id,full_symbol,open_1,high_1,low_1,close_1,volume_1,knowledge_timestamp_1,start_ts,open_2,high_2,low_2,close_2,volume_2,knowledge_timestamp_2
-        shape=(25916, 15)
-                                    asset_id        full_symbol    open_1    high_1     low_1   close_1  volume_1            knowledge_timestamp_1                  start_ts    open_2    high_2     low_2   close_2    volume_2 knowledge_timestamp_2
+        index=[2022-04-30 20:01:00-04:00, 2022-04-30 20:29:00-04:00]
+        columns=asset_id,full_symbol,open,high,low,close,volume,vwap,number_of_trades,twap,knowledge_timestamp,start_ts,bid_price,bid_size,ask_price,ask_size
+        shape=(58, 16)
+                                    asset_id        full_symbol      open      high       low     close    volume        vwap  number_of_trades        twap              knowledge_timestamp                  start_ts     bid_price  bid_size     ask_price  ask_size
         end_ts
-        2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT   2725.59   2730.42   2725.59   2730.04  1607.265 2022-06-24 11:10:10.287766+00:00 2022-04-30 20:01:00-04:00   2727.21   2731.74   2727.20   2731.67   563.15050            2022-05-10
-        2022-04-30 20:02:00-04:00  1467591036  binance::BTC_USDT  37626.70  37667.20  37626.70  37658.80   321.075 2022-06-24 05:47:16.075108+00:00 2022-04-30 20:01:00-04:00  37642.28  37684.71  37642.28  37672.10    70.97044            2022-05-10
-        2022-04-30 20:03:00-04:00  1464553467  binance::ETH_USDT   2730.04   2731.97   2725.33   2731.79  3056.801 2022-06-24 11:10:10.287766+00:00 2022-04-30 20:02:00-04:00   2731.67   2733.17   2727.18   2733.16  3325.93940            2022-05-10
+        2022-04-30 20:01:00-04:00  1464553467  binance::ETH_USDT   2726.62   2727.16   2724.99   2725.59   648.179   2725.8408               618   2725.7606 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:00:00-04:00   2725.493716  1035.828   2725.731107  1007.609
+        2022-04-30 20:01:00-04:00  1467591036  binance::BTC_USDT  37635.00  37635.60  37603.70  37626.80   168.216  37619.4980              1322  37619.8180 2022-06-20 09:48:46.910826+00:00 2022-04-30 20:00:00-04:00  37620.402680   120.039  37622.417898   107.896
+        2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT   2725.59   2730.42   2725.59   2730.04  1607.265   2728.7821              1295   2728.3652 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:01:00-04:00   2728.740700   732.959   2728.834137  1293.961
         ...
-        2022-05-09 19:58:00-04:00  1467591036  binance::BTC_USDT  30127.90  30206.30  30026.00  30137.30  2580.634 2022-06-24 05:47:16.075108+00:00 2022-05-09 19:57:00-04:00     NaN     NaN    NaN      NaN       NaN                   NaT
-        2022-05-09 19:59:00-04:00  1464553467  binance::ETH_USDT   2235.59   2238.33   2224.34   2227.48  6847.862 2022-06-24 11:10:10.287766+00:00 2022-05-09 19:58:00-04:00     NaN     NaN    NaN      NaN       NaN                   NaT
-        2022-05-09 19:59:00-04:00  1467591036  binance::BTC_USDT  30137.20  30175.10  30003.60  30056.60  1443.674 2022-07-09 12:07:51.240219+00:00 2022-05-09 19:58:00-04:00     NaN     NaN    NaN      NaN       NaN                   NaT
+        2022-04-30 20:28:00-04:00  1467591036  binance::BTC_USDT  37617.30  37636.10  37609.00  37630.00  175.641  37620.1890               889  37621.0910 2022-06-20 09:48:46.910826+00:00 2022-04-30 20:27:00-04:00  37616.416796   205.573  37621.741608   105.712
+        2022-04-30 20:29:00-04:00  1464553467  binance::ETH_USDT   2727.11   2727.45   2725.74   2725.75  854.813   2726.4297               604   2726.5467 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:28:00-04:00   2726.427932   801.267   2726.375710  1457.017
+        2022-04-30 20:29:00-04:00  1467591036  binance::BTC_USDT  37630.00  37630.10  37608.60  37612.10  128.965  37615.0390               800  37615.9640 2022-06-20 09:48:46.910826+00:00 2022-04-30 20:28:00-04:00  37616.943055    57.059  37617.898140   118.408
         """
         # pylint: enable=line-too-long
         # Run.

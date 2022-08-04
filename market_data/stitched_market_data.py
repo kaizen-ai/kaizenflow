@@ -16,7 +16,8 @@ import helpers.hprint as hprint
 
 # import im_lime.eg as imlimeg
 import im_v2.common.data.client as icdc
-import market_data as mdata
+import market_data.abstract_market_data as mdabmada
+import market_data.im_client_market_data as mdimcmada
 
 # import market_data_lime.eg_real_time_market_data as mdlertmda
 
@@ -53,7 +54,7 @@ def normalize_historical_df(df: pd.DataFrame) -> pd.DataFrame:
 #  a RealTime ImClient. Then derive IgStitchedMarketData from it customizing the
 #  columns to read from each ImClient.
 # TODO(gp): Add tests using MarketData_TestCase.
-class IgStitchedMarketData(mdata.MarketData):
+class IgStitchedMarketData(mdabmada.MarketData):
     """
     Accept a RealTimeImClient and an historical ImClient, and.
     """
@@ -247,21 +248,17 @@ class IgStitchedMarketData(mdata.MarketData):
 
 
 # TODO(Grisha): @Dan Solve problem with getting data for last period in historical mode.
-class HorizontalStitchedMarketData(mdata.MarketData):
+class HorizontalStitchedMarketData(mdabmada.MarketData):
     def __init__(
         self,
         *args: Any,
-        im_client1: icdc.ImClient,
-        im_client2: icdc.ImClient,
+        im_client_market_data1: mdimcmada.ImClientMarketData,
+        im_client_market_data2: mdimcmada.ImClientMarketData,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self._im_client_market_data1 = mdata.ImClientMarketData(
-            *args, im_client=im_client1, **kwargs
-        )
-        self._im_client_market_data2 = mdata.ImClientMarketData(
-            *args, im_client=im_client2, **kwargs
-        )
+        self._im_client_market_data1 = im_client_market_data1
+        self._im_client_market_data2 = im_client_market_data2
 
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
         """
@@ -283,7 +280,7 @@ class HorizontalStitchedMarketData(mdata.MarketData):
         """
         See the parent class.
         """
-        market_data1 = self._im_client_market_data1._get_data(
+        market_data_df1 = self._im_client_market_data1._get_data(
             start_ts,
             end_ts,
             ts_col_name,
@@ -292,7 +289,7 @@ class HorizontalStitchedMarketData(mdata.MarketData):
             right_close,
             limit,
         )
-        market_data2 = self._im_client_market_data2._get_data(
+        market_data_df2 = self._im_client_market_data2._get_data(
             start_ts,
             end_ts,
             ts_col_name,
@@ -301,24 +298,19 @@ class HorizontalStitchedMarketData(mdata.MarketData):
             right_close,
             limit,
         )
-        #
+        # TODO(Grisha): @Dan Decide what to do with shared columns and what columns to merge on.
         cols_to_merge_on = [
             self._end_time_col_name,
             self._asset_id_col,
             "full_symbol",
             self._start_time_col_name,
         ]
-        if self._columns is not None:
-            if "full_symbol" not in self._columns:
-                cols_to_merge_on.remove("full_symbol")
-        #
-        market_data = market_data1.merge(
-            market_data2,
+        market_data_df = market_data_df1.merge(
+            market_data_df2,
             how="outer",
             on=cols_to_merge_on,
-            suffixes=("_1", "_2"),
         )
-        return market_data
+        return market_data_df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
         last_end_time1 = self._im_client_market_data1.get_last_end_time()

@@ -389,8 +389,8 @@ def get_RealtimeMarketData_example1(
 
 
 def get_HorizontalStitchedMarketData_example1(
-    im_client1: icdc.ImClient,
-    im_client2: icdc.ImClient,
+    im_client_market_data1: mdimcmada.ImClientMarketData,
+    im_client_market_data2: mdimcmada.ImClientMarketData,
     asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
@@ -406,8 +406,8 @@ def get_HorizontalStitchedMarketData_example1(
     if wall_clock_time is None:
         # The maximum timestamp is set from the data except for the cases when
         # it's too computationally expensive to read all of the data on the fly.
-        wall_clock_time1 = _get_last_timestamp(im_client1, asset_ids)
-        wall_clock_time2 = _get_last_timestamp(im_client2, asset_ids)
+        wall_clock_time1 = im_client_market_data1.get_wall_clock_time()
+        wall_clock_time2 = im_client_market_data2.get_wall_clock_time()
         wall_clock_time = max(wall_clock_time1, wall_clock_time2)
 
     def get_wall_clock_time() -> pd.Timestamp:
@@ -424,8 +424,8 @@ def get_HorizontalStitchedMarketData_example1(
         end_time_col_name,
         columns,
         get_wall_clock_time,
-        im_client1=im_client1,
-        im_client2=im_client2,
+        im_client_market_data1=im_client_market_data1,
+        im_client_market_data2=im_client_market_data2,
         column_remap=column_remap,
         filter_data_mode=filter_data_mode,
     )
