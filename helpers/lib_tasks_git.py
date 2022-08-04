@@ -628,6 +628,7 @@ def _git_diff_with_branch(
     files = sorted(files)
     print("files=%s\n%s" % (len(files), "\n".join(files)))
     # Filter the files, if needed.
+    print("# Before filtering files=%s\n%s" % (len(files), "\n".join(files)))
     if file_name:
         files_tmp = []
         for f in files:
