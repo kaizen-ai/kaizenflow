@@ -8,6 +8,7 @@ import pandas as pd
 import core.real_time as creatime
 import helpers.hasyncio as hasynci
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import market_data as mdata
@@ -23,24 +24,13 @@ _5mins = pd.DateOffset(minutes=5)
 
 
 # #############################################################################
+# TestDataFramePortfolio1
+# #############################################################################
 
 
 class TestDataFramePortfolio1(hunitest.TestCase):
-    # @pytest.mark.skip("This is flaky because of the clock jitter")
-    def test_state(self) -> None:
-        """
-        Check non-cash holdings for a Portfolio with only cash.
-        """
-        expected = r"""                           asset_id  curr_num_shares  price    value  \
-2000-01-01 09:35:00-05:00        -1          1000000      1  1000000
-
-                               wall_clock_timestamp
-2000-01-01 09:35:00-05:00 2000-01-01 09:35:00-05:00  """
-        portfolio = self._get_portfolio1()
-        actual = portfolio.get_cached_mark_to_market()
-        self.assert_equal(str(actual), expected, fuzzy_match=True)
-
-    def _get_portfolio1(self):
+    @staticmethod
+    def get_portfolio1():
         """
         Return a freshly minted Portfolio with only cash.
         """
@@ -57,7 +47,24 @@ class TestDataFramePortfolio1(hunitest.TestCase):
             _ = portfolio.mark_to_market()
             return portfolio
 
+    # @pytest.mark.skip("This is flaky because of the clock jitter")
+    def test_state(self) -> None:
+        """
+        Check non-cash holdings for a Portfolio with only cash.
+        """
+        expected = r"""
+                                   asset_id  curr_num_shares  price    value  \
+        2000-01-01 09:35:00-05:00        -1          1000000      1  1000000
 
+                                       wall_clock_timestamp
+        2000-01-01 09:35:00-05:00 2000-01-01 09:35:00-05:00  """
+        portfolio = self.get_portfolio1()
+        actual = portfolio.get_cached_mark_to_market()
+        self.assert_equal(str(actual), expected, fuzzy_match=True)
+
+
+# #############################################################################
+# TestDataFramePortfolio2
 # #############################################################################
 
 
@@ -137,15 +144,15 @@ class TestDataFramePortfolio2(hunitest.TestCase):
             _ = portfolio.mark_to_market()
             # Check.
             expected = r"""
-              2000-01-01 09:35:00-05:00
-pnl                                 NaN
-gross_volume                        0.0
-net_volume                          0.0
-gmv                                 0.0
-nmv                                 0.0
-cash                          1000000.0
-net_wealth                    1000000.0
-leverage                            0.0"""
+                          2000-01-01 09:35:00-05:00
+            pnl                                 NaN
+            gross_volume                        0.0
+            net_volume                          0.0
+            gmv                                 0.0
+            nmv                                 0.0
+            cash                          1000000.0
+            net_wealth                    1000000.0
+            leverage                            0.0"""
             actual = portfolio.get_historical_statistics().transpose()
             self.assert_equal(str(actual), expected, fuzzy_match=True)
 
@@ -171,15 +178,15 @@ leverage                            0.0"""
             )
             _ = portfolio.mark_to_market()
             expected = r"""
-              2000-01-01 09:35:00-05:00
-pnl                                 NaN
-gross_volume               0.000000e+00
-net_volume                 0.000000e+00
-gmv                        1.768351e+06
-nmv                        1.768351e+06
-cash                       1.000000e+04
-net_wealth                 1.778351e+06
-leverage                   9.943768e-01"""
+                          2000-01-01 09:35:00-05:00
+            pnl                                 NaN
+            gross_volume               0.000000e+00
+            net_volume                 0.000000e+00
+            gmv                        1.768351e+06
+            nmv                        1.768351e+06
+            cash                       1.000000e+04
+            net_wealth                 1.778351e+06
+            leverage                   9.943768e-01"""
             actual = portfolio.get_historical_statistics().transpose()
             self.assert_equal(str(actual), expected, fuzzy_match=True)
 
@@ -195,11 +202,11 @@ leverage                   9.943768e-01"""
                 event_loop=event_loop,
             )
             price_txt = r"""
-start_datetime,end_datetime,asset_id,price
-2000-01-01 09:30:00-05:00,2000-01-01 09:35:00-05:00,100,100.34
-"""
+            start_datetime,end_datetime,asset_id,price
+            2000-01-01 09:30:00-05:00,2000-01-01 09:35:00-05:00,100,100.34
+            """
             price_df = pd.read_csv(
-                io.StringIO(price_txt),
+                io.StringIO(hprint.dedent(price_txt)),
                 parse_dates=["start_datetime", "end_datetime"],
             )
             start_time_col_name = "start_datetime"
@@ -227,19 +234,21 @@ start_datetime,end_datetime,asset_id,price
             _ = portfolio.mark_to_market()
             # Check.
             expected = r"""
-              2000-01-01 09:35:00-05:00
-pnl                                 NaN
-gross_volume                        0.0
-net_volume                          0.0
-gmv                                 0.0
-nmv                                 0.0
-cash                          1000000.0
-net_wealth                    1000000.0
-leverage                            0.0"""
+                          2000-01-01 09:35:00-05:00
+            pnl                                 NaN
+            gross_volume                        0.0
+            net_volume                          0.0
+            gmv                                 0.0
+            nmv                                 0.0
+            cash                          1000000.0
+            net_wealth                    1000000.0
+            leverage                            0.0"""
             actual = portfolio.get_historical_statistics().transpose()
             self.assert_equal(str(actual), expected, fuzzy_match=True)
 
 
+# #############################################################################
+# TestDatabasePortfolio1
 # #############################################################################
 
 
@@ -301,11 +310,10 @@ def _get_row3() -> pd.Series:
 
 
 class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
-    
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-    
+
     def test1(self) -> None:
         """
         Test that the update of Portfolio works.
@@ -325,7 +333,6 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
                 df = hsql.execute_query_to_df(self.connection, query)
                 print(hpandas.df_to_str(df))
                 assert 0
-            #
             # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
@@ -355,7 +362,6 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
                 df = hsql.execute_query_to_df(self.connection, query)
                 print(hpandas.df_to_str(df))
                 assert 0
-            #
             # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
@@ -366,76 +372,73 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
             coroutines = [self._coroutine2(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
 
-    async def _coroutine1(
-        self,
-        portfolio,
-    ):
+    async def _coroutine1(self, portfolio: omportfo.Portfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
         # Check.
         actual = str(portfolio)
         expected = r"""
-# historical holdings=
-asset_id                    101       -1
-2000-01-01 09:35:00-05:00   0.0  1000000.0
-2000-01-01 09:40:00-05:00  20.0  1000000.0
-# historical holdings marked to market=
-asset_id                        101       -1
-2000-01-01 09:35:00-05:00      0.00  1000000.0
-2000-01-01 09:40:00-05:00  20004.03  1000000.0
-# historical flows=
-asset_id                   101
-2000-01-01 09:40:00-05:00  0.0
-# historical pnl=
-asset_id                        101
-2000-01-01 09:35:00-05:00       NaN
-2000-01-01 09:40:00-05:00  20004.03
-# historical statistics=
-                                pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-2000-01-01 09:35:00-05:00       NaN           0.0         0.0      0.00      0.00  1000000.0    1.00e+06      0.00
-2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02"""
-
+        # historical holdings=
+        asset_id                    101       -1
+        2000-01-01 09:35:00-05:00   0.0  1000000.0
+        2000-01-01 09:40:00-05:00  20.0  1000000.0
+        # historical holdings marked to market=
+        asset_id                        101       -1
+        2000-01-01 09:35:00-05:00      0.00  1000000.0
+        2000-01-01 09:40:00-05:00  20004.03  1000000.0
+        # historical flows=
+        asset_id                   101
+        2000-01-01 09:40:00-05:00  0.0
+        # historical pnl=
+        asset_id                        101
+        2000-01-01 09:35:00-05:00       NaN
+        2000-01-01 09:40:00-05:00  20004.03
+        # historical statistics=
+                                        pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
+        2000-01-01 09:35:00-05:00       NaN           0.0         0.0      0.00      0.00  1000000.0    1.00e+06      0.00
+        2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    async def _coroutine2(
-        self,
-        portfolio,
-    ):
+    async def _coroutine2(self, portfolio: omportfo.Portfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
         # Check.
         actual = str(portfolio)
         expected = r"""
-# historical holdings=
-asset_id                    101      -1
-2000-01-01 09:35:00-05:00   0.0  1.00e+06
-2000-01-01 09:40:00-05:00  20.0  1.00e+06
-# historical holdings marked to market=
-asset_id                        101      -1
-2000-01-01 09:35:00-05:00      0.00  1.00e+06
-2000-01-01 09:40:00-05:00  20004.03  1.00e+06
-# historical flows=
-asset_id                       101
-2000-01-01 09:40:00-05:00  1903.12
-# historical pnl=
-asset_id                        101
-2000-01-01 09:35:00-05:00       NaN
-2000-01-01 09:40:00-05:00  21907.15
-# historical statistics=
-                                pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
-2000-01-01 09:35:00-05:00       NaN          0.00        0.00      0.00      0.00  1.00e+06    1.00e+06      0.00
-2000-01-01 09:40:00-05:00  21907.15       1903.12    -1903.12  20004.03  20004.03  1.00e+06    1.02e+06      0.02"""
+        # historical holdings=
+        asset_id                    101      -1
+        2000-01-01 09:35:00-05:00   0.0  1.00e+06
+        2000-01-01 09:40:00-05:00  20.0  1.00e+06
+        # historical holdings marked to market=
+        asset_id                        101      -1
+        2000-01-01 09:35:00-05:00      0.00  1.00e+06
+        2000-01-01 09:40:00-05:00  20004.03  1.00e+06
+        # historical flows=
+        asset_id                       101
+        2000-01-01 09:40:00-05:00  1903.12
+        # historical pnl=
+        asset_id                        101
+        2000-01-01 09:35:00-05:00       NaN
+        2000-01-01 09:40:00-05:00  21907.15
+        # historical statistics=
+                                        pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
+        2000-01-01 09:35:00-05:00       NaN          0.00        0.00      0.00      0.00  1.00e+06    1.00e+06      0.00
+        2000-01-01 09:40:00-05:00  21907.15       1903.12    -1903.12  20004.03  20004.03  1.00e+06    1.02e+06      0.02"""
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# TestDatabasePortfolio2
+# #############################################################################
 
 
 class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
-    
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-    
+
     def test1(self) -> None:
         """
         Test the `log_state()`/`read_state()` round trip.
@@ -455,7 +458,6 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
                 df = hsql.execute_query_to_df(self.connection, query)
                 print(hpandas.df_to_str(df))
                 assert 0
-            #
             # Create DatabasePortfolio with some initial cash.
             portfolio = oporexam.get_DatabasePortfolio_example1(
                 event_loop,
@@ -466,10 +468,7 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
             coroutines = [self._coroutine1(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
 
-    async def _coroutine1(
-        self,
-        portfolio,
-    ):
+    async def _coroutine1(self, portfolio: omportfo.Portfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
@@ -489,28 +488,32 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
         #
         portfolio_df_str = hpandas.df_to_str(portfolio_df, precision=precision)
         expected_portfolio_df_str = r"""
-                          holdings            holdings_marked_to_market            flows   pnl
-                               101       -1                         101       -1     101   101
-2000-01-01 09:40:00-05:00     20.0  1000000.0                  20004.03  1000000.0   0.0   NaN
-2000-01-01 09:45:00-05:00     20.0  1000000.0                  19998.37  1000000.0  -0.0 -5.66"""
+                                  holdings            holdings_marked_to_market            flows   pnl
+                                       101       -1                         101       -1     101   101
+        2000-01-01 09:40:00-05:00     20.0  1000000.0                  20004.03  1000000.0   0.0   NaN
+        2000-01-01 09:45:00-05:00     20.0  1000000.0                  19998.37  1000000.0  -0.0 -5.66"""
         self.assert_equal(
             portfolio_df_str, expected_portfolio_df_str, fuzzy_match=True
         )
         #
         stats_df_str = hpandas.df_to_str(stats_df, precision=precision)
         expected_stats_df_str = r"""
-                                pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02
-2000-01-01 09:45:00-05:00     -5.66           0.0         0.0  19998.37  19998.37  1000000.0    1.02e+06      0.02"""
+                                        pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
+        2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02
+        2000-01-01 09:45:00-05:00     -5.66           0.0         0.0  19998.37  19998.37  1000000.0    1.02e+06      0.02"""
         self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)
 
 
+# #############################################################################
+# TestDatabasePortfolio3
+# #############################################################################
+
+
 class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
-    
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-    
+
     def test1(self) -> None:
         """
         Test initialization from db.
@@ -530,7 +533,6 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
                 df = hsql.execute_query_to_df(self.connection, query)
                 print(hpandas.df_to_str(df))
                 assert 0
-            #
             # Create DatabasePortfolio from the DB.
             portfolio = oporexam.get_DatabasePortfolio_example2(
                 event_loop,
@@ -541,33 +543,30 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
             coroutines = [self._coroutine1(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
 
-    async def _coroutine1(
-        self,
-        portfolio,
-    ):
+    async def _coroutine1(self, portfolio: omportfo.Portfolio):
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
         #
         actual = str(portfolio)
         expected = r"""
-# historical holdings=
-asset_id                    101  -1
-2000-01-01 09:35:00-05:00  20.0  0.0
-2000-01-01 09:40:00-05:00  20.0  0.0
-# historical holdings marked to market=
-asset_id                        101  -1
-2000-01-01 09:35:00-05:00  20006.24  0.0
-2000-01-01 09:40:00-05:00  20004.03  0.0
-# historical flows=
-asset_id                   101
-2000-01-01 09:40:00-05:00  0.0
-# historical pnl=
-asset_id                    101
-2000-01-01 09:35:00-05:00   NaN
-2000-01-01 09:40:00-05:00 -2.21
-# historical statistics=
-                            pnl  gross_volume  net_volume       gmv       nmv  cash  net_wealth  leverage
-2000-01-01 09:35:00-05:00   NaN           0.0         0.0  20006.24  20006.24   0.0    20006.24       1.0
-2000-01-01 09:40:00-05:00 -2.21           0.0         0.0  20004.03  20004.03   0.0    20004.03       1.0"""
+        # historical holdings=
+        asset_id                    101  -1
+        2000-01-01 09:35:00-05:00  20.0  0.0
+        2000-01-01 09:40:00-05:00  20.0  0.0
+        # historical holdings marked to market=
+        asset_id                        101  -1
+        2000-01-01 09:35:00-05:00  20006.24  0.0
+        2000-01-01 09:40:00-05:00  20004.03  0.0
+        # historical flows=
+        asset_id                   101
+        2000-01-01 09:40:00-05:00  0.0
+        # historical pnl=
+        asset_id                    101
+        2000-01-01 09:35:00-05:00   NaN
+        2000-01-01 09:40:00-05:00 -2.21
+        # historical statistics=
+                                    pnl  gross_volume  net_volume       gmv       nmv  cash  net_wealth  leverage
+        2000-01-01 09:35:00-05:00   NaN           0.0         0.0  20006.24  20006.24   0.0    20006.24       1.0
+        2000-01-01 09:40:00-05:00 -2.21           0.0         0.0  20004.03  20004.03   0.0    20004.03       1.0"""
         self.assert_equal(actual, expected, fuzzy_match=True)

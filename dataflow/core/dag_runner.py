@@ -18,6 +18,7 @@ import dataflow.core.utils as dtfcorutil
 import dataflow.core.visitors as dtfcorvisi
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hobject as hobject
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): At hindsight a `DagRunner` just calls methods on a DAG so we could
 #  merge the code into the DAG to simplify the class system. If we wanted to
 #  keep the behaviors separated, we could use mixins like `FitPredictDag`.
-class DagRunner(abc.ABC):
+class DagRunner(abc.ABC, hobject.PrintableMixin):
     """
     Abstract class with the common code to all `DagRunner`s.
 

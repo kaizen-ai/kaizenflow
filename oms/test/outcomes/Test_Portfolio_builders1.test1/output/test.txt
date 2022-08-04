@@ -1,0 +1,115 @@
+################################################################################
+str:
+################################################################################
+# historical holdings=
+Empty DataFrame
+Columns: [-1]
+Index: []
+# historical holdings marked to market=
+Empty DataFrame
+Columns: [-1]
+Index: []
+# historical flows=
+Empty DataFrame
+Columns: []
+Index: []
+# historical pnl=
+Empty DataFrame
+Columns: []
+Index: []
+# historical statistics=
+Empty DataFrame
+Columns: [pnl]
+Index: []
+################################################################################
+repr:
+################################################################################
+<oms.portfolio.DataFramePortfolio at 0x>:
+  broker= <oms.broker.SimulatedBroker>
+    <oms.broker.SimulatedBroker at 0x>:
+      _strategy_id='SAU1' <str>
+      _account='candidate' <str>
+      market_data= <market_data.replayed_market_data.ReplayedMarketData>
+        <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+          _asset_id_col='asset_id' <str>
+          _asset_ids='[101, 202]' <list>
+          _start_time_col_name='start_datetime' <str>
+          _end_time_col_name='end_datetime' <str>
+          _columns='None' <NoneType>
+          _sleep_in_secs='30' <int>
+          _timezone='America/New_York' <str>
+          _column_remap='None' <NoneType>
+          _filter_data_mode='assert' <str>
+          _max_iterations='10' <int>
+          _df= <pandas.core.frame.DataFrame>
+                         start_datetime              end_datetime              timestamp_db        price  asset_id
+            0 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00   999.874540       101
+            0 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00   999.874540       202
+            1 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  1000.325254       101
+            ...
+            59 2000-01-01 10:29:00-05:00 2000-01-01 10:30:00-05:00 2000-01-01 10:30:00-05:00  998.050046       202
+            60 2000-01-01 10:30:00-05:00 2000-01-01 10:31:00-05:00 2000-01-01 10:31:00-05:00  997.938723       101
+            60 2000-01-01 10:30:00-05:00 2000-01-01 10:31:00-05:00 2000-01-01 10:31:00-05:00  997.938723       202
+          _knowledge_datetime_col_name='timestamp_db' <str>
+          _delay_in_secs='0' <int>
+      _timestamp_col='end_datetime' <str>
+      _column_remap='None' <NoneType>
+      _orders='OrderedDict()' <collections.OrderedDict>
+      _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
+      _fills='[]' <list>
+  _account='candidate' <str>
+  _timestamp_col='end_datetime' <str>
+  market_data= <market_data.replayed_market_data.ReplayedMarketData>
+    <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+      _asset_id_col='asset_id' <str>
+      _asset_ids='[101, 202]' <list>
+      _start_time_col_name='start_datetime' <str>
+      _end_time_col_name='end_datetime' <str>
+      _columns='None' <NoneType>
+      _sleep_in_secs='30' <int>
+      _timezone='America/New_York' <str>
+      _column_remap='None' <NoneType>
+      _filter_data_mode='assert' <str>
+      _max_iterations='10' <int>
+      _df= <pandas.core.frame.DataFrame>
+                     start_datetime              end_datetime              timestamp_db        price  asset_id
+        0 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00   999.874540       101
+        0 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00   999.874540       202
+        1 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  1000.325254       101
+        ...
+        59 2000-01-01 10:29:00-05:00 2000-01-01 10:30:00-05:00 2000-01-01 10:30:00-05:00  998.050046       202
+        60 2000-01-01 10:30:00-05:00 2000-01-01 10:31:00-05:00 2000-01-01 10:31:00-05:00  997.938723       101
+        60 2000-01-01 10:30:00-05:00 2000-01-01 10:31:00-05:00 2000-01-01 10:31:00-05:00  997.938723       202
+      _knowledge_datetime_col_name='timestamp_db' <str>
+      _delay_in_secs='0' <int>
+  _asset_id_col='asset_id' <str>
+  _mark_to_market_col='price' <str>
+  _pricing_type='last' <str>
+  _bar_duration='None' <NoneType>
+  _max_num_bars='100' <int>
+  _asset_holdings= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+    <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+      _max_keys='100' <int>
+      _odict='OrderedDict()' <collections.OrderedDict>
+  _cash= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+    <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+      _max_keys='100' <int>
+      _odict='OrderedDict()' <collections.OrderedDict>
+  _assets_marked_to_market= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+    <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+      _max_keys='100' <int>
+      _odict='OrderedDict()' <collections.OrderedDict>
+  _flows= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+    <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+      _max_keys='100' <int>
+      _odict='OrderedDict()' <collections.OrderedDict>
+  _statistics= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+    <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+      _max_keys='100' <int>
+      _odict='OrderedDict()' <collections.OrderedDict>
+  _retrieve_initial_holdings_from_db='False' <bool>
+  _initial_holdings= <pandas.core.series.Series>
+              curr_num_shares
+    asset_id
+    -1              1000000.0
+  _initial_universe='Int64Index([], dtype='int64', name='asset_id')' <pandas.core.indexes.numeric.Int64Index>

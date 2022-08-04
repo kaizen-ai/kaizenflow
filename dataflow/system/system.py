@@ -6,11 +6,15 @@ import dataflow.system.system as dtfsyssyst
 
 import abc
 import logging
+import os
 from typing import Any, Callable, Coroutine
 
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
+import helpers.hdbg as hdbg
+import helpers.hintrospection as hintros
+import helpers.hio as hio
 import helpers.hprint as hprint
 import market_data as mdata
 import oms as oms
@@ -159,10 +163,13 @@ class System(abc.ABC):
         self._config = self._get_system_config_template()
         self._config["system_class"] = self.__class__.__name__
         _LOG.debug("system_config=\n%s", self._config)
+        # Default log dir.
+        self._config["log_dir"] = "./system_log_dir"
 
+    # TODO(gp): Improve str if needed.
     def __str__(self) -> str:
         txt = []
-        txt.append("# %s" % hprint.to_object_pointer(self))
+        txt.append("# %s" % hprint.to_object_str(self))
         txt.append(hprint.indent(str(self._config)))
         txt = "\n".join(txt)
         return txt
@@ -175,9 +182,9 @@ class System(abc.ABC):
         """
         Set the config for a System.
 
-        This is used in the tile backtesting flow to create multiple
-        configs and then inject one at a time into a `System` in order
-        to simulate the `System` for a specific tile.
+        This is used in the tile backtesting flow to create multiple configs and
+        then inject one at a time into a `System` in order to simulate the `System`
+        for a specific tile.
         """
         self._config = config
 
@@ -194,6 +201,12 @@ class System(abc.ABC):
             + hprint.frame("End config before dag_runner")
         )
         #
+        log_dir = self.config["log_dir"]
+        hio.create_dir(log_dir, incremental=False)
+        #
+        file_name = os.path.join(log_dir, "system_config.input.txt")
+        hio.to_file(file_name, repr(self.config))
+        #
         key = "dag_runner_object"
         dag_runner: dtfcore.DagRunner = self._get_cached_value(
             key, self._get_dag_runner
@@ -201,9 +214,9 @@ class System(abc.ABC):
         # After everything is built, mark the config as read-only to avoid
         # further modifications.
         # TODO(Grisha): this prevents from writing any object in a config, after we do
-        # `system.dag_runner`. E.g., after `dag_runner` is built one wants to do
-        # `system.portfolio` while `portfolio` is not in a config yet, but since a config
-        # is already marked as read-only execution fails.
+        #  `system.dag_runner`. E.g., after `dag_runner` is built one wants to do
+        #  `system.portfolio` while `portfolio` is not in a config yet, but since a config
+        #  is already marked as read-only execution fails.
         self._config.mark_read_only()
         #
         _LOG.info(
@@ -214,10 +227,9 @@ class System(abc.ABC):
             + "\n"
             + hprint.frame("End config after dag_runner")
         )
-        if False:
-            import helpers.hio as hio
-
-            hio.to_file("system_config.txt", str(self.config))
+        #
+        file_name = os.path.join(log_dir, "system_config.output.txt")
+        hio.to_file(file_name, repr(self.config))
         return dag_runner
 
     @abc.abstractmethod
@@ -267,8 +279,18 @@ class System(abc.ABC):
                 builder_func.__name__,
             )
             obj = builder_func()
-            # Build.
+            # Build the object.
+            hdbg.dassert_not_in(key, self.config)
             self.config[key] = obj
+            # Add the object representation after it's built.
+            key_tmp = ("object.str", key)
+            hdbg.dassert_not_in(key_tmp, self.config)
+            # Use the unambiguous object representation `__repr__()`.
+            self.config[key_tmp] = repr(obj)
+            # Add information about who created that object.
+            key_tmp = ("object.builder_function", key)
+            hdbg.dassert_not_in(key_tmp, self.config)
+            self.config[key_tmp] = hintros.get_name_from_function(builder_func)
         _LOG.debug("Object for %s=\n%s", key, obj)
         return obj
 
