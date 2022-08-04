@@ -199,10 +199,16 @@ class ResultBundle(abc.ABC):
         if self._column_to_tags is not None:
             # TODO(gp): Cache it or compute it the first time.
             tag_to_columns: Dict[Any, List[Any]] = {}
-            for column, tags in self._column_to_tags.to_dict().items():
-                for tag in tags:
-                    tag_to_columns.setdefault(tag, []).append(column)
-            return tag_to_columns
+            if type(self._column_to_tags) != collections.OrderedDict:
+                for column, tags in self._column_to_tags.to_dict().items():
+                    for tag in tags:
+                        tag_to_columns.setdefault(tag, []).append(column)
+                return tag_to_columns
+            else:
+                for column, tags in self._column_to_tags.items():
+                    for tag in tags:
+                        tag_to_columns.setdefault(tag, []).append(column)
+                return tag_to_columns
         return None
 
     @property
@@ -242,21 +248,26 @@ class ResultBundle(abc.ABC):
 
         :param commit_hash: whether to include current commit hash
         """
-        serialized_bundle = cconfig.Config()
+        #serialized_bundle = cconfig.Config()
+        serialized_bundle = {}
         serialized_bundle["config"] = self._config
         serialized_bundle["result_nid"] = self._result_nid
         serialized_bundle["method"] = self._method
         serialized_bundle["result_df"] = self._result_df
-        if self._column_to_tags is not None:
-            serialized_bundle["column_to_tags"] = ccocouti.get_config_from_nested_dict(self._column_to_tags)
+        # if self._column_to_tags is not None:
+        #     serialized_bundle["column_to_tags"] = ccocouti.get_config_from_nested_dict(self._column_to_tags)
+        serialized_bundle["column_to_tags"] = self._column_to_tags
         info = self._info
-        if info is not None:
-            info = cconfig.get_config_from_nested_dict(info)
+        # if info is not None:
+        #     info = cconfig.get_config_from_nested_dict(info)
         serialized_bundle["info"] = info
         serialized_bundle["payload"] = self._payload
         serialized_bundle["class"] = self.__class__.__name__
         if commit_hash:
             serialized_bundle["commit_hash"] = hgit.get_current_commit_hash()
+        #
+        serialized_bundle = ccocouti.get_config_from_nested_dict(serialized_bundle)
+        #
         return serialized_bundle
 
     @classmethod
@@ -268,8 +279,8 @@ class ResultBundle(abc.ABC):
         if column_to_tags:
             column_to_tags = column_to_tags.to_dict()
         info = serialized_bundle["info"]
-        if info:
-            info = info.to_dict()
+        # if info:
+        #     info = info.to_dict()
         rb = cls(
             config=serialized_bundle["config"],
             result_nid=serialized_bundle["result_nid"],

@@ -89,25 +89,42 @@ class TestResultBundle(hunitest.TestCase):
         # TODO(gp): Factor out common part.
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
         config_ = cconfig.get_config_from_nested_dict({"key": "val"})
-        init_config = cconfig.get_config_from_nested_dict(
-            {
-                "config": {
-                    config_
-                },
-                "result_nid": "leaf_node",
-                "method": "fit",
-                "result_df": df,
-                "column_to_tags": {
+        # init_config = cconfig.get_config_from_nested_dict(
+        #     {
+        #         "config": {
+        #             config_
+        #         },
+        #         "result_nid": "leaf_node",
+        #         "method": "fit",
+        #         "result_df": df,
+        #         "column_to_tags": {
+        #             "col0": ["feature_col"],
+        #             "col1": ["target_col", "step_0"],
+        #             "col2": ["target_col", "step_1"],
+        #             "col3": ["prediction_col", "step_0"],
+        #             "col4": ["prediction_col", "step_1"],
+        #         },
+        #         "info": {"df_info": dtfcorutil.get_df_info_as_string(df)},
+        #         "payload": None,
+        #     }
+        # )
+        #
+        init_dict = {}
+        init_dict["config"] = config_
+        init_dict["result_nid"] = "leaf_node"
+        init_dict["method"] = "fit"
+        init_dict["result_df"] = df
+        init_dict["column_to_tags"] = {
                     "col0": ["feature_col"],
                     "col1": ["target_col", "step_0"],
                     "col2": ["target_col", "step_1"],
                     "col3": ["prediction_col", "step_0"],
                     "col4": ["prediction_col", "step_1"],
-                },
-                "info": {"df_info": dtfcorutil.get_df_info_as_string(df)},
-                "payload": None,
-            }
-        )
+                }
+        init_dict["info"]= {"df_info": dtfcorutil.get_df_info_as_string(df)},
+        init_dict["payload"] = None
+        #
+        init_config = cconfig.get_config_from_nested_dict(init_dict)
         return init_config
 
     def _get_result_bundle(self) -> dtfcorebun.ResultBundle:
