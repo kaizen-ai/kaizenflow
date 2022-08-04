@@ -6,6 +6,7 @@ import dataflow.system.system as dtfsyssyst
 
 import abc
 import logging
+import os
 from typing import Any, Callable, Coroutine
 
 import core.config as cconfig
@@ -200,8 +201,8 @@ class System(abc.ABC):
             + hprint.frame("End config before dag_runner")
         )
         #
-        root_dir = self.config["root_log_dir"]
-        hio.create_dir(root_dir, incremental=False)
+        root_log_dir = self.config["root_log_dir"]
+        hio.create_dir(root_log_dir, incremental=False)
         #
         file_name = os.path.join(root_log_dir, "system_config.input.str.txt")
         hio.to_file(file_name, str(self.config))
