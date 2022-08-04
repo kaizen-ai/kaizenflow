@@ -21,6 +21,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
 
     @pytest.mark.slow("~30 seconds by GH actions.")
     def test_get_data_for_interval5(self) -> None:
+        # TODO(Grisha): @Dan Create `get_BidAskOhlcvMarketData_example1()`.
         # Prepare inputs.
         universe_version = "v4"
         resample_1min = True
@@ -48,7 +49,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
         asset_ids = [1467591036, 1464553467]
         columns = None
         column_remap = None
-        wall_clock_time = pd.Timestamp("2022-05-1T23:00:00+00:00")
+        wall_clock_time = None
         filter_data_mode = "assert"
         #
         im_client_market_data1 = mdmadaex.get_HistoricalImClientMarketData_example1(

@@ -50,6 +50,11 @@ def normalize_historical_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# #############################################################################
+# IgStitchedMarketData
+# #############################################################################
+
+
 # TODO(gp): Create a general StitchedMarketData class that accepts an Historical and
 #  a RealTime ImClient. Then derive IgStitchedMarketData from it customizing the
 #  columns to read from each ImClient.
@@ -247,7 +252,11 @@ class IgStitchedMarketData(mdabmada.MarketData):
         return self._ig_rt_market_data._get_last_end_time()
 
 
-# TODO(Grisha): @Dan Solve problem with getting data for last period in historical mode.
+# #############################################################################
+# HorizontalStitchedMarketData
+# #############################################################################
+
+
 class HorizontalStitchedMarketData(mdabmada.MarketData):
     def __init__(
         self,
@@ -298,6 +307,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
             right_close,
             limit,
         )
+        # TODO(Grisha): @Dan Move to `hpandas` if needed.
         # TODO(Grisha): @Dan Decide what to do with shared columns and what columns to merge on.
         cols_to_merge_on = [
             self._end_time_col_name,
