@@ -439,6 +439,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def _test_database_portfolio_helper(
         self,
         system: dtfsyssyst.System,
+        *,
+        add_system_config: bool = True,
+        add_run_signature: bool = True,
     ) -> str:
         """
         Run a System with a DatabasePortfolio.
@@ -465,25 +468,27 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             )
             # Compute signature.
             txt = []
-            txt.append(hprint.frame("system_config"))
-            txt.append(str(system.config))
-            # TODO(gp): This should be factored out.
-            txt.append(hprint.frame("compute_run_signature"))
-            result_bundles = result_bundles[0]
-            result_bundle = result_bundles[-1]
-            #result_bundle.result_df = result_bundle.result_df.tail(40)
-            system_tester = SystemTester()
-            # Check output.
-            forecast_evaluator_from_prices_dict = system.config[
-                "research_forecast_evaluator_from_prices"
-            ].to_dict()
-            txt_tmp = system_tester.compute_run_signature(
-                dag_runner,
-                portfolio,
-                result_bundle,
-                forecast_evaluator_from_prices_dict,
-            )
-            txt.append(txt_tmp)
+            if add_system_config:
+                txt.append(hprint.frame("system_config"))
+                txt.append(str(system.config))
+            if add_run_signature:
+                # TODO(gp): This should be factored out.
+                txt.append(hprint.frame("compute_run_signature"))
+                result_bundles = result_bundles[0]
+                result_bundle = result_bundles[-1]
+                #result_bundle.result_df = result_bundle.result_df.tail(40)
+                system_tester = SystemTester()
+                # Check output.
+                forecast_evaluator_from_prices_dict = system.config[
+                    "research_forecast_evaluator_from_prices"
+                ].to_dict()
+                txt_tmp = system_tester.compute_run_signature(
+                    dag_runner,
+                    portfolio,
+                    result_bundle,
+                    forecast_evaluator_from_prices_dict,
+                )
+                txt.append(txt_tmp)
             #
             actual = "\n".join(txt)
             # Remove the following line:
@@ -523,18 +528,28 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         Test that the outcome is the same when running a System with a
         DataFramePortfolio vs running one with a DatabasePortfolio.
         """
+        # The config signature is different (since the systems are different) so
+        # we only compare the result of the run.
+        add_system_config = False
+        add_run_signature = True
         actual = self._test_dataframe_portfolio_helper(
-            system_with_dataframe_portfolio
+            system_with_dataframe_portfolio,
+            add_system_config=add_system_config,
+            add_run_signature=add_run_signature
         )
+        hdbg.dassert_lte(10, len(actual.split("\n")))
         expected = self._test_database_portfolio_helper(
-            system_with_database_portfolio
+            system_with_database_portfolio,
+            add_system_config=add_system_config,
+            add_run_signature=add_run_signature
         )
-        # Remove `system_class` since it is different for the two systems.
-        # E.g.,
-        #   system_class: Example1_Time_ForecastSystem_with_DataFramePortfolio
-        #   system_class: Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
-        actual = hunitest.filter_text("system_class:", actual)
-        expected = hunitest.filter_text("system_class:", expected)
+        hdbg.dassert_lte(10, len(expected.split("\n")))
+        # # Remove `system_class` since it is different for the two systems.
+        # # E.g.,
+        # #   system_class: Example1_Time_ForecastSystem_with_DataFramePortfolio
+        # #   system_class: Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+        # actual = hunitest.filter_text("system_class:", actual)
+        # expected = hunitest.filter_text("system_class:", expected)
         self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True,
                 purify_expected_text=True)
 

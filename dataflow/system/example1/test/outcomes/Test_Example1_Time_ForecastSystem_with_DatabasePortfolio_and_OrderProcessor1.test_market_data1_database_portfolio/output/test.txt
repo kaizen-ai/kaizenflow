@@ -131,7 +131,7 @@ object.str:
         _orders='OrderedDict()' <collections.OrderedDict>
         _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
         _fills='[]' <list>
-        _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=6338', closed: 0>' <psycopg2.extensions.connection>
+        _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=xxx', closed: 0>' <psycopg2.extensions.connection>
         _submitted_orders_table_name='submitted_orders' <str>
         _accepted_orders_table_name='accepted_orders' <str>
         _poll_kwargs= <dict>
@@ -217,7 +217,7 @@ object.str:
        101                  0.0
       -1              1000000.0
     _initial_universe='Int64Index([101], dtype='int64', name='asset_id')' <pandas.core.indexes.numeric.Int64Index>
-    _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=6338', closed: 0>' <psycopg2.extensions.connection>
+    _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=xxx', closed: 0>' <psycopg2.extensions.connection>
     _table_name='current_positions' <str>
     _timestamp_to_snapshot_df='OrderedDict()' <collections.OrderedDict>
     _net_cost= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
@@ -552,7 +552,7 @@ dag_runner_object: RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 
     2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
     2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
   _knowledge_datetime_col_name='timestamp_db' <str>
-  _delay_in_secs='5' <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:22.811418-0400', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:24.239436-0400', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:25.567147-0400', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:26.483365-0400', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:27.389883-0400', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:28.855154-0400', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 06:02:29.847460-0400', tz='America/New_York'))] <list>)
+  _delay_in_secs='5' <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 09:25:23.400399-0400', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 09:25:24.184234-0400', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 09:25:25.089828-0400', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 09:25:26.537892-0400', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 09:25:27.595391-0400', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 09:25:28.808312-0400', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04 09:25:29.539795-0400', tz='America/New_York'))] <list>)
 ################################################################################
 compute_run_signature
 ################################################################################

@@ -1038,6 +1038,46 @@ class Test_purify_object_representation1(hunitest.TestCase):
         datetime.time(16, 4  0)}}"""
         self.helper(txt, exp)
 
+    def test4(self) -> None:
+        """
+        Test replacing
+        wall_clock_time=Timestamp('2022-08-04 09:29:13.892793-0400', tz='America/New_York'))
+        """
+        txt = """
+        _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
+        <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 900} <dict>,
+        _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
+        _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>,
+        _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
+        10:05:00-0500', tz='America/New_York'),
+        wall_clock_time=Timestamp('2022-08-04 09:29:13.441715-0400',
+        tz='America/New_York')), Event(num_it=2,
+        current_time=Timestamp('2000-01-01 10:10:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04
+        09:29:13.892793-0400', tz='America/New_York')), Event(num_it=3,
+        current_time=Timestamp('2000-01-01 10:15:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04
+        09:29:14.131619-0400', tz='America/New_York'))] <list>)
+        """
+        exp = """
+        _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
+        <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 900} <dict>,
+        _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
+        _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>,
+        _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
+        10:05:00-0500', tz='America/New_York'),
+        wall_clock_time=Timestamp('xxx', tz='America/New_York')),
+        Event(num_it=2, current_time=Timestamp('2000-01-01 10:10:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('xxx',
+        tz='America/New_York')), Event(num_it=3,
+        current_time=Timestamp('2000-01-01 10:15:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('xxx',
+        tz='America/New_York'))] <list>)
+        """
+        txt = " ".join(hprint.dedent(txt).split("\n"))
+        exp = " ".join(hprint.dedent(exp).split("\n"))
+        self.helper(txt, exp)
+
 
 # #############################################################################
 
