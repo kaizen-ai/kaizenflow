@@ -9,7 +9,7 @@ import oms.test.oms_db_helper as omtodh
 
 
 def _test_object_signature(self_: Any, obj: Any) -> None:
-    remove_lines_regex = "_db_connection"
+    remove_lines_regex = "_db_connection|DatabaseBroker"
     hobject.test_object_signature(
         self_, obj, remove_lines_regex=remove_lines_regex
     )
@@ -24,7 +24,7 @@ class Test_Portfolio_builders1(hunitest.TestCase):
     def test1(self) -> None:
         event_loop = None
         portfolio = oporexam.get_DataFramePortfolio_example1(event_loop)
-        #
+        # Check.
         _test_object_signature(self, portfolio)
 
 
@@ -48,4 +48,5 @@ class Test_Portfolio_builders2(omtodh.TestOmsDbHelper):
                 table_name,
                 asset_ids=[101],
             )
+            # Check.
             _test_object_signature(self, portfolio)

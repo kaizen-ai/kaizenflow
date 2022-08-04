@@ -25,7 +25,6 @@ str:
 ################################################################################
 repr:
 ################################################################################
-<oms.broker.DatabaseBroker at 0x>:
   _strategy_id='SAU1' <str>
   _account='candidate' <str>
   market_data= <market_data.replayed_market_data.ReplayedMarketData>

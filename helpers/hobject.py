@@ -16,7 +16,8 @@ import helpers.hprint as hprint
 import helpers.hstring as hstring
 
 _LOG = logging.getLogger(__name__)
-
+# Mute this module unless we want to debug it.
+_LOG.setLevel(logging.INFO)
 
 # #############################################################################
 # obj_to_str
