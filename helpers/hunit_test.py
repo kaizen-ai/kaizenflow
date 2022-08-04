@@ -493,12 +493,16 @@ def purify_from_env_vars(txt: str) -> str:
     return txt
 
 
-# TODO(gp): -> purify_object_references
-def purify_object_reference(txt: str) -> str:
+def purify_object_representation(txt: str) -> str:
     """
     Remove references like `at 0x7f43493442e0`.
     """
     txt = re.sub(r"at 0x[0-9A-Fa-f]+", "at 0x", txt, flags=re.MULTILINE)
+    txt = re.sub(r"port=\d+", "port=xxx", txt, flags=re.MULTILINE)
+    # wall_clock_time=Timestamp('2022-08-04 09:25:04.830746-0400'
+    txt = re.sub("wall_clock_time=Timestamp\('.*?',",
+                 "wall_clock_time=Timestamp('xxx',", txt,
+                 flags=re.MULTILINE)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -514,13 +518,13 @@ def purify_white_spaces(txt: str) -> str:
 
 def purify_txt_from_client(txt: str) -> str:
     """
-    Remove from a string all the information specific of a git client.
+    Remove from a string all the information of a specific run.
     """
     txt = purify_from_environment(txt)
     txt = purify_app_references(txt)
     txt = purify_amp_references(txt)
     txt = purify_from_env_vars(txt)
-    txt = purify_object_reference(txt)
+    txt = purify_object_representation(txt)
     txt = purify_white_spaces(txt)
     return txt
 
