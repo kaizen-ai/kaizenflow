@@ -306,6 +306,21 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
             right_close,
             limit,
         )
+        # Data indices should be of the same type and should have at least 1
+        # value in common.
+        market_data_df_index1 = market_data_df1.index
+        market_data_df_index2 = market_data_df2.index
+        hdbg.dassert_array_has_same_type_element(
+            market_data_df_index1, market_data_df_index2, False
+        )
+        # TODO(Grisha): @Dan Use an overlap threshold (~90%) to decide whether
+        # to merge data or warn/trim about insufficient overlap.
+        common_index = set(market_data_df_index1).intersection(
+            set(market_data_df_index2)
+        )
+        hdbg.dassert_lte(
+            1, common_index, "No common data in the specified time interval."
+        )
         # TODO(Grisha): @Dan Move to `hpandas` if needed.
         # TODO(Grisha): @Dan Decide what to do with shared columns and what columns to merge on.
         cols_to_merge_on = [

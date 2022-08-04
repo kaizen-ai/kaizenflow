@@ -19,7 +19,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     the parent class.
     """
 
-    @pytest.mark.slow("~30 seconds by GH actions.")
+    @pytest.mark.superslow("~30 seconds by GH actions.")
     def test_get_data_for_interval5(self) -> None:
         # TODO(Grisha): @Dan Create `get_BidAskOhlcvMarketData_example1()`.
         # Prepare inputs.
