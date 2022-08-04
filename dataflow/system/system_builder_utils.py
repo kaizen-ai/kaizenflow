@@ -305,6 +305,7 @@ def apply_dag_property(
     recursion.
     """
     dag_builder = system.config["dag_builder_object"]
+    #
     fast_prod_setup = system.config.get(
         ["dag_builder_config", "fast_prod_setup"], False
     )
@@ -322,6 +323,7 @@ def apply_dag_property(
     if debug_mode_config:
         _LOG.warning("Setting debug mode")
         dag.set_debug_mode(**debug_mode_config)
+    #
     force_free_nodes = system.config.get(
         ["dag_property_config", "force_free_nodes"], False
     )
