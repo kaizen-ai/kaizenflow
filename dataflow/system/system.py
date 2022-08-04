@@ -385,7 +385,7 @@ class _ForecastSystem_with_Portfolio(ForecastSystem):
     - a `MarketData`
       - Historical or replayed
     - a Forecast DAG
-      - The Forecast DAG contains a `ProcessForecasts` that creates orders from
+      - The Forecast DAG contains a `ProcessForecastsNode` that creates orders from
         forecasts
     - a `Portfolio`
       - The portfolio is used to store the holdings according to the orders

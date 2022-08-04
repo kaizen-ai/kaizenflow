@@ -15,7 +15,6 @@ import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import oms.portfolio as omportfo
@@ -24,8 +23,7 @@ import oms.process_forecasts_ as oprofore
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): -> ProcessForecastsNode to distinguish from process_forecasts?
-class ProcessForecasts(dtfcore.FitPredictNode):
+class ProcessForecastsNode(dtfcore.FitPredictNode):
     """
     Place trades from a model.
     """
@@ -37,33 +35,24 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         volatility_col: str,
         spread_col: Optional[str],
         portfolio: omportfo.Portfolio,
+        # TODO(Paul): Rename this `process_forecasts_dict`.
         process_forecasts_config: Dict[str, Any],
-        *,
-        forecast_evaluator_from_prices_dict: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
-        Parameters have the same meaning as in `process_forecasts()`.
+        Parameters have the same meaning as in `oms/process_forecasts_()`.
 
         :param process_forecasts_config: configures `process_forecasts()`
-        :param forecast_evaluator_from_prices_dict: if not None, it configures
-            `ForecastEvaluatorFromPrices` which computes the vectorized shadow
-            PnL
         """
         super().__init__(nid)
         self._prediction_col = prediction_col
         self._volatility_col = volatility_col
         self._spread_col = spread_col
         self._portfolio = portfolio
-        # TODO(gp): Why does it need to be a Config? Inside Python code we want
-        #  to use only dict.
         process_forecasts_config = cconfig.get_config_from_nested_dict(
             process_forecasts_config
         )
         hdbg.dassert_isinstance(process_forecasts_config, cconfig.Config)
         self._process_forecasts_config = process_forecasts_config
-        self._forecast_evaluator_from_prices_dict = (
-            forecast_evaluator_from_prices_dict
-        )
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._compute_forecasts(df_in, fit=True)
@@ -86,8 +75,6 @@ class ProcessForecasts(dtfcore.FitPredictNode):
     def _compute_forecasts(
         self, df: pd.DataFrame, fit: bool = True
     ) -> Dict[str, pd.DataFrame]:
-        if self._forecast_evaluator_from_prices_dict is not None:
-            self._evaluate_forecasts(df)
         hdbg.dassert_in(self._prediction_col, df.columns)
         # Make sure it's multi-index.
         hdbg.dassert_lte(2, df.columns.nlevels)
@@ -117,19 +104,6 @@ class ProcessForecasts(dtfcore.FitPredictNode):
         # Pass the dataframe through.
         return {"df_out": df}
 
-    def _evaluate_forecasts(self, df: pd.DataFrame) -> None:
-        forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
-            **self._forecast_evaluator_from_prices_dict["init"]
-        )
-        #
-        log_dir = self._forecast_evaluator_from_prices_dict["log_dir"]
-        _LOG.info("log_dir=%s", log_dir)
-        forecast_evaluator.log_portfolio(
-            df,
-            log_dir,
-            **self._forecast_evaluator_from_prices_dict["kwargs"],
-        )
-
 
 # #############################################################################
 # Dict builders.
@@ -140,6 +114,7 @@ def get_process_forecasts_dict_example1(
     portfolio: omportfo.Portfolio,
     prediction_col: str,
     volatility_col: str,
+    # TODO(Paul): Remove this parameter.
     price_col: str,
     spread_col: Optional[str],
     order_duration_in_mins: int,
@@ -151,23 +126,6 @@ def get_process_forecasts_dict_example1(
     Get the config for `ProcessForecast` node.
     """
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
-    # TODO(gp): It's unclear if we should be able to enable or not
-    # ForecastEvaluatorFromPrice.
-    if log_dir is not None:
-        # Params for `ForecastEvaluatorFromPrice`, which computes the pnl with
-        # the vectorized PnL that we run in parallel.
-        forecast_evaluator_from_prices_dict = {
-            "init": {
-                "price_col": price_col,
-                "volatility_col": volatility_col,
-                "prediction_col": prediction_col,
-                "spread_col": spread_col,
-            },
-            "log_dir": os.path.join(log_dir, "evaluate_forecasts"),
-            "kwargs": compute_target_positions_kwargs,
-        }
-    else:
-        forecast_evaluator_from_prices_dict = None
     #
     order_type = "price@twap"
     process_forecasts_config_dict = {
@@ -191,7 +149,7 @@ def get_process_forecasts_dict_example1(
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }
-    # This goes to the `ProcessForecasts` node.
+    # This goes to `ProcessForecastsNode`.
     process_forecasts_dict = {
         "prediction_col": prediction_col,
         "volatility_col": volatility_col,
