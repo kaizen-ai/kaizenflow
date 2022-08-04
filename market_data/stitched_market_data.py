@@ -265,6 +265,12 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
+        hdbg.dassert_isinstance(
+            im_client_market_data1, mdimcmada.ImClientMarketData
+        )
+        hdbg.dassert_isinstance(
+            im_client_market_data2, mdimcmada.ImClientMarketData
+        )
         self._im_client_market_data1 = im_client_market_data1
         self._im_client_market_data2 = im_client_market_data2
 
@@ -315,8 +321,8 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         )
         # TODO(Grisha): @Dan Use an overlap threshold (~90%) to decide whether
         # to merge data or warn/trim about insufficient overlap.
-        common_index = set(market_data_df_index1).intersection(
-            set(market_data_df_index2)
+        common_index = market_data_df_index1.intersection(
+            market_data_df_index2
         )
         hdbg.dassert_lte(
             1, len(common_index), "No common data in the specified time interval."
