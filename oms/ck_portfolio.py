@@ -119,12 +119,12 @@ def get_CcxtPortfolio_prod_instance(
     table_name = omsckc.get_core_db_view(
         "current_positions", liveness, instance_type
     )
-    initial_cash = 1e6
+    initial_cash = 1000
     portfolio = CkPortfolio.from_cash(
         broker,
         mark_to_market_col,
         pricing_method,
-        initial_cash=1e6,
+        initial_cash=initial_cash,
         asset_ids=asset_ids,
         #retrieve_initial_holdings_from_db=retrieve_initial_holdings_from_db,
         #table_name=table_name,

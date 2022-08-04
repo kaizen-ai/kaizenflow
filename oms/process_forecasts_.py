@@ -526,6 +526,8 @@ class ForecastProcessor:
         diff_num_shares = df["target_notional_trade"] / df["price"]
         diff_num_shares.replace([-np.inf, np.inf], np.nan, inplace=True)
         diff_num_shares = diff_num_shares.fillna(0)
+        # HACK!
+        diff_num_shares = round(diff_num_shares, 3)
         df["diff_num_shares"] = diff_num_shares
         df["spread"] = assets_and_predictions.set_index("asset_id")["spread"]
         _LOG.debug("df=\n%s", hpandas.df_to_str(df))

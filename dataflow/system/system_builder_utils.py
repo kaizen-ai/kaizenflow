@@ -436,7 +436,8 @@ def get_RealTimeDagRunner_from_System(
     #  want to compute the weights off-line and then load them up.
     #  We want to remove fit_at_beginning.
     fit_at_beginning = system.config.get(
-        ("dag_runner_config", "fit_at_beginning"), True
+        #("dag_runner_config", "fit_at_beginning"), True
+        ("dag_runner_config", "fit_at_beginning"), False
     )
     get_wall_clock_time = market_data.get_wall_clock_time
     # TODO(gp): This should become a builder method injecting values inside the

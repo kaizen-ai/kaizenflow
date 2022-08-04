@@ -225,7 +225,7 @@ def get_process_forecasts_dict_example2(
     #
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0,
-        "target_gmv": 1e5,
+        "target_gmv": 2000,
     }
     log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     #

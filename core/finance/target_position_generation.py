@@ -101,7 +101,7 @@ def _apply_gmv_scaling(
     target_gmv: Union[float, pd.Series],
 ) -> pd.DataFrame:
     l1_norm = target_positions.abs().sum(axis=1, min_count=1)
-    if isinstance(target_gmv, float):
+    if isinstance(target_gmv, (float, int)):
         hdbg.dassert_lt(0, target_gmv)
         scale_factors = l1_norm / target_gmv
     elif isinstance(target_gmv, pd.Series):
