@@ -108,7 +108,6 @@ class TestResultBundle(hunitest.TestCase):
             "payload": None,
 
         }
-        #
         init_config = cconfig.get_config_from_nested_dict(init_dict)
         return init_config
 
@@ -200,24 +199,27 @@ class TestPredictionResultBundle(hunitest.TestCase):
 
     @staticmethod
     def _get_init_config() -> cconfig.Config:
-        init_config = cconfig.Config()
-        init_config["config"] = cconfig.get_config_from_nested_dict(
-            {"key": "val"}
-        )
-        init_config["result_nid"] = "leaf_node"
-        init_config["method"] = "fit"
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
-        init_config["result_df"] = df
-        column_to_tags = {
+        config_ = {"key": "val"}
+        info_ = {
+            "df_info": dtfcorutil.get_df_info_as_string(df)
+        }
+        column_to_tags_dict = {
             "col0": ["feature_col"],
             "col1": ["target_col", "step_0"],
             "col2": ["target_col", "step_1"],
             "col3": ["prediction_col", "step_0"],
             "col4": ["prediction_col", "step_1"],
         }
-        init_config["column_to_tags"] = cconfig.get_config_from_nested_dict(column_to_tags)
-        info_ordered_dict = collections.OrderedDict(
-            {"df_info": dtfcorutil.get_df_info_as_string(df)}
-        )
-        init_config["info"] = cconfig.get_config_from_nested_dict(info_ordered_dict)
+        init_dict = {
+            "config": config_,
+            "result_nid": "leaf_node",
+            "method": "fit",
+            "result_df": df,
+            "column_to_tags": column_to_tags_dict,
+            "info": info_,
+            "payload": None,
+
+        }
+        init_config = cconfig.get_config_from_nested_dict(init_dict)
         return init_config

@@ -33,7 +33,6 @@ class ResultBundle(abc.ABC):
     """
     Abstract class for storing DAG results.
     """
-
     def __init__(
         self,
         config: cconfig.Config,
@@ -65,6 +64,8 @@ class ResultBundle(abc.ABC):
         if result_df is not None:
             hdbg.dassert_isinstance(result_df, pd.DataFrame)
         self._result_df = result_df
+        # if isinstance(column_to_tags, cconfig.Config):
+        #     column_to_tags = column_to_tags.to_dict()
         self._column_to_tags = column_to_tags
         self._info = info
         self._payload = payload
@@ -198,16 +199,10 @@ class ResultBundle(abc.ABC):
         if self._column_to_tags is not None:
             # TODO(gp): Cache it or compute it the first time.
             tag_to_columns: Dict[Any, List[Any]] = {}
-            if type(self._column_to_tags) != collections.OrderedDict:
-                for column, tags in self._column_to_tags.to_dict().items():
-                    for tag in tags:
-                        tag_to_columns.setdefault(tag, []).append(column)
-                return tag_to_columns
-            else:
-                for column, tags in self._column_to_tags.items():
-                    for tag in tags:
-                        tag_to_columns.setdefault(tag, []).append(column)
-                return tag_to_columns
+            for column, tags in self._column_to_tags.items():
+                for tag in tags:
+                    tag_to_columns.setdefault(tag, []).append(column)
+            return tag_to_columns
         return None
 
     @property
@@ -259,9 +254,8 @@ class ResultBundle(abc.ABC):
         serialized_bundle["class"] = self.__class__.__name__
         if commit_hash:
             serialized_bundle["commit_hash"] = hgit.get_current_commit_hash()
-        #
+        # Convert to a `Config`.
         serialized_bundle = cconfig.get_config_from_nested_dict(serialized_bundle)
-        #
         return serialized_bundle
 
     @classmethod
@@ -270,7 +264,7 @@ class ResultBundle(abc.ABC):
         Initialize `ResultBundle` from config.
         """
         # In a `Config` dicts are configs but the class accepts `info` and
-        # `column_to_tags`` as dicts.
+        # `column_to_tags` as dicts.
         column_to_tags = serialized_bundle["column_to_tags"]
         if column_to_tags:
             column_to_tags = column_to_tags.to_dict()
