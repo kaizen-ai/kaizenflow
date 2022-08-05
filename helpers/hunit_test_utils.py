@@ -425,5 +425,5 @@ def check_env_to_str(self_: Any, exp: str, *,
     act = hunitest.filter_text("get_repo_map", act)
     act = hunitest.filter_text("AM_HOST_", act)
     if skip_secrets_vars:
-        act = hunitest.filter_text("AM_AWS_|AM_TELEGRAM_TOKEN|GH_ACTION_ACCESS_TOKEN", act)
+        act = hunitest.filter_text("AM_AWS_|CK_AWS_|AM_TELEGRAM_TOKEN|GH_ACTION_ACCESS_TOKEN", act)
     self_.assert_equal(act, exp, fuzzy_match=True, purify_text=True)
