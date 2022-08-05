@@ -253,12 +253,8 @@ class ResultBundle(abc.ABC):
         serialized_bundle["result_nid"] = self._result_nid
         serialized_bundle["method"] = self._method
         serialized_bundle["result_df"] = self._result_df
-        # if self._column_to_tags is not None:
-        #     serialized_bundle["column_to_tags"] = ccocouti.get_config_from_nested_dict(self._column_to_tags)
         serialized_bundle["column_to_tags"] = self._column_to_tags
         info = self._info
-        # if info is not None:
-        #     info = cconfig.get_config_from_nested_dict(info)
         serialized_bundle["info"] = info
         serialized_bundle["payload"] = self._payload
         serialized_bundle["class"] = self.__class__.__name__
@@ -278,8 +274,6 @@ class ResultBundle(abc.ABC):
         if column_to_tags:
             column_to_tags = column_to_tags.to_dict()
         info = serialized_bundle["info"]
-        # if info:
-        #     info = info.to_dict()
         rb = cls(
             config=serialized_bundle["config"],
             result_nid=serialized_bundle["result_nid"],
