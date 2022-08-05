@@ -81,7 +81,7 @@ def compute_target_positions_cross_sectionally(
         hpandas.df_to_str(target_position_signs.sum(axis=1)),
     )
     volatility = volatility.clip(lower=volatility_lower_bound)
-    target_positions = target_position_signs.divide(volatility ** 2)
+    target_positions = target_position_signs.divide(volatility**2)
     _LOG.debug(
         "target_positions prior to gmv scaling=\n%s",
         hpandas.df_to_str(target_positions, num_rows=10),
@@ -150,8 +150,8 @@ def compute_target_positions_longitudinally(
         impute `spread_lower_bound`.
     """
     # TODO(Paul): Some callers compute at a single time step with an
-    # integer-indexed dataframe. Either update the callers to use a timestamp
-    # or relax constraints uniformly in this file.
+    #  integer-indexed dataframe. Either update the callers to use a timestamp
+    #  or relax constraints uniformly in this file.
     # hpandas.dassert_time_indexed_df(
     #     prediction, allow_empty=True, strictly_increasing=True
     # )
@@ -196,7 +196,10 @@ def compute_target_positions_longitudinally(
     mask = pred_term.multiply(vol_to_spread_term) <= gamma
     prediction = prediction[~mask]
     prediction = prediction.reindex(index=non_nan_idx)
-    prediction[mask] = 0.0
+    # TODO(Paul): This can arise if nothing is masked out. Revisit and test.
+    # if not prediction[mask].isnull().all().all():
+    #     prediction[mask] = 0.0
+    prediction = prediction.fillna(0.0)
     # Add back the all-NaN rows.
     prediction = prediction.reindex(index=idx)
     #

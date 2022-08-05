@@ -830,6 +830,7 @@ def pytest_repro(  # type: ignore
     file_name="./.pytest_cache/v/cache/lastfailed",
     show_stacktrace=False,
     create_script=True,
+    script_name="./tmp.pytest_repro.sh",
 ):
     """
     Generate commands to reproduce the failed tests after a `pytest` run.
@@ -983,7 +984,6 @@ def pytest_repro(  # type: ignore
             res += full_traceback
     _LOG.info("%s", failed_test_output_str)
     if create_script:
-        script_name = "./tmp.pytest_repro.sh"
         script_txt = ["pytest \\"]
         script_txt.extend([f"  {t} \\" for t in targets])
         script_txt.append("  $*")
