@@ -494,6 +494,9 @@ def get_RealTimeDagRunner_from_System(
 def get_DataFramePortfolio_from_System(
     system: dtfsyssyst.System,
 ) -> oms.Portfolio:
+    """
+    Build a `DataFramePortfolio` from a system config.
+    """
     event_loop = system.config["event_loop_object"]
     market_data = system.market_data
     mark_to_market_col = system.config["portfolio_config", "mark_to_market_col"]
@@ -519,6 +522,9 @@ def get_DataFramePortfolio_from_System(
 def get_DatabasePortfolio_from_System(
     system: dtfsyssyst.System,
 ) -> oms.Portfolio:
+    """
+    Build a `DatabasePortfolio` from a system config.
+    """
     event_loop = system.config["event_loop_object"]
     db_connection = system.config["db_connection_object"]
     market_data = system.market_data
@@ -546,6 +552,9 @@ def get_DatabasePortfolio_from_System(
 def apply_Portfolio_config(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
+    """
+    Extend system config with parameters for `Portfolio` init.
+    """
     system.config["portfolio_config", "mark_to_market_col"] = "close"
     system.config["portfolio_config", "pricing_method"] = "twap.5T"
     system.config["portfolio_config", "column_remap"] = {
