@@ -4,12 +4,12 @@ Import as:
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
-import datetime
 import logging
 from typing import Any, Dict
 
 import pandas as pd
 
+import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow.system.system as dtfsyssyst
@@ -77,6 +77,40 @@ def get_Cx_RealTimeMarketData_example1(
 
 
 # #############################################################################
+# Process forecasts configs.
+# #############################################################################
+
+
+def get_Cx_process_forecasts_dict_example1(
+    system: dtfsyssyst.System,
+) -> Dict[str, Any]:
+    """
+    Get the dictionary with `ProcessForecastsNode` config params for C1b pipeline.
+    """
+    prediction_col = "vwap.ret_0.vol_adj_2_hat"
+    volatility_col = "vwap.ret_0.vol"
+    spread_col = None
+    order_duration_in_mins = 5
+    style = "cross_sectional"
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0, 
+        "target_gmv": 1e5,
+    }
+    log_dir = None
+    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
+        system.portfolio,
+        prediction_col,
+        volatility_col,
+        spread_col,
+        order_duration_in_mins,
+        style,
+        compute_target_positions_kwargs,
+        log_dir,
+    )
+    return process_forecasts_dict
+
+
+# #############################################################################
 # DAG instances.
 # #############################################################################
 
@@ -124,115 +158,20 @@ def get_Cx_RealTimeDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     return dag
 
 
-# TODO(Paul): Refactor this.
 def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     """
-    Build a DAG with a real time data source and forecast processor.
+    Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode`.
     """
     hdbg.dassert_isinstance(system, dtfsys.System)
     system = dtfsys.apply_history_lookback(system)
     dag = dtfsys.add_real_time_data_source(system)
-    # Copied from E8_system_example.py
-    # Configure a `ProcessForecast` node.
-    # TODO(gp): @all we should use get_process_forecasts_dict_example1 or a similar
-    #  function.
-    prediction_col = system.config["research_pnl", "prediction_col"]
-    volatility_col = system.config["research_pnl", "volatility_col"]
-    spread_col = None
-    bulk_frac_to_remove = 0.0
-    target_gmv = 1e5
-    log_dir = None
-    # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
-    order_type = "price@twap"
-    process_forecasts_config_dict = {
-        "order_config": {
-            "order_type": order_type,
-            "order_duration_in_mins": 5,
-        },
-        "optimizer_config": {
-            "backend": "pomo",
-            "params": {
-                "style": "cross_sectional",
-                "kwargs": {
-                    "bulk_frac_to_remove": bulk_frac_to_remove,
-                    "bulk_fill_method": "zero",
-                    "target_gmv": target_gmv,
-                },
-            },
-        },
-        "ath_start_time": datetime.time(9, 30),
-        "trading_start_time": datetime.time(9, 30),
-        "ath_end_time": datetime.time(16, 40),
-        "trading_end_time": datetime.time(16, 40),
-        "execution_mode": "real_time",
-        "log_dir": log_dir,
-    }
-    system.config["process_forecasts_config"] = {
-        "prediction_col": prediction_col,
-        "volatility_col": volatility_col,
-        "spread_col": spread_col,
-        "portfolio": system.portfolio,
-        "process_forecasts_config": process_forecasts_config_dict,
-    }
-    # Append the ProcessForecast node.
-    stage = "process_forecasts"
-    _LOG.debug("stage=%s", stage)
-    node = dtfsys.ProcessForecastsNode(
-        stage, **system.config["process_forecasts_config"]
+    # Configure a `ProcessForecastNode`.
+    process_forecasts_config = get_Cx_process_forecasts_dict_example1(
+        system
     )
-    dag.append_to_tail(node)
+    system.config[
+        "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
+    # Append the `ProcessForecastNode`.
+    dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag
-
-
-# #############################################################################
-# Dict builders.
-# #############################################################################
-
-
-def get_process_forecasts_dict_example5(
-    system: dtfsyssyst.System,
-) -> Dict[str, Any]:
-    """
-    Get the dictionary with process_forecasts config params for C1b pipeline.
-    """
-    prediction_col = system.config["research_pnl", "prediction_col"]
-    volatility_col = system.config["research_pnl", "volatility_col"]
-    spread_col = None
-    bulk_frac_to_remove = 0.0
-    target_gmv = 1e5
-    log_dir = None
-    # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
-    order_type = "price@twap"
-    forecast_evaluator_from_prices_dict = None
-    process_forecasts_config_dict = {
-        "order_config": {
-            "order_type": order_type,
-            "order_duration_in_mins": 5,
-        },
-        "optimizer_config": {
-            "backend": "pomo",
-            "params": {
-                "style": "cross_sectional",
-                "kwargs": {
-                    "bulk_frac_to_remove": bulk_frac_to_remove,
-                    "bulk_fill_method": "zero",
-                    "target_gmv": target_gmv,
-                },
-            },
-        },
-        "ath_start_time": datetime.time(9, 30),
-        "trading_start_time": datetime.time(9, 30),
-        "ath_end_time": datetime.time(16, 40),
-        "trading_end_time": datetime.time(16, 40),
-        "execution_mode": "real_time",
-        "log_dir": log_dir,
-    }
-    process_forecasts_dict = {
-        "prediction_col": prediction_col,
-        "volatility_col": volatility_col,
-        "spread_col": spread_col,
-        "portfolio": system.portfolio,
-        "process_forecasts_config": process_forecasts_config_dict,
-        "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
-    }
-    return process_forecasts_dict

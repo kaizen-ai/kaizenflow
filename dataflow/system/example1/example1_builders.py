@@ -3,7 +3,6 @@ Import as:
 
 import dataflow.system.example1.example1_builders as dtfsexexbu
 """
-import datetime
 import logging
 from typing import Any, Dict
 
@@ -13,6 +12,7 @@ import dataflow.core as dtfcore
 # TODO(gp): We can't use dtfsys because we are inside dataflow/system.
 #  Consider moving out Example1 from this dir somehow so that we can use dtfsys
 #  like we do for other systems.
+import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
@@ -59,41 +59,25 @@ def get_Example1_process_forecasts_dict_example1(
     prediction_col = "feature1"
     volatility_col = "vwap.ret_0.vol"
     spread_col = None
-    bulk_frac_to_remove = 0.0
-    target_gmv = 1e5
+    order_duration_in_mins = 5
+    style = "cross_sectional"
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0, 
+        "bulk_fill_method": "zero",
+        "target_gmv": 1e5,
+    }
     log_dir = None
-    order_type = "price@twap"
-    process_forecasts_config_dict = {
-        "order_config": {
-            "order_type": order_type,
-            "order_duration_in_mins": 5,
-        },
-        "optimizer_config": {
-            "backend": "pomo",
-            "params": {
-                "style": "cross_sectional",
-                "kwargs": {
-                    "bulk_frac_to_remove": bulk_frac_to_remove,
-                    "bulk_fill_method": "zero",
-                    "target_gmv": target_gmv,
-                },
-            },
-        },
-        "ath_start_time": datetime.time(9, 30),
-        "trading_start_time": datetime.time(9, 30),
-        "ath_end_time": datetime.time(16, 40),
-        "trading_end_time": datetime.time(16, 40),
-        "execution_mode": "real_time",
-        "log_dir": log_dir,
-    }
-    process_forecasts_config = {
-        "prediction_col": prediction_col,
-        "volatility_col": volatility_col,
-        "spread_col": spread_col,
-        "portfolio": system.portfolio,
-        "process_forecasts_config": process_forecasts_config_dict,
-    }
-    return process_forecasts_config
+    process_forecasts_dict = dtfsysinod.get_process_forecasts_dict_example1(
+        system.portfolio,
+        prediction_col,
+        volatility_col,
+        spread_col,
+        order_duration_in_mins,
+        style,
+        compute_target_positions_kwargs,
+        log_dir,
+    )
+    return process_forecasts_dict
 
 
 # #############################################################################

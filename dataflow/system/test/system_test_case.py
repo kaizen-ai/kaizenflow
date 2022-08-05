@@ -395,10 +395,12 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            actual = _get_signature_from_result_bundle(system,
-                                                       result_bundles,
-                                                       add_system_config,
-                                                       add_run_signature)
+            actual = _get_signature_from_result_bundle(
+                system,
+                result_bundles,
+                add_system_config,
+                add_run_signature
+            )
             return actual
 
     def _test1(self, system: dtfsyssyst.System) -> None:
