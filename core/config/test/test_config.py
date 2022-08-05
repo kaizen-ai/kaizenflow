@@ -1,3 +1,4 @@
+import collections
 import datetime
 import logging
 import pprint
@@ -1094,14 +1095,14 @@ class Test_make_read_only1(hunitest.TestCase):
 class Test_to_dict1(hunitest.TestCase):
     # TODO(Grisha): @Max add a basic test that covers a trivial case, i.e.
     # just a regular config without any config-value.
-    # TODO(Grisha): @Max add a test for a config with an empty subconfig and 
+    # TODO(Grisha): @Max add a test for a config with an empty subconfig and
     # also check length.
     def test1(self) -> None:
         """
         ...
         """
         sub_config_dict = {
-            "sub_key1": "sub_value1", 
+            "sub_key1": "sub_value1",
             "sub_key2": "sub_value2",
         }
         config_as_dict = {
@@ -1110,9 +1111,26 @@ class Test_to_dict1(hunitest.TestCase):
             "param3_as_config": sub_config_dict,
         }
         config = cconfig.get_config_from_nested_dict(config_as_dict)
-        config_to_dict = config.to_dict()
-        check = isinstance(config_to_dict["param3_as_config"], dict)
+        #
+        exp = r"""
+        param1: 1
+        param2: 2
+        param3_as_config:
+          sub_key1: sub_value1
+          sub_key2: sub_value2
+        """
+        act = str(config)
+        self.assert_equal(act, exp, fuzzy_match=True)
+        #
+        config_as_dict2 = config.to_dict()
+        check = isinstance(config_as_dict2["param3_as_config"], dict)
         self.assertTrue(check)
+        #
+        # Ensure that the round trip transform is correct.
+        dict1 = collections.OrderedDict(config_as_dict)
+        dict2 = config_as_dict2
+        dict2["param3_as_config"] = dict(dict2["param3_as_config"])
+        self.assert_equal(str(dict1), str(dict2))
 
 
 # TODO(gp): Unit tests all the functions.
