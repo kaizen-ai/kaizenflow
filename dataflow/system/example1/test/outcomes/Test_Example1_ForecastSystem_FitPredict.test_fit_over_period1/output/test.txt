@@ -223,14 +223,14 @@ object.str:
             ]
         }
     config='' <core.config.config_.Config>
-    _column_to_tags_mapping='[]' <list>
+    _column_to_tags_mapping='None' <NoneType>
     _result_nid='compress_rets' <str>
 object.builder_function:
   market_object: dataflow.system.example1.example1_forecast_system._get_market_data
   dag_object: dataflow.system.example1.example1_forecast_system._get_dag
   dag_runner_object: dataflow.system.example1.example1_forecast_system._get_dag_runner
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 6 nodes and 5 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
-dag_runner_object: FitPredictDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 6 nodes and 5 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=[] <list>, _result_nid=compress_rets <str>)
+dag_runner_object: FitPredictDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 6 nodes and 5 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=compress_rets <str>)
 ################################################################################
 vwap.ret_0.vol_adj.c
 ################################################################################
