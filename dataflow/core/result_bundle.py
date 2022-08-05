@@ -269,10 +269,14 @@ class ResultBundle(abc.ABC):
         """
         Initialize `ResultBundle` from config.
         """
+        # In a `Config` dicts are configs but the class accepts `info` and
+        # `column_to_tags`` as dicts.
         column_to_tags = serialized_bundle["column_to_tags"]
         if column_to_tags:
             column_to_tags = column_to_tags.to_dict()
         info = serialized_bundle["info"]
+        if info:
+            info = info.to_dict()
         rb = cls(
             config=serialized_bundle["config"],
             result_nid=serialized_bundle["result_nid"],

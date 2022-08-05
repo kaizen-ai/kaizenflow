@@ -87,22 +87,27 @@ class TestResultBundle(hunitest.TestCase):
     def _get_init_config() -> cconfig.Config:
         # TODO(gp): Factor out common part.
         df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
-        config_ = cconfig.get_config_from_nested_dict({"key": "val"})
-        info_ = cconfig.get_config_from_nested_dict({"df_info": dtfcorutil.get_df_info_as_string(df)})
-        init_dict = {}
-        init_dict["config"] = config_
-        init_dict["result_nid"] = "leaf_node"
-        init_dict["method"] = "fit"
-        init_dict["result_df"] = df
-        init_dict["column_to_tags"] = {
-                    "col0": ["feature_col"],
-                    "col1": ["target_col", "step_0"],
-                    "col2": ["target_col", "step_1"],
-                    "col3": ["prediction_col", "step_0"],
-                    "col4": ["prediction_col", "step_1"],
-                }
-        init_dict["info"]= info_,
-        init_dict["payload"] = None
+        config_ = {"key": "val"}
+        info_ = {
+            "df_info": dtfcorutil.get_df_info_as_string(df)
+        }
+        column_to_tags_dict = {
+            "col0": ["feature_col"],
+            "col1": ["target_col", "step_0"],
+            "col2": ["target_col", "step_1"],
+            "col3": ["prediction_col", "step_0"],
+            "col4": ["prediction_col", "step_1"],
+        }
+        init_dict = {
+            "config": config_,
+            "result_nid": "leaf_node",
+            "method": "fit",
+            "result_df": df,
+            "column_to_tags": column_to_tags_dict,
+            "info": info_,
+            "payload": None,
+
+        }
         #
         init_config = cconfig.get_config_from_nested_dict(init_dict)
         return init_config
