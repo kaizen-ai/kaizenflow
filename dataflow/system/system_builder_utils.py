@@ -304,16 +304,16 @@ def apply_dag_property(
     are in the process of building it and it will cause infinite
     recursion.
     """
-    dag_builder = system.config["dag_builder_object"]
-    fast_prod_setup = system.config.get(
-        ["dag_builder_config", "fast_prod_setup"], False
-    )
-    _LOG.debug(hprint.to_str("fast_prod_setup"))
-    if fast_prod_setup:
-        _LOG.warning("Setting fast prod setup")
-        system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
-            system.config["dag_config"]
-        )
+    # dag_builder = system.config["dag_builder_object"]
+    # fast_prod_setup = system.config.get(
+    #     ["dag_builder_config", "fast_prod_setup"], False
+    # )
+    # _LOG.debug(hprint.to_str("fast_prod_setup"))
+    # if fast_prod_setup:
+    #     _LOG.warning("Setting fast prod setup")
+    #     system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
+    #         system.config["dag_config"]
+    #     )
     # Set DAG properties.
     debug_mode_config = system.config.get(
         ["dag_property_config", "debug_mode_config"], None
