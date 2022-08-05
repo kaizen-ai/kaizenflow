@@ -6,7 +6,6 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 
 import asyncio
 import logging
-import os
 from typing import Callable, List, Tuple, Union
 
 import pandas as pd
@@ -53,10 +52,11 @@ def get_signature(
 
 
 def _get_signature_from_result_bundle(
-        system: dtfsyssyst.System,
-        result_bundles: List[dtfcore.ResultBundle],
-        add_system_config: bool,
-        add_run_signature: bool) -> str:
+    system: dtfsyssyst.System,
+    result_bundles: List[dtfcore.ResultBundle],
+    add_system_config: bool,
+    add_run_signature: bool,
+) -> str:
     portfolio = system.portfolio
     dag_runner = system.dag_runner
     # Compute signature.
@@ -69,7 +69,7 @@ def _get_signature_from_result_bundle(
         txt.append(hprint.frame("compute_run_signature"))
         result_bundles = result_bundles[0]
         result_bundle = result_bundles[-1]
-        #result_bundle.result_df = result_bundle.result_df.tail(40)
+        # result_bundle.result_df = result_bundle.result_df.tail(40)
         system_tester = SystemTester()
         # Check output.
         forecast_evaluator_from_prices_dict = system.config[
@@ -352,28 +352,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     - Simulated broker
     """
 
-    def _test_save_data(
-        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
-    ) -> None:
-        """
-        Generate data used in this test.
-
-        E.g.,
-        ```
-        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
-        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
-        ```
-        """
-        # period = "last_day"
-        # period = pd.Timedelta("15D")
-        limit = None
-        mdata.save_market_data(market_data, file_name, period, limit)
-        _LOG.warning("Updated file '%s'", file_name)
-        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
-
     # TODO(Grisha): there is some code that is common for `Time_ForecastSystem_with_DataFramePortfolio_TestCase1`
     # and `Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1` that we should factor out.
     @staticmethod
@@ -395,11 +373,32 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            actual = _get_signature_from_result_bundle(system,
-                                                       result_bundles,
-                                                       add_system_config,
-                                                       add_run_signature)
+            actual = _get_signature_from_result_bundle(
+                system, result_bundles, add_system_config, add_run_signature
+            )
             return actual
+
+    def _test_save_data(
+        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
+    ) -> None:
+        """
+        Generate data used in this test.
+
+        E.g.,
+        ```
+        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
+        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
+        ```
+        """
+        # period = "last_day"
+        # period = pd.Timedelta("15D")
+        limit = None
+        mdata.save_market_data(market_data, file_name, period, limit)
+        _LOG.warning("Updated file '%s'", file_name)
+        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
 
     def _test1(self, system: dtfsyssyst.System) -> None:
         """
@@ -484,10 +483,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             # Check.
-            actual = _get_signature_from_result_bundle(system,
-                                                       result_bundles,
-                                                       add_system_config,
-                                                       add_run_signature)
+            actual = _get_signature_from_result_bundle(
+                system, result_bundles, add_system_config, add_run_signature
+            )
             return actual
 
     def _test1(self, system: dtfsyssyst.System) -> None:
@@ -523,17 +521,22 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         actual = self._test_dataframe_portfolio_helper(
             system_with_dataframe_portfolio,
             add_system_config=add_system_config,
-            add_run_signature=add_run_signature
+            add_run_signature=add_run_signature,
         )
         hdbg.dassert_lte(10, len(actual.split("\n")))
         expected = self._test_database_portfolio_helper(
             system_with_database_portfolio,
             add_system_config=add_system_config,
-            add_run_signature=add_run_signature
+            add_run_signature=add_run_signature,
         )
         hdbg.dassert_lte(10, len(expected.split("\n")))
-        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True,
-                purify_expected_text=True)
+        self.assert_equal(
+            actual,
+            expected,
+            fuzzy_match=True,
+            purify_text=True,
+            purify_expected_text=True,
+        )
 
 
 # TODO(gp): Add a longer test with more assets once things are working.
