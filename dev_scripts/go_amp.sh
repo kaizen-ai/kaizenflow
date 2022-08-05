@@ -15,6 +15,10 @@ if [[ -z $IDX ]]; then
 fi;
 
 DIR_NAME="$HOME/src/$DIR_PREFIX$IDX"
+if [[ ! -d $DIR_NAME ]]; then
+    echo "Can't find dir $DIR_NAME"
+    exit -1
+fi;
 FILE="dev_scripts/tmux_amp.sh $DIR_PREFIX $IDX"
 echo "> $DIR_NAME/$FILE"
 
