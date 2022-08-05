@@ -13,6 +13,33 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+def _get_init_config() -> cconfig.Config:
+    df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
+    config_ = {"key": "val"}
+    info_ = {
+        "df_info": dtfcorutil.get_df_info_as_string(df)
+    }
+    column_to_tags_dict = {
+        "col0": ["feature_col"],
+        "col1": ["target_col", "step_0"],
+        "col2": ["target_col", "step_1"],
+        "col3": ["prediction_col", "step_0"],
+        "col4": ["prediction_col", "step_1"],
+    }
+    init_dict = {
+        "config": config_,
+        "result_nid": "leaf_node",
+        "method": "fit",
+        "result_df": df,
+        "column_to_tags": column_to_tags_dict,
+        "info": info_,
+        "payload": None,
+
+    }
+    init_config = cconfig.get_config_from_nested_dict(init_dict)
+    return init_config
+
+
 class TestResultBundle(hunitest.TestCase):
     def test_to_config1(self) -> None:
         """
@@ -29,7 +56,7 @@ class TestResultBundle(hunitest.TestCase):
         Initialize a `ResultBundle` from a config.
         """
         # Initialize a `ResultBundle` from a config.
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         rb = dtfcorebun.ResultBundle.from_config(init_config)
         # Check.
         actual_config = rb.to_config(commit_hash=False)
@@ -41,7 +68,7 @@ class TestResultBundle(hunitest.TestCase):
         Round-trip conversion using `from_config()` and `to_config()`.
         """
         # Initialize a `ResultBundle` from a config.
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         result_bundle = dtfcorebun.ResultBundle.from_config(init_config)
         # This pattern is used in `master_backtest.py` before pickling.
         rb_as_dict = result_bundle.to_config().to_dict()
@@ -83,39 +110,11 @@ class TestResultBundle(hunitest.TestCase):
         expected = ["col2", "col4"]
         self.assert_equal(str(actual), str(expected))
 
-    @staticmethod
-    def _get_init_config() -> cconfig.Config:
-        # TODO(gp): Factor out common part.
-        df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
-        config_ = {"key": "val"}
-        info_ = {
-            "df_info": dtfcorutil.get_df_info_as_string(df)
-        }
-        column_to_tags_dict = {
-            "col0": ["feature_col"],
-            "col1": ["target_col", "step_0"],
-            "col2": ["target_col", "step_1"],
-            "col3": ["prediction_col", "step_0"],
-            "col4": ["prediction_col", "step_1"],
-        }
-        init_dict = {
-            "config": config_,
-            "result_nid": "leaf_node",
-            "method": "fit",
-            "result_df": df,
-            "column_to_tags": column_to_tags_dict,
-            "info": info_,
-            "payload": None,
-
-        }
-        init_config = cconfig.get_config_from_nested_dict(init_dict)
-        return init_config
-
     def _get_result_bundle(self) -> dtfcorebun.ResultBundle:
         """
         Initialize a `ResultBundle` from a config.
         """
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         rb = dtfcorebun.ResultBundle.from_config(init_config)
         return rb
 
@@ -125,34 +124,34 @@ class TestResultBundle(hunitest.TestCase):
 
 class TestPredictionResultBundle(hunitest.TestCase):
     def test_to_config1(self) -> None:
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual_config = prb.to_config(commit_hash=False)
         self.check_string(f"config without 'commit_hash' field:\n{actual_config}")
 
     def test_feature_col_names1(self) -> None:
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.feature_col_names
         expected = ["col0"]
         self.assertListEqual(actual, expected)
 
     def test_target_col_names1(self) -> None:
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.target_col_names
         expected = ["col1", "col2"]
         self.assertListEqual(actual, expected)
 
     def test_prediction_col_names1(self) -> None:
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.prediction_col_names
         expected = ["col3", "col4"]
         self.assertListEqual(actual, expected)
 
     def test_get_target_and_prediction_col_names_for_tags1(self) -> None:
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.get_target_and_prediction_col_names_for_tags(
             tags=["step_0", "step_1"]
@@ -164,7 +163,7 @@ class TestPredictionResultBundle(hunitest.TestCase):
         """
         Try to extract columns with no target column for given tag.
         """
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         init_config["column_to_tags"].pop("col1")
         prb = dtfcorebun.PredictionResultBundle(**init_config)
         with self.assertRaises(AssertionError):
@@ -174,7 +173,7 @@ class TestPredictionResultBundle(hunitest.TestCase):
         """
         Extract columns with no target column for another tag.
         """
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         init_config["column_to_tags"].pop("col1")
         prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.get_target_and_prediction_col_names_for_tags(tags=["step_1"])
@@ -182,7 +181,7 @@ class TestPredictionResultBundle(hunitest.TestCase):
         self.assertDictEqual(actual, expected)
 
     def test_get_targets_and_predictions_for_tags1(self) -> None:
-        init_config = self._get_init_config()
+        init_config = _get_init_config()
         prb = dtfcorebun.PredictionResultBundle(**init_config)
         actual = prb.get_targets_and_predictions_for_tags(
             tags=["step_0", "step_1"]
@@ -196,30 +195,3 @@ class TestPredictionResultBundle(hunitest.TestCase):
         for tag, (target, prediction) in actual.items():
             pd.testing.assert_series_equal(target, expected[tag][0])
             pd.testing.assert_series_equal(prediction, expected[tag][1])
-
-    @staticmethod
-    def _get_init_config() -> cconfig.Config:
-        df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
-        config_ = {"key": "val"}
-        info_ = {
-            "df_info": dtfcorutil.get_df_info_as_string(df)
-        }
-        column_to_tags_dict = {
-            "col0": ["feature_col"],
-            "col1": ["target_col", "step_0"],
-            "col2": ["target_col", "step_1"],
-            "col3": ["prediction_col", "step_0"],
-            "col4": ["prediction_col", "step_1"],
-        }
-        init_dict = {
-            "config": config_,
-            "result_nid": "leaf_node",
-            "method": "fit",
-            "result_df": df,
-            "column_to_tags": column_to_tags_dict,
-            "info": info_,
-            "payload": None,
-
-        }
-        init_config = cconfig.get_config_from_nested_dict(init_dict)
-        return init_config

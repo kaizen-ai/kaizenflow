@@ -64,8 +64,11 @@ class ResultBundle(abc.ABC):
         if result_df is not None:
             hdbg.dassert_isinstance(result_df, pd.DataFrame)
         self._result_df = result_df
-        # if isinstance(column_to_tags, cconfig.Config):
-        #     column_to_tags = column_to_tags.to_dict()
+        if isinstance(column_to_tags, cconfig.Config):
+            # It should be a dict but when we initialize `ResultBundle` using a config,
+            # e.g., `ResultBundle(**config)` the value is a config because dict-like 
+            # values are not allowed.
+            column_to_tags = column_to_tags.to_dict()
         self._column_to_tags = column_to_tags
         self._info = info
         self._payload = payload
