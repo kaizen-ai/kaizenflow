@@ -94,6 +94,7 @@ def get_Cx_process_forecasts_dict_example1(
     style = "cross_sectional"
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0, 
+        "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
     log_dir = None
