@@ -8,10 +8,12 @@ from typing import Any, Dict
 
 import pandas as pd
 
+import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import market_data as mdata
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -52,6 +54,7 @@ def adapt_dag_to_real_time(
     # Create and append the ProcessForecast node.
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
-    node = dtfsysinod.ProcessForecastsNode(stage, **process_forecasts_dict)
+    process_forecasts_dict = cconfig.get_config_from_nested_dict(process_forecasts_dict)
+    node = dtfsysinod.ProcessForecastsNode(stage, **process_forecasts_dict.to_dict())
     dag.append_to_tail(node)
     return dag
