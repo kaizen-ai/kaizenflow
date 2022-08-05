@@ -45,7 +45,7 @@ dag_builder_class: Example1_DagBuilder
 system_class: Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
 market_data_config:
   asset_id_col_name: asset_id
-  delay_in_secs: 0
+  delay_in_secs: 5
   initial_replayed_delay: 5
   asset_ids: [101]
   data:
@@ -77,259 +77,604 @@ research_forecast_evaluator_from_prices:
     target_gmv: 100000.0
     liquidate_at_end_of_day: False
 event_loop_object: <_EventLoop running=False closed=True debug=False>
-market_object: <market_data.replayed_market_data.ReplayedMarketData object>
+market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((120, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
+object.str:
+  market_object: <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+    _asset_id_col='asset_id' <str>
+    _asset_ids='[101]' <list>
+    _start_time_col_name='start_datetime' <str>
+    _end_time_col_name='end_datetime' <str>
+    _columns='None' <NoneType>
+    _sleep_in_secs='1.0' <float>
+    _timezone='America/New_York' <str>
+    _column_remap='None' <NoneType>
+    _filter_data_mode='assert' <str>
+    _max_iterations='120' <int>
+    _df= <pandas.core.frame.DataFrame>
+                                           start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+      2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+      2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+      2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+      ...
+      2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+      2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+      2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+    _knowledge_datetime_col_name='timestamp_db' <str>
+    _delay_in_secs='5' <int>
+  portfolio_object: <oms.portfolio.DatabasePortfolio at 0x>:
+    broker= <oms.broker.DatabaseBroker>
+      <oms.broker.DatabaseBroker at 0x>:
+        _strategy_id='SAU1' <str>
+        _account='candidate' <str>
+        market_data= <market_data.replayed_market_data.ReplayedMarketData>
+          <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+            _asset_id_col='asset_id' <str>
+            _asset_ids='[101]' <list>
+            _start_time_col_name='start_datetime' <str>
+            _end_time_col_name='end_datetime' <str>
+            _columns='None' <NoneType>
+            _sleep_in_secs='1.0' <float>
+            _timezone='America/New_York' <str>
+            _column_remap='None' <NoneType>
+            _filter_data_mode='assert' <str>
+            _max_iterations='120' <int>
+            _df= <pandas.core.frame.DataFrame>
+                                                   start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+              2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+              2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+              2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+              ...
+              2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+              2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+              2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+            _knowledge_datetime_col_name='timestamp_db' <str>
+            _delay_in_secs='5' <int>
+        _timestamp_col='end_datetime' <str>
+        _column_remap='{'bid': 'bid', 'ask': 'ask', 'midpoint': 'midpoint', 'price': 'close'}' <dict>
+        _orders='OrderedDict()' <collections.OrderedDict>
+        _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
+        _fills='[]' <list>
+        _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=xxx', closed: 0>' <psycopg2.extensions.connection>
+        _submitted_orders_table_name='submitted_orders' <str>
+        _accepted_orders_table_name='accepted_orders' <str>
+        _poll_kwargs= <dict>
+          {'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+            _asset_id_col='asset_id' <str>
+            _asset_ids='[101]' <list>
+            _start_time_col_name='start_datetime' <str>
+            _end_time_col_name='end_datetime' <str>
+            _columns='None' <NoneType>
+            _sleep_in_secs='1.0' <float>
+            _timezone='America/New_York' <str>
+            _column_remap='None' <NoneType>
+            _filter_data_mode='assert' <str>
+            _max_iterations='120' <int>
+            _df= <pandas.core.frame.DataFrame>
+                                                   start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+              2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+              2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+              2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+              ...
+              2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+              2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+              2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+            _knowledge_datetime_col_name='timestamp_db' <str>
+            _delay_in_secs='5' <int>>,
+           'sleep_in_secs': 1.0,
+           'timeout_in_secs': 10.0}
+        _submissions='OrderedDict()' <collections.OrderedDict>
+    _account='candidate' <str>
+    _timestamp_col='end_datetime' <str>
+    market_data= <market_data.replayed_market_data.ReplayedMarketData>
+      <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+        _asset_id_col='asset_id' <str>
+        _asset_ids='[101]' <list>
+        _start_time_col_name='start_datetime' <str>
+        _end_time_col_name='end_datetime' <str>
+        _columns='None' <NoneType>
+        _sleep_in_secs='1.0' <float>
+        _timezone='America/New_York' <str>
+        _column_remap='None' <NoneType>
+        _filter_data_mode='assert' <str>
+        _max_iterations='120' <int>
+        _df= <pandas.core.frame.DataFrame>
+                                               start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+          2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+          2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+          2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+          ...
+          2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+          2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+          2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+        _knowledge_datetime_col_name='timestamp_db' <str>
+        _delay_in_secs='5' <int>
+    _asset_id_col='asset_id' <str>
+    _mark_to_market_col='close' <str>
+    _pricing_type='twap' <str>
+    _bar_duration='5T' <str>
+    _max_num_bars='100' <int>
+    _asset_holdings= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _cash= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _assets_marked_to_market= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _flows= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _statistics= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='100' <int>
+        _odict='OrderedDict()' <collections.OrderedDict>
+    _retrieve_initial_holdings_from_db='False' <bool>
+    _initial_holdings= <pandas.core.series.Series>
+                curr_num_shares
+      asset_id
+       101                  0.0
+      -1              1000000.0
+    _initial_universe='Int64Index([101], dtype='int64', name='asset_id')' <pandas.core.indexes.numeric.Int64Index>
+    _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=xxx', closed: 0>' <psycopg2.extensions.connection>
+    _table_name='current_positions' <str>
+    _timestamp_to_snapshot_df='OrderedDict()' <collections.OrderedDict>
+    _net_cost= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
+      <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
+        _max_keys='None' <NoneType>
+        _odict='OrderedDict()' <collections.OrderedDict>
+  dag_object: <dataflow.core.dag.DAG at 0x>:
+    _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
+    _name='None' <NoneType>
+    _mode='strict' <str>
+    _save_node_io='' <str>
+    _profile_execution='False' <bool>
+    _dst_dir='None' <NoneType>
+    force_free_nodes='False' <bool>
+    nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecastsNode object>})]
+    edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
+    json=
+    {
+        "directed": true,
+        "graph": {},
+        "links": [
+            {
+                "df_in": "df_out",
+                "source": "resample",
+                "target": "compute_ret_0"
+            },
+            {
+                "df_in": "df_out",
+                "source": "compute_ret_0",
+                "target": "compute_vol"
+            },
+            {
+                "df_in": "df_out",
+                "source": "compute_vol",
+                "target": "adjust_rets"
+            },
+            {
+                "df_in": "df_out",
+                "source": "adjust_rets",
+                "target": "compress_rets"
+            },
+            {
+                "df_in": "df_out",
+                "source": "compress_rets",
+                "target": "process_forecasts"
+            },
+            {
+                "df_in": "df_out",
+                "source": "read_data",
+                "target": "resample"
+            }
+        ],
+        "multigraph": false,
+        "nodes": [
+            {
+                "id": "resample",
+                "stage": "GroupedColDfToDfTransformer"
+            },
+            {
+                "id": "compute_ret_0",
+                "stage": "GroupedColDfToDfTransformer"
+            },
+            {
+                "id": "compute_vol",
+                "stage": "SeriesToSeriesTransformer"
+            },
+            {
+                "id": "adjust_rets",
+                "stage": "GroupedColDfToDfTransformer"
+            },
+            {
+                "id": "compress_rets",
+                "stage": "GroupedColDfToDfTransformer"
+            },
+            {
+                "id": "read_data",
+                "stage": "RealTimeDataSource"
+            },
+            {
+                "id": "process_forecasts",
+                "stage": "ProcessForecastsNode"
+            }
+        ]
+    }
+  dag_runner_object: <dataflow.system.real_time_dag_runner.RealTimeDagRunner at 0x>:
+    dag= <dataflow.core.dag.DAG>
+      <dataflow.core.dag.DAG at 0x>:
+        _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
+        _name='None' <NoneType>
+        _mode='strict' <str>
+        _save_node_io='' <str>
+        _profile_execution='False' <bool>
+        _dst_dir='None' <NoneType>
+        force_free_nodes='False' <bool>
+        nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecastsNode object>})]
+        edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('read_data', 'resample', {'df_in': 'df_out'})]
+        json=
+        {
+            "directed": true,
+            "graph": {},
+            "links": [
+                {
+                    "df_in": "df_out",
+                    "source": "resample",
+                    "target": "compute_ret_0"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "compute_ret_0",
+                    "target": "compute_vol"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "compute_vol",
+                    "target": "adjust_rets"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "adjust_rets",
+                    "target": "compress_rets"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "compress_rets",
+                    "target": "process_forecasts"
+                },
+                {
+                    "df_in": "df_out",
+                    "source": "read_data",
+                    "target": "resample"
+                }
+            ],
+            "multigraph": false,
+            "nodes": [
+                {
+                    "id": "resample",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compute_ret_0",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compute_vol",
+                    "stage": "SeriesToSeriesTransformer"
+                },
+                {
+                    "id": "adjust_rets",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "compress_rets",
+                    "stage": "GroupedColDfToDfTransformer"
+                },
+                {
+                    "id": "read_data",
+                    "stage": "RealTimeDataSource"
+                },
+                {
+                    "id": "process_forecasts",
+                    "stage": "ProcessForecastsNode"
+                }
+            ]
+        }
+    config='' <core.config.config_.Config>
+    _column_to_tags_mapping='[]' <list>
+    _result_nid='process_forecasts' <str>
+    _execute_rt_loop_kwargs= <dict>
+      {'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+        _asset_id_col='asset_id' <str>
+        _asset_ids='[101]' <list>
+        _start_time_col_name='start_datetime' <str>
+        _end_time_col_name='end_datetime' <str>
+        _columns='None' <NoneType>
+        _sleep_in_secs='1.0' <float>
+        _timezone='America/New_York' <str>
+        _column_remap='None' <NoneType>
+        _filter_data_mode='assert' <str>
+        _max_iterations='120' <int>
+        _df= <pandas.core.frame.DataFrame>
+                                               start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+          2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+          2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+          2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+          ...
+          2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+          2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+          2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+        _knowledge_datetime_col_name='timestamp_db' <str>
+        _delay_in_secs='5' <int>>,
+       'sleep_interval_in_secs': 300,
+       'time_out_in_secs': 6900}
+    _dst_dir='None' <NoneType>
+    _fit_at_beginning='False' <bool>
+    _wake_up_timestamp='None' <NoneType>
+    _grid_time_in_secs='300' <int>
+    _events='[]' <list>
+object.builder_function:
+  market_object: dataflow.system.example1.example1_forecast_system._get_market_data
+  portfolio_object: dataflow.system.example1.example1_forecast_system._get_portfolio
+  dag_object: dataflow.system.example1.example1_forecast_system._get_dag
+  dag_runner_object: dataflow.system.example1.example1_forecast_system._get_dag_runner
 portfolio_object: # historical holdings=
 asset_id                      101      -1
-2000-01-01 09:35:01-05:00    0.00  1.00e+06
-2000-01-01 09:40:01-05:00 -994.04  1.10e+06
-2000-01-01 09:45:01-05:00  991.74  8.98e+05
-2000-01-01 09:50:01-05:00 -980.39  1.10e+06
-2000-01-01 09:55:01-05:00  991.74  8.97e+05
-2000-01-01 10:00:01-05:00 -991.74  1.10e+06
-2000-01-01 10:05:01-05:00  980.39  9.01e+05
-2000-01-01 10:10:01-05:00 -991.74  1.10e+06
-2000-01-01 10:15:01-05:00  991.74  8.98e+05
-2000-01-01 10:20:01-05:00 -980.39  1.10e+06
-2000-01-01 10:25:01-05:00  991.74  8.97e+05
-2000-01-01 10:30:01-05:00 -991.74  1.10e+06
-2000-01-01 10:35:01-05:00  980.39  9.01e+05
-2000-01-01 10:40:01-05:00 -991.74  1.10e+06
-2000-01-01 10:45:01-05:00  991.74  8.98e+05
-2000-01-01 10:50:01-05:00 -980.39  1.10e+06
-2000-01-01 10:55:01-05:00  991.74  8.97e+05
-2000-01-01 11:00:01-05:00 -991.74  1.10e+06
-2000-01-01 11:05:01-05:00  980.39  9.01e+05
-2000-01-01 11:10:01-05:00 -991.74  1.10e+06
-2000-01-01 11:15:01-05:00  991.74  8.98e+05
-2000-01-01 11:20:01-05:00 -980.39  1.10e+06
-2000-01-01 11:25:01-05:00  991.74  8.97e+05
+2000-01-01 09:35:06-05:00    0.00  1.00e+06
+2000-01-01 09:40:06-05:00 -994.04  1.10e+06
+2000-01-01 09:45:06-05:00  991.74  8.98e+05
+2000-01-01 09:50:06-05:00 -980.39  1.10e+06
+2000-01-01 09:55:06-05:00  991.74  8.97e+05
+2000-01-01 10:00:06-05:00 -991.74  1.10e+06
+2000-01-01 10:05:06-05:00  980.39  9.01e+05
+2000-01-01 10:10:06-05:00 -991.74  1.10e+06
+2000-01-01 10:15:06-05:00  991.74  8.98e+05
+2000-01-01 10:20:06-05:00 -980.39  1.10e+06
+2000-01-01 10:25:06-05:00  991.74  8.97e+05
+2000-01-01 10:30:06-05:00 -991.74  1.10e+06
+2000-01-01 10:35:06-05:00  980.39  9.01e+05
+2000-01-01 10:40:06-05:00 -991.74  1.10e+06
+2000-01-01 10:45:06-05:00  991.74  8.98e+05
+2000-01-01 10:50:06-05:00 -980.39  1.10e+06
+2000-01-01 10:55:06-05:00  991.74  8.97e+05
+2000-01-01 11:00:06-05:00 -991.74  1.10e+06
+2000-01-01 11:05:06-05:00  980.39  9.01e+05
+2000-01-01 11:10:06-05:00 -991.74  1.10e+06
+2000-01-01 11:15:06-05:00  991.74  8.98e+05
+2000-01-01 11:20:06-05:00 -980.39  1.10e+06
+2000-01-01 11:25:06-05:00  991.74  8.97e+05
 # historical holdings marked to market=
 asset_id                         101      -1
-2000-01-01 09:35:01-05:00       0.00  1.00e+06
-2000-01-01 09:40:01-05:00 -100231.94  1.10e+06
-2000-01-01 09:45:01-05:00  101157.02  8.98e+05
-2000-01-01 09:50:01-05:00  -98856.21  1.10e+06
-2000-01-01 09:55:01-05:00  100000.00  8.97e+05
-2000-01-01 10:00:01-05:00 -101157.02  1.10e+06
-2000-01-01 10:05:01-05:00   98856.21  9.01e+05
-2000-01-01 10:10:01-05:00 -100000.00  1.10e+06
-2000-01-01 10:15:01-05:00  101157.02  8.98e+05
-2000-01-01 10:20:01-05:00  -98856.21  1.10e+06
-2000-01-01 10:25:01-05:00  100000.00  8.97e+05
-2000-01-01 10:30:01-05:00 -101157.02  1.10e+06
-2000-01-01 10:35:01-05:00   98856.21  9.01e+05
-2000-01-01 10:40:01-05:00 -100000.00  1.10e+06
-2000-01-01 10:45:01-05:00  101157.02  8.98e+05
-2000-01-01 10:50:01-05:00  -98856.21  1.10e+06
-2000-01-01 10:55:01-05:00  100000.00  8.97e+05
-2000-01-01 11:00:01-05:00 -101157.02  1.10e+06
-2000-01-01 11:05:01-05:00   98856.21  9.01e+05
-2000-01-01 11:10:01-05:00 -100000.00  1.10e+06
-2000-01-01 11:15:01-05:00  101157.02  8.98e+05
-2000-01-01 11:20:01-05:00  -98856.21  1.10e+06
-2000-01-01 11:25:01-05:00  100000.00  8.97e+05
+2000-01-01 09:35:06-05:00       0.00  1.00e+06
+2000-01-01 09:40:06-05:00 -100231.94  1.10e+06
+2000-01-01 09:45:06-05:00  101157.02  8.98e+05
+2000-01-01 09:50:06-05:00  -98856.21  1.10e+06
+2000-01-01 09:55:06-05:00  100000.00  8.97e+05
+2000-01-01 10:00:06-05:00 -101157.02  1.10e+06
+2000-01-01 10:05:06-05:00   98856.21  9.01e+05
+2000-01-01 10:10:06-05:00 -100000.00  1.10e+06
+2000-01-01 10:15:06-05:00  101157.02  8.98e+05
+2000-01-01 10:20:06-05:00  -98856.21  1.10e+06
+2000-01-01 10:25:06-05:00  100000.00  8.97e+05
+2000-01-01 10:30:06-05:00 -101157.02  1.10e+06
+2000-01-01 10:35:06-05:00   98856.21  9.01e+05
+2000-01-01 10:40:06-05:00 -100000.00  1.10e+06
+2000-01-01 10:45:06-05:00  101157.02  8.98e+05
+2000-01-01 10:50:06-05:00  -98856.21  1.10e+06
+2000-01-01 10:55:06-05:00  100000.00  8.97e+05
+2000-01-01 11:00:06-05:00 -101157.02  1.10e+06
+2000-01-01 11:05:06-05:00   98856.21  9.01e+05
+2000-01-01 11:10:06-05:00 -100000.00  1.10e+06
+2000-01-01 11:15:06-05:00  101157.02  8.98e+05
+2000-01-01 11:20:06-05:00  -98856.21  1.10e+06
+2000-01-01 11:25:06-05:00  100000.00  8.97e+05
 # historical flows=
 asset_id                         101
-2000-01-01 09:40:01-05:00  100397.61
-2000-01-01 09:45:01-05:00 -202548.67
-2000-01-01 09:50:01-05:00  198396.05
-2000-01-01 09:55:01-05:00 -199184.90
-2000-01-01 10:00:01-05:00  202314.05
-2000-01-01 10:05:01-05:00 -198396.05
-2000-01-01 10:10:01-05:00  199184.90
-2000-01-01 10:15:01-05:00 -202314.05
-2000-01-01 10:20:01-05:00  198396.05
-2000-01-01 10:25:01-05:00 -199184.90
-2000-01-01 10:30:01-05:00  202314.05
-2000-01-01 10:35:01-05:00 -198396.05
-2000-01-01 10:40:01-05:00  199184.90
-2000-01-01 10:45:01-05:00 -202314.05
-2000-01-01 10:50:01-05:00  198396.05
-2000-01-01 10:55:01-05:00 -199184.90
-2000-01-01 11:00:01-05:00  202314.05
-2000-01-01 11:05:01-05:00 -198396.05
-2000-01-01 11:10:01-05:00  199184.90
-2000-01-01 11:15:01-05:00 -202314.05
-2000-01-01 11:20:01-05:00  198396.05
-2000-01-01 11:25:01-05:00 -199184.90
+2000-01-01 09:40:06-05:00  100397.61
+2000-01-01 09:45:06-05:00 -202548.67
+2000-01-01 09:50:06-05:00  198396.05
+2000-01-01 09:55:06-05:00 -199184.90
+2000-01-01 10:00:06-05:00  202314.05
+2000-01-01 10:05:06-05:00 -198396.05
+2000-01-01 10:10:06-05:00  199184.90
+2000-01-01 10:15:06-05:00 -202314.05
+2000-01-01 10:20:06-05:00  198396.05
+2000-01-01 10:25:06-05:00 -199184.90
+2000-01-01 10:30:06-05:00  202314.05
+2000-01-01 10:35:06-05:00 -198396.05
+2000-01-01 10:40:06-05:00  199184.90
+2000-01-01 10:45:06-05:00 -202314.05
+2000-01-01 10:50:06-05:00  198396.05
+2000-01-01 10:55:06-05:00 -199184.90
+2000-01-01 11:00:06-05:00  202314.05
+2000-01-01 11:05:06-05:00 -198396.05
+2000-01-01 11:10:06-05:00  199184.90
+2000-01-01 11:15:06-05:00 -202314.05
+2000-01-01 11:20:06-05:00  198396.05
+2000-01-01 11:25:06-05:00 -199184.90
 # historical pnl=
 asset_id                       101
-2000-01-01 09:35:01-05:00      NaN
-2000-01-01 09:40:01-05:00   165.67
-2000-01-01 09:45:01-05:00 -1159.71
-2000-01-01 09:50:01-05:00 -1617.19
-2000-01-01 09:55:01-05:00  -328.69
-2000-01-01 10:00:01-05:00  1157.02
-2000-01-01 10:05:01-05:00  1617.19
-2000-01-01 10:10:01-05:00   328.69
-2000-01-01 10:15:01-05:00 -1157.02
-2000-01-01 10:20:01-05:00 -1617.19
-2000-01-01 10:25:01-05:00  -328.69
-2000-01-01 10:30:01-05:00  1157.02
-2000-01-01 10:35:01-05:00  1617.19
-2000-01-01 10:40:01-05:00   328.69
-2000-01-01 10:45:01-05:00 -1157.02
-2000-01-01 10:50:01-05:00 -1617.19
-2000-01-01 10:55:01-05:00  -328.69
-2000-01-01 11:00:01-05:00  1157.02
-2000-01-01 11:05:01-05:00  1617.19
-2000-01-01 11:10:01-05:00   328.69
-2000-01-01 11:15:01-05:00 -1157.02
-2000-01-01 11:20:01-05:00 -1617.19
-2000-01-01 11:25:01-05:00  -328.69
+2000-01-01 09:35:06-05:00      NaN
+2000-01-01 09:40:06-05:00   165.67
+2000-01-01 09:45:06-05:00 -1159.71
+2000-01-01 09:50:06-05:00 -1617.19
+2000-01-01 09:55:06-05:00  -328.69
+2000-01-01 10:00:06-05:00  1157.02
+2000-01-01 10:05:06-05:00  1617.19
+2000-01-01 10:10:06-05:00   328.69
+2000-01-01 10:15:06-05:00 -1157.02
+2000-01-01 10:20:06-05:00 -1617.19
+2000-01-01 10:25:06-05:00  -328.69
+2000-01-01 10:30:06-05:00  1157.02
+2000-01-01 10:35:06-05:00  1617.19
+2000-01-01 10:40:06-05:00   328.69
+2000-01-01 10:45:06-05:00 -1157.02
+2000-01-01 10:50:06-05:00 -1617.19
+2000-01-01 10:55:06-05:00  -328.69
+2000-01-01 11:00:06-05:00  1157.02
+2000-01-01 11:05:06-05:00  1617.19
+2000-01-01 11:10:06-05:00   328.69
+2000-01-01 11:15:06-05:00 -1157.02
+2000-01-01 11:20:06-05:00 -1617.19
+2000-01-01 11:25:06-05:00  -328.69
 # historical statistics=
                                pnl  gross_volume  net_volume        gmv        nmv      cash  net_wealth  leverage
-2000-01-01 09:35:01-05:00      NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
-2000-01-01 09:40:01-05:00   165.67     100397.61  -100397.61  100231.94 -100231.94  1.10e+06    1.00e+06       0.1
-2000-01-01 09:45:01-05:00 -1159.71     202548.67   202548.67  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-2000-01-01 09:50:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-2000-01-01 09:55:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-2000-01-01 10:00:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-2000-01-01 10:05:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-2000-01-01 10:10:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-2000-01-01 10:15:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-2000-01-01 10:20:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-2000-01-01 10:25:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-2000-01-01 10:30:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-2000-01-01 10:35:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-2000-01-01 10:40:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-2000-01-01 10:45:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-2000-01-01 10:50:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-2000-01-01 10:55:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-2000-01-01 11:00:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-2000-01-01 11:05:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-2000-01-01 11:10:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-2000-01-01 11:15:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-2000-01-01 11:20:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-2000-01-01 11:25:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+2000-01-01 09:35:06-05:00      NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
+2000-01-01 09:40:06-05:00   165.67     100397.61  -100397.61  100231.94 -100231.94  1.10e+06    1.00e+06       0.1
+2000-01-01 09:45:06-05:00 -1159.71     202548.67   202548.67  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+2000-01-01 09:50:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+2000-01-01 09:55:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+2000-01-01 10:00:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+2000-01-01 10:05:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+2000-01-01 10:10:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+2000-01-01 10:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+2000-01-01 10:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+2000-01-01 10:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+2000-01-01 10:30:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+2000-01-01 10:35:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+2000-01-01 10:40:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+2000-01-01 10:45:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+2000-01-01 10:50:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+2000-01-01 10:55:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+2000-01-01 11:00:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+2000-01-01 11:05:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+2000-01-01 11:10:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+2000-01-01 11:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+2000-01-01 11:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+2000-01-01 11:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
 process_forecasts_config:
   prediction_col: feature1
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio: # historical holdings=
   asset_id                      101      -1
-  2000-01-01 09:35:01-05:00    0.00  1.00e+06
-  2000-01-01 09:40:01-05:00 -994.04  1.10e+06
-  2000-01-01 09:45:01-05:00  991.74  8.98e+05
-  2000-01-01 09:50:01-05:00 -980.39  1.10e+06
-  2000-01-01 09:55:01-05:00  991.74  8.97e+05
-  2000-01-01 10:00:01-05:00 -991.74  1.10e+06
-  2000-01-01 10:05:01-05:00  980.39  9.01e+05
-  2000-01-01 10:10:01-05:00 -991.74  1.10e+06
-  2000-01-01 10:15:01-05:00  991.74  8.98e+05
-  2000-01-01 10:20:01-05:00 -980.39  1.10e+06
-  2000-01-01 10:25:01-05:00  991.74  8.97e+05
-  2000-01-01 10:30:01-05:00 -991.74  1.10e+06
-  2000-01-01 10:35:01-05:00  980.39  9.01e+05
-  2000-01-01 10:40:01-05:00 -991.74  1.10e+06
-  2000-01-01 10:45:01-05:00  991.74  8.98e+05
-  2000-01-01 10:50:01-05:00 -980.39  1.10e+06
-  2000-01-01 10:55:01-05:00  991.74  8.97e+05
-  2000-01-01 11:00:01-05:00 -991.74  1.10e+06
-  2000-01-01 11:05:01-05:00  980.39  9.01e+05
-  2000-01-01 11:10:01-05:00 -991.74  1.10e+06
-  2000-01-01 11:15:01-05:00  991.74  8.98e+05
-  2000-01-01 11:20:01-05:00 -980.39  1.10e+06
-  2000-01-01 11:25:01-05:00  991.74  8.97e+05
+  2000-01-01 09:35:06-05:00    0.00  1.00e+06
+  2000-01-01 09:40:06-05:00 -994.04  1.10e+06
+  2000-01-01 09:45:06-05:00  991.74  8.98e+05
+  2000-01-01 09:50:06-05:00 -980.39  1.10e+06
+  2000-01-01 09:55:06-05:00  991.74  8.97e+05
+  2000-01-01 10:00:06-05:00 -991.74  1.10e+06
+  2000-01-01 10:05:06-05:00  980.39  9.01e+05
+  2000-01-01 10:10:06-05:00 -991.74  1.10e+06
+  2000-01-01 10:15:06-05:00  991.74  8.98e+05
+  2000-01-01 10:20:06-05:00 -980.39  1.10e+06
+  2000-01-01 10:25:06-05:00  991.74  8.97e+05
+  2000-01-01 10:30:06-05:00 -991.74  1.10e+06
+  2000-01-01 10:35:06-05:00  980.39  9.01e+05
+  2000-01-01 10:40:06-05:00 -991.74  1.10e+06
+  2000-01-01 10:45:06-05:00  991.74  8.98e+05
+  2000-01-01 10:50:06-05:00 -980.39  1.10e+06
+  2000-01-01 10:55:06-05:00  991.74  8.97e+05
+  2000-01-01 11:00:06-05:00 -991.74  1.10e+06
+  2000-01-01 11:05:06-05:00  980.39  9.01e+05
+  2000-01-01 11:10:06-05:00 -991.74  1.10e+06
+  2000-01-01 11:15:06-05:00  991.74  8.98e+05
+  2000-01-01 11:20:06-05:00 -980.39  1.10e+06
+  2000-01-01 11:25:06-05:00  991.74  8.97e+05
   # historical holdings marked to market=
   asset_id                         101      -1
-  2000-01-01 09:35:01-05:00       0.00  1.00e+06
-  2000-01-01 09:40:01-05:00 -100231.94  1.10e+06
-  2000-01-01 09:45:01-05:00  101157.02  8.98e+05
-  2000-01-01 09:50:01-05:00  -98856.21  1.10e+06
-  2000-01-01 09:55:01-05:00  100000.00  8.97e+05
-  2000-01-01 10:00:01-05:00 -101157.02  1.10e+06
-  2000-01-01 10:05:01-05:00   98856.21  9.01e+05
-  2000-01-01 10:10:01-05:00 -100000.00  1.10e+06
-  2000-01-01 10:15:01-05:00  101157.02  8.98e+05
-  2000-01-01 10:20:01-05:00  -98856.21  1.10e+06
-  2000-01-01 10:25:01-05:00  100000.00  8.97e+05
-  2000-01-01 10:30:01-05:00 -101157.02  1.10e+06
-  2000-01-01 10:35:01-05:00   98856.21  9.01e+05
-  2000-01-01 10:40:01-05:00 -100000.00  1.10e+06
-  2000-01-01 10:45:01-05:00  101157.02  8.98e+05
-  2000-01-01 10:50:01-05:00  -98856.21  1.10e+06
-  2000-01-01 10:55:01-05:00  100000.00  8.97e+05
-  2000-01-01 11:00:01-05:00 -101157.02  1.10e+06
-  2000-01-01 11:05:01-05:00   98856.21  9.01e+05
-  2000-01-01 11:10:01-05:00 -100000.00  1.10e+06
-  2000-01-01 11:15:01-05:00  101157.02  8.98e+05
-  2000-01-01 11:20:01-05:00  -98856.21  1.10e+06
-  2000-01-01 11:25:01-05:00  100000.00  8.97e+05
+  2000-01-01 09:35:06-05:00       0.00  1.00e+06
+  2000-01-01 09:40:06-05:00 -100231.94  1.10e+06
+  2000-01-01 09:45:06-05:00  101157.02  8.98e+05
+  2000-01-01 09:50:06-05:00  -98856.21  1.10e+06
+  2000-01-01 09:55:06-05:00  100000.00  8.97e+05
+  2000-01-01 10:00:06-05:00 -101157.02  1.10e+06
+  2000-01-01 10:05:06-05:00   98856.21  9.01e+05
+  2000-01-01 10:10:06-05:00 -100000.00  1.10e+06
+  2000-01-01 10:15:06-05:00  101157.02  8.98e+05
+  2000-01-01 10:20:06-05:00  -98856.21  1.10e+06
+  2000-01-01 10:25:06-05:00  100000.00  8.97e+05
+  2000-01-01 10:30:06-05:00 -101157.02  1.10e+06
+  2000-01-01 10:35:06-05:00   98856.21  9.01e+05
+  2000-01-01 10:40:06-05:00 -100000.00  1.10e+06
+  2000-01-01 10:45:06-05:00  101157.02  8.98e+05
+  2000-01-01 10:50:06-05:00  -98856.21  1.10e+06
+  2000-01-01 10:55:06-05:00  100000.00  8.97e+05
+  2000-01-01 11:00:06-05:00 -101157.02  1.10e+06
+  2000-01-01 11:05:06-05:00   98856.21  9.01e+05
+  2000-01-01 11:10:06-05:00 -100000.00  1.10e+06
+  2000-01-01 11:15:06-05:00  101157.02  8.98e+05
+  2000-01-01 11:20:06-05:00  -98856.21  1.10e+06
+  2000-01-01 11:25:06-05:00  100000.00  8.97e+05
   # historical flows=
   asset_id                         101
-  2000-01-01 09:40:01-05:00  100397.61
-  2000-01-01 09:45:01-05:00 -202548.67
-  2000-01-01 09:50:01-05:00  198396.05
-  2000-01-01 09:55:01-05:00 -199184.90
-  2000-01-01 10:00:01-05:00  202314.05
-  2000-01-01 10:05:01-05:00 -198396.05
-  2000-01-01 10:10:01-05:00  199184.90
-  2000-01-01 10:15:01-05:00 -202314.05
-  2000-01-01 10:20:01-05:00  198396.05
-  2000-01-01 10:25:01-05:00 -199184.90
-  2000-01-01 10:30:01-05:00  202314.05
-  2000-01-01 10:35:01-05:00 -198396.05
-  2000-01-01 10:40:01-05:00  199184.90
-  2000-01-01 10:45:01-05:00 -202314.05
-  2000-01-01 10:50:01-05:00  198396.05
-  2000-01-01 10:55:01-05:00 -199184.90
-  2000-01-01 11:00:01-05:00  202314.05
-  2000-01-01 11:05:01-05:00 -198396.05
-  2000-01-01 11:10:01-05:00  199184.90
-  2000-01-01 11:15:01-05:00 -202314.05
-  2000-01-01 11:20:01-05:00  198396.05
-  2000-01-01 11:25:01-05:00 -199184.90
+  2000-01-01 09:40:06-05:00  100397.61
+  2000-01-01 09:45:06-05:00 -202548.67
+  2000-01-01 09:50:06-05:00  198396.05
+  2000-01-01 09:55:06-05:00 -199184.90
+  2000-01-01 10:00:06-05:00  202314.05
+  2000-01-01 10:05:06-05:00 -198396.05
+  2000-01-01 10:10:06-05:00  199184.90
+  2000-01-01 10:15:06-05:00 -202314.05
+  2000-01-01 10:20:06-05:00  198396.05
+  2000-01-01 10:25:06-05:00 -199184.90
+  2000-01-01 10:30:06-05:00  202314.05
+  2000-01-01 10:35:06-05:00 -198396.05
+  2000-01-01 10:40:06-05:00  199184.90
+  2000-01-01 10:45:06-05:00 -202314.05
+  2000-01-01 10:50:06-05:00  198396.05
+  2000-01-01 10:55:06-05:00 -199184.90
+  2000-01-01 11:00:06-05:00  202314.05
+  2000-01-01 11:05:06-05:00 -198396.05
+  2000-01-01 11:10:06-05:00  199184.90
+  2000-01-01 11:15:06-05:00 -202314.05
+  2000-01-01 11:20:06-05:00  198396.05
+  2000-01-01 11:25:06-05:00 -199184.90
   # historical pnl=
   asset_id                       101
-  2000-01-01 09:35:01-05:00      NaN
-  2000-01-01 09:40:01-05:00   165.67
-  2000-01-01 09:45:01-05:00 -1159.71
-  2000-01-01 09:50:01-05:00 -1617.19
-  2000-01-01 09:55:01-05:00  -328.69
-  2000-01-01 10:00:01-05:00  1157.02
-  2000-01-01 10:05:01-05:00  1617.19
-  2000-01-01 10:10:01-05:00   328.69
-  2000-01-01 10:15:01-05:00 -1157.02
-  2000-01-01 10:20:01-05:00 -1617.19
-  2000-01-01 10:25:01-05:00  -328.69
-  2000-01-01 10:30:01-05:00  1157.02
-  2000-01-01 10:35:01-05:00  1617.19
-  2000-01-01 10:40:01-05:00   328.69
-  2000-01-01 10:45:01-05:00 -1157.02
-  2000-01-01 10:50:01-05:00 -1617.19
-  2000-01-01 10:55:01-05:00  -328.69
-  2000-01-01 11:00:01-05:00  1157.02
-  2000-01-01 11:05:01-05:00  1617.19
-  2000-01-01 11:10:01-05:00   328.69
-  2000-01-01 11:15:01-05:00 -1157.02
-  2000-01-01 11:20:01-05:00 -1617.19
-  2000-01-01 11:25:01-05:00  -328.69
+  2000-01-01 09:35:06-05:00      NaN
+  2000-01-01 09:40:06-05:00   165.67
+  2000-01-01 09:45:06-05:00 -1159.71
+  2000-01-01 09:50:06-05:00 -1617.19
+  2000-01-01 09:55:06-05:00  -328.69
+  2000-01-01 10:00:06-05:00  1157.02
+  2000-01-01 10:05:06-05:00  1617.19
+  2000-01-01 10:10:06-05:00   328.69
+  2000-01-01 10:15:06-05:00 -1157.02
+  2000-01-01 10:20:06-05:00 -1617.19
+  2000-01-01 10:25:06-05:00  -328.69
+  2000-01-01 10:30:06-05:00  1157.02
+  2000-01-01 10:35:06-05:00  1617.19
+  2000-01-01 10:40:06-05:00   328.69
+  2000-01-01 10:45:06-05:00 -1157.02
+  2000-01-01 10:50:06-05:00 -1617.19
+  2000-01-01 10:55:06-05:00  -328.69
+  2000-01-01 11:00:06-05:00  1157.02
+  2000-01-01 11:05:06-05:00  1617.19
+  2000-01-01 11:10:06-05:00   328.69
+  2000-01-01 11:15:06-05:00 -1157.02
+  2000-01-01 11:20:06-05:00 -1617.19
+  2000-01-01 11:25:06-05:00  -328.69
   # historical statistics=
                                  pnl  gross_volume  net_volume        gmv        nmv      cash  net_wealth  leverage
-  2000-01-01 09:35:01-05:00      NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
-  2000-01-01 09:40:01-05:00   165.67     100397.61  -100397.61  100231.94 -100231.94  1.10e+06    1.00e+06       0.1
-  2000-01-01 09:45:01-05:00 -1159.71     202548.67   202548.67  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-  2000-01-01 09:50:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-  2000-01-01 09:55:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-  2000-01-01 10:00:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-  2000-01-01 10:05:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-  2000-01-01 10:10:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-  2000-01-01 10:15:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-  2000-01-01 10:20:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-  2000-01-01 10:25:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-  2000-01-01 10:30:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-  2000-01-01 10:35:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-  2000-01-01 10:40:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-  2000-01-01 10:45:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-  2000-01-01 10:50:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-  2000-01-01 10:55:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-  2000-01-01 11:00:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-  2000-01-01 11:05:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-  2000-01-01 11:10:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-  2000-01-01 11:15:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-  2000-01-01 11:20:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-  2000-01-01 11:25:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+  2000-01-01 09:35:06-05:00      NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
+  2000-01-01 09:40:06-05:00   165.67     100397.61  -100397.61  100231.94 -100231.94  1.10e+06    1.00e+06       0.1
+  2000-01-01 09:45:06-05:00 -1159.71     202548.67   202548.67  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+  2000-01-01 09:50:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+  2000-01-01 09:55:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+  2000-01-01 10:00:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+  2000-01-01 10:05:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+  2000-01-01 10:10:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+  2000-01-01 10:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+  2000-01-01 10:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+  2000-01-01 10:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+  2000-01-01 10:30:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+  2000-01-01 10:35:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+  2000-01-01 10:40:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+  2000-01-01 10:45:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+  2000-01-01 10:50:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+  2000-01-01 10:55:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+  2000-01-01 11:00:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+  2000-01-01 11:05:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+  2000-01-01 11:10:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+  2000-01-01 11:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+  2000-01-01 11:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+  2000-01-01 11:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
   process_forecasts_config:
     order_config:
       order_type: price@twap
@@ -347,17 +692,29 @@ process_forecasts_config:
     ath_end_time: 16:40:00
     trading_end_time: 16:40:00
     execution_mode: real_time
-  forecast_evaluator_from_prices_dict: None
-dag_object: dag=<dataflow.core.dag.DAG object>
-  name=None
-  mode=strict
-  nodes=[('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('load_prices', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object at 0x>}), ('process_forecasts', {'stage': <dataflow.system.sink_nodes.ProcessForecasts object>})]
-  edges=[('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'process_forecasts', {'df_in': 'df_out'}), ('load_prices', 'resample', {'df_in': 'df_out'})]
-  save_node_io=
-  profile_execution=False
-  dst_dir=None
-  force_free_nodes=False
-dag_runner_object: <dataflow.system.real_time_dag_runner.RealTimeDagRunner object>
+dag_object: DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
+dag_runner_object: RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=[] <list>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+  _asset_id_col='asset_id' <str>
+  _asset_ids='[101]' <list>
+  _start_time_col_name='start_datetime' <str>
+  _end_time_col_name='end_datetime' <str>
+  _columns='None' <NoneType>
+  _sleep_in_secs='1.0' <float>
+  _timezone='America/New_York' <str>
+  _column_remap='None' <NoneType>
+  _filter_data_mode='assert' <str>
+  _max_iterations='120' <int>
+  _df= <pandas.core.frame.DataFrame>
+                                         start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
+    2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+    2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+    2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100      -1.0
+    ...
+    2000-01-01 11:28:00-05:00 2000-01-01 11:27:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:28:00-05:00  102.0       101     100       1.0
+    2000-01-01 11:29:00-05:00 2000-01-01 11:28:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:29:00-05:00  102.0       101     100       1.0
+    2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
+  _knowledge_datetime_col_name='timestamp_db' <str>
+  _delay_in_secs='5' <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 6900} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=8, current_time=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=9, current_time=Timestamp('2000-01-01 10:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=10, current_time=Timestamp('2000-01-01 10:20:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=11, current_time=Timestamp('2000-01-01 10:25:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=12, current_time=Timestamp('2000-01-01 10:30:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=13, current_time=Timestamp('2000-01-01 10:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=14, current_time=Timestamp('2000-01-01 10:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=15, current_time=Timestamp('2000-01-01 10:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=16, current_time=Timestamp('2000-01-01 10:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=17, current_time=Timestamp('2000-01-01 10:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=18, current_time=Timestamp('2000-01-01 11:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=19, current_time=Timestamp('2000-01-01 11:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=20, current_time=Timestamp('2000-01-01 11:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=21, current_time=Timestamp('2000-01-01 11:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=22, current_time=Timestamp('2000-01-01 11:20:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=23, current_time=Timestamp('2000-01-01 11:25:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)
 ################################################################################
 compute_run_signature
 ################################################################################
@@ -392,128 +749,128 @@ num_it=23 current_time='2000-01-01 11:25:00-05:00'
 
 # historical holdings=
 asset_id                      101      -1
-2000-01-01 09:35:01-05:00    0.00  1.00e+06
-2000-01-01 09:40:01-05:00 -994.04  1.10e+06
-2000-01-01 09:45:01-05:00  991.74  8.98e+05
-2000-01-01 09:50:01-05:00 -980.39  1.10e+06
-2000-01-01 09:55:01-05:00  991.74  8.97e+05
-2000-01-01 10:00:01-05:00 -991.74  1.10e+06
-2000-01-01 10:05:01-05:00  980.39  9.01e+05
-2000-01-01 10:10:01-05:00 -991.74  1.10e+06
-2000-01-01 10:15:01-05:00  991.74  8.98e+05
-2000-01-01 10:20:01-05:00 -980.39  1.10e+06
-2000-01-01 10:25:01-05:00  991.74  8.97e+05
-2000-01-01 10:30:01-05:00 -991.74  1.10e+06
-2000-01-01 10:35:01-05:00  980.39  9.01e+05
-2000-01-01 10:40:01-05:00 -991.74  1.10e+06
-2000-01-01 10:45:01-05:00  991.74  8.98e+05
-2000-01-01 10:50:01-05:00 -980.39  1.10e+06
-2000-01-01 10:55:01-05:00  991.74  8.97e+05
-2000-01-01 11:00:01-05:00 -991.74  1.10e+06
-2000-01-01 11:05:01-05:00  980.39  9.01e+05
-2000-01-01 11:10:01-05:00 -991.74  1.10e+06
-2000-01-01 11:15:01-05:00  991.74  8.98e+05
-2000-01-01 11:20:01-05:00 -980.39  1.10e+06
-2000-01-01 11:25:01-05:00  991.74  8.97e+05
+2000-01-01 09:35:06-05:00    0.00  1.00e+06
+2000-01-01 09:40:06-05:00 -994.04  1.10e+06
+2000-01-01 09:45:06-05:00  991.74  8.98e+05
+2000-01-01 09:50:06-05:00 -980.39  1.10e+06
+2000-01-01 09:55:06-05:00  991.74  8.97e+05
+2000-01-01 10:00:06-05:00 -991.74  1.10e+06
+2000-01-01 10:05:06-05:00  980.39  9.01e+05
+2000-01-01 10:10:06-05:00 -991.74  1.10e+06
+2000-01-01 10:15:06-05:00  991.74  8.98e+05
+2000-01-01 10:20:06-05:00 -980.39  1.10e+06
+2000-01-01 10:25:06-05:00  991.74  8.97e+05
+2000-01-01 10:30:06-05:00 -991.74  1.10e+06
+2000-01-01 10:35:06-05:00  980.39  9.01e+05
+2000-01-01 10:40:06-05:00 -991.74  1.10e+06
+2000-01-01 10:45:06-05:00  991.74  8.98e+05
+2000-01-01 10:50:06-05:00 -980.39  1.10e+06
+2000-01-01 10:55:06-05:00  991.74  8.97e+05
+2000-01-01 11:00:06-05:00 -991.74  1.10e+06
+2000-01-01 11:05:06-05:00  980.39  9.01e+05
+2000-01-01 11:10:06-05:00 -991.74  1.10e+06
+2000-01-01 11:15:06-05:00  991.74  8.98e+05
+2000-01-01 11:20:06-05:00 -980.39  1.10e+06
+2000-01-01 11:25:06-05:00  991.74  8.97e+05
 # historical holdings marked to market=
 asset_id                         101      -1
-2000-01-01 09:35:01-05:00       0.00  1.00e+06
-2000-01-01 09:40:01-05:00 -100231.94  1.10e+06
-2000-01-01 09:45:01-05:00  101157.02  8.98e+05
-2000-01-01 09:50:01-05:00  -98856.21  1.10e+06
-2000-01-01 09:55:01-05:00  100000.00  8.97e+05
-2000-01-01 10:00:01-05:00 -101157.02  1.10e+06
-2000-01-01 10:05:01-05:00   98856.21  9.01e+05
-2000-01-01 10:10:01-05:00 -100000.00  1.10e+06
-2000-01-01 10:15:01-05:00  101157.02  8.98e+05
-2000-01-01 10:20:01-05:00  -98856.21  1.10e+06
-2000-01-01 10:25:01-05:00  100000.00  8.97e+05
-2000-01-01 10:30:01-05:00 -101157.02  1.10e+06
-2000-01-01 10:35:01-05:00   98856.21  9.01e+05
-2000-01-01 10:40:01-05:00 -100000.00  1.10e+06
-2000-01-01 10:45:01-05:00  101157.02  8.98e+05
-2000-01-01 10:50:01-05:00  -98856.21  1.10e+06
-2000-01-01 10:55:01-05:00  100000.00  8.97e+05
-2000-01-01 11:00:01-05:00 -101157.02  1.10e+06
-2000-01-01 11:05:01-05:00   98856.21  9.01e+05
-2000-01-01 11:10:01-05:00 -100000.00  1.10e+06
-2000-01-01 11:15:01-05:00  101157.02  8.98e+05
-2000-01-01 11:20:01-05:00  -98856.21  1.10e+06
-2000-01-01 11:25:01-05:00  100000.00  8.97e+05
+2000-01-01 09:35:06-05:00       0.00  1.00e+06
+2000-01-01 09:40:06-05:00 -100231.94  1.10e+06
+2000-01-01 09:45:06-05:00  101157.02  8.98e+05
+2000-01-01 09:50:06-05:00  -98856.21  1.10e+06
+2000-01-01 09:55:06-05:00  100000.00  8.97e+05
+2000-01-01 10:00:06-05:00 -101157.02  1.10e+06
+2000-01-01 10:05:06-05:00   98856.21  9.01e+05
+2000-01-01 10:10:06-05:00 -100000.00  1.10e+06
+2000-01-01 10:15:06-05:00  101157.02  8.98e+05
+2000-01-01 10:20:06-05:00  -98856.21  1.10e+06
+2000-01-01 10:25:06-05:00  100000.00  8.97e+05
+2000-01-01 10:30:06-05:00 -101157.02  1.10e+06
+2000-01-01 10:35:06-05:00   98856.21  9.01e+05
+2000-01-01 10:40:06-05:00 -100000.00  1.10e+06
+2000-01-01 10:45:06-05:00  101157.02  8.98e+05
+2000-01-01 10:50:06-05:00  -98856.21  1.10e+06
+2000-01-01 10:55:06-05:00  100000.00  8.97e+05
+2000-01-01 11:00:06-05:00 -101157.02  1.10e+06
+2000-01-01 11:05:06-05:00   98856.21  9.01e+05
+2000-01-01 11:10:06-05:00 -100000.00  1.10e+06
+2000-01-01 11:15:06-05:00  101157.02  8.98e+05
+2000-01-01 11:20:06-05:00  -98856.21  1.10e+06
+2000-01-01 11:25:06-05:00  100000.00  8.97e+05
 # historical flows=
 asset_id                         101
-2000-01-01 09:40:01-05:00  100397.61
-2000-01-01 09:45:01-05:00 -202548.67
-2000-01-01 09:50:01-05:00  198396.05
-2000-01-01 09:55:01-05:00 -199184.90
-2000-01-01 10:00:01-05:00  202314.05
-2000-01-01 10:05:01-05:00 -198396.05
-2000-01-01 10:10:01-05:00  199184.90
-2000-01-01 10:15:01-05:00 -202314.05
-2000-01-01 10:20:01-05:00  198396.05
-2000-01-01 10:25:01-05:00 -199184.90
-2000-01-01 10:30:01-05:00  202314.05
-2000-01-01 10:35:01-05:00 -198396.05
-2000-01-01 10:40:01-05:00  199184.90
-2000-01-01 10:45:01-05:00 -202314.05
-2000-01-01 10:50:01-05:00  198396.05
-2000-01-01 10:55:01-05:00 -199184.90
-2000-01-01 11:00:01-05:00  202314.05
-2000-01-01 11:05:01-05:00 -198396.05
-2000-01-01 11:10:01-05:00  199184.90
-2000-01-01 11:15:01-05:00 -202314.05
-2000-01-01 11:20:01-05:00  198396.05
-2000-01-01 11:25:01-05:00 -199184.90
+2000-01-01 09:40:06-05:00  100397.61
+2000-01-01 09:45:06-05:00 -202548.67
+2000-01-01 09:50:06-05:00  198396.05
+2000-01-01 09:55:06-05:00 -199184.90
+2000-01-01 10:00:06-05:00  202314.05
+2000-01-01 10:05:06-05:00 -198396.05
+2000-01-01 10:10:06-05:00  199184.90
+2000-01-01 10:15:06-05:00 -202314.05
+2000-01-01 10:20:06-05:00  198396.05
+2000-01-01 10:25:06-05:00 -199184.90
+2000-01-01 10:30:06-05:00  202314.05
+2000-01-01 10:35:06-05:00 -198396.05
+2000-01-01 10:40:06-05:00  199184.90
+2000-01-01 10:45:06-05:00 -202314.05
+2000-01-01 10:50:06-05:00  198396.05
+2000-01-01 10:55:06-05:00 -199184.90
+2000-01-01 11:00:06-05:00  202314.05
+2000-01-01 11:05:06-05:00 -198396.05
+2000-01-01 11:10:06-05:00  199184.90
+2000-01-01 11:15:06-05:00 -202314.05
+2000-01-01 11:20:06-05:00  198396.05
+2000-01-01 11:25:06-05:00 -199184.90
 # historical pnl=
 asset_id                       101
-2000-01-01 09:35:01-05:00      NaN
-2000-01-01 09:40:01-05:00   165.67
-2000-01-01 09:45:01-05:00 -1159.71
-2000-01-01 09:50:01-05:00 -1617.19
-2000-01-01 09:55:01-05:00  -328.69
-2000-01-01 10:00:01-05:00  1157.02
-2000-01-01 10:05:01-05:00  1617.19
-2000-01-01 10:10:01-05:00   328.69
-2000-01-01 10:15:01-05:00 -1157.02
-2000-01-01 10:20:01-05:00 -1617.19
-2000-01-01 10:25:01-05:00  -328.69
-2000-01-01 10:30:01-05:00  1157.02
-2000-01-01 10:35:01-05:00  1617.19
-2000-01-01 10:40:01-05:00   328.69
-2000-01-01 10:45:01-05:00 -1157.02
-2000-01-01 10:50:01-05:00 -1617.19
-2000-01-01 10:55:01-05:00  -328.69
-2000-01-01 11:00:01-05:00  1157.02
-2000-01-01 11:05:01-05:00  1617.19
-2000-01-01 11:10:01-05:00   328.69
-2000-01-01 11:15:01-05:00 -1157.02
-2000-01-01 11:20:01-05:00 -1617.19
-2000-01-01 11:25:01-05:00  -328.69
+2000-01-01 09:35:06-05:00      NaN
+2000-01-01 09:40:06-05:00   165.67
+2000-01-01 09:45:06-05:00 -1159.71
+2000-01-01 09:50:06-05:00 -1617.19
+2000-01-01 09:55:06-05:00  -328.69
+2000-01-01 10:00:06-05:00  1157.02
+2000-01-01 10:05:06-05:00  1617.19
+2000-01-01 10:10:06-05:00   328.69
+2000-01-01 10:15:06-05:00 -1157.02
+2000-01-01 10:20:06-05:00 -1617.19
+2000-01-01 10:25:06-05:00  -328.69
+2000-01-01 10:30:06-05:00  1157.02
+2000-01-01 10:35:06-05:00  1617.19
+2000-01-01 10:40:06-05:00   328.69
+2000-01-01 10:45:06-05:00 -1157.02
+2000-01-01 10:50:06-05:00 -1617.19
+2000-01-01 10:55:06-05:00  -328.69
+2000-01-01 11:00:06-05:00  1157.02
+2000-01-01 11:05:06-05:00  1617.19
+2000-01-01 11:10:06-05:00   328.69
+2000-01-01 11:15:06-05:00 -1157.02
+2000-01-01 11:20:06-05:00 -1617.19
+2000-01-01 11:25:06-05:00  -328.69
 # historical statistics=
                                pnl  gross_volume  net_volume        gmv        nmv      cash  net_wealth  leverage
-2000-01-01 09:35:01-05:00      NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
-2000-01-01 09:40:01-05:00   165.67     100397.61  -100397.61  100231.94 -100231.94  1.10e+06    1.00e+06       0.1
-2000-01-01 09:45:01-05:00 -1159.71     202548.67   202548.67  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-2000-01-01 09:50:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-2000-01-01 09:55:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-2000-01-01 10:00:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-2000-01-01 10:05:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-2000-01-01 10:10:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-2000-01-01 10:15:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-2000-01-01 10:20:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-2000-01-01 10:25:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-2000-01-01 10:30:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-2000-01-01 10:35:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-2000-01-01 10:40:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-2000-01-01 10:45:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-2000-01-01 10:50:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-2000-01-01 10:55:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-2000-01-01 11:00:01-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-2000-01-01 11:05:01-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-2000-01-01 11:10:01-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-2000-01-01 11:15:01-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-2000-01-01 11:20:01-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-2000-01-01 11:25:01-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+2000-01-01 09:35:06-05:00      NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
+2000-01-01 09:40:06-05:00   165.67     100397.61  -100397.61  100231.94 -100231.94  1.10e+06    1.00e+06       0.1
+2000-01-01 09:45:06-05:00 -1159.71     202548.67   202548.67  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+2000-01-01 09:50:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+2000-01-01 09:55:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+2000-01-01 10:00:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+2000-01-01 10:05:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+2000-01-01 10:10:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+2000-01-01 10:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+2000-01-01 10:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+2000-01-01 10:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+2000-01-01 10:30:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+2000-01-01 10:35:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+2000-01-01 10:40:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+2000-01-01 10:45:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+2000-01-01 10:50:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+2000-01-01 10:55:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
+2000-01-01 11:00:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
+2000-01-01 11:05:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
+2000-01-01 11:10:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
+2000-01-01 11:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
+2000-01-01 11:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
+2000-01-01 11:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
 
 # forecast_evaluator_from_prices signature=
 
@@ -556,7 +913,7 @@ end_datetime
 2000-01-01 11:10:00-05:00 -100397.61
 2000-01-01 11:15:00-05:00  100990.10
 2000-01-01 11:20:00-05:00  -98627.45
-2000-01-01 11:25:00-05:00  100149.11
+2000-01-01 11:25:00-05:00  100397.61
 # flows=
                                  101
 end_datetime
@@ -576,7 +933,7 @@ end_datetime
 2000-01-01 11:10:00-05:00  199417.22
 2000-01-01 11:15:00-05:00 -202381.75
 2000-01-01 11:20:00-05:00  198231.41
-2000-01-01 11:25:00-05:00 -198923.62
+2000-01-01 11:25:00-05:00 -199417.22
 # pnl=
                                101
 end_datetime
@@ -596,7 +953,7 @@ end_datetime
 2000-01-01 11:10:00-05:00   392.16
 2000-01-01 11:15:00-05:00  -994.04
 2000-01-01 11:20:00-05:00 -1386.14
-2000-01-01 11:25:00-05:00  -147.06
+2000-01-01 11:25:00-05:00  -392.16
 # statistics=
                                pnl  gross_volume  net_volume        gmv        nmv
 end_datetime
@@ -616,7 +973,7 @@ end_datetime
 2000-01-01 11:10:00-05:00   392.16     199417.22  -199417.22  100397.61 -100397.61
 2000-01-01 11:15:00-05:00  -994.04     202381.75   202381.75  100990.10  100990.10
 2000-01-01 11:20:00-05:00 -1386.14     198231.41  -198231.41   98627.45  -98627.45
-2000-01-01 11:25:00-05:00  -147.06     198923.62   198923.62  100149.11  100149.11
+2000-01-01 11:25:00-05:00  -392.16     199417.22   199417.22  100397.61  100397.61
 
 # pnl agreement with research pnl
 

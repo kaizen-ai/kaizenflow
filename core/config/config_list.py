@@ -39,12 +39,13 @@ class ConfigList:
     def __iter__(self) -> Iterator[cconconf.Config]:
         return iter(self._configs)
 
+    # TODO(gp): Improve str if needed.
     def __str__(self) -> str:
         """
         Print a list of configs into a readable string.
         """
         txt = []
-        txt.append("# %s" % hprint.to_object_pointer(self))
+        txt.append("# %s" % hprint.to_object_str(self))
         txt.append(hprint.indent(ccocouti.configs_to_str(self.configs)))
         txt = "\n".join(txt)
         return txt

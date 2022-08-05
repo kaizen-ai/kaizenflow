@@ -423,6 +423,32 @@ class TestVerifySchema(hunitest.TestCase):
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
+    def test_fix_int_column2(self) -> None:
+        """
+        Test if int64 column if forced to int32.
+        """
+        # Define test Dataframe data with `year` and `month` columns with type `int64`.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "year": [2022, 2022, 2022],
+            "month": [7,7,8],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
+        test_df = pd.DataFrame(data=test_data)
+        expected_df = test_df.copy()
+        # Fix the type of the `month` and `year` columns to `int32`.
+        expected_df["year"] = expected_df["year"].astype("int32")
+        expected_df["month"] = expected_df["month"].astype("int32")
+        # Function should fix the type of the columns to `int32`.
+        actual_df = imvcdeexut.verify_schema(test_df)
+        # Check the result.
+        hunitest.compare_df(expected_df, actual_df)
+
     def test_non_numerical_column(self) -> None:
         """
         Test if invalid Dataframe schema produces an error.
