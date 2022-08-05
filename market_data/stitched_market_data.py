@@ -260,7 +260,8 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
     """
     Build `MarketData` client from 2 `ImClientMarketData` clients.
 
-    Obtained data is a horizontally concatenated return from both input clients. 
+    Obtained data is a horizontally concatenated return from both input
+    clients.
     """
 
     def __init__(
@@ -286,6 +287,53 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         """
         # TODO(gp): It should delegate to the ImClient.
         return True
+
+    # TODO(Grisha): @Dan Move to `hpandas` if needed.
+    @staticmethod
+    def _merge_dfs(
+        df1: pd.DataFrame,
+        df2: pd.DataFrame,
+        end_time_col_name: str,
+        *,
+        how: str,
+        cols_to_merge_on: List[str],
+        threshold: float = 0.9,
+    ) -> pd.DataFrame:
+        """
+        Merge `_get_data()` returns in one dataframe.
+
+        :param df1: dataframe to use for merge
+        :param df2: dataframe to use for merge
+        :param end_time_col_name: end time column name
+        :param how: mode of merge to use
+        :param cols_to_merge_on: columns to perform the merge on
+        :param threshold: share of end time column values in common to allow the merge
+        """
+        # Verify that end time columns have values of the same type.
+        end_time_col1 = df1[end_time_col_name]
+        end_time_col2 = df2[end_time_col_name]
+        only_first_elem = False
+        hdbg.dassert_array_has_same_type_element(
+            end_time_col1, end_time_col2, only_first_elem
+        )
+        # TODO(Grisha): @Dan Implement asserts for each asset id.
+        # Verify that the share of unique common end time values is above threshold.
+        end_time_unique_values1 = set(end_time_col1)
+        end_time_unique_values2 = set(end_time_col2)
+        end_time_common_values = set(end_time_unique_values1) & set(
+            end_time_unique_values2
+        )
+        end_time_common_values_share1 = len(end_time_common_values) / len(
+            end_time_unique_values1
+        )
+        end_time_common_values_share2 = len(end_time_common_values) / len(
+            end_time_unique_values2
+        )
+        hdbg.dassert_lte(threshold, end_time_common_values_share1)
+        hdbg.dassert_lte(threshold, end_time_common_values_share2)
+        #
+        res_df = df1.merge(df2, how=how, on=cols_to_merge_on)
+        return res_df
 
     def _get_data(
         self,
@@ -331,9 +379,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         market_data_df = self._merge_dfs(
             market_data_df1,
             market_data_df2,
-            asset_ids,
             self._end_time_col_name,
-            self._asset_id_col,
             how="outer",
             cols_to_merge_on=cols_to_merge_on,
         )
@@ -353,52 +399,3 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         else:
             ret = max(last_end_time1, last_end_time2)
         return ret
-
-    # TODO(Grisha): @Dan Move to `hpandas` if needed.
-    @staticmethod
-    def _merge_dfs(
-        df1: pd.DataFrame,
-        df2: pd.DataFrame,
-        asset_ids: List[int],
-        end_time_col: str,
-        asset_id_col: str,
-        *,
-        how: str,
-        cols_to_merge_on: List[str],
-        threshold: float = 0.9,
-    ) -> pd.DataFrame:
-        """
-        Merge `_get_data()` returns in one dataframe.
-
-        :param df1: dataframe to use for merge
-        :param df2: dataframe to use for merge
-        :param asset_ids: assets ids the data has been requested for
-        :param end_time_col: end time column name
-        :param asset_id_col: asset_id column name
-        :param how: mode of merge to use
-        :param cols_to_merge_on: columns to perform the merge on
-        :param threshold: share of end time column values in common to allow the merge
-        """
-        # Verify that end time columns have values of the same type.
-        end_time_col1 = df1[end_time_col]
-        end_time_col2 = df2[end_time_col]
-        only_first_elem = False
-        hdbg.dassert_array_has_same_type_element(
-            end_time_col1, end_time_col2, only_first_elem
-        )
-        # Verify that the share of common end time values is above threshold
-        # for each asset id.
-        for asset_id in asset_ids:
-            asset_id_df1 = df1[df1[asset_id_col]==asset_id]
-            asset_id_df2 = df2[df2[asset_id_col]==asset_id]
-            asset_id_end_time_col1 = asset_id_df1[end_time_col]
-            asset_id_end_time_col2 = asset_id_df2[end_time_col]
-            #
-            common_values = set(asset_id_end_time_col1) & set(asset_id_end_time_col2)
-            common_values_share1 = len(common_values) / len(asset_id_end_time_col1)
-            common_values_share2 = len(common_values) / len(asset_id_end_time_col2)
-            hdbg.dassert_lte(threshold, common_values_share1)
-            hdbg.dassert_lte(threshold, common_values_share2)
-        #
-        res_df = df1.merge(df2, how=how, on=cols_to_merge_on)
-        return res_df
