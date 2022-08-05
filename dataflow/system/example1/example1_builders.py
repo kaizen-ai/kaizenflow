@@ -21,7 +21,6 @@ import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hdbg as hdbg
 import market_data as mdata
-import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -110,7 +109,6 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     log_dir = None
     # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     order_type = "price@twap"
-    forecast_evaluator_from_prices_dict = None
     process_forecasts_config_dict = {
         "order_config": {
             "order_type": order_type,
@@ -140,7 +138,6 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "spread_col": spread_col,
         "portfolio": system.portfolio,
         "process_forecasts_config": process_forecasts_config_dict,
-        "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
     }
     system.config[
         "process_forecasts_config"
