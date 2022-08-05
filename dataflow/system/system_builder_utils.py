@@ -13,6 +13,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
+import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.universe as dtfuniver
@@ -379,6 +380,22 @@ def add_real_time_data_source(
         multiindex_output,
     )
     dag = build_dag_with_data_source_node(system, node)
+    return dag
+
+
+def add_process_forecasts_node(
+    system: dtfsyssyst.System, dag: dtfcore.DAG
+) -> dtfcore.DAG:
+    """
+    Append `ProcessForecastsNode` to a DAG.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    stage = "process_forecasts"
+    _LOG.debug("stage=%s", stage)
+    node = dtfsysinod.ProcessForecastsNode(
+        stage, **system.config["process_forecasts_config"].to_dict()
+    )
+    dag.append_to_tail(node)
     return dag
 
 
