@@ -24,17 +24,7 @@ _LOG = logging.getLogger(__name__)
 _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 
-# #############################################################################
-
-
 AssetId = int
-
-
-def dassert_valid_asset_ids(asset_ids: Optional[Iterable[AssetId]]) -> None:
-    if asset_ids is not None:
-        hdbg.dassert_container_type(
-            asset_ids, (np.ndarray, list), (int, np.int64)
-        )
 
 
 # #############################################################################
@@ -133,8 +123,10 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             )
         )
         self._asset_id_col = asset_id_col
-        dassert_valid_asset_ids(asset_ids)
+        # TODO(gp): Some tests pass asset_ids=None which is not ideal.
+        # hdbg.dassert_is_not(asset_ids, None)
         self._asset_ids = asset_ids
+        self._dassert_valid_asset_ids(asset_ids)
         self._start_time_col_name = start_time_col_name
         self._end_time_col_name = end_time_col_name
         self._columns = columns
@@ -220,7 +212,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         :param ts: the timestamp to filter on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
         """
-        dassert_valid_asset_ids(asset_ids)
+        self._dassert_valid_asset_ids(asset_ids)
         start_ts = ts - pd.Timedelta("1S")
         end_ts = ts + pd.Timedelta("1S")
         df = self.get_data_for_interval(
@@ -267,7 +259,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         # Resolve the asset ids.
         if asset_ids is None:
             asset_ids = self._asset_ids
-        dassert_valid_asset_ids(asset_ids)
+        self._dassert_valid_asset_ids(asset_ids)
         # Check the requested interval.
         hdateti.dassert_is_valid_interval(
             start_ts, end_ts, left_close, right_close
@@ -344,7 +336,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         This function should be called `get_twa_price()` or `get_twap()`, but alas
         TWAP is often used as an adjective for price.
         """
-        dassert_valid_asset_ids(asset_ids)
+        self._dassert_valid_asset_ids(asset_ids)
         # Get the slice (start_ts, end_ts] of prices.
         left_close = False
         right_close = True
@@ -382,7 +374,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         E.g., if the last end time is 9:35 and `bar_duration=5T`, then
         we compute TWAP for (9:30, 9:35].
         """
-        dassert_valid_asset_ids(asset_ids)
+        self._dassert_valid_asset_ids(asset_ids)
         last_end_time = self.get_last_end_time()
         _LOG.debug("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
@@ -426,7 +418,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close")
         """
-        dassert_valid_asset_ids(asset_ids)
+        self._dassert_valid_asset_ids(asset_ids)
         # TODO(Paul): Use a to-be-written `get_last_start_time()` instead.
         last_end_time = self.get_last_end_time()
         _LOG.info("last_end_time=%s", last_end_time)
@@ -613,6 +605,14 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
     # /////////////////////////////////////////////////////////////////////////////
     # Data normalization.
     # /////////////////////////////////////////////////////////////////////////////
+
+    def _dassert_valid_asset_ids(self, asset_ids: Optional[Iterable[AssetId]],
+                                 ) -> None:
+        if asset_ids is not None:
+            hdbg.dassert_container_type(
+                asset_ids, (np.ndarray, list), (int, np.int64)
+            )
+            hdbg.dassert_is_subset(asset_ids, self._asset_ids)
 
     def _normalize_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """

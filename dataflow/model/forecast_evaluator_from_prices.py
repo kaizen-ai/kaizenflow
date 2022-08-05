@@ -274,6 +274,7 @@ class ForecastEvaluatorFromPrices:
         style: str = "cross_sectional",
         quantization: str = "no_quantization",
         liquidate_at_end_of_day: bool = True,
+        initialize_beginning_of_day_trades_to_zero: bool = True,
         adjust_for_splits: bool = False,
         reindex_like_input: bool = False,
         burn_in_bars: int = 3,
@@ -342,7 +343,6 @@ class ForecastEvaluatorFromPrices:
             ffill_limit,
         )
         # Compute cash inflows/outflows from trades.
-        initialize_beginning_of_day_trades_to_zero = True
         flows = self._compute_flows(
             df,
             holdings,
@@ -849,3 +849,51 @@ class ForecastEvaluatorFromPrices:
             pnl = pnl.reindex(input_idx)
             stats = stats.reindex(input_idx)
         return holdings, positions, flows, pnl, stats
+
+
+def cross_check_portfolio_pnl(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute the PnL using multiple generally equivalent calculations.
+
+    Computations may legitimately differ in some cases due to overnight
+    holdings, corporate actions, and special beginning-of-day/end-of-day
+    settings.
+
+    Computations may also differ if trades were calculation using separate
+    execution prices (`buy_price_col`, `sell_price_col`).
+
+    :param df: `portfolio_df` output of `ForecastEvaluatorFromPrices.annotate_forecasts()`
+    :return: multiindexed dataframe with PnL correlations
+    """
+    # Reference PnL (nominal).
+    reference_pnl = df["pnl"]
+    # PnL computed from nominal position changes and nominal in/outflows.
+    holdings_diff_plus_flow = df["position"].diff().add(df["flow"])
+    # PnL computed from share counts and price differences.
+    holdings_time_price_diff = (
+        df["holdings"].shift(1).multiply(df["price"].diff())
+    )
+    # PnL computed from nominal position changes and nominal share trades.
+    nominal_position_minus_trade_times_price = (
+        df["position"].diff().add(-df["price"].multiply(df["holdings"].diff()))
+    )
+    # PnL computed from nominal positions and percentage price changes.
+    nominal_position_time_pct_price_change = (
+        df["position"].shift(1).multiply(df["price"].pct_change())
+    )
+    # Organize PnL calculations into a multiindexed dataframe.
+    pnl_dict = {
+        "reference_pnl": reference_pnl,
+        "holdings_diff_plus_flow": holdings_diff_plus_flow,
+        "holdings_times_price_diff": holdings_time_price_diff,
+        "nominal_position_minus_trade_times_price": nominal_position_minus_trade_times_price,
+        "nominal_position_times_pct_price_change": nominal_position_time_pct_price_change,
+    }
+    pnl_df = pd.concat(pnl_dict.values(), axis=1, keys=pnl_dict.keys())
+    pnl_df = pnl_df.swaplevel(i=0, j=1, axis=1)
+    # Compute per-instrument correlations of various PnL calculations.
+    pnl_corrs = {}
+    for col in pnl_df.columns.levels[0]:
+        pnl_corrs[col] = pnl_df[col].corr()
+    pnl_corr_df = pd.concat(pnl_corrs.values(), keys=pnl_corrs.keys())
+    return pnl_corr_df

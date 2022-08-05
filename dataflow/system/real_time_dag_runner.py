@@ -200,7 +200,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         #  sources and sinks that are awaitable.
         nid = self.dag.get_unique_sink()
         node = self.dag.get_node(nid)
-        if isinstance(node, dtfsysinod.ProcessForecasts):
+        if isinstance(node, dtfsysinod.ProcessForecastsNode):
             _LOG.debug("Waiting on node '%s' ...", str(nid))
             await node.process_forecasts()
             _LOG.debug("Waiting on node '%s': done", str(nid))
