@@ -184,8 +184,8 @@ def get_process_forecasts_dict_example1(
             },
         },
         # Params for `process_forecasts()`.
-        "ath_start_time": datetime.time(9, 30),
-        "trading_start_time": datetime.time(9, 30),
+        "ath_start_time": datetime.time(8, 30),
+        "trading_start_time": datetime.time(8, 30),
         "ath_end_time": datetime.time(16, 40),
         "trading_end_time": datetime.time(16, 40),
         "execution_mode": "real_time",

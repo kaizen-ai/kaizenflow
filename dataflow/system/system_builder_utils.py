@@ -222,7 +222,7 @@ def apply_dag_runner_config(
     elif trading_period_str == "2T":
         # Run every 2 min.
         wake_up_timestamp = wake_up_timestamp.replace(
-            hour=9, minute=30, second=0, microsecond=0, nanosecond=0
+            hour=8, minute=30, second=0, microsecond=0, nanosecond=0
         )
         sleep_interval_in_secs = 60 * 2
         # TODO(gp): Horrible confusing name.
