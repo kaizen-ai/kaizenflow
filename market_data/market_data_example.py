@@ -17,6 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
+import im_v2.crypto_chassis.data.client as iccdc
 import market_data.im_client_market_data as mdimcmada
 import market_data.real_time_market_data as mdrtmada
 import market_data.replayed_market_data as mdremada
@@ -427,6 +428,71 @@ def get_HorizontalStitchedMarketData_example1(
         im_client_market_data1=im_client_market_data1,
         im_client_market_data2=im_client_market_data2,
         column_remap=column_remap,
+        filter_data_mode=filter_data_mode,
+    )
+    return market_data
+
+
+# TODO(Grisha): we should mock ImClients.
+def get_CryptoChassis_BidAskOhlcvMarketData_example1(
+    asset_ids: List[int],
+    universe_version: str,
+    resample_1min: bool,
+    data_snapshot: str,
+    *,
+    wall_clock_time: Optional[pd.Timestamp] = None,
+    filter_data_mode: str = "assert",
+) -> mdstmada.HorizontalStitchedMarketData:
+    """
+    Build a `HorizontalStitchedMarketData` using "ohlcv" and "bid_ask" dataset
+    type `ImClient`s.
+    """
+    contract_type = "futures"
+    #
+    dataset1 = "ohlcv"
+    im_client1 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+        universe_version,
+        resample_1min,
+        dataset1,
+        contract_type,
+        data_snapshot,
+    )
+    #
+    dataset2 = "bid_ask"
+    im_client2 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+        universe_version,
+        resample_1min,
+        dataset2,
+        contract_type,
+        data_snapshot,
+    )
+    #
+    columns = None
+    column_remap = None
+    #
+    im_client_market_data1 = get_HistoricalImClientMarketData_example1(
+        im_client1,
+        asset_ids,
+        columns,
+        column_remap,
+        wall_clock_time=wall_clock_time,
+        filter_data_mode=filter_data_mode,
+    )
+    im_client_market_data2 = get_HistoricalImClientMarketData_example1(
+        im_client2,
+        asset_ids,
+        columns,
+        column_remap,
+        wall_clock_time=wall_clock_time,
+        filter_data_mode=filter_data_mode,
+    )
+    market_data = get_HorizontalStitchedMarketData_example1(
+        im_client_market_data1,
+        im_client_market_data2,
+        asset_ids,
+        columns,
+        column_remap,
+        wall_clock_time=wall_clock_time,
         filter_data_mode=filter_data_mode,
     )
     return market_data
