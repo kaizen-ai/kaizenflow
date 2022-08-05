@@ -263,6 +263,10 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_REPO_CONFIG_CHECK='True'
           AM_REPO_CONFIG_PATH=''
           CI='true'
+          CK_AWS_ACCESS_KEY_ID=***    
+          CK_AWS_DEFAULT_REGION=***
+          CK_AWS_S3_BUCKET=***
+          CK_AWS_SECRET_ACCESS_KEY=***
         """
         # We ignore the AWS vars, since GH Actions does some replacement to mask
         # the env vars coming from secrets.
