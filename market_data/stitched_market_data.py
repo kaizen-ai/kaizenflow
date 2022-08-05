@@ -302,12 +302,13 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         """
         Merge `_get_data()` returns in one dataframe.
 
-        :param df1: dataframe to use for merge
-        :param df2: dataframe to use for merge
+        :param df1: data to use for merge
+        :param df2: data to use for merge
         :param end_time_col_name: end time column name
         :param how: mode of merge to use
         :param cols_to_merge_on: columns to perform the merge on
         :param threshold: share of end time column values in common to allow the merge
+        :return: merged data
         """
         # Verify that end time columns have values of the same type.
         end_time_col1 = df1[end_time_col_name]
