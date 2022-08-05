@@ -387,12 +387,12 @@ def add_process_forecasts_node(
     system: dtfsyssyst.System, dag: dtfcore.DAG
 ) -> dtfcore.DAG:
     """
-    Append `ProcessForecasts` node to a DAG.
+    Append `ProcessForecastsNode` to a DAG.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
-    node = dtfsysinod.ProcessForecasts(
+    node = dtfsysinod.ProcessForecastsNode(
         stage, **system.config["process_forecasts_config"].to_dict()
     )
     dag.append_to_tail(node)

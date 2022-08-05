@@ -109,13 +109,11 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 # Dict builders.
 # #############################################################################
 
-
+# TODO(Grisha): generalize and move to `system_builder_utils.py`?
 def get_process_forecasts_dict_example1(
     portfolio: omportfo.Portfolio,
     prediction_col: str,
     volatility_col: str,
-    # TODO(Paul): Remove this parameter.
-    price_col: str,
     spread_col: Optional[str],
     order_duration_in_mins: int,
     style: str,
@@ -123,7 +121,7 @@ def get_process_forecasts_dict_example1(
     log_dir: str,
 ) -> Dict[str, Any]:
     """
-    Get the config for `ProcessForecast` node.
+    Get the config for `ProcessForecastNode`.
     """
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     #
@@ -160,51 +158,3 @@ def get_process_forecasts_dict_example1(
     }
     return process_forecasts_dict
 
-
-def get_process_forecasts_dict_example4(
-    system: dtfsyssyst.System,
-) -> Dict[str, Any]:
-    """
-    Get the dictionary with process_forecasts config params for Example1
-    pipeline.
-    """
-    prediction_col = "feature1"
-    volatility_col = "vwap.ret_0.vol"
-    spread_col = None
-    bulk_frac_to_remove = 0.0
-    target_gmv = 1e5
-    log_dir = None
-    order_type = "price@twap"
-    forecast_evaluator_from_prices_dict = None
-    process_forecasts_config_dict = {
-        "order_config": {
-            "order_type": order_type,
-            "order_duration_in_mins": 5,
-        },
-        "optimizer_config": {
-            "backend": "pomo",
-            "params": {
-                "style": "cross_sectional",
-                "kwargs": {
-                    "bulk_frac_to_remove": bulk_frac_to_remove,
-                    "bulk_fill_method": "zero",
-                    "target_gmv": target_gmv,
-                },
-            },
-        },
-        "ath_start_time": datetime.time(9, 30),
-        "trading_start_time": datetime.time(9, 30),
-        "ath_end_time": datetime.time(16, 40),
-        "trading_end_time": datetime.time(16, 40),
-        "execution_mode": "real_time",
-        "log_dir": log_dir,
-    }
-    process_forecasts_config = {
-        "prediction_col": prediction_col,
-        "volatility_col": volatility_col,
-        "spread_col": spread_col,
-        "portfolio": system.portfolio,
-        "process_forecasts_config": process_forecasts_config_dict,
-        "forecast_evaluator_from_prices_dict": forecast_evaluator_from_prices_dict,
-    }
-    return process_forecasts_config
