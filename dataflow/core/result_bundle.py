@@ -20,7 +20,6 @@ import helpers.hio as hio
 import helpers.hparquet as hparque
 import helpers.hpickle as hpickle
 import helpers.htimer as htimer
-import core.config.config_utils as ccocouti
 
 _LOG = logging.getLogger(__name__)
 
@@ -261,7 +260,7 @@ class ResultBundle(abc.ABC):
         if commit_hash:
             serialized_bundle["commit_hash"] = hgit.get_current_commit_hash()
         #
-        serialized_bundle = ccocouti.get_config_from_nested_dict(serialized_bundle)
+        serialized_bundle = cconfig.get_config_from_nested_dict(serialized_bundle)
         #
         return serialized_bundle
 

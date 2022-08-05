@@ -15,7 +15,6 @@ from dataflow.core.nodes.gluonts_models import (
     ContinuousDeepArModel,
     DeepARGlobalModel,
 )
-import core.config.config_utils as ccocouti
 
 # TODO(gp): use our import style instead of from ... import
 from dataflow.core.nodes.sources import DfDataSource
@@ -73,9 +72,9 @@ if True:
             config["x_vars"] = None
             config["y_vars"] = ["y"]
             trainer_kwargs = {"epochs": 1}
-            config["trainer_kwargs"] = ccocouti.get_config_from_nested_dict(trainer_kwargs)
+            config["trainer_kwargs"] = cconfig.get_config_from_nested_dict(trainer_kwargs)
             estimator_kwargs = {"prediction_length": 2}
-            config["estimator_kwargs"] = ccocouti.get_config_from_nested_dict(estimator_kwargs)
+            config["estimator_kwargs"] = cconfig.get_config_from_nested_dict(estimator_kwargs)
             node = ContinuousDeepArModel(
                 "deepar",
                 **config.to_dict(),
@@ -154,12 +153,12 @@ if True:
             config = cconfig.Config()
             config["nid"] = "deepar"
             trainer_kwargs = {"epochs": 1}
-            config["trainer_kwargs"] = ccocouti.get_config_from_nested_dict(trainer_kwargs)
+            config["trainer_kwargs"] = cconfig.get_config_from_nested_dict(trainer_kwargs)
             estimator_kwargs = {
                 "freq": "T",
                 "use_feat_dynamic_real": False,
             }
-            config["estimator_kwargs"] = ccocouti.get_config_from_nested_dict(estimator_kwargs)
+            config["estimator_kwargs"] = cconfig.get_config_from_nested_dict(estimator_kwargs)
             config["x_vars"] = self._x_vars
             config["y_vars"] = self._y_vars
             return config

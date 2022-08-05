@@ -9,7 +9,6 @@ import dataflow.core.result_bundle as dtfcorebun
 import dataflow.core.utils as dtfcorutil
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-import core.config.config_utils as ccocouti
 
 _LOG = logging.getLogger(__name__)
 
@@ -211,9 +210,9 @@ class TestPredictionResultBundle(hunitest.TestCase):
             "col3": ["prediction_col", "step_0"],
             "col4": ["prediction_col", "step_1"],
         }
-        init_config["column_to_tags"] = ccocouti.get_config_from_nested_dict(column_to_tags)
+        init_config["column_to_tags"] = cconfig.get_config_from_nested_dict(column_to_tags)
         info_ordered_dict = collections.OrderedDict(
             {"df_info": dtfcorutil.get_df_info_as_string(df)}
         )
-        init_config["info"] = ccocouti.get_config_from_nested_dict(info_ordered_dict)
+        init_config["info"] = cconfig.get_config_from_nested_dict(info_ordered_dict)
         return init_config

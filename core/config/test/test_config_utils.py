@@ -181,7 +181,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Empty dict.
+        One of the dict's values is an empty dict.
         """
         nested = {
             "key1": "val1",
@@ -206,9 +206,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        - Create a dictionary with another dictionary as a value
-        - Convert it to config
-        - Test whether the value is now `Config` type
+        One of the dict's values is a dict that should become a `Config`.
         """
         test_dict = {"key1": "value1", "key2": {"key3": "value2"}}
         test_config = cconfig.get_config_from_nested_dict(test_dict)
