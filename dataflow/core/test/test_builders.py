@@ -53,14 +53,16 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         dag_builder = dtfcdabuex.MvnReturnsBuilder()
         #
         overriding_config = cconfig.Config()
-        overriding_config["load_prices"] = cconfig.get_config_from_nested_dict({
-            "frequency": "T",
-            "start_date": "2010-01-04 09:30:00",
-            "end_date": "2010-01-14 16:05:00",
-            "dim": 4,
-            "target_volatility": 0.25,
-            "seed": 247,
-        })
+        overriding_config["load_prices"] = cconfig.get_config_from_nested_dict(
+            {
+                "frequency": "T",
+                "start_date": "2010-01-04 09:30:00",
+                "end_date": "2010-01-14 16:05:00",
+                "dim": 4,
+                "target_volatility": 0.25,
+                "seed": 247,
+            }
+        )
         node = dtfconosou.MultivariateNormalDataSource
         nodes_to_insert = [("load_prices", node)]
         #

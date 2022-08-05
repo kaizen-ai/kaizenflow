@@ -1,4 +1,3 @@
-import collections
 import logging
 import os
 
@@ -16,9 +15,7 @@ _LOG = logging.getLogger(__name__)
 def _get_init_config() -> cconfig.Config:
     df = pd.DataFrame([range(5)], columns=[f"col{i}" for i in range(5)])
     config_ = {"key": "val"}
-    info_ = {
-        "df_info": dtfcorutil.get_df_info_as_string(df)
-    }
+    info_ = {"df_info": dtfcorutil.get_df_info_as_string(df)}
     column_to_tags_dict = {
         "col0": ["feature_col"],
         "col1": ["target_col", "step_0"],
@@ -34,7 +31,6 @@ def _get_init_config() -> cconfig.Config:
         "column_to_tags": column_to_tags_dict,
         "info": info_,
         "payload": None,
-
     }
     init_config = cconfig.get_config_from_nested_dict(init_dict)
     return init_config

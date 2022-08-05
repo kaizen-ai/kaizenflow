@@ -1094,8 +1094,8 @@ class Test_make_read_only1(hunitest.TestCase):
 
 class Test_to_dict1(hunitest.TestCase):
     def helper(
-        self, 
-        config_as_dict: Dict[str, Any], 
+        self,
+        config_as_dict: Dict[str, Any],
         expected_result_as_str: str,
     ) -> None:
         """
@@ -1178,6 +1178,6 @@ class Test_to_dict1(hunitest.TestCase):
         param3:
         """
         self.helper(config_as_dict, exp)
-  
+
 
 # TODO(gp): Unit tests all the functions.
