@@ -8,7 +8,6 @@ import dataflow.system.sink_nodes as dtfsysinod
 import collections
 import datetime
 import logging
-import os
 from typing import Any, Dict, Optional
 
 import pandas as pd
@@ -157,4 +156,3 @@ def get_process_forecasts_dict_example1(
         "process_forecasts_config": process_forecasts_config_dict,
     }
     return process_forecasts_dict
-

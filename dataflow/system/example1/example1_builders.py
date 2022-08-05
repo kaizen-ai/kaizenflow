@@ -44,6 +44,7 @@ def get_Example1_MarketData_example2(
     )
     return market_data
 
+
 # #############################################################################
 # Process forecasts configs.
 # #############################################################################
@@ -62,7 +63,7 @@ def get_Example1_process_forecasts_dict_example1(
     order_duration_in_mins = 5
     style = "cross_sectional"
     compute_target_positions_kwargs = {
-        "bulk_frac_to_remove": 0.0, 
+        "bulk_frac_to_remove": 0.0,
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }

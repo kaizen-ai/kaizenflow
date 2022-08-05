@@ -85,7 +85,8 @@ def get_Cx_process_forecasts_dict_example1(
     system: dtfsyssyst.System,
 ) -> Dict[str, Any]:
     """
-    Get the dictionary with `ProcessForecastsNode` config params for C1b pipeline.
+    Get the dictionary with `ProcessForecastsNode` config params for C1b
+    pipeline.
     """
     prediction_col = "vwap.ret_0.vol_adj_2_hat"
     volatility_col = "vwap.ret_0.vol"
@@ -93,7 +94,7 @@ def get_Cx_process_forecasts_dict_example1(
     order_duration_in_mins = 5
     style = "cross_sectional"
     compute_target_positions_kwargs = {
-        "bulk_frac_to_remove": 0.0, 
+        "bulk_frac_to_remove": 0.0,
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
@@ -167,9 +168,7 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     system = dtfsys.apply_history_lookback(system)
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
-    process_forecasts_config = get_Cx_process_forecasts_dict_example1(
-        system
-    )
+    process_forecasts_config = get_Cx_process_forecasts_dict_example1(system)
     system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
