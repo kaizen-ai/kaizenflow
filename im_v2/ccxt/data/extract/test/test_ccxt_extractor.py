@@ -148,9 +148,38 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         actual_output = hpandas.df_to_str(ohlcv_data)
         expected_output = r"""dummy
-        0  dummy
-        0  dummy
-        0  dummy
+            0  dummy
+            0  dummy
+            0  dummy
+        """
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+
+    @umock.patch.object(
+        ivcdexex.CcxtExtractor,
+        "_fetch_ohlcv",
+        spec=ivcdexex.CcxtExtractor._fetch_ohlcv,
+    )
+    def test_download_ohlcv2(self, fetch_ohlcv_mock: umock.MagicMock) -> None:
+        """
+        Verify that wrapper around `ccxt.binance` is getting the latest bars.
+        """
+        fetch_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
+        # Prepare data and initialize class before run.
+        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_class.currency_pairs = ["BTC/USDT"]
+        # Run.
+        ohlcv_data = exchange_class._download_ohlcv(
+            exchange_id="binance",
+            currency_pair="BTC/USDT",
+        )
+        # Check output.
+        self.assertEqual(fetch_ohlcv_mock.call_count, 1)
+        actual_args = tuple(fetch_ohlcv_mock.call_args)
+        expected_args = (("BTC/USDT",), {"bar_per_iteration": 500})
+        self.assertEqual(actual_args, expected_args)
+        actual_output = hpandas.df_to_str(ohlcv_data)
+        expected_output = r"""dummy
+            0  dummy
         """
         self.assert_equal(actual_output, expected_output, fuzzy_match=True)
 
