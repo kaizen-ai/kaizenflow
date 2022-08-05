@@ -271,7 +271,7 @@ class CcxtBroker(ombroker.Broker):
             position_amount = float(position["info"]["positionAmt"])
             if position_amount != 0:
                 open_positions.append(position)
-            return open_positions
+        return open_positions
 
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:

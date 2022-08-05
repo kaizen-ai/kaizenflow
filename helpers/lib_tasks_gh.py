@@ -196,7 +196,9 @@ def gh_workflow_list(  # type: ignore
                 print(f"# Log is in '{log_file_name}'")
                 # Run_fast_tests  Run fast tests  2021-12-19T00:19:38.3394316Z FAILED data
                 # cmd = rf"grep 'Z FAILED ' {log_file_name}"
-                cmd = f"invoke pytest_repro -f {log_file_name}"
+                workflow_as_str = workflow.lower().replace(" ", "_")
+                script_name = f"./tmp.pytest_repro.{workflow_as_str}.sh"
+                cmd = f"invoke pytest_repro --file-name {log_file_name} --script-name {script_name}"
                 if show_stack_trace:
                     cmd += " -s"
                 hsystem.system(cmd, suppress_output=False, abort_on_error=False)

@@ -16,6 +16,7 @@ from tqdm.autonotebook import tqdm
 import core.key_sorted_ordered_dict as cksoordi
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsql as hsql
@@ -29,7 +30,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class Portfolio(abc.ABC):
+class Portfolio(abc.ABC, hobject.PrintableMixin):
     """
     Store holdings over time, e.g., how many shares of each asset are owned at
     any time. Cash is treated as just another asset to keep code uniform.
@@ -90,7 +91,12 @@ class Portfolio(abc.ABC):
         :param max_num_bars: maximum number of market data bars to store in memory;
             if `None`, then impose no restriction.
         """
-        _LOG.debug(hprint.to_str("mark_to_market_col"))
+        _LOG.debug(
+            hprint.to_str(
+                "broker mark_to_market_col pricing_method initial_holdings "
+                "retrieve_initial_holdings_from_db max_num_bars"
+            )
+        )
         # Set and unpack broker.
         hdbg.dassert_issubclass(broker, ombroker.Broker)
         self.broker = broker
@@ -144,6 +150,8 @@ class Portfolio(abc.ABC):
         self._initial_holdings = initial_holdings
         # Set the initial universe.
         self._initial_universe = initial_holdings.index.drop(Portfolio.CASH_ID)
+        #
+        _LOG.debug("After initialization:\n%s", repr(self))
 
     def __str__(self) -> str:
         """
@@ -1046,6 +1054,7 @@ class DatabasePortfolio(Portfolio):
 
         :param table_name: current positions table name
         """
+        _LOG.debug(hprint.to_str("table_name"))
         super().__init__(*args, **kwargs)
         #
         self._db_connection = self.broker._db_connection
@@ -1061,6 +1070,8 @@ class DatabasePortfolio(Portfolio):
                 self._initial_holdings
             )
             self._validate_initial_holdings(self._initial_holdings)
+        #
+        _LOG.debug("After initialization:\n%s", repr(self))
 
     def _observe_holdings(self) -> None:
         # The current positions table has the following fields:
