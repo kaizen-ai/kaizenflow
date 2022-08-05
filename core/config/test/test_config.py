@@ -2,7 +2,7 @@ import collections
 import datetime
 import logging
 import pprint
-from typing import Any
+from typing import Any, Dict
 
 import pytest
 
@@ -1093,24 +1093,61 @@ class Test_make_read_only1(hunitest.TestCase):
 
 
 class Test_to_dict1(hunitest.TestCase):
-    # TODO(Grisha): @Max add a basic test that covers a trivial case, i.e.
-    # just a regular config without any config-value.
-    # TODO(Grisha): @Max add a test for a config with an empty subconfig and
-    # also check length.
+    def helper(
+        self, 
+        config_as_dict: Dict[str, Any], 
+        expected_result_as_str: str,
+    ) -> None:
+        """
+        Check that a `Config`'s conversion to a dict is correct.
+
+        :param config_as_dict: a dictionary to build a `Config` from
+        :param expected_result_as_str: expected `Config` value as string
+        """
+        config = cconfig.get_config_from_nested_dict(config_as_dict)
+        act = str(config)
+        self.assert_equal(act, expected_result_as_str, fuzzy_match=True)
+        #
+        # Ensure that the round trip transform is correct.
+        config_as_dict2 = config.to_dict()
+        self.assert_equal(str(config_as_dict), str(config_as_dict2))
+
     def test1(self) -> None:
         """
-        ...
+        Test a regular `Config`.
         """
-        sub_config_dict = {
-            "sub_key1": "sub_value1",
-            "sub_key2": "sub_value2",
-        }
-        config_as_dict = {
-            "param1": 1,
-            "param2": 2,
-            "param3_as_config": sub_config_dict,
-        }
-        config = cconfig.get_config_from_nested_dict(config_as_dict)
+        config_as_dict = collections.OrderedDict(
+            {
+                "param1": 1,
+                "param2": 2,
+                "param3": 3,
+            }
+        )
+        #
+        exp = r"""
+        param1: 1
+        param2: 2
+        param3: 3
+        """
+        self.helper(config_as_dict, exp)
+
+    def test2(self) -> None:
+        """
+        Test a `Config` with a non-empty sub-config.
+        """
+        sub_config_dict = collections.OrderedDict(
+            {
+                "sub_key1": "sub_value1",
+                "sub_key2": "sub_value2",
+            }
+        )
+        config_as_dict = collections.OrderedDict(
+            {
+                "param1": 1,
+                "param2": 2,
+                "param3_as_config": sub_config_dict,
+            }
+        )
         #
         exp = r"""
         param1: 1
@@ -1119,18 +1156,28 @@ class Test_to_dict1(hunitest.TestCase):
           sub_key1: sub_value1
           sub_key2: sub_value2
         """
-        act = str(config)
-        self.assert_equal(act, exp, fuzzy_match=True)
-        #
-        config_as_dict2 = config.to_dict()
-        check = isinstance(config_as_dict2["param3_as_config"], dict)
-        self.assertTrue(check)
-        #
-        # Ensure that the round trip transform is correct.
-        dict1 = collections.OrderedDict(config_as_dict)
-        dict2 = config_as_dict2
-        dict2["param3_as_config"] = dict(dict2["param3_as_config"])
-        self.assert_equal(str(dict1), str(dict2))
+        self.helper(config_as_dict, exp)
 
+    def test3(self) -> None:
+        """
+        Test a `Config` with an empty sub-config.
+        """
+        config_as_dict = collections.OrderedDict(
+            {
+                "param1": 1,
+                "param2": 2,
+                # An empty dict becomes an empty config when converting to `Config`
+                # further.
+                "param3": collections.OrderedDict(),
+            }
+        )
+        #
+        exp = r"""
+        param1: 1
+        param2: 2
+        param3:
+        """
+        self.helper(config_as_dict, exp)
+  
 
 # TODO(gp): Unit tests all the functions.

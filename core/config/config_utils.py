@@ -92,6 +92,8 @@ def get_config_from_flattened_dict(
                 # cannot use dict as value in a `Config`.
                 v = get_config_from_nested_dict(v)
             else:
+                # TODO(Grisha): maybe move to `get_config_from_nested_dict`, i.e.
+                # return empty `Config` right away without passing further.
                 # If dictionary is empty convert to an empty `Config`.
                 v = cconconf.Config()
         config[k] = v
