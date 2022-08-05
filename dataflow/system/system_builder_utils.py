@@ -489,6 +489,8 @@ def get_DataFramePortfolio_from_System(
         pricing_method=pricing_method,
         asset_ids=asset_ids,
     )
+    # TODO(gp): We should pass the column_remap to the Portfolio builder,
+    # instead of injecting it after the fact.
     portfolio.broker._column_remap = system.config[
         "portfolio_config", "column_remap"
     ]
@@ -516,7 +518,23 @@ def get_DatabasePortfolio_from_System(
         pricing_method=pricing_method,
         asset_ids=asset_ids,
     )
+    # TODO(gp): We should pass the column_remap to the Portfolio builder,
+    # instead of injecting it after the fact.
     portfolio.broker._column_remap = system.config[
         "portfolio_config", "column_remap"
     ]
     return portfolio
+
+
+def apply_Portfolio_config(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
+    system.config["portfolio_config", "mark_to_market_col"] = "close"
+    system.config["portfolio_config", "pricing_method"] = "twap.5T"
+    system.config["portfolio_config", "column_remap"] = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
+    return system
