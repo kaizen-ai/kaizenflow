@@ -52,6 +52,6 @@ def adapt_dag_to_real_time(
     # Create and append the ProcessForecast node.
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
-    node = dtfsysinod.ProcessForecasts(stage, **process_forecasts_dict)
+    node = dtfsysinod.ProcessForecastsNode(stage, **process_forecasts_dict)
     dag.append_to_tail(node)
     return dag
