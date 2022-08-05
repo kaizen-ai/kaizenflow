@@ -248,7 +248,6 @@ class ResultBundle(abc.ABC):
 
         :param commit_hash: whether to include current commit hash
         """
-        #serialized_bundle = cconfig.Config()
         serialized_bundle = {}
         serialized_bundle["config"] = self._config
         serialized_bundle["result_nid"] = self._result_nid

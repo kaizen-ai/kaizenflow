@@ -145,8 +145,8 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     # Append the ProcessForecast node.
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
-    node = dtfsysinod.ProcessForecasts(
-        stage, **system.config["process_forecasts_config"]
+    node = dtfsysinod.ProcessForecastsNode(
+        stage, **system.config["process_forecasts_config"].to_dict()
     )
     dag.append_to_tail(node)
     return dag

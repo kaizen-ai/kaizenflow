@@ -55,6 +55,6 @@ def adapt_dag_to_real_time(
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
     process_forecasts_dict = ccocouti.get_config_from_nested_dict(process_forecasts_dict)
-    node = dtfsysinod.ProcessForecasts(stage, **process_forecasts_dict)
+    node = dtfsysinod.ProcessForecastsNode(stage, **process_forecasts_dict.to_dict())
     dag.append_to_tail(node)
     return dag

@@ -1087,7 +1087,7 @@ class Test_make_read_only1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestConfigToDict
+# Test_to_dict1
 # #############################################################################
 
 
@@ -1104,23 +1104,15 @@ class Test_to_dict1(hunitest.TestCase):
             "sub_key1": "sub_value1", 
             "sub_key2": "sub_value2",
         }
-        #sub_config = cconfig.get_config_from_nested_dict(sub_config_dict)
         config_as_dict = {
             "param1": 1,
             "param2": 2,
             "param3_as_config": sub_config_dict,
         }
         config = cconfig.get_config_from_nested_dict(config_as_dict)
-        print("CONFIG_TYPE", type(config))
-        print("SUB_CONFIG_TYPE", type(config["param3_as_config"]))
         config_to_dict = config.to_dict()
         check = isinstance(config_to_dict["param3_as_config"], dict)
         self.assertTrue(check)
-
-
-# Dict[Dict] -> get_config_from_nested_dict -> Config[Config]
-
-# Config[Config] -> to_dict() -> Dict[Dict]
 
 
 # TODO(gp): Unit tests all the functions.

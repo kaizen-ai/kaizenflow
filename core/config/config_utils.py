@@ -94,8 +94,6 @@ def get_config_from_flattened_dict(
             else:
                 # If dictionary is empty convert to an empty `Config`.
                 v = cconconf.Config()
-        # if isinstance(v, dict) and not v:
-        #     v = cconconf.Config()
         config[k] = v
     return config
 
