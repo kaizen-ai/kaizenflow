@@ -280,9 +280,9 @@ class Config:
         _LOG.debug("")
         self._read_only = True
         # TODO(gp): Make read_only recursive. Add unit tests.
-        for v in self._config.values():
-            if isinstance(v, Config):
-                v.mark_read_only()
+        # for v in self._config.values():
+        #     if isinstance(v, Config):
+        #         v.mark_read_only()
                 #assert 0
 
     @classmethod
