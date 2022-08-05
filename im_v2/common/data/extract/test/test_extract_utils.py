@@ -1,4 +1,6 @@
 import unittest.mock as umock
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 import pandas as pd
 import pytest
@@ -13,6 +15,306 @@ import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
+
+
+class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
+    # Regular mock for capturing logs.
+    log_patch = umock.patch.object(imvcdeexut, "_LOG")
+    # Mock call to function that is calling external provider.
+    realtime_download_patch = umock.patch.object(
+        imvcdeexut,
+        "_download_realtime_for_one_exchange_with_timeout",
+        spec=imvcdeexut._download_realtime_for_one_exchange_with_timeout,
+    )
+    # Mock current time calls, so they can be controlled.
+    timedelta_patch = umock.patch.object(
+        imvcdeexut, "timedelta", spec=imvcdeexut.timedelta
+    )
+    # `datetime.now` can not be directly patched as it is built-in method.
+    # Error: "can't set attributes of built-in/extension type 'datetime.datetime'"
+    datetime_patch = umock.patch.object(
+        imvcdeexut, "datetime", spec=imvcdeexut.datetime
+    )
+    sleep_patch = umock.patch.object(
+        imvcdeexut.time, "sleep", spec=imvcdeexut.time.sleep
+    )
+
+    def setUp(self) -> None:
+        super().setUp()
+        # On test run, brand new mocks are created from patch's `.start()` method.
+        self.log_mock: umock.MagicMock = self.log_patch.start()
+        self.realtime_download_mock: umock.MagicMock = (
+            self.realtime_download_patch.start()
+        )
+        self.timedelta_mock: umock.MagicMock = self.timedelta_patch.start()
+        self.datetime_mock: umock.MagicMock = self.datetime_patch.start()
+        self.sleep_mock: umock.MagicMock = self.sleep_patch.start()
+        # Commonly used extractor mock.
+        self.extractor_mock = umock.create_autospec(
+            ivcdexex.CcxtExtractor, instance=True
+        )
+        # Commonly used kwargs across the tests.
+        self.kwargs = {
+            "data_type": "ohlcv",
+            "exchange_id": "binance",
+            "universe": "small",
+            "db_stage": "dev",
+            "db_table": "ccxt_ohlcv_test",
+            "aws_profile": "ck",
+            "s3_path": "s3://cryptokaizen-data-test/realtime/",
+            "interval_min": 1,
+            "start_time": "2022-08-04 21:17:35",
+            "stop_time": "2022-08-04 21:20:35",
+        }
+        # Predefined side effects for successful run.
+        time_window_min = 5  # to mimic the one in the function call.
+        self.timedelta_side_effect = [
+            timedelta(seconds=1),
+            timedelta(minutes=time_window_min),
+            # `interval_min` passed in kwargs.
+            *[timedelta(minutes=1) for _ in range(3)],
+            # Exit on second iteration.
+            timedelta(seconds=1),
+        ]
+        #
+        self.datetime_side_effect = [
+            datetime(2022, 8, 4, 21, 17, 34),
+            datetime(2022, 8, 4, 21, 17, 34),
+            # Entering into while loop.
+            datetime(2022, 8, 4, 21, 17, 34),
+            datetime(2022, 8, 4, 21, 17, 35),
+            # Download time, align the grid.
+            *[datetime(2022, 8, 4, 21, 18, 15) for _ in range(3)],
+            # Exit on second iteration.
+            datetime(2022, 8, 4, 21, 22, 45),
+        ]
+
+    def tearDown(self) -> None:
+        # We need to deallocate in reverse order to avoid race conditions.
+        super().tearDown()
+        #
+        self.log_patch.stop()
+        self.realtime_download_patch.stop()
+        self.timedelta_patch.stop()
+        self.datetime_patch.stop()
+        self.sleep_patch.stop()
+
+    def call_download_realtime_for_one_exchange_periodically(
+        self, additional_kwargs: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """
+        Test directly function call for coverage increase.
+        """
+        # Prepare inputs and keep original kwargs intact.
+        kwargs = {**self.kwargs}
+        if additional_kwargs:
+            kwargs.update(additional_kwargs)
+        # Run.
+        imvcdeexut.download_realtime_for_one_exchange_periodically(
+            kwargs, self.extractor_mock
+        )
+        # Check call.
+        self.assertEqual(self.realtime_download_mock.call_count, 1)
+        actual_args = tuple(self.realtime_download_mock.call_args)
+        expected_args = (
+            (
+                self.kwargs,
+                self.extractor_mock,
+                pd.Timestamp("2022-08-04 21:12:35"),
+                datetime(2022, 8, 4, 21, 17, 35),
+            ),
+            {},
+        )
+        self.assertEqual(actual_args, expected_args)
+
+    def test_function_call1(self) -> None:
+        """
+        Verify clean periodical download without any issues.
+        """
+        # Set mock return values for exactly one iteration.
+        self.timedelta_mock.side_effect = self.timedelta_side_effect
+        self.datetime_mock.now.side_effect = self.datetime_side_effect
+        # Run.
+        self.call_download_realtime_for_one_exchange_periodically()
+        # Check mock states.
+        actual_logs = str(self.log_mock.method_calls)
+        expected_logs = r"""
+            [call.info('Delay %s sec until next iteration', 1.0),
+            call.info('Successfully completed, iteration took %s sec', 40.0)]
+        """
+        self.assert_equal(actual_logs, expected_logs, fuzzy_match=True)
+        #
+        actual_calls = str(self.timedelta_mock.call_args_list)
+        expected_calls = r"""
+            [call(seconds=1.0),
+            call(minutes=5),
+            call(minutes=1),
+            call(minutes=1),
+            call(minutes=1),
+            call(seconds=20.0)]
+        """
+        self.assert_equal(actual_calls, expected_calls, fuzzy_match=True)
+
+    def test_function_call2(self) -> None:
+        """
+        Verify download that takes more time than `interval_min`.
+        """
+        # Set mock return values for one iteration.
+        timedelta_for_align = self.timedelta_side_effect[:-1]
+        timedelta_for_align.append(self.timedelta_side_effect[-2])
+        timedelta_for_align.append(self.timedelta_side_effect[-1])
+        self.timedelta_mock.side_effect = timedelta_for_align
+        #
+        long_download = self.datetime_side_effect[:4]
+        long_download.extend([datetime(2022, 8, 4, 21, 18, 45) for _ in range(3)])
+        long_download.append(self.datetime_side_effect[-1])
+        self.datetime_mock.now.side_effect = long_download
+        # Run.
+        self.call_download_realtime_for_one_exchange_periodically()
+        # Check mock states.
+        actual_logs = str(self.log_mock.method_calls)
+        expected_logs = r"""
+            [call.info('Delay %s sec until next iteration', 1.0),
+             call.error('The download was not finished in %s minutes.', 1),
+             call.debug('Initial start time before align `%s`.', Timestamp('2022-08-04 21:17:35')),
+             call.debug('Start time aligned `%s`.', Timestamp('2022-08-04 21:18:35'))]
+        """
+        self.assert_equal(actual_logs, expected_logs, fuzzy_match=True)
+        #
+        actual_calls = str(self.timedelta_mock.call_args_list)
+        expected_calls = r"""
+            [call(seconds=1.0),
+             call(minutes=5),
+             call(minutes=1),
+             call(minutes=1),
+             call(minutes=1),
+             call(minutes=1),
+             call(seconds=0)]
+        """
+        self.assert_equal(actual_calls, expected_calls, fuzzy_match=True)
+
+    def test_function_call3(self) -> None:
+        """
+        Verify runtime error.
+        """
+        # Set mock return values for 5 iterations.
+        self.realtime_download_mock.side_effect = [
+            Exception("Dummy1"),
+            Exception("Dummy2"),
+            Exception("Dummy3"),
+            Exception("Dummy4"),
+            Exception("Dummy5"),
+        ]
+        #
+        timedelta_for_error = self.timedelta_side_effect[:3]
+        [timedelta_for_error.extend(timedelta_for_error) for _ in range(4)]
+        self.timedelta_mock.side_effect = timedelta_for_error
+        #
+        download_for_error = self.datetime_side_effect[:5]
+        [download_for_error.extend(download_for_error) for _ in range(4)]
+        self.datetime_mock.now.side_effect = download_for_error
+        with pytest.raises(RuntimeError) as fail:
+            # Run.
+            self.call_download_realtime_for_one_exchange_periodically()
+        actual_error = str(fail.value)
+        expected_error = "5 consecutive downloads were failed"
+        self.assert_equal(expected_error, actual_error)
+        # Check mock states.
+        actual_logs = str(self.log_mock.method_calls)
+        expected_logs = r"""
+            [call.info('Delay %s sec until next iteration', 1.0),
+             call.error('Download failed %s', 'Dummy1'),
+             call.info('Start repeat download immediately.'),
+             call.info('Delay %s sec until next iteration', 0),
+             call.error('Download failed %s', 'Dummy2'),
+             call.info('Start repeat download immediately.'),
+             call.info('Delay %s sec until next iteration', 0),
+             call.error('Download failed %s', 'Dummy3'),
+             call.info('Start repeat download immediately.'),
+             call.info('Delay %s sec until next iteration', 0),
+             call.error('Download failed %s', 'Dummy4'),
+             call.info('Start repeat download immediately.'),
+             call.info('Delay %s sec until next iteration', 0),
+             call.error('Download failed %s', 'Dummy5')]
+        """
+        self.assert_equal(actual_logs, expected_logs, fuzzy_match=True)
+
+    def test_invalid_input1(self) -> None:
+        """
+        Run with wrong `interval_min`.
+        """
+        additional_kwargs = {"interval_min": 0}
+        with pytest.raises(AssertionError) as fail:
+            # Run.
+            self.call_download_realtime_for_one_exchange_periodically(
+                additional_kwargs=additional_kwargs
+            )
+        # Check output for error.
+        actual_error = str(fail.value)
+        expected_error = r"""
+            * Failed assertion *
+            1 <= 0
+            interval_min: 0 should be greater than 0
+        """
+        self.assert_equal(actual_error, expected_error, fuzzy_match=True)
+
+    def test_invalid_input2(self) -> None:
+        """
+        Run with `start_time` in the past.
+        """
+        self.datetime_mock.now.return_value = datetime(2022, 8, 4, 21, 17, 36)
+        with pytest.raises(AssertionError) as fail:
+            # Run.
+            self.call_download_realtime_for_one_exchange_periodically()
+        # Check output for error.
+        actual_error = str(fail.value)
+        expected_error = r"""
+            * Failed assertion *
+            2022-08-04 21:17:36 < 2022-08-04 21:17:35
+            start_time is in the past
+        """
+        self.assert_equal(actual_error, expected_error, fuzzy_match=True)
+
+    def test_invalid_input3(self) -> None:
+        """
+        Run with `start_time` greater than the `stop_time`.
+        """
+        additional_kwargs = {"start_time": "2022-08-04 21:20:36"}
+        self.datetime_mock.now.return_value = datetime(2022, 8, 4, 21, 17, 34)
+        with pytest.raises(AssertionError) as fail:
+            # Run.
+            self.call_download_realtime_for_one_exchange_periodically(
+                additional_kwargs=additional_kwargs
+            )
+        # Check output for error.
+        actual_error = str(fail.value)
+        expected_error = r"""
+            * Failed assertion *
+            2022-08-04 21:20:36 < 2022-08-04 21:20:35
+            stop_time is less than start_time
+        """
+        self.assert_equal(actual_error, expected_error, fuzzy_match=True)
+
+    def test_invalid_input4(self) -> None:
+        """
+        Run with `start_time` with different timezone info.
+        """
+        additional_kwargs = {"start_time": "2022-08-04 21:17:35+02:00"}
+        self.datetime_mock.now.return_value = datetime(2022, 8, 4, 21, 17, 34)
+        with pytest.raises(AssertionError) as fail:
+            # Run.
+            self.call_download_realtime_for_one_exchange_periodically(
+                additional_kwargs=additional_kwargs
+            )
+        # Check output for error.
+        actual_error = str(fail.value)
+        expected_error = r"""
+            * Failed assertion *
+            'pytz.FixedOffset(120)'
+            ==
+            'None'
+        """
+        self.assert_equal(actual_error, expected_error, fuzzy_match=True)
 
 
 @pytest.mark.skipif(
@@ -471,8 +773,6 @@ class TestVerifySchema(hunitest.TestCase):
             imvcdeexut.verify_schema(test_df)
         actual = str(cm.exception)
         expected = """
-################################################################################
-Invalid dtype of `close` column: expected type `float64`, found `object`
-################################################################################
-"""
-        self.assertEqual(actual, expected)
+            Invalid dtype of `close` column: expected type `float64`, found `object`
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)

@@ -300,7 +300,7 @@ def download_realtime_for_one_exchange_periodically(
     Encapsulate common logic for periodical exchange data download.
 
     :param args: arguments passed on script run
-    :param exchange_class: which exchange is used in script run
+    :param exchange: which exchange is used in script run
     """
     # Time range for each download.
     time_window_min = 5
@@ -358,6 +358,9 @@ def download_realtime_for_one_exchange_periodically(
             _LOG.error(
                 "The download was not finished in %s minutes.", interval_min
             )
+            _LOG.debug(
+                "Initial start time before align `%s`.", iteration_start_time
+            )
             iteration_delay_sec = 0
             # Download that will start after repeated one, should follow to the initial schedule.
             while datetime.now(tz) > iteration_start_time + timedelta(
@@ -365,6 +368,9 @@ def download_realtime_for_one_exchange_periodically(
             ):
                 iteration_start_time = iteration_start_time + timedelta(
                     minutes=interval_min
+                )
+                _LOG.debug(
+                    "Start time aligned `%s`.", iteration_start_time
                 )
         # If download failed, but there is time before next download.
         elif num_failures > 0:
