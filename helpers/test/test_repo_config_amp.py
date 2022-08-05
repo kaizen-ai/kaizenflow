@@ -86,6 +86,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             get_shared_data_dirs='{'/data/shared': '/shared_data'}'
             has_dind_support='True'
             has_docker_sudo='True'
+            is_CK_S3_available='False'
             run_docker_as_root='False'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='False'
@@ -93,7 +94,6 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             use_docker_sibling_containers='False'
             # hserver.config
               is_AM_S3_available()='True'
-              is_CK_S3_available()='True'
               is_dev4()='False'
               is_dev_ck()='True'
               is_inside_ci()='False'
@@ -140,19 +140,19 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             get_shared_data_dirs='None'
             has_dind_support='False'
             has_docker_sudo='True'
+            is_CK_S3_available='False'
             run_docker_as_root='False'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='True'
             use_docker_network_mode_host='False'
             use_docker_sibling_containers='True'
             # hserver.config
-            is_AM_S3_available='True'
-            is_CK_S3_available='True'
-            is_dev4='False'
-            is_dev_ck='False'
-            is_inside_ci='False'
-            is_inside_docker='True'
-            is_mac='True'
+              is_AM_S3_available='True'
+              is_dev4='False'
+              is_dev_ck='False'
+              is_inside_ci='False'
+              is_inside_docker='True'
+              is_mac='True'
         # Env vars:
         AM_AWS_ACCESS_KEY_ID=undef
         AM_AWS_DEFAULT_REGION=undef
@@ -175,7 +175,58 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
         exp_has_dind_support = True
         hrecouti.assert_setup(self, exp_enable_privileged_mode, exp_has_dind_support)
 
-    def test_ci(self) -> None:
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//amp",
+        reason="Run only in //amp",
+    )
+    def test_amp_ci(self) -> None:
+        hunteuti.execute_only_on_ci()
+        #
+        exp = r"""
+        # Repo config:
+          # repo_config.config
+            enable_privileged_mode='True'
+            get_docker_base_image_name='amp'
+            get_docker_shared_group=''
+            get_docker_user=''
+            get_host_name='github.com'
+            get_invalid_words='[]'
+            get_shared_data_dirs='None'
+            has_dind_support='True'
+            has_docker_sudo='False'
+            is_CK_S3_available='False'
+            run_docker_as_$USER_NAME='True'
+            skip_submodules_test='False'
+            use_docker_db_container_name_to_connect='False'
+            use_docker_network_mode_host='False'
+            use_docker_sibling_containers='False'
+            # hserver.config
+              is_AM_S3_available()='True'
+              is_dev4()='False'
+              is_dev_ck()='False'
+              is_inside_ci()='True'
+              is_inside_docker()='True'
+              is_mac(version='Catalina')='False'
+              is_mac(version='Monterey')='False'
+        # Env vars:
+          AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
+          AM_ENABLE_DIND='1'
+          AM_FORCE_TEST_FAIL=''
+          AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
+          AM_REPO_CONFIG_CHECK='True'
+          AM_REPO_CONFIG_PATH=''
+          CI='true'
+        """
+        # We ignore the AWS vars, since GH Actions does some replacement to mask
+        # the env vars coming from secrets.
+        skip_secrets_vars = True
+        hunteuti.check_env_to_str(self, exp, skip_secrets_vars=skip_secrets_vars)
+
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//cmamp",
+        reason="Run only in //cmamp",
+    )
+    def test_cmamp_ci(self) -> None:
         hunteuti.execute_only_on_ci()
         #
         exp = r"""
