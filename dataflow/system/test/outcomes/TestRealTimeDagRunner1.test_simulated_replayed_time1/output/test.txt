@@ -3,11 +3,11 @@ config:
 
 result_nid: compute_ret_0
 method: predict
-result_df: 
+result_df:
   index=[2010-01-04 09:30:00, 2010-01-14 16:05:00]
   columns=('close.ret_0', 'MN0'),('close.ret_0', 'MN1'),('close.ret_0', 'MN2'),('close.ret_0', 'MN3'),('twap.ret_0', 'MN0'),('twap.ret_0', 'MN1'),('twap.ret_0', 'MN2'),('twap.ret_0', 'MN3'),('vwap.ret_0', 'MN0'),('vwap.ret_0', 'MN1'),('vwap.ret_0', 'MN2'),('vwap.ret_0', 'MN3'),('close', 'MN0'),('close', 'MN1'),('close', 'MN2'),('close', 'MN3'),('twap', 'MN0'),('twap', 'MN1'),('twap', 'MN2'),('twap', 'MN3'),('volume', 'MN0'),('volume', 'MN1'),('volume', 'MN2'),('volume', 'MN3'),('vwap', 'MN0'),('vwap', 'MN1'),('vwap', 'MN2'),('vwap', 'MN3')
   shape=(2960, 28)
-                      close.ret_0                               twap.ret_0                               vwap.ret_0                                    close                                   twap                               volume                           vwap                              
+                      close.ret_0                               twap.ret_0                               vwap.ret_0                                    close                                   twap                               volume                           vwap
                               MN0       MN1       MN2       MN3        MN0       MN1       MN2       MN3        MN0       MN1       MN2       MN3        MN0       MN1      MN2       MN3       MN0       MN1       MN2       MN3    MN0    MN1    MN2    MN3       MN0       MN1       MN2       MN3
   2010-01-04 09:30:00         NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN      NaN       NaN       NaN       NaN       NaN       NaN    NaN    NaN    NaN    NaN       NaN       NaN       NaN       NaN
   2010-01-04 09:35:00         NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN   1.070746  2.792283  3.96700  0.747024  2.960477  1.310048  2.118868  2.501001  500.0  500.0  500.0  500.0  2.960477  1.310048  2.118868  2.501001
@@ -25,8 +25,8 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   11916 non-null  float64
        1   (close, MN1)   11916 non-null  float64
        2   (close, MN2)   11916 non-null  float64
@@ -42,8 +42,8 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   3510 non-null   float64
        1   (close, MN1)   3510 non-null   float64
        2   (close, MN2)   3510 non-null   float64
@@ -61,8 +61,8 @@ info:
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
       Data columns (total 16 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   702 non-null    float64
        1   (close, MN1)   702 non-null    float64
        2   (close, MN2)   702 non-null    float64
@@ -88,8 +88,8 @@ info:
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
       Data columns (total 28 columns):
-       #   Column              Non-Null Count  Dtype  
-      ---  ------              --------------  -----  
+       #   Column              Non-Null Count  Dtype
+      ---  ------              --------------  -----
        0   (close.ret_0, MN0)  693 non-null    float64
        1   (close.ret_0, MN1)  693 non-null    float64
        2   (close.ret_0, MN2)  693 non-null    float64
@@ -125,16 +125,16 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   14796 non-null  float64
        1   (close, MN1)   14796 non-null  float64
        2   (close, MN2)   14796 non-null  float64
        3   (close, MN3)   14796 non-null  float64
-       4   (volume, MN0)  14796 non-null  int64  
-       5   (volume, MN1)  14796 non-null  int64  
-       6   (volume, MN2)  14796 non-null  int64  
-       7   (volume, MN3)  14796 non-null  int64  
+       4   (volume, MN0)  14796 non-null  int64
+       5   (volume, MN1)  14796 non-null  int64
+       6   (volume, MN2)  14796 non-null  int64
+       7   (volume, MN3)  14796 non-null  int64
       dtypes: float64(4), int64(4)
 payload: None
 class: ResultBundle
@@ -142,11 +142,11 @@ config:
 
 result_nid: compute_ret_0
 method: predict
-result_df: 
+result_df:
   index=[2010-01-04 09:30:00, 2010-01-14 16:05:00]
   columns=('close.ret_0', 'MN0'),('close.ret_0', 'MN1'),('close.ret_0', 'MN2'),('close.ret_0', 'MN3'),('twap.ret_0', 'MN0'),('twap.ret_0', 'MN1'),('twap.ret_0', 'MN2'),('twap.ret_0', 'MN3'),('vwap.ret_0', 'MN0'),('vwap.ret_0', 'MN1'),('vwap.ret_0', 'MN2'),('vwap.ret_0', 'MN3'),('close', 'MN0'),('close', 'MN1'),('close', 'MN2'),('close', 'MN3'),('twap', 'MN0'),('twap', 'MN1'),('twap', 'MN2'),('twap', 'MN3'),('volume', 'MN0'),('volume', 'MN1'),('volume', 'MN2'),('volume', 'MN3'),('vwap', 'MN0'),('vwap', 'MN1'),('vwap', 'MN2'),('vwap', 'MN3')
   shape=(2960, 28)
-                      close.ret_0                               twap.ret_0                               vwap.ret_0                                    close                                   twap                               volume                           vwap                              
+                      close.ret_0                               twap.ret_0                               vwap.ret_0                                    close                                   twap                               volume                           vwap
                               MN0       MN1       MN2       MN3        MN0       MN1       MN2       MN3        MN0       MN1       MN2       MN3        MN0       MN1      MN2       MN3       MN0       MN1       MN2       MN3    MN0    MN1    MN2    MN3       MN0       MN1       MN2       MN3
   2010-01-04 09:30:00         NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN      NaN       NaN       NaN       NaN       NaN       NaN    NaN    NaN    NaN    NaN       NaN       NaN       NaN       NaN
   2010-01-04 09:35:00         NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN   1.070746  2.792283  3.96700  0.747024  2.960477  1.310048  2.118868  2.501001  500.0  500.0  500.0  500.0  2.960477  1.310048  2.118868  2.501001
@@ -164,8 +164,8 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   11916 non-null  float64
        1   (close, MN1)   11916 non-null  float64
        2   (close, MN2)   11916 non-null  float64
@@ -181,8 +181,8 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   3510 non-null   float64
        1   (close, MN1)   3510 non-null   float64
        2   (close, MN2)   3510 non-null   float64
@@ -200,8 +200,8 @@ info:
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
       Data columns (total 16 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   702 non-null    float64
        1   (close, MN1)   702 non-null    float64
        2   (close, MN2)   702 non-null    float64
@@ -227,8 +227,8 @@ info:
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
       Data columns (total 28 columns):
-       #   Column              Non-Null Count  Dtype  
-      ---  ------              --------------  -----  
+       #   Column              Non-Null Count  Dtype
+      ---  ------              --------------  -----
        0   (close.ret_0, MN0)  693 non-null    float64
        1   (close.ret_0, MN1)  693 non-null    float64
        2   (close.ret_0, MN2)  693 non-null    float64
@@ -264,16 +264,16 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   14796 non-null  float64
        1   (close, MN1)   14796 non-null  float64
        2   (close, MN2)   14796 non-null  float64
        3   (close, MN3)   14796 non-null  float64
-       4   (volume, MN0)  14796 non-null  int64  
-       5   (volume, MN1)  14796 non-null  int64  
-       6   (volume, MN2)  14796 non-null  int64  
-       7   (volume, MN3)  14796 non-null  int64  
+       4   (volume, MN0)  14796 non-null  int64
+       5   (volume, MN1)  14796 non-null  int64
+       6   (volume, MN2)  14796 non-null  int64
+       7   (volume, MN3)  14796 non-null  int64
       dtypes: float64(4), int64(4)
 payload: None
 class: ResultBundle
@@ -281,11 +281,11 @@ config:
 
 result_nid: compute_ret_0
 method: predict
-result_df: 
+result_df:
   index=[2010-01-04 09:30:00, 2010-01-14 16:05:00]
   columns=('close.ret_0', 'MN0'),('close.ret_0', 'MN1'),('close.ret_0', 'MN2'),('close.ret_0', 'MN3'),('twap.ret_0', 'MN0'),('twap.ret_0', 'MN1'),('twap.ret_0', 'MN2'),('twap.ret_0', 'MN3'),('vwap.ret_0', 'MN0'),('vwap.ret_0', 'MN1'),('vwap.ret_0', 'MN2'),('vwap.ret_0', 'MN3'),('close', 'MN0'),('close', 'MN1'),('close', 'MN2'),('close', 'MN3'),('twap', 'MN0'),('twap', 'MN1'),('twap', 'MN2'),('twap', 'MN3'),('volume', 'MN0'),('volume', 'MN1'),('volume', 'MN2'),('volume', 'MN3'),('vwap', 'MN0'),('vwap', 'MN1'),('vwap', 'MN2'),('vwap', 'MN3')
   shape=(2960, 28)
-                      close.ret_0                               twap.ret_0                               vwap.ret_0                                    close                                   twap                               volume                           vwap                              
+                      close.ret_0                               twap.ret_0                               vwap.ret_0                                    close                                   twap                               volume                           vwap
                               MN0       MN1       MN2       MN3        MN0       MN1       MN2       MN3        MN0       MN1       MN2       MN3        MN0       MN1      MN2       MN3       MN0       MN1       MN2       MN3    MN0    MN1    MN2    MN3       MN0       MN1       MN2       MN3
   2010-01-04 09:30:00         NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN      NaN       NaN       NaN       NaN       NaN       NaN    NaN    NaN    NaN    NaN       NaN       NaN       NaN       NaN
   2010-01-04 09:35:00         NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN        NaN       NaN       NaN       NaN   1.070746  2.792283  3.96700  0.747024  2.960477  1.310048  2.118868  2.501001  500.0  500.0  500.0  500.0  2.960477  1.310048  2.118868  2.501001
@@ -303,8 +303,8 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   11916 non-null  float64
        1   (close, MN1)   11916 non-null  float64
        2   (close, MN2)   11916 non-null  float64
@@ -320,8 +320,8 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   3510 non-null   float64
        1   (close, MN1)   3510 non-null   float64
        2   (close, MN2)   3510 non-null   float64
@@ -339,8 +339,8 @@ info:
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
       Data columns (total 16 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   702 non-null    float64
        1   (close, MN1)   702 non-null    float64
        2   (close, MN2)   702 non-null    float64
@@ -366,8 +366,8 @@ info:
       DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: 5T
       Data columns (total 28 columns):
-       #   Column              Non-Null Count  Dtype  
-      ---  ------              --------------  -----  
+       #   Column              Non-Null Count  Dtype
+      ---  ------              --------------  -----
        0   (close.ret_0, MN0)  693 non-null    float64
        1   (close.ret_0, MN1)  693 non-null    float64
        2   (close.ret_0, MN2)  693 non-null    float64
@@ -403,16 +403,16 @@ info:
       DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
       Freq: T
       Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype  
-      ---  ------         --------------  -----  
+       #   Column         Non-Null Count  Dtype
+      ---  ------         --------------  -----
        0   (close, MN0)   14796 non-null  float64
        1   (close, MN1)   14796 non-null  float64
        2   (close, MN2)   14796 non-null  float64
        3   (close, MN3)   14796 non-null  float64
-       4   (volume, MN0)  14796 non-null  int64  
-       5   (volume, MN1)  14796 non-null  int64  
-       6   (volume, MN2)  14796 non-null  int64  
-       7   (volume, MN3)  14796 non-null  int64  
+       4   (volume, MN0)  14796 non-null  int64
+       5   (volume, MN1)  14796 non-null  int64
+       6   (volume, MN2)  14796 non-null  int64
+       7   (volume, MN3)  14796 non-null  int64
       dtypes: float64(4), int64(4)
 payload: None
 class: ResultBundle

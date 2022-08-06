@@ -1,11 +1,11 @@
 INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt --show-stacktrace'
-## pytest_repro: 
+## pytest_repro:
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt'
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt'
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Found 3 failed pytest 'tests' target(s); to reproduce run:
-pytest helpers/test/test_lib_tasks.py::TestDryRunTasks1::test_git_clean
 pytest dataflow/system/example1/test/test_example1_forecast_system.py::Test_Example1_ForecastSystem_FitPredict::test_fit_over_backtest_period1
 pytest dataflow/system/example1/test/test_example1_forecast_system.py::Test_Example1_ForecastSystem_FitPredict::test_fit_over_period1
+pytest helpers/test/test_lib_tasks.py::TestDryRunTasks1::test_git_clean
 
 # TestDryRunTasks1.test_git_clean
 Traceback (most recent call last):
@@ -19,7 +19,7 @@ Traceback (most recent call last):
     diff_files(
   File "/app/helpers/hunit_test.py", line 586, in diff_files
     raise RuntimeError(msg_as_str)
-RuntimeError: 
+RuntimeError:
 --------------------------------------------------------------------------------
 ACTUAL vs EXPECTED: TestDryRunTasks1.test_git_clean
 --------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ Traceback (most recent call last):
     diff_files(
   File "/app/helpers/hunit_test.py", line 586, in diff_files
     raise RuntimeError(msg_as_str)
-RuntimeError: 
+RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: Test_Example1_ForecastSystem_FitPredict.test_fit_over_backtest_period1
 --------------------------------------------------------------------------------
@@ -231,7 +231,7 @@ Traceback (most recent call last):
     diff_files(
   File "/app/helpers/hunit_test.py", line 586, in diff_files
     raise RuntimeError(msg_as_str)
-RuntimeError: 
+RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: Test_Example1_ForecastSystem_FitPredict.test_fit_over_period1
 --------------------------------------------------------------------------------

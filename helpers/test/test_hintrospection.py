@@ -178,6 +178,6 @@ class Test_get_function_name1(hunitest.TestCase):
 class Test_get_name_from_function1(hunitest.TestCase):
     def test1(self) -> None:
         act = hintros.get_name_from_function(test_function)
-        hstring.remove_prefix(act, "amp.", assert_on_error=False)
+        act = hstring.remove_prefix(act, "amp.", assert_on_error=False)
         exp = "helpers.test.test_hintrospection.test_function"
         self.assert_equal(act, exp)

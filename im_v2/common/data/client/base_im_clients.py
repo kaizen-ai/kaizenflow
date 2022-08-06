@@ -240,7 +240,6 @@ class ImClient(abc.ABC):
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
         # Check that columns are required ones.
-        # TODO(gp): Difference btw amp and cmamp.
         if columns is not None:
             df = hpandas.check_and_filter_matching_columns(
                 df, columns, filter_data_mode
