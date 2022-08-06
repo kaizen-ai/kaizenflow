@@ -259,6 +259,8 @@ class System(abc.ABC):
     # - To access the objects (e.g., for checking the output of a test) one uses the
     #   public properties
 
+    # TODO(gp): Pass also the expected type so we can check that each function
+    #  returns what's expected.
     def _get_cached_value(
         self,
         key: str,
@@ -537,13 +539,16 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
 
+    # TODO(gp): -> order_processor_coroutine?
+    # TODO(gp): Can we return the OrderProcessor somehow so we can add it to the config?
     @property
     def order_processor(
         self,
     ) -> Coroutine:
-        order_processor: Coroutine = self._get_cached_value("order_processor",
-                                                            self._get_order_processor)
-        return order_processor
+        order_processor_coroutine: Coroutine = self._get_cached_value(
+                "order_processor", self._get_order_processor)
+        hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
+        return order_processor_coroutine
 
     @abc.abstractmethod
     def _get_order_processor(self) -> Coroutine:

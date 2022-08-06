@@ -6,7 +6,7 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 
 import asyncio
 import logging
-from typing import Callable, List, Tuple, Union
+from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
 
 import pandas as pd
 
@@ -67,7 +67,7 @@ def _get_signature_from_result_bundle(
     if add_run_signature:
         # TODO(gp): This should be factored out.
         txt.append(hprint.frame("compute_run_signature"))
-        result_bundles = result_bundles[0]
+        hdbg.dassert_isinstance(result_bundles, list)
         result_bundle = result_bundles[-1]
         # result_bundle.result_df = result_bundle.result_df.tail(40)
         system_tester = SystemTester()
@@ -373,6 +373,9 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
+            # Check.
+            # Pick the ResultBundle corresponding to the DagRunner execution.
+            result_bundles = result_bundles[0]
             actual = _get_signature_from_result_bundle(
                 system, result_bundles, add_system_config, add_run_signature
             )
@@ -473,7 +476,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
             # Create and add order processor.
-            order_processor_coroutine = system.get_order_processor_coroutine()
+            order_processor_coroutine = system.order_processor
+            hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
             coroutines.append(order_processor_coroutine)
             # Create DAG runner.
             dag_runner = system.dag_runner
@@ -483,6 +487,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             # Check.
+            # Pick the result_bundle that corresponds to the DagRunner.
+            result_bundles = result_bundles[1]
             actual = _get_signature_from_result_bundle(
                 system, result_bundles, add_system_config, add_run_signature
             )
@@ -579,11 +585,12 @@ class SystemTester:
 
     def compute_run_signature(
         self,
-        dag_runner,
-        portfolio,
-        result_bundle,
-        forecast_evaluator_from_prices_dict,
+        dag_runner: dtfcore.DagRunner,
+        portfolio: oms.Portfolio,
+        result_bundle: dtfcore.ResultBundle,
+        forecast_evaluator_from_prices_dict: Dict[str, Any],
     ) -> str:
+        hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
         # Check output.
         actual = []
         #
@@ -616,9 +623,10 @@ class SystemTester:
 
     def get_research_pnl_signature(
         self,
-        result_bundle,
-        forecast_evaluator_from_prices_dict,
+        result_bundle: dtfcore.ResultBundle,
+        forecast_evaluator_from_prices_dict: Dict[str, Any],
     ) -> Tuple[str, pd.Series]:
+        hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
         # TODO(gp): @all use actual.append(hprint.frame("system_config"))
         #  to separate the sections of the output.
         actual = ["\n# forecast_evaluator_from_prices signature=\n"]

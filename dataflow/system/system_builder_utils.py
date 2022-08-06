@@ -13,6 +13,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
+import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.universe as dtfuniver
@@ -572,7 +573,7 @@ def get_OrderProcessorCoroutine_from_System(
         system.config["db_connection_object"],
         system.portfolio,
         system.config["market_data_config", "asset_id_col_name"],
-        system.config["order_processor", "max_wait_time_for_order_in_secs"]
+        system.config["order_processor_config", "max_wait_time_for_order_in_secs"]
     )
     # We add extra 5 seconds for the `OrderProcessor` to account for
     # the first bar that the DAG spends in fit mode.
@@ -583,6 +584,7 @@ def get_OrderProcessorCoroutine_from_System(
     order_processor_coroutine = oms.get_order_processor_coroutine_example1(
         order_processor,
         system.portfolio,
-        system.config["order_processor", "duration_in_secs"]
+        system.config["order_processor_config", "duration_in_secs"]
     )
+    hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
     return order_processor_coroutine
