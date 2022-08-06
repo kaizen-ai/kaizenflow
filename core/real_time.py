@@ -102,7 +102,7 @@ class ReplayedTime:
         hdateti.dassert_tz_compatible(
             self._initial_replayed_dt, self._initial_wall_clock_dt
         )
-        # TODO(gp): Difference btw amp and cmamp.
+        # TODO(gp): Difference between amp and cmamp.
         hdbg.dassert_lte(
             self._initial_replayed_dt,
             self._initial_wall_clock_dt,

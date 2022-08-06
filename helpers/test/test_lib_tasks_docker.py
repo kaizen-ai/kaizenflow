@@ -229,7 +229,6 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
         """
         self._check(act, exp)
 
-    # TODO(gp): Difference btw amp and cmamp.
     def test_docker_bash5(self) -> None:
         """
         Command for running through a shell.

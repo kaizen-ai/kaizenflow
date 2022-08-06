@@ -1107,7 +1107,6 @@ class Test_to_dict1(hunitest.TestCase):
         config = cconfig.get_config_from_nested_dict(config_as_dict)
         act = str(config)
         self.assert_equal(act, expected_result_as_str, fuzzy_match=True)
-        #
         # Ensure that the round trip transform is correct.
         config_as_dict2 = config.to_dict()
         self.assert_equal(str(config_as_dict), str(config_as_dict2))
@@ -1179,5 +1178,56 @@ class Test_to_dict1(hunitest.TestCase):
         """
         self.helper(config_as_dict, exp)
 
+    # def test4(self):
+    #     import dataflow_lime.pipelines.E8.E8d_pipeline as dtflpee8pi
+    #     obj = dtflpee8pi.E8d_DagBuilder()
+    #     obj.get_config_template()
+    #     assert 0
+    #     dict_ = {
+    #         "resample": {
+    #             "in_col_groups": [
+    #                 ("close",),
+    #                 ("volume",),
+    #                 ("sbc_sac.compressed_difference",),
+    #                 ("day_spread",),
+    #                 ("day_num_spread",),
+    #             ],
+    #             "out_col_group": (),
+    #             "transformer_kwargs": {
+    #                 "rule": "5T",
+    #                 # "rule": "15T",
+    #                 "resampling_groups": [
+    #                     ({"close": "close"}, "last", {}),
+    #                     (
+    #                         {
+    #                             "close": "twap",
+    #                             "sbc_sac.compressed_difference": "sbc_sac.compressed_difference",
+    #                         },
+    #                         "mean",
+    #                         # TODO(gp): Use {}
+    #                         # {},
+    #                         None,
+    #                     ),
+    #                     (
+    #                         {
+    #                             "day_spread": "day_spread",
+    #                             "day_num_spread": "day_num_spread",
+    #                             "volume": "volume",
+    #                         },
+    #                         "sum",
+    #                         {"min_count": 1},
+    #                     ),
+    #                 ],
+    #                 "vwap_groups": [
+    #                     ("close", "volume", "vwap"),
+    #                 ],
+    #             },
+    #             "reindex_like_input": False,
+    #             "join_output_with_input": False,
+    #         },
+    #     }
+    #     config_tail = cconfig.get_config_from_nested_dict(dict_)
+    #     config = cconfig.Config()
+    #     config.update(config_tail)
 
 # TODO(gp): Unit tests all the functions.

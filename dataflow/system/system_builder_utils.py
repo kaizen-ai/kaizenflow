@@ -561,26 +561,12 @@ def get_OrderProcessorCoroutine_from_System(
     """
     Build an OrderProcessor coroutine from the parameters in the SystemConfig.
     """
-    # If an order is not placed within a bar, then there is a timeout, so
-    # we add extra 5 seconds to `sleep_interval_in_secs` (which represents
-    # the length of a trading bar) to make sure that the `OrderProcessor`
-    # waits long enough before timing out.
-    # max_wait_time_for_order_in_secs = (
-    #     system.config["dag_runner_config", "sleep_interval_in_secs"] + 5
-    # )
-
     order_processor = oms.get_order_processor_example1(
         system.config["db_connection_object"],
         system.portfolio,
         system.config["market_data_config", "asset_id_col_name"],
         system.config["order_processor_config", "max_wait_time_for_order_in_secs"]
     )
-    # We add extra 5 seconds for the `OrderProcessor` to account for
-    # the first bar that the DAG spends in fit mode.
-    # real_time_loop_time_out_in_secs = (
-    #         system.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
-    #         + 5
-    # )
     order_processor_coroutine = oms.get_order_processor_coroutine_example1(
         order_processor,
         system.portfolio,

@@ -27,7 +27,12 @@ import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
+# Disable _LOG.debug.
 _LOG.debug = lambda *_: 0
+
+# Enable or disable _LOG.verb_debug
+#_LOG.verb_debug = lambda *_: 0
+_LOG.verb_debug = _LOG.debug
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.
@@ -80,7 +85,8 @@ class Config:
         If `key` is an iterable of keys, then the key hierarchy is
         navigated/created and the leaf value added/updated with `val`.
         """
-        _LOG.debug("key=%s, config=%s", key, self)
+        #_LOG.verb_debug("key=%s, config=%s", key, self)
+        # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
             hdbg.dfatal(f"val='{val}' can't be a dict")
         if False:
@@ -285,6 +291,10 @@ class Config:
         #         v.mark_read_only()
         #         assert 0
 
+    # /////////////////////////////////////////////////////////////////////////////
+    # From / to functions.
+    # /////////////////////////////////////////////////////////////////////////////
+
     @classmethod
     def from_python(cls, code: str) -> Optional["Config"]:
         """
@@ -346,6 +356,8 @@ class Config:
                 dict_[k] = v
         return dict_
 
+    # /////////////////////////////////////////////////////////////////////////////
+
     def is_serializable(self) -> bool:
         """
         Make sure the config can be serialized and deserialized correctly.
@@ -406,6 +418,10 @@ class Config:
             % (key, self._config[key], hprint.indent(str(self)))
         )
 
+    # /////////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # /////////////////////////////////////////////////////////////////////////////
+
     @staticmethod
     def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
         hdbg.dassert(hintros.is_iterable(key), "Key='%s' is not iterable", key)
@@ -417,7 +433,7 @@ class Config:
         return head_key, tail_key
 
     def _get_item(self, key: Key, *, level: int) -> Any:
-        _LOG.debug("key=%s, config=%s, lev=%s", key, self, level)
+        #_LOG.debug("key=%s, config=%s, lev=%s", key, self, level)
         # Check if the key is nested.
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
