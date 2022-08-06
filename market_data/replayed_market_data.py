@@ -235,7 +235,9 @@ def load_market_data(
         s3fs_ = hs3.get_s3fs(aws_profile)
         read_csv_kwargs_tmp["s3fs"] = s3fs_
     read_csv_kwargs.update(read_csv_kwargs_tmp)  # type: ignore[arg-type]
-    stream, read_csv_kwargs = hs3.get_local_or_s3_stream(file_name, **read_csv_kwargs)
+    stream, read_csv_kwargs = hs3.get_local_or_s3_stream(
+        file_name, **read_csv_kwargs
+    )
     df = hpandas.read_csv_to_df(stream, **read_csv_kwargs)
     # Adjust column names to the processable format.
     if column_remap:

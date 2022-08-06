@@ -62,6 +62,7 @@ def get_order_processor_coroutine_example1(
 ) -> Coroutine:
     """
     Create a coroutine running the OrderProcessor, that lasts for
+    duration_in_secs.
 
     :param duration_in_secs: how many seconds to run after the beginning of the
         replayed clock

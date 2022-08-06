@@ -606,8 +606,10 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
     # Data normalization.
     # /////////////////////////////////////////////////////////////////////////////
 
-    def _dassert_valid_asset_ids(self, asset_ids: Optional[Iterable[AssetId]],
-                                 ) -> None:
+    def _dassert_valid_asset_ids(
+        self,
+        asset_ids: Optional[Iterable[AssetId]],
+    ) -> None:
         if asset_ids is not None:
             hdbg.dassert_container_type(
                 asset_ids, (np.ndarray, list), (int, np.int64)

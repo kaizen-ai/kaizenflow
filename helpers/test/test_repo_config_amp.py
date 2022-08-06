@@ -73,6 +73,7 @@ class TestRepoConfig_Amp(hunitest.TestCase):
             exp = True
             self.assertEqual(act, exp)
 
+
 # #############################################################################
 # TestRepoConfig_Amp_signature
 # #############################################################################
@@ -129,7 +130,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_TELEGRAM_TOKEN=***
           CI=''
           GH_ACTION_ACCESS_TOKEN=empty
-          CK_AWS_ACCESS_KEY_ID=***    
+          CK_AWS_ACCESS_KEY_ID=***
           CK_AWS_DEFAULT_REGION=***
           CK_AWS_S3_BUCKET=***
           CK_AWS_SECRET_ACCESS_KEY=***
@@ -187,7 +188,9 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
         #
         exp_enable_privileged_mode = True
         exp_has_dind_support = True
-        hrecouti.assert_setup(self, exp_enable_privileged_mode, exp_has_dind_support)
+        hrecouti.assert_setup(
+            self, exp_enable_privileged_mode, exp_has_dind_support
+        )
 
     @pytest.mark.skipif(
         not henv.execute_repo_config_code("get_name()") == "//amp",

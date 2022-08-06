@@ -182,9 +182,9 @@ class System(abc.ABC):
         """
         Set the config for a System.
 
-        This is used in the tile backtesting flow to create multiple configs and
-        then inject one at a time into a `System` in order to simulate the `System`
-        for a specific tile.
+        This is used in the tile backtesting flow to create multiple
+        configs and then inject one at a time into a `System` in order
+        to simulate the `System` for a specific tile.
         """
         self._config = config
 
@@ -547,7 +547,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         self,
     ) -> Coroutine:
         order_processor_coroutine: Coroutine = self._get_cached_value(
-                "order_processor", self._get_order_processor)
+            "order_processor", self._get_order_processor
+        )
         hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
         return order_processor_coroutine
 

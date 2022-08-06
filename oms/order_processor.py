@@ -70,10 +70,13 @@ class OrderProcessor(hobject.PrintableMixin):
             tests and so we have control over the DB and we can use names chosen by us,
             so we use the standard table names as defaults
         """
-        _LOG.debug(hprint.to_str(
-            "db_connection max_wait_time_for_order_in_secs delay_to_accept_in_secs"
-            " delay_to_fill_in_secs broker asset_id_name submitted_orders_table_name"
-            " accepted_orders_table_name current_positions_table_name"))
+        _LOG.debug(
+            hprint.to_str(
+                "db_connection max_wait_time_for_order_in_secs delay_to_accept_in_secs"
+                " delay_to_fill_in_secs broker asset_id_name submitted_orders_table_name"
+                " accepted_orders_table_name current_positions_table_name"
+            )
+        )
         self._db_connection = db_connection
         #
         hdbg.dassert_lte(0, max_wait_time_for_order_in_secs)
@@ -144,15 +147,16 @@ class OrderProcessor(hobject.PrintableMixin):
         """
         Poll for submitted orders, accept, and enqueue.
         """
-        poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time,
-            timeout_in_secs=self.max_wait_time_for_order_in_secs
-            )
+        poll_kwargs = hasynci.get_poll_kwargs(
+            self._get_wall_clock_time,
+            timeout_in_secs=self.max_wait_time_for_order_in_secs,
+        )
         # Wait for orders to be written in `submitted_orders_table_name`.
         diff_num_rows = await hsql.wait_for_change_in_number_of_rows(
             self._get_wall_clock_time,
             self._db_connection,
             self._submitted_orders_table_name,
-            poll_kwargs
+            poll_kwargs,
         )
         _LOG.debug("diff_num_rows=%s", diff_num_rows)
         # Extract the latest file_name after order submission is complete.

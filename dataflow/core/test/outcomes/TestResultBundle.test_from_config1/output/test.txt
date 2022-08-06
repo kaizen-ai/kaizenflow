@@ -3,7 +3,7 @@ config:
   key: val
 result_nid: leaf_node
 method: fit
-result_df: 
+result_df:
   index=[0, 0]
   columns=col0,col1,col2,col3,col4
   shape=(1, 5)

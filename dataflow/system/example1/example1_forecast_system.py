@@ -247,7 +247,9 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         return portfolio
 
     def _get_order_processor(self) -> Coroutine:
-        order_processor_coroutine = dtfssybuut.get_OrderProcessorCoroutine_from_System(self)
+        order_processor_coroutine = (
+            dtfssybuut.get_OrderProcessorCoroutine_from_System(self)
+        )
         return order_processor_coroutine
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
@@ -300,12 +302,15 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
     max_wait_time_for_order_in_secs = (
         system.config["dag_runner_config", "sleep_interval_in_secs"] + 5
     )
-    system.config["order_processor_config", "max_wait_time_for_order_in_secs"] = max_wait_time_for_order_in_secs
+    system.config[
+        "order_processor_config", "max_wait_time_for_order_in_secs"
+    ] = max_wait_time_for_order_in_secs
     # We add extra 5 seconds for the `OrderProcessor` to account for the first bar
     # that the DAG spends in fit mode.
     real_time_loop_time_out_in_secs = (
-        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
-        + 5
-        )
-    system.config["order_processor_config", "duration_in_secs"] = real_time_loop_time_out_in_secs
+        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] + 5
+    )
+    system.config[
+        "order_processor_config", "duration_in_secs"
+    ] = real_time_loop_time_out_in_secs
     return system

@@ -276,7 +276,8 @@ def align_on_time_grid(
 
     # _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
     target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
-        grid_time_in_secs, get_wall_clock_time)
+        grid_time_in_secs, get_wall_clock_time
+    )
     #
     if use_high_resolution:
         # Wait for a bit and then busy wait.

@@ -508,7 +508,7 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
     def test6(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
-        
+
     def test7(self) -> None:
         cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
         self.helper(cmd)
