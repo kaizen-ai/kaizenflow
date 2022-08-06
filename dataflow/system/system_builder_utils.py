@@ -525,21 +525,16 @@ def get_DatabasePortfolio_from_System(
     """
     Build a `DatabasePortfolio` from a system config.
     """
-    event_loop = system.config["event_loop_object"]
-    db_connection = system.config["db_connection_object"]
-    market_data = system.market_data
-    table_name = oms.CURRENT_POSITIONS_TABLE_NAME
-    mark_to_market_col = system.config["portfolio_config", "mark_to_market_col"]
-    pricing_method = system.config["portfolio_config", "pricing_method"]
-    asset_ids = system.config["market_data_config", "asset_ids"]
     portfolio = oms.get_DatabasePortfolio_example1(
-        event_loop,
-        db_connection,
-        table_name,
-        market_data=market_data,
-        mark_to_market_col=mark_to_market_col,
-        pricing_method=pricing_method,
-        asset_ids=asset_ids,
+        system.config["event_loop_object"],
+        system.config["db_connection_object"],
+        oms.CURRENT_POSITIONS_TABLE_NAME,
+        market_data=system.market_data,
+        mark_to_market_col=system.config[
+            "portfolio_config", "mark_to_market_col"
+        ],
+        pricing_method=system.config["portfolio_config", "pricing_method"],
+        asset_ids=system.config["market_data_config", "asset_ids"],
     )
     # TODO(gp): We should pass the column_remap to the Portfolio builder,
     # instead of injecting it after the fact.
@@ -557,10 +552,13 @@ def apply_Portfolio_config(
     """
     system.config["portfolio_config", "mark_to_market_col"] = "close"
     system.config["portfolio_config", "pricing_method"] = "twap.5T"
-    system.config["portfolio_config", "column_remap"] = {
+    column_remap = {
         "bid": "bid",
         "ask": "ask",
         "midpoint": "midpoint",
         "price": "close",
     }
+    system.config[
+        "portfolio_config", "column_remap"
+    ] = cconfig.get_config_from_nested_dict(column_remap)
     return system
