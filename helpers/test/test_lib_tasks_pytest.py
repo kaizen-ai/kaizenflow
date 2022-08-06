@@ -244,11 +244,11 @@ class Test_pytest_repro1(hunitest.TestCase):
         exp = [
             "dev_scripts/testing/test/test_run_tests.py",
             "dev_scripts/testing/test/test_run_tests2.py",
-            "helpers/test/test_printing.py::Test_dedent1::test2",
             "documentation/scripts/test/test_all.py",
             "documentation/scripts/test/test_render_md.py",
             "helpers/test/helpers/test/test_list.py::Test_list_1",
             "helpers/test/test_cache.py::TestAmpTask1407",
+            "helpers/test/test_printing.py::Test_dedent1::test2",
         ]
         self.helper(file_name, mode, exp)
 
@@ -258,11 +258,11 @@ class Test_pytest_repro1(hunitest.TestCase):
         exp = [
             "dev_scripts/testing/test/test_run_tests.py",
             "dev_scripts/testing/test/test_run_tests2.py",
-            "helpers/test/test_printing.py",
             "documentation/scripts/test/test_all.py",
             "documentation/scripts/test/test_render_md.py",
             "helpers/test/helpers/test/test_list.py",
             "helpers/test/test_cache.py",
+            "helpers/test/test_printing.py",
         ]
         self.helper(file_name, mode, exp)
 
@@ -270,9 +270,9 @@ class Test_pytest_repro1(hunitest.TestCase):
         file_name = self._build_pytest_file1()
         mode = "classes"
         exp = [
-            "helpers/test/test_printing.py::Test_dedent1",
             "helpers/test/helpers/test/test_list.py::Test_list_1",
             "helpers/test/test_cache.py::TestAmpTask1407",
+            "helpers/test/test_printing.py::Test_dedent1",
         ]
         self.helper(file_name, mode, exp)
 
