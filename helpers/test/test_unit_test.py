@@ -318,7 +318,7 @@ Diff with:
 or running:
 > ./tmp_diff.sh
 --------------------------------------------------------------------------------
-EXPECTED VARIABLE: Test_AssertEqual1.test_not_equal1
+ACTUAL VARIABLE: Test_AssertEqual1.test_not_equal1
 --------------------------------------------------------------------------------
 exp = r"""
 completed failure Lint    Run_linter

@@ -283,7 +283,7 @@ class Config:
         # for v in self._config.values():
         #     if isinstance(v, Config):
         #         v.mark_read_only()
-                #assert 0
+        #         assert 0
 
     @classmethod
     def from_python(cls, code: str) -> Optional["Config"]:
@@ -340,7 +340,7 @@ class Config:
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
             if isinstance(v, Config):
-                # If a value is a `Config` covert to dictionary recursively.
+                # If a value is a `Config` convert to dictionary recursively.
                 dict_[k] = v.to_dict()
             else:
                 dict_[k] = v

@@ -9,6 +9,7 @@ from typing import Coroutine
 
 import pandas as pd
 
+import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import oms.order_processor as oordproc
@@ -17,22 +18,28 @@ import oms.portfolio as omportfo
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): Part of this should become a `get_OrderProcessor_example()`.
+# TODO(gp): -> `get_OrderProcessor_example()`.
 def get_order_processor_example1(
     db_connection: hsql.DbConnection,
     portfolio: omportfo.Portfolio,
     asset_id_name: str,
-    max_wait_time_for_order_in_secs: int
+    max_wait_time_for_order_in_secs: int,
+    *,
+    delay_to_accept_in_secs: int = 3,
+    delay_to_fill_in_secs: int = 10
 ) -> oordproc.OrderProcessor:
     """
-    Build an order processor.
+    Build an OrderProcessor.
+
+    The params are the same as the OrderProcessor.
+
+    :param max_wait_time_for_order_in_secs: how long to wait for an order to be
+        received, once this object starts waiting
+    :param delay_to_accept_in_secs: delay after the order is submitted to update
+        the accepted orders table
+    :param delay_to_fill_in_secs: delay after the order is accepted to update the
+        position table with the filled positions
     """
-    # order_processor_poll_kwargs["sleep_in_secs"] = 1
-    # Since orders should come every 5 mins we give it a buffer of 15 extra
-    # mins.
-    # TODO(gp): Expose this through the interface.
-    delay_to_accept_in_secs = 3
-    delay_to_fill_in_secs = 10
     broker = portfolio.broker
     order_processor = oordproc.OrderProcessor(
         db_connection,
@@ -41,22 +48,32 @@ def get_order_processor_example1(
         delay_to_fill_in_secs,
         broker,
         asset_id_name,
-        # poll_kwargs=order_processor_poll_kwargs,
     )
     return order_processor
 
 
+# TODO(gp): It would be better to pass only what's needed (i.e., get_wall_clock_time)
+#  instead of passing Portfolio.
+# TODO(gp): -> `get_OrderProcessorCoroutine_example()`.
 def get_order_processor_coroutine_example1(
     order_processor: oordproc.OrderProcessor,
     portfolio: omportfo.Portfolio,
-    real_time_loop_time_out_in_secs: int,
+    duration_in_secs: float,
 ) -> Coroutine:
-    # TODO(gp): It would be better to pass only what's needed (i.e.,
-    #  get_wall_clock_time) instead of passing portfolio.
+    """
+    Create a coroutine running the OrderProcessor, that lasts for
+
+    :param duration_in_secs: how many seconds to run after the beginning of the
+        replayed clock
+    """
+    _LOG.debug(hprint.to_str("order_processor portfolio real_time_loop_time_out_in_secs"))
+    # Compute the timestamp when the OrderProcessor should shut down.
     get_wall_clock_time = portfolio.broker.market_data.get_wall_clock_time
     initial_timestamp = get_wall_clock_time()
-    _LOG.debug(hprint.to_str("real_time_loop_time_out_in_secs"))
-    offset = pd.Timedelta(real_time_loop_time_out_in_secs, unit="seconds")
-    termination_condition = initial_timestamp + offset
-    order_processor_coroutine = order_processor.run_loop(termination_condition)
+    hdbg.dassert_isinstance(duration_in_secs, float)
+    hdbg.dassert_lt(0, duration_in_secs)
+    offset = pd.Timedelta(duration_in_secs, unit="seconds")
+    termination_timestamp = initial_timestamp + offset
+    # Build the Coroutine.
+    order_processor_coroutine = order_processor.run_loop(termination_timestamp)
     return order_processor_coroutine

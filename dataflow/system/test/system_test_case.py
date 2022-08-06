@@ -472,12 +472,12 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             # Complete system config.
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
-            # Create DAG runner.
-            dag_runner = system.dag_runner
-            coroutines.append(dag_runner.predict())
             # Create and add order processor.
             order_processor_coroutine = system.get_order_processor_coroutine()
             coroutines.append(order_processor_coroutine)
+            # Create DAG runner.
+            dag_runner = system.dag_runner
+            coroutines.append(dag_runner.predict())
             #
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
