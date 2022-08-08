@@ -396,6 +396,10 @@ class CcxtBroker(ombroker.Broker):
         # Select credentials for provided exchange.
         if self._mode == "test":
             secrets_id = self._exchange_id + "_sandbox"
+        elif self._mode == "debug_test1":
+            # TODO(Danya): Temporary mode for running debug script.
+            #  See CMTask2575.
+            secrets_id = self._exchange_id + "_debug_test1"
         else:
             secrets_id = self._exchange_id
         exchange_params = hsecret.get_secret(secrets_id)

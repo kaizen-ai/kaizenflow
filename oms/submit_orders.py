@@ -18,10 +18,23 @@ import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
-import oms.ccxt_broker as occxbrok
 import oms.oms_utils as oomsutil
+import oms.order as omorder
+import asyncio
 
 _LOG = logging.getLogger(__name__)
+
+
+DEFAULT_ORDERS = """
+        Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121 tz=America/New_York
+Order: order_id=1 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=1467591036 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.011 tz=America/New_York
+Order: order_id=2 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=2061507978 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=169.063 tz=America/New_York
+Order: order_id=3 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=2237530510 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=2.828 tz=America/New_York
+Order: order_id=4 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=2601760471 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=-33.958 tz=America/New_York
+Order: order_id=5 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=3065029174 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=6052.094 tz=America/New_York
+Order: order_id=6 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=3303714233 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=-0.07 tz=America/New_York
+Order: order_id=7 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=8717633868 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=3.885 tz=America/New_York
+Order: order_id=8 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=8968126878 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=1.384 tz=America/New_York"""
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -37,13 +50,6 @@ def _parse() -> argparse.ArgumentParser:
         help="Name of the exchange, e.g. 'binance'.",
     )
     parser.add_argument(
-        "--currency_pairs",
-        action="store",
-        required=True,
-        type=str,
-        help="Currency pairs used in orders separated by spaces, e.g. 'BTC_USDT ETH_USDT'",
-    )
-    parser.add_argument(
         "--contract_type",
         action="store",
         required=True,
@@ -51,11 +57,19 @@ def _parse() -> argparse.ArgumentParser:
         help="'futures' or 'spot'. Note: only futures contracts are supported.",
     )
     parser.add_argument(
-        "--sleep_interval",
+        "--sleep_in_seconds",
         action="store",
         required=True,
+        type=int,
+        help="Sleep time between order submissions in seconds."
+    )
+    parser.add_argument(
+        "--orders_file",
+        action="store",
+        required=False,
+        default=None,
         type=str,
-        help="Sleep time between order submissions, e.g. '1m'."
+        help="Orders in string format"
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser
@@ -79,8 +93,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize CcxtBroker connected to testnet.
     exchange_id = args.exchange_id
     contract_type = args.contract_type
-    broker = oomsutil.get_example_ccxt_broker(market_data, exchange_id, contract_type) 
-    
+    broker = oomsutil.get_example_ccxt_broker(market_data, exchange_id, contract_type)
+    if args.orders_file is None:
+        orders = omorder.orders_from_string(DEFAULT_ORDERS)
+    else:
+        hdbg.dassert_file_exists(args.orders_file)
+        with open(args.orders_file, "r") as f:
+            txt = f.read()
+            orders = omorder.orders_from_string(txt)
+    for order in orders:
+        asyncio.run(broker.submit_orders([order]))
 
 
 if __name__ == "__main__":
