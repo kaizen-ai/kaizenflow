@@ -89,7 +89,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hsql.remove_table(connection, "example2_marketdata")
     # Initialize real-time market data.
     im_client = icdc.get_mock_realtime_client(connection)
-    market_data = mdata.get_RealtimeMarketData_example1(im_client)
+    market_data = mdata.get_RealTimeImClientMarketData_example2(im_client)
     # Initialize CcxtBroker connected to testnet.
     exchange_id = args.exchange_id
     contract_type = args.contract_type

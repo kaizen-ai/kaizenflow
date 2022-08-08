@@ -368,6 +368,35 @@ def get_RealtimeMarketData_example1(
     start_time_col_name = "start_timestamp"
     end_time_col_name = "end_timestamp"
     columns = None
+    get_wall_clock_time = lambda: pd.Timestamp(
+        "2022-04-23", tz="America/New_York"
+    )
+    market_data = mdrtmada.RealTimeMarketData2(
+        im_client,
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+    )
+    return market_data
+
+
+# TODO(Grisha): @Dan -> `get_RealTimeImClientMarketData_example2`.
+def get_RealTimeImClientMarketData_example2(
+    im_client: icdc.RealTimeImClient,
+) -> mdrtmada.RealTimeMarketData2:
+    """
+    Create a RealTimeMarketData2 to use as placeholder in Broker.
+
+    This example is geared to work with CcxtBroker.
+    """
+    asset_id_col = "asset_id"
+    asset_ids = [1464553467]
+    start_time_col_name = "start_timestamp"
+    end_time_col_name = "end_timestamp"
+    columns = None
     get_wall_clock_time = lambda: pd.Timestamp.now(
         tz="America/New_York"
     )
@@ -381,7 +410,6 @@ def get_RealtimeMarketData_example1(
         get_wall_clock_time,
     )
     return market_data
-
 
 # #############################################################################
 # StitchedMarketData examples
